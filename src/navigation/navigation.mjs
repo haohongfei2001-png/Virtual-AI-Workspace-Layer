@@ -4,9 +4,8 @@ import {validateFrameResumeView} from '../host/frame-resume-state.mjs';
 import { freeNavigationSnapshot, freeListRows, assertPreparedFreeSnapshot } from './free-view.mjs';
 import { currentIndex } from './current-index.mjs';
 import { knownMatches,knownProjectMatches,searchProjectMap } from './search.mjs';
-import { defaultIcon, iconPaths, svgIcon } from './icons.mjs';
+import { defaultIcon, iconPaths, svgIcon, workspaceReturnIcon as gridIcon } from './icons.mjs';
 import { project, initialView } from './projection.mjs';
-const gridIcon='<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="7" height="7" rx="1.3"/><rect x="14" y="3" width="7" height="7" rx="1.3"/><rect x="3" y="14" width="7" height="7" rx="1.3"/><rect x="14" y="14" width="7" height="7" rx="1.3"/></svg>';
 import { css } from './styles.mjs';
 function node(doc,tag,attrs={},text=''){const n=doc.createElement(tag);for(const[k,v]of Object.entries(attrs))n.setAttribute(k,v);n.textContent=text;return n;}
 /** Navigation owns only its roots and reversible view masking; never renders chat/composer. */
