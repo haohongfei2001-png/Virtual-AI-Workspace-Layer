@@ -15,7 +15,7 @@ try{
    document.documentElement.style.setProperty('--vaiwl-font-scale',String(scale));const {createNavigation}=await import('/src/navigation/navigation.mjs'),p=(items=[])=>({items,total:items.length,offset:0,limit:5,hasMore:false}),title='长期研究项目与知识管理中文标题'.repeat(12);
    const group={id:'project',name:title,nativeName:title,icon:'◇',segment:0,nativeUrl:null,lists:{current:p(),old:p(),unknown:p()}};
    const nav=globalThis.menuLayoutNavigation=createNavigation({document,surface:{role:'workspace',root:document.querySelector('#mount')},adapter:{currentURL:()=>'',isCurrent:()=>false,status(){}}});
-   nav.updateFrameProjection({protocol:'vaiwl-free-frame/1',role:'workspace',scope:'scope',completeSnapshot:false,segment:0,viewSession:{H:30,T:20000,Z:'UTC',policyRevision:0},navigation:{hasNewer:false,hasOlder:false,maxSegment:0},groups:{...p([group]),limit:24},entries:{noProject:{...p(),inventoryTotal:0},unknown:{...p(),inventoryTotal:0}},selection:null});
+   nav.updateFrameProjection(globalThis.menuLayoutProjection={protocol:'vaiwl-free-frame/1',role:'workspace',scope:'scope',completeSnapshot:false,segment:0,viewSession:{H:30,T:20000,Z:'UTC',policyRevision:0},navigation:{hasNewer:false,hasOlder:false,maxSegment:0},groups:{...p([group]),limit:24},entries:{noProject:{...p(),inventoryTotal:0},unknown:{...p(),inventoryTotal:0}},selection:null});
   },scale);
   const trigger=page.locator('.card-actions');await trigger.focus();await trigger.press('Enter');await page.getByRole('menu').waitFor();
   const measured=await page.evaluate(()=>{const shadow=menuLayoutNavigation.roots().workspace.shadow,head=shadow.querySelector('.card-head'),title=head.querySelector('h2'),text=title.querySelector('.theme-name'),glyph=title.querySelector('.theme-glyph'),menu=shadow.querySelector('.menu'),trigger=shadow.querySelector('.card-actions'),rect=n=>n.getBoundingClientRect().toJSON();return {head:rect(head),title:rect(title),text:rect(text),glyph:rect(glyph),menu:rect(menu),trigger:rect(trigger),workspace:rect(shadow.querySelector('.workspace')),glyphMinHeight:getComputedStyle(glyph).minHeight,titleFontSize:parseFloat(getComputedStyle(title).fontSize),focusedFirst:shadow.activeElement===menu.querySelector('[role="menuitem"]'),menuItems:menu.querySelectorAll('[role="menuitem"]').length,workspaceWidth:shadow.querySelector('.workspace').clientWidth,workspaceScroll:shadow.querySelector('.workspace').scrollWidth};});
@@ -24,7 +24,29 @@ try{
   assert(measured.menu.left>=measured.workspace.left&&measured.menu.right<=measured.workspace.right,'project menu must remain inside the owned workspace');
   assert(measured.menu.top>=measured.title.bottom-1,'menu must start below enlarged title');assert(measured.menu.top>=measured.head.bottom-1,'menu must anchor below the whole card header');assert(measured.text.right<=measured.trigger.left+1||measured.text.bottom<=measured.trigger.top+1,'long Chinese title must not obscure action, including wrapped headers');assert(measured.glyph.bottom<=measured.head.bottom+1&&measured.glyph.top>=measured.head.top-1,'glyph stays within expanded header');assert(Math.abs(measured.glyph.width-measured.glyph.height)<=1,'theme glyph remains square');assert(Math.abs(measured.glyph.width-25*scale)<=1,'glyph scales with 25px v2.7 baseline');assert.equal(measured.titleFontSize,15*scale);assert.equal(measured.focusedFirst,true);assert.equal(measured.menuItems,1);assert(measured.workspaceScroll<=measured.workspaceWidth+1);
   await page.keyboard.press('End');assert.equal(await page.evaluate(()=>{const s=menuLayoutNavigation.roots().workspace.shadow;return s.activeElement===s.querySelector('.menu').lastElementChild;}),true);await page.keyboard.press('Home');assert.equal(await page.evaluate(()=>{const s=menuLayoutNavigation.roots().workspace.shadow;return s.activeElement===s.querySelector('.menu').firstElementChild;}),true);await page.keyboard.press('Escape');assert.equal(await page.getByRole('menu').count(),0);assert.equal(await trigger.evaluate(n=>n.getRootNode().activeElement===n),true);
-  report.checks.at(-1).keyboardFocusRestored=true;await page.evaluate(()=>menuLayoutNavigation.stop());
+  report.checks.at(-1).keyboardFocusRestored=true;
+  if(width===420&&scale===1){
+   // A following focusable element represents leaving this owned workspace.
+   await page.evaluate(()=>{const next=document.createElement('button');next.id='after-workspace';next.textContent='After workspace';document.body.append(next);});
+   await trigger.press('Enter');await page.keyboard.press('Shift+Tab');
+   assert.equal(await page.getByRole('menu').count(),0,'Shift+Tab must dismiss the project menu');
+   assert.equal(await trigger.evaluate(n=>n.getRootNode().activeElement===n),true,'Shift+Tab returns to the menu trigger');
+   await trigger.press('Enter');await page.keyboard.press('Tab');
+   assert.equal(await page.getByRole('menu').count(),0,'Tab must dismiss the project menu');
+   assert.equal(await page.locator('#after-workspace').evaluate(n=>document.activeElement===n),true,'Tab continues after the trigger without trapping focus');
+   report.checks.at(-1).tabDismissalAndFocus=true;
+   await trigger.focus();await trigger.press('Enter');
+   await page.evaluate(()=>menuLayoutNavigation.updateFrameProjection(menuLayoutProjection));
+   await page.getByRole('menu').waitFor({state:'detached'});
+   assert.equal(await trigger.evaluate(n=>n.getRootNode().activeElement===n),true,'same-scope update must return menu focus to its surviving project control');
+   report.checks.at(-1).updateFocusRestored=true;
+   await trigger.press('Enter');await page.locator('#after-workspace').focus();
+   await page.evaluate(()=>menuLayoutNavigation.updateFrameProjection(menuLayoutProjection));
+   await page.getByRole('menu').waitFor({state:'detached'});
+   assert.equal(await page.locator('#after-workspace').evaluate(n=>document.activeElement===n),true,'update must not reclaim focus after the user leaves the menu');
+   report.checks.at(-1).externalFocusPreserved=true;
+  }
+  await page.evaluate(()=>menuLayoutNavigation.stop());
  }
  report.ok=true;
 }catch(error){report.ok=false;report.error=error.stack;process.exitCode=1;}finally{await browser?.close();if(server.listening)await new Promise(r=>server.close(r));report.sourceAfter=await hashes();report.sourceStable=JSON.stringify(report.sourceBefore)===JSON.stringify(report.sourceAfter);if(!report.sourceStable){report.ok=false;process.exitCode=1;}await writeFile(out,JSON.stringify(report,null,2)+'\n');}console.log(JSON.stringify(report));

@@ -411,10 +411,20 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
       if(menu?.trigger===trigger){closeMenu();return;}closeMenu(false);const popup=node(doc,'div',{class:'menu',role:'menu','aria-label':'主题操作 '+g.name});
       const item=(label,fn)=>{const b=button(label,()=>{closeMenu(false);fn();},label,'');b.setAttribute('role','menuitem');popup.append(b);};
       if(onManage&&!free())item('编辑主题',()=>onManage({workspaceId:g.id}));item('查找此主题',()=>findKnown(g.id));
-      popup.addEventListener('keydown',e=>{const items=[...popup.querySelectorAll('button')],i=items.indexOf(doc.activeElement?.shadowRoot?.activeElement??popup.getRootNode().activeElement);if(e.key==='Escape'){e.preventDefault();e.stopPropagation();closeMenu();}else if(['ArrowDown','ArrowUp','Home','End'].includes(e.key)){e.preventDefault();items[e.key==='Home'?0:e.key==='End'?items.length-1:(i+(e.key==='ArrowDown'?1:items.length-1))%items.length]?.focus();}});
+      // Tab exits the menu: backward to its trigger, forward to the next control.
+      popup.addEventListener('keydown',e=>{const items=[...popup.querySelectorAll('button')],i=items.indexOf(doc.activeElement?.shadowRoot?.activeElement??popup.getRootNode().activeElement);if(e.key==='Escape'){e.preventDefault();e.stopPropagation();closeMenu();}else if(e.key==='Tab'){closeMenu();if(e.shiftKey)e.preventDefault();}else if(['ArrowDown','ArrowUp','Home','End'].includes(e.key)){e.preventDefault();items[e.key==='Home'?0:e.key==='End'?items.length-1:(i+(e.key==='ArrowDown'?1:items.length-1))%items.length]?.focus();}});
       const outside=e=>{if(!e.composedPath().includes(popup)&&!e.composedPath().includes(trigger))closeMenu(false);};menu={n:popup,trigger,outside};trigger.setAttribute('aria-expanded','true');head.append(popup);doc.addEventListener('pointerdown',outside,true);popup.querySelector('button')?.focus();
     },'','square card-actions'),'more');trigger.dataset.focusKey='actions:'+g.id;trigger.setAttribute('aria-haspopup','menu');trigger.setAttribute('aria-expanded','false');head.append(trigger);}
-  function focusState(){if(framed&&doc.hasFocus?.()===false)return null;for(const root of [roots?.sidebar,roots?.workspace]){const n=root?.shadow?.activeElement;if(n?.dataset.focusKey)return {root,key:n.dataset.focusKey,start:n.selectionStart,end:n.selectionEnd};}return null;}
+  function focusState(){
+    if(framed&&doc.hasFocus?.()===false)return null;
+    for(const root of [roots?.sidebar,roots?.workspace]){
+      const n=root?.shadow?.activeElement;
+      // A render retires the menu; restore its focus to the surviving control.
+      if(n&&menu?.n.contains(n))return {root,key:menu.trigger.dataset.focusKey};
+      if(n?.dataset.focusKey)return {root,key:n.dataset.focusKey,start:n.selectionStart,end:n.selectionEnd};
+    }
+    return null;
+  }
   function restoreOwnedFocus(f){
     if(!f||framed&&doc.hasFocus?.()===false)return;
     const key=f.key==='关闭设置'&&!settingsOpen?'workspace-settings':f.key,shadow=f.root.shadow;
