@@ -63,3 +63,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
   :is([data-vaiwl-frame-backup], [data-vaiwl-frame-recovery]) > section { padding: 10px; }
   [data-vaiwl-frame-recovery] > section > section { padding: 10px; }
 }
+
+/* Match the approved sidebar tone without recoloring native host nodes. */
+body[data-frame-role="sidebar"] { --surface:#f9f9f9; background:var(--surface); }
+html[data-vaiwl-theme="dark"] body[data-frame-role="sidebar"] { --surface:#171717; }

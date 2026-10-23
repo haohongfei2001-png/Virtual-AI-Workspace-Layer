@@ -34,6 +34,21 @@ export const css=`
 @media(pointer:coarse){.card-head > .project-create{min-width:34px;min-height:34px}.card-actions{opacity:1}.card .row{min-height:44px}.old,.arrows button{min-height:40px}}
 .snippet-preview{display:block;font-size:calc(12px * var(--vaiwl-font-scale,1));color:var(--muted,#646464);white-space:normal;max-height:3em;overflow:hidden;margin-left:8px;flex:1}.anchor-feedback{font-size:calc(12px * var(--vaiwl-font-scale,1));color:var(--muted,#646464);padding:8px}.working-set .row{margin:3px 0}.toolbar .square{width:30px;height:32px}
 
+/* Original quiet rows: secondary workset actions keep a reserved square,
+   appear on pointer/focus, and never shorten the title by a text-button width. */
+.working-set-inline{flex-wrap:nowrap!important;gap:0!important}
+.working-set-inline>.row{flex:1 1 0!important}
+.working-set-add{width:28px;height:28px;opacity:0;color:var(--muted,#646464)}
+.working-set-inline:hover>.working-set-add,.working-set-inline:focus-within>.working-set-add{opacity:1}
+.current-context h2{font-size:calc(12px * var(--vaiwl-font-scale,1));font-weight:500;color:var(--muted,#646464);margin:8px}
+.sidebar-footer{padding:8px 4px;border-top:1px solid var(--line,#e8e8e8);gap:6px;flex:none}
+.sidebar-footer .more{flex:1;text-align:left}
+.workspace .empty-inventory{border:0;padding:4px 0;margin:0 0 12px;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.workspace .empty-inventory h2,.workspace .empty-inventory p{font-size:12px;font-weight:400;color:var(--muted,#646464);margin:0}
+.project-group-head>.project-create{opacity:0;width:28px;height:28px}
+.project-group-head:hover>.project-create,.project-group-head:focus-within>.project-create{opacity:1}
+@media(pointer:coarse){.working-set-add,.project-group-head>.project-create{opacity:1;min-width:34px;min-height:34px}}
+
 /* The host may retain its native rail at a narrow viewport. Reflow only our
    owned controls so required titles and actions still get usable inline space. */
 @media(max-width:240px){

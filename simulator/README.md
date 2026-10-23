@@ -1,5 +1,14 @@
 # VAIWL High-Fidelity ChatGPT Host Simulator
 
+## 当前正式 Free 界面：本机可操作实例（2026-10-23）
+
+在原仓库根目录运行 `node simulator/open-free.mjs`。启动器构建当前 `extension/package.mjs` 正式 Host 包，在新的隔离 Chrome 中自动打开工作区；无须手动安装、登录或重载。先行核查用 `node simulator/open-free.mjs --check`，只启动无界面浏览器并在结束时关闭。
+
+该入口运行实际 `workspace.html/sidebar.html → free-frame-client → navigation`，使用原生 owner、授权 frame、IndexedDB、工作集、设置和返回流程。没有复制批准原型或另写卡片 UI。合成的六个 Project 及聊天由现有本机 fixture 提供，宿主外观复用原 `simulator/host.css`；不访问 ChatGPT、日常 Profile 或账户，worker 和页面外网都受限。每次运行目录和报告打印在终端；原型和旧入口保留供历史证据使用。
+
+可以操作卡片、侧栏展开、查找、工作集、设置、原生搜索与输入、聊天阅读和四格返回。内容是合成资料；原生顶部和输入区依现行 Host 安全合同保持可达，所以整屏构图不等同于早期原型隐藏原生控件的画面。这不是生产来源或个人日用验收。
+
+
 ## 当前Free合成开发入口（2026-10-13）
 
 默认 `?mode=page` / `?mode=mv3` 展示Free原生Project、NONE/UNKNOWN、原名与活动分段；历史Pro展示加 `&view=pro`。运行和构建仍沿用本页命令，manifest版本0.2.0，仅匹配loopback。这个包可以在隔离Chrome加载，**不能用于真实ChatGPT账户，也不是已发布产品**。

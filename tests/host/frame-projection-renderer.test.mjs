@@ -409,3 +409,30 @@ test('density control waits for authoritative DTO, blocks repeat and retired cli
  f.nav.updateFrameProjection({...projection(),compactRows:false});resolve({ok:true});await Promise.resolve();await Promise.resolve();assert.equal(f.button('紧凑窗口').getAttribute('aria-pressed'),'false');old.click();assert.equal(calls.length,1);
  f.button('紧凑窗口').click();assert.deepEqual(calls,[false,true]);f.nav.updateFrameProjection({...projection(),scope:'next',compactRows:false});resolve({ok:false});await Promise.resolve();await Promise.resolve();assert.equal(f.button('紧凑窗口'),undefined);assert.equal(f.nav.roots().workspace.n.dataset.vaiwlCompact,'false');
 });
+
+test('empty known inventories do not leave large panels; a new UNKNOWN row remains reachable',()=>{
+ const f=fixture(),dto=projection();dto.entries={noProject:{...page(),inventoryTotal:0},unknown:{...page(),inventoryTotal:0}};
+ f.nav.updateFrameProjection(dto);assert.equal(f.pane().querySelectorAll('[data-free-list]').length,0);
+ dto.entries.unknown={...page([row('still-unknown')]),inventoryTotal:1};f.nav.updateFrameProjection(dto);
+ assert.deepEqual(f.pane().querySelectorAll('[data-free-list]').map(n=>n.getAttribute('data-free-list')),['unknown']);assert(f.pane().querySelector('[data-ref-id="still-unknown"]'));f.nav.stop();
+});
+test('sidebar keeps navigation ahead of persistent manual-asset tools',()=>{
+ const f=fixture('sidebar',()=>null,null,null,{}, {onSnippetsRequest(){}});f.nav.updateFrameProjection(projection('sidebar'));
+ const panel=f.pane().querySelector('section'),list=f.pane().querySelector('.themes'),footer=f.pane().querySelector('.sidebar-footer');
+ assert(panel.children.indexOf(list)<panel.children.indexOf(footer));assert(footer.querySelectorAll('button').includes(f.button('当前工作集')));assert(footer.querySelectorAll('button').includes(f.button('已保存片段')));f.nav.stop();
+});
+test('approved decorative icons do not change native names or override supplied icons',()=>{
+ const f=fixture(),dto=projection();dto.groups.items[0].name='硕士论文';dto.groups.items[1].name='阅读';dto.groups.items[1].icon='code';f.nav.updateFrameProjection(dto);
+ assert.deepEqual(f.pane().querySelectorAll('.theme-glyph').slice(0,2).map(n=>n.dataset.icon),['research','code']);assert.equal(dto.groups.items[0].nativeName,'Original P2');f.nav.stop();
+});
+
+test('owned workspace becoming visible relayouts cards and disconnects its observer on invalidation',()=>{
+ const f=fixture();let notify,observed,disconnected=false;
+ f.doc.defaultView.ResizeObserver=class{constructor(fn){notify=fn;}observe(n){observed=n;}disconnect(){disconnected=true;}};
+ f.nav.updateFrameProjection(projection());assert.equal(observed,f.nav.roots().workspace.n);
+ const grid=f.pane().querySelector('.cards'),cards=grid.querySelectorAll('.card');
+ assert.equal(cards[0].style.width,undefined); // Hidden frame had no measurable width.
+ grid.clientWidth=573;notify();
+ assert.equal(cards[0].style.width,'573px');assert.equal(cards[1].style.left,'0px');
+ f.nav.invalidate();assert(disconnected);assert.equal(f.nav.roots(),null);notify();assert.equal(f.nav.roots(),null);f.nav.stop();
+});

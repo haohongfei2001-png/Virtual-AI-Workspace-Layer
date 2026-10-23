@@ -27,7 +27,7 @@ try{
  await page.waitForFunction(()=>document.querySelectorAll('[data-va-owned]:popover-open').length===2||[...document.querySelectorAll('button')].some(n=>n.getAttribute('aria-label')==='返回工作空间'),null,{timeout:15000});
  const initialReturn=page.getByRole('button',{name:'返回工作空间',exact:true});if(await initialReturn.isVisible())await initialReturn.click();
  await page.waitForFunction(()=>document.querySelectorAll('[data-va-owned]:popover-open').length===2,null,{timeout:15000});
- let sidebar=await frameFor('sidebar'),workspace=await frameFor('workspace');await sidebar.locator('.toolbar').waitFor();await workspace.locator('.workspace').waitFor();
+ let sidebar=await frameFor('sidebar'),workspace=await frameFor('workspace');await sidebar.locator('.toolbar').first().waitFor();await workspace.locator('.workspace').waitFor();
  const worker=context.serviceWorkers().find(w=>w.url().startsWith('chrome-extension://'+id));assert(worker);report.workerNetworkBlocked=await worker.evaluate(async()=>{try{await fetch('https://example.com/');return false;}catch{return true;}});assert(report.workerNetworkBlocked);
  for(const [role,frame] of [['sidebar',sidebar],['workspace',workspace]])await sample(frame,role+'-initial');
  report.results.push({name:'packaged-HTML-real-client-and-grant-have-bounded-initial-shells',status:'PASS'});
@@ -41,7 +41,7 @@ try{
   const sizes=await frame.evaluate(()=>{const c=document.querySelector('[data-vaiwl-candidate-root]'),n=document.querySelector('[data-vaiwl-frame-root]'),list=c.querySelector('[data-vaiwl-candidates]').shadowRoot.querySelector('ul');const box=e=>{const r=e.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height};};list.scrollTop=list.scrollHeight;return {candidate:box(c),navigation:box(n),list:{...box(list),clientHeight:list.clientHeight,scrollHeight:list.scrollHeight,scrollTop:list.scrollTop}};});
   assert(sizes.candidate.height>0&&sizes.navigation.height>0);assert(sizes.list.clientHeight>0&&sizes.list.scrollTop>0);report.measurements.push({label:role+'-candidate-scroll',...sizes});
  }
- const toolbar=await sidebar.locator('.toolbar').evaluate(n=>{const r=n.getBoundingClientRect();return {height:r.height,buttons:[...n.querySelectorAll('button')].map(b=>{const q=b.getBoundingClientRect();return {label:b.getAttribute('aria-label')??b.textContent,left:q.left,right:q.right,top:q.top,bottom:q.bottom,width:q.width,height:q.height};}),width:innerWidth,viewportHeight:innerHeight};});
+ const toolbar=await sidebar.locator('.toolbar').evaluateAll(nodes=>{return {buttons:nodes.flatMap(n=>[...n.querySelectorAll('button')]).map(b=>{const q=b.getBoundingClientRect();return {label:b.getAttribute('aria-label')??b.textContent,left:q.left,right:q.right,top:q.top,bottom:q.bottom,width:q.width,height:q.height};}),width:innerWidth,viewportHeight:innerHeight};});
  assert(toolbar.buttons.length>=4);for(const b of toolbar.buttons)assert(b.width>0&&b.height>0&&b.left>=-1&&b.right<=toolbar.width+1&&b.top>=-1&&b.bottom<=toolbar.viewportHeight+1,JSON.stringify(b));report.measurements.push({label:'narrow-sidebar-toolbar',...toolbar});
  report.screenshot=output+'.png';await page.screenshot({path:report.screenshot});
  report.results.push({name:'native-fixture-candidate-page-and-sidebar-toolbar-fit-bounded-shell',status:'PASS'});
