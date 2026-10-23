@@ -11,14 +11,17 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
  let epoch=0,current=null;
  const boundaryReasons=['missing-or-ambiguous-native-boundary','unsafe-native-home-layout','unsafe-native-history-list','return-slot-outside-native-header','unsafe-native-reading-viewport','overlapping-native-boundary','native-content-occupies-return-slot','unsafe-native-geometry','unsafe-native-project-layout'];
  // Keep diagnostics on our frame: ancestor mutations would invalidate native masks.
- const reportJoin=state=>{const node=state.frames?.[0]?.frame;if(node?.dataset)node.dataset.vaiwlFrameJoin=JSON.stringify({loaded:state.loadedRoles?.size??0,joined:state.joinedRoles?.size??0,granted:state.grants.size,registered:state.registered,joinSignal:state.joinSignal??'not-observed',modules:state.moduleRoles?.size??0,mode:state.mode,presentation:state.presentation??'not-attempted'});};
+ const joinSnapshot=state=>({loaded:state.loadedRoles?.size??0,joined:state.joinedRoles?.size??0,granted:state.grants.size,registered:state.registered,joinSignal:state.joinSignal??'not-observed',modules:state.moduleRoles?.size??0,boot:state.bootStages??{},bootSignal:state.bootSignal??'not-observed',inlineFrames:state.frames?.filter(x=>x.frame.hasAttribute?.('srcdoc')).length??0,framePolicy:state.framePolicy??'not-observed',mode:state.mode,presentation:state.presentation??'not-attempted'});
+ const reportJoin=state=>{const node=state.frames?.[0]?.frame;if(node?.dataset)node.dataset.vaiwlFrameJoin=JSON.stringify(joinSnapshot(state));};
  const reportBoundary=inspection=>{if(doc.documentElement?.dataset)doc.documentElement.dataset.vaiwlBoundary=boundaryReasons.includes(inspection?.reason)?inspection.reason:inspection?.ok?'region-identity-changed':'unavailable';if(doc.documentElement?.dataset&&['roots','header-gap','button','hit-root','viewport','reading-root','reading-paint','protected-regions','header-paint','hit-test','header-layer','region-rect'].includes(inspection?.geometryStage))doc.documentElement.dataset.vaiwlGeometry=inspection.geometryStage;};
  function removeReturn(state){state.button?.remove();state.button=null;state.returnStyle=null;adapter.setReturnControl?.(null);}
- function dispose(state,reason,retainMount=false){if(!state)return;state.resolveIdle?.(false);cancel(state.timer);cancel(state.renewTimer);cancel(state.appearanceTimer);state.geometryObserver?.disconnect();win.removeEventListener('resize',state.geometryChanged);win.removeEventListener('scroll',state.geometryChanged,true);win.visualViewport?.removeEventListener?.('resize',state.geometryChanged);win.visualViewport?.removeEventListener?.('scroll',state.geometryChanged);state.appearanceObserver?.disconnect();state.media?.removeEventListener?.('change',state.appearanceChanged);win.removeEventListener('resize',state.appearanceChanged);state.observer?.disconnect();win.removeEventListener('message',state.listener);win.removeEventListener('popstate',state.changed);win.removeEventListener('hashchange',state.changed);doc.removeEventListener?.('beforetoggle',state.nativeToggle,true);doc.removeEventListener?.('toggle',state.changed,true);win.removeEventListener('pagehide',state.pagehide);removeReturn(state);if(state.handle){try{surface.suspend(state.handle,reason);}catch{}try{surface.dispose(state.handle);}catch{}if(!retainMount)try{Promise.resolve(bridge.revokeMount?.({mountId:state.handle.id})).catch(()=>{});}catch{}}}
+ function dispose(state,reason,retainMount=false){if(!state)return;state.resolveIdle?.(false);cancel(state.timer);cancel(state.renewTimer);cancel(state.appearanceTimer);state.frameObserver?.disconnect();state.geometryObserver?.disconnect();win.removeEventListener('resize',state.geometryChanged);win.removeEventListener('scroll',state.geometryChanged,true);win.visualViewport?.removeEventListener?.('resize',state.geometryChanged);win.visualViewport?.removeEventListener?.('scroll',state.geometryChanged);state.appearanceObserver?.disconnect();state.media?.removeEventListener?.('change',state.appearanceChanged);win.removeEventListener('resize',state.appearanceChanged);state.observer?.disconnect();win.removeEventListener('message',state.listener);doc.removeEventListener?.('securitypolicyviolation',state.policyViolation);win.removeEventListener('popstate',state.changed);win.removeEventListener('hashchange',state.changed);doc.removeEventListener?.('beforetoggle',state.nativeToggle,true);doc.removeEventListener?.('toggle',state.changed,true);win.removeEventListener('pagehide',state.pagehide);removeReturn(state);if(state.handle){try{surface.suspend(state.handle,reason);}catch{}try{surface.dispose(state.handle);}catch{}if(!retainMount)try{Promise.resolve(bridge.revokeMount?.({mountId:state.handle.id})).catch(()=>{});}catch{}}}
  function stop(reason='surface-stopped'){
   const started=elapsedNow();epoch++;const run=epoch,prior=current;current=null;
   const handoff=prior?.cancelCloseJoining===true&&['ui-frame-suspended','ui-grant-expired'].includes(reason)&&typeof bridge.releaseCancelledClose==='function';
   let cleanup;try{cleanup=adapter.stop();}catch{cleanup=false;}dispose(prior,reason,handoff);
+  // Copy fixed owned-frame diagnostics only after native masks have been removed.
+  if(prior?.frames&&doc.documentElement?.dataset)doc.documentElement.dataset.vaiwlFrameExit=JSON.stringify(joinSnapshot(prior));
   if(prior)try{onTerminated(reason,Object.freeze({mode:prior.mode==='workspace'?'workspace':'reading'}));}catch{/* Recovery notification cannot undo cleanup. */}
   if(handoff){
    // Destroy both frames before offering release; a partly rejoined frame may
@@ -34,7 +37,12 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
    }).catch(()=>false).finally(()=>{try{Promise.resolve(bridge.revokeMount?.({mountId:prior.handle.id})).catch(()=>{});}catch{}});
   }
  }
+ function frameDocumentsIntact(state){
+  if(state.frames?.some(({frame})=>frame.hasAttribute?.('srcdoc'))){reportJoin(state);if(current===state)stop('ui-frame-document-replaced');return false;}
+  return true;
+ }
  function valid(state,requireRegistered=true){
+  if(!frameDocumentsIntact(state))return false;
   if(state.dormant||current!==state||state.epoch!==epoch||requireRegistered&&!state.registered||doc.location.href!==state.url)return false;
   const inspection=adapter.inspect();return inspection?.ok&&inspection.regionEpoch===state.handle.regionEpoch&&state.frames.every(({frame})=>frame.isConnected&&frame.ownerDocument===doc);
  }
@@ -184,11 +192,14 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
     reportBoundary(state.inspection);
     throw Error('invalid-return-slot');
    }
+   state.policyViolation=event=>{if(current!==state||!['frame-src','child-src'].includes(event.effectiveDirective))return;let blocked;try{blocked=new URL(event.blockedURI);}catch{return;}if(blocked.protocol+'//'+blocked.host!==trustedOrigin)return;state.framePolicy=event.disposition==='enforce'?'frame-blocked':'frame-report-only';reportJoin(state);};doc.addEventListener?.('securitypolicyviolation',state.policyViolation);
    state.handle=await surface.mount(state.context,state.inspection,{onSurrender:event=>nativeSurrender(state,event)});if(current!==state){dispose(state,'stale-mount');return null;}
    state.loadedRoles=new Set();state.joinedRoles=new Set();state.moduleRoles=new Set();
    state.frames=surface.frames(state.handle).map(value=>({...value,window:value.frame.contentWindow}));if(state.frames.length!==2||new Set(state.frames.map(x=>x.role)).size!==2||state.frames.some(x=>!['workspace','sidebar'].includes(x.role)))throw Error('incomplete-dual-surface');
-   for(const target of state.frames)target.frame.addEventListener?.('load',()=>{if(current===state){state.loadedRoles.add(target.role);reportJoin(state);}},{once:true});
+   for(const target of state.frames)target.frame.addEventListener?.('load',()=>{if(current===state){state.loadedRoles.add(target.role);reportJoin(state);frameDocumentsIntact(state);}},{once:true});
    reportJoin(state);
+   if(!frameDocumentsIntact(state))return null;
+   if(win.MutationObserver){state.frameObserver=new win.MutationObserver(()=>{if(current===state)frameDocumentsIntact(state);});for(const {frame}of state.frames)state.frameObserver.observe(frame,{attributes:true,attributeFilter:['srcdoc']});}
    state.listener=event=>{void receive(state,event);};win.addEventListener('message',state.listener);
    const ack=await bridge.registerMount({handle:state.handle});if(current!==state)return null;if(ack?.ok!==true)throw Error('mount-registration-denied');state.registered=true;reportJoin(state);
    if(!valid(state))throw Error('stale-mount-registration');
@@ -201,7 +212,9 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
   }catch{if(current===state)stop('mount-unavailable');return null;}
  }
  async function receive(state,event){
+  if(current!==state||!frameDocumentsIntact(state))return;
   // Fixed diagnostic classes only; an untrusted signal never grants a join.
+  if(current===state&&event.data?.type==='VAIWL_UI_BOOT'&&['workspace','sidebar'].includes(event.data?.role)){const frame=state.frames.find(x=>x.role===event.data.role);state.bootSignal=event.origin!==trustedOrigin?'origin-rejected':event.source!==frame?.window?'source-rejected':Object.getPrototypeOf(event.data)!==Object.prototype?'record-rejected':'correlated';reportJoin(state);}
   if(current===state&&event.data?.type==='VAIWL_UI_JOIN'&&['workspace','sidebar'].includes(event.data?.role)){
    const frame=state.frames.find(x=>x.role===event.data.role);
    state.joinSignal=event.origin!==trustedOrigin?'origin-rejected':event.source!==frame?.window?'source-rejected':Object.getPrototypeOf(event.data)!==Object.prototype?'record-rejected':'correlated';reportJoin(state);
@@ -209,7 +222,7 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
   if(current!==state||state.epoch!==epoch||doc.location.href!==state.url||event.origin!==trustedOrigin)return;
   const data=event.data;if(!data||Object.getPrototypeOf(data)!==Object.prototype)return;
   const target=state.frames.find(x=>x.role===data.role);if(!target||!target.frame.isConnected||target.frame.ownerDocument!==doc||event.source!==target.window||target.frame.contentWindow!==target.window)return;
-  if(exactHostRecord(data,['type','role','stage'])&&data.type==='VAIWL_UI_BOOT'&&data.stage==='module-ready'){state.moduleRoles?.add(data.role);reportJoin(state);return;}
+  if(exactHostRecord(data,['type','role','stage'])&&data.type==='VAIWL_UI_BOOT'&&['entry-ready','dom-ready','entry-resource-failed','script-error','promise-rejected','module-ready'].includes(data.stage)){if(data.stage==='module-ready')state.moduleRoles?.add(data.role);(state.bootStages??={})[data.role]=data.stage;reportJoin(state);return;}
   if(state.dormant){
    if(exactHostRecord(data,['type','role','requestId'])&&data.type==='VAIWL_UI_IDLE_ACK'&&data.requestId===state.idleRequestId){state.idleAcks.add(data.role);if(dormantReady())state.resolveIdle?.(true);}
    return;

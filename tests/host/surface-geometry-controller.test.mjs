@@ -8,7 +8,7 @@ function fixture({geometry=true}={}){
  const target=map=>({addEventListener(k,fn){if(!map.has(k))map.set(k,new Set());map.get(k).add(fn);},removeEventListener(k,fn){map.get(k)?.delete(fn);}});
  const win={...target(events),visualViewport:target(viewport),ResizeObserver:class{constructor(fn){this.fn=fn;this.nodes=[];this.disconnected=false;observers.push(this);}observe(n){this.nodes.push(n);}disconnect(){this.disconnected=true;}}};
  const slot={isConnected:true,children:[],append(n){this.children.push(n);n.parent=this;}};
- const doc={defaultView:win,location:{href:'https://chatgpt.com/'},body:{},activeElement:{native:true},draft:'UNSENT',createElement:()=>({dataset:{},setAttribute(){},addEventListener(){},remove(){if(this.parent)this.parent.children=this.parent.children.filter(x=>x!==this);}})};
+ const doc={defaultView:win,location:{href:'https://chatgpt.com/'},body:{},activeElement:{native:true},draft:'UNSENT',createElement:()=>({dataset:{},style:{},setAttribute(){},addEventListener(){},remove(){if(this.parent)this.parent.children=this.parent.children.filter(x=>x!==this);}})};
  const nodes=Array.from({length:4},()=>({isConnected:true,ownerDocument:doc}));
  const inspection=()=>({ok,regionEpoch:region,reading:nodes[0],header:nodes[1],composer:nodes[2],historyMaskRoots:[nodes[3]],protectedRegions:[nodes[1],nodes[2]],navigationSlot:slot,readingRect:{x:100,y:40,width:800,height:500}});
  const binding={documentToken:'token',producerToken:'producer',browserDocumentId:'parent',routeEpoch:1,origin:'https://chatgpt.com',expiresAt:new Date(60000).toISOString()};

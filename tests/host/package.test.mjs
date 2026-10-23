@@ -1,4 +1,5 @@
 import test from 'node:test';
+import {runInNewContext} from 'node:vm';
 import assert from 'node:assert/strict';
 import {mkdtempSync,readFileSync,writeFileSync,rmSync,existsSync,symlinkSync} from 'node:fs';
 import {tmpdir} from 'node:os';
@@ -17,11 +18,14 @@ test('frame shell bytes participate in the live source drift check and package d
   assert.equal(info.sourceHashes[path],sha(bytes));assert.equal(info.files[role+'.html'],sha(bytes));
   assert.notEqual(info.sourceHashes[path],sha(Buffer.concat([bytes,Buffer.from('<style>main{height:1px}</style>')])));
   assert.match(bytes.toString(),/href="extension\/frame-shell\.css"/);
+  assert.match(bytes.toString(),/src="extension\/frame-bootstrap\.js"/);
  }
  const css=readFileSync(new URL('../../extension/frame-shell.css',import.meta.url));
  assert.equal(info.sourceHashes['extension/frame-shell.css'],sha(css));
  assert.deepEqual(readFileSync(join(out,'extension/frame-shell.css')),css);
  assert.equal(info.files['extension/frame-shell.css'],sha(css));
+ const boot=readFileSync(new URL('../../extension/frame-bootstrap.js',import.meta.url));assert.equal(info.sourceHashes['extension/frame-bootstrap.js'],sha(boot));
+ assert.equal(info.files['extension/frame-bootstrap.js'],sha(readFileSync(join(out,'extension/frame-bootstrap.js'))));
 });
 test('formal development build defaults to unverified context without simulator or seed modules',async t=>{
  const out=join(root(t),'formal'),info=buildHost(out),manifest=json(join(out,'manifest.json'));
@@ -125,4 +129,13 @@ test('observed ChatGPT C2 candidate is opt-in and never enables automatic body/s
  // Rehashed candidate metadata cannot silently turn on automatic body reads.
  const configPath=join(out,'extension/config.mjs'),bad=readFileSync(configPath,'utf8').replace('"origin":','"currentMetadataReadEnabled":true,"origin":');writeFileSync(configPath,bad);info.files['extension/config.mjs']=sha(bad);writeFileSync(join(out,'build-manifest.json'),JSON.stringify(info));
  assert.throws(()=>verifyHost(out),/invalid-host-package-context/);
+});
+
+test('early frame diagnostics emit only fixed stages to the configured parent and retain errors',t=>{
+ const origin='http://127.0.0.1:3210',out=join(root(t),'early-boot');buildHost(out,{offlineOrigin:origin,browserLocal:true});
+ const source=readFileSync(join(out,'extension/frame-bootstrap.js'),'utf8'),sent=[],events=new Map(),document={body:{dataset:{frameRole:'workspace'}},documentElement:{dataset:{}},addEventListener:(name,fn)=>events.set(name,fn)};
+ const window={parent:{postMessage:(data,target)=>sent.push({data,target})},addEventListener:(name,fn)=>events.set(name,fn)};
+ runInNewContext(source,{document,window});
+ events.get('error')({target:{tagName:'SCRIPT'},message:'PRIVATE_TEST_VALUE'});events.get('DOMContentLoaded')();
+ assert.deepEqual(sent.map(x=>x.data.stage),['entry-ready','entry-resource-failed']);assert(sent.every(x=>x.target===origin));assert(!JSON.stringify(sent).includes('PRIVATE_TEST_VALUE'));assert.equal(document.documentElement.dataset.vaiwlFrameBoot,'entry-resource-failed');
 });

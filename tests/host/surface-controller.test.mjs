@@ -190,21 +190,21 @@ test('appearance is allowlisted, sent after owned JOIN and deduplicated without 
  const f=fixture(),sent=[],observers=[];let theme='light';
  f.doc.documentElement={classList:{contains:()=>false}};
  f.doc.defaultView.getComputedStyle=()=>({colorScheme:theme,direction:'ltr',fontFamily:'PrivateFont, serif',fontSize:'20px',backgroundColor:'rgb(255,255,255)'});
- f.doc.defaultView.MutationObserver=class{constructor(fn){this.fn=fn;observers.push(this);}observe(){}disconnect(){this.disconnected=true;}};
+ f.doc.defaultView.MutationObserver=class{constructor(fn){this.fn=fn;observers.push(this);}observe(node){if(node===f.doc.documentElement)this.appearance=true;}disconnect(){this.disconnected=true;}};
  for(const target of f.frames)target.frame.contentWindow.postMessage=(data,origin)=>sent.push({data,origin});
  await f.controller.start({});assert.equal(sent.length,0);await f.both();assert.equal(sent.length,2);
  assert.deepEqual(sent[0],{origin:'chrome-extension://extension',data:{type:'VAIWL_UI_APPEARANCE',role:'workspace',appearance:{theme:'light',direction:'ltr',fontFamily:'serif',baseFontSize:20}}});
- const watcher=observers[1];for(let i=0;i<100;i++)watcher.fn();f.tick(0);assert.equal(sent.length,2);
+ const watcher=observers.find(o=>o.appearance);for(let i=0;i<100;i++)watcher.fn();f.tick(0);assert.equal(sent.length,2);
  theme='dark';for(let i=0;i<100;i++)watcher.fn();f.tick(0);assert.equal(sent.length,4);assert(sent.slice(2).every(v=>v.data.appearance.theme==='dark'));assert.equal(f.calls.confirm.length,2);assert.equal(f.calls.show,1);
  watcher.fn();f.controller.stop();f.tick(0);watcher.fn();f.tick(0);assert.equal(sent.length,4);assert(watcher.disconnected);
 });
 test('appearance queued for replaced frame window or retired mount cannot reach it',async()=>{
  const f=fixture(),sent=[],observers=[];let theme='light';f.doc.documentElement={classList:{contains:()=>false}};
  f.doc.defaultView.getComputedStyle=()=>({colorScheme:theme,fontFamily:'system-ui',fontSize:'16px',direction:'ltr'});
- f.doc.defaultView.MutationObserver=class{constructor(fn){this.fn=fn;observers.push(this);}observe(){}disconnect(){}};
+ f.doc.defaultView.MutationObserver=class{constructor(fn){this.fn=fn;observers.push(this);}observe(node){if(node===f.doc.documentElement)this.appearance=true;}disconnect(){}};
  for(const target of f.frames)target.frame.contentWindow.postMessage=data=>sent.push(data.role);
- await f.controller.start({});await f.both();sent.length=0;theme='dark';observers[1].fn();f.frames[0].frame.contentWindow={postMessage:()=>assert.fail('replacement frame received appearance')};f.tick(0);assert.deepEqual(sent,['sidebar']);
- f.controller.stop();theme='light';observers[1].fn();f.tick(0);assert.deepEqual(sent,['sidebar']);
+ await f.controller.start({});await f.both();sent.length=0;theme='dark';observers.find(o=>o.appearance).fn();f.frames[0].frame.contentWindow={postMessage:()=>assert.fail('replacement frame received appearance')};f.tick(0);assert.deepEqual(sent,['sidebar']);
+ f.controller.stop();theme='light';observers.find(o=>o.appearance).fn();f.tick(0);assert.deepEqual(sent,['sidebar']);
 });
 
 function publishingFixture(){
@@ -321,4 +321,25 @@ test('isWorkspacePresented rejects a synchronous close during its visibility rea
  const f=fixture();await f.controller.start({});await f.both();const before=f.calls.show;
  f.surface.visibility=()=>{f.surrender({reason:'native-reading',phase:'closing'});return {workspace:true,sidebar:true};};
  assert.equal(f.controller.isWorkspacePresented(),false);assert.equal(f.calls.show,before);assert.equal(f.slot.children.length,0);f.controller.stop();
+});
+
+test('an inline replacement fails closed before registration and is never removed to retry',async()=>{
+ const f=fixture();let checked=0;f.frames[0].frame.hasAttribute=name=>(checked++,name==='srcdoc');
+ assert.equal(await f.controller.start({}),null);await f.both();
+ assert(checked>0);assert.equal(f.calls.register,0);assert.equal(f.calls.confirm.length,0);assert.equal(f.calls.show,0);
+ assert.equal(f.calls.terminations.at(-1).reason,'ui-frame-document-replaced');assert.equal(f.calls.dispose,1);
+});
+test('inline replacement while a private grant is pending cannot reveal either surface',async()=>{
+ const f=fixture(),held=deferred(),confirm=f.bridge.confirmParent;f.bridge.confirmParent=()=>held.promise;
+ await f.controller.start({});f.message();await drain();f.frames[0].frame.hasAttribute=name=>name==='srcdoc';
+ held.resolve(await confirm({role:'workspace'}));await drain();await f.both();
+ assert.equal(f.calls.show,0);assert.equal(f.calls.terminations.at(-1).reason,'ui-frame-document-replaced');assert.equal(f.calls.dispose,1);
+});
+test('frame boot reports cannot grant a surface or carry arbitrary diagnostic content',async()=>{
+ const f=fixture();f.frames[0].frame.dataset={};await f.controller.start({});
+ const boot=stage=>f.message('workspace',{data:{type:'VAIWL_UI_BOOT',role:'workspace',stage}});
+ boot('entry-ready');await drain();assert.equal(JSON.parse(f.frames[0].frame.dataset.vaiwlFrameJoin).boot.workspace,'entry-ready');
+ boot('PRIVATE_TEST_VALUE');await drain();assert(!f.frames[0].frame.dataset.vaiwlFrameJoin.includes('PRIVATE_TEST_VALUE'));
+ assert.equal(f.calls.confirm.length,0);assert.equal(f.calls.show,0);await f.both();assert.equal(f.calls.show,1);
+ f.doc.documentElement={dataset:{}};f.frames[0].frame.dataset.vaiwlFrameJoin='PRIVATE_TEST_VALUE';f.controller.stop();assert(!f.doc.documentElement.dataset.vaiwlFrameExit.includes('PRIVATE_TEST_VALUE'));
 });

@@ -1,6 +1,19 @@
 # VAIWL实际状态：渐进积累工程已接线，真实来源逐项待准入
 
 
+## Mac续验：正式框架被空srcdoc替换；立即安全退出已修，日用仍未通过（r31，2026-10-23）
+
+接续 `c120be43`。原Profile工具连接可用，当前阻塞不再是“浏览器禁用”。真实页面两份正式extension iframe的src仍指向workspace/sidebar，但存在空`srcdoc`；普通locator读回与r29包内独立计数均确认，后者记录inlineFrames=2、granted=0。这解释了先前load存在而module/JOIN均为0的路径：框架展示空内联文档，没有执行正式入口。**写入者尚未确定**，不能自动归因于网站、浏览器控制或某个扩展；未观察到CSP事件也不证明所有策略均允许。
+
+沿现surface-controller补齐源完整性：挂载注册前、load、srcdoc变化及grant消费时拒绝替换，立即撤下双surface与mask，不删除该属性、不换载体、不授予权限或自动反复挂载。固定启动/终止阶段不保存页面内容，终止快照由内部状态生成，避免照抄页面可改文本。r30本人Mac实际读回`ui-frame-document-replaced`、registered=false、granted=0、ownedFrames=0，原生输入区仍存在；这是安全退出PASS，**正式UI仍FAIL**，不是启动成功。
+
+相关定向回归与单一故障的隔离MV3复现通过：正常正式frame可JOIN；启动前/授权后空srcdoc替换均安全退出，原生草稿保留。扩大到直接相关既有生命周期检查时，五份旧DOM夹具缺style，已在c120be43原源码复现相同失败后修正夹具；未弱化生产规则。全部原失败日志保留。详见[原回执r31Checkpoint](engineering/free-mac-home-acceptance-20261023.json)。
+
+r31正式候选 `/Users/hhf/Downloads/VAIWL-Browser-Local-Mac-20261023-r31/extension` 已构建、备份后写入同ID原目录，197文件核验，manifest、数据库文件、三个stash及额外副本未改。最后实机行为核验为r30；r31仅补终止快照来源保护，最终包激活不冒充Mac验收。未发送批准的测试消息、未重做来源实验或调用内部接口。
+
+剩余唯一启动证据是空srcdoc的写入组件/规则及其正式兼容方法。现有受支持DOM观察只证明最终属性，未给出写入调用来源；不盲目关闭其他扩展、清库、重装或反复刷新。找到确切来源后只修对应兼容差额，再续原Project/新聊天/搜索/返回/恢复的集中Mac验收。源码修复、隔离PASS、安全退出PASS与完整实机日用通过继续分开。
+
+
 ## Mac续验检查点：浏览器连接恢复，聊天布局差额已修，正式frame握手仍失败（r24，2026-10-23）
 
 接续 `a55d63ba`。本人重启后，原hongfei hao Profile经正式浏览器控制恢复；不再把旧“Work本地浏览器禁用”当作当前阻塞，具体旧策略分支仍未证实。原ID/manifest、旧数据库、额外副本与三个stash保留；没有卸载、换Profile、内部接口或新增来源实验。

@@ -498,7 +498,7 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
     })
    };
    s.controller=controllerFactory({document:doc,adapter,surface,extensionOrigin:'chrome-extension://'+runtime.id,bridge,initialMode,onWake:()=>wake(s),onTerminated:(reason,presentation)=>{
-    const publicStops=['native-region-changed','native-geometry-changed','dormant-document-changed','mount-unavailable','ui-frame-suspended','ui-grant-expired','session-renew-failed','surface-stopped','ui-authority-revoked','ui-user-exit'];
+    const publicStops=['ui-frame-document-replaced','native-region-changed','native-geometry-changed','dormant-document-changed','mount-unavailable','ui-frame-suspended','ui-grant-expired','session-renew-failed','surface-stopped','ui-authority-revoked','ui-user-exit'];
     if(current===s&&doc.documentElement?.dataset)doc.documentElement.dataset.vaiwlSurfaceStop=publicStops.includes(reason)?reason:'other';
     // Intentional exit ends this document session, including late recovery callbacks.
     if(current===s&&reason==='ui-user-exit'){stop();return;}
