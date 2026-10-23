@@ -492,7 +492,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     if(frameProjection&&workingSetError)page.append(node(doc,'p',{role:'alert'},workingSetError));
     if(frameProjection&&searchQuery!==null){
       const section=node(doc,'section',{class:'search'}),top=node(doc,'div',{class:'search-top'}),theme=groups.find(g=>g.id===searchTheme);
-      top.append(node(doc,'strong',{},theme?.name??'查找已知项目与聊天'),graphic(button('关闭派生查找',closeFrameSearch),'close'));section.append(top);
+      top.append(node(doc,'strong',{title:theme?.name??'查找已知项目与聊天'},theme?.name??'查找已知项目与聊天'),graphic(button('关闭派生查找',closeFrameSearch),'close'));section.append(top);
       const input=node(doc,'input',{'aria-label':'已知聊天查找输入',placeholder:'输入项目、聊天名称或已保存片段','data-focus-key':'search-input',type:'search',maxlength:'200'});input.value=searchQuery;
       const results=node(doc,'div',{class:'search-results'});
       const display=()=>{results.replaceChildren();const found=frameProjection.search;
@@ -537,7 +537,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
       }page.append(section);
     }else if(searchQuery!==null){
       const search=node(doc,'section',{class:'search'}),top=node(doc,'div',{class:'search-top'}),theme=groups.find(g=>g.id===searchTheme);
-      top.append(node(doc,'strong',{},theme?.name??(free()?'查找已知项目与聊天':'查找主题与派生名称')),graphic(button('关闭派生查找',()=>{searchQuery=null;searchTheme=null;render();queueMicrotask(()=>roots?.workspace?.shadow.querySelector('.workspace')?.focus({preventScroll:true}));}),'close'));search.append(top);
+      top.append(node(doc,'strong',{title:theme?.name??(free()?'查找已知项目与聊天':'查找主题与派生名称')},theme?.name??(free()?'查找已知项目与聊天':'查找主题与派生名称')),graphic(button('关闭派生查找',()=>{searchQuery=null;searchTheme=null;render();queueMicrotask(()=>roots?.workspace?.shadow.querySelector('.workspace')?.focus({preventScroll:true}));}),'close'));search.append(top);
       const input=node(doc,'input',{'aria-label':free()?'已知聊天查找输入':'派生查找输入',placeholder:'输入主题或窗口名称','data-focus-key':'search-input',type:'search'});input.value=searchQuery;
       search.append(input,node(doc,'p',{},'仅查找已知主题与窗口，包含时间尚未确认的记录。原生搜索独立保留。'));
       const results=node(doc,'div',{class:'search-results'});

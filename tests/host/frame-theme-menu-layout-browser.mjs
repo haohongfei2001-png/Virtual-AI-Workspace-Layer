@@ -48,5 +48,25 @@ try{
   }
   await page.evaluate(()=>menuLayoutNavigation.stop());
  }
+ // Project-scoped search must keep its close control reachable even when the
+ // native project name is one unbroken token. Use the actual renderer and CSS.
+ report.projectSearch=[];
+ for(const scale of [1,2]){
+  await page.setViewportSize({width:420,height:900});await page.goto(origin+'/frame');
+  await page.evaluate(async scale=>{
+   document.documentElement.style.setProperty('--vaiwl-font-scale',String(scale));
+   const {createNavigation}=await import('/src/navigation/navigation.mjs'),p=(items=[])=>({items,total:items.length,offset:0,limit:5,hasMore:false});
+   const name='ProjectWithoutWhitespace'.repeat(24).slice(0,512),group={id:'project',name,nativeName:name,nativeUrl:null,segment:0,lists:{current:p(),old:p(),unknown:p()}};
+   globalThis.searchLayoutNavigation=createNavigation({document,surface:{role:'workspace',root:document.querySelector('#mount')},adapter:{currentURL:()=>'',isCurrent:()=>false,status(){}}});
+   searchLayoutNavigation.updateFrameProjection({protocol:'vaiwl-free-frame/1',role:'workspace',scope:'scope',completeSnapshot:false,segment:0,viewSession:{H:30,T:20000,Z:'UTC',policyRevision:0},navigation:{hasNewer:false,hasOlder:false,maxSegment:0},groups:{...p([group]),limit:24},entries:{noProject:{...p(),inventoryTotal:0},unknown:{...p(),inventoryTotal:0}},selection:null});
+   searchLayoutNavigation.present({kind:'search-known',themeId:'project'});
+  },scale);
+  const measured=await page.evaluate(()=>{const s=searchLayoutNavigation.roots().workspace.shadow,w=s.querySelector('.workspace'),title=s.querySelector('.search-top strong'),close=s.querySelector('.search-top button'),rect=n=>n.getBoundingClientRect().toJSON();return {workspace:rect(w),title:rect(title),close:rect(close),width:w.clientWidth,scrollWidth:w.scrollWidth,titleHint:title.title===title.textContent,lineHeight:parseFloat(getComputedStyle(title).lineHeight),fullTitle:title.textContent==='ProjectWithoutWhitespace'.repeat(24).slice(0,512)};});
+  await page.screenshot({path:out+`.search-${scale}.png`});
+  await page.getByRole('button',{name:'关闭派生查找',exact:true}).focus();await page.keyboard.press('Enter');
+  const focusReturned=await page.evaluate(()=>{const s=searchLayoutNavigation.roots().workspace.shadow;return !s.querySelector('.search-top')&&s.activeElement===s.querySelector('.workspace');});
+  report.projectSearch.push({scale,...measured,focusReturned});await page.evaluate(()=>searchLayoutNavigation.stop());
+ }
+ assert(report.projectSearch.every(c=>c.close.left>=c.workspace.left&&c.close.right<=c.workspace.right&&c.title.right<=c.close.left+1&&c.scrollWidth<=c.width+1&&c.fullTitle&&c.titleHint&&c.title.height<=c.lineHeight*3+1&&c.close.top>=c.workspace.top&&c.close.bottom<=c.workspace.bottom&&c.focusReturned),'project search title must wrap without pushing the close control outside the workspace');
  report.ok=true;
 }catch(error){report.ok=false;report.error=error.stack;process.exitCode=1;}finally{await browser?.close();if(server.listening)await new Promise(r=>server.close(r));report.sourceAfter=await hashes();report.sourceStable=JSON.stringify(report.sourceBefore)===JSON.stringify(report.sourceAfter);if(!report.sourceStable){report.ok=false;process.exitCode=1;}await writeFile(out,JSON.stringify(report,null,2)+'\n');}console.log(JSON.stringify(report));
