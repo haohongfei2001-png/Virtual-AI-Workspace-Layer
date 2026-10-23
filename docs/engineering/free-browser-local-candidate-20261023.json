@@ -1,0 +1,77 @@
+{
+  "schema": "vaiwl-browser-local-candidate-evidence-v1",
+  "baseHead": "399183690cd2ffe4058f592196ce798fbe324d18",
+  "source": "user-authorized-visible-navigation-only",
+  "strictIdentity": "UNCHANGED",
+  "internalInterfaces": "DISABLED",
+  "realMacChrome": "NOT_RUN",
+  "releaseReady": false,
+  "isolatedMV3": {
+    "status": "PASS",
+    "checks": {
+      "projectAndMembersInFormalUI": true,
+      "nativeOpenPreservesDraft": true,
+      "uniqueReturn": true,
+      "noDatabaseOpened": true,
+      "reloadRediscoversVisibleObjects": true,
+      "replacementDoesNotExposeOldProject": true,
+      "explicitBindingUsesExistingIDBInSeparateNamespace": true,
+      "trustedSameDocumentNavigationRetainsPersonalSpace": true,
+      "explicitUnlockRestoresKnownProject": true,
+      "refreshLocksButPreservesPersonalCache": true,
+      "browserRestartLocksAndExplicitUnlockRestores": true,
+      "noInternalRequests": true
+    },
+    "localUseObserved": true,
+    "report": "/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/.git/vaiwl-checkpoints/20261023-browser-local/mv3-final.json"
+  },
+  "targetedRegression": {
+    "pass": 138,
+    "fail": 0,
+    "log": "/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/.git/vaiwl-checkpoints/20261023-browser-local/vaiwl-browser-local-final-regression.txt"
+  },
+  "precedingStrictBoundaryRegression": {
+    "pass": 309,
+    "fail": 0,
+    "log": "/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/.git/vaiwl-checkpoints/20261023-browser-local/vaiwl-browser-local-regression.txt",
+    "notAnAdditionalFullSuite": true
+  },
+  "candidate": {
+    "unpacked": "/Users/hhf/Downloads/VAIWL-Browser-Local-20261023-39918369-r2/extension",
+    "archiveSha256": "eb9f3117a171b053c31536a704c30f63c4629ce7169d6c27a263197917682005"
+  },
+  "failuresResolved": [
+    "Private status tab incorrectly classified as content sender; separated sender classes.",
+    "Restart lacked an acknowledged receiver; explicit response and revoke-on-failure added.",
+    "Offline runner issued unlock before new document content readiness; wait for formal UI, no retry.",
+    "SPA fixture initially retained Project layout on conversation route; replace native fixture surface.",
+    "Runner expected workspace visible while native-reading mode correctly persisted; use existing return control.",
+    "Final isolation review added keyboard Enter/Space revocation before native account controls, matching pointer activation."
+  ],
+  "limits": [
+    "Local confirmation is not server account authentication.",
+    "Refresh, new document, focus loss, unknown navigation and worker restart lock saved personal data; explicit confirmation required.",
+    "Single local personal binding per extension profile; no automatic multi-account selection.",
+    "Only stable visible links and existing positive member witnesses; empty/ambiguous Project panels stay unresolved.",
+    "No messages or message IDs, internal APIs, webRequest, history scan, hidden navigation, send or ACK inference.",
+    "Real new-chat timing, actual Project changes, physical IME and account/workspace switching remain part of one real acceptance."
+  ],
+  "sourceHashes": {
+    "src/runtime/browser-local-authority.mjs": "da580ad4ed43bc210696c04b15b46a882c32a4892d8007a7add9e95081093332",
+    "src/runtime/browser-local-control.mjs": "f94d6ecfb280bd913e0bb3ef7a40ed7ef590fe3b6bc345c3ab9d5346725633a2",
+    "src/runtime/browser-local-memory.mjs": "c7070618f486d8daa46884cfcc85c13736199779cc5014ece951b078c10460b1",
+    "src/runtime/browser-local-storage.mjs": "ca59ae6c031212b6703607f671b3efcbee0a61c03759bea150026befca6f1017",
+    "src/host/browser-local-lifecycle.mjs": "7f3fcf1bd29ebba2dd53a4fc41aaa1d4656a56bf9c0e93b136fd3361f0e9e18d",
+    "src/runtime/host-binding-service.mjs": "33397a68d2befc1399b7d0eddc27948f34c431389d10d2cd939f1f3d204d6eed",
+    "src/runtime/host-worker-runtime.mjs": "ea4ba504e966656dd44e9de484769209f11eebdc98b067553bb0a45483372002",
+    "src/runtime/host-current-navigation.mjs": "ae1033e1b5ed4c1301653d08ba90f5e0ee64f255da910e9f7cf7046f62a5cca4",
+    "src/host/chatgpt-adapter.mjs": "83aa6c544f77457e92cf36c91bb911b18a1b81023991638c641d05bfdd5807f2",
+    "src/host/surface-discovery.mjs": "8bfeb2a6539b2ba6bcf1c6bf471fe7e98848418a25263f8402330c1b83db999d",
+    "src/b1/identity.mjs": "75f25f4daf8eef16c1cc161eeb7ef1eeaa17378d701f67d2ec56cb51ebfa8289",
+    "src/b1/scope-repository.mjs": "7124b1e9e6b2ff9b0af0d836bf9a8c60db401e67fb02e04366c53f8a207f750d",
+    "extension/content-entry.mjs": "c57e1de228890deefa2f13d5b04a075e0c4af59411684a13b1c50525fa348ef6",
+    "extension/status.mjs": "7875c4f5c9bb8926a27e5d8edf2e8e0c978a70d036aa6df0796b1fa20c7a2ee6",
+    "extension/build.mjs": "bc7bbcb0a137c48c163f9ccccac6e2a63341d99fb8c1f5c9e266255c4c844c76",
+    "extension/package.mjs": "c96a76129ec7c029554be7900e3516529612c816ab482f27c044a96dfd3a4fd5"
+  }
+}

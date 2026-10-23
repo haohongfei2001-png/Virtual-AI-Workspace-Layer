@@ -79,6 +79,16 @@ export function createSurfaceDiscovery({document,binding,urlPolicy,profile=LEGAC
     // distinct: our own root mask inherits it into otherwise loaded controls.
     const sampleable=node=>{
       if(!node?.isConnected||node.ownerDocument!==document||!node.getClientRects().length)return false;
+      if(profile.visibleNavigationOnly){
+        const rect=node.getBoundingClientRect();let left=Math.max(0,rect.left),right=Math.min(document.defaultView.innerWidth,rect.right),top=Math.max(0,rect.top),bottom=Math.min(document.defaultView.innerHeight,rect.bottom),depth=0;
+        for(let parent=node;parent;parent=parent.parentElement){
+          if(++depth>64||parent.hidden||parent.getAttribute('aria-hidden')==='true')return false;
+          const style=document.defaultView.getComputedStyle(parent);
+          if(style.display==='none'||style.visibility!=='visible'||Number(style.opacity)===0)return false;
+          if(parent!==node){const box=parent.getBoundingClientRect();if(['hidden','clip','scroll','auto'].includes(style.overflowX)){left=Math.max(left,box.left);right=Math.min(right,box.right);}if(['hidden','clip','scroll','auto'].includes(style.overflowY)){top=Math.max(top,box.top);bottom=Math.min(bottom,box.bottom);}}
+        }
+        return right>left&&bottom>top;
+      }
       let depth=0;for(let parent=node;parent;parent=parent.parentElement){
         if(++depth>64||!parent.isConnected||parent.ownerDocument!==document)return false;
         const style=document.defaultView.getComputedStyle(parent);
@@ -225,6 +235,11 @@ export function createSurfaceDiscovery({document,binding,urlPolicy,profile=LEGAC
   // Inspect native visibility with only our own workspace mask synchronously
   // closed. Do not treat inherited hidden styles as evidence of native visibility.
   function readSurface(read){
+    if(!stopped&&profile.visibleNavigationOnly&&[...document.querySelectorAll('[data-va-mask-workspace],[data-va-mask-sidebar]')].some(isOwnedMask)){
+      const result=withNativeReading(()=>({value:read()}));
+      if(result===null||result===undefined)throw Error('native-visible-navigation-probe-unavailable');
+      return result.value;
+    }
     if(!stopped&&profile.nativeProjectLayout==='panel-after-composer'){
       const roots=document.querySelectorAll(profile.regions.members);
       if(roots.length===1&&isOwnedMask(roots[0])===true){

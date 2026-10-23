@@ -1,3 +1,6 @@
+import {browserLocalStorage} from './browser-local-storage.mjs';
+import {createBrowserLocalAuthority} from './browser-local-authority.mjs';
+import {createBrowserLocalMemory} from './browser-local-memory.mjs';
 import {digest} from '../data/hash.mjs';
 import {createHostNativeActivityOwner} from './host-native-activity-owner.mjs';
 import {validateNativeActivityProfile,LOCAL_USE_PROFILE} from './native-activity-profile.mjs';
@@ -36,6 +39,13 @@ import {exactHostRecord} from '../host/contract.mjs';
 import {tokenOK} from '../b1/identity.mjs';
 /** Zero-seed identity composition. Existing repository/broker owners remain unchanged. */
 export function createHostBindingService({extensionId,getFrame,getContexts=null,allowedURL,provider,profile,contextObserver=null,isolatedIdentityDispatch=null,identityOrigin=null,repository,surfaceProfiles=null,currentMetadataReadEnabled=false,sendCandidatesEnabled=false,sendAckProfile=null,historicalSendProfile=null,nativeActivityProfile=null,firstSendOrigin=null,oldSendTerminalOrigin=null,readBudget=null,uiURL=null,uiURLs=null,workspaceRepository=null,freeEvidenceRepository=null,prepareNavigation=null,navigationURLPolicy=null,candidateBridge=null,dispatchCurrent=null,presentSurface=null,selectionBridge=null,freeRuntime=null,now=Date.now,makeId=()=>crypto.randomUUID(),elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout}={}){
+ const browserLocal=profile?.id==='browser-local-session';
+ if(browserLocal&&(contextObserver||currentMetadataReadEnabled||sendCandidatesEnabled||sendAckProfile||historicalSendProfile||nativeActivityProfile||firstSendOrigin||oldSendTerminalOrigin))throw Error('local-mode-network-source-forbidden');
+ const localMemory=browserLocal?createBrowserLocalMemory({clock:()=>new Date(now()).toISOString()}):null;
+ const persistentLocal=browserLocal?{repository,workspaceRepository,freeEvidenceRepository}:null;
+ if(localMemory){repository=browserLocalStorage(localMemory.base,persistentLocal.repository);workspaceRepository=persistentLocal.workspaceRepository?browserLocalStorage(localMemory.workspaces,persistentLocal.workspaceRepository):localMemory.workspaces;
+  if(persistentLocal.workspaceRepository)workspaceRepository.partitioned=browserLocalStorage(localMemory.workspaces.partitioned,persistentLocal.workspaceRepository.partitioned);
+  freeEvidenceRepository=persistentLocal.freeEvidenceRepository?browserLocalStorage(localMemory.evidence,persistentLocal.freeEvidenceRepository):localMemory.evidence;isolatedIdentityDispatch=null;selectionBridge=null;}
  const activity={requests:0,background:0};
  async function track(kind,work){activity[kind]++;try{return await work();}finally{activity[kind]--;}}
  const handshake=createHostDocumentHandshake({extensionId,getFrame,allowedURL,now,makeId,elapsedNow,schedule,cancel});
@@ -54,7 +64,7 @@ export function createHostBindingService({extensionId,getFrame,getContexts=null,
    return identityOwner.read({frame,binding,sender:producer.sender,authorityEpoch:attempt.authorityEpoch,signal:attempt.signal,isCurrent:()=>serviceActive&&attempt.isCurrent()&&sequences.get(binding.producerToken)===producer&&!producer.denied&&handshake.isBound(producer.binding,producer.sender),remainingMs});
   }
  }:null;
- const authority=createScopeAuthority({provider,profile,readIdentity,contextObserver,allowedURL,now,makeId,elapsedNow,schedule,cancel});
+ const authority=browserLocal?createBrowserLocalAuthority({allowedURL,now,makeId,onDiscard:localMemory.discard}):createScopeAuthority({provider,profile,readIdentity,contextObserver,allowedURL,now,makeId,elapsedNow,schedule,cancel});
  const contextRecovery=profile.browserRequestContext===true&&contextObserver?createNoReceiptContextRecovery({profile,contextObserver,authority,now,elapsedNow,schedule,cancel}):null;
  const asFrame=(doc,sender)=>({tabId:doc.tabId,frameId:0,documentId:doc.documentId,parentDocumentId:null,actualURL:doc.url,documentLifecycle:'active',incognito:sender.tab?.incognito===true});
 
@@ -77,25 +87,27 @@ export function createHostBindingService({extensionId,getFrame,getContexts=null,
  const currentMetadata=observations?createCurrentMetadataReader({observations,provider,enabled:currentMetadataReadEnabled,now,onHistorical:historyOwner?async input=>{await historyOwner.consume(input);input.guard();ui?.notifyScope(input.context.scope.key);}:null}):null;
 
  const entryCalibration=ui&&historyOwner&&currentMetadata?createHostEntryCalibration({ui,observations,reader:currentMetadata,elapsedNow,schedule,cancel}):null;
- const nativeRepository=observations?new NativeRepository({baseRepository:repository,workspaceRepository,hostObservationGate:observations.gate,lifecycleGate:observations.lifecycleGate,prepareInitialHostIndex:true,clock:()=>new Date(now()).toISOString()}):null;
- const continuations=nativeRepository&&typeof freeEvidenceRepository?.applyContinuation==='function'?createHostContinuationOwner({nativeRepository,evidenceRepository:freeEvidenceRepository,profileFor:continuationProfileFor}):null;
+ const nativeRepository=localMemory?(persistentLocal.workspaceRepository?browserLocalStorage(localMemory.native,new NativeRepository({baseRepository:persistentLocal.repository,workspaceRepository:persistentLocal.workspaceRepository,hostObservationGate:observations.gate,lifecycleGate:observations.lifecycleGate,prepareInitialHostIndex:true,clock:()=>new Date(now()).toISOString()})):localMemory.native):observations?new NativeRepository({baseRepository:repository,workspaceRepository,hostObservationGate:observations.gate,lifecycleGate:observations.lifecycleGate,prepareInitialHostIndex:true,clock:()=>new Date(now()).toISOString()}):null;
+ const continuations=!browserLocal&&nativeRepository&&typeof freeEvidenceRepository?.applyContinuation==='function'?createHostContinuationOwner({nativeRepository,evidenceRepository:freeEvidenceRepository,profileFor:continuationProfileFor}):null;
  if(ackProfile&&nativeRepository&&continuations)ackOwner=createHostSendAckOwner({evidenceRepository:()=>freeEvidenceRepository,profileFor:continuationProfileFor,commitNative:input=>observations.commitAcknowledged(input),drain:input=>continuations.drain(input),now});
  sendCandidates=currentMetadata?createHostSendCandidates({observations,reader:currentMetadata,enabled:sendCandidatesEnabled,now,schedule,cancel,onAcknowledged:ackOwner?async input=>{
   await ackOwner.consume(input);input.guard();ui?.notifyScope(input.context.scope.key);
  }:null}):null;
  const oldSendTerminal=oldSendTerminalOrigin&&sendCandidates?createHostOldSendTerminal({origin:oldSendTerminalOrigin,handshake,observations,sendCandidates,readBudget,readOperation:createOldSendTerminalReadback({origin:oldSendTerminalOrigin,elapsedNow}),now,elapsedNow,schedule,cancel}):null;
  const firstSend=firstSendOrigin&&ackOwner?createHostFirstSend({origin:firstSendOrigin,readBudget,handshake,authority,getFrame,observations,reader:currentMetadata,readOperation:createFirstSendReadback({origin:firstSendOrigin,elapsedNow}),onAcknowledged:async input=>{await ackOwner.consume(input);input.guard();ui?.notifyScope(input.context.scope.key);},now,elapsedNow}):null;
- const readService=workspaceRepository&&freeEvidenceRepository&&nativeRepository?createFreeReadService({admitActivitySource:createHostActivitySourceAdmission({sendAckProfile:ackProfile,historicalSendProfile:historyProfile,nativeActivityProfile:activityProfile,localUseProfile:localUse?LOCAL_USE_PROFILE:null}),initializeTimePolicy:true,repository,workspaces:workspaceRepository,native:nativeRepository,evidence:freeEvidenceRepository,clock:()=>new Date(now()).toISOString()}):null;
- const currentNavigation=ui&&observations&&dispatchCurrent?createHostCurrentNavigation({ui,observations,bridge:dispatchCurrent,onConfirmedUse:localUse?async({scope,conversationId,actionId,guard,signal})=>{
+ const readService=workspaceRepository&&freeEvidenceRepository&&nativeRepository?createFreeReadService({admitActivitySource:createHostActivitySourceAdmission({sendAckProfile:ackProfile,historicalSendProfile:historyProfile,nativeActivityProfile:activityProfile,localUseProfile:localUse?LOCAL_USE_PROFILE:null}),initializeTimePolicy:!browserLocal,repository,workspaces:workspaceRepository,native:nativeRepository,evidence:freeEvidenceRepository,clock:()=>new Date(now()).toISOString()}):null;
+ const recordLocalUse=localUse?async({scope,conversationId,actionId,guard,signal})=>{
   if(!guard())return;const observedAt=new Date(now()).toISOString();
   await localUse.consume({observation:{profileId:LOCAL_USE_PROFILE.id,profileVersion:LOCAL_USE_PROFILE.revision,scopeKey:scope.key,observedAt,items:[{conversationId,usedAt:observedAt,actionKey:'action_'+digest(actionId)}]},context:{scope,providerProfile:LOCAL_USE_PROFILE.providerProfile,signal},guard});
   if(guard())ui?.notifyScope(scope.key);
- }:null,urlPolicy:navigationURLPolicy,elapsedNow,schedule,cancel}):null;
+ }:null;
+ const currentNavigation=ui&&observations&&dispatchCurrent?createHostCurrentNavigation({ui,observations,bridge:dispatchCurrent,onConfirmedUse:recordLocalUse,urlPolicy:navigationURLPolicy,elapsedNow,schedule,cancel}):null;
+ if(localMemory)localMemory.setGates({native:observations.gate,activity:(scope,request)=>localUse?.gate(scope,request)});
  const views=ui&&readService?createHostViewService({ui,readService,workspaceRepository,nativeWritePending:scopeKey=>observations?.isNativeWritePending(scopeKey)===true,prepareNavigation,registerCurrentNavigation:currentNavigation?input=>currentNavigation.register(input):null,nativeCandidatesEnabled:!!candidateBridge,presentSurface,clock:()=>new Date(now()).toISOString(),elapsedNow,schedule,cancel}):null;
  const candidates=ui&&candidateBridge?createHostCandidateService({ui,bridge:candidateBridge,elapsedNow,schedule,cancel,makeId}):null;
  const snippets=ui&&views&&selectionBridge?createHostSnippetService({ui,workspaceRepository,resolveView:views.resolveSnippetView,selectionBridge,onChanged:scopeKey=>{views.refreshScope(scopeKey);ui.notifyScope?.(scopeKey);},elapsedNow,schedule,cancel,makeId}):null;
- recovery=ui&&readService?createHostRecoveryService({ui,readService,workspaceRepository,onRecovered:scopeKey=>{views?.refreshScope(scopeKey);ui.notifyScope?.(scopeKey);},elapsedNow,schedule,cancel}):null;
- backup=ui&&['exportBackup','previewRestore','restoreBackup'].every(name=>typeof workspaceRepository?.[name]==='function')?createHostBackupService({ui,workspaceRepository,onRestored:scopeKey=>{views?.refreshScope(scopeKey);ui.notifyScope?.(scopeKey);},elapsedNow,schedule,cancel,makeId}):null;
+ recovery=!browserLocal&&ui&&readService?createHostRecoveryService({ui,readService,workspaceRepository,onRecovered:scopeKey=>{views?.refreshScope(scopeKey);ui.notifyScope?.(scopeKey);},elapsedNow,schedule,cancel}):null;
+ backup=!browserLocal&&ui&&['exportBackup','previewRestore','restoreBackup'].every(name=>typeof workspaceRepository?.[name]==='function')?createHostBackupService({ui,workspaceRepository,onRestored:scopeKey=>{views?.refreshScope(scopeKey);ui.notifyScope?.(scopeKey);},elapsedNow,schedule,cancel,makeId}):null;
  const commands={};if(readService)for(const name of ['snapshot','command','undo','history','saveView','exportBackup','previewRestore','restoreBackup','recoveryStatus','recover'])if(typeof workspaceRepository[name]==='function')commands[name]=workspaceRepository[name].bind(workspaceRepository);
  const broker=createDocumentBindingBroker({extensionId,getFrame,allowedURL,repository,workspaceRepository:readService?{...readService,...commands}:workspaceRepository,freeRuntime,now,makeId,hostHandshake:handshake,resolveScope:({currentFrame,sender})=>authority.scopeFor(asFrame(currentFrame,sender))});
  // Claims last only through concurrent service delivery, not the grant lifetime.
@@ -225,9 +237,16 @@ export function createHostBindingService({extensionId,getFrame,getContexts=null,
   if(!attempt.completed&&attempt.frame)firstSend?.invalidateTab(attempt.frame.tabId);
   if(focus&&!attempt.completed&&attempt.frame&&attempt.resolution?.state==='verified'&&authority.peek(attempt.frame).grant===attempt.resolution.grant)authority.invalidate(attempt.frame.documentId);releaseResolution(attempt);}
  }
- function invalidate({tabId,frameId=0,documentId,firstSendNavigation=null,preserveViewDocumentId=null}={}){contextRecovery?.invalidate({tabId,documentId});oldSendTerminal?.invalidateTab(tabId);if(firstSendNavigation)firstSend?.navigate({tabId,...firstSendNavigation});else firstSend?.invalidateTab(tabId);broker.invalidate({tabId,frameId});if(documentId){ingestionPasses?.invalidateDocument(documentId);observations?.invalidateDocument(documentId);authority.invalidate(documentId);ui?.revokeDocument(documentId);views?.revokeDocument(documentId);}else{ingestionPasses?.invalidateTab(tabId);observations?.invalidateTab(tabId);authority.invalidateTab(tabId);ui?.revokeTab(tabId);views?.revokeTab(tabId,{preserveDocumentId:preserveViewDocumentId});}}
+ function invalidate({tabId,frameId=0,documentId,firstSendNavigation=null,preserveViewDocumentId=null,localNavigation=null}={}){contextRecovery?.invalidate({tabId,documentId});oldSendTerminal?.invalidateTab(tabId);if(firstSendNavigation)firstSend?.navigate({tabId,...firstSendNavigation});else firstSend?.invalidateTab(tabId);broker.invalidate({tabId,frameId});if(documentId){ingestionPasses?.invalidateDocument(documentId);observations?.invalidateDocument(documentId);authority.invalidate(documentId);ui?.revokeDocument(documentId);views?.revokeDocument(documentId);}else{ingestionPasses?.invalidateTab(tabId);observations?.invalidateTab(tabId);authority.invalidateTab(tabId,browserLocal?localNavigation:null);ui?.revokeTab(tabId);views?.revokeTab(tabId,{preserveDocumentId:preserveViewDocumentId});}}
+ async function acceptLocalArrival(frame){
+  if(!browserLocal||!recordLocalUse)return false;
+  const arrival=authority.takeArrival(frame),scope=authority.scopeFor(frame),grant=authority.peek(frame).grant,route=navigationURLPolicy?.parse(frame.actualURL);
+  if(!arrival||!scope||route?.kind!=='conversation')return false;
+  const guard=()=>serviceActive&&authority.peek(frame).grant===grant&&now()<arrival.until;
+  try{await recordLocalUse({scope,conversationId:route.conversationId,actionId:arrival.actionId,guard});return guard();}catch{return false;}
+ }
  function tabClosed(tabId){contextRecovery?.forgetTab(tabId);ingestionPasses?.invalidateTab(tabId);oldSendTerminal?.invalidateTab(tabId);firstSend?.invalidateTab(tabId);observations?.invalidateTab(tabId);broker.tabClosed(tabId);authority.invalidateTab(tabId);ui?.revokeTab(tabId);views?.revokeTab(tabId);}
- function stop(){if(!serviceActive)return;serviceActive=false;contextRecovery?.stop();identityOwner?.stop();entryCalibration?.stop();ingestionPasses?.stop();currentNavigation?.stop();candidates?.stop();views?.stop();snippets?.stop();oldSendTerminal?.stop();firstSend?.stop();sendCandidates?.stop();ackOwner?.stop();historyOwner?.stop();nativeActivity?.stop();localUse?.stop();for(const attempt of nativeActivityAttempts)attempt.abort.abort();currentMetadata?.stop();observations?.stop();recovery?.stop();backup?.stop();for(const attempt of refreshAttempts){attempt.active=false;attempt.abort.abort();}refreshAttempts.clear();authority.invalidateAll();}
+ function stop(){if(!serviceActive)return;serviceActive=false;contextRecovery?.stop();identityOwner?.stop();entryCalibration?.stop();ingestionPasses?.stop();currentNavigation?.stop();candidates?.stop();views?.stop();snippets?.stop();oldSendTerminal?.stop();firstSend?.stop();sendCandidates?.stop();ackOwner?.stop();historyOwner?.stop();nativeActivity?.stop();localUse?.stop();for(const attempt of nativeActivityAttempts)attempt.abort.abort();currentMetadata?.stop();observations?.stop();recovery?.stop();backup?.stop();for(const attempt of refreshAttempts){attempt.active=false;attempt.abort.abort();}refreshAttempts.clear();authority.invalidateAll();localMemory?.stop();}
  // Internal worker composition only; no page RPC exposes metadata or accepts proof IDs.
  const consumeNativeActivity=(proof,frame)=>track('background',async()=>{
   const started=elapsedNow(),abort=new AbortController();let active=true,used=false;
@@ -264,5 +283,5 @@ export function createHostBindingService({extensionId,getFrame,getContexts=null,
  function ownersIdle(excludeUi=false){
   return [authority,contextRecovery,...(typeof contextObserver?.isIdle==='function'?[contextObserver]:[]),continuations,nativeActivity,localUse,...(excludeUi?[]:[ui]),observations,ingestionPasses,currentMetadata,sendCandidates,firstSend,oldSendTerminal,backup,recovery,views].every(owner=>owner===null||owner.isIdle?.()===true);
  }
- return Object.freeze({isIdle,consumeNativeActivity,activityAdmission:(scope,request)=>nativeActivity?.gate(scope,request)??localUse?.gate(scope,request)??null,oldSendTerminal,firstSend,ackAdmission:(scope,request)=>ackOwner?.gate(scope,request)??historyOwner?.gate(scope,request)??null,sendCandidates,readCurrentMetadata,stop,connectPort:port=>serviceActive&&(ui?.connectPort(port)??false),handle,invalidate,tabClosed,broker,handshake,authority,nativeRepository,observations,continuations,readService,ui,views});
+ return Object.freeze({isIdle,consumeNativeActivity,activityAdmission:(scope,request)=>nativeActivity?.gate(scope,request)??localUse?.gate(scope,request)??null,oldSendTerminal,firstSend,ackAdmission:(scope,request)=>ackOwner?.gate(scope,request)??historyOwner?.gate(scope,request)??null,sendCandidates,readCurrentMetadata,stop,connectPort:port=>serviceActive&&(ui?.connectPort(port)??false),handle,invalidate,acceptLocalArrival,tabClosed,broker,handshake,authority,nativeRepository,observations,continuations,readService,ui,views});
 }

@@ -1,5 +1,16 @@
 # VAIWL 唯一开发计划：Free 完整交付 → Pro 智能增强
 
+## 当前执行：Browser-Local正式产品接线（2026-10-23）
+
+用户最新决定将当次原生界面即时显示和已绑定个人持久访问分开，并明确允许本地处理当前可见导航元数据、禁止内部接口。此决定覆盖下方历史“任何DOM生产读取关闭”对这一限定通道的安排；原严格身份、旧库、人工资产、来源标记和成员安全不改。仍按原B1/B2/C2→B3/C4/C5→B4/B5/C6/F3/F4执行，不建立新计划。
+
+本批代码已接通文档RAM能力→原正式v2.7、private popup显式local personal确认→原Native/Evidence/CAS/IDB、可信同文档导航→独立local-use、刷新/重启锁定及明确确认恢复。数据键采用独立四段本地namespace；没有伪造服务器账号/Workspace、修改liveVerified或重放source-v3。可见性检查排除隐藏/透明/视口外条目，滚动按自然输入补充。内部身份/目录、消息body/ID、截获和history权限均未启用。细节、源码hash、失败归因及可安装目录见[STATUS当前节](STATUS.md)和[证据](engineering/free-browser-local-candidate-20261023.json)。
+
+该候选仍有明确边界：同一Profile仅一个明确绑定的local personal空间；无服务器身份保证，未知/跨文档导航、前台丢失/原生非链接控件及重启后须确认才解锁旧数据，描述符不能自动认证。已确认Project与成员沿现有surfaceBatch正向处理；空Project仅有未关联route/title时保持未知；新聊天须出现稳定可见导航输入，不从发送或URL猜造成功。可选Chrome历史补全和跨文档自动解锁后置，不申请额外权限；片段/严格恢复诊断在该模式关闭。
+
+隔离MV3实际证明正式界面、搜索/原生打开/返回、同文档连续存储与local-use、刷新和浏览器重启的锁定/确认恢复。本人Mac实际ChatGPT连续过程仍待一次集中验收，不以离线PASS替代。下一步仅安装当前正式候选并完成原J1–J4个人适用过程，按实际问题进入F4；不新建诊断、不重跑source-v3、不恢复取消的全历史/逐消息审计。候选及原成果保全，不merge/deploy/release。
+
+
 ## 当前检查点：真实启动前置门与恢复边界收口（2026-10-23）
 
 接续 `b81d4dbe`，仅核对原B1/B4/C2/F3启动链，修复默认无C2/C3配置仍先读取身份的问题：ScopeAuthority在refresh网络前拒绝无空间合同配置，续验撤掉合同也不读取。默认构建/UI/生产来源开关未启用；有效C2/C3认证路径保持。定向修前/修后与默认worker真实service组合检查及包验证见STATUS首节，未重复Project、local-use、返回或MV3矩阵。

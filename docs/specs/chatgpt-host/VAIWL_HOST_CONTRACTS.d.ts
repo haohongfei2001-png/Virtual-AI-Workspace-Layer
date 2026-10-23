@@ -268,6 +268,21 @@ export interface ScopeGrant {
   issuedAt: ISOInstant;
   expiresAt: ISOInstant;
 }
+/** Browser-Local is a separate local storage capability, NEVER a PrincipalProof
+ * or ContextProof. The same internal verified discriminator means owner-issued
+ * capability only; consumers must retain this explicit grant kind/storage mode. */
+export interface BrowserLocalScope {
+  kind: 'browser-local'; storage: 'session' | 'personal'; spaceId: string; key: string;
+}
+export interface BrowserLocalGrant {
+  kind: 'browser-local-session'; id: ScopeGrantId; scopeKey: string; scopeEpoch: number;
+  issuedAt: ISOInstant; expiresAt: ISOInstant;
+  storage: 'memory-only' | 'explicit-local-personal';
+  serverIdentity: 'NOT_ESTABLISHED';
+}
+export type BrowserLocalResolution =
+  | { state: 'verified'; grant: BrowserLocalGrant }
+  | { state: 'unverified'; reason: ReasonCode };
 export type ScopeResolution =
   | { state: 'verified'; grant: ScopeGrant }
   | { state: 'pending'; retryAt: ISOInstant }

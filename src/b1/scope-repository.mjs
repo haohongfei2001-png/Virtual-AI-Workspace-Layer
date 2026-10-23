@@ -42,6 +42,7 @@ export class ScopeRepository {
   scopeOrThrow(scope){
     const n=normalizedScope(scope);
     if(!n)throw Error('unverified-scope');
+    if(n.kind==='browser-local'&&n.storage==='session')throw Error('session-scope-is-memory-only');
     return n;
   }
   key(scope,id){if(!tokenOK(id))throw Error('invalid-ref');return JSON.stringify([scope.key,id]);}

@@ -5,6 +5,14 @@
 **规格：VA-HOST/1 · 修订 1.1 FINAL · 2026-10-13。**
 本文件直接修订原 VA-HOST/1；与同目录验收规格、类型合同、Codex 交接构成唯一现行设计包。原 A–G 仍为唯一开发路线。本包不是产品代码、GitHub 提交、真实 ChatGPT 验收或发布许可。
 
+## 2026-10-23 Browser-Local 限定入口
+
+用户最新决定将即时展示与已绑定私人持久访问分开。显式 `browserLocal:true` 包只消费当前可见导航，复用原 owner、surfaceBatch、正式双 frame、Native/Evidence/CAS，不执行内部身份/目录或消息读取。即时能力标记 `kind:browser-local-session`、`serverIdentity:NOT_ESTABLISHED`，只用 RAM；本人在私有 popup 确认后才使用独立四段本地 personal 键。原下文 ScopeGrant/PrincipalProof/ContextProof 继续仅描述严格认证模式，不将本地确认冒充 C2/C3。
+
+本地持久描述符不自动恢复权限。未知/跨文档导航、失去前台、原生非链接控件及 worker/浏览器重启回到锁定状态；原缓存保留。一次可信原生导航意图只可在6秒内由同文档、同目标浏览器事件消费一次，延续本地存储但重发新本地 grant/epoch。本地最近打开与发送/ACK分开。Project 对象可由其真实稳定链接独立发现；成员仍要求原正向页面证据。仅有路由/未关联标题的空Project不得造卡。可见但无标题的稳定链接保留 unavailable，UNKNOWN不改NONE、未见不删除。可选history补全不属于本包权限。
+
+这是可安装候选工程合同，非本人Mac验收或网站官方许可证明。严格模式与 source-v3 历史证据不改变；原81项与已取消产品要求不重启。
+
 ## 2026-10-19 用户批准的临时只读导航例外
 
 用户明确批准在真实 session 接口挑战403期间提供 `temporaryReadOnly:true` 显式构建；默认/正常包仍严格执行以下完整合同。本例外仅用于受限本人试用，不是新计划、账户scope、LIVE_VERIFIED或完整Free替代。

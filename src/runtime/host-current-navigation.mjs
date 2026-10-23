@@ -100,7 +100,7 @@ export function createHostCurrentNavigation({ui,observations,bridge,onConfirmedU
      for(const [id,old]of arrivals)if(old.tabId===context.parentFrame.tabId)arrivals.delete(id);
      arrival={scopeKey:context.scope.key,tabId:context.parentFrame.tabId,documentId:context.parentFrame.documentId,refId:row.refId,action,started:a.started,settled:false,proofId:null};arrivals.set(m.actionId,arrival);
     }
-    const result=await bridge({context,command,mode:row.mode,guard:fresh,remainingMs:6000-(elapsedNow()-a.started)});
+    const result=await bridge({context,command,mode:row.mode,navigationURL:row.navigationURL,guard:fresh,remainingMs:6000-(elapsedNow()-a.started)});
     const states=row.mode==='same-target'?['already-current','blocked','unconfirmed']:['dispatched','blocked','unconfirmed'];
     const valid=exactHostRecord(result,['state',...(Object.hasOwn(result??{},'actionId')?['actionId']:[]),...(Object.hasOwn(result??{},'reason')?['reason']:[])])&&states.includes(result.state)&&(!Object.hasOwn(result,'actionId')||result.actionId===m.actionId);
     if(arrival){

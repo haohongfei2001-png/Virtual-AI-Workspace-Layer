@@ -32,3 +32,10 @@ test('unpacked single-path builder preserves safe defaults and existing-director
  const verified=run(dir,['--verify',out]);assert.equal(verified.status,0,verified.stderr);assert.equal(JSON.parse(verified.stdout).releaseStatus,'NOT_RELEASE_READY');assert.deepEqual(snapshot(out),before);
  assert.notEqual(buildRun(dir,[out]).status,0);assert.deepEqual(snapshot(out),before);
 });
+
+test('explicit Browser-Local CLI packages formal frames without internal network capability',t=>{
+ const dir=root(t),built=run(dir,['--browser-local',join(dir,'local')]);assert.equal(built.status,0,built.stderr);const info=JSON.parse(built.stdout),manifest=JSON.parse(readFileSync(join(info.unpacked,'manifest.json'),'utf8'));
+ assert.deepEqual(manifest.permissions,['webNavigation','storage']);assert.deepEqual(manifest.host_permissions,['https://chatgpt.com/*']);assert.match(manifest.content_security_policy.extension_pages,/connect-src 'none'/);
+ const build=JSON.parse(readFileSync(join(info.unpacked,'build-manifest.json'),'utf8'));assert.equal(build.browserLocal,true);assert.equal(build.realChatGPT,'NOT_RUN');assert.equal(build.contextSelection,'BROWSER_LOCAL_SESSION_NO_SERVER_IDENTITY');
+ assert(readFileSync(join(info.unpacked,'extension/config.mjs'),'utf8').includes('browser-local-session'));assert.equal(run(dir,['--verify',info.unpacked]).status,0);
+});

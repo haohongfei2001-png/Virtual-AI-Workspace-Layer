@@ -1,3 +1,4 @@
+import {createBrowserLocalControl} from './browser-local-control.mjs';
 import {createBrowserOldSendTerminal} from './browser-old-send-terminal.mjs';
 import {createSharedHostReadBudget} from './shared-host-read-budget.mjs';
 import {createBrowserFirstSend} from './browser-first-send.mjs';
@@ -12,7 +13,9 @@ import {createSessionProvider} from './session-provider.mjs';
 
 /** Zero-seed worker composition. Configuration is packaged code, never page input. */
 export function createHostWorkerRuntime({chrome,indexedDB,origin='https://chatgpt.com',scopeProfile={id:'chatgpt-context-unverified',singlePersonalDefault:false},provider=null,surfaceProfile=undefined,sessionProfile={},currentMetadataReadEnabled=false,sendCandidatesEnabled=false,sendAckProfile=null,historicalSendProfile=null,nativeActivityProfile=null,offlineFirstSend=false,offlineOldSendTerminal=false,browserBootstrap=null,serviceFactory=createHostBindingService}={}){
- const selectedSurfaceProfile=selectHostSurfaceProfile(surfaceProfile);
+ const browserLocal=scopeProfile.id==='browser-local-session';
+ if(browserLocal&&(scopeProfile.singlePersonalDefault!==false||scopeProfile.browserRequestContext||currentMetadataReadEnabled||sendCandidatesEnabled||sendAckProfile||historicalSendProfile||nativeActivityProfile||offlineFirstSend||offlineOldSendTerminal||provider))throw Error('local-mode-network-source-forbidden');
+ const baseSurfaceProfile=selectHostSurfaceProfile(surfaceProfile),selectedSurfaceProfile=browserLocal?{...baseSurfaceProfile,currentBody:null,visibleNavigationOnly:true}:baseSurfaceProfile;
  const conversationRequestContext=scopeProfile.conversationRequestContext??null;
  if(Object.hasOwn(sessionProfile,'conversationRequestContext')&&(sessionProfile.conversationRequestContext??null)!==conversationRequestContext)throw Error('host-conversation-profile-mismatch');
  const policy=createURLPolicy({origin,profile:{projectId:({container})=>/^g-p-[0-9a-f]{32}$/.test(container)?container:null}});
@@ -33,7 +36,7 @@ export function createHostWorkerRuntime({chrome,indexedDB,origin='https://chatgp
  try{
  repository=new ScopeRepository({indexedDB});const workspaceRepository=new WorkspaceRepository({baseRepository:repository}),freeEvidenceRepository=new FreeEvidenceRepository({baseRepository:repository,hostObservationGate:(scope,request)=>service?.ackAdmission?.(scope,request)??service?.activityAdmission?.(scope,request)??service?.continuations?.admission(scope,request)});
  const readBudget=createSharedHostReadBudget({repository});
- service=serviceFactory({readBudget,extensionId:chrome.runtime.id,repository,workspaceRepository,freeEvidenceRepository,allowedURL,contextObserver,provider:provider??createSessionProvider({origin,readBudget,profile:{...sessionProfile,conversationRequestContext,currentConversationReadEnabled:currentMetadataReadEnabled,...(sendAckProfile?{sendAckProfile}:{} ),...(historicalSendProfile?{historicalSendProfile}:{})}}),currentMetadataReadEnabled,sendCandidatesEnabled,sendAckProfile,historicalSendProfile,nativeActivityProfile,firstSendOrigin:offlineFirstSend?origin:null,oldSendTerminalOrigin:offlineOldSendTerminal?origin:null,profile:scopeProfile,
+ service=serviceFactory({readBudget,extensionId:chrome.runtime.id,repository,workspaceRepository,freeEvidenceRepository,allowedURL,contextObserver,provider:browserLocal?{read:async()=>{throw Error('local-mode-has-no-identity-provider');}}:provider??createSessionProvider({origin,readBudget,profile:{...sessionProfile,conversationRequestContext,currentConversationReadEnabled:currentMetadataReadEnabled,...(sendAckProfile?{sendAckProfile}:{} ),...(historicalSendProfile?{historicalSendProfile}:{})}}),currentMetadataReadEnabled,sendCandidatesEnabled,sendAckProfile,historicalSendProfile,nativeActivityProfile,firstSendOrigin:offlineFirstSend?origin:null,oldSendTerminalOrigin:offlineOldSendTerminal?origin:null,profile:scopeProfile,
   identityOrigin:origin,isolatedIdentityDispatch:(frame,command)=>chrome.tabs.sendMessage(frame.tabId,command,{documentId:frame.documentId}),
   navigationURLPolicy:policy,surfaceProfiles:new Map([[selectedSurfaceProfile.id,{...selectedSurfaceProfile,urlPolicy:policy}]]),
   uiURLs:Object.fromEntries(['workspace','sidebar'].map(role=>[role,chrome.runtime.getURL(role+'.html')])),
@@ -60,14 +63,16 @@ export function createHostWorkerRuntime({chrome,indexedDB,origin='https://chatgp
    }
    return chrome.tabs.sendMessage(context.parentFrame.tabId,message,{documentId:context.parentFrame.documentId});
   },
-  dispatchCurrent:({context,command,mode,guard,remainingMs})=>{
+  dispatchCurrent:({context,command,mode,guard,remainingMs,navigationURL})=>{
    if(!guard()||!context.isCurrent()||!Number.isFinite(remainingMs)||remainingMs<=0||remainingMs>6000)return {state:'blocked'};
+   if(browserLocal&&mode==='native-control')service.authority.prepareNavigation(context.parentFrame,navigationURL);
    return chrome.tabs.sendMessage(context.parentFrame.tabId,{type:mode==='cancel'?'HOST_NATIVE_CANCEL_PLAN':mode==='native-control'?'HOST_NATIVE_DISPATCH_PLAN':'HOST_NATIVE_DISPATCH_CURRENT',...context.binding,command,expiresAt:new Date(Date.now()+remainingMs).toISOString()},{documentId:context.parentFrame.documentId});
   },
   prepareNavigation:({parentFrame,binding,targets})=>chrome.tabs.sendMessage(parentFrame.tabId,{type:'HOST_NATIVE_PLAN',...binding,targets},{documentId:parentFrame.documentId})});
  oldSendObserver=offlineOldSendTerminal?createBrowserOldSendTerminal({webRequest:chrome.webRequest,origin,onTerminal:event=>service.oldSendTerminal?.terminal(event)}):null;
  firstSendObserver=offlineFirstSend?createBrowserFirstSend({webRequest:chrome.webRequest,origin,onSubmit:event=>service.firstSend?.submit(event)}):null;
- const message=(value,sender,reply)=>{if(!active)return;Promise.resolve().then(()=>active?service.handle(value,sender):null).then(result=>{if(active)reply(result);},()=>{if(active)reply({ok:false,reason:'host-unavailable'});});return true;};
+ const localControl=browserLocal?createBrowserLocalControl({chrome,service,allowedURL,urlPolicy:policy}):null;
+ const message=(value,sender,reply)=>{if(!active)return;Promise.resolve().then(()=>active?(localControl&&value?.type==='HOST_LOCAL_SPACE'?localControl.handle(value,sender):service.handle(value,sender)):null).then(result=>{if(active)reply(result);},()=>{if(active)reply({ok:false,reason:'host-unavailable'});});return true;};
  const connect=port=>{try{if(active&&service.connectPort(port))return;}catch{}try{port.disconnect();}catch{}};
  const invalidate=(details,replacement=false)=>{
   if(!active||details.frameId!==0||!Number.isSafeInteger(details.tabId))return;
@@ -75,7 +80,8 @@ export function createHostWorkerRuntime({chrome,indexedDB,origin='https://chatgp
   if(replacement){firstSendObserver?.invalidateTab(details.tabId);service.firstSend?.invalidateTab(details.tabId);}
   // Only a trusted same-document browser event may retain display metadata.
   // All tab authority is still revoked synchronously, even on SPA navigation.
-  oldSendObserver?.invalidateTab(details.tabId);service.invalidate({tabId:details.tabId,...(!replacement&&allowedURL(details.url)&&typeof details.documentId==='string'&&details.documentId.length>0?{preserveViewDocumentId:details.documentId}:{}),...(!replacement&&offlineFirstSend?{firstSendNavigation:{browserDocumentId:details.documentId,url:details.url,navigatedAt:details.timeStamp}}:{})});
+  oldSendObserver?.invalidateTab(details.tabId);service.invalidate({tabId:details.tabId,...(browserLocal&&!replacement?{localNavigation:{documentId:details.documentId,url:details.url,documentLifecycle:details.documentLifecycle}}:{}),...(!replacement&&allowedURL(details.url)&&typeof details.documentId==='string'&&details.documentId.length>0?{preserveViewDocumentId:details.documentId}:{}),...(!replacement&&offlineFirstSend?{firstSendNavigation:{browserDocumentId:details.documentId,url:details.url,navigatedAt:details.timeStamp}}:{})});
+  if(browserLocal&&!replacement&&allowedURL(details.url))void service.acceptLocalArrival({tabId:details.tabId,frameId:0,documentId:details.documentId,actualURL:details.url,documentLifecycle:details.documentLifecycle,incognito:false});
   if(allowedURL(details.url)&&typeof details.documentId==='string')Promise.resolve().then(()=>active?chrome.tabs.sendMessage(details.tabId,{type:'HOST_DOCUMENT_INVALIDATED'},{documentId:details.documentId}):null).catch(()=>{});
  };
  const removed=tabId=>{if(active){oldSendObserver?.invalidateTab(tabId);firstSendObserver?.invalidateTab(tabId);service.firstSend?.invalidateTab(tabId);service.tabClosed(tabId);}};

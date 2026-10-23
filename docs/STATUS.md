@@ -1,5 +1,30 @@
 # VAIWL实际状态：渐进积累工程已接线，真实来源逐项待准入
 
+## Browser-Local正式候选：可见导航与本地保存接通（2026-10-23）
+
+接续实际本地/远端 `39918369`；用户最新明确允许“本地处理当前可见导航元数据；不启用内部接口”。本轮没有使用真实账户/请求诊断、CDP受拒通道或新Profile读取；原source-v3及所有已消费批次不重测。
+
+### 实际产品差额
+
+- **当次正式界面启动**：[本地authority](../src/runtime/browser-local-authority.mjs)用独立本地能力接原Host/owner/双frame；[RAM适配](../src/runtime/browser-local-memory.mjs)复用Native/Evidence/state reducers及CAS规则。未确认前不打开IDB，不读取旧账户/Pro缓存，不假造PrincipalProof/ContextProof/verified账号，不改liveVerified。
+- **明确绑定与持久保存**：[私有入口](../src/runtime/browser-local-control.mjs)核扩展sender、实际active top document和显式确认；[路由适配](../src/runtime/browser-local-storage.mjs)将personal请求交原NativeRepository/EvidenceRepository/WorkspaceRepository。四段本地命名空间不与三段严格scope混用；storage.local只存本地space描述符，不存grant、账号名或凭据。原DB/CAS/人工资产保留。
+- **原生导航与最近使用**：原生受信点击或既有VAIWL owner计划，加6秒内同文档浏览器目标到达，一次消费后换grant/epoch、保留同一本地空间；沿原local-use/ActivityDecision记录实际打开。缺意图、不同目标、重载不续授权也不造发送/ACK。保留原输入、草稿和唯一四格返回。
+- **可见输入范围**：[surface-discovery](../src/host/surface-discovery.mjs)在本地模式额外排除隐藏、透明、视口外和被滚动容器裁剪的条目；自然滚动触发原扫描。自己的mask通过原同步native-reading检查临时关闭，不将隐藏宿主内容视作可见。消息body/消息ID discovery、内部provider、隔离认证、webRequest/history均关闭；扩展页CSP进一步设`connect-src 'none'`。
+- **恢复与锁定**：[lifecycle](../src/host/browser-local-lifecycle.mjs)先撤界面再确认锁定；拒绝锁定时不因focus重开旧数据。个人绑定在未知跳转、新文档、前台丢失或原生非链接控件后撤销，旧数据不删除。再次明确确认通过原持久层恢复。原Project正向归属、逐字段合并、新稳定导航链接发现直接继承，没有重写UI、数据层或恢复引擎。
+
+### 已验证与尚未验证
+
+[证据清单](engineering/free-browser-local-candidate-20261023.json)记录精确源码hash与原始本地日志。最终定向138项通过，另外先前309项严格启动/包边界回归单独保留，不相加冒充新全套。真实隔离headless MV3已走通：正式Project与成员→查找→原生新标签打开/草稿保留→四格返回→无IDB即时层→明确确认写入原IDB→同文档原生导航保持personal并记录local-use→刷新锁定→确认恢复→关闭并重启浏览器后仍锁定/确认恢复；外网隔离，无内部接口请求。前期失败及产品/观察器归因保留在证据，未挑绿抹除。
+
+**本人Mac真实ChatGPT验收仍NOT_RUN，不是完整Free日用PASS。** 单一local personal绑定靠本人确认，不是服务器认证；不能根据旧描述符/URL静默解锁，也不能宣称识别所有静默账号变更。跨文档零操作恢复、可选Chrome历史补全未启用。空Project仅有路由/未关联标题时仍不会造卡；已有稳定Project链接可独立成对象，成员必须正向证明。新聊天稳定导航出现时机、实际移动/改名/账户及Workspace变化、物理输入法、本人安装共存仍需一次集中实用验收。片段正文采集和严格恢复诊断在本地模式关闭，不把完整UI框架误报成全部动作可用。
+
+### 可安装交付
+
+候选已构建校验，196文件：`/Users/hhf/Downloads/VAIWL-Browser-Local-20261023-39918369-r2/extension`；ZIP及SHA256SUMS在其父目录。构建命令为 `node extension/package.mjs --browser-local <新目录>`。保留原安装包/ID和数据库，不自行覆盖或重载本人扩展。集中安装时停用旧测试VAIWL（不卸载），加载此目录；在同一授权Profile的ChatGPT正常页面查看正式界面，需持久保存时通过扩展图标确认当前账号/Workspace。无需Cookie、DevTools、脚本或新的接口诊断。此候选新目录的扩展ID/本地数据独立，不冒充同ID升级。
+
+后续唯一必要的用户环境步骤是这次候选的集中实际使用：首次启用、Project/新聊天/原生搜索、返回、刷新、重启及账号/Workspace锁定。失败修对应原F4，不再次研究许可或重跑source-v3。内部通道继续关闭；10k/100k和取消要求不恢复。未merge、部署或发布。
+
+
 ## 真实启动收口：未配置空间合同前禁止身份读取（2026-10-23）
 
 接续本地/远端一致的 `b81d4dbe`。本轮只检查正式配置、ScopeAuthority、C2、Host 启动/撤权/恢复；未重做上一轮 Project/local-use/返回修复，未访问本人 Chrome 或新增真实请求。
