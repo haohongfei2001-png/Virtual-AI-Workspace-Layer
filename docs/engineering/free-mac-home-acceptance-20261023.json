@@ -728,5 +728,35 @@
       "url": "https://learn.chatgpt.com/docs/chrome-extension",
       "result": "General browser permissions documented; this specific srcdoc rewrite or its owner not established."
     }
+  },
+  "srcdocAttribution20261024": {
+    "baseHead": "1755dea5259c18d96dfb74693de41220fa83fa02",
+    "authorization": "One user-approved supported CDP attribution attempt; home only; <=1 reload; <=30s observation; <=20 pauses; no bodies, credentials, network responses or other tabs.",
+    "consumed": true,
+    "retryAllowed": false,
+    "profile": "original-authorized-profile",
+    "transport": "supported-tab-cdp",
+    "debuggerEnable": "SUCCEEDED",
+    "reloads": 1,
+    "observedPauses": 0,
+    "observationElapsedMs": 640,
+    "result": "INCOMPLETE_EVENT_STREAM_TRUNCATED",
+    "writer": "NOT_ESTABLISHED",
+    "cleanup": {
+      "breakpointRemoval": "attempted",
+      "resume": "attempted",
+      "debuggerDisable": "SUCCEEDED",
+      "domDisable": "attempted",
+      "attributeEdits": 0,
+      "extensionsDisabled": 0
+    },
+    "finalPage": {
+      "startup": "layout-failed",
+      "nativeAccountErrorVisible": true,
+      "browserCheckTextVisible": true,
+      "nativeEditorPresent": false
+    },
+    "conclusion": "No writer attribution or compatibility repair established. Event truncation invalidates absence-based conclusions. Native account check is a separate current blocker; no retry or challenge handling.",
+    "preservation": "No package upgrade, database mutation, private unlock, message send or new source request; existing extension and all prior evidence preserved."
   }
 }
