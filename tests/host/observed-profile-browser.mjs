@@ -74,9 +74,16 @@ try{
   const local=document.createElement('div');local.setAttribute('role','listitem');local.style.height='37px';local.innerHTML='<a href="/local/draft-fixture">Native unsent chat</a>';group.prepend(local);
   const second=saved.cloneNode(true);second.querySelector('a').href='/c/44444444-4444-4444-8444-444444444444';group.append(second);
   const spinner=document.createElement('span');group.append(spinner);
+  await adapter.stop();await adapter.start({binding,emit:async p=>({state:'accepted',localSeq:p.localSeq,receiptId:'fixture'})});
   const partition=adapter.inspect();checks.localDraftRetained=partition.ok&&partition.historyMaskRoots.length===2&&partition.historyMaskRoots[0]===saved&&partition.sidebarRect.y===189&&partition.sidebarRect.height===74;
   const partitionHandle=await surface.mount({binding},partition);surface.showWorkspace(partitionHandle);
   checks.localDraftNotMasked=!surface.isMasked(local)&&getComputedStyle(local).visibility==='visible'&&surface.isMasked(saved)&&adapter.inspect().ok;
+  const mixed=adapter.inspect();local.remove();spinner.remove();
+  const pure=adapter.inspect();checks.loadingCompletionKeepsRowMasks=pure.ok&&pure.regionEpoch===mixed.regionEpoch&&pure.historyMaskRoots.length===mixed.historyMaskRoots.length&&pure.historyMaskRoots.every((node,i)=>node===mixed.historyMaskRoots[i]);
+  group.prepend(local);group.append(spinner);
+  const added=second.cloneNode(true);added.removeAttribute('data-va-mask-sidebar');added.querySelector('a').href='/c/55555555-5555-4555-8555-555555555555';spinner.before(added);
+  const expanded=adapter.inspect();checks.appendedNativeRowDoesNotReplaceMask=expanded.ok&&expanded.regionEpoch===mixed.regionEpoch&&expanded.historyMaskRoots.length===2&&!surface.isMasked(added)&&getComputedStyle(added).visibility==='visible';added.remove();
+  group.insertBefore(second,saved);checks.reorderedPinnedRowsRefused=adapter.inspect().reason==='unsafe-native-history-list';group.insertBefore(saved,second);
   const beforeScroll=adapter.inspect();nav.style.height='180px';nav.scrollTop=180;
   const afterScroll=adapter.inspect();checks.clippedRunKeepsMaskIdentity=afterScroll.ok&&afterScroll.regionEpoch===beforeScroll.regionEpoch&&afterScroll.historyMaskRoots.length===2&&afterScroll.historyMaskRoots.every((n,i)=>n===beforeScroll.historyMaskRoots[i]);
   const hiddenControl=document.createElement('input');saved.append(hiddenControl);checks.clippedUnsafeRowStillRejected=adapter.inspect().reason==='unsafe-native-history-list';hiddenControl.remove();

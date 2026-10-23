@@ -1,5 +1,13 @@
 # VAIWL 唯一开发计划：Free 完整交付 → Pro 智能增强
 
+
+## 当前Mac续验检查点（r17，2026-10-23）
+
+沿原C2/C5/F4修复实机首页侧栏遮罩因加载/新增行变化误撤UI；固定当次遮罩根而非库存，新增可见元数据继续发现，撤权与原生控件保护不变。新增的固定框架阶段诊断移至owned frame，避免诊断本身触发原生祖先变更。定向检查和既有隔离MV3连续流程通过；原失败、真实零JOIN未归因及具体源码/包见STATUS首节和原Mac回执r17Checkpoint。
+
+r17已备份后更新原加载目录，manifest与DB保留，运行激活未确认。当前工具拒绝“Local browser use is disabled in Work settings”，不换入口绕过；原Profile控制恢复后继续现有集中验收，不新增计划、账户实验或重复安装。真实Project/新聊天/搜索返回/worker/私人缓存验收仍未完成，不能以离线PASS升级。
+
+
 ## 当前检查点：首次Mac验收与首页挂载修补（2026-10-23）
 
 本人已完成原扩展同ID重载、本地空间确认及草稿保存；原Chrome退出重开已完成。首次真实首页未挂载正式UI，归入原C2/C5/F4实际失败，未用绑定成功替代产品验收。按真实DOM修首页独立欢迎区、侧栏scrollport裁剪及本地草稿行的安全保留；沿既有renderer/mount，不重做UI、来源或数据库。源码和已测/未测分账见STATUS首节与[回执](engineering/free-mac-home-acceptance-20261023.json)。

@@ -95,15 +95,19 @@ export function nativeHistoryListOK({document,source,root,urlPolicy,isOwnedMask=
 // Keep that row (and loading controls) native. A single consecutive stable run
 // can use the existing sidebar; never cover gaps or infer a stable ID for it.
 export function nativeHistoryPresentation(options){
- const {document,source,root}=options;
- if(nativeHistoryListOK(options))return {rect:nativeHistoryListRect(options),maskRoots:[root]};
+ const {document,source,root,preferredMaskRoots=null}=options;
  try{
   if(!root||!source?.contains(root))return null;
   const lists=root.matches('[role="list"]')?[root]:[...root.querySelectorAll('[role="list"]')];
+  // Once the native list exposes explicit rows, keep row masks even after
+  // loading/local rows disappear. Switching to the containing root would
+  // invalidate an otherwise unchanged mount. Legacy pure roots stay supported.
+  if(!lists.length||preferredMaskRoots?.length===1&&preferredMaskRoots[0]===root)return nativeHistoryListOK(options)?{rect:nativeHistoryListRect(options),maskRoots:[root]}:null;
   if(lists.length!==1)return null;
   const children=[...lists[0].children];if(children.length>256)return null;
-  const stable=children.filter(n=>n.hasAttribute('data-sidebar-chatgpt-conversation-key'));
-  if(!stable.length||children.indexOf(stable.at(-1))-children.indexOf(stable[0])+1!==stable.length)return null;
+  const stable=preferredMaskRoots??children.filter(n=>n.hasAttribute('data-sidebar-chatgpt-conversation-key'));
+  if(!stable.every(n=>children.includes(n)&&n.hasAttribute('data-sidebar-chatgpt-conversation-key')))return null;
+  if(!stable.length||!stable.every((node,index)=>children.indexOf(node)===children.indexOf(stable[0])+index))return null;
   const visible=stable.map(node=>({node,rect:nativeHistoryListRect({document,source,root:node})})).filter(x=>x.rect);
   // Mask identity follows the proved native row run, not the viewport.
   // Scrolling only changes its clipped rectangle. Offscreen validation is

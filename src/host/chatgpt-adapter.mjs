@@ -337,11 +337,22 @@ if(!p){
   // an unrelated directory cursor or its pending bounded fragments.
   if(surfaceChanged)requestScan();else schedule();
  }
- function stop(){discardPausedSurface();if(observationExpiry!==null){cancelRetry(observationExpiry);observationExpiry=null;}observationRAM=null;observationRows=[];observationKeys.clear();observationCursor=null;observationScanning=false;observationOnly=false;surfaceRetryWanted=false;nativePrepareAt=null;idleRevision++;finishPass('cancel');ingestionPass=null;generation++;if(retryTimer!==null){cancelRetry(retryTimer);retryTimer=null;}stopped=true;snippets?.stop();snippets=null;snippetReady=()=>false;sendObserver?.stop();sendObserver=null;acceptedBody=null;intents=[];sendGap=null;sendGapBlocked=false;surfaceParts=[];surfaceKey=null;surfaceSequence=null;surfaceWanted=true;surfaceScanning=false;surfaceCursor=null;surfacePage=0;surfacePageKey=null;surfaceAccepted.clear();surfaceFailed.clear();observer?.disconnect();observer=null;document.removeEventListener('scroll',requestScan,true);document.removeEventListener('click',nativeUseClick,true);document.removeEventListener('toggle',surfaceToggle,true);document.removeEventListener('visibilitychange',visibilityChanged);document.removeEventListener('focusout',schedule,true);document.defaultView.removeEventListener('popstate',requestScan);document.defaultView.removeEventListener('hashchange',requestScan);document.defaultView.removeEventListener('resize',requestScan);discovery?.stop();bodyDiscovery?.stop();bodyDiscovery=null;actions=null;dirty=false;queued=false;busy=false;last.clear();failedKey.clear();return Promise.all([...terminalWork]).then(results=>results.every(Boolean));}
+ function stop(){historySelections=new WeakMap();discardPausedSurface();if(observationExpiry!==null){cancelRetry(observationExpiry);observationExpiry=null;}observationRAM=null;observationRows=[];observationKeys.clear();observationCursor=null;observationScanning=false;observationOnly=false;surfaceRetryWanted=false;nativePrepareAt=null;idleRevision++;finishPass('cancel');ingestionPass=null;generation++;if(retryTimer!==null){cancelRetry(retryTimer);retryTimer=null;}stopped=true;snippets?.stop();snippets=null;snippetReady=()=>false;sendObserver?.stop();sendObserver=null;acceptedBody=null;intents=[];sendGap=null;sendGapBlocked=false;surfaceParts=[];surfaceKey=null;surfaceSequence=null;surfaceWanted=true;surfaceScanning=false;surfaceCursor=null;surfacePage=0;surfacePageKey=null;surfaceAccepted.clear();surfaceFailed.clear();observer?.disconnect();observer=null;document.removeEventListener('scroll',requestScan,true);document.removeEventListener('click',nativeUseClick,true);document.removeEventListener('toggle',surfaceToggle,true);document.removeEventListener('visibilitychange',visibilityChanged);document.removeEventListener('focusout',schedule,true);document.defaultView.removeEventListener('popstate',requestScan);document.defaultView.removeEventListener('hashchange',requestScan);document.defaultView.removeEventListener('resize',requestScan);discovery?.stop();bodyDiscovery?.stop();bodyDiscovery=null;actions=null;dirty=false;queued=false;busy=false;last.clear();failedKey.clear();return Promise.all([...terminalWork]).then(results=>results.every(Boolean));}
+ // Freeze only this mount's presentation row set, never the discovered objects.
+ // Appended/prepended native rows remain visible and discoverable. Existing row
+ // removal, reordering or an inserted gap still invalidates the old mount.
+ let historySelections=new WeakMap();
+ function historyPresentationFor(source,history){
+  const prior=historySelections.get(history);
+  if(prior&&prior.source!==source)return null;
+  const result=nativeHistoryPresentation({document,source,root:history,urlPolicy,isOwnedMask,preferredMaskRoots:prior?.maskRoots??null});
+  if(result&&!prior)historySelections.set(history,{source,maskRoots:[...result.maskRoots]});
+  return result;
+ }
  function historyListCurrent(history,inspection=null){
   if(!nativeLayout.historyList)return true;
   const source=one(profile.regions.history);
-  const presentation=nativeHistoryPresentation({document,source,root:history,urlPolicy,isOwnedMask});
+  const presentation=historyPresentationFor(source,history);
   return !!presentation&&(!inspection||source===inspection.historySource&&presentation.maskRoots.length===inspection.historyMaskRoots.length&&presentation.maskRoots.every((n,i)=>n===inspection.historyMaskRoots[i]));
  }
  function nativeTopologyOK(history,header,reading,composer,slot){return !explicitLayout||header!==slot&&header.contains(slot)&&![history,reading,composer].some(node=>node===slot||node.contains(slot));}
@@ -383,7 +394,7 @@ if(!p){
  function projectSurface(geometry=true){
   const history=one(nativeLayout.historyList??profile.regions.history),header=one(nativeLayout.header),slot=one(nativeLayout.navigationSlot);
   if(!history||!header||!slot||!historyListCurrent(history))return null;
-  const historyPresentation=nativeHistoryPresentation({document,source:one(profile.regions.history),root:history,urlPolicy,isOwnedMask});
+  const historyPresentation=historyPresentationFor(one(profile.regions.history),history);
   return inspectNativeProjectSurface({document,profile,urlPolicy,history,header,slot,button:returnControl,isOwnedMask,geometry,historyPresentation});
  }
  function currentProjectSurface(inspection,geometry=true){
@@ -404,7 +415,7 @@ if(!p){
   if(homeLayout&&reading.querySelector('form,input,textarea,select,[contenteditable]'))return fail('unsafe-native-home-layout');
   if(!historyListCurrent(history))return fail('unsafe-native-history-list');
   const historySource=nativeLayout.historyList?one(profile.regions.history):null;
-  const historyPresentation=nativeLayout.historyList?nativeHistoryPresentation({document,source:historySource,root:history,urlPolicy,isOwnedMask}):{rect:rect(history),maskRoots:[history]};
+  const historyPresentation=nativeLayout.historyList?historyPresentationFor(historySource,history):{rect:rect(history),maskRoots:[history]};
   if(!historyPresentation)return fail('unsafe-native-history-list');
   if(!nativeTopologyOK(history,header,reading,composer,navigationSlot))return fail('return-slot-outside-native-header');
   const readingViewport=nativeLayout.readingViewport?one(nativeLayout.readingViewport):null;

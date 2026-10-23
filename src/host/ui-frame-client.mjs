@@ -30,6 +30,7 @@ export function createUiFrameClient({document:doc,runtime,role,parentOrigin,onGr
   try{doc.defaultView.parent.postMessage({type:'VAIWL_UI_IDLE_ACK',role,requestId:pending.requestId},parentOrigin);}catch{}
  }
  function stop(reason='ui-stopped',userExit=false){
+  if(doc.documentElement?.dataset)doc.documentElement.dataset.vaiwlFrameLifecycle=['ui-starting','ui-stopped','ui-idle','ui-user-exit','ui-grant-expired','ui-renew-failed','ui-join-failed','ui-port-disconnected','ui-renderer-failed'].includes(reason)?reason:'stopped';
   idleAck=null;if(wakeListener){doc.defaultView.removeEventListener?.('message',wakeListener);wakeListener=null;}
   const wasActive=active;active=false;if(appearanceListener){doc.defaultView.removeEventListener?.('message',appearanceListener);appearanceListener=null;}appearance?.clear();appearanceKey=null;if(desired){desired.resolve(false);desired=null;}epoch++;grant=null;cancel(expiryTimer);cancel(renewTimer);expiryTimer=renewTimer=null;abort?.abort();abort=null;
   const previous=port;port=null;if(previous){try{previous.onDisconnect.removeListener(disconnect);}catch{}try{previous.onMessage?.removeListener(messageListener);}catch{}}
@@ -113,9 +114,10 @@ export function createUiFrameClient({document:doc,runtime,role,parentOrigin,onGr
    };
    port.onMessage?.addListener(messageListener);
    doc.defaultView.parent.postMessage({type:'VAIWL_UI_JOIN',role,nonce},parentOrigin);
-   const ack=await request({v:1,type:'HOST_UI_JOIN',nonce,role},signal);if(epoch!==run)return false;
+   if(doc.documentElement?.dataset)doc.documentElement.dataset.vaiwlFrameLifecycle='waiting-private-join';
+   const ack=await request({v:1,type:'HOST_UI_JOIN',nonce,role},signal);if(epoch!==run)return false;if(doc.documentElement?.dataset)doc.documentElement.dataset.vaiwlFrameLifecycle='private-join-ack';
    if(ack?.ok!==true||!valid(ack.grant)){stop('ui-join-failed');return false;}
-   return await publish(ack.grant,run);
+   const result=await publish(ack.grant,run);if(epoch===run&&doc.documentElement?.dataset)doc.documentElement.dataset.vaiwlFrameLifecycle=result?'render-ready':'render-not-current';return result;
   }catch{if(epoch===run)stop('ui-join-failed');return false;}
  }
  return Object.freeze({start,stop,exit:()=>stop('ui-user-exit',true),isAuthorized:()=>!!grant&&now()<Date.parse(grant.expiresAt)});

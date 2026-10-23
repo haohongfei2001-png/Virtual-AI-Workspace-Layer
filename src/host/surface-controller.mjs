@@ -10,6 +10,8 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
  const trustedOrigin=`${origin.protocol}//${origin.host}`,win=doc.defaultView;
  let epoch=0,current=null;
  const boundaryReasons=['missing-or-ambiguous-native-boundary','unsafe-native-home-layout','unsafe-native-history-list','return-slot-outside-native-header','unsafe-native-reading-viewport','overlapping-native-boundary','native-content-occupies-return-slot','unsafe-native-geometry','unsafe-native-project-layout'];
+ // Keep diagnostics on our frame: ancestor mutations would invalidate native masks.
+ const reportJoin=state=>{const node=state.frames?.[0]?.frame;if(node?.dataset)node.dataset.vaiwlFrameJoin=JSON.stringify({loaded:state.loadedRoles?.size??0,joined:state.joinedRoles?.size??0,granted:state.grants.size,registered:state.registered,joinSignal:state.joinSignal??'not-observed',modules:state.moduleRoles?.size??0,mode:state.mode,presentation:state.presentation??'not-attempted'});};
  const reportBoundary=inspection=>{if(doc.documentElement?.dataset)doc.documentElement.dataset.vaiwlBoundary=boundaryReasons.includes(inspection?.reason)?inspection.reason:inspection?.ok?'region-identity-changed':'unavailable';};
  function removeReturn(state){state.button?.remove();state.button=null;state.returnStyle=null;adapter.setReturnControl?.(null);}
  function dispose(state,reason,retainMount=false){if(!state)return;state.resolveIdle?.(false);cancel(state.timer);cancel(state.renewTimer);cancel(state.appearanceTimer);state.geometryObserver?.disconnect();win.removeEventListener('resize',state.geometryChanged);win.removeEventListener('scroll',state.geometryChanged,true);win.visualViewport?.removeEventListener?.('resize',state.geometryChanged);win.visualViewport?.removeEventListener?.('scroll',state.geometryChanged);state.appearanceObserver?.disconnect();state.media?.removeEventListener?.('change',state.appearanceChanged);win.removeEventListener('resize',state.appearanceChanged);state.observer?.disconnect();win.removeEventListener('message',state.listener);win.removeEventListener('popstate',state.changed);win.removeEventListener('hashchange',state.changed);doc.removeEventListener?.('beforetoggle',state.nativeToggle,true);doc.removeEventListener?.('toggle',state.changed,true);win.removeEventListener('pagehide',state.pagehide);removeReturn(state);if(state.handle){try{surface.suspend(state.handle,reason);}catch{}try{surface.dispose(state.handle);}catch{}if(!retainMount)try{Promise.resolve(bridge.revokeMount?.({mountId:state.handle.id})).catch(()=>{});}catch{}}}
@@ -99,7 +101,7 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
   try{
    if(!fresh())return false;if(adapter.hasNativeLayer()){suspend('native-layer');return false;}
    if(!refreshGeometry(state)||!fresh())return false;
-   const shown=surface.showWorkspace(handle);
+   state.presentation='showing';reportJoin(state);const shown=surface.showWorkspace(handle);state.presentation=shown===false?'show-refused':'show-returned';reportJoin(state);
    if(!same())return false;
    // showPopover can synchronously surrender to native input or a native layer.
    // The mount loop may then open its other surface: close that residue without
@@ -183,9 +185,12 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
     throw Error('invalid-return-slot');
    }
    state.handle=await surface.mount(state.context,state.inspection,{onSurrender:event=>nativeSurrender(state,event)});if(current!==state){dispose(state,'stale-mount');return null;}
+   state.loadedRoles=new Set();state.joinedRoles=new Set();state.moduleRoles=new Set();
    state.frames=surface.frames(state.handle).map(value=>({...value,window:value.frame.contentWindow}));if(state.frames.length!==2||new Set(state.frames.map(x=>x.role)).size!==2||state.frames.some(x=>!['workspace','sidebar'].includes(x.role)))throw Error('incomplete-dual-surface');
+   for(const target of state.frames)target.frame.addEventListener?.('load',()=>{if(current===state){state.loadedRoles.add(target.role);reportJoin(state);}},{once:true});
+   reportJoin(state);
    state.listener=event=>{void receive(state,event);};win.addEventListener('message',state.listener);
-   const ack=await bridge.registerMount({handle:state.handle});if(current!==state)return null;if(ack?.ok!==true)throw Error('mount-registration-denied');state.registered=true;
+   const ack=await bridge.registerMount({handle:state.handle});if(current!==state)return null;if(ack?.ok!==true)throw Error('mount-registration-denied');state.registered=true;reportJoin(state);
    if(!valid(state))throw Error('stale-mount-registration');
    state.nativeToggle=event=>{if(event.newState==='open'&&!event.target.closest?.('[data-va-owned]'))suspend('native-layer');};doc.addEventListener?.('beforetoggle',state.nativeToggle,true);
    state.changed=()=>{try{if(!reconcileGeometry(state))return;if(adapter.hasNativeLayer())suspend('native-layer');else if(state.mode==='reading'||state.mode==='suspended')ensureReturn(state);}finally{publishSurface(state);}};
@@ -196,14 +201,21 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
   }catch{if(current===state)stop('mount-unavailable');return null;}
  }
  async function receive(state,event){
+  // Fixed diagnostic classes only; an untrusted signal never grants a join.
+  if(current===state&&event.data?.type==='VAIWL_UI_JOIN'&&['workspace','sidebar'].includes(event.data?.role)){
+   const frame=state.frames.find(x=>x.role===event.data.role);
+   state.joinSignal=event.origin!==trustedOrigin?'origin-rejected':event.source!==frame?.window?'source-rejected':Object.getPrototypeOf(event.data)!==Object.prototype?'record-rejected':'correlated';reportJoin(state);
+  }
   if(current!==state||state.epoch!==epoch||doc.location.href!==state.url||event.origin!==trustedOrigin)return;
   const data=event.data;if(!data||Object.getPrototypeOf(data)!==Object.prototype)return;
   const target=state.frames.find(x=>x.role===data.role);if(!target||!target.frame.isConnected||target.frame.ownerDocument!==doc||event.source!==target.window||target.frame.contentWindow!==target.window)return;
+  if(exactHostRecord(data,['type','role','stage'])&&data.type==='VAIWL_UI_BOOT'&&data.stage==='module-ready'){state.moduleRoles?.add(data.role);reportJoin(state);return;}
   if(state.dormant){
    if(exactHostRecord(data,['type','role','requestId'])&&data.type==='VAIWL_UI_IDLE_ACK'&&data.requestId===state.idleRequestId){state.idleAcks.add(data.role);if(dormantReady())state.resolveIdle?.(true);}
    return;
   }
   if(exactHostRecord(data,['role','type'])&&['VAIWL_UI_SUSPEND','VAIWL_UI_EXIT'].includes(data.type)){stop(data.type==='VAIWL_UI_EXIT'?'ui-user-exit':'ui-frame-suspended');return;}
+  if(data.type==='VAIWL_UI_JOIN'){state.joinedRoles?.add(data.role);reportJoin(state);}
   if(!valid(state,false)||Object.keys(data).sort().join(',')!=='nonce,role,type'||data.type!=='VAIWL_UI_JOIN'||!tokenOK(data.nonce)||state.pending.has(data.role)||state.grants.has(data.role))return;
   if(!state.registered){if(!state.earlyJoins.has(data.role))state.earlyJoins.set(data.role,{origin:event.origin,source:event.source,data:{type:data.type,role:data.role,nonce:data.nonce}});return;}
   state.pending.add(data.role);
@@ -211,7 +223,7 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
    const ack=await bridge.confirmParent({mountId:state.handle.id,documentToken:state.handle.documentToken,regionEpoch:state.handle.regionEpoch,nonce:data.nonce,role:data.role});
    if(!valid(state)||event.source!==target.window||target.frame.contentWindow!==target.window)return;
    const grant=ack?.grant;if(ack?.ok!==true||!tokenOK(grant?.id)||grant.mountId!==state.handle.id||grant.role!==data.role||grant.parentDocumentId!==state.context.binding.browserDocumentId||!tokenOK(grant.uiDocumentId)||!tokenOK(grant.scopeGrantId)||!Number.isFinite(Date.parse(grant.expiresAt))||Date.parse(grant.expiresAt)<=now())return;
-   state.grants.set(data.role,Object.freeze({...grant}));publishAppearance(state,data.role);arm(state);
+   state.grants.set(data.role,Object.freeze({...grant}));reportJoin(state);publishAppearance(state,data.role);arm(state);
    if(state.cancelCloseJoining&&authorized(state)){state.cancelCloseJoining=false;bridge.cancelledCloseReady?.();}
    if(state.mode==='waiting'&&authorized(state)){
     // Native input can precede listener installation or the second grant. Preserve
@@ -219,7 +231,7 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
     const entered=state.pendingWakeEntry===true,entryEpoch=state.intentEpoch+1;state.pendingWakeEntry=false;
     if(adapter.hasNativeLayer())suspend('native-layer');else if(state.pendingNativeInput||hasProtectedFocus(state))showNativeReading();else if((state.resumeMode??initialMode)==='reading')showReading();else if(showWorkspace()&&entered&&state.intentEpoch===entryEpoch&&!state.pendingNativeInput&&!adapter.hasNativeLayer()&&!hasProtectedFocus(state))workspaceEntered(state);
    }
-  }catch{/* A failed public join never authorizes a surface. */}finally{state.pending.delete(data.role);}
+  }catch{state.presentation='join-exception';reportJoin(state);/* A failed public join never authorizes a surface. */}finally{state.pending.delete(data.role);reportJoin(state);}
  }
  // Advisory only: a busy worker must leave the current leases and frames intact.
  // Final release still repeats the guard after both frames acknowledge clearing.

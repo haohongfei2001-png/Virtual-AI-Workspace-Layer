@@ -74,5 +74,48 @@
     "real history-mask-run invalidation identified; the scroll mechanism is reproduced offline, not yet proven the sole real cause",
     "one earlier real hello-failed marker has no established cause",
     "r11 actual UI and continuous Mac journey pending native account page availability; no further refresh/challenge attempts"
-  ]
+  ],
+  "r17Checkpoint": {
+    "baseHead": "87fb5734c7939094e76aad663a3b0d5eeb341b01",
+    "actualMac": {
+      "r11": "FAIL_MASK_ROOT_CHANGED_19_TO_1",
+      "r12": "FAIL_APPENDED_NATIVE_ROW_CHANGED_MASK_COUNT_19_TO_20",
+      "r13": "FAIL_UNSAFE_NATIVE_HISTORY_THEN_GRANT_EXPIRED",
+      "r14_r15": "FAIL_TWO_FRAME_LOADS_ZERO_PUBLIC_JOINS_THEN_GRANT_EXPIRED",
+      "nativePage": "RECOVERED_BEFORE_CURRENT_TOOL_BLOCK",
+      "r17": "NOT_RUN_LOCAL_BROWSER_USE_DISABLED_IN_WORK_SETTINGS",
+      "newChatSend": "NOT_RUN_NO_MESSAGE_SENT"
+    },
+    "changes": [
+      "Explicit list keeps validated row masks when local/loading rows disappear",
+      "Per-mount row selection stays stable on append/prepend; discovery remains live; removal/reorder/gap/unsafe row rejects",
+      "Fixed stage diagnostics on owned frame, not native document ancestor; no authority or data content"
+    ],
+    "offline": {
+      "observedProfile": "PASS_HOME_AND_CONVERSATION_WITH_APPEND_AND_REORDER_CASES",
+      "targetedUnits": "PASS_85",
+      "formalMV3": "PASS_EXISTING_PROJECT_NAVIGATION_RETURN_WORKER_ACCOUNT_RISK_REFRESH_RESTART_FLOW",
+      "retainedFailures": "Several diagnostic runs failed at first popover wait. Exact offline hide trace identified new root-level diagnostic attribute as native ancestor mutation through adapter.onSurfaceChange. Moving diagnostic to owned frame resolved. Visibility-only hypothesis failed; removed temporary instrumentation. Real zero-JOIN remains separately unresolved.",
+      "logs": ".git/vaiwl-checkpoints/20261023-mac-home-r17"
+    },
+    "candidate": {
+      "revision": "r17",
+      "files": 196,
+      "directory": "/Users/hhf/Downloads/VAIWL-Browser-Local-Mac-20261023-r17/extension",
+      "zipSha256": "296f51a65979e2dc60f6bf71666bfcd63c94c0d50aa58def6fd9c7344d279c7c",
+      "originalDirectoryUpdated": true,
+      "manifestUnchanged": true,
+      "runtimeActivation": "NOT_VERIFIED",
+      "databaseTouched": false
+    },
+    "next": "When existing original Profile browser control is available, inspect current native page and empty draft, activate r17 via ordinary page refresh, read owned frame stages and complete remaining actual acceptance. No reinstall, clearing storage, source diagnostic, or duplicate test message.",
+    "sourceHashes": {
+      "extension/sidebar.mjs": "8d1b85dda5d1a93b548cd37da978cb0f90ffef340ddd2744023b90eafc936220",
+      "extension/workspace.mjs": "c12419194fa2a92b3770cfdd60849e36c92261e27066c55235a082a1bbb507af",
+      "src/host/chatgpt-adapter.mjs": "2cf62b6ceccd36c29677a1d4c886a8778988b860a7e45c67b00dcc38510fa3a4",
+      "src/host/native-history-list.mjs": "8be096b4728ad4a1a0087db76a640a522098e41c0bdc04818f53b34f620908d7",
+      "src/host/surface-controller.mjs": "ab06dea40fae8c9ec11b96308920e2246f13a6227b4a7333caf801e12caf0b85",
+      "src/host/ui-frame-client.mjs": "32a3f5b368c2e7918b1c82291a29c8218f36e17731fcbf3ab6108d5678b62b30"
+    }
+  }
 }
