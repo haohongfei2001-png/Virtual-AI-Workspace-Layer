@@ -1,4 +1,34 @@
-# VAIWL实际状态：独立Free工程恢复，生产接入与日用交付仍NO-GO
+# VAIWL实际状态：渐进积累工程已接线，真实来源逐项待准入
+
+## 多来源渐进积累：实际接线与剩余准入（2026-10-23）
+
+正式消费[PR16修正6356448353](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16#issuecomment-6356448353)，从本地/远端一致的cba39ee1继续。**产品路线已采纳；不是生产提取获准或本人日用验收。** 沿原B1/B2/C1–C4/B4–B5实现以下差额，正式renderer、样式、v2.7及人工资产没有改动。
+
+- **逐字段事实合并**：[native-facts](../src/data/native-facts.mjs)复用同scope/nativeID、既有canonical profile族及CAS，增加有界fieldWitnesses；标题、URL、availability、memberCount和原子成员关系各留渠道、版本、时间及冲突状态。缺失/null/UNKNOWN保留先前正向字段及其原见证；同一时点跨channel强值冲突仅隔离相应字段。其他未撤销来源族仍拒绝覆盖。新值不自动更新其他字段的新鲜度；不因缺席删除，明确撤权/不可用不放宽。
+- **明确归属与显示**：原[surface-batch](../src/host/surface-batch.mjs)已具备正向成员/NONE证据入口，本轮直接继承，未猜真实站点新selector或将目录gizmo_id:null变成NONE。[free-projection](../src/data/free-projection.mjs)现在按字段见证呈现；冲突标题不借别名显示，冲突URL不用于导航，原归属与其他无冲突字段继续可用。旧计数不能因新标题刷新而变成完整成员证明。
+- **独立本地最近使用**：[正式导航owner](../src/runtime/host-current-navigation.mjs)在用户点选已确认当前聊天、或同scope/tab/document且6秒内确认到达后，沿[binding service](../src/runtime/host-binding-service.mjs)→既有[activity owner](../src/runtime/host-native-activity-owner.mjs)→FreeEvidenceRepository/CAS保存独立local-recent-use，每C仅一条最新值。[ActivityDecision](../src/data/free-activity.mjs)以provisional最近使用参与原排序/窗口，不产生actorVerified、sentAt、ACK或coverage。发现、注册、刷新、恢复、重复action和未确认dispatch都不更新使用。
+- **近似原生活动**：原native-object-update/order的profile、private owner与ActivityDecision消费已经接通，直接复用；rank不造日期，更新时间不充本人发送。没有为此新增真实producer或重跑source-v3。本地使用只覆盖上述已核实Free操作，未覆盖任意宿主点击、新标签、Project打开或未确认到达；不得声称这些行为均已自动积累。
+
+### 每种来源：技术能力与生产准入分别记录
+
+| 来源 | 技术能力／必需字段 | 适用访问与语义条件 | 当前状态 |
+|---|---|---|---|
+| session、认证canonical roster与C2 | source-v3已有本人限定成功；主体、有效期、可访问context、当前请求/页面关联 | 明确适用允许依据；当前主体/空间私有证明；不复用旧批次或default/null | 技术证据永久保留；生产链仍关闭，本轮不读取 |
+| 已有自然DOM观察 | 原listen/proposal→owner→NativeRepository；正向ID、原始标题、URL、文档/route/profile | 需要适用程序化提取允许条件及可靠身份；成员需专用区域正向合同，NONE需明确语义 | 源码/隔离夹具可用；真实observed profile并未覆盖全部成员/NONE；未获准提取继续关闭 |
+| 内部普通/归档/Project/成员目录 | source-v3限定可读；现有parser与首屏consumer具备ID/标题/覆盖域，不承诺全量 | 网站允许该接口读取；认证/当前空间、分页和成员字段语义分别验证 | 技术候选/有限成功，不等于正式支持；无新生产provider、自动扫描关闭 |
+| 原生更新时间／同域顺序 | 原codec3私有profile可消费C ID、已证单位的updateTime、已证过滤/排序域 | 数据来源先获准，再核验时间/顺序含义；不是本人发送 | 独立消费实现已具备，真实来源准入/部分语义尚缺，未启用 |
+| Free自身确认的本地使用 | 当前scope/C、唯一action、确认时钟与当前body；不读取新响应 | 已授权正式UI操作、可信当前scope/对象、有限关联；不能借此触发网站提取 | 本轮正式接线，隔离MV3通过；真实账户能力仍受上游身份/对象准入阻塞 |
+| 合成fixture／已存合法事实 | 既有测试机制；字段合并、成员、活动、CAS/恢复及正式UI可验证 | 隔离profile和本地夹具，阻断外网；缓存本身不赋予原来源许可，撤销/scope仍检查 | 本轮使用；不作为真实主用验收或替代读取通道 |
+
+HTTP200、浏览器权限、用户安装、正常导航均不构成网站提取许可。没有新增真实请求、截获、自动点击、账户实验或许可研究。未来只启用明确获准且语义足够的来源，不因后置域未过否定独立已核能力；身份链失败仍停止对应读写。
+
+### 验证、安装包与剩余条件
+
+定向检查通过；复用实际headless MV3包验证当前项操作、原生输入/草稿和唯一返回保持，以及本地use从0→1、无发送事件、刷新后字节不变。真实隔离IDB验证字段见证与成员在重开后保留、本地使用去重/撤销/账户隔离；原恢复完整性检查通过。详见[本轮回执](engineering/free-progressive-accumulation-20261023.json)。初次类型/测试夹具/加载等待/构建目标问题及修正原日志留在`.git/vaiwl-checkpoints/20261023-progressive/`；未放宽授权期限或以模拟替代真实验收。这是writer差异审查，不冒称独立审查。
+
+已生成并校验**可安装开发包**，路径及sha256在回执中；状态仍HOST_IMPLEMENTATION_UNVERIFIED / NOT_RELEASE_READY。没有更新本人已安装扩展、没有开启真实自动组织。新字段图与local-use hint沿原库保存，旧包可能拒绝新字段/类型；不能把旧回退证据当本版本降版认证，不清库降级。
+
+本轮已确认可独立实施差额完成。下一生产条件是**至少一个明确获准、能在可信主体/当前空间内提供近期ID/原名及正向归属的输入通道**，再按该通道许可接入现有owner/profile并补对应Mac连续J1–J4与安装/恢复验收；无需等全历史统一接口，也不重新消费source-v3。未取得该条件前，正式UI/存储/恢复与本轮接线可继续复用，但不宣称自动组织真实聊天或完整日用完成。无新增具体缺陷时不追加模拟矩阵或恢复无变化巡检。
 
 ## C5：正式界面整体视觉恢复与可操作实例（2026-10-23）
 

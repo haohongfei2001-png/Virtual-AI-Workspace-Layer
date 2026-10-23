@@ -6,14 +6,14 @@ import {withRequestDeadline} from '../data/request-deadline.mjs';
 const commandFields=['actionId','uiGrantId','mountId','planRevision','targetKey'];
 const failure=()=>({ok:false,state:'blocked'});
 /** RAM-only issued resolved navigation plans. Presentation and page messages never authorize a dispatch. */
-export function createHostCurrentNavigation({ui,observations,bridge,urlPolicy=null,elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout}={}){
+export function createHostCurrentNavigation({ui,observations,bridge,onConfirmedUse=null,urlPolicy=null,elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout}={}){
  if(typeof ui?.withScope!=='function'||typeof observations?.withCurrent!=='function'||[bridge,elapsedNow,schedule,cancel].some(x=>typeof x!=='function'))throw Error('invalid-current-navigation');
- const groups=new Map(),actions=new Map(),pending=new Map(),attempts=new Set();let stopped=false;
+ const groups=new Map(),actions=new Map(),pending=new Map(),attempts=new Set(),arrivals=new Map();let stopped=false;
  const current=context=>{try{return context.isCurrent()===true;}catch{return false;}};
  const key=(context,grantId,mountId)=>JSON.stringify([context.scope.key,context.scopeGrantId,grantId,mountId,context.role]);
  const within=(start,ms)=>{const n=elapsedNow();return Number.isFinite(start)&&Number.isFinite(n)&&n>=start&&n-start<ms;};
  const live=e=>!stopped&&groups.get(e.key)===e&&within(e.created,30000)&&current(e.context);
- function prune(){for(const [k,e]of groups)if(!live(e))groups.delete(k);for(const [id,action]of actions)if(!current(action.context))actions.delete(id);}
+ function prune(){for(const [id,a]of arrivals)if(stopped||a.action.cancelled||!within(a.started,6000))arrivals.delete(id);for(const [k,e]of groups)if(!live(e))groups.delete(k);for(const [id,action]of actions)if(!current(action.context))actions.delete(id);}
  function register({context,grantId,mountId,navigation}={}){
   if(stopped||!context||!current(context)||typeof context.scope?.key!=='string'||!tokenOK(context.scopeGrantId)||!['workspace','sidebar'].includes(context.role)||!tokenOK(grantId)||!tokenOK(mountId)||!Array.isArray(navigation)||navigation.length>200)throw Error('invalid-current-registration');
   const rows=new Map(),refs=new Set(),policy=urlPolicy??createURLPolicy({origin:new URL(context.parentFrame?.actualURL).origin});
@@ -24,11 +24,28 @@ export function createHostCurrentNavigation({ui,observations,bridge,urlPolicy=nu
    if(!tokenOK(id)||!tokenOK(row.targetKey)||rows.has(row.targetKey)||refs.has(entity+':'+id)||t?.nativeId!==id||t?.entity!==entity)throw Error('invalid-current-plan');
    if(!same&&!native||same&&(project||!policy.sameTarget(t.navigationURL,context.parentFrame?.actualURL))||native&&(p.control.documentToken!==context.binding?.documentToken||p.control.routeEpoch!==context.binding?.routeEpoch))throw Error('invalid-current-plan');
    const parsed=policy.parse(t.navigationURL);if(parsed.kind!==entity||(parsed.conversationId??parsed.projectId)!==id)throw Error('invalid-current-plan');
-   refs.add(entity+':'+id);rows.set(row.targetKey,Object.freeze({refId:id,targetKey:row.targetKey,mode:p.mode,bodyProofId:same?p.bodyProofId:null,planRevision:p.planRevision,navigationURL:t.navigationURL}));
+   refs.add(entity+':'+id);rows.set(row.targetKey,Object.freeze({entity,refId:id,targetKey:row.targetKey,mode:p.mode,bodyProofId:same?p.bodyProofId:null,planRevision:p.planRevision,navigationURL:t.navigationURL}));
   }
   prune();const k=key(context,grantId,mountId),created=elapsedNow();if(!Number.isFinite(created)||!groups.has(k)&&groups.size>=64)throw Error('current-plan-capacity');
   if(!rows.size){groups.delete(k);return true;}
   groups.set(k,{key:k,context,grantId,mountId,created,rows,binding:{...context.binding},parentFrame:{...context.parentFrame}});return true;
+ }
+ // A native-control dispatch is only an intent. Match its later current-body
+ // proof in the same scope/tab/document before recording local use. Discovery,
+ // refresh and unrelated body observations have no matching intent.
+ async function observe(proofId){
+  if(!onConfirmedUse||stopped)return false;prune();if(!arrivals.size)return false;
+  try{return await observations.withCurrent(proofId,async proof=>{
+   for(const [id,a]of arrivals){
+    if(proof.scope?.key!==a.scopeKey||proof.tabId!==a.tabId||proof.browserDocumentId!==a.documentId||proof.conversationId!==a.refId||!proof.guard())continue;
+    a.proofId=proofId;if(!a.settled)return false;
+    arrivals.delete(id);
+    const guard=()=>!stopped&&!a.action.cancelled&&within(a.started,6000)&&proof.guard();
+    if(!guard())return false;
+    await onConfirmedUse({scope:proof.scope,conversationId:a.refId,actionId:id,guard,signal:proof.signal});return true;
+   }
+   return false;
+  });}catch{return false;}
  }
  function authorize(command,parentFrame){
   if(!exactHostRecord(command,commandFields))return false;const e=pending.get(command.actionId),expected=e?.context.parentFrame;
@@ -43,7 +60,7 @@ export function createHostCurrentNavigation({ui,observations,bridge,urlPolicy=nu
    if(!alive()||!e||!live(e)||!current(context)||row?.planRevision!==m.planRevision||action&&(action.key!==k||action.targetKey!==m.targetKey||action.planRevision!==m.planRevision)||!action&&actions.size>=1024)return failure();
    // A tombstone also fences cancel-before-dispatch delivery. Never delete it
    // to enable replay, and never claim an already completed click was undone.
-   if(action)action.cancelled=true;else actions.set(m.actionId,{context,key:k,targetKey:m.targetKey,planRevision:m.planRevision,cancelled:true});
+   arrivals.delete(m.actionId);if(action)action.cancelled=true;else actions.set(m.actionId,{context,key:k,targetKey:m.targetKey,planRevision:m.planRevision,cancelled:true});
    const command={actionId:m.actionId,uiGrantId:m.grantId,mountId:m.mountId,planRevision:m.planRevision,targetKey:m.targetKey};
    const guard=()=>alive()&&current(context)&&live(e);
    const result=await bridge({context,command,mode:'cancel',guard,remainingMs:6000-(elapsedNow()-started)});
@@ -65,15 +82,29 @@ export function createHostCurrentNavigation({ui,observations,bridge,urlPolicy=nu
     if(!guard()||proof&&(proof.scope?.key!==context.scope.key||['documentToken','producerToken','routeEpoch'].some(k=>proof[k]!==context.binding?.[k])||proof.conversationId!==row.refId||typeof proof.guard!=='function'||proof.guard()!==true))throw Error('current-proof-conflict');
     const fresh=()=>{try{return guard()&&(!proof||proof.guard()===true);}catch{return false;}};
     const entry={command,context,guard:fresh};pending.set(m.actionId,entry);a.pending=entry;a.actionId=m.actionId;a.nativeAttempt=row.mode==='native-control';
+    let arrival=null;
+    if(onConfirmedUse&&row.mode==='native-control'&&row.entity==='conversation'){
+     // New intent supersedes a previous unresolved intent in this same tab.
+     for(const [id,old]of arrivals)if(old.tabId===context.parentFrame.tabId)arrivals.delete(id);
+     arrival={scopeKey:context.scope.key,tabId:context.parentFrame.tabId,documentId:context.parentFrame.documentId,refId:row.refId,action,started:a.started,settled:false,proofId:null};arrivals.set(m.actionId,arrival);
+    }
     const result=await bridge({context,command,mode:row.mode,guard:fresh,remainingMs:6000-(elapsedNow()-a.started)});
-    if(!fresh())return a.nativeAttempt?{ok:true,state:'unconfirmed'}:failure();
     const states=row.mode==='same-target'?['already-current','blocked','unconfirmed']:['dispatched','blocked','unconfirmed'];
-    if(!exactHostRecord(result,['state',...(Object.hasOwn(result??{},'actionId')?['actionId']:[]),...(Object.hasOwn(result??{},'reason')?['reason']:[])])||!states.includes(result.state)||Object.hasOwn(result,'actionId')&&result.actionId!==m.actionId)throw Error('invalid-current-result');
+    const valid=exactHostRecord(result,['state',...(Object.hasOwn(result??{},'actionId')?['actionId']:[]),...(Object.hasOwn(result??{},'reason')?['reason']:[])])&&states.includes(result.state)&&(!Object.hasOwn(result,'actionId')||result.actionId===m.actionId);
+    if(arrival){
+     if(valid&&['dispatched','unconfirmed'].includes(result.state)&&!action.cancelled){arrival.settled=true;if(arrival.proofId)await observe(arrival.proofId);}
+     else arrivals.delete(m.actionId);
+    }
+    if(!fresh())return a.nativeAttempt?{ok:true,state:'unconfirmed'}:failure();
+    if(!valid)throw Error('invalid-current-result');
+    if(result.state==='already-current'&&proof&&onConfirmedUse){
+     try{await onConfirmedUse({scope:proof.scope,conversationId:row.refId,actionId:m.actionId,guard:fresh,signal:proof.signal});}catch{/* A local recency write never repeats or undoes a native action. */}
+    }
     return {ok:true,state:result.state};
    };
    return row.mode==='same-target'?observations.withCurrent(row.bodyProofId,execute):execute(null);
   }),{timeoutMs:6000,now:elapsedNow,schedule,cancel});}catch{return a.nativeAttempt?{ok:true,state:'unconfirmed'}:failure();}finally{a.active=false;attempts.delete(a);if(a.pending&&pending.get(a.actionId)===a.pending)pending.delete(a.actionId);}
  }
- function stop(){stopped=true;groups.clear();actions.clear();pending.clear();for(const a of attempts)a.active=false;attempts.clear();}
- return Object.freeze({register,handle,cancelAction,authorize,stop});
+ function stop(){stopped=true;groups.clear();actions.clear();pending.clear();arrivals.clear();for(const a of attempts)a.active=false;attempts.clear();}
+ return Object.freeze({register,handle,cancelAction,authorize,observe,stop});
 }

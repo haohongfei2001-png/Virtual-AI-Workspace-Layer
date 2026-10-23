@@ -7,11 +7,12 @@ import {validateHistoricalSendProfile} from './historical-send-profile.mjs';
  * repository. A stored channel label, checksum or DOM profile never enables it.
  * Only explicitly configured owner profiles are admitted; default is deny-all.
  * Freshness, event validity and coverage remain the existing projector's job. */
-export function createHostActivitySourceAdmission({sendAckProfile=null,historicalSendProfile=null,nativeActivityProfile=null}={}){
+export function createHostActivitySourceAdmission({sendAckProfile=null,historicalSendProfile=null,nativeActivityProfile=null,localUseProfile=null}={}){
  const owners=[];
  if(sendAckProfile){const p=validateSendAckProfile(sendAckProfile);owners.push({profile:p,codecVersion:1});}
  if(historicalSendProfile){const p=validateHistoricalSendProfile(historicalSendProfile);owners.push({profile:p,codecVersion:2});}
- if(nativeActivityProfile){const p=validateNativeActivityProfile(nativeActivityProfile);owners.push({profile:p,codecVersion:3});}
+ if(nativeActivityProfile){const p=validateNativeActivityProfile(nativeActivityProfile);if(p.semantics!=='native-object-update')throw Error('invalid-native-activity-profile');owners.push({profile:p,codecVersion:3});}
+ if(localUseProfile){const p=validateNativeActivityProfile(localUseProfile);if(p.semantics!=='local-confirmed-use')throw Error('invalid-local-use-profile');owners.push({profile:p,codecVersion:3});}
  // Per-composition snapshot preparation keeps chain validation O(sources), not
  // O(sources²). The closure is local to this synchronous read, never cached.
  function forSources(scope,origin){

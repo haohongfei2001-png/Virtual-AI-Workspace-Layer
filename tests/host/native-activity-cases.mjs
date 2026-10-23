@@ -38,3 +38,28 @@ export async function runNativeActivityCase(indexedDB){
   return {status:'PASS',checks:['persist-reopen','scope-isolation','default-deny','time-not-ACK','repeat-idempotency','bounded-order-replacement','unknown-reachability','revoke-new-incarnation','natural-aging']};
  }finally{owner.stop();base.close();}
 }
+
+import {LOCAL_USE_PROFILE} from '../../src/runtime/native-activity-profile.mjs';
+/** New local interaction semantics use the existing evidence directory/CAS and
+ * reopen path. No synthetic sentAt or producer request stands in for a use. */
+export async function runLocalUseCase(indexedDB){
+ const scope=normalizedScope({verified:true,provider:'chatgpt',accountId:'local',organizationId:'space'}),other=normalizedScope({...scope,accountId:'other'});
+ let wall=Date.parse('2026-10-23T01:00:00Z'),valid=true,owner;
+ const base=new ScopeRepository({indexedDB,databaseName:'local_use_'+crypto.randomUUID().replaceAll('-','')}),repo=new FreeEvidenceRepository({baseRepository:base,clock:()=>new Date(wall).toISOString(),hostObservationGate:(s,r)=>owner.gate(s,r)});
+ const make=()=>createHostNativeActivityOwner({evidenceRepository:()=>repo,profileFor:()=>LOCAL_USE_PROFILE,now:()=>wall});owner=make();
+ const send=(actionKey,usedAt=new Date(wall).toISOString())=>owner.consume({observation:{profileId:LOCAL_USE_PROFILE.id,profileVersion:1,scopeKey:scope.key,observedAt:new Date(wall).toISOString(),items:[{conversationId:A,usedAt,actionKey}]},context:{scope,providerProfile:LOCAL_USE_PROFILE.providerProfile},guard:()=>valid});
+ const project=e=>projectFreeActivity({scope:scope.key,refs:[{id:A,scope:scope.key}],projects:[],noProject:[],unknown:[A]},e,createFreeViewSession({now:new Date(wall).toISOString(),timeZone:'UTC'}),new Date(wall).toISOString());
+ try{
+  check((await send('click1')).ok,'local-write');const first=await repo.read(scope),decision=project(first).refs[0].activityDecision;
+  check(decision.reason==='local-recent-use'&&decision.basis==='provisional'&&decision.localUse.usedAt===new Date(wall).toISOString()&&!decision.sentAt&&!decision.sentInterval,'use-not-send');
+  check(Object.keys(first.hints).length===1&&!Object.keys(first.events).length&&!Object.keys(first.coverage).length,'use-created-send');
+  const src=Object.values(first.sources)[0],allow=createHostActivitySourceAdmission({localUseProfile:LOCAL_USE_PROFILE});check(allow(scope,src,{store:'evidence',sources:first.sources}),'local-private-read');
+  check(!createHostActivitySourceAdmission()(scope,src,{store:'evidence',sources:first.sources}),'local-default-admission');
+  wall+=1000;check((await send('click1')).replayed,'same-action-renewed');check((await repo.read(scope)).revision===first.revision,'same-action-write');
+  wall+=1000;check((await send('click2')).ok,'new-action');const second=await repo.read(scope);check(Object.keys(second.hints).length===1,'unbounded-use-log');
+  wall+=120000;base.close();owner.stop();owner=make();check(project(await repo.read(scope)).refs[0].activityDecision.localUse.usedAt===new Date(wall-120000).toISOString(),'local-reopen');check((await repo.read(other)).revision===0,'local-scope-leak');
+  valid=false;let denied=false;try{await send('click3');}catch{denied=true;}check(denied,'local-revoke-guard');valid=true;
+  const current=await repo.read(scope);check((await repo.invalidate(scope,{sourceId:src.id,operationId:'revoke_local',expectedRevision:current.revision})).ok,'local-source-revoke');check(project(await repo.read(scope)).refs[0].activityDecision.localUse===undefined,'revoked-local-use');
+  return {status:'PASS',checks:['confirmed-use-not-send','duplicate-action-no-renewal','bounded-latest-use','CAS-reopen','scope-isolation','private-admission','revocation']};
+ }finally{owner.stop();base.close();}
+}

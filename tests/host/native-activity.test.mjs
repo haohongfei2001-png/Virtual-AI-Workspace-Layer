@@ -69,3 +69,10 @@ test('cancelled activity apply remains nonidle through late rejection with an in
  finally{reject(Error('late-storage-failure'));await new Promise(r=>setImmediate(r));}
  assert.equal(f.owner.isIdle(),true);assert.equal(f.requests.length,0);
 });
+
+import {runLocalUseCase} from './native-activity-cases.mjs';
+import {LOCAL_USE_PROFILE} from '../../src/runtime/native-activity-profile.mjs';
+test('local recent use persists separately through existing scoped CAS/reopen',async()=>assert.equal((await runLocalUseCase(new MockIDBFactory())).status,'PASS'));
+test('local use profile cannot consume server updateTime, missing action or future use',()=>{
+ for(const item of [{conversationId:A,updateTime:1},{conversationId:A,usedAt:'2026-10-22T00:00:00Z'},{conversationId:A,usedAt:'2026-10-23T00:00:00Z',actionKey:'click'}])assert.throws(()=>parseNativeActivityRows({profile:LOCAL_USE_PROFILE,observedAt:'2026-10-22T00:00:00Z',items:[item]}));
+});

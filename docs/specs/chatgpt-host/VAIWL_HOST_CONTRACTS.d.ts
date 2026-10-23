@@ -197,6 +197,16 @@ export interface NativeActivityObservation {
   observedAt: ISOInstant; // Observation only, never activity time.
   items: { conversationId: NativeId; updateTime?: number | ISOInstant | null }[]; // Max256.
 }
+/** Private navigation-owner callback only, never a page ObservationProposal.
+ * Same verified scope and current body, or a bounded matching arrival, required.
+ * Uses existing codec3 evidence CAS; no sentAt, actor or ACK claim. */
+export interface LocalUseObservation {
+  profileId: 'vaiwl-local-use';
+  profileVersion: 1;
+  scopeKey: string;
+  observedAt: ISOInstant;
+  items: [{ conversationId: NativeId; usedAt: ISOInstant; actionKey: string }];
+}
 interface ProposalEnvelope {
   protocol: 'vaiwl-host-observation/1';
   documentToken: DocumentToken;

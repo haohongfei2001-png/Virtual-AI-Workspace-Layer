@@ -42,13 +42,14 @@ export function createHostNativeActivityOwner({evidenceRepository,profileFor,now
    const source={id:sourceId,generation,sourceRevision,observedAt,validUntil,channel:'host-evidence',codecVersion:3,profileId:profile.id,profileVersion:profile.revision,orderDomain:parsed.order?.domain??null,orderBatch:parsed.order?.batch??null};
    const base={sourceId,generation,sourceRevision,observedAt,validUntil};
    const hints=[];
+   for(const row of parsed.localUses??[]){const eventKey='use_'+digest([sourceId,generation,row.conversationId]);hints.push({...base,...row,id:eventKey,eventKey,hintType:'local-recent-use'});}
    for(const row of parsed.times){const eventKey='update_'+digest([sourceId,generation,row.conversationId]);hints.push({...base,...row,id:eventKey,eventKey,hintType:'native-activity',semanticsVerified:true});}
    for(const [rank,conversationId]of (parsed.order?.ids??[]).entries()){const eventKey='rank_'+digest([sourceId,generation,conversationId]);hints.push({...base,conversationId,id:eventKey,eventKey,hintType:'native-order',orderDomain:parsed.order.domain,orderBatch:parsed.order.batch,rank});}
-   const fresh=hints.filter(h=>{const old=page.evidence.hints[h.id];if(!old)return true;if(old.revoked)throw Error('revoked-native-activity');return h.hintType==='native-order'?old.orderBatch!==h.orderBatch:JSON.stringify(old.candidateInterval)!==JSON.stringify(h.candidateInterval);});
+   const fresh=hints.filter(h=>{const old=page.evidence.hints[h.id];if(!old)return true;if(old.revoked)throw Error('revoked-native-activity');return h.hintType==='local-recent-use'?old.actionKey!==h.actionKey&&instant(old.usedAt)<instant(h.usedAt):h.hintType==='native-order'?old.orderBatch!==h.orderBatch:JSON.stringify(old.candidateInterval)!==JSON.stringify(h.candidateInterval);});
    if(!fresh.length&&priorSource?.orderBatch===source.orderBatch)return {ok:true,replayed:true,revision:page.revision,gaps:parsed.gaps};
    if(!hints.length&&!priorSource)return {ok:true,replayed:true,revision:page.revision,gaps:parsed.gaps};
    const request={operationId:'activity_'+digest([scope.key,sourceId,generation,page.revision,source.orderBatch,fresh]),expectedRevision:page.revision,batch:{sources:[source],events:[],coverage:[],hints:fresh}};
-   gates.set(request,{scopeKey:scope.key,channel:'host-evidence',purpose:'native-activity',codecVersion:3,sourceId,generation,profileId:profile.id,profileVersion:profile.revision,guard:current});
+   gates.set(request,{scopeKey:scope.key,channel:'host-evidence',purpose:profile.semantics==='local-confirmed-use'?'local-use':'native-activity',codecVersion:3,sourceId,generation,profileId:profile.id,profileVersion:profile.revision,guard:current});
    let result;try{result=await repository.apply(scope,request,{guard:current,signal:abort.signal});}finally{gates.delete(request);}check();
    if(result?.ok)return {...result,gaps:parsed.gaps};if(result?.reason!=='revision-conflict'||attempt===1)throw Error(result?.reason??'native-activity-persist-failed');
   }})]),{now:elapsedNow,schedule,cancel});}finally{active=false;abort.abort();if(rejectAbort)abort.signal.removeEventListener('abort',rejectAbort);context.signal?.removeEventListener('abort',cancelAttempt);attempts.delete(abort);busy--;}

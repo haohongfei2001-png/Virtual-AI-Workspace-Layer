@@ -29,8 +29,12 @@ export async function runDirectoryIDB(output,{authenticated=false}={}){
     h.base.close();const reopened=await h.native.snapshot(h.scope);check(reopened.unknown.some(row=>row.id===D),'reopened-unknown');check(reopened.projects.some(p=>p.members.some(row=>row.id===C)),'prior-project-membership');
     check((await h.dom()).state==='accepted','dom-after');const final=await h.native.read(h.scope);check(final.refs[D]&&final.sources[sourceId].channel==='host-dom','unseen-row-retained');
     h.setPayload(ordinary([]));const empty=await h.observe();check(empty.replayed&&await h.native.version(h.scope)===final.revision,'no-absence-delete');
+    if(!authenticated){h.advance(1);check((await h.dom()).state==='accepted','fresh-positive-fields');const positive=await h.native.read(h.scope);
+    h.advance(1000);check((await h.dom({missingTitle:true})).state==='accepted','partial-field-observation');h.base.close();const partial=await h.native.read(h.scope),partialView=await h.native.snapshot(h.scope);
+    check(partial.refs[C].nativeTitle===positive.refs[C].nativeTitle&&JSON.stringify(partial.refs[C].fieldWitnesses.nativeTitle)===JSON.stringify(positive.refs[C].fieldWitnesses.nativeTitle),'field-title-provenance');
+    check(partialView.refs.find(r=>r.id===C).nativeTitle===positive.refs[C].nativeTitle&&partialView.refs.find(r=>r.id===C).membership==='PROJECT','field-projection-and-membership');}
     const foreign={verified:true,provider:h.scope.provider,accountId:'foreign-fixture',organizationId:h.scope.organizationId};check((await h.native.read(foreign)).revision===0,'scope-isolation');
-    const summary={sameCanonicalSource:true,membershipPreserved:true,unknownRemainsUnknown:true,reopenedIndexedDB:true,absenceDidNotDelete:true,otherScopeEmpty:true,coverageGapPreserved:result.coverage.gaps.includes('missing-inventory-status')};
+    const summary={sameCanonicalSource:true,fieldProvenanceReopened:!authenticated,weakTitleDoesNotRenew:!authenticated,membershipPreserved:true,unknownRemainsUnknown:true,reopenedIndexedDB:true,absenceDidNotDelete:true,otherScopeEmpty:true,coverageGapPreserved:result.coverage.gaps.includes('missing-inventory-status')};
     if(authenticated){
      const {createSessionProvider}=await import('/src/runtime/session-provider.mjs'),{createSharedHostReadBudget}=await import('/src/runtime/shared-host-read-budget.mjs');const now=()=>Date.parse('2026-10-14T00:00:00Z');
      const make=()=>createSessionProvider({origin:location.origin,now,readBudget:createSharedHostReadBudget({repository:h.base,now}),profile:{id:'session',structures:{personal:'personal',workspace:'organization'},directoryReadEnabled:true,currentConversationContextHeader:true,currentConversationRosterContext:true}});

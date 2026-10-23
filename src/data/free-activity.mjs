@@ -2,7 +2,7 @@ import { instant, localDay } from '../navigation/projection.mjs';
 import { freeSegmentFor } from './free-time-policy.mjs';
 import { validateObservedSendAnchor } from './observed-send-anchor.mjs';
 function active(row,sources,clock) {
-  const source=sources[row.sourceId],durableNative=source?.channel==='host-evidence'&&source.codecVersion===3&&['native-activity','native-order'].includes(row.hintType);
+  const source=sources[row.sourceId],durableNative=source?.channel==='host-evidence'&&source.codecVersion===3&&['native-activity','native-order','local-recent-use'].includes(row.hintType);
   return !!source&&!source.revoked&&!row.revoked&&
     (durableNative||source.channel==='host-evidence'&&source.codecVersion===2&&row.kind==='new-send'||source.validUntil===undefined||instant(source.validUntil)>clock)&&
     (durableNative||row.validUntil===undefined||instant(row.validUntil)>clock)&&
@@ -45,7 +45,7 @@ export function projectFreeActivity(snapshot,evidence,session,now) {
       if(seen.has(key)&&JSON.stringify(seen.get(key))!==JSON.stringify(r)){bad.add(key);if(sources[e.sourceId]?.channel==='host-evidence'&&sources[e.sourceId]?.codecVersion===2)originalConflicts.add(key);}else seen.set(key,r);
     }
     const positives=[...seen].filter(([key])=>!bad.has(key)).map(([,r])=>r).sort((a,b)=>instant(b[1])-instant(a[1]));
-    const latest=positives[0];let result=base,nativeOrder=null;
+    const latest=positives[0];let result=base,nativeOrder=null,localUse=null;
     if(latest){
       const lo=freeSegmentFor(latest[0],session),hi=freeSegmentFor(latest[1],session),same=lo===hi&&lo!==null;
       const complete=!bad.size&&covered(coverage.get(id)??[],latest[1],now,sources,clock);
@@ -53,6 +53,10 @@ export function projectFreeActivity(snapshot,evidence,session,now) {
         reason:!same?'interval-crosses-window':hi===0?'positive-send':complete?'covered-history':'historical-anchor-incomplete',sentInterval:{from:latest[0],through:latest[1]}};
     }
     for(const h of hints.get(id)??[]){
+      if(h.hintType==='local-recent-use'){
+        if(active(h,sources,clock)&&sources[h.sourceId]?.codecVersion===3&&instant(h.usedAt)!==null&&instant(h.usedAt)<=clock&&instant(h.usedAt)<=instant(h.observedAt)&&(!localUse||instant(localUse.usedAt)<instant(h.usedAt)))localUse={usedAt:h.usedAt,sourceId:h.sourceId};
+        continue;
+      }
       if(h.hintType==='native-order'){
         const src=sources[h.sourceId];
         if(active(h,sources,clock)&&src?.codecVersion===3&&h.orderBatch===src.orderBatch&&h.orderDomain===src.orderDomain)nativeOrder={sourceId:h.sourceId,domain:h.orderDomain,batch:h.orderBatch,rank:h.rank};
@@ -82,6 +86,12 @@ export function projectFreeActivity(snapshot,evidence,session,now) {
       const candidateDay=localDay(at,session.Z);
       if(result.candidateTime!==null&&instant(at)<=instant(result.candidateTime))continue;
       result={...base,basis:'provisional',candidateDay,candidateTime:at,segment:freeSegmentFor(at,session),reason:self?'confirmed-send-observation':'native-activity-hint',validUntil:sources[h.sourceId]?.codecVersion===3?null:h.validUntil,nextCheck:h.validUntil};
+    }
+    // Local interaction is independent from server activity and strict send
+    // evidence. It can prioritize a verified opened item, never assert an ACK.
+    if(localUse){
+      if(result.candidateTime===null||instant(localUse.usedAt)>instant(result.candidateTime))result={...base,basis:'provisional',candidateDay:localDay(localUse.usedAt,session.Z),candidateTime:localUse.usedAt,segment:freeSegmentFor(localUse.usedAt,session),reason:'local-recent-use'};
+      result={...result,localUse};
     }
     if(bad.size&&result.basis==='undated')result={...result,reason:'conflicting-send-evidence'};
     return nativeOrder?{...result,nativeOrder,reason:result.basis==='undated'?'native-relative-order':result.reason}:result;

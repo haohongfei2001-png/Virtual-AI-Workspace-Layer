@@ -27,7 +27,7 @@ function source(row){
 function validateRow(table,row,state){
  if(table==='sources'){source(row);return;}
  witness(row,state);id(row.conversationId);
- if(state.sources[row.sourceId].channel==='host-evidence'&&(state.sources[row.sourceId].codecVersion===2?table!=='events':state.sources[row.sourceId].codecVersion===3?table!=='hints'||!['native-activity','native-order'].includes(row.hintType):table!=='hints'||row.hintType!=='observed-self-send'))throw Error('unsupported-host-evidence-kind');
+ if(state.sources[row.sourceId].channel==='host-evidence'&&(state.sources[row.sourceId].codecVersion===2?table!=='events':state.sources[row.sourceId].codecVersion===3?table!=='hints'||!['native-activity','native-order','local-recent-use'].includes(row.hintType):table!=='hints'||row.hintType!=='observed-self-send'))throw Error('unsupported-host-evidence-kind');
  if(table==='events'){
   shape(row,[...witnessFields,'conversationId','messageId','branchId','actorVerified','actorScopeKey','role','kind','sendState','sentAt','precision'],['sentInterval']);
   id(row.messageId);id(row.branchId);
@@ -39,6 +39,10 @@ function validateRow(table,row,state){
    if(time(row.sentInterval.through)>time(row.observedAt))throw Error('future-free-send-interval');
   }else throw Error('unknown-free-send-time');
  }else if(table==='hints'){
+  if(row.hintType==='local-recent-use'){
+   shape(row,[...witnessFields,'conversationId','eventKey','hintType','validUntil','usedAt','actionKey']);id(row.eventKey);id(row.actionKey);
+   if(state.sources[row.sourceId].channel!=='host-evidence'||state.sources[row.sourceId].codecVersion!==3||time(row.usedAt)>time(row.observedAt)||time(row.observedAt)-time(row.usedAt)>=6000||time(row.validUntil)<=time(row.observedAt))throw Error('invalid-local-use');return;
+  }
   if(row.hintType==='native-order'){
    shape(row,[...witnessFields,'conversationId','eventKey','hintType','validUntil','orderDomain','orderBatch','rank']);id(row.eventKey);id(row.orderDomain);id(row.orderBatch);
    if(state.sources[row.sourceId].codecVersion!==3||!Number.isSafeInteger(row.rank)||row.rank<0||row.rank>=256||time(row.validUntil)<=time(row.observedAt))throw Error('invalid-native-order');return;
@@ -112,7 +116,7 @@ export function applyFreeEvidence(state,command,{scope,now,channel,historical=fa
   }
   const hints=[];for(const input of command.batch.hints){
    if(Object.hasOwn(input,'revoked'))throw Error('free-evidence-revocation-replay');
-   const row={...input,revoked:false};if(channel==='host-evidence'&&!['observed-self-send','native-activity','native-order'].includes(row.hintType))throw Error('unsupported-host-evidence-kind');validateRow('hints',row,historical?{...next,sources:historicalSources}:next);const src=historical?historicalSources[row.sourceId]:next.sources[row.sourceId];
+   const row={...input,revoked:false};if(channel==='host-evidence'&&!['observed-self-send','native-activity','native-order','local-recent-use'].includes(row.hintType))throw Error('unsupported-host-evidence-kind');validateRow('hints',row,historical?{...next,sources:historicalSources}:next);const src=historical?historicalSources[row.sourceId]:next.sources[row.sourceId];
    if(src.revoked||time(src.validUntil)<=clock)throw Error('inactive-free-evidence-source');
    if(src.channel!==channel)throw Error('free-evidence-channel-mismatch');
    if(row.hintType!=='observed-self-send'&&time(row.validUntil)>time(src.validUntil))throw Error('hint-exceeds-source-expiry');hints.push(row);

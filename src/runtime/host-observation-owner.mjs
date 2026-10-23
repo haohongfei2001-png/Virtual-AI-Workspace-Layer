@@ -10,7 +10,7 @@ import {directoryTarget,directoryRequest,directoryBatch} from '../host/directory
 import {digest} from '../data/hash.mjs';
 import {lifecycleKind,validateNativeLifecycleChange} from '../data/native-lifecycle.mjs';
 /** Privileged owner; the gate recognizes request object identity, never serialized labels. */
-export function createHostObservationOwner({handshake,authority,getFrame,profiles,onAccepted=null,foregroundReadPending=()=>false,onSendIntent=null,onSendGap=null,onNativeDelta=null,ackAdmission=null,now=Date.now,maxProducers=128,elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout,makeId=()=>crypto.randomUUID()}={}){
+export function createHostObservationOwner({handshake,authority,getFrame,profiles,onAccepted=null,foregroundReadPending=()=>false,onSendIntent=null,onSendGap=null,onNativeDelta=null,onCurrentObserved=null,ackAdmission=null,now=Date.now,maxProducers=128,elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout,makeId=()=>crypto.randomUUID()}={}){
  if(!handshake?.verify||!handshake?.isBound||!handshake?.matchesFrame||!authority?.peek||!authority?.scopeFor||typeof getFrame!=='function'||!(profiles instanceof Map))throw Error('invalid-host-observation-owner');
  const admissions=new WeakMap(),lifecycleAdmissions=new WeakMap(),producers=new Map(),failedBatches=new Map(),bodies=new Map(),reads=new Set();let busy=null,stopped=false,joint=null,runs=0;
  async function track(work){runs++;try{return await work();}finally{runs--;}}
@@ -212,6 +212,7 @@ export function createHostObservationOwner({handshake,authority,getFrame,profile
     }
     const receiptId='body_'+digest([grant.id,proposal.producerToken,proposal.localSeq,semanticFingerprint]).slice(0,48);
     if(!combined){producers.set(proposal.producerToken,{isBound:producerCurrent,scopeKey:scope.key,grantId:grant.id,scopeEpoch:grant.scopeEpoch,seq:proposal.localSeq,fingerprint:semanticFingerprint,receiptId,bodyProofId:proofId,bodyEpoch,bodyRegionEpoch:body.regionEpoch,until:Math.min(Date.parse(grant.expiresAt),time+20000)});
+    if(proofId)try{await onCurrentObserved?.(proofId);}catch{}
     return {state:'accepted',localSeq:proposal.localSeq,receiptId,bodyProofId:proofId,bodyEpoch};}
    }
    // Only background directory packets yield; current body/send causality keeps
@@ -272,6 +273,7 @@ export function createHostObservationOwner({handshake,authority,getFrame,profile
    // IDless controls and detached handles also drive live candidate UI.
    const liveControlsChanged=surfaceProposal.payload.detachedHandles.length>0||surfaceProposal.payload.candidates.some(candidate=>candidate.target.kind==='live-control');
    try{if(!coalesced||liveControlsChanged)onAccepted?.(scope,{background:!combined&&!isBody&&!isSend});}catch{}
+   if(combined&&bodyEntry?.current())try{await onCurrentObserved?.(bodyEntry.proofId);}catch{}
    batchCommitted=true;if(combined)failedBatches.delete(proposal.producerToken);return {state:'accepted',localSeq:proposal.localSeq,receiptId,...(combined?{bodyProofId:bodyEntry?.proofId??null,bodyEpoch:batchBodyEpoch??bodyEntry?.bodyEpoch??0}:{})};
   }catch{return rejected('invalid-host-observation');}
   finally{if(request)admissions.delete(request);if(newBatchProof&&!batchCommitted){failedBatches.set(newBatchProof.producerToken,newBatchProof);if(bodies.get(newBatchProof.producerToken)?.proofId===newBatchProof.proofId)discardBody(newBatchProof.producerToken);}}

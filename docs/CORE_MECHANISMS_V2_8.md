@@ -32,7 +32,7 @@ Free项目“＋”进入已核验原生Project的新聊天入口；新Project�
 
 ObservationHint保留原有来源提示与短期有效期。新增的LocalSendAnchor属于同evidence体系中的`observed-self-send`持久观察锚：只有本地本人intent、确切message/operation和独立确证ACK关联后才能建立，保存首次本机有界观察区间/ACK witness/clockBasis/calibrationDueAt，始终只支持provisional，没有sentAt/serverTime。它不是放松UserSendEvent，也不能由旧短TTL hint批量升级。
 
-点击、打开、改名、改文件、AI回复、updated_at、HTTP Date、导入、首次发现均不自动算新发送。合格的同域原生近期顺序可供无日期排序；经核验语义/单位的对象更新时间可供provisional最近活动。二者不写本人sentAt、actorVerified或成功ACK；首次观察只建baseline，重复打开/轮询/置顶/筛选/虚拟滚动不续活动起点。严格UserSendEvent与ACK锚原义保留，UNKNOWN不作NONE，未见不删除，原生搜索始终可达。某种字段用作弱提示也需验证负面语义；没有合格ACK、只有optimistic气泡或整个流complete不得形成持久观察锚。
+点击、打开、改名、改文件、AI回复、updated_at、HTTP Date、导入、首次发现均不自动算新发送。合格的同域原生近期顺序可供无日期排序；经核验语义/单位的对象更新时间可供provisional最近活动。二者不写本人sentAt、actorVerified或成功ACK；首次观察只建baseline，轮询/置顶/筛选/虚拟滚动不续发送或原生更新时间；用户明确打开并确认到达可更新独立本地最近使用，不续写任何发送锚。严格UserSendEvent与ACK锚原义保留，UNKNOWN不作NONE，未见不删除，原生搜索始终可达。某种字段用作弱提示也需验证负面语义；没有合格ACK、只有optimistic气泡或整个流complete不得形成持久观察锚。
 
 同scope/C/message语义事件只记录一次，重复打开不修改immutable事件的observedAt，lastSeen/witness另行更新；event key不得依赖current branch leaf，谱系固定到该消息。相同message原始时间冲突隔离，不取较晚值。InventoryCoverage、成员完整性和TimeCoverage分别保存：已读一些对象不等于全账户；一条可信今天发送可证明近期，却不能证明历史无更晚输入。NONE按各自活动计算，不把整份普通聊天列表造为一个Project。
 
@@ -60,7 +60,7 @@ ActivityDecision包含对象ID、exact/interval/provisional/undated依据、可�
 
 项目决策聚合实际成员最近有效可信活动（严格发送或provisional原生更新时间；相对顺序无日期），一个近期成员足以使项目近期。P有未知成员时不宣称完整历史，但已有旧锚可支持可逆下沉。P在一个显示段出现一次，子窗口跟随父项目；旧窗口在该P内展开，不按自身旧日期另造卡片。成员集合版本是P局部版本，无关Q更新不得使全部P成员失效。
 
-NONE按自身活动分段；UNKNOWN独立可达，不假装Project。普通按有效活动排序，同值用原生稳定顺序/稳定ID；人工固定仅快捷可达，不把访问当活动。点选/拖动/composition时保持原目标、焦点和当前项，在安全更新点重排，不无限不刷新。历史ViewSession不会因另一个tab新策略改变而被重新解释。
+NONE按自身活动分段；UNKNOWN独立可达，不假装Project。普通按有效活动排序，同值用原生稳定顺序/稳定ID；人工固定仅快捷可达，不把访问当发送。独立local-recent-use可由明确用户操作及当前对象确认形成provisional最近使用，首次发现/自动刷新/恢复/重复派发不产生使用。点选/拖动/composition时保持原目标、焦点和当前项，在安全更新点重排，不无限不刷新。历史ViewSession不会因另一个tab新策略改变而被重新解释。
 
 ### 3.4 校准调度与验收目标
 

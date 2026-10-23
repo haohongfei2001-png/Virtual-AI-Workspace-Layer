@@ -2,6 +2,8 @@
 
 2026-10-22用户采纳[PR16体验裁决](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16#issuecomment-6335005042)：本人Mac Chrome主用连续体验为个人交付标准。原计划及81项原表按①个人必需/②发布完善/③后续优化/④取消简化分层；历史结果不改PASS，取消的全历史与逐消息完整审计不转为发布欠账。安全、权限、正确归属、资产、完整v2.7不削弱。
 
+2026-10-23用户正式采纳[PR16渐进积累修正6356448353](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16#issuecomment-6356448353)：Free按同scope/nativeID多来源逐字段积累，不以统一接口、全历史或逐消息完整审计作为首次可用前提。产品路线GO不代表网站提取许可；未获准的接口、DOM程序化提取和截获仍关闭，不改变身份/空间、成员证据、资产或恢复边界。
+
 ## 1. 已批准产品与正式Host规格
 
 Free-first / Pro-later已经批准。Free使用真实ChatGPT Project稳定ID/原名与Conversation，确认NONE与UNKNOWN分开，原生历史/搜索/新建/输入/消息/工具保持；活跃和渐进历史、默认30/手动H、工作集/片段、持久恢复属于Free；全库密度auto H后置③。Pro保留虚拟组织/派生标题/Series/拆合/人工约束及端云模型目标，旧人工作品受保护，不提前开发Pro AI或收费。

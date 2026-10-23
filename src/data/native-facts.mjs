@@ -7,7 +7,28 @@ const availabilityValues = ['available', 'unavailable', 'unknown'];
 const membershipValues = ['PROJECT', 'NONE', 'UNKNOWN'];
 const rowWitnessFields=['sourceId','generation','sourceRevision','observedAt','validUntil'];
 const rowFields={projects:['id','nativeName','nativeUrl','availability',...rowWitnessFields],refs:['id','nativeTitle','nativeUrl','availability',...rowWitnessFields],membership:['id','state','projectId',...rowWitnessFields]};
-const rowOptional={projects:['nativeAliases','memberCount'],refs:['nativeAliases'],membership:[]};
+const rowOptional={projects:['nativeAliases','memberCount','fieldWitnesses'],refs:['nativeAliases','fieldWitnesses'],membership:['fieldWitnesses']};
+const mergeFields={projects:['nativeName','nativeUrl','availability','memberCount'],refs:['nativeTitle','nativeUrl','availability'],membership:['state']};
+/** Field provenance survives a partial observation by another admitted channel
+ * in the same source family. A field never acquires a newer timestamp merely
+ * because another field was seen. Membership state/projectId is one fact. */
+export const nativeFieldWitness=(row,field)=>row?.fieldWitnesses?.[field]??row;
+export const nativeFieldConflicted=(row,field)=>row?.fieldWitnesses?.[field]?.conflicted===true;
+function mergeFieldsFrom(previous,row,table,provenance,channel,current){
+ const result={...row,...provenance},stamps={};
+ for(const field of mergeFields[table]){
+  if(field==='memberCount'&&!Object.hasOwn(row,field)&&!Object.hasOwn(previous??{},field))continue;
+  const prior=nativeFieldWitness(previous,field),oldChannel=prior?.channel??current.sources[previous?.sourceId]?.channel;
+  const reusable=previous&&previous.sourceId===provenance.sourceId&&previous.generation===provenance.generation&&!current.sources[previous.sourceId]?.revoked;
+  const weak=!Object.hasOwn(row,field)||row[field]===null||field==='availability'&&row[field]==='unknown'||field==='state'&&row[field]==='UNKNOWN';
+  const same=field==='state'?row.state===previous?.state&&row.projectId===previous?.projectId:row[field]===previous?.[field];
+  const conflict=reusable&&!weak&&!same&&oldChannel!==channel&&timestamp(prior.observedAt)===timestamp(provenance.observedAt);
+  const retain=reusable&&(weak||timestamp(prior.observedAt)>timestamp(provenance.observedAt)||prior.conflicted&&timestamp(prior.observedAt)>=timestamp(provenance.observedAt));
+  if(retain){result[field]=previous[field];if(field==='state')result.projectId=previous.projectId;stamps[field]={...Object.fromEntries(rowWitnessFields.map(k=>[k,prior[k]])),channel:oldChannel,conflicted:prior.conflicted===true};}
+  else stamps[field]={...provenance,channel,conflicted:!!conflict};
+ }
+ result.fieldWitnesses=stamps;return result;
+}
 export const hostNativeChannel=value=>value==='host-dom'||value==='host-metadata';
 function identifier(value) {
   if (!tokenOK(value) || reserved.has(value)) throw Error('invalid-native-id');
@@ -94,6 +115,14 @@ function validateNativeFactsStructure(facts, scope) {
       if (row.nativeAliases !== undefined && (!Array.isArray(row.nativeAliases) || row.nativeAliases.length > 20 || row.nativeAliases.some(v => typeof v !== 'string' || !v.trim() || v.length > 200))) throw Error('invalid-native-aliases');
       if (row.memberCount !== undefined && row.memberCount !== null && (!Number.isSafeInteger(row.memberCount) || row.memberCount < 0 || row.memberCount > 100000)) throw Error('invalid-native-member-count');
       witness(row);
+      if(row.fieldWitnesses!==undefined){
+        shape(row.fieldWitnesses,mergeFields[table].filter(field=>Object.hasOwn(row,field)));
+        for(const [field,stamp] of Object.entries(row.fieldWitnesses)){
+          shape(stamp,[...rowWitnessFields,'channel','conflicted']);witness(stamp);
+          const owner=facts.sources[stamp.sourceId];
+          if(!Object.hasOwn(row,field)||!hostNativeChannel(stamp.channel)||typeof stamp.conflicted!=='boolean'||stamp.sourceId!==row.sourceId||stamp.generation!==row.generation||!owner||owner.sourceRevision<stamp.sourceRevision||timestamp(stamp.observedAt)>timestamp(owner.observedAt))throw Error('invalid-native-field-witness');
+        }
+      }
       const source = facts.sources[row.sourceId];
       if (!source || source.generation !== row.generation || source.sourceRevision < row.sourceRevision) {
         throw Error('orphan-native-witness');
@@ -171,12 +200,12 @@ export function applyNativeObservations(current, batch, {scope, channel, sourceI
       else nativeObject(row, table === 'projects' ? 'nativeName' : 'nativeTitle');
       const previous = next[table][row.id];
       if (previous && previous.sourceId !== sourceId && !current.sources[previous.sourceId]?.revoked) throw Error('native-source-conflict');
-      next[table][row.id] = {...row, ...provenance};
+      next[table][row.id] = hostNativeChannel(channel)?mergeFieldsFrom(previous,row,table,provenance,channel,current):{...row, ...provenance};
       if (table !== 'membership') {
         const field = table === 'projects' ? 'nativeName' : 'nativeTitle';
-        const retain = previous && previous.sourceId === sourceId && previous.availability === 'available' && nativeWitnessActive(previous, current, now);
+        const retain = previous && previous.sourceId === sourceId && previous.availability === 'available' && !nativeFieldConflicted(previous,field) && nativeWitnessActive(previous, current, now);
         const aliases = retain ? [...(previous.nativeAliases ?? []), previous[field]] : [];
-        next[table][row.id].nativeAliases = [...new Set(aliases.filter(v => v && v !== row[field]))].slice(-20);
+        next[table][row.id].nativeAliases = [...new Set(aliases.filter(v => v && v !== next[table][row.id][field]))].slice(-20);
       }
     }
   }

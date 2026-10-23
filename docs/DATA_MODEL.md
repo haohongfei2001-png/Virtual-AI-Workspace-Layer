@@ -56,6 +56,8 @@ ObservationProposal包含protocol、document/producer token、localSeq、routeEp
 | FieldWitness | receipt、fieldRevision、producerGeneration、upstreamRevision、verificationEpoch、observedAt、freshnessUntil、revoked | freshness不是访问授权，receipt在RAM中的ID不是可恢复接纳证明 |
 | canonical source | scope内统一NativeRepository来源、持久generation、注册profile与撤销状态 | 各producer先归约，不直接互相native-source-conflict；统一source不洗白低信任输入 |
 
+2026-10-23当前窄实现：Host事实行可带`fieldWitnesses`，字段维度记录sourceId/generation/sourceRevision/observedAt/validUntil/channel/conflicted；PROJECT/NONE的state+projectId原子合并。无字段图的旧行沿用行见证；同一canonical profile族的DOM/metadata互补，其他未撤销source族仍拒绝覆盖。弱字段保留原值和原时间；等时跨channel强冲突隐藏对应显示字段，后续较新正向事实可解除。字段冲突不借别名泄露，URL冲突不派发。缺席不删除，UNKNOWN不覆盖PROJECT/NONE；明确unavailable/撤销仍fail-closed。没有新增表、库键或hash算法。旧包不认识可选字段图与新hint会拒绝读取，不宣称可无损降版，不清库降级。
+
 每字段只保存当前和有限冲突候选、必要来源摘要；不保存无限DOM、完整网络响应或第二份全量refs。producer重启失效其待处理提案，不使持久source generation每次变化、清空已知历史。
 
 2026-10-22目录消费窄接线：worker私有`directoryProvider`以同一context对象绑定固定首屏请求、主体来源、grant/epoch、文档及目标；页面无目录RPC。owner复用原canonical sourceId/generation和同库CAS，以`host-metadata / directory-candidates`持久接纳正向ID/原名，不能伪装`host-dom / surface`。admission.coverage仅记录**最新批次**的过滤域、缺口和本页终止；不重证旧行或聚合成完整库存。membership为空、inventory始终partial、无活动/ACK/缺席删除。缺名不覆盖或续证已知原名，明确首屏参数冲突拒绝；缺完整库存声明仍可保留合法条目。待恢复pending-evidence优先，目录暂缓或输掉原revision CAS；原ACK续接谓词不放宽。
@@ -93,6 +95,7 @@ InventoryCoverage以CoverageDomain区分projects-index/recent-list/project-membe
 | ObservationHint | 原有eventKey/hintType/observedAt/validUntil/candidateInterval及witness | 保留短期提示语义，重复不续TTL；不能批量转换为持久发送证据 |
 | LocalSendAnchor | `kind=observed-self-send`；scope/C/message eventKey、ackReceipt、firstObservedAt、本机有界interval、clockBasis/quality、calibrationDueAt、revoked | 新codec的持久本地确证ACK观察，永远provisional，没有sentAt/serverTime；校准due不删除已确认活动，原起点不随重开/轮询变 |
 | RecencyObservation | 同domain nativeOrder、baseline/newID/order/title change、前后digest、observedAt、carriesSendTime=false | 可直接支持同域无日期稳定排序及发现/校准；首次25条、置顶、改名不制造发送或日期 |
+| LocalRecentUse | 私有导航owner确认后的scope/C/action摘要和usedAt；codec3独立local-recent-use hint、每C仅最新一项 | 同对象确认或同scope/tab/document有界到达，不取网络；重复action不续期，恢复不造新使用；无actorVerified/sentAt/ACK，撤销和scope准入保持 |
 | NativeActivityObservation | 私有provider proof下的scope/profile、原生C ID及可选updateTime；单位和排序域由包内profile明确 | codec3同库CAS：每来源/C/种类一个最新快照；更新时间provisional，同域同批rank无日期；新grant/准入前不可读，撤权不复活；无新生产profile默认关闭 |
 | ActivityDecision | objectKey、evidenceRevision、exact/interval/provisional/undated、candidateTime/day/segment、reason、nextCheck | 纯可重算投影，不写回sentAt/membership；依据缺失不制造确定旧日期 |
 | FreeViewPreferences/ViewSession | H∈7/14/30/60/90、T/Z/policyRevision、人工锁/auto、旧项/容量/侧栏、anchor/scroll | 同一偏好owner；历史会话固定H/T/Z，其他tab更新不误解释原k |
