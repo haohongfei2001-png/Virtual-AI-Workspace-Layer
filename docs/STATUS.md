@@ -1,5 +1,16 @@
 # VAIWL实际状态：渐进积累工程已接线，真实来源逐项待准入
 
+
+## Mac续验检查点：浏览器连接恢复，聊天布局差额已修，正式frame握手仍失败（r24，2026-10-23）
+
+接续 `a55d63ba`。本人重启后，原hongfei hao Profile经正式浏览器控制恢复；不再把旧“Work本地浏览器禁用”当作当前阻塞，具体旧策略分支仍未证实。原ID/manifest、旧数据库、额外副本与三个stash保留；没有卸载、换Profile、内部接口或新增来源实验。
+
+真实已有Project聊天验证了三个布局差额：原等待器只处理首页，聊天页在原生区域尚未出现时就挂载；Project面包屑占据旧固定返回位置；滚动内容原始矩形伸到标题栏后方但已被原生viewport裁剪。沿既有adapter与mount修复：同一6秒就绪等待覆盖聊天页并检查几何；只在显式observed profile中寻找经过原有paint/hit/原生保护校验的空白四格位置，允许纯色非交互背景；裁剪仅适用可证实受viewport约束的后代，fixed/外部absolute/顶层仍使用原几何拒绝。没有重做UI、改变身份或清库。失败诊断增加固定geometry阶段，不含标题、ID、正文或凭据。
+
+**实际Mac仍FAIL**：r24聊天页与首页曾进入ready并加载两个正式frame，但module-ready/public JOIN/grants均为0，随后ui-grant-expired；另一轮针对启动的读取出现layout-failed，原失败不删除。frame加载不等于正式界面显示，尚未确定握手失败根因。新聊天、搜索/返回、私人缓存、worker恢复与账户隔离未完成；获准测试消息仍未发送。
+
+必要定向单元、真实headless几何反例与既有隔离正式MV3连续流程通过，均不升级为Mac PASS。r24可恢复包 `/Users/hhf/Downloads/VAIWL-Browser-Local-Mac-20261023-r24/extension`，196文件核验，ZIP SHA256 `08aab699111985f0d648e2fa76d7f122cccbb38a7ce58aa4a2263441b8c67f9d`；已先备份再更新同一原加载目录。分轮事实与hash见[原回执r24Checkpoint](engineering/free-mac-home-acceptance-20261023.json)。下一项仍是正式frame启动/握手，不要求本人再次改设置、重装或来源测试；未宣称日用交付。
+
 ## Mac续验检查点：侧栏遮罩稳定修复；r17待实机续验（2026-10-23）
 
 接续 `87fb5734`。原Profile恢复后，真实页面观察到两类遮罩变化：加载行消失使19个行根变为1个容器根；新增行使19个根变为20个。修复沿既有adapter/native-history-list固定当次已校验行集合，仅更新裁剪矩形；新增行仍原生可见且可发现，删除、重排、夹入间隙或不安全控件仍拒绝。没有冻结数据、猜归属或放宽身份。

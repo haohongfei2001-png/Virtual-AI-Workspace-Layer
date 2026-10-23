@@ -764,3 +764,9 @@ test('late gap acknowledgement cannot unlock a replacement producer before its o
  releaseBody();await settle();f.click();await settle();assert.equal(next.filter(p=>p.kind==='send-candidate').length,1);
  assert(next.every(p=>p.producerToken==='replacement'&&p.routeEpoch===5));f.adapter.stop();
 });
+
+test('observed header gap policy is accepted only with its explicit safe layout',()=>{
+ const nativeLayout={...explicitLayout,returnPlacement:'header-gap',returnHitRoot:'#hit',headerLayout:'transparent-containers',gapPolicy:'first-empty-header-gap'};
+ assert.doesNotThrow(()=>fixture({profile:{...LEGACY_SURFACE_PROFILE,nativeLayout}}));
+ for(const patch of [{gapPolicy:'unknown'},{headerLayout:undefined},{returnPlacement:undefined}])assert.throws(()=>fixture({profile:{...LEGACY_SURFACE_PROFILE,nativeLayout:{...nativeLayout,...patch}}}),/invalid-native-layout-profile|invalid-native-return-placement/);
+});

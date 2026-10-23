@@ -14,11 +14,11 @@ test('observed profile is explicit and cannot replace default or invent authorit
 });
 
 import {waitForNativeHomeLayout} from '../../src/host/chatgpt-observed-profile.mjs';
-test('initial home hydration waits once; timeout, route change and pagehide never authorize startup',async()=>{
- for(const outcome of ['ready','timeout','route','pagehide']){
+test('home and conversation hydration wait once; timeout, route change and pagehide never authorize startup',async()=>{
+ for(const pathname of ['/', '/c/33333333-3333-4333-8333-333333333333', '/g/g-p-11111111111111111111111111111111/c/33333333-3333-4333-8333-333333333333'])for(const outcome of ['ready','timeout','route','pagehide']){
   let hydrated=false,notify,disconnected=false,time=0,next=0;const events=new Map(),timers=new Map(),node={};
-  const document={location:{pathname:'/',href:'https://chatgpt.com/'},documentElement:{},querySelectorAll:()=>hydrated?[node]:[],defaultView:{performance:{now:()=>time},MutationObserver:class{constructor(fn){notify=fn;}observe(){}disconnect(){disconnected=true;}},setTimeout:(fn,ms)=>{const id=++next;timers.set(id,{fn,ms});return id;},clearTimeout(id){timers.delete(id);},addEventListener:(n,fn)=>events.set(n,fn),removeEventListener:n=>events.delete(n)}};
-  let resolved=false;const pending=waitForNativeHomeLayout({document,profile:observed}).then(value=>(resolved=true,value));await Promise.resolve();assert.equal(resolved,false);
+  const document={location:{pathname,href:'https://chatgpt.com'+pathname},documentElement:{},querySelectorAll:()=>hydrated?[node]:[],defaultView:{performance:{now:()=>time},MutationObserver:class{constructor(fn){notify=fn;}observe(){}disconnect(){disconnected=true;}},setTimeout:(fn,ms)=>{const id=++next;timers.set(id,{fn,ms});return id;},clearTimeout(id){timers.delete(id);},addEventListener:(n,fn)=>events.set(n,fn),removeEventListener:n=>events.delete(n)}};
+  let resolved=false;const pending=waitForNativeHomeLayout({document,profile:{...observed,nativeHomeLayout:{...observed.nativeHomeLayout,returnPlacement:undefined},nativeLayout:{...observed.nativeLayout,returnPlacement:undefined}}}).then(value=>(resolved=true,value));await Promise.resolve();assert.equal(resolved,false);
   if(outcome==='ready'){hydrated=true;notify();await Promise.resolve();assert.equal(resolved,false);time=150;[...timers.values()].find(t=>t.ms===150).fn();}
   if(outcome==='timeout'){time=6000;[...timers.values()].find(t=>t.ms===6000).fn();}
   if(outcome==='route'){document.location.href+='c/changed';hydrated=true;notify();}

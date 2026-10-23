@@ -1,10 +1,12 @@
 import {CHATGPT_SIDEBAR_SELECTOR} from './native-surface-boundary.mjs';
 import {CHATGPT_SELECTION_CURRENT_BODY} from './current-body-discovery.mjs';
+import {nativeReturnGapRect} from './native-return-gap.mjs';
+import {createURLPolicy} from './url-policy.mjs';
 import {LEGACY_SURFACE_PROFILE} from './surface-discovery.mjs';
 // The observed Chinese desktop surface is a candidate, not an authority profile.
 // Unsupported membership/send/risk grammars stay absent; no synthetic NONE/ACK.
 export const CHATGPT_OBSERVED_PROFILE=Object.freeze({
- id:'chatgpt-zh-desktop-observed-20261018',revision:5,reconstruction:false,liveVerified:false,
+ id:'chatgpt-zh-desktop-observed-20261018',revision:6,reconstruction:false,liveVerified:false,
  memberAssociation:'route-linked-project-panel-v1',
  nativeProjectLayout:'panel-after-composer',
  sidebarBoundary:CHATGPT_SIDEBAR_SELECTOR,
@@ -19,6 +21,7 @@ export const CHATGPT_OBSERVED_PROFILE=Object.freeze({
   composer:'[data-app-action-timeline-scroll] > [data-thread-scroll-footer]',
   historyList:'nav:not([data-app-navigation-rail]) [data-app-action-sidebar-section] > div > div[aria-hidden]:has([data-sidebar-chatgpt-conversation-key])',
   returnPlacement:'header-gap',returnHitRoot:'[data-app-shell-main-content-layout]',
+  headerLayout:'plain-containers',gapPolicy:'first-empty-header-gap',
  }),
  // The native home composer is centered, outside the welcome region. Never
  // use the whole home main/scroll container: it also owns input and tools.
@@ -39,9 +42,21 @@ export function selectHostSurfaceProfile(id){
 
 /** One bounded DOM-readiness wait before the first handshake. No account read,
  * retry or authority reuse: a changed document/route must start independently. */
-export function waitForNativeHomeLayout({document,profile,timeoutMs=6000,signal=null}){
- if(!profile?.nativeHomeLayout||document.location.pathname!=='/')return Promise.resolve(true);
- const layout=profile.nativeHomeLayout,href=document.location.href,win=document.defaultView;
+export function waitForNativeLayout({document,profile,timeoutMs=6000,signal=null}){
+ const href=document.location.href,route=createURLPolicy({origin:new URL(href).origin}).parse(href);
+ const layout=route.kind==='home'?profile?.nativeHomeLayout:route.kind==='conversation'?profile?.nativeLayout:null;
+ if(!layout)return Promise.resolve(true);
+ const keys=['header','reading','composer','navigationSlot','historyList','returnHitRoot',...(layout.readingViewport?['readingViewport']:[])],win=document.defaultView;
+ const geometryReady=nodes=>{
+  if(layout.returnPlacement!=='header-gap')return true;
+  const byKey=Object.fromEntries(keys.map((key,i)=>[key,nodes[i]])),{header,reading,composer,navigationSlot,historyList,returnHitRoot,readingViewport}=byKey;
+  const rect=node=>{const r=node.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height};};
+  let readingRect=rect(reading);
+  if(readingViewport){const v=rect(readingViewport),h=rect(header),c=rect(composer),x=Math.max(0,v.x),y=Math.max(0,v.y,h.y+h.height);readingRect={x,y,width:Math.min(win.innerWidth,v.x+v.width)-x,height:Math.min(win.innerHeight,v.y+v.height,c.y)-y};}
+  if(readingRect.width<=0||readingRect.height<=0)return false;
+  return !!nativeReturnGapRect({document,header,slot:navigationSlot,hitRoot:returnHitRoot,readingRoot:readingViewport?reading:null,readingViewport:readingViewport??null,viewportFocus:layout.viewportFocus??null,headerLayout:layout.headerLayout??null,gapPolicy:layout.gapPolicy??null,excluded:[historyList,composer],excludedRects:[readingRect]});
+ };
+
  return new Promise(resolve=>{
   let settled=false,observer,timer,stableTimer=null,prior=[];const started=win.performance.now();
   const finish=value=>{if(settled)return;settled=true;observer?.disconnect();win.clearTimeout(timer);win.clearTimeout(stableTimer);signal?.removeEventListener('abort',leave);win.removeEventListener('pagehide',leave);win.removeEventListener('popstate',check);win.removeEventListener('hashchange',check);resolve(value);};
@@ -52,18 +67,22 @@ export function waitForNativeHomeLayout({document,profile,timeoutMs=6000,signal=
    try{
     // Presentation readiness only. Adapter inspection still proves purity,
     // geometry and native control protection after a fresh worker handshake.
-    const groups=['header','reading','composer','navigationSlot','historyList','returnHitRoot'].map(k=>document.querySelectorAll(layout[k]));
-    const nodes=groups.every(items=>items.length===1)?groups.map(items=>items[0]):[];
+    const groups=keys.map(k=>document.querySelectorAll(layout[k]));
+    let nodes=groups.every(items=>items.length===1)?groups.map(items=>items[0]):[];
+    if(nodes.length&&!geometryReady(nodes))nodes=[];
     if(nodes.length&&nodes.length===prior.length&&nodes.every((node,i)=>node===prior[i]))return;
     win.clearTimeout(stableTimer);stableTimer=null;prior=nodes;
     if(nodes.length)stableTimer=win.setTimeout(()=>{
      const elapsed=win.performance.now()-started;
-     if(!signal?.aborted&&document.location.href===href&&elapsed>=0&&elapsed<timeoutMs&&groups.every((_,i)=>{const current=document.querySelectorAll(layout[['header','reading','composer','navigationSlot','historyList','returnHitRoot'][i]]);return current.length===1&&current[0]===nodes[i];}))finish(true);else finish(false);
+     if(!signal?.aborted&&document.location.href===href&&elapsed>=0&&elapsed<timeoutMs&&geometryReady(nodes)&&groups.every((_,i)=>{const current=document.querySelectorAll(layout[keys[i]]);return current.length===1&&current[0]===nodes[i];}))finish(true);else{prior=[];check();}
     },150);
    }catch{finish(false);}
   };
   if(!Number.isFinite(timeoutMs)||timeoutMs<=0||timeoutMs>6000){finish(false);return;}
-  observer=new win.MutationObserver(check);observer.observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:['class','role','data-composer-placement','data-chatgpt-composer','data-sidebar-chatgpt-conversation-key','aria-hidden']});
+  observer=new win.MutationObserver(check);observer.observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:['class','style','role','tabindex','data-composer-placement','data-chatgpt-composer','data-sidebar-chatgpt-conversation-key','aria-hidden']});
   signal?.addEventListener('abort',leave,{once:true});win.addEventListener('pagehide',leave);win.addEventListener('popstate',check);win.addEventListener('hashchange',check);timer=win.setTimeout(()=>finish(false),timeoutMs);check();
  });
 }
+
+// Compatibility for callers of the original home-only readiness helper.
+export const waitForNativeHomeLayout=waitForNativeLayout;
