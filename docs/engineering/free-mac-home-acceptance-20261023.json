@@ -851,6 +851,12 @@
       "Individual breakpoint removal did not confirm success; Debugger.disable succeeded. DOM.disable did not confirm success. Do not label every cleanup step successful."
     ],
     "preservation": "No package changes, attribute edits, extension disable, database edits, account unlock, source experiment or message send.",
-    "nextBoundary": "Do not repeat this consumed batch. Resolve collector contract and bounded branch diagnostics before proposing any new live attempt; no product fix or Mac UI PASS established."
+    "nextBoundary": "Do not repeat this consumed batch. Resolve collector contract and bounded branch diagnostics before proposing any new live attempt; no product fix or Mac UI PASS established.",
+    "postCleanup": {
+      "command": "DOM.disable",
+      "scope": "cleanup only, no refresh or debugger re-enable",
+      "result": "DOM agent has not been enabled",
+      "conclusion": "DOM domain already inactive; initial cleanup failure is preserved above"
+    }
   }
 }
