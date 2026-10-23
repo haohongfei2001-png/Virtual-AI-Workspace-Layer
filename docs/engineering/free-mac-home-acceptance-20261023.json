@@ -757,6 +757,37 @@
       "nativeEditorPresent": false
     },
     "conclusion": "No writer attribution or compatibility repair established. Event truncation invalidates absence-based conclusions. Native account check is a separate current blocker; no retry or challenge handling.",
-    "preservation": "No package upgrade, database mutation, private unlock, message send or new source request; existing extension and all prior evidence preserved."
+    "preservation": "No package upgrade, database mutation, private unlock, message send or new source request; existing extension and all prior evidence preserved.",
+    "offlineObserverReview": {
+      "kind": "PURE_OBSERVER_METHOD_REPRODUCTION",
+      "sourceFile": "bundled browser/26.1016.62342/scripts/browser-service.mjs",
+      "sourceSha256": "4cc91e314d2fcb9ed954436be8467f1ddc9b73a69f5d7001e83ccd283625188d",
+      "firstObservedOrigin": {
+        "truncated": true,
+        "retainedTargetEvents": 1,
+        "hasMore": false
+      },
+      "knownSameOrigin": {
+        "truncated": false,
+        "retainedTargetEvents": 1,
+        "hasMore": false
+      },
+      "unrelatedEventEviction": {
+        "truncated": true,
+        "retainedTargetEvents": 0
+      },
+      "realBrowserCalls": 0,
+      "realAccountRequests": 0,
+      "runtimeModified": false,
+      "conclusion": "truncated does not imply returned target events are unusable; actual prior eviction branch and writer remain unknown",
+      "priorAttemptCorrection": "The collector exited on truncated before inspecting returned events. No returned target event was retained, so the previous attempt cannot establish that no pause was delivered.",
+      "nextCollectorRule": "Inspect already returned target-specific positive evidence before assessing historical completeness. Never infer absence from a truncated interval. Any future live batch still requires fresh explicit scope; do not replay the spent batch.",
+      "currentNativePage": {
+        "readOnlyWithoutReload": true,
+        "accountError": true,
+        "browserCheck": true,
+        "nativeEditor": false
+      }
+    }
   }
 }
