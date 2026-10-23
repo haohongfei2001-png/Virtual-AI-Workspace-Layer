@@ -789,5 +789,68 @@
         "nativeEditor": false
       }
     }
+  },
+  "srcdocAttributionSecond20261024": {
+    "baseHead": "38e60922b27407ad5e5d1745e68cbd56d6805adf",
+    "authorization": "Fresh explicit user grant: original home, one refresh, 30s observation, <=20 pauses, owned frame attribute/source locations only; no bodies, credentials, responses or other tabs.",
+    "consumed": true,
+    "retryAllowed": false,
+    "precondition": {
+      "home": true,
+      "nativeEditor": true,
+      "accountError": false,
+      "browserCheck": false
+    },
+    "result": {
+      "state": "DEADLINE",
+      "refreshes": 1,
+      "pauses": 2,
+      "truncated": true,
+      "ownedFramesArmed": 0,
+      "writes": [],
+      "cleanup": {
+        "breakpointRemovalIncomplete": true,
+        "debuggerDisabled": true,
+        "domDisabled": false
+      },
+      "elapsedMs": 30053,
+      "reload": {
+        "ok": true
+      }
+    },
+    "finalPage": {
+      "nativeEditor": true,
+      "accountError": false,
+      "browserCheck": false,
+      "startup": "surface-failed"
+    },
+    "writer": "NOT_ESTABLISHED",
+    "observerReview": {
+      "kind": "COLLECTOR_EMPTY_URL_BRANCH_ONLY",
+      "old": {
+        "arms": 0,
+        "classification": null
+      },
+      "corrected": {
+        "arms": 1,
+        "classification": [
+          {
+            "ownBreakpoint": true,
+            "hasTopFrame": true,
+            "topUrl": "empty",
+            "kind": "other"
+          }
+        ]
+      },
+      "realBrowserCalls": 0,
+      "actualLivePauseUrl": "NOT_RETAINED_NOT_ESTABLISHED"
+    },
+    "limitations": [
+      "No attribute breakpoint was armed. Two pauses do not prove a srcdoc writer was captured.",
+      "Pause URL and hit classification were not retained in this batch; empty URL branch is a proven collector defect, not an established live cause.",
+      "Individual breakpoint removal did not confirm success; Debugger.disable succeeded. DOM.disable did not confirm success. Do not label every cleanup step successful."
+    ],
+    "preservation": "No package changes, attribute edits, extension disable, database edits, account unlock, source experiment or message send.",
+    "nextBoundary": "Do not repeat this consumed batch. Resolve collector contract and bounded branch diagnostics before proposing any new live attempt; no product fix or Mac UI PASS established."
   }
 }
