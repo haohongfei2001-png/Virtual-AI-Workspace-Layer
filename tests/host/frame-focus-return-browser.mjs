@@ -53,6 +53,31 @@ try{
  const retained=await frame.evaluate(()=>focusResult());assert.equal(retained.label,'较早的30日');assert.equal(retained.disabled,false);
  await page.locator('#native').focus();await frame.evaluate(()=>nav.updateFrameProjection(dto));assert.equal(await page.locator('#native').evaluate(n=>document.activeElement===n&&n.value==='UNSENT LOCAL FIXTURE'),true);
  report.enabledFocusRetained=true;report.nativeFocusAndDraftRetained=true;assert.deepEqual(report.errors,[]);
+ // Finishing a sidebar expansion retires its final "show more" button.
+ // Focus must stay in the owning sidebar instead of falling into the document.
+ await frame.evaluate(()=>{
+  nav.stop();dto.role='sidebar';
+  const item=i=>({id:'unknown_'+i,nativeTitle:'Native '+i,displayTitle:'Native '+i,nativeUrl:'https://chatgpt.com/c/unknown_'+i,available:true,membership:'UNKNOWN',projectId:null,segment:null});
+  dto.entries.unknown={items:Array.from({length:5},(_,i)=>item(i)),total:6,offset:0,limit:5,hasMore:true,inventoryTotal:6};
+  globalThis.sidebarFinal={...dto,entries:{...dto.entries,unknown:{items:Array.from({length:6},(_,i)=>item(i)),total:6,offset:0,limit:17,hasMore:false,inventoryTotal:6}}};
+ });
+ await frame.evaluate(async()=>{
+  const {createNavigation}=await import('/src/navigation/navigation.mjs');
+  nav=createNavigation({document,surface:{role:'sidebar',root:document.querySelector('#mount')},adapter:{currentURL:()=>'',isCurrent:()=>false,status(){}},onProjectionRequest:()=>sidebarFinal});nav.updateFrameProjection(dto);
+ });
+ await frame.getByRole('button',{name:'显示更多归属待核对',exact:true}).focus();
+ await frame.getByRole('button',{name:'显示更多归属待核对',exact:true}).press('Enter');
+ await frame.waitForFunction(()=>!nav.roots().sidebar.shadow.querySelector('[aria-label="显示更多归属待核对"]'));
+ report.sidebarFinalExpansion=await frame.evaluate(()=>{const shadow=nav.roots().sidebar.shadow;return {focusWithin:!!shadow.activeElement,focusedNavigation:shadow.activeElement===shadow.querySelector('.themes'),rows:shadow.querySelectorAll('[data-ref-id]').length};});
+ await frame.evaluate(()=>nav.updateFrameProjection(sidebarFinal));
+ report.sidebarUpdateRetainsFocus=await frame.evaluate(()=>{const shadow=nav.roots().sidebar.shadow;return shadow.activeElement===shadow.querySelector('.themes');});
+ await page.keyboard.press('Tab');
+ report.sidebarNextTab=await frame.evaluate(()=>nav.roots().sidebar.shadow.activeElement?.getAttribute('data-ref-id'));
+ // A row can also disappear from this sidebar after a same-scope update.
+ await frame.evaluate(()=>nav.updateFrameProjection({...sidebarFinal,entries:{...sidebarFinal.entries,unknown:{items:[],total:0,offset:0,limit:17,hasMore:false,inventoryTotal:0}}}));
+ report.sidebarRetiredRow=await frame.evaluate(()=>{const shadow=nav.roots().sidebar.shadow;return shadow.activeElement===shadow.querySelector('.themes');});
+ await page.locator('#native').focus();await frame.evaluate(()=>nav.updateFrameProjection(sidebarFinal));
+ assert.equal(await page.locator('#native').evaluate(n=>document.activeElement===n&&n.value==='UNSENT LOCAL FIXTURE'),true);
  // Reproduce the observer's two-operation race in a controlled order: resolve
  // the old element, let the actual renderer replace it, then evaluate the old
  // handle. A disconnected element's zero is not the current viewport's scroll.
@@ -73,7 +98,7 @@ try{
  const lost=await frame.evaluate(readCurrentWindowScroll);assert.equal(lost.top,0);assert.notEqual(lost.top,before.top,'actual loss must remain a failure of the original equality');
  report.scrollObserver={before,stale,current,realLoss:lost,scope:'CONTROLLED_ELEMENT_RESOLUTION_RENDER_EVALUATION_ORDER_ONLY'};
  await retired.dispose();
- report.ok=report.checks.length===5&&report.checks.every(c=>c.workspace&&!c.disabled&&c.connected&&(!c.afterRefresh||c.afterRefresh.workspace));if(!report.ok)process.exitCode=1;
+ report.ok=report.sidebarRetiredRow&&report.sidebarFinalExpansion.focusedNavigation&&report.sidebarUpdateRetainsFocus&&report.sidebarNextTab==='unknown_0'&&report.checks.length===5&&report.checks.every(c=>c.workspace&&!c.disabled&&c.connected&&(!c.afterRefresh||c.afterRefresh.workspace));if(!report.ok)process.exitCode=1;
 }catch(e){report.ok=false;report.error=e.stack;process.exitCode=1;}
 finally{
  await browser?.close();if(server.listening)await new Promise(r=>server.close(r));
