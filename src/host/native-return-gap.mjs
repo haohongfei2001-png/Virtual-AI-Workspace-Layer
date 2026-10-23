@@ -75,10 +75,18 @@ export function nativeReturnGapRect({document,header,slot,hitRoot,readingRoot=nu
    while(node!==header&&!node.nextElementSibling)node=node.parentElement;
    node=node===header?null:node.nextElementSibling;
   }
-  for(const [x,y]of [[r.x+1,r.y+1],[r.x+35,r.y+1],[r.x+1,r.y+35],[r.x+35,r.y+35],[r.x+18,r.y+18]]){
+  // The approved control has 9px rounded corners. Those four outside-curve
+  // pixels must still expose the proved empty native background, not another
+  // control. Require actual button hits at four additional interior points;
+  // do not confuse its transparent corners with a missing/occluded button.
+  const buttonStyle=button&&win.getComputedStyle(button);
+  const rounded=buttonStyle&&['borderTopLeftRadius','borderTopRightRadius','borderBottomLeftRadius','borderBottomRightRadius'].every(k=>buttonStyle[k]==='9px')&&buttonStyle.clipPath==='none';
+  const points=[[1,1,!rounded],[35,1,!rounded],[1,35,!rounded],[35,35,!rounded],[18,18,true],...(rounded?[[10,10,true],[26,10,true],[10,26,true],[26,26,true]]:[])];
+  for(const [dx,dy,buttonHit]of points){
+   const x=r.x+dx,y=r.y+dy;
    const hits=document.elementsFromPoint(x,y),top=hits[0];
    const background=top===button?hits.find(n=>n!==button):top;
-   if(button&&top!==button||background!==hitRoot&&background!==readingRoot&&background!==readingViewport)return null;
+   if(button&&buttonHit&&top!==button||background!==hitRoot&&background!==readingRoot&&background!==readingViewport)return null;
   }
   // Match the observed header layer; never escalate above native dialogs.
   if(win.getComputedStyle(header).zIndex!=='30')return null;

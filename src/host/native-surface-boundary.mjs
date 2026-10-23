@@ -21,8 +21,8 @@ export function profileElement(document,profile,selector,route=null){
    root=selected;
   }
   if(profile.projectListBoundary&&selector===profile.regions?.members){
-   // Route controls observation only. This list supplies no Project identity,
-   // membership, completeness, current-context or principal evidence.
+   // Route selects a candidate region only. A separate relationship witness
+   // is required for membership; this never supplies scope or completeness.
    if(route?.kind!=='project')return null;
    const selected=oneVisible(document,document,profile.projectListBoundary);
    if(!selected||selected.closest(projectExcluded))return null;
@@ -42,5 +42,41 @@ export function observedProjectListTitle(document,node,root){
   const leaf=wrapper.firstElementChild;
   if(leaf.closest(projectExcluded)||leaf.tagName!=='DIV'||wrapper.lastElementChild.tagName!=='DIV'||leaf.children.length||!visible(document,leaf))return null;
   const text=(leaf.textContent??'').trim();return text&&text.length<=200?{nativeTitle:text,titleState:'exact'}:null;
+ }catch{return null;}
+}
+
+// A bounded relationship witness inside the observed Project panel. Neither
+// the route nor its title alone associates a stale panel with the current P.
+// At least one actual member link must repeat that P; conflicting containers,
+// ambiguous/hidden panels and non-chat tabs leave all membership UNKNOWN.
+// This is a DOM proposal, never an account/Workspace or C2 receipt.
+export function observedProjectAssociation(document,profile,urlPolicy,root){
+ try{
+  if(profile.memberAssociation!=='route-linked-project-panel-v1')return null;
+  const route=urlPolicy.parse(document.location.href);
+  if(route.kind!=='project'||profileElement(document,profile,profile.regions.members,route)!==root||!visible(document,root))return null;
+  const main=root.closest(profile.projectListBoundary),titles=main?.querySelectorAll('h1 > button');
+  if(!main||main.closest(projectExcluded)||titles?.length!==1)return null;
+  const title=titles[0];
+  if(!visible(document,title)||title.closest(projectExcluded)||title.children.length)return null;
+  const nativeTitle=(title.textContent??'').trim();if(!nativeTitle||nativeTitle.length>200)return null;
+  const list=root.parentElement,tabs=list?.querySelectorAll('[role="tablist"]');
+  if(list?.children.length!==2||list.lastElementChild!==root||tabs?.length!==1||!visible(document,tabs[0]))return null;
+  const selected=tabs[0].querySelectorAll('[role="tab"][aria-selected="true"]');
+  if(selected.length!==1||!visible(document,selected[0]))return null;
+  // The observed chats panel is a SECTION/OL of native conversation rows. No
+  // tab label, preview, whole-row text or unrelated page content is read.
+  const section=root.firstElementChild,ol=section?.firstElementChild;
+  if(root.children.length!==1||section?.tagName!=='SECTION'||section.children.length!==1||ol?.tagName!=='OL'||ol.children.length>256)return null;
+  let linked=null;
+  for(const li of ol.children){
+   if(li.tagName!=='LI')return null;
+   const anchors=li.querySelectorAll(':scope > a[href]');if(anchors.length!==1)return null;
+   const anchor=anchors[0],member=urlPolicy.parse(anchor.getAttribute('href'));
+   if(member.kind!=='conversation'||!observedProjectListTitle(document,anchor,root))return null;
+   if(member.containerHint!==null){if(member.containerHint!==route.projectId)return null;linked??=anchor;}
+  }
+  if(!linked)return null;
+  return {projectId:route.projectId,nativeTitle,navigationURL:route.navigationURL,nodes:[main,root,title,selected[0],linked],key:JSON.stringify([route.projectId,nativeTitle,linked.getAttribute('href')])};
  }catch{return null;}
 }

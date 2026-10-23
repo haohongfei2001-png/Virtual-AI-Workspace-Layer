@@ -121,6 +121,12 @@ export function createHostBindingService({extensionId,getFrame,getContexts=null,
   if(!serviceActive)return {ok:false,reason:'host-service-stopped'};
   if(message?.type==='HOST_IDENTITY_RESULT')return identityOwner?identityOwner.handle(message,sender):{ok:false};
   if(message?.type==='HOST_INGESTION_PASS')return ingestionPasses?ingestionPasses.handle(message,sender):{ok:false};
+  if(message?.type==='HOST_NATIVE_LOCAL_USE'){
+   if(!currentNavigation||!exactHostRecord(message,['v','type','documentToken','producerToken','routeEpoch','actionId','proofId'])||message.v!==1||!tokenOK(message.actionId)||!tokenOK(message.proofId)||!await handshake.verify(message,sender))return {ok:false};
+   const actual=await getFrame({tabId:sender.tab.id,frameId:0});
+   if(!handshake.matchesFrame(message,sender,actual)||!await handshake.verify(message,sender))return {ok:false};
+   return {ok:await currentNavigation.nativeUse({actionId:message.actionId,proofId:message.proofId,binding:message,parentFrame:{tabId:sender.tab.id,documentId:actual.documentId}})};
+  }
   if(message?.type==='HOST_NATIVE_AUTHORIZE'){
    if((!candidates&&!currentNavigation)||!exactHostRecord(message,['v','type','documentToken','producerToken','routeEpoch','command'])||message.v!==1||!await handshake.verify(message,sender))return {ok:false};
    const actual=await getFrame({tabId:sender.tab.id,frameId:0});

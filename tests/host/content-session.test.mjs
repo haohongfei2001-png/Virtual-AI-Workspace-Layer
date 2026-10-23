@@ -398,3 +398,24 @@ for(const exit of ['restore','stop','leave'])test('C2 pending notification durin
  f.events.get('pageshow')?.({persisted:true});await drain();assert.equal(f.calls.length,before,'pending context still needs new READY after return');
  await f.client.contextReady();assert.equal(f.calls.filter(m=>m.type==='HOST_HELLO').length,exit==='restore'?2:1);f.client.stop();
 });
+
+test('native link intent survives same-document rebind but needs matching acknowledged body',async()=>{
+ const f=recentFixture();await f.client.start();const first=f.adapter;
+ first.onNativeUse({actionId:'native_click',conversationId:'c2'},f.binding(),null);
+ await f.send('c1');assert.equal(f.calls.filter(m=>m.type==='HOST_NATIVE_LOCAL_USE').length,0);
+ f.document.location.href+='/c/c2';first.onRebindNeeded();await drain();await f.send('c2');await drain();
+ const used=f.calls.filter(m=>m.type==='HOST_NATIVE_LOCAL_USE');assert.equal(used.length,1);assert.equal(used[0].proofId,'proof');assert.equal(used[0].actionId,'native_click');
+ await f.send('c2');await drain();assert.equal(f.calls.filter(m=>m.type==='HOST_NATIVE_LOCAL_USE').length,1);f.client.stop();
+});
+for(const boundary of ['scope','document','deadline','stop','pending','pagehide'])test('native local use cannot cross '+boundary,async()=>{
+ const f=recentFixture();await f.client.start();f.adapter.onNativeUse({actionId:'native_click',conversationId:'c2'},f.binding(),null);
+ if(boundary==='scope')f.scope('scope-b');if(boundary==='document')f.doc('other');if(boundary==='deadline')await f.advance(6000);
+ if(boundary==='stop'){f.client.stop();await f.client.start();}else if(boundary==='pending'){f.client.contextPending();await f.client.contextReady();}else if(boundary==='pagehide'){f.events.get('pagehide')({persisted:true});f.events.get('pageshow')({persisted:true});await drain();}else {f.adapter.onRebindNeeded();await drain();}
+ await f.send('c2');await drain();assert.equal(f.calls.filter(m=>m.type==='HOST_NATIVE_LOCAL_USE').length,0);f.client.stop();
+});
+test('already-open native link use requires current proof and mismatched producer cannot report',async()=>{
+ const f=recentFixture();await f.client.start();
+ const intent={actionId:'native_click',conversationId:'c1'},proof={conversationId:'c1',bodyProofId:'proof'};
+ f.adapter.onNativeUse(intent,{...f.binding(),producerToken:'wrong'},proof);await drain();assert.equal(f.calls.filter(m=>m.type==='HOST_NATIVE_LOCAL_USE').length,0);
+ f.adapter.onNativeUse(intent,f.binding(),proof);await drain();assert.equal(f.calls.filter(m=>m.type==='HOST_NATIVE_LOCAL_USE').length,1);f.client.stop();
+});

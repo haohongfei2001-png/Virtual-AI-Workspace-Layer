@@ -24,7 +24,22 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
  const clearLearned=()=>{learned=[];learnedScope=null;learnedDocument=null;};
  // RAM-only inspection hint; neither a membership fact nor a reusable proof.
  let recentConversation=null;
- const clearRecent=()=>{recentConversation=null;};
+ let nativeUseIntent=null;
+ function captureNativeUse(s,intent,producer,proof=null){
+  if(!live(s)||!s.ready||!s.scopeKey||!sameProducer(producer,s.binding)||!tokenOK(intent?.actionId)||!tokenOK(intent?.conversationId))return;
+  nativeUseIntent={...intent,scopeKey:s.scopeKey,documentId:s.binding.browserDocumentId,started:elapsedNow()};
+  if(proof?.conversationId===intent.conversationId&&tokenOK(proof.bodyProofId))confirmNativeUse(s,proof.conversationId,proof.bodyProofId);
+ }
+ function confirmNativeUse(s,conversationId,proofId){
+  const intent=nativeUseIntent;if(!intent)return;
+  const elapsed=elapsedNow()-intent.started;
+  if(!live(s)||!Number.isFinite(elapsed)||elapsed<0||elapsed>=6000||intent.scopeKey!==s.scopeKey||intent.documentId!==s.binding.browserDocumentId){nativeUseIntent=null;return;}
+  if(intent.conversationId!==conversationId)return;
+  // Consume before IPC; no automatic retry or persistence of an old gesture.
+  nativeUseIntent=null;
+  void rpc(s,{v:1,type:'HOST_NATIVE_LOCAL_USE',...bindingFields(s.binding),actionId:intent.actionId,proofId},6000-elapsed).catch(()=>{});
+ }
+ const clearRecent=()=>{recentConversation=null;nativeUseIntent=null;};
  function recentId(s,forRebind=false){
   const h=recentConversation;if(!h||!forRebind&&!live(s))return null;
   const wall=now(),elapsed=elapsedNow();
@@ -38,6 +53,7 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
   const body=p.kind==='current-observation'?p.payload.body:p.payload;
   if(body?.association!=='explicit-body-id'||!tokenOK(body.conversationId))return;
   rememberRecentId(s,body.conversationId);
+  confirmNativeUse(s,body.conversationId,result.bodyProofId);
  }
  function rememberRecentId(s,id){
   recentId(s,true);const h=recentConversation;
@@ -215,7 +231,7 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
  function retainMigration(s,handle){const m=liveMigration(s);if(!m)return false;try{if(typeof s.adapter?.retainLoadedHandles==='function'&&s.adapter.retainLoadedHandles(m.leaseOwner,[handle],m.elapsedDeadline)!==true){clearMigration(s);return false;}}catch{clearMigration(s);return false;}m.handle=handle;return true;}
  function dispose(s,keepObservation=false){if(!s)return;clearMigration(s);doc.removeEventListener?.('visibilitychange',s.visibility);doc.defaultView.removeEventListener('focus',s.focus);doc.defaultView.removeEventListener('blur',s.blur);s.restorePending?.();s.capturePending?.cancel();s.snippets?.stop();s.candidates?.stop();try{s.controller?.stop();}catch{}s.abort.abort();try{runtime.onMessage.removeListener(s.listener);}catch{}doc.defaultView.removeEventListener('pagehide',s.pagehide);try{if(!keepObservation||observation?.adapter!==s.adapter)s.adapter?.stop();}catch{}}
  function reset(keepObservation=false){if(!keepObservation)stopObservation();epoch++;const s=current;current=null;dispose(s,keepObservation);}
- function stop(){contextWaitSuspended=false;verificationWaitURL=null;contextResumeAllowed=false;contextResumeMode='workspace';contextResumeURL=null;clearLearned();clearRecent();clearUpgrade();for(const type of ['pointerdown','keydown'])doc.removeEventListener?.(type,interruptUpgrade,true);enabled=false;restoreArmed=false;rebindQueued=false;rebindRun++;reset();doc.defaultView.removeEventListener('pagehide',pagehide);doc.defaultView.removeEventListener('pageshow',pageshow);}
+ function stop(){nativeUseIntent=null;contextWaitSuspended=false;verificationWaitURL=null;contextResumeAllowed=false;contextResumeMode='workspace';contextResumeURL=null;clearLearned();clearRecent();clearUpgrade();for(const type of ['pointerdown','keydown'])doc.removeEventListener?.(type,interruptUpgrade,true);enabled=false;restoreArmed=false;rebindQueued=false;rebindRun++;reset();doc.defaultView.removeEventListener('pagehide',pagehide);doc.defaultView.removeEventListener('pageshow',pageshow);}
  function pagehide(event){
   stopObservation();
   if(event?.persisted!==true){stop();return;}
@@ -349,7 +365,7 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
    // context listener eligible for a later genuine native READY notification.
    // This helper neither retries nor handles explicit negative responses.
    const hello=await handshake(s,{v:1,type:'HOST_HELLO',clientId,seq:++seq});if(contextRecovery===true&&exactHostRecord(hello,['ok','reason'])&&hello.ok===false&&hello.reason==='invalidated-during-check')throw Error('context-handshake-superseded');if(!bindingOK(hello?.binding))throw Error('invalid-host-binding');s.binding=Object.freeze({...hello.binding});
-   let surface;const adapter=s.adapter=adapterFactory({document:doc,onIdleHint:()=>requestAutomaticIdle(s),onNativePrepare:producer=>nativePrepare(s,producer),priorityConversationId:()=>recentId(s),onOldSendOperation:(intent,producer)=>{if(!live(s)||!s.ready||!sameProducer(producer,s.binding))return;void send({type:'HOST_OLD_SEND_OPERATION',documentToken:s.binding.documentToken,producerToken:s.binding.producerToken,routeEpoch:s.binding.routeEpoch,...intent}).catch(()=>{});},onFirstSendIntent:(intent,producer)=>{if(!live(s)||!s.ready||!sameProducer(producer,s.binding)||s.url!==origin+'/')return;void send({type:'HOST_FIRST_SEND_INTENT',documentToken:s.binding.documentToken,producerToken:s.binding.producerToken,routeEpoch:s.binding.routeEpoch,...intent}).catch(()=>{});},onSurfaceChange:records=>{if(live(s))surface?.surrenderChanged?.(records);},isOwnedSurface:node=>live(s)&&surface?.isOwnedSurface?.(node)===true,isOwnedMask:node=>live(s)&&surface?.isMasked?.(node)===true,
+   let surface;const adapter=s.adapter=adapterFactory({document:doc,onNativeUse:(intent,producer,proof)=>captureNativeUse(s,intent,producer,proof),onIdleHint:()=>requestAutomaticIdle(s),onNativePrepare:producer=>nativePrepare(s,producer),priorityConversationId:()=>recentId(s),onOldSendOperation:(intent,producer)=>{if(!live(s)||!s.ready||!sameProducer(producer,s.binding))return;void send({type:'HOST_OLD_SEND_OPERATION',documentToken:s.binding.documentToken,producerToken:s.binding.producerToken,routeEpoch:s.binding.routeEpoch,...intent}).catch(()=>{});},onFirstSendIntent:(intent,producer)=>{if(!live(s)||!s.ready||!sameProducer(producer,s.binding)||s.url!==origin+'/')return;void send({type:'HOST_FIRST_SEND_INTENT',documentToken:s.binding.documentToken,producerToken:s.binding.producerToken,routeEpoch:s.binding.routeEpoch,...intent}).catch(()=>{});},onSurfaceChange:records=>{if(live(s))surface?.surrenderChanged?.(records);},isOwnedSurface:node=>live(s)&&surface?.isOwnedSurface?.(node)===true,isOwnedMask:node=>live(s)&&surface?.isMasked?.(node)===true,
     withNativeReading:read=>live(s)?s.controller?.withNativeReading?.(read)??null:null,urlPolicy:createURLPolicy({origin,profile:{projectId:({container})=>/^g-p-[0-9a-f]{32}$/.test(container)?container:null}}),now,elapsedNow,authorize:async command=>{if(s.candidates?.authorize(command)!==true&&s.plans?.authorize(command)!==true)return false;const result=await rpc(s,{v:1,type:'HOST_NATIVE_AUTHORIZE',...bindingFields(s.binding),command});return result?.ok===true&&(s.candidates?.authorize(command)===true||s.plans?.authorize(command)===true);},beforeDispatch:plan=>plan?.mode==='same-target'||s.plans?.beforeDispatch?.(plan)===true?undefined:s.candidates?.beforeDispatch(),onNativeDispatch:event=>{if(event.plan.target.kind!=='live-control'||!s.scopeKey)return;const identity=s.adapter.captureCandidateIdentity?.(event.plan.control);if(!identity)return;clearUpgrade();upgradeIdentity=identity;upgradeDisplay=s.candidates?.displayFor(event.command)??null;for(const type of ['pointerdown','keydown'])doc.addEventListener?.(type,interruptUpgrade,true);for(const type of ['popstate','hashchange'])doc.defaultView.addEventListener(type,upgradeRoute);upgrade.propose({actionId:event.actionId,identity,scopeKey:s.scopeKey,documentId:s.binding.browserDocumentId,originalURL:s.url,expiresAt:now()+6000});upgradeTimer=schedule(clearUpgrade,6000);},onNativeDispatchCancelled:event=>{if(upgrade.cancel(event.actionId))clearUpgrade();},onRebindNeeded:()=>{if(observation?.adapter===s.adapter)stopObservation();rebind(s);}});
    await startObservation(s);
    const auth=await handshake(s,{v:1,type:'HOST_REFRESH',clientId,seq:++seq,...bindingFields(s.binding)});noteScopeStatus(s,auth);if(auth?.state!=='verified')throw Error('scope-not-verified');if(expectedScope!==null&&auth.scopeKey!==expectedScope)throw Error('recovery-scope-changed');s.contextReadyPending=false;s.scopeKey=auth.scopeKey;s.ackProjects=new Set();s.upgraded=null;

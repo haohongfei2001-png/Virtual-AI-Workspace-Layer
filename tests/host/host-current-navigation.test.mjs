@@ -86,3 +86,13 @@ test('arrival during dispatch is buffered until a valid result and cancellation 
  }
  const uses=[],f=nativeFixture(uses);await f.handle({type:'HOST_UI_DISPATCH_NATIVE'});await f.service.cancelAction(cancelMessage(f),'owned');await f.service.observe('proof');assert.equal(uses.length,0);
 });
+
+test('isolated native use consumes a fresh matching proof once and never dispatches',async()=>{
+ const uses=[],f=fixture(x=>uses.push(x));
+ const args={actionId:'native_click',proofId:'proof',binding:f.context.binding,parentFrame:f.context.parentFrame};
+ assert.equal(await f.service.nativeUse({...args,binding:{...args.binding,producerToken:'other'}}),false);
+ assert.equal(await f.service.nativeUse({...args,parentFrame:{...args.parentFrame,documentId:'other'}}),false);
+ assert.equal(uses.length,0);assert.equal(await f.service.nativeUse(args),true);assert.equal(await f.service.nativeUse(args),false);
+ assert.equal(uses.length,1);assert.equal(uses[0].conversationId,id);assert.equal(f.counts().bridgeCalls,0);
+ f.service.stop();assert.equal(await f.service.nativeUse({...args,actionId:'another'}),false);
+});

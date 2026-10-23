@@ -13,6 +13,18 @@ export function createHostCurrentNavigation({ui,observations,bridge,onConfirmedU
  const key=(context,grantId,mountId)=>JSON.stringify([context.scope.key,context.scopeGrantId,grantId,mountId,context.role]);
  const within=(start,ms)=>{const n=elapsedNow();return Number.isFinite(start)&&Number.isFinite(n)&&n>=start&&n-start<ms;};
  const live=e=>!stopped&&groups.get(e.key)===e&&within(e.created,30000)&&current(e.context);
+ const nativeUses=new Set();
+ // Called only after the service authenticates an isolated content message.
+ // The fresh current-body proof supplies scope/object identity; an action ID
+ // supplies deduplication only, never authority or a successful send.
+ async function nativeUse({actionId,proofId,binding,parentFrame}){
+  if(stopped||!onConfirmedUse||!tokenOK(actionId)||!tokenOK(proofId)||nativeUses.has(actionId)||nativeUses.size>=1024)return false;
+  try{return await observations.withCurrent(proofId,async proof=>{
+   if(stopped||nativeUses.has(actionId)||nativeUses.size>=1024||proof.tabId!==parentFrame.tabId||proof.browserDocumentId!==parentFrame.documentId||['documentToken','producerToken','routeEpoch'].some(k=>proof[k]!==binding[k])||!proof.guard())return false;
+   nativeUses.add(actionId);
+   await onConfirmedUse({scope:proof.scope,conversationId:proof.conversationId,actionId:'native_'+actionId,guard:()=>!stopped&&proof.guard(),signal:proof.signal});return true;
+  });}catch{return false;}
+ }
  function prune(){for(const [id,a]of arrivals)if(stopped||a.action.cancelled||!within(a.started,6000))arrivals.delete(id);for(const [k,e]of groups)if(!live(e))groups.delete(k);for(const [id,action]of actions)if(!current(action.context))actions.delete(id);}
  function register({context,grantId,mountId,navigation}={}){
   if(stopped||!context||!current(context)||typeof context.scope?.key!=='string'||!tokenOK(context.scopeGrantId)||!['workspace','sidebar'].includes(context.role)||!tokenOK(grantId)||!tokenOK(mountId)||!Array.isArray(navigation)||navigation.length>200)throw Error('invalid-current-registration');
@@ -105,6 +117,6 @@ export function createHostCurrentNavigation({ui,observations,bridge,onConfirmedU
    return row.mode==='same-target'?observations.withCurrent(row.bodyProofId,execute):execute(null);
   }),{timeoutMs:6000,now:elapsedNow,schedule,cancel});}catch{return a.nativeAttempt?{ok:true,state:'unconfirmed'}:failure();}finally{a.active=false;attempts.delete(a);if(a.pending&&pending.get(a.actionId)===a.pending)pending.delete(a.actionId);}
  }
- function stop(){stopped=true;groups.clear();actions.clear();pending.clear();arrivals.clear();for(const a of attempts)a.active=false;attempts.clear();}
- return Object.freeze({register,handle,cancelAction,authorize,observe,stop});
+ function stop(){stopped=true;groups.clear();actions.clear();pending.clear();arrivals.clear();nativeUses.clear();for(const a of attempts)a.active=false;attempts.clear();}
+ return Object.freeze({register,handle,cancelAction,authorize,observe,nativeUse,stop});
 }

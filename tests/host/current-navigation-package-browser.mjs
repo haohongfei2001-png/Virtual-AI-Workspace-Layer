@@ -52,6 +52,29 @@ try{
  const renewed=page.frames().find(f=>f.url()===`chrome-extension://${id}/workspace.html`);assert(renewed);
  report.useAfterReload=await localUseState(renewed);assert.deepEqual(report.useAfterReload,report.useAfter,'refresh must not renew local use');
  report.results.push({name:'formal-current-action-persists-one-local-use-without-send-evidence-and-refresh-does-not-renew',status:'PASS'});
+ // Use the real native sidebar after surrendering the formal surface. The
+ // extension must confirm the resulting body under the new SPA binding before
+ // storing recency; it must neither dispatch the native action nor create ACK.
+ if(await back.isVisible())await back.click();
+ const workspace=page.frames().find(f=>f.url()===`chrome-extension://${id}/workspace.html`);assert(workspace);
+ await workspace.getByRole('link',{name:'Ordinary conversation',exact:true}).first().click();
+ await page.getByRole('button',{name:'显示原生列表',exact:true}).click();
+ await page.waitForFunction(()=>document.querySelectorAll('[data-va-owned]:popover-open').length===0,null,{timeout:10000});
+ const nextId='44444444-4444-4444-8444-444444444444';
+ await page.locator('nav[aria-label="Chat history"] a[href="/c/'+nextId+'"]').click();
+ await page.waitForURL(server.origin+'/c/'+nextId);
+ await page.waitForFunction(()=>document.querySelector('iframe[src$="/workspace.html"]'),null,{timeout:15000});
+ await page.frameLocator('iframe[src$="/workspace.html"]').getByRole('link',{name:'Membership not loaded',exact:true}).first().waitFor({state:'attached',timeout:15000});
+ const nativeFrame=page.frames().find(f=>f.url()===`chrome-extension://${id}/workspace.html`);assert(nativeFrame);
+ const useDeadline=Date.now()+6000;do{report.nativeUse=await localUseState(nativeFrame);if(report.nativeUse.hints.some(h=>h.conversationId===nextId))break;await new Promise(r=>setTimeout(r,50));}while(Date.now()<useDeadline);
+ assert.equal(report.nativeUse.hints.filter(h=>h.conversationId===nextId).length,1,'native click must persist only after current body confirmation');
+ assert.equal(report.nativeUse.events,0);assert.equal(report.nativeUse.coverage,0);assert(report.nativeUse.hints.every(h=>h.sentAt===undefined));
+ assert(await page.evaluate(()=>currentEditor===document.querySelector('textarea')&&currentEditor.value==='CURRENT_NAVIGATION_UNSENT_DRAFT'));
+ await page.reload();await page.waitForFunction(()=>document.querySelector('iframe[src$="/workspace.html"]'),null,{timeout:15000});
+ await page.frameLocator('iframe[src$="/workspace.html"]').getByRole('link',{name:'Membership not loaded',exact:true}).first().waitFor({state:'attached',timeout:15000});
+ const afterNativeReload=page.frames().find(f=>f.url()===`chrome-extension://${id}/workspace.html`);assert(afterNativeReload);
+ assert.deepEqual(await localUseState(afterNativeReload),report.nativeUse,'native click recency must survive refresh without renewal');
+ report.results.push({name:'trusted-native-sidebar-spa-arrival-persists-local-use-and-preserves-draft-without-send-or-refresh-renewal',status:'PASS'});
  assert.equal(verifyHost(built.unpacked).status,'OFFLINE_HOST_RECONSTRUCTION');report.browserVersion=context.browser().version();report.status='PASS';
 }catch(e){report.status='FAIL';report.error=e.stack;process.exitCode=1;report.frames=await Promise.all((page?.frames()??[]).map(async f=>{try{return {url:f.url(),state:await f.evaluate(()=>({text:document.body?.innerText,trace:globalThis.currentNavigationTrace,open:document.querySelectorAll('[data-va-owned]:popover-open').length}))};}catch(error){return {url:f.url(),error:String(error)};}}));if(page)try{report.failureScreenshot=join(dir,'failure.png');await page.screenshot({path:report.failureScreenshot});}catch{}}
 finally{await context?.close();await server.close();report.sourceChangedDuringRun=(await Promise.all(Object.entries(manifest.sourceHashes).map(async([p,h])=>hash(await readFile(p))!==h))).some(Boolean);report.scriptChangedDuringRun=hash(await readFile(scriptPath))!==scriptHash;if(report.sourceChangedDuringRun||report.scriptChangedDuringRun){report.status='FAIL';report.error=(report.error??'')+' source-or-script-changed';process.exitCode=1;}await writeFile(process.argv[2]??'/private/tmp/free-current-navigation-package.json',JSON.stringify(report,null,2)+'\n');}console.log(JSON.stringify({status:report.status,error:report.error,results:report.results}));

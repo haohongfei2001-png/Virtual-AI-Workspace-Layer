@@ -1,5 +1,20 @@
 # VAIWL实际状态：渐进积累工程已接线，真实来源逐项待准入
 
+## 渐进个人候选：原生使用、Project 正向归属与返回修复（2026-10-23）
+
+接续已核本地/远端 `519c906e`，沿原 B1/B2/C2–C5 补实际源码差额。正式 v2.7 renderer、双 frame、Native/EvidenceRepository、fieldWitnesses、CAS 和恢复系统继续复用；没有打开演示、访问本人 Chrome 或重测 source-v3。
+
+- **Project 关系候选接线**：`native-surface-boundary → observed profile r5 → surface-discovery → surfaceBatch → 原 owner/CAS`。当前 Project 路由、唯一可见标题/选中面板、严格聊天行结构及至少一条同 Project 的真实链接必须同时吻合；出现其他 Project 链接、旧路由、隐藏/歧义面板或缺少关联时，不提出正向关系。只读标题叶，不读预览/正文；普通近期列表仍 UNKNOWN，未见不删除。重复别名去重，但冲突名称/身份查询仍到严格 gate。**这是既有结构夹具下可审阅的关系候选，不能从离线通过升级为真实网页语义或生产提取许可；profile.liveVerified 仍 false。**
+- **原生侧栏/成员链接的本地最近使用**：隔离 content 仅接受当前已绑定页面内、支持区域中的可信主键点击；记录一次 RAM 意图，在同账户/空间/tab/document 内、6 秒内确认匹配当前 body 后，经 `HOST_NATIVE_LOCAL_USE → current-navigation → 原 activity owner/Evidence CAS` 写 local-recent-use。生产身份、页面证明和来源准入仍独立检查。重复、过期、scope/document 替换、context 撤销、BFCache/stop 不重用旧意图；不拦截原生默认行为，不发请求，不生成 sentAt/ACK/coverage。手输地址、刷新、任意搜索弹层、新标签和未确认新建不因此成为使用事件。
+- **实际连续交互缺陷已修**：Project 原生阅读后，批准圆角四格返回按钮被旧矩形角点命中检查误判为缺失。保留图形/圆角/尺寸，以原生背景核验透明角落，并增加按钮内部命中点；原生角落遮挡仍拒绝。SVG 装饰不接收指针、不重复进入可访问树。没有放宽空间、遮挡或敏感区保护。
+
+定向 Node 检查、Project 关系/冲突/遮罩与返回命中检查通过；实际隔离 headless MV3 验证①原生侧栏 SPA 到达→本地 use→刷新不续时间，原草稿保持；②可信合成空间内 Project/两成员进入同库和正式 UI、查找/安全打开/唯一返回/输入/滚动恢复，以及 worker 丢失撤销旧 frame。**后者在没有新 C2 时安全等待，不等于真实 J4 连续恢复。** 首轮夹具 ID 重复、frame 早到采样、返回故障及临时仪器包失配记录均保留，未抹去失败。详见[本轮回执](engineering/free-progressive-native-integration-20261023.json)；本轮为 writer 差异核查，不冒称独立审查。
+
+已生成并校验新的可安装**开发包**，路径/hash 在回执；默认 scope 配置、读取开关和 `liveVerified` 未翻开，没有更新本人安装。**尚未形成可在真实 ChatGPT 连续使用的个人候选。** 当前真实启动仍缺：获准输入通道，以及该通道内首页/Project/刷新或 worker 恢复的可信当前空间延续；source-v3 只证明先前限定聊天文档链，不覆盖这些页面。正向成员和自然新聊天发现也未获本人真实验收。现有 `observedChatGPTContext` 构建分支已存在，不能把选择它当作解决这些缺口。
+
+下一步只在明确适用的输入许可/合同成立后，按允许通道闭合上述空间和关系合同，沿现有配置/owner 接通，再合批做本人 Mac J1–J4。未满足前不安装成日用版、不新增真实诊断，不绕过 DOM/API 限制；已实现的原生新建、搜索、发送/ID 提升和恢复继续保留，未用本次结果虚报全链路完成。10k/100k 仍 DEFERRED，取消的全历史与逐消息审计不恢复。
+
+
 ## 多来源渐进积累：实际接线与剩余准入（2026-10-23）
 
 正式消费[PR16修正6356448353](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16#issuecomment-6356448353)，从本地/远端一致的cba39ee1继续。**产品路线已采纳；不是生产提取获准或本人日用验收。** 沿原B1/B2/C1–C4/B4–B5实现以下差额，正式renderer、样式、v2.7及人工资产没有改动。

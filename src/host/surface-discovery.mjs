@@ -1,4 +1,4 @@
-import {profileElement,observedProjectListTitle} from './native-surface-boundary.mjs';
+import {profileElement,observedProjectListTitle,observedProjectAssociation} from './native-surface-boundary.mjs';
 import {createBoundedHandleRegistry} from './bounded-handle-registry.mjs';
 import {exactHostRecord} from './contract.mjs';
 
@@ -122,6 +122,11 @@ export function createSurfaceDiscovery({document,binding,urlPolicy,profile=LEGAC
     // A canonical current Project needs route identity and the explicitly scoped
     // member surface; an IDless sidebar label never supplies that identity.
     const members=roots.get('members');
+    const panelAssociation=!candidateOnly&&members?observedProjectAssociation(document,profile,urlPolicy,members):null;
+    if(panelAssociation){
+      currentProjectId=panelAssociation.projectId;contextNodes=panelAssociation.nodes;contextValue=panelAssociation.key;
+      candidates.push({renderKey:`project:${currentProjectId}`,entity:'project',nativeTitle:panelAssociation.nativeTitle,titleState:'exact',target:{kind:'resolved',entity:'project',nativeId:currentProjectId,navigationURL:panelAssociation.navigationURL,liveHandle:null},evidence:evidence('current-project-route','current-project-title','members','route-linked-member')});
+    }
     if(!candidateOnly&&route.kind==='project'&&hasMemberAssociation&&members&&members.getAttribute(profile.memberProjectIdAttribute)===route.projectId&&profile.currentProjectTitle&&profile.currentProjectHeader){
       const heading=unique(profile.currentProjectTitle),header=unique(profile.currentProjectHeader);
       contextNodes=[members,members.parentNode,heading,heading?.parentNode,header,header?.parentNode];
@@ -188,11 +193,14 @@ export function createSurfaceDiscovery({document,binding,urlPolicy,profile=LEGAC
       if(page.priorityNodes?.has(node))continue;
       if(!node.matches(regionKind==='projects'?profile.controls:profile.conversationControls))continue;
       if(!root?.contains(node)||!sampleable(node))continue;
-      if(regionKind==='history'&&page.memberIds.size){const parsed=urlPolicy.parse(node.getAttribute('href'));if(parsed.kind==='conversation'&&page.memberIds.has(parsed.conversationId))continue;}
+      // Observed panel aliases still pass through candidate conflict checks;
+      // a sidebar identity query or conflicting title must not disappear merely
+      // because a Project relationship was proposed for the same C.
+      if(regionKind==='history'&&!panelAssociation&&page.memberIds.size){const parsed=urlPolicy.parse(node.getAttribute('href'));if(parsed.kind==='conversation'&&page.memberIds.has(parsed.conversationId))continue;}
       const item=candidate(node,root,regionKind,regionKind==='projects'?'project':'conversation');
       if(regionKind==='projects'||!item||item.target.kind!=='resolved')continue;
       const conversationId=item.target.nativeId;
-      if(regionKind==='members'&&hasMemberAssociation&&visible(root)&&visible(node)&&route.kind==='project'&&root.getAttribute(profile.memberProjectIdAttribute)===route.projectId){claims.set(conversationId,{conversationId,asserted:'PROJECT',projectId:route.projectId,upstreamRevision:null,evidence:evidence('members','current-project-route')});if(currentProjectId===route.projectId)page.memberIds.add(conversationId);}
+      if(regionKind==='members'&&visible(root)&&visible(node)&&route.kind==='project'&&(panelAssociation?.projectId===route.projectId||hasMemberAssociation&&root.getAttribute(profile.memberProjectIdAttribute)===route.projectId)){claims.set(conversationId,{conversationId,asserted:'PROJECT',projectId:route.projectId,upstreamRevision:null,evidence:evidence('members','current-project-route',...(panelAssociation?['route-linked-member']:[]))});if(currentProjectId===route.projectId)page.memberIds.add(conversationId);}
       else if(!claims.has(conversationId)) claims.set(conversationId,{conversationId,asserted:'UNKNOWN',projectId:null,reason:'membership-not-observed',evidence:evidence(regionKind)});
     }
 

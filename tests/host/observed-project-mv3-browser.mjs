@@ -33,7 +33,7 @@ const server=createServer((req,res)=>{
 await new Promise(r=>server.listen(0,'127.0.0.1',r));const origin='http://127.0.0.1:'+server.address().port,guard=await createHistoricalNetworkGuard({fixtureOrigin:origin});
 const dir=await mkdtemp(join(tmpdir(),'vaiwl-observed-project-mv3-')),built=packageHost(join(dir,'package'),{offlineOrigin:origin,offlineContext:true,offlineProjectContext:true,offlineObservedProjectLayout:true});
 const manifestPath=join(built.unpacked,'build-manifest.json'),manifestBytes=await readFile(manifestPath),info=JSON.parse(manifestBytes),start=performance.now();
-const report={status:'RUNNING',evidence:'ISOLATED_PACKAGED_MV3_OFFLINE_PROJECT_LAYOUT',realChatGPT:'NOT_RUN',projectIdentity:'SYNTHETIC_LOOPBACK_ASSOCIATION_ONLY',membership:'UNKNOWN',release:'NOT_RELEASE_READY',sourceHashes:info.sourceHashes,testHashes,buildManifestHash:hash(manifestBytes),checks:{},requests,package:built};
+const report={status:'RUNNING',evidence:'ISOLATED_PACKAGED_MV3_OFFLINE_PROJECT_LAYOUT',realChatGPT:'NOT_RUN',projectIdentity:'SYNTHETIC_LOOPBACK_ASSOCIATION_ONLY',membership:'ROUTE_LINKED_PANEL_OFFLINE_ONLY',release:'NOT_RELEASE_READY',sourceHashes:info.sourceHashes,testHashes,buildManifestHash:hash(manifestBytes),checks:{},requests,package:built};
 let context,page,worker,id,statusPage;
 const projectRequest=(p,account='account-host-team')=>p.evaluate(async({P,account})=>{await fetch('/backend-api/projects/'+P,{headers:{'ChatGPT-Account-Id':account}});},{P,account});
 const until=async(fn,timeout=10000)=>{const end=performance.now()+timeout;while(performance.now()<end){if(await fn())return;await new Promise(r=>setTimeout(r,25));}throw Error('project-observation-deadline');};
@@ -65,12 +65,13 @@ try{
  const rosterBefore=requests.filter(r=>r.path==='/backend-api/accounts/check/v4-2023-04-27').length;await projectRequest(page,'account-not-in-roster');await until(()=>requests.filter(r=>r.path==='/backend-api/accounts/check/v4-2023-04-27').length>rosterBefore);await until(async()=>(await localState())==='waiting');await noFrames(page);report.checks.unlistedAccountCannotMount=true;
  await projectRequest(page);await opened();
  const workspace=page.frameLocator('iframe[src="chrome-extension://'+id+'/workspace.html"]'),sidebar=page.frameLocator('iframe[src="chrome-extension://'+id+'/sidebar.html"]');
- await workspace.locator('[data-free-list="unknown"]').getByRole('link',{name:'Native B',exact:true}).waitFor({timeout:10000});
+ await workspace.getByRole('link',{name:'Native B',exact:true}).first().waitFor({timeout:10000});
  const frame=page.frames().find(f=>f.url()==='chrome-extension://'+id+'/workspace.html');assert(frame);
  const facts=await frame.evaluate(async()=>{const {ScopeRepository}=await import(chrome.runtime.getURL('src/b1/scope-repository.mjs')),{NativeRepository}=await import(chrome.runtime.getURL('src/data/native-repository.mjs')),base=new ScopeRepository({indexedDB});try{const db=await base.open(),keys=await new Promise((resolve,reject)=>{const tx=db.transaction('native_states'),q=tx.objectStore('native_states').getAll();tx.oncomplete=()=>resolve(q.result.filter(r=>r.key===r.payload?.scopeKey).map(r=>r.key));tx.onabort=()=>reject(tx.error);});const rows=[];for(const key of keys){const [provider,accountId,organizationId]=JSON.parse(key),s=await new NativeRepository({baseRepository:base}).read({verified:true,provider,accountId,organizationId});rows.push({key,projects:s.projects,refs:s.refs,membership:s.membership});}return rows;}finally{base.close();}});
  assert.equal(facts.length,1);assert.equal(facts[0].key,JSON.stringify(['chatgpt','principal_'+digest(['chatgpt-principal-v1','user-host-fixture']),'context_'+digest(['chatgpt-context-v1','user-host-fixture','account-host-team'])]));
- assert.deepEqual(Object.keys(facts[0].projects),[]);assert.deepEqual(Object.keys(facts[0].membership),[]);assert.deepEqual(Object.keys(facts[0].refs).sort(),[C,B].sort());
- assert.equal(facts[0].refs[B].nativeTitle,'Native B');assert.equal(facts[0].refs[C].nativeTitle,'Native A');report.checks.correctScopeNoProjectOrMembershipUpgrade=true;
+ assert.deepEqual(Object.keys(facts[0].projects),[P]);assert.deepEqual(Object.keys(facts[0].membership).sort(),[C,B].sort());assert.deepEqual(Object.keys(facts[0].refs).sort(),[C,B].sort());
+ for(const cid of [C,B]){assert.equal(facts[0].membership[cid].state,'PROJECT');assert.equal(facts[0].membership[cid].projectId,P);}
+ assert.equal(facts[0].refs[B].nativeTitle,'Native B');assert.equal(facts[0].refs[C].nativeTitle,'Native A');report.checks.correctScopeAndPositivePanelMembership=true;
  assert.equal(await page.locator('#project-panel').evaluate(n=>getComputedStyle(n).visibility),'hidden');
  for(const selector of ['#project-title','#draft','#model','#project-tabs'])assert(await page.locator(selector).isVisible());await draft();report.checks.nativeRegionsProtected=true;
  await sidebar.getByRole('button',{name:'查找已知项目与聊天',exact:true}).click();await workspace.getByRole('searchbox',{name:'已知聊天查找输入'}).fill('Native B');

@@ -9,7 +9,7 @@ const plugins=baseline?[{name:'baseline',setup(b){b.onLoad({filter:/src\/host\/(
 const {outputFiles}=await require('esbuild').build({stdin:{contents:"export {createChatGPTAdapter} from './src/host/chatgpt-adapter.mjs';export {createSurfaceDiscovery} from './src/host/surface-discovery.mjs';export {createURLPolicy} from './src/host/url-policy.mjs';export {CHATGPT_OBSERVED_PROFILE} from './src/host/chatgpt-observed-profile.mjs';export {createMountSurface} from './src/navigation/mount-surface.mjs';export {createSurfaceController} from './src/host/surface-controller.mjs';export {splitSurfacePayload} from './src/host/surface-fragments.mjs';",resolveDir:process.cwd()},plugins,bundle:true,write:false,format:'iife',globalName:'maskedModule'});
 const P='g-p-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',C='33333333-3333-4333-8333-333333333333',B='44444444-4444-4444-8444-444444444444',url='https://chatgpt.com/g/'+P+'/project',browser=await chromium.launch({headless:true}),results=[];
 try{
- for(const mode of ['unmasked-alias','mask','native-hidden-attribute','native-hidden-css','native-hidden-aria','replace-root','probe-refused','title-conflict','identity-query-conflict','stable-drain']){
+ for(const mode of ['unmasked-alias','mask','native-hidden-attribute','native-hidden-css','native-hidden-aria','replace-root','probe-refused','title-conflict','identity-query-conflict','stable-drain','project-reading-return','return-corner-occluded']){
   const page=await browser.newPage({viewport:{width:785,height:1193}});await page.route('**/*',r=>r.request().url()===url?r.fulfill({contentType:'text/html',body:observedProjectHTML(P,C)}):r.abort());await page.goto(url);await page.addScriptTag({content:outputFiles[0].text});
   const result=await page.evaluate(async({mode,C,B})=>{
    const {createChatGPTAdapter,createSurfaceDiscovery,createURLPolicy,CHATGPT_OBSERVED_PROFILE:profile,createMountSurface,createSurfaceController,splitSurfacePayload}=maskedModule;
@@ -20,7 +20,7 @@ try{
     const d=createSurfaceDiscovery({document,binding,profile,urlPolicy:policy}),payload=d.scan();
     const parts=splitSurfacePayload(payload,{protocol:'vaiwl-host-observation/1',localSeq:1});
     const targets=parts.flatMap(p=>p.candidates).map(c=>c.target.nativeId);d.stop();
-    return {passed:targets.length===2&&targets.includes(C)&&targets.includes(B)&&reads===0};
+    return {passed:targets.length===3&&targets.includes(C)&&targets.includes(B)&&reads===0};
    }
    const adapter=createChatGPTAdapter({document,profile,urlPolicy:policy,isOwnedMask:n=>surface?.isMasked(n)===true,isOwnedSurface:n=>surface?.isOwnedSurface(n)===true,withNativeReading:read=>{probes++;return mode==='probe-refused'?null:controller?.withNativeReading(read)??null;}});
    surface=createMountSurface({document,createFrameURL:({role})=>'chrome-extension://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/'+role+'.html'});
@@ -30,6 +30,11 @@ try{
    for(let i=0;i<50;i++)await Promise.resolve();
    const discovery=createSurfaceDiscovery({document,binding,profile,urlPolicy:policy,isOwnedMask:n=>surface.isMasked(n),withNativeReading:read=>mode==='probe-refused'?null:controller.withNativeReading(read)});
    if(mode==='probe-refused'){let rejected=false;try{discovery.scan();}catch{rejected=true;}controller.stop();discovery.stop();return {passed:rejected&&reads===0};}
+   if(mode==='project-reading-return'||mode==='return-corner-occluded'){
+    const returned=controller.showReading(),button=document.querySelector('button[aria-label="返回工作空间"]');
+    let passed=returned&&!!button&&button.querySelector('svg')!==null;
+    if(mode==='return-corner-occluded'&&button){const r=button.getBoundingClientRect(),occluder=document.createElement('button');occluder.style.cssText=`position:fixed;left:${r.x+1}px;top:${r.y+1}px;width:2px;height:2px;border:0;padding:0;z-index:31`;document.body.append(occluder);passed&&=controller.showWorkspace()===false;occluder.remove();}else passed&&=controller.showWorkspace()===true;controller.stop();discovery.stop();return {passed,returned,buttonPresent:!!button};
+   }
    const initial=discovery.scan(),row=initial.candidates.find(c=>c.target.nativeId===B),alias=initial.candidates.filter(c=>c.target.nativeId===C);assertExists(row);
    const envelope={protocol:'vaiwl-host-observation/1',...binding,localSeq:1,profileId:profile.id,profileVersion:profile.revision,bodyProofId:null,kind:'surface-delta'};
    if(mode==='title-conflict')document.querySelector('nav a').textContent='Different title';
