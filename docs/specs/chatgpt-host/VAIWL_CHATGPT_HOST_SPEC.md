@@ -9,7 +9,7 @@
 
 用户最新决定将即时展示与已绑定私人持久访问分开。显式 `browserLocal:true` 包只消费当前可见导航，复用原 owner、surfaceBatch、正式双 frame、Native/Evidence/CAS，不执行内部身份/目录或消息读取。即时能力标记 `kind:browser-local-session`、`serverIdentity:NOT_ESTABLISHED`，只用 RAM；本人在私有 popup 确认后才使用独立四段本地 personal 键。原下文 ScopeGrant/PrincipalProof/ContextProof 继续仅描述严格认证模式，不将本地确认冒充 C2/C3。
 
-本地持久描述符不自动恢复权限。未知/跨文档导航、失去前台、原生非链接控件及 worker/浏览器重启回到锁定状态；原缓存保留。一次可信原生导航意图只可在6秒内由同文档、同目标浏览器事件消费一次，延续本地存储但重发新本地 grant/epoch。本地最近打开与发送/ACK分开。Project 对象可由其真实稳定链接独立发现；成员仍要求原正向页面证据。仅有路由/未关联标题的空Project不得造卡。可见但无标题的稳定链接保留 unavailable，UNKNOWN不改NONE、未见不删除。可选history补全不属于本包权限。
+本地持久描述符不自动恢复权限。普通失焦/切换标签/原生控件不锁定，已确认的同文档受支持SPA导航延续本地选择并换grant/epoch。Worker重启须同时核 trusted-only storage.session 有界记录、实际相同documentId及存活隔离文档随机见证；每次确认最多12小时，不滑动续期，不存账号/正文/凭据，不将此当C2/C3。刷新/新文档/完整浏览器重启不继承见证，回到即时视图，原缓存保留但不读取。账户/Workspace风险操作跨已确认文档撤销私人数据访问。一次可信原生导航意图仍只可在6秒内由同文档、同目标浏览器事件消费一次用于本地活动；一般路由连续不造活动。本地最近打开与发送/ACK分开。Project 对象可由其真实稳定链接独立发现；成员仍要求原正向页面证据。仅有路由/未关联标题的空Project不得造卡。可见但无标题的稳定链接保留 unavailable，UNKNOWN不改NONE、未见不删除。可选history补全不属于本包权限。
 
 这是可安装候选工程合同，非本人Mac验收或网站官方许可证明。严格模式与 source-v3 历史证据不改变；原81项与已取消产品要求不重启。
 

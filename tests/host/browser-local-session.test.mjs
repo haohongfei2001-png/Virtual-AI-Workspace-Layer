@@ -14,16 +14,16 @@ test('local namespace cannot alias a strict principal and session never reaches 
  const repo=new ScopeRepository({indexedDB:{open(){assert.fail('must not open');}}});
  await assert.rejects(repo.get(local,C),/memory-only/);
 });
-test('document authority has no server receipts, expires and discards; no restore after restart',async()=>{
+test('document authority has no server receipts, expires grants but retains the selection; a new authority starts empty',async()=>{
  let time=1000,i=0;const discarded=[];
  const authority=createBrowserLocalAuthority({allowedURL:u=>u.startsWith(url),now:()=>time,makeId:()=>`local_${++i}`,onDiscard:k=>discarded.push(k)});
  const frame={tabId:1,frameId:0,documentId:'doc',incognito:false,documentLifecycle:'active',actualURL:url};
  const result=await authority.refresh(frame,'bind');assert.equal(result.state,'verified');assert.equal(result.grant.kind,'browser-local-session');assert.equal(result.grant.principal,undefined);assert.equal(authority.sourceFor(frame),null);
  const old=authority.scopeFor(frame);assert.equal(authority.scopeFor({...frame,tabId:2}),null);
- time+=60000;assert.equal(authority.peek(frame).state,'unverified');assert.deepEqual(discarded,[old.key]);
+ time+=60000;assert.equal(authority.peek(frame).state,'unverified');assert.deepEqual(discarded,[]);
  assert.equal(createBrowserLocalAuthority({allowedURL:()=>true}).scopeFor(frame),null);
- await authority.refresh(frame,'bind');assert.notEqual(authority.scopeFor(frame).key,old.key);
- authority.invalidateTab(1);assert.equal(authority.scopeFor(frame),null);
+ await authority.refresh(frame,'bind');assert.equal(authority.scopeFor(frame).key,old.key);
+ authority.invalidateTab(1);assert.equal(authority.scopeFor(frame),null);assert.deepEqual(discarded,[old.key]);
  const aborted=new AbortController();aborted.abort();assert.equal((await authority.refresh(frame,'bind',aborted.signal)).state,'unverified');
 });
 test('actual Host pipeline accepts current surface into formal projection with zero identity/IDB reads',async t=>{

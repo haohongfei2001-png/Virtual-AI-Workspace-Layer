@@ -31,7 +31,7 @@ export function createHostWorkerRuntime({chrome,indexedDB,origin='https://chatgp
   if(urlClassifications.size===4)urlClassifications.delete(urlClassifications.keys().next().value);
   urlClassifications.set(value,result);return result;
  };
- let service,repository,oldSendObserver=null,firstSendObserver=null,active=true;const listeners=[];
+ let service,repository,localControl=null,oldSendObserver=null,firstSendObserver=null,active=true;const listeners=[];
  const bootstrap=browserBootstrap??createHostBrowserBootstrap({chrome,origin,scopeProfile}),browserOwner=bootstrap.claim({chrome,origin,scopeProfile}),contextObserver=browserOwner.contextObserver;
  try{
  repository=new ScopeRepository({indexedDB});const workspaceRepository=new WorkspaceRepository({baseRepository:repository}),freeEvidenceRepository=new FreeEvidenceRepository({baseRepository:repository,hostObservationGate:(scope,request)=>service?.ackAdmission?.(scope,request)??service?.activityAdmission?.(scope,request)??service?.continuations?.admission(scope,request)});
@@ -71,11 +71,12 @@ export function createHostWorkerRuntime({chrome,indexedDB,origin='https://chatgp
   prepareNavigation:({parentFrame,binding,targets})=>chrome.tabs.sendMessage(parentFrame.tabId,{type:'HOST_NATIVE_PLAN',...binding,targets},{documentId:parentFrame.documentId})});
  oldSendObserver=offlineOldSendTerminal?createBrowserOldSendTerminal({webRequest:chrome.webRequest,origin,onTerminal:event=>service.oldSendTerminal?.terminal(event)}):null;
  firstSendObserver=offlineFirstSend?createBrowserFirstSend({webRequest:chrome.webRequest,origin,onSubmit:event=>service.firstSend?.submit(event)}):null;
- const localControl=browserLocal?createBrowserLocalControl({chrome,service,allowedURL,urlPolicy:policy}):null;
- const message=(value,sender,reply)=>{if(!active)return;Promise.resolve().then(()=>active?(localControl&&value?.type==='HOST_LOCAL_SPACE'?localControl.handle(value,sender):service.handle(value,sender)):null).then(result=>{if(active)reply(result);},()=>{if(active)reply({ok:false,reason:'host-unavailable'});});return true;};
+ localControl=browserLocal?createBrowserLocalControl({chrome,service,allowedURL,urlPolicy:policy,origin}):null;
+ const message=(value,sender,reply)=>{if(!active)return;Promise.resolve().then(async()=>{if(!active)return null;if(localControl&&value?.type==='HOST_LOCAL_SPACE')return localControl.handle(value,sender);if(localControl&&['HOST_HELLO','HOST_REFRESH','HOST_FOCUS'].includes(value?.type))await localControl.resume(sender);return active?service.handle(value,sender):null;}).then(result=>{if(active)reply(result);},()=>{if(active)reply({ok:false,reason:'host-unavailable'});});return true;};
  const connect=port=>{try{if(active&&service.connectPort(port))return;}catch{}try{port.disconnect();}catch{}};
  const invalidate=(details,replacement=false)=>{
   if(!active||details.frameId!==0||!Number.isSafeInteger(details.tabId))return;
+  localControl?.navigate(details,replacement);
   // A replacement document also revokes the prior tab document's scope/UI.
   if(replacement){firstSendObserver?.invalidateTab(details.tabId);service.firstSend?.invalidateTab(details.tabId);}
   // Only a trusted same-document browser event may retain display metadata.
@@ -84,7 +85,7 @@ export function createHostWorkerRuntime({chrome,indexedDB,origin='https://chatgp
   if(browserLocal&&!replacement&&allowedURL(details.url))void service.acceptLocalArrival({tabId:details.tabId,frameId:0,documentId:details.documentId,actualURL:details.url,documentLifecycle:details.documentLifecycle,incognito:false});
   if(allowedURL(details.url)&&typeof details.documentId==='string')Promise.resolve().then(()=>active?chrome.tabs.sendMessage(details.tabId,{type:'HOST_DOCUMENT_INVALIDATED'},{documentId:details.documentId}):null).catch(()=>{});
  };
- const removed=tabId=>{if(active){oldSendObserver?.invalidateTab(tabId);firstSendObserver?.invalidateTab(tabId);service.firstSend?.invalidateTab(tabId);service.tabClosed(tabId);}};
+ const removed=tabId=>{if(active){void localControl?.forget(tabId);oldSendObserver?.invalidateTab(tabId);firstSendObserver?.invalidateTab(tabId);service.firstSend?.invalidateTab(tabId);service.tabClosed(tabId);}};
  listeners.push([chrome.runtime.onMessage,message],[chrome.runtime.onConnect,connect]);
  for(const [event,listener]of listeners)event.addListener(listener);
  browserOwner.attach({onNavigation:invalidate,onRemoved:removed,
@@ -92,5 +93,5 @@ export function createHostWorkerRuntime({chrome,indexedDB,origin='https://chatgp
   onContextReady:({tabId,documentId})=>chrome.tabs.sendMessage(tabId,{type:'HOST_CONTEXT_READY'},{documentId})});
  return Object.freeze({service,stop});
  }catch(error){stop();throw error;}
- function stop(){if(!active)return;active=false;urlClassifications.clear();oldSendObserver?.stop();firstSendObserver?.stop();browserOwner.stop();service?.stop?.();for(const [event,listener]of listeners)event.removeListener(listener);service?.ui?.revokeAll();service?.views?.stop();repository?.close();}
+ function stop(){if(!active)return;active=false;localControl?.stop();urlClassifications.clear();oldSendObserver?.stop();firstSendObserver?.stop();browserOwner.stop();service?.stop?.();for(const [event,listener]of listeners)event.removeListener(listener);service?.ui?.revokeAll();service?.views?.stop();repository?.close();}
 }

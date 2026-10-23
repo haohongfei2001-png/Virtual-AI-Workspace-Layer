@@ -10,7 +10,7 @@ import {observedProjectHTML} from './fixtures/observed-project.mjs';
 import {observedDesktopHTML} from './fixtures/observed-desktop.mjs';
 import {createHistoricalNetworkGuard,historicalNetworkGuardArgs} from './historical-network-guard.mjs';
 const P='g-p-11111111111111111111111111111111',C='33333333-3333-4333-8333-333333333333',B='44444444-4444-4444-8444-444444444444',requests=[];
-const server=createServer((req,res)=>{requests.push(req.url);res.writeHead(200,{'Content-Type':'text/html','Cache-Control':'no-store'});res.end(req.url==='/g/'+P+'/project'?observedProjectHTML(P,C)+`<script>document.addEventListener('click',e=>{const a=e.target.closest('a[href]');if(a&&a.getAttribute('href')==='/c/${B}'&&!e.defaultPrevented){e.preventDefault();const next=a.href;const html=new DOMParser().parseFromString(${JSON.stringify(observedDesktopHTML(B))},'text/html');document.body.replaceChildren(...html.body.childNodes);for(const style of document.querySelectorAll('head style'))style.remove();document.head.append(...html.head.childNodes);history.pushState({},'',next);}});</script>`:observedDesktopHTML(B));});
+const server=createServer((req,res)=>{requests.push(req.url);res.writeHead(200,{'Content-Type':'text/html','Cache-Control':'no-store'});res.end(req.url==='/g/'+P+'/project'?observedProjectHTML(P,C)+`<script>document.addEventListener('click',e=>{if(e.target.closest('button')?.textContent==='Native search'){history.pushState({},'','/');return;}const a=e.target.closest('a[href]');if(a&&a.getAttribute('href')==='/c/${B}'&&!e.defaultPrevented){e.preventDefault();const next=a.href;const html=new DOMParser().parseFromString(${JSON.stringify(observedDesktopHTML(B))},'text/html');document.body.replaceChildren(...html.body.childNodes);for(const style of document.querySelectorAll('head style'))style.remove();document.head.append(...html.head.childNodes);history.pushState({},'',next);}});</script>`:observedDesktopHTML(B));});
 await new Promise(r=>server.listen(0,'127.0.0.1',r));const origin='http://127.0.0.1:'+server.address().port,guard=await createHistoricalNetworkGuard({fixtureOrigin:origin});
 const dir=await mkdtemp(join(tmpdir(),'vaiwl-browser-local-mv3-')),built=packageHost(join(dir,'package'),{offlineOrigin:origin,browserLocal:true}),report={status:'RUNNING',evidence:'ISOLATED_MV3_FORMAL_UI_LOCAL_SESSION_AND_PERSONAL',realChatGPT:'NOT_RUN',package:built,checks:{},requests};
 let context,page;
@@ -30,7 +30,7 @@ try{
  const opened=context.waitForEvent('page');await workspace.getByRole('link',{name:'Native B',exact:true}).click();const chat=await opened;await chat.waitForURL(origin+'/c/'+B);assert.equal(await chat.evaluate(()=>opener),null);await chat.close();assert.equal(await page.locator('#draft').inputValue(),'fixture draft');report.checks.nativeOpenPreservesDraft=true;
  const back=page.getByRole('button',{name:'返回工作空间',exact:true});if(await back.isVisible())await back.click();
  await page.getByRole('button',{name:'返回原生阅读',exact:true}).click();await back.waitFor();await back.click();await page.waitForFunction(()=>document.querySelectorAll('[data-va-owned]:popover-open').length===2);report.checks.uniqueReturn=true;
- const worker=context.serviceWorkers().find(w=>w.url().startsWith('chrome-extension://'+id+'/'));assert(worker);
+ let worker=context.serviceWorkers().find(w=>w.url().startsWith('chrome-extension://'+id+'/'));assert(worker);
  assert.deepEqual(await worker.evaluate(async()=>await indexedDB.databases()),[]);report.checks.noDatabaseOpened=true;
  await page.reload();await workspace.getByRole('link',{name:'Native B',exact:true}).first().waitFor({timeout:15000});report.checks.reloadRediscoversVisibleObjects=true;
  await page.goto(origin+'/c/'+B);await workspace.getByRole('link',{name:'Native A',exact:true}).first().waitFor({timeout:15000});assert.equal(await workspace.getByText('Native Project',{exact:true}).count(),0);report.checks.replacementDoesNotExposeOldProject=true;
@@ -47,6 +47,42 @@ try{
  assert.deepEqual(await roots(),stored);report.checks.trustedSameDocumentNavigationRetainsPersonalSpace=true;
  const localHints=await worker.evaluate(async()=>{const db=await new Promise((resolve,reject)=>{const q=indexedDB.open('vaiwl-b1-v1');q.onsuccess=()=>resolve(q.result);q.onerror=()=>reject(q.error);});try{return await new Promise((resolve,reject)=>{const tx=db.transaction('native_states'),q=tx.objectStore('native_states').getAll();tx.oncomplete=()=>resolve(q.result);tx.onabort=()=>reject(tx.error);});}finally{db.close();}});
  report.localUseObserved=JSON.stringify(localHints).includes('local-recent-use');assert(report.localUseObserved);
+ // Exercise the same installed formal UI; no business-state/grant injection.
+ const assertPersonal=async()=>assert.equal((await popup.evaluate(()=>chrome.runtime.sendMessage({v:1,type:'HOST_LOCAL_SPACE',action:'status'}))).mode,'personal');
+ await popup.bringToFront();await page.bringToFront();await workspace.getByText('Native Project',{exact:true}).first().waitFor({timeout:15000});await assertPersonal();
+ report.checks.tabFocusKeepsBinding=true;
+ await page.getByRole('button',{name:'返回原生阅读',exact:true}).click();
+ await page.getByRole('button',{name:'Native search',exact:true}).click();await page.waitForURL(origin+'/');await back.waitFor({timeout:15000});await back.click();
+ await workspace.getByText('Native Project',{exact:true}).first().waitFor({timeout:15000});await assertPersonal();report.checks.nativeSearchAndUnplannedSpaKeepsBinding=true;
+ const lifecycle=await context.newCDPSession(page),versions=[];
+ lifecycle.on('ServiceWorker.workerVersionUpdated',event=>versions.push(...event.versions));await lifecycle.send('ServiceWorker.enable');
+ const version=async(predicate)=>{const end=Date.now()+10000;while(Date.now()<end){const found=versions.find(predicate);if(found)return found;await new Promise(r=>setTimeout(r,50));}throw Error('worker-version-timeout');};
+ const running=await version(v=>v.scriptURL==='chrome-extension://'+id+'/extension/worker.mjs'&&v.runningStatus==='running');
+ const oldWorkerFrames=page.frames().filter(f=>f.url().startsWith('chrome-extension://'+id+'/'));
+ const offset=versions.length;await lifecycle.send('ServiceWorker.stopWorker',{versionId:running.versionId});
+ await version((v,i)=>i>=offset&&v.versionId===running.versionId&&v.runningStatus==='stopped');report.checks.actualWorkerStopped=true;
+ await popup.bringToFront();await page.bringToFront();
+ await version((v,i)=>i>=offset&&v.runningStatus==='running'&&v.scriptURL===running.scriptURL);
+ worker=context.serviceWorkers().find(w=>w.url().startsWith('chrome-extension://'+id+'/'));
+ // Keep the pre-interruption presentation. Use the existing return only if
+ // recovery is in reading mode, never synthesize a second entry.
+ const replacedUntil=Date.now()+15000;while(!oldWorkerFrames.every(f=>f.isDetached())&&Date.now()<replacedUntil)await new Promise(r=>setTimeout(r,50));
+ assert(oldWorkerFrames.every(f=>f.isDetached()),'worker recovery needs fresh UI documents');
+ if(await back.isVisible())await back.click();
+ await workspace.getByText('Native Project',{exact:true}).first().waitFor({timeout:15000});await assertPersonal();
+ report.checks.workerRestartSameDocumentNoConfirmation=true;
+ assert.equal(await page.locator('textarea').inputValue(),'fixture draft');report.checks.workerRecoveryPreservesDraft=true;
+ // Native account control is a risk boundary. It is a fixture button, never a
+ // real account action; the production capture handler must revoke the binding.
+ await page.getByRole('button',{name:'返回原生阅读',exact:true}).click();
+ await page.evaluate(()=>{const button=document.createElement('button');button.setAttribute('aria-label','切换账户');button.id='account-risk';button.textContent='Account';document.querySelector('#heading').append(button);});
+ await page.locator('#account-risk').click();
+ await popup.bringToFront();await page.bringToFront();
+ await workspace.getByRole('link',{name:'Native A',exact:true}).first().waitFor({timeout:15000});
+ assert.equal(await workspace.getByText('Native Project',{exact:true}).count(),0);assert.equal((await popup.evaluate(()=>chrome.runtime.sendMessage({v:1,type:'HOST_LOCAL_SPACE',action:'status'}))).mode,'locked');
+ assert.deepEqual(await worker.evaluate(async()=> (await chrome.storage.session.get('vaiwl-browser-local-continuity-v1'))['vaiwl-browser-local-continuity-v1'].rows),[]);
+ report.checks.accountRiskClearsContinuityAndPrivateProjection=true;
+
 
  await page.goto(origin+'/c/'+B);await workspace.getByRole('link',{name:'Native A',exact:true}).first().waitFor({timeout:15000});assert.equal(await workspace.getByText('Native Project',{exact:true}).count(),0);
  assert.equal((await unlock()).ok,true);await workspace.getByText('Native Project',{exact:true}).first().waitFor({timeout:15000});report.checks.explicitUnlockRestoresKnownProject=true;
@@ -58,6 +94,6 @@ try{
  const status=await context.newPage();await status.goto('chrome-extension://'+id+'/status.html');await page.bringToFront();
  const restoredBinding=await status.evaluate(()=>chrome.runtime.sendMessage({v:1,type:'HOST_LOCAL_SPACE',action:'unlock'}));assert.equal(restoredBinding.ok,true,JSON.stringify(restoredBinding));await reopened.getByText('Native Project',{exact:true}).first().waitFor({timeout:15000});report.checks.browserRestartLocksAndExplicitUnlockRestores=true;
  assert(requests.every(p=>!p.startsWith('/api/')&&!p.startsWith('/backend-api/')));report.checks.noInternalRequests=true;report.status='PASS';
-}catch(error){report.status='FAIL';report.error=error.stack;try{report.page=await page.locator('body').innerText();report.frames=page.frames().map(f=>f.url());}catch{}process.exitCode=1;}
+}catch(error){report.status='FAIL';report.error=error.stack;try{report.page=await page.locator('body').innerText();report.frames=page.frames().map(f=>f.url());const w=context.serviceWorkers().find(w=>w.url().startsWith('chrome-extension://'));report.continuity=await w.evaluate(async()=>{const saved=(await chrome.storage.session.get('vaiwl-browser-local-continuity-v1'))['vaiwl-browser-local-continuity-v1'];const row=saved?.rows?.[0];if(!row)return {rows:saved?.rows?.length??-1};const frame=await chrome.webNavigation.getFrame({tabId:row.tabId,frameId:0});let proof;try{proof=await chrome.tabs.sendMessage(row.tabId,{type:'HOST_LOCAL_CONTINUITY',action:'probe',challenge:'failure-check'},{documentId:row.documentId});}catch{}return {rows:saved.rows.length,documentMatches:frame?.documentId===row.documentId,active:frame?.documentLifecycle==='active',noncePresent:!!proof?.nonce,nonceMatches:proof?.nonce===row.nonce,unexpired:Date.now()<row.expiresAt};});}catch{}process.exitCode=1;}
 finally{await context?.close();await new Promise(r=>server.close(r));await guard.close();await writeFile(join(dir,'report.json'),JSON.stringify(report,null,2));}
 console.log(JSON.stringify({status:report.status,error:report.error,checks:report.checks,report:join(dir,'report.json')}));

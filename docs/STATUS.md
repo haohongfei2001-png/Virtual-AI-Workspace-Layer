@@ -1,5 +1,23 @@
 # VAIWL实际状态：渐进积累工程已接线，真实来源逐项待准入
 
+## Browser-Local低打扰连续绑定（2026-10-23）
+
+接续实际本地/远端 `28f72da5`。本轮只修原B4/B5/C6/F3中的连续性差额，未重做UI/数据层/Project归属，未使用真实ChatGPT账户或重放任何来源批次。
+
+- [lifecycle](../src/host/browser-local-lifecycle.mjs)取消blur、visibilitychange和一般原生按钮的无差别锁定；普通搜索、新聊天/工具/模型/附件控件不再视为账户变化。只将原生账户/Workspace/退出入口的固定特征作为撤权风险信号，不作为身份凭据；捕获鼠标/键盘、立即撤旧界面和RAM见证。确认撤权后恢复即时视图，不因通知/焦点竞态留在停止状态。
+- [authority](../src/runtime/browser-local-authority.mjs)把60秒显示grant与最长12小时、不滑动续期的文档本地选择分开；到期grant仍拒绝，新的授权检查可续显示，不丢已确认选择。受支持同文档SPA连续，不要求每条正常路由都事先发意图；仅6秒内匹配真实点击的到达才计local-use，不从一般导航造发送/活动。
+- [control](../src/runtime/browser-local-control.mjs)在trusted-only `chrome.storage.session`保存最多32个文档的本地space、随机连续性见证及期限；不含账号/Workspace服务器ID、正文、Cookie或token。Worker重启须复核相同tab/documentId、实际active浏览器文档、存活隔离脚本RAM见证及期限，才重新发行grant。保存记录、URL、本地UUID单独都不能解锁。延迟回复在风险/导航revision变化后不能恢复。账户风险清除所有已绑定文档的连续性，原IDB保留。
+- 实际复现并修正两处连续性故障：SPA后MessageSender.url可滞留初始URL，恢复改核浏览器当前文档并前后复核；原生点击准备若先异步查frame会错过到达，改为沿authority已有最新浏览器路由同步登记原文档意图。没有放宽原严格模式。
+
+**已验证**：最终定向103项通过；隔离headless正式MV3实际验证切换标签、原生搜索触发非预计划SPA、真实停止/重新启动worker、新UI文档恢复个人库存、草稿保留、账户风险控件撤缓存/清会话、刷新即时视图/明确恢复及完整关闭重开浏览器的锁库。测试使用既有本地fixture并阻断外网；强制worker退出不是自然休眠测量，fixture账户控件不是本人真实账户切换验收。失败报告及具体归因保留，未修改历史PASS，见[本轮证据](engineering/free-browser-local-continuity-20261023.json)。
+
+**准确边界**：已确认文档内的普通使用和worker重启不再需要反复确认。刷新、新标签、新文档或完整Chrome重启不能仅凭浏览器会话记录证明私人数据归属，所以直接显示即时视图，旧库不删、恢复时仍需明确确认；没有“信任设备”默认开关。静默远端账号变化缺少可观察信号时不能宣称检测。真实Mac连续使用仍NOT_RUN，不宣称完整日用通过。
+
+**更新包**：`/Users/hhf/Downloads/VAIWL-Browser-Local-Continuity-20261023-r2/extension`（196文件）；ZIP SHA256 `e42a62dd5463cff2e5f342fdf44b0a69aa4baa0fbf466795503e6a0767c024ee`。未覆盖本人安装/原目录、未卸载、未改旧库；升级须先备份原源码目录，再将此包内容用于原加载目录并重载同一扩展，保持原扩展ID。直接另加载新目录不继承旧IDB，不把它冒充无损升级。
+
+只安排一次本人集中验收：同ID升级并确认一次→切换窗口/标签→原生搜索与已有聊天/新聊天→Project/四格返回→刷新观察即时视图、明确恢复旧数据→完整重启确认旧库仍锁定→最后检查本人实际账户/Workspace风险入口。真实发送或切换到其他账户不由本轮离线工程代操作。发现差额沿原F4处理，不新增来源诊断或重复许可研究。
+
+
 ## Browser-Local正式候选：可见导航与本地保存接通（2026-10-23）
 
 接续实际本地/远端 `39918369`；用户最新明确允许“本地处理当前可见导航元数据；不启用内部接口”。本轮没有使用真实账户/请求诊断、CDP受拒通道或新Profile读取；原source-v3及所有已消费批次不重测。

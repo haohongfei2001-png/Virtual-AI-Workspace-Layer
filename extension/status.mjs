@@ -5,7 +5,7 @@ const state=await readActiveLocalStatus({tabs:chrome.tabs});
 document.getElementById('status').textContent=messages[state];
 
 if(HOST_CONFIG.browserLocal){
- const note=document.createElement('p');note.className='note';note.textContent='即时层只显示本页已知导航。确认后，才读写你绑定的本地个人空间。这不是服务器身份认证：请确认当前账号及 Workspace 正确。未知跳转、离开前台或账号相关操作会锁定旧数据；刷新或重启后需重新确认。';document.body.append(note);
+ const note=document.createElement('p');note.className='note';note.textContent='即时层只显示本页已知导航。确认后，才读写你绑定的本地个人空间。这不是服务器身份认证：请确认当前账号及 Workspace 正确。同一页面内切换标签、普通操作和后台恢复无需重新确认。账户或空间切换风险会锁定旧数据。刷新和完整重启浏览器后先显示即时视图，恢复旧资料时再确认。';document.body.append(note);
  const result=document.createElement('p');result.setAttribute('role','status');document.body.append(result);
  const unlock=document.createElement('button');unlock.textContent='确认当前账号与 Workspace，解锁本地空间';document.body.append(unlock);
  const lock=document.createElement('button');lock.textContent='锁定本地空间';document.body.append(lock);
