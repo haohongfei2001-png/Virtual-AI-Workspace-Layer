@@ -1,3 +1,4 @@
+import {createURLPolicy} from './url-policy.mjs';
 import {exactHostRecord} from './contract.mjs';
 import {tokenOK} from '../b1/identity.mjs';
 /** A live isolated document retains confirmation across ordinary focus/SPA
@@ -39,6 +40,27 @@ export function installBrowserLocalLifecycle({document:doc,runtime,session,profi
   void runtime.sendMessage({v:1,type:'HOST_LOCAL_SPACE',action:'prepare-navigation',target:link.href}).catch(()=>{});
  };
  const focus=()=>{if(waiting&&doc.visibilityState==='visible')void restart();};
+ // Missing initial sidebar/layout can become available after a native expand
+ // or resize. Observe only configured boundaries; no polling, data read or RPC
+ // until all are present. Session owns the single fresh-preparation allowance.
+ let layoutQueued=false;
+ const layoutChanged=()=>{
+  if(stopped||layoutQueued||waiting||typeof session.recoverLayout!=='function')return;
+  layoutQueued=true;queueMicrotask(()=>{layoutQueued=false;
+   if(stopped||waiting||doc.visibilityState==='hidden'||!session.localStatus?.()?.startsWith('layout-missing-'))return;
+   try{
+    const route=createURLPolicy({origin:doc.location.origin}).parse(doc.location.href);
+    const layout=route.kind==='home'?profile?.nativeHomeLayout:route.kind==='conversation'?profile?.nativeLayout:null;
+    if(!layout||doc.querySelector('dialog[open], [aria-modal="true"]'))return;
+    const keys=['header','reading','composer','navigationSlot','historyList','returnHitRoot',...(layout.readingViewport?['readingViewport']:[])];
+    if(!keys.every(key=>{const nodes=doc.querySelectorAll(layout[key]);if(nodes.length!==1)return false;const node=nodes[0],rect=node.getBoundingClientRect();return node.isConnected&&rect.width>0&&rect.height>0&&!node.closest('[hidden],[inert],[aria-hidden="true"]');}))return;
+    void session.recoverLayout().catch(()=>{});
+   }catch{/* Unsupported structure stays native-only. */}
+  });
+ };
+ const layoutObserver=doc.defaultView.MutationObserver?new doc.defaultView.MutationObserver(layoutChanged):null;
+ layoutObserver?.observe(doc.documentElement,{subtree:true,childList:true,attributes:true,attributeFilter:['class','style','hidden','inert','aria-hidden','role','data-sidebar-chatgpt-conversation-key']});
+ doc.defaultView.addEventListener('resize',layoutChanged);
  const pagehide=()=>{clear();}; // BFCache also needs a new explicit confirmation.
  const message=(m,sender,reply)=>{
   if(stopped||sender?.id!==runtime.id||sender.tab!==undefined)return;
@@ -57,5 +79,5 @@ export function installBrowserLocalLifecycle({document:doc,runtime,session,profi
   if(m.type==='HOST_DOCUMENT_INVALIDATED'&&waiting)void restart();
  };
  doc.defaultView.addEventListener('focus',focus);doc.defaultView.addEventListener('pagehide',pagehide);doc.addEventListener('pointerdown',pointer,true);doc.addEventListener('keydown',keyboard,true);doc.addEventListener('click',navigation,true);runtime.onMessage.addListener(message);
- return ()=>{stopped=true;clear();run++;session.stop();doc.defaultView.removeEventListener('focus',focus);doc.defaultView.removeEventListener('pagehide',pagehide);doc.removeEventListener('pointerdown',pointer,true);doc.removeEventListener('keydown',keyboard,true);doc.removeEventListener('click',navigation,true);runtime.onMessage.removeListener(message);};
+ return ()=>{stopped=true;layoutObserver?.disconnect();doc.defaultView.removeEventListener('resize',layoutChanged);clear();run++;session.stop();doc.defaultView.removeEventListener('focus',focus);doc.defaultView.removeEventListener('pagehide',pagehide);doc.removeEventListener('pointerdown',pointer,true);doc.removeEventListener('keydown',keyboard,true);doc.removeEventListener('click',navigation,true);runtime.onMessage.removeListener(message);};
 }

@@ -1857,5 +1857,60 @@
       "database": "NOT_TOUCHED",
       "automation": "STOPPED_BEFORE_UNCERTAIN_TARGET_INPUT"
     }
+  },
+  "initialLayoutRecovery20261024": {
+    "baseHead": "80107b4c",
+    "confirmedCodeDefect": "missing initial native layout stopped session permanently after six-second readiness deadline",
+    "fix": "one same-document same-URL recovery after unique visible boundaries appear; fresh full preparation and binding; reading-first; no retry after failure or explicit stop",
+    "unitTests": {
+      "passed": 137,
+      "log": "/private/tmp/vaiwl-layout-recovery-unit.log"
+    },
+    "isolatedMV3": {
+      "status": "PASS",
+      "report": "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-aawcuG/report.json",
+      "lateSidebarRecovery": true,
+      "realAccount": false
+    },
+    "installation": {
+      "candidate": ".git/vaiwl-artifacts/browser-local-layout-recovery-20261024-r63",
+      "backup": ".git/vaiwl-artifacts/same-id-r63-activation-20261024/previous-extension",
+      "manifestUnchanged": true,
+      "verifiedFiles": 196,
+      "changedFiles": [
+        "src/host/browser-local-lifecycle.mjs",
+        "src/host/content-session.mjs"
+      ],
+      "databaseTouched": false,
+      "reload": "NATIVE_AXPRESS_DISPATCHED",
+      "runtimeFingerprint": "NOT_ESTABLISHED"
+    },
+    "actualMac": {
+      "nativeWindowFill": "OBSERVED_1920x1080_THEN_CHANGED",
+      "initialLayoutSnapshotCounts": [
+        1,
+        1,
+        1,
+        1,
+        0,
+        1,
+        0
+      ],
+      "currentDOMSelectorMatch": "NOT_ESTABLISHED",
+      "addressReadback": "MISMATCH_STOPPED_BEFORE_ENTER",
+      "r63HomeRecovery": "NOT_RUN",
+      "r63SearchReturn": "NOT_RUN",
+      "testMessageSent": false,
+      "personalUnlockByAgent": false
+    },
+    "preserved": [
+      "old database",
+      "old draft tabs",
+      "same extension ID and path",
+      "other Profile windows",
+      "three stashes",
+      "human assets"
+    ],
+    "next": "resume original native Mac acceptance only with stable exact original window and verified native control target; no browser claim or CDP"
   }
 }

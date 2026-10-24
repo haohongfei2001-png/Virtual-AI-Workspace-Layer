@@ -462,3 +462,19 @@ test('initial transport refusal stays fail-closed with bounded private reason',a
  }
  const f=fixture();f.setResponse(()=>Promise.reject(Error('PRIVATE_TRANSPORT_DETAIL')));assert.equal(await f.client.start(),null);assert.equal(f.client.localStatus(),'hello-transport-unavailable');assert.equal(f.calls.length,1);assert.equal(f.listeners.size,0);
 });
+
+test('a newly available initial layout gets one fresh reading startup, never an automatic failure loop',async()=>{
+ const f=fixture();let ready=false,prepares=0,mode;const factory=f.options.controllerFactory;
+ const client=createHostContentSession({...f.options,prepareDocument:async({onFailure})=>{prepares++;if(!ready)onFailure('layout-missing-historyList');return ready;},controllerFactory:o=>{mode=o.initialMode;return factory(o);}});
+ await client.start();assert.equal(f.calls.length,0);ready=true;
+ assert.deepEqual(await client.recoverLayout(),{id:'mount'});assert.equal(mode,'reading');assert.equal(prepares,2);assert.equal(f.calls[0].type,'HOST_HELLO');
+ assert.equal(await client.recoverLayout(),null);client.stop();
+ const failed=fixture({prepareDocument:async({onFailure})=>{onFailure('layout-missing-historyList');return false;}});
+ await failed.client.start();await failed.client.recoverLayout();await failed.client.recoverLayout();assert.equal(failed.calls.length,0);assert.equal(failed.client.localStatus(),'layout-missing-historyList');failed.client.stop();
+});
+test('layout recovery cannot resume an explicit stop, changed route or non-layout refusal',async()=>{
+ for(const change of [f=>f.client.stop(),f=>{f.document.location.href+='c/other';}]){
+  const f=fixture({prepareDocument:async({onFailure})=>{onFailure('layout-missing-historyList');return false;}});await f.client.start();change(f);assert.equal(await f.client.recoverLayout(),null);assert.equal(f.calls.length,0);f.client.stop();
+ }
+ const f=fixture({prepareDocument:async()=>true});f.setResponse(()=>({ok:false,reason:'denied'}));await f.client.start();const count=f.calls.length;assert.equal(await f.client.recoverLayout(),null);assert.equal(f.calls.length,count);f.client.stop();
+});
