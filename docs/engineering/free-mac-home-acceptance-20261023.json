@@ -2093,5 +2093,35 @@
       "private-only restore",
       "worker/browser restart"
     ]
+  },
+  "confirmedDocumentR66_20261024": {
+    "baseline": "78547b53",
+    "status": "PARTIAL_MAC_NOT_ACCEPTED",
+    "confirmation": "USER_REPORTED_DONE; popup had closed before readback, reopening does not retain unlock acknowledgement; no substitute unlock click performed",
+    "actual": {
+      "formalKnownRows": "OBSERVED_IN_OWN_WORKSPACE",
+      "currentFormalChatOpen": "PASS_READING_AND_FOUR_GRID_REAPPEARED",
+      "fourGridFrameEntry": "PASS_BOTH_FORMAL_AREAS_IN_BOUNDED_OBSERVATIONS",
+      "sustainedContinuity": "NOT_ESTABLISHED_FOREGROUND_CHANGED",
+      "projectHome": "NOT_ESTABLISHED_MENU_DISPATCH_NOT_ARRIVAL",
+      "originalUiFrameSuspendedCause": "NOT_ESTABLISHED_NOT_REOBSERVED_THIS_TURN"
+    },
+    "operatorDefect": "Temporary native scripts reintroduced set frontmost of p and frontmost of p checks. System-wide foreground PID differed from the target despite the process property check. Reused committed navigator AppKit PID activation pattern and added shared exact-window focus helper; all subsequent native inputs check global foreground PID and exact AXMain window. No proof that every earlier focus change was caused by this defect.",
+    "operatorValidation": {
+      "compile": "PASS",
+      "wrongBundle": "REJECTED_BEFORE_ACTIVATION",
+      "exactOriginalPID": "PASS_APPKIT_AND_AX_FOREGROUND_MATCH",
+      "scope": "native helper only, not product acceptance"
+    },
+    "preservation": {
+      "extensionReplaced": false,
+      "databaseFilesTouched": false,
+      "draftsIntentionallyModified": false,
+      "testMessageSent": false,
+      "browserTabClaimed": false,
+      "cdpUsed": false,
+      "otherChrome": "Different foreground PID observed; no contents read or targeted page action. Cannot assert earlier activation left its focus unchanged."
+    },
+    "next": "Keep current confirmed document and original installation. Continue only with exact PID/window controls; do not ask for repeated unlock or treat stale AX paths as product failures. Project/member journey, new chat, private-only restore and restart remain unaccepted."
   }
 }
