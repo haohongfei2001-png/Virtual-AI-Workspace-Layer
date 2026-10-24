@@ -79,8 +79,8 @@ try{
   let clipped=adapter.inspect();checks.longHistoryClipped=clipped.ok&&clipped.sidebarRect.y===152&&clipped.sidebarRect.height===300;
   nav.scrollTop=50;clipped=adapter.inspect();checks.scrolledHistoryClipped=clipped.ok&&clipped.sidebarRect.y===102&&clipped.sidebarRect.height===350;
   const neighbor=document.createElement('button');neighbor.textContent='Native control';neighbor.style.cssText='position:fixed;left:10px;top:200px;width:40px;height:30px';nav.append(neighbor);
-  checks.overlappingNativeControlRefused=adapter.inspect().reason==='unsafe-native-history-list';neighbor.remove();
-  nav.style.transform='rotate(180deg)';checks.transformedScrollportRefused=adapter.inspect().reason==='unsafe-native-history-list';nav.style.transform='';
+  checks.overlappingNativeControlRefused=adapter.inspect().reason==='unsafe-native-history-list'&&adapter.inspect().historyFailure==='sibling-overlap';neighbor.remove();
+  nav.style.transform='rotate(180deg)';checks.transformedScrollportRefused=adapter.inspect().reason==='unsafe-native-history-list'&&adapter.inspect().historyFailure==='geometry';nav.style.transform='';
   nav.style.top='800px';checks.fullyClippedListRefused=adapter.inspect().ok===false;
   nav.style.top='52px';nav.scrollTop=0;
   const saved=list.firstElementChild;const group=document.createElement('div');group.setAttribute('role','list');list.append(group);group.append(saved);saved.style.height='37px';
@@ -96,13 +96,13 @@ try{
   group.prepend(local);group.append(spinner);
   const added=second.cloneNode(true);added.removeAttribute('data-va-mask-sidebar');added.querySelector('a').href='/c/55555555-5555-4555-8555-555555555555';spinner.before(added);
   const expanded=adapter.inspect();checks.appendedNativeRowDoesNotReplaceMask=expanded.ok&&expanded.regionEpoch===mixed.regionEpoch&&expanded.historyMaskRoots.length===2&&!surface.isMasked(added)&&getComputedStyle(added).visibility==='visible';added.remove();
-  group.insertBefore(second,saved);checks.reorderedPinnedRowsRefused=adapter.inspect().reason==='unsafe-native-history-list';group.insertBefore(saved,second);
+  group.insertBefore(second,saved);checks.reorderedPinnedRowsRefused=adapter.inspect().reason==='unsafe-native-history-list'&&adapter.inspect().historyFailure==='row-order';group.insertBefore(saved,second);
   const beforeScroll=adapter.inspect();nav.style.height='180px';nav.scrollTop=180;
   const afterScroll=adapter.inspect();checks.clippedRunKeepsMaskIdentity=afterScroll.ok&&afterScroll.regionEpoch===beforeScroll.regionEpoch&&afterScroll.historyMaskRoots.length===2&&afterScroll.historyMaskRoots.every((n,i)=>n===beforeScroll.historyMaskRoots[i]);
   const hiddenControl=document.createElement('input');saved.append(hiddenControl);checks.clippedUnsafeRowStillRejected=adapter.inspect().reason==='unsafe-native-history-list';hiddenControl.remove();
   surface.dispose(partitionHandle);nav.style.height='400px';nav.scrollTop=0;
   saved.after(local);checks.interleavedLocalDraftRefused=adapter.inspect().reason==='unsafe-native-history-list';group.prepend(local);
-  second.style.marginTop='4px';checks.unknownGapRefused=adapter.inspect().reason==='unsafe-native-history-list';
+  second.style.marginTop='4px';checks.unknownGapRefused=adapter.inspect().reason==='unsafe-native-history-list'&&adapter.inspect().historyFailure==='row-gap';
   checks.draftPreserved=composer.querySelector('textarea').value==='home draft';await adapter.stop();return checks;
  });
  assert(Object.values(homeChecks).every(Boolean),JSON.stringify(homeChecks));console.log(JSON.stringify({status:'PASS_WEB_MECHANISM_ONLY',homeChecks}));await home.close();

@@ -1956,5 +1956,53 @@
       "inputMethodChanged": false
     },
     "next": "original C2/C5/F4 native acceptance with verified exact window/control; no blind input replay or treating offline PASS as Mac PASS"
+  },
+  "nativeSearchReturnR64_20261024": {
+    "baseHead": "01a4f376",
+    "priorDocument": {
+      "popup": "surface-unsafe-native-history-list",
+      "rootCause": "NOT_ESTABLISHED",
+      "privateData": "LOCKED"
+    },
+    "change": "fixed refusal categories only; no new collection or weaker safety admission",
+    "validation": {
+      "unit": "PASS",
+      "observedProfileBrowser": "PASS_WEB_MECHANISM_ONLY",
+      "packageFiles": 197
+    },
+    "installation": {
+      "candidate": ".git/vaiwl-artifacts/browser-local-history-reason-20261024-r64",
+      "backup": ".git/vaiwl-artifacts/same-id-r64-activation-20261024/previous-extension",
+      "verifiedFiles": 196,
+      "manifestUnchanged": true,
+      "reload": "EXACT_ID_NATIVE_AXPRESS_DISPATCHED",
+      "databaseTouched": false,
+      "runtimeFingerprint": "NOT_ESTABLISHED"
+    },
+    "actualMac": {
+      "newHomeArrival": "PASS_AXDOCUMENT",
+      "popup": "PASS_READING",
+      "keyboardFourGrid": "PASS_TWO_FORMAL_FRAMES_OBSERVED",
+      "nativeSearchOpen": "PASS_GLOBAL_SEARCH_HEADING",
+      "nativeSearchInput": "PASS_EXACT_QUERY_READBACK",
+      "nativeSearchClose": "PASS_ESCAPE_AND_RETURN_CONTROL_PRESENT",
+      "searchReturn": "PASS_BOTH_FORMAL_FRAMES_OBSERVED_AGAIN",
+      "formalLinkOpen": "NOT_RUN_AXURL_READ_FAILED_BEFORE_ENTER",
+      "project": "NOT_RUN",
+      "newChatSend": "NOT_RUN",
+      "privateRestore": "NOT_RUN_NEW_DOCUMENT_INSTANT_ONLY",
+      "workerRecovery": "NOT_RUN",
+      "browserRestartIsolation": "NOT_RUN"
+    },
+    "safety": {
+      "oldDraftTabsPreserved": true,
+      "personalUnlockByAgent": false,
+      "testMessageSent": false,
+      "internalRequests": 0,
+      "browserTabClaimed": false,
+      "cdpUsed": false,
+      "otherWindowsOperated": false
+    },
+    "overall": "NOT_FREE_ACCEPTED"
   }
 }

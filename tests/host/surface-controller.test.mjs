@@ -409,3 +409,15 @@ test('closing modal with invalid background still withdraws the mount',async()=>
  const f=fixture(),inspect=f.adapter.inspect;let hidden=false;f.adapter.inspect=()=>hidden?{ok:false,reason:'unsafe-native-history-list'}:inspect();
  await f.controller.start({});await f.both();hidden=true;f.layer(true);f.change();assert.equal(f.calls.dispose,0);f.layer(false);f.change();assert.equal(f.calls.dispose,1);assert.equal(f.slot.children.length,0);
 });
+
+// Classification must not authorize an unsafe layout or expose arbitrary text.
+test('history refusal reports only fixed categories on mount and later withdrawal',async()=>{
+ for(const detail of ['row-gap','PRIVATE_PAGE_VALUE'])for(const mounted of [false,true]){
+  const failures=[],f=fixture({onFailure:v=>failures.push(v)});
+  if(mounted){await f.controller.start({});await f.both();}
+  f.adapter.inspect=()=>({ok:false,reason:'unsafe-native-history-list',historyFailure:detail});
+  if(mounted)f.change();else assert.equal(await f.controller.start({}),null);
+  assert(failures.includes('surface-unsafe-native-history-list'+(detail==='row-gap'?'-row-gap':'')));
+  assert(failures.every(v=>!v.includes('PRIVATE_PAGE_VALUE')));assert.equal(f.controller.showWorkspace(),false);
+ }
+});

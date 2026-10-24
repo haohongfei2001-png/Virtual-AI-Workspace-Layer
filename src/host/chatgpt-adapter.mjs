@@ -1,7 +1,7 @@
 import {profileElement} from './native-surface-boundary.mjs';
 import {inspectNativeProjectSurface} from './native-project-surface.mjs';
 import {nativeReturnGapRect,isEmptyViewportMarker} from './native-return-gap.mjs';
-import {nativeHistoryPresentation} from './native-history-list.mjs';
+import {nativeHistoryPresentation,historyFailureReasons} from './native-history-list.mjs';
 import {nativeReturnSlotRect} from './native-return-slot.mjs';
 import {currentObservation,currentSurfaceSlice} from './current-observation-batch.mjs';
 import {sha256} from '../data/hash.mjs';
@@ -343,11 +343,12 @@ if(!p){
  // Freeze only this mount's presentation row set, never the discovered objects.
  // Appended/prepended native rows remain visible and discoverable. Existing row
  // removal, reordering or an inserted gap still invalidates the old mount.
- let historySelections=new WeakMap();
+ let historySelections=new WeakMap(),historyFailure=null;
  function historyPresentationFor(source,history){
   const prior=historySelections.get(history);
-  if(prior&&prior.source!==source)return null;
-  const result=nativeHistoryPresentation({document,source,root:history,urlPolicy,isOwnedMask,preferredMaskRoots:prior?.maskRoots??null});
+  historyFailure=null;
+  if(prior&&prior.source!==source){historyFailure='source-replaced';return null;}
+  const result=nativeHistoryPresentation({document,source,root:history,urlPolicy,isOwnedMask,preferredMaskRoots:prior?.maskRoots??null,onFailure:reason=>{if(historyFailureReasons.includes(reason))historyFailure=reason;}});
   if(result&&!prior)historySelections.set(history,{source,maskRoots:[...result.maskRoots]});
   return result;
  }
@@ -405,7 +406,7 @@ if(!p){
   return proof&&current&&proof.length===current.proofNodes.length&&proof.every((node,i)=>node===current.proofNodes[i]&&node===priorNodes[i])?current:null;
  }
  function inspect(){
-  const fail=reason=>({ok:false,reason,profileId:profile.id});if(!active())return fail('stale-host-binding');try{syncRoute();}catch{return fail('host-rebind-required');}if(urlPolicy.parse(url).kind==='unsupported')return fail('unsupported-host-route');
+  const fail=reason=>({ok:false,reason,profileId:profile.id,...(reason==='unsafe-native-history-list'&&historyFailure?{historyFailure}:{})});if(!active())return fail('stale-host-binding');try{syncRoute();}catch{return fail('host-rebind-required');}if(urlPolicy.parse(url).kind==='unsupported')return fail('unsupported-host-route');
   if(projectLayout()){
    const found=projectSurface();if(!found)return fail(projectSurface(false)?'unsafe-native-geometry':'unsafe-native-project-layout');
    const {proofNodes,...layout}=found;if(proofNodes.length!==priorNodes.length||proofNodes.some((node,i)=>node!==priorNodes[i])){regionEpoch++;priorNodes=proofNodes;}
