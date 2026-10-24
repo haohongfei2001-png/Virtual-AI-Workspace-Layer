@@ -1823,6 +1823,39 @@
       "databaseUntouched": true,
       "sameExtensionId": true
     },
-    "activation": "R62_NOT_RUN"
+    "activation": {
+      "candidate": "r62",
+      "codeCommit": "594ce57e",
+      "backup": ".git/vaiwl-artifacts/same-id-r62-activation-20261024/previous-extension",
+      "manifestUnchanged": true,
+      "verifiedFiles": 196,
+      "reload": "EXACT_ORIGINAL_ENABLED_EXTENSION_AXPRESS_DISPATCHED",
+      "runtimeFingerprint": "NOT_ESTABLISHED"
+    },
+    "postUpgradeMac": {
+      "home": "NATIVE_HOME_OPENED_IN_NEW_ACCEPTANCE_TAB",
+      "status": "LAYOUT_NOT_READY_NATIVE_HISTORY_NOT_FOUND",
+      "nativeSidebar": "KEYBOARD_FOCUSED_ACTIVATION_OPENED_NATIVE_SIDEBAR",
+      "searchReturn": "NOT_RUN_UNSTABLE_WINDOW_LAYOUT",
+      "windowSizesObserved": [
+        [
+          627,
+          1280
+        ],
+        [
+          1920,
+          1080
+        ],
+        [
+          1363,
+          538
+        ]
+      ],
+      "windowChangeCause": "NOT_ESTABLISHED",
+      "accountConfirmation": "NOT_PERFORMED_BY_AGENT",
+      "oldDraft": "UNCHANGED",
+      "database": "NOT_TOUCHED",
+      "automation": "STOPPED_BEFORE_UNCERTAIN_TARGET_INPUT"
+    }
   }
 }
