@@ -7,8 +7,9 @@ const scope=scopeOf('A'),start=Date.parse('2026-10-23T00:00:00Z');
 const project={id:'P',nativeName:'原生项目',nativeUrl:'https://chatgpt.com/g/P/project',availability:'available',memberCount:1};
 const ref={id:'C',nativeTitle:'原生标题',nativeUrl:'https://chatgpt.com/c/C',availability:'available'};
 const member={id:'C',state:'PROJECT',projectId:'P'};
-function apply(facts,values,channel='host-dom',ms=1000,sourceId='host'){
+function apply(facts,values,channel='host-dom',ms=1000,sourceId='host',profilePatch={}){
  const at=new Date(start+ms).toISOString(),admission={profileId:'profile',profileVersion:1,evidenceClass:channel==='host-dom'?'surface':'directory-candidates',semanticFingerprint:'a'.repeat(64),acceptedAt:at};
+ Object.assign(admission,profilePatch);
  if(channel==='host-metadata')admission.coverage={domain:{kind:'recent-list',filter:'is_archived=unspecified;is_starred=unspecified',sort:'unspecified'},gaps:[],terminalObserved:false};
  return applyNativeObservations(facts,{scopeKey:emptyNativeFacts(scope).scopeKey,sourceRevision:(facts.sources[sourceId]?.sourceRevision??0)+1,observedAt:at,validUntil:new Date(start+ms+60000).toISOString(),projects:[],refs:[],membership:[],inventory:{projects:'partial',conversations:'partial',cursor:null},...values},{scope,channel,sourceId,generation:'g',now:at,admission});
 }
@@ -41,4 +42,30 @@ test('a conflicting route is withheld independently of title and membership',()=
  const first=apply(seed(),{refs:[{...ref,nativeUrl:ref.nativeUrl+'?view=one'}]},'host-dom',2000);
  const conflict=apply(first,{refs:[{...ref,nativeUrl:ref.nativeUrl+'?view=two'}]},'host-metadata',2000),r=view(conflict,2000).refs[0];
  assert.equal(r.nativeUrl,null);assert.equal(r.nativeTitle,ref.nativeTitle);assert.equal(r.membership,'PROJECT');
+});
+
+test('new DOM profile incarnation accepts only complete fresh reobservations and preserves untouched facts',()=>{
+ const first=seed(),before=structuredClone(first);
+ const next=apply(first,{refs:[{...ref,nativeTitle:'重新观察标题'}]},'host-dom',2000,'successor',{profileVersion:2});
+ assert.equal(next.refs.C.nativeTitle,'重新观察标题');assert.equal(next.refs.C.sourceId,'successor');
+ assert.deepEqual(next.projects,first.projects);assert.deepEqual(next.membership,first.membership);assert.deepEqual(next.sources.host,first.sources.host);assert.deepEqual(first,before);
+ const cases=[
+  [{refs:[ref]},'host-dom',2000,{profileId:'unrelated',profileVersion:2}],
+  [{refs:[ref]},'host-dom',2000,{profileVersion:1}],
+  [{refs:[ref]},'host-metadata',2000,{profileVersion:2}],
+  [{refs:[ref]},'host-dom',500,{profileVersion:2}],
+  [{refs:[{...ref,nativeTitle:null}]},'host-dom',2000,{profileVersion:2}],
+  [{refs:[{...ref,availability:'unknown'}]},'host-dom',2000,{profileVersion:2}],
+  [{membership:[{id:'C',state:'UNKNOWN',projectId:null}]},'host-dom',2000,{profileVersion:2}],
+  [{projects:[{id:'P',nativeName:project.nativeName,nativeUrl:project.nativeUrl,availability:'available'}]},'host-dom',2000,{profileVersion:2}]
+ ];
+ for(const [values,channel,ms,patch] of cases)assert.throws(()=>apply(first,values,channel,ms,'successor',patch),/source-conflict/);
+ assert.deepEqual(first,before);
+});
+test('profile change cannot resolve an equal-time quarantined field',()=>{
+ const conflict=apply(seed(),{refs:[{...ref,nativeTitle:'disagrees'}]},'host-metadata',1000);
+ // The last admitted source channel must itself be DOM before a DOM successor.
+ const dom=apply(conflict,{refs:[{...ref,nativeTitle:null}]},'host-dom',1000);
+ assert.throws(()=>apply(dom,{refs:[ref]},'host-dom',1000,'successor',{profileVersion:2}),/source-conflict/);
+ const later=apply(dom,{refs:[ref]},'host-dom',2000,'successor',{profileVersion:2});assert.equal(view(later,2000).refs[0].nativeTitle,ref.nativeTitle);
 });

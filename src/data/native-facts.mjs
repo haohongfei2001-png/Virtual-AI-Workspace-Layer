@@ -14,6 +14,19 @@ const mergeFields={projects:['nativeName','nativeUrl','availability','memberCoun
  * because another field was seen. Membership state/projectId is one fact. */
 export const nativeFieldWitness=(row,field)=>row?.fieldWitnesses?.[field]??row;
 export const nativeFieldConflicted=(row,field)=>row?.fieldWitnesses?.[field]?.conflicted===true;
+// A newer parser for the very same admitted DOM profile may reobserve a row
+// under its own incarnation. It cannot transfer missing/weak fields or their
+// authority across sources: each existing field must be freshly supplied.
+function completeProfileSuccessor(previous,row,table,current,channel,admission,observedAt){
+ const source=current.sources[previous.sourceId],old=source?.admission;
+ if(channel!=='host-dom'||source?.channel!==channel||old?.profileId!==admission.profileId||old.profileVersion>=admission.profileVersion)return false;
+ return mergeFields[table].every(field=>{
+  if(field==='memberCount'&&!Object.hasOwn(previous,field)&&!Object.hasOwn(row,field))return true;
+  const prior=nativeFieldWitness(previous,field);
+  return Object.hasOwn(row,field)&&row[field]!==null&&!(field==='availability'&&row[field]==='unknown')&&!(field==='state'&&row[field]==='UNKNOWN')&&
+   timestamp(observedAt)>=timestamp(prior.observedAt)&&!(prior.conflicted&&timestamp(observedAt)===timestamp(prior.observedAt));
+ });
+}
 function mergeFieldsFrom(previous,row,table,provenance,channel,current){
  const result={...row,...provenance},stamps={};
  for(const field of mergeFields[table]){
@@ -199,7 +212,8 @@ export function applyNativeObservations(current, batch, {scope, channel, sourceI
       if (table === 'membership') membership(row, next.projects);
       else nativeObject(row, table === 'projects' ? 'nativeName' : 'nativeTitle');
       const previous = next[table][row.id];
-      if (previous && previous.sourceId !== sourceId && !current.sources[previous.sourceId]?.revoked) throw Error('native-source-conflict');
+      if (previous && previous.sourceId !== sourceId && !current.sources[previous.sourceId]?.revoked &&
+          !completeProfileSuccessor(previous,row,table,current,channel,admission,batch.observedAt)) throw Error('native-source-conflict');
       next[table][row.id] = hostNativeChannel(channel)?mergeFieldsFrom(previous,row,table,provenance,channel,current):{...row, ...provenance};
       if (table !== 'membership') {
         const field = table === 'projects' ? 'nativeName' : 'nativeTitle';

@@ -9,18 +9,20 @@ import {NativeRepository} from '../../src/data/native-repository.mjs';
 import {createHostObservationOwner} from '../../src/runtime/host-observation-owner.mjs';
 import {createURLPolicy} from '../../src/host/url-policy.mjs';
 const origin='https://chatgpt.com',scope=normalizedScope({verified:true,provider:'chatgpt',accountId:'fixture',organizationId:'personal'});
-function fixture(t){
+function fixture(t,scopeOverride=null){
+ const scope=scopeOverride??normalizedScope({verified:true,provider:'chatgpt',accountId:'fixture',organizationId:'personal'});
  let time=1000,bound=true,notifications=0;
  const grant={id:'grant',scopeEpoch:1,expiresAt:new Date(21000).toISOString()},sender={tab:{id:1,incognito:false},frameId:0,documentId:'doc'};
- const profile={id:'coalescing',revision:1,urlPolicy:createURLPolicy({profile:{conversationId:x=>x,projectId:({container})=>container}})};
+ let profile={id:'coalescing',revision:1,urlPolicy:createURLPolicy({profile:{conversationId:x=>x,projectId:({container})=>container}})};
  const base=new ScopeRepository({indexedDB:new MockIDBFactory(),databaseName:'owner-coalescing'});
- const owner=createHostObservationOwner({handshake:{verify:async()=>bound,isBound:()=>bound,matchesFrame:()=>bound},authority:{peek:()=>({state:'verified',grant}),scopeFor:()=>scope},getFrame:async()=>({documentId:'doc',url:origin+'/',documentLifecycle:'active'}),profiles:new Map([[profile.id,profile]]),onAccepted:()=>notifications++,now:()=>time});
+ const profiles=new Map([[profile.id,profile]]);
+ const owner=createHostObservationOwner({handshake:{verify:async()=>bound,isBound:()=>bound,matchesFrame:()=>bound},authority:{peek:()=>({state:'verified',grant}),scopeFor:()=>scope},getFrame:async()=>({documentId:'doc',url:origin+'/',documentLifecycle:'active'}),profiles,onAccepted:()=>notifications++,now:()=>time});
  const native=new NativeRepository({baseRepository:base,hostObservationGate:owner.gate,clock:()=>new Date(time).toISOString()});
  t.after(()=>{owner.stop();base.close();});
- const evidence=fieldPaths=>({profileId:profile.id,profileVersion:1,sourceKind:'native-dom',regionEpoch:1,fieldPaths,receiptId:null});
+ const evidence=fieldPaths=>({profileId:profile.id,profileVersion:profile.revision,sourceKind:'native-dom',regionEpoch:1,fieldPaths,receiptId:null});
  const candidate=(entity,id,title=id)=>({renderKey:entity+':'+id,entity,nativeTitle:title,titleState:'exact',target:{kind:'resolved',entity,nativeId:id,navigationURL:origin+(entity==='project'?'/g/'+id+'/project':'/c/'+id),liveHandle:null},evidence:evidence(['history','href'])});
- const proposal=(seq,patch={})=>({protocol:'vaiwl-host-observation/1',documentToken:'document',producerToken:'producer',routeEpoch:1,localSeq:seq,profileId:profile.id,profileVersion:1,bodyProofId:null,kind:'surface-delta',payload:{candidates:[candidate('project','p1'),candidate('project','p2'),candidate('conversation','c1')],membershipClaims:[{conversationId:'c1',asserted:'PROJECT',projectId:'p1',upstreamRevision:null,evidence:evidence(['members','current-project-route'])}],coverageClaims:[],detachedHandles:[],...patch}});
- return {native,owner,proposal,candidate,evidence,get notifications(){return notifications;},read:()=>native.read(scope),send:p=>owner.ingest(p,sender,native),advance(ms){time+=ms;grant.expiresAt=new Date(time+20000).toISOString();},revoke(){bound=false;}};
+ const proposal=(seq,patch={})=>({protocol:'vaiwl-host-observation/1',documentToken:'document',producerToken:'producer',routeEpoch:1,localSeq:seq,profileId:profile.id,profileVersion:profile.revision,bodyProofId:null,kind:'surface-delta',payload:{candidates:[candidate('project','p1'),candidate('project','p2'),candidate('conversation','c1')],membershipClaims:[{conversationId:'c1',asserted:'PROJECT',projectId:'p1',upstreamRevision:null,evidence:evidence(['members','current-project-route'])}],coverageClaims:[],detachedHandles:[],...patch}});
+ return {native,owner,proposal,candidate,evidence,upgradeProfile(){profile={...profile,revision:profile.revision+1};profiles.set(profile.id,profile);},get notifications(){return notifications;},read:()=>native.read(scope),send:p=>owner.ingest(p,sender,native),advance(ms){time+=ms;grant.expiresAt=new Date(time+20000).toISOString();},revoke(){bound=false;}};
 }
 const accepted=async(f,p)=>{const result=await f.send(p);assert.equal(result.state,'accepted',JSON.stringify(result));return result;};
 test('MOCK_IDB coalescing unchanged active rows ACK without renewing persisted source or row witnesses',async t=>{
@@ -83,4 +85,17 @@ for(const kind of ['live-control','detached-handle'])test('MOCK_IDB coalescing '
  const f=fixture(t);await accepted(f,f.proposal(1));const before=await f.read(),p=f.proposal(2);
  if(kind==='live-control')p.payload.candidates.push({renderKey:'candidate:live_new',entity:'project',nativeTitle:'New native Project entry',titleState:'exact',target:{kind:'live-control',control:{id:'live_new',documentToken:'document',routeEpoch:1,regionEpoch:1,controlKind:'project'},navigationURL:null},evidence:f.evidence(['projects','button'])});else p.payload.detachedHandles=['live_old'];
  await accepted(f,p);assert.deepEqual(await f.read(),before);assert.equal(f.notifications,2,'nonpersistent candidate changes remain reachable even when native rows coalesce');
+});
+
+test('MOCK_IDB personal profile upgrade ingests fresh Project facts while preserving unobserved private records',async t=>{
+ const local=normalizedScope({kind:'browser-local',storage:'personal',spaceId:'upgrade-fixture'}),f=fixture(t,local);
+ await accepted(f,f.proposal(1,{candidates:[f.candidate('conversation','c1'),f.candidate('conversation','saved')],membershipClaims:[]}));
+ const before=await f.read(),oldSource=Object.values(before.sources)[0];
+ f.upgradeProfile();
+ const p=f.proposal(1,{candidates:[f.candidate('project','p1'),f.candidate('conversation','c1')]});p.producerToken='upgraded';
+ await accepted(f,p);const after=await f.read();
+ assert.equal(after.membership.c1.projectId,'p1');assert.equal(after.projects.p1.nativeName,'p1');
+ assert.notEqual(after.refs.c1.sourceId,oldSource.id);assert.equal(after.sources[after.refs.c1.sourceId].admission.profileVersion,2);
+ assert.deepEqual(after.sources[oldSource.id],oldSource);assert.deepEqual(after.refs.saved,before.refs.saved);
+ assert.equal(after.scopeKey,local.key);assert.equal((await f.send(p)).state,'duplicate');assert.deepEqual(await f.read(),after);
 });

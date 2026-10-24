@@ -2484,5 +2484,75 @@
       "personalUnlockNeverClickedByOperator": true
     },
     "next": "Current repaired Project document is ready; private popup opened and one current-document personal confirmation requested. Continue remaining personal journey without another reload unless a concrete defect requires it."
+  },
+  "profileUpgradeR89_20261025": {
+    "baseHead": "4c81cb58079bd0c3a770f75cf3aa59b792c83994",
+    "actualMac": {
+      "currentDocumentUserConfirmation": "PASS_POPUP_ACK_PERSONAL",
+      "privateProjectAfterConfirmation": "FAIL_PROJECT_CARD_NOT_RETAINED_UNKNOWN_ROWS_ONLY",
+      "lastNavigationSummary": {
+        "phase": "failed",
+        "matched": 5,
+        "visible": 0,
+        "association": 1,
+        "candidates": 0,
+        "claims": 0
+      },
+      "knownMemberOpen": "PARTIAL_EXPECTED_TITLE_REACHED_DOCUMENT_CONTINUITY_NOT_ESTABLISHED",
+      "memberDocumentPrivateState": "LOCKED",
+      "upgradeRootCauseInOriginalDatabase": "NOT_ESTABLISHED_ORIGINAL_PRIVATE_SOURCE_VERSION_NOT_READ",
+      "r89Reload": "NOT_RUN_ORIGINAL_PID_9833_HAS_ZERO_AX_WINDOWS",
+      "r89PrivateRecovery": "NOT_RUN",
+      "fullChromeRestart": "INHERITED_PRIOR_PASS_NOT_REPEATED",
+      "workerRestart": "NOT_ESTABLISHED",
+      "newChatSend": "NOT_RUN",
+      "accountRiskJourney": "NOT_RUN"
+    },
+    "confirmedCodeDefect": {
+      "selector": "same admitted DOM profile with older persisted version was rejected as native-source-incarnation-conflict",
+      "apply": "fresh successor still rejected overlapping observed rows as native-source-conflict",
+      "fix": "select separate successor without changing old sources; accept complete fresh reobservations from strictly newer same DOM profile; preserve unobserved facts, existing CAS, scope and authority fences",
+      "limits": "partial/weak/older/conflicted equal-time, unrelated profile, same-version and metadata takeovers stay rejected; not a cache reauthentication or migration"
+    },
+    "verification": {
+      "targeted": "PASS_50_DIRECT_NATIVE_FACTS_FIELD_MERGE_INCARNATION_OWNER_TESTS",
+      "isolatedMv3": "PASS_SAME_ID_PROFILE_8_TO_9_REAL_IDB_FORMAL_PROJECT_AND_UNOBSERVED_MEMBER_RECOVERY",
+      "isolation": "new headless profile, loopback fixture, external network blocked including worker; no actual account data",
+      "upgradeMechanism": "existing isolated management disable/same-path load/enable pattern; no uninstall and no database writes by test runner",
+      "checks": [
+        "old source records unchanged",
+        "unobserved member reference and membership unchanged",
+        "same local scope retained",
+        "new version admitted through owner and CAS",
+        "private data locked before explicit offline fixture confirmation",
+        "formal UI displays member absent from new page"
+      ],
+      "earlierAttempts": "direct browser restart/load and self-reload runs failed before new observation acceptance; retained as harness failures, not counted as product passes; final run uses existing acknowledged same-ID upgrade mechanism",
+      "artifact": ".git/vaiwl-artifacts/browser-local-source-upgrade-20261025-r89/verification"
+    },
+    "package": {
+      "candidate": ".git/vaiwl-artifacts/browser-local-source-upgrade-20261025-r89/extension",
+      "archiveSha256": "e7426c80e87825e98819aa6d54454b2011151bbd780163dec6d8c3afaf5f4e21",
+      "canonicalFiles": 196,
+      "installedCanonicalMatch": true,
+      "manifestUnchanged": true,
+      "backup": ".git/vaiwl-artifacts/same-id-r89-source-upgrade-20261025/previous-extension",
+      "changed": [
+        "src/data/native-facts.mjs",
+        "src/runtime/native-source-incarnation.mjs",
+        "extension/classic-runtime.js"
+      ],
+      "activation": "FILES_UPDATED_RUNTIME_RELOAD_NOT_RUN"
+    },
+    "preservation": {
+      "originalDatabaseNotReadOrChangedByOperator": true,
+      "draftsNotReadOrChanged": true,
+      "otherChromeNotOperated": true,
+      "personalUnlockNeverClickedByOperator": true,
+      "internalAccountRequests": 0,
+      "testMessagesSent": 0,
+      "stashCount": 3
+    },
+    "next": "Restore an original Profile 4 window, then perform original-ID native Reload and continue acceptance; no reinstall, new account experiment or synthetic-to-Mac promotion."
   }
 }
