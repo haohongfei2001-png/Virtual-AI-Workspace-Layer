@@ -1389,5 +1389,64 @@
       }
     },
     "remaining": "Need ordinary user observation of existing four-grid return. Do not treat old ready string as visible-workspace proof or keep assuming srcdoc replacement. Do not claim normal tool cleanup was observed."
+  },
+  "nativeComputerUseCompatibility20261024": {
+    "status": "PASS_BOUNDED_NO_ACCOUNT_NATIVE_APP_COMPATIBILITY",
+    "realChatGPT": "NOT_RUN",
+    "fullMacAcceptance": "NOT_RUN",
+    "head": "ea4b60df43a0464a3b5dc1b350d5ed094523ff2b",
+    "authorization": "User approved independent open -n launch, new isolated profile, and both extension installations at action time.",
+    "transport": "SUPPORTED_NATIVE_APP_AX_AND_INPUT_ONLY",
+    "browser": "Chrome for Testing 153.0.8010.12; chromium-1243",
+    "profile": "new isolated-profile/Default; account_info entries 0",
+    "officialExtension": {
+      "id": "hehggadaopoacecdllhhajmbjkdcmajg",
+      "version": "1.26.1020.11845",
+      "sourceCopyFiles": 41,
+      "sourceUnmodified": true
+    },
+    "vaiwlExtension": {
+      "id": "cinnjmimkokmeeonmabmjalboghlnobo",
+      "build": "existing packageHost with browserLocal and fixed loopback offlineOrigin",
+      "archiveSha256": "9b051dca1ba727699dc5cdda412e0d3b707af61e475662e50e5103ff8959716e"
+    },
+    "checks": {
+      "bothExtensionsEnabledInManagementUI": "PASS",
+      "formalWorkspaceAndSidebarDocumentsWithProjectAndMembers": "PASS",
+      "nativeReadingThenUniqueReturn": "PASS",
+      "cardOpensExactFixtureChatInNewTab": "PASS",
+      "closingNewChatReturnsToIntactProject": "PASS",
+      "fixtureDraftStillPresent": "PASS",
+      "browserNativeControlDoesNotBlankFormalFramesInThisRun": "PASS"
+    },
+    "limits": [
+      "No browser tab was claimed; this does not establish compatibility with browser-control foreign-frame monitoring active.",
+      "No CDP, internal extension API, debugger, account login, response read, or protection modification used.",
+      "AX documents and successful actions establish operational checks; the native screenshot is a transformed small window capture and does not establish full visual acceptance.",
+      "Native-app tool selected an older same-app process initially. Version-page verification caught it before installation. The old no-account test instance containing only test pages was normally quit; new isolated profile and flags then verified in the UI."
+    ],
+    "network": {
+      "fixturePageRequests": 3,
+      "denyProxyRequests": 160,
+      "welcomePage": "Official extension auto-opened its install welcome URL; proxy blocked it with ERR_TUNNEL_CONNECTION_FAILED; tab closed without retry.",
+      "proxyScope": "test process only; existing reject-only proxy, no forwarding",
+      "allBrowserNetworkChannelsAudited": false
+    },
+    "cleanup": {
+      "newTestProcessExited": true,
+      "fixtureAndProxyStopped": true,
+      "testProfileAndEvidencePreserved": true,
+      "originalChromeTouched": false,
+      "originalInstall196ManifestHashesMatch": true,
+      "originalDataUntouched": true,
+      "threeStashesPreserved": true
+    },
+    "liveContinuation": {
+      "state": "BLOCKED_PRE_TARGET_SELECTION",
+      "reason": "Two Google Chrome processes share the same app path: job-application process and original Profile 4. Current documented macOS getApp selector has no explicit PID/profile binding. Test showed app-path selection can choose the older process. No actual Google Chrome app selection or tab control attempted.",
+      "nextCondition": "A supported exact native target for Profile 4, or the other Chrome process finishing normally so target selection becomes unambiguous. Do not close or interfere with job work; do not retry raw CDP or claim current user tab."
+    },
+    "localArtifacts": ".git/vaiwl-artifacts/native-cua-compatibility-20261024-r1",
+    "evidence": "formal-ui-after-return.txt; formal-ui-after-return.png; preparation.json; preflight.json; environment-final.json"
   }
 }
