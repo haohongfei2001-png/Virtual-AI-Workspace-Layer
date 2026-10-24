@@ -22,7 +22,7 @@ function assertSnapshotMeaning(text){
  assert.match(visible,/打开.{0,12}(?:时|状态)|本次(?:检查|读取)|状态快照/,'one-shot result must be explicitly presented as a snapshot');
  assert.match(visible,/(?:重新|再次).{0,8}打开|关闭.{0,8}打开/,'explain how the user can obtain a fresh local observation without polling');
 }
-for(const state of ['ready','dormant','connecting','waiting','verification-required','frame-blocked','unavailable'])test('actual popup renders '+state+' as a single local snapshot',async()=>{
+for(const state of ['ready','reading','suspended','dormant','connecting','waiting','verification-required','frame-blocked','unavailable'])test('actual popup renders '+state+' as a single local snapshot',async()=>{
  const f=await render({v:1,state});assert.equal(typeof f.node.textContent,'string');assert(f.node.textContent.length>0);assertSnapshotMeaning(f.node.textContent);
  assert.deepEqual(f.calls,[['query',{active:true,currentWindow:true}],['send',7,{v:1,type:'HOST_LOCAL_STATUS'},{frameId:0}]]);
  const before=f.node.textContent;f.change({v:1,state:state==='ready'?'waiting':'ready'});await drain();assert.equal(f.calls.length,2,'no polling or automatic refresh');assert.equal(f.node.textContent,before,'snapshot remains explicitly historical');

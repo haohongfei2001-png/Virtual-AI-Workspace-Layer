@@ -1,4 +1,4 @@
-const states=new Set(['ready','dormant','connecting','waiting','verification-required','frame-blocked','unavailable']);
+const states=new Set(['ready','reading','suspended','dormant','connecting','waiting','verification-required','frame-blocked','unavailable']);
 const exact=(value,keys)=>value!==null&&typeof value==='object'&&!Array.isArray(value)&&Object.getPrototypeOf(value)===Object.prototype&&Reflect.ownKeys(value).length===keys.length&&keys.every(key=>Object.hasOwn(value,key));
 /** Passive isolated-world status. This is not an authority or recovery channel. */
 export function installLocalStatus({runtime,readState}){

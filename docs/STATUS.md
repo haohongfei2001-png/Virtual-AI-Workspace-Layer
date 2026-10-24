@@ -1,5 +1,14 @@
 # VAIWL实际状态：渐进积累工程已接线，真实来源逐项待准入
 
+## 普通刷新后已连接但界面未见：展示状态分层修补（2026-10-24）
+
+本人报告：未由工具接管的手动刷新后，原生ChatGPT正常，未看到正式VAIWL；原扩展popup返回“增强界面已连接”。这是用户提供的固定状态证据，不是自动实机观测。只读核验原安装Browser-Local配置有效、196个manifest文件hash一致且无缺失；原r31未安装前批r32修正，本轮也不覆盖。未发现VAIWL将frame替换退出标记持久化到跨刷新启动的机制。
+
+已确认代码缺口：原controller的localStatus将reading、suspended和workspace统一报ready。存在原生composer已聚焦时保留阅读、只创建唯一四格返回的合法路径；因此“已连接”不能证明工作区已展开，也不能据此认定当前仍是空srcdoc。实际Mac模式及四格可见性尚缺本人观察，不能把候选原因定为实机根因。
+
+沿原私有状态合同新增reading/suspended固定分类与popup说明；不自动展开、不抢输入、不新增返回按钮、不解锁、不改UI设计。定向验证保护输入焦点/草稿、状态只读及原四格返回，正式包r33构建验证通过，仅暂存artifact。原安装/旧数据/stash不变，浏览器工具调用、账户请求、刷新均0。下一步只查看现有四格入口及一次用户点击结果；不要求重装或新账户诊断。详情见原Mac回执 `postControlRefreshPresentation20261024`。此前“正常释放后刷新”的路径未完成真实恢复确认，不以源码清理路径当作释放回执。
+
+
 ## 已定位安装代码中的空srcdoc写入机制；停止重复账号定位（2026-10-24）
 
 本轮不依赖客服/CDP，仅读取已安装扩展的代码。ChatGPT 浏览器控制扩展 `hehggadaopoacecdllhhajmbjkdcmajg` / `1.26.1020.11845` 的 `content-scripts/foreign-frame-monitor.js` 明确将其他扩展 iframe 写为 `srcdoc=""`，遍历包括 closed Shadow DOM。后台在受控标签的有效文档注入相同函数，后续导航也安装。直接执行该已安装原函数的无账户 Node VM 复现：VAIWL workspace、Shadow DOM sidebar及新增foreign frame均被置空，同扩展及普通网页frame不变。源hash、触发链与结果见原[Mac回执](engineering/free-mac-home-acceptance-20261023.json)的 `foreignFrameMonitorSourceAttribution20261024`。这是**安装源码机制＋离线因果证据**，与既有Mac症状吻合；未捕获本人的实际写入调用栈，不把历史归因失败改成PASS。

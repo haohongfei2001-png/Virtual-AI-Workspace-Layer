@@ -1351,5 +1351,43 @@
       "extraFiles": "Number-suffixed copies retained; not deleted or treated as writer evidence",
       "mutations": 0
     }
+  },
+  "postControlRefreshPresentation20261024": {
+    "baseCommit": "cb6f50b6932a1e161b9ebd4c9c5803863c4c6215",
+    "userObservation": {
+      "afterManualRefresh": "Native ChatGPT normal; formal VAIWL UI not seen",
+      "originalPopup": "本次检查：增强界面已连接。",
+      "evidenceType": "USER_REPORTED_FIXED_STATUS",
+      "actualMode": "UNKNOWN",
+      "fourGridEntry": "AWAITING_USER_OBSERVATION"
+    },
+    "codeFinding": "Installed localStatus reports ready for both reading and suspended modes when registration, both UI grants and frame windows remain valid. A pre-existing protected composer focus at JOIN selects native reading and a four-grid return rather than auto-opening workspace. This matches a possible path, not yet the actual Mac cause.",
+    "checks": {
+      "installedBrowserLocal": true,
+      "installedManifestHashes": "196/196_MATCH_NO_MISSING",
+      "installedFrameBlockedStatus": false,
+      "crossRefreshStopFlag": "No persisted frame-replacement stop flag in reviewed VAIWL startup/lifecycle; new document calls start",
+      "browserToolClaim": 0,
+      "browserRefresh": 0,
+      "accountRequests": 0,
+      "installationWrites": 0,
+      "databaseAccess": 0
+    },
+    "change": "Private controller status distinguishes reading and suspended from workspace mode; popup explains native-reading return and native-layer yield. No new UI entry, auto-show, focus change, unlock or authority. Earlier frame-blocked repair remains staged, not installed.",
+    "validation": {
+      "result": "PASS",
+      "targetedTests": 156,
+      "log": "/private/tmp/vaiwl-presentation-status-20261024.tap",
+      "scope": "Unit integration of controller, actual popup and private fixed protocol; protected focus preserves draft and four-grid entry. No real browser acceptance.",
+      "candidate": {
+        "status": "HOST_IMPLEMENTATION_UNVERIFIED",
+        "releaseStatus": "NOT_RELEASE_READY",
+        "files": 197,
+        "unpacked": "/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/.git/vaiwl-artifacts/browser-local-presentation-status-20261024-r33/extension",
+        "archive": "/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/.git/vaiwl-artifacts/browser-local-presentation-status-20261024-r33/vaiwl-free-host-development.zip",
+        "archiveSha256": "91b5974c949b5351b0d6631380d5e8ff67d1f4f7b0bf28ae559f00012767f084"
+      }
+    },
+    "remaining": "Need ordinary user observation of existing four-grid return. Do not treat old ready string as visible-workspace proof or keep assuming srcdoc replacement. Do not claim normal tool cleanup was observed."
   }
 }

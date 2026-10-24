@@ -1,6 +1,6 @@
 import {HOST_CONFIG} from './config.mjs';
 import {readActiveLocalStatus} from '../src/host/local-status.mjs';
-const messages={'frame-blocked':'本次检查：界面框架被替换，VAIWL 已安全退出，原生页面仍可使用。若正在使用浏览器自动控制，请结束控制后正常打开页面。无需重新确认账号或重装扩展。',ready:'本次检查：增强界面已连接。',dormant:'本次检查：增强界面已休眠，原生 ChatGPT 仍可使用。',connecting:'本次检查：正在连接工作空间，原生 ChatGPT 仍可使用。',waiting:'本次检查：暂时无法验证工作空间，正在等待新的上下文证据。原生 ChatGPT 仍可使用。','verification-required':'本次检查：服务端要求浏览器验证，增强界面已停止连接。请查看原生 ChatGPT 页面；若出现验证请手动完成，没有验证页则无需反复刷新。',unavailable:'本次检查：此标签页尚未接入增强界面。请确认这是受支持的 ChatGPT 页面；原生页面仍可使用。'};
+const messages={reading:'本次检查：已连接，当前保留原生阅读或输入。可使用页面顶部的四格“返回工作空间”入口展开 VAIWL；无需重新确认本地空间。',suspended:'本次检查：已连接，增强界面正在为原生弹层或交互让位。结束当前原生操作后，可使用四格入口返回；无需重装扩展。','frame-blocked':'本次检查：界面框架被替换，VAIWL 已安全退出，原生页面仍可使用。若正在使用浏览器自动控制，请结束控制后正常打开页面。无需重新确认账号或重装扩展。',ready:'本次检查：增强界面已连接。',dormant:'本次检查：增强界面已休眠，原生 ChatGPT 仍可使用。',connecting:'本次检查：正在连接工作空间，原生 ChatGPT 仍可使用。',waiting:'本次检查：暂时无法验证工作空间，正在等待新的上下文证据。原生 ChatGPT 仍可使用。','verification-required':'本次检查：服务端要求浏览器验证，增强界面已停止连接。请查看原生 ChatGPT 页面；若出现验证请手动完成，没有验证页则无需反复刷新。',unavailable:'本次检查：此标签页尚未接入增强界面。请确认这是受支持的 ChatGPT 页面；原生页面仍可使用。'};
 const state=await readActiveLocalStatus({tabs:chrome.tabs});
 document.getElementById('status').textContent=messages[state];
 

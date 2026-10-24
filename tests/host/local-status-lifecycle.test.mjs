@@ -59,3 +59,20 @@ test('content delegates only current controller local status and rejects changed
  const f=contentFixture(t);await f.session.start();const c=installControllerStatus(f);c.localStatus=()=> 'dormant';contentPassive(f,'dormant');c.active=false;c.localStatus=()=> 'unavailable';contentPassive(f,'unavailable');
  f.document.location.href+='c/changed';contentPassive(f,'unavailable');
 });
+
+test('connected reading and native-layer suspension are distinct passive status snapshots',async t=>{
+ const f=await mounted(t);f.doc.draft='UNSENT';
+ f.controller.showNativeReading();passive(f,'reading');
+ assert.equal(f.slot.children.length,1);assert.equal(f.doc.draft,'UNSENT');
+ f.layer(true);f.change();passive(f,'suspended');
+ f.layer(false);f.change();
+ const button=f.slot.children[0];assert(button,'the existing return entry remains the only workspace control');
+ button.events.click({isTrusted:true});passive(f,'ready');assert.equal(f.doc.draft,'UNSENT');
+});
+test('native composer focus at JOIN keeps reading and does not report the workspace as shown',async t=>{
+ const f=surfaceFixture();t.after(()=>f.controller.stop());
+ const editor={isConnected:true,ownerDocument:f.doc};f.doc.activeElement=editor;f.doc.draft='UNSENT';
+ const inspect=f.adapter.inspect;f.adapter.inspect=()=>({...inspect(),composer:editor});
+ await f.controller.start({});await f.both();passive(f,'reading');
+ assert.equal(f.calls.show,0);assert.equal(f.slot.children.length,1);assert.equal(f.doc.draft,'UNSENT');
+});

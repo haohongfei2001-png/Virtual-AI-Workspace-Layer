@@ -355,7 +355,12 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
   const state=current;if(!state||state.epoch!==epoch||doc.location.href!==state.url)return 'unavailable';
   if(state.dormant)return dormantReady()?'dormant':'unavailable';
   if(!state.registered||state.mode==='waiting')return 'connecting';
-  const time=now();return !state.geometryPaused&&Number.isFinite(time)&&Date.parse(state.context.binding.expiresAt)>time&&state.grants.size===2&&[...state.grants.values()].every(g=>Date.parse(g.expiresAt)>time)&&state.frames.length===2&&state.frames.every(({frame,window})=>frame.isConnected&&frame.ownerDocument===doc&&frame.contentWindow===window)?'ready':'unavailable';
+  const time=now();if(state.geometryPaused||!Number.isFinite(time)||!(Date.parse(state.context.binding.expiresAt)>time)||state.grants.size!==2||![...state.grants.values()].every(g=>Date.parse(g.expiresAt)>time)||state.frames.length!==2||!state.frames.every(({frame,window})=>frame.isConnected&&frame.ownerDocument===doc&&frame.contentWindow===window))return 'unavailable';
+  // Transport readiness is not presentation. Report private controller mode
+  // without inspecting native content, moving focus or opening a surface.
+  if(state.mode==='reading')return 'reading';
+  if(state.mode==='suspended')return 'suspended';
+  return state.mode==='workspace'?'ready':'unavailable';
  }
  return Object.freeze({localStatus,withNativeReading,cancelDormantClose,renewDormantLease,idleReleaseBusy:()=>current?.releaseBusy===true&&dormantReady(),checkIdle,enterDormant,settleDormant,dormantReady,resumeDormant,start,presentationMode:()=>current?.mode==='workspace'?'workspace':'reading',showWorkspace,isWorkspacePresented,showReading,showNativeReading,focusFrame(role){const state=current;if(!state||state.mode!=='workspace'||!authorized(state)||adapter.hasNativeLayer())return false;const target=state.frames.find(x=>x.role===role);if(!target?.frame?.focus)return false;target.frame.focus({preventScroll:true});let active=doc.activeElement;while(active?.shadowRoot?.activeElement)active=active.shadowRoot.activeElement;return active===target.frame;},isFrameTarget(role,node){return !!current&&authorized(current)&&current.frames.some(x=>x.role===role&&x.frame===node);},isReturnTarget:node=>!!current&&current.button===node&&authorized(current),intentGuard(){const state=current,revision=state?.intentEpoch;return ()=>!!state&&current===state&&state.intentEpoch===revision&&authorized(state)&&!adapter.hasNativeLayer();},readingGuard(){const state=current,revision=state?.intentEpoch;return ()=>!!state&&current===state&&state.intentEpoch===revision&&state.mode==='reading'&&authorized(state)&&!adapter.hasNativeLayer();},suspend,stop,revoke:()=>stop('ui-authority-revoked')});
 }
