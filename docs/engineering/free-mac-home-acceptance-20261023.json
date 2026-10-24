@@ -1897,11 +1897,12 @@
         0
       ],
       "currentDOMSelectorMatch": "NOT_ESTABLISHED",
-      "addressReadback": "MISMATCH_STOPPED_BEFORE_ENTER",
+      "addressReadback": "INITIAL_MISMATCH_STOPPED; LATER_EXACT_HOME_VALUE_THEN_NATIVE_ENTER_DISPATCHED",
       "r63HomeRecovery": "NOT_RUN",
       "r63SearchReturn": "NOT_RUN",
       "testMessageSent": false,
-      "personalUnlockByAgent": false
+      "personalUnlockByAgent": false,
+      "navigationOutcome": "NOT_CONFIRMED_WINDOW_STILL_EXTENSIONS_MANAGER_NO_REPLAY"
     },
     "preserved": [
       "old database",
