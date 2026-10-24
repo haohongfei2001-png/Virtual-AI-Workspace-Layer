@@ -14,6 +14,9 @@ try{
  // the conversation titlebar ambiguous. Preserve rejection when both own slots.
  await page.evaluate(()=>{const other=document.createElement('header');other.setAttribute('data-app-shell-titlebar','');other.id='other-native-titlebar';other.style.cssText='left:0;top:0;width:200px;height:40px';document.body.prepend(other);});
  if(focusableViewport)await page.evaluate(()=>document.querySelector('[data-slate-sidebar-content]').removeAttribute('data-slate-sidebar-content'));
+ // Same-route retained native trees are hidden after SPA navigation. Keep the
+ // duplicate in the document throughout the real layout/mount test.
+ await page.evaluate(()=>{const cached=document.createElement('div');cached.id='cached-native-titlebar';cached.hidden=true;cached.append(document.querySelector('[data-app-shell-titlebar]:has([data-app-shell-main-titlebar])').cloneNode(true));document.body.append(cached);});
  const readiness=await page.evaluate(async()=>{
   const sidebar=document.querySelector('[data-slate-sidebar-content]')??document.querySelector('nav');sidebar.style.display='none';let done=false;
   const pending=observedModule.waitForNativeLayout({document,profile:observedModule.CHATGPT_OBSERVED_PROFILE,timeoutMs:2000}).then(v=>{done=true;return v;});
@@ -29,9 +32,12 @@ try{
   const falseSlot=document.createElement('div');falseSlot.setAttribute('data-app-shell-main-titlebar','');other.append(falseSlot);
   const ambiguousRejected=adapter.inspect().ok===false;falseSlot.remove();
   if(!ambiguousRejected)throw Error('two-slot-bearing-titlebars-admitted');
+  const cached=document.querySelector('#cached-native-titlebar');
+  const hiddenDuplicateAccepted=adapter.inspect().ok;
+  cached.hidden=false;const visibleDuplicateRejected=!adapter.inspect().ok;cached.hidden=true;
   const inspection=adapter.inspect();if(!inspection.ok)throw Error(inspection.reason);
   surface=createMountSurface({document,createFrameURL:({role})=>'chrome-extension://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/'+role+'.html'});const handle=await surface.mount({binding},inspection);surface.showWorkspace(handle);for(let i=0;i<40;i++)await Promise.resolve();
-  const result={viewportShape:role===(focusableViewport?'region':null)&&tabindex===(focusableViewport?'0':null),bodyObservationPresent:proposals.some(p=>p.kind==='current-object'||p.kind==='current-observation'),noMaskedBodyInvalidation:proposals.filter(p=>p.kind==='current-object'||p.kind==='current-observation').every(p=>(p.kind==='current-observation'?p.payload.body:p.payload).association==='explicit-body-id'),profileSelected:inspection.profileId===profile.id,bodyConfigured:profile.currentBody.conversationIdSource==='message-elements',nativeTitle:proposals.some(p=>p.payload?.candidates?.some(c=>c.nativeTitle==='Native A')),noFabricatedMembership:proposals.every(p=>(p.payload?.membershipClaims??[]).every(c=>c.asserted==='UNKNOWN')),readingMasked:surface.isMasked(document.querySelector('#reading')),historyMasked:surface.isMasked(document.querySelector('#list')),searchVisible:getComputedStyle(document.querySelector('#heading')).visibility==='visible',composerVisible:getComputedStyle(document.querySelector('textarea')).visibility==='visible',geometryStillValid:adapter.inspect().ok};
+  const result={hiddenDuplicateAccepted,visibleDuplicateRejected,viewportShape:role===(focusableViewport?'region':null)&&tabindex===(focusableViewport?'0':null),bodyObservationPresent:proposals.some(p=>p.kind==='current-object'||p.kind==='current-observation'),noMaskedBodyInvalidation:proposals.filter(p=>p.kind==='current-object'||p.kind==='current-observation').every(p=>(p.kind==='current-observation'?p.payload.body:p.payload).association==='explicit-body-id'),profileSelected:inspection.profileId===profile.id,bodyConfigured:profile.currentBody.conversationIdSource==='message-elements',nativeTitle:proposals.some(p=>p.payload?.candidates?.some(c=>c.nativeTitle==='Native A')),noFabricatedMembership:proposals.every(p=>(p.payload?.membershipClaims??[]).every(c=>c.asserted==='UNKNOWN')),readingMasked:surface.isMasked(document.querySelector('#reading')),historyMasked:surface.isMasked(document.querySelector('#list')),searchVisible:getComputedStyle(document.querySelector('#heading')).visibility==='visible',composerVisible:getComputedStyle(document.querySelector('textarea')).visibility==='visible',geometryStillValid:adapter.inspect().ok};
   let scans=0;
   result.synchronousReadingProbe=surface.withNativeReading(handle,()=>{scans++;return getComputedStyle(document.querySelector('#reading')).visibility==='visible';},()=>true)===true&&scans===1&&surface.visibility(handle).workspace;
   surface.showReading(handle);surface.showWorkspace(handle);

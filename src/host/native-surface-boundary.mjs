@@ -33,6 +33,10 @@ export function profileElement(document,profile,selector,route=null){
    if(!selected||selected.closest(projectExcluded))return null;
    return oneVisible(document,selected,selector,projectExcluded);
   }
+  // Native SPA routing retains hidden prior surfaces. They are not current
+  // layout targets. Require exactly one visible candidate; never take the first
+  // match or treat an invisible cached node as a usable return region.
+  if(profile.visibleLayoutBoundary===true&&['nativeLayout','nativeHomeLayout'].some(name=>['header','navigationSlot','returnHitRoot'].some(key=>profile[name]?.[key]===selector)))return oneVisible(document,root,selector);
   const nodes=root.querySelectorAll(selector);
   return nodes.length===1?nodes[0]:null;
  }catch{return null;}

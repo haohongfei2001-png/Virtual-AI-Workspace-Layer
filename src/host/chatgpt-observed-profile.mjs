@@ -10,6 +10,7 @@ export const CHATGPT_OBSERVED_PROFILE=Object.freeze({
  id:'chatgpt-zh-desktop-observed-20261018',revision:9,reconstruction:false,liveVerified:false,
  memberAssociation:'route-linked-project-panel-v1',
  nativeProjectLayout:'panel-after-composer',
+ visibleLayoutBoundary:true,
  sidebarBoundary:CHATGPT_SIDEBAR_SELECTOR,
  sidebarBoundaryFallback:'nav:not([data-app-navigation-rail]):has([data-app-action-sidebar-section] [data-sidebar-chatgpt-conversation-key])',
  projectListBoundary:'main[data-app-shell-main-surface] [data-app-shell-main-content-layout] [role="main"]:has(h1 > button):has([role="tabpanel"])',
@@ -77,11 +78,11 @@ export function waitForNativeLayout({document,profile,timeoutMs=6000,signal=null
     // Presentation readiness only. Adapter inspection still proves purity,
     // geometry and native control protection after a fresh worker handshake.
     const groups=keys.map(k=>document.querySelectorAll(layout[k]));
-    try{shape=project?null:{counts:groups.map(items=>Math.min(33,items.length)),branches:[...document.querySelectorAll(layout.readingViewport??':not(*)')].slice(0,1).flatMap(v=>[...v.children].slice(0,12).map(n=>{const r=n.getBoundingClientRect(),style=win.getComputedStyle(n);return [['DIV','STYLE','SCRIPT','TEMPLATE','FOOTER','BUTTON'].includes(n.tagName)?n.tagName:'OTHER',style.display!=='none'&&style.visibility==='visible'&&r.width>0&&r.height>0,n.hasAttribute('data-thread-scroll-footer'),!!n.querySelector('[data-chatgpt-conversation-selection-target]'),n.matches('[contenteditable],input,textarea')||!!n.querySelector('[contenteditable],input,textarea'),Math.min(33,n.children.length)];}))};
+    try{shape={counts:project?[Math.min(33,groups[0].length),0,0,Math.min(33,groups[1].length),Math.min(33,groups[2].length),0,0]:groups.map(items=>Math.min(33,items.length)),branches:[...document.querySelectorAll(layout.readingViewport??':not(*)')].slice(0,1).flatMap(v=>[...v.children].slice(0,12).map(n=>{const r=n.getBoundingClientRect(),style=win.getComputedStyle(n);return [['DIV','STYLE','SCRIPT','TEMPLATE','FOOTER','BUTTON'].includes(n.tagName)?n.tagName:'OTHER',style.display!=='none'&&style.visibility==='visible'&&r.width>0&&r.height>0,n.hasAttribute('data-thread-scroll-footer'),!!n.querySelector('[data-chatgpt-conversation-selection-target]'),n.matches('[contenteditable],input,textarea')||!!n.querySelector('[contenteditable],input,textarea'),Math.min(33,n.children.length)];}))};
     // A home layout has six keys; keep the fixed count schema independent of route.
     if(shape?.counts.length===6)shape.counts.push(0);}catch{shape=null;}
     const bad=groups.findIndex(items=>items.length!==1);if(bad>=0)failure='layout-'+(groups[bad].length===0?'missing-':'ambiguous-')+keys[bad];
-    let nodes=groups.every(items=>items.length===1)?groups.map(items=>items[0]):[];
+    let nodes=keys.map(key=>profileElement(document,profile,layout[key],route));if(nodes.some(node=>!node))nodes=[];
     if(nodes.length){const mismatch=keys.findIndex((key,i)=>profileElement(document,profile,layout[key],route)!==nodes[i]);if(mismatch>=0){failure=keys[mismatch]==='historyList'?'layout-sidebar-'+sidebarBoundaryFailure(document,profile):'layout-missing-'+keys[mismatch];nodes=[];}}
     if(nodes.length&&!geometryReady(nodes))nodes=[];
     if(project&&nodes.length)nodes.push(...projectProof);
@@ -89,7 +90,7 @@ export function waitForNativeLayout({document,profile,timeoutMs=6000,signal=null
     win.clearTimeout(stableTimer);stableTimer=null;prior=nodes;
     if(nodes.length)stableTimer=win.setTimeout(()=>{
      const elapsed=win.performance.now()-started;
-     if(!signal?.aborted&&document.location.href===href&&elapsed>=0&&elapsed<timeoutMs&&geometryReady(nodes)&&(!project||projectProof.length===nodes.length-keys.length&&projectProof.every((node,i)=>node===nodes[keys.length+i]))&&groups.every((_,i)=>{const current=document.querySelectorAll(layout[keys[i]]);return current.length===1&&current[0]===nodes[i]&&profileElement(document,profile,layout[keys[i]],route)===nodes[i];}))finish(true);else{prior=[];check();}
+     if(!signal?.aborted&&document.location.href===href&&elapsed>=0&&elapsed<timeoutMs&&geometryReady(nodes)&&(!project||projectProof.length===nodes.length-keys.length&&projectProof.every((node,i)=>node===nodes[keys.length+i]))&&groups.every((_,i)=>{return profileElement(document,profile,layout[keys[i]],route)===nodes[i];}))finish(true);else{prior=[];check();}
     },150);
    }catch{finish(false);}
   };

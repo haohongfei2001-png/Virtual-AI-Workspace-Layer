@@ -58,3 +58,10 @@ test('unknown local binding response is not presented as an unlocked workspace',
  assert.match(f.elements.filter(e=>e.tag==='p').at(-1).textContent,/未能确认/);
  assert(!f.elements.some(e=>e.textContent.includes('PRIVATE')));
 });
+
+test('layout refusal does not mislabel a still-confirmed document as locked',async()=>{
+ const f=await render({v:1,state:'layout-ambiguous-header'},true,{ok:true,mode:'personal',exists:true});
+ assert.match(f.node.textContent,/多个候选/);assert.doesNotMatch(f.node.textContent,/未解锁旧数据/);
+ assert.match(f.elements.filter(e=>e.tag==='p').at(-1).textContent,/已解锁.*无需重复确认/);
+ assert.deepEqual(f.calls.filter(c=>c[0]==='control'),[['control',{v:1,type:'HOST_LOCAL_SPACE',action:'status'}]]);
+});

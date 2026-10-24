@@ -98,3 +98,16 @@ test('account risk revokes all confirmed documents, not just the triggering tab'
  assert.equal(f.a.scopeFor(frame),null);assert.equal(f.a.scopeFor(other),null);
  assert(f.sent.some(([tab,m])=>tab===8&&m.type==='HOST_LOCAL_LOCKED'));
 });
+
+test('titlebar recovery observer requires unique visible boundaries before spending preparation',async()=>{
+ const win=new EventTarget();let mutated,duplicates=true,recoveries=0;
+ win.MutationObserver=class{constructor(fn){mutated=fn;}observe(){}disconnect(){}};
+ const node={isConnected:true,getBoundingClientRect:()=>({width:100,height:40}),closest:()=>null};
+ const doc={defaultView:win,location:{origin,href:origin+'/'},visibilityState:'visible',documentElement:{},addEventListener(){},removeEventListener(){},querySelector:()=>null,querySelectorAll:s=>s==='header'&&duplicates?[node,node]:[node]};
+ const runtime={getURL:()=> 'chrome-extension://ext/',onMessage:{addListener(){},removeListener(){}}};
+ const profile={nativeHomeLayout:Object.fromEntries(['header','reading','composer','navigationSlot','historyList','returnHitRoot'].map(k=>[k,k]))};
+ const remove=installBrowserLocalLifecycle({document:doc,runtime,profile,session:{localStatus:()=> 'layout-ambiguous-header',recoverLayout:async()=>{recoveries++;},stop(){}}});
+ mutated();await Promise.resolve();assert.equal(recoveries,0);
+ duplicates=false;mutated();await Promise.resolve();assert.equal(recoveries,1);
+ doc.visibilityState='hidden';mutated();await Promise.resolve();assert.equal(recoveries,1);remove();
+});

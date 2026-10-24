@@ -2408,5 +2408,81 @@
       "New-chat and account-risk journeys not executed"
     ],
     "overall": "PARTIAL_NOT_FREE_ACCEPTED"
+  },
+  "projectSpaTitlebarR88_20261025": {
+    "baseline": "5a2d1bbc471b6fb130ecfd2b179cc25625d1791a",
+    "mode": "NATIVE_AX_EXACT_PID_NO_BROWSER_CLAIM_NO_CDP",
+    "originalConfirmation": {
+      "actualPopupAck": true,
+      "projectNavigationStillPersonal": true,
+      "privateOnlyRestoration": "NOT_ESTABLISHED"
+    },
+    "failure": {
+      "state": "layout-ambiguous-header",
+      "projectCounts": [
+        2,
+        0,
+        0,
+        2,
+        1,
+        0,
+        0
+      ],
+      "oldConversationBranchesVisible": [
+        false,
+        false
+      ],
+      "r86SettledRecoveryAlone": "INSUFFICIENT_REAL_MAC"
+    },
+    "fix": {
+      "uniqueVisibleHeaderSlotAndHitRoot": true,
+      "twoVisibleCandidatesStillRejected": true,
+      "fullGeometryAndNativeProtectionRetained": true,
+      "oneFreshPreparationAfterSettledTitlebar": true,
+      "layoutPopupBindingSeparate": true
+    },
+    "targetedValidation": {
+      "node": "PASS_182_DIRECT_TESTS",
+      "observedNativeBrowser": "PASS_WEB_MECHANISM_ONLY",
+      "isolatedFormalMv3HiddenRetainedTitlebar": "PASS",
+      "isolatedFormalMv3LateResolvedTitlebar": "PASS",
+      "excluded": "NOT_WHOLE_FREE_ACCEPTANCE"
+    },
+    "observerCorrections": [
+      "Initial successful mount opens workspace directly; waiting for a reading-only four-grid button timed out despite state ready. Corrected observer then formal member link and accepted batch passed.",
+      "Native member link accessible name can gain the existing last-confirmed suffix; exact two observed variants accepted before dispatch."
+    ],
+    "actualMac": {
+      "r88ReloadOriginalId": "DISPATCHED_ONCE",
+      "projectToMemberExactRouteAndTitle": "PASS",
+      "nativeMemberToProjectConnected": "PASS",
+      "fourGridAfterNativeReturn": "PASS",
+      "projectCardsAfterReturn": 1,
+      "correctMembersAfterReturn": 2,
+      "privateDataNewDocumentLocked": "PASS",
+      "privateOnlyDataRecovery": "NOT_ESTABLISHED",
+      "workerRestart": "NOT_ESTABLISHED_INHERITED",
+      "newChatSend": "NOT_RUN",
+      "accountRiskJourney": "NOT_RUN"
+    },
+    "package": {
+      "candidate": ".git/vaiwl-artifacts/browser-local-visible-titlebar-20261025-r88/extension",
+      "archiveSha256": "5fe2f5c07f26207c69e1fd5b4bf566736605099f3acd255d8dfecdff5cd6a76b",
+      "canonicalFileCount": 196,
+      "sameManifest": true,
+      "backup": ".git/vaiwl-artifacts/same-id-r88-visible-titlebar-20261025/previous-extension",
+      "canonicalHashesVerified": true,
+      "historicalCopiesPreserved": true
+    },
+    "preservation": {
+      "databaseNotOpenedByOperator": true,
+      "draftsNotReadOrChanged": true,
+      "originalTabsKept": true,
+      "otherChromeNotOperated": true,
+      "internalApiRequests": 0,
+      "testMessagesSent": 0,
+      "personalUnlockNeverClickedByOperator": true
+    },
+    "next": "Current repaired Project document is ready; private popup opened and one current-document personal confirmation requested. Continue remaining personal journey without another reload unless a concrete defect requires it."
   }
 }

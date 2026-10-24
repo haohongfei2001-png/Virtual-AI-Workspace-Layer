@@ -1,4 +1,4 @@
-import {foregroundFailureStates,helloFailureStates,layoutFailureStates,surfaceFailureStates,validLayoutShape} from './local-status.mjs';
+import {recoverableLayoutFailure,foregroundFailureStates,helloFailureStates,layoutFailureStates,surfaceFailureStates,validLayoutShape} from './local-status.mjs';
 import {createIsolatedSessionReader} from './isolated-session-reader.mjs';
 import {createCandidateUpgrade} from './candidate-upgrade.mjs';
 import {createContentCandidates} from './content-candidates.mjs';
@@ -266,7 +266,7 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
  // A newly available native boundary may recover one pre-HELLO layout failure.
  // This is not retry permission for scope/transport/frame failures or user exit.
  async function recoverLayout(){
-  if(!prepareDocument||layoutRetryUsed||layoutRetryURL!==doc.location.href||enabled||current||frameReplaced||doc.visibilityState==='hidden'||!(startupFailure?.state.startsWith('layout-missing-')||startupFailure?.state==='layout-project-rows'))return null;
+  if(!prepareDocument||layoutRetryUsed||layoutRetryURL!==doc.location.href||enabled||current||frameReplaced||doc.visibilityState==='hidden'||!recoverableLayoutFailure(startupFailure?.state))return null;
   layoutRetryUsed=true;layoutRetryURL=null;enabled=true;restoreArmed=false;rebindQueued=false;rebindRun++;
   doc.defaultView.addEventListener('pageshow',pageshow);
   return begin(true,'reading');
@@ -583,7 +583,7 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
     // remains unusable; bind the new route instead of disabling the document.
     // Same-route failures still stop, and replaced/stopped sessions cannot retry.
     if(enabled&&doc.location.href!==s.url)rebind(s);else if(error?.message==='scope-not-verified'||contextRecovery===true&&contextResumeAllowed&&['context-handshake-superseded','context-handshake-transport-unavailable'].includes(error?.message))contextPending(true);else {
-     const layoutOnly=startupPhase==='layout'&&!s.binding&&!layoutRetryUsed&&(s.layoutFailure?.startsWith('layout-missing-')||s.layoutFailure==='layout-project-rows');
+     const layoutOnly=startupPhase==='layout'&&!s.binding&&!layoutRetryUsed&&recoverableLayoutFailure(s.layoutFailure);
      const nextRouteLayout=prepareDocument&&startupPhase==='layout'&&!s.binding&&!frameReplaced;
      stop();if(layoutOnly)layoutRetryURL=s.url;if(nextRouteLayout)layoutRouteURL=s.url;
     }

@@ -508,3 +508,16 @@ test('route recovery does not revive explicit stop, hidden document or rejected 
  f.document.location.href+='c/33333333-3333-4333-8333-333333333333';const count=f.calls.length;
  assert.equal(await f.client.recoverRoute(),null);assert.equal(f.calls.length,count);f.client.stop();
 });
+
+test('settled titlebar ambiguity allows one fresh preparation but never accepts a still-ambiguous layout',async()=>{
+ for(const reason of ['layout-ambiguous-header','layout-ambiguous-navigationSlot']){
+  for(const settled of [true,false]){
+   const f=fixture();let ready=false,prepares=0;
+   const client=createHostContentSession({...f.options,prepareDocument:async({onFailure})=>{prepares++;if(!ready)onFailure(reason);return ready;}});
+   await client.start();assert.equal(f.calls.length,0);ready=settled;
+   assert.equal(!!await client.recoverLayout(),settled);assert.equal(prepares,2);
+   if(!settled)assert.equal(f.calls.length,0,'ambiguous layout never reaches HELLO');
+   assert.equal(await client.recoverLayout(),null);assert.equal(prepares,2);client.stop();
+  }
+ }
+});

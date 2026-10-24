@@ -1,3 +1,5 @@
+import {profileElement} from './native-surface-boundary.mjs';
+import {recoverableLayoutFailure} from './local-status.mjs';
 import {createURLPolicy} from './url-policy.mjs';
 import {exactHostRecord} from './contract.mjs';
 import {inspectNativeProjectSurface} from './native-project-surface.mjs';
@@ -49,18 +51,18 @@ export function installBrowserLocalLifecycle({document:doc,runtime,session,profi
   if(stopped||layoutQueued||waiting||typeof session.recoverLayout!=='function')return;
   layoutQueued=true;queueMicrotask(()=>{layoutQueued=false;
    const state=session.localStatus?.();
-   if(stopped||waiting||doc.visibilityState==='hidden'||!(state?.startsWith('layout-missing-')||state==='layout-project-rows'))return;
+   if(stopped||waiting||doc.visibilityState==='hidden'||!recoverableLayoutFailure(state))return;
    try{
     const route=createURLPolicy({origin:doc.location.origin}).parse(doc.location.href);
     const project=['project','project-candidate'].includes(route.kind)&&profile?.nativeProjectLayout==='panel-after-composer';
     const layout=route.kind==='home'?profile?.nativeHomeLayout:route.kind==='conversation'||project?profile?.nativeLayout:null;
     if(!layout||doc.querySelector('dialog[open], [aria-modal="true"]'))return;
     const keys=project?['header','navigationSlot','historyList']:['header','reading','composer','navigationSlot','historyList','returnHitRoot',...(layout.readingViewport?['readingViewport']:[])];
-    if(!keys.every(key=>{const nodes=doc.querySelectorAll(layout[key]);if(nodes.length!==1)return false;const node=nodes[0],rect=node.getBoundingClientRect();return node.isConnected&&rect.width>0&&rect.height>0&&!node.closest('[hidden],[inert],[aria-hidden="true"]');}))return;
+    if(!keys.every(key=>{const node=profileElement(doc,profile,layout[key],route);if(!node)return false;const rect=node.getBoundingClientRect();return node.isConnected&&rect.width>0&&rect.height>0&&!node.closest('[hidden],[inert],[aria-hidden="true"]');}))return;
     // A loading/skeleton row can outlive the initial bounded wait. Only a
     // complete current Project proof earns the one fresh preparation; repeated
     // skeleton mutations never consume it, authorize data, or extend a deadline.
-    if(state==='layout-project-rows'&&(!project||!inspectNativeProjectSurface({document:doc,profile,urlPolicy:createURLPolicy({origin:doc.location.origin}),history:doc.querySelector(layout.historyList),header:doc.querySelector(layout.header),slot:doc.querySelector(layout.navigationSlot)})))return;
+    if(state==='layout-project-rows'&&(!project||!inspectNativeProjectSurface({document:doc,profile,urlPolicy:createURLPolicy({origin:doc.location.origin}),history:profileElement(doc,profile,layout.historyList,route),header:profileElement(doc,profile,layout.header,route),slot:profileElement(doc,profile,layout.navigationSlot,route)})))return;
     void session.recoverLayout().catch(()=>{});
    }catch{/* Unsupported structure stays native-only. */}
   });
