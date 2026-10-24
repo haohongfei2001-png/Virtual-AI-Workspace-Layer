@@ -22,7 +22,19 @@ try{
   decoration.textContent='#text::before{content:"";position:absolute;inset:0;box-sizing:border-box;margin:0;border-image-source:linear-gradient(red,red);border-image-outset:100px}';out.borderPaintOutsetRejected=!ok();decoration.remove();
   const shadowHost=document.createElement('div');shadowHost.style.cssText='position:fixed;left:500px;top:100px;width:0;height:0';root.append(shadowHost);shadowHost.attachShadow({mode:'open'}).innerHTML='<button style="position:fixed;left:234px;top:14px;width:2px;height:2px;padding:0;border:0"></button>';out.shadowOverflowRejected=!ok();shadowHost.remove();
   const custom=document.createElement('native-widget');root.append(custom);out.unknownCustomElementRejected=!ok();custom.remove();
-  const many=document.createDocumentFragment();for(let i=0;i<2048;i++)many.append(document.createElement('span'));q('#text').append(many);out.scanOverflowRejected=!ok();q('#text').replaceChildren(document.createTextNode('Native content'));
+  const many=document.createDocumentFragment();for(let i=0;i<3000;i++){const span=document.createElement('span');span.textContent='x';many.append(span);}q('#text').append(many);
+  // More than the old element AND text-rectangle caps: complete proof passes,
+  // but a tiny last descendant still blocks it (no early success/truncation).
+  out.longTranscriptAllowed=ok();
+  root.append(obstacle);out.lateLongTranscriptObstacleRejected=!ok();obstacle.remove();
+  root.append(custom);out.lateOpaqueDescendantRejected=!ok();custom.remove();
+  let ticks=0,reason=null;
+  Object.defineProperty(performance,'now',{configurable:true,value:()=>ticks++});
+  args.onReject=value=>reason=value;
+  out.elapsedBudgetFailsClosed=!ok()&&reason==='reading-paint-budget';
+  delete performance.now;delete args.onReject;
+  out.freshProofAfterBudget=ok();
+  q('#text').replaceChildren(document.createTextNode('Native content'));
   const replacement=root.cloneNode(true);root.replaceWith(replacement);out.staleReadingRejected=!ok();replacement.replaceWith(root);
   out.restored=ok();
   const viewport=document.createElement('div');viewport.style.cssText='position:fixed;left:220px;top:0;width:780px;height:700px;overflow:auto';root.replaceWith(viewport);viewport.append(root);args.readingViewport=viewport;
@@ -46,13 +58,16 @@ try{
   const breadcrumb=document.createElement('a');breadcrumb.href='#project';breadcrumb.textContent='Project';breadcrumb.style.cssText='position:absolute;left:8px;top:8px;width:140px;height:36px;pointer-events:auto';wrapper.append(breadcrumb);q('#slot').append(wrapper);
   out.nativeBreadcrumbRejectsFixedGap=!ok();args.headerLayout='transparent-containers';args.gapPolicy='first-empty-header-gap';
   const shifted=gapModule.nativeReturnGapRect(args);out.breadcrumbGap=shifted?.x===376&&shifted?.width===36;
-  const tiny=document.createElement('button');tiny.style.cssText='position:fixed;left:390px;top:14px;width:2px;height:2px;padding:0;border:0;pointer-events:none';root.append(tiny);out.shiftedGapStillProtectsReading=!ok();tiny.remove();
+  const tiny=document.createElement('button');tiny.style.cssText='position:fixed;left:390px;top:14px;width:2px;height:2px;padding:0;border:0;pointer-events:none';root.append(tiny);out.shiftedGapAvoidsReading=gapModule.nativeReturnGapRect(args)?.x===400;
+  const returnButton=document.createElement('button');returnButton.style.cssText='position:fixed;left:400px;top:8px;width:36px;height:36px;padding:0;border:0;z-index:30';document.body.append(returnButton);args.button=returnButton;
+  out.relocatedButtonRevalidates=ok();returnButton.style.left='228px';out.oldButtonPositionRejected=!ok();delete args.button;returnButton.remove();
+  tiny.style.width='700px';out.noGapAcrossReadingRejected=!ok();tiny.remove();
   wrapper.style.backgroundColor='rgb(250, 250, 250)';out.paintedContainerWithoutProfileRejected=!ok();args.headerLayout='plain-containers';out.plainNativeBackgroundAllowed=ok();wrapper.style.backgroundImage='linear-gradient(red,red)';out.backgroundImageStillRejected=!ok();wrapper.style.backgroundImage='none';wrapper.style.backgroundColor='transparent';
   wrapper.style.pointerEvents='auto';out.opaqueContainerStillRejects=!ok();wrapper.style.pointerEvents='none';
   breadcrumb.style.width='760px';out.noRemainingGapRejected=!ok();breadcrumb.style.width='140px';
   args.gapPolicy='unknown';out.unknownGapPolicyRejected=!ok();args.gapPolicy='first-empty-header-gap';
   out.breadcrumbRemainsNative=breadcrumb.parentElement===wrapper&&breadcrumb.getAttribute('href')==='#project'&&getComputedStyle(breadcrumb).pointerEvents==='auto';
-  wrapper.remove();out.emptyHeaderKeepsOriginalGap=gapModule.nativeReturnGapRect(args)?.x===228;
+  wrapper.remove();out.emptyHeaderKeepsOriginalGap=gapModule.nativeReturnGapRect(args)?.x===228;delete args.gapPolicy;
   const clipped=document.createElement('div');clipped.style.cssText='position:fixed;left:220px;top:52px;width:780px;height:500px;overflow:auto';root.replaceWith(clipped);clipped.append(root);args.readingViewport=clipped;
   q('#text').style.cssText='height:100px;width:400px;margin:0';clipped.scrollTop=52;
   out.scrolledNativeContentClippedFromHeader=ok();

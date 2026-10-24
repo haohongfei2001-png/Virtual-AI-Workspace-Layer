@@ -76,3 +76,10 @@ test('native composer focus at JOIN keeps reading and does not report the worksp
  await f.controller.start({});await f.both();passive(f,'reading');
  assert.equal(f.calls.show,0);assert.equal(f.slot.children.length,1);assert.equal(f.doc.draft,'UNSENT');
 });
+
+test('stalled frame startup reports the existing fixed stage without DOM inspection or retry',async t=>{
+ const f=surfaceFixture();t.after(()=>f.controller.stop());await f.controller.start({});f.tick(6000);passive(f,'surface-frame-module-pending');
+ for(const role of ['workspace','sidebar'])f.message(role,{data:{type:'VAIWL_UI_BOOT',role,stage:'module-ready'}});
+ await drain();passive(f,'surface-frame-join-pending');
+ f.bridge.confirmParent=async()=>({ok:false});await f.both();passive(f,'surface-frame-grant-pending');
+});

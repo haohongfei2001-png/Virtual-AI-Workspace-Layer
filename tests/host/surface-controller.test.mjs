@@ -343,3 +343,13 @@ test('frame boot reports cannot grant a surface or carry arbitrary diagnostic co
  assert.equal(f.calls.confirm.length,0);assert.equal(f.calls.show,0);await f.both();assert.equal(f.calls.show,1);
  f.doc.documentElement={dataset:{}};f.frames[0].frame.dataset.vaiwlFrameJoin='PRIVATE_TEST_VALUE';f.controller.stop();assert(!f.doc.documentElement.dataset.vaiwlFrameExit.includes('PRIVATE_TEST_VALUE'));
 });
+
+test('geometry reconciliation forwards one complete inspection to mount without rescanning',async()=>{
+ const f=fixture();f.surface.refreshGeometry=()=>true;await f.controller.start({});await f.both();
+ const inspect=f.adapter.inspect;let count=0,observed;
+ f.adapter.inspect=()=>{count++;if(count>1)return {ok:false,reason:'unsafe-native-geometry'};return observed=inspect();};
+ f.surface.refreshGeometry=(handle,value)=>{assert.equal(value,observed);return true;};
+ // Workspace mode avoids a separate return-button action: the same mutation
+ // callback must validate and refresh from one current, complete snapshot.
+ f.change();assert.equal(count,1);assert.equal(f.calls.terminations.length,0);f.controller.stop();
+});

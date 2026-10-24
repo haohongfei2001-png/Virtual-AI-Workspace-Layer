@@ -1591,5 +1591,48 @@
       "isolatedMV3Report": "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-lGyLct/report.json"
     },
     "next": "fix long-chat return-gap proof cost/coverage without dropping controls or raising the guard threshold; then continue real journey; no user action needed for this code defect"
+  },
+  "longChatPaint20261024": {
+    "baseHead": "0df3df0e39b8cc0e17df89dee3178f5121adc626",
+    "changes": [
+      "complete-paint-proof-with-50ms-budget-no-node-count-truncation",
+      "same-call-style-and-range-reuse",
+      "header-gap-union-of-header-and-reading-paint",
+      "installed-button-final-gap-revalidation",
+      "one-complete-inspection-per-reconciliation",
+      "remove-duplicate-gap-proof-inside-adapter-inspect",
+      "fixed-terminal-and-stalled-join-status"
+    ],
+    "isolated": {
+      "longFormalMV3": "PASS",
+      "report": "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-yf1d60/report.json",
+      "priorLongFailure": "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-yV3WtK/report.json",
+      "unitTests": 297,
+      "readingGapBrowser": "PASS_WEB_MECHANISM_ONLY",
+      "accountAcceptance": "NOT_RUN"
+    },
+    "actualMac": {
+      "readingConnection": "PASS_FIXED_STATUS_OBSERVED",
+      "returnButtonPresent": "PASS_NATIVE_AX",
+      "returnActivation": "TRUSTED_KEY_AND_NATIVE_POINTER_DISPATCHED",
+      "longChatFormalWorkspace": "NOT_ESTABLISHED_NO_STABLE_DUAL_FRAME_OBSERVED_AFTER_INPUT",
+      "privateUnlock": "NOT_RUN",
+      "newMessage": "NOT_RUN",
+      "fullJourney": "NOT_RUN",
+      "browserUseClaim": false,
+      "CDP": false
+    },
+    "installation": {
+      "candidate": ".git/vaiwl-artifacts/browser-local-complete-paint-20261024-r55/extension",
+      "originalPath": ".git/vaiwl-artifacts/local-source-witness-20261022/extension",
+      "backup": ".git/vaiwl-artifacts/same-id-r55-activation-20261024/previous-extension",
+      "extensionId": "miendbcjdmecjggplepenghjnoejmaic",
+      "manifestUnchanged": true,
+      "verifiedFiles": 196,
+      "reload": "GUARDED_NATIVE_KEY_DISPATCHED",
+      "databaseTouched": false,
+      "stashCount": 3
+    },
+    "remaining": "Determine why the real long-chat return gesture does not yield stable formal surfaces, without browser takeover or weakened geometry."
   }
 }

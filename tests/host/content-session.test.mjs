@@ -442,3 +442,15 @@ test('local layout loss uses one fresh same-scope handshake, never a recovery lo
   client.stop();
  }
 });
+
+test('terminated controller preserves its recorded fixed failure without new inspection or IPC',async()=>{
+ const f=fixture(),factory=f.options.controllerFactory;let terminate,status='ready';
+ const client=createHostContentSession({...f.options,controllerFactory:options=>{terminate=options.onTerminated;return {...factory(options),localStatus:()=>status};}});
+ await client.start();assert.equal(client.localStatus(),'ready');
+ status='surface-controller-absent';terminate('ui-frame-suspended');await drain();
+ // Recovery can use the one existing fresh handshake; fail the final controller
+ // with a non-retrying stop, then preserve its fixed reason.
+ status='surface-controller-absent';terminate('ui-authority-revoked');
+ const before=f.calls.length;assert.equal(client.localStatus(),'surface-ui-authority-revoked');assert.equal(f.calls.length,before);
+ f.document.location.href+='c/other';assert.notEqual(client.localStatus(),'surface-ui-authority-revoked');client.stop();
+});

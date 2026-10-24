@@ -43,10 +43,10 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
   if(state.frames?.some(({frame})=>frame.hasAttribute?.('srcdoc'))){reportJoin(state);if(current===state)stop('ui-frame-document-replaced');return false;}
   return true;
  }
- function valid(state,requireRegistered=true){
+ function valid(state,requireRegistered=true,inspection=null){
   if(!frameDocumentsIntact(state))return false;
   if(state.dormant||current!==state||state.epoch!==epoch||requireRegistered&&!state.registered||doc.location.href!==state.url)return false;
-  const inspection=adapter.inspect();return inspection?.ok&&inspection.regionEpoch===state.handle.regionEpoch&&state.frames.every(({frame})=>frame.isConnected&&frame.ownerDocument===doc);
+  inspection??=adapter.inspect();return inspection?.ok&&inspection.regionEpoch===state.handle.regionEpoch&&state.frames.every(({frame})=>frame.isConnected&&frame.ownerDocument===doc);
  }
  // Public, allowlisted presentation only; never a source of UI authority.
  function publishAppearance(state,targetRole=null){
@@ -61,9 +61,9 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
   if(win.MutationObserver&&doc.documentElement){state.appearanceObserver=new win.MutationObserver(state.appearanceChanged);for(const node of [doc.documentElement,doc.body])if(node)state.appearanceObserver.observe(node,{attributes:true,attributeFilter:['class','style','dir']});}
   state.media=win.matchMedia?.('(prefers-color-scheme: dark)');state.media?.addEventListener?.('change',state.appearanceChanged);win.addEventListener('resize',state.appearanceChanged);
  }
- function refreshGeometry(state){
+ function refreshGeometry(state,inspection=null){
   if(typeof surface.refreshGeometry!=='function')return true;
-  try{if(surface.refreshGeometry(state.handle,adapter.inspect())===true)return true;}catch{}
+  try{if(surface.refreshGeometry(state.handle,inspection??adapter.inspect())===true)return true;}catch{}
   if(current===state)stop('native-geometry-changed');return false;
  }
  function geometryContinuity(state){
@@ -72,19 +72,23 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
  function reconcileGeometry(state){
   if(current!==state)return false;
   if(state.dormant){if(doc.location.href!==state.url||state.frames.some(({frame,window})=>!frame.isConnected||frame.ownerDocument!==doc||frame.contentWindow!==window)){stop('dormant-document-changed');return false;}ensureReturn(state);return false;}
-  if(!valid(state)){
-   if(adapter.inspect()?.reason==='unsafe-native-geometry'&&geometryContinuity(state)){
+  // One complete synchronous snapshot for this reconciliation. Repeating the
+  // full reading proof can spend a second budget without any intervening DOM
+  // event; do not turn that second attempt into a terminal mount failure.
+  const inspection=adapter.inspect();
+  if(!valid(state,true,inspection)){
+   if(inspection?.reason==='unsafe-native-geometry'&&geometryContinuity(state)){
     if(!state.geometryPaused){state.geometryPaused=true;state.geometryRevision++;state.intentEpoch++;}
     cancel(state.renewTimer);state.renewTimer=null;state.mode='suspended';removeReturn(state);surface.suspend(state.handle,'temporary-native-geometry');return false;
    }
-   reportBoundary(adapter.inspect());stop('native-region-changed');return false;
+   reportBoundary(inspection);stop('native-region-changed');return false;
   }
   if(state.geometryPaused){
    if(!geometryContinuity(state)){stop('native-region-changed');return false;}
-   if(!refreshGeometry(state))return false;
+   if(!refreshGeometry(state,inspection))return false;
    state.geometryPaused=false;state.mode='reading';ensureReturn(state);arm(state);return true;
   }
-  return refreshGeometry(state);
+  return refreshGeometry(state,inspection);
  }
  function watchGeometry(state){
   if(typeof surface.refreshGeometry!=='function')return;
@@ -187,7 +191,7 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
   finally{state.renewing=false;if(current===state&&!state.dormant){arm(state);publishSurface(state);}}
  }
  async function start(options){
-  stop('surface-restart');lastBoundary=null;const run=epoch,state={epoch:run,intentEpoch:0,url:doc.location.href,registered:false,handle:null,grants:new Map(),earlyJoins:new Map(),pending:new Set(),button:null,timer:null,renewTimer:null,renewing:false,renewalCeiling:null,observer:null,appearanceObserver:null,appearanceTimer:null,appearanceKeys:new Map(),surfaceKey:null,surfaceRevision:0,mode:'waiting',dormant:false,waking:false,geometryPaused:false,geometryRevision:0};current=state;
+  stop('surface-restart');lastBoundary=null;const run=epoch,state={startedAt:elapsedNow(),epoch:run,intentEpoch:0,url:doc.location.href,registered:false,handle:null,grants:new Map(),earlyJoins:new Map(),pending:new Set(),button:null,timer:null,renewTimer:null,renewing:false,renewalCeiling:null,observer:null,appearanceObserver:null,appearanceTimer:null,appearanceKeys:new Map(),surfaceKey:null,surfaceRevision:0,mode:'waiting',dormant:false,waking:false,geometryPaused:false,geometryRevision:0};current=state;
   try{
    state.context=await adapter.start(options);if(current!==state)return null;
    state.inspection=adapter.inspect();if(!state.inspection?.ok||!state.inspection.navigationSlot?.isConnected){
@@ -356,7 +360,22 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
  function localStatus(){
   const state=current;if(!state)return 'surface-controller-absent';if(state.epoch!==epoch||doc.location.href!==state.url)return 'surface-document-stale';
   if(state.dormant)return dormantReady()?'dormant':'unavailable';
-  if(!state.registered||state.mode==='waiting')return 'connecting';
+  if(!state.registered||state.mode==='waiting'){
+   // A stalled owned-frame handshake is not indefinitely 'connecting'. This
+   // reads fixed controller state only; it neither probes DOM nor retries JOIN.
+   const elapsed=elapsedNow()-state.startedAt;
+   if(!Number.isFinite(elapsed)||elapsed<6000)return 'connecting';
+   if(state.framePolicy==='frame-blocked')return 'surface-frame-policy-blocked';
+   const boot=Object.values(state.bootStages??{});
+   if(boot.includes('entry-resource-failed'))return 'surface-frame-resource-failed';
+   if(boot.some(x=>['script-error','promise-rejected'].includes(x)))return 'surface-frame-script-failed';
+   if(!state.registered)return 'surface-mount-registration-pending';
+   if(['origin-rejected','source-rejected','record-rejected'].includes(state.joinSignal))return 'surface-frame-join-rejected';
+   if(state.moduleRoles?.size!==2)return 'surface-frame-module-pending';
+   if(state.joinedRoles?.size!==2)return 'surface-frame-join-pending';
+   if(state.grants.size!==2)return 'surface-frame-grant-pending';
+   return 'surface-frame-presentation-pending';
+  }
   if(state.geometryPaused)return 'surface-geometry-paused';
   const time=now();if(!Number.isFinite(time)||!(Date.parse(state.context.binding.expiresAt)>time))return 'surface-binding-expired';
   if(state.grants.size!==2)return 'surface-grants-incomplete';
