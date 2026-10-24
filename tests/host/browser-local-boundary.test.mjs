@@ -10,6 +10,7 @@ test('local native intent retains store once, renews grant, never authorizes rep
  await a.bindPersonal(frame,'mine');const old=a.peek(frame).grant,scope=a.scopeFor(frame);
  assert(a.prepareNavigation(frame,target));a.invalidateTab(7,{documentId:'doc',url:target,documentLifecycle:'active'});
  const next={...frame,actualURL:target};assert.equal(a.scopeFor(next).key,scope.key);assert.notEqual(a.peek(next).grant.id,old.id);assert.equal(a.peek(frame).state,'unverified');assert.equal(dropped.length,0);
+ assert.equal(a.isCurrentGrant(next,old),false,'same-document route change revokes old epoch');assert.equal(a.isCurrentGrant(next,a.peek(next).grant),true);
  assert(a.takeArrival(next));assert.equal(a.takeArrival(next),null);
  a.invalidateTab(7,{documentId:'doc',url:origin+'/auth/login',documentLifecycle:'active'});assert.equal(a.scopeFor(next),null);assert.deepEqual(dropped,[scope.key]);
  await a.bindPersonal(frame,'mine');a.prepareNavigation(frame,target);now+=6000;a.invalidateTab(7,{documentId:'doc',url:target,documentLifecycle:'active'});assert.equal(a.scopeFor(next).storage,'personal');assert.equal(a.takeArrival(next),null);

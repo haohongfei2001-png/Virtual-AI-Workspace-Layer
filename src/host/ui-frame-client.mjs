@@ -36,7 +36,7 @@ export function createUiFrameClient({document:doc,runtime,role,parentOrigin,onGr
   const previous=port;port=null;if(previous){try{previous.onDisconnect.removeListener(disconnect);}catch{}try{previous.onMessage?.removeListener(messageListener);}catch{}}
   clear(reason,false);
   // Notify before reentrant onClear callbacks or port teardown can start a new session.
-  if(wasActive)try{doc.defaultView.parent.postMessage({type:userExit?'VAIWL_UI_EXIT':'VAIWL_UI_SUSPEND',role},parentOrigin);}catch{}
+  if(wasActive)try{doc.defaultView.parent.postMessage({type:userExit?'VAIWL_UI_EXIT':'VAIWL_UI_SUSPEND',role,...(!userExit&&['ui-grant-expired','ui-renew-failed','ui-join-failed','ui-port-disconnected','ui-renderer-failed'].includes(reason)?{reason}:{})},parentOrigin);}catch{}
   if(wasActive)try{onClear(reason);}catch{}
   try{previous?.disconnect();}catch{}
  }

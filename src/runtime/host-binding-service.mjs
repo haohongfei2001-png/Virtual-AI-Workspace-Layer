@@ -126,6 +126,7 @@ export function createHostBindingService({extensionId,getFrame,getContexts=null,
   resolutionClaims.delete(claim.grant);
   if(!claim.delivered&&attempt.frame&&authority.peek(attempt.frame).grant===claim.grant)authority.invalidate(attempt.frame.documentId);
  }
+ const resolutionCurrent=(frame,grant)=>browserLocal?authority.isCurrentGrant(frame,grant):authority.peek(frame).grant===grant;
  const sequences=new Map(),refreshAttempts=new Set();let serviceActive=true;
  async function handleWork(message,sender){
   if(message?.type==='HOST_OLD_SEND_OPERATION')return {ok:oldSendTerminal?await oldSendTerminal.intent(message,sender):false};
@@ -201,7 +202,7 @@ export function createHostBindingService({extensionId,getFrame,getContexts=null,
   if(focus&&resolution.state!=='verified'){denyFocus();revokeFocus();}check();
   const verified=await handshake.verify(message,sender);check();
   if(!verified){firstSend?.invalidateTab(frame.tabId);if(focus&&resolution.state==='verified'&&authority.peek(frame).grant===resolution.grant)authority.invalidate(frame.documentId);revokeFocus();return {ok:false,reason:'stale-host-document'};}
-  if(resolution.state==='verified'&&authority.peek(frame).grant===resolution.grant){const scope=authority.scopeFor(frame);if(scope)views?.confirmScope(frame,scope.key);}
+  if(resolution.state==='verified'&&resolutionCurrent(frame,resolution.grant)){const scope=authority.scopeFor(frame);if(scope)views?.confirmScope(frame,scope.key);}
   const recoveryProfiles=[...(surfaceProfiles?.size===1?[surfaceProfiles.values().next().value]:[]),...(ackProfile&&resolution.grant?.principal?.providerProfile===ackProfile.providerProfile?[ackProfile]:[])];
   if(!focus&&resolution.state==='verified'&&continuations&&recoveryProfiles.length&&elapsedNow()-attempt.started<4500){
    // Reuse the existing refresh request; no background timer or restored grant.
@@ -209,7 +210,7 @@ export function createHostBindingService({extensionId,getFrame,getContexts=null,
    const scope=authority.scopeFor(frame),drainAbort=new AbortController(),started=elapsedNow();
    let active=true,abortSelection;
    const abort=()=>drainAbort.abort();attempt.abort.signal.addEventListener('abort',abort,{once:true});
-   const guard=()=>active&&attempt.active&&!drainAbort.signal.aborted&&elapsedNow()-started<1000&&handshake.isBound(message,sender)&&authority.peek(frame).grant===resolution.grant;
+   const guard=()=>active&&attempt.active&&!drainAbort.signal.aborted&&elapsedNow()-started<1000&&handshake.isBound(message,sender)&&resolutionCurrent(frame,resolution.grant);
    try{const drained=await withRequestDeadline(async()=>{
     // Validated durable data selects among current trusted profiles; it never
     // creates authority. Select before fresh observations advance source epochs.
@@ -221,14 +222,14 @@ export function createHostBindingService({extensionId,getFrame,getContexts=null,
    },{timeoutMs:1000,now:elapsedNow,schedule,cancel});if(drained.state==='complete'||drained.state==='needs-revalidation')ui?.notifyScope(scope.key);}catch{}finally{active=false;if(abortSelection)drainAbort.signal.removeEventListener('abort',abortSelection);drainAbort.abort();attempt.abort.signal.removeEventListener('abort',abort);}
    check();
    const stillVerified=await handshake.verify(message,sender);check();
-   if(!stillVerified||authority.peek(frame).grant!==resolution.grant)return {ok:false,reason:'stale-host-document'};
+   if(!stillVerified||!resolutionCurrent(frame,resolution.grant))return {ok:false,reason:'stale-host-document'};
   }
-  if(resolution.state==='verified'&&(authority.peek(frame).grant!==resolution.grant||sequences.get(message.producerToken)!==producer))return {ok:false,reason:'stale-host-document'};
-  return {ok:true,v:1,type:'HOST_SCOPE_STATUS',state:resolution.state,...(resolution.state==='verified'&&authority.peek(frame).grant===resolution.grant?{scopeKey:authority.scopeFor(frame)?.key}:{}),...(resolution.reason?{reason:resolution.reason}:{})};
+  if(resolution.state==='verified'&&(!resolutionCurrent(frame,resolution.grant)||sequences.get(message.producerToken)!==producer))return {ok:false,reason:'stale-host-document'};
+  return {ok:true,v:1,type:'HOST_SCOPE_STATUS',state:resolution.state,...(resolution.state==='verified'&&resolutionCurrent(frame,resolution.grant)?{scopeKey:authority.scopeFor(frame)?.key}:{}),...(resolution.reason?{reason:resolution.reason}:{})};
   }),{timeoutMs:6000,now:elapsedNow,schedule,cancel});
   if(result.ok===true&&result.state==='verified'){
    check();
-   if(!attempt.frame||authority.peek(attempt.frame).grant!==attempt.resolution?.grant||sequences.get(message.producerToken)!==attempt.producer||!handshake.isBound(message,sender))return {ok:false,reason:'stale-host-document'};
+   if(!attempt.frame||!resolutionCurrent(attempt.frame,attempt.resolution?.grant)||sequences.get(message.producerToken)!==attempt.producer||!handshake.isBound(message,sender))return {ok:false,reason:'stale-host-document'};
    attempt.producer.verified=true;
    if(attempt.resolutionClaim){attempt.resolutionClaim.delivered=true;contextRecovery?.confirmDelivery(attempt.frame,attempt.producer,attempt.resolutionClaim.grant);}
   }

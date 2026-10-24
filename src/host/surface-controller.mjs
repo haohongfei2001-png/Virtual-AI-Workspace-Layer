@@ -173,21 +173,22 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
  function arm(state){if(state.dormant)return;cancel(state.timer);const until=leaseUntil(state);state.timer=schedule(()=>{if(current===state&&!state.dormant)stop('ui-grant-expired');},Math.max(0,until-now()));if((state.renewalCeiling===null||until>state.renewalCeiling)&&!state.geometryPaused&&typeof bridge.renewSession==='function'&&state.grants.size===2&&!state.renewing&&state.renewTimer===null)state.renewTimer=schedule(()=>{state.renewTimer=null;void renewSession(state);},Math.max(1,Math.min(10000,(until-now())/2)));}
  async function renewSession(state){
   if(state.dormant||state.geometryPaused)return;const geometryRevision=state.geometryRevision,priorUntil=leaseUntil(state);
-  if(!authorized(state)){if(current===state)stop('stale-session-renewal');return;}state.renewing=true;
+  if(!authorized(state)){if(current===state)stop('stale-session-renewal');return;}state.renewing=true;let renewalStage=null;
   try{
    const raw=await withRequestDeadline(()=>bridge.renewSession({handle:state.handle,binding:state.context.binding}),{timeoutMs:6000,now:elapsedNow,schedule,cancel});
-   if(current!==state||state.dormant||state.geometryRevision!==geometryRevision)return;if(!authorized(state))throw Error('stale-session-renewal');
+   if(current!==state||state.dormant||state.geometryRevision!==geometryRevision)return;renewalStage='local-validity';if(!authorized(state))throw Error('stale-session-renewal');
+   renewalStage='ack';
    const ack=structuredClone(raw),binding=ack?.binding,keys=['documentToken','producerToken','browserDocumentId','routeEpoch','origin'];
    const future=value=>Number.isFinite(Date.parse(value))&&Date.parse(value)>now()&&Date.parse(value)<=now()+20000;
    if(ack?.ok!==true||!binding||Object.keys(binding).sort().join(',')!==[...keys,'expiresAt'].sort().join(',')||keys.some(k=>binding[k]!==state.context.binding[k])||!future(binding.expiresAt)||!Array.isArray(ack.grants)||ack.grants.length!==2)throw Error('invalid-session-renewal');
    const next=new Map();for(const grant of ack.grants){const previous=state.grants.get(grant?.role);if(!previous||next.has(grant.role)||['id','mountId','role','parentDocumentId','uiDocumentId','scopeGrantId'].some(k=>grant[k]!==previous[k])||!future(grant.expiresAt))throw Error('invalid-session-renewal');next.set(grant.role,Object.freeze({...grant}));}
-   if(adapter.updateBinding(binding)!==true)throw Error('invalid-binding-renewal');
+   renewalStage='adapter';if(adapter.updateBinding(binding)!==true)throw Error('invalid-binding-renewal');
    state.context={...state.context,binding:Object.freeze({...binding})};state.grants=next;
    // A successful read may still be capped by the original session/context expiry.
    // Do not halve the remaining interval repeatedly when no lease time was gained.
    // Keep the absolute expiry timer: this never extends authority or retries a denial.
    state.renewalCeiling=leaseUntil(state)<=priorUntil?priorUntil:null;
-  }catch{if(current===state&&!state.dormant&&state.geometryRevision===geometryRevision)stop('session-renew-failed');}
+  }catch{if(current===state&&!state.dormant&&state.geometryRevision===geometryRevision){if(renewalStage)try{onFailure('surface-session-renew-'+renewalStage);}catch{}stop('session-renew-failed');}}
   finally{state.renewing=false;if(current===state&&!state.dormant){arm(state);publishSurface(state);}}
  }
  async function start(options){
@@ -233,6 +234,8 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
    if(exactHostRecord(data,['type','role','requestId'])&&data.type==='VAIWL_UI_IDLE_ACK'&&data.requestId===state.idleRequestId){state.idleAcks.add(data.role);if(dormantReady())state.resolveIdle?.(true);}
    return;
   }
+  // Correlated fixed failure metadata only; it can withdraw, never grant, UI access.
+  if(exactHostRecord(data,['role','type','reason'])&&data.type==='VAIWL_UI_SUSPEND'&&['ui-grant-expired','ui-renew-failed','ui-join-failed','ui-port-disconnected','ui-renderer-failed'].includes(data.reason)){try{onFailure('surface-frame-'+data.reason);}catch{}stop('ui-frame-suspended');return;}
   if(exactHostRecord(data,['role','type'])&&['VAIWL_UI_SUSPEND','VAIWL_UI_EXIT'].includes(data.type)){stop(data.type==='VAIWL_UI_EXIT'?'ui-user-exit':'ui-frame-suspended');return;}
   if(data.type==='VAIWL_UI_JOIN'){state.joinedRoles?.add(data.role);reportJoin(state);}
   if(!valid(state,false)||Object.keys(data).sort().join(',')!=='nonce,role,type'||data.type!=='VAIWL_UI_JOIN'||!tokenOK(data.nonce)||state.pending.has(data.role)||state.grants.has(data.role))return;

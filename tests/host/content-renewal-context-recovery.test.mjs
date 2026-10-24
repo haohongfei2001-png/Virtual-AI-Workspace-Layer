@@ -82,5 +82,5 @@ for(const reason of ['native-region-changed','native-geometry-changed']){
 
 for(const reason of ['native-region-changed','native-geometry-changed'])test(reason+' without context recovery remains stopped',async t=>{
  const f=fixture(t,false);await f.session.start();f.controllers[0].terminate(reason);await f.ready();await f.advance(30000);
- assert.equal(f.session.localStatus(),'unavailable');assert.equal(f.session.showWorkspace(),false);assert.equal(f.hellos(),1);assert.equal(f.listeners.size,0);
+ assert.equal(f.session.localStatus(),'surface-'+reason);assert.equal(f.session.showWorkspace(),false);assert.equal(f.hellos(),1);assert.equal(f.listeners.size,0);
 });

@@ -482,16 +482,21 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
     revokeMount:({mountId})=>{if(s.binding)void withRequestDeadline(()=>send({v:1,type:'HOST_UI_RELEASE',...bindingFields(s.binding),mountId}),{now:elapsedNow,schedule,cancel}).catch(()=>{});},
     renewSession:({handle,binding})=>track(async()=>{
      if(!bindingOK(binding,s.binding))throw Error('stale-content-binding');
-     const started=elapsedNow();s.renewContextPending=true;
+     const started=elapsedNow();s.renewContextPending=true;let renewalStage='document';
      try{
       const renewed=await rpc(s,{v:1,type:'HOST_DOCUMENT_RENEW',clientId,seq:++seq,...bindingFields(binding)});
       if(renewed?.ok!==true||!bindingOK(renewed.binding,s.binding))throw Error('invalid-host-binding');
-      s.binding=Object.freeze({...renewed.binding});
+      s.binding=Object.freeze({...renewed.binding});renewalStage='scope';
       const remaining=()=>{const budget=6000-(elapsedNow()-started);if(budget<=0)throw Error('request-timeout');return budget;};
       const authority=await rpc(s,{v:1,type:'HOST_REFRESH',clientId,seq:++seq,...bindingFields(binding)},remaining());noteScopeStatus(s,authority);
       if(authority?.state!=='verified'||authority.scopeKey!==s.scopeKey){s.recoveryDenied=true;throw Error('scope-not-verified');}
+      renewalStage='ui-pair';
       const status=await rpc(s,{v:1,type:'HOST_UI_STATUS',...bindingFields(binding),mountId:handle.id},remaining());
+      if(status?.ok!==true)throw Error('ui-renewal-unavailable');
       return {...status,binding:renewed.binding};
+     }catch(error){
+      if(current===s){s.surfaceFailure='surface-session-renew-'+renewalStage;startupFailure={url:s.url,state:s.surfaceFailure,shape:null};}
+      throw error;
      }finally{
       s.renewContextPending=false;
       // Only a rejected scope may consume the in-flight READY through the

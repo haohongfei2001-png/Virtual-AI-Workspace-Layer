@@ -1634,5 +1634,53 @@
       "stashCount": 3
     },
     "remaining": "Determine why the real long-chat return gesture does not yield stable formal surfaces, without browser takeover or weakened geometry."
+  },
+  "localRenewal20261024": {
+    "baseHead": "c8adcf01",
+    "confirmedCodeDefect": "Concurrent local HOST_FOCUS and HOST_REFRESH replace the same-document immutable grant snapshots; reference-only delivery checks reject a valid request as stale-host-document.",
+    "before": "FAIL_DETERMINISTIC_REAL_SERVICE_WITH_BROWSER_DOUBLES_NO_ACCOUNT",
+    "fix": "Browser-local authority recognizes only its own issued, unexpired snapshots of the exact current entry/id/epoch/scope. Actual document and producer checks remain. Strict server authority keeps reference equality. Cleanup retains exact-grant ownership.",
+    "offline": {
+      "targetedRuntime": "PASS_69",
+      "targetedHost": "PASS_224",
+      "formalMV3": "PASS_SAME_FRAME_25_SECOND_RENEWAL_AND_EXISTING_CONTINUITY_PATH",
+      "notEquivalentTo": "Mac account acceptance"
+    },
+    "actualMac": {
+      "formalWorkspaceAndSidebar": "PASS_NATIVE_AX_BOTH_VISIBLE_1_5_TO_28_2_SECONDS",
+      "visibleRecentNavigation": "PASS_ALLOWED_CURRENT_PAGE_METADATA_ONLY",
+      "nativeReadingExit": "PASS_FORMAL_SURFACES_CLOSED_AND_FOUR_GRID_RETURN_OBSERVED",
+      "repeatReturn": "NOT_ESTABLISHED",
+      "personalUnlock": "NOT_RUN",
+      "newChatSend": "NOT_RUN",
+      "projectMembership": "NOT_RUN",
+      "fullContinuousJourney": "NOT_ESTABLISHED"
+    },
+    "activation": {
+      "candidate": "r58",
+      "verifiedPackageFiles": 196,
+      "manifestUnchanged": true,
+      "sameId": "miendbcjdmecjggplepenghjnoejmaic",
+      "originalPathPreserved": true,
+      "backup": ".git/vaiwl-artifacts/same-id-r58-activation-20261024/previous-extension",
+      "nativeReload": "AXPRESS_DISPATCHED_ENABLED_READBACK",
+      "activeBuildIndependentlyIdentified": false,
+      "databaseFilesTouched": false
+    },
+    "observerCorrections": [
+      "AXFocused assignment plus Space is not a reliable click; original extension was found disabled and restored to enabled via actual keyboard traversal/readback. Earlier dispatch-only reloads are not proof of activation.",
+      "Chrome memory-use decoration changes the acceptance window title. Native selection stays on the same PID and unique acceptance title/profile suffix.",
+      "Initial fixed-position observation returned unavailable paths; do not equate that with product disappearance. Final bounded read recorded both actual frame names at 21 consecutive points."
+    ],
+    "constraints": {
+      "browserUseOrCDP": false,
+      "internalAPI": false,
+      "messageSent": false,
+      "otherProfileActions": false,
+      "oldDataDeleted": false,
+      "stashesPreserved": 3
+    },
+    "evidence": ".git/vaiwl-checkpoints/20261024-local-renewal",
+    "remaining": "Only a bounded real continuity observation passed. Repeated return and the rest of the Mac journey must be established separately; do not claim the concurrency defect was the sole real cause."
   }
 }

@@ -3,7 +3,7 @@ import {normalizedScope,tokenOK} from '../b1/identity.mjs';
  * receipts. It never calls identity providers; personal storage requires an
  * explicit private binding. Same-document continuity is separate from one-use activity intents. */
 export function createBrowserLocalAuthority({allowedURL,now=Date.now,makeId=()=>crypto.randomUUID(),onDiscard=()=>{}}={}){
- const entries=new Map();let epoch=0;
+ const entries=new Map(),issuedGrants=new WeakMap();let epoch=0;
  const valid=f=>f&&Number.isSafeInteger(f.tabId)&&f.tabId>=0&&f.frameId===0&&tokenOK(f.documentId)&&f.incognito===false&&f.documentLifecycle==='active'&&allowedURL(f.actualURL);
  const key=f=>JSON.stringify([f.tabId,f.documentId]);
  const deny=()=>({state:'unverified',reason:'browser-local-document-unavailable'});
@@ -31,9 +31,16 @@ export function createBrowserLocalAuthority({allowedURL,now=Date.now,makeId=()=>
   e.issued=now();e.grant=Object.freeze({kind:'browser-local-session',id:e.id,scopeKey:e.scope.key,scopeEpoch:e.epoch,
    issuedAt:new Date(e.issued).toISOString(),expiresAt:new Date(e.issued+60000).toISOString(),
    storage:e.scope.storage==='personal'?'explicit-local-personal':'memory-only',serverIdentity:'NOT_ESTABLISHED'});
-  return Promise.resolve({state:'verified',grant:e.grant});
+  issuedGrants.set(e.grant,e);return Promise.resolve({state:'verified',grant:e.grant});
  }
- return Object.freeze({isIdle:()=>true,peek,refresh:(frame,_reason,signal)=>issue(frame,signal),revalidate:issue,sourceFor:()=>null,
+ // Concurrent focus and renewal can issue different immutable snapshots of
+ // the same local selection. Accept only an actually issued, still-unexpired
+ // snapshot of that exact entry/epoch; this never extends its original lease.
+ function isCurrentGrant(frame,grant){
+  const e=valid(frame)&&entries.get(key(frame));
+  return !!e&&!!grant&&issuedGrants.get(grant)===e&&peek(frame).state==='verified'&&grant.id===e.id&&grant.scopeEpoch===e.epoch&&grant.scopeKey===e.scope.key&&now()>=Date.parse(grant.issuedAt)&&now()<Date.parse(grant.expiresAt);
+ }
+ return Object.freeze({isIdle:()=>true,peek,isCurrentGrant,refresh:(frame,_reason,signal)=>issue(frame,signal),revalidate:issue,sourceFor:()=>null,
   bindPersonal(frame,spaceId,selectionUntil=now()+43200000){
    if(!valid(frame)||!tokenOK(spaceId)||!Number.isFinite(selectionUntil)||selectionUntil<=now()||selectionUntil>now()+43200000)throw Error('invalid-local-personal-binding');
    // Called only after the private popup confirms this exact browser document.

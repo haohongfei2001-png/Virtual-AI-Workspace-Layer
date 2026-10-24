@@ -49,3 +49,26 @@ test('actual Host pipeline accepts current surface into formal projection with z
  assert.equal((await service.handle({v:1,type:'HOST_UI_VIEW',grantId:joined.grant.id,mountId:'mount',query:{}},ui)).ok,false);
  assert.equal((await service.handle(proposal,sender)).state,'rejected');
 });
+
+test('local foreground and periodic renewal share a live grant without revoking the same document',async t=>{
+ let i=0,time=1000;const frame={tabId:1,frameId:0,documentId:'doc',incognito:false,documentLifecycle:'active',actualURL:url};
+ const sender={id:'ext',tab:{id:1,incognito:false},frameId:0,documentId:'doc',documentLifecycle:'active',url};
+ const service=createHostBindingService({extensionId:'ext',getFrame:async()=>({documentId:'doc',url,documentLifecycle:'active',parentFrameId:-1}),allowedURL:u=>u===url,profile:{id:'browser-local-session'},surfaceProfiles:new Map(),provider:{read(){assert.fail('no identity request');}},repository:{open(){assert.fail('no database access');}},now:()=>time,makeId:()=>`local_${++i}`});t.after(()=>service.stop());
+ const {binding}=await service.handle({v:1,type:'HOST_HELLO',clientId:'client',seq:1},sender),{documentToken,producerToken,routeEpoch}=binding;
+ let seq=1;const request=type=>service.handle({v:1,type,clientId:'client',seq:++seq,documentToken,producerToken,routeEpoch},sender);
+ assert.equal((await request('HOST_REFRESH')).state,'verified');const original=service.authority.peek(frame).grant;
+ const pair=await Promise.all([request('HOST_FOCUS'),request('HOST_REFRESH')]);
+ assert(pair.every(r=>r.ok===true&&r.state==='verified'),JSON.stringify(pair));
+ assert.equal(service.authority.isCurrentGrant(frame,original),true,'original unexpired proof remains current');
+ // Extend current leases while preserving the original document transport.
+ for(let n=0;n<5;n++){time+=10000;assert.equal((await request('HOST_DOCUMENT_RENEW')).ok,true);assert.equal((await request('HOST_REFRESH')).state,'verified');}
+ const near=service.authority.peek(frame).grant;
+ const next=await Promise.all([request('HOST_REFRESH'),request('HOST_FOCUS')]);
+ assert(next.every(r=>r.ok===true&&r.state==='verified'),JSON.stringify(next));
+ assert.equal(service.authority.isCurrentGrant(frame,near),true);assert.notEqual(near,original);assert.equal(near.id,original.id);
+ assert.equal(service.authority.isCurrentGrant(frame,{...near}),false,'a copied descriptor is not an issued proof');
+ time+=10000;assert.equal(service.authority.isCurrentGrant(frame,original),false,'renewal must not extend the original proof expiry');
+ assert.equal((await request('HOST_FOCUS')).state,'verified','no persistent producer denial');
+ service.invalidate({tabId:1});assert.equal(service.authority.peek(frame).state,'unverified');
+ assert.equal((await request('HOST_FOCUS')).ok,false,'real revocation still rejects the old document binding');
+});

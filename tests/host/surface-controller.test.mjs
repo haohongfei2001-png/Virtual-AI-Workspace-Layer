@@ -353,3 +353,20 @@ test('geometry reconciliation forwards one complete inspection to mount without 
  // callback must validate and refresh from one current, complete snapshot.
  f.change();assert.equal(count,1);assert.equal(f.calls.terminations.length,0);f.controller.stop();
 });
+
+test('renewal diagnostics distinguish local geometry from ACK rejection without exposing raw failures',async()=>{
+ for(const [stage,change] of [['local-validity',f=>{f.adapter.inspect=()=>({ok:false});}],['ack',(_f,a)=>{a.ok=false;}],['adapter',f=>{f.adapter.updateBinding=()=>false;}]]){
+  const reasons=[],f=fixture({onFailure:reason=>reasons.push(reason)});
+  f.bridge.renewSession=async()=>{const a=f.renewAck();change(f,a);return a;};
+  await f.controller.start({});await f.both();f.tick(10000);await drain();
+  assert.deepEqual(reasons,['surface-session-renew-'+stage]);assert.equal(f.calls.dispose,1);
+ }
+});
+
+test('only a correlated fixed frame failure may report its stage and withdraw UI',async()=>{
+ const failures=[],f=fixture({onFailure:v=>failures.push(v)});await f.controller.start({});await f.both();
+ for(const patch of [{origin:'https://chatgpt.com'},{source:{}},{data:{type:'VAIWL_UI_SUSPEND',role:'workspace',reason:'private-value'}}])f.message('workspace',{data:{type:'VAIWL_UI_SUSPEND',role:'workspace',reason:'ui-renew-failed'},...patch});
+ assert.equal(f.calls.dispose,0);assert.deepEqual(failures,[]);
+ f.message('workspace',{data:{type:'VAIWL_UI_SUSPEND',role:'workspace',reason:'ui-renew-failed'}});
+ assert.equal(f.calls.dispose,1);assert.deepEqual(failures,['surface-frame-ui-renew-failed']);
+});

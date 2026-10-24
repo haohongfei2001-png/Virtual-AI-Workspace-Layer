@@ -40,6 +40,16 @@ try{
  await page.reload();await workspace.getByRole('link',{name:'Native B',exact:true}).first().waitFor({timeout:15000});report.checks.reloadRediscoversVisibleObjects=true;
  await page.goto(origin+'/c/'+B);await workspace.getByRole('link',{name:'Native A',exact:true}).first().waitFor({timeout:15000});assert.equal(await workspace.getByText('Native Project',{exact:true}).count(),0);report.checks.replacementDoesNotExposeOldProject=true;
  await page.getByRole('button',{name:'返回原生阅读',exact:true}).click();await back.waitFor();await back.click();await workspace.getByRole('link',{name:'Native A',exact:true}).first().waitFor({timeout:15000});report.checks.longChatReadingReturn=true;
+ // Keep the same formal surfaces alive across document/UI renewal, not merely
+ // long enough for the initial render to appear.
+ const longMount=await page.locator('iframe[src="chrome-extension://'+id+'/workspace.html"]').elementHandle();
+ for(let at=0;at<25;at++){
+  await new Promise(resolve=>setTimeout(resolve,1000));
+  assert.equal(await page.locator('[data-va-owned]:popover-open').count(),2,'long-chat presentation lost during renewal at '+at);
+  assert.equal(await longMount.evaluate(node=>node.isConnected),true,'original frame must not be silently replaced');
+ }
+ await longMount.dispose();report.checks.longChatRenewalContinuity=true;
+
  const popup=await context.newPage();await popup.goto('chrome-extension://'+id+'/status.html');
  await page.goto(origin+'/g/'+P+'/project');await page.bringToFront();await workspace.getByRole('link',{name:'Native B',exact:true}).first().waitFor({timeout:15000});
  const unlock=()=>popup.evaluate(()=>chrome.runtime.sendMessage({v:1,type:'HOST_LOCAL_SPACE',action:'unlock'}));
