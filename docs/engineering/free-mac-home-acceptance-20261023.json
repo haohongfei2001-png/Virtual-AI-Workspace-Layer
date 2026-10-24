@@ -1682,5 +1682,53 @@
     },
     "evidence": ".git/vaiwl-checkpoints/20261024-local-renewal",
     "remaining": "Only a bounded real continuity observation passed. Repeated return and the rest of the Mac journey must be established separately; do not claim the concurrency defect was the sole real cause."
+  },
+  "keyboardReturn20261024": {
+    "baseHead": "ca1975d6",
+    "confirmedCodeDefect": "Keyboard activation removes the focused return button without entering the workspace frame. Focus falls to BODY and subsequent Tab may reach protected native UI.",
+    "fix": "After successful trusted keyboard return only, reuse existing focusFrame(workspace). Pointer and automatic presentation do not transfer focus. Native focus protection remains.",
+    "helloDiagnostics": "Known fixed handshake refusal categories only; no raw replies/errors, no retries or new authority. Initial real hello-failed root cause is not established.",
+    "offline": {
+      "before": "FAIL_BODY_NOT_IFRAME_IN_FORMAL_MV3",
+      "after": "PASS_EXISTING_FORMAL_MV3_CONTINUITY_WITH_KEYBOARD_FOCUS",
+      "targetedUnit": "PASS_262",
+      "notEquivalentTo": "Mac account acceptance"
+    },
+    "actualMac": {
+      "profile": "PASS_NATIVE_VERSION_PAGE_PROFILE_4_CONFIRMED_IN_NEW_ACCEPTANCE_WINDOW",
+      "initialHello": "FAIL_GENERIC_REASON_NOT_ESTABLISHED",
+      "afterReload": "PASS_CONNECTED_READING",
+      "keyboardReturn": "PASS_TWO_ENTRIES_BOTH_FORMAL_FRAMES_OBSERVED_BEFORE_FOCUS_FIX",
+      "nativeFocusSurrenderAndReentry": "PASS_LIMITED",
+      "directAXCloseEffect": "NOT_ESTABLISHED",
+      "r60KeyboardFocusFix": "NOT_RUN_ACTIVATION_PENDING",
+      "personalUnlock": "NOT_RUN",
+      "newChatSend": "NOT_RUN",
+      "projectMembership": "NOT_RUN",
+      "fullContinuousJourney": "NOT_ESTABLISHED"
+    },
+    "activation": {
+      "candidate": ".git/vaiwl-artifacts/browser-local-keyboard-20261024-r60/extension",
+      "packageSha256": "5a4d146ef8790e036eaf5cd137147891b85bffab435a6cc6af434e7657c02174",
+      "originalPath": ".git/vaiwl-artifacts/local-source-witness-20261022/extension",
+      "sameId": "miendbcjdmecjggplepenghjnoejmaic",
+      "backup": ".git/vaiwl-artifacts/same-id-r60-activation-20261024/previous-extension",
+      "verifiedFiles": 196,
+      "manifestUnchanged": true,
+      "databaseFilesTouched": false,
+      "state": "COPIED_NOT_ACTIVATED",
+      "reason": "Focus guard stopped before input; another profile window was recording. Do not interrupt or quit the shared Chrome process.",
+      "finalAttempt": "Recording ended. Opened one manager tab in acceptance window; address assigned, foreground guard stopped before Enter. No reload/refresh dispatched; r60 activation still pending."
+    },
+    "constraints": {
+      "browserUseOrCDP": false,
+      "internalAPI": false,
+      "messageSent": false,
+      "otherProfileInput": false,
+      "oldDataDeleted": false,
+      "stashesPreserved": 3
+    },
+    "evidence": ".git/vaiwl-checkpoints/20261024-keyboard-return",
+    "next": "Activate same-ID r60 when no other foreground work is interrupted; verify actual keyboard focus and continue original Mac journey. Personal cache confirmation remains a user action."
   }
 }

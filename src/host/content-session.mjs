@@ -1,4 +1,4 @@
-import {layoutFailureStates,surfaceFailureStates,validLayoutShape} from './local-status.mjs';
+import {helloFailureStates,layoutFailureStates,surfaceFailureStates,validLayoutShape} from './local-status.mjs';
 import {createIsolatedSessionReader} from './isolated-session-reader.mjs';
 import {createCandidateUpgrade} from './candidate-upgrade.mjs';
 import {createContentCandidates} from './content-candidates.mjs';
@@ -365,14 +365,18 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
    });
   };runtime.onMessage.addListener(s.listener);
   let startupPhase='hello';
-  const reportStartup=phase=>{if(current!==s)return;startupFailure=['layout-failed','hello-failed','adapter-failed','authorization-failed','surface-failed'].includes(phase)?{url:s.url,shape:s.layoutShape??null,state:phase==='layout-failed'&&layoutFailureStates.includes(s.layoutFailure)?s.layoutFailure:phase==='surface-failed'&&surfaceFailureStates.includes(s.surfaceFailure)?s.surfaceFailure:phase}:null;if(doc.documentElement?.dataset)doc.documentElement.dataset.vaiwlStartup=phase;};
+  const reportStartup=phase=>{if(current!==s)return;startupFailure=['layout-failed','hello-failed','adapter-failed','authorization-failed','surface-failed'].includes(phase)?{url:s.url,shape:s.layoutShape??null,state:phase==='hello-failed'&&helloFailureStates.includes(s.helloFailure)?s.helloFailure:phase==='layout-failed'&&layoutFailureStates.includes(s.layoutFailure)?s.layoutFailure:phase==='surface-failed'&&surfaceFailureStates.includes(s.surfaceFailure)?s.surfaceFailure:phase}:null;if(doc.documentElement?.dataset)doc.documentElement.dataset.vaiwlStartup=phase;};
   reportStartup(startupPhase);
   try{
    if(prepareDocument){startupPhase='layout';reportStartup(startupPhase);if(await prepareDocument({signal:s.abort.signal,onFailure:(reason,shape)=>{if(current===s&&layoutFailureStates.includes(reason)){s.layoutFailure=reason;s.layoutShape=validLayoutShape(shape)?shape:null;}}})!==true||!live(s)||doc.location.href!==s.url)throw Error('native-layout-not-ready');startupPhase='hello';reportStartup(startupPhase);}
    // A C2 transport failure withdraws capabilities but keeps the passive
    // context listener eligible for a later genuine native READY notification.
    // This helper neither retries nor handles explicit negative responses.
-   const hello=await handshake(s,{v:1,type:'HOST_HELLO',clientId,seq:++seq});if(contextRecovery===true&&exactHostRecord(hello,['ok','reason'])&&hello.ok===false&&hello.reason==='invalidated-during-check')throw Error('context-handshake-superseded');if(!bindingOK(hello?.binding))throw Error('invalid-host-binding');s.binding=Object.freeze({...hello.binding});
+   const hello=await handshake(s,{v:1,type:'HOST_HELLO',clientId,seq:++seq});
+   // Only known private transport refusal codes survive. No raw reply or error.
+   if(exactHostRecord(hello,['ok','reason'])&&hello.ok===false&&helloFailureStates.includes('hello-'+hello.reason))s.helloFailure='hello-'+hello.reason;
+   else if(!bindingOK(hello?.binding))s.helloFailure='hello-invalid-binding';
+   if(contextRecovery===true&&exactHostRecord(hello,['ok','reason'])&&hello.ok===false&&hello.reason==='invalidated-during-check')throw Error('context-handshake-superseded');if(!bindingOK(hello?.binding))throw Error('invalid-host-binding');s.binding=Object.freeze({...hello.binding});
    startupPhase='adapter';reportStartup(startupPhase);
    let surface;const adapter=s.adapter=adapterFactory({document:doc,onNativeUse:(intent,producer,proof)=>captureNativeUse(s,intent,producer,proof),onIdleHint:()=>requestAutomaticIdle(s),onNativePrepare:producer=>nativePrepare(s,producer),priorityConversationId:()=>recentId(s),onOldSendOperation:(intent,producer)=>{if(!live(s)||!s.ready||!sameProducer(producer,s.binding))return;void send({type:'HOST_OLD_SEND_OPERATION',documentToken:s.binding.documentToken,producerToken:s.binding.producerToken,routeEpoch:s.binding.routeEpoch,...intent}).catch(()=>{});},onFirstSendIntent:(intent,producer)=>{if(!live(s)||!s.ready||!sameProducer(producer,s.binding)||s.url!==origin+'/')return;void send({type:'HOST_FIRST_SEND_INTENT',documentToken:s.binding.documentToken,producerToken:s.binding.producerToken,routeEpoch:s.binding.routeEpoch,...intent}).catch(()=>{});},onSurfaceChange:records=>{if(live(s))surface?.surrenderChanged?.(records);},isOwnedSurface:node=>live(s)&&surface?.isOwnedSurface?.(node)===true,isOwnedMask:node=>live(s)&&surface?.isMasked?.(node)===true,
     withNativeReading:read=>live(s)?s.controller?.withNativeReading?.(read)??null:null,urlPolicy:createURLPolicy({origin,profile:{projectId:({container})=>/^g-p-[0-9a-f]{32}$/.test(container)?container:null}}),now,elapsedNow,authorize:async command=>{if(s.candidates?.authorize(command)!==true&&s.plans?.authorize(command)!==true)return false;const result=await rpc(s,{v:1,type:'HOST_NATIVE_AUTHORIZE',...bindingFields(s.binding),command});return result?.ok===true&&(s.candidates?.authorize(command)===true||s.plans?.authorize(command)===true);},beforeDispatch:plan=>plan?.mode==='same-target'||s.plans?.beforeDispatch?.(plan)===true?undefined:s.candidates?.beforeDispatch(),onNativeDispatch:event=>{if(event.plan.target.kind!=='live-control'||!s.scopeKey)return;const identity=s.adapter.captureCandidateIdentity?.(event.plan.control);if(!identity)return;clearUpgrade();upgradeIdentity=identity;upgradeDisplay=s.candidates?.displayFor(event.command)??null;for(const type of ['pointerdown','keydown'])doc.addEventListener?.(type,interruptUpgrade,true);for(const type of ['popstate','hashchange'])doc.defaultView.addEventListener(type,upgradeRoute);upgrade.propose({actionId:event.actionId,identity,scopeKey:s.scopeKey,documentId:s.binding.browserDocumentId,originalURL:s.url,expiresAt:now()+6000});upgradeTimer=schedule(clearUpgrade,6000);},onNativeDispatchCancelled:event=>{if(upgrade.cancel(event.actionId))clearUpgrade();},onRebindNeeded:()=>{if(observation?.adapter===s.adapter)stopObservation();rebind(s);}});
@@ -551,6 +555,7 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
   }catch(error){
    if(current===s){
     // Fixed stage only: never publish exception text, identities or RPC data.
+    if(startupPhase==='hello'&&error?.message==='context-handshake-transport-unavailable')s.helloFailure='hello-transport-unavailable';
     reportStartup(startupPhase+'-failed');
     // A native route can change while HELLO, REFRESH or mount is pending,
     // before the adapter has installed its route listeners. The old reply

@@ -34,7 +34,10 @@ try{
  await sidebar.getByRole('button',{name:'查找已知项目与聊天',exact:true}).click();await workspace.getByRole('searchbox',{name:'已知聊天查找输入'}).fill('Native B');
  const opened=context.waitForEvent('page');await workspace.getByRole('link',{name:'Native B',exact:true}).click();const chat=await opened;await chat.waitForURL(origin+'/c/'+B);assert.equal(await chat.evaluate(()=>opener),null);await chat.close();assert.equal(await page.locator('#draft').inputValue(),'fixture draft');report.checks.nativeOpenPreservesDraft=true;
  const back=page.getByRole('button',{name:'返回工作空间',exact:true});if(await back.isVisible())await back.click();
- await page.getByRole('button',{name:'返回原生阅读',exact:true}).click();await back.waitFor();await back.click();await page.waitForFunction(()=>document.querySelectorAll('[data-va-owned]:popover-open').length===2);report.checks.uniqueReturn=true;
+ await page.getByRole('button',{name:'返回原生阅读',exact:true}).click();await back.waitFor();await back.focus();await page.keyboard.press('Space');await page.waitForFunction(()=>document.querySelectorAll('[data-va-owned]:popover-open').length===2);report.checks.uniqueReturn=true;
+ assert.equal(await page.evaluate(()=>document.activeElement?.tagName),'IFRAME','keyboard return must carry focus into the workspace, not drop it to native body');
+ await page.keyboard.press('Tab');
+ assert.equal(await page.evaluate(()=>document.activeElement?.tagName),'IFRAME','next Tab stays in formal workspace');report.checks.keyboardReturnKeepsFocus=true;
  let worker=context.serviceWorkers().find(w=>w.url().startsWith('chrome-extension://'+id+'/'));assert(worker);
  assert.deepEqual(await worker.evaluate(async()=>await indexedDB.databases()),[]);report.checks.noDatabaseOpened=true;
  await page.reload();await workspace.getByRole('link',{name:'Native B',exact:true}).first().waitFor({timeout:15000});report.checks.reloadRediscoversVisibleObjects=true;

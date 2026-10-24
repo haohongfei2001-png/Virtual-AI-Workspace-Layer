@@ -370,3 +370,10 @@ test('only a correlated fixed frame failure may report its stage and withdraw UI
  f.message('workspace',{data:{type:'VAIWL_UI_SUSPEND',role:'workspace',reason:'ui-renew-failed'}});
  assert.equal(f.calls.dispose,1);assert.deepEqual(failures,['surface-frame-ui-renew-failed']);
 });
+
+test('keyboard return transfers its own focus after show; pointer and programmatic entry do not',async()=>{
+ const f=fixture();let focused=0;const frame=f.frames[0].frame;frame.focus=options=>{assert.deepEqual(options,{preventScroll:true});focused++;f.doc.activeElement=frame;};
+ await f.controller.start({});await f.both();assert.equal(focused,0);
+ for(const detail of [1,0]){f.controller.showReading();const button=f.slot.children[0];f.doc.activeElement=button;button.events.click({isTrusted:true,detail});assert.equal(focused,detail===0?1:0);}
+ assert.equal(f.doc.activeElement,frame);f.controller.stop();
+});

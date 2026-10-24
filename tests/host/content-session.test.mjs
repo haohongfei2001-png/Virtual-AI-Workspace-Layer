@@ -454,3 +454,11 @@ test('terminated controller preserves its recorded fixed failure without new ins
  const before=f.calls.length;assert.equal(client.localStatus(),'surface-ui-authority-revoked');assert.equal(f.calls.length,before);
  f.document.location.href+='c/other';assert.notEqual(client.localStatus(),'surface-ui-authority-revoked');client.stop();
 });
+
+// Real startup failures must remain diagnosable without retaining reply data.
+test('initial transport refusal stays fail-closed with bounded private reason',async()=>{
+ for(const [reply,expected] of [[{ok:false,reason:'invalidated-during-check'},'hello-invalidated-during-check'],[{ok:false,reason:'not-current-document'},'hello-not-current-document'],[{ok:false,reason:'PRIVATE_DETAIL'},'hello-invalid-binding'],[{ok:false,reason:'invalid-sender',private:'SECRET'},'hello-invalid-binding'],[{binding:{}},'hello-invalid-binding']]){
+  const f=fixture();f.setResponse(()=>reply);assert.equal(await f.client.start(),null);assert.equal(f.client.localStatus(),expected);assert.equal(f.calls.length,1);assert.equal(f.client.showWorkspace(),false);assert.equal(f.listeners.size,0);await f.advance(30000);assert.equal(f.calls.length,1);
+ }
+ const f=fixture();f.setResponse(()=>Promise.reject(Error('PRIVATE_TRANSPORT_DETAIL')));assert.equal(await f.client.start(),null);assert.equal(f.client.localStatus(),'hello-transport-unavailable');assert.equal(f.calls.length,1);assert.equal(f.listeners.size,0);
+});
