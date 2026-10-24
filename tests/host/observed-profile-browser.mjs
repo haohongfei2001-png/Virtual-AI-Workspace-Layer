@@ -10,6 +10,9 @@ try{
  const page=await browser.newPage({viewport:{width:1000,height:700}}),id='33333333-3333-4333-8333-333333333333',url='https://chatgpt.com/c/'+id;
  await page.route('**/*',r=>r.request().url()===url?r.fulfill({contentType:'text/html',body:focusableViewport?observedDesktopHTML(id).replace('<div data-app-action-timeline-scroll>', '<div data-app-action-timeline-scroll role="region" tabindex="0">'):observedDesktopHTML(id)}):r.abort());
  await page.goto(url);await page.addScriptTag({content:outputFiles[0].text});
+ // A second native app titlebar without the main return slot must not make
+ // the conversation titlebar ambiguous. Preserve rejection when both own slots.
+ await page.evaluate(()=>{const other=document.createElement('header');other.setAttribute('data-app-shell-titlebar','');other.id='other-native-titlebar';other.style.cssText='left:0;top:0;width:200px;height:40px';document.body.prepend(other);});
  if(focusableViewport)await page.evaluate(()=>document.querySelector('[data-slate-sidebar-content]').removeAttribute('data-slate-sidebar-content'));
  const readiness=await page.evaluate(async()=>{
   const sidebar=document.querySelector('[data-slate-sidebar-content]')??document.querySelector('nav');sidebar.style.display='none';let done=false;
@@ -22,6 +25,10 @@ try{
   const binding={documentToken:'fixture',producerToken:'fixture',browserDocumentId:'parent',routeEpoch:1,origin:location.origin,expiresAt:new Date(Date.now()+20000).toISOString()};
   await adapter.start({binding,emit:async p=>{proposals.push(p);return {state:'accepted',localSeq:p.localSeq,receiptId:'fixture'};}});for(let i=0;i<40;i++)await Promise.resolve();
   const viewport=document.querySelector('[data-app-action-timeline-scroll]');const marker=document.createElement('div');marker.id='layout-marker';viewport.insertBefore(marker,viewport.lastElementChild);const role=viewport.getAttribute('role'),tabindex=viewport.getAttribute('tabindex');
+  const other=document.querySelector('#other-native-titlebar');
+  const falseSlot=document.createElement('div');falseSlot.setAttribute('data-app-shell-main-titlebar','');other.append(falseSlot);
+  const ambiguousRejected=adapter.inspect().ok===false;falseSlot.remove();
+  if(!ambiguousRejected)throw Error('two-slot-bearing-titlebars-admitted');
   const inspection=adapter.inspect();if(!inspection.ok)throw Error(inspection.reason);
   surface=createMountSurface({document,createFrameURL:({role})=>'chrome-extension://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/'+role+'.html'});const handle=await surface.mount({binding},inspection);surface.showWorkspace(handle);for(let i=0;i<40;i++)await Promise.resolve();
   const result={viewportShape:role===(focusableViewport?'region':null)&&tabindex===(focusableViewport?'0':null),bodyObservationPresent:proposals.some(p=>p.kind==='current-object'||p.kind==='current-observation'),noMaskedBodyInvalidation:proposals.filter(p=>p.kind==='current-object'||p.kind==='current-observation').every(p=>(p.kind==='current-observation'?p.payload.body:p.payload).association==='explicit-body-id'),profileSelected:inspection.profileId===profile.id,bodyConfigured:profile.currentBody.conversationIdSource==='message-elements',nativeTitle:proposals.some(p=>p.payload?.candidates?.some(c=>c.nativeTitle==='Native A')),noFabricatedMembership:proposals.every(p=>(p.payload?.membershipClaims??[]).every(c=>c.asserted==='UNKNOWN')),readingMasked:surface.isMasked(document.querySelector('#reading')),historyMasked:surface.isMasked(document.querySelector('#list')),searchVisible:getComputedStyle(document.querySelector('#heading')).visibility==='visible',composerVisible:getComputedStyle(document.querySelector('textarea')).visibility==='visible',geometryStillValid:adapter.inspect().ok};

@@ -6,7 +6,7 @@ import {LEGACY_SURFACE_PROFILE} from './surface-discovery.mjs';
 // The observed Chinese desktop surface is a candidate, not an authority profile.
 // Unsupported membership/send/risk grammars stay absent; no synthetic NONE/ACK.
 export const CHATGPT_OBSERVED_PROFILE=Object.freeze({
- id:'chatgpt-zh-desktop-observed-20261018',revision:8,reconstruction:false,liveVerified:false,
+ id:'chatgpt-zh-desktop-observed-20261018',revision:9,reconstruction:false,liveVerified:false,
  memberAssociation:'route-linked-project-panel-v1',
  nativeProjectLayout:'panel-after-composer',
  sidebarBoundary:CHATGPT_SIDEBAR_SELECTOR,
@@ -15,8 +15,11 @@ export const CHATGPT_OBSERVED_PROFILE=Object.freeze({
  regions:Object.freeze({projects:'nav:not([data-app-navigation-rail])',history:'nav:not([data-app-navigation-rail])',members:'[role="tabpanel"]',moveMenu:':not(*)'}),
  controls:'a[href]',conversationControls:'a[href]',maxCandidates:256,
  currentBody:CHATGPT_SELECTION_CURRENT_BODY,
+ // The return slot must already be a strict descendant of its titlebar.
+ // Scope selection to that relation; unrelated native titlebars are not
+ // candidates. Multiple slot-bearing titlebars still fail the unique check.
  nativeLayout:Object.freeze({
-  header:'[data-app-shell-titlebar]',navigationSlot:'[data-app-shell-main-titlebar]',
+  header:'[data-app-shell-titlebar]:has([data-app-shell-main-titlebar])',navigationSlot:'[data-app-shell-main-titlebar]',
   readingViewport:'[data-app-action-timeline-scroll]',viewportFocus:'native-scroll-region',viewportMarkers:'empty-div-v1',
   reading:'[data-app-action-timeline-scroll] > :not([data-thread-scroll-footer]):not(div:empty)',
   composer:'[data-app-action-timeline-scroll] > [data-thread-scroll-footer]',
@@ -27,7 +30,7 @@ export const CHATGPT_OBSERVED_PROFILE=Object.freeze({
  // The native home composer is centered, outside the welcome region. Never
  // use the whole home main/scroll container: it also owns input and tools.
  nativeHomeLayout:Object.freeze({
-  header:'[data-app-shell-titlebar]',navigationSlot:'[data-app-shell-main-titlebar]',
+  header:'[data-app-shell-titlebar]:has([data-app-shell-main-titlebar])',navigationSlot:'[data-app-shell-main-titlebar]',
   reading:'main [role="main"] .home-composer-anchor',
   composer:'main form[data-chatgpt-composer][data-composer-placement="home"]',
   historyList:'nav:not([data-app-navigation-rail]) [data-app-action-sidebar-section] > div > div[aria-hidden]:has([data-sidebar-chatgpt-conversation-key])',

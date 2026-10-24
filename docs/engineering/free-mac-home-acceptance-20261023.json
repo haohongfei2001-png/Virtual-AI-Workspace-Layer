@@ -2050,5 +2050,48 @@
       "browserRestart": "NOT_RUN"
     },
     "lastBoundary": "Original acceptance window lost foreground; input guard stopped native actions. No key replay into another process."
+  },
+  "nativeProjectTitlebarR66_20261024": {
+    "baseline": "b2e40ef5",
+    "status": "PARTIAL_MAC_NOT_ACCEPTED",
+    "before": {
+      "projectChat": "FAIL_AMBIGUOUS_HEADER",
+      "evidence": "On the previously failing target chat, original popup explicitly reported multiple native titlebar candidates. No new body or page-script read."
+    },
+    "change": "Scope observed header selector to the existing strict descendant main-titlebar slot invariant. Unrelated titlebars no longer count; multiple slot-bearing headers and all topology/geometry checks still reject.",
+    "validation": {
+      "observedProfileBrowser": "PASS_WEB_MECHANISM_ONLY_EXISTING_SUITE",
+      "newCase": "Unrelated header accepted; duplicate slot-bearing header rejected. Existing composer/draft/mask guards retained.",
+      "archiveSha256": "c47c3ec4f522106438b44d629e19ba3c8d945f1b0ca7e8cbda7d7f9f0e019f92",
+      "packageFiles": 197
+    },
+    "actualMac": {
+      "nativeChatArrival": "PASS_EXPECTED_TITLE",
+      "reading": "PASS_OWN_POPUP_READY_READING",
+      "fourGridReturn": "PASS_BOTH_FORMAL_AXWEB_AREAS",
+      "scope": "INSTANT_NEW_DOCUMENT_NOT_PERSONAL_CONFIRMATION",
+      "originalPersonalSuspensionRoot": "NOT_ESTABLISHED",
+      "evidence": "Original same-ID r66 reload dispatched, new acceptance homepage -> native Project-list existing chat -> popup ready reading -> four-grid -> VAIWL workspace and history webareas. Native controls only, no browser tab claim or CDP."
+    },
+    "installed": {
+      "sameId": true,
+      "manifestUnchanged": true,
+      "verifiedFiles": 196,
+      "backup": ".git/vaiwl-artifacts/same-id-r66-activation-20261024/previous-extension",
+      "runtimeFingerprint": "NOT_ESTABLISHED"
+    },
+    "preservation": {
+      "databaseFilesTouched": false,
+      "draftsModified": false,
+      "testMessageSent": false,
+      "otherWindowsOperated": false
+    },
+    "remaining": [
+      "personal navigation failure reproduction after current document confirmation",
+      "Project member journey",
+      "new chat send",
+      "private-only restore",
+      "worker/browser restart"
+    ]
   }
 }
