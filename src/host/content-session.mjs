@@ -1,4 +1,4 @@
-import {helloFailureStates,layoutFailureStates,surfaceFailureStates,validLayoutShape} from './local-status.mjs';
+import {foregroundFailureStates,helloFailureStates,layoutFailureStates,surfaceFailureStates,validLayoutShape} from './local-status.mjs';
 import {createIsolatedSessionReader} from './isolated-session-reader.mjs';
 import {createCandidateUpgrade} from './candidate-upgrade.mjs';
 import {createContentCandidates} from './content-candidates.mjs';
@@ -269,7 +269,7 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
   s.blur=()=>{foregroundArmed=true;};
   s.focus=()=>{
    if(doc.visibilityState!=='visible'||!foregroundArmed||!s.ready||!live(s))return;
-   if(foregroundPending)return;foregroundArmed=false;foregroundPending=true;
+   if(foregroundPending)return;foregroundArmed=false;foregroundPending=true;let foregroundFailure='foreground-failed';
    const recoverTransport=()=>{
     if(!enabled||!live(s)||typeof s.scopeKey!=='string'||!s.scopeKey||s.recoveryDenied||s.busyClose===true||recoveryRemaining<1)return false;
     recoveryRemaining--;rebind(s,null,s.scopeKey);return true;
@@ -277,13 +277,17 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
    void track(()=>rpc(s,{v:1,type:'HOST_FOCUS',clientId,seq:++seq,...bindingFields(s.binding)}).then(result=>{
     noteScopeStatus(s,result);
     if(exactHostRecord(result,['ok','reason'])&&result.ok===false&&result.reason==='invalid-host-document'&&recoverTransport())return;
-    if(result?.ok!==true||result.state!=='verified'||result.scopeKey!==s.scopeKey)throw Error('foreground-scope-unverified');
+    if(result?.ok!==true||result.state!=='verified'||result.scopeKey!==s.scopeKey){
+     const code=result?.ok!==true?'foreground-'+result?.reason:result.state!=='verified'?'foreground-scope-unverified':'foreground-scope-changed';
+     if(foregroundFailureStates.includes(code))foregroundFailure=code;
+     throw Error('foreground-scope-unverified');
+    }
    },()=>{
     // A lost port is not an identity decision. Discard the old session and use
     // the existing one-shot HELLO + fresh same-scope authorization path. No
     // stored receipt, old grant or extra retry budget is made authoritative.
-    if(!recoverTransport())throw Error('foreground-transport-unavailable');
-   }).catch(()=>{if(live(s)){startupFailure={url:s.url,state:'foreground-failed',shape:null};s.recoveryDenied=true;contextPending();}}).finally(()=>{foregroundPending=false;s.focus();})).catch(()=>{});
+    if(!recoverTransport()){foregroundFailure='foreground-transport-unavailable';throw Error('foreground-transport-unavailable');}
+   }).catch(()=>{if(live(s)){startupFailure={url:s.url,state:foregroundFailure,shape:null};s.recoveryDenied=true;contextPending();}}).finally(()=>{foregroundPending=false;s.focus();})).catch(()=>{});
   };
   s.visibility=()=>{if(doc.visibilityState==='hidden')foregroundArmed=true;else s.focus();};
   doc.addEventListener?.('visibilitychange',s.visibility);doc.defaultView.addEventListener('focus',s.focus);doc.defaultView.addEventListener('blur',s.blur);

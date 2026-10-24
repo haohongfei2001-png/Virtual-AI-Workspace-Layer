@@ -1768,5 +1768,37 @@
       "stashesPreserved": 3
     },
     "next": "User confirms current account/workspace using existing local popup; then continue real persistence and remaining native Project/search/new-chat journey. No reinstall/settings/research required."
+  },
+  "personalForeground20261024": {
+    "baseline": "6034825c",
+    "realMac": {
+      "personalConfirmation": "PASS_USER_CONFIRMED_AND_OWN_POPUP_READBACK",
+      "knownPrivateObjectsRestored": "PASS_WITH_LAST_CONFIRMED_LABEL",
+      "formalLinkNativeOpen": "PASS_TARGET_TITLE_READBACK",
+      "chatFourGridReturn": "PASS_BOTH_FORMAL_FRAMES",
+      "continuedForeground": "FAIL_FOREGROUND_FAILED",
+      "candidatePanel": "ERROR_OBSERVED_NO_RETRY",
+      "testMessage": "NOT_SENT",
+      "fullDailyAcceptance": "NOT_ESTABLISHED"
+    },
+    "confirmedIndependentDefect": {
+      "cause": "sequence TTL cleanup removes still-bound verified producer when another tab refreshes",
+      "before": "FAIL_scope-not-verified",
+      "after": "PASS_renewed_personal_scope_retained",
+      "actualMacFailureAttribution": "NOT_ESTABLISHED_OLD_STATUS_DID_NOT_RETAIN_REASON"
+    },
+    "validation": {
+      "targetedTests": 182,
+      "result": "PASS",
+      "isolatedFormalMV3": "PASS",
+      "realAccountRequests": 0
+    },
+    "preserved": {
+      "extensionId": "miendbcjdmecjggplepenghjnoejmaic",
+      "oldDraft": true,
+      "database": true,
+      "stashes": 3
+    },
+    "activation": "NOT_RUN"
   }
 }

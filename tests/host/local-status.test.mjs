@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {installLocalStatus,readActiveLocalStatus,validLayoutShape,readActiveLocalLayout} from '../../src/host/local-status.mjs';
+import {foregroundFailureStates,installLocalStatus,readActiveLocalStatus,validLayoutShape,readActiveLocalLayout} from '../../src/host/local-status.mjs';
 const request=()=>({v:1,type:'HOST_LOCAL_STATUS'});
 const sender=()=>({id:'extension',url:'chrome-extension://extension/status.html'});
 const drain=async()=>{for(let i=0;i<30;i++)await Promise.resolve();};
@@ -61,4 +61,9 @@ test('layout shape is bounded fixed metadata and restricted to the exact popup',
 test('layout lookup deadline fences a late tab lookup without dispatch',async()=>{
  let release,expire,sends=0;const tabs={query:()=>new Promise(r=>release=r),sendMessage:()=>{sends++;}};
  const result=readActiveLocalLayout({tabs,schedule:f=>{expire=f;return 1;},cancel:()=>{}});await drain();expire();assert.equal(await result,null);release([{id:7}]);await drain();assert.equal(sends,0);
+});
+
+test('foreground diagnostic codes use the existing private popup channel without raw response text',async()=>{
+ for(const state of foregroundFailureStates){const f=listenerFixture(()=>state);assert.deepEqual(f.dispatch(),[{v:1,state}]);f.dispose();assert.equal(await popupFixture({send:async()=>({v:1,state})}).run(),state);}
+ const f=listenerFixture(()=> 'foreground-PRIVATE');assert.deepEqual(f.dispatch(),[{v:1,state:'unavailable'}]);f.dispose();
 });

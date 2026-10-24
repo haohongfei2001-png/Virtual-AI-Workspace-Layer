@@ -72,3 +72,18 @@ test('local foreground and periodic renewal share a live grant without revoking 
  service.invalidate({tabId:1});assert.equal(service.authority.peek(frame).state,'unverified');
  assert.equal((await request('HOST_FOCUS')).ok,false,'real revocation still rejects the old document binding');
 });
+
+test('another tab cannot prune the verified producer of a renewed local document',async t=>{
+ let time=1000,i=0;const frames=new Map();
+ const service=createHostBindingService({extensionId:'ext',getFrame:async({tabId})=>frames.get(tabId),surfaceProfiles:new Map(),allowedURL:u=>u===url,profile:{id:'browser-local-session'},provider:{read(){assert.fail('no identity request');}},repository:{open(){assert.fail('no database access');}},now:()=>time,makeId:()=>`local_${++i}`});t.after(()=>service.stop());
+ const sender=tabId=>({id:'ext',tab:{id:tabId,incognito:false},frameId:0,documentId:'doc'+tabId,documentLifecycle:'active',url});
+ const bind=async tabId=>{frames.set(tabId,{documentId:'doc'+tabId,url,documentLifecycle:'active',parentFrameId:-1});const {binding:{documentToken,producerToken,routeEpoch}}=await service.handle({v:1,type:'HOST_HELLO',clientId:'client'+tabId,seq:1},sender(tabId));let seq=1;return type=>service.handle({v:1,type,clientId:'client'+tabId,seq:++seq,documentToken,producerToken,routeEpoch},sender(tabId));};
+ const first=await bind(1);assert.equal((await first('HOST_REFRESH')).state,'verified');
+ const frame={tabId:1,frameId:0,documentId:'doc1',actualURL:url,documentLifecycle:'active',incognito:false};
+ await service.authority.bindPersonal(frame,'personal-space');assert.equal((await first('HOST_REFRESH')).state,'verified');
+ time+=15000;assert.equal((await first('HOST_DOCUMENT_RENEW')).ok,true);
+ time+=6000;const second=await bind(2);assert.equal((await second('HOST_REFRESH')).state,'verified');
+ const focused=await first('HOST_FOCUS');assert.equal(focused.state,'verified',JSON.stringify(focused));
+ assert.equal(service.authority.scopeFor(frame).storage,'personal');
+ service.invalidate({tabId:1});assert.equal((await first('HOST_FOCUS')).ok,false,'revocation still wins');
+});

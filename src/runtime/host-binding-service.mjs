@@ -181,7 +181,10 @@ export function createHostBindingService({extensionId,getFrame,getContexts=null,
   try{const result=await withRequestDeadline(()=>track('background',async()=>{
   if(!await handshake.verify(message,sender))return {ok:false,reason:'invalid-host-document'};check();
   const prior=sequences.get(message.producerToken);if(prior?.denied)return {ok:false,reason:'scope-not-verified'};if(focus&&!prior?.verified)return {ok:false,reason:'scope-not-verified'};if(prior&&message.seq<=prior.seq)return {ok:false,reason:'replayed-sequence'};
-  const time=now();for(const [key,value]of sequences)if(value.denied?!handshake.isBound(value.binding,value.sender):value.until<=time)sequences.delete(key);
+  // The sequence TTL is cleanup metadata, not the lifetime of a verified
+  // producer. A live document may have renewed its transport independently.
+  // Keep its verification/denial and replay high-water mark until unbound.
+  const time=now();for(const [key,value]of sequences)if((value.denied||value.until<=time)&&!handshake.isBound(value.binding,value.sender))sequences.delete(key);
   if(!sequences.has(message.producerToken)&&sequences.size>=128)return {ok:false,reason:'capacity'};
   const producer=prior??{verified:false,freshStarted:false,binding:Object.freeze({documentToken:message.documentToken,producerToken:message.producerToken,routeEpoch:message.routeEpoch}),sender:Object.freeze({id:sender.id,tab:Object.freeze({id:sender.tab.id,incognito:sender.tab.incognito}),frameId:sender.frameId,documentId:sender.documentId,documentLifecycle:sender.documentLifecycle,url:sender.url})};producer.seq=message.seq;producer.until=time+20000;sequences.set(message.producerToken,producer);attempt.producer=producer;
   const actual=await getFrame({tabId:sender.tab.id,frameId:0});check();
