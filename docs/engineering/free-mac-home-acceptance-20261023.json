@@ -1252,5 +1252,20 @@
     "cleanup": "Created fixture tab closed; local server stopped. Original extension, data, tabs and stashes unchanged.",
     "nextExternalCondition": "Official revocation/reapproval of the saved CDP denial for this origin in the current task. Existing tools expose no corresponding reset. Do not edit policy files, invoke hidden APIs, switch origin/port/surface/task or debug the account instead.",
     "publicDocumentation": "https://learn.chatgpt.com/docs/browser documents site permission controls but does not establish a current-task saved-CDP-denial reset method."
+  },
+  "noAccountBridgeSupportFollowup20261024": {
+    "baseHead": "1d39ca5633d0248247363824bbba99797a67b919",
+    "grant": "call_75a7a278562048a6a726c5c7c4c67562; approved exact minimal text",
+    "destination": "Existing OpenAI Help Center tool-fault conversation; no new ticket",
+    "messageSha256": "399197ac3bb3452ecb46e2122420cbe5b1a765daf770f9af5369dfcbda6d13ed",
+    "delivery": "SENT_ONCE; exact text visible in conversation, composer cleared, AI-assisted response received",
+    "attachments": 0,
+    "replySummary": "AI-assisted support states no documented per-task/session CDP-denial reset; recommends removing origin site rule, enabling full CDP, restarting and using a new thread. No effective current-task revocation or platform fix supplied.",
+    "disposition": "Not executed: site-rule advice does not establish removal of the known session-level denial; a new-thread test would conflict with the current no-workaround constraint. No additional message transmitted.",
+    "permissionResolved": false,
+    "bridgeContinuity": "NOT_RUN",
+    "srcdocWriter": "NOT_ESTABLISHED",
+    "accountOperations": 0,
+    "installedExtensionOrDataChanged": false
   }
 }
