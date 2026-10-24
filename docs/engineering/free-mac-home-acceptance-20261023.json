@@ -1191,5 +1191,47 @@
     "realMacUI": "FAIL_UNCHANGED",
     "transportLimit": "Real Chrome CDP semantics verified through a local test adapter using the documented event envelope. Current Codex live bridge is not re-tested; any refusal, unrecognized response, source drift or unknown state stops without a second refresh.",
     "nextLiveScope": "Fresh explicit grant only: same profile/home and installed extension; <=1 reload, <=30s observation, <=20 pauses, own two frames only, <=1 frontend-ID remap while paused and the exact objects still live; fixed script locations and boolean state only. No bodies/credentials/network responses/other tabs/attribute edits/extension disabling. Cleanup afterward, no automatic rerun."
+  },
+  "frameAttributionLiveThird20261024": {
+    "sourceCommit": "0fb3abbfb846e97832b581c46f6866550b3e511c",
+    "grant": "call_f53e9d23d3954da1b715de3f860dc1f0; explicitly approved once; now consumed",
+    "result": {
+      "schema": "vaiwl-frame-attribution-v1",
+      "state": "DEADLINE",
+      "refreshes": 1,
+      "pauses": 0,
+      "truncated": true,
+      "armed": 0,
+      "nodeRebindings": 0,
+      "pauseClasses": [],
+      "writes": [],
+      "cleanup": {
+        "sourceBreakpoint": "COMMAND_FAILED",
+        "resume": "NOT_PAUSED",
+        "debugger": "DONE",
+        "dom": "DOM_ALREADY_INACTIVE"
+      },
+      "observationElapsedMs": 30003,
+      "cleanupElapsedMs": 22,
+      "reload": "COMPLETE"
+    },
+    "postCleanup": {
+      "nativeEditableCount": 1,
+      "challengeMarker": false,
+      "ownedFrames": 0,
+      "installedDataModified": false
+    },
+    "writer": "NOT_ESTABLISHED",
+    "productCompatibilityFix": "NOT_IMPLEMENTED_WITHOUT_ATTRIBUTION",
+    "staticToolInspection": {
+      "file": "browser/26.1016.62342/scripts/browser-service.mjs",
+      "sha256": "4cc91e314d2fcb9ed954436be8467f1ddc9b73a69f5d7001e83ccd283625188d",
+      "reload": "navigate_tab_reload uses normal Page.reload and waits for a load event; no explicit Debugger.disable or detach in this handler.",
+      "eventBuffer": "forgetAttachedTab discards cached events and marks them evicted; ordinary capacity eviction also yields truncated. This run cannot distinguish them.",
+      "rawCalls": "callRawCdp preserves debugger on command timeout; executeTargetCdp may recover an unattached debugger. These code paths do not prove which occurred live.",
+      "conclusion": "Missing source breakpoint and inactive DOM on cleanup are compatible with lost debug-session state, but neither the loss nor its cause is established. No tool code was modified or private API invoked."
+    },
+    "nextGate": "Do not request another account refresh yet. First establish supported tool-bridge breakpoint/event continuity on a non-account fixture, within allowed tool permissions; previously denied localhost cannot be bypassed. No hidden transport, direct debug port, profile switching, or protection disabling.",
+    "realAcceptance": "NOT_RUN beyond native editor presence; existing UI failure not promoted to PASS"
   }
 }
