@@ -478,3 +478,24 @@ test('layout recovery cannot resume an explicit stop, changed route or non-layou
  }
  const f=fixture({prepareDocument:async()=>true});f.setResponse(()=>({ok:false,reason:'denied'}));await f.client.start();const count=f.calls.length;assert.equal(await f.client.recoverLayout(),null);assert.equal(f.calls.length,count);f.client.stop();
 });
+
+test('leaving a failed Project preparation starts a fresh reading bind only on a different route',async()=>{
+ let ready=false,mode;const f=fixture(),factory=f.options.controllerFactory;
+ const client=createHostContentSession({...f.options,prepareDocument:async({onFailure})=>{if(!ready)onFailure('layout-project-main');return ready;},controllerFactory:o=>{mode=o.initialMode;return factory(o);}});
+ f.document.location.href+='g/g-p-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/project';
+ await client.start();assert.equal(f.calls.length,0);assert.equal(await client.recoverRoute(),null);
+ ready=true;f.document.location.href='https://chatgpt.com/c/33333333-3333-4333-8333-333333333333';
+ assert.deepEqual(await client.recoverRoute(),{id:'mount'});assert.equal(mode,'reading');assert.equal(f.calls[0].type,'HOST_HELLO');
+ const count=f.calls.length;assert.equal(await client.recoverRoute(),null);assert.equal(f.calls.length,count);client.stop();
+});
+test('route recovery does not revive explicit stop, hidden document or rejected identity',async()=>{
+ for(const block of ['stop','hidden','unsupported']){
+  const f=fixture({prepareDocument:async({onFailure})=>{onFailure('layout-project-main');return false;}});await f.client.start();
+  f.document.location.href='https://chatgpt.com/c/33333333-3333-4333-8333-333333333333';
+  if(block==='stop')f.client.stop();if(block==='hidden')f.document.visibilityState='hidden';if(block==='unsupported')f.document.location.href='https://chatgpt.com/settings';
+  assert.equal(await f.client.recoverRoute(),null);assert.equal(f.calls.length,0);f.client.stop();
+ }
+ const f=fixture({prepareDocument:async()=>true});f.setResponse(()=>({ok:false,reason:'denied'}));await f.client.start();
+ f.document.location.href+='c/33333333-3333-4333-8333-333333333333';const count=f.calls.length;
+ assert.equal(await f.client.recoverRoute(),null);assert.equal(f.calls.length,count);f.client.stop();
+});

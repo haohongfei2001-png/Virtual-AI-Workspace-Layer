@@ -430,3 +430,15 @@ test('correlated fixed projection failure reaches local status without authorizi
   assert(failures.includes('surface-frame-'+reason));assert.equal(f.calls.dispose,1);assert.equal(f.controller.showWorkspace(),false);
  }
 });
+
+
+test('workspace entry does not destroy a mount on a redundant pre-show reading scan',async()=>{
+ const f=fixture();f.surface.refreshGeometry=(_handle,inspection)=>inspection.ok===true;
+ await f.controller.start({});await f.both();f.controller.showReading();
+ const inspect=f.adapter.inspect;let shown=false,preShowScans=0,observed;
+ f.adapter.inspect=()=>{if(!shown&&++preShowScans>1)return {ok:false,reason:'unsafe-native-geometry'};return observed=inspect();};
+ f.surface.refreshGeometry=(_handle,inspection)=>{assert.equal(inspection,observed);return inspection.ok===true;};
+ f.surface.showWorkspace=()=>{shown=true;return true;};
+ assert.equal(f.controller.showWorkspace(),true);assert.equal(preShowScans,1);assert.equal(f.calls.dispose,0);
+ f.controller.stop();
+});

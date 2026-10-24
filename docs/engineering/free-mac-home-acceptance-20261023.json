@@ -2123,5 +2123,83 @@
       "otherChrome": "Different foreground PID observed; no contents read or targeted page action. Cannot assert earlier activation left its focus unchanged."
     },
     "next": "Keep current confirmed document and original installation. Continue only with exact PID/window controls; do not ask for repeated unlock or treat stale AX paths as product failures. Project/member journey, new chat, private-only restore and restart remain unaccepted."
+  },
+  "projectReadinessAndRecoveryR76_20261024": {
+    "baseHead": "3c69b246",
+    "sourceStatus": "IMPLEMENTED_NOT_FULL_MAC_ACCEPTED",
+    "actualMac": {
+      "nativeProjectArrival": "PASS_NATIVE_TITLE_AND_PRIOR_ROUTE_EVIDENCE",
+      "projectFormalSurfaceBeforeFix": "FAIL_LAYOUT_PROJECT_GEOMETRY_CLIP_SHAPE",
+      "observedClipCategory": "border-box",
+      "projectSidebarLate": "FAIL_LAYOUT_MISSING_HISTORY_LIST_OBSERVED",
+      "projectFormalSurfaceR76": "NOT_RUN_AFTER_UPDATE_NATIVE_TARGET_BECAME_UNSTABLE",
+      "privateRecovery": "NOT_RUN_NEW_DOCUMENT_NOT_PERSONALLY_CONFIRMED",
+      "workerRecovery": "NOT_RUN_MAC",
+      "browserRestartRecovery": "NOT_RUN_MAC_NO_SAFE_ALL_WINDOW_DRAFT_PROOF",
+      "newTestMessageSent": false
+    },
+    "fixes": [
+      "Bounded Project layout readiness before fresh handshake",
+      "Late Project sidebar can trigger one fresh reading-only recovery",
+      "Failed pre-handshake Project can recover on next supported native route",
+      "Conservative pixel inset and border-box clipping proof covers viewport and return slot; unsupported clips rejected",
+      "One full pre-show geometry snapshot reused for authorization and mount; post-show guards remain fresh"
+    ],
+    "verification": {
+      "unitLog": "/private/tmp/vaiwl-r76-unit.log",
+      "unitResult": "PASS_325",
+      "projectLayoutLog": "/private/tmp/vaiwl-r76b-project-layout.log",
+      "projectLayoutResult": "PASS_WEB_MECHANISM_ONLY",
+      "mv3PriorFailure": {
+        "log": "/private/tmp/vaiwl-r74-local-mv3.log",
+        "stage": "explicit unlock after account risk",
+        "result": "FAIL_NATIVE_GEOMETRY_CHANGED_WITH_VALID_CONTINUITY"
+      },
+      "mv3AfterFix": {
+        "log": "/private/tmp/vaiwl-r75-local-mv3.log",
+        "result": "PASS_ISOLATED_MV3",
+        "report": "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-4QXfzO/report.json",
+        "includes": [
+          "late Project sidebar",
+          "failed Project route recovery",
+          "private restore",
+          "same-document worker restart",
+          "refresh cache lock",
+          "full isolated browser restart and explicit restore",
+          "draft preservation"
+        ]
+      },
+      "borderBoxInitialFixture": "16px rounded border box correctly refused when return slot intersects corner; corrected positive fixture uses square border box, corner and percentage negatives retained"
+    },
+    "installation": {
+      "id": "miendbcjdmecjggplepenghjnoejmaic",
+      "path": ".git/vaiwl-artifacts/local-source-witness-20261022/extension",
+      "cleanCandidate": ".git/vaiwl-artifacts/browser-local-project-ready-20261024-r76/extension",
+      "candidateVerification": "PASS_197_FILES",
+      "backup": ".git/vaiwl-artifacts/same-id-r76-activation-20261024/previous-extension",
+      "manifestUnchanged": true,
+      "canonicalFilesMatched": 196,
+      "installedExtras": "2680 pre-existing numbered copies preserved; installed tree strict verification is NOT clean-package PASS",
+      "reload": "ORIGINAL_ID_RELOAD_DISPATCHED_ONCE_AFTER_NATIVE_ID_CHECK",
+      "activeBuildFingerprint": "NOT_ESTABLISHED"
+    },
+    "nativeControlStop": {
+      "reason": "foreground PID changed and acceptance window shrank to 747px after guarded sizing",
+      "noFurtherInput": true,
+      "otherWindowsUntouched": true,
+      "oldDraftTabsPreserved": true
+    },
+    "boundaries": {
+      "databaseModifiedByTools": false,
+      "accountUnlockClickedByAssistant": false,
+      "cdpOrBrowserClaim": false,
+      "internalRequests": false,
+      "productionAdmissionChanged": false
+    },
+    "remaining": [
+      "Mac Project formal surface after r76",
+      "personally bound same-document private and worker recovery",
+      "safe full Chrome restart and personal recovery; do not transfer prior-document grant"
+    ]
   }
 }

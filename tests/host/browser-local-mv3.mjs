@@ -28,6 +28,7 @@ try{
  const cdp=await context.browser().newBrowserCDPSession(),{id}=await cdp.send('Extensions.loadUnpacked',{path:built.unpacked});
  // A native sidebar absent at first load can appear after the six-second
  // readiness deadline. Its appearance permits one fresh, reading-only startup.
+ for(const lateRoute of ['conversation','project']){
  const delayed=await context.newPage();await delayed.addInitScript(()=>{
   document.addEventListener('DOMContentLoaded',()=>{
    const list=document.querySelector('nav:not([data-app-navigation-rail]) [data-app-action-sidebar-section] > div > div[aria-hidden]:has([data-sidebar-chatgpt-conversation-key])');
@@ -35,7 +36,7 @@ try{
    const button=document.createElement('button');button.textContent='Reveal fixture sidebar';button.onclick=()=>{marker.replaceWith(list);button.remove();};document.body.append(button);
   },{once:true});
  });
- await delayed.goto(origin+'/c/'+B);
+ await delayed.goto(origin+(lateRoute==='project'?'/g/'+P+'/project':'/c/'+B));
  await delayed.waitForFunction(()=>document.documentElement.dataset.vaiwlStartup==='layout-failed',null,{timeout:10000});
  assert.equal(await delayed.locator('iframe[src^="chrome-extension://"]').count(),0);
  await delayed.getByRole('button',{name:'Reveal fixture sidebar',exact:true}).click();
@@ -43,7 +44,18 @@ try{
  assert.equal(await delayed.locator('[data-va-owned]:popover-open').count(),0,'late readiness must not steal native focus');
  await delayed.getByRole('button',{name:'返回工作空间',exact:true}).click();
  await delayed.frameLocator('iframe[src="chrome-extension://'+id+'/workspace.html"]').getByRole('link',{name:'Native A',exact:true}).first().waitFor({timeout:10000});
- report.checks.lateNativeSidebarStartsWithoutReload=true;await delayed.close();
+ report.checks[lateRoute==='project'?'lateProjectSidebarStartsWithoutReload':'lateNativeSidebarStartsWithoutReload']=true;await delayed.close();
+ }
+ // A Project layout failure must not disable later supported SPA routes.
+ const failedProject=await context.newPage();await failedProject.addInitScript(()=>document.addEventListener('DOMContentLoaded',()=>document.querySelector('#project-panel')?.remove(),{once:true}));
+ await failedProject.goto(origin+'/g/'+P+'/project');
+ await failedProject.waitForFunction(()=>document.documentElement.dataset.vaiwlStartup==='layout-failed',null,{timeout:10000});
+ assert.equal(await failedProject.locator('[data-va-owned]').count(),0);
+ await failedProject.getByRole('button',{name:'Native search',exact:true}).click();await failedProject.waitForURL(origin+'/');
+ await failedProject.getByRole('button',{name:'返回工作空间',exact:true}).waitFor({timeout:15000});
+ assert.equal(await failedProject.locator('[data-va-owned]:popover-open').count(),0);
+ assert.equal(await failedProject.locator('textarea').inputValue(),'fixture draft');
+ report.checks.failedProjectToNativeHomeRecoversWithoutReload=true;await failedProject.close();
  page=await context.newPage();report.browserErrors=[];page.on('pageerror',error=>{if(report.browserErrors.length<10)report.browserErrors.push(error.message);});await page.goto(origin+'/g/'+P+'/project');
  await page.waitForFunction(()=>document.querySelectorAll('[data-va-owned]:popover-open').length===2,null,{timeout:15000});
  const workspace=page.frameLocator('iframe[src="chrome-extension://'+id+'/workspace.html"]'),sidebar=page.frameLocator('iframe[src="chrome-extension://'+id+'/sidebar.html"]');

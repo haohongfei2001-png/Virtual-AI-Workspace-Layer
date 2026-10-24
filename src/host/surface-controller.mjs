@@ -110,7 +110,7 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
   win.addEventListener('resize',state.geometryChanged);if(state.inspection.readingViewport||state.inspection.historySource)win.addEventListener('scroll',state.geometryChanged,true);win.visualViewport?.addEventListener?.('resize',state.geometryChanged);if(state.inspection.readingViewport||state.inspection.historySource)win.visualViewport?.addEventListener?.('scroll',state.geometryChanged);
   if(win.ResizeObserver){state.geometryObserver=new win.ResizeObserver(state.geometryChanged);for(const node of new Set([state.inspection.reading,...(state.inspection.readingViewport?[state.inspection.readingViewport]:[]),...state.inspection.historyMaskRoots,state.inspection.header,state.inspection.composer,...state.inspection.protectedRegions]))state.geometryObserver.observe(node);}
  }
- function authorized(state){return !state.geometryPaused&&valid(state)&&Date.parse(state.context.binding.expiresAt)>now()&&state.frames.every(({role})=>{const grant=state.grants.get(role);return grant&&Date.parse(grant.expiresAt)>now();});}
+ function authorized(state,inspection=null){return !state.geometryPaused&&valid(state,true,inspection)&&Date.parse(state.context.binding.expiresAt)>now()&&state.frames.every(({role})=>{const grant=state.grants.get(role);return grant&&Date.parse(grant.expiresAt)>now();});}
  // A private scheduling hint sampled from owned popovers, never authority.
  function publishSurface(state){
   if(!state||current!==state||!state.registered||doc.location.href!==state.url||Date.parse(state.context.binding.expiresAt)<=now()||typeof bridge.surfaceState!=='function'||typeof surface.visibility!=='function')return;
@@ -125,10 +125,14 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
   const state=current;if(!state)return false;
   const handle=state.handle,intent=++state.intentEpoch;
   const same=()=>current===state&&state.handle===handle;
-  const fresh=()=>same()&&state.intentEpoch===intent&&authorized(state)&&same()&&state.intentEpoch===intent;
+  const fresh=(inspection=null)=>same()&&state.intentEpoch===intent&&authorized(state,inspection)&&same()&&state.intentEpoch===intent;
   try{
-   if(!fresh())return false;if(adapter.hasNativeLayer()){suspend('native-layer');return false;}
-   if(!refreshGeometry(state)||!fresh())return false;
+   // Before presentation there is no native mutation or asynchronous boundary.
+   // Use the same complete proof for authorization and mount geometry. A second
+   // reading scan can exhaust its own budget and wrongly destroy a valid mount.
+   const inspection=adapter.inspect();
+   if(!fresh(inspection))return false;if(adapter.hasNativeLayer()){suspend('native-layer');return false;}
+   if(!refreshGeometry(state,inspection)||!fresh(inspection))return false;
    state.presentation='showing';reportJoin(state);const shown=surface.showWorkspace(handle);state.presentation=shown===false?'show-refused':'show-returned';reportJoin(state);
    if(!same())return false;
    // showPopover can synchronously surrender to native input or a native layer.

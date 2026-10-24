@@ -24,6 +24,7 @@ on run argv
     -- `set frontmost of p` can select another same-named Chrome process.
     if not ((targetApp's activateWithOptions:0) as boolean) then error "PID activation failed"
     perform action "AXRaise" of w
+    set value of attribute "AXMain" of w to true
     delay 0.2
     set actualApp to current application's NSWorkspace's sharedWorkspace()'s frontmostApplication()
     if (actualApp's processIdentifier() as integer) is not targetPID then error "AppKit foreground mismatch"

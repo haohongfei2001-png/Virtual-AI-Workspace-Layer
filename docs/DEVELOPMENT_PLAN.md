@@ -1,5 +1,7 @@
 # VAIWL 唯一开发计划：Free 完整交付 → Pro 智能增强
 
+接续3c69b246，原C2/C5/F4本轮差额已实施：Project有界稳定布局准备、晚到侧栏及失败后的支持路由恢复、保守border-box/inset几何支持、私人解锁展示前单次几何证明。原Mac真实Project失败已定位为border-box不支持；r76同ID备份升级，后续窗口前台/尺寸变化停止输入，修复后Project、私人/Worker及完整浏览器重启Mac验收仍未成立。隔离正式MV3对应恢复链通过不替代Mac。保留旧授权/数据/草稿，未代点新文档确认，未操作其他窗口。具体证据见STATUS及原Mac回执projectReadinessAndRecoveryR76_20261024；继续原旅程，不新增计划或扩权。
+
 当前续验78547b53：本人已回复当前文档确认。正式条目/原生阅读/四格及有界双frame可见已有实际证据，持续私人恢复仍未建立，旧ui-frame-suspended根因不宣称关闭。临时验收脚本同名Chrome前台判断已改用已有AppKit精确PID规则并固化原生focus helper；全局实际PID与唯一AXMain一致才输入，不补发到达不明操作。保持当前确认文档、原ID与旧数据，Project主页实际到达/成员、新聊天及恢复仍为原C2/C5/F4剩余；不重复本人确认或来源实验。
 
 当前接续b2e40ef5：修复原C2/C5/F4标题栏全页候选误判，按已存在的header包含main-slot关系限定选择，唯一性和几何保护不变。r66同ID备份升级后，同一目标聊天原生打开/reading/四格返回双frame在即时层实际通过。旧私人层ui-frame-suspended原因未建立；继续本次文档本人确认后的连续旅程，不以即时层成功替代私人恢复或完整Mac验收，不重跑已过搜索/普通返回。详见STATUS及原Mac回执nativeProjectTitlebarR66_20261024。

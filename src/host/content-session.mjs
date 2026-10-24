@@ -90,7 +90,7 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
  let seq=0,epoch=0,current=null,enabled=false,rebindQueued=false,rebindRun=0,restoreArmed=false,recoveryRemaining=0,contextResumeAllowed=false,contextWaitSuspended=false,contextResumeMode='workspace',contextResumeURL=null,verificationWaitURL=null;
  let activeWork=0,rawIPC=0,workRevision=0,observation=null;
  // Private, document-local presentation failure; never inferred from page data.
- let frameReplaced=false,startupFailure=null,layoutRetryURL=null,layoutRetryUsed=false;
+ let frameReplaced=false,startupFailure=null,layoutRetryURL=null,layoutRetryUsed=false,layoutRouteURL=null;
  function stopObservation(){const prior=observation;observation=null;if(!prior)return;cancel(prior.timer);runtime.onMessage.removeListener(prior.invalidate);prior.adapter.stop();}
  async function startObservation(s){
   const adapter=s.adapter,entry={adapter,owner:s,timer:null,invalidate:null};observation=entry;
@@ -235,7 +235,7 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
  function retainMigration(s,handle){const m=liveMigration(s);if(!m)return false;try{if(typeof s.adapter?.retainLoadedHandles==='function'&&s.adapter.retainLoadedHandles(m.leaseOwner,[handle],m.elapsedDeadline)!==true){clearMigration(s);return false;}}catch{clearMigration(s);return false;}m.handle=handle;return true;}
  function dispose(s,keepObservation=false){if(!s)return;clearMigration(s);doc.removeEventListener?.('visibilitychange',s.visibility);doc.defaultView.removeEventListener('focus',s.focus);doc.defaultView.removeEventListener('blur',s.blur);s.restorePending?.();s.capturePending?.cancel();s.snippets?.stop();s.candidates?.stop();try{s.controller?.stop();}catch{}s.abort.abort();try{runtime.onMessage.removeListener(s.listener);}catch{}doc.defaultView.removeEventListener('pagehide',s.pagehide);try{if(!keepObservation||observation?.adapter!==s.adapter)s.adapter?.stop();}catch{}}
  function reset(keepObservation=false){if(!keepObservation)stopObservation();epoch++;const s=current;current=null;dispose(s,keepObservation);}
- function stop(){layoutRetryURL=null;nativeUseIntent=null;contextWaitSuspended=false;verificationWaitURL=null;contextResumeAllowed=false;contextResumeMode='workspace';contextResumeURL=null;clearLearned();clearRecent();clearUpgrade();for(const type of ['pointerdown','keydown'])doc.removeEventListener?.(type,interruptUpgrade,true);enabled=false;restoreArmed=false;rebindQueued=false;rebindRun++;reset();doc.defaultView.removeEventListener('pagehide',pagehide);doc.defaultView.removeEventListener('pageshow',pageshow);}
+ function stop(){layoutRetryURL=null;layoutRouteURL=null;nativeUseIntent=null;contextWaitSuspended=false;verificationWaitURL=null;contextResumeAllowed=false;contextResumeMode='workspace';contextResumeURL=null;clearLearned();clearRecent();clearUpgrade();for(const type of ['pointerdown','keydown'])doc.removeEventListener?.(type,interruptUpgrade,true);enabled=false;restoreArmed=false;rebindQueued=false;rebindRun++;reset();doc.defaultView.removeEventListener('pagehide',pagehide);doc.defaultView.removeEventListener('pageshow',pageshow);}
  function pagehide(event){
   stopObservation();
   if(event?.persisted!==true){stop();return;}
@@ -262,12 +262,21 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
   // subsequent attempt; failures never schedule their own recovery loop.
   queueMicrotask(()=>{if(!enabled||run!==rebindRun)return;rebindQueued=false;void begin(true,initialMode,expectedScope);});
  }
- async function start(){layoutRetryUsed=false;layoutRetryURL=null;frameReplaced=false;startupFailure=null;contextWaitSuspended=false;verificationWaitURL=null;contextResumeMode='workspace';contextResumeURL=null;contextResumeAllowed=contextRecovery===true;clearLearned();clearRecent();clearUpgrade();recoveryRemaining=1;enabled=true;restoreArmed=false;rebindQueued=false;rebindRun++;doc.defaultView.addEventListener('pageshow',pageshow);return begin();}
+ async function start(){layoutRouteURL=null;layoutRetryUsed=false;layoutRetryURL=null;frameReplaced=false;startupFailure=null;contextWaitSuspended=false;verificationWaitURL=null;contextResumeMode='workspace';contextResumeURL=null;contextResumeAllowed=contextRecovery===true;clearLearned();clearRecent();clearUpgrade();recoveryRemaining=1;enabled=true;restoreArmed=false;rebindQueued=false;rebindRun++;doc.defaultView.addEventListener('pageshow',pageshow);return begin();}
  // A newly available native boundary may recover one pre-HELLO layout failure.
  // This is not retry permission for scope/transport/frame failures or user exit.
  async function recoverLayout(){
   if(!prepareDocument||layoutRetryUsed||layoutRetryURL!==doc.location.href||enabled||current||frameReplaced||doc.visibilityState==='hidden'||!startupFailure?.state.startsWith('layout-missing-'))return null;
   layoutRetryUsed=true;layoutRetryURL=null;enabled=true;restoreArmed=false;rebindQueued=false;rebindRun++;
+  doc.defaultView.addEventListener('pageshow',pageshow);
+  return begin(true,'reading');
+ }
+ // Only a browser invalidation for a different native route may restart a
+ // failed pre-HELLO layout. No old grant/frame is reused and same-route events,
+ // explicit stop, identity refusal or frame replacement never qualify.
+ async function recoverRoute(){
+  if(!prepareDocument||!layoutRouteURL||layoutRouteURL===doc.location.href||enabled||current||frameReplaced||doc.visibilityState==='hidden'||createURLPolicy({origin}).parse(doc.location.href).kind==='unsupported')return null;
+  layoutRouteURL=null;layoutRetryURL=null;layoutRetryUsed=false;enabled=true;restoreArmed=false;rebindQueued=false;rebindRun++;
   doc.defaultView.addEventListener('pageshow',pageshow);
   return begin(true,'reading');
  }
@@ -575,7 +584,8 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
     // Same-route failures still stop, and replaced/stopped sessions cannot retry.
     if(enabled&&doc.location.href!==s.url)rebind(s);else if(error?.message==='scope-not-verified'||contextRecovery===true&&contextResumeAllowed&&['context-handshake-superseded','context-handshake-transport-unavailable'].includes(error?.message))contextPending(true);else {
      const layoutOnly=startupPhase==='layout'&&!s.binding&&!layoutRetryUsed&&s.layoutFailure?.startsWith('layout-missing-');
-     stop();if(layoutOnly)layoutRetryURL=s.url;
+     const nextRouteLayout=prepareDocument&&startupPhase==='layout'&&!s.binding&&!frameReplaced;
+     stop();if(layoutOnly)layoutRetryURL=s.url;if(nextRouteLayout)layoutRouteURL=s.url;
     }
    }
    return null;
@@ -616,5 +626,5 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
   return begin(true,contextResumeMode);
  }
  function localStatus(){if(frameReplaced)return 'frame-blocked';if(!enabled&&!contextResumeAllowed&&!observation&&startupFailure?.url===doc.location.href)return startupFailure.state;if(!enabled)return contextResumeAllowed||observation?(verificationWaitURL===doc.location.href?'verification-required':'waiting'):'unavailable';if(!current||!live(current))return 'unavailable';if(!current.ready)return 'connecting';const state=current.controller?.localStatus?.()??'unavailable';return ['unavailable','surface-controller-absent'].includes(state)&&startupFailure?.url===doc.location.href?startupFailure.state:state;}
- return Object.freeze({localStatus,recoverLayout,localLayoutStatus:()=>startupFailure?.url===doc.location.href&&localStatus().startsWith('layout-')?startupFailure.shape:null,start,stop,contextPending,contextReady,prepareIdle,enterDormant,isOwnedMask:node=>!!current&&live(current)&&current.surface?.isMasked?.(node)===true,showWorkspace:()=>sync(()=>current?.controller?.showWorkspace()??false),showReading:()=>sync(()=>current?.controller?.showReading()??false)});
+ return Object.freeze({localStatus,recoverLayout,recoverRoute,localLayoutStatus:()=>startupFailure?.url===doc.location.href&&localStatus().startsWith('layout-')?startupFailure.shape:null,start,stop,contextPending,contextReady,prepareIdle,enterDormant,isOwnedMask:node=>!!current&&live(current)&&current.surface?.isMasked?.(node)===true,showWorkspace:()=>sync(()=>current?.controller?.showWorkspace()??false),showReading:()=>sync(()=>current?.controller?.showReading()??false)});
 }

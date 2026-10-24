@@ -1,3 +1,4 @@
+import {inspectNativeProjectSurface} from './native-project-surface.mjs';
 import {CHATGPT_SIDEBAR_SELECTOR,profileElement,sidebarBoundaryFailure} from './native-surface-boundary.mjs';
 import {CHATGPT_SELECTION_CURRENT_BODY} from './current-body-discovery.mjs';
 import {nativeReturnGapRect} from './native-return-gap.mjs';
@@ -47,12 +48,15 @@ export function selectHostSurfaceProfile(id){
 /** One bounded DOM-readiness wait before the first handshake. No account read,
  * retry or authority reuse: a changed document/route must start independently. */
 export function waitForNativeLayout({document,profile,timeoutMs=6000,signal=null,onFailure=()=>{}}){
- const href=document.location.href,route=createURLPolicy({origin:new URL(href).origin}).parse(href);
- const layout=route.kind==='home'?profile?.nativeHomeLayout:route.kind==='conversation'?profile?.nativeLayout:null;
+ const href=document.location.href,urlPolicy=createURLPolicy({origin:new URL(href).origin}),route=urlPolicy.parse(href);
+ // Candidate route is enough for presentation readiness, never for P identity.
+ const project=['project','project-candidate'].includes(route.kind)&&profile?.nativeProjectLayout==='panel-after-composer';
+ const layout=route.kind==='home'?profile?.nativeHomeLayout:route.kind==='conversation'||project?profile?.nativeLayout:null;
  if(!layout)return Promise.resolve(true);
- const keys=['header','reading','composer','navigationSlot','historyList','returnHitRoot',...(layout.readingViewport?['readingViewport']:[])],win=document.defaultView;
- let failure='layout-check-failed',shape=null;
+ const keys=project?['header','navigationSlot','historyList']:['header','reading','composer','navigationSlot','historyList','returnHitRoot',...(layout.readingViewport?['readingViewport']:[])],win=document.defaultView;
+ let failure='layout-check-failed',shape=null,projectProof=null;
  const geometryReady=nodes=>{
+  if(project){const [header,slot,history]=nodes,result=inspectNativeProjectSurface({document,profile,urlPolicy,header,slot,history,onFailure:(reason,detail)=>{failure='layout-project-'+reason;shape=detail;}});projectProof=result?.proofNodes??null;return !!result;}
   if(layout.returnPlacement!=='header-gap')return true;
   const byKey=Object.fromEntries(keys.map((key,i)=>[key,nodes[i]])),{header,reading,composer,navigationSlot,historyList,returnHitRoot,readingViewport}=byKey;
   const rect=node=>{const r=node.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height};};
@@ -73,18 +77,19 @@ export function waitForNativeLayout({document,profile,timeoutMs=6000,signal=null
     // Presentation readiness only. Adapter inspection still proves purity,
     // geometry and native control protection after a fresh worker handshake.
     const groups=keys.map(k=>document.querySelectorAll(layout[k]));
-    try{shape={counts:groups.map(items=>Math.min(33,items.length)),branches:[...document.querySelectorAll(layout.readingViewport??':not(*)')].slice(0,1).flatMap(v=>[...v.children].slice(0,12).map(n=>{const r=n.getBoundingClientRect(),style=win.getComputedStyle(n);return [['DIV','STYLE','SCRIPT','TEMPLATE','FOOTER','BUTTON'].includes(n.tagName)?n.tagName:'OTHER',style.display!=='none'&&style.visibility==='visible'&&r.width>0&&r.height>0,n.hasAttribute('data-thread-scroll-footer'),!!n.querySelector('[data-chatgpt-conversation-selection-target]'),n.matches('[contenteditable],input,textarea')||!!n.querySelector('[contenteditable],input,textarea'),Math.min(33,n.children.length)];}))};
+    try{shape=project?null:{counts:groups.map(items=>Math.min(33,items.length)),branches:[...document.querySelectorAll(layout.readingViewport??':not(*)')].slice(0,1).flatMap(v=>[...v.children].slice(0,12).map(n=>{const r=n.getBoundingClientRect(),style=win.getComputedStyle(n);return [['DIV','STYLE','SCRIPT','TEMPLATE','FOOTER','BUTTON'].includes(n.tagName)?n.tagName:'OTHER',style.display!=='none'&&style.visibility==='visible'&&r.width>0&&r.height>0,n.hasAttribute('data-thread-scroll-footer'),!!n.querySelector('[data-chatgpt-conversation-selection-target]'),n.matches('[contenteditable],input,textarea')||!!n.querySelector('[contenteditable],input,textarea'),Math.min(33,n.children.length)];}))};
     // A home layout has six keys; keep the fixed count schema independent of route.
-    if(shape.counts.length===6)shape.counts.push(0);}catch{shape=null;}
+    if(shape?.counts.length===6)shape.counts.push(0);}catch{shape=null;}
     const bad=groups.findIndex(items=>items.length!==1);if(bad>=0)failure='layout-'+(groups[bad].length===0?'missing-':'ambiguous-')+keys[bad];
     let nodes=groups.every(items=>items.length===1)?groups.map(items=>items[0]):[];
     if(nodes.length){const mismatch=keys.findIndex((key,i)=>profileElement(document,profile,layout[key],route)!==nodes[i]);if(mismatch>=0){failure=keys[mismatch]==='historyList'?'layout-sidebar-'+sidebarBoundaryFailure(document,profile):'layout-missing-'+keys[mismatch];nodes=[];}}
     if(nodes.length&&!geometryReady(nodes))nodes=[];
+    if(project&&nodes.length)nodes.push(...projectProof);
     if(nodes.length&&nodes.length===prior.length&&nodes.every((node,i)=>node===prior[i]))return;
     win.clearTimeout(stableTimer);stableTimer=null;prior=nodes;
     if(nodes.length)stableTimer=win.setTimeout(()=>{
      const elapsed=win.performance.now()-started;
-     if(!signal?.aborted&&document.location.href===href&&elapsed>=0&&elapsed<timeoutMs&&geometryReady(nodes)&&groups.every((_,i)=>{const current=document.querySelectorAll(layout[keys[i]]);return current.length===1&&current[0]===nodes[i]&&profileElement(document,profile,layout[keys[i]],route)===nodes[i];}))finish(true);else{prior=[];check();}
+     if(!signal?.aborted&&document.location.href===href&&elapsed>=0&&elapsed<timeoutMs&&geometryReady(nodes)&&(!project||projectProof.length===nodes.length-keys.length&&projectProof.every((node,i)=>node===nodes[keys.length+i]))&&groups.every((_,i)=>{const current=document.querySelectorAll(layout[keys[i]]);return current.length===1&&current[0]===nodes[i]&&profileElement(document,profile,layout[keys[i]],route)===nodes[i];}))finish(true);else{prior=[];check();}
     },150);
    }catch{finish(false);}
   };

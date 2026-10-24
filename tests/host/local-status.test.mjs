@@ -67,3 +67,9 @@ test('foreground diagnostic codes use the existing private popup channel without
  for(const state of foregroundFailureStates){const f=listenerFixture(()=>state);assert.deepEqual(f.dispatch(),[{v:1,state}]);f.dispose();assert.equal(await popupFixture({send:async()=>({v:1,state})}).run(),state);}
  const f=listenerFixture(()=> 'foreground-PRIVATE');assert.deepEqual(f.dispatch(),[{v:1,state:'unavailable'}]);f.dispose();
 });
+
+test('Project clip diagnostic admits numeric inset geometry only',()=>{
+ assert.equal(validLayoutShape({projectClip:'inset(0px 0px 0px -9999px round 16px)'}),true);
+ for(const projectClip of ['url(https://private.invalid)','PRIVATE','inset(0px) account-id','inset('+('0'.repeat(200))+'px)'])assert.equal(validLayoutShape({projectClip}),false);
+ assert.equal(validLayoutShape({projectClip:'inset(0px)',title:'private'}),false);
+});

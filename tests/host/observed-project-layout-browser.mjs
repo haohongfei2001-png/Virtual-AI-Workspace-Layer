@@ -5,11 +5,32 @@ import {chromium} from '../b1/tooling/node_modules/playwright/index.mjs';
 import {observedProjectHTML} from './fixtures/observed-project.mjs';
 const require=createRequire(new URL('../../extension/tooling/package.json',import.meta.url)),baseline=process.env.FREE_PROJECT_LAYOUT_BASELINE_REF;
 const plugins=baseline?[{name:'saved-baseline',setup(build){build.onLoad({filter:/src\/(host\/(chatgpt-adapter|chatgpt-observed-profile)|navigation\/mount-surface)\.mjs$/},args=>({contents:execFileSync('git',['show',`${baseline}:${args.path.slice(process.cwd().length+1)}`],{encoding:'utf8'}),loader:'js'}));}}]:[];
-const {outputFiles}=await require('esbuild').build({stdin:{contents:"export {createChatGPTAdapter} from './src/host/chatgpt-adapter.mjs';export {createURLPolicy} from './src/host/url-policy.mjs';export {CHATGPT_OBSERVED_PROFILE} from './src/host/chatgpt-observed-profile.mjs';export {createSurfaceController} from './src/host/surface-controller.mjs';export {createMountSurface} from './src/navigation/mount-surface.mjs';",resolveDir:process.cwd()},plugins,bundle:true,write:false,format:'iife',globalName:'projectModule'});
+const {outputFiles}=await require('esbuild').build({stdin:{contents:"export {createChatGPTAdapter} from './src/host/chatgpt-adapter.mjs';export {createURLPolicy} from './src/host/url-policy.mjs';export {CHATGPT_OBSERVED_PROFILE,waitForNativeLayout} from './src/host/chatgpt-observed-profile.mjs';export {createSurfaceController} from './src/host/surface-controller.mjs';export {createMountSurface} from './src/navigation/mount-surface.mjs';",resolveDir:process.cwd()},plugins,bundle:true,write:false,format:'iife',globalName:'projectModule'});
 const project='g-p-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',cid='33333333-3333-4333-8333-333333333333',url=`https://chatgpt.com/g/${project}/project`;
 const started=performance.now(),browser=await chromium.launch({headless:true}),results=[];
 try{
- for(const mode of (baseline?['journey']:['journey','hidden-old-root','second-root','extra-native-widget','tiny-gap-control','composer-overflow','title-overflow','tab-overlap','pseudo-overflow','title-shadow','tab-outline','composer-shadow-changed','header-opaque','header-control','outer-clip','clip-path','css-mask','ancestor-transform','foreign-list-link','extra-panel','editable-panel','file-panel','replace-tabs','replace-title','replace-composer','replace-scroll','route-change','scroll','resize','keyboard','controller-journey','controller-scroll','controller-route','controller-replace','controller-resize','controller-popup','controller-expiry'])){
+ if(!baseline){
+  const page=await browser.newPage({viewport:{width:785,height:1193}});
+  await page.route('**/*',r=>r.request().url()===url?r.fulfill({contentType:'text/html',body:observedProjectHTML(project,cid)}):r.abort());
+  await page.goto(url);await page.addScriptTag({content:outputFiles[0].text});
+  const preparation=await page.evaluate(async()=>{
+   const {waitForNativeLayout,CHATGPT_OBSERVED_PROFILE:profile}=projectModule;
+   const panel=document.querySelector('#project-panel'),list=panel.parentElement;
+   panel.remove();let settled=false;
+   const pending=waitForNativeLayout({document,profile,timeoutMs:2000}).then(value=>{settled=true;return value;});
+   await new Promise(r=>setTimeout(r,200));const waited=!settled;list.append(panel);
+   const ready=await pending;
+   const extra=document.createElement('textarea');panel.append(extra);let reason;
+   const unsafe=await waitForNativeLayout({document,profile,timeoutMs:220,onFailure:r=>{reason=r;}});extra.remove();
+   const shell=document.querySelector('main[data-app-shell-main-surface]');shell.style.clipPath='inset(0px 0px 0px -9999px round 16px)';let clipDetail;
+   const clipRejected=await waitForNativeLayout({document,profile,timeoutMs:220,onFailure:(r,d)=>{clipDetail=d;}})===false&&clipDetail?.projectClip==='inset(0px 0px 0px -9999px round 16px)';shell.style.clipPath='';
+   const routePending=waitForNativeLayout({document,profile,timeoutMs:1000});history.pushState({},'','/');dispatchEvent(new PopStateEvent('popstate'));
+   const routeRejected=await routePending===false;
+   return {waited,ready,clipRejected,unsafeRejected:unsafe===false&&reason==='layout-project-composer-title',routeRejected,draftPreserved:document.querySelector('#draft').value==='fixture draft'};
+  });
+  assert(Object.values(preparation).every(Boolean),JSON.stringify(preparation));results.push({mode:'bounded-project-preparation',passed:true,checks:preparation});await page.close();
+ }
+ for(const mode of (baseline?['journey']:['journey','shell-border-box','shell-border-box-corner','shell-border-box-percent','shell-zero-radius','shell-asymmetric','shell-layout-ancestor','shell-cut','shell-percent','shell-polygon','hidden-old-root','second-root','extra-native-widget','tiny-gap-control','composer-overflow','title-overflow','tab-overlap','pseudo-overflow','title-shadow','tab-outline','composer-shadow-changed','header-opaque','header-control','outer-clip','clip-path','css-mask','ancestor-transform','foreign-list-link','extra-panel','editable-panel','file-panel','replace-tabs','replace-title','replace-composer','replace-scroll','route-change','scroll','resize','keyboard','controller-journey','controller-scroll','controller-route','controller-replace','controller-resize','controller-popup','controller-expiry'])){
   const caseStarted=performance.now(),page=await browser.newPage({viewport:{width:785,height:1193}});
   await page.route('**/*',r=>r.request().url()===url?r.fulfill({contentType:'text/html',body:observedProjectHTML(project,cid)}):r.abort());
   await page.goto(url);await page.addScriptTag({content:outputFiles[0].text});
@@ -34,6 +55,9 @@ try{
    if(mode==='header-opaque')document.querySelector('[data-app-shell-header-toolbar]').style.background='red';
    if(mode==='header-control'){const b=document.createElement('button');b.style.cssText='position:fixed;left:354px;top:20px;width:2px;height:2px;padding:0;border:0';document.querySelector('[data-app-shell-header-toolbar]').append(b);}
    if(mode==='outer-clip'){document.querySelector('#project').style.height='400px';document.querySelector('#project-scroll').style.height='1125px';}
+   if(mode==='shell-layout-ancestor')document.querySelector('[data-app-shell-main-content-layout]').style.clipPath='inset(0px round 0px)';
+   if(mode.startsWith('shell-border-box')){const shell=document.querySelector('main[data-app-shell-main-surface]');shell.style.clipPath='border-box';shell.style.borderRadius=mode==='shell-border-box-percent'?'50%':mode==='shell-border-box-corner'?'128px':'0px';}
+   if(mode.startsWith('shell-')&&!mode.startsWith('shell-border-box')&&mode!=='shell-layout-ancestor')document.querySelector('main[data-app-shell-main-surface]').style.clipPath=({'shell-zero-radius':'inset(0px 0px 0px -16px round 0px)','shell-asymmetric':'inset(0px 0px 0px -16px round 16px 8px 0px 8px)','shell-cut':'inset(0px 100px 0px 0px)','shell-percent':'inset(0% 0%)','shell-polygon':'polygon(0 0, 100% 0, 100% 100%)'})[mode];
    if(mode==='clip-path')document.querySelector('#project-scroll').style.clipPath='inset(0 50% 0 0)';
    if(mode==='css-mask')document.querySelector('#project-scroll').style.maskImage='linear-gradient(black,transparent)';
    if(mode==='ancestor-transform')document.querySelector('main').style.transform='scale(.9)';
@@ -41,7 +65,7 @@ try{
    if(mode==='extra-panel')panel.after(panel.cloneNode(true));
    if(mode==='editable-panel')panel.contentEditable='true';
    if(mode==='file-panel')panel.replaceChildren(document.createElement('input'));
-   const reject=['second-root','extra-native-widget','tiny-gap-control','composer-overflow','title-overflow','tab-overlap','pseudo-overflow','title-shadow','tab-outline','composer-shadow-changed','header-opaque','header-control','outer-clip','clip-path','css-mask','ancestor-transform','foreign-list-link','extra-panel','editable-panel','file-panel'].includes(mode);
+   const reject=['shell-border-box-corner','shell-border-box-percent','shell-cut','shell-percent','shell-polygon','second-root','extra-native-widget','tiny-gap-control','composer-overflow','title-overflow','tab-overlap','pseudo-overflow','title-shadow','tab-outline','composer-shadow-changed','header-opaque','header-control','outer-clip','clip-path','css-mask','ancestor-transform','foreign-list-link','extra-panel','editable-panel','file-panel'].includes(mode);
    if(reject){const refused=!adapter.inspect().ok;adapter.stop();return {mode,passed:refused&&forbiddenReads===0,refused,forbiddenReads};}
    if(mode.startsWith('controller-')){
     surface=createMountSurface({document,createFrameURL:({role})=>`chrome-extension://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/${role}.html`});

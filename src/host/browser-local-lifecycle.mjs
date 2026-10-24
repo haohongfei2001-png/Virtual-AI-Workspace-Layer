@@ -50,9 +50,10 @@ export function installBrowserLocalLifecycle({document:doc,runtime,session,profi
    if(stopped||waiting||doc.visibilityState==='hidden'||!session.localStatus?.()?.startsWith('layout-missing-'))return;
    try{
     const route=createURLPolicy({origin:doc.location.origin}).parse(doc.location.href);
-    const layout=route.kind==='home'?profile?.nativeHomeLayout:route.kind==='conversation'?profile?.nativeLayout:null;
+    const project=['project','project-candidate'].includes(route.kind)&&profile?.nativeProjectLayout==='panel-after-composer';
+    const layout=route.kind==='home'?profile?.nativeHomeLayout:route.kind==='conversation'||project?profile?.nativeLayout:null;
     if(!layout||doc.querySelector('dialog[open], [aria-modal="true"]'))return;
-    const keys=['header','reading','composer','navigationSlot','historyList','returnHitRoot',...(layout.readingViewport?['readingViewport']:[])];
+    const keys=project?['header','navigationSlot','historyList']:['header','reading','composer','navigationSlot','historyList','returnHitRoot',...(layout.readingViewport?['readingViewport']:[])];
     if(!keys.every(key=>{const nodes=doc.querySelectorAll(layout[key]);if(nodes.length!==1)return false;const node=nodes[0],rect=node.getBoundingClientRect();return node.isConnected&&rect.width>0&&rect.height>0&&!node.closest('[hidden],[inert],[aria-hidden="true"]');}))return;
     void session.recoverLayout().catch(()=>{});
    }catch{/* Unsupported structure stays native-only. */}
@@ -76,7 +77,7 @@ export function installBrowserLocalLifecycle({document:doc,runtime,session,profi
   if(!exactHostRecord(m,['type']))return;
   if(m.type==='HOST_LOCAL_LOCKED'){clear();waiting=true;run++;session.stop();reply({ok:true});return;}
   if(m.type==='HOST_LOCAL_RESTART'){void restart().then(ok=>reply({ok}),()=>reply({ok:false}));return true;}
-  if(m.type==='HOST_DOCUMENT_INVALIDATED'&&waiting)void restart();
+  if(m.type==='HOST_DOCUMENT_INVALIDATED'){if(waiting)void restart();else void session.recoverRoute?.().catch(()=>{});}
  };
  doc.defaultView.addEventListener('focus',focus);doc.defaultView.addEventListener('pagehide',pagehide);doc.addEventListener('pointerdown',pointer,true);doc.addEventListener('keydown',keyboard,true);doc.addEventListener('click',navigation,true);runtime.onMessage.addListener(message);
  return ()=>{stopped=true;layoutObserver?.disconnect();doc.defaultView.removeEventListener('resize',layoutChanged);clear();run++;session.stop();doc.defaultView.removeEventListener('focus',focus);doc.defaultView.removeEventListener('pagehide',pagehide);doc.removeEventListener('pointerdown',pointer,true);doc.removeEventListener('keydown',keyboard,true);doc.removeEventListener('click',navigation,true);runtime.onMessage.removeListener(message);};

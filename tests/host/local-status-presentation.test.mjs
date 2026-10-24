@@ -1,3 +1,4 @@
+import {projectSurfaceFailureReasons} from '../../src/host/native-project-surface.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -39,4 +40,8 @@ test('blocked Browser-Local popup explains frame failure and keeps locking avail
  lock.listeners.click();await drain();
  assert.deepEqual(f.calls.at(-1),['control',{v:1,type:'HOST_LOCAL_SPACE',action:'lock'}]);
  assert.equal(unlock.disabled,true);assert.equal(lock.disabled,false);
+});
+
+for(const reason of projectSurfaceFailureReasons)test('Project preparation stage is visible without page values: '+reason,async()=>{
+ const f=await render({v:1,state:'layout-project-'+reason});assert.match(f.node.textContent,/Project 页面布局尚未就绪/);assert(f.node.textContent.includes('（'+reason+'）'));assert(!f.node.textContent.includes('状态不可用'));
 });
