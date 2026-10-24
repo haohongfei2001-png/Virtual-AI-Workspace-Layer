@@ -1913,5 +1913,48 @@
       "human assets"
     ],
     "next": "resume original native Mac acceptance only with stable exact original window and verified native control target; no browser claim or CDP"
+  },
+  "exactNativeNavigation20261024": {
+    "baseHead": "c87f0868",
+    "confirmedOperatorDefects": [
+      "IME converted ASCII colon to fullwidth; AppleScript default text equality returned true",
+      "first Enter was consumed by active IME composition rather than address navigation"
+    ],
+    "fix": "native paste with all pasteboard types preserved only in RAM; exact Unicode code-point comparison; one Enter; actual AXDocument target readback; no replay after ambiguity",
+    "noAccount": {
+      "status": "PASS",
+      "navigation": "local fixture A to B",
+      "targetDocumentReadback": true,
+      "targetInputUntouched": true,
+      "externalNetwork": "blocked by isolated-process proxy",
+      "evidenceDirectory": ".git/vaiwl-artifacts/native-navigation-20261024-r3"
+    },
+    "actualMac": {
+      "homeArrival": "PASS_ACTUAL_AXDOCUMENT_HTTPS_CHATGPT_COM_HOME",
+      "fourGrid": "OBSERVED_THEN_ABSENT",
+      "workspaceAndHistoryFrames": "NOT_RUN_NO_SUCCESSFUL_OPEN_READBACK",
+      "searchReturn": "NOT_RUN",
+      "popupFailureReason": "NOT_ESTABLISHED",
+      "laterWindowMain": false,
+      "laterWindowSize": [
+        628,
+        532
+      ],
+      "windowChangeCause": "NOT_ESTABLISHED",
+      "newDocumentPrivateUnlock": "NOT_RUN_USER_ONLY",
+      "testMessageSent": false
+    },
+    "safety": {
+      "sameInstalledId": true,
+      "extensionFilesChanged": false,
+      "databaseTouched": false,
+      "draftsTouched": false,
+      "otherWindowsOperated": false,
+      "browserTabClaimed": false,
+      "cdpUsed": false,
+      "internalRequests": 0,
+      "inputMethodChanged": false
+    },
+    "next": "original C2/C5/F4 native acceptance with verified exact window/control; no blind input replay or treating offline PASS as Mac PASS"
   }
 }
