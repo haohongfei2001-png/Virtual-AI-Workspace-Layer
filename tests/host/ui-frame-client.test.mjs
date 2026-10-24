@@ -95,3 +95,13 @@ test('onClear reentrant start cannot have its new port disconnected by the old e
  assert.deepEqual(f.messages.map(x=>x.message.type),['VAIWL_UI_JOIN','VAIWL_UI_EXIT','VAIWL_UI_JOIN']);
  client.stop();assert.deepEqual(disconnected,[1,2]);
 });
+
+
+test('projection refusal retains only fixed reasons while clearing private frame contents',async()=>{
+ for(const reason of ['frame-view-unavailable','invalid-frame-current','invalid-frame-navigation','read-budget-exhausted','PRIVATE_URL_OR_ERROR_TEXT']){
+  const f=fixture(),client=createUiFrameClient(f.options);await client.start();client.stop(reason);
+  const message=f.messages.at(-1).message;
+  assert.deepEqual(message,{type:'VAIWL_UI_SUSPEND',role:'workspace',...(reason==='PRIVATE_URL_OR_ERROR_TEXT'?{}:{reason})});
+  assert.equal(f.body.textContent,'');assert.equal(client.isAuthorized(),false);
+ }
+});

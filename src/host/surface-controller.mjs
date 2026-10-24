@@ -1,5 +1,5 @@
 import {historyFailureReasons} from './native-history-list.mjs';
-import {surfaceFailureStates} from './local-status.mjs';
+import {surfaceFailureStates,frameFailureReasons} from './local-status.mjs';
 import {workspaceReturnIcon} from '../navigation/icons.mjs';
 import {readFrameAppearance} from './frame-appearance.mjs';
 import {withRequestDeadline} from '../data/request-deadline.mjs';
@@ -252,7 +252,7 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
    return;
   }
   // Correlated fixed failure metadata only; it can withdraw, never grant, UI access.
-  if(exactHostRecord(data,['role','type','reason'])&&data.type==='VAIWL_UI_SUSPEND'&&['ui-grant-expired','ui-renew-failed','ui-join-failed','ui-port-disconnected','ui-renderer-failed'].includes(data.reason)){try{onFailure('surface-frame-'+data.reason);}catch{}stop('ui-frame-suspended');return;}
+  if(exactHostRecord(data,['role','type','reason'])&&data.type==='VAIWL_UI_SUSPEND'&&frameFailureReasons.includes(data.reason)){try{onFailure('surface-frame-'+data.reason);}catch{}stop('ui-frame-suspended');return;}
   if(exactHostRecord(data,['role','type'])&&['VAIWL_UI_SUSPEND','VAIWL_UI_EXIT'].includes(data.type)){stop(data.type==='VAIWL_UI_EXIT'?'ui-user-exit':'ui-frame-suspended');return;}
   if(data.type==='VAIWL_UI_JOIN'){state.joinedRoles?.add(data.role);reportJoin(state);}
   if(!valid(state,false)||Object.keys(data).sort().join(',')!=='nonce,role,type'||data.type!=='VAIWL_UI_JOIN'||!tokenOK(data.nonce)||state.pending.has(data.role)||state.grants.has(data.role))return;

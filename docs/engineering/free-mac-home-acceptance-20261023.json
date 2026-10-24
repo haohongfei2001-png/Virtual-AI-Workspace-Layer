@@ -2004,5 +2004,51 @@
       "otherWindowsOperated": false
     },
     "overall": "NOT_FREE_ACCEPTED"
+  },
+  "nativeConversationReturnR65_20261024": {
+    "baseline": "74098470",
+    "status": "PARTIAL_MAC_NOT_ACCEPTED",
+    "personalConfirmation": {
+      "state": "PASS",
+      "evidence": "User confirmed in original popup; native AX readback says local space bound to current document. This is not server authentication or proof of private-only object restoration."
+    },
+    "projectConversation": {
+      "navigation": "PASS",
+      "return": "FAIL",
+      "evidence": "Formal card activation reached expected native chat title and /c/ route. Own popup later reported ui-frame-suspended; detailed cause not established. No message body read."
+    },
+    "ordinaryConversation": {
+      "state": "PASS_SCOPED_INSTANT",
+      "evidence": "After r65 same-ID reload in new acceptance tab: instant home formal card -> expected native ordinary chat title and https://chatgpt.com/c/ route -> four-grid -> both VAIWL workspace and history AXWebAreas. No local unlock in this new document."
+    },
+    "change": "Fixed projection failure categories survive ui-frame-client -> surface-controller -> local status. Failure withdrawal and all grant checks unchanged. This repairs diagnostic loss, not a proven root fix for the Project-chat failure.",
+    "validation": {
+      "targetedNode": "169 PASS",
+      "packageFiles": 197,
+      "archiveSha256": "71fff22f86cf43fdfaa5c5e43c739148bc87ada96cf2fc193ad6a0655f63acc3"
+    },
+    "installed": {
+      "sameId": true,
+      "manifestUnchanged": true,
+      "verifiedFiles": 196,
+      "originalPackageBackedUp": true,
+      "nativeReload": "DISPATCHED",
+      "runtimeFingerprint": "NOT_ESTABLISHED"
+    },
+    "preservation": {
+      "databaseFilesTouched": false,
+      "draftsModified": false,
+      "testMessageSent": false,
+      "otherWindowsOperated": false,
+      "cdpOrBrowserTabClaim": false
+    },
+    "remaining": {
+      "projectMemberJourney": "NOT_RUN",
+      "newChatSend": "NOT_RUN",
+      "privateOnlyRestore": "NOT_ESTABLISHED",
+      "workerRestart": "NOT_RUN",
+      "browserRestart": "NOT_RUN"
+    },
+    "lastBoundary": "Original acceptance window lost foreground; input guard stopped native actions. No key replay into another process."
   }
 }

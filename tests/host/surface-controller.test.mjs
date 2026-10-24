@@ -421,3 +421,12 @@ test('history refusal reports only fixed categories on mount and later withdrawa
   assert(failures.every(v=>!v.includes('PRIVATE_PAGE_VALUE')));assert.equal(f.controller.showWorkspace(),false);
  }
 });
+
+
+test('correlated fixed projection failure reaches local status without authorizing recovery',async()=>{
+ for(const reason of ['frame-view-unavailable','invalid-frame-current','invalid-frame-navigation','read-budget-exhausted']){
+  const failures=[],f=fixture({onFailure:v=>failures.push(v)});await f.controller.start({});await f.both();
+  f.message('workspace',{data:{type:'VAIWL_UI_SUSPEND',role:'workspace',reason}});await drain();
+  assert(failures.includes('surface-frame-'+reason));assert.equal(f.calls.dispose,1);assert.equal(f.controller.showWorkspace(),false);
+ }
+});
