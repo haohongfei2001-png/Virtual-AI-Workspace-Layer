@@ -858,5 +858,338 @@
       "result": "DOM agent has not been enabled",
       "conclusion": "DOM domain already inactive; initial cleanup failure is preserved above"
     }
+  },
+  "frameAttributionCollectorAudit20261024": {
+    "baseHead": "796b4569fc7402f0c39221b489c175692817cc96",
+    "scope": "COLLECTOR_ONLY; isolated headless Chrome, new disposable profile, existing MV3 and native-shaped fixture, reject-only network guard; no account, no installed-extension changes.",
+    "sourceHashes": {
+      "tools/frame-attribution/collector.mjs": "04574b02fdb91eb2ad4222aa1ab0b30cbaf47dfcfba0debb33aa4b939f2f9d9e",
+      "tests/host/frame-attribution.test.mjs": "51ef229ba8d7bfaa1b5f90d4eeab979e76b0ea020cc965c1a7c195bceda66c12",
+      "tests/host/frame-attribution-browser.mjs": "373445f6e292316949fdf81c5ee9aab9128fbd500c8e38d8a8bfe01ae8424192"
+    },
+    "installedMountMatchesSource": true,
+    "mountSourceSha256": "b4dbb6dc6fe3f64961ac1601f5261acba81d7ed67869f3885ff37f95a46695d3",
+    "fixed": [
+      "Unique current-source anchor after both frames are connected, no hard-coded source line.",
+      "Exact breakpoint ID admits empty CallFrame.url; scriptParsed metadata resolves the actual writer location.",
+      "Returned positive events are processed despite older-event truncation.",
+      "Both frame objects/source/parent are verified before DOM breakpoints; at most one live-object rebind on expired frontend node IDs.",
+      "srcdoc is checked before/after a single step; benign attributes and interrupted steps cannot create writer attribution.",
+      "Breakpoint response validated before reload; hanging reload cannot extend observation; denial stops; cleanup outcomes are explicit."
+    ],
+    "unit": {
+      "passed": 13,
+      "failed": 0,
+      "scope": "collector control flow, limits, privacy and cleanup only"
+    },
+    "headless": {
+      "status": "PASS",
+      "packageUnmodified": true,
+      "cases": [
+        {
+          "scenario": "page",
+          "result": {
+            "schema": "vaiwl-frame-attribution-v1",
+            "state": "WRITER_OBSERVED",
+            "refreshes": 1,
+            "pauses": 3,
+            "truncated": false,
+            "armed": 2,
+            "nodeRebindings": 0,
+            "pauseClasses": [
+              {
+                "ownHit": true,
+                "hasTop": true,
+                "urlPresent": false,
+                "kind": "other"
+              },
+              {
+                "ownHit": false,
+                "hasTop": true,
+                "urlPresent": false,
+                "kind": "dom"
+              },
+              {
+                "ownHit": false,
+                "hasTop": true,
+                "urlPresent": false,
+                "kind": "step"
+              }
+            ],
+            "writes": [
+              {
+                "role": "workspace",
+                "attribute": "srcdoc",
+                "stack": [
+                  {
+                    "source": "http://127.0.0.1:55201/writer.js",
+                    "line": 3,
+                    "column": 43
+                  }
+                ]
+              }
+            ],
+            "cleanup": {
+              "attribute-workspace": "NODE_ALREADY_GONE",
+              "attribute-sidebar": "NODE_ALREADY_GONE",
+              "resume": "NOT_PAUSED",
+              "debugger": "DONE",
+              "objects": "DONE",
+              "dom": "DONE"
+            },
+            "observationElapsedMs": 255,
+            "cleanupElapsedMs": 8,
+            "reload": "COMPLETE"
+          }
+        },
+        {
+          "scenario": "page-empty-url-truncated",
+          "result": {
+            "schema": "vaiwl-frame-attribution-v1",
+            "state": "WRITER_OBSERVED",
+            "refreshes": 1,
+            "pauses": 3,
+            "truncated": true,
+            "armed": 2,
+            "nodeRebindings": 0,
+            "pauseClasses": [
+              {
+                "ownHit": true,
+                "hasTop": true,
+                "urlPresent": false,
+                "kind": "other"
+              },
+              {
+                "ownHit": false,
+                "hasTop": true,
+                "urlPresent": false,
+                "kind": "dom"
+              },
+              {
+                "ownHit": false,
+                "hasTop": true,
+                "urlPresent": false,
+                "kind": "step"
+              }
+            ],
+            "writes": [
+              {
+                "role": "workspace",
+                "attribute": "srcdoc",
+                "stack": [
+                  {
+                    "source": "http://127.0.0.1:55201/writer.js",
+                    "line": 3,
+                    "column": 43
+                  }
+                ]
+              }
+            ],
+            "cleanup": {
+              "attribute-workspace": "NODE_ALREADY_GONE",
+              "attribute-sidebar": "NODE_ALREADY_GONE",
+              "resume": "NOT_PAUSED",
+              "debugger": "DONE",
+              "objects": "DONE",
+              "dom": "DONE"
+            },
+            "observationElapsedMs": 254,
+            "cleanupElapsedMs": 5,
+            "reload": "COMPLETE"
+          }
+        },
+        {
+          "scenario": "page-node-invalidated",
+          "result": {
+            "schema": "vaiwl-frame-attribution-v1",
+            "state": "WRITER_OBSERVED",
+            "refreshes": 1,
+            "pauses": 3,
+            "truncated": false,
+            "armed": 2,
+            "nodeRebindings": 1,
+            "pauseClasses": [
+              {
+                "ownHit": true,
+                "hasTop": true,
+                "urlPresent": false,
+                "kind": "other"
+              },
+              {
+                "ownHit": false,
+                "hasTop": true,
+                "urlPresent": false,
+                "kind": "dom"
+              },
+              {
+                "ownHit": false,
+                "hasTop": true,
+                "urlPresent": false,
+                "kind": "step"
+              }
+            ],
+            "writes": [
+              {
+                "role": "workspace",
+                "attribute": "srcdoc",
+                "stack": [
+                  {
+                    "source": "http://127.0.0.1:55201/writer.js",
+                    "line": 3,
+                    "column": 43
+                  }
+                ]
+              }
+            ],
+            "cleanup": {
+              "attribute-workspace": "NODE_ALREADY_GONE",
+              "attribute-sidebar": "NODE_ALREADY_GONE",
+              "resume": "NOT_PAUSED",
+              "debugger": "DONE",
+              "objects": "DONE",
+              "dom": "DONE"
+            },
+            "observationElapsedMs": 248,
+            "cleanupElapsedMs": 4,
+            "reload": "COMPLETE"
+          }
+        },
+        {
+          "scenario": "extension",
+          "result": {
+            "schema": "vaiwl-frame-attribution-v1",
+            "state": "WRITER_OBSERVED",
+            "refreshes": 1,
+            "pauses": 3,
+            "truncated": false,
+            "armed": 2,
+            "nodeRebindings": 0,
+            "pauseClasses": [
+              {
+                "ownHit": true,
+                "hasTop": true,
+                "urlPresent": false,
+                "kind": "other"
+              },
+              {
+                "ownHit": false,
+                "hasTop": true,
+                "urlPresent": false,
+                "kind": "dom"
+              },
+              {
+                "ownHit": false,
+                "hasTop": true,
+                "urlPresent": false,
+                "kind": "step"
+              }
+            ],
+            "writes": [
+              {
+                "role": "workspace",
+                "attribute": "srcdoc",
+                "stack": [
+                  {
+                    "source": "chrome-extension://cgmacmjkdojaoljdcegocblbgknjonmc/writer.js",
+                    "line": 4,
+                    "column": 43
+                  }
+                ]
+              }
+            ],
+            "cleanup": {
+              "attribute-workspace": "NODE_ALREADY_GONE",
+              "attribute-sidebar": "NODE_ALREADY_GONE",
+              "resume": "NOT_PAUSED",
+              "debugger": "DONE",
+              "objects": "DONE",
+              "dom": "DONE"
+            },
+            "observationElapsedMs": 235,
+            "cleanupElapsedMs": 7,
+            "reload": "COMPLETE"
+          }
+        },
+        {
+          "scenario": "none",
+          "result": {
+            "schema": "vaiwl-frame-attribution-v1",
+            "state": "DEADLINE",
+            "refreshes": 1,
+            "pauses": 5,
+            "truncated": false,
+            "armed": 2,
+            "nodeRebindings": 0,
+            "pauseClasses": [
+              {
+                "ownHit": true,
+                "hasTop": true,
+                "urlPresent": false,
+                "kind": "other"
+              },
+              {
+                "ownHit": false,
+                "hasTop": true,
+                "urlPresent": false,
+                "kind": "dom"
+              },
+              {
+                "ownHit": false,
+                "hasTop": true,
+                "urlPresent": false,
+                "kind": "step"
+              },
+              {
+                "ownHit": false,
+                "hasTop": true,
+                "urlPresent": false,
+                "kind": "dom"
+              },
+              {
+                "ownHit": false,
+                "hasTop": true,
+                "urlPresent": false,
+                "kind": "step"
+              }
+            ],
+            "writes": [],
+            "cleanup": {
+              "attribute-workspace": "DONE",
+              "attribute-sidebar": "DONE",
+              "resume": "NOT_PAUSED",
+              "debugger": "DONE",
+              "objects": "DONE",
+              "dom": "DONE"
+            },
+            "observationElapsedMs": 2500,
+            "cleanupElapsedMs": 4,
+            "reload": "COMPLETE"
+          }
+        }
+      ]
+    },
+    "priorFailuresPreserved": [
+      "run2: fixture draft expectation incorrectly assumed empty; corrected to existing fixture draft.",
+      "run3: NODE_ALREADY_GONE while arming; no false attribution. Bounded same-object remapping later proved using explicit offline ID invalidation.",
+      "first extension-writer fixture used an unsupported route query and never mounted; corrected fixture to a supported path, not product route rules."
+    ],
+    "artifacts": ".git/vaiwl-artifacts/frame-attribution-audit-20261024",
+    "artifactHashes": {
+      "vaiwl-collector-audit-run1.log": "b4010b6c3575a7aa26233a4b3e373a632e2a38911f4b83da331a512d5381b0bc",
+      "vaiwl-collector-audit-run2.log": "f97f633d15c7d83716b5fd1a450f51fe228a58d6c4640e553effaa902b3b8e5a",
+      "vaiwl-collector-audit-run3.log": "78897780eef72f508baf1539198de722f5f5956f3f36ff7f13d45fa1ce83eeeb",
+      "vaiwl-collector-audit-nodeid-trace.log": "c5cef7dfa7df313b82f71577203edff948eed308d770948e31e39c72e1e10cd4",
+      "vaiwl-collector-audit-node-remap.log": "638312f0ff32794d8e7b8cba7fb1ac6521d63d961914da7808f086ac0cc7e6b7",
+      "vaiwl-collector-audit-extension-writer.log": "1f5154b08fa79099b46d64104e8057fa5beaf3b4070ec719b69bcc42824b2454",
+      "vaiwl-collector-audit-extension-writer2.log": "8b36d25abf4fabee92f26263208e3d36424a54b682c7b65d78b3d715d1fceabe",
+      "vaiwl-collector-audit-final-browser.log": "8b966e4e3f713ec354be42358e99623dcdf5520b95cd43adf5fff74ce4b3d69f",
+      "vaiwl-collector-audit-final-unit.log": "60a5f55b9cc1afc69de9d4cbd2878b3b7a6702daeec7890e383517eed38c4bc1"
+    },
+    "realBrowserCalls": 0,
+    "realAccountRequests": 0,
+    "realWriter": "NOT_ESTABLISHED",
+    "realMacUI": "FAIL_UNCHANGED",
+    "transportLimit": "Real Chrome CDP semantics verified through a local test adapter using the documented event envelope. Current Codex live bridge is not re-tested; any refusal, unrecognized response, source drift or unknown state stops without a second refresh.",
+    "nextLiveScope": "Fresh explicit grant only: same profile/home and installed extension; <=1 reload, <=30s observation, <=20 pauses, own two frames only, <=1 frontend-ID remap while paused and the exact objects still live; fixed script locations and boolean state only. No bodies/credentials/network responses/other tabs/attribute edits/extension disabling. Cleanup afterward, no automatic rerun."
   }
 }
