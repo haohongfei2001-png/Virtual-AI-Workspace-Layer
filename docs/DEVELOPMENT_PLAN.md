@@ -1,5 +1,8 @@
 # VAIWL 唯一开发计划：Free 完整交付 → Pro 智能增强
 
+接续c4f49f9e：原C2/C5/F4已实际完成本人确认后的已知行恢复、仅原Profile 4完整退出/重开、正式四格恢复和重启后旧私人数据锁定。popup已窄修“界面连接≠私人绑定”，同ID备份更新后实际显示locked。Project即时卡片/成员仍为空且根因未建立，同文档Worker停止重启未取得可判证据，新文档明确私人恢复及新聊天/风险旅程未验收；不得重复旧来源实验或以旧文档授权解锁。下一步定位当前可见导航发现/接收差额，再集中完成剩余旅程，不重做UI或增加模拟矩阵。详见原STATUS及回执privateRestartAndBindingStatusR78_20261024。
+
+
 接续a173b04f，原C2/C5/F4实际Mac已通过原生菜单Space到达规范Project路由，r76已连接且四格展开正式双frame；成员卡片仍未出现，不能据此认定Project完整消费通过。精确PID前台helper修复异步激活等待，原单次授权/数据边界不变。下一步在当前文档本人确认后验私人恢复，完整重启另需当前草稿安全事实；已集中提出，不重复安装或来源实验。详见原回执nativeProjectForegroundR77_20261024及STATUS。
 
 接续3c69b246，原C2/C5/F4本轮差额已实施：Project有界稳定布局准备、晚到侧栏及失败后的支持路由恢复、保守border-box/inset几何支持、私人解锁展示前单次几何证明。原Mac真实Project失败已定位为border-box不支持；r76同ID备份升级，后续窗口前台/尺寸变化停止输入，修复后Project、私人/Worker及完整浏览器重启Mac验收仍未成立。隔离正式MV3对应恢复链通过不替代Mac。保留旧授权/数据/草稿，未代点新文档确认，未操作其他窗口。具体证据见STATUS及原Mac回执projectReadinessAndRecoveryR76_20261024；继续原旅程，不新增计划或扩权。

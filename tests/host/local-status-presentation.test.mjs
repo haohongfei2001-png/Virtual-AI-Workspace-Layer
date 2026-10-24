@@ -8,12 +8,12 @@ const html=readFileSync(new URL('../../extension/status.html',import.meta.url),'
 const importLine="import {HOST_CONFIG} from './config.mjs';\nimport {readActiveLocalStatus,readActiveLocalLayout} from '../src/host/local-status.mjs';\n";
 assert(source.startsWith(importLine),'execute actual popup body after its exact imports');
 const AsyncFunction=Object.getPrototypeOf(async function(){}).constructor;
-async function render(initial,browserLocal=false){
+async function render(initial,browserLocal=false,localState={ok:true}){
  let current=initial;const calls=[],node={textContent:''};
  const chrome={tabs:{query:async args=>{calls.push(['query',args]);return [{id:7,get title(){throw Error('PRIVATE_TITLE');},get url(){throw Error('PRIVATE_URL');}}];},sendMessage:async(...args)=>{calls.push(['send',...args]);return current;}}};
  const elements=[];
  const document={getElementById:id=>{assert.equal(id,'status');return node;},body:{append:e=>elements.push(e)},createElement:tag=>({tag,textContent:'',listeners:{},setAttribute(){},addEventListener(type,fn){this.listeners[type]=fn;}})};
- chrome.runtime={sendMessage:async message=>{calls.push(['control',message]);return {ok:true};}};
+ chrome.runtime={sendMessage:async message=>{calls.push(['control',message]);return localState;}};
  await new AsyncFunction('HOST_CONFIG','readActiveLocalStatus','readActiveLocalLayout','chrome','document',source.slice(importLine.length))({browserLocal},readActiveLocalStatus,readActiveLocalLayout,chrome,document);
  return {calls,node,elements,change:value=>{current=value;}};
 }
@@ -44,4 +44,17 @@ test('blocked Browser-Local popup explains frame failure and keeps locking avail
 
 for(const reason of projectSurfaceFailureReasons)test('Project preparation stage is visible without page values: '+reason,async()=>{
  const f=await render({v:1,state:'layout-project-'+reason});assert.match(f.node.textContent,/Project 页面布局尚未就绪/);assert(f.node.textContent.includes('（'+reason+'）'));assert(!f.node.textContent.includes('状态不可用'));
+});
+
+for(const [mode,exists,expected] of [['personal',true,/已解锁.*无需重复确认/],['locked',true,/旧私人数据已锁定.*本人确认/],['locked',false,/即时视图.*确认后才绑定/]])test('actual Browser-Local popup separates surface readiness from '+mode+' binding with descriptor '+exists,async()=>{
+ const f=await render({v:1,state:'reading'},true,{ok:true,mode,exists});
+ assert.doesNotMatch(f.node.textContent,/无需重新确认/);
+ assert.match(f.elements.filter(e=>e.tag==='p').at(-1).textContent,expected);
+ assert.deepEqual(f.calls.filter(c=>c[0]==='control'),[['control',{v:1,type:'HOST_LOCAL_SPACE',action:'status'}]]);
+ await drain();assert.equal(f.calls.length,3,'no automatic polling or unlock');
+});
+test('unknown local binding response is not presented as an unlocked workspace',async()=>{
+ const f=await render({v:1,state:'ready'},true,{ok:true,mode:'PRIVATE',exists:true});
+ assert.match(f.elements.filter(e=>e.tag==='p').at(-1).textContent,/未能确认/);
+ assert(!f.elements.some(e=>e.textContent.includes('PRIVATE')));
 });

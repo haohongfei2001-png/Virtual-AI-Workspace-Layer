@@ -2237,5 +2237,53 @@
       "Current personally confirmed document private recovery and worker continuity",
       "Safe original Chrome restart; instant lock and explicit private restore"
     ]
+  },
+  "privateRestartAndBindingStatusR78_20261024": {
+    "baseHead": "c4f49f9e1a8e57b1a2bab57f0082f98bddf0a0b4",
+    "authorization": "User confirmed current-document unlock and current draft safety; original Chrome process restart only",
+    "actualMac": {
+      "beforeRestartPersonalBinding": "PASS_OWN_POPUP_CURRENT_DOCUMENT_BINDING_ACK",
+      "beforeRestartKnownRows": "PASS_FIVE_KNOWN_ROWS_RETURNED_AFTER_PERSONAL_CONFIRMATION_ALL_MEMBERSHIP_UNKNOWN",
+      "privateExclusiveRowProvenance": "NOT_ESTABLISHED_NO_DATABASE_CONTENT_READ",
+      "workerStop": "ONE_OWN_STOP_DISPATCH_RUNNING_BEFORE_AND_AFTER_NO_INSPECT_OR_UNREGISTER",
+      "sameDocumentWorkerRestart": "NOT_ESTABLISHED_STOP_TRANSITION_NOT_OBSERVED",
+      "originalBrowserRestart": "PASS_POLITE_TERMINATION_PROCESS_EXIT_AND_NEW_PROFILE_4_PROCESS_WITH_RESTORE_LAST_SESSION",
+      "otherJobChrome": "PASS_SAME_PROCESS_REMAINED_RUNNING_NOT_OPERATED",
+      "restoredProjectDocument": "PASS_NATIVE_PROJECT_TITLE_AND_EXTENSION_CONNECTED",
+      "fourGridAfterRestart": "PASS_FORMAL_WORKSPACE_REACHABLE",
+      "privateCacheAfterRestart": "PASS_OWN_CONTROL_REPORTS_EXISTING_DESCRIPTOR_LOCKED_NO_OLD_ROWS_SHOWN",
+      "postRestartExplicitPrivateRestore": "NOT_RUN_NEW_DOCUMENT_PERSONAL_CONFIRMATION_REQUIRED",
+      "projectInstantCards": "NOT_ESTABLISHED_NATIVE_MEMBERS_PRESENT_FORMAL_INSTANT_VIEW_EMPTY",
+      "newChat": "NOT_RUN_NO_MESSAGE_SENT"
+    },
+    "confirmedProductFix": {
+      "problem": "reading surface state incorrectly promised no local-space reconfirmation after full restart",
+      "change": "Existing HOST_LOCAL_SPACE status queried once on popup open; connection and personal binding displayed separately; timeout/unknown never unlock",
+      "source": "extension/status.mjs",
+      "targetedRegression": "PASS_tests/host/local-status-presentation.test.mjs_44",
+      "actualInstalledPopup": "PASS_CONNECTED_AND_EXISTING_PRIVATE_DATA_LOCKED_TEXT_READ_BACK",
+      "candidate": ".git/vaiwl-artifacts/browser-local-binding-status-20261024-r78/extension",
+      "archiveSha256": "d66b95ecd25bc7bee131293378e24b25d3b81b4fb55c03965785fe8a28bd6465",
+      "cleanPackage": "PASS_197_FILES",
+      "installedCanonicalManifest": "PASS_196_FILES",
+      "backup": ".git/vaiwl-artifacts/same-id-r78-popup-20261024/previous-extension",
+      "installation": "Only status.mjs and build-manifest.json updated; same manifest and ID; popup reopened without extension reload; historical extra files preserved"
+    },
+    "boundaries": {
+      "browserClaimOrCDP": false,
+      "internalRequests": false,
+      "assistantClickedUnlock": false,
+      "databaseModifiedByRepair": false,
+      "extensionReloaded": false,
+      "otherChromeQuit": false,
+      "oldNumberedCopiesAndStashesPreserved": true,
+      "processAccessibility": "AXEnhancedUserInterface enabled only on exact new original Chrome process; no system permission changes"
+    },
+    "remaining": [
+      "Project visible-navigation discovery/ingestion gap: no proven root cause from available native evidence; do not infer membership",
+      "New-document explicit private restore after browser restart",
+      "Same-document Worker restart continuity not established",
+      "Original remaining new-chat and account-risk acceptance; no full Free acceptance claim"
+    ]
   }
 }
