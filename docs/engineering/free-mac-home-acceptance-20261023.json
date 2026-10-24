@@ -1534,5 +1534,62 @@
     "jobProcessInputs": 0,
     "newTestsRun": 0,
     "scope": "Current Browser-Local personal acceptance; prior full-history and message-audit prerequisites remain cancelled."
+  },
+  "formalWorkspaceAndChatLayout20261024": {
+    "baseHead": "110fe3e5c499032a6f94a20fdf0fe7532eeee51f",
+    "scope": "authorized native AX/keyboard in exact original Profile 4 acceptance window; visible navigation only",
+    "actualMac": {
+      "formalHomeWorkspaceAndHistory": "PASS_REAL_VISIBLE_RECENT_LINKS",
+      "trustedFourGridActivation": "PASS",
+      "knownNativeConversationOpen": "PASS_TARGET_MATCH",
+      "chatWorkspaceStable": "FAIL_LAYOUT_GEOMETRY_READING_PAINT_CAPACITY",
+      "latestFixedStatus": "layout-geometry-reading-paint-capacity",
+      "personalUnlock": "NOT_RUN_THIS_DOCUMENT",
+      "newMessage": "NOT_RUN",
+      "projectMembership": "NOT_RUN",
+      "searchReturnJourney": "NOT_RUN",
+      "refreshWorkerRestartIsolation": "NOT_RUN"
+    },
+    "confirmedDefects": [
+      "empty nonpainting DIV is an extra direct timeline child",
+      "chat route omits home-only sidebar wrapper while native navigation remains",
+      "long conversation exceeds existing 2048-node return-gap proof budget"
+    ],
+    "implemented": [
+      "narrow nonpainting marker admission with dynamic revocation",
+      "unique visible native-nav fallback only when original sidebar wrapper absent",
+      "readiness and adapter share boundary resolution",
+      "private bounded fixed-code startup/status diagnostics and deadline-fenced local query"
+    ],
+    "notImplemented": [
+      "scalable complete return-gap safety proof for the long real conversation"
+    ],
+    "package": {
+      "candidate": ".git/vaiwl-artifacts/browser-local-gap-detail-20261024-r48/extension",
+      "installed": ".git/vaiwl-artifacts/local-source-witness-20261022/extension",
+      "id": "miendbcjdmecjggplepenghjnoejmaic",
+      "filesVerified": 196,
+      "manifestUnchanged": true,
+      "activation": "PASS_NATIVE_RELOAD_AND_R48_SPECIFIC_STATUS",
+      "backup": ".git/vaiwl-artifacts/same-id-r48-activation-20261024/previous-extension"
+    },
+    "preservation": {
+      "databaseFilesTouched": false,
+      "initialDraftPreserved": true,
+      "jobProcessOperated": false,
+      "originalUserTabClaimed": false,
+      "browserUseOrCDP": false,
+      "stashes": 3,
+      "knownAgentDuplicateTabsClosed": 10
+    },
+    "validation": {
+      "targeted": "PASS_294",
+      "observedProfileBrowser": "PASS_WEB_MECHANISM_ONLY",
+      "readingViewportBrowser": "PASS_WEB_MECHANISM_ONLY",
+      "isolatedMV3": "PASS_FORMAL_UI_NAVIGATION_WORKER_RESTART_REFRESH_AND_PRIVATE_ISOLATION",
+      "notEquivalentTo": "full personal Mac acceptance",
+      "isolatedMV3Report": "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-lGyLct/report.json"
+    },
+    "next": "fix long-chat return-gap proof cost/coverage without dropping controls or raising the guard threshold; then continue real journey; no user action needed for this code defect"
   }
 }

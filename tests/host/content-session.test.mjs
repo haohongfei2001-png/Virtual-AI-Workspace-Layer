@@ -424,7 +424,11 @@ test('bounded layout preparation precedes HELLO and a stopped wait cannot reopen
  const f=fixture();let complete;const prepareDocument=()=>new Promise(resolve=>{complete=resolve;});
  const client=createHostContentSession({...f.options,prepareDocument});
  const pending=client.start();await drain();assert.equal(f.calls.length,0);client.stop();complete(true);assert.equal(await pending,null);assert.equal(f.calls.length,0);
- const failed=createHostContentSession({...f.options,prepareDocument:async()=>false});assert.equal(await failed.start(),null);assert.equal(f.calls.length,0);
+ const failed=createHostContentSession({...f.options,prepareDocument:async()=>false});assert.equal(await failed.start(),null);assert.equal(f.calls.length,0);assert.equal(failed.localStatus(),'layout-failed');
+ const before=f.calls.length;assert.equal(failed.localStatus(),'layout-failed');assert.equal(f.calls.length,before);
+ const detailed=createHostContentSession({...f.options,prepareDocument:async({onFailure})=>{onFailure('layout-missing-reading');return false;}});await detailed.start();assert.equal(detailed.localStatus(),'layout-missing-reading');assert.equal(f.calls.length,before);
+ const rejected=createHostContentSession({...f.options,prepareDocument:async({onFailure})=>{onFailure('PRIVATE_DETAIL');return false;}});await rejected.start();assert.equal(rejected.localStatus(),'layout-failed');
+ f.options.document.location.href+='c/other';assert.equal(failed.localStatus(),'unavailable');f.options.document.location.href='https://chatgpt.com/';
  const ready=createHostContentSession({...f.options,prepareDocument:async()=>true});assert.deepEqual(await ready.start(),{id:'mount'});assert.equal(f.calls[0].type,'HOST_HELLO');ready.stop();
 });
 test('local layout loss uses one fresh same-scope handshake, never a recovery loop or strict-mode retry',async()=>{

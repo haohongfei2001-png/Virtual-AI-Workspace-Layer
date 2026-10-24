@@ -16,9 +16,14 @@ export function profileElement(document,profile,selector,route=null){
  try{
   let root=document;
   if(profile.sidebarBoundary&&[profile.regions?.projects,profile.regions?.history,profile.nativeLayout?.historyList].includes(selector)){
-   const selected=oneVisible(document,document,profile.sidebarBoundary,excluded);
+   const original=document.querySelectorAll(profile.sidebarBoundary);
+   // Chat pages may omit the home-only wrapper. Admit only the same visible
+   // native navigation with the already-observed conversation-row grammar;
+   // an existing hidden/ambiguous wrapper never triggers this fallback.
+   const selected=original.length===0&&profile.sidebarBoundaryFallback?oneVisible(document,document,profile.sidebarBoundaryFallback,excluded):oneVisible(document,document,profile.sidebarBoundary,excluded);
    if(!selected||selected.closest(excluded))return null;
    root=selected;
+   if(root.matches(selector))return root;
   }
   if(profile.projectListBoundary&&selector===profile.regions?.members){
    // Route selects a candidate region only. A separate relationship witness
@@ -79,4 +84,17 @@ export function observedProjectAssociation(document,profile,urlPolicy,root){
   if(!linked)return null;
   return {projectId:route.projectId,nativeTitle,navigationURL:route.navigationURL,nodes:[main,root,title,selected[0],linked],key:JSON.stringify([route.projectId,nativeTitle,linked.getAttribute('href')])};
  }catch{return null;}
+}
+
+/** Fixed structural failure category; no page text or attribute values leave it. */
+export function sidebarBoundaryFailure(document,profile){
+ try{
+  const nodes=[...document.querySelectorAll(profile.sidebarBoundary)];if(!nodes.length)return 'missing';if(nodes.length>8)return 'capacity';
+  const allowed=nodes.filter(n=>visible(document,n)&&!n.closest(excluded));
+  if(allowed.length>1)return 'ambiguous';if(allowed.length===1)return allowed[0].querySelectorAll(profile.nativeLayout.historyList).length===1?'changed':'list-not-in-boundary';
+  if(nodes.length!==1)return 'no-unique-visible';const node=nodes[0];
+  if(node.closest(excluded))return 'excluded-branch';if(!node.getClientRects().length)return 'no-rect';
+  let depth=0;for(let p=node;p;p=p.parentElement){if(++depth>64)return 'ancestor-limit';if(p.hidden)return 'hidden-attribute';if(p.getAttribute('aria-hidden')==='true')return 'aria-hidden';const c=document.defaultView.getComputedStyle(p);if(c.display==='none')return 'display-none';if(['hidden','collapse'].includes(c.visibility))return 'visibility';if(c.opacity==='0')return 'opacity-zero';}
+  return node.checkVisibility?.({checkOpacity:true,checkVisibilityCSS:true,contentVisibilityAuto:true})===false?'check-visibility':'unavailable';
+ }catch{return 'unavailable';}
 }

@@ -19,7 +19,7 @@ function passive(f,expected){
 }
 async function mounted(t){const f=surfaceFixture();t.after(()=>f.controller.stop());await f.controller.start({});await f.both();passive(f,'ready');return f;}
 test('controller status moves through startup and each grant without inspecting or requesting',async t=>{
- const f=surfaceFixture();t.after(()=>f.controller.stop());passive(f,'unavailable');let release;
+ const f=surfaceFixture();t.after(()=>f.controller.stop());passive(f,'surface-controller-absent');let release;
  f.bridge.registerMount=()=>new Promise(resolve=>{release=resolve;});const started=f.controller.start({});await drain();passive(f,'connecting');release({ok:true});await started;passive(f,'connecting');
  f.message();await drain();passive(f,'connecting');f.message('sidebar');await drain();passive(f,'ready');
 });
@@ -33,7 +33,7 @@ for(const kind of ['revoke','stop','grant-expiry','binding-expiry','route','deta
  if(kind==='detached-frame')f.frames[0].frame.isConnected=false;
  if(kind==='replacement-window')f.frames[0].frame.contentWindow={};
  if(kind==='foreign-owner')f.frames[0].frame.ownerDocument={};
- passive(f,'unavailable');
+ passive(f,({'revoke':'surface-controller-absent','stop':'surface-controller-absent','grant-expiry':'surface-grants-expired','binding-expiry':'surface-binding-expired','route':'surface-document-stale'})[kind]??'surface-frames-detached');
 });
 test('dormant status requires both original idle ACKs and connected frames but never renews expired lease',async t=>{
  const f=await mounted(t),messages=[];f.surface.visibility=()=>({workspace:false,sidebar:false});

@@ -1,3 +1,4 @@
+import {layoutFailureStates,surfaceFailureStates,validLayoutShape} from './local-status.mjs';
 import {createIsolatedSessionReader} from './isolated-session-reader.mjs';
 import {createCandidateUpgrade} from './candidate-upgrade.mjs';
 import {createContentCandidates} from './content-candidates.mjs';
@@ -89,7 +90,7 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
  let seq=0,epoch=0,current=null,enabled=false,rebindQueued=false,rebindRun=0,restoreArmed=false,recoveryRemaining=0,contextResumeAllowed=false,contextWaitSuspended=false,contextResumeMode='workspace',contextResumeURL=null,verificationWaitURL=null;
  let activeWork=0,rawIPC=0,workRevision=0,observation=null;
  // Private, document-local presentation failure; never inferred from page data.
- let frameReplaced=false;
+ let frameReplaced=false,startupFailure=null;
  function stopObservation(){const prior=observation;observation=null;if(!prior)return;cancel(prior.timer);runtime.onMessage.removeListener(prior.invalidate);prior.adapter.stop();}
  async function startObservation(s){
   const adapter=s.adapter,entry={adapter,owner:s,timer:null,invalidate:null};observation=entry;
@@ -261,7 +262,7 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
   // subsequent attempt; failures never schedule their own recovery loop.
   queueMicrotask(()=>{if(!enabled||run!==rebindRun)return;rebindQueued=false;void begin(true,initialMode,expectedScope);});
  }
- async function start(){frameReplaced=false;contextWaitSuspended=false;verificationWaitURL=null;contextResumeMode='workspace';contextResumeURL=null;contextResumeAllowed=contextRecovery===true;clearLearned();clearRecent();clearUpgrade();recoveryRemaining=1;enabled=true;restoreArmed=false;rebindQueued=false;rebindRun++;doc.defaultView.addEventListener('pageshow',pageshow);return begin();}
+ async function start(){frameReplaced=false;startupFailure=null;contextWaitSuspended=false;verificationWaitURL=null;contextResumeMode='workspace';contextResumeURL=null;contextResumeAllowed=contextRecovery===true;clearLearned();clearRecent();clearUpgrade();recoveryRemaining=1;enabled=true;restoreArmed=false;rebindQueued=false;rebindRun++;doc.defaultView.addEventListener('pageshow',pageshow);return begin();}
  async function begin(rebinding=false,initialMode='workspace',expectedScope=null){
   reset();const s={run:epoch,initialMode,url:doc.location.href,abort:new AbortController(),binding:null,controller:null,adapter:null,listener:()=>{},pagehide,plans:null,rebinding,ready:false,recoveryDenied:false,snippets:null,snippetRef:null,snippetScopeGrant:null,identityChallenges:new Map(),identityPending:false,identityAuthority:0};current=s;doc.defaultView.addEventListener('pagehide',s.pagehide);
   let foregroundArmed=doc.visibilityState==='hidden',foregroundPending=false;
@@ -282,7 +283,7 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
     // the existing one-shot HELLO + fresh same-scope authorization path. No
     // stored receipt, old grant or extra retry budget is made authoritative.
     if(!recoverTransport())throw Error('foreground-transport-unavailable');
-   }).catch(()=>{if(live(s)){s.recoveryDenied=true;contextPending();}}).finally(()=>{foregroundPending=false;s.focus();})).catch(()=>{});
+   }).catch(()=>{if(live(s)){startupFailure={url:s.url,state:'foreground-failed',shape:null};s.recoveryDenied=true;contextPending();}}).finally(()=>{foregroundPending=false;s.focus();})).catch(()=>{});
   };
   s.visibility=()=>{if(doc.visibilityState==='hidden')foregroundArmed=true;else s.focus();};
   doc.addEventListener?.('visibilitychange',s.visibility);doc.defaultView.addEventListener('focus',s.focus);doc.defaultView.addEventListener('blur',s.blur);
@@ -364,10 +365,10 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
    });
   };runtime.onMessage.addListener(s.listener);
   let startupPhase='hello';
-  const reportStartup=phase=>{if(current===s&&doc.documentElement?.dataset)doc.documentElement.dataset.vaiwlStartup=phase;};
+  const reportStartup=phase=>{if(current!==s)return;startupFailure=['layout-failed','hello-failed','adapter-failed','authorization-failed','surface-failed'].includes(phase)?{url:s.url,shape:s.layoutShape??null,state:phase==='layout-failed'&&layoutFailureStates.includes(s.layoutFailure)?s.layoutFailure:phase==='surface-failed'&&surfaceFailureStates.includes(s.surfaceFailure)?s.surfaceFailure:phase}:null;if(doc.documentElement?.dataset)doc.documentElement.dataset.vaiwlStartup=phase;};
   reportStartup(startupPhase);
   try{
-   if(prepareDocument){startupPhase='layout';reportStartup(startupPhase);if(await prepareDocument({signal:s.abort.signal})!==true||!live(s)||doc.location.href!==s.url)throw Error('native-layout-not-ready');startupPhase='hello';reportStartup(startupPhase);}
+   if(prepareDocument){startupPhase='layout';reportStartup(startupPhase);if(await prepareDocument({signal:s.abort.signal,onFailure:(reason,shape)=>{if(current===s&&layoutFailureStates.includes(reason)){s.layoutFailure=reason;s.layoutShape=validLayoutShape(shape)?shape:null;}}})!==true||!live(s)||doc.location.href!==s.url)throw Error('native-layout-not-ready');startupPhase='hello';reportStartup(startupPhase);}
    // A C2 transport failure withdraws capabilities but keeps the passive
    // context listener eligible for a later genuine native READY notification.
    // This helper neither retries nor handles explicit negative responses.
@@ -499,7 +500,8 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
      }
     })
    };
-   s.controller=controllerFactory({document:doc,adapter,surface,extensionOrigin:'chrome-extension://'+runtime.id,bridge,initialMode,onWake:()=>wake(s),onTerminated:(reason,presentation)=>{
+   s.controller=controllerFactory({document:doc,adapter,surface,extensionOrigin:'chrome-extension://'+runtime.id,bridge,initialMode,onWake:()=>wake(s),onFailure:code=>{if(current===s&&surfaceFailureStates.includes(code)){s.surfaceFailure=code;startupFailure={url:s.url,state:code,shape:null};}},onTerminated:(reason,presentation)=>{
+    if(current===s&&!s.surfaceFailure&&surfaceFailureStates.includes('surface-'+reason)){s.surfaceFailure='surface-'+reason;startupFailure={url:s.url,state:s.surfaceFailure,shape:null};}
     const publicStops=['ui-frame-document-replaced','native-region-changed','native-geometry-changed','dormant-document-changed','mount-unavailable','ui-frame-suspended','ui-grant-expired','session-renew-failed','surface-stopped','ui-authority-revoked','ui-user-exit'];
     if(current===s&&doc.documentElement?.dataset)doc.documentElement.dataset.vaiwlSurfaceStop=publicStops.includes(reason)?reason:'other';
     // A replaced frame cannot regain authority via READY, renewal or a late
@@ -588,6 +590,6 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
   doc.defaultView.addEventListener('pageshow',pageshow);
   return begin(true,contextResumeMode);
  }
- function localStatus(){if(frameReplaced)return 'frame-blocked';if(!enabled)return contextResumeAllowed||observation?(verificationWaitURL===doc.location.href?'verification-required':'waiting'):'unavailable';if(!current||!live(current))return 'unavailable';if(!current.ready)return 'connecting';return current.controller?.localStatus?.()??'unavailable';}
- return Object.freeze({localStatus,start,stop,contextPending,contextReady,prepareIdle,enterDormant,isOwnedMask:node=>!!current&&live(current)&&current.surface?.isMasked?.(node)===true,showWorkspace:()=>sync(()=>current?.controller?.showWorkspace()??false),showReading:()=>sync(()=>current?.controller?.showReading()??false)});
+ function localStatus(){if(frameReplaced)return 'frame-blocked';if(!enabled&&!contextResumeAllowed&&!observation&&startupFailure?.url===doc.location.href)return startupFailure.state;if(!enabled)return contextResumeAllowed||observation?(verificationWaitURL===doc.location.href?'verification-required':'waiting'):'unavailable';if(!current||!live(current))return 'unavailable';if(!current.ready)return 'connecting';const state=current.controller?.localStatus?.()??'unavailable';return state==='unavailable'&&startupFailure?.url===doc.location.href?startupFailure.state:state;}
+ return Object.freeze({localStatus,localLayoutStatus:()=>startupFailure?.url===doc.location.href&&localStatus().startsWith('layout-')?startupFailure.shape:null,start,stop,contextPending,contextReady,prepareIdle,enterDormant,isOwnedMask:node=>!!current&&live(current)&&current.surface?.isMasked?.(node)===true,showWorkspace:()=>sync(()=>current?.controller?.showWorkspace()??false),showReading:()=>sync(()=>current?.controller?.showReading()??false)});
 }

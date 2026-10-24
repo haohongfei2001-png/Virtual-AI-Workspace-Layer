@@ -1,6 +1,6 @@
 import {profileElement} from './native-surface-boundary.mjs';
 import {inspectNativeProjectSurface} from './native-project-surface.mjs';
-import {nativeReturnGapRect} from './native-return-gap.mjs';
+import {nativeReturnGapRect,isEmptyViewportMarker} from './native-return-gap.mjs';
 import {nativeHistoryPresentation} from './native-history-list.mjs';
 import {nativeReturnSlotRect} from './native-return-slot.mjs';
 import {currentObservation,currentSurfaceSlice} from './current-observation-batch.mjs';
@@ -27,17 +27,18 @@ export function createChatGPTAdapter({document,urlPolicy=createURLPolicy(),profi
  const explicitLayout=Object.hasOwn(profile,'nativeLayout');
  const homeLayout=profile.nativeHomeLayout&&urlPolicy.parse(document.location.href).kind==='home'&&document.querySelector(profile.nativeHomeLayout.reading)?profile.nativeHomeLayout:null;
  const configuredLayout=homeLayout??(explicitLayout?profile.nativeLayout:{header:'main > header',reading:'main > section[aria-label="Conversation"]',composer:'main > form#composer',navigationSlot:'main > header > .navigation-slot'});
- for(const key of ['readingViewport','historyList','returnPlacement','returnHitRoot','viewportFocus','headerLayout','gapPolicy'])if(configuredLayout&&Object.hasOwn(configuredLayout,key))layoutKeys.push(key);
+ for(const key of ['readingViewport','historyList','returnPlacement','returnHitRoot','viewportFocus','viewportMarkers','headerLayout','gapPolicy'])if(configuredLayout&&Object.hasOwn(configuredLayout,key))layoutKeys.push(key);
  if(!exactHostRecord(configuredLayout,layoutKeys)||!layoutKeys.every(k=>typeof configuredLayout[k]==='string'&&configuredLayout[k].trim().length>0&&configuredLayout[k].length<=256))throw Error('invalid-native-layout-profile');
  // Package-owned selectors choose boundaries, never grant authority or relax geometry.
  const nativeLayout=Object.freeze({...configuredLayout});
  if((nativeLayout.returnPlacement!==undefined||nativeLayout.returnHitRoot!==undefined)&&(nativeLayout.returnPlacement!=='header-gap'||!nativeLayout.returnHitRoot))throw Error('invalid-native-return-placement');
  if(nativeLayout.viewportFocus!==undefined&&(nativeLayout.viewportFocus!=='native-scroll-region'||!nativeLayout.readingViewport||nativeLayout.returnPlacement!=='header-gap'))throw Error('invalid-native-layout-profile');
+ if(nativeLayout.viewportMarkers!==undefined&&(nativeLayout.viewportMarkers!=='empty-div-v1'||!nativeLayout.readingViewport))throw Error('invalid-native-layout-profile');
  if(nativeLayout.headerLayout!==undefined&&(!['transparent-containers','plain-containers'].includes(nativeLayout.headerLayout)||nativeLayout.returnPlacement!=='header-gap'))throw Error('invalid-native-layout-profile');
  if(nativeLayout.gapPolicy!==undefined&&(nativeLayout.gapPolicy!=='first-empty-header-gap'||nativeLayout.returnPlacement!=='header-gap'||!['transparent-containers','plain-containers'].includes(nativeLayout.headerLayout)))throw Error('invalid-native-layout-profile');
  let returnControl=null,returnGeometryStage=null;
  const gapMode=nativeLayout.returnPlacement==='header-gap';
- const returnGeometry=(history,header,readingRect,composer,slot)=>gapMode?nativeReturnGapRect({document,header,slot,hitRoot:one(nativeLayout.returnHitRoot),headerLayout:nativeLayout.headerLayout??null,gapPolicy:nativeLayout.gapPolicy??null,onReject:stage=>{returnGeometryStage=stage;},...(nativeLayout.readingViewport?{readingRoot:one(nativeLayout.reading),readingViewport:one(nativeLayout.readingViewport),viewportFocus:nativeLayout.viewportFocus??null,isOwnedMask}:{}),button:returnControl,excluded:[history,composer],excludedRects:[readingRect]}):nativeReturnSlotRect({document,header,slot,excluded:[history,composer],excludedRects:[readingRect]});
+ const returnGeometry=(history,header,readingRect,composer,slot)=>gapMode?nativeReturnGapRect({document,header,slot,hitRoot:one(nativeLayout.returnHitRoot),headerLayout:nativeLayout.headerLayout??null,gapPolicy:nativeLayout.gapPolicy??null,onReject:stage=>{returnGeometryStage=stage;},...(nativeLayout.readingViewport?{readingRoot:one(nativeLayout.reading),readingViewport:one(nativeLayout.readingViewport),viewportFocus:nativeLayout.viewportFocus??null,viewportMarkers:nativeLayout.viewportMarkers??null,isOwnedMask}:{}),button:returnControl,excluded:[history,composer],excludedRects:[readingRect]}):nativeReturnSlotRect({document,header,slot,excluded:[history,composer],excludedRects:[readingRect]});
 
  inputRisk=inputRisk??createNativeInputRisk({document,profile});
  let binding=null,emit=null,discovery=null,bodyDiscovery=null,actions=null,observer=null,stopped=true,epoch=0,seq=0,url='',busy=false,dirty=false,queued=false,generation=0,last=new Map(),regionEpoch=0,priorNodes=[],failedKey=new Map(),retryTimer=null,pausedSurface=null,sendObserver=null,acceptedBody=null,snippets=null,snippetReady=()=>false,intents=[],sendGap=null,sendGapBlocked=false,surfaceParts=[],surfaceKey=null,surfaceSequence=null,surfaceWanted=true,surfaceScanning=false,surfaceCursor=null,surfacePage=0,surfacePageKey=null,surfaceEpoch=0,surfaceSnapshotEpoch=0,surfaceRetryWanted=false;const surfaceAccepted=new Map(),surfaceFailed=new Map();
@@ -358,9 +359,9 @@ if(!p){
  }
  function nativeTopologyOK(history,header,reading,composer,slot){return !explicitLayout||header!==slot&&header.contains(slot)&&![history,reading,composer].some(node=>node===slot||node.contains(slot));}
  // A scroll container is geometry only, never a mask root. This profile is
- // deliberately limited to two direct branches: reading and protected footer.
+ // limited to reading, protected footer and explicitly proved nonpainting markers.
  function viewportTopologyOK(viewport,history,header,reading,composer){
-  return !!viewport&&viewport.isConnected&&viewport.ownerDocument===document&&viewport!==reading&&viewport!==composer&&[reading,composer].every(n=>n.isConnected&&n.ownerDocument===document&&n.parentElement===viewport)&&viewport.children.length===2&&![...(viewport.childNodes??[])].some(n=>n.nodeType===3&&n.textContent.trim())&&[...viewport.children].every(n=>n===reading||n===composer)&&!viewport.contains(header)&&!viewport.contains(history);
+  return !!viewport&&viewport.isConnected&&viewport.ownerDocument===document&&viewport!==reading&&viewport!==composer&&[reading,composer].every(n=>n.isConnected&&n.ownerDocument===document&&n.parentElement===viewport)&&viewport.children.length>=2&&viewport.children.length<=10&&![...(viewport.childNodes??[])].some(n=>n.nodeType===3&&n.textContent.trim())&&[...viewport.children].every(n=>n===reading||n===composer||nativeLayout.viewportMarkers==='empty-div-v1'&&isEmptyViewportMarker(n,viewport,document))&&!viewport.contains(header)&&!viewport.contains(history);
  }
  function viewportRect(viewport,header,composer){
   const v=rect(viewport),h=rect(header),c=rect(composer),width=document.defaultView.innerWidth,height=document.defaultView.innerHeight;
@@ -412,7 +413,7 @@ if(!p){
    projectProofs.set(inspection,proofNodes);return inspection;
   }
   const history=one(nativeLayout.historyList??profile.regions.history),header=one(nativeLayout.header),reading=one(nativeLayout.reading),composer=one(nativeLayout.composer),navigationSlot=one(nativeLayout.navigationSlot);
-  if(!history||!header||!reading||!composer||!navigationSlot)return fail('missing-or-ambiguous-native-boundary');
+  if(!history||!header||!reading||!composer||!navigationSlot)return {...fail('missing-or-ambiguous-native-boundary'),boundaryKey:Object.entries({history,header,reading,composer,navigationSlot}).find(([,node])=>!node)[0]};
   if(homeLayout&&reading.querySelector('form,input,textarea,select,[contenteditable]'))return fail('unsafe-native-home-layout');
   if(!historyListCurrent(history))return fail('unsafe-native-history-list');
   const historySource=nativeLayout.historyList?one(profile.regions.history):null;

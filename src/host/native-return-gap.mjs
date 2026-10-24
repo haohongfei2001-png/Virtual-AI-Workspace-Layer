@@ -1,6 +1,19 @@
+// A package-selected empty layout marker is neither content nor a mask root.
+// Revalidate it on every topology/geometry check; any paint, child or focus
+// semantics withdraw the exception. It is never changed or removed.
+export function isEmptyViewportMarker(node,viewport,document){
+ try{
+  if(!node||node.parentElement!==viewport||!node.isConnected||node.ownerDocument!==document||node.tagName!=='DIV'||node.childNodes.length!==0||node.shadowRoot||node.matches('[role],[tabindex],[contenteditable],a,button,input,textarea,select'))return false;
+  const win=document.defaultView,s=win.getComputedStyle(node),r=node.getBoundingClientRect();
+  if(![r.x,r.y,r.width,r.height].every(Number.isFinite)||r.width<0||r.height<0)return false;
+  if(s.display==='none')return true;
+  if(r.width!==0&&r.height!==0)return false;
+  return ['::before','::after'].every(p=>['none','normal'].includes(win.getComputedStyle(node,p).content))&&['boxShadow','filter','backdropFilter','transform','translate','rotate','scale','offsetPath','borderImageSource'].every(k=>s[k]==='none')&&['none','hidden'].includes(s.outlineStyle)&&s.zoom==='1';
+ }catch{return false;}
+}
 // Explicit presentation variant for the observed pointer-transparent titlebar.
 // This proves an empty rectangle; it never supplies account or scope evidence.
-export function nativeReturnGapRect({document,header,slot,hitRoot,readingRoot=null,readingViewport=null,viewportFocus=null,headerLayout=null,gapPolicy=null,onReject=()=>{},isOwnedMask=()=>false,button=null,excluded=[],excludedRects=[]}){
+export function nativeReturnGapRect({document,header,slot,hitRoot,readingRoot=null,readingViewport=null,viewportFocus=null,viewportMarkers=null,headerLayout=null,gapPolicy=null,onReject=()=>{},isOwnedMask=()=>false,button=null,excluded=[],excludedRects=[]}){
  let stage='roots';const reject=()=>{try{onReject(stage);}catch{}return null;};
  try{
   const win=document.defaultView,rect=n=>n.getBoundingClientRect(),overlap=(a,b)=>a.x<b.x+b.width&&b.x<a.x+a.width&&a.y<b.y+b.height&&b.y<a.y+a.height;
@@ -40,12 +53,13 @@ export function nativeReturnGapRect({document,header,slot,hitRoot,readingRoot=nu
   // with no other content except geometrically excluded native branches.
   stage='viewport';
   if(viewportFocus!==null&&viewportFocus!=='native-scroll-region')return reject();
+  if(viewportMarkers!==null&&(viewportMarkers!=='empty-div-v1'||!readingViewport))return reject();
   if(viewportFocus!==null&&!readingViewport)return reject();
   if(readingViewport){
    // An explicit native scroll region keeps its own tab stop and keyboard
    // behavior. Only the reading child is masked; never the viewport itself.
    const scrollRegion=viewportFocus==='native-scroll-region'&&readingViewport.getAttribute('role')==='region'&&readingViewport.getAttribute('tabindex')==='0'&&!readingViewport.hasAttribute('contenteditable')&&['auto','scroll'].includes(win.getComputedStyle(readingViewport).overflowY);
-   if(!readingRoot||readingViewport===hitRoot||readingRoot.parentElement!==readingViewport||!readingViewport.isConnected||readingViewport.ownerDocument!==document||!hitRoot.contains(readingViewport)||readingViewport.tagName!=='DIV'||!scrollRegion&&readingViewport.matches('[role],[tabindex],[contenteditable]')||readingViewport.shadowRoot||[...readingViewport.childNodes].some(n=>n.nodeType===3&&n.textContent.trim())||[...readingViewport.children].some(n=>n!==readingRoot&&!excluded.includes(n)))return reject();
+   if(!readingRoot||readingViewport===hitRoot||readingRoot.parentElement!==readingViewport||!readingViewport.isConnected||readingViewport.ownerDocument!==document||!hitRoot.contains(readingViewport)||readingViewport.tagName!=='DIV'||!scrollRegion&&readingViewport.matches('[role],[tabindex],[contenteditable]')||readingViewport.shadowRoot||[...readingViewport.childNodes].some(n=>n.nodeType===3&&n.textContent.trim())||readingViewport.children.length>10||[...readingViewport.children].some(n=>n!==readingRoot&&!excluded.includes(n)&&!(viewportMarkers==='empty-div-v1'&&isEmptyViewportMarker(n,readingViewport,document))))return reject();
    for(const pseudo of ['::before','::after'])if(!['none','normal'].includes(win.getComputedStyle(readingViewport,pseudo).content))return reject();
    let n=readingViewport,depth=0;for(;n;n=n.parentElement){const style=win.getComputedStyle(n);if(++depth>128||n.hidden||n.inert||n.getAttribute('aria-hidden')==='true'||style.display==='none'||style.visibility!=='visible'||Number(style.opacity)===0)return reject();}
   }
@@ -75,9 +89,9 @@ export function nativeReturnGapRect({document,header,slot,hitRoot,readingRoot=nu
   stage='reading-paint';
    const walker=document.createTreeWalker(readingRoot,5);let node=readingRoot,nodes=0,rectangles=0;
    do{
-    if(++nodes>2048)return reject();
+    if(++nodes>2048){stage='reading-paint-capacity';return reject();}
     if(node.nodeType===1){
-     if(node.shadowRoot||node.localName?.includes('-'))return reject();
+     if(node.shadowRoot||node.localName?.includes('-')){stage='reading-paint-opaque';return reject();}
      for(const pseudo of ['::before','::after']){
       const style=win.getComputedStyle(node,pseudo);if(['none','normal'].includes(style.content))continue;
       // Empty native decorations are safe only when their entire border box
@@ -86,12 +100,12 @@ export function nativeReturnGapRect({document,header,slot,hitRoot,readingRoot=nu
       const host=win.getComputedStyle(node),left=px(style.left),top=px(style.top),width=px(style.width),height=px(style.height);
       const paddingWidth=host.boxSizing==='border-box'?px(host.width)-px(host.borderLeftWidth)-px(host.borderRightWidth):px(host.width)+px(host.paddingLeft)+px(host.paddingRight);
       const paddingHeight=host.boxSizing==='border-box'?px(host.height)-px(host.borderTopWidth)-px(host.borderBottomWidth):px(host.height)+px(host.paddingTop)+px(host.paddingBottom);
-      if(node===readingRoot||style.content!=='""'||host.position==='static'||style.position!=='absolute'||style.boxSizing!=='border-box'||!['left','top','right','bottom','width','height'].every(k=>Number.isFinite(px(style[k])))||![paddingWidth,paddingHeight].every(Number.isFinite)||left+width>paddingWidth||px(style.right)+width>paddingWidth||top+height>paddingHeight||px(style.bottom)+height>paddingHeight||['marginLeft','marginTop','marginRight','marginBottom'].some(k=>px(style[k])!==0)||['transform','translate','rotate','scale','boxShadow','textShadow','filter','backdropFilter','offsetPath','borderImageSource'].some(k=>style[k]!=='none')||!['none','hidden'].includes(style.outlineStyle)||style.zoom!=='1')return reject();
+      if(node===readingRoot||style.content!=='""'||host.position==='static'||style.position!=='absolute'||style.boxSizing!=='border-box'||!['left','top','right','bottom','width','height'].every(k=>Number.isFinite(px(style[k])))||![paddingWidth,paddingHeight].every(Number.isFinite)||left+width>paddingWidth||px(style.right)+width>paddingWidth||top+height>paddingHeight||px(style.bottom)+height>paddingHeight||['marginLeft','marginTop','marginRight','marginBottom'].some(k=>px(style[k])!==0)||['transform','translate','rotate','scale','boxShadow','textShadow','filter','backdropFilter','offsetPath','borderImageSource'].some(k=>style[k]!=='none')||!['none','hidden'].includes(style.outlineStyle)||style.zoom!=='1'){stage='reading-paint-decoration';return reject();}
      }
-     if(node!==readingRoot){const box=rect(node);if(![box.x,box.y,box.width,box.height].every(Number.isFinite)||box.width>0&&box.height>0&&overlap(r,visibleBox(node,box)))return reject();}
+     if(node!==readingRoot){const box=rect(node);if(![box.x,box.y,box.width,box.height].every(Number.isFinite)||box.width>0&&box.height>0&&overlap(r,visibleBox(node,box))){stage='reading-paint-overlap';return reject();}}
     }else{
      const range=document.createRange();range.selectNodeContents(node);
-     for(const box of range.getClientRects()){if(++rectangles>2048||![box.x,box.y,box.width,box.height].every(Number.isFinite)||box.width>0&&box.height>0&&overlap(r,visibleBox(node,box)))return reject();}
+     for(const box of range.getClientRects()){if(++rectangles>2048||![box.x,box.y,box.width,box.height].every(Number.isFinite)||box.width>0&&box.height>0&&overlap(r,visibleBox(node,box))){stage='reading-paint-overlap';return reject();}}
     }
    }while(node=walker.nextNode());
   }
