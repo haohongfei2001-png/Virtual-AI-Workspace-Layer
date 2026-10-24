@@ -1,5 +1,7 @@
 # VAIWL 唯一开发计划：Free 完整交付 → Pro 智能增强
 
+接续a173b04f，原C2/C5/F4实际Mac已通过原生菜单Space到达规范Project路由，r76已连接且四格展开正式双frame；成员卡片仍未出现，不能据此认定Project完整消费通过。精确PID前台helper修复异步激活等待，原单次授权/数据边界不变。下一步在当前文档本人确认后验私人恢复，完整重启另需当前草稿安全事实；已集中提出，不重复安装或来源实验。详见原回执nativeProjectForegroundR77_20261024及STATUS。
+
 接续3c69b246，原C2/C5/F4本轮差额已实施：Project有界稳定布局准备、晚到侧栏及失败后的支持路由恢复、保守border-box/inset几何支持、私人解锁展示前单次几何证明。原Mac真实Project失败已定位为border-box不支持；r76同ID备份升级，后续窗口前台/尺寸变化停止输入，修复后Project、私人/Worker及完整浏览器重启Mac验收仍未成立。隔离正式MV3对应恢复链通过不替代Mac。保留旧授权/数据/草稿，未代点新文档确认，未操作其他窗口。具体证据见STATUS及原Mac回执projectReadinessAndRecoveryR76_20261024；继续原旅程，不新增计划或扩权。
 
 当前续验78547b53：本人已回复当前文档确认。正式条目/原生阅读/四格及有界双frame可见已有实际证据，持续私人恢复仍未建立，旧ui-frame-suspended根因不宣称关闭。临时验收脚本同名Chrome前台判断已改用已有AppKit精确PID规则并固化原生focus helper；全局实际PID与唯一AXMain一致才输入，不补发到达不明操作。保持当前确认文档、原ID与旧数据，Project主页实际到达/成员、新聊天及恢复仍为原C2/C5/F4剩余；不重复本人确认或来源实验。

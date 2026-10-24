@@ -22,14 +22,26 @@ on run argv
     if (count of (windows of p whose name starts with titlePrefix and name ends with titleSuffix)) is not 1 then error "Ambiguous window"
     set w to a reference to (first window of p whose name starts with titlePrefix and name ends with titleSuffix)
     -- `set frontmost of p` can select another same-named Chrome process.
-    if not ((targetApp's activateWithOptions:0) as boolean) then error "PID activation failed"
+    if not ((targetApp's activateWithOptions:2) as boolean) then error "PID activation failed"
     perform action "AXRaise" of w
     set value of attribute "AXMain" of w to true
-    delay 0.2
-    set actualApp to current application's NSWorkspace's sharedWorkspace()'s frontmostApplication()
-    if (actualApp's processIdentifier() as integer) is not targetPID then error "AppKit foreground mismatch"
-    if (unix id of application processes whose frontmost is true) is not {targetPID} then error "AX foreground mismatch"
-    if unix id of p is not targetPID or value of attribute "AXMain" of w is not true then error "Window mismatch"
+    -- Native activation is asynchronous. Observe a bounded stable foreground;
+    -- never reactivate in this loop or send input while another app owns it.
+    set stableSamples to 0
+    repeat 10 times
+      delay 0.2
+      set actualApp to current application's NSWorkspace's sharedWorkspace()'s frontmostApplication()
+      set appKitMatches to (actualApp's processIdentifier() as integer) is targetPID
+      set axMatches to (unix id of application processes whose frontmost is true) is {targetPID}
+      if unix id of p is not targetPID then error "Process changed"
+      if appKitMatches and axMatches and value of attribute "AXMain" of w is true then
+        set stableSamples to stableSamples + 1
+        if stableSamples is 2 then exit repeat
+      else
+        set stableSamples to 0
+      end if
+    end repeat
+    if stableSamples < 2 then error "Stable foreground unavailable; no input"
     return "EXACT_PID_WINDOW_FOCUSED"
   end tell
 end run

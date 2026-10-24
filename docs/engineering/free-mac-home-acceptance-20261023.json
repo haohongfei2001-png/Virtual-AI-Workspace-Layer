@@ -2201,5 +2201,41 @@
       "personally bound same-document private and worker recovery",
       "safe full Chrome restart and personal recovery; do not transfer prior-document grant"
     ]
+  },
+  "nativeProjectForegroundR77_20261024": {
+    "baseHead": "a173b04ff5544ba420286178a7fcc8d8ffc4f141",
+    "foreground": {
+      "coordination": "USER_AUTHORIZED_ONE_MESSAGE_MAX_5_MINUTES_ACKNOWLEDGED",
+      "fix": "ONE_EXACT_PID_ACTIVATION_THEN_TWO_CONSECUTIVE_APPKIT_GLOBAL_AX_AND_MAIN_SAMPLES_WITHIN_2_SECONDS",
+      "compilation": "PASS",
+      "wrongBundleBeforeActivation": "PASS_REJECTED",
+      "exactTargetActivation": "PASS_MAC",
+      "allForegroundAndResizeWriters": "NOT_ESTABLISHED"
+    },
+    "actualMac": {
+      "projectMenu": "AXPress unavailable; focused Space actually navigated after Enter/click did not establish arrival",
+      "projectRoute": "PASS_NATIVE_ADDRESS_CANONICAL_PROJECT_NO_QUERY_OR_FRAGMENT",
+      "nativeProjectHeadingAndMemberList": "PASS_TITLE_AND_TWO_ROWS_PRESENT",
+      "originalExtensionStatus": "PASS_CONNECTED_READING_AND_READY",
+      "projectFourGrid": "PASS_FORMAL_WORKSPACE_AND_HISTORY_AXWEBAREAS",
+      "projectCards": "NOT_ESTABLISHED_FORMAL_SURFACE_SHOWED_NO_CARDS",
+      "privateRecovery": "NOT_RUN_CURRENT_DOCUMENT_CONFIRMATION_PENDING",
+      "workerRecovery": "NOT_RUN_MAC",
+      "fullBrowserRestart": "NOT_RUN_CURRENT_ALL_DRAFT_SAFETY_PENDING"
+    },
+    "boundaries": {
+      "originalExtensionAndDatabasePreserved": true,
+      "otherChromeProcessOperated": false,
+      "browserClaimOrCDP": false,
+      "internalRequests": false,
+      "testMessageSent": false,
+      "privateUnlockClickedByAssistant": false,
+      "extensionReloadedThisCheckpoint": false
+    },
+    "remaining": [
+      "Confirm actual Project member consumption without treating empty frames as success",
+      "Current personally confirmed document private recovery and worker continuity",
+      "Safe original Chrome restart; instant lock and explicit private restore"
+    ]
   }
 }
