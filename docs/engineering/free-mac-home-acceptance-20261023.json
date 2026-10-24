@@ -1730,5 +1730,43 @@
     },
     "evidence": ".git/vaiwl-checkpoints/20261024-keyboard-return",
     "next": "Activate same-ID r60 when no other foreground work is interrupted; verify actual keyboard focus and continue original Mac journey. Personal cache confirmation remains a user action."
+  },
+  "keyboardMacFollowup20261024": {
+    "baseHead": "1855af0c",
+    "installation": {
+      "sameId": "miendbcjdmecjggplepenghjnoejmaic",
+      "installedControllerMatchesCommittedSource": true,
+      "reload": "EXACT_ENABLED_EXTENSION_AXPRESS_DISPATCHED",
+      "newAcceptanceDocument": "OPENED_NATIVE_HOMEPAGE_IN_SAME_PROFILE",
+      "activeBuildIndependentlyIdentified": false,
+      "oldDataTouched": false
+    },
+    "actualMac": {
+      "connectedReading": "PASS_OWN_STATUS_READBACK",
+      "keyboardWorkspaceEntry": "PASS_BOTH_FORMAL_FRAMES_OBSERVED",
+      "nextTabInWorkspace": "PASS_WORKSPACE_SETTINGS_AXFOCUSED_TRUE_AND_BOTH_FRAMES_PRESENT",
+      "keyboardNativeReadingReturn": "PASS_TARGET_AXFOCUSED_THEN_SPACE_AND_FOUR_GRID_READBACK",
+      "projectNavigation": "NOT_ESTABLISHED_NO_KEY_DISPATCH_WHEN_FOCUS_UNCONFIRMED_AXPRESS_EFFECT_UNCONFIRMED",
+      "nativeSearch": "NOT_ESTABLISHED_AXPRESS_EFFECT_UNCONFIRMED",
+      "privateUnlock": "WAITING_USER_CURRENT_DOCUMENT_CONFIRMATION",
+      "newChatSend": "NOT_RUN",
+      "fullContinuousJourney": "NOT_ESTABLISHED"
+    },
+    "failedOrAmbiguousChecks": [
+      "An earlier Tab attempt after foreground reactivation found the frame absent; own status later reported connected reading. This does not establish a runtime fault.",
+      "The first-control-specific check was false; direct owned-control readback established workspace settings was focused, so Tab remained inside formal UI.",
+      "AXPress/pointer dispatch alone did not establish a successful return or native navigation; only subsequent keyboard actions with readback count as PASS."
+    ],
+    "preservation": {
+      "oldAcceptanceDraft": "PRESENT_REFRESH_NOT_SENT",
+      "newTabUsedToAvoidDraftLoss": true,
+      "internalAPI": false,
+      "CDPOrBrowserClaim": false,
+      "messagesSent": false,
+      "otherProfileInput": false,
+      "databaseDeletion": false,
+      "stashesPreserved": 3
+    },
+    "next": "User confirms current account/workspace using existing local popup; then continue real persistence and remaining native Project/search/new-chat journey. No reinstall/settings/research required."
   }
 }
