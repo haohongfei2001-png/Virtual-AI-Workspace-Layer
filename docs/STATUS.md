@@ -1,5 +1,14 @@
 # VAIWL实际状态：渐进积累工程已接线，真实来源逐项待准入
 
+## 同名进程选择根因修复；原 Profile 4 已进入原生实机续验（2026-10-24）
+
+本人明确允许AppleScript/System Events后，在两个同名、无账户Chrome for Testing进程中复现了脚本错误：`whose unix id`筛选本身正确，但把进程对象求值保存后，System Events返回按名称表示的引用，后续落到较早同名进程；直接把`application process id`求值保存也有同样问题。保留`a reference to application process id`的未求值引用后，四次交替读回均匹配，实际只在B新建窗口，A不变。已加入只读复用工具`tools/native-process-reference.applescript`，同时验证PID及bundle；测试进程正常结束。没有绕过拒绝、CDP或修改浏览器保护。
+
+原Chrome同一进程还包含不同Profile窗口，启动参数不能证明新窗口所属Profile。从明确标识的窗口新开验收窗口后，原生版本页实际确认Profile 4，再打开ChatGPT；没有claim原有标签、操作投递进程或搬迁资料。无账户键盘夹具证明正常Tab聚焦＋Space产生可信点击且草稿保留；原验收页沿直接元素引用检查焦点后激活四格，实际读到正式`VAIWL 历史导航`及搜索/退出等控件，原生输入、模型、附件控件仍在。直接AX点击、焦点对象读回及一次坐标尝试未建立激活，不计PASS；未对保护机制做适配规避。
+
+实机仍是**部分进展**：完整工作区卡片/已知对象尚未确认，popup报“增强界面已连接”且仍提供本地空间确认；未代点解锁，未发送已批准测试消息，Project成员、新聊天、搜索返回、刷新/重启和隔离尚未通过。不能把侧栏框架可读当作完整正式界面或日用通过。原r31安装、旧库及三个stash保留；下一步是原界面展示/投影与集中连续验收，精确进程选择已不再是等待投递结束的理由。事实见原Mac回执`nativeProcessSelection20261024`。
+
+
 ## 原生Computer Use无账户双扩展兼容实测通过，原账号续验待精确窗口选择（2026-10-24）
 
 用户已在操作时批准新隔离Profile、标准open启动和双扩展安装。实际Chrome for Testing 153.0.8010.12中，通过原生AX/输入完成现正式Browser-Local包及原样官方ChatGPT控制扩展1.26.1020.11845安装；两者管理页均启用，正式workspace/sidebar实际加载并展示夹具Project及成员。原生阅读→唯一四格返回、卡片打开正确聊天新标签、关闭后回原Project与保留fixture draft均通过。没有claim浏览器标签、调用CDP或修改foreign-frame保护；这证明本次原生控制路径可操作，不证明被浏览器工具接管时兼容，更不等于本人账号日用验收。

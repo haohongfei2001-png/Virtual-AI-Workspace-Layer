@@ -1448,5 +1448,61 @@
     },
     "localArtifacts": ".git/vaiwl-artifacts/native-cua-compatibility-20261024-r1",
     "evidence": "formal-ui-after-return.txt; formal-ui-after-return.png; preparation.json; preflight.json; environment-final.json"
+  },
+  "nativeProcessSelection20261024": {
+    "baseline": "c03760fd",
+    "authorization": "Explicit AppleScript/System Events native process targeting; isolate same-name test before original Profile 4; preserve other task and original data.",
+    "rootCause": {
+      "state": "CONFIRMED_IN_NO_ACCOUNT_ENVIRONMENT",
+      "description": "Materializing the whose-query result, or assigning an evaluated process-id lookup, returns a name-based application process specifier. Reading it again selects the earlier same-name process. Direct scalar filtering returns the requested PID. An unevaluated reference to application process id preserves the unique target."
+    },
+    "fix": "tools/native-process-reference.applescript",
+    "isolatedEvidence": {
+      "sameNameInstances": 2,
+      "distinctProfileDirectories": true,
+      "network": "process-only dead-end HTTP proxy; QUIC disabled; local file fixtures; no account login or installed account data; not a complete network-channel audit",
+      "oldSelectorReturnedWrongSibling": true,
+      "evaluatedUniqueIdReturnedWrongSibling": true,
+      "unevaluatedUniqueIdAlternatingReadbacks": 4,
+      "allMatched": true,
+      "targetedNewWindowOnlyInB": true,
+      "aWindowListUnchanged": true,
+      "testProcessesClosed": true
+    },
+    "inputEvidence": {
+      "fixtureTrustedKeyboardActivation": "PASS",
+      "fixtureDraftPreserved": true,
+      "accessibilityClickNotEquivalentToTrustedKeyboard": true,
+      "focusBinding": "Check AXFocused on a target element reference rooted at the unique process ID; do not rely on a returned AXFocusedUIElement object to retain a same-name process binding."
+    },
+    "actualMac": {
+      "processTarget": "PASS",
+      "profilePathFromNativeVersionPage": "PASS_Profile_4",
+      "sameProcessMultipleProfilesObserved": true,
+      "profileVerificationRequiredBeyondProcessLaunchArgs": true,
+      "newAcceptanceWindow": true,
+      "existingChatGPTTabClaimed": false,
+      "browserUseClaims": 0,
+      "cdpCalls": 0,
+      "internalApiCallsByAgent": 0,
+      "homeNativeInputModelAttachmentControls": "OBSERVED",
+      "returnControl": "OBSERVED_AND_KEYBOARD_ACTIVATED",
+      "formalSidebarFrame": "OBSERVED_VAIWL_HISTORY_NAVIGATION_WITH_CONTROLS",
+      "fullWorkspaceCards": "NOT_ESTABLISHED",
+      "popup": "OBSERVED_CONNECTED_AND_LOCAL_UNLOCK_ACTION_AVAILABLE",
+      "persistentUnlockPerformed": false,
+      "testMessageSent": false,
+      "projectMembersNewChatSearchReturnRefreshRestartIsolation": "NOT_RUN",
+      "nativeKeyboardFocusAttempt": "Returned-focus-object approach did not locate target after bounded traversal; direct target AXFocused reference located it after one reverse Tab and dispatched Space. Earlier AX click/focus attempts not counted as UI PASS.",
+      "visualAcceptance": "NOT_RUN"
+    },
+    "preservation": {
+      "jobProcessInputs": 0,
+      "extensionInstallOrReload": 0,
+      "extensionOrDatabaseFilesModified": 0,
+      "oldStashes": 3,
+      "noSecurityProtectionChanged": true
+    },
+    "remaining": "Complete workspace presentation and known-object projection, then native interaction and lifecycle acceptance; explicit personal unlock remains user confirmation, not inferred from browser Profile. Process selection is no longer the blocker."
   }
 }
