@@ -1,0 +1,67 @@
+--- a/src/host/content-session.mjs
++++ b/src/host/content-session.mjs
+@@ -393,7 +393,7 @@
+     },
+     workspaceEntered:({mountId})=>{s.returned=true;s.returnFocusGuard=s.controller.intentGuard?.()??(()=>false);liveMigration(s);if(s.migration&&adapter.matchesCandidateIdentity?.(s.upgraded.identity,s.migration.handle)!==true)clearMigration(s);if(s.migration){s.migration.ready=true;if(s.migration.display.presentation.focused&&s.migration.focusAllowed)s.migration.focusAllowed=s.controller.focusFrame?.(s.migration.display.role)===true;}return rpc(s,{v:1,type:'HOST_UI_WORKSPACE_ENTERED',...bindingFields(s.binding),mountId});},
+     revokeMount:({mountId})=>{if(s.binding)void withRequestDeadline(()=>send({v:1,type:'HOST_UI_RELEASE',...bindingFields(s.binding),mountId}),{now:elapsedNow,schedule,cancel}).catch(()=>{});},
+-    renewSession:({handle,binding})=>track(async()=>{if(!bindingOK(binding,s.binding))throw Error('stale-content-binding');const started=elapsedNow();const renewed=await rpc(s,{v:1,type:'HOST_DOCUMENT_RENEW',clientId,seq:++seq,...bindingFields(binding)});if(renewed?.ok!==true||!bindingOK(renewed.binding,s.binding))throw Error('invalid-host-binding');s.binding=Object.freeze({...renewed.binding});const remaining=()=>{const budget=6000-(elapsedNow()-started);if(budget<=0)throw Error('request-timeout');return budget;};const authority=await rpc(s,{v:1,type:'HOST_REFRESH',clientId,seq:++seq,...bindingFields(binding)},remaining());if(authority?.state!=='verified'||authority.scopeKey!==s.scopeKey){s.recoveryDenied=true;throw Error('scope-not-verified');}const status=await rpc(s,{v:1,type:'HOST_UI_STATUS',...bindingFields(binding),mountId:handle.id},remaining());return {...status,binding:renewed.binding};})
++    renewSession:({handle,binding})=>track(async()=>{if(!bindingOK(binding,s.binding))throw Error('stale-content-binding');const started=elapsedNow();const renewed=await rpc(s,{v:1,type:'HOST_DOCUMENT_RENEW',clientId,seq:++seq,...bindingFields(binding)});if(renewed?.ok!==true||!bindingOK(renewed.binding,s.binding))throw Error('invalid-host-binding');s.binding=Object.freeze({...renewed.binding});const remaining=()=>{const budget=6000-(elapsedNow()-started);if(budget<=0)throw Error('request-timeout');return budget;};const authority=await rpc(s,{v:1,type:'HOST_REFRESH',clientId,seq:++seq,...bindingFields(binding)},remaining());if(authority?.state!=='verified'||authority.scopeKey!==s.scopeKey){if(exactHostRecord(authority,['ok','reason'])&&authority.ok===false&&authority.reason==='invalid-host-document')throw Error('invalid-host-binding');s.recoveryDenied=true;throw Error('scope-not-verified');}const status=await rpc(s,{v:1,type:'HOST_UI_STATUS',...bindingFields(binding),mountId:handle.id},remaining());return {...status,binding:renewed.binding};})
+    };
+    s.controller=controllerFactory({document:doc,adapter,surface,extensionOrigin:'chrome-extension://'+runtime.id,bridge,initialMode,onWake:()=>wake(s),onTerminated:(reason,presentation)=>{
+     // Intentional exit ends this document session, including late recovery callbacks.
+--- /dev/null
++++ b/tests/host/renew-handshake-recovery.test.mjs
+@@ -0,0 +1,53 @@
++import test from 'node:test';
++import assert from 'node:assert/strict';
++import {createHostContentSession} from '../../src/host/content-session.mjs';
++
++// Real content-session state machine; deterministic runtime/controller doubles.
++// No browser, network, real account, or copied production implementation.
++const drain=async()=>{for(let i=0;i<80;i++)await Promise.resolve();};
++const invalidDocument=()=>({ok:false,reason:'invalid-host-document'});
++function fixture(){
++ const calls=[],controllers=[],events=new Map(),listeners=new Set(),timers=new Map();
++ let time=1000,timerId=0,hello=0,nextRefresh=null,helloDenied=false,heldRefresh=null;
++ const doc={location:{origin:'https://chatgpt.com',href:'https://chatgpt.com/c/current'},draft:'SYNTHETIC_UNSENT',defaultView:{addEventListener:(k,f)=>events.set(k,f),removeEventListener:(k,f)=>{if(events.get(k)===f)events.delete(k);}}};
++ const binding=()=>({documentToken:'doc'+hello,producerToken:'producer'+hello,browserDocumentId:'browser',routeEpoch:hello,origin:doc.location.origin,expiresAt:new Date(time+20000).toISOString()});
++ const runtime={id:'extension',getURL:p=>'chrome-extension://extension/'+p,onMessage:{addListener:f=>listeners.add(f),removeListener:f=>listeners.delete(f)},async sendMessage(m){
++  calls.push(m);
++  if(m.type==='HOST_HELLO'){hello++;return helloDenied?{ok:false}:{binding:binding()};}
++  if(m.type==='HOST_DOCUMENT_RENEW')return {ok:true,binding:binding()};
++  if(m.type==='HOST_REFRESH'){
++   if(heldRefresh)return heldRefresh;
++   if(nextRefresh!==null){const result=nextRefresh;nextRefresh=null;return result;}
++   return {state:'verified',scopeKey:'scope1'};
++  }
++  return {ok:true};
++ }};
++ const session=createHostContentSession({document:doc,runtime,makeId:()=> 'client',now:()=>time,elapsedNow:()=>time,schedule:(fn,ms)=>{const key=++timerId;timers.set(key,{fn,at:time+ms});return key;},cancel:key=>timers.delete(key),adapterFactory:()=>({inspect:()=>({ok:true}),stop(){}}),surfaceFactory:()=>({}),plansFactory:()=>({}),controllerFactory:options=>{
++  let active=false;const controller={options,async start(context){controller.binding=context.binding;await options.bridge.registerMount({handle:{id:'mount'+hello,regionEpoch:1}});active=true;return {id:'mount'+hello};},stop(){if(!active)return;active=false;options.onTerminated('surface-stopped');},showWorkspace:()=>active,showReading:()=>active,terminate(reason='session-renew-failed'){active=false;options.onTerminated(reason,{mode:'reading'});}};
++  controllers.push(controller);return controller;
++ }});
++ return {session,calls,controllers,doc,events,listeners,refresh:value=>{nextRefresh=value;},denyHello:()=>{helloDenied=true;},hellos:()=>calls.filter(m=>m.type==='HOST_HELLO'),async advance(ms){time+=ms;for(const[id,t]of [...timers])if(t.at<=time){timers.delete(id);t.fn();}await drain();},holdRefresh(){let release;heldRefresh=new Promise(r=>release=r);return value=>{heldRefresh=null;release(value);};}};
++}
++const renew=f=>{const current=f.controllers[0];return current.options.bridge.renewSession({handle:{id:'mount1'},binding:current.binding});};
++test('lost document between renew and refresh permits one fresh handshake, never old grants',async()=>{
++ const f=fixture();try{await f.session.start();f.refresh(invalidDocument());await assert.rejects(renew(f));f.controllers[0].terminate();await drain();
++  assert.equal(f.hellos().length,2);assert.equal(f.controllers.length,2);assert.equal(f.session.showWorkspace(),true);assert.equal(f.controllers[1].options.initialMode,'reading');
++  assert.deepEqual(f.calls.filter(x=>x.type==='HOST_REFRESH').map(x=>x.documentToken),['doc1','doc1','doc2']);assert.equal(f.calls.filter(x=>x.type==='HOST_UI_STATUS').length,0);assert.equal(f.doc.draft,'SYNTHETIC_UNSENT');
++  f.controllers[1].terminate();await drain();await f.advance(30000);assert.equal(f.hellos().length,2);assert.equal(f.session.showWorkspace(),false);
++ }finally{f.session.stop();}
++});
++for(const denied of [{state:'unknown'},{ok:false,reason:'scope-not-verified'},{state:'verified',scopeKey:'other'},{ok:false,reason:'invalid-host-document',extra:true}])test('scope/malformed denial stays terminal: '+JSON.stringify(denied),async()=>{
++ const f=fixture();try{await f.session.start();f.refresh(denied);await assert.rejects(renew(f),/scope-not-verified/);f.controllers[0].terminate();await drain();await f.advance(30000);assert.equal(f.hellos().length,1);assert.equal(f.session.showWorkspace(),false);}finally{f.session.stop();}
++});
++test('a prior scope denial is never cleared by a later invalid-document response',async()=>{
++ const f=fixture();try{await f.session.start();f.refresh({state:'unknown'});await assert.rejects(renew(f));f.refresh(invalidDocument());await assert.rejects(renew(f));f.controllers[0].terminate();await drain();assert.equal(f.hellos().length,1);}finally{f.session.stop();}
++});
++for(const cancel of ['stop','pagehide'])test(cancel+' before queued fresh handshake prevents revival',async()=>{
++ const f=fixture();try{await f.session.start();f.refresh(invalidDocument());await assert.rejects(renew(f));f.controllers[0].terminate();if(cancel==='stop')f.session.stop();else f.events.get('pagehide')({persisted:false});await drain();assert.equal(f.hellos().length,1);assert.equal(f.session.showWorkspace(),false);}finally{f.session.stop();}
++});
++test('failed replacement consumes the original one-shot opportunity without retry loop',async()=>{
++ const f=fixture();try{await f.session.start();f.refresh(invalidDocument());await assert.rejects(renew(f));f.denyHello();f.controllers[0].terminate();await drain();await f.advance(30000);assert.equal(f.hellos().length,2);assert.equal(f.controllers.length,1);assert.equal(f.session.showWorkspace(),false);}finally{f.session.stop();}
++});
++test('original six-second renewal deadline rejects late refresh and cannot reopen stopped session',async()=>{
++ const f=fixture();let release;try{await f.session.start();release=f.holdRefresh();const pending=renew(f),rejected=assert.rejects(pending,/request-timeout/);await drain();await f.advance(6000);await rejected;f.session.stop();release(invalidDocument());await drain();f.controllers[0].terminate();await drain();assert.equal(f.hellos().length,1);assert.equal(f.session.showWorkspace(),false);}finally{release?.(invalidDocument());f.session.stop();}
++});
