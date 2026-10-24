@@ -1504,5 +1504,35 @@
       "noSecurityProtectionChanged": true
     },
     "remaining": "Complete workspace presentation and known-object projection, then native interaction and lifecycle acceptance; explicit personal unlock remains user confirmation, not inferred from browser Profile. Process selection is no longer the blocker."
+  },
+  "deliveryGapReview20261024": {
+    "baseHead": "2a41a90f",
+    "installedManifestFiles": 196,
+    "installedHashMismatches": 0,
+    "stagedR33ManifestFiles": 196,
+    "stagedR33HashMismatches": 0,
+    "stagedChangedFiles": [
+      "src/host/local-status.mjs",
+      "src/host/content-session.mjs",
+      "src/host/surface-controller.mjs",
+      "extension/status.mjs"
+    ],
+    "realNativeFollowup": {
+      "target": "previously verified Profile 4 acceptance window only",
+      "returnControl": "OBSERVED_ENABLED",
+      "boundedReverseTabFocus": "NOT_ESTABLISHED_AFTER_30",
+      "spaceOrClickDispatched": false,
+      "fullWorkspace": "NOT_ESTABLISHED",
+      "noProductFailureInferred": true
+    },
+    "extensionInstallOrReload": 0,
+    "databaseWritesByAgent": 0,
+    "browserUseClaims": 0,
+    "cdpCalls": 0,
+    "testMessageSent": false,
+    "privateUnlockPerformed": false,
+    "jobProcessInputs": 0,
+    "newTestsRun": 0,
+    "scope": "Current Browser-Local personal acceptance; prior full-history and message-audit prerequisites remain cancelled."
   }
 }
