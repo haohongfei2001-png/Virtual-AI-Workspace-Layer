@@ -11,6 +11,17 @@ const exact=(value,keys)=>value!==null&&typeof value==='object'&&!Array.isArray(
 // Bounded layout categories or numeric computed inset geometry only; never
 // native text, IDs, URLs, arbitrary CSS, attribute values or credential material.
 export function validLayoutShape(value){
+ if(exact(value,['navigation'])){
+  const n=value.navigation,counts=values=>Array.isArray(values)&&values.every(v=>Number.isInteger(v)&&v>=0&&v<=256);
+  const geometry=(values,lengths)=>Array.isArray(values)&&lengths.includes(values.length)&&values.every(v=>Number.isInteger(v)&&Math.abs(v)<=65536);
+  const topology=rows=>Array.isArray(rows)&&rows.length<=20&&rows.every((r,i)=>Array.isArray(r)&&r.length===3&&Number.isInteger(r[0])&&r[0]>=-1&&r[0]<i&&Number.isInteger(r[1])&&r[1]>=-1&&r[1]<=9&&Number.isInteger(r[2])&&r[2]>=0&&r[2]<=256);
+  return exact(n,['phase','roots','matched','visible','firstOutside','firstClip','memberShape','headingShape','memberReject','rejected','titles','association','candidates','claims'])
+   &&['not-scanned','scanned','accepted','duplicate','rejected','retry-after','failed','scan-failed'].includes(n.phase)
+   &&counts(n.memberReject)&&n.memberReject.length===7&&counts(n.rejected)&&n.rejected.length===11
+   &&topology(n.memberShape)&&topology(n.headingShape)&&geometry(n.firstClip,[0,3])&&geometry(n.firstOutside,[0,6])
+   &&Array.isArray(n.roots)&&n.roots.length===3&&n.roots.every(v=>v===0||v===1)
+   &&counts(['matched','visible','titles','association','candidates','claims'].map(k=>n[k]));
+ }
  if(exact(value,['projectClip']))return typeof value.projectClip==='string'&&(['inset','rect','xywh','circle','ellipse','polygon','path','url','shape','border-box','padding-box','content-box','margin-box','fill-box','stroke-box','view-box','empty','unavailable','other'].includes(value.projectClip)||projectClipDiagnostic(value.projectClip).projectClip===value.projectClip);
  return exact(value,['counts','branches'])&&Array.isArray(value.counts)&&value.counts.length===7&&value.counts.every(n=>Number.isInteger(n)&&n>=0&&n<=33)&&Array.isArray(value.branches)&&value.branches.length<=12&&value.branches.every(row=>Array.isArray(row)&&row.length===6&&['DIV','STYLE','SCRIPT','TEMPLATE','FOOTER','BUTTON','OTHER'].includes(row[0])&&row.slice(1,5).every(v=>typeof v==='boolean')&&Number.isInteger(row[5])&&row[5]>=0&&row[5]<=33);
 }

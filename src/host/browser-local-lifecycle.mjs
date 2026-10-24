@@ -1,5 +1,6 @@
 import {createURLPolicy} from './url-policy.mjs';
 import {exactHostRecord} from './contract.mjs';
+import {inspectNativeProjectSurface} from './native-project-surface.mjs';
 import {tokenOK} from '../b1/identity.mjs';
 /** A live isolated document retains confirmation across ordinary focus/SPA
  * activity. Only explicit account risks revoke it; new documents have no nonce. */
@@ -47,7 +48,8 @@ export function installBrowserLocalLifecycle({document:doc,runtime,session,profi
  const layoutChanged=()=>{
   if(stopped||layoutQueued||waiting||typeof session.recoverLayout!=='function')return;
   layoutQueued=true;queueMicrotask(()=>{layoutQueued=false;
-   if(stopped||waiting||doc.visibilityState==='hidden'||!session.localStatus?.()?.startsWith('layout-missing-'))return;
+   const state=session.localStatus?.();
+   if(stopped||waiting||doc.visibilityState==='hidden'||!(state?.startsWith('layout-missing-')||state==='layout-project-rows'))return;
    try{
     const route=createURLPolicy({origin:doc.location.origin}).parse(doc.location.href);
     const project=['project','project-candidate'].includes(route.kind)&&profile?.nativeProjectLayout==='panel-after-composer';
@@ -55,6 +57,10 @@ export function installBrowserLocalLifecycle({document:doc,runtime,session,profi
     if(!layout||doc.querySelector('dialog[open], [aria-modal="true"]'))return;
     const keys=project?['header','navigationSlot','historyList']:['header','reading','composer','navigationSlot','historyList','returnHitRoot',...(layout.readingViewport?['readingViewport']:[])];
     if(!keys.every(key=>{const nodes=doc.querySelectorAll(layout[key]);if(nodes.length!==1)return false;const node=nodes[0],rect=node.getBoundingClientRect();return node.isConnected&&rect.width>0&&rect.height>0&&!node.closest('[hidden],[inert],[aria-hidden="true"]');}))return;
+    // A loading/skeleton row can outlive the initial bounded wait. Only a
+    // complete current Project proof earns the one fresh preparation; repeated
+    // skeleton mutations never consume it, authorize data, or extend a deadline.
+    if(state==='layout-project-rows'&&(!project||!inspectNativeProjectSurface({document:doc,profile,urlPolicy:createURLPolicy({origin:doc.location.origin}),history:doc.querySelector(layout.historyList),header:doc.querySelector(layout.header),slot:doc.querySelector(layout.navigationSlot)})))return;
     void session.recoverLayout().catch(()=>{});
    }catch{/* Unsupported structure stays native-only. */}
   });

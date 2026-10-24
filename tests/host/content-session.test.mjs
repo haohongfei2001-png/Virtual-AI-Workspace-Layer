@@ -472,6 +472,15 @@ test('a newly available initial layout gets one fresh reading startup, never an 
  const failed=fixture({prepareDocument:async({onFailure})=>{onFailure('layout-missing-historyList');return false;}});
  await failed.client.start();await failed.client.recoverLayout();await failed.client.recoverLayout();assert.equal(failed.calls.length,0);assert.equal(failed.client.localStatus(),'layout-missing-historyList');failed.client.stop();
 });
+test('late Project rows share the single fresh preparation allowance; other Project failures do not',async()=>{
+ for(const reason of ['layout-project-rows','layout-project-paint']){
+  const f=fixture();let ready=false,prepares=0;
+  const client=createHostContentSession({...f.options,prepareDocument:async({onFailure})=>{prepares++;if(!ready)onFailure(reason);return ready;}});
+  await client.start();assert.equal(f.calls.length,0);ready=true;
+  const result=await client.recoverLayout();assert.equal(!!result,reason==='layout-project-rows');
+  assert.equal(prepares,reason==='layout-project-rows'?2:1);assert.equal(await client.recoverLayout(),null);client.stop();
+ }
+});
 test('layout recovery cannot resume an explicit stop, changed route or non-layout refusal',async()=>{
  for(const change of [f=>f.client.stop(),f=>{f.document.location.href+='c/other';}]){
   const f=fixture({prepareDocument:async({onFailure})=>{onFailure('layout-missing-historyList');return false;}});await f.client.start();change(f);assert.equal(await f.client.recoverLayout(),null);assert.equal(f.calls.length,0);f.client.stop();

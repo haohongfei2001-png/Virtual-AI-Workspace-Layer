@@ -73,7 +73,7 @@ try{
  }
  // The same observed layout now proposes positive membership only when its
  // current route, unique panel and an actual Project-qualified row agree.
- for(const mode of ['positive','rename','stale-route','conflicting-container','no-linked-row','hidden-panel','ambiguous-panel','no-selected-tab']){
+ for(const mode of ['positive','rename','title-span','title-hidden-span','title-complex-span','stale-route','conflicting-container','no-linked-row','hidden-panel','ambiguous-panel','no-selected-tab']){
   const page=await browser.newPage({viewport:{width:1000,height:800}}),url='https://chatgpt.com/g/'+project+'/project';
   await page.route('**/*',r=>r.request().url()===url?r.fulfill({contentType:'text/html',body:observedProjectHTML(project,'33333333-3333-4333-8333-333333333333')}):r.abort());await page.goto(url);await page.addScriptTag({content:outputFiles[0].text});
   const result=await page.evaluate(({mode,project})=>{
@@ -81,6 +81,7 @@ try{
    const panel=document.querySelector('#project-panel'),first=panel.querySelector('a'),other=panel.querySelectorAll('a')[1];let reads=0;
    for(const node of panel.querySelectorAll('a,a>div,a>div>div:last-child'))Object.defineProperty(node,'textContent',{get(){reads++;throw Error('preview-read');}});
    if(mode==='rename')document.querySelector('#project-title h1 button').textContent='Renamed Project';
+   if(mode.startsWith('title-')&&mode.endsWith('span')){const title=document.querySelector('#project-title h1 button');title.innerHTML='<span>Native Project</span>';if(mode==='title-hidden-span')title.firstChild.hidden=true;if(mode==='title-complex-span')title.firstChild.innerHTML='<span>Native Project</span>';Object.defineProperty(title,'textContent',{get(){reads++;throw Error('whole-heading-read');}});}
    if(mode==='stale-route')history.pushState({},'', '/g/g-p-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb/project');
    if(mode==='conflicting-container')other.href='/g/g-p-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb/c/55555555-5555-4555-8555-555555555555';
    if(mode==='no-linked-row')first.href='/c/44444444-4444-4444-8444-444444444444';
@@ -91,7 +92,7 @@ try{
    const claims=result.membershipClaims.filter(c=>c.asserted==='PROJECT'),p=result.candidates.find(c=>c.entity==='project');
    return {positive:claims.length,projects:!!p,title:p?.nativeTitle,ids:claims.map(c=>c.projectId),reads,none:result.membershipClaims.some(c=>c.asserted==='NONE')};
   },{mode,project});
-  const positive=['positive','rename'].includes(mode);assert.equal(result.positive,positive?2:0);assert.equal(result.projects,positive);assert.equal(result.reads,0);assert.equal(result.none,false);if(positive){assert(result.ids.every(p=>p===project));assert.equal(result.title,mode==='rename'?'Renamed Project':'Native Project');}
+  const positive=['positive','rename','title-span'].includes(mode);assert.equal(result.positive,positive?2:0);assert.equal(result.projects,positive);assert.equal(result.reads,0);assert.equal(result.none,false);if(positive){assert(result.ids.every(p=>p===project));assert.equal(result.title,mode==='rename'?'Renamed Project':'Native Project');}
   results.push({mode:'membership-'+mode,passed:true,...result});await page.close();
  }
  console.log(JSON.stringify({status:results.every(r=>r.passed)?'PASS_WEB_MECHANISM_ONLY':'FAIL',baseline:baseline??null,results}));assert(results.every(r=>r.passed));

@@ -28,15 +28,16 @@ try{
  const cdp=await context.browser().newBrowserCDPSession(),{id}=await cdp.send('Extensions.loadUnpacked',{path:built.unpacked});
  // A native sidebar absent at first load can appear after the six-second
  // readiness deadline. Its appearance permits one fresh, reading-only startup.
- for(const lateRoute of ['conversation','project']){
- const delayed=await context.newPage();await delayed.addInitScript(()=>{
+ for(const lateRoute of ['conversation','project','project-rows']){
+ const delayed=await context.newPage();await delayed.addInitScript(lateRoute=>{
   document.addEventListener('DOMContentLoaded',()=>{
+   if(lateRoute==='project-rows'){const list=document.querySelector('#project-panel ol'),rows=[...list.children];list.replaceChildren(Object.assign(document.createElement('li'),{textContent:'Loading'}));const button=document.createElement('button');button.textContent='Reveal fixture sidebar';button.onclick=()=>{list.replaceChildren(...rows);button.remove();};document.body.append(button);return;}
    const list=document.querySelector('nav:not([data-app-navigation-rail]) [data-app-action-sidebar-section] > div > div[aria-hidden]:has([data-sidebar-chatgpt-conversation-key])');
    if(!list)throw Error('fixture-history-missing');const marker=document.createComment('delayed-native-history');list.replaceWith(marker);
    const button=document.createElement('button');button.textContent='Reveal fixture sidebar';button.onclick=()=>{marker.replaceWith(list);button.remove();};document.body.append(button);
   },{once:true});
- });
- await delayed.goto(origin+(lateRoute==='project'?'/g/'+P+'/project':'/c/'+B));
+ },lateRoute);
+ await delayed.goto(origin+(lateRoute.startsWith('project')?'/g/'+P+'/project':'/c/'+B));
  await delayed.waitForFunction(()=>document.documentElement.dataset.vaiwlStartup==='layout-failed',null,{timeout:10000});
  assert.equal(await delayed.locator('iframe[src^="chrome-extension://"]').count(),0);
  await delayed.getByRole('button',{name:'Reveal fixture sidebar',exact:true}).click();
@@ -44,7 +45,7 @@ try{
  assert.equal(await delayed.locator('[data-va-owned]:popover-open').count(),0,'late readiness must not steal native focus');
  await delayed.getByRole('button',{name:'返回工作空间',exact:true}).click();
  await delayed.frameLocator('iframe[src="chrome-extension://'+id+'/workspace.html"]').getByRole('link',{name:'Native A',exact:true}).first().waitFor({timeout:10000});
- report.checks[lateRoute==='project'?'lateProjectSidebarStartsWithoutReload':'lateNativeSidebarStartsWithoutReload']=true;await delayed.close();
+ report.checks[lateRoute==='project-rows'?'lateProjectRowsStartWithoutReload':lateRoute==='project'?'lateProjectSidebarStartsWithoutReload':'lateNativeSidebarStartsWithoutReload']=true;await delayed.close();
  }
  // A Project layout failure must not disable later supported SPA routes.
  const failedProject=await context.newPage();await failedProject.addInitScript(()=>document.addEventListener('DOMContentLoaded',()=>document.querySelector('#project-panel')?.remove(),{once:true}));

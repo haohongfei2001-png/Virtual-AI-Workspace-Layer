@@ -10,7 +10,7 @@ assert(source.startsWith(importLine),'execute actual popup body after its exact 
 const AsyncFunction=Object.getPrototypeOf(async function(){}).constructor;
 async function render(initial,browserLocal=false,localState={ok:true}){
  let current=initial;const calls=[],node={textContent:''};
- const chrome={tabs:{query:async args=>{calls.push(['query',args]);return [{id:7,get title(){throw Error('PRIVATE_TITLE');},get url(){throw Error('PRIVATE_URL');}}];},sendMessage:async(...args)=>{calls.push(['send',...args]);return current;}}};
+ const chrome={tabs:{query:async args=>{calls.push(['query',args]);return [{id:7,get title(){throw Error('PRIVATE_TITLE');},get url(){throw Error('PRIVATE_URL');}}];},sendMessage:async(...args)=>{calls.push(['send',...args]);return args[1]?.type==='HOST_LOCAL_LAYOUT'?{v:1,shape:null}:current;}}};
  const elements=[];
  const document={getElementById:id=>{assert.equal(id,'status');return node;},body:{append:e=>elements.push(e)},createElement:tag=>({tag,textContent:'',listeners:{},setAttribute(){},addEventListener(type,fn){this.listeners[type]=fn;}})};
  chrome.runtime={sendMessage:async message=>{calls.push(['control',message]);return localState;}};
@@ -51,7 +51,7 @@ for(const [mode,exists,expected] of [['personal',true,/已解锁.*无需重复�
  assert.doesNotMatch(f.node.textContent,/无需重新确认/);
  assert.match(f.elements.filter(e=>e.tag==='p').at(-1).textContent,expected);
  assert.deepEqual(f.calls.filter(c=>c[0]==='control'),[['control',{v:1,type:'HOST_LOCAL_SPACE',action:'status'}]]);
- await drain();assert.equal(f.calls.length,3,'no automatic polling or unlock');
+ await drain();assert.equal(f.calls.length,5,'one surface, one navigation summary, one binding query; no polling or unlock');
 });
 test('unknown local binding response is not presented as an unlocked workspace',async()=>{
  const f=await render({v:1,state:'ready'},true,{ok:true,mode:'PRIVATE',exists:true});

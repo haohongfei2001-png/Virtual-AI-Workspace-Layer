@@ -2285,5 +2285,77 @@
       "Same-document Worker restart continuity not established",
       "Original remaining new-chat and account-risk acceptance; no full Free acceptance claim"
     ]
+  },
+  "projectNavigationDiagnosisR79R84_20261025": {
+    "baseHead": "9b93808eab3ed0af01bfc3ff178baca304bad961",
+    "scope": "Original same-ID Browser-Local extension; current visible navigation metadata and private popup status only; exact native PID control",
+    "actualMac": {
+      "r79": "Three regions found; five matched controls, zero admitted visible; empty batch accepted",
+      "r80": "Initial viewport exclusion observed; not an identity or database admission refusal",
+      "r81": "Fresh Project document stopped at layout-project-rows; native list still had two rows",
+      "r82": "Connected reading; two visible proposals accepted, no Project association or member titles",
+      "r83": {
+        "nativeProjectHeading": "BUTTON with one text-only SPAN",
+        "nativeMemberTitleTopology": "A > DIV > two text-only DIVs",
+        "firstViewportRejection": [
+          16,
+          813,
+          209,
+          20,
+          960,
+          797
+        ],
+        "firstClipRejection": [
+          0,
+          240,
+          602
+        ],
+        "visible": 2,
+        "memberTitles": 0,
+        "projectAssociation": 0
+      },
+      "r84": "Installed canonical files updated; Reload NOT_RUN because exact foreground guard rejected before input"
+    },
+    "confirmedCodeFixes": [
+      {
+        "cause": "Rows appearing after the initial bounded layout wait could never recover on the same route",
+        "change": "One fresh reading preparation only after complete current Project layout proof; no deadline or authority relaxation",
+        "evidence": "Isolated formal MV3 failed before, passed after; known Project members and return reached"
+      },
+      {
+        "cause": "Native Project title wrapped in single SPAN was rejected by direct-text-only grammar",
+        "change": "Accept only visible sole plain text SPAN; secondary or hidden title branches remain rejected",
+        "evidence": "Actual native fixed topology observed; direct targeted browser regression passes without preview/whole-row reads"
+      }
+    ],
+    "realProductAcceptance": "NOT_COMPLETE_PROJECT_MEMBER_CONSUMPTION_STILL_UNRESOLVED",
+    "protected": {
+      "sameExtensionId": true,
+      "manifestUnchanged": true,
+      "databaseTouchedByRepair": false,
+      "oldTabsAndDraftsRetained": true,
+      "internalAPI": false,
+      "realCDPOrBrowserClaim": false,
+      "unlockClickedByAssistant": false,
+      "jobChromeOperated": false
+    },
+    "pending": [
+      "Complete r84 native reload and read fixed member rejection stage",
+      "Verify Project membership in formal UI",
+      "Post-restart personal recovery requires current document confirmation by user; previous confirmation is not reused"
+    ],
+    "candidate": {
+      "path": ".git/vaiwl-artifacts/browser-local-project-recovery-20261025-r85/extension",
+      "archiveSha256": "a6ce58bcfa38af3de77732cd3e4dc1f13e35d9a4ebc666f94fa4e07b78bcddb0",
+      "cleanPackageFiles": 197,
+      "installedCanonicalFiles": 196,
+      "candidateInstalled": false
+    },
+    "verification": {
+      "unit": "PASS content-session/browser-local-boundary/local-status/local-status-presentation, 258",
+      "titleBrowser": "PASS observed-project-list-browser, includes single-span/hidden-span/nested-span",
+      "isolatedFormalMV3": "PASS narrow late-rows plus title-span test, accepted one Project and two members; no preview read",
+      "broaderMV3": "NOT_RERUN; late rows case added to existing browser-local-mv3 journey; no full real acceptance inference"
+    }
   }
 }

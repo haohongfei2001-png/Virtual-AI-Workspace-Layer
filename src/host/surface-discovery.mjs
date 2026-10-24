@@ -24,7 +24,7 @@ export function createSurfaceDiscovery({document,binding,urlPolicy,profile=LEGAC
   let routeURL=document.location.href;
   let byNode=new WeakMap(),lookupComplete=true;const detached=new Set();
   const byId=createBoundedHandleRegistry({now:elapsedNow,onEvict:(_id,entry)=>{const node=entry.node.deref();if(node&&byNode.get(node)===entry)byNode.delete(node);lookupComplete=false;}});
-  const roots=new Map(),pages=new WeakMap();let watched=[];
+  const roots=new Map(),pages=new WeakMap();let watched=[],summary=null;
   const unique = selector => profileElement(document,profile,selector,urlPolicy.parse(document.location.href));
   const isProjectList=regionKind=>!!profile.projectListBoundary&&regionKind==='members';
   const hasMemberAssociation=!profile.projectListBoundary&&typeof profile.memberProjectIdAttribute==='string'&&profile.memberProjectIdAttribute.length>0;
@@ -64,6 +64,7 @@ export function createSurfaceDiscovery({document,binding,urlPolicy,profile=LEGAC
     const empty=()=>({candidates:[],membershipClaims:[],coverageClaims:[],detachedHandles:[]});
     if(stopped){if(cursor)throw Error('stale-surface-cursor');return {payload:empty(),cursor:null};}
     refreshRoute();refreshRoots();
+    if(!candidateOnly)summary={roots:['projects','history','members'].map(k=>roots.get(k)?1:0),matched:0,visible:0,firstOutside:[],firstClip:[],memberShape:[],headingShape:[],memberReject:Array(7).fill(0),rejected:Array(11).fill(0),titles:0,association:0,candidates:0,claims:0};
     // IDless Project reads do not perform unrelated member cleanup. Ordinary
     // ingestion and every actual handle lookup retain the full live checks.
     if(!cursor)for(const [id,entry] of byId.entries()) if((!candidateOnly||entry.regionKind==='projects')&&!valid(entry)) { byId.delete(id);const node=entry.node.deref();if(node)byNode.delete(node);detached.add(id); }
@@ -78,16 +79,23 @@ export function createSurfaceDiscovery({document,binding,urlPolicy,profile=LEGAC
     // conflict with a visible renamed record. visibility:hidden alone remains
     // distinct: our own root mask inherits it into otherwise loaded controls.
     const sampleable=node=>{
-      if(!node?.isConnected||node.ownerDocument!==document||!node.getClientRects().length)return false;
+      const reject=code=>{if(!candidateOnly&&summary)summary.rejected[code]=Math.min(256,summary.rejected[code]+1);return false;};
+      if(!node?.isConnected||node.ownerDocument!==document)return reject(2);
+      if(!node.getClientRects().length)return reject(1);
       if(profile.visibleNavigationOnly){
         const rect=node.getBoundingClientRect();let left=Math.max(0,rect.left),right=Math.min(document.defaultView.innerWidth,rect.right),top=Math.max(0,rect.top),bottom=Math.min(document.defaultView.innerHeight,rect.bottom),depth=0;
+        if(right<=left||bottom<=top){if(!candidateOnly&&!summary.firstOutside.length)summary.firstOutside=[rect.x,rect.y,rect.width,rect.height,document.defaultView.innerWidth,document.defaultView.innerHeight].map(v=>Number.isFinite(v)?Math.max(-65536,Math.min(65536,Math.round(v))):0);return reject(0);}
         for(let parent=node;parent;parent=parent.parentElement){
-          if(++depth>64||parent.hidden||parent.getAttribute('aria-hidden')==='true')return false;
+          if(++depth>64)return reject(3);
+          if(parent.hidden||parent.getAttribute('aria-hidden')==='true')return reject(4);
           const style=document.defaultView.getComputedStyle(parent);
-          if(style.display==='none'||style.visibility!=='visible'||Number(style.opacity)===0)return false;
+          if(style.display==='none')return reject(5);
+          if(style.visibility!=='visible')return reject(6);
+          if(Number(style.opacity)===0)return reject(7);
           if(parent!==node){const box=parent.getBoundingClientRect();if(['hidden','clip','scroll','auto'].includes(style.overflowX)){left=Math.max(left,box.left);right=Math.min(right,box.right);}if(['hidden','clip','scroll','auto'].includes(style.overflowY)){top=Math.max(top,box.top);bottom=Math.min(bottom,box.bottom);}}
+          if(right<=left||bottom<=top){if(!candidateOnly&&!summary.firstClip.length){const b=parent.getBoundingClientRect();summary.firstClip=[style.display==='contents'?1:0,Math.round(b.width),Math.round(b.height)].map(v=>Math.max(-65536,Math.min(65536,v)));}return reject(parent===document.body?8:parent===document.documentElement?9:10);}
         }
-        return right>left&&bottom>top;
+        return true;
       }
       let depth=0;for(let parent=node;parent;parent=parent.parentElement){
         if(++depth>64||!parent.isConnected||parent.ownerDocument!==document)return false;
@@ -118,7 +126,7 @@ export function createSurfaceDiscovery({document,binding,urlPolicy,profile=LEGAC
       if(!parsed&&!(entity==='project'&&node.tagName==='BUTTON')) return null;
       const id=parsed?.kind===entity?(entity==='project'?parsed.projectId:parsed.conversationId):null;
       if(candidateOnly&&id)return null;
-      const label=isProjectList(regionKind)?observedProjectListTitle(document,node,root):title(node);if(!label)return null;
+      const label=isProjectList(regionKind)?observedProjectListTitle(document,node,root,code=>{if(!candidateOnly)summary.memberReject[code]=Math.min(256,summary.memberReject[code]+1);}):title(node);if(!label)return null;
       const handle=control(node,root,regionKind,entity,id?JSON.stringify([entity,id,parsed.navigationURL]):null);
       const target=id?{kind:'resolved',entity,nativeId:id,navigationURL:parsed.navigationURL,liveHandle:handle}:{kind:'live-control',control:handle,navigationURL:null};
       const result={renderKey:id?`${entity}:${id}`:`candidate:${handle.id}`,entity,...label,target,evidence:evidence(regionKind,isProjectList(regionKind)?'title-leaf':'textContent',href?'href':'button')};
@@ -132,7 +140,15 @@ export function createSurfaceDiscovery({document,binding,urlPolicy,profile=LEGAC
     // A canonical current Project needs route identity and the explicitly scoped
     // member surface; an IDless sidebar label never supplies that identity.
     const members=roots.get('members');
+    if(!candidateOnly&&members){
+      // Only tag/count topology of the bounded navigation/title branches. No
+      // text, attributes, IDs, URLs, input or message content enters diagnostics.
+      const shape=root=>{if(!root)return [];const rows=[],pending=[[root,-1,0]];while(pending.length&&rows.length<20){const [node,parent,depth]=pending.shift(),index=rows.length;rows.push([parent,['A','BUTTON','DIV','SPAN','SECTION','OL','LI','H1','SVG','PATH'].indexOf(node.tagName.toUpperCase()),Math.min(256,node.children.length)]);if(depth<4)for(const child of [...node.children].slice(0,4))pending.push([child,index,depth+1]);}return rows;};
+      summary.memberShape=shape(members.querySelector('li > a[href]'));
+      summary.headingShape=shape(members.closest(profile.projectListBoundary)?.querySelector('h1 > button'));
+    }
     const panelAssociation=!candidateOnly&&members?observedProjectAssociation(document,profile,urlPolicy,members):null;
+    if(!candidateOnly)summary.association=panelAssociation?1:0;
     if(panelAssociation){
       currentProjectId=panelAssociation.projectId;contextNodes=panelAssociation.nodes;contextValue=panelAssociation.key;
       candidates.push({renderKey:`project:${currentProjectId}`,entity:'project',nativeTitle:panelAssociation.nativeTitle,titleState:'exact',target:{kind:'resolved',entity:'project',nativeId:currentProjectId,navigationURL:panelAssociation.navigationURL,liveHandle:null},evidence:evidence('current-project-route','current-project-title','members','route-linked-member')});
@@ -202,12 +218,15 @@ export function createSurfaceDiscovery({document,binding,urlPolicy,profile=LEGAC
       inspected++;
       if(page.priorityNodes?.has(node))continue;
       if(!node.matches(regionKind==='projects'?profile.controls:profile.conversationControls))continue;
+      if(!candidateOnly)summary.matched++;
       if(!root?.contains(node)||!sampleable(node))continue;
+      if(!candidateOnly)summary.visible++;
       // Observed panel aliases still pass through candidate conflict checks;
       // a sidebar identity query or conflicting title must not disappear merely
       // because a Project relationship was proposed for the same C.
       if(regionKind==='history'&&!panelAssociation&&page.memberIds.size){const parsed=urlPolicy.parse(node.getAttribute('href'));if(parsed.kind==='conversation'&&page.memberIds.has(parsed.conversationId))continue;}
       const item=candidate(node,root,regionKind,regionKind==='projects'?'project':'conversation');
+      if(!candidateOnly&&regionKind==='members'&&item)summary.titles++;
       if(regionKind==='projects'||!item||item.target.kind!=='resolved')continue;
       const conversationId=item.target.nativeId;
       if(regionKind==='members'&&visible(root)&&visible(node)&&route.kind==='project'&&(panelAssociation?.projectId===route.projectId||hasMemberAssociation&&root.getAttribute(profile.memberProjectIdAttribute)===route.projectId)){claims.set(conversationId,{conversationId,asserted:'PROJECT',projectId:route.projectId,upstreamRevision:null,evidence:evidence('members','current-project-route',...(panelAssociation?['route-linked-member']:[]))});if(currentProjectId===route.projectId)page.memberIds.add(conversationId);}
@@ -226,6 +245,7 @@ export function createSurfaceDiscovery({document,binding,urlPolicy,profile=LEGAC
     const detachedHandles=[];for(const id of detached){if(detachedHandles.length===512)break;detachedHandles.push(id);detached.delete(id);}
     // A visible DOM slice is not an account-wide or terminal snapshot.
     let next=null;if(page.region<page.regions.length||detached.size){next=Object.freeze(Object.create(null));pages.set(next,page);}
+    if(!candidateOnly){summary.candidates=candidates.length;summary.claims=claims.size;}
     return {payload:{candidates,membershipClaims:[...claims.values()],coverageClaims:[],detachedHandles},cursor:next};
   }
   function preservePresentationCursor(cursor){
@@ -348,7 +368,7 @@ export function createSurfaceDiscovery({document,binding,urlPolicy,profile=LEGAC
     const entry=candidateEntry(handle);if(!entry)return false;
     return identity.document.deref()===document&&identity.profileId===profile.id&&identity.profileVersion===profile.revision&&identity.node.deref()===entry.node.deref()&&identity.root.deref()===entry.root.deref()&&identity.parent.deref()===entry.parent.deref()&&identity.fingerprint===entry.fingerprint;
   }
-  return Object.freeze({scan,scanPage,scanCandidatePage,preservePresentationCursor,affectsSurface,getNode:(handle,options={})=>{const node=readSurface(()=>getNode(handle));return options.forDispatch&&!dispatchable(node)?null:node;},resolveLoadedTargets:targets=>readSurface(()=>resolveLoadedTargets(targets)),retainHandles(owner,handles,deadline){return readSurface(()=>{if(stopped||!Array.isArray(handles)||handles.length>256||handles.some(handle=>!getNode(handle)))return false;return byId.retain(owner,handles.map(handle=>handle.id),deadline);});},releaseHandles:owner=>byId.release(owner),handleStats:()=>({...byId.stats(),detached:detached.size,lookupComplete}),captureCandidateIdentity:handle=>readSurface(()=>captureCandidateIdentity(handle)),matchesCandidateIdentity:(...args)=>readSurface(()=>matchesCandidateIdentity(...args)),invalidate({routeEpoch:nextEpoch}={}) {
+  return Object.freeze({navigationSummary:()=>summary?structuredClone(summary):null,scan,scanPage,scanCandidatePage,preservePresentationCursor,affectsSurface,getNode:(handle,options={})=>{const node=readSurface(()=>getNode(handle));return options.forDispatch&&!dispatchable(node)?null:node;},resolveLoadedTargets:targets=>readSurface(()=>resolveLoadedTargets(targets)),retainHandles(owner,handles,deadline){return readSurface(()=>{if(stopped||!Array.isArray(handles)||handles.length>256||handles.some(handle=>!getNode(handle)))return false;return byId.retain(owner,handles.map(handle=>handle.id),deadline);});},releaseHandles:owner=>byId.release(owner),handleStats:()=>({...byId.stats(),detached:detached.size,lookupComplete}),captureCandidateIdentity:handle=>readSurface(()=>captureCandidateIdentity(handle)),matchesCandidateIdentity:(...args)=>readSurface(()=>matchesCandidateIdentity(...args)),invalidate({routeEpoch:nextEpoch}={}) {
     if(stopped)return;routeEpoch=Number.isSafeInteger(nextEpoch)&&nextEpoch>routeEpoch?nextEpoch:routeEpoch+1;clearHandles();roots.clear();routeURL=document.location.href;
   },stop() {stopped=true;clearHandles();roots.clear();}});
 }

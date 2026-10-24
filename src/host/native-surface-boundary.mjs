@@ -40,14 +40,15 @@ export function profileElement(document,profile,selector,route=null){
 
 // This observed native row has two separate text fields. Read only the first
 // text-only DIV; missing/hidden/changed structure never falls back to preview.
-export function observedProjectListTitle(document,node,root){
- try{
-  if(node.closest(projectExcluded)||node.tagName!=='A'||node.parentElement?.tagName!=='LI'||node.parentElement.parentElement?.tagName!=='OL'||node.parentElement.parentElement.parentElement?.tagName!=='SECTION'||node.parentElement.parentElement.parentElement.parentElement!==root||node.children.length!==1)return null;
-  const wrapper=node.firstElementChild;if(wrapper.tagName!=='DIV'||wrapper.children.length!==2)return null;
-  const leaf=wrapper.firstElementChild;
-  if(leaf.closest(projectExcluded)||leaf.tagName!=='DIV'||wrapper.lastElementChild.tagName!=='DIV'||leaf.children.length||!visible(document,leaf))return null;
-  const text=(leaf.textContent??'').trim();return text&&text.length<=200?{nativeTitle:text,titleState:'exact'}:null;
- }catch{return null;}
+export function observedProjectListTitle(document,node,root,onReject=()=>{}){
+ let stage=1;try{
+  if(node.closest(projectExcluded)||node.tagName!=='A'||node.parentElement?.tagName!=='LI'||node.parentElement.parentElement?.tagName!=='OL'||node.parentElement.parentElement.parentElement?.tagName!=='SECTION'||node.parentElement.parentElement.parentElement.parentElement!==root||node.children.length!==1){onReject(stage);return null;}
+  stage=2;const wrapper=node.firstElementChild;if(wrapper.tagName!=='DIV'||wrapper.children.length!==2){onReject(stage);return null;}
+  stage=3;const leaf=wrapper.firstElementChild;
+  if(leaf.closest(projectExcluded)||leaf.tagName!=='DIV'||wrapper.lastElementChild.tagName!=='DIV'||leaf.children.length){onReject(stage);return null;}
+  stage=4;if(!visible(document,leaf)){onReject(stage);return null;}
+  stage=5;const text=(leaf.textContent??'').trim();if(!text||text.length>200){onReject(stage);return null;}return {nativeTitle:text,titleState:'exact'};
+ }catch{onReject(6);return null;}
 }
 
 // A bounded relationship witness inside the observed Project panel. Neither
@@ -63,8 +64,13 @@ export function observedProjectAssociation(document,profile,urlPolicy,root){
   const main=root.closest(profile.projectListBoundary),titles=main?.querySelectorAll('h1 > button');
   if(!main||main.closest(projectExcluded)||titles?.length!==1)return null;
   const title=titles[0];
-  if(!visible(document,title)||title.closest(projectExcluded)||title.children.length)return null;
-  const nativeTitle=(title.textContent??'').trim();if(!nativeTitle||nativeTitle.length>200)return null;
+  if(!visible(document,title)||title.closest(projectExcluded))return null;
+  // Native Project rename button may wrap only its name in one plain SPAN.
+  // Reject icons, secondary labels, hidden text and nested controls; never read
+  // the complete button as a fallback for an unfamiliar title structure.
+  const leaf=title.children.length===0?title:title.children.length===1&&title.firstElementChild.tagName==='SPAN'&&title.firstElementChild.children.length===0&&!title.firstElementChild.matches('[role],[tabindex],[contenteditable]')&&![...title.childNodes].some(n=>n.nodeType===3&&n.textContent.trim())?title.firstElementChild:null;
+  if(!leaf||!visible(document,leaf))return null;
+  const nativeTitle=(leaf.textContent??'').trim();if(!nativeTitle||nativeTitle.length>200)return null;
   const list=root.parentElement,tabs=list?.querySelectorAll('[role="tablist"]');
   if(list?.children.length!==2||list.lastElementChild!==root||tabs?.length!==1||!visible(document,tabs[0]))return null;
   const selected=tabs[0].querySelectorAll('[role="tab"][aria-selected="true"]');

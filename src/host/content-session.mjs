@@ -266,7 +266,7 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
  // A newly available native boundary may recover one pre-HELLO layout failure.
  // This is not retry permission for scope/transport/frame failures or user exit.
  async function recoverLayout(){
-  if(!prepareDocument||layoutRetryUsed||layoutRetryURL!==doc.location.href||enabled||current||frameReplaced||doc.visibilityState==='hidden'||!startupFailure?.state.startsWith('layout-missing-'))return null;
+  if(!prepareDocument||layoutRetryUsed||layoutRetryURL!==doc.location.href||enabled||current||frameReplaced||doc.visibilityState==='hidden'||!(startupFailure?.state.startsWith('layout-missing-')||startupFailure?.state==='layout-project-rows'))return null;
   layoutRetryUsed=true;layoutRetryURL=null;enabled=true;restoreArmed=false;rebindQueued=false;rebindRun++;
   doc.defaultView.addEventListener('pageshow',pageshow);
   return begin(true,'reading');
@@ -583,7 +583,7 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
     // remains unusable; bind the new route instead of disabling the document.
     // Same-route failures still stop, and replaced/stopped sessions cannot retry.
     if(enabled&&doc.location.href!==s.url)rebind(s);else if(error?.message==='scope-not-verified'||contextRecovery===true&&contextResumeAllowed&&['context-handshake-superseded','context-handshake-transport-unavailable'].includes(error?.message))contextPending(true);else {
-     const layoutOnly=startupPhase==='layout'&&!s.binding&&!layoutRetryUsed&&s.layoutFailure?.startsWith('layout-missing-');
+     const layoutOnly=startupPhase==='layout'&&!s.binding&&!layoutRetryUsed&&(s.layoutFailure?.startsWith('layout-missing-')||s.layoutFailure==='layout-project-rows');
      const nextRouteLayout=prepareDocument&&startupPhase==='layout'&&!s.binding&&!frameReplaced;
      stop();if(layoutOnly)layoutRetryURL=s.url;if(nextRouteLayout)layoutRouteURL=s.url;
     }
@@ -626,5 +626,5 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
   return begin(true,contextResumeMode);
  }
  function localStatus(){if(frameReplaced)return 'frame-blocked';if(!enabled&&!contextResumeAllowed&&!observation&&startupFailure?.url===doc.location.href)return startupFailure.state;if(!enabled)return contextResumeAllowed||observation?(verificationWaitURL===doc.location.href?'verification-required':'waiting'):'unavailable';if(!current||!live(current))return 'unavailable';if(!current.ready)return 'connecting';const state=current.controller?.localStatus?.()??'unavailable';return ['unavailable','surface-controller-absent'].includes(state)&&startupFailure?.url===doc.location.href?startupFailure.state:state;}
- return Object.freeze({localStatus,recoverLayout,recoverRoute,localLayoutStatus:()=>startupFailure?.url===doc.location.href&&localStatus().startsWith('layout-')?startupFailure.shape:null,start,stop,contextPending,contextReady,prepareIdle,enterDormant,isOwnedMask:node=>!!current&&live(current)&&current.surface?.isMasked?.(node)===true,showWorkspace:()=>sync(()=>current?.controller?.showWorkspace()??false),showReading:()=>sync(()=>current?.controller?.showReading()??false)});
+ return Object.freeze({localStatus,recoverLayout,recoverRoute,localLayoutStatus:()=>startupFailure?.url===doc.location.href&&localStatus().startsWith('layout-')?startupFailure.shape:current&&live(current)&&current.adapter?.navigationSummary?{navigation:current.adapter.navigationSummary()}:null,start,stop,contextPending,contextReady,prepareIdle,enterDormant,isOwnedMask:node=>!!current&&live(current)&&current.surface?.isMasked?.(node)===true,showWorkspace:()=>sync(()=>current?.controller?.showWorkspace()??false),showReading:()=>sync(()=>current?.controller?.showReading()??false)});
 }

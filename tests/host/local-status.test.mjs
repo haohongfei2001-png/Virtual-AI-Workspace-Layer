@@ -73,3 +73,9 @@ test('Project clip diagnostic admits numeric inset geometry only',()=>{
  for(const projectClip of ['url(https://private.invalid)','PRIVATE','inset(0px) account-id','inset('+('0'.repeat(200))+'px)'])assert.equal(validLayoutShape({projectClip}),false);
  assert.equal(validLayoutShape({projectClip:'inset(0px)',title:'private'}),false);
 });
+
+ test('navigation summary admits only fixed phase and bounded counts, never row data',()=>{
+ const navigation={phase:'accepted',roots:[1,1,1],firstOutside:[],firstClip:[],memberShape:[],headingShape:[],memberReject:Array(7).fill(0),rejected:Array(11).fill(0),matched:3,visible:2,titles:2,association:1,candidates:3,claims:2};
+ assert.equal(validLayoutShape({navigation}),true);
+ for(const n of [{...navigation,url:'PRIVATE'},{...navigation,phase:'PRIVATE'},{...navigation,matched:257},{...navigation,roots:[1,1,1,1]},{...navigation,titles:-1}])assert.equal(validLayoutShape({navigation:n}),false);
+ });
