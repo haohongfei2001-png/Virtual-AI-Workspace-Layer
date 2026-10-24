@@ -1267,5 +1267,89 @@
     "srcdocWriter": "NOT_ESTABLISHED",
     "accountOperations": 0,
     "installedExtensionOrDataChanged": false
+  },
+  "foreignFrameMonitorSourceAttribution20261024": {
+    "baseCommit": "5bc6ab281e116d7b222325ad50ab32921fdea609",
+    "conclusion": "INSTALLED_WRITER_MECHANISM_CONFIRMED_OFFLINE_NOT_LIVE_STACK",
+    "evidence": {
+      "state": "PASS",
+      "method": "Unmodified installed monitor function in isolated Node VM with minimal DOM doubles; no browser, account or network",
+      "installedExtension": {
+        "name": "ChatGPT",
+        "id": "hehggadaopoacecdllhhajmbjkdcmajg",
+        "version": "1.26.1020.11845"
+      },
+      "sourceFile": "content-scripts/foreign-frame-monitor.js",
+      "sha256": "337ad4ff3ec7846134e5d39528936b1cbb68107de3c4da0e0641c712bda66129",
+      "findings": {
+        "vaiwlWorkspaceBlanked": true,
+        "vaiwlSidebarInShadowRootBlanked": true,
+        "newForeignFrameBlanked": true,
+        "sameExtensionUntouched": true,
+        "ordinaryWebFrameUntouched": true
+      },
+      "liveCallStack": "NOT_CAPTURED",
+      "scope": "Confirms exact installed source behavior; not a live execution trace or Mac acceptance",
+      "accountRequests": 0,
+      "cdpCalls": 0,
+      "installedFilesChanged": 0
+    },
+    "backgroundSourceSha256": "2564d018e01f71365db8adfb5ccd36de981446328854d84328bddcda236b8e39",
+    "activation": "requireSessionTab -> yb -> su -> wb/gb; fallback Tb injects content-scripts/foreign-frame-monitor.js; active controlled document and subsequent navigation",
+    "normalCleanup": "endTurnUnlocked -> bb -> au -> Ob disconnects observer; does not remove existing srcdoc; source-inspected, live cleanup not asserted",
+    "compatibility": "Keep the original extension and dual-frame design. Ordinary personal use after normal browser-tool release is distinct from tool-controlled-tab acceptance. Do not re-claim the page to verify recovery, because that activates the monitor again. A fresh ordinary document is needed to discard prior mutations. No hidden cleanup call, attribute removal, extension disable, new carrier or alternate automation surface.",
+    "productFix": [
+      "Private document-local frame-blocked status survives teardown; page dataset is not a status authority",
+      "Frame replacement ends the content session and prevents context READY or late mount replies from reviving it",
+      "Popup explains the replacement and disables misleading re-unlock while retaining explicit local lock"
+    ],
+    "validation": {
+      "targeted": "PASS",
+      "tests": 137,
+      "log": "/private/tmp/vaiwl-frame-blocked-tests.tap",
+      "files": [
+        "tests/host/content-session-start-recovery.test.mjs",
+        "tests/host/local-status.test.mjs",
+        "tests/host/local-status-presentation.test.mjs",
+        "tests/host/surface-controller.test.mjs"
+      ],
+      "scope": "Node tests; actual popup body; no new browser or account operation",
+      "candidate": {
+        "status": "HOST_IMPLEMENTATION_UNVERIFIED",
+        "releaseStatus": "NOT_RELEASE_READY",
+        "files": 197,
+        "unpacked": "/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/.git/vaiwl-artifacts/browser-local-frame-status-20261024-r32/extension",
+        "archive": "/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/.git/vaiwl-artifacts/browser-local-frame-status-20261024-r32/vaiwl-free-host-development.zip",
+        "archiveSha256": "766057ed3c7053c111c1485345fb2e98273b4acbbb012ec6bd1b904b37eb4ad5"
+      }
+    },
+    "preservation": {
+      "installedPackage": "UNCHANGED_r31",
+      "database": "UNTOUCHED",
+      "stash": [
+        "42c88772",
+        "f4270c6e",
+        "899e7228"
+      ],
+      "accountRequests": 0,
+      "cdpCalls": 0,
+      "browserRefreshes": 0
+    },
+    "remaining": {
+      "normalPersonalUseRecovery": "NOT_RUN",
+      "MacFormalUI": "FAIL_PREVIOUS_NOT_RETESTED",
+      "liveWriterCallStack": "NOT_CAPTURED",
+      "toolBridgePermission": "UNCHANGED_NOT_NEEDED_FOR_SOURCE_FINDING",
+      "fullFree": "NOT_ACCEPTED"
+    },
+    "installedReadOnlyCheck": {
+      "strictPackageVerifier": "FAIL_unexpected-host-package-files",
+      "manifestListedFiles": 196,
+      "missing": [],
+      "hashMismatch": [],
+      "extraFileCount": 2675,
+      "extraFiles": "Number-suffixed copies retained; not deleted or treated as writer evidence",
+      "mutations": 0
+    }
   }
 }

@@ -1,5 +1,14 @@
 # VAIWL实际状态：渐进积累工程已接线，真实来源逐项待准入
 
+## 已定位安装代码中的空srcdoc写入机制；停止重复账号定位（2026-10-24）
+
+本轮不依赖客服/CDP，仅读取已安装扩展的代码。ChatGPT 浏览器控制扩展 `hehggadaopoacecdllhhajmbjkdcmajg` / `1.26.1020.11845` 的 `content-scripts/foreign-frame-monitor.js` 明确将其他扩展 iframe 写为 `srcdoc=""`，遍历包括 closed Shadow DOM。后台在受控标签的有效文档注入相同函数，后续导航也安装。直接执行该已安装原函数的无账户 Node VM 复现：VAIWL workspace、Shadow DOM sidebar及新增foreign frame均被置空，同扩展及普通网页frame不变。源hash、触发链与结果见原[Mac回执](engineering/free-mac-home-acceptance-20261023.json)的 `foreignFrameMonitorSourceAttribution20261024`。这是**安装源码机制＋离线因果证据**，与既有Mac症状吻合；未捕获本人的实际写入调用栈，不把历史归因失败改成PASS。
+
+正常工具turn结束路径会移除该监听，但不撤销已写入属性；此为源码结论，尚未实测本次释放。无需将解除localhost CDP拒绝或客服处理作为普通个人使用的前提。后续应由工具正常结束控制，普通用户文档重新打开/正常刷新后使用原扩展；不能再自动claim同页检验恢复，因为会重新启用该保护。不调用内部清理API、不删除srcdoc、不停用扩展、不改载体或换自动化通道规避；受控标签内的双frame兼容仍受该机制限制。原控制台拒绝记录保持。
+
+实际代码差额：`content-session`收到源替换立即清理整个会话，晚到mount回复/READY不复活；原私有状态合同新增固定 `frame-blocked`，弹窗解释故障并禁止误导性的重复解锁，保留主动锁定。状态来自隔离RAM，不信页面dataset，不推测具体写入者。原v2.7、数据库、来源、认证不改。定向验证及正式Browser-Local包校验通过；r32仅保存在原仓库artifact目录，**原r31安装、旧数据、三个stash均未改**。原安装只读核验发现额外数字副本，严格整包文件集检查未通过；manifest列出的196个文件全部hash一致、无缺失，副本原样保留，不归因为空srcdoc写入者。没有新增账号请求、刷新、CDP或真实Chrome验收；正式UI真实恢复仍NOT_RUN，不能宣称完整Free完成。
+
+
 ## 无账户工具桥准入复查（2026-10-24）
 
 按最新用户要求，在原 `http://127.0.0.1:51204` 准备固定无账户框架页，未换端口或通道。页面加载正常，首个readEvents即被saved permission规则拒绝，尚未启Debugger、设置断点或刷新；不是新的采集器/产品FAIL。页面和服务已关闭，账号操作0、原安装/数据库/stash不变。真实工具桥连续性仍NOT_RUN，srcdoc写入者未知。下一条件仍是平台对当前任务该origin提供正式撤销/重新审批；公开网站权限说明没有证明能清除此会话记录，不要求本人重复重载或修改全局开关。固定复现入口已保留，解除后可直接续接，禁止修改保护配置或换地址取得相同被拒结果。
