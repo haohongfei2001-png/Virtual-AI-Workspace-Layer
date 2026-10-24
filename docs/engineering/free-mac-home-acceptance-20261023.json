@@ -1233,5 +1233,24 @@
     },
     "nextGate": "Do not request another account refresh yet. First establish supported tool-bridge breakpoint/event continuity on a non-account fixture, within allowed tool permissions; previously denied localhost cannot be bypassed. No hidden transport, direct debug port, profile switching, or protection disabling.",
     "realAcceptance": "NOT_RUN beyond native editor presence; existing UI failure not promoted to PASS"
+  },
+  "noAccountBridgePreflight20261024": {
+    "baseHead": "01edacfb654bd82034b7eac501948157bfc93fbe",
+    "fixture": "tools/frame-attribution/bridge-fixture.mjs",
+    "fixtureSha256": "4fba1cfc239b07c0e262c1a16e64f41ae96a5d62e6283e955421c7ee6b3b9550",
+    "origin": "http://127.0.0.1:51204",
+    "pageLoad": "PASS; fixed page, one own iframe and cleanup-check button visible",
+    "firstAction": "readEvents(Debugger.scriptParsed,Debugger.paused,Debugger.breakpointResolved,Inspector.detached)",
+    "permissionResult": "BLOCKED_SAVED_PERMISSION; before Debugger.enable or source breakpoint",
+    "rawToolMessage": "Browser Use rejected this action due to browser security policy. Reason: A saved user permission setting blocks this action. Browser use could not acquire authority to use raw CDP. The CDP approval gate did not grant access for http://127.0.0.1:51204. A saved permission or managed policy denies access.",
+    "debuggerEnabled": false,
+    "breakpointsSet": 0,
+    "observedReloads": 0,
+    "accountOperations": 0,
+    "bridgeContinuity": "NOT_RUN",
+    "srcdocWriter": "NOT_ESTABLISHED",
+    "cleanup": "Created fixture tab closed; local server stopped. Original extension, data, tabs and stashes unchanged.",
+    "nextExternalCondition": "Official revocation/reapproval of the saved CDP denial for this origin in the current task. Existing tools expose no corresponding reset. Do not edit policy files, invoke hidden APIs, switch origin/port/surface/task or debug the account instead.",
+    "publicDocumentation": "https://learn.chatgpt.com/docs/browser documents site permission controls but does not establish a current-task saved-CDP-denial reset method."
   }
 }
