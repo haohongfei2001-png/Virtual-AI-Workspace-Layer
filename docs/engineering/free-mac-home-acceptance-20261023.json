@@ -1773,7 +1773,7 @@
     "baseline": "6034825c",
     "realMac": {
       "personalConfirmation": "PASS_USER_CONFIRMED_AND_OWN_POPUP_READBACK",
-      "knownPrivateObjectsRestored": "PASS_WITH_LAST_CONFIRMED_LABEL",
+      "knownPrivateObjectsRestored": "KNOWN_ROWS_RENDERED_AFTER_UNLOCK_PRIVATE_ONLY_ORIGIN_NOT_ESTABLISHED",
       "formalLinkNativeOpen": "PASS_TARGET_TITLE_READBACK",
       "chatFourGridReturn": "PASS_BOTH_FORMAL_FRAMES",
       "continuedForeground": "FAIL_FOREGROUND_FAILED",
@@ -1799,6 +1799,30 @@
       "database": true,
       "stashes": 3
     },
-    "activation": "NOT_RUN"
+    "activation": "R61_SAME_ID_RELOAD_DISPATCHED_OWN_READY_AND_FORMAL_FRAMES_READ_BACK_RUNTIME_FINGERPRINT_NOT_ESTABLISHED"
+  },
+  "nativeSearchModal20261024": {
+    "baseline": "85a676f7",
+    "realMac": {
+      "nativeSearchOpen": "PASS_AX_HEADING_AND_COMBOBOX",
+      "nativeSearchQuery": "PASS_EXACT_QUERY_READBACK",
+      "nativeSearchClose": "PASS",
+      "returnAfterSearch": "FAIL_surface-unsafe-native-history-list",
+      "freshDocument": "INSTANT_ONLY_NOT_USER_UNLOCKED",
+      "message": "NOT_SENT",
+      "fullDailyAcceptance": "NOT_ESTABLISHED"
+    },
+    "independentReproduction": {
+      "before": "FAIL_BACKGROUND_HIDING_DISPOSES_MOUNT",
+      "fix": "hidden modal retains only original bound transport; full layout proof required after close",
+      "validation": "380 targeted tests PASS; isolated formal MV3 modal 25 seconds across renewal PASS",
+      "realModalDOMAttribution": "NOT_DIRECTLY_OBSERVED"
+    },
+    "preservation": {
+      "oldDraft": true,
+      "databaseUntouched": true,
+      "sameExtensionId": true
+    },
+    "activation": "R62_NOT_RUN"
   }
 }

@@ -10,10 +10,11 @@ function fixture(options={}){
  const win={addEventListener:(k,fn)=>{if(!listeners.has(k))listeners.set(k,new Set());listeners.get(k).add(fn);},removeEventListener:(k,fn)=>listeners.get(k)?.delete(fn),MutationObserver:class{constructor(fn){observer=fn;}observe(){}disconnect(){}}};
  const slot={isConnected:true,children:[],append(b){this.children.push(b);b.parent=this;}};
  const doc={defaultView:win,location:{href:'https://chatgpt.com/'},body:{},createElement:()=>({dataset:{},style:{},events:{},setAttribute(k,v){this[k]=v;},addEventListener(k,fn){this.events[k]=fn;},remove(){if(this.parent)this.parent.children=this.parent.children.filter(x=>x!==this);}})};
+ slot.ownerDocument=doc;const roots=Object.fromEntries(['history','header','reading','composer'].map(key=>[key,{isConnected:true,ownerDocument:doc}]));let visible=false;
  const frames=['workspace','sidebar'].map(role=>({role,frame:{isConnected:true,ownerDocument:doc,contentWindow:{}}}));
  const binding={documentToken:'token',producerToken:'producer',browserDocumentId:'parent',routeEpoch:1,origin:'https://chatgpt.com',expiresAt:new Date(60000).toISOString()};
- const adapter={updateBinding:next=>{calls.updates.push(next);return true;},start:async()=>({binding}),stop:()=>{calls.stop++;},inspect:()=>({ok:true,regionEpoch:region,navigationSlot:slot}),hasNativeLayer:()=>layer};
- const surface={mount:async(c,i,o)=>(surrender=o.onSurrender,{id:'mount',documentToken:'token',regionEpoch:region}),frames:()=>frames,showWorkspace:()=>{calls.show++;},showReading:()=>{calls.reading++;},suspend:()=>{calls.suspend++;},dispose:()=>{calls.dispose++;}};
+ const adapter={updateBinding:next=>{calls.updates.push(next);return true;},start:async()=>({binding}),stop:()=>{calls.stop++;},inspect:()=>({ok:true,regionEpoch:region,navigationSlot:slot,...roots}),hasNativeLayer:()=>layer};
+ const surface={mount:async(c,i,o)=>(surrender=o.onSurrender,{id:'mount',documentToken:'token',regionEpoch:region}),frames:()=>frames,showWorkspace:()=>{visible=true;calls.show++;},showReading:()=>{visible=false;calls.reading++;},visibility:()=>({workspace:visible,sidebar:visible}),suspend:()=>{visible=false;calls.suspend++;},dispose:()=>{calls.dispose++;}};
  const bridge={registerMount:async()=>{calls.register++;return {ok:true};},confirmParent:async value=>{calls.confirm.push(value);return {ok:true,grant:{id:`grant_${value.role}`,mountId:'mount',role:value.role,parentDocumentId:'parent',uiDocumentId:`ui_${value.role}`,scopeGrantId:'scope',expiresAt:new Date(21000).toISOString()}};}};
  const controller=createSurfaceController({onWake:()=>false,...options,document:doc,adapter,surface,bridge,extensionOrigin:'chrome-extension://extension',onTerminated:(reason,presentation)=>calls.terminations.push({reason,presentation}),now:()=>time,elapsedNow:()=>time,schedule:(fn,ms)=>{const id=++n;timers.set(id,{fn,at:time+ms});return id;},cancel:id=>timers.delete(id)});
  const message=(role='workspace',patch={})=>{const event={source:frames.find(x=>x.role===role).frame.contentWindow,origin:'chrome-extension://extension',data:{type:'VAIWL_UI_JOIN',role,nonce:`nonce_${role}`},...patch};for(const fn of listeners.get('message')??[])fn(event);};
@@ -376,4 +377,35 @@ test('keyboard return transfers its own focus after show; pointer and programmat
  await f.controller.start({});await f.both();assert.equal(focused,0);
  for(const detail of [1,0]){f.controller.showReading();const button=f.slot.children[0];f.doc.activeElement=button;button.events.click({isTrusted:true,detail});assert.equal(focused,detail===0?1:0);}
  assert.equal(f.doc.activeElement,frame);f.controller.stop();
+});
+
+test('native modal may hide background layout without destroying a live suspended mount',async()=>{
+ const f=fixture(),inspect=f.adapter.inspect;let hidden=false;
+ f.adapter.inspect=()=>hidden?{ok:false,reason:'unsafe-native-history-list'}:inspect();
+ await f.controller.start({});await f.both();f.controller.showReading();
+ hidden=true;f.layer(true);f.change();
+ assert.equal(f.calls.dispose,0,'native modal background hiding is presentation suspension');
+ assert.equal(f.slot.children.length,0);assert.equal(f.controller.showWorkspace(),false);
+ hidden=false;f.layer(false);f.change();
+ assert.equal(f.slot.children.length,1);assert.equal(f.calls.show,1,'closing the modal restores only the return');
+ assert.equal(f.controller.showWorkspace(),true);f.controller.stop();
+});
+
+test('hidden modal transport renews across expiry but cannot show until full geometry returns',async()=>{
+ const f=fixture(),inspect=f.adapter.inspect;let hidden=false;
+ f.adapter.inspect=()=>hidden?{ok:false,reason:'unsafe-native-history-list'}:inspect();
+ f.bridge.renewSession=async()=>f.renewAck();
+ await f.controller.start({});await f.both();f.controller.showReading();hidden=true;f.layer(true);f.change();
+ for(let i=0;i<3;i++){f.tick(10000);await drain();assert.equal(f.calls.dispose,0);assert.equal(f.controller.showWorkspace(),false);assert.equal(f.slot.children.length,0);}
+ assert.equal(f.calls.updates.length,3);
+ f.layer(false);hidden=false;f.change();assert.equal(f.slot.children.length,1);assert.equal(f.calls.show,1);assert.equal(f.controller.showWorkspace(),true);f.controller.stop();
+});
+test('modal never exempts expired authority, detached roots, changed frame or route',async()=>{
+ for(const invalidate of [f=>f.tick(20000),f=>{f.adapter.inspect().header.isConnected=false;},f=>{f.frames[0].frame.contentWindow={};},f=>{f.doc.location.href+='c/other';}]){
+  const f=fixture();await f.controller.start({});await f.both();f.layer(true);f.change();invalidate(f);f.change();assert.equal(f.calls.dispose,1);assert.equal(f.controller.showWorkspace(),false);
+ }
+});
+test('closing modal with invalid background still withdraws the mount',async()=>{
+ const f=fixture(),inspect=f.adapter.inspect;let hidden=false;f.adapter.inspect=()=>hidden?{ok:false,reason:'unsafe-native-history-list'}:inspect();
+ await f.controller.start({});await f.both();hidden=true;f.layer(true);f.change();assert.equal(f.calls.dispose,0);f.layer(false);f.change();assert.equal(f.calls.dispose,1);assert.equal(f.slot.children.length,0);
 });

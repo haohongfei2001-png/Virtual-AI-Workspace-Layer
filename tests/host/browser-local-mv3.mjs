@@ -70,6 +70,18 @@ try{
  const assertPersonal=async()=>assert.equal((await popup.evaluate(()=>chrome.runtime.sendMessage({v:1,type:'HOST_LOCAL_SPACE',action:'status'}))).mode,'personal');
  await popup.bringToFront();await page.bringToFront();await workspace.getByText('Native Project',{exact:true}).first().waitFor({timeout:15000});await assertPersonal();
  report.checks.tabFocusKeepsBinding=true;
+ // Native modal hides the background without replacing its document or roots.
+ // Keep the real installed frames/owner alive through several renewal windows.
+ await page.getByRole('button',{name:'返回原生阅读',exact:true}).click();await back.waitFor();
+ const modalFrame=await page.locator('iframe[src="chrome-extension://'+id+'/workspace.html"]').elementHandle();
+ await page.evaluate(()=>{const main=document.querySelector('main'),nav=document.querySelector('nav');for(const node of [main,nav]){if(!node)throw Error('missing-modal-background');node.setAttribute('aria-hidden','true');node.inert=true;}const dialog=document.createElement('dialog');dialog.id='fixture-native-modal';dialog.setAttribute('aria-modal','true');dialog.textContent='Native search fixture';document.body.append(dialog);dialog.showModal();});
+ for(let at=0;at<25;at++){await new Promise(r=>setTimeout(r,1000));assert.equal(await modalFrame.evaluate(node=>node.isConnected),true,'native modal must not destroy the bound frame');assert.equal(await page.locator('[data-va-owned]:popover-open').count(),0);}
+ await assertPersonal();
+ await page.evaluate(()=>{document.querySelector('#fixture-native-modal').remove();for(const node of [document.querySelector('main'),document.querySelector('nav')]){node.removeAttribute('aria-hidden');node.inert=false;}});
+ await back.waitFor({timeout:10000});assert.equal(await page.locator('[data-va-owned]:popover-open').count(),0);await back.click();
+ await workspace.getByText('Native Project',{exact:true}).first().waitFor({timeout:10000});await assertPersonal();assert.equal(await modalFrame.evaluate(node=>node.isConnected),true);await modalFrame.dispose();
+ report.checks.nativeModalAcrossRenewalRestoresOnlyReturn=true;
+
  await page.getByRole('button',{name:'返回原生阅读',exact:true}).click();
  await page.getByRole('button',{name:'Native search',exact:true}).click();await page.waitForURL(origin+'/');await back.waitFor({timeout:15000});await back.click();
  await workspace.getByText('Native Project',{exact:true}).first().waitFor({timeout:15000});await assertPersonal();report.checks.nativeSearchAndUnplannedSpaKeepsBinding=true;

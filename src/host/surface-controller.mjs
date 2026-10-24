@@ -69,9 +69,21 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
  function geometryContinuity(state){
   return current===state&&state.epoch===epoch&&state.registered&&doc.location.href===state.url&&Date.parse(state.context.binding.expiresAt)>now()&&state.grants.size===2&&[...state.grants.values()].every(g=>Date.parse(g.expiresAt)>now())&&state.frames.every(({frame,window})=>frame.isConnected&&frame.ownerDocument===doc&&frame.contentWindow===window)&&adapter.isSameNativeRegions?.(state.inspection)===true;
  }
+ // A native modal can legitimately hide/inert the background. It grants no
+ // presentation authority: retain only the already registered, hidden transport
+ // while its original document, roots, frames and unexpired grants survive.
+ function hiddenModalContinuity(state){
+  if(!adapter.hasNativeLayer()||!frameDocumentsIntact(state)||state.dormant||state.geometryPaused||current!==state||state.epoch!==epoch||!state.registered||state.mode!=='suspended'||doc.location.href!==state.url||Date.parse(state.context.binding.expiresAt)<=now()||state.grants.size!==2)return false;
+  let visible;try{visible=surface.visibility?.(state.handle);}catch{return false;}
+  if(visible?.workspace!==false||visible?.sidebar!==false)return false;
+  const roots=[state.inspection.history,state.inspection.header,state.inspection.reading,state.inspection.composer,state.inspection.navigationSlot,...(state.inspection.historyMaskRoots??[]),...(state.inspection.protectedRegions??[]),...(state.inspection.readingViewport?[state.inspection.readingViewport]:[])];
+  return roots.every(node=>node?.isConnected&&node.ownerDocument===doc)&&state.frames.every(({frame,window,role})=>frame.isConnected&&frame.ownerDocument===doc&&frame.contentWindow===window&&Date.parse(state.grants.get(role)?.expiresAt)>now());
+ }
+ function renewalAllowed(state){return adapter.hasNativeLayer()?hiddenModalContinuity(state):authorized(state);}
  function reconcileGeometry(state){
   if(current!==state)return false;
   if(state.dormant){if(doc.location.href!==state.url||state.frames.some(({frame,window})=>!frame.isConnected||frame.ownerDocument!==doc||frame.contentWindow!==window)){stop('dormant-document-changed');return false;}ensureReturn(state);return false;}
+  if(adapter.hasNativeLayer()){suspend('native-layer');if(!hiddenModalContinuity(state))stop('native-region-changed');return false;}
   // One complete synchronous snapshot for this reconciliation. Repeating the
   // full reading proof can spend a second budget without any intervening DOM
   // event; do not turn that second attempt into a terminal mount failure.
@@ -176,10 +188,10 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
  function arm(state){if(state.dormant)return;cancel(state.timer);const until=leaseUntil(state);state.timer=schedule(()=>{if(current===state&&!state.dormant)stop('ui-grant-expired');},Math.max(0,until-now()));if((state.renewalCeiling===null||until>state.renewalCeiling)&&!state.geometryPaused&&typeof bridge.renewSession==='function'&&state.grants.size===2&&!state.renewing&&state.renewTimer===null)state.renewTimer=schedule(()=>{state.renewTimer=null;void renewSession(state);},Math.max(1,Math.min(10000,(until-now())/2)));}
  async function renewSession(state){
   if(state.dormant||state.geometryPaused)return;const geometryRevision=state.geometryRevision,priorUntil=leaseUntil(state);
-  if(!authorized(state)){if(current===state)stop('stale-session-renewal');return;}state.renewing=true;let renewalStage=null;
+  if(!renewalAllowed(state)){if(current===state)stop('stale-session-renewal');return;}state.renewing=true;let renewalStage=null;
   try{
    const raw=await withRequestDeadline(()=>bridge.renewSession({handle:state.handle,binding:state.context.binding}),{timeoutMs:6000,now:elapsedNow,schedule,cancel});
-   if(current!==state||state.dormant||state.geometryRevision!==geometryRevision)return;renewalStage='local-validity';if(!authorized(state))throw Error('stale-session-renewal');
+   if(current!==state||state.dormant||state.geometryRevision!==geometryRevision)return;renewalStage='local-validity';if(!renewalAllowed(state))throw Error('stale-session-renewal');
    renewalStage='ack';
    const ack=structuredClone(raw),binding=ack?.binding,keys=['documentToken','producerToken','browserDocumentId','routeEpoch','origin'];
    const future=value=>Number.isFinite(Date.parse(value))&&Date.parse(value)>now()&&Date.parse(value)<=now()+20000;
