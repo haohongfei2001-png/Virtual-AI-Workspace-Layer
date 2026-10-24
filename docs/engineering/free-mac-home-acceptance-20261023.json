@@ -2357,5 +2357,56 @@
       "isolatedFormalMV3": "PASS narrow late-rows plus title-span test, accepted one Project and two members; no preview read",
       "broaderMV3": "NOT_RERUN; late rows case added to existing browser-local-mv3 journey; no full real acceptance inference"
     }
+  },
+  "projectMemberMacR85_20261025": {
+    "baseHead": "ac06141290c12d95a45b84169f010227a45826ac",
+    "scope": "Original Profile 4, same extension ID, native System Events/AppKit only; current visible navigation metadata and own extension UI; no tab claim/CDP/internal API",
+    "candidate": {
+      "revision": "r85",
+      "canonicalFilesMatched": 196,
+      "nativeReload": "DISPATCHED_ONCE",
+      "runtimeEvidence": "New popup association and memberReject fields observed; no runtime hash assertion"
+    },
+    "actualMac": {
+      "projectTitleAssociation": "PASS: association=1 with native single SPAN title after reload",
+      "projectCardAndMembers": {
+        "state": "PASS",
+        "projectCards": 1,
+        "memberLinks": 2,
+        "evidence": "Formal VAIWL workspace AXWebArea contains observed Project heading and its two member links; unrelated rows remain under UNKNOWN"
+      },
+      "memberOpen": {
+        "state": "PASS",
+        "evidence": "Activated a member link in formal workspace; later native address is a conversation route and native window title matches selected member; no chat body read",
+        "immediateSixSecondArrival": "NOT_ESTABLISHED"
+      },
+      "nativeReading": "PASS: own popup reports connected reading after member arrival, no ui-frame-suspended reported in this path",
+      "fourGridAfterMember": "PASS: native return exposes formal workspace and history frames",
+      "projectRetentionAfterMember": {
+        "state": "NOT_ESTABLISHED",
+        "observed": "Instant view after return contains UNKNOWN rows but no earlier Project card; browser document continuity not independently established; private layer remains locked"
+      },
+      "privateBindingStatus": "LOCKED: existing private data descriptor reported by private popup; user-only current-document confirmation requested, not clicked by assistant",
+      "latestScanPhase": "scan-failed observed later; UI remained connected; exact scan exception cause NOT_ESTABLISHED"
+    },
+    "diagnosticInterpretation": "navigationSummary describes the latest bounded page, not a cumulative inventory; latest page candidates=0/visible=0 did not negate earlier accepted Project/member observations",
+    "nativeDriver": "Read-only or pre-input guards stopped on changed foreground, missing nodes or focus mismatch. Native AXPress dispatch alone is not counted as navigation success. Other Chrome was not operated.",
+    "protected": {
+      "databaseModifiedByRepair": false,
+      "oldTabsAndDraftsRetained": true,
+      "manifestUnchanged": true,
+      "sameExtensionId": true,
+      "internalAPI": false,
+      "realCDPOrBrowserClaim": false,
+      "unlockClickedByAssistant": false,
+      "jobChromeOperated": false
+    },
+    "pending": [
+      "Current-document user confirmation before private restoration acceptance",
+      "Distinguish new-document instant reset from same-document retention loss",
+      "Same-document Worker restart remains NOT_ESTABLISHED from prior attempt; do not claim offline pass as Mac pass",
+      "New-chat and account-risk journeys not executed"
+    ],
+    "overall": "PARTIAL_NOT_FREE_ACCEPTED"
   }
 }
