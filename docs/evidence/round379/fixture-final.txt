@@ -1,0 +1,26 @@
+✔ test-process partial metadata changes ancestry only and restores identical native facts (19.036333ms)
+✔ partial metadata test control is unavailable outside the J2 fixture (3.1095ms)
+✔ LEGACY serves native-shaped reconstruction without oracle or initial idless identity (15.549292ms)
+✔ fixed authentication endpoints require server-owned cookie and token and return raw protocol data (6.562333ms)
+✔ idless native activation reveals correct distinct same-name project and members (2.930083ms)
+✔ ordinary NONE has explicit current native menu state; UNKNOWN remains unselected (1.646958ms)
+✔ test-process identity control retains independent roster order without active-context claim (1.790125ms)
+✔ offline acceptance requires explicit test-process control and never comes from append alone (2.498125ms)
+✔ non-first selected Team binds declared failure receipt without appending a message (1.344417ms)
+✔ selected Team success keeps original accepted time and duplicate operation rejection (0.132792ms)
+✔ selected-context declared send rejects undefined header without creating operation (0.070334ms)
+✔ selected-context declared send rejects personal header without creating operation (0.050416ms)
+✔ selected-context declared send rejects absent header without creating operation (0.352583ms)
+✔ stored receipt is inaccessible after context switch, principal switch or roster removal (0.112833ms)
+✔ readback rejects supplied mismatching context header but allows production headerless readback (0.060417ms)
+✔ explicit absent selection never falls back to first roster row (0.058625ms)
+✔ legacy single-roster headerless failure and immutable operation readback remain supported (0.081375ms)
+✔ ambiguous legacy roster remains rejected without explicit selection (0.092917ms)
+ℹ tests 18
+ℹ suites 0
+ℹ pass 18
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 80.0215

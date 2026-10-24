@@ -1,0 +1,23 @@
+{
+  "status": "PASS_NATIVE_VISIBILITY_PREREQUISITE",
+  "evidence": "REAL_NATIVE_BROWSER_VISIBILITY_ONLY",
+  "productAcceptance": "NOT_ESTABLISHED",
+  "browserPrecondition": {
+    "transport": "isolated-loopback-CDP",
+    "noDefaults": true,
+    "headed": true,
+    "focusEmulation": "NOT_ENABLED_BY_PLAYWRIGHT",
+    "source": "Playwright connectOverCDP noDefaults public option; native Chromium capturer is session-owned"
+  },
+  "events": [
+    {
+      "state": "hidden",
+      "trusted": true
+    },
+    {
+      "state": "visible",
+      "trusted": true
+    }
+  ],
+  "browserVersion": "156.0.8078.4"
+}

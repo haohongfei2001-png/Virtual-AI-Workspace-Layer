@@ -1,0 +1,15 @@
+{
+  "evidence": "REAL_BROWSER_SYNTHETIC_FREE_SHARED_ASSETS_PAGE_TRANSPORT",
+  "browser": "156.0.8078.4",
+  "checks": [
+    "free-workset-opens-original-native-ref",
+    "native-back-forward-preserves-original-draft",
+    "free-manually-selected-snippet-reaches-native-message",
+    "free-pro-free-preserves-human-assets-and-shared-preferences",
+    "free-excludes-pro-derived-name-after-mode-return",
+    "free-changed-native-message-refuses-stale-snippet-anchor",
+    "background-update-retains-native-reading-and-draft-nodes",
+    "obsolete-lease-update-does-not-read-or-rebind"
+  ],
+  "fail": 0
+}

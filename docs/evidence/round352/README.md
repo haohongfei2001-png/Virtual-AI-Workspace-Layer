@@ -1,0 +1,7 @@
+# Round352：发送链局部空闲判定
+
+基线8d48945。新增私有同步isIdle：correlator只在有效binding且原clock检查通过、无pending intent时true；复用原30秒到期机制，不续observedAt、不清used重放账本。host-send-candidates聚合inflight读取、intent/terminal访问的首次await前计数、correlator pending、pending ACK和retry timer。ACK消费的整个await由inflight覆盖，不能在相关意图已从correlator取走但尚未持久化时误报空闲。
+
+新correlator独立12项；候选owner追加6项（其中多种入口/同步throw/异步reject矩阵）。19个相关文件270/270 PASS后，追加异常释放用例的最终3文件86/86 PASS；不累加两套计数。独立只读审查无阻断。没有网络读取、候选生成、预算重置或主动删ACK。过期ACK尚未被既有observe清理时保守false，当前不为促成idle增加清扫/重读。
+
+这仍仅是局部必要条件，不是授权、准入许可或UI11完成。实际自动待命未启用：first-send early/pending/inflight、old-terminal入口空表窗口、ack/observation/continuation执行中事务、UI备份分块/待确认人工操作等仍需纳入；同producer关闭栅栏还需避免检查后新请求进入。已持久continuation不因待命删除，旧grant不能复活。没有新浏览器验收，完整Free/自然休眠/100k/真实profile和其余G/U继续NOT_RELEASE_READY。

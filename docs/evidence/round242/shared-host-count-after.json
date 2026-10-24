@@ -1,0 +1,59 @@
+{
+  "kind": "MOCK_HOST_GATE_COUNTS_NOT_BROWSER_PERFORMANCE",
+  "migrations": 1,
+  "directories": 1,
+  "format": "vaiwl-shared-ref-directory-v1",
+  "nativeRefs": 80,
+  "sharedRefs": 80,
+  "humanAssetsPreserved": true,
+  "rows": [
+    {
+      "batch": 0,
+      "sharedCloneRefs": [
+        0
+      ]
+    },
+    {
+      "batch": 1,
+      "sharedCloneRefs": [
+        0
+      ]
+    },
+    {
+      "batch": 2,
+      "sharedCloneRefs": [
+        0
+      ]
+    },
+    {
+      "batch": 3,
+      "sharedCloneRefs": [
+        0
+      ]
+    },
+    {
+      "batch": 4,
+      "sharedCloneRefs": [
+        0
+      ]
+    },
+    {
+      "batch": 5,
+      "sharedCloneRefs": [
+        0
+      ]
+    },
+    {
+      "batch": 6,
+      "sharedCloneRefs": [
+        0
+      ]
+    },
+    {
+      "batch": 7,
+      "sharedCloneRefs": [
+        0
+      ]
+    }
+  ]
+}

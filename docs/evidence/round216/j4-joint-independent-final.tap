@@ -1,0 +1,35 @@
+✔ request diagnostic is bounded and excludes fixture body, principal and credentials (1.627946ms)
+✔ timeout diagnostics preserve real hold predicate and timeout without resetting budget (6.42448ms)
+✔ native acceptance creates original send time, holds only detail delivery, and never replays send on release (2.053367ms)
+✔ bad native send cannot create evidence and changed native handler cannot silently bypass fixture (0.694137ms)
+✔ J4 fixture fault never blocks native C2 receipt GET and never changes default native submit (5.821691ms)
+✔ optional J4 server exposes authenticated-only held detail and actual original POST record (51.522844ms)
+✔ native detail uses existing exact historical and ACK codecs without broadening authenticated semantics (7.404992ms)
+✔ continuous interruption oracle requires actual new authenticated read, unmodified budget wait and peer-scope negatives (7.942272ms)
+✔ mixed native submit updates service title/detail and app DOM in one acceptance without holding ACK (1.222995ms)
+✔ debugger boundary only suspends production drain and never evaluates or injects authority (8.123977ms)
+✔ native rename POST persists consistent route, list and authenticated detail titles (57.041861ms)
+✔ continuous mixed runner requires real pending before interruption and idempotent authenticated reread (14.957165ms)
+✔ return checks actual mounted state and clicks only a visible native return button (0.856272ms)
+✔ portable J4 assets cover all manual asset classes without authority or evidence (8.583129ms)
+✔ same asset bundle cannot be restored into other authenticated context (2.216784ms)
+✔ J4 native context switch is opt-in authenticated roster-validated service (56.732029ms)
+✔ continuous segment never claims missing atomic/schema/profile acceptance (0.309797ms)
+✔ runner uses production file import and actual lifecycle APIs without business-state injection or synthetic grants (4.651077ms)
+✔ repair fault touches only checksum of an existing production root and remains explicit (1.004105ms)
+✔ repaired UNKNOWN route uses stable identity and never expects revoked native title (0.622329ms)
+✔ recovered link oracle requires the original route, enabled UNKNOWN identity and redacted title (1.758162ms)
+✔ silent server loss before 50s is not a received auth-change signal (3.862207ms)
+✔ foreground force revalidates before natural proof boundary (0.612785ms)
+✔ diagnostic outer timeout never relaxes 60s proof acceptance (1.149865ms)
+✔ runner keeps independent natural and trusted-foreground observations (5.864357ms)
+✔ headed execution is explicit and keeps native trusted visibility assertions (2.787335ms)
+✔ foreground uses the same native browser with no emulation and natural case remains independent (1.100771ms)
+ℹ tests 27
+ℹ suites 0
+ℹ pass 27
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 218.143863

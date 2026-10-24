@@ -1,0 +1,49 @@
+{
+  "selected": "descendants",
+  "evidence": "WEB_MECHANISM_ONLY_REAL_HEADLESS_TRUSTED_NATIVE_EDITOR_GESTURES",
+  "realChatGPT": "NOT_RUN",
+  "physicalIME": "NOT_RUN",
+  "scope": "Passive send intent observation, no authentication/transport/server ACK and no production profile certification.",
+  "scriptHash": "8c6ca206d7d4b19fb663fba7ed5e52ce529594d2cb157902a986fd1840b53697",
+  "sourceHashes": {
+    "src/host/native-send-intent.mjs": "72d880a36e6e79f70ed896212b683c5e44f79cffedc1516295f9380447c2a090",
+    "src/b1/identity.mjs": "6d7ca616701826733d4936d8a139395ccf1a3111e025ec6b1035d78c1dc05e99"
+  },
+  "results": [],
+  "pendingDescendant": {
+    "mode": "embedded-button",
+    "intents": [
+      {
+        "intentId": "fa4584ce-71a7-46d7-aa70-0e58c8ed2920",
+        "kind": "send",
+        "isComposing": false,
+        "observedAt": "2026-10-15T00:12:47.648Z"
+      }
+    ],
+    "native": {
+      "click": 0,
+      "enter": 1
+    },
+    "bodyAccess": {
+      "reads": 0,
+      "writes": 0
+    },
+    "unchanged": true,
+    "targets": [
+      {
+        "targetId": "editor",
+        "key": "Enter",
+        "trusted": true
+      }
+    ],
+    "active": {
+      "id": "editor",
+      "tag": "DIV"
+    },
+    "childEditable": true
+  },
+  "status": "FAIL",
+  "error": "AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:\n\n  assert(state.targets.some(e=>e.targetId==='descendant'&&e.key==='Enter'&&e.trusted))\n\n    at file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/host/native-send-editor-browser.mjs:17:1093",
+  "sourceChangedDuringRun": false,
+  "scriptChangedDuringRun": false
+}

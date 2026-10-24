@@ -1,0 +1,5 @@
+{
+  "src/host/send-correlator.mjs": "fa3c6edda97e65a3ded253dcbb636e995cd524b66e81363968c22efa0e11f964",
+  "src/runtime/host-send-candidates.mjs": "9b7655ee312baaeb6b923eb6c2ffb221e1c43c66dc95716e2f1383f4b8a32298",
+  "tests/host/send-candidate-read-failure-budget.test.mjs": "081d545a4ad623d455bf5594939080a581920a10965c1249c39e12ce9f89254d"
+}

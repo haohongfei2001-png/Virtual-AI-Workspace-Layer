@@ -1,0 +1,144 @@
+{
+  "schema": "vaiwl-independent-engineering-closure-v1",
+  "baseHead": "dc7756648d272791ef709d0998a61393ce596e4c",
+  "tasks": [
+    "B3.F",
+    "B4.F",
+    "B5.F",
+    "C1",
+    "C2",
+    "C3",
+    "C4",
+    "C5",
+    "C6",
+    "F3"
+  ],
+  "finding": "Persisted compactRows=false was omitted from production frame DTO, discarded by renderer and absent from frame settings. Existing preference/CAS/owner paths now wired.",
+  "classification": "See original STATUS opening table; no other confirmed independent implementation gap in reviewed scope. Not a proof of defect absence or completed Free acceptance.",
+  "auditReferenceHashes": {
+    "extension/README.txt": "2c89521a58ac4b2d93df2fac5e9b748ce2682a11dfc6bfa62f463ddd0acfc41c",
+    "extension/build.mjs": "5d9baf6ddf3dc3771882d116c4888db67abf7a418c747052048fd0630c924949",
+    "extension/package.mjs": "6bf1847fa0dcb365613e46b5cbe4058ebe455cb0de20ee6c546f0d8a01f9fd9a",
+    "src/data/free-evidence-repository.mjs": "d937a4efbafe9c57ba085c963e593e21d781ce219d531cde7701c76d9ba252cf",
+    "src/data/free-projection.mjs": "f60e26a1cc7eaa9a630ad1bbbdf1a78af227aeb6974acfe54308197914222fa8",
+    "src/data/free-time-policy.mjs": "8a75b5bdde8abf8ee07873ecf2aa45a19faccd030b9f03c738b56db6ba9ea17a",
+    "src/data/native-repository.mjs": "e2eaf5314683a5fbbae07066f5fb6eb92b47b96c62568eecf0c107eadd93be50",
+    "src/data/preferences.mjs": "1fb8395c5dfe23d64c91095b71a1c117b9762b3ccec68e262aaf73744b12c9d7",
+    "src/data/repository.mjs": "0e03a0e3c7cf3a7779191aebb05f221fd2ef37b03ee805f2e0c5375566df3b7c",
+    "src/host/frame-appearance.mjs": "b393fb7be24fb0f0834d239d3ede9503f08cbef98f6fd3cc4b64312fac3b5972",
+    "src/host/frame-resume-state.mjs": "60976e1f4a1e73c93d8d6ac6d4211b138936b2ff282c60e9293ad0e5305a58fb",
+    "src/host/free-frame-backup.mjs": "433e747331d90eeb3af8b2de0efb29d1603d1a45759bfa1b0dbb1f0ac524d552",
+    "src/host/free-frame-client.mjs": "fe33ce9e7677bf6ae8b7e8f64d48c9a519cc67f544fcdb1007dddf6685fac71f",
+    "src/host/native-actions.mjs": "33827b4ef137df1f2284e4940e1a5fa1f7e778add695c817b1b155e978c33586",
+    "src/host/surface-controller.mjs": "33079a20bc2ea4c1963a158ae899e0fbeef21a0e730be1082ea62b9b8d74becd",
+    "src/host/ui-frame-client.mjs": "7ee9218fe396c539cefe56e8d1b4cd65ea8a7de3b2656b2f6515cb1b519815f1",
+    "src/navigation/mount-surface.mjs": "b25ab416c7e76beb0eebe34c811f9241f3d848c3dc5d85640a456d19c0e0d311",
+    "src/navigation/navigation.mjs": "f8f6a07719acefb9e39927767b84128a87690123bfeb8cca4398ae40dd2c4729",
+    "src/navigation/search.mjs": "36fe6eda63bd85ff203a306a78309a91979dd9705b2cdb2b64c1f764c2e2b8d0",
+    "src/navigation/styles.mjs": "81e076b00f9ae87ab71c6f6d27ee9a3788ecb98ee0d9bc3cde260158eefd23d0",
+    "src/runtime/free-frame-projection.mjs": "798dc789b6e8aafc2030984e9c1be6a8762109b80545a9d8505841e7dd9cfd39",
+    "src/runtime/free-search-projection.mjs": "354fd7098b8bd695fb281f6641388127347306e63186057c9b0604f92fc224dd",
+    "src/runtime/free-working-set-projection.mjs": "b50b973005612c5d9d76cff9a4acd6d6fc23d006dea787d681c534385629ff4f",
+    "src/runtime/host-continuation-owner.mjs": "f4d2dd6393d36fe7708beb9020571a4c11f63459dc4f3075ffbfa982e5e65630",
+    "src/runtime/host-recovery-service.mjs": "78839dcb8f8b1bc8e66b5e06e2b8d0fcea9b414bd10274d6d32bd02cb835c171",
+    "src/runtime/host-snippet-service.mjs": "15c63959f85f73e6be7eb194c4534120bcfabe23ec17746b6b063977bdb75cae",
+    "src/runtime/host-view-service.mjs": "553476a0609a9a60e3f026c26a58b03314107d9a72179560b940045a178ee5cf",
+    "src/runtime/scope-authority.mjs": "246c1add1b7ffcce87b94645e429a036c0bc3989bb79ed07066d5407eca49437",
+    "tests/host/frame-projection-renderer.test.mjs": "4c18ab7b77ee725905322c14dd2216141e43b013c4984082d0a19e7d9516eddc",
+    "tests/host/free-frame-projection.test.mjs": "83f23c3509a343119f2ec91be484d8db47ac41cd0e875b722e6cbafdef1e4fb6",
+    "tests/host/j1-package-journey.mjs": "9887ebcdf7d48e64275d0ddf8665cba738c2ab495384514c77775631db3cc22d",
+    "tests/host/j2-package-journey.mjs": "80fd3614e520924bd1cb452eb9de3956649e7c2f3686e0e6c56f855bf6e74103",
+    "tests/host/j3-package-journey.mjs": "26e0f4fa879e925dc6eb01bd34835eedef19d5a34293c3cd65afdc39c9f32e20",
+    "tests/host/j4-evidence-recovery.mjs": "2a744083196beff8d647ac0379a3c0a0aa1a43ee2366b81e375d5f9c87ccc84a"
+  },
+  "validation": {
+    "before": {
+      "tests": 2,
+      "failed": 2,
+      "reason": "saved false omitted and rendered true",
+      "sha256": "dbfbdaf91ffab5a9d501cb6ebf740c551435aea47370f23b8ed51cf8bdc89450"
+    },
+    "targeted": {
+      "tests": 136,
+      "passed": 136,
+      "failed": 0,
+      "skipped": 0,
+      "newTests": 8,
+      "files": [
+        "tests/host/free-frame-projection.test.mjs",
+        "tests/host/frame-projection-renderer.test.mjs",
+        "tests/host/host-working-set-mutation.test.mjs"
+      ],
+      "logSha256": "676e94dc8489526156645be56bee22e4f47ede844dce81a1f3f7ac1012f3f9f9"
+    },
+    "browser": {
+      "status": "PASS",
+      "evidence": "REAL_HEADLESS_PACKAGED_MV3_WORKING_SET_OFFLINE",
+      "results": [
+        {
+          "name": "density-setting-persists-and-updates-both-surfaces-with-original-draft",
+          "status": "PASS"
+        },
+        {
+          "name": "two-real-native-references-added-and-sidebar-opens-manual-order",
+          "status": "PASS"
+        },
+        {
+          "name": "move-up-persists-reversed-order-with-original-names-and-draft",
+          "status": "PASS"
+        },
+        {
+          "name": "new-host-tab-restores-saved-spacious-density",
+          "status": "PASS"
+        },
+        {
+          "name": "new-host-tab-reads-persisted-working-set-without-reloading-draft-tab",
+          "status": "PASS"
+        },
+        {
+          "name": "native-input-surrender-and-explicit-return-preserve-working-set-and-draft",
+          "status": "PASS"
+        },
+        {
+          "name": "working-set-native-link-opens-known-conversation-preserving-original-draft",
+          "status": "PASS"
+        },
+        {
+          "name": "remove-current-then-last-reference-produces-real-empty-working-set",
+          "status": "PASS"
+        }
+      ],
+      "sourceChangedDuringRun": false,
+      "buildManifestUnchanged": true,
+      "buildManifestHash": "59a9494cf8fbf030e34c8148a8c97232942b47124f7f7023b3ae66cf8d1bc4b9",
+      "reportSha256": "30b29d4afec83ef03736391e2d3a3f2ce618b606d408cad4c9333d8299926a99",
+      "realChatGPT": "NOT_RUN",
+      "workerExternalNetworkBoundary": "isolated offline package connect-src loopback origin; page routes allow only loopback and extension"
+    },
+    "defaultBuild": {
+      "status": "HOST_IMPLEMENTATION_UNVERIFIED",
+      "releaseStatus": "NOT_RELEASE_READY",
+      "files": 191,
+      "unpacked": "/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/.git/vaiwl-checkpoints/20261023-engineering-closure/default-package/extension",
+      "archive": "/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/.git/vaiwl-checkpoints/20261023-engineering-closure/default-package/vaiwl-free-host-development.zip",
+      "archiveSha256": "bee04d964fe35f2c609b6798a0eb0f8db3061c6fb6fd1baec92eba0b2bb5bd76"
+    },
+    "defaultVerify": {
+      "status": "HOST_IMPLEMENTATION_UNVERIFIED",
+      "releaseStatus": "NOT_RELEASE_READY",
+      "files": 191
+    },
+    "review": "Main writer code/call-chain and diff review only; no independent full audit or CI rerun"
+  },
+  "boundaries": {
+    "productionReadingEnabled": false,
+    "realAccountRequests": 0,
+    "newWitnessBatch": false,
+    "dailyInstallationUpdated": false,
+    "sourceV3": "PRESERVED_NOT_RERUN",
+    "personalAcceptance": "NOT_RUN",
+    "release": "NOT_RELEASE_READY",
+    "automation": "PAUSED_BY_USER_REQUEST_AFTER_CLOSURE"
+  },
+  "checkpoint": ".git/vaiwl-checkpoints/20261023-engineering-closure"
+}

@@ -1,0 +1,93 @@
+{
+  "evidence": "L_ACTUAL_OWNERS_AND_REPOSITORIES_NOT_BROWSER_OR_UI",
+  "sameWallTime": true,
+  "clockAdvance": false,
+  "originalNativeWitness": {
+    "sourceId": "host_dom_034618d9b15e41e2b70e143fc1b0b2a1",
+    "generation": "profile_1",
+    "profileId": "surface",
+    "profileVersion": 1,
+    "sourceRevision": 2,
+    "semanticFingerprint": "b14f3e14b8d2245dcd78cf3825615a07054512ac740e32d45f9a5cf70f3d10eb"
+  },
+  "pendingOperationId": "dom_af53d8f44d4ca3ca2b6e302d8620756c70dd6943417ce2b7",
+  "checksumFault": {
+    "authority": "TEST_ONLY_EXISTING_EVIDENCE_ROOT_CHECKSUM_FAULT",
+    "beforeRootDigest": "8d9add27446776c58e0997765f21def740089bd69aa113fe190cf709a4b693d7",
+    "afterRootDigest": "adec42366ef619fbcb340e3eeee4524b28734c0c4ff7338036e22537bdccb05f",
+    "payloadUnchanged": true,
+    "changedFields": [
+      "checksum"
+    ],
+    "revision": 4
+  },
+  "observationResult": {
+    "state": "rejected",
+    "localSeq": 1,
+    "reason": "invalid-host-observation"
+  },
+  "surfaceObservationResult": {
+    "state": "accepted",
+    "localSeq": 2,
+    "receiptId": "dom_aec02d55c7dd99f16a059fc0177bbc67d44b09c7dd70c630"
+  },
+  "stages": [
+    {
+      "stage": "AFTER_CHECKSUM_FAULT",
+      "continuationState": "pending-evidence",
+      "continuationReason": null,
+      "nativeSourceRevision": 2,
+      "nativeGeneration": "profile_1",
+      "nativeSemanticFingerprint": "b14f3e14b8d2245dcd78cf3825615a07054512ac740e32d45f9a5cf70f3d10eb",
+      "nativeOracle": "PASS"
+    },
+    {
+      "stage": "NEW_SERVICE_HOST_REFRESH_WHILE_CORRUPT",
+      "continuationState": "pending-evidence",
+      "continuationReason": null,
+      "nativeSourceRevision": 2,
+      "nativeGeneration": "profile_1",
+      "nativeSemanticFingerprint": "b14f3e14b8d2245dcd78cf3825615a07054512ac740e32d45f9a5cf70f3d10eb",
+      "nativeOracle": "PASS"
+    },
+    {
+      "stage": "FRESH_CURRENT_BODY_SAME_NATIVE_TITLE_WHILE_CORRUPT",
+      "continuationState": "pending-evidence",
+      "continuationReason": null,
+      "nativeSourceRevision": 2,
+      "nativeGeneration": "profile_1",
+      "nativeSemanticFingerprint": "b14f3e14b8d2245dcd78cf3825615a07054512ac740e32d45f9a5cf70f3d10eb",
+      "nativeOracle": "PASS"
+    },
+    {
+      "stage": "NORMAL_FRESH_SURFACE_SCAN_SAME_NATIVE_TITLE_WHILE_CORRUPT",
+      "continuationState": "pending-evidence",
+      "continuationReason": null,
+      "nativeSourceRevision": 3,
+      "nativeGeneration": "profile_1",
+      "nativeSemanticFingerprint": "309ed3abfa3b7fdabfda8e13e218a5eec6cec8e52a914bc558fae74c53c815d6",
+      "nativeOracle": "native source changed: sourceRevision"
+    },
+    {
+      "stage": "AFTER_PRODUCTION_REPAIR_NOT_UI_CERTIFICATION",
+      "continuationState": "pending-evidence",
+      "continuationReason": null,
+      "nativeSourceRevision": 3,
+      "nativeGeneration": "profile_1",
+      "nativeSemanticFingerprint": "309ed3abfa3b7fdabfda8e13e218a5eec6cec8e52a914bc558fae74c53c815d6",
+      "nativeOracle": "native source changed: sourceRevision"
+    },
+    {
+      "stage": "SECOND_NEW_SERVICE_HOST_REFRESH_AFTER_REPAIR",
+      "continuationState": "needs-revalidation",
+      "continuationReason": "source-changed",
+      "nativeSourceRevision": 3,
+      "nativeGeneration": "profile_1",
+      "nativeSemanticFingerprint": "309ed3abfa3b7fdabfda8e13e218a5eec6cec8e52a914bc558fae74c53c815d6",
+      "nativeOracle": "native source changed: sourceRevision"
+    }
+  ],
+  "sourceRevoked": true,
+  "firstACKRetained": true,
+  "secondACKAbsent": true
+}

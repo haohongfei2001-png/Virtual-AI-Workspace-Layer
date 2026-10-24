@@ -1,0 +1,3 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {readFile} from 'node:fs/promises';
+
+test('reload after repair requires genuinely new current-ref source and preserves every revoked predecessor',async()=>{const source=await readFile(new URL('./j4-package-journey.mjs',import.meta.url),'utf8');assert(source.includes("assert.equal(revalidated.sourceStates[revalidated.currentRefSource]?.revoked,false)"));assert(source.includes('assert(!Object.hasOwn(repaired.sourceStates,revalidated.currentRefSource))'));assert(source.includes('assert.deepEqual(revalidated.sourceStates[sourceId],repaired.sourceStates[sourceId])'));assert(source.includes("record('fresh-native-observation-after-repair-revalidates-current-ref-with-old-sources-still-revoked'"));});

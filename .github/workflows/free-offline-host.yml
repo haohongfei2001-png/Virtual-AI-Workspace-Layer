@@ -1,0 +1,559 @@
+name: Free offline Host slices (not release acceptance)
+
+on:
+  workflow_dispatch:
+    inputs:
+      diagnostic:
+        description: 'One isolated diagnostic, not full CI or acceptance'
+        required: true
+        type: choice
+        options: [temporary-project-startup, transport-expiry, temporary-navigation-appearance, j4-codec-after-evidence]
+  push:
+    branches: [codex/vaiwl-free-first-20261013]
+
+permissions:
+  contents: read
+
+env:
+  FREE_SOURCE_COMMIT: ${{ github.sha }}
+  # User priority 2026-10-18: preserve original scale gates; do not run them.
+  FREE_SCALE_ACCEPTANCE: DEFERRED
+
+concurrency:
+  group: free-offline-host-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  node-contracts:
+    # Public repository + standard GitHub-hosted runner only. No paid runner,
+    # artifact/cache upload, credentials, deployment or private host access.
+    if: github.repository == 'haohongfei2001-png/Virtual-AI-Workspace-Layer' && github.event.repository.private == false && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '24'
+      - name: Install locked Host build tool
+        run: npm ci --prefix extension/tooling --ignore-scripts --no-audit --no-fund
+      - name: Complete Node contracts including historical writer compatibility
+        run: node --test --test-concurrency=2 $(find tests -name '*.test.mjs' -not -path '*/node_modules/*' | sort)
+      - name: Twelve isolated guard mutation contracts
+        run: node tests/host/guard-mutations.runner.mjs --source-commit "$GITHUB_SHA" --report "$RUNNER_TEMP/guards.json"
+  offline-journeys:
+    # Public repository + standard GitHub-hosted runner only. No paid runner,
+    # artifact/cache upload, credentials, deployment or private host access.
+    if: github.repository == 'haohongfei2001-png/Virtual-AI-Workspace-Layer' && github.event.repository.private == false && github.ref == 'refs/heads/codex/vaiwl-free-first-20261013' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && (inputs.diagnostic == 'temporary-project-startup' || inputs.diagnostic == 'transport-expiry' || inputs.diagnostic == 'temporary-navigation-appearance')))
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '24'
+      - name: Install locked Host build tool
+        run: npm ci --prefix extension/tooling --ignore-scripts --no-audit --no-fund
+      - name: Install locked test tools and isolated Chromium
+        run: |
+          npm ci --prefix tests/b1/tooling --ignore-scripts
+          tests/b1/tooling/node_modules/.bin/playwright install --with-deps chromium
+          node --input-type=module -e "import {chromium} from './tests/b1/tooling/node_modules/playwright/index.mjs'; console.log('FREE_CHROME_EXECUTABLE='+chromium.executablePath())" >> "$GITHUB_ENV"
+      - name: Actual packaged C2 conversation slice
+        if: ${{ !cancelled() && github.event_name == 'push' }}
+        run: |
+          node tests/host/context-package-mv3-browser.mjs "$RUNNER_TEMP/context-package.json"
+          node tests/host/context-package-mv3-browser.mjs "$RUNNER_TEMP/context-container.json" container
+      - name: C2 immediate-load cold-start regression (separate result)
+        if: ${{ !cancelled() && github.event_name == 'push' }}
+        run: node tests/host/context-package-mv3-browser.mjs "$RUNNER_TEMP/context-cold.json" cold
+      - name: C2 cold passive diagnostic copy (not package acceptance)
+        if: ${{ !cancelled() && github.event_name == 'push' }}
+        run: |
+          set +e
+          node tests/host/context-package-mv3-browser.mjs "$RUNNER_TEMP/context-cold-trace.json" cold-trace
+          result=$?
+          set -e
+          node tests/host/context-cold-trace-outcome.mjs "$RUNNER_TEMP/context-cold-trace.json" "$result"
+      - name: Separate cold safety boundary and genuine native navigation recovery
+        if: ${{ !cancelled() && github.event_name == 'push' }}
+        run: node tests/host/context-package-mv3-browser.mjs "$RUNNER_TEMP/context-cold-recovery.json" cold-recovery
+      - name: C2 dormant scope denial and fresh native GET recovery
+        if: ${{ !cancelled() && github.event_name == 'push' }}
+        run: node tests/host/context-replacement-package-browser.mjs "$RUNNER_TEMP/context-dormant.json" dormant-recovery
+      - name: Reject permanent-stop dormant recovery mutation
+        if: ${{ !cancelled() && github.event_name == 'push' }}
+        run: |
+          set +e
+          node tests/host/context-replacement-package-browser.mjs "$RUNNER_TEMP/context-dormant-mutant.json" dormant-recovery-mutant
+          result=$?
+          set -e
+          test "$result" -eq 1
+          node -e "const r=require(process.env.RUNNER_TEMP+'/context-dormant-mutant.json'); if(r.status!=='FAIL'||r.mutation!=='RESTORE_PERMANENT_STOP_AFTER_DENIED_WAKE'||r.requests.length!==2||!r.requests.every(q=>q.method==='GET'&&q.status===200)||r.errors.length!==0||r.phase!=='await-fresh-frame-after-native-GET'||r.results.at(-1)?.name!=='denied-wake-withdraws-old-projection-preserves-native-draft'||r.sourceChangedDuringRun!==false||r.cleanupErrors?.length||!r.error?.includes('J2-observation-timeout')) process.exit(1);"
+      - name: Foreground expired document transport with genuine live C2 receipt
+        if: ${{ !cancelled() && (github.event_name == 'push' || inputs.diagnostic == 'transport-expiry') }}
+        run: |
+          node tests/host/context-replacement-package-browser.mjs "$RUNNER_TEMP/context-transport-expiry.json" transport-expiry
+          node -e "const r=require(process.env.RUNNER_TEMP+'/context-transport-expiry.json'); if(r.status!=='PASS_NARROW_OFFLINE_TRANSPORT_EXPIRY'||r.browserPrecondition?.noDefaults!==true||r.browserPrecondition?.focusEmulation!=='NOT_ENABLED_BY_PLAYWRIGHT'||r.foregroundFocusIsolation?.nativeHeadingClicked!==true||r.foregroundFocusIsolation?.composerFocused!==false||r.sourceChangedDuringRun!==false||r.cleanupErrors?.length||r.errors.length||r.requests.length!==1||r.requests[0].method!=='GET'||r.requests[0].status!==200||r.nativeRequestStarts.length!==1||r.forcedWorkerStop!==false||r.foregroundRecovery?.newGrant!==true||r.foregroundRecovery?.actualPostFocusVIEW!==true||r.foregroundRecovery?.sameWorker!==true||r.results.at(-1)?.name!=='new-projection-same-nonfirst-team-no-personal-writes') process.exit(1);"
+      - name: Reject stale foreground transport without a fresh handshake
+        if: ${{ !cancelled() && github.event_name == 'push' }}
+        run: |
+          set +e
+          node tests/host/context-replacement-package-browser.mjs "$RUNNER_TEMP/context-transport-expiry-mutant.json" transport-expiry-mutant
+          result=$?
+          set -e
+          test "$result" -eq 1
+          node -e "const a=require(process.env.RUNNER_TEMP+'/context-transport-expiry.json'),r=require(process.env.RUNNER_TEMP+'/context-transport-expiry-mutant.json'); if(r.status!=='FAIL'||r.mutation!=='REMOVE_EXACT_FOREGROUND_INVALID_DOCUMENT_RECOVERY'||r.browserPrecondition?.noDefaults!==true||r.browserPrecondition?.focusEmulation!=='NOT_ENABLED_BY_PLAYWRIGHT'||r.foregroundFocusIsolation?.nativeHeadingClicked!==true||r.foregroundFocusIsolation?.composerFocused!==false||r.phase!=='await-fresh-foreground-grant-and-VIEW'||!r.error?.includes('J4-peer-current-scope-timeout')||r.results.at(-1)?.name!=='real-dormant-document-lease-expires-with-live-C2-no-renewal-or-native-GET'||r.transportOwner?.workerClosed!==false||!Number.isFinite(r.transportOwner?.focusedAt)||!Number.isFinite(r.transportOwner?.observationEndedAt)||r.transportOwner.observationEndedAt<=r.transportOwner.focusedAt||!r.transport?.some(t=>t.type==='HOST_FOCUS'&&t.requestedAt>r.transportOwner.focusedAt&&t.ok===false&&t.reason==='invalid-host-document')||r.transport?.some(t=>t.type==='HOST_HELLO'&&t.requestedAt>r.transportOwner.focusedAt)||r.sourceChangedDuringRun!==false||r.cleanupErrors?.length||r.errors.length||r.requests.length!==1||r.requests[0].method!=='GET'||r.requests[0].status!==200||r.nativeRequestStarts.length!==1||r.forcedWorkerStop!==false) process.exit(1); for(const k of ['sourceHashes','fixtureHashes']) if(JSON.stringify(a[k])!==JSON.stringify(r[k])) process.exit(1);"
+      - name: C2 stale native failure preserves newer receipt with exact guard mutation
+        if: ${{ !cancelled() && github.event_name == 'push' }}
+        run: |
+          node tests/host/context-stale-request-package-browser.mjs "$RUNNER_TEMP/context-stale.json"
+          set +e
+          node tests/host/context-stale-request-package-browser.mjs "$RUNNER_TEMP/context-stale-mutant.json" oldguard-mutant
+          result=$?
+          set -e
+          test "$result" -eq 1
+          node -e "const a=require(process.env.RUNNER_TEMP+'/context-stale.json'),b=require(process.env.RUNNER_TEMP+'/context-stale-mutant.json'); if(a.status!=='PASS_NARROW_OFFLINE_STALE_NATIVE_TERMINAL'||b.status!=='FAIL'||b.mutation!=='RESTORE_OLD_TERMINAL_GUARD'||b.phase!=='new-projection-survives-old-503'||!b.error?.includes('new-projection-revoked-by-stale-terminal')) process.exit(1); for(const r of [a,b]) if(r.sourceChangedDuringRun!==false||r.cleanupErrors?.length||r.errors.length||JSON.stringify(r.requests.map(q=>[q.method,q.status]))!==JSON.stringify([['GET',200],['GET',200],['GET',503]])) process.exit(1); for(const k of ['sourceHashes','fixtureHashes','nativeOrder']) if(JSON.stringify(a[k])!==JSON.stringify(b[k])) process.exit(1);"
+      - name: Continuous J1 candidate journey (partial coverage only)
+        if: ${{ !cancelled() && github.event_name == 'push' }}
+        run: |
+          set +e
+          node tests/host/j1-package-journey.mjs "$RUNNER_TEMP/j1.json"
+          result=$?
+          set -e
+          test "$result" -eq 2
+          node -e "const r=require(process.env.RUNNER_TEMP+'/j1.json'); if(r.status!=='PARTIAL_J1_NOT_ACCEPTED') process.exit(1); console.log(r.status)"
+      - name: Continuous J3 explicit historical activity slice
+        if: ${{ !cancelled() && github.event_name == 'push' }}
+        run: |
+          set +e
+          node tests/host/j3-package-journey.mjs "$RUNNER_TEMP/j3.json"
+          result=$?
+          set -e
+          test "$result" -eq 0 -o "$result" -eq 2
+          node -e "const r=require(process.env.RUNNER_TEMP+'/j3.json'); if(!['PASS','PARTIAL_NOT_J3_ACCEPTED'].includes(r.status)) process.exit(1); console.log(r.status)"
+      - name: Actual packaged homepage first-send causal slice
+        if: ${{ !cancelled() && github.event_name == 'push' }}
+        run: node tests/host/first-send-package-browser.mjs "$RUNNER_TEMP/first-send.json"
+      - name: Continuous J2 authenticated ACK and original-time journey
+        if: ${{ !cancelled() && github.event_name == 'push' }}
+        run: node tests/host/j2-package-journey.mjs "$RUNNER_TEMP/j2-journey.json"
+      - name: Existing conversation immediate retry after native failure
+        if: ${{ !cancelled() && github.event_name == 'push' }}
+        run: J2_TERMINAL_MODE=failure node tests/host/j2-fast-retry-package.mjs "$RUNNER_TEMP/j2-fast-failure.json"
+      - name: Existing conversation immediate retry after native cancellation
+        if: ${{ !cancelled() && github.event_name == 'push' }}
+        run: J2_TERMINAL_MODE=cancelled node tests/host/j2-fast-retry-package.mjs "$RUNNER_TEMP/j2-fast-cancelled.json"
+      - name: Packaged profile layout theme and viewport subcontracts
+        if: ${{ !cancelled() && github.event_name == 'push' }}
+        run: |
+          node tests/host/ui10-package-matrix-browser.mjs "$RUNNER_TEMP/ui10-matrix.json"
+          node tests/host/observed-project-mv3-browser.mjs "$RUNNER_TEMP/observed-project-layout.json"
+          node tests/host/visible-actions-package-browser.mjs "$RUNNER_TEMP/visible-actions.json"
+          FREE_WINDOW_RETENTION_RUN=1 FREE_NAVIGATION_CANCEL_RUN=1 FREE_PANEL_CANCEL_RUN=1 node tests/host/frame-window-retention-package-browser.mjs "$RUNNER_TEMP/frame-window-retention.json"
+      - name: Passive local extension status (isolated MV3)
+        if: ${{ !cancelled() && github.event_name == 'push' }}
+        run: node tests/host/local-status-package-browser.mjs "$RUNNER_TEMP/local-status.json"
+      - name: Temporary native navigation (isolated MV3, no authentication)
+        if: ${{ !cancelled() && (github.event_name == 'push' || inputs.diagnostic == 'temporary-navigation-appearance') }}
+        run: node tests/host/temporary-navigation-package-browser.mjs "$RUNNER_TEMP/temporary-navigation.json"
+      - name: Temporary Project navigation (isolated MV3, no authentication)
+        if: ${{ !cancelled() && (github.event_name == 'push' || inputs.diagnostic == 'temporary-project-startup') }}
+        run: node tests/host/temporary-project-mv3-browser.mjs "$RUNNER_TEMP/temporary-project-navigation.json"
+      - name: Challenge status remains fail closed (isolated MV3)
+        if: ${{ !cancelled() && github.event_name == 'push' }}
+        run: |
+          node tests/host/challenge-status-package-browser.mjs "$RUNNER_TEMP/challenge-status.json"
+          node tests/host/preauthorization-package-browser.mjs "$RUNNER_TEMP/preauthorization.json"
+      - name: Layout mechanism regressions (not MV3 acceptance)
+        if: ${{ !cancelled() && github.event_name == 'push' }}
+        run: |
+          node tests/host/frame-focus-return-browser.mjs "$RUNNER_TEMP/frame-focus-return.json"
+          node --test tests/host/recovery-panel-focus-browser.mjs tests/host/frame-renderer-browser.mjs
+          node tests/host/reading-viewport-browser.mjs
+          node tests/host/return-slot-browser.mjs
+          node tests/host/return-gap-browser.mjs
+          node tests/host/reading-return-gap-browser.mjs
+          node tests/host/history-list-browser.mjs
+          node tests/host/observed-profile-browser.mjs
+          node tests/host/observed-sidebar-browser.mjs
+          node tests/host/observed-project-list-browser.mjs
+          node tests/host/observed-project-layout-browser.mjs
+          node tests/host/observed-project-masked-browser.mjs
+          node tests/host/temporary-project-list-browser.mjs
+      - name: Packaged native snippet save search locate and removal
+        if: ${{ !cancelled() && github.event_name == 'push' }}
+        run: |
+          if node tests/host/snippets-package-mv3-browser.mjs "$RUNNER_TEMP/snippets-package.json"; then
+            exit 0
+          else
+            original_result=$?
+            timeout 60s node tests/host/snippets-package-mv3-browser.mjs "$RUNNER_TEMP/snippets-startup-trace.json" startup-trace || true
+            exit "$original_result"
+          fi
+      - name: Publish bounded text evidence to logs only
+        if: ${{ !cancelled() }}
+        run: |
+          echo "Source commit: $GITHUB_SHA"
+          echo "Event: $GITHUB_EVENT_NAME (workflow_dispatch is diagnostic only, never full CI)"
+          echo 'This job is slice evidence, not 81-case/J1-J4/real ChatGPT acceptance.'
+          for name in context-package context-container context-cold context-cold-trace context-cold-recovery context-dormant context-dormant-mutant context-transport-expiry context-transport-expiry-mutant context-stale context-stale-mutant j1 j3 first-send j2-journey j2-fast-failure j2-fast-cancelled ui10-matrix visible-actions frame-window-retention frame-focus-return local-status observed-project-layout temporary-navigation temporary-project-navigation challenge-status preauthorization snippets-package snippets-startup-trace; do
+            if [ -f "$RUNNER_TEMP/$name.json" ]; then cat "$RUNNER_TEMP/$name.json"; fi
+          done
+  offline-durability-compat:
+    # Public repository + standard GitHub-hosted runner only. No paid runner,
+    # artifact/cache upload, credentials, deployment or private host access.
+    if: github.repository == 'haohongfei2001-png/Virtual-AI-Workspace-Layer' && github.event.repository.private == false && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '24'
+      - name: Install locked Host build tool
+        run: npm ci --prefix extension/tooling --ignore-scripts --no-audit --no-fund
+      - name: Install locked test tools and isolated Chromium
+        run: |
+          npm ci --prefix tests/b1/tooling --ignore-scripts
+          tests/b1/tooling/node_modules/.bin/playwright install --with-deps chromium
+          node --input-type=module -e "import {chromium} from './tests/b1/tooling/node_modules/playwright/index.mjs'; console.log('FREE_CHROME_EXECUTABLE='+chromium.executablePath())" >> "$GITHUB_ENV"
+      - name: Real native visibility startup prerequisite
+        id: native_visibility
+        if: ${{ !cancelled() }}
+        run: FREE_CHROME_HEADED=1 xvfb-run -a node tests/host/native-visibility-smoke.mjs "$RUNNER_TEMP/native-visibility.json"
+      - name: Real browser and IDB guard mutation counterexamples
+        if: ${{ !cancelled() }}
+        run: FREE_SOURCE_COMMIT="$GITHUB_SHA" node tests/host/guard-mutations-browser.runner.mjs "$RUNNER_TEMP/guard-browser.json"
+      - name: Populated approved navigation renderer contracts
+        if: ${{ !cancelled() }}
+        run: |
+          trap 'test ! -f "$RUNNER_TEMP/ui10-populated.json" || cat "$RUNNER_TEMP/ui10-populated.json"' EXIT
+          node tests/host/ui10-populated-view-browser.mjs "$RUNNER_TEMP/ui10-populated.json"
+          cat "$RUNNER_TEMP/ui10-populated.json"
+      - name: Recovery deadlines at real IndexedDB final request boundaries
+        if: ${{ !cancelled() }}
+        run: |
+          trap 'test ! -f "$RUNNER_TEMP/recoverydeadline.json" || cat "$RUNNER_TEMP/recoverydeadline.json"' EXIT
+          node tests/host/recoverydeadline-browser.mjs "$RUNNER_TEMP/recoverydeadline.json"
+          node -e "const r=require(process.env.RUNNER_TEMP+'/recoverydeadline.json'); if(r.status!=='PASS'||r.sourcesStable!==true||r.results.length!==52) process.exit(1); console.log(JSON.stringify(r))"
+      - name: Genuine joint native and ACK IDB cut with designated mutation
+        if: ${{ !cancelled() }}
+        run: |
+          node tests/host/joint-observation-idb-browser.mjs "$RUNNER_TEMP/joint-observation.json"
+          set +e
+          FREE_JOINT_DROP_CONTINUATION=1 node tests/host/joint-observation-idb-browser.mjs "$RUNNER_TEMP/joint-observation-mutant.json"
+          result=$?
+          set -e
+          test "$result" -eq 1
+          node -e "const r=require(process.env.RUNNER_TEMP+'/joint-observation-mutant.json'); if(r.status!=='FAIL'||r.mutation!=='DROP_NATIVE_CONTINUATION'||r.sourceChanged!==false||!r.error?.includes('AssertionError')||!r.error.includes('SYS01_NATIVE_PENDING_ATOMIC')) process.exit(1); console.log('Designated joint atomicity mutation killed; explicit offline authority only')"
+      - name: Record unestablished existing-source pending repair probe (not acceptance)
+        if: ${{ !cancelled() }}
+        run: |
+          node tests/host/existing-source-pending-repair-journey.mjs "$RUNNER_TEMP/existing-source-pending-repair.json"
+          node -e "const r=require(process.env.RUNNER_TEMP+'/existing-source-pending-repair.json'); if(r.status!=='NOT_RUN'||r.S!=='NOT_RUN'||r.sourceCommit!==process.env.GITHUB_SHA||r.fullSYS02!=='NOT_ESTABLISHED'||r.fullJ4!=='NOT_ESTABLISHED'||r.release!=='NOT_RELEASE_READY'||r.scopeFeasibility!=='NOT_ESTABLISHED_NORMAL_SURFACE_CAN_INVALIDATE_NATIVE_WITNESS'||r.steps.length!==0) process.exit(1); console.log('Development probe NOT_RUN; exact source-revoked S and full SYS02 remain NOT_ESTABLISHED')"
+      - name: Native IndexedDB pending capacity and transaction fault slice
+        if: ${{ !cancelled() }}
+        run: node tests/host/sys02-pending-idb-browser.mjs "$RUNNER_TEMP/sys02-pending-idb.json"
+      - name: Actual archived Host to current Host asset update
+        if: ${{ !cancelled() && steps.native_visibility.outcome == 'success' }}
+        run: FREE_CHROME_HEADED=1 FREE_SOURCE_COMMIT="$GITHUB_SHA" xvfb-run -a node tests/host/historical-host-upgrade.mjs "$RUNNER_TEMP/historical-host.json"
+      - name: Same-schema installed Host lifecycle codec rollback
+        if: ${{ !cancelled() && steps.native_visibility.outcome == 'success' }}
+        run: FREE_HISTORICAL_CODEC=1 FREE_CHROME_HEADED=1 FREE_SOURCE_COMMIT="$GITHUB_SHA" xvfb-run -a node tests/host/historical-host-upgrade.mjs "$RUNNER_TEMP/historical-codec.json"
+      - name: Actual historical Pro schema compatibility with isolated network guard
+        if: ${{ !cancelled() && steps.native_visibility.outcome == 'success' }}
+        run: FREE_CHROME_HEADED=1 FREE_SOURCE_COMMIT="$GITHUB_SHA" xvfb-run -a node tests/host/historical-pro-upgrade.mjs "$RUNNER_TEMP/historical-pro.json"
+      - name: Native token stream with authenticated ACK and title (narrow SYS05)
+        if: ${{ !cancelled() }}
+        timeout-minutes: 3
+        run: |
+          node tests/host/sys05-stream-package-journey.mjs "$RUNNER_TEMP/sys05-stream.json" --execute-browser
+          node -e "const r=require(process.env.RUNNER_TEMP+'/sys05-stream.json'); if(r.status!=='PASS_NARROW_OFFLINE_SYS05_CORRECTNESS'||r.S!=='NARROW_UNINSTRUMENTED_BROWSER_OBSERVED'||r.sourceCommit!==process.env.GITHUB_SHA||r.fullSYS05!=='NOT_ESTABLISHED'||r.workInstrumentation!==false) process.exit(1)"
+      - name: Separate instrumented native stream work diagnostic (not performance acceptance)
+        if: ${{ !cancelled() }}
+        timeout-minutes: 3
+        run: |
+          node tests/host/sys05-stream-package-journey.mjs "$RUNNER_TEMP/sys05-work.json" --execute-browser --observe-work --backpressure --gap-recovery
+          node -e "const r=require(process.env.RUNNER_TEMP+'/sys05-work.json'); if(r.status!=='PASS_NARROW_DIAGNOSTIC_SYS05_SLICE'||r.S!=='NARROW_INSTRUMENTED_BROWSER_OBSERVED'||r.sourceCommit!==process.env.GITHUB_SHA||r.fullSYS05!=='NOT_ESTABLISHED'||r.workInstrumentation!==true||r.F1!=='DIAGNOSTIC_ONLY_NOT_ACCEPTED'||r.backpressureRequested!==true||r.backpressureVerdict!=='PASS_NARROW_REAL_OWNER_CONTENTION'||r.directoryGapRequested!==true||r.gapRecovery!=='PASS_NARROW_UNDELIVERED_FRAGMENT_RETURN_RESCAN'||r.queueOverflow!=='NOT_RUN') process.exit(1)"
+      - name: Bounded send queue overflow and fresh native ACK recovery
+        if: ${{ !cancelled() }}
+        timeout-minutes: 3
+        run: |
+          trap 'test ! -f "$RUNNER_TEMP/sys05-overflow.json" || cat "$RUNNER_TEMP/sys05-overflow.json"' EXIT
+          node tests/host/sys05-stream-package-journey.mjs "$RUNNER_TEMP/sys05-overflow.json" --execute-browser --queue-overflow
+          node -e "const r=require(process.env.RUNNER_TEMP+'/sys05-overflow.json'); if(r.queueOverflow!=='PASS_BOUNDED_SEND_INTENT_OVERFLOW_AND_FRESH_ACK'||r.fullSYS05!=='NOT_ESTABLISHED'||r.sourceCommit!==process.env.GITHUB_SHA) process.exit(1); console.log(JSON.stringify(r))"
+      - name: Formal Host 10k single-project membership sample
+        id: formal_host_10k
+        if: ${{ !cancelled() && env.FREE_SCALE_ACCEPTANCE != 'DEFERRED' }}
+        timeout-minutes: 5
+        run: |
+          set +e
+          HOST_SCALE_RUN=1 HOST_SCALE_SIZE=10000 HOST_SCALE_DISTRIBUTION=single-project HOST_SCALE_CPU_RATE=1 node tests/host/host-scale-package-browser.mjs "$RUNNER_TEMP/host-scale-10k-project.json"
+          result=$?
+          set -e
+          test "$result" -eq 2
+          node -e "const r=require(process.env.RUNNER_TEMP+'/host-scale-10k-project.json'); if(r.status!=='PARTIAL_SYS04_NOT_ACCEPTED'||r.sourceCommit!==process.env.GITHUB_SHA||r.scenario.size!==10000||r.scenario.distribution!=='single-project'||r.measurement?.before?.projectMembership!==10000||r.measurement?.after?.projectMembership!==10000||r.measurement?.status!=='MEASURED_AT_STABLE_ADMITTED_INDEX') process.exit(1); console.log('One admitted 10k exact-project membership sample; no p95 or SYS04 acceptance claim')"
+      - name: Failure-only existing 10k worker and native page CPU diagnostic (not acceptance)
+        if: ${{ !cancelled() && env.FREE_SCALE_ACCEPTANCE != 'DEFERRED' && steps.formal_host_10k.outcome == 'failure' }}
+        timeout-minutes: 5
+        run: |
+          set +e
+          FREE_HOST_SCALE_CPU_PROFILE=1 FREE_HOST_SCALE_CPU_TRACE=1 FREE_HOST_SCALE_TRACE=1 FREE_HOST_SCALE_TRACE_RETURN=1 HOST_SCALE_RUN=1 HOST_SCALE_SIZE=10000 HOST_SCALE_DISTRIBUTION=single-project HOST_SCALE_CPU_RATE=1 node tests/host/host-scale-package-browser.mjs "$RUNNER_TEMP/host-scale-10k-cpu-diagnostic.json"
+          result=$?
+          set -e
+          test "$result" -eq 1
+          node -e "const r=require(process.env.RUNNER_TEMP+'/host-scale-10k-cpu-diagnostic.json'); if(r.status!=='FAIL'||r.cleanupErrors?.length||r.temporaryDirectoryRemoved!==true||r.sourceCommit!==process.env.GITHUB_SHA||r.acceptance!=='NOT_ESTABLISHED'||r.measurement?.status!=='NOT_RUN_DIAGNOSTIC_WORKER_AND_NATIVE_PAGE_CPU'||r.workerCPUProfile?.kind!=='DIAGNOSTIC_ONLY_HOST_SCALE_WORKER_CPU'||r.workerCPUProfile?.status!=='CAPTURED'||r.workerCPUProfile?.acceptance!=='NOT_ESTABLISHED'||!r.workerCPUProfile.profile?.samples?.length||r.nativePageCPUProfile?.kind!=='DIAGNOSTIC_ONLY_HOST_SCALE_NATIVE_PAGE_CPU'||r.nativePageCPUProfile?.status!=='CAPTURED'||r.nativePageCPUProfile?.acceptance!=='NOT_ESTABLISHED'||!r.nativePageCPUProfile.profile?.samples?.length||r.cpuProfileCleanup?.status!=='SUCCEEDED'||r.instrumentation?.clockAlignment!==true||r.instrumentedPackageUnchanged!==true||!r.instrumentation.buildManifestSha256||r.instrumentation.limit!==1024||r.instrumentation.maxBytes!==131072||r.workerTrace?.status!=='RAM_SNAPSHOT'||!Number.isSafeInteger(r.workerTrace.producerDropped)||r.workerTrace.producerDropped<0||!Number.isSafeInteger(r.trace?.dropped)||r.trace.dropped<0||r.trace.bytes>131072||r.trace.events.length>1024||!r.trace?.events?.length||!r.trace.events.every(e=>Number.isFinite(e.clockEpochMs))||r.diagnosticClock?.kind!=='COMMAND_BOUNDS_AND_RECORDED_STAGE_CORRELATION_ONLY'||r.sourceChangedDuringRun!==false||r.fixtureChangedDuringRun!==false||r.manifestChangedDuringRun!==false) process.exit(1); for(const p of [r.workerCPUProfile,r.nativePageCPUProfile]) {const c=p.clockCorrelation; if(c?.kind!=='RUNNER_CDP_COMMAND_BOUNDS_NOT_ACTUAL_SAMPLE_INSTANTS'||c.profileClock!=='UNMAPPED_CDP_MICROSECONDS'||!['startRequested','startAcknowledged','stopRequested','stopAcknowledged'].every(k=>Number.isFinite(c[k]?.wallTimeMs)&&Number.isFinite(c[k]?.timeOriginMs)&&Number.isFinite(c[k]?.monotonicMs)&&c[k].epochMs===c[k].timeOriginMs+c[k].monotonicMs)) process.exit(1);} const t=r.cpuPhaseTrace; if(t?.kind!=='DIAGNOSTIC_ONLY_CPU_PHASE_TRACE'||t.acceptance!=='NOT_ESTABLISHED'||t.status!=='CAPTURED'||t.limit!==1024||t.maxBytes!==131072||t.timeoutMs!==1000||t.snapshotBoundary!=='CONTENT_COPY_THEN_ONE_EXISTING_WORKER_READ_NOT_ATOMIC'||t.coverageMeaning!=='RECORDED_EVENT_RANGE_INTERSECTION_ONLY_NOT_CONTINUOUS_OR_SYNCHRONIZED'||t.dropDisclosure!=='SOURCE_COUNTERS_AND_RETAINED_ROW_COUNTERS_NOT_A_COMPLETE_LOSS_COUNT'||t.content?.status!=='RAM_SNAPSHOT'||t.worker?.status!=='RAM_SNAPSHOT'||![t.dropped,t.content.dropped,t.worker.dropped,t.worker.producerDropped].every(n=>Number.isSafeInteger(n)&&n>=0)||![t.bytes,t.content.bytes,t.worker.bytes].every(n=>Number.isSafeInteger(n)&&n>=0&&n<=131072)||!t.events?.length||t.events.length>1024||!t.events.every(e=>Number.isFinite(e.clockEpochMs))) process.exit(1); for(const k of ['requested','completed']) {const c=t.snapshotClock?.[k]; if(!Number.isFinite(c?.wallTimeMs)||!Number.isFinite(c?.timeOriginMs)||!Number.isFinite(c?.monotonicMs)||c.epochMs!==c.timeOriginMs+c.monotonicMs) process.exit(1);} const a=t.snapshotClock.requested,b=t.snapshotClock.completed; if(a.timeOriginMs!==b.timeOriginMs||b.monotonicMs<a.monotonicMs||b.monotonicMs-a.monotonicMs>1000) process.exit(1); for(const [key,realm,ordinal] of [['workerCPUProfile','worker',0],['nativePageCPUProfile','content',2]]) {const c=t.profileRanges?.[key],p=r[key].clockCorrelation,commands=['startRequested','startAcknowledged','stopRequested','stopAcknowledged'].map(k=>p[k].epochMs),rows=t.events.filter(e=>e.realm===realm&&e.realmOrdinal===ordinal).map(e=>e.clockEpochMs); if(!c||c.realm!==realm||c.realmOrdinal!==ordinal||!rows.length||c.retainedEvents!==rows.length||c.commandRangeEpochMs?.first!==Math.min(...commands)||c.commandRangeEpochMs?.last!==Math.max(...commands)||c.retainedEventRangeEpochMs?.first!==Math.min(...rows)||c.retainedEventRangeEpochMs?.last!==Math.max(...rows)||c.intersectsCommandBounds!==(Math.min(...rows)<=Math.max(...commands)&&Math.max(...rows)>=Math.min(...commands))||p.stopAcknowledged.timeOriginMs!==a.timeOriginMs||p.stopAcknowledged.monotonicMs>a.monotonicMs) process.exit(1);} console.log('Diagnostic sampled the existing worker and exact synthetic native page in parallel; formal 10k FAIL remains unchanged')"
+      - name: Isolated visibility proposal experiment (not production)
+        if: ${{ !cancelled() }}
+        run: node tests/host/experiments/native-visibility/probe-browser.mjs "$RUNNER_TEMP/visibility-probe.json"
+      - name: Publish bounded text evidence to logs only
+        if: ${{ !cancelled() }}
+        run: |
+          echo "Source commit: $GITHUB_SHA"
+          echo 'This job is slice evidence, not 81-case/J1-J4/real ChatGPT acceptance.'
+          echo 'Scale acceptance: DEFERRED by user priority; skipped 10k/100k is not PASS or release readiness. Original thresholds and failures retained.'
+          for name in native-visibility guard-browser joint-observation joint-observation-mutant existing-source-pending-repair sys02-pending-idb historical-host historical-codec historical-pro sys05-stream sys05-work host-scale-10k-project host-scale-10k-cpu-diagnostic visibility-probe; do
+            if [ -f "$RUNNER_TEMP/$name.json" ]; then cat "$RUNNER_TEMP/$name.json"; fi
+          done
+
+  offline-j4-lifecycle:
+    # Public repository + standard GitHub-hosted runner only. No paid runner,
+    # artifact/cache upload, credentials, deployment or private host access.
+    if: github.repository == 'haohongfei2001-png/Virtual-AI-Workspace-Layer' && github.event.repository.private == false && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '24'
+      - name: Install locked Host build tool
+        run: npm ci --prefix extension/tooling --ignore-scripts --no-audit --no-fund
+      - name: Install locked test tools and isolated Chromium
+        run: |
+          npm ci --prefix tests/b1/tooling --ignore-scripts
+          tests/b1/tooling/node_modules/.bin/playwright install --with-deps chromium
+          node --input-type=module -e "import {chromium} from './tests/b1/tooling/node_modules/playwright/index.mjs'; console.log('FREE_CHROME_EXECUTABLE='+chromium.executablePath())" >> "$GITHUB_ENV"
+      - name: J4 native visibility startup prerequisite
+        id: native_visibility
+        if: ${{ !cancelled() }}
+        run: FREE_CHROME_HEADED=1 xvfb-run -a node tests/host/native-visibility-smoke.mjs "$RUNNER_TEMP/native-visibility.json"
+      - name: J2 and J4 prerequisites (partial coverage only)
+        if: ${{ !cancelled() && steps.native_visibility.outcome == 'success' }}
+        run: |
+          command -v xvfb-run
+          set +e
+          FREE_CHROME_HEADED=1 xvfb-run -a node tests/host/j2-j4-package-prerequisites.mjs "$RUNNER_TEMP/j2-j4.json"
+          result=$?
+          set -e
+          test "$result" -eq 2
+          node -e "const r=require(process.env.RUNNER_TEMP+'/j2-j4.json'); if(r.status!=='PARTIAL_J2_J4_NOT_ACCEPTED') process.exit(1); console.log(r.status)"
+      - name: Continuous J4 context assets and lifecycle slice
+        id: j4_journey
+        if: ${{ !cancelled() && steps.native_visibility.outcome == 'success' }}
+        run: |
+          set +e
+          FREE_CHROME_HEADED=1 xvfb-run -a node tests/host/j4-package-journey.mjs "$RUNNER_TEMP/j4-journey.json"
+          result=$?
+          set -e
+          test "$result" -eq 2
+          node -e "const r=require(process.env.RUNNER_TEMP+'/j4-journey.json'); if(r.status!=='PARTIAL_J4_NOT_ACCEPTED') process.exit(1); console.log(r.status)"
+      - name: J4 failure-only full lifecycle diagnostic (not acceptance)
+        if: ${{ !cancelled() && steps.j4_journey.outcome == 'failure' }}
+        run: |
+          set +e
+          FREE_J4_LIFECYCLE_ORDER_TRACE=1 FREE_CHROME_HEADED=1 xvfb-run -a node tests/host/j4-package-journey.mjs "$RUNNER_TEMP/j4-lifecycle-trace.json"
+          result=$?
+          set -e
+          test "$result" -eq 2
+          node -e "const r=require(process.env.RUNNER_TEMP+'/j4-lifecycle-trace.json'); if(r.status!=='DIAGNOSTIC_ONLY_J4_LIFECYCLE_ORDER'||r.sourceCommit!==process.env.GITHUB_SHA) process.exit(1); console.log(r.status)"
+      - name: Publish bounded text evidence to logs only
+        if: ${{ !cancelled() }}
+        run: |
+          echo "Source commit: $GITHUB_SHA"
+          echo 'Independent J4 runner; original journey order and gates retained.'
+          for name in native-visibility j2-j4 j4-journey j4-lifecycle-trace; do
+            if [ -f "$RUNNER_TEMP/$name.json" ]; then cat "$RUNNER_TEMP/$name.json"; fi
+          done
+
+  cloud-journey-matrix:
+    # Existing public repository, isolated fixtures only; no artifact uploads or production access.
+    if: github.repository == 'haohongfei2001-png/Virtual-AI-Workspace-Layer' && github.event.repository.private == false && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/codex/vaiwl-free-first-20261013' && inputs.diagnostic == 'j4-codec-after-evidence'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix:
+        case: ${{ fromJSON(github.event_name == 'workflow_dispatch' && '["j4-codec-after-evidence"]' || '["j4-before-native","j1-legacy","j1-modern","j2-legacy","j2-modern","j3-legacy","j3-modern","partial-reachability","j4-before-evidence-reenable","j4-after-evidence","j4-codec-before-evidence","j4-codec-after-evidence"]') }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '24'
+      - name: Install locked build and isolated browser tools
+        run: |
+          npm ci --prefix extension/tooling --ignore-scripts --no-audit --no-fund
+          npm ci --prefix tests/b1/tooling --ignore-scripts
+          tests/b1/tooling/node_modules/.bin/playwright install --with-deps chromium
+          node --input-type=module -e "import {chromium} from './tests/b1/tooling/node_modules/playwright/index.mjs'; console.log('FREE_CHROME_EXECUTABLE='+chromium.executablePath())" >> "$GITHUB_ENV"
+      - name: Execute one continuous supported-profile case
+        run: FREE_CHROME_HEADED=1 xvfb-run -a node tests/host/j1-j4-offline-matrix.mjs "$RUNNER_TEMP/cloud-matrix" --execute-browser --cases=${{ matrix.case }}
+      - name: Independent first re-enable owner trace (diagnostic only, never formal S)
+        if: ${{ !cancelled() && matrix.case == 'j4-before-native' }}
+        run: |
+          set +e
+          FREE_CHROME_HEADED=1 FREE_J4_REENABLE_OWNER_TRACE=1 timeout 180s xvfb-run -a node tests/host/j4-package-journey.mjs "$RUNNER_TEMP/j4-reenable-owner-trace.json"
+          result=$?
+          set -e
+          test "$result" -eq 2
+          node tests/host/j4-reenable-trace-outcome.mjs "$RUNNER_TEMP/j4-reenable-owner-trace.json" "$result" "$GITHUB_SHA"
+      - name: Preserve exact scoped result in job log
+        if: ${{ always() }}
+        run: |
+          echo "Event: $GITHUB_EVENT_NAME (workflow_dispatch is one scoped diagnostic, never full CI)"
+          for f in "$RUNNER_TEMP"/cloud-matrix/*.json; do [ ! -f "$f" ] || cat "$f"; done
+          for f in "$RUNNER_TEMP"/cloud-matrix/*.log; do [ ! -f "$f" ] || tail -150 "$f"; done
+          test ! -f "$RUNNER_TEMP/j4-reenable-owner-trace.json" || cat "$RUNNER_TEMP/j4-reenable-owner-trace.json"
+
+  cloud-ui-controls:
+    if: github.repository == 'haohongfei2001-png/Virtual-AI-Workspace-Layer' && github.event.repository.private == false && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix:
+        profile: [LEGACY, MODERN, PARTIAL]
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '24'
+      - name: Install locked build and isolated browser tools
+        run: |
+          npm ci --prefix extension/tooling --ignore-scripts --no-audit --no-fund
+          npm ci --prefix tests/b1/tooling --ignore-scripts
+          tests/b1/tooling/node_modules/.bin/playwright install --with-deps chromium
+          node --input-type=module -e "import {chromium} from './tests/b1/tooling/node_modules/playwright/index.mjs'; console.log('FREE_CHROME_EXECUTABLE='+chromium.executablePath())" >> "$GITHUB_ENV"
+      - name: Actual packaged control matrix across themes and viewports
+        run: |
+          FREE_UI10_INTERACTIONS=1 node tests/host/ui10-package-matrix-browser.mjs "$RUNNER_TEMP/cloud-ui-controls.json" ${{ matrix.profile }}
+          node -e "const r=require(process.env.RUNNER_TEMP+'/cloud-ui-controls.json'); if(r.interactionMatrix?.status!=='PASS_CONTROL_SUBMATRIX_ONLY'||!r.interactionMatrix.cells.length||r.fullV27Acceptance!=='NOT_ESTABLISHED') process.exit(1)"
+      - name: Early search input before owner result (web mechanism only)
+        if: ${{ !cancelled() && matrix.profile == 'LEGACY' }}
+        run: node tests/host/ui10-search-early-input-browser.mjs "$RUNNER_TEMP/cloud-ui-early-input.json"
+      - name: Preserve exact UI result in job log
+        if: ${{ always() }}
+        run: |
+          for name in cloud-ui-controls cloud-ui-early-input; do
+            test ! -f "$RUNNER_TEMP/$name.json" || cat "$RUNNER_TEMP/$name.json"
+          done
+
+  cloud-supplementary-gates:
+    # Finite explicit offline cases, synthetic fixtures only. No artifacts or live credentials.
+    if: github.repository == 'haohongfei2001-png/Virtual-AI-Workspace-Layer' && github.event.repository.private == false && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: ${{ matrix.gate == 'populated-native' && 25 || 15 }}
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix:
+        # Prioritize the remaining causal gate and longest case; coverage and limits stay unchanged.
+        gate: [fault-unknown-protocol, native-entry-safety, populated-native, existing-source-repair, membership-after-message, fault-auth-failure, fault-unsafe-reading, fault-forged-scope, fault-csp, fault-iframe-destroy, fault-stale-response, fault-rate-limit, fault-corrupt, privacy-main, privacy-isolated, idle-draft-active, idle-safe-empty-reading, visual-components, page-command-native-fetch, non-atomic-terminal, mixed-role, mixed-role-alt]
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '24'
+      - name: Install locked build and isolated browser tools
+        run: |
+          npm ci --prefix extension/tooling --ignore-scripts --no-audit --no-fund
+          npm ci --prefix tests/b1/tooling --ignore-scripts
+          tests/b1/tooling/node_modules/.bin/playwright install --with-deps chromium
+          node --input-type=module -e "import {chromium} from './tests/b1/tooling/node_modules/playwright/index.mjs'; console.log('FREE_CHROME_EXECUTABLE='+chromium.executablePath())" >> "$GITHUB_ENV"
+      - name: Execute one bounded supplementary case
+        id: formal_supplementary
+        env:
+          SELECTED_GATE: ${{ matrix.gate }}
+        run: |
+          report="$RUNNER_TEMP/supplementary.json"
+          case "$SELECTED_GATE" in
+            fault-*) node tests/host/fault-package-matrix-browser.mjs "$report" "${SELECTED_GATE#fault-}" ;;
+            privacy-main) node tests/host/privacy-package-browser.mjs "$report" ;;
+            privacy-isolated) node tests/host/isolated-auth-privacy-browser.mjs "$report" ;;
+            populated-native) node tests/host/ui10-populated-package-browser.mjs "$report" ;;
+            visual-components) node tests/host/ui10-visual-paired-browser.mjs "$report" ;;
+            existing-source-repair) FREE_CHROME_HEADED=1 xvfb-run -a node tests/host/existing-source-pending-repair-journey.mjs "$report" --execute-browser ;;
+            native-entry-safety) node tests/host/native-entry-safety-package-browser.mjs "$report" ;;
+            page-command-native-fetch) node tests/host/page-command-native-fetch-package-browser.mjs "$report" ;;
+            non-atomic-terminal) node tests/host/non-atomic-terminal-idb-browser.mjs "$report" ;;
+            mixed-role|mixed-role-alt|membership-after-message) FREE_EVIDENCE_SCENARIO="$SELECTED_GATE" node tests/host/evidence-order-package-browser.mjs "$report" ;;
+            idle-*)
+              set +e
+              node tests/host/natural-worker-idle-probe.mjs "$report" "${SELECTED_GATE#idle-}"
+              result=$?
+              set -e
+              test "$result" -eq 0 -o "$result" -eq 2
+              node -e "const r=require(process.env.RUNNER_TEMP+'/supplementary.json'); if(!['NATURAL_IDLE_NOT_OBSERVED','UNFORCED_TARGET_DESTRUCTION_RECOVERY_PASS'].includes(r.status)||r.naturalWorkerSleep==='PASS'||r.forcedWorkerStop!==false||r.workerDebuggerAttached!==false||r.productionTimersModified!==false||!Number.isFinite(r.observation?.elapsedMs)||r.observation.elapsedMs<60000||r.observation.elapsedMs>90000||r.sourceChangedDuringRun!==false||r.buildManifestUnchanged!==true||r.runnerChangedDuringRun!==false||r.sourceCommit!==process.env.GITHUB_SHA||r.evidenceBinding?.dependenciesUnchanged!==true||r.evidenceBinding?.cleanupVerified!==true||r.evidenceBinding?.sourceCommitBound!==true||r.scenario!==process.env.SELECTED_GATE.slice(5)||r.cleanupErrors?.length) process.exit(1); console.log('Finite observation only; NOT_OBSERVED is not natural-idle acceptance')"
+              ;;
+            *) exit 1 ;;
+          esac
+          node -e "const expected={'native-entry-safety':'PASS_LEGACY_SUBSCENARIOS_ONLY','page-command-native-fetch':'PASS_NARROW_PACKAGED_PAGE_COMMAND_AND_NO_TAP_CONTINUITY','non-atomic-terminal':'PASS_D_SCOPED','mixed-role':'PASS_SCOPED_OFFLINE_D_S','mixed-role-alt':'PASS_SCOPED_OFFLINE_D_S','membership-after-message':'PASS_SCOPED_OFFLINE_D_S'}[process.env.SELECTED_GATE];if(expected){const r=require(process.env.RUNNER_TEMP+'/supplementary.json');if(r.status!==expected||r.sourceCommit!==process.env.GITHUB_SHA)process.exit(1)}"
+      - name: First-five admission trace after eligible early failure (diagnostic only)
+        if: ${{ !cancelled() && matrix.gate == 'populated-native' && steps.formal_supplementary.outcome == 'failure' }}
+        run: |
+          formal="$RUNNER_TEMP/supplementary.json"
+          if test ! -f "$formal"; then
+            echo "No formal report; no diagnostic started."
+            exit 0
+          fi
+          set +e
+          node tests/host/ui10-admission-trace-outcome.mjs eligible "$formal" "$GITHUB_SHA" "$formal.trace-binding"
+          eligibility=$?
+          set -e
+          if test "$eligibility" -eq 3; then exit 0; fi
+          test "$eligibility" -eq 0
+          set +e
+          FREE_UI10_ADMISSION_TRACE=1 timeout 180s node tests/host/ui10-populated-package-browser.mjs "$RUNNER_TEMP/ui10-admission-trace.json"
+          result=$?
+          set -e
+          test "$result" -eq 2
+          node tests/host/ui10-admission-trace-outcome.mjs verify "$RUNNER_TEMP/ui10-admission-trace.json" "$GITHUB_SHA" "$formal" "$result"
+      - name: Independent unknown-protocol consumption trace (diagnostic only)
+        if: ${{ !cancelled() && matrix.gate == 'fault-unknown-protocol' }}
+        run: |
+          set +e
+          FREE_FAULT_UNKNOWN_TRACE=1 timeout 180s node tests/host/fault-package-matrix-browser.mjs "$RUNNER_TEMP/fault-unknown-trace.json" unknown-protocol
+          result=$?
+          set -e
+          test "$result" -eq 2
+          node tests/host/fault-unknown-trace-outcome.mjs "$RUNNER_TEMP/fault-unknown-trace.json" "$result" "$GITHUB_SHA"
+      - name: Preserve exact supplementary result in job log
+        if: ${{ always() }}
+        run: |
+          test ! -f "$RUNNER_TEMP/supplementary.json" || cat "$RUNNER_TEMP/supplementary.json"
+          test ! -f "$RUNNER_TEMP/fault-unknown-trace.json" || cat "$RUNNER_TEMP/fault-unknown-trace.json"
+          test ! -f "$RUNNER_TEMP/ui10-admission-trace.json" || cat "$RUNNER_TEMP/ui10-admission-trace.json"

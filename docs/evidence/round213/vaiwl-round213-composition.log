@@ -1,0 +1,39 @@
+✔ only two exact historical product snapshots are admitted (1.717351ms)
+✔ same-path replacement requires confirmed disable and exact copied bytes (17.627798ms)
+✔ Host history runner keeps real backup UI, original scope/database, and same disabled slot (2.111556ms)
+✔ portable Pro compatibility input contains all human asset classes and no success evidence (9.212982ms)
+✔ Pro schema runner uses frozen real build and genuine old-reader refusal without moving databases (2.555155ms)
+✔ actual Host inspector empty manual subset is JSON digestible before importing assets (1.304699ms)
+✔ J1 trace observes original RPC result without changing request, return value or rejection (7.882724ms)
+✔ portable J4 assets cover all manual asset classes without authority or evidence (8.232512ms)
+✔ same asset bundle cannot be restored into other authenticated context (1.044256ms)
+✔ J4 native context switch is opt-in authenticated roster-validated service (56.330368ms)
+✔ continuous segment never claims missing atomic/schema/profile acceptance (0.259051ms)
+✔ runner uses production file import and actual lifecycle APIs without business-state injection or synthetic grants (4.296453ms)
+✔ repair fault touches only checksum of an existing production root and remains explicit (0.831685ms)
+✔ repaired UNKNOWN route uses stable identity and never expects revoked native title (0.66276ms)
+✔ recovered link oracle requires the original route, enabled UNKNOWN identity and redacted title (1.366382ms)
+✔ frame shell bytes participate in the live source drift check and package digest (36.25785ms)
+✔ formal development build defaults to unverified context without simulator or seed modules (36.605871ms)
+✔ offline build accepts only exact IPv4 loopback origin and limits manifest to loopback (23.639846ms)
+✔ every shipped static import/re-export resolves inside module closure and WAR excludes worker-only code (22.505289ms)
+✔ host development ZIP and SHA256SUMS reproduce byte-for-byte (81.951448ms)
+✔ host verifier rejects extra package mutation (19.332141ms)
+✔ host verifier rejects bytes package mutation (19.761448ms)
+✔ host verifier rejects symlink package mutation (19.120441ms)
+✔ rehashed config cannot enable unverified production C3 while claiming fail-closed (22.632371ms)
+✔ rehashed offline package rejects mixed production origin boundary (18.311361ms)
+✔ rehashed offline package rejects mixed production csp boundary (19.704312ms)
+✔ rehashed offline package rejects mixed production war boundary (17.67552ms)
+✔ snippet reconstruction profile is explicit loopback-only and cannot enable production (22.027956ms)
+✔ historical grammar is explicit offline-only package configuration (35.472772ms)
+✔ explicit existing-C ACK composition requires loopback C2 and never enables first-send observer (55.754924ms)
+✔ package verifier rejects forged existing-send composition even with rewritten config file hash (51.417204ms)
+ℹ tests 31
+ℹ suites 0
+ℹ pass 31
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 617.88571

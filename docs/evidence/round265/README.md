@@ -1,0 +1,18 @@
+# Round265 — Read committed partial indexes during native scanning
+
+Base `a1ffd8607f89dadbcd9368af56fc354e97a20f29`, original local branch / Draft PR16, 2026-10-16. Production changes are confined to host binding, view and observation owners; no schema, storage engine, source authority, hash, native action or profile change.
+
+A deterministic real-binding/MockIDB regression showed that a committed first packet stayed `preparing` for5seconds with no write in flight, solely because an ingestion pass had not ended. The previous view scheduling hint combined the whole pass with actual native writes. It now waits for actual storage preparation/writes, allowing the existing strict loader to read committed partial facts.
+
+The existing view owner provides a RAM-only1000ms scheduling window shared by all mounts of a scope. Background surface proposals yield through the existing50ms retry response after complete scope/payload/sequence validation and before repository reads or acceptance. No receipt, sequence or persistent fact is created by yielding. Current-body, send and combined causal observations retain priority. Original snapshot/version checks, two read retries,30second preparation deadline,6second observation transport budget and source lifetimes remain unchanged.
+
+A window ends on delivery/error/revocation/stop/expiry and cannot renew before an accepted native publication. Delayed RPC release is bound to captured window identity and preparation generation. Last-view removal preserves the used marker, preventing repeated mount churn from renewing it. Window records are bounded by maxViews; at capacity a new scope uses ordinary strict reads without a window rather than blocking. The mechanism does not establish completeness or bless stale snapshots.
+
+## Validation
+
+- The original red partial-projection regression now passes with native p1 and c1 UNKNOWN reachable while the pass remains open. Targeted view tests cover deadline/retry limits, live writes, exact scope, no renewal on retries/remount, publication before renewal, stopped/revoked/rolled-back state, and delayed navigation RPC across generations. Observation tests confirm zero storage access or sequence consumption on yield, unchanged-proposal retry, rejection of bad authority, other-scope independence and current/send bypass.
+- First actual10k run: initial two surfaces became ready at399ms and22.201s. The later return-workspace stage still failed its original30second deadline, despite the last diagnostic inventory showing10000refs. This report predates the identity-release/tombstone cleanup and is retained as FAIL, not final-code success or performance certification.
+- Final production candidate actual1k run completed the original native tail/member/return/search journey: tab readiness300ms/809ms; exact before/after audits1000 correct Project members. Status remains PARTIAL_SYS04_NOT_ACCEPTED and this is a single sample, notp95.
+- Initial full Node regression had4 failures because two exact instrumentation anchors no longer matched the updated source; no product assertion was relaxed. The trace anchors were updated to preserve awaitingDelivery and releaseRead semantics. Its18 contracts then passed. Final regression is in STATUS and `node-final.log.gz`.
+
+Next product evidence needed is the10k return-stage lifecycle: current observations cannot distinguish expired windows, long refreshes and version-triggered restarts. Existing bounded scale trace is retained for that diagnosis; do not extend deadlines or certify10k from the1k result. Remaining81 cases,100k/cold reliability, native hidden-membership proof, real ChatGPT/PAIA/physical IME and release conditions remain open. **Free NOT_RELEASE_READY.**

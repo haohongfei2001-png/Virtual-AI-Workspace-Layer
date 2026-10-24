@@ -1,0 +1,133 @@
+{
+  "evidence": "REAL_HEADLESS_IDB_SYNTHETIC_NATIVE_BULK_AUDIT",
+  "realChatGPT": "NOT_RUN",
+  "mv3": "NOT_RUN",
+  "preparedIndex": false,
+  "sourceHashes": {
+    "src/data/audit-record-prefetch.mjs": "5af85b5c8a90e0a1d236fdec784b77ee970f7ea251e18b4be386a34e909d6b7c",
+    "src/data/native-partition-audit.mjs": "3cd490dc6e38459d1562d8b2a8ec277911fe46782cb55840965fb045182f247f",
+    "src/data/native-partitions.mjs": "4e295e042a2e5e3337dddfe1f5928d0f8e920aaab981a7e2f96fcd00ccff60a9",
+    "src/data/native-index-migration.mjs": "69b9275e7a58878aba4eba800eb324140ac84c0730d31dcb4f3a067d29dda6a2",
+    "src/data/native-repository.mjs": "cff865baf77bf282bc3825f1ad28d24986d968cb9b262033030682c6103b2256",
+    "src/data/native-facts.mjs": "98dc17aedc9cf675fed8d720a181422956f79fd6784a4040327788a69e8c3c93",
+    "src/data/hash.mjs": "aef21d1842cdc09b33fef973a9d29f15cb7c0c3f773a6a9d31726b83ffee7b21",
+    "src/data/repository.mjs": "7fcd49c80cb6ee3687dcc898895f387965d6e86cf847a158ff7ba1e2becdbe9e",
+    "src/data/schema.mjs": "4a15161852c0c0a9dcc3fab10a984c97929ed9157c33fbc97121711cb41740aa",
+    "tests/free/native-audit-bulk-browser.mjs": "373aa2774e3205edad7971d3b266446e100b51f4418f0003b52c13608f4b86bf"
+  },
+  "results": [
+    {
+      "status": "PASS",
+      "mode": "bulk",
+      "refs": 600,
+      "bulkCalls": 600,
+      "keyCalls": 3,
+      "loadedValues": 600,
+      "loadedExtraValues": 0,
+      "scanned": 1199,
+      "scanBound": 1200,
+      "exactPieceGets": 0,
+      "result": {
+        "ok": true,
+        "revision": 3,
+        "operationId": "migrate_bulk"
+      },
+      "proPreserved": true,
+      "otherScopePreserved": true,
+      "rollback": false
+    },
+    {
+      "status": "PASS",
+      "mode": "retained-extra-fallback",
+      "refs": 600,
+      "bulkCalls": 200,
+      "keyCalls": 3,
+      "loadedValues": 200,
+      "loadedExtraValues": 0,
+      "scanned": 1200,
+      "scanBound": 1200,
+      "exactPieceGets": 400,
+      "result": {
+        "ok": true,
+        "revision": 3,
+        "operationId": "migrate_retained-extra-fallback"
+      },
+      "proPreserved": true,
+      "otherScopePreserved": true,
+      "rollback": false
+    },
+    {
+      "status": "PASS",
+      "mode": "tail-checksum",
+      "refs": 600,
+      "bulkCalls": 600,
+      "keyCalls": 3,
+      "loadedValues": 600,
+      "loadedExtraValues": 0,
+      "scanned": 1199,
+      "scanBound": 1200,
+      "exactPieceGets": 0,
+      "result": {
+        "ok": false,
+        "reason": "corrupt-native-record"
+      },
+      "proPreserved": true,
+      "otherScopePreserved": true,
+      "rollback": true
+    },
+    {
+      "status": "PASS",
+      "mode": "tail-missing",
+      "refs": 600,
+      "bulkCalls": 599,
+      "keyCalls": 3,
+      "loadedValues": 599,
+      "loadedExtraValues": 0,
+      "scanned": 1198,
+      "scanBound": 1200,
+      "exactPieceGets": 1,
+      "result": {
+        "ok": false,
+        "reason": "corrupt-native-record"
+      },
+      "proPreserved": true,
+      "otherScopePreserved": true,
+      "rollback": true
+    },
+    {
+      "status": "PASS",
+      "mode": "guard",
+      "refs": 600,
+      "bulkCalls": 256,
+      "keyCalls": 2,
+      "loadedValues": 256,
+      "loadedExtraValues": 0,
+      "scanned": 1024,
+      "scanBound": 1200,
+      "exactPieceGets": 0,
+      "result": {
+        "ok": false,
+        "reason": "stale-binding"
+      },
+      "proPreserved": true,
+      "otherScopePreserved": true,
+      "rollback": true
+    }
+  ],
+  "pageErrors": [],
+  "browser": "155.0.8059.40",
+  "sourceHashesAfter": {
+    "src/data/audit-record-prefetch.mjs": "5af85b5c8a90e0a1d236fdec784b77ee970f7ea251e18b4be386a34e909d6b7c",
+    "src/data/native-partition-audit.mjs": "3cd490dc6e38459d1562d8b2a8ec277911fe46782cb55840965fb045182f247f",
+    "src/data/native-partitions.mjs": "4e295e042a2e5e3337dddfe1f5928d0f8e920aaab981a7e2f96fcd00ccff60a9",
+    "src/data/native-index-migration.mjs": "69b9275e7a58878aba4eba800eb324140ac84c0730d31dcb4f3a067d29dda6a2",
+    "src/data/native-repository.mjs": "cff865baf77bf282bc3825f1ad28d24986d968cb9b262033030682c6103b2256",
+    "src/data/native-facts.mjs": "98dc17aedc9cf675fed8d720a181422956f79fd6784a4040327788a69e8c3c93",
+    "src/data/hash.mjs": "aef21d1842cdc09b33fef973a9d29f15cb7c0c3f773a6a9d31726b83ffee7b21",
+    "src/data/repository.mjs": "7fcd49c80cb6ee3687dcc898895f387965d6e86cf847a158ff7ba1e2becdbe9e",
+    "src/data/schema.mjs": "4a15161852c0c0a9dcc3fab10a984c97929ed9157c33fbc97121711cb41740aa",
+    "tests/free/native-audit-bulk-browser.mjs": "373aa2774e3205edad7971d3b266446e100b51f4418f0003b52c13608f4b86bf"
+  },
+  "sourceChangedDuringRun": false,
+  "status": "PASS"
+}

@@ -1,0 +1,57 @@
+{
+  "schema": "vaiwl-session-idle-drain-evidence-v1",
+  "baseHead": "22eb4c8d6558239b35179a085759784d1b11293b",
+  "task": "C6/F3 actual fixed authentication and current-object work remains nonidle after caller cancellation",
+  "sourceHashes": {
+    "src/runtime/session-provider.mjs": "292d97ca43c438d83a09fba28bc39c23742215cc899862966308e51178ff695e",
+    "src/runtime/scope-authority.mjs": "246c1add1b7ffcce87b94645e429a036c0bc3989bb79ed07066d5407eca49437",
+    "src/runtime/current-metadata-reader.mjs": "c237d156abe921e5066cd267a6a7bb056b80a744f46d9045c8a34a44ad0d641c",
+    "tests/host/session-provider-idle.test.mjs": "8d74ece6a3e2ab8ec548bcb62998b3929a5e45b41cfccf45646f7c3d6fb71a95"
+  },
+  "rootCause": "ScopeAuthority and CurrentMetadataReader counted bounded provider promises. Their cancellation could settle before fixed fetch or response reader cancellation completed, allowing premature service idle.",
+  "change": "Track the actual fixed-provider chain through cleanup; consume its optional local idle capability in the two existing owners. Caller deadlines, source guards, private credential lifetime, fixed requests, and directory per-instance lock remain unchanged.",
+  "validation": {
+    "preFix": {
+      "failed": 2,
+      "passed": 0,
+      "log": "before.log",
+      "initialFixtureError": "initial-fixture-error.log records a wrong refresh reason in the first test draft; corrected before the two behavioral failures were recorded."
+    },
+    "targetedRegression": {
+      "passed": 192,
+      "failed": 0,
+      "skipped": 0,
+      "newTests": 3,
+      "log": "regression.log",
+      "scope": "Actual SessionProvider composed with ScopeAuthority, CurrentMetadataReader and HostBindingService; controlled fetch/body doubles and MOCK_IDB. No live browser/account claim."
+    },
+    "builds": [
+      {
+        "name": "default",
+        "result": {
+          "status": "HOST_IMPLEMENTATION_UNVERIFIED",
+          "releaseStatus": "NOT_RELEASE_READY",
+          "files": 191
+        }
+      },
+      {
+        "name": "observed",
+        "result": {
+          "status": "HOST_IMPLEMENTATION_UNVERIFIED",
+          "releaseStatus": "NOT_RELEASE_READY",
+          "files": 191
+        }
+      }
+    ],
+    "review": "Main writer source/diff review only; no new independent runtime review or repeated browser matrix."
+  },
+  "boundaries": {
+    "productionEnabled": false,
+    "realAccountRequests": 0,
+    "newWitnessBatch": false,
+    "installedPackageUpdated": false,
+    "credentialsPersisted": false,
+    "realDailyAcceptance": "NOT_RUN"
+  },
+  "checkpoint": ".git/vaiwl-checkpoints/20261023-session-idle-drain"
+}

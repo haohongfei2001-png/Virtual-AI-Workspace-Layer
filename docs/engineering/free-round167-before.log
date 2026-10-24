@@ -1,0 +1,85 @@
+✖ mount native focus hides both surfaces and notifies; owned controls and disposed mounts do not (1.884084ms)
+✔ owner registration and both UiGrant ACKs gate initial dual-surface show (1.913375ms)
+✔ origin, original contentWindow, connectedness and public join shape are mandatory (0.640375ms)
+✔ exactly one four-grid return exists only in reading and opens workspace (0.277708ms)
+✔ native portal surrenders both surfaces without automatically taking focus back (0.204834ms)
+✔ route or region replacement disposes owned UI and stops adapter (0.217792ms)
+✔ grant expiry and explicit revoke remove return and dispose both surfaces (0.220333ms)
+✔ late registration or grant ACK after stop never shows stale surfaces (0.194583ms)
+✔ owner denial and stale region during registration dispose without show (0.068708ms)
+✔ both early JOINs drain only after owner ACK, with one pending nonce per role (0.130042ms)
+✔ cached JOIN cannot survive stop or changed original WindowProxy before register ACK (0.193375ms)
+✔ early forged source/origin cannot occupy cache ahead of legitimate JOIN (0.100792ms)
+✔ owned-frame public SUSPEND remains effective while registration is pending (0.09975ms)
+✔ trusted session renewal extends binding/grants in place without new JOIN or return/draft mutations (0.34425ms)
+✔ session renewal rejects changed binding/scope/UI/role and overlong lifetime (0.489542ms)
+✔ six-second session deadline releases UI and late ACK cannot renew or resurrect it (0.094167ms)
+✔ stop, route and region changes fence pending session renewal (0.663292ms)
+✔ native input surrender creates one return without reopening masks or changing draft (0.120375ms)
+✔ native portal removes return then restores only the entry; invalid slot never receives it (0.071875ms)
+✔ late native surrender after pagehide, expiry or stop cannot restore return (0.161334ms)
+✔ short scope-clipped grants renew before their hard expiry (0.121125ms)
+✔ only trusted return-button entry notifies owner after synchronous successful show (0.103875ms)
+✔ notification failures never prevent native return and stale or blocked buttons cannot notify (0.161791ms)
+✔ session renewal and programmatic workspace presentation never notify entry (0.079125ms)
+✔ reading guard is tied to one explicit reading intent and never revives after workspace return (0.107125ms)
+✔ native surrender and suspension invalidate prior reading intent permanently (0.109042ms)
+✔ successful in-place session renewal preserves a reading guard and stop invalidates it (0.106208ms)
+✔ asynchronous native-reading close echo preserves the programmatic reading guard (0.055292ms)
+✔ native-input surrender while already reading still invalidates the previous guard (0.053416ms)
+✔ untrusted or missing return gesture cannot open workspace or consume reading return (0.072ms)
+✔ private migration frame focus requires authorized visible workspace and exact role (0.137542ms)
+✔ private frame focus recognizes actual iframe through nested shadow active elements (0.058667ms)
+✔ presentationMode is a read-only hint, reading before grants and after suspension or stop (0.064208ms)
+✔ native boundary refusal preserves reading mode and its unique return control (0.050416ms)
+✖ native surrender records reading for recovery even if authority expires before toggle (0.412375ms)
+ℹ tests 35
+ℹ suites 0
+ℹ pass 33
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 52.347792
+
+✖ failing tests:
+
+test at tests/host/mount-surrender.test.mjs:5:1
+✖ mount native focus hides both surfaces and notifies; owned controls and disposed mounts do not (1.884084ms)
+  AssertionError [ERR_ASSERTION]: mode notification must not wait for a queued toggle
+  + actual - expected
+  
+  + undefined
+  - {
+  -   reason: 'native-change'
+  - }
+  
+      at TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/host/mount-surrender.test.mjs:35:136)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: { reason: 'native-change' },
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at tests/host/surface-controller.test.mjs:149:1
+✖ native surrender records reading for recovery even if authority expires before toggle (0.412375ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'workspace'
+  - 'reading'
+  
+      at TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/host/surface-controller.test.mjs:152:9)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'workspace',
+    expected: 'reading',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

@@ -1,0 +1,36 @@
+✔ A1 foreground aborts same-scope A2 in-flight repair but keeps its binding and different-scope B work (1.178666ms)
+✔ any held same-scope foreground defers all peer repairs without polling while other scope runs (0.275875ms)
+✔ two peers release only after last hold plus quiet second and releases are idempotent (0.222375ms)
+✔ stopping the foreground holder releases its surviving peer after quiet period (0.129542ms)
+✔ old release after same-id rebind cannot release the new hold or same-scope peer (0.146084ms)
+✔ terminal degraded peer is not retried by another tab foreground lifecycle (0.17675ms)
+✔ terminal partial peer is not retried by another tab foreground lifecycle (0.135292ms)
+✔ scope replacement does not let old release cancel a new different-scope foreground holder (0.151625ms)
+✖ guard loss before foreground release stops holder and resumes its surviving same-scope peer (0.392375ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 8
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 51.641791
+
+✖ failing tests:
+
+test at tests/free/known-anchor-scope-priority.test.mjs:17:1
+✖ guard loss before foreground release stops holder and resumes its surviving same-scope peer (0.392375ms)
+  AssertionError [ERR_ASSERTION]: surviving peer resumes after guard-loss releases the last hold
+  
+  0 !== 1
+  
+      at TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/free/known-anchor-scope-priority.test.mjs:17:598)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

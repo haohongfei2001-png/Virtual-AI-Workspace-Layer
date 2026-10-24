@@ -1,0 +1,26 @@
+✔ MOCK_IDB migration v1 to current preserves old records (0.924625ms)
+✔ MOCK_IDB malformed v1 schema rolls back atomic upgrade (0.236042ms)
+✔ MOCK_IDB blocked upgrade closes eventual abandoned connection (1.081959ms)
+✔ MOCK_IDB injected quota error rolls back state and receipt (222.5685ms)
+✔ MOCK_IDB fresh B1 connection shares upgraded DB with B23 (62.155709ms)
+✔ MOCK_IDB v2 upgrade preserves roots, partitions and human logs; old reader cannot reopen v2 (2.048458ms)
+✔ MOCK_IDB v1 rejects refs wrong-path index without altering any old records (1.283209ms)
+✔ MOCK_IDB v1 rejects refs array-path index without altering any old records (0.178958ms)
+✔ MOCK_IDB v1 rejects refs unique index without altering any old records (0.159375ms)
+✔ MOCK_IDB v1 rejects refs multi-entry index without altering any old records (0.11725ms)
+✔ MOCK_IDB v2 rejects refs wrong-path index without altering any old records (0.159917ms)
+✔ MOCK_IDB v2 rejects refs array-path index without altering any old records (0.463459ms)
+✔ MOCK_IDB v2 rejects refs unique index without altering any old records (0.150042ms)
+✔ MOCK_IDB v2 rejects refs multi-entry index without altering any old records (0.211417ms)
+✔ MOCK_IDB v2 rejects b23_operations wrong-path index without altering any old records (0.397916ms)
+✔ MOCK_IDB v2 rejects b23_operations array-path index without altering any old records (0.17925ms)
+✔ MOCK_IDB v2 rejects b23_operations unique index without altering any old records (0.324417ms)
+✔ MOCK_IDB v2 rejects b23_operations multi-entry index without altering any old records (0.108583ms)
+ℹ tests 18
+ℹ suites 0
+ℹ pass 18
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 343.227

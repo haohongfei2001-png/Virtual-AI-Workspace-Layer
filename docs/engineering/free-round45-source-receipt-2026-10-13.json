@@ -1,0 +1,35 @@
+{
+  "baseHead": "181d78cd5bda7bf7ee9c3d7880a7c128665d3db9",
+  "sourceHashes": {
+    "src/data/evidence-directory-writer.mjs": "0656a92e6016dcfc07f04c0014a3ea01e4fbe95dd74a4848900ae1f688747062",
+    "src/data/evidence-directory-migration.mjs": "5ba7a597c10a814d135f54339f307b597511319627047de907aa3e817f45290d",
+    "src/data/free-evidence-repository.mjs": "6752c6a8896b62e6a247b4c9fc14ee72a1b2233f3f6271754cc83c7c99996981",
+    "src/data/free-recovery-status.mjs": "50e3ab800c17ab190dbdc9c33d2630a7d8806889fe6c126c67068ace09a282e5",
+    "simulator/build.mjs": "32d16e0ca089d67f54934b7ca66514a02199ae003cc298174c6f4504b3c42bde",
+    "tests/free/evidence-directory-write.test.mjs": "44eeec54e9f2be58b1c169e96350b419cc003de96a41da3bfdd7bbf770e1d45f",
+    "tests/free/evidence-directory-write-browser.mjs": "7f060c5af2f2bff5979b027639afd0d8afde89b10eb7ed91e1286991dd8c4ff4",
+    "tests/free/indexed-recovery-status.test.mjs": "7b09265777765a29164f3191dec1b101f65edcd36594634196b7bb69db7e93c0",
+    "tests/free/evidence-directory-contracts.mjs": "bf1bd3cf8f75d9ccc51e2d200fe3face08cf6dc788cb72d7318cd738537a94f9"
+  },
+  "fullNode": {
+    "pass": 915,
+    "fail": 0,
+    "skip": 0,
+    "logTail": "anged during GET_REF without URL change (6.885916ms)\n✔ B1 rejects account changed during LIST_REFS without URL change (0.773458ms)\n✔ MV3 build deterministic, scoped and CSP-safe (22.837334ms)\n✔ opaque browser bundle compiles the same actual navigation and broker modules (5.220833ms)\n✔ actual Node HTTP host serves app and rejects unsafe/unrelated paths (26.236375ms)\n✔ 120 contiguous 30-local-day segments Asia/Shanghai (16.520542ms)\n✔ 120 contiguous 30-local-day segments America/New_York (0.982292ms)\n✔ 120 contiguous 30-local-day segments Europe/Berlin (0.985833ms)\n✔ 120 contiguous 30-local-day segments Pacific/Kiritimati (1.141542ms)\n✔ 120 contiguous 30-local-day segments Pacific/Honolulu (0.870416ms)\n✔ current segment includes exactly today and preceding 29 local days (2.259209ms)\n✔ DST is calendar-based, not 720 hours (0.148084ms)\n✔ leap day included (0.172166ms)\n✔ invalid zone and negative segment rejected (0.216625ms)\n✔ future and naive times remain unknown (0.09725ms)\n✔ single latest theme segment; old children stay parent (0.858834ms)\n✔ current positive observation does not require full old coverage (0.458292ms)\n✔ old snapshot cannot assert no recent input (0.591166ms)\n✔ old child with a coverage gap is unknown, not forcibly historical (0.386541ms)\n✔ visit/update/assistant/edit timestamps never activate (0.074792ms)\n✔ duplicate events idempotent, conflicting times quarantined (0.056458ms)\n✔ scope collision rejected even for same native ID/title (0.173459ms)\n✔ theme scope mismatch rejected (0.057375ms)\n✔ time-zone projection does not mutate source (1.175458ms)\n✔ 120 themes and all 604 references accounted for (10.082208ms)\n✔ cross-Project references aggregate without native mutation (0.890875ms)\n✔ only explicit synthetic origins and paths accepted (0.336125ms)\n✔ impossible calendar instants are unknown rather than normalized into a different day (0.088792ms)\nℹ tests 915\nℹ suites 0\nℹ pass 915\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 17733.923666\n"
+  },
+  "realIDB": 7,
+  "MV3": 9,
+  "package": {
+    "status": "SYNTHETIC_ONLY",
+    "releaseStatus": "NOT_RELEASE_READY",
+    "files": 50,
+    "workerModules": 43,
+    "unpacked": "/private/tmp/vaiwl-free-delivery-round45-20261013/extension",
+    "archive": "/private/tmp/vaiwl-free-delivery-round45-20261013/vaiwl-free-synthetic-only.zip",
+    "archiveSha256": "eb29951f232261f2817df68a807ce71d61a0ec4e37315f19802789c98c9a9e7a",
+    "sourceManifestSha256": "6aa2fdece4760ca45ec656d9b1f2a3b6bba51f4fa42071a640652d088de76921"
+  },
+  "normalSend": "NOT_RUN",
+  "automaticMigration": "NOT_ENABLED",
+  "realAccount": "NOT_RUN"
+}

@@ -1,0 +1,2558 @@
+{
+  "schema": "vaiwl-mac-acceptance-home-20261023-v1",
+  "baseHead": "05cda30e5a86824bc571fa01328272279de9f703",
+  "scope": "Browser-Local visible navigation only; no source diagnostic or internal requests",
+  "actualMac": {
+    "sameIdUpgrade": "PASS_USER_RETRY_LOADED_AFTER_ORIGINAL_PATH_REPAIR",
+    "localConfirmation": "PASS_USER_CONFIRMED_AND_POPUP_ACK",
+    "homeBeforeFix": "FAIL_NO_FORMAL_UI",
+    "homeR3": "FAIL_NO_FORMAL_UI",
+    "homeR4": "FAIL_NO_STABLE_FORMAL_UI",
+    "browserQuitAndReopen": "PASS_ORIGINAL_PROFILE_RECONNECTED",
+    "newChatSend": "NOT_RUN_NO_TEST_MESSAGE_SENT",
+    "project": "NOT_RUN",
+    "searchReturn": "NOT_RUN",
+    "workerRecovery": "NOT_RUN",
+    "privateCacheIsolation": "NOT_RUN",
+    "homeR10": "FAIL_READY_THEN_NATIVE_REGION_CHANGED_HISTORY_MASK_RUN",
+    "homeR11": "NOT_RUN_NATIVE_ACCOUNT_BROWSER_CHECK_INCOMPLETE",
+    "nativeAccountPage": "BLOCKED_BROWSER_CHECK_INCOMPLETE_NO_RETRY_OR_SIGNOUT"
+  },
+  "confirmedDefects": [
+    "home has separate welcome region and centered composer, without conversation timeline/footer",
+    "history root extends below native scrollport; old geometry rejects it",
+    "native history contains an unsent local row and loading elements; stable-only mask must preserve them",
+    "startup can precede native home hydration; bounded layout readiness now precedes fresh handshake",
+    "mask selection previously depended on visible row subset: clipping a row changes region epoch; isolated before FAIL / after PASS",
+    "original unpacked load path was absent during earlier upgrade; restored at exact path; user Retry confirmed load"
+  ],
+  "offline": {
+    "observedProfileAndController": "PASS_60_TARGETED_TESTS",
+    "observedBrowser": "PASS_WEB_MECHANISM_ONLY_HOME_CONVERSATION_AND_CLIPPED_MASK_CONTINUITY",
+    "projectLayout": "PASS_WEB_MECHANISM_ONLY_EXISTING_TARGETED_REGRESSION",
+    "notEquivalentTo": "real Mac ChatGPT acceptance",
+    "retainedFailure": "one new clipping assertion wrongly assumed scrollTop could move entire list out of view; Chrome clamps scrollTop. Replaced with actual out-of-viewport geometry; no production relaxation.",
+    "finalUnits": "PASS_200_TARGETED_CONTENT_SESSION_PROFILE_CONTROLLER_PACKAGE",
+    "isolatedMV3": "PASS_FORMAL_UI_PROJECT_NATIVE_NAVIGATION_HOME_SPA_WORKER_RECOVERY_CACHE_ISOLATION_REFRESH_RESTART",
+    "retainedMV3Failure": "old fixture changed URL to home but retained conversation DOM; new readiness correctly refused it. Corrected the native fixture to observed home layout while preserving same document, draft and navigation; production guard unchanged.",
+    "logs": ".git/vaiwl-checkpoints/20261023-mac-home-final"
+  },
+  "package": {
+    "revision": "r11",
+    "files": 196,
+    "zipSha256": "da23deaaf200e848cbf159339b9f587e87ac5b02c87b5c86ec2d42ecc630eac1",
+    "state": "HOST_IMPLEMENTATION_UNVERIFIED",
+    "sameLoadPath": true,
+    "databaseModifiedByAgent": false,
+    "directory": "/Users/hhf/Downloads/VAIWL-Browser-Local-Mac-20261023-r11/extension",
+    "installedActivePathsVerified": 196,
+    "extraUnreferencedCopiesPreserved": 302,
+    "r11RuntimeActivation": "NOT_RUN_NO_BROWSER_RELOAD_AFTER_NATIVE_ACCOUNT_BLOCK"
+  },
+  "preservation": {
+    "originalAndIntermediatePackagesRetained": true,
+    "preUpgradeAndClosedChromeDataSnapshotsRetained": true,
+    "stashCount": 3,
+    "newBranches": 0,
+    "mergeDeployRelease": false
+  },
+  "sourceHashes": {
+    "extension/build.mjs": "7e072c1eda5ea00eaf10647477a050c571676ccca2c0d9ed846ce90f052ce910",
+    "extension/content-entry.mjs": "ea69be21bdd28bf7b70b98a93a4dd6fd94ea5fbb572ee58ac445f92c05c011d4",
+    "src/host/chatgpt-adapter.mjs": "d2a2ae25f5a5fc6e7ffccec90b78c1af3a9d8bafb3f15eb46a009a29db7929f1",
+    "src/host/chatgpt-observed-profile.mjs": "71004d235a50bf8919faeea88afa259874c2c2bde0192c13a734123175432ccd",
+    "src/host/content-session.mjs": "66463de120cb55a22ee20968447153c06a3abfb266c540a13b137537d138362a",
+    "src/host/native-history-list.mjs": "82a54bc146f131b32a125e0ba923325eb84cb0f478c83fae85117b54e7790bc8",
+    "src/host/native-project-surface.mjs": "91039235cf19c37aefa6f3fe76a933d8a48f52ff4ecb4586fe8bf1afb3cd83e6",
+    "src/host/surface-controller.mjs": "44f08b99add0e9ca77ba88e0d2d4724b38880582746ccf06fab1ad0b705959e4",
+    "tests/host/browser-local-mv3.mjs": "a6fa5c3302e93be16766e22113b8831e14069721f5f25a30061666938b4d1491",
+    "tests/host/content-session.test.mjs": "cae68f91c2a59d8511c5e116e9dbdb82ccf82503ed36877699e2184afd78bb76",
+    "tests/host/observed-profile-browser.mjs": "71019ebd45f404ab25e00df2b22891568a0645d75c5dd23d5a1c92023efffc1f",
+    "tests/host/observed-profile.test.mjs": "718454ad06937d60ea244398ee97a566907119c0c2dd03dd617689fd1a83e820"
+  },
+  "unresolved": [
+    "real history-mask-run invalidation identified; the scroll mechanism is reproduced offline, not yet proven the sole real cause",
+    "one earlier real hello-failed marker has no established cause",
+    "r11 actual UI and continuous Mac journey pending native account page availability; no further refresh/challenge attempts"
+  ],
+  "r17Checkpoint": {
+    "baseHead": "87fb5734c7939094e76aad663a3b0d5eeb341b01",
+    "actualMac": {
+      "r11": "FAIL_MASK_ROOT_CHANGED_19_TO_1",
+      "r12": "FAIL_APPENDED_NATIVE_ROW_CHANGED_MASK_COUNT_19_TO_20",
+      "r13": "FAIL_UNSAFE_NATIVE_HISTORY_THEN_GRANT_EXPIRED",
+      "r14_r15": "FAIL_TWO_FRAME_LOADS_ZERO_PUBLIC_JOINS_THEN_GRANT_EXPIRED",
+      "nativePage": "RECOVERED_BEFORE_CURRENT_TOOL_BLOCK",
+      "r17": "NOT_RUN_LOCAL_BROWSER_USE_DISABLED_IN_WORK_SETTINGS",
+      "newChatSend": "NOT_RUN_NO_MESSAGE_SENT"
+    },
+    "changes": [
+      "Explicit list keeps validated row masks when local/loading rows disappear",
+      "Per-mount row selection stays stable on append/prepend; discovery remains live; removal/reorder/gap/unsafe row rejects",
+      "Fixed stage diagnostics on owned frame, not native document ancestor; no authority or data content"
+    ],
+    "offline": {
+      "observedProfile": "PASS_HOME_AND_CONVERSATION_WITH_APPEND_AND_REORDER_CASES",
+      "targetedUnits": "PASS_85",
+      "formalMV3": "PASS_EXISTING_PROJECT_NAVIGATION_RETURN_WORKER_ACCOUNT_RISK_REFRESH_RESTART_FLOW",
+      "retainedFailures": "Several diagnostic runs failed at first popover wait. Exact offline hide trace identified new root-level diagnostic attribute as native ancestor mutation through adapter.onSurfaceChange. Moving diagnostic to owned frame resolved. Visibility-only hypothesis failed; removed temporary instrumentation. Real zero-JOIN remains separately unresolved.",
+      "logs": ".git/vaiwl-checkpoints/20261023-mac-home-r17"
+    },
+    "candidate": {
+      "revision": "r17",
+      "files": 196,
+      "directory": "/Users/hhf/Downloads/VAIWL-Browser-Local-Mac-20261023-r17/extension",
+      "zipSha256": "296f51a65979e2dc60f6bf71666bfcd63c94c0d50aa58def6fd9c7344d279c7c",
+      "originalDirectoryUpdated": true,
+      "manifestUnchanged": true,
+      "runtimeActivation": "NOT_VERIFIED",
+      "databaseTouched": false
+    },
+    "next": "When existing original Profile browser control is available, inspect current native page and empty draft, activate r17 via ordinary page refresh, read owned frame stages and complete remaining actual acceptance. No reinstall, clearing storage, source diagnostic, or duplicate test message.",
+    "sourceHashes": {
+      "extension/sidebar.mjs": "8d1b85dda5d1a93b548cd37da978cb0f90ffef340ddd2744023b90eafc936220",
+      "extension/workspace.mjs": "c12419194fa2a92b3770cfdd60849e36c92261e27066c55235a082a1bbb507af",
+      "src/host/chatgpt-adapter.mjs": "2cf62b6ceccd36c29677a1d4c886a8778988b860a7e45c67b00dcc38510fa3a4",
+      "src/host/native-history-list.mjs": "8be096b4728ad4a1a0087db76a640a522098e41c0bdc04818f53b34f620908d7",
+      "src/host/surface-controller.mjs": "ab06dea40fae8c9ec11b96308920e2246f13a6227b4a7333caf801e12caf0b85",
+      "src/host/ui-frame-client.mjs": "32a3f5b368c2e7918b1c82291a29c8218f36e17731fcbf3ab6108d5678b62b30"
+    }
+  },
+  "r24Checkpoint": {
+    "baseCommit": "a55d63ba0a9bb800cff9790e22b385be65bcfe72",
+    "date": "2026-10-23",
+    "browserConnection": "RESTORED_AFTER_USER_RESTART_VIA_ORIGINAL_SUPPORTED_CUA",
+    "exactPriorGateCause": "NOT_ESTABLISHED",
+    "realMac": {
+      "originalProfileReconnected": "PASS",
+      "nativeExistingProjectChatOpen": "PASS_NATIVE_ONLY",
+      "draftChecks": "EMPTY_BEFORE_REFRESH",
+      "extensionImmediateWorkspace": "FAIL_NOT_STABLY_PRESENTED",
+      "realNewChat": "NOT_RUN",
+      "approvedTestMessage": "NOT_SENT",
+      "return": "NOT_RUN",
+      "personalCacheRecovery": "NOT_RUN",
+      "workerRecovery": "NOT_RUN",
+      "accountIsolation": "NOT_RUN"
+    },
+    "observations": [
+      {
+        "candidate": "r17",
+        "result": "home ready then ui-grant-expired; another start hello-failed; conversation start missing-or-ambiguous-native-boundary"
+      },
+      {
+        "candidate": "r18",
+        "result": "conversation regions became available; mount refused unsafe-native-geometry"
+      },
+      {
+        "candidate": "r19",
+        "result": "adapter-failed: newly added gapPolicy missing in layout whitelist; corrected before final package"
+      },
+      {
+        "candidate": "r20/r21/r22",
+        "result": "unsafe-native-geometry; no public UI established"
+      },
+      {
+        "candidate": "r23",
+        "result": "fixed diagnostic narrowed refusal to viewport; later read-only DOM showed expected viewport topology, so precise transient cause remains unproven"
+      },
+      {
+        "candidate": "r24",
+        "result": "conversation reached ready, 2 frame loads, 0 module-ready/public JOIN/grants; ui-grant-expired. Subsequent diagnostic reload layout-failed. Home reached ready with 2 frame loads and 0 JOIN, then expiry. Not a stable Mac PASS."
+      }
+    ],
+    "confirmedDifferences": [
+      "conversation pages were excluded from bounded hydration wait",
+      "native Project breadcrumb occupies old fixed header gap",
+      "scrolled reading descendants have raw rectangles behind a clipping viewport"
+    ],
+    "changes": [
+      "reuse one bounded 6s layout-readiness wait for home and conversations; geometry checked before HELLO",
+      "explicit observed profile chooses first proved empty header gap without moving native controls",
+      "plain noninteractive native header background accepted only under explicit profile and existing paint/hit proofs",
+      "apply native scroll clipping only to contained descendants; fixed, external absolute and top-layer escapes retain raw checks",
+      "fixed non-sensitive geometry stage on failed mount"
+    ],
+    "offline": {
+      "classification": "ISOLATED_MV3_NOT_MAC_ACCEPTANCE",
+      "status": "PASS",
+      "checks": {
+        "projectAndMembersInFormalUI": true,
+        "nativeOpenPreservesDraft": true,
+        "uniqueReturn": true,
+        "noDatabaseOpened": true,
+        "reloadRediscoversVisibleObjects": true,
+        "replacementDoesNotExposeOldProject": true,
+        "explicitBindingUsesExistingIDBInSeparateNamespace": true,
+        "trustedSameDocumentNavigationRetainsPersonalSpace": true,
+        "tabFocusKeepsBinding": true,
+        "nativeSearchAndUnplannedSpaKeepsBinding": true,
+        "actualWorkerStopped": true,
+        "workerRestartSameDocumentNoConfirmation": true,
+        "workerRecoveryPreservesDraft": true,
+        "accountRiskClearsContinuityAndPrivateProjection": true,
+        "explicitUnlockRestoresKnownProject": true,
+        "refreshLocksButPreservesPersonalCache": true,
+        "browserRestartLocksAndExplicitUnlockRestores": true,
+        "noInternalRequests": true
+      },
+      "reportHash": "51b6f46220e29289fba89529233384e0a74f5fdbef2fe992830e01a6ecc029fa",
+      "unitLogSummary": [
+        "ℹ tests 241",
+        "ℹ suites 0",
+        "ℹ pass 241",
+        "ℹ fail 0",
+        "ℹ cancelled 0",
+        "ℹ skipped 0",
+        "ℹ todo 0",
+        "ℹ duration_ms 812.175208"
+      ],
+      "gapRegression": "PASS_WEB_MECHANISM_ONLY; breadcrumb, plain background, clipped reading and fixed/external absolute counterexamples"
+    },
+    "candidate": {
+      "directory": "/Users/hhf/Downloads/VAIWL-Browser-Local-Mac-20261023-r24/extension",
+      "archiveSha256": "08aab699111985f0d648e2fa76d7f122cccbb38a7ce58aa4a2263441b8c67f9d",
+      "filesVerified": 196,
+      "sourceHashes": {
+        "extension/worker.mjs": "0b80790a6af44952f12d782e55ffa45008778580e1daf5aa447a4b3e2a264009",
+        "extension/browser-bootstrap.mjs": "961284ccdf807fa799b81c512607808d9a143ca6070f98aaedf28e26e87fc554",
+        "src/runtime/host-browser-bootstrap.mjs": "5a7e89e900643d7c8e9c1d5f1b4573e4d6d6bf11dfe9fc296e12a62ed38e36e3",
+        "src/runtime/browser-request-context.mjs": "689ee6ea95184456be52b872a0778f04abfc6e75922991ca9ac0daa3019093aa",
+        "src/host/url-policy.mjs": "fddfafcca2276161e6fd3c908ac896d0dab656fce6cf06aee64f1f442f7ac7e9",
+        "src/b1/identity.mjs": "75f25f4daf8eef16c1cc161eeb7ef1eeaa17378d701f67d2ec56cb51ebfa8289",
+        "src/data/request-deadline.mjs": "cda2ebb4158c05eb911fbb84a1af092cf91f461e3a002bef4b4d23f5a70dfdf7",
+        "extension/config.mjs": "9f38c623f8ef08e684d9b1b71fd0a49c01b736a41e75efc997117370df175c41",
+        "src/runtime/host-worker-runtime.mjs": "67f8da491f2104b81216cafd5a4ee56768dc2940e4159b87e596e9010c45a54b",
+        "src/runtime/browser-local-control.mjs": "e4925b22ff34a9c8af43243a140bb97f25a329b8137de049995ddaa94cdebc90",
+        "src/host/contract.mjs": "35129aacf2a7e1fe1812c846379563d60ad74a66b689ad41bc38d76484a97716",
+        "src/runtime/browser-old-send-terminal.mjs": "0ac8c767e1112f053d979ae411662cf1db17fc26501ea35e41ca8b4186514393",
+        "src/host/old-send-terminal-profile.mjs": "a43986f8e54b15c98e9dc3535a9e0bb08820ad2132f0eb0fdf72ace97b227b0f",
+        "src/runtime/shared-host-read-budget.mjs": "ee4e09ea97c144fbe30b029b41251ae8e313503bf706e3b4cd9966a24ae27196",
+        "src/data/hash.mjs": "aef21d1842cdc09b33fef973a9d29f15cb7c0c3f773a6a9d31726b83ffee7b21",
+        "src/runtime/browser-first-send.mjs": "609847013c92f984f0c75a4854b57ba2592eb878704d76a21d7c0364033929e6",
+        "src/host/first-send-profile.mjs": "cf0d76b36fc980a890246d255448f8b29965b5ff12882689d6884e7336e436ff",
+        "src/b1/scope-repository.mjs": "7124b1e9e6b2ff9b0af0d836bf9a8c60db401e67fb02e04366c53f8a207f750d",
+        "src/data/schema.mjs": "3b3053fef20deb617fcc7a8cff8401424c7b5537373908974eff7143efb0f2ab",
+        "src/data/free-policy-initialization.mjs": "e0a358b12ea9454f5ee657612e4c83c247ba895b082a362be9186f4b7e898a32",
+        "src/data/known-anchor-key.mjs": "e5d91c902e04440be924ef0506ff688bbbccd83150610f50199b518bcb298df3",
+        "src/data/repository.mjs": "0e03a0e3c7cf3a7779191aebb05f221fd2ef37b03ee805f2e0c5375566df3b7c",
+        "src/data/free-time-policy.mjs": "8a75b5bdde8abf8ee07873ecf2aa45a19faccd030b9f03c738b56db6ba9ea17a",
+        "src/navigation/projection.mjs": "36334b5da4bd8e89718bf45b69723f4a657d46797c03c653298aaa3392399f24",
+        "src/data/activity-version-fence.mjs": "165775d2e4e9aa5acbd56af9d9e97a6bd4707e7d9c27f5b1669a215529bd1e74",
+        "src/data/native-repository.mjs": "e2eaf5314683a5fbbae07066f5fb6eb92b47b96c62568eecf0c107eadd93be50",
+        "src/data/native-lifecycle.mjs": "62d46f572dadbcc247d3d144ec4e85539ef82e6e08ccb6d9f1e8857914ecd965",
+        "src/data/state.mjs": "df0eaff00a7f050c37653f0e740b8fabe19bce571c5e37f4ce437d180984c62a",
+        "src/data/preferences.mjs": "1fb8395c5dfe23d64c91095b71a1c117b9762b3ccec68e262aaf73744b12c9d7",
+        "src/data/continuation-evidence-reader.mjs": "c28d338063eb500ef98c4fec88938d63b5adc501bdbfe44185fbc2fe781d7fbe",
+        "src/data/free-evidence-partitions.mjs": "c1cdd10d9c6a6a142759fa7589b55a1607a4518260677abb3145ea00907a0ead",
+        "src/data/free-evidence.mjs": "3a658b980251c330a09104786e5048f3e8cfa46e81e7e72403bbbdadf6c8a982",
+        "src/data/observed-send-anchor.mjs": "f9dbb9278502a325c2263d4adeb99ea1c0159525d505728fe84fdee2d59980da",
+        "src/data/free-activity.mjs": "29a89003f69d38a6927916db367af505362586168df292055941cf7aa56a0928",
+        "src/data/evidence-ref-directory.mjs": "8a89bf5b8535578881c823077554f177098044214a22fcfaf4be41e65498c867",
+        "src/data/verified-record-cache.mjs": "9b7b3c13abdd37f2b6d4fad48b85707a9815538fd793cad537f8e87b8f08cde0",
+        "src/data/native-observation-continuation.mjs": "3222a09592efd5c904cc65e036976f2f08bb260a9e639c83bcfddbd025dedee8",
+        "src/data/native-facts.mjs": "4282a0559f4b430735b35b9211a4037d1a6d3fb45aa1a8a5f36b44bafcda4f3b",
+        "src/data/native-partitions.mjs": "fd5fae8cbe9e64bcd9ed8b276f46714b00beea7fd8989e21fbd9e0fa9bada782",
+        "src/data/native-version-index.mjs": "943a4d05a7e0d44fa587acd1b1d9a5828988b30c74ba9903a3243b07159ad5cb",
+        "src/data/capture-json-snapshot.mjs": "d082508f8186c38c71e83e0cc8653501fcf6afde67e941b8ce8803f04106ade8",
+        "src/data/native-index-migration.mjs": "fa88d1b18c1594649b5bd1e84025dc1310c3241ee51f123a498ea49fc20a30e9",
+        "src/data/native-partition-audit.mjs": "b63440b53cda12d5bdf148914db5f88c21d868bf4186db0b339f8ffe50890a18",
+        "src/data/audit-record-prefetch.mjs": "5af85b5c8a90e0a1d236fdec784b77ee970f7ea251e18b4be386a34e909d6b7c",
+        "src/data/native-index-writer.mjs": "b9e24103156b3a9511e6284001992bba23d56b09fbe5360db545e7d3116d3fb2",
+        "src/data/native-index-reader.mjs": "6bdbf029cca3490520a24d8d9faad171d8f604b85817847239f5cceb2f3f556a",
+        "src/data/free-projection.mjs": "e184a7d3533710840fe8248b11ffde1db06ee10d42f03b850d231faf8ab3bd85",
+        "src/data/free-evidence-repository.mjs": "cf10ba12875a9024f45bd7bb595fab1cece014eb67a852199d8e825418bd2003",
+        "src/data/evidence-directory-writer.mjs": "9ff0c941904e155c736a29e1d232e4fecf67d7995c5d4b6907a12b0f54102944",
+        "src/data/evidence-directory-migration.mjs": "75328ab40b3327d9e9c60c44402d87ea3afc9bd385eeb3ba2f0a14036fc1b135",
+        "src/data/evidence-partition-audit.mjs": "3aadf876de681cc97ef5564119da7a2c691c45a472434d6e8f7080ae02d3aa79",
+        "src/data/evidence-directory-reader.mjs": "7ef90c7a37a82b2ce4562acb6afc56e4ae36d14543c776893664b79869fa895b",
+        "src/data/shared-directory-retention.mjs": "4213b173e47d2f2a43693dbd8c1fa7a5fbbabdf2439104aebc22f603cfd2be64",
+        "src/data/shared-directory-reader.mjs": "23d34f68b0dedce591ef2b99bb539a7eb56efff619d6c80ec959290f500672d7",
+        "src/data/shared-ref-directory.mjs": "995be9ccc613720e97b807d8a98ed80a336ec79ebb13b4521316548848f10626",
+        "src/data/partition-manifest.mjs": "566283402493ada28abc530354c343bc6c561e309d1e6802c981d62584a5e06a",
+        "src/data/cooperate.mjs": "ce494a33280143e1e2a2227a72413da792330311de12642a9a56b13704f2f3b4",
+        "src/data/shared-directory-migration.mjs": "0cd415f9a871b93613c3d9f3e301982cda2d1891dc847d983397f87dc2dcf0df",
+        "src/data/shared-directory-writer.mjs": "9e933860ea5b331ee78f3df09431b65925e3930e22ee55b11b692c9c764bf1b8",
+        "src/data/shared-partition-audit.mjs": "25d4b77561b36b150ce1524e27e184170f3c1ef493995251a88678908d31f6cf",
+        "src/data/partitioned.mjs": "c0d4d79ee1cd4ed6c3d95580416aaa79c2160eb7a82347717cc98afb9da453ac",
+        "src/data/shared-directory-recovery.mjs": "420077b28d9e4bc69835bb63c2c00ebfe5ce0497d2bd902a3728fe38684476ee",
+        "src/data/backup.mjs": "bb0a8639d02e2169ae15e866a464f1531b7e80e40afd7c8a4b35e99d70928396",
+        "src/data/evidence.mjs": "f84032c9a2fc08455480652b60de6fb9394a70e82a7ace8729186ff097b26238",
+        "src/data/known-anchor-backfill.mjs": "dd58e613da9564668fc7963135dd98caccf3bd6930e532864e68d9ff6afd55ca",
+        "src/host/chatgpt-observed-profile.mjs": "0d053bd8ee48ee71420cdcf62de2f574e9aeec89d13fdc93fdc5a6e3bdb7c24a",
+        "src/host/native-surface-boundary.mjs": "a07258d559b2c4f48491fd217ac8123a662de024f2eb2a4ece6939e3763d9ec0",
+        "src/host/current-body-discovery.mjs": "b6c78564eb4470b85cf316e5d737182b854aad2b2e4e1d56a24750c91c503fe0",
+        "src/host/native-return-gap.mjs": "6b9bfb67677db010bad92c9e1b928a9bd14f92d8c3840379970722a7171295f0",
+        "src/host/surface-discovery.mjs": "8bfeb2a6539b2ba6bcf1c6bf471fe7e98848418a25263f8402330c1b83db999d",
+        "src/host/bounded-handle-registry.mjs": "ea3a48ed3760741b8d845b4116830cffc611571b6fd01bb9561bd8a63efdee5c",
+        "src/runtime/host-binding-service.mjs": "33397a68d2befc1399b7d0eddc27948f34c431389d10d2cd939f1f3d204d6eed",
+        "src/runtime/browser-local-storage.mjs": "ca59ae6c031212b6703607f671b3efcbee0a61c03759bea150026befca6f1017",
+        "src/runtime/browser-local-authority.mjs": "3489176670062d247b052b016c41d75c9d18cc3d81f9f708d85329a86b6b36ba",
+        "src/runtime/browser-local-memory.mjs": "c7070618f486d8daa46884cfcc85c13736199779cc5014ece951b078c10460b1",
+        "src/runtime/host-native-activity-owner.mjs": "54adec4047801e7e8da8f4bfb0c9ee87557cc2a64f4bc090b846b57a6bada625",
+        "src/runtime/evidence-source-incarnation.mjs": "6bcdc42a9b5e94b0597f3588186af7ba105befbc84f21021a5556936d87e6e4a",
+        "src/runtime/native-activity-profile.mjs": "2b17ad13773345a49985bf24f8fa3cf815dc584f01864068d104970b427714bb",
+        "src/host/metadata-candidates.mjs": "76637cf062eff2be631c11c63dd40db2ec33dfa835710d82147270774e1350cf",
+        "src/runtime/context-recovery/no-receipt-recovery.mjs": "14d2382c12f250de8386837a1b0845e60f7c1f1297245dbc8e4ee67d87ec2513",
+        "src/runtime/isolated-session-owner.mjs": "8c3ef00c36a387c6664e3f24910ba317f7d3a7b9d2216f70f9823d7700c0061c",
+        "src/runtime/host-entry-calibration.mjs": "25e59ade903d92af3bd70f8e7d205c8ac2d054ca6cabcaad5da41a7def1393c6",
+        "src/runtime/host-ingestion-pass-owner.mjs": "42716372e8f9d57f33d1a75d27c9fae1016d868cdd1eb87b90c712e8b3981347",
+        "src/runtime/host-old-send-terminal.mjs": "69d794d01b2ef6f60a9b466a8583a3d020a28906c8bda1381557af57e6b36a29",
+        "src/runtime/old-send-terminal-readback.mjs": "c090d556d487b58771ae56ed408547c37e893e7a78e26838a47a528fbd459fce",
+        "src/runtime/host-activity-source-admission.mjs": "7010e6644bbe7b05ae43a3b7b0fbf6928d35f46eacaa86d4b7877a5673a92489",
+        "src/runtime/send-ack-admission.mjs": "25c9033baee468e771b8f1d6d74764e619bcda669b2eaf658985e4208b349696",
+        "src/runtime/historical-send-profile.mjs": "b356d5fc7101080ba60910edc0175180924c548269816dd98900f2055195f4c9",
+        "src/host/conversation-metadata.mjs": "915e88458f46265a696e68fc4b2892916e4bc69ffd03f04d580b4dee4c9e658f",
+        "src/host/conversation-directory-metadata.mjs": "2508a697792936a889708b649c28bb8ed2b1bc1b56e43ef44c176bd0354bf733",
+        "src/runtime/host-historical-send-owner.mjs": "dd0901b6c0739146db14371fab1284c37ab43fa0e106406d51e7c7e308b76bce",
+        "src/runtime/host-first-send.mjs": "44b175a4c7f41f903b19275c84d5f1269dd179eb7c1775a87ca81fa97cbac816",
+        "src/host/first-send-causality.mjs": "cd062c0b638408b387bb469f76dac3ea389acd9943bd42c1545ac8f0a08905e6",
+        "src/runtime/first-send-readback.mjs": "4052d39db39d2e5053bb4287cde87fd45ddcce844420099203950ea68a9691f6",
+        "src/runtime/host-current-navigation.mjs": "ae1033e1b5ed4c1301653d08ba90f5e0ee64f255da910e9f7cf7046f62a5cca4",
+        "src/host/current-navigation-plan.mjs": "c33cfd6af8e7523ac85fe812b59b2e24df109d4e03a3d507b9edab6b53d413ff",
+        "src/runtime/host-send-ack-owner.mjs": "7e4362115828c9b68ff3a34923587c2711e6df854d119b9b3d3a1d91b5830fc5",
+        "src/runtime/host-candidate-service.mjs": "0ae6ff996262e89550bc49709e96647c5a738f33ca44409d465b39bf5c5af4fd",
+        "src/host/candidate-presentation.mjs": "d2a89c85c263de8f1572c8fe12e7fc1400bd4201fed7c3adb9aede868cd6cc4a",
+        "src/runtime/host-snippet-service.mjs": "15c63959f85f73e6be7eb194c4534120bcfabe23ec17746b6b063977bdb75cae",
+        "src/runtime/host-backup-service.mjs": "ee70a94e1f1af68c23f93ff1bc5b67d547c7661c4b1abe7e7a9c26e4da9d9c2e",
+        "src/host/backup-transfer.mjs": "69b9c025e80993644ba8b37fdf77ccb9662d4050fae66e847b98b3663f59122a",
+        "src/runtime/host-send-candidates.mjs": "454bb4ab52dbac6fafe3a5f70c9d7e8acfcce6f4011c2a70646616ca96dafac4",
+        "src/host/send-correlator.mjs": "251d50175833fb24dd945da770aafa40e34db3850da0eaa67b9944bb5798d408",
+        "src/runtime/current-metadata-reader.mjs": "c237d156abe921e5066cd267a6a7bb056b80a744f46d9045c8a34a44ad0d641c",
+        "src/runtime/host-recovery-service.mjs": "78839dcb8f8b1bc8e66b5e06e2b8d0fcea9b414bd10274d6d32bd02cb835c171",
+        "src/runtime/host-continuation-owner.mjs": "f4d2dd6393d36fe7708beb9020571a4c11f63459dc4f3075ffbfa982e5e65630",
+        "src/runtime/free-read-service.mjs": "b0c15af3c81cac1f923defe44ac64b12bea539e4b94211ffe9e2c06eed044832",
+        "src/data/free-recovery-status.mjs": "7c87501d48823af05818e94f48304fbebbc29828d92802e6629c80232fd7a7c2",
+        "src/runtime/host-view-service.mjs": "553476a0609a9a60e3f026c26a58b03314107d9a72179560b940045a178ee5cf",
+        "src/runtime/free-project-location.mjs": "45892565ac8896feb97872c59e3b504d0563b6e461c3da49d838c1359991e649",
+        "src/navigation/free-view.mjs": "ef0f8d6b798789539d16bdc3ae1d8cc66ccf5fc32f472b83ca2c475863946aaa",
+        "src/host/frame-resume-state.mjs": "60976e1f4a1e73c93d8d6ac6d4211b138936b2ff282c60e9293ad0e5305a58fb",
+        "src/host/frame-row-windows.mjs": "5ff48b95d0e45aba9ca779f08b5c0c4a9a4056826ffcc94d47a8c03323d42b3b",
+        "src/runtime/host-auto-time-policy.mjs": "90838ac5e0c95262911bb05289e13abe659662b7ea08255edfce14e7665516f3",
+        "src/runtime/free-working-set-projection.mjs": "b50b973005612c5d9d76cff9a4acd6d6fc23d006dea787d681c534385629ff4f",
+        "src/runtime/free-search-projection.mjs": "354fd7098b8bd695fb281f6641388127347306e63186057c9b0604f92fc224dd",
+        "src/navigation/search.mjs": "36fe6eda63bd85ff203a306a78309a91979dd9705b2cdb2b64c1f764c2e2b8d0",
+        "src/runtime/free-view-owner.mjs": "fda3b75a5fcca2d7095a220783563b847f966325ad75760a0fb40629d4860974",
+        "src/data/read-recovery-budget.mjs": "7c7948a740dcc37f9a2a6b25babe8c29cd2d84441299c1429c7e524402cc8c51",
+        "src/data/free-header-loader.mjs": "7817a581a7816d744b39ed8fa37d49eb86da065335e2f46ec190fa9fae18e7cb",
+        "src/data/free-page-loader.mjs": "c4339dfa76cfab89aa1f16b40129ee9f7c779233d5d03ff2134f551a8f9b0d65",
+        "src/data/free-replica.mjs": "11326c574b31ce1fc4c93bf712b812f0d3181f0254ec08ec22e8588836dd81dc",
+        "src/navigation/current-index.mjs": "23f13e4d9556715bb029ad6724b8a3731ba87251d6ddfd8e95939085ebfab21e",
+        "src/runtime/free-frame-projection.mjs": "798dc789b6e8aafc2030984e9c1be6a8762109b80545a9d8505841e7dd9cfd39",
+        "src/runtime/host-ui-owner.mjs": "8ff6645c1f1399f35ed622c7cd4960a574f851e3d81760eba00d03d9717f011e",
+        "src/host/ui-grants.mjs": "391215f92dcb238f329c302b1a90476776d47a4e981727458b7278f113d71330",
+        "src/runtime/host-observation-owner.mjs": "ca209bbc5de355630b602d33c730eaf7022c746ee6005e29ff20abadb6e3d272",
+        "src/runtime/native-source-incarnation.mjs": "85a69f2470a92c40631189759f4a80640fad415bcdd1d04bfaee88ce60af56a4",
+        "src/host/current-observation-batch.mjs": "f7fcd583d0811a8b71d72dc5bac4ba4c57eae16e552076aa08d5a50f42b45151",
+        "src/host/send-intent-claim.mjs": "c4c748740cb6c691e03565f346fd31a83761a585c9ff2f28d94fec4db5053b23",
+        "src/host/current-body-claim.mjs": "e082ed353a0bb81c7762a65ffa258a375391ca3194618f2a9888fee0c357e13a",
+        "src/host/surface-batch.mjs": "4733a8cecdc3f4664c77da81d12441c9f2bd7cf0c16e55ec93eb94076faa4e5d",
+        "src/host/directory-batch.mjs": "6cc6546fd64a97d5b21765c12d4dc90ccc1d6a3b219aee0f7816cf4b3574eb92",
+        "src/host/project-metadata.mjs": "71980d52b0a41103a3920f86152e2387cadc5da7eb07614911cdf2acd4d9d46e",
+        "src/b1/document-binding-broker.mjs": "1f247c0fa2b3a05c5f2ae11dda39df04de9c79628b7753715bdafcadbc842aec",
+        "src/b1/host-document-handshake.mjs": "fafe938904e635da9964d222fe7dce8cc98cb5eda6501420af464c95b4a9cc6b",
+        "src/runtime/scope-authority.mjs": "e33521586cf169b4e29bc58f03b42724b8e5a55a0cd2c72213a595100b964e42",
+        "src/runtime/session-provider.mjs": "1964e5e9aa55f1a2211c909919f55723dc437e57fc5c5546c104da2f7eeb90b5",
+        "src/host/session-identity.mjs": "ff71fb796ab2c81ef07a5fae274a3de2c4317e05af48a590c952bb0c51b31281",
+        "src/host/conversation-acceptance.mjs": "92fdfc486bd9614028aacc197b99a26b8ad3ae254e54a980a04b0a1e90153144",
+        "extension/content-entry.mjs": "1878b18c3843a3a580f350441c58b0ddfce9cc8c12077a707a1d510e611b558c",
+        "src/host/browser-local-lifecycle.mjs": "2ad946950506907ef4ea23593fb74693da94f95733fe79bed8239b817428eebc",
+        "src/host/loopback-project-association-profile.mjs": "31cd5af21c95337f732c6ca4f0971d0c8ad9642d678f0e77f650094e076adc71",
+        "src/host/temporary-native-navigation.mjs": "b778ec2c049636d022e8883f6a185cc0325634fd40a8ed2ce206f95f91064388",
+        "src/host/local-status.mjs": "8b42de228a85e76760d9474c3a92a331f1d612a3e45c1112e25c98983bb2a79d",
+        "src/host/isolated-session-reader.mjs": "49b5726c6b1317f1879a5c5b263a88bdb8e0b886a31a012d156c9b42a84118e1",
+        "src/host/context-association.mjs": "e589ecda593fb2ae08d0e0a28e9f002e31b90c754bfa2e2de65cb403ab885ff0",
+        "src/host/project-context-association.mjs": "46c098890d73b560ca5b7666eb48eb057f8390184e8d5d73ba70871e10029577",
+        "src/host/chatgpt-adapter.mjs": "0ecc27648ce76481024f2fee08840de676539f98fec12e1ac630161dbf952a00",
+        "src/host/native-project-surface.mjs": "91039235cf19c37aefa6f3fe76a933d8a48f52ff4ecb4586fe8bf1afb3cd83e6",
+        "src/host/native-history-list.mjs": "8be096b4728ad4a1a0087db76a640a522098e41c0bdc04818f53b34f620908d7",
+        "src/host/native-return-slot.mjs": "a2c19a6d7e082a8ff82ab8f8c5c4b5adaa4188f21b8c31ab95dfd5826b97f803",
+        "src/host/surface-fragments.mjs": "1fbae58e227c4c3cfbefb991ee1f7c469a9225ac2360940b23b5cfc999555d74",
+        "src/host/native-input-risk.mjs": "ff4407f492fec8c4677ecab8eb2ca69f1b5fb1bfaeb39f38213030b16ba1b0b5",
+        "src/host/native-send-intent.mjs": "f1d32ff506e8a289d6b6a46ae91043ea1d49c666265418af6a80a384caf53d30",
+        "src/host/native-snippets.mjs": "2e4c039073450d55cda5c09c30b7ceebfc9f0141b30a85c7c7d19a1a1bb2a142",
+        "src/host/native-actions.mjs": "33827b4ef137df1f2284e4940e1a5fa1f7e778add695c817b1b155e978c33586",
+        "src/host/content-session.mjs": "66463de120cb55a22ee20968447153c06a3abfb266c540a13b137537d138362a",
+        "src/host/candidate-upgrade.mjs": "480569f2a94916408f5cb00a830f61a9d150624b4416642660879790ee85ef5a",
+        "src/host/content-candidates.mjs": "8fa2eb65858bea846f2b78303ae6a3d45e9df959e08cf93c75b2c6d04b3e68dc",
+        "src/host/candidate-page-window.mjs": "b8e741b7f46a9a0468255d56261b3c39d47e27d31d6ca87442ef32ff055d33cc",
+        "src/host/snippet-capture-wait.mjs": "8d97f82660a0fb30ebf9e904f2d9f46ba25c932e3f3efaa7895b5ad6d5f7210c",
+        "src/host/snippet-selection-session.mjs": "f5f1ccd83d3c339f525e9016bf1f39be0ef0da12d783ff002dd045af083286a0",
+        "src/navigation/mount-surface.mjs": "b4dbb6dc6fe3f64961ac1601f5261acba81d7ed67869f3885ff37f95a46695d3",
+        "src/host/surface-controller.mjs": "dc97d25a723cb984507efa1bf06b6a537229da3d6e80b7fba7617a4e5f6ac7a0",
+        "src/navigation/icons.mjs": "2fae3d2fb1f4488ca16dd1a05abf8d8ae5f1f0478a4103b634961f8e62bb1ab5",
+        "src/host/frame-appearance.mjs": "b393fb7be24fb0f0834d239d3ede9503f08cbef98f6fd3cc4b64312fac3b5972",
+        "src/host/frame-native-plans.mjs": "3678d30c1749468cf6c39a48e59790cb0d6422efa59e05078cb2c5517503ab44",
+        "extension/workspace.mjs": "c12419194fa2a92b3770cfdd60849e36c92261e27066c55235a082a1bbb507af",
+        "src/host/free-frame-client.mjs": "22fe33b6618b28dea270310d4d863611e6bd5c354fbdc20dee2fcec2cb0cbe38",
+        "src/host/free-frame-read-error.mjs": "a53482488ed8a6f4ba40339d5eb116bbd445e7ca3e230e822fbe9ba2c708e5dd",
+        "src/host/local-panel-focus.mjs": "ce29e6b1c542dbe2be000a517ffaa56a1fca21088219973326808025cb64cdfa",
+        "src/host/frame-candidate-migration.mjs": "10d9b7bab81194530d589940cd1f184f5d6db9215ee7cb78be5a244168054b5c",
+        "src/host/free-frame-candidates.mjs": "97ad6ddaa1c9ee09efecee36e476c26b1629e9dd49b22e4665932156e4c6368e",
+        "src/host/free-frame-snippets.mjs": "33856791be021ba262f2f6d0d7bf18a3a2bdfaaee89f2346f03f5e2f6f877eda",
+        "src/host/free-frame-backup.mjs": "433e747331d90eeb3af8b2de0efb29d1603d1a45759bfa1b0dbb1f0ac524d552",
+        "src/host/free-frame-recovery.mjs": "367ddb3c9b94bb5cebbaf06817c8e2db15b31255ef9af78dbe3169e0d725a34a",
+        "src/navigation/free-recovery.mjs": "20352a2a9a37bfdac9d0889d87efaf80510bf7462df3fba1ceef1e4eac3c0442",
+        "src/host/ui-frame-client.mjs": "32a3f5b368c2e7918b1c82291a29c8218f36e17731fcbf3ab6108d5678b62b30",
+        "src/navigation/navigation.mjs": "2ab77ae68b47c7ee3c76d523680e824ebd72a1e58d1be89a8c779050a03cfa8c",
+        "src/navigation/styles.mjs": "803a8a20135db402edcf381dabb69f52ce087a7c73f985e0c84a639f22bdbc7c",
+        "extension/sidebar.mjs": "8d1b85dda5d1a93b548cd37da978cb0f90ffef340ddd2744023b90eafc936220",
+        "extension/status.mjs": "228ce0ac893dbc2a3663e246b6fc41be14c2ef35fea5b0404ba257684dc2efe1",
+        "extension/temporary-navigation.mjs": "a62ae7b41b83de18880faebf42b59f0a45999d28a8f506344b3e19dceb459db2",
+        "extension/temporary-content-entry.mjs": "d13222e0bf8be8c629408ea388c0a8dfcc9d5c57c32a0deb78d64f0776018624",
+        "extension/frame-shell.css": "4826fa88776348353f067aa6fddf5067f33da07e769ee1c7677e7ce2c4853d88",
+        "extension/workspace.html": "1d8d939f9deca25ae47afb1f5e0cdbffaceb85ea6e6be972edd0dea4bfed8f55",
+        "extension/sidebar.html": "a918821a8217fb8e52918837d89febea7d8306952107cf0ae6deb5defbf5d813",
+        "extension/status.html": "4540871802f6daf6b35f8b1767dee7f7bb586cf8a29ae147b659c587ad76205b",
+        "extension/status.css": "bc01e7292382621af7066a117fba9b4cd6a720960e073098ecb96eb1ed313799",
+        "extension/README.txt": "0a62c1838a8043eb1aaac3536fc9134b8fcd1e6876cc2214abdfb860dc23acfb",
+        "extension/build.mjs": "7e072c1eda5ea00eaf10647477a050c571676ccca2c0d9ed846ce90f052ce910",
+        "extension/classic-worker-build.mjs": "87275509401785d49ce134d0780a06e587dc8d303eacf91aab7a22752c3007b5",
+        "extension/tooling/package.json": "eae0628aefa50bf39eab0053f7ff0abb687f30c84607220e4ff0dae7b8e664d1",
+        "extension/tooling/package-lock.json": "4609d990146911013da85142a111efcd9209a26f3d51ce56a83d5d6a3bb58180"
+      }
+    },
+    "preservation": {
+      "sameExtensionId": true,
+      "manifestUnchanged": true,
+      "databaseUntouched": true,
+      "stashCount": 3,
+      "extraCopiesUntouched": true,
+      "packageBackups": ".git/vaiwl-artifacts/local-source-witness-20261022/extension-before-*20261023-r18..r24; r20 full copy completed after slow duplicate-file read"
+    },
+    "next": "Resolve public frame bootstrap/JOIN absence with supported in-page tools; do not repeat account/source witnesses, silently unlock personal data, or call UI accepted. No further settings change requested."
+  },
+  "r31Checkpoint": {
+    "baseCommit": "c120be43cefeaab7070a7de964a0c84fd031847f",
+    "timestampUTC": "2026-10-23T13:15:44Z",
+    "scope": "MAC_OWNED_FRAME_BOOTSTRAP_AND_INLINE_DOCUMENT_REPLACEMENT",
+    "actualMac": {
+      "formalUI": "FAIL",
+      "r30SourceReplacementDetection": "PASS",
+      "r31FinalPackageActivation": "NOT_RUN",
+      "testMessageSent": false,
+      "observations": [
+        {
+          "candidate": "r25-r28",
+          "loaded": 2,
+          "joined": 0,
+          "modules": 0,
+          "boot": "not-observed",
+          "framePolicy": "not-observed",
+          "note": "No observed policy violation does not establish absence of all browser or extension restrictions."
+        },
+        {
+          "candidate": "r28",
+          "method": "supported DOM locator getAttribute on owned workspace iframe",
+          "srcdocPresent": true,
+          "srcdocLength": 0
+        },
+        {
+          "candidate": "r29",
+          "method": "packaged controller independent fixed record",
+          "inlineFrames": 2,
+          "granted": 0,
+          "registered": true
+        },
+        {
+          "candidate": "r30",
+          "method": "packaged controller independent fixed record",
+          "inlineFrames": 2,
+          "granted": 0,
+          "registered": false,
+          "loaded": 0,
+          "reason": "ui-frame-document-replaced",
+          "ownedFramesAfterStop": 0,
+          "nativeEditorsAfterStop": 1
+        }
+      ],
+      "conclusion": "Owned frame src targets remained formal extension pages, but empty srcdoc took precedence. Independent extension diagnostics corroborate this, not just browser observer output. Source replacement stops bootstrap before account or directory semantics are exercised.",
+      "writerOfSrcdoc": "NOT_ESTABLISHED",
+      "attribution": "Do not attribute to ChatGPT, browser control, AdBlock or another component without write-source evidence.",
+      "remaining": "Identify the component/rule adding empty srcdoc and obtain its supported compatibility path. No blind removal, disabling other extensions, alternate UI or permission bypass."
+    },
+    "implementation": [
+      "Early packaged fixed frame stages without private values or authority",
+      "Owned iframe srcdoc guard before registration, on load, mutation and grant consumption",
+      "Immediate dual-surface cleanup on replacement; does not remove srcdoc or reissue a grant",
+      "Fixed terminal diagnostic reconstructed from controller state, not copied from page-mutable text",
+      "No automatic recovery for ui-frame-document-replaced"
+    ],
+    "validation": {
+      "unitLog": "/private/tmp/vaiwl-r31-final-unit.log",
+      "unitPassed": 169,
+      "unitFailed": 0,
+      "isolatedBrowserReport": "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-frame-integrity-W78YnO/report.json",
+      "isolatedBrowser": "PASS",
+      "checks": [
+        "formal frame baseline joins",
+        "runtime srcdoc replacement closes both masks and preserves native draft",
+        "pre-registration replacement receives no grants",
+        "no private database or internal requests in isolated fixture"
+      ],
+      "retainedFailures": [
+        {
+          "log": "/private/tmp/vaiwl-r30-unit.log",
+          "reason": "Appearance tests selected observer by construction index; corrected to observed document target."
+        },
+        {
+          "log": "/private/tmp/vaiwl-r30-frame-browser.log",
+          "reason": "Test used unsupported native query; corrected fixture to a second stable native conversation path, not relaxed product query rules."
+        },
+        {
+          "log": "/private/tmp/vaiwl-c120-baseline.log",
+          "baselineCommit": "c120be43",
+          "failed": 55,
+          "reason": "Existing five DOM fixtures omitted style object now required by existing return button. Same failures reproduced on baseline. Added only real-DOM style shape; no production fallback."
+        }
+      ]
+    },
+    "candidate": {
+      "status": "HOST_IMPLEMENTATION_UNVERIFIED",
+      "releaseStatus": "NOT_RELEASE_READY",
+      "files": 197,
+      "unpacked": "/Users/hhf/Downloads/VAIWL-Browser-Local-Mac-20261023-r31/extension",
+      "archive": "/Users/hhf/Downloads/VAIWL-Browser-Local-Mac-20261023-r31/vaiwl-free-host-development.zip",
+      "archiveSha256": "992e38fd946ca82926d9825c0e5ab2295f7034a96fcf6884527ee913f3334f4d"
+    },
+    "sourceHashes": {
+      "extension/worker.mjs": "0b80790a6af44952f12d782e55ffa45008778580e1daf5aa447a4b3e2a264009",
+      "extension/browser-bootstrap.mjs": "961284ccdf807fa799b81c512607808d9a143ca6070f98aaedf28e26e87fc554",
+      "src/runtime/host-browser-bootstrap.mjs": "5a7e89e900643d7c8e9c1d5f1b4573e4d6d6bf11dfe9fc296e12a62ed38e36e3",
+      "src/runtime/browser-request-context.mjs": "689ee6ea95184456be52b872a0778f04abfc6e75922991ca9ac0daa3019093aa",
+      "src/host/url-policy.mjs": "fddfafcca2276161e6fd3c908ac896d0dab656fce6cf06aee64f1f442f7ac7e9",
+      "src/b1/identity.mjs": "75f25f4daf8eef16c1cc161eeb7ef1eeaa17378d701f67d2ec56cb51ebfa8289",
+      "src/data/request-deadline.mjs": "cda2ebb4158c05eb911fbb84a1af092cf91f461e3a002bef4b4d23f5a70dfdf7",
+      "extension/config.mjs": "9f38c623f8ef08e684d9b1b71fd0a49c01b736a41e75efc997117370df175c41",
+      "src/runtime/host-worker-runtime.mjs": "67f8da491f2104b81216cafd5a4ee56768dc2940e4159b87e596e9010c45a54b",
+      "src/runtime/browser-local-control.mjs": "e4925b22ff34a9c8af43243a140bb97f25a329b8137de049995ddaa94cdebc90",
+      "src/host/contract.mjs": "35129aacf2a7e1fe1812c846379563d60ad74a66b689ad41bc38d76484a97716",
+      "src/runtime/browser-old-send-terminal.mjs": "0ac8c767e1112f053d979ae411662cf1db17fc26501ea35e41ca8b4186514393",
+      "src/host/old-send-terminal-profile.mjs": "a43986f8e54b15c98e9dc3535a9e0bb08820ad2132f0eb0fdf72ace97b227b0f",
+      "src/runtime/shared-host-read-budget.mjs": "ee4e09ea97c144fbe30b029b41251ae8e313503bf706e3b4cd9966a24ae27196",
+      "src/data/hash.mjs": "aef21d1842cdc09b33fef973a9d29f15cb7c0c3f773a6a9d31726b83ffee7b21",
+      "src/runtime/browser-first-send.mjs": "609847013c92f984f0c75a4854b57ba2592eb878704d76a21d7c0364033929e6",
+      "src/host/first-send-profile.mjs": "cf0d76b36fc980a890246d255448f8b29965b5ff12882689d6884e7336e436ff",
+      "src/b1/scope-repository.mjs": "7124b1e9e6b2ff9b0af0d836bf9a8c60db401e67fb02e04366c53f8a207f750d",
+      "src/data/schema.mjs": "3b3053fef20deb617fcc7a8cff8401424c7b5537373908974eff7143efb0f2ab",
+      "src/data/free-policy-initialization.mjs": "e0a358b12ea9454f5ee657612e4c83c247ba895b082a362be9186f4b7e898a32",
+      "src/data/known-anchor-key.mjs": "e5d91c902e04440be924ef0506ff688bbbccd83150610f50199b518bcb298df3",
+      "src/data/repository.mjs": "0e03a0e3c7cf3a7779191aebb05f221fd2ef37b03ee805f2e0c5375566df3b7c",
+      "src/data/free-time-policy.mjs": "8a75b5bdde8abf8ee07873ecf2aa45a19faccd030b9f03c738b56db6ba9ea17a",
+      "src/navigation/projection.mjs": "36334b5da4bd8e89718bf45b69723f4a657d46797c03c653298aaa3392399f24",
+      "src/data/activity-version-fence.mjs": "165775d2e4e9aa5acbd56af9d9e97a6bd4707e7d9c27f5b1669a215529bd1e74",
+      "src/data/native-repository.mjs": "e2eaf5314683a5fbbae07066f5fb6eb92b47b96c62568eecf0c107eadd93be50",
+      "src/data/native-lifecycle.mjs": "62d46f572dadbcc247d3d144ec4e85539ef82e6e08ccb6d9f1e8857914ecd965",
+      "src/data/state.mjs": "df0eaff00a7f050c37653f0e740b8fabe19bce571c5e37f4ce437d180984c62a",
+      "src/data/preferences.mjs": "1fb8395c5dfe23d64c91095b71a1c117b9762b3ccec68e262aaf73744b12c9d7",
+      "src/data/continuation-evidence-reader.mjs": "c28d338063eb500ef98c4fec88938d63b5adc501bdbfe44185fbc2fe781d7fbe",
+      "src/data/free-evidence-partitions.mjs": "c1cdd10d9c6a6a142759fa7589b55a1607a4518260677abb3145ea00907a0ead",
+      "src/data/free-evidence.mjs": "3a658b980251c330a09104786e5048f3e8cfa46e81e7e72403bbbdadf6c8a982",
+      "src/data/observed-send-anchor.mjs": "f9dbb9278502a325c2263d4adeb99ea1c0159525d505728fe84fdee2d59980da",
+      "src/data/free-activity.mjs": "29a89003f69d38a6927916db367af505362586168df292055941cf7aa56a0928",
+      "src/data/evidence-ref-directory.mjs": "8a89bf5b8535578881c823077554f177098044214a22fcfaf4be41e65498c867",
+      "src/data/verified-record-cache.mjs": "9b7b3c13abdd37f2b6d4fad48b85707a9815538fd793cad537f8e87b8f08cde0",
+      "src/data/native-observation-continuation.mjs": "3222a09592efd5c904cc65e036976f2f08bb260a9e639c83bcfddbd025dedee8",
+      "src/data/native-facts.mjs": "4282a0559f4b430735b35b9211a4037d1a6d3fb45aa1a8a5f36b44bafcda4f3b",
+      "src/data/native-partitions.mjs": "fd5fae8cbe9e64bcd9ed8b276f46714b00beea7fd8989e21fbd9e0fa9bada782",
+      "src/data/native-version-index.mjs": "943a4d05a7e0d44fa587acd1b1d9a5828988b30c74ba9903a3243b07159ad5cb",
+      "src/data/capture-json-snapshot.mjs": "d082508f8186c38c71e83e0cc8653501fcf6afde67e941b8ce8803f04106ade8",
+      "src/data/native-index-migration.mjs": "fa88d1b18c1594649b5bd1e84025dc1310c3241ee51f123a498ea49fc20a30e9",
+      "src/data/native-partition-audit.mjs": "b63440b53cda12d5bdf148914db5f88c21d868bf4186db0b339f8ffe50890a18",
+      "src/data/audit-record-prefetch.mjs": "5af85b5c8a90e0a1d236fdec784b77ee970f7ea251e18b4be386a34e909d6b7c",
+      "src/data/native-index-writer.mjs": "b9e24103156b3a9511e6284001992bba23d56b09fbe5360db545e7d3116d3fb2",
+      "src/data/native-index-reader.mjs": "6bdbf029cca3490520a24d8d9faad171d8f604b85817847239f5cceb2f3f556a",
+      "src/data/free-projection.mjs": "e184a7d3533710840fe8248b11ffde1db06ee10d42f03b850d231faf8ab3bd85",
+      "src/data/free-evidence-repository.mjs": "cf10ba12875a9024f45bd7bb595fab1cece014eb67a852199d8e825418bd2003",
+      "src/data/evidence-directory-writer.mjs": "9ff0c941904e155c736a29e1d232e4fecf67d7995c5d4b6907a12b0f54102944",
+      "src/data/evidence-directory-migration.mjs": "75328ab40b3327d9e9c60c44402d87ea3afc9bd385eeb3ba2f0a14036fc1b135",
+      "src/data/evidence-partition-audit.mjs": "3aadf876de681cc97ef5564119da7a2c691c45a472434d6e8f7080ae02d3aa79",
+      "src/data/evidence-directory-reader.mjs": "7ef90c7a37a82b2ce4562acb6afc56e4ae36d14543c776893664b79869fa895b",
+      "src/data/shared-directory-retention.mjs": "4213b173e47d2f2a43693dbd8c1fa7a5fbbabdf2439104aebc22f603cfd2be64",
+      "src/data/shared-directory-reader.mjs": "23d34f68b0dedce591ef2b99bb539a7eb56efff619d6c80ec959290f500672d7",
+      "src/data/shared-ref-directory.mjs": "995be9ccc613720e97b807d8a98ed80a336ec79ebb13b4521316548848f10626",
+      "src/data/partition-manifest.mjs": "566283402493ada28abc530354c343bc6c561e309d1e6802c981d62584a5e06a",
+      "src/data/cooperate.mjs": "ce494a33280143e1e2a2227a72413da792330311de12642a9a56b13704f2f3b4",
+      "src/data/shared-directory-migration.mjs": "0cd415f9a871b93613c3d9f3e301982cda2d1891dc847d983397f87dc2dcf0df",
+      "src/data/shared-directory-writer.mjs": "9e933860ea5b331ee78f3df09431b65925e3930e22ee55b11b692c9c764bf1b8",
+      "src/data/shared-partition-audit.mjs": "25d4b77561b36b150ce1524e27e184170f3c1ef493995251a88678908d31f6cf",
+      "src/data/partitioned.mjs": "c0d4d79ee1cd4ed6c3d95580416aaa79c2160eb7a82347717cc98afb9da453ac",
+      "src/data/shared-directory-recovery.mjs": "420077b28d9e4bc69835bb63c2c00ebfe5ce0497d2bd902a3728fe38684476ee",
+      "src/data/backup.mjs": "bb0a8639d02e2169ae15e866a464f1531b7e80e40afd7c8a4b35e99d70928396",
+      "src/data/evidence.mjs": "f84032c9a2fc08455480652b60de6fb9394a70e82a7ace8729186ff097b26238",
+      "src/data/known-anchor-backfill.mjs": "dd58e613da9564668fc7963135dd98caccf3bd6930e532864e68d9ff6afd55ca",
+      "src/host/chatgpt-observed-profile.mjs": "0d053bd8ee48ee71420cdcf62de2f574e9aeec89d13fdc93fdc5a6e3bdb7c24a",
+      "src/host/native-surface-boundary.mjs": "a07258d559b2c4f48491fd217ac8123a662de024f2eb2a4ece6939e3763d9ec0",
+      "src/host/current-body-discovery.mjs": "b6c78564eb4470b85cf316e5d737182b854aad2b2e4e1d56a24750c91c503fe0",
+      "src/host/native-return-gap.mjs": "6b9bfb67677db010bad92c9e1b928a9bd14f92d8c3840379970722a7171295f0",
+      "src/host/surface-discovery.mjs": "8bfeb2a6539b2ba6bcf1c6bf471fe7e98848418a25263f8402330c1b83db999d",
+      "src/host/bounded-handle-registry.mjs": "ea3a48ed3760741b8d845b4116830cffc611571b6fd01bb9561bd8a63efdee5c",
+      "src/runtime/host-binding-service.mjs": "33397a68d2befc1399b7d0eddc27948f34c431389d10d2cd939f1f3d204d6eed",
+      "src/runtime/browser-local-storage.mjs": "ca59ae6c031212b6703607f671b3efcbee0a61c03759bea150026befca6f1017",
+      "src/runtime/browser-local-authority.mjs": "3489176670062d247b052b016c41d75c9d18cc3d81f9f708d85329a86b6b36ba",
+      "src/runtime/browser-local-memory.mjs": "c7070618f486d8daa46884cfcc85c13736199779cc5014ece951b078c10460b1",
+      "src/runtime/host-native-activity-owner.mjs": "54adec4047801e7e8da8f4bfb0c9ee87557cc2a64f4bc090b846b57a6bada625",
+      "src/runtime/evidence-source-incarnation.mjs": "6bcdc42a9b5e94b0597f3588186af7ba105befbc84f21021a5556936d87e6e4a",
+      "src/runtime/native-activity-profile.mjs": "2b17ad13773345a49985bf24f8fa3cf815dc584f01864068d104970b427714bb",
+      "src/host/metadata-candidates.mjs": "76637cf062eff2be631c11c63dd40db2ec33dfa835710d82147270774e1350cf",
+      "src/runtime/context-recovery/no-receipt-recovery.mjs": "14d2382c12f250de8386837a1b0845e60f7c1f1297245dbc8e4ee67d87ec2513",
+      "src/runtime/isolated-session-owner.mjs": "8c3ef00c36a387c6664e3f24910ba317f7d3a7b9d2216f70f9823d7700c0061c",
+      "src/runtime/host-entry-calibration.mjs": "25e59ade903d92af3bd70f8e7d205c8ac2d054ca6cabcaad5da41a7def1393c6",
+      "src/runtime/host-ingestion-pass-owner.mjs": "42716372e8f9d57f33d1a75d27c9fae1016d868cdd1eb87b90c712e8b3981347",
+      "src/runtime/host-old-send-terminal.mjs": "69d794d01b2ef6f60a9b466a8583a3d020a28906c8bda1381557af57e6b36a29",
+      "src/runtime/old-send-terminal-readback.mjs": "c090d556d487b58771ae56ed408547c37e893e7a78e26838a47a528fbd459fce",
+      "src/runtime/host-activity-source-admission.mjs": "7010e6644bbe7b05ae43a3b7b0fbf6928d35f46eacaa86d4b7877a5673a92489",
+      "src/runtime/send-ack-admission.mjs": "25c9033baee468e771b8f1d6d74764e619bcda669b2eaf658985e4208b349696",
+      "src/runtime/historical-send-profile.mjs": "b356d5fc7101080ba60910edc0175180924c548269816dd98900f2055195f4c9",
+      "src/host/conversation-metadata.mjs": "915e88458f46265a696e68fc4b2892916e4bc69ffd03f04d580b4dee4c9e658f",
+      "src/host/conversation-directory-metadata.mjs": "2508a697792936a889708b649c28bb8ed2b1bc1b56e43ef44c176bd0354bf733",
+      "src/runtime/host-historical-send-owner.mjs": "dd0901b6c0739146db14371fab1284c37ab43fa0e106406d51e7c7e308b76bce",
+      "src/runtime/host-first-send.mjs": "44b175a4c7f41f903b19275c84d5f1269dd179eb7c1775a87ca81fa97cbac816",
+      "src/host/first-send-causality.mjs": "cd062c0b638408b387bb469f76dac3ea389acd9943bd42c1545ac8f0a08905e6",
+      "src/runtime/first-send-readback.mjs": "4052d39db39d2e5053bb4287cde87fd45ddcce844420099203950ea68a9691f6",
+      "src/runtime/host-current-navigation.mjs": "ae1033e1b5ed4c1301653d08ba90f5e0ee64f255da910e9f7cf7046f62a5cca4",
+      "src/host/current-navigation-plan.mjs": "c33cfd6af8e7523ac85fe812b59b2e24df109d4e03a3d507b9edab6b53d413ff",
+      "src/runtime/host-send-ack-owner.mjs": "7e4362115828c9b68ff3a34923587c2711e6df854d119b9b3d3a1d91b5830fc5",
+      "src/runtime/host-candidate-service.mjs": "0ae6ff996262e89550bc49709e96647c5a738f33ca44409d465b39bf5c5af4fd",
+      "src/host/candidate-presentation.mjs": "d2a89c85c263de8f1572c8fe12e7fc1400bd4201fed7c3adb9aede868cd6cc4a",
+      "src/runtime/host-snippet-service.mjs": "15c63959f85f73e6be7eb194c4534120bcfabe23ec17746b6b063977bdb75cae",
+      "src/runtime/host-backup-service.mjs": "ee70a94e1f1af68c23f93ff1bc5b67d547c7661c4b1abe7e7a9c26e4da9d9c2e",
+      "src/host/backup-transfer.mjs": "69b9c025e80993644ba8b37fdf77ccb9662d4050fae66e847b98b3663f59122a",
+      "src/runtime/host-send-candidates.mjs": "454bb4ab52dbac6fafe3a5f70c9d7e8acfcce6f4011c2a70646616ca96dafac4",
+      "src/host/send-correlator.mjs": "251d50175833fb24dd945da770aafa40e34db3850da0eaa67b9944bb5798d408",
+      "src/runtime/current-metadata-reader.mjs": "c237d156abe921e5066cd267a6a7bb056b80a744f46d9045c8a34a44ad0d641c",
+      "src/runtime/host-recovery-service.mjs": "78839dcb8f8b1bc8e66b5e06e2b8d0fcea9b414bd10274d6d32bd02cb835c171",
+      "src/runtime/host-continuation-owner.mjs": "f4d2dd6393d36fe7708beb9020571a4c11f63459dc4f3075ffbfa982e5e65630",
+      "src/runtime/free-read-service.mjs": "b0c15af3c81cac1f923defe44ac64b12bea539e4b94211ffe9e2c06eed044832",
+      "src/data/free-recovery-status.mjs": "7c87501d48823af05818e94f48304fbebbc29828d92802e6629c80232fd7a7c2",
+      "src/runtime/host-view-service.mjs": "553476a0609a9a60e3f026c26a58b03314107d9a72179560b940045a178ee5cf",
+      "src/runtime/free-project-location.mjs": "45892565ac8896feb97872c59e3b504d0563b6e461c3da49d838c1359991e649",
+      "src/navigation/free-view.mjs": "ef0f8d6b798789539d16bdc3ae1d8cc66ccf5fc32f472b83ca2c475863946aaa",
+      "src/host/frame-resume-state.mjs": "60976e1f4a1e73c93d8d6ac6d4211b138936b2ff282c60e9293ad0e5305a58fb",
+      "src/host/frame-row-windows.mjs": "5ff48b95d0e45aba9ca779f08b5c0c4a9a4056826ffcc94d47a8c03323d42b3b",
+      "src/runtime/host-auto-time-policy.mjs": "90838ac5e0c95262911bb05289e13abe659662b7ea08255edfce14e7665516f3",
+      "src/runtime/free-working-set-projection.mjs": "b50b973005612c5d9d76cff9a4acd6d6fc23d006dea787d681c534385629ff4f",
+      "src/runtime/free-search-projection.mjs": "354fd7098b8bd695fb281f6641388127347306e63186057c9b0604f92fc224dd",
+      "src/navigation/search.mjs": "36fe6eda63bd85ff203a306a78309a91979dd9705b2cdb2b64c1f764c2e2b8d0",
+      "src/runtime/free-view-owner.mjs": "fda3b75a5fcca2d7095a220783563b847f966325ad75760a0fb40629d4860974",
+      "src/data/read-recovery-budget.mjs": "7c7948a740dcc37f9a2a6b25babe8c29cd2d84441299c1429c7e524402cc8c51",
+      "src/data/free-header-loader.mjs": "7817a581a7816d744b39ed8fa37d49eb86da065335e2f46ec190fa9fae18e7cb",
+      "src/data/free-page-loader.mjs": "c4339dfa76cfab89aa1f16b40129ee9f7c779233d5d03ff2134f551a8f9b0d65",
+      "src/data/free-replica.mjs": "11326c574b31ce1fc4c93bf712b812f0d3181f0254ec08ec22e8588836dd81dc",
+      "src/navigation/current-index.mjs": "23f13e4d9556715bb029ad6724b8a3731ba87251d6ddfd8e95939085ebfab21e",
+      "src/runtime/free-frame-projection.mjs": "798dc789b6e8aafc2030984e9c1be6a8762109b80545a9d8505841e7dd9cfd39",
+      "src/runtime/host-ui-owner.mjs": "8ff6645c1f1399f35ed622c7cd4960a574f851e3d81760eba00d03d9717f011e",
+      "src/host/ui-grants.mjs": "391215f92dcb238f329c302b1a90476776d47a4e981727458b7278f113d71330",
+      "src/runtime/host-observation-owner.mjs": "ca209bbc5de355630b602d33c730eaf7022c746ee6005e29ff20abadb6e3d272",
+      "src/runtime/native-source-incarnation.mjs": "85a69f2470a92c40631189759f4a80640fad415bcdd1d04bfaee88ce60af56a4",
+      "src/host/current-observation-batch.mjs": "f7fcd583d0811a8b71d72dc5bac4ba4c57eae16e552076aa08d5a50f42b45151",
+      "src/host/send-intent-claim.mjs": "c4c748740cb6c691e03565f346fd31a83761a585c9ff2f28d94fec4db5053b23",
+      "src/host/current-body-claim.mjs": "e082ed353a0bb81c7762a65ffa258a375391ca3194618f2a9888fee0c357e13a",
+      "src/host/surface-batch.mjs": "4733a8cecdc3f4664c77da81d12441c9f2bd7cf0c16e55ec93eb94076faa4e5d",
+      "src/host/directory-batch.mjs": "6cc6546fd64a97d5b21765c12d4dc90ccc1d6a3b219aee0f7816cf4b3574eb92",
+      "src/host/project-metadata.mjs": "71980d52b0a41103a3920f86152e2387cadc5da7eb07614911cdf2acd4d9d46e",
+      "src/b1/document-binding-broker.mjs": "1f247c0fa2b3a05c5f2ae11dda39df04de9c79628b7753715bdafcadbc842aec",
+      "src/b1/host-document-handshake.mjs": "fafe938904e635da9964d222fe7dce8cc98cb5eda6501420af464c95b4a9cc6b",
+      "src/runtime/scope-authority.mjs": "e33521586cf169b4e29bc58f03b42724b8e5a55a0cd2c72213a595100b964e42",
+      "src/runtime/session-provider.mjs": "1964e5e9aa55f1a2211c909919f55723dc437e57fc5c5546c104da2f7eeb90b5",
+      "src/host/session-identity.mjs": "ff71fb796ab2c81ef07a5fae274a3de2c4317e05af48a590c952bb0c51b31281",
+      "src/host/conversation-acceptance.mjs": "92fdfc486bd9614028aacc197b99a26b8ad3ae254e54a980a04b0a1e90153144",
+      "extension/content-entry.mjs": "1878b18c3843a3a580f350441c58b0ddfce9cc8c12077a707a1d510e611b558c",
+      "src/host/browser-local-lifecycle.mjs": "2ad946950506907ef4ea23593fb74693da94f95733fe79bed8239b817428eebc",
+      "src/host/loopback-project-association-profile.mjs": "31cd5af21c95337f732c6ca4f0971d0c8ad9642d678f0e77f650094e076adc71",
+      "src/host/temporary-native-navigation.mjs": "b778ec2c049636d022e8883f6a185cc0325634fd40a8ed2ce206f95f91064388",
+      "src/host/local-status.mjs": "8b42de228a85e76760d9474c3a92a331f1d612a3e45c1112e25c98983bb2a79d",
+      "src/host/isolated-session-reader.mjs": "49b5726c6b1317f1879a5c5b263a88bdb8e0b886a31a012d156c9b42a84118e1",
+      "src/host/context-association.mjs": "e589ecda593fb2ae08d0e0a28e9f002e31b90c754bfa2e2de65cb403ab885ff0",
+      "src/host/project-context-association.mjs": "46c098890d73b560ca5b7666eb48eb057f8390184e8d5d73ba70871e10029577",
+      "src/host/chatgpt-adapter.mjs": "0ecc27648ce76481024f2fee08840de676539f98fec12e1ac630161dbf952a00",
+      "src/host/native-project-surface.mjs": "91039235cf19c37aefa6f3fe76a933d8a48f52ff4ecb4586fe8bf1afb3cd83e6",
+      "src/host/native-history-list.mjs": "8be096b4728ad4a1a0087db76a640a522098e41c0bdc04818f53b34f620908d7",
+      "src/host/native-return-slot.mjs": "a2c19a6d7e082a8ff82ab8f8c5c4b5adaa4188f21b8c31ab95dfd5826b97f803",
+      "src/host/surface-fragments.mjs": "1fbae58e227c4c3cfbefb991ee1f7c469a9225ac2360940b23b5cfc999555d74",
+      "src/host/native-input-risk.mjs": "ff4407f492fec8c4677ecab8eb2ca69f1b5fb1bfaeb39f38213030b16ba1b0b5",
+      "src/host/native-send-intent.mjs": "f1d32ff506e8a289d6b6a46ae91043ea1d49c666265418af6a80a384caf53d30",
+      "src/host/native-snippets.mjs": "2e4c039073450d55cda5c09c30b7ceebfc9f0141b30a85c7c7d19a1a1bb2a142",
+      "src/host/native-actions.mjs": "33827b4ef137df1f2284e4940e1a5fa1f7e778add695c817b1b155e978c33586",
+      "src/host/content-session.mjs": "9edcd1de55f8a358d5debf7b2e461f1a5d5ce6a8610c9a01ad6f9579fd2a37ae",
+      "src/host/candidate-upgrade.mjs": "480569f2a94916408f5cb00a830f61a9d150624b4416642660879790ee85ef5a",
+      "src/host/content-candidates.mjs": "8fa2eb65858bea846f2b78303ae6a3d45e9df959e08cf93c75b2c6d04b3e68dc",
+      "src/host/candidate-page-window.mjs": "b8e741b7f46a9a0468255d56261b3c39d47e27d31d6ca87442ef32ff055d33cc",
+      "src/host/snippet-capture-wait.mjs": "8d97f82660a0fb30ebf9e904f2d9f46ba25c932e3f3efaa7895b5ad6d5f7210c",
+      "src/host/snippet-selection-session.mjs": "f5f1ccd83d3c339f525e9016bf1f39be0ef0da12d783ff002dd045af083286a0",
+      "src/navigation/mount-surface.mjs": "b4dbb6dc6fe3f64961ac1601f5261acba81d7ed67869f3885ff37f95a46695d3",
+      "src/host/surface-controller.mjs": "b1d41d014381287f3876eb178160dcca124a4ca09caed767d0879f0bb740589d",
+      "src/navigation/icons.mjs": "2fae3d2fb1f4488ca16dd1a05abf8d8ae5f1f0478a4103b634961f8e62bb1ab5",
+      "src/host/frame-appearance.mjs": "b393fb7be24fb0f0834d239d3ede9503f08cbef98f6fd3cc4b64312fac3b5972",
+      "src/host/frame-native-plans.mjs": "3678d30c1749468cf6c39a48e59790cb0d6422efa59e05078cb2c5517503ab44",
+      "extension/workspace.mjs": "c12419194fa2a92b3770cfdd60849e36c92261e27066c55235a082a1bbb507af",
+      "src/host/free-frame-client.mjs": "22fe33b6618b28dea270310d4d863611e6bd5c354fbdc20dee2fcec2cb0cbe38",
+      "src/host/free-frame-read-error.mjs": "a53482488ed8a6f4ba40339d5eb116bbd445e7ca3e230e822fbe9ba2c708e5dd",
+      "src/host/local-panel-focus.mjs": "ce29e6b1c542dbe2be000a517ffaa56a1fca21088219973326808025cb64cdfa",
+      "src/host/frame-candidate-migration.mjs": "10d9b7bab81194530d589940cd1f184f5d6db9215ee7cb78be5a244168054b5c",
+      "src/host/free-frame-candidates.mjs": "97ad6ddaa1c9ee09efecee36e476c26b1629e9dd49b22e4665932156e4c6368e",
+      "src/host/free-frame-snippets.mjs": "33856791be021ba262f2f6d0d7bf18a3a2bdfaaee89f2346f03f5e2f6f877eda",
+      "src/host/free-frame-backup.mjs": "433e747331d90eeb3af8b2de0efb29d1603d1a45759bfa1b0dbb1f0ac524d552",
+      "src/host/free-frame-recovery.mjs": "367ddb3c9b94bb5cebbaf06817c8e2db15b31255ef9af78dbe3169e0d725a34a",
+      "src/navigation/free-recovery.mjs": "20352a2a9a37bfdac9d0889d87efaf80510bf7462df3fba1ceef1e4eac3c0442",
+      "src/host/ui-frame-client.mjs": "32a3f5b368c2e7918b1c82291a29c8218f36e17731fcbf3ab6108d5678b62b30",
+      "src/navigation/navigation.mjs": "2ab77ae68b47c7ee3c76d523680e824ebd72a1e58d1be89a8c779050a03cfa8c",
+      "src/navigation/styles.mjs": "803a8a20135db402edcf381dabb69f52ce087a7c73f985e0c84a639f22bdbc7c",
+      "extension/sidebar.mjs": "8d1b85dda5d1a93b548cd37da978cb0f90ffef340ddd2744023b90eafc936220",
+      "extension/status.mjs": "228ce0ac893dbc2a3663e246b6fc41be14c2ef35fea5b0404ba257684dc2efe1",
+      "extension/temporary-navigation.mjs": "a62ae7b41b83de18880faebf42b59f0a45999d28a8f506344b3e19dceb459db2",
+      "extension/temporary-content-entry.mjs": "d13222e0bf8be8c629408ea388c0a8dfcc9d5c57c32a0deb78d64f0776018624",
+      "extension/frame-shell.css": "4826fa88776348353f067aa6fddf5067f33da07e769ee1c7677e7ce2c4853d88",
+      "extension/frame-bootstrap.js": "55ac9c3f26128ed2090c27f83fff35823640a618c24f38348aee5f4a286f5a12",
+      "extension/workspace.html": "25ae5ed0790d6307bf160ff9db6bd3df635628f604abee6b9551f78bfb357024",
+      "extension/sidebar.html": "58e09f90eba837e4ec77804c7e1672ff57af91455d56387342955e160daf4c74",
+      "extension/status.html": "4540871802f6daf6b35f8b1767dee7f7bb586cf8a29ae147b659c587ad76205b",
+      "extension/status.css": "bc01e7292382621af7066a117fba9b4cd6a720960e073098ecb96eb1ed313799",
+      "extension/README.txt": "0a62c1838a8043eb1aaac3536fc9134b8fcd1e6876cc2214abdfb860dc23acfb",
+      "extension/build.mjs": "cc0c35572ad91b9a9189ba5e05242742bc0fdbec8f9dfeb1bb6a523008803a6d",
+      "extension/classic-worker-build.mjs": "87275509401785d49ce134d0780a06e587dc8d303eacf91aab7a22752c3007b5",
+      "extension/tooling/package.json": "eae0628aefa50bf39eab0053f7ff0abb687f30c84607220e4ff0dae7b8e664d1",
+      "extension/tooling/package-lock.json": "4609d990146911013da85142a111efcd9209a26f3d51ce56a83d5d6a3bb58180"
+    },
+    "preservation": {
+      "sameExtensionId": "miendbcjdmecjggplepenghjnoejmaic",
+      "packagedFilesVerified": 197,
+      "manifestUnchanged": true,
+      "databaseFilesModifiedByAgent": false,
+      "originalStashes": 3,
+      "oldBatchesRepeated": false,
+      "originalLoadDirectory": ".git/vaiwl-artifacts/local-source-witness-20261022/extension",
+      "lastBackup": ".git/vaiwl-artifacts/local-source-witness-20261022/extension-before-fixed-frame-report-20261023-r31"
+    },
+    "officialDocumentationChecked": {
+      "url": "https://learn.chatgpt.com/docs/chrome-extension",
+      "result": "General browser permissions documented; this specific srcdoc rewrite or its owner not established."
+    }
+  },
+  "srcdocAttribution20261024": {
+    "baseHead": "1755dea5259c18d96dfb74693de41220fa83fa02",
+    "authorization": "One user-approved supported CDP attribution attempt; home only; <=1 reload; <=30s observation; <=20 pauses; no bodies, credentials, network responses or other tabs.",
+    "consumed": true,
+    "retryAllowed": false,
+    "profile": "original-authorized-profile",
+    "transport": "supported-tab-cdp",
+    "debuggerEnable": "SUCCEEDED",
+    "reloads": 1,
+    "observedPauses": 0,
+    "observationElapsedMs": 640,
+    "result": "INCOMPLETE_EVENT_STREAM_TRUNCATED",
+    "writer": "NOT_ESTABLISHED",
+    "cleanup": {
+      "breakpointRemoval": "attempted",
+      "resume": "attempted",
+      "debuggerDisable": "SUCCEEDED",
+      "domDisable": "attempted",
+      "attributeEdits": 0,
+      "extensionsDisabled": 0
+    },
+    "finalPage": {
+      "startup": "layout-failed",
+      "nativeAccountErrorVisible": true,
+      "browserCheckTextVisible": true,
+      "nativeEditorPresent": false
+    },
+    "conclusion": "No writer attribution or compatibility repair established. Event truncation invalidates absence-based conclusions. Native account check is a separate current blocker; no retry or challenge handling.",
+    "preservation": "No package upgrade, database mutation, private unlock, message send or new source request; existing extension and all prior evidence preserved.",
+    "offlineObserverReview": {
+      "kind": "PURE_OBSERVER_METHOD_REPRODUCTION",
+      "sourceFile": "bundled browser/26.1016.62342/scripts/browser-service.mjs",
+      "sourceSha256": "4cc91e314d2fcb9ed954436be8467f1ddc9b73a69f5d7001e83ccd283625188d",
+      "firstObservedOrigin": {
+        "truncated": true,
+        "retainedTargetEvents": 1,
+        "hasMore": false
+      },
+      "knownSameOrigin": {
+        "truncated": false,
+        "retainedTargetEvents": 1,
+        "hasMore": false
+      },
+      "unrelatedEventEviction": {
+        "truncated": true,
+        "retainedTargetEvents": 0
+      },
+      "realBrowserCalls": 0,
+      "realAccountRequests": 0,
+      "runtimeModified": false,
+      "conclusion": "truncated does not imply returned target events are unusable; actual prior eviction branch and writer remain unknown",
+      "priorAttemptCorrection": "The collector exited on truncated before inspecting returned events. No returned target event was retained, so the previous attempt cannot establish that no pause was delivered.",
+      "nextCollectorRule": "Inspect already returned target-specific positive evidence before assessing historical completeness. Never infer absence from a truncated interval. Any future live batch still requires fresh explicit scope; do not replay the spent batch.",
+      "currentNativePage": {
+        "readOnlyWithoutReload": true,
+        "accountError": true,
+        "browserCheck": true,
+        "nativeEditor": false
+      }
+    }
+  },
+  "srcdocAttributionSecond20261024": {
+    "baseHead": "38e60922b27407ad5e5d1745e68cbd56d6805adf",
+    "authorization": "Fresh explicit user grant: original home, one refresh, 30s observation, <=20 pauses, owned frame attribute/source locations only; no bodies, credentials, responses or other tabs.",
+    "consumed": true,
+    "retryAllowed": false,
+    "precondition": {
+      "home": true,
+      "nativeEditor": true,
+      "accountError": false,
+      "browserCheck": false
+    },
+    "result": {
+      "state": "DEADLINE",
+      "refreshes": 1,
+      "pauses": 2,
+      "truncated": true,
+      "ownedFramesArmed": 0,
+      "writes": [],
+      "cleanup": {
+        "breakpointRemovalIncomplete": true,
+        "debuggerDisabled": true,
+        "domDisabled": false
+      },
+      "elapsedMs": 30053,
+      "reload": {
+        "ok": true
+      }
+    },
+    "finalPage": {
+      "nativeEditor": true,
+      "accountError": false,
+      "browserCheck": false,
+      "startup": "surface-failed"
+    },
+    "writer": "NOT_ESTABLISHED",
+    "observerReview": {
+      "kind": "COLLECTOR_EMPTY_URL_BRANCH_ONLY",
+      "old": {
+        "arms": 0,
+        "classification": null
+      },
+      "corrected": {
+        "arms": 1,
+        "classification": [
+          {
+            "ownBreakpoint": true,
+            "hasTopFrame": true,
+            "topUrl": "empty",
+            "kind": "other"
+          }
+        ]
+      },
+      "realBrowserCalls": 0,
+      "actualLivePauseUrl": "NOT_RETAINED_NOT_ESTABLISHED"
+    },
+    "limitations": [
+      "No attribute breakpoint was armed. Two pauses do not prove a srcdoc writer was captured.",
+      "Pause URL and hit classification were not retained in this batch; empty URL branch is a proven collector defect, not an established live cause.",
+      "Individual breakpoint removal did not confirm success; Debugger.disable succeeded. DOM.disable did not confirm success. Do not label every cleanup step successful."
+    ],
+    "preservation": "No package changes, attribute edits, extension disable, database edits, account unlock, source experiment or message send.",
+    "nextBoundary": "Do not repeat this consumed batch. Resolve collector contract and bounded branch diagnostics before proposing any new live attempt; no product fix or Mac UI PASS established.",
+    "postCleanup": {
+      "command": "DOM.disable",
+      "scope": "cleanup only, no refresh or debugger re-enable",
+      "result": "DOM agent has not been enabled",
+      "conclusion": "DOM domain already inactive; initial cleanup failure is preserved above"
+    }
+  },
+  "frameAttributionCollectorAudit20261024": {
+    "baseHead": "796b4569fc7402f0c39221b489c175692817cc96",
+    "scope": "COLLECTOR_ONLY; isolated headless Chrome, new disposable profile, existing MV3 and native-shaped fixture, reject-only network guard; no account, no installed-extension changes.",
+    "sourceHashes": {
+      "tools/frame-attribution/collector.mjs": "04574b02fdb91eb2ad4222aa1ab0b30cbaf47dfcfba0debb33aa4b939f2f9d9e",
+      "tests/host/frame-attribution.test.mjs": "51ef229ba8d7bfaa1b5f90d4eeab979e76b0ea020cc965c1a7c195bceda66c12",
+      "tests/host/frame-attribution-browser.mjs": "373445f6e292316949fdf81c5ee9aab9128fbd500c8e38d8a8bfe01ae8424192"
+    },
+    "installedMountMatchesSource": true,
+    "mountSourceSha256": "b4dbb6dc6fe3f64961ac1601f5261acba81d7ed67869f3885ff37f95a46695d3",
+    "fixed": [
+      "Unique current-source anchor after both frames are connected, no hard-coded source line.",
+      "Exact breakpoint ID admits empty CallFrame.url; scriptParsed metadata resolves the actual writer location.",
+      "Returned positive events are processed despite older-event truncation.",
+      "Both frame objects/source/parent are verified before DOM breakpoints; at most one live-object rebind on expired frontend node IDs.",
+      "srcdoc is checked before/after a single step; benign attributes and interrupted steps cannot create writer attribution.",
+      "Breakpoint response validated before reload; hanging reload cannot extend observation; denial stops; cleanup outcomes are explicit."
+    ],
+    "unit": {
+      "passed": 13,
+      "failed": 0,
+      "scope": "collector control flow, limits, privacy and cleanup only"
+    },
+    "headless": {
+      "status": "PASS",
+      "packageUnmodified": true,
+      "cases": [
+        {
+          "scenario": "page",
+          "result": {
+            "schema": "vaiwl-frame-attribution-v1",
+            "state": "WRITER_OBSERVED",
+            "refreshes": 1,
+            "pauses": 3,
+            "truncated": false,
+            "armed": 2,
+            "nodeRebindings": 0,
+            "pauseClasses": [
+              {
+                "ownHit": true,
+                "hasTop": true,
+                "urlPresent": false,
+                "kind": "other"
+              },
+              {
+                "ownHit": false,
+                "hasTop": true,
+                "urlPresent": false,
+                "kind": "dom"
+              },
+              {
+                "ownHit": false,
+                "hasTop": true,
+                "urlPresent": false,
+                "kind": "step"
+              }
+            ],
+            "writes": [
+              {
+                "role": "workspace",
+                "attribute": "srcdoc",
+                "stack": [
+                  {
+                    "source": "http://127.0.0.1:55201/writer.js",
+                    "line": 3,
+                    "column": 43
+                  }
+                ]
+              }
+            ],
+            "cleanup": {
+              "attribute-workspace": "NODE_ALREADY_GONE",
+              "attribute-sidebar": "NODE_ALREADY_GONE",
+              "resume": "NOT_PAUSED",
+              "debugger": "DONE",
+              "objects": "DONE",
+              "dom": "DONE"
+            },
+            "observationElapsedMs": 255,
+            "cleanupElapsedMs": 8,
+            "reload": "COMPLETE"
+          }
+        },
+        {
+          "scenario": "page-empty-url-truncated",
+          "result": {
+            "schema": "vaiwl-frame-attribution-v1",
+            "state": "WRITER_OBSERVED",
+            "refreshes": 1,
+            "pauses": 3,
+            "truncated": true,
+            "armed": 2,
+            "nodeRebindings": 0,
+            "pauseClasses": [
+              {
+                "ownHit": true,
+                "hasTop": true,
+                "urlPresent": false,
+                "kind": "other"
+              },
+              {
+                "ownHit": false,
+                "hasTop": true,
+                "urlPresent": false,
+                "kind": "dom"
+              },
+              {
+                "ownHit": false,
+                "hasTop": true,
+                "urlPresent": false,
+                "kind": "step"
+              }
+            ],
+            "writes": [
+              {
+                "role": "workspace",
+                "attribute": "srcdoc",
+                "stack": [
+                  {
+                    "source": "http://127.0.0.1:55201/writer.js",
+                    "line": 3,
+                    "column": 43
+                  }
+                ]
+              }
+            ],
+            "cleanup": {
+              "attribute-workspace": "NODE_ALREADY_GONE",
+              "attribute-sidebar": "NODE_ALREADY_GONE",
+              "resume": "NOT_PAUSED",
+              "debugger": "DONE",
+              "objects": "DONE",
+              "dom": "DONE"
+            },
+            "observationElapsedMs": 254,
+            "cleanupElapsedMs": 5,
+            "reload": "COMPLETE"
+          }
+        },
+        {
+          "scenario": "page-node-invalidated",
+          "result": {
+            "schema": "vaiwl-frame-attribution-v1",
+            "state": "WRITER_OBSERVED",
+            "refreshes": 1,
+            "pauses": 3,
+            "truncated": false,
+            "armed": 2,
+            "nodeRebindings": 1,
+            "pauseClasses": [
+              {
+                "ownHit": true,
+                "hasTop": true,
+                "urlPresent": false,
+                "kind": "other"
+              },
+              {
+                "ownHit": false,
+                "hasTop": true,
+                "urlPresent": false,
+                "kind": "dom"
+              },
+              {
+                "ownHit": false,
+                "hasTop": true,
+                "urlPresent": false,
+                "kind": "step"
+              }
+            ],
+            "writes": [
+              {
+                "role": "workspace",
+                "attribute": "srcdoc",
+                "stack": [
+                  {
+                    "source": "http://127.0.0.1:55201/writer.js",
+                    "line": 3,
+                    "column": 43
+                  }
+                ]
+              }
+            ],
+            "cleanup": {
+              "attribute-workspace": "NODE_ALREADY_GONE",
+              "attribute-sidebar": "NODE_ALREADY_GONE",
+              "resume": "NOT_PAUSED",
+              "debugger": "DONE",
+              "objects": "DONE",
+              "dom": "DONE"
+            },
+            "observationElapsedMs": 248,
+            "cleanupElapsedMs": 4,
+            "reload": "COMPLETE"
+          }
+        },
+        {
+          "scenario": "extension",
+          "result": {
+            "schema": "vaiwl-frame-attribution-v1",
+            "state": "WRITER_OBSERVED",
+            "refreshes": 1,
+            "pauses": 3,
+            "truncated": false,
+            "armed": 2,
+            "nodeRebindings": 0,
+            "pauseClasses": [
+              {
+                "ownHit": true,
+                "hasTop": true,
+                "urlPresent": false,
+                "kind": "other"
+              },
+              {
+                "ownHit": false,
+                "hasTop": true,
+                "urlPresent": false,
+                "kind": "dom"
+              },
+              {
+                "ownHit": false,
+                "hasTop": true,
+                "urlPresent": false,
+                "kind": "step"
+              }
+            ],
+            "writes": [
+              {
+                "role": "workspace",
+                "attribute": "srcdoc",
+                "stack": [
+                  {
+                    "source": "chrome-extension://cgmacmjkdojaoljdcegocblbgknjonmc/writer.js",
+                    "line": 4,
+                    "column": 43
+                  }
+                ]
+              }
+            ],
+            "cleanup": {
+              "attribute-workspace": "NODE_ALREADY_GONE",
+              "attribute-sidebar": "NODE_ALREADY_GONE",
+              "resume": "NOT_PAUSED",
+              "debugger": "DONE",
+              "objects": "DONE",
+              "dom": "DONE"
+            },
+            "observationElapsedMs": 235,
+            "cleanupElapsedMs": 7,
+            "reload": "COMPLETE"
+          }
+        },
+        {
+          "scenario": "none",
+          "result": {
+            "schema": "vaiwl-frame-attribution-v1",
+            "state": "DEADLINE",
+            "refreshes": 1,
+            "pauses": 5,
+            "truncated": false,
+            "armed": 2,
+            "nodeRebindings": 0,
+            "pauseClasses": [
+              {
+                "ownHit": true,
+                "hasTop": true,
+                "urlPresent": false,
+                "kind": "other"
+              },
+              {
+                "ownHit": false,
+                "hasTop": true,
+                "urlPresent": false,
+                "kind": "dom"
+              },
+              {
+                "ownHit": false,
+                "hasTop": true,
+                "urlPresent": false,
+                "kind": "step"
+              },
+              {
+                "ownHit": false,
+                "hasTop": true,
+                "urlPresent": false,
+                "kind": "dom"
+              },
+              {
+                "ownHit": false,
+                "hasTop": true,
+                "urlPresent": false,
+                "kind": "step"
+              }
+            ],
+            "writes": [],
+            "cleanup": {
+              "attribute-workspace": "DONE",
+              "attribute-sidebar": "DONE",
+              "resume": "NOT_PAUSED",
+              "debugger": "DONE",
+              "objects": "DONE",
+              "dom": "DONE"
+            },
+            "observationElapsedMs": 2500,
+            "cleanupElapsedMs": 4,
+            "reload": "COMPLETE"
+          }
+        }
+      ]
+    },
+    "priorFailuresPreserved": [
+      "run2: fixture draft expectation incorrectly assumed empty; corrected to existing fixture draft.",
+      "run3: NODE_ALREADY_GONE while arming; no false attribution. Bounded same-object remapping later proved using explicit offline ID invalidation.",
+      "first extension-writer fixture used an unsupported route query and never mounted; corrected fixture to a supported path, not product route rules."
+    ],
+    "artifacts": ".git/vaiwl-artifacts/frame-attribution-audit-20261024",
+    "artifactHashes": {
+      "vaiwl-collector-audit-run1.log": "b4010b6c3575a7aa26233a4b3e373a632e2a38911f4b83da331a512d5381b0bc",
+      "vaiwl-collector-audit-run2.log": "f97f633d15c7d83716b5fd1a450f51fe228a58d6c4640e553effaa902b3b8e5a",
+      "vaiwl-collector-audit-run3.log": "78897780eef72f508baf1539198de722f5f5956f3f36ff7f13d45fa1ce83eeeb",
+      "vaiwl-collector-audit-nodeid-trace.log": "c5cef7dfa7df313b82f71577203edff948eed308d770948e31e39c72e1e10cd4",
+      "vaiwl-collector-audit-node-remap.log": "638312f0ff32794d8e7b8cba7fb1ac6521d63d961914da7808f086ac0cc7e6b7",
+      "vaiwl-collector-audit-extension-writer.log": "1f5154b08fa79099b46d64104e8057fa5beaf3b4070ec719b69bcc42824b2454",
+      "vaiwl-collector-audit-extension-writer2.log": "8b36d25abf4fabee92f26263208e3d36424a54b682c7b65d78b3d715d1fceabe",
+      "vaiwl-collector-audit-final-browser.log": "8b966e4e3f713ec354be42358e99623dcdf5520b95cd43adf5fff74ce4b3d69f",
+      "vaiwl-collector-audit-final-unit.log": "60a5f55b9cc1afc69de9d4cbd2878b3b7a6702daeec7890e383517eed38c4bc1"
+    },
+    "realBrowserCalls": 0,
+    "realAccountRequests": 0,
+    "realWriter": "NOT_ESTABLISHED",
+    "realMacUI": "FAIL_UNCHANGED",
+    "transportLimit": "Real Chrome CDP semantics verified through a local test adapter using the documented event envelope. Current Codex live bridge is not re-tested; any refusal, unrecognized response, source drift or unknown state stops without a second refresh.",
+    "nextLiveScope": "Fresh explicit grant only: same profile/home and installed extension; <=1 reload, <=30s observation, <=20 pauses, own two frames only, <=1 frontend-ID remap while paused and the exact objects still live; fixed script locations and boolean state only. No bodies/credentials/network responses/other tabs/attribute edits/extension disabling. Cleanup afterward, no automatic rerun."
+  },
+  "frameAttributionLiveThird20261024": {
+    "sourceCommit": "0fb3abbfb846e97832b581c46f6866550b3e511c",
+    "grant": "call_f53e9d23d3954da1b715de3f860dc1f0; explicitly approved once; now consumed",
+    "result": {
+      "schema": "vaiwl-frame-attribution-v1",
+      "state": "DEADLINE",
+      "refreshes": 1,
+      "pauses": 0,
+      "truncated": true,
+      "armed": 0,
+      "nodeRebindings": 0,
+      "pauseClasses": [],
+      "writes": [],
+      "cleanup": {
+        "sourceBreakpoint": "COMMAND_FAILED",
+        "resume": "NOT_PAUSED",
+        "debugger": "DONE",
+        "dom": "DOM_ALREADY_INACTIVE"
+      },
+      "observationElapsedMs": 30003,
+      "cleanupElapsedMs": 22,
+      "reload": "COMPLETE"
+    },
+    "postCleanup": {
+      "nativeEditableCount": 1,
+      "challengeMarker": false,
+      "ownedFrames": 0,
+      "installedDataModified": false
+    },
+    "writer": "NOT_ESTABLISHED",
+    "productCompatibilityFix": "NOT_IMPLEMENTED_WITHOUT_ATTRIBUTION",
+    "staticToolInspection": {
+      "file": "browser/26.1016.62342/scripts/browser-service.mjs",
+      "sha256": "4cc91e314d2fcb9ed954436be8467f1ddc9b73a69f5d7001e83ccd283625188d",
+      "reload": "navigate_tab_reload uses normal Page.reload and waits for a load event; no explicit Debugger.disable or detach in this handler.",
+      "eventBuffer": "forgetAttachedTab discards cached events and marks them evicted; ordinary capacity eviction also yields truncated. This run cannot distinguish them.",
+      "rawCalls": "callRawCdp preserves debugger on command timeout; executeTargetCdp may recover an unattached debugger. These code paths do not prove which occurred live.",
+      "conclusion": "Missing source breakpoint and inactive DOM on cleanup are compatible with lost debug-session state, but neither the loss nor its cause is established. No tool code was modified or private API invoked."
+    },
+    "nextGate": "Do not request another account refresh yet. First establish supported tool-bridge breakpoint/event continuity on a non-account fixture, within allowed tool permissions; previously denied localhost cannot be bypassed. No hidden transport, direct debug port, profile switching, or protection disabling.",
+    "realAcceptance": "NOT_RUN beyond native editor presence; existing UI failure not promoted to PASS"
+  },
+  "noAccountBridgePreflight20261024": {
+    "baseHead": "01edacfb654bd82034b7eac501948157bfc93fbe",
+    "fixture": "tools/frame-attribution/bridge-fixture.mjs",
+    "fixtureSha256": "4fba1cfc239b07c0e262c1a16e64f41ae96a5d62e6283e955421c7ee6b3b9550",
+    "origin": "http://127.0.0.1:51204",
+    "pageLoad": "PASS; fixed page, one own iframe and cleanup-check button visible",
+    "firstAction": "readEvents(Debugger.scriptParsed,Debugger.paused,Debugger.breakpointResolved,Inspector.detached)",
+    "permissionResult": "BLOCKED_SAVED_PERMISSION; before Debugger.enable or source breakpoint",
+    "rawToolMessage": "Browser Use rejected this action due to browser security policy. Reason: A saved user permission setting blocks this action. Browser use could not acquire authority to use raw CDP. The CDP approval gate did not grant access for http://127.0.0.1:51204. A saved permission or managed policy denies access.",
+    "debuggerEnabled": false,
+    "breakpointsSet": 0,
+    "observedReloads": 0,
+    "accountOperations": 0,
+    "bridgeContinuity": "NOT_RUN",
+    "srcdocWriter": "NOT_ESTABLISHED",
+    "cleanup": "Created fixture tab closed; local server stopped. Original extension, data, tabs and stashes unchanged.",
+    "nextExternalCondition": "Official revocation/reapproval of the saved CDP denial for this origin in the current task. Existing tools expose no corresponding reset. Do not edit policy files, invoke hidden APIs, switch origin/port/surface/task or debug the account instead.",
+    "publicDocumentation": "https://learn.chatgpt.com/docs/browser documents site permission controls but does not establish a current-task saved-CDP-denial reset method."
+  },
+  "noAccountBridgeSupportFollowup20261024": {
+    "baseHead": "1d39ca5633d0248247363824bbba99797a67b919",
+    "grant": "call_75a7a278562048a6a726c5c7c4c67562; approved exact minimal text",
+    "destination": "Existing OpenAI Help Center tool-fault conversation; no new ticket",
+    "messageSha256": "399197ac3bb3452ecb46e2122420cbe5b1a765daf770f9af5369dfcbda6d13ed",
+    "delivery": "SENT_ONCE; exact text visible in conversation, composer cleared, AI-assisted response received",
+    "attachments": 0,
+    "replySummary": "AI-assisted support states no documented per-task/session CDP-denial reset; recommends removing origin site rule, enabling full CDP, restarting and using a new thread. No effective current-task revocation or platform fix supplied.",
+    "disposition": "Not executed: site-rule advice does not establish removal of the known session-level denial; a new-thread test would conflict with the current no-workaround constraint. No additional message transmitted.",
+    "permissionResolved": false,
+    "bridgeContinuity": "NOT_RUN",
+    "srcdocWriter": "NOT_ESTABLISHED",
+    "accountOperations": 0,
+    "installedExtensionOrDataChanged": false
+  },
+  "foreignFrameMonitorSourceAttribution20261024": {
+    "baseCommit": "5bc6ab281e116d7b222325ad50ab32921fdea609",
+    "conclusion": "INSTALLED_WRITER_MECHANISM_CONFIRMED_OFFLINE_NOT_LIVE_STACK",
+    "evidence": {
+      "state": "PASS",
+      "method": "Unmodified installed monitor function in isolated Node VM with minimal DOM doubles; no browser, account or network",
+      "installedExtension": {
+        "name": "ChatGPT",
+        "id": "hehggadaopoacecdllhhajmbjkdcmajg",
+        "version": "1.26.1020.11845"
+      },
+      "sourceFile": "content-scripts/foreign-frame-monitor.js",
+      "sha256": "337ad4ff3ec7846134e5d39528936b1cbb68107de3c4da0e0641c712bda66129",
+      "findings": {
+        "vaiwlWorkspaceBlanked": true,
+        "vaiwlSidebarInShadowRootBlanked": true,
+        "newForeignFrameBlanked": true,
+        "sameExtensionUntouched": true,
+        "ordinaryWebFrameUntouched": true
+      },
+      "liveCallStack": "NOT_CAPTURED",
+      "scope": "Confirms exact installed source behavior; not a live execution trace or Mac acceptance",
+      "accountRequests": 0,
+      "cdpCalls": 0,
+      "installedFilesChanged": 0
+    },
+    "backgroundSourceSha256": "2564d018e01f71365db8adfb5ccd36de981446328854d84328bddcda236b8e39",
+    "activation": "requireSessionTab -> yb -> su -> wb/gb; fallback Tb injects content-scripts/foreign-frame-monitor.js; active controlled document and subsequent navigation",
+    "normalCleanup": "endTurnUnlocked -> bb -> au -> Ob disconnects observer; does not remove existing srcdoc; source-inspected, live cleanup not asserted",
+    "compatibility": "Keep the original extension and dual-frame design. Ordinary personal use after normal browser-tool release is distinct from tool-controlled-tab acceptance. Do not re-claim the page to verify recovery, because that activates the monitor again. A fresh ordinary document is needed to discard prior mutations. No hidden cleanup call, attribute removal, extension disable, new carrier or alternate automation surface.",
+    "productFix": [
+      "Private document-local frame-blocked status survives teardown; page dataset is not a status authority",
+      "Frame replacement ends the content session and prevents context READY or late mount replies from reviving it",
+      "Popup explains the replacement and disables misleading re-unlock while retaining explicit local lock"
+    ],
+    "validation": {
+      "targeted": "PASS",
+      "tests": 137,
+      "log": "/private/tmp/vaiwl-frame-blocked-tests.tap",
+      "files": [
+        "tests/host/content-session-start-recovery.test.mjs",
+        "tests/host/local-status.test.mjs",
+        "tests/host/local-status-presentation.test.mjs",
+        "tests/host/surface-controller.test.mjs"
+      ],
+      "scope": "Node tests; actual popup body; no new browser or account operation",
+      "candidate": {
+        "status": "HOST_IMPLEMENTATION_UNVERIFIED",
+        "releaseStatus": "NOT_RELEASE_READY",
+        "files": 197,
+        "unpacked": "/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/.git/vaiwl-artifacts/browser-local-frame-status-20261024-r32/extension",
+        "archive": "/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/.git/vaiwl-artifacts/browser-local-frame-status-20261024-r32/vaiwl-free-host-development.zip",
+        "archiveSha256": "766057ed3c7053c111c1485345fb2e98273b4acbbb012ec6bd1b904b37eb4ad5"
+      }
+    },
+    "preservation": {
+      "installedPackage": "UNCHANGED_r31",
+      "database": "UNTOUCHED",
+      "stash": [
+        "42c88772",
+        "f4270c6e",
+        "899e7228"
+      ],
+      "accountRequests": 0,
+      "cdpCalls": 0,
+      "browserRefreshes": 0
+    },
+    "remaining": {
+      "normalPersonalUseRecovery": "NOT_RUN",
+      "MacFormalUI": "FAIL_PREVIOUS_NOT_RETESTED",
+      "liveWriterCallStack": "NOT_CAPTURED",
+      "toolBridgePermission": "UNCHANGED_NOT_NEEDED_FOR_SOURCE_FINDING",
+      "fullFree": "NOT_ACCEPTED"
+    },
+    "installedReadOnlyCheck": {
+      "strictPackageVerifier": "FAIL_unexpected-host-package-files",
+      "manifestListedFiles": 196,
+      "missing": [],
+      "hashMismatch": [],
+      "extraFileCount": 2675,
+      "extraFiles": "Number-suffixed copies retained; not deleted or treated as writer evidence",
+      "mutations": 0
+    }
+  },
+  "postControlRefreshPresentation20261024": {
+    "baseCommit": "cb6f50b6932a1e161b9ebd4c9c5803863c4c6215",
+    "userObservation": {
+      "afterManualRefresh": "Native ChatGPT normal; formal VAIWL UI not seen",
+      "originalPopup": "本次检查：增强界面已连接。",
+      "evidenceType": "USER_REPORTED_FIXED_STATUS",
+      "actualMode": "UNKNOWN",
+      "fourGridEntry": "AWAITING_USER_OBSERVATION"
+    },
+    "codeFinding": "Installed localStatus reports ready for both reading and suspended modes when registration, both UI grants and frame windows remain valid. A pre-existing protected composer focus at JOIN selects native reading and a four-grid return rather than auto-opening workspace. This matches a possible path, not yet the actual Mac cause.",
+    "checks": {
+      "installedBrowserLocal": true,
+      "installedManifestHashes": "196/196_MATCH_NO_MISSING",
+      "installedFrameBlockedStatus": false,
+      "crossRefreshStopFlag": "No persisted frame-replacement stop flag in reviewed VAIWL startup/lifecycle; new document calls start",
+      "browserToolClaim": 0,
+      "browserRefresh": 0,
+      "accountRequests": 0,
+      "installationWrites": 0,
+      "databaseAccess": 0
+    },
+    "change": "Private controller status distinguishes reading and suspended from workspace mode; popup explains native-reading return and native-layer yield. No new UI entry, auto-show, focus change, unlock or authority. Earlier frame-blocked repair remains staged, not installed.",
+    "validation": {
+      "result": "PASS",
+      "targetedTests": 156,
+      "log": "/private/tmp/vaiwl-presentation-status-20261024.tap",
+      "scope": "Unit integration of controller, actual popup and private fixed protocol; protected focus preserves draft and four-grid entry. No real browser acceptance.",
+      "candidate": {
+        "status": "HOST_IMPLEMENTATION_UNVERIFIED",
+        "releaseStatus": "NOT_RELEASE_READY",
+        "files": 197,
+        "unpacked": "/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/.git/vaiwl-artifacts/browser-local-presentation-status-20261024-r33/extension",
+        "archive": "/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/.git/vaiwl-artifacts/browser-local-presentation-status-20261024-r33/vaiwl-free-host-development.zip",
+        "archiveSha256": "91b5974c949b5351b0d6631380d5e8ff67d1f4f7b0bf28ae559f00012767f084"
+      }
+    },
+    "remaining": "Need ordinary user observation of existing four-grid return. Do not treat old ready string as visible-workspace proof or keep assuming srcdoc replacement. Do not claim normal tool cleanup was observed."
+  },
+  "nativeComputerUseCompatibility20261024": {
+    "status": "PASS_BOUNDED_NO_ACCOUNT_NATIVE_APP_COMPATIBILITY",
+    "realChatGPT": "NOT_RUN",
+    "fullMacAcceptance": "NOT_RUN",
+    "head": "ea4b60df43a0464a3b5dc1b350d5ed094523ff2b",
+    "authorization": "User approved independent open -n launch, new isolated profile, and both extension installations at action time.",
+    "transport": "SUPPORTED_NATIVE_APP_AX_AND_INPUT_ONLY",
+    "browser": "Chrome for Testing 153.0.8010.12; chromium-1243",
+    "profile": "new isolated-profile/Default; account_info entries 0",
+    "officialExtension": {
+      "id": "hehggadaopoacecdllhhajmbjkdcmajg",
+      "version": "1.26.1020.11845",
+      "sourceCopyFiles": 41,
+      "sourceUnmodified": true
+    },
+    "vaiwlExtension": {
+      "id": "cinnjmimkokmeeonmabmjalboghlnobo",
+      "build": "existing packageHost with browserLocal and fixed loopback offlineOrigin",
+      "archiveSha256": "9b051dca1ba727699dc5cdda412e0d3b707af61e475662e50e5103ff8959716e"
+    },
+    "checks": {
+      "bothExtensionsEnabledInManagementUI": "PASS",
+      "formalWorkspaceAndSidebarDocumentsWithProjectAndMembers": "PASS",
+      "nativeReadingThenUniqueReturn": "PASS",
+      "cardOpensExactFixtureChatInNewTab": "PASS",
+      "closingNewChatReturnsToIntactProject": "PASS",
+      "fixtureDraftStillPresent": "PASS",
+      "browserNativeControlDoesNotBlankFormalFramesInThisRun": "PASS"
+    },
+    "limits": [
+      "No browser tab was claimed; this does not establish compatibility with browser-control foreign-frame monitoring active.",
+      "No CDP, internal extension API, debugger, account login, response read, or protection modification used.",
+      "AX documents and successful actions establish operational checks; the native screenshot is a transformed small window capture and does not establish full visual acceptance.",
+      "Native-app tool selected an older same-app process initially. Version-page verification caught it before installation. The old no-account test instance containing only test pages was normally quit; new isolated profile and flags then verified in the UI."
+    ],
+    "network": {
+      "fixturePageRequests": 3,
+      "denyProxyRequests": 160,
+      "welcomePage": "Official extension auto-opened its install welcome URL; proxy blocked it with ERR_TUNNEL_CONNECTION_FAILED; tab closed without retry.",
+      "proxyScope": "test process only; existing reject-only proxy, no forwarding",
+      "allBrowserNetworkChannelsAudited": false
+    },
+    "cleanup": {
+      "newTestProcessExited": true,
+      "fixtureAndProxyStopped": true,
+      "testProfileAndEvidencePreserved": true,
+      "originalChromeTouched": false,
+      "originalInstall196ManifestHashesMatch": true,
+      "originalDataUntouched": true,
+      "threeStashesPreserved": true
+    },
+    "liveContinuation": {
+      "state": "BLOCKED_PRE_TARGET_SELECTION",
+      "reason": "Two Google Chrome processes share the same app path: job-application process and original Profile 4. Current documented macOS getApp selector has no explicit PID/profile binding. Test showed app-path selection can choose the older process. No actual Google Chrome app selection or tab control attempted.",
+      "nextCondition": "A supported exact native target for Profile 4, or the other Chrome process finishing normally so target selection becomes unambiguous. Do not close or interfere with job work; do not retry raw CDP or claim current user tab."
+    },
+    "localArtifacts": ".git/vaiwl-artifacts/native-cua-compatibility-20261024-r1",
+    "evidence": "formal-ui-after-return.txt; formal-ui-after-return.png; preparation.json; preflight.json; environment-final.json"
+  },
+  "nativeProcessSelection20261024": {
+    "baseline": "c03760fd",
+    "authorization": "Explicit AppleScript/System Events native process targeting; isolate same-name test before original Profile 4; preserve other task and original data.",
+    "rootCause": {
+      "state": "CONFIRMED_IN_NO_ACCOUNT_ENVIRONMENT",
+      "description": "Materializing the whose-query result, or assigning an evaluated process-id lookup, returns a name-based application process specifier. Reading it again selects the earlier same-name process. Direct scalar filtering returns the requested PID. An unevaluated reference to application process id preserves the unique target."
+    },
+    "fix": "tools/native-process-reference.applescript",
+    "isolatedEvidence": {
+      "sameNameInstances": 2,
+      "distinctProfileDirectories": true,
+      "network": "process-only dead-end HTTP proxy; QUIC disabled; local file fixtures; no account login or installed account data; not a complete network-channel audit",
+      "oldSelectorReturnedWrongSibling": true,
+      "evaluatedUniqueIdReturnedWrongSibling": true,
+      "unevaluatedUniqueIdAlternatingReadbacks": 4,
+      "allMatched": true,
+      "targetedNewWindowOnlyInB": true,
+      "aWindowListUnchanged": true,
+      "testProcessesClosed": true
+    },
+    "inputEvidence": {
+      "fixtureTrustedKeyboardActivation": "PASS",
+      "fixtureDraftPreserved": true,
+      "accessibilityClickNotEquivalentToTrustedKeyboard": true,
+      "focusBinding": "Check AXFocused on a target element reference rooted at the unique process ID; do not rely on a returned AXFocusedUIElement object to retain a same-name process binding."
+    },
+    "actualMac": {
+      "processTarget": "PASS",
+      "profilePathFromNativeVersionPage": "PASS_Profile_4",
+      "sameProcessMultipleProfilesObserved": true,
+      "profileVerificationRequiredBeyondProcessLaunchArgs": true,
+      "newAcceptanceWindow": true,
+      "existingChatGPTTabClaimed": false,
+      "browserUseClaims": 0,
+      "cdpCalls": 0,
+      "internalApiCallsByAgent": 0,
+      "homeNativeInputModelAttachmentControls": "OBSERVED",
+      "returnControl": "OBSERVED_AND_KEYBOARD_ACTIVATED",
+      "formalSidebarFrame": "OBSERVED_VAIWL_HISTORY_NAVIGATION_WITH_CONTROLS",
+      "fullWorkspaceCards": "NOT_ESTABLISHED",
+      "popup": "OBSERVED_CONNECTED_AND_LOCAL_UNLOCK_ACTION_AVAILABLE",
+      "persistentUnlockPerformed": false,
+      "testMessageSent": false,
+      "projectMembersNewChatSearchReturnRefreshRestartIsolation": "NOT_RUN",
+      "nativeKeyboardFocusAttempt": "Returned-focus-object approach did not locate target after bounded traversal; direct target AXFocused reference located it after one reverse Tab and dispatched Space. Earlier AX click/focus attempts not counted as UI PASS.",
+      "visualAcceptance": "NOT_RUN"
+    },
+    "preservation": {
+      "jobProcessInputs": 0,
+      "extensionInstallOrReload": 0,
+      "extensionOrDatabaseFilesModified": 0,
+      "oldStashes": 3,
+      "noSecurityProtectionChanged": true
+    },
+    "remaining": "Complete workspace presentation and known-object projection, then native interaction and lifecycle acceptance; explicit personal unlock remains user confirmation, not inferred from browser Profile. Process selection is no longer the blocker."
+  },
+  "deliveryGapReview20261024": {
+    "baseHead": "2a41a90f",
+    "installedManifestFiles": 196,
+    "installedHashMismatches": 0,
+    "stagedR33ManifestFiles": 196,
+    "stagedR33HashMismatches": 0,
+    "stagedChangedFiles": [
+      "src/host/local-status.mjs",
+      "src/host/content-session.mjs",
+      "src/host/surface-controller.mjs",
+      "extension/status.mjs"
+    ],
+    "realNativeFollowup": {
+      "target": "previously verified Profile 4 acceptance window only",
+      "returnControl": "OBSERVED_ENABLED",
+      "boundedReverseTabFocus": "NOT_ESTABLISHED_AFTER_30",
+      "spaceOrClickDispatched": false,
+      "fullWorkspace": "NOT_ESTABLISHED",
+      "noProductFailureInferred": true
+    },
+    "extensionInstallOrReload": 0,
+    "databaseWritesByAgent": 0,
+    "browserUseClaims": 0,
+    "cdpCalls": 0,
+    "testMessageSent": false,
+    "privateUnlockPerformed": false,
+    "jobProcessInputs": 0,
+    "newTestsRun": 0,
+    "scope": "Current Browser-Local personal acceptance; prior full-history and message-audit prerequisites remain cancelled."
+  },
+  "formalWorkspaceAndChatLayout20261024": {
+    "baseHead": "110fe3e5c499032a6f94a20fdf0fe7532eeee51f",
+    "scope": "authorized native AX/keyboard in exact original Profile 4 acceptance window; visible navigation only",
+    "actualMac": {
+      "formalHomeWorkspaceAndHistory": "PASS_REAL_VISIBLE_RECENT_LINKS",
+      "trustedFourGridActivation": "PASS",
+      "knownNativeConversationOpen": "PASS_TARGET_MATCH",
+      "chatWorkspaceStable": "FAIL_LAYOUT_GEOMETRY_READING_PAINT_CAPACITY",
+      "latestFixedStatus": "layout-geometry-reading-paint-capacity",
+      "personalUnlock": "NOT_RUN_THIS_DOCUMENT",
+      "newMessage": "NOT_RUN",
+      "projectMembership": "NOT_RUN",
+      "searchReturnJourney": "NOT_RUN",
+      "refreshWorkerRestartIsolation": "NOT_RUN"
+    },
+    "confirmedDefects": [
+      "empty nonpainting DIV is an extra direct timeline child",
+      "chat route omits home-only sidebar wrapper while native navigation remains",
+      "long conversation exceeds existing 2048-node return-gap proof budget"
+    ],
+    "implemented": [
+      "narrow nonpainting marker admission with dynamic revocation",
+      "unique visible native-nav fallback only when original sidebar wrapper absent",
+      "readiness and adapter share boundary resolution",
+      "private bounded fixed-code startup/status diagnostics and deadline-fenced local query"
+    ],
+    "notImplemented": [
+      "scalable complete return-gap safety proof for the long real conversation"
+    ],
+    "package": {
+      "candidate": ".git/vaiwl-artifacts/browser-local-gap-detail-20261024-r48/extension",
+      "installed": ".git/vaiwl-artifacts/local-source-witness-20261022/extension",
+      "id": "miendbcjdmecjggplepenghjnoejmaic",
+      "filesVerified": 196,
+      "manifestUnchanged": true,
+      "activation": "PASS_NATIVE_RELOAD_AND_R48_SPECIFIC_STATUS",
+      "backup": ".git/vaiwl-artifacts/same-id-r48-activation-20261024/previous-extension"
+    },
+    "preservation": {
+      "databaseFilesTouched": false,
+      "initialDraftPreserved": true,
+      "jobProcessOperated": false,
+      "originalUserTabClaimed": false,
+      "browserUseOrCDP": false,
+      "stashes": 3,
+      "knownAgentDuplicateTabsClosed": 10
+    },
+    "validation": {
+      "targeted": "PASS_294",
+      "observedProfileBrowser": "PASS_WEB_MECHANISM_ONLY",
+      "readingViewportBrowser": "PASS_WEB_MECHANISM_ONLY",
+      "isolatedMV3": "PASS_FORMAL_UI_NAVIGATION_WORKER_RESTART_REFRESH_AND_PRIVATE_ISOLATION",
+      "notEquivalentTo": "full personal Mac acceptance",
+      "isolatedMV3Report": "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-lGyLct/report.json"
+    },
+    "next": "fix long-chat return-gap proof cost/coverage without dropping controls or raising the guard threshold; then continue real journey; no user action needed for this code defect"
+  },
+  "longChatPaint20261024": {
+    "baseHead": "0df3df0e39b8cc0e17df89dee3178f5121adc626",
+    "changes": [
+      "complete-paint-proof-with-50ms-budget-no-node-count-truncation",
+      "same-call-style-and-range-reuse",
+      "header-gap-union-of-header-and-reading-paint",
+      "installed-button-final-gap-revalidation",
+      "one-complete-inspection-per-reconciliation",
+      "remove-duplicate-gap-proof-inside-adapter-inspect",
+      "fixed-terminal-and-stalled-join-status"
+    ],
+    "isolated": {
+      "longFormalMV3": "PASS",
+      "report": "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-yf1d60/report.json",
+      "priorLongFailure": "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-yV3WtK/report.json",
+      "unitTests": 297,
+      "readingGapBrowser": "PASS_WEB_MECHANISM_ONLY",
+      "accountAcceptance": "NOT_RUN"
+    },
+    "actualMac": {
+      "readingConnection": "PASS_FIXED_STATUS_OBSERVED",
+      "returnButtonPresent": "PASS_NATIVE_AX",
+      "returnActivation": "TRUSTED_KEY_AND_NATIVE_POINTER_DISPATCHED",
+      "longChatFormalWorkspace": "NOT_ESTABLISHED_NO_STABLE_DUAL_FRAME_OBSERVED_AFTER_INPUT",
+      "privateUnlock": "NOT_RUN",
+      "newMessage": "NOT_RUN",
+      "fullJourney": "NOT_RUN",
+      "browserUseClaim": false,
+      "CDP": false
+    },
+    "installation": {
+      "candidate": ".git/vaiwl-artifacts/browser-local-complete-paint-20261024-r55/extension",
+      "originalPath": ".git/vaiwl-artifacts/local-source-witness-20261022/extension",
+      "backup": ".git/vaiwl-artifacts/same-id-r55-activation-20261024/previous-extension",
+      "extensionId": "miendbcjdmecjggplepenghjnoejmaic",
+      "manifestUnchanged": true,
+      "verifiedFiles": 196,
+      "reload": "GUARDED_NATIVE_KEY_DISPATCHED",
+      "databaseTouched": false,
+      "stashCount": 3
+    },
+    "remaining": "Determine why the real long-chat return gesture does not yield stable formal surfaces, without browser takeover or weakened geometry."
+  },
+  "localRenewal20261024": {
+    "baseHead": "c8adcf01",
+    "confirmedCodeDefect": "Concurrent local HOST_FOCUS and HOST_REFRESH replace the same-document immutable grant snapshots; reference-only delivery checks reject a valid request as stale-host-document.",
+    "before": "FAIL_DETERMINISTIC_REAL_SERVICE_WITH_BROWSER_DOUBLES_NO_ACCOUNT",
+    "fix": "Browser-local authority recognizes only its own issued, unexpired snapshots of the exact current entry/id/epoch/scope. Actual document and producer checks remain. Strict server authority keeps reference equality. Cleanup retains exact-grant ownership.",
+    "offline": {
+      "targetedRuntime": "PASS_69",
+      "targetedHost": "PASS_224",
+      "formalMV3": "PASS_SAME_FRAME_25_SECOND_RENEWAL_AND_EXISTING_CONTINUITY_PATH",
+      "notEquivalentTo": "Mac account acceptance"
+    },
+    "actualMac": {
+      "formalWorkspaceAndSidebar": "PASS_NATIVE_AX_BOTH_VISIBLE_1_5_TO_28_2_SECONDS",
+      "visibleRecentNavigation": "PASS_ALLOWED_CURRENT_PAGE_METADATA_ONLY",
+      "nativeReadingExit": "PASS_FORMAL_SURFACES_CLOSED_AND_FOUR_GRID_RETURN_OBSERVED",
+      "repeatReturn": "NOT_ESTABLISHED",
+      "personalUnlock": "NOT_RUN",
+      "newChatSend": "NOT_RUN",
+      "projectMembership": "NOT_RUN",
+      "fullContinuousJourney": "NOT_ESTABLISHED"
+    },
+    "activation": {
+      "candidate": "r58",
+      "verifiedPackageFiles": 196,
+      "manifestUnchanged": true,
+      "sameId": "miendbcjdmecjggplepenghjnoejmaic",
+      "originalPathPreserved": true,
+      "backup": ".git/vaiwl-artifacts/same-id-r58-activation-20261024/previous-extension",
+      "nativeReload": "AXPRESS_DISPATCHED_ENABLED_READBACK",
+      "activeBuildIndependentlyIdentified": false,
+      "databaseFilesTouched": false
+    },
+    "observerCorrections": [
+      "AXFocused assignment plus Space is not a reliable click; original extension was found disabled and restored to enabled via actual keyboard traversal/readback. Earlier dispatch-only reloads are not proof of activation.",
+      "Chrome memory-use decoration changes the acceptance window title. Native selection stays on the same PID and unique acceptance title/profile suffix.",
+      "Initial fixed-position observation returned unavailable paths; do not equate that with product disappearance. Final bounded read recorded both actual frame names at 21 consecutive points."
+    ],
+    "constraints": {
+      "browserUseOrCDP": false,
+      "internalAPI": false,
+      "messageSent": false,
+      "otherProfileActions": false,
+      "oldDataDeleted": false,
+      "stashesPreserved": 3
+    },
+    "evidence": ".git/vaiwl-checkpoints/20261024-local-renewal",
+    "remaining": "Only a bounded real continuity observation passed. Repeated return and the rest of the Mac journey must be established separately; do not claim the concurrency defect was the sole real cause."
+  },
+  "keyboardReturn20261024": {
+    "baseHead": "ca1975d6",
+    "confirmedCodeDefect": "Keyboard activation removes the focused return button without entering the workspace frame. Focus falls to BODY and subsequent Tab may reach protected native UI.",
+    "fix": "After successful trusted keyboard return only, reuse existing focusFrame(workspace). Pointer and automatic presentation do not transfer focus. Native focus protection remains.",
+    "helloDiagnostics": "Known fixed handshake refusal categories only; no raw replies/errors, no retries or new authority. Initial real hello-failed root cause is not established.",
+    "offline": {
+      "before": "FAIL_BODY_NOT_IFRAME_IN_FORMAL_MV3",
+      "after": "PASS_EXISTING_FORMAL_MV3_CONTINUITY_WITH_KEYBOARD_FOCUS",
+      "targetedUnit": "PASS_262",
+      "notEquivalentTo": "Mac account acceptance"
+    },
+    "actualMac": {
+      "profile": "PASS_NATIVE_VERSION_PAGE_PROFILE_4_CONFIRMED_IN_NEW_ACCEPTANCE_WINDOW",
+      "initialHello": "FAIL_GENERIC_REASON_NOT_ESTABLISHED",
+      "afterReload": "PASS_CONNECTED_READING",
+      "keyboardReturn": "PASS_TWO_ENTRIES_BOTH_FORMAL_FRAMES_OBSERVED_BEFORE_FOCUS_FIX",
+      "nativeFocusSurrenderAndReentry": "PASS_LIMITED",
+      "directAXCloseEffect": "NOT_ESTABLISHED",
+      "r60KeyboardFocusFix": "NOT_RUN_ACTIVATION_PENDING",
+      "personalUnlock": "NOT_RUN",
+      "newChatSend": "NOT_RUN",
+      "projectMembership": "NOT_RUN",
+      "fullContinuousJourney": "NOT_ESTABLISHED"
+    },
+    "activation": {
+      "candidate": ".git/vaiwl-artifacts/browser-local-keyboard-20261024-r60/extension",
+      "packageSha256": "5a4d146ef8790e036eaf5cd137147891b85bffab435a6cc6af434e7657c02174",
+      "originalPath": ".git/vaiwl-artifacts/local-source-witness-20261022/extension",
+      "sameId": "miendbcjdmecjggplepenghjnoejmaic",
+      "backup": ".git/vaiwl-artifacts/same-id-r60-activation-20261024/previous-extension",
+      "verifiedFiles": 196,
+      "manifestUnchanged": true,
+      "databaseFilesTouched": false,
+      "state": "COPIED_NOT_ACTIVATED",
+      "reason": "Focus guard stopped before input; another profile window was recording. Do not interrupt or quit the shared Chrome process.",
+      "finalAttempt": "Recording ended. Opened one manager tab in acceptance window; address assigned, foreground guard stopped before Enter. No reload/refresh dispatched; r60 activation still pending."
+    },
+    "constraints": {
+      "browserUseOrCDP": false,
+      "internalAPI": false,
+      "messageSent": false,
+      "otherProfileInput": false,
+      "oldDataDeleted": false,
+      "stashesPreserved": 3
+    },
+    "evidence": ".git/vaiwl-checkpoints/20261024-keyboard-return",
+    "next": "Activate same-ID r60 when no other foreground work is interrupted; verify actual keyboard focus and continue original Mac journey. Personal cache confirmation remains a user action."
+  },
+  "keyboardMacFollowup20261024": {
+    "baseHead": "1855af0c",
+    "installation": {
+      "sameId": "miendbcjdmecjggplepenghjnoejmaic",
+      "installedControllerMatchesCommittedSource": true,
+      "reload": "EXACT_ENABLED_EXTENSION_AXPRESS_DISPATCHED",
+      "newAcceptanceDocument": "OPENED_NATIVE_HOMEPAGE_IN_SAME_PROFILE",
+      "activeBuildIndependentlyIdentified": false,
+      "oldDataTouched": false
+    },
+    "actualMac": {
+      "connectedReading": "PASS_OWN_STATUS_READBACK",
+      "keyboardWorkspaceEntry": "PASS_BOTH_FORMAL_FRAMES_OBSERVED",
+      "nextTabInWorkspace": "PASS_WORKSPACE_SETTINGS_AXFOCUSED_TRUE_AND_BOTH_FRAMES_PRESENT",
+      "keyboardNativeReadingReturn": "PASS_TARGET_AXFOCUSED_THEN_SPACE_AND_FOUR_GRID_READBACK",
+      "projectNavigation": "NOT_ESTABLISHED_NO_KEY_DISPATCH_WHEN_FOCUS_UNCONFIRMED_AXPRESS_EFFECT_UNCONFIRMED",
+      "nativeSearch": "NOT_ESTABLISHED_AXPRESS_EFFECT_UNCONFIRMED",
+      "privateUnlock": "WAITING_USER_CURRENT_DOCUMENT_CONFIRMATION",
+      "newChatSend": "NOT_RUN",
+      "fullContinuousJourney": "NOT_ESTABLISHED"
+    },
+    "failedOrAmbiguousChecks": [
+      "An earlier Tab attempt after foreground reactivation found the frame absent; own status later reported connected reading. This does not establish a runtime fault.",
+      "The first-control-specific check was false; direct owned-control readback established workspace settings was focused, so Tab remained inside formal UI.",
+      "AXPress/pointer dispatch alone did not establish a successful return or native navigation; only subsequent keyboard actions with readback count as PASS."
+    ],
+    "preservation": {
+      "oldAcceptanceDraft": "PRESENT_REFRESH_NOT_SENT",
+      "newTabUsedToAvoidDraftLoss": true,
+      "internalAPI": false,
+      "CDPOrBrowserClaim": false,
+      "messagesSent": false,
+      "otherProfileInput": false,
+      "databaseDeletion": false,
+      "stashesPreserved": 3
+    },
+    "next": "User confirms current account/workspace using existing local popup; then continue real persistence and remaining native Project/search/new-chat journey. No reinstall/settings/research required."
+  },
+  "personalForeground20261024": {
+    "baseline": "6034825c",
+    "realMac": {
+      "personalConfirmation": "PASS_USER_CONFIRMED_AND_OWN_POPUP_READBACK",
+      "knownPrivateObjectsRestored": "KNOWN_ROWS_RENDERED_AFTER_UNLOCK_PRIVATE_ONLY_ORIGIN_NOT_ESTABLISHED",
+      "formalLinkNativeOpen": "PASS_TARGET_TITLE_READBACK",
+      "chatFourGridReturn": "PASS_BOTH_FORMAL_FRAMES",
+      "continuedForeground": "FAIL_FOREGROUND_FAILED",
+      "candidatePanel": "ERROR_OBSERVED_NO_RETRY",
+      "testMessage": "NOT_SENT",
+      "fullDailyAcceptance": "NOT_ESTABLISHED"
+    },
+    "confirmedIndependentDefect": {
+      "cause": "sequence TTL cleanup removes still-bound verified producer when another tab refreshes",
+      "before": "FAIL_scope-not-verified",
+      "after": "PASS_renewed_personal_scope_retained",
+      "actualMacFailureAttribution": "NOT_ESTABLISHED_OLD_STATUS_DID_NOT_RETAIN_REASON"
+    },
+    "validation": {
+      "targetedTests": 182,
+      "result": "PASS",
+      "isolatedFormalMV3": "PASS",
+      "realAccountRequests": 0
+    },
+    "preserved": {
+      "extensionId": "miendbcjdmecjggplepenghjnoejmaic",
+      "oldDraft": true,
+      "database": true,
+      "stashes": 3
+    },
+    "activation": "R61_SAME_ID_RELOAD_DISPATCHED_OWN_READY_AND_FORMAL_FRAMES_READ_BACK_RUNTIME_FINGERPRINT_NOT_ESTABLISHED"
+  },
+  "nativeSearchModal20261024": {
+    "baseline": "85a676f7",
+    "realMac": {
+      "nativeSearchOpen": "PASS_AX_HEADING_AND_COMBOBOX",
+      "nativeSearchQuery": "PASS_EXACT_QUERY_READBACK",
+      "nativeSearchClose": "PASS",
+      "returnAfterSearch": "FAIL_surface-unsafe-native-history-list",
+      "freshDocument": "INSTANT_ONLY_NOT_USER_UNLOCKED",
+      "message": "NOT_SENT",
+      "fullDailyAcceptance": "NOT_ESTABLISHED"
+    },
+    "independentReproduction": {
+      "before": "FAIL_BACKGROUND_HIDING_DISPOSES_MOUNT",
+      "fix": "hidden modal retains only original bound transport; full layout proof required after close",
+      "validation": "380 targeted tests PASS; isolated formal MV3 modal 25 seconds across renewal PASS",
+      "realModalDOMAttribution": "NOT_DIRECTLY_OBSERVED"
+    },
+    "preservation": {
+      "oldDraft": true,
+      "databaseUntouched": true,
+      "sameExtensionId": true
+    },
+    "activation": {
+      "candidate": "r62",
+      "codeCommit": "594ce57e",
+      "backup": ".git/vaiwl-artifacts/same-id-r62-activation-20261024/previous-extension",
+      "manifestUnchanged": true,
+      "verifiedFiles": 196,
+      "reload": "EXACT_ORIGINAL_ENABLED_EXTENSION_AXPRESS_DISPATCHED",
+      "runtimeFingerprint": "NOT_ESTABLISHED"
+    },
+    "postUpgradeMac": {
+      "home": "NATIVE_HOME_OPENED_IN_NEW_ACCEPTANCE_TAB",
+      "status": "LAYOUT_NOT_READY_NATIVE_HISTORY_NOT_FOUND",
+      "nativeSidebar": "KEYBOARD_FOCUSED_ACTIVATION_OPENED_NATIVE_SIDEBAR",
+      "searchReturn": "NOT_RUN_UNSTABLE_WINDOW_LAYOUT",
+      "windowSizesObserved": [
+        [
+          627,
+          1280
+        ],
+        [
+          1920,
+          1080
+        ],
+        [
+          1363,
+          538
+        ]
+      ],
+      "windowChangeCause": "NOT_ESTABLISHED",
+      "accountConfirmation": "NOT_PERFORMED_BY_AGENT",
+      "oldDraft": "UNCHANGED",
+      "database": "NOT_TOUCHED",
+      "automation": "STOPPED_BEFORE_UNCERTAIN_TARGET_INPUT"
+    }
+  },
+  "initialLayoutRecovery20261024": {
+    "baseHead": "80107b4c",
+    "confirmedCodeDefect": "missing initial native layout stopped session permanently after six-second readiness deadline",
+    "fix": "one same-document same-URL recovery after unique visible boundaries appear; fresh full preparation and binding; reading-first; no retry after failure or explicit stop",
+    "unitTests": {
+      "passed": 137,
+      "log": "/private/tmp/vaiwl-layout-recovery-unit.log"
+    },
+    "isolatedMV3": {
+      "status": "PASS",
+      "report": "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-aawcuG/report.json",
+      "lateSidebarRecovery": true,
+      "realAccount": false
+    },
+    "installation": {
+      "candidate": ".git/vaiwl-artifacts/browser-local-layout-recovery-20261024-r63",
+      "backup": ".git/vaiwl-artifacts/same-id-r63-activation-20261024/previous-extension",
+      "manifestUnchanged": true,
+      "verifiedFiles": 196,
+      "changedFiles": [
+        "src/host/browser-local-lifecycle.mjs",
+        "src/host/content-session.mjs"
+      ],
+      "databaseTouched": false,
+      "reload": "NATIVE_AXPRESS_DISPATCHED",
+      "runtimeFingerprint": "NOT_ESTABLISHED"
+    },
+    "actualMac": {
+      "nativeWindowFill": "OBSERVED_1920x1080_THEN_CHANGED",
+      "initialLayoutSnapshotCounts": [
+        1,
+        1,
+        1,
+        1,
+        0,
+        1,
+        0
+      ],
+      "currentDOMSelectorMatch": "NOT_ESTABLISHED",
+      "addressReadback": "INITIAL_MISMATCH_STOPPED; LATER_EXACT_HOME_VALUE_THEN_NATIVE_ENTER_DISPATCHED",
+      "r63HomeRecovery": "NOT_RUN",
+      "r63SearchReturn": "NOT_RUN",
+      "testMessageSent": false,
+      "personalUnlockByAgent": false,
+      "navigationOutcome": "NOT_CONFIRMED_WINDOW_STILL_EXTENSIONS_MANAGER_NO_REPLAY"
+    },
+    "preserved": [
+      "old database",
+      "old draft tabs",
+      "same extension ID and path",
+      "other Profile windows",
+      "three stashes",
+      "human assets"
+    ],
+    "next": "resume original native Mac acceptance only with stable exact original window and verified native control target; no browser claim or CDP"
+  },
+  "exactNativeNavigation20261024": {
+    "baseHead": "c87f0868",
+    "confirmedOperatorDefects": [
+      "IME converted ASCII colon to fullwidth; AppleScript default text equality returned true",
+      "first Enter was consumed by active IME composition rather than address navigation"
+    ],
+    "fix": "native paste with all pasteboard types preserved only in RAM; exact Unicode code-point comparison; one Enter; actual AXDocument target readback; no replay after ambiguity",
+    "noAccount": {
+      "status": "PASS",
+      "navigation": "local fixture A to B",
+      "targetDocumentReadback": true,
+      "targetInputUntouched": true,
+      "externalNetwork": "blocked by isolated-process proxy",
+      "evidenceDirectory": ".git/vaiwl-artifacts/native-navigation-20261024-r3"
+    },
+    "actualMac": {
+      "homeArrival": "PASS_ACTUAL_AXDOCUMENT_HTTPS_CHATGPT_COM_HOME",
+      "fourGrid": "OBSERVED_THEN_ABSENT",
+      "workspaceAndHistoryFrames": "NOT_RUN_NO_SUCCESSFUL_OPEN_READBACK",
+      "searchReturn": "NOT_RUN",
+      "popupFailureReason": "NOT_ESTABLISHED",
+      "laterWindowMain": false,
+      "laterWindowSize": [
+        628,
+        532
+      ],
+      "windowChangeCause": "NOT_ESTABLISHED",
+      "newDocumentPrivateUnlock": "NOT_RUN_USER_ONLY",
+      "testMessageSent": false
+    },
+    "safety": {
+      "sameInstalledId": true,
+      "extensionFilesChanged": false,
+      "databaseTouched": false,
+      "draftsTouched": false,
+      "otherWindowsOperated": false,
+      "browserTabClaimed": false,
+      "cdpUsed": false,
+      "internalRequests": 0,
+      "inputMethodChanged": false
+    },
+    "next": "original C2/C5/F4 native acceptance with verified exact window/control; no blind input replay or treating offline PASS as Mac PASS"
+  },
+  "nativeSearchReturnR64_20261024": {
+    "baseHead": "01a4f376",
+    "priorDocument": {
+      "popup": "surface-unsafe-native-history-list",
+      "rootCause": "NOT_ESTABLISHED",
+      "privateData": "LOCKED"
+    },
+    "change": "fixed refusal categories only; no new collection or weaker safety admission",
+    "validation": {
+      "unit": "PASS",
+      "observedProfileBrowser": "PASS_WEB_MECHANISM_ONLY",
+      "packageFiles": 197
+    },
+    "installation": {
+      "candidate": ".git/vaiwl-artifacts/browser-local-history-reason-20261024-r64",
+      "backup": ".git/vaiwl-artifacts/same-id-r64-activation-20261024/previous-extension",
+      "verifiedFiles": 196,
+      "manifestUnchanged": true,
+      "reload": "EXACT_ID_NATIVE_AXPRESS_DISPATCHED",
+      "databaseTouched": false,
+      "runtimeFingerprint": "NOT_ESTABLISHED"
+    },
+    "actualMac": {
+      "newHomeArrival": "PASS_AXDOCUMENT",
+      "popup": "PASS_READING",
+      "keyboardFourGrid": "PASS_TWO_FORMAL_FRAMES_OBSERVED",
+      "nativeSearchOpen": "PASS_GLOBAL_SEARCH_HEADING",
+      "nativeSearchInput": "PASS_EXACT_QUERY_READBACK",
+      "nativeSearchClose": "PASS_ESCAPE_AND_RETURN_CONTROL_PRESENT",
+      "searchReturn": "PASS_BOTH_FORMAL_FRAMES_OBSERVED_AGAIN",
+      "formalLinkOpen": "NOT_RUN_AXURL_READ_FAILED_BEFORE_ENTER",
+      "project": "NOT_RUN",
+      "newChatSend": "NOT_RUN",
+      "privateRestore": "NOT_RUN_NEW_DOCUMENT_INSTANT_ONLY",
+      "workerRecovery": "NOT_RUN",
+      "browserRestartIsolation": "NOT_RUN"
+    },
+    "safety": {
+      "oldDraftTabsPreserved": true,
+      "personalUnlockByAgent": false,
+      "testMessageSent": false,
+      "internalRequests": 0,
+      "browserTabClaimed": false,
+      "cdpUsed": false,
+      "otherWindowsOperated": false
+    },
+    "overall": "NOT_FREE_ACCEPTED"
+  },
+  "nativeConversationReturnR65_20261024": {
+    "baseline": "74098470",
+    "status": "PARTIAL_MAC_NOT_ACCEPTED",
+    "personalConfirmation": {
+      "state": "PASS",
+      "evidence": "User confirmed in original popup; native AX readback says local space bound to current document. This is not server authentication or proof of private-only object restoration."
+    },
+    "projectConversation": {
+      "navigation": "PASS",
+      "return": "FAIL",
+      "evidence": "Formal card activation reached expected native chat title and /c/ route. Own popup later reported ui-frame-suspended; detailed cause not established. No message body read."
+    },
+    "ordinaryConversation": {
+      "state": "PASS_SCOPED_INSTANT",
+      "evidence": "After r65 same-ID reload in new acceptance tab: instant home formal card -> expected native ordinary chat title and https://chatgpt.com/c/ route -> four-grid -> both VAIWL workspace and history AXWebAreas. No local unlock in this new document."
+    },
+    "change": "Fixed projection failure categories survive ui-frame-client -> surface-controller -> local status. Failure withdrawal and all grant checks unchanged. This repairs diagnostic loss, not a proven root fix for the Project-chat failure.",
+    "validation": {
+      "targetedNode": "169 PASS",
+      "packageFiles": 197,
+      "archiveSha256": "71fff22f86cf43fdfaa5c5e43c739148bc87ada96cf2fc193ad6a0655f63acc3"
+    },
+    "installed": {
+      "sameId": true,
+      "manifestUnchanged": true,
+      "verifiedFiles": 196,
+      "originalPackageBackedUp": true,
+      "nativeReload": "DISPATCHED",
+      "runtimeFingerprint": "NOT_ESTABLISHED"
+    },
+    "preservation": {
+      "databaseFilesTouched": false,
+      "draftsModified": false,
+      "testMessageSent": false,
+      "otherWindowsOperated": false,
+      "cdpOrBrowserTabClaim": false
+    },
+    "remaining": {
+      "projectMemberJourney": "NOT_RUN",
+      "newChatSend": "NOT_RUN",
+      "privateOnlyRestore": "NOT_ESTABLISHED",
+      "workerRestart": "NOT_RUN",
+      "browserRestart": "NOT_RUN"
+    },
+    "lastBoundary": "Original acceptance window lost foreground; input guard stopped native actions. No key replay into another process."
+  },
+  "nativeProjectTitlebarR66_20261024": {
+    "baseline": "b2e40ef5",
+    "status": "PARTIAL_MAC_NOT_ACCEPTED",
+    "before": {
+      "projectChat": "FAIL_AMBIGUOUS_HEADER",
+      "evidence": "On the previously failing target chat, original popup explicitly reported multiple native titlebar candidates. No new body or page-script read."
+    },
+    "change": "Scope observed header selector to the existing strict descendant main-titlebar slot invariant. Unrelated titlebars no longer count; multiple slot-bearing headers and all topology/geometry checks still reject.",
+    "validation": {
+      "observedProfileBrowser": "PASS_WEB_MECHANISM_ONLY_EXISTING_SUITE",
+      "newCase": "Unrelated header accepted; duplicate slot-bearing header rejected. Existing composer/draft/mask guards retained.",
+      "archiveSha256": "c47c3ec4f522106438b44d629e19ba3c8d945f1b0ca7e8cbda7d7f9f0e019f92",
+      "packageFiles": 197
+    },
+    "actualMac": {
+      "nativeChatArrival": "PASS_EXPECTED_TITLE",
+      "reading": "PASS_OWN_POPUP_READY_READING",
+      "fourGridReturn": "PASS_BOTH_FORMAL_AXWEB_AREAS",
+      "scope": "INSTANT_NEW_DOCUMENT_NOT_PERSONAL_CONFIRMATION",
+      "originalPersonalSuspensionRoot": "NOT_ESTABLISHED",
+      "evidence": "Original same-ID r66 reload dispatched, new acceptance homepage -> native Project-list existing chat -> popup ready reading -> four-grid -> VAIWL workspace and history webareas. Native controls only, no browser tab claim or CDP."
+    },
+    "installed": {
+      "sameId": true,
+      "manifestUnchanged": true,
+      "verifiedFiles": 196,
+      "backup": ".git/vaiwl-artifacts/same-id-r66-activation-20261024/previous-extension",
+      "runtimeFingerprint": "NOT_ESTABLISHED"
+    },
+    "preservation": {
+      "databaseFilesTouched": false,
+      "draftsModified": false,
+      "testMessageSent": false,
+      "otherWindowsOperated": false
+    },
+    "remaining": [
+      "personal navigation failure reproduction after current document confirmation",
+      "Project member journey",
+      "new chat send",
+      "private-only restore",
+      "worker/browser restart"
+    ]
+  },
+  "confirmedDocumentR66_20261024": {
+    "baseline": "78547b53",
+    "status": "PARTIAL_MAC_NOT_ACCEPTED",
+    "confirmation": "USER_REPORTED_DONE; popup had closed before readback, reopening does not retain unlock acknowledgement; no substitute unlock click performed",
+    "actual": {
+      "formalKnownRows": "OBSERVED_IN_OWN_WORKSPACE",
+      "currentFormalChatOpen": "PASS_READING_AND_FOUR_GRID_REAPPEARED",
+      "fourGridFrameEntry": "PASS_BOTH_FORMAL_AREAS_IN_BOUNDED_OBSERVATIONS",
+      "sustainedContinuity": "NOT_ESTABLISHED_FOREGROUND_CHANGED",
+      "projectHome": "NOT_ESTABLISHED_MENU_DISPATCH_NOT_ARRIVAL",
+      "originalUiFrameSuspendedCause": "NOT_ESTABLISHED_NOT_REOBSERVED_THIS_TURN"
+    },
+    "operatorDefect": "Temporary native scripts reintroduced set frontmost of p and frontmost of p checks. System-wide foreground PID differed from the target despite the process property check. Reused committed navigator AppKit PID activation pattern and added shared exact-window focus helper; all subsequent native inputs check global foreground PID and exact AXMain window. No proof that every earlier focus change was caused by this defect.",
+    "operatorValidation": {
+      "compile": "PASS",
+      "wrongBundle": "REJECTED_BEFORE_ACTIVATION",
+      "exactOriginalPID": "PASS_APPKIT_AND_AX_FOREGROUND_MATCH",
+      "scope": "native helper only, not product acceptance"
+    },
+    "preservation": {
+      "extensionReplaced": false,
+      "databaseFilesTouched": false,
+      "draftsIntentionallyModified": false,
+      "testMessageSent": false,
+      "browserTabClaimed": false,
+      "cdpUsed": false,
+      "otherChrome": "Different foreground PID observed; no contents read or targeted page action. Cannot assert earlier activation left its focus unchanged."
+    },
+    "next": "Keep current confirmed document and original installation. Continue only with exact PID/window controls; do not ask for repeated unlock or treat stale AX paths as product failures. Project/member journey, new chat, private-only restore and restart remain unaccepted."
+  },
+  "projectReadinessAndRecoveryR76_20261024": {
+    "baseHead": "3c69b246",
+    "sourceStatus": "IMPLEMENTED_NOT_FULL_MAC_ACCEPTED",
+    "actualMac": {
+      "nativeProjectArrival": "PASS_NATIVE_TITLE_AND_PRIOR_ROUTE_EVIDENCE",
+      "projectFormalSurfaceBeforeFix": "FAIL_LAYOUT_PROJECT_GEOMETRY_CLIP_SHAPE",
+      "observedClipCategory": "border-box",
+      "projectSidebarLate": "FAIL_LAYOUT_MISSING_HISTORY_LIST_OBSERVED",
+      "projectFormalSurfaceR76": "NOT_RUN_AFTER_UPDATE_NATIVE_TARGET_BECAME_UNSTABLE",
+      "privateRecovery": "NOT_RUN_NEW_DOCUMENT_NOT_PERSONALLY_CONFIRMED",
+      "workerRecovery": "NOT_RUN_MAC",
+      "browserRestartRecovery": "NOT_RUN_MAC_NO_SAFE_ALL_WINDOW_DRAFT_PROOF",
+      "newTestMessageSent": false
+    },
+    "fixes": [
+      "Bounded Project layout readiness before fresh handshake",
+      "Late Project sidebar can trigger one fresh reading-only recovery",
+      "Failed pre-handshake Project can recover on next supported native route",
+      "Conservative pixel inset and border-box clipping proof covers viewport and return slot; unsupported clips rejected",
+      "One full pre-show geometry snapshot reused for authorization and mount; post-show guards remain fresh"
+    ],
+    "verification": {
+      "unitLog": "/private/tmp/vaiwl-r76-unit.log",
+      "unitResult": "PASS_325",
+      "projectLayoutLog": "/private/tmp/vaiwl-r76b-project-layout.log",
+      "projectLayoutResult": "PASS_WEB_MECHANISM_ONLY",
+      "mv3PriorFailure": {
+        "log": "/private/tmp/vaiwl-r74-local-mv3.log",
+        "stage": "explicit unlock after account risk",
+        "result": "FAIL_NATIVE_GEOMETRY_CHANGED_WITH_VALID_CONTINUITY"
+      },
+      "mv3AfterFix": {
+        "log": "/private/tmp/vaiwl-r75-local-mv3.log",
+        "result": "PASS_ISOLATED_MV3",
+        "report": "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-4QXfzO/report.json",
+        "includes": [
+          "late Project sidebar",
+          "failed Project route recovery",
+          "private restore",
+          "same-document worker restart",
+          "refresh cache lock",
+          "full isolated browser restart and explicit restore",
+          "draft preservation"
+        ]
+      },
+      "borderBoxInitialFixture": "16px rounded border box correctly refused when return slot intersects corner; corrected positive fixture uses square border box, corner and percentage negatives retained"
+    },
+    "installation": {
+      "id": "miendbcjdmecjggplepenghjnoejmaic",
+      "path": ".git/vaiwl-artifacts/local-source-witness-20261022/extension",
+      "cleanCandidate": ".git/vaiwl-artifacts/browser-local-project-ready-20261024-r76/extension",
+      "candidateVerification": "PASS_197_FILES",
+      "backup": ".git/vaiwl-artifacts/same-id-r76-activation-20261024/previous-extension",
+      "manifestUnchanged": true,
+      "canonicalFilesMatched": 196,
+      "installedExtras": "2680 pre-existing numbered copies preserved; installed tree strict verification is NOT clean-package PASS",
+      "reload": "ORIGINAL_ID_RELOAD_DISPATCHED_ONCE_AFTER_NATIVE_ID_CHECK",
+      "activeBuildFingerprint": "NOT_ESTABLISHED"
+    },
+    "nativeControlStop": {
+      "reason": "foreground PID changed and acceptance window shrank to 747px after guarded sizing",
+      "noFurtherInput": true,
+      "otherWindowsUntouched": true,
+      "oldDraftTabsPreserved": true
+    },
+    "boundaries": {
+      "databaseModifiedByTools": false,
+      "accountUnlockClickedByAssistant": false,
+      "cdpOrBrowserClaim": false,
+      "internalRequests": false,
+      "productionAdmissionChanged": false
+    },
+    "remaining": [
+      "Mac Project formal surface after r76",
+      "personally bound same-document private and worker recovery",
+      "safe full Chrome restart and personal recovery; do not transfer prior-document grant"
+    ]
+  },
+  "nativeProjectForegroundR77_20261024": {
+    "baseHead": "a173b04ff5544ba420286178a7fcc8d8ffc4f141",
+    "foreground": {
+      "coordination": "USER_AUTHORIZED_ONE_MESSAGE_MAX_5_MINUTES_ACKNOWLEDGED",
+      "fix": "ONE_EXACT_PID_ACTIVATION_THEN_TWO_CONSECUTIVE_APPKIT_GLOBAL_AX_AND_MAIN_SAMPLES_WITHIN_2_SECONDS",
+      "compilation": "PASS",
+      "wrongBundleBeforeActivation": "PASS_REJECTED",
+      "exactTargetActivation": "PASS_MAC",
+      "allForegroundAndResizeWriters": "NOT_ESTABLISHED"
+    },
+    "actualMac": {
+      "projectMenu": "AXPress unavailable; focused Space actually navigated after Enter/click did not establish arrival",
+      "projectRoute": "PASS_NATIVE_ADDRESS_CANONICAL_PROJECT_NO_QUERY_OR_FRAGMENT",
+      "nativeProjectHeadingAndMemberList": "PASS_TITLE_AND_TWO_ROWS_PRESENT",
+      "originalExtensionStatus": "PASS_CONNECTED_READING_AND_READY",
+      "projectFourGrid": "PASS_FORMAL_WORKSPACE_AND_HISTORY_AXWEBAREAS",
+      "projectCards": "NOT_ESTABLISHED_FORMAL_SURFACE_SHOWED_NO_CARDS",
+      "privateRecovery": "NOT_RUN_CURRENT_DOCUMENT_CONFIRMATION_PENDING",
+      "workerRecovery": "NOT_RUN_MAC",
+      "fullBrowserRestart": "NOT_RUN_CURRENT_ALL_DRAFT_SAFETY_PENDING"
+    },
+    "boundaries": {
+      "originalExtensionAndDatabasePreserved": true,
+      "otherChromeProcessOperated": false,
+      "browserClaimOrCDP": false,
+      "internalRequests": false,
+      "testMessageSent": false,
+      "privateUnlockClickedByAssistant": false,
+      "extensionReloadedThisCheckpoint": false
+    },
+    "remaining": [
+      "Confirm actual Project member consumption without treating empty frames as success",
+      "Current personally confirmed document private recovery and worker continuity",
+      "Safe original Chrome restart; instant lock and explicit private restore"
+    ]
+  },
+  "privateRestartAndBindingStatusR78_20261024": {
+    "baseHead": "c4f49f9e1a8e57b1a2bab57f0082f98bddf0a0b4",
+    "authorization": "User confirmed current-document unlock and current draft safety; original Chrome process restart only",
+    "actualMac": {
+      "beforeRestartPersonalBinding": "PASS_OWN_POPUP_CURRENT_DOCUMENT_BINDING_ACK",
+      "beforeRestartKnownRows": "PASS_FIVE_KNOWN_ROWS_RETURNED_AFTER_PERSONAL_CONFIRMATION_ALL_MEMBERSHIP_UNKNOWN",
+      "privateExclusiveRowProvenance": "NOT_ESTABLISHED_NO_DATABASE_CONTENT_READ",
+      "workerStop": "ONE_OWN_STOP_DISPATCH_RUNNING_BEFORE_AND_AFTER_NO_INSPECT_OR_UNREGISTER",
+      "sameDocumentWorkerRestart": "NOT_ESTABLISHED_STOP_TRANSITION_NOT_OBSERVED",
+      "originalBrowserRestart": "PASS_POLITE_TERMINATION_PROCESS_EXIT_AND_NEW_PROFILE_4_PROCESS_WITH_RESTORE_LAST_SESSION",
+      "otherJobChrome": "PASS_SAME_PROCESS_REMAINED_RUNNING_NOT_OPERATED",
+      "restoredProjectDocument": "PASS_NATIVE_PROJECT_TITLE_AND_EXTENSION_CONNECTED",
+      "fourGridAfterRestart": "PASS_FORMAL_WORKSPACE_REACHABLE",
+      "privateCacheAfterRestart": "PASS_OWN_CONTROL_REPORTS_EXISTING_DESCRIPTOR_LOCKED_NO_OLD_ROWS_SHOWN",
+      "postRestartExplicitPrivateRestore": "NOT_RUN_NEW_DOCUMENT_PERSONAL_CONFIRMATION_REQUIRED",
+      "projectInstantCards": "NOT_ESTABLISHED_NATIVE_MEMBERS_PRESENT_FORMAL_INSTANT_VIEW_EMPTY",
+      "newChat": "NOT_RUN_NO_MESSAGE_SENT"
+    },
+    "confirmedProductFix": {
+      "problem": "reading surface state incorrectly promised no local-space reconfirmation after full restart",
+      "change": "Existing HOST_LOCAL_SPACE status queried once on popup open; connection and personal binding displayed separately; timeout/unknown never unlock",
+      "source": "extension/status.mjs",
+      "targetedRegression": "PASS_tests/host/local-status-presentation.test.mjs_44",
+      "actualInstalledPopup": "PASS_CONNECTED_AND_EXISTING_PRIVATE_DATA_LOCKED_TEXT_READ_BACK",
+      "candidate": ".git/vaiwl-artifacts/browser-local-binding-status-20261024-r78/extension",
+      "archiveSha256": "d66b95ecd25bc7bee131293378e24b25d3b81b4fb55c03965785fe8a28bd6465",
+      "cleanPackage": "PASS_197_FILES",
+      "installedCanonicalManifest": "PASS_196_FILES",
+      "backup": ".git/vaiwl-artifacts/same-id-r78-popup-20261024/previous-extension",
+      "installation": "Only status.mjs and build-manifest.json updated; same manifest and ID; popup reopened without extension reload; historical extra files preserved"
+    },
+    "boundaries": {
+      "browserClaimOrCDP": false,
+      "internalRequests": false,
+      "assistantClickedUnlock": false,
+      "databaseModifiedByRepair": false,
+      "extensionReloaded": false,
+      "otherChromeQuit": false,
+      "oldNumberedCopiesAndStashesPreserved": true,
+      "processAccessibility": "AXEnhancedUserInterface enabled only on exact new original Chrome process; no system permission changes"
+    },
+    "remaining": [
+      "Project visible-navigation discovery/ingestion gap: no proven root cause from available native evidence; do not infer membership",
+      "New-document explicit private restore after browser restart",
+      "Same-document Worker restart continuity not established",
+      "Original remaining new-chat and account-risk acceptance; no full Free acceptance claim"
+    ]
+  },
+  "projectNavigationDiagnosisR79R84_20261025": {
+    "baseHead": "9b93808eab3ed0af01bfc3ff178baca304bad961",
+    "scope": "Original same-ID Browser-Local extension; current visible navigation metadata and private popup status only; exact native PID control",
+    "actualMac": {
+      "r79": "Three regions found; five matched controls, zero admitted visible; empty batch accepted",
+      "r80": "Initial viewport exclusion observed; not an identity or database admission refusal",
+      "r81": "Fresh Project document stopped at layout-project-rows; native list still had two rows",
+      "r82": "Connected reading; two visible proposals accepted, no Project association or member titles",
+      "r83": {
+        "nativeProjectHeading": "BUTTON with one text-only SPAN",
+        "nativeMemberTitleTopology": "A > DIV > two text-only DIVs",
+        "firstViewportRejection": [
+          16,
+          813,
+          209,
+          20,
+          960,
+          797
+        ],
+        "firstClipRejection": [
+          0,
+          240,
+          602
+        ],
+        "visible": 2,
+        "memberTitles": 0,
+        "projectAssociation": 0
+      },
+      "r84": "Installed canonical files updated; Reload NOT_RUN because exact foreground guard rejected before input"
+    },
+    "confirmedCodeFixes": [
+      {
+        "cause": "Rows appearing after the initial bounded layout wait could never recover on the same route",
+        "change": "One fresh reading preparation only after complete current Project layout proof; no deadline or authority relaxation",
+        "evidence": "Isolated formal MV3 failed before, passed after; known Project members and return reached"
+      },
+      {
+        "cause": "Native Project title wrapped in single SPAN was rejected by direct-text-only grammar",
+        "change": "Accept only visible sole plain text SPAN; secondary or hidden title branches remain rejected",
+        "evidence": "Actual native fixed topology observed; direct targeted browser regression passes without preview/whole-row reads"
+      }
+    ],
+    "realProductAcceptance": "NOT_COMPLETE_PROJECT_MEMBER_CONSUMPTION_STILL_UNRESOLVED",
+    "protected": {
+      "sameExtensionId": true,
+      "manifestUnchanged": true,
+      "databaseTouchedByRepair": false,
+      "oldTabsAndDraftsRetained": true,
+      "internalAPI": false,
+      "realCDPOrBrowserClaim": false,
+      "unlockClickedByAssistant": false,
+      "jobChromeOperated": false
+    },
+    "pending": [
+      "Complete r84 native reload and read fixed member rejection stage",
+      "Verify Project membership in formal UI",
+      "Post-restart personal recovery requires current document confirmation by user; previous confirmation is not reused"
+    ],
+    "candidate": {
+      "path": ".git/vaiwl-artifacts/browser-local-project-recovery-20261025-r85/extension",
+      "archiveSha256": "a6ce58bcfa38af3de77732cd3e4dc1f13e35d9a4ebc666f94fa4e07b78bcddb0",
+      "cleanPackageFiles": 197,
+      "installedCanonicalFiles": 196,
+      "candidateInstalled": false
+    },
+    "verification": {
+      "unit": "PASS content-session/browser-local-boundary/local-status/local-status-presentation, 258",
+      "titleBrowser": "PASS observed-project-list-browser, includes single-span/hidden-span/nested-span",
+      "isolatedFormalMV3": "PASS narrow late-rows plus title-span test, accepted one Project and two members; no preview read",
+      "broaderMV3": "NOT_RERUN; late rows case added to existing browser-local-mv3 journey; no full real acceptance inference"
+    }
+  },
+  "projectMemberMacR85_20261025": {
+    "baseHead": "ac06141290c12d95a45b84169f010227a45826ac",
+    "scope": "Original Profile 4, same extension ID, native System Events/AppKit only; current visible navigation metadata and own extension UI; no tab claim/CDP/internal API",
+    "candidate": {
+      "revision": "r85",
+      "canonicalFilesMatched": 196,
+      "nativeReload": "DISPATCHED_ONCE",
+      "runtimeEvidence": "New popup association and memberReject fields observed; no runtime hash assertion"
+    },
+    "actualMac": {
+      "projectTitleAssociation": "PASS: association=1 with native single SPAN title after reload",
+      "projectCardAndMembers": {
+        "state": "PASS",
+        "projectCards": 1,
+        "memberLinks": 2,
+        "evidence": "Formal VAIWL workspace AXWebArea contains observed Project heading and its two member links; unrelated rows remain under UNKNOWN"
+      },
+      "memberOpen": {
+        "state": "PASS",
+        "evidence": "Activated a member link in formal workspace; later native address is a conversation route and native window title matches selected member; no chat body read",
+        "immediateSixSecondArrival": "NOT_ESTABLISHED"
+      },
+      "nativeReading": "PASS: own popup reports connected reading after member arrival, no ui-frame-suspended reported in this path",
+      "fourGridAfterMember": "PASS: native return exposes formal workspace and history frames",
+      "projectRetentionAfterMember": {
+        "state": "NOT_ESTABLISHED",
+        "observed": "Instant view after return contains UNKNOWN rows but no earlier Project card; browser document continuity not independently established; private layer remains locked"
+      },
+      "privateBindingStatus": "LOCKED: existing private data descriptor reported by private popup; user-only current-document confirmation requested, not clicked by assistant",
+      "latestScanPhase": "scan-failed observed later; UI remained connected; exact scan exception cause NOT_ESTABLISHED"
+    },
+    "diagnosticInterpretation": "navigationSummary describes the latest bounded page, not a cumulative inventory; latest page candidates=0/visible=0 did not negate earlier accepted Project/member observations",
+    "nativeDriver": "Read-only or pre-input guards stopped on changed foreground, missing nodes or focus mismatch. Native AXPress dispatch alone is not counted as navigation success. Other Chrome was not operated.",
+    "protected": {
+      "databaseModifiedByRepair": false,
+      "oldTabsAndDraftsRetained": true,
+      "manifestUnchanged": true,
+      "sameExtensionId": true,
+      "internalAPI": false,
+      "realCDPOrBrowserClaim": false,
+      "unlockClickedByAssistant": false,
+      "jobChromeOperated": false
+    },
+    "pending": [
+      "Current-document user confirmation before private restoration acceptance",
+      "Distinguish new-document instant reset from same-document retention loss",
+      "Same-document Worker restart remains NOT_ESTABLISHED from prior attempt; do not claim offline pass as Mac pass",
+      "New-chat and account-risk journeys not executed"
+    ],
+    "overall": "PARTIAL_NOT_FREE_ACCEPTED"
+  },
+  "projectSpaTitlebarR88_20261025": {
+    "baseline": "5a2d1bbc471b6fb130ecfd2b179cc25625d1791a",
+    "mode": "NATIVE_AX_EXACT_PID_NO_BROWSER_CLAIM_NO_CDP",
+    "originalConfirmation": {
+      "actualPopupAck": true,
+      "projectNavigationStillPersonal": true,
+      "privateOnlyRestoration": "NOT_ESTABLISHED"
+    },
+    "failure": {
+      "state": "layout-ambiguous-header",
+      "projectCounts": [
+        2,
+        0,
+        0,
+        2,
+        1,
+        0,
+        0
+      ],
+      "oldConversationBranchesVisible": [
+        false,
+        false
+      ],
+      "r86SettledRecoveryAlone": "INSUFFICIENT_REAL_MAC"
+    },
+    "fix": {
+      "uniqueVisibleHeaderSlotAndHitRoot": true,
+      "twoVisibleCandidatesStillRejected": true,
+      "fullGeometryAndNativeProtectionRetained": true,
+      "oneFreshPreparationAfterSettledTitlebar": true,
+      "layoutPopupBindingSeparate": true
+    },
+    "targetedValidation": {
+      "node": "PASS_182_DIRECT_TESTS",
+      "observedNativeBrowser": "PASS_WEB_MECHANISM_ONLY",
+      "isolatedFormalMv3HiddenRetainedTitlebar": "PASS",
+      "isolatedFormalMv3LateResolvedTitlebar": "PASS",
+      "excluded": "NOT_WHOLE_FREE_ACCEPTANCE"
+    },
+    "observerCorrections": [
+      "Initial successful mount opens workspace directly; waiting for a reading-only four-grid button timed out despite state ready. Corrected observer then formal member link and accepted batch passed.",
+      "Native member link accessible name can gain the existing last-confirmed suffix; exact two observed variants accepted before dispatch."
+    ],
+    "actualMac": {
+      "r88ReloadOriginalId": "DISPATCHED_ONCE",
+      "projectToMemberExactRouteAndTitle": "PASS",
+      "nativeMemberToProjectConnected": "PASS",
+      "fourGridAfterNativeReturn": "PASS",
+      "projectCardsAfterReturn": 1,
+      "correctMembersAfterReturn": 2,
+      "privateDataNewDocumentLocked": "PASS",
+      "privateOnlyDataRecovery": "NOT_ESTABLISHED",
+      "workerRestart": "NOT_ESTABLISHED_INHERITED",
+      "newChatSend": "NOT_RUN",
+      "accountRiskJourney": "NOT_RUN"
+    },
+    "package": {
+      "candidate": ".git/vaiwl-artifacts/browser-local-visible-titlebar-20261025-r88/extension",
+      "archiveSha256": "5fe2f5c07f26207c69e1fd5b4bf566736605099f3acd255d8dfecdff5cd6a76b",
+      "canonicalFileCount": 196,
+      "sameManifest": true,
+      "backup": ".git/vaiwl-artifacts/same-id-r88-visible-titlebar-20261025/previous-extension",
+      "canonicalHashesVerified": true,
+      "historicalCopiesPreserved": true
+    },
+    "preservation": {
+      "databaseNotOpenedByOperator": true,
+      "draftsNotReadOrChanged": true,
+      "originalTabsKept": true,
+      "otherChromeNotOperated": true,
+      "internalApiRequests": 0,
+      "testMessagesSent": 0,
+      "personalUnlockNeverClickedByOperator": true
+    },
+    "next": "Current repaired Project document is ready; private popup opened and one current-document personal confirmation requested. Continue remaining personal journey without another reload unless a concrete defect requires it."
+  },
+  "profileUpgradeR89_20261025": {
+    "baseHead": "4c81cb58079bd0c3a770f75cf3aa59b792c83994",
+    "actualMac": {
+      "currentDocumentUserConfirmation": "PASS_POPUP_ACK_PERSONAL",
+      "privateProjectAfterConfirmation": "FAIL_PROJECT_CARD_NOT_RETAINED_UNKNOWN_ROWS_ONLY",
+      "lastNavigationSummary": {
+        "phase": "failed",
+        "matched": 5,
+        "visible": 0,
+        "association": 1,
+        "candidates": 0,
+        "claims": 0
+      },
+      "knownMemberOpen": "PARTIAL_EXPECTED_TITLE_REACHED_DOCUMENT_CONTINUITY_NOT_ESTABLISHED",
+      "memberDocumentPrivateState": "LOCKED",
+      "upgradeRootCauseInOriginalDatabase": "NOT_ESTABLISHED_ORIGINAL_PRIVATE_SOURCE_VERSION_NOT_READ",
+      "r89Reload": "NOT_RUN_ORIGINAL_PID_9833_HAS_ZERO_AX_WINDOWS",
+      "r89PrivateRecovery": "NOT_RUN",
+      "fullChromeRestart": "INHERITED_PRIOR_PASS_NOT_REPEATED",
+      "workerRestart": "NOT_ESTABLISHED",
+      "newChatSend": "NOT_RUN",
+      "accountRiskJourney": "NOT_RUN"
+    },
+    "confirmedCodeDefect": {
+      "selector": "same admitted DOM profile with older persisted version was rejected as native-source-incarnation-conflict",
+      "apply": "fresh successor still rejected overlapping observed rows as native-source-conflict",
+      "fix": "select separate successor without changing old sources; accept complete fresh reobservations from strictly newer same DOM profile; preserve unobserved facts, existing CAS, scope and authority fences",
+      "limits": "partial/weak/older/conflicted equal-time, unrelated profile, same-version and metadata takeovers stay rejected; not a cache reauthentication or migration"
+    },
+    "verification": {
+      "targeted": "PASS_50_DIRECT_NATIVE_FACTS_FIELD_MERGE_INCARNATION_OWNER_TESTS",
+      "isolatedMv3": "PASS_SAME_ID_PROFILE_8_TO_9_REAL_IDB_FORMAL_PROJECT_AND_UNOBSERVED_MEMBER_RECOVERY",
+      "isolation": "new headless profile, loopback fixture, external network blocked including worker; no actual account data",
+      "upgradeMechanism": "existing isolated management disable/same-path load/enable pattern; no uninstall and no database writes by test runner",
+      "checks": [
+        "old source records unchanged",
+        "unobserved member reference and membership unchanged",
+        "same local scope retained",
+        "new version admitted through owner and CAS",
+        "private data locked before explicit offline fixture confirmation",
+        "formal UI displays member absent from new page"
+      ],
+      "earlierAttempts": "direct browser restart/load and self-reload runs failed before new observation acceptance; retained as harness failures, not counted as product passes; final run uses existing acknowledged same-ID upgrade mechanism",
+      "artifact": ".git/vaiwl-artifacts/browser-local-source-upgrade-20261025-r89/verification"
+    },
+    "package": {
+      "candidate": ".git/vaiwl-artifacts/browser-local-source-upgrade-20261025-r89/extension",
+      "archiveSha256": "e7426c80e87825e98819aa6d54454b2011151bbd780163dec6d8c3afaf5f4e21",
+      "canonicalFiles": 196,
+      "installedCanonicalMatch": true,
+      "manifestUnchanged": true,
+      "backup": ".git/vaiwl-artifacts/same-id-r89-source-upgrade-20261025/previous-extension",
+      "changed": [
+        "src/data/native-facts.mjs",
+        "src/runtime/native-source-incarnation.mjs",
+        "extension/classic-runtime.js"
+      ],
+      "activation": "FILES_UPDATED_RUNTIME_RELOAD_NOT_RUN"
+    },
+    "preservation": {
+      "originalDatabaseNotReadOrChangedByOperator": true,
+      "draftsNotReadOrChanged": true,
+      "otherChromeNotOperated": true,
+      "personalUnlockNeverClickedByOperator": true,
+      "internalAccountRequests": 0,
+      "testMessagesSent": 0,
+      "stashCount": 3
+    },
+    "next": "Restore an original Profile 4 window, then perform original-ID native Reload and continue acceptance; no reinstall, new account experiment or synthetic-to-Mac promotion."
+  }
+}

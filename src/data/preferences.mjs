@@ -1,7 +1,9 @@
-export const preferenceIds=['sidebarVisible','compactRows','workingSet','savedSnippets'];
+import { validateFreeTimePolicy } from './free-time-policy.mjs';
+export const preferenceIds=['sidebarVisible','compactRows','workingSet','savedSnippets','freeTimePolicy'];
 /** Manual, scoped reference metadata only. No drafts, model state or executable authorization. */
 export function validatePreference(p,state,checks){const {exact,id,text}=checks;
  if(!preferenceIds.includes(p.id))throw Error('invalid-preference');
+ if(p.id==='freeTimePolicy'){validateFreeTimePolicy(p.value);return;}
  if(['sidebarVisible','compactRows'].includes(p.id)){if(typeof p.value!=='boolean')throw Error('invalid-boolean');return;}
  const ref=r=>{id(r);if(!Object.hasOwn(state.refs,r))throw Error('orphan-preference-ref');};
  if(p.id==='workingSet'){exact(p.value,['refs','current']);const v=p.value;if(!Array.isArray(v.refs)||v.refs.length>1000||new Set(v.refs).size!==v.refs.length)throw Error('invalid-working-set');v.refs.forEach(ref);if(v.current!==null&&!v.refs.includes(v.current))throw Error('invalid-working-set-current');return;}

@@ -1,0 +1,40 @@
+✔ same version but stale resources requires actual runtime reload (1.838992ms)
+✔ already re-read exact manifest does not cause extra reload (0.27137ms)
+✔ reload failure or still-old manifest cannot proceed to asset acceptance (0.695626ms)
+✔ only two exact historical product snapshots are admitted (1.214113ms)
+✔ same-path replacement requires confirmed disable and exact copied bytes (13.40988ms)
+✔ Host history runner keeps real backup UI, original scope/database, and same disabled slot (1.651293ms)
+✔ portable Pro compatibility input contains all human asset classes and no success evidence (7.224199ms)
+✔ Pro schema runner uses frozen real build and genuine old-reader refusal without moving databases (2.348016ms)
+✔ actual Host inspector empty manual subset is JSON digestible before importing assets (1.102204ms)
+✔ archived Host backup uses its actual direct entry rather than a later settings menu (5.588699ms)
+✔ old worker proxy probe retains exact positive proxy evidence and diagnoses earlier test-route interception (1.040581ms)
+✔ request diagnostic is bounded and excludes fixture body, principal and credentials (1.809192ms)
+✔ timeout diagnostics preserve real hold predicate and timeout without resetting budget (4.455589ms)
+✔ native acceptance creates original send time, holds only detail delivery, and never replays send on release (2.142846ms)
+✔ bad native send cannot create evidence and changed native handler cannot silently bypass fixture (0.895192ms)
+✔ J4 fixture fault never blocks native C2 receipt GET and never changes default native submit (5.150898ms)
+✔ optional J4 server exposes authenticated-only held detail and actual original POST record (53.892978ms)
+✔ native detail uses existing exact historical and ACK codecs without broadening authenticated semantics (6.964608ms)
+✔ continuous interruption oracle requires actual new authenticated read, unmodified budget wait and peer-scope negatives (4.573878ms)
+✔ mixed native submit updates service title/detail and app DOM in one acceptance without holding ACK (1.15256ms)
+✔ debugger boundary only suspends production drain and never evaluates or injects authority (6.958968ms)
+✔ native rename POST persists consistent route, list and authenticated detail titles (49.925011ms)
+✔ continuous mixed runner requires real pending before interruption and idempotent authenticated reread (4.80081ms)
+✔ return checks actual mounted state and clicks only a visible native return button (0.778255ms)
+✔ portable J4 assets cover all manual asset classes without authority or evidence (6.302778ms)
+✔ same asset bundle cannot be restored into other authenticated context (1.204148ms)
+✔ J4 native context switch is opt-in authenticated roster-validated service (61.723628ms)
+✔ continuous segment never claims missing atomic/schema/profile acceptance (0.33729ms)
+✔ runner uses production file import and actual lifecycle APIs without business-state injection or synthetic grants (7.994172ms)
+✔ repair fault touches only checksum of an existing production root and remains explicit (0.753878ms)
+✔ repaired UNKNOWN route uses stable identity and never expects revoked native title (0.573656ms)
+✔ recovered link oracle requires the original route, enabled UNKNOWN identity and redacted title (1.435217ms)
+ℹ tests 32
+ℹ suites 0
+ℹ pass 32
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 452.858016

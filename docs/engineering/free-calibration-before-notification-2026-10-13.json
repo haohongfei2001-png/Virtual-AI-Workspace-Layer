@@ -1,0 +1,31 @@
+{
+  "evidence": "REAL_BROWSER_SYNTHETIC_PAGE_ONLY",
+  "browser": "156.0.8078.4",
+  "thresholdMs": 1000,
+  "elapsedMs": 2199.699999999255,
+  "evidenceRevision": 1,
+  "requestsAfterRelease": [
+    {
+      "type": "CHECK",
+      "elapsedMs": 2040.0999999996275
+    },
+    {
+      "type": "B23_FREE_HEADER",
+      "elapsedMs": 2083.4000000003725
+    },
+    {
+      "type": "B23_FREE_PAGE",
+      "elapsedMs": 2138
+    },
+    {
+      "type": "CHECK",
+      "elapsedMs": 2162.699999999255
+    },
+    {
+      "type": "CHECK",
+      "elapsedMs": 2189.5999999996275
+    }
+  ],
+  "eventPersisted": true,
+  "pass": false
+}

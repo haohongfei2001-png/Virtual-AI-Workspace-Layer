@@ -1,0 +1,29 @@
+[{"name":"explicit-open-has-panel-focus","pass":true},{"name":"status-completion-keeps-panel-focus","pass":true},{"name":"refresh-keeps-back-focus","pass":true},{"name":"refresh-completion-keeps-back-focus","pass":true},{"name":"late-check-never-steals-outside-focus","pass":true},{"name":"stop-preserves-outside-focus","pass":true},{"name":"checks-never-repair","pass":true},{"name":"backup-open-has-panel-focus","pass":true},{"name":"download-is-focused-before-invalidation","pass":true},{"name":"hidden-download-focus-falls-back-to-heading","pass":true},{"name":"backup-invalidation-does-not-steal-focus","pass":true},{"name":"snippets-open-has-panel-focus","pass":true},{"name":"snippets-completion-keeps-focus","pass":true},{"name":"snippets-invalidation-keeps-back-focus","pass":true},{"name":"snippet-refresh-never-steals-outside-focus","pass":true},{"name":"draft-unchanged","pass":true}]
+✖ recovery and backup keep keyboard focus within an explicit local operation (4949.688417ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 5143.943125
+
+✖ failing tests:
+
+test at tests/host/recovery-panel-focus-browser.mjs:8:1
+✖ recovery and backup keep keyboard focus within an explicit local operation (4949.688417ms)
+  AssertionError [ERR_ASSERTION]: a new conflict keeps focus in its replacement feedback
+
+  null !== 'status'
+
+      at TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/host/recovery-panel-focus-browser.mjs:56:9)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: null,
+    expected: 'status',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

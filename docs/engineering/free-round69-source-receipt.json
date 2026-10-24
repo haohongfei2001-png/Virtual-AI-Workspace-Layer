@@ -1,0 +1,9 @@
+{
+  "baseCommit": "0c09d26",
+  "files": {
+    "src/data/schema.mjs": "e26c835c73a6d3de22817ad092bff95aea6d03fab913f4fa2b778e03bb704bce",
+    "tests/b23/mock-idb.mjs": "3ef108d10b2636792ceec01ac3daa7727cd704126bc0fd064b30ee9246fefac1",
+    "tests/free/schema-index.test.mjs": "077d3795014e3ea8420a0f336be4d7c5f6a7a8cfd3dd08c0f684e77a534df849",
+    "tests/free/schema-index-browser.mjs": "e19bd02e687f0946f09327429e81a4fbdc02dafba896784fc265d0bf36388b16"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "baseCommit": "570a906",
+  "files": {
+    "src/data/native-partition-audit.mjs": "fa335cec2a50d7ecdfefdd3e6db5459e18d0c22bdd3478649f55a6654dcc441e",
+    "src/data/native-index-migration.mjs": "32af0f8ce1b4afcec39eef08e5e867615c425547539de81dc3b23dc7321030cd",
+    "simulator/build.mjs": "06e357f1a5fff4c5ac46eb6d1e607697fc69acde08b5e9276a64a2604d441d8b",
+    "tests/free/native-partition-audit.test.mjs": "83c9547906cbf3807f83bfbf5a686804c896a04c05e670f2355329328f068cda",
+    "tests/free/native-index-write-browser.mjs": "bffe2f8be7883e326fea28fd4678eeb7f9d3180de53e6bb320992d9661bd949b"
+  }
+}

@@ -1,0 +1,68 @@
+{
+  "baseCommit": "e37a84b0f4cd832396af8eec82de27f7c8a1cac2",
+  "candidateIdentity": "Exact production hashes in browser JSON; exact frozen inputs in Node integrity JSON",
+  "requirement": "B4.F / UI-11 automatic dormant entry on existing supported C3 configuration",
+  "status": "PARTIAL_NOT_FREE_ACCEPTED",
+  "node": {
+    "passed": 8256,
+    "failed": 0,
+    "skipped": 0,
+    "wallSeconds": 204.80550458299695,
+    "inputsUnchanged": true,
+    "previousBatchWallSeconds": 108.45,
+    "speedupEstablished": false
+  },
+  "guards": {
+    "killed": 12,
+    "total": 12
+  },
+  "browser": {
+    "status": "UNFORCED_WORKER_DESTRUCTION_AND_WAKE_OBSERVED",
+    "naturalWorkerSleep": "NOT_ESTABLISHED",
+    "originalWorkerDestroyedAfterMs": 30029.579542,
+    "detachedWindowMs": 60001.178042,
+    "forcedStop": false,
+    "privateRootsCleared": true,
+    "sameDocumentEditorFramesAndUniqueReturn": true,
+    "newWorkerFreshViews": true,
+    "sourceRunnerManifestUnchanged": true,
+    "realChatGPT": "NOT_RUN"
+  },
+  "rootCause": "Existing dormant release/wake engine had no production automatic caller. Now one acknowledged open-to-closed opportunity attempts closure only after local drain and clear risk; no polling retry or new scope permission. Independent risk token false-to-clear revival was fixed by permanent invalidation.",
+  "limits": [
+    "Default production unsupported context remains disabled; C2-only is excluded.",
+    "10k Linux original 30s journey still FAIL; no acceptance threshold change.",
+    "C2-only peer automatic foreground proof remains unavailable after receipt memory loss.",
+    "Real Profile connection, physical IME, PAIA and cross-environment manual acceptance remain unverified."
+  ],
+  "artifacts": {
+    "local-automatic-full-node.tap.gz": {
+      "rawSHA256": "5692e9f977918fd2069f0716eecf0a0e3bb0eac6ef2d9205ebe307687d86d19a",
+      "bytes": 753437
+    },
+    "local-automatic-full-node-integrity.json.gz": {
+      "rawSHA256": "4dbc00c31ba91b462cd73af0fdd3d94b493addba641041e056514180ce72a99a",
+      "bytes": 127268
+    },
+    "local-automatic-idle-mv3.json.gz": {
+      "rawSHA256": "4052591aa1bc7d22d3a601643ae5195c44c8878eb43d9999ba7432eb3cecb425",
+      "bytes": 25455
+    },
+    "local-automatic-guard-mutations.json.gz": {
+      "rawSHA256": "d13ccfe58eaabc3944225cd3dea0740b9e633412ad3cfb8e65f7b44f4b35de65",
+      "bytes": 31997
+    },
+    "local-automatic-content-red.tap.gz": {
+      "rawSHA256": "5a11562112d43844c28379dd6e013928a02df1ab367d76dfe37387cb8980727b",
+      "bytes": 4323
+    },
+    "local-automatic-risk-revocation-red.tap.gz": {
+      "rawSHA256": "b88768a57fe618a388a4751194be26c1707735d6c78c7ba6febcd9259ded2aab",
+      "bytes": 2140
+    },
+    "local-automatic-idle-controls.tap.gz": {
+      "rawSHA256": "2f08e57fcc3d5e4fa42437fa57e49d19d3ab7456f57c4d4ce6034141fb7b3be2",
+      "bytes": 2244
+    }
+  }
+}

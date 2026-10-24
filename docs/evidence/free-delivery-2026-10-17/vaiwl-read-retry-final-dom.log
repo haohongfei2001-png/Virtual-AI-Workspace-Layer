@@ -1,0 +1,10 @@
+[{"name":"explicit-open-has-panel-focus","pass":true},{"name":"status-completion-keeps-panel-focus","pass":true},{"name":"refresh-keeps-back-focus","pass":true},{"name":"refresh-completion-keeps-back-focus","pass":true},{"name":"late-check-never-steals-outside-focus","pass":true},{"name":"stop-preserves-outside-focus","pass":true},{"name":"checks-never-repair","pass":true},{"name":"backup-open-has-panel-focus","pass":true},{"name":"download-is-focused-before-invalidation","pass":true},{"name":"hidden-download-focus-falls-back-to-heading","pass":true},{"name":"backup-invalidation-does-not-steal-focus","pass":true},{"name":"snippets-open-has-panel-focus","pass":true},{"name":"snippets-completion-keeps-focus","pass":true},{"name":"snippets-invalidation-keeps-back-focus","pass":true},{"name":"snippet-refresh-never-steals-outside-focus","pass":true},{"name":"draft-unchanged","pass":true}]
+✔ recovery and backup keep keyboard focus within an explicit local operation (1134.982125ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1336.892584

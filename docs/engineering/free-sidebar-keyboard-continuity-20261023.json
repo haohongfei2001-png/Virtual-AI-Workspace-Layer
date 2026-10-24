@@ -1,0 +1,143 @@
+{
+  "schema": "vaiwl-sidebar-keyboard-continuity-v1",
+  "baseline": "f9f0cf9d8cf4339c719e53cf9e340b599a4a105a",
+  "tasks": [
+    "C3",
+    "C5"
+  ],
+  "defect": "Sidebar final expansion retires focused pager; fallback only searched workspace nodes, so focus fell into the document. Same issue applies to a focused row removed by a same-scope update.",
+  "before": {
+    "ok": false,
+    "finalExpansion": {
+      "focusWithin": false,
+      "focusedNavigation": false,
+      "rows": 6
+    },
+    "nextTab": null
+  },
+  "implementation": "Use the existing owned-focus restoration with a programmatically focusable sidebar navigation landmark and stable focus key. No extra Tab stop, native-node modification, projection data or new reads.",
+  "validation": {
+    "kind": "WEB_MECHANISM_ONLY",
+    "browser": "156.0.8078.47",
+    "sourceStable": true,
+    "finalExpansion": {
+      "focusWithin": true,
+      "focusedNavigation": true,
+      "rows": 6
+    },
+    "sameScopeUpdate": true,
+    "retiredRow": true,
+    "nextTab": "unknown_0",
+    "nativeFocusAndDraft": true,
+    "workspaceChecksRetained": [
+      {
+        "H": 30,
+        "mode": "search-known",
+        "key": "Enter",
+        "workspace": true,
+        "label": "主题工作区",
+        "disabled": false,
+        "connected": true,
+        "afterRefresh": {
+          "workspace": true,
+          "label": "主题工作区",
+          "disabled": false,
+          "connected": true
+        }
+      },
+      {
+        "H": 30,
+        "mode": "search-known",
+        "key": "Space",
+        "workspace": true,
+        "label": "主题工作区",
+        "disabled": false,
+        "connected": true,
+        "afterRefresh": {
+          "workspace": true,
+          "label": "主题工作区",
+          "disabled": false,
+          "connected": true
+        }
+      },
+      {
+        "H": 30,
+        "mode": "show-working-set",
+        "key": "Enter",
+        "workspace": true,
+        "label": "主题工作区",
+        "disabled": false,
+        "connected": true,
+        "afterRefresh": {
+          "workspace": true,
+          "label": "主题工作区",
+          "disabled": false,
+          "connected": true
+        }
+      },
+      {
+        "H": 14,
+        "mode": "search-known",
+        "key": "Enter",
+        "workspace": true,
+        "label": "主题工作区",
+        "disabled": false,
+        "connected": true,
+        "afterRefresh": {
+          "workspace": true,
+          "label": "主题工作区",
+          "disabled": false,
+          "connected": true
+        }
+      },
+      {
+        "mode": "focused-history-control-became-disabled",
+        "workspace": true,
+        "label": "主题工作区",
+        "disabled": false,
+        "connected": true
+      }
+    ],
+    "errors": [],
+    "targetedNode": {
+      "passed": 20,
+      "failed": 0,
+      "skipped": 0,
+      "files": [
+        "tests/host/workspace-visual-layout.test.mjs",
+        "tests/host/frame-resume-renderer.test.mjs",
+        "tests/host/navigation-queued-background-intent.test.mjs"
+      ]
+    },
+    "build": {
+      "status": "HOST_IMPLEMENTATION_UNVERIFIED",
+      "releaseStatus": "NOT_RELEASE_READY",
+      "files": 191
+    }
+  },
+  "review": "PRIMARY_WRITER_ONLY",
+  "limits": [
+    "Synthetic projections in real isolated headless DOM; not real-account/MV3/daily-use acceptance.",
+    "Fallback goes to navigation landmark; it does not promise first-new-row focus.",
+    "No new source requests, no source-v3 repetition, no installation or production enablement.",
+    "Existing historical unexplained failures retained; no blanket completion claim."
+  ],
+  "sourceHashes": {
+    "src/navigation/navigation.mjs": "6ce6f7d483b7d157a912adb7b7f6ac3562d1514619689ad8207aee4c23633387",
+    "src/host/frame-row-windows.mjs": "5ff48b95d0e45aba9ca779f08b5c0c4a9a4056826ffcc94d47a8c03323d42b3b",
+    "src/host/frame-resume-state.mjs": "60976e1f4a1e73c93d8d6ac6d4211b138936b2ff282c60e9293ad0e5305a58fb",
+    "src/host/current-navigation-plan.mjs": "c33cfd6af8e7523ac85fe812b59b2e24df109d4e03a3d507b9edab6b53d413ff",
+    "src/navigation/projection.mjs": "36334b5da4bd8e89718bf45b69723f4a657d46797c03c653298aaa3392399f24",
+    "src/navigation/styles.mjs": "81e076b00f9ae87ab71c6f6d27ee9a3788ecb98ee0d9bc3cde260158eefd23d0",
+    "src/navigation/free-view.mjs": "ef0f8d6b798789539d16bdc3ae1d8cc66ccf5fc32f472b83ca2c475863946aaa",
+    "src/navigation/current-index.mjs": "23f13e4d9556715bb029ad6724b8a3731ba87251d6ddfd8e95939085ebfab21e",
+    "src/navigation/search.mjs": "36fe6eda63bd85ff203a306a78309a91979dd9705b2cdb2b64c1f764c2e2b8d0",
+    "src/navigation/icons.mjs": "14195d8a7a21a029278ff6f9bf0bb1add2d679b37666108d80cfadabe312d2fd",
+    "src/host/contract.mjs": "35129aacf2a7e1fe1812c846379563d60ad74a66b689ad41bc38d76484a97716",
+    "src/b1/identity.mjs": "6d7ca616701826733d4936d8a139395ccf1a3111e025ec6b1035d78c1dc05e99",
+    "src/data/cooperate.mjs": "ce494a33280143e1e2a2227a72413da792330311de12642a9a56b13704f2f3b4"
+  },
+  "testHash": "c20c829cc171e12640e8749557959eb815477880f33e7472674e134b3267422e",
+  "checkpoint": ".git/vaiwl-checkpoints/20261023-sidebar-continuity",
+  "fixtureCorrection": "Initial fixture used a display-only 1/13 row-limit; final before/after repeated once with actual 5/17 row limits and 6 rows. Initial logs retained; only valid-page-before/final used for result."
+}

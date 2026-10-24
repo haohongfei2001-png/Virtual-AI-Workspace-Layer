@@ -1,0 +1,8 @@
+{
+  "baseCommit": "b46ef83",
+  "productionChanged": false,
+  "files": {
+    "tests/free/schema-upgrade-mv3-browser.mjs": "503443ce908d4e80023d5759944f3549c2b728e069653b440eaede36be3ff632",
+    "tests/free/read-budget-scope-browser.mjs": "e9f6acdec663cbe6a25ce62b3daa1d96ce4bb355693ff8571645493adc5cba44"
+  }
+}

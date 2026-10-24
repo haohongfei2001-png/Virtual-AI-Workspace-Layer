@@ -1,0 +1,9 @@
+# Round356：保留原生阅读节点的控制器待命状态
+
+从856a0e8继续。surface controller增加私有enterDormant：仅已授权、无pending join/renew、两块surface均关闭且有显式owner onWake回调时允许；撤回grants、停止续租/expiry/appearance计时，向两原iframe派发VAIWL_UI_IDLE，保留节点与唯一四格返回。旧JOIN/SUSPEND和已排队expiry不复活权限或拆除正常待命frame。返回只由可信用户点击请求owner fresh wake，不直接show旧workspace；native弹层和route变化禁止该入口，pagehide/替换文档仍清理。
+
+派发缺失或抛错时清理并返回失败。旧slot被原生element/text占用时移除返回，不重建。enterDormant=true只说明本地状态转换和消息派发，不证明iframe已清空或worker已自然退出；没有端到端ACK/自然休眠/慢恢复通过声明。此API尚未由生产content自动调用，默认无onWake时拒绝待命。
+
+独立content核对：reset/rebind会销毁frame且adapter.stop会清send队列，不能用作入睡。必须先实现同producer、能拒绝pending工作的同步冻结；content直发first/old-send/ingestion-cancel及RPC提前返回后的IPC需纳入检查。唤醒可复用fresh HELLO→REFRESH；现有HOST_FOCUS不能复用旧grant。可见阅读时停止send observer会丢下一次发送意图，不能据isIdle直接stop。实际接线与UI-11继续未完成，不创建第二路线。
+
+验证：根6项新生命周期反例、独立7项；移除通知失败/slot占用修复的独立mutant为4PASS/3FAIL，正式源独立7/7PASS。最终相关11文件 **215/215 Node PASS**，零skip/cancel，独立审查无新增阻断。本轮无浏览器结果，完整Free仍NOT_RELEASE_READY。

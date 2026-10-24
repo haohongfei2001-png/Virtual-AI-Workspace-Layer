@@ -1,0 +1,18 @@
+✔ explicit migration retains all shared facts and authority with current directory checkpoint and receipt (191.457291ms)
+✔ concurrent migration CAS, receipt replay and already-indexed noop (185.845ms)
+✔ migration quota after bucket put rolls back all stores and retries same operation (181.621834ms)
+✔ migration guard after bucket put rolls back all stores and retries same operation (165.850625ms)
+✔ migration rejects missing-piece without publication (107.239125ms)
+✔ migration rejects corrupt-piece without publication (107.005792ms)
+✔ migration rejects wrong-units without publication (135.120458ms)
+✔ migration rejects missing-event-locator without publication (127.796333ms)
+✔ migration rejects wrong-coverage-locator without publication (134.170084ms)
+✔ migration preserves other account and supports directory human rename followed by undo (394.862875ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 10
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1786.451666

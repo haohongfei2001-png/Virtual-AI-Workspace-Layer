@@ -1,0 +1,41 @@
+{
+  "evidence": "REAL_HEADLESS_MV3_HOST_FREE_VIEW_NATIVE_LINK_OFFLINE",
+  "liveChatGPT": "NOT_RUN",
+  "fullJ1": "NOT_COMPLETE",
+  "sourceHashes": {
+    "src/host/free-frame-client.mjs": "62f2f0d44f8c7110df316014d710a23ed5e9ac7a3e68e77e6d1a17e1f532ed73",
+    "src/runtime/host-view-service.mjs": "592fe62c2ad4b8918c25cfbcc4dfcccdfe5c80e287548042a4d6acab7aa29348",
+    "src/runtime/free-frame-projection.mjs": "dbd21682cf281f751dd21598bdd5281e163e24fd87cb82e6a6af5fca2e7c31bb",
+    "src/runtime/free-view-owner.mjs": "1ad338e1e2ac112a12ad1dda77472baccbbbb6dcc0a6ddd62420f0c0c4e8449a",
+    "src/navigation/navigation.mjs": "901042d10e75176bdca02671fc0cf4affde700c8a8dbb58142b7c891c5a0af42",
+    "src/host/frame-native-plans.mjs": "d3fc2e60cd961c77048146235e72353a9a401e2048605f4dfaa4d3df02499746",
+    "src/host/ui-frame-client.mjs": "eea1a82b3a60e3f4d7ba9a6bc3984b72aed2a5c4f60884bafd8e44c726c2ecf3",
+    "src/host/surface-controller.mjs": "a35854135b276a51d207bf12ee590f0af571815b0fb855cea2847bc642ebfd86",
+    "src/navigation/mount-surface.mjs": "d8ed4ee322a55df4a8498c7065f61b6d0ebd709a8c2a2febba142fcc21900c35",
+    "src/runtime/host-ui-owner.mjs": "f2ca504d7b40552fc2e051cf6cb1c97307960b8b05e51db9988f476e4d39f1ee",
+    "src/runtime/host-binding-service.mjs": "bc7fa6476ac27385da05bf0565cfee43788458ec05866751dd46bf37eb648807",
+    "src/host/ui-grants.mjs": "38b648ca69fa08342e93393ea8e75fb660ec7fa3871611b3b8c8e110f92ba1a1",
+    "src/host/chatgpt-adapter.mjs": "65dfd43aeff3446fea126321f7a97a95fcfc1642828e27e220cf9008aff00f29"
+  },
+  "results": [
+    {
+      "name": "real-native-owner-IDB-shared-view-authorized-dual-frame-names",
+      "status": "PASS"
+    },
+    {
+      "name": "native-observation-notifies-both-private-frames-before-renewal",
+      "status": "PASS"
+    },
+    {
+      "name": "prepared-native-href-opens-original-chat-preserving-source-draft",
+      "status": "PASS"
+    },
+    {
+      "name": "actual-view-invalidation-clears-private-projection-restores-native",
+      "status": "PASS"
+    }
+  ],
+  "errors": [],
+  "status": "PASS",
+  "sourceChangedDuringRun": false
+}

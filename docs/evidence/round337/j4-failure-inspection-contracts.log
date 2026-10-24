@@ -1,0 +1,26 @@
+✔ post-failure collector reads real closure state without owner calls or sensitive output (31.943208ms)
+✔ bounded timeout still releases object group and detaches (6.084209ms)
+✔ invalid limit fails closed before heap inspection and still cleans up (0.519584ms)
+✔ failure inspection chooses exact isolated extension world and exact worker; releases both (1.761959ms)
+✔ missing isolated world and unsupported nested transport record unavailable without fallback (0.276167ms)
+✔ nested transport works with real inspector and rejects non-inspection methods (0.431708ms)
+✔ nested timeout is bounded and cleanup removes outstanding listener (5.6445ms)
+✔ J4 closure inspection is failure-only and never replaces original failure or steps (0.534083ms)
+✔ missing target or unavailable CDP never masks J4 original failure (0.074542ms)
+✔ runner calls diagnosis only after failed step recording and hashes both collector sources (1.076542ms)
+✔ portable J4 assets cover all manual asset classes without authority or evidence (2.346709ms)
+✔ same asset bundle cannot be restored into other authenticated context (0.28275ms)
+✔ J4 native context switch is opt-in authenticated roster-validated service (19.622583ms)
+✔ continuous segment never claims missing atomic/schema/profile acceptance (0.109583ms)
+✔ runner uses production file import and actual lifecycle APIs without business-state injection or synthetic grants (1.632208ms)
+✔ repair fault touches only checksum of an existing production root and remains explicit (0.832167ms)
+✔ repaired UNKNOWN route uses stable identity and never expects revoked native title (0.22ms)
+✔ recovered link oracle requires the original route, enabled UNKNOWN identity and redacted title (0.647417ms)
+ℹ tests 18
+ℹ suites 0
+ℹ pass 18
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 88.674167

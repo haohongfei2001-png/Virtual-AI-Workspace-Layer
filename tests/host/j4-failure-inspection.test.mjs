@@ -1,0 +1,25 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {readFile} from 'node:fs/promises';
+import {inspectJ4FailureAfterError,selectJ4FailurePage,recordJ4JointDiagnostic} from './j4-package-journey.mjs';
+const options={context:{},page:{},browser:{},extensionId:'a'.repeat(32)};
+test('J4 closure inspection is failure-only and never replaces original failure or steps',async()=>{let calls=0;const inspect=async value=>{calls++;assert.equal(value,options);return {kind:'POST_FAILURE_FORMAL_PACKAGE_INSPECTION'};};for(const status of ['PARTIAL_J4_NOT_ACCEPTED','PASS','NOT_RUN_BROWSER_STARTUP']){const r={status};await inspectJ4FailureAfterError(r,options,inspect);assert.deepEqual(r,{status});}assert.equal(calls,0);const report={status:'FAIL',steps:[{status:'FAIL',error:'original-timeout'}]};await inspectJ4FailureAfterError(report,options,inspect);assert.equal(calls,1);assert.equal(report.status,'FAIL');assert.deepEqual(report.steps,[{status:'FAIL',error:'original-timeout'}]);assert.equal(report.failureInspection.kind,'POST_FAILURE_FORMAL_PACKAGE_INSPECTION');});
+test('missing target or unavailable CDP never masks J4 original failure',async()=>{const report={status:'FAIL',error:'original'};await inspectJ4FailureAfterError(report,{...options,page:null},()=>{throw Error('must-not-run');});assert.equal(report.failureInspection,undefined);await inspectJ4FailureAfterError(report,options,async()=>{throw Error('private-error-text');});assert.deepEqual(report.failureInspection,{error:'failure-inspection-unavailable'});assert.equal(report.error,'original');assert.equal(report.status,'FAIL');});
+test('runner calls diagnosis only after failed step recording and hashes both collector sources',async()=>{const source=await readFile(new URL('./j4-package-journey.mjs',import.meta.url),'utf8');assert(source.includes("'j3-failure-inspection.mjs','j3-failure-closures.mjs'"));assert(source.includes('const a=primaryPage=await context.newPage();'));const catchStart=source.indexOf("}catch(error){report.steps.push({name:'continuous-execution'");const inspect=source.indexOf('await inspectJ4FailureAfterError(report,{context,page:target.page',catchStart);const final=source.indexOf('finally{',catchStart);assert(catchStart>=0&&inspect>catchStart&&inspect<final);});
+
+test('peer timeout inspects the failed peer only; unrelated failures stay primary',()=>{
+ const primary={},peer={};
+ assert.deepEqual(selectJ4FailurePage(Error('J4-peer-current-scope-timeout'),primary,peer),{role:'peer',page:peer});
+ for(const error of [Error('other'),null,Error('prefix J4-peer-current-scope-timeout')])assert.deepEqual(selectJ4FailurePage(error,primary,peer),{role:'primary',page:primary});
+ assert.deepEqual(selectJ4FailurePage(Error('J4-peer-current-scope-timeout'),primary,undefined),{role:'primary',page:primary});
+});
+
+test('joint lifecycle snapshot is awaited only at completed peer hop boundaries',async()=>{
+ for(const stage of ['joint-peer-native-hop','joint-peer-native-hop-state']){
+  const report={},facts={stage};let release,done=false;
+  const pending=recordJ4JointDiagnostic(report,facts,()=>new Promise(r=>release=r)).then(()=>done=true);
+  await Promise.resolve();assert.equal(done,false);assert.equal(report.jointDiagnostics[0],facts);release();await pending;assert.equal(done,true);
+ }
+ for(const stage of ['joint-before-native-send','joint-interruption-failed','before-native-trigger-and-transaction-entry-raw']){
+  const report={};await recordJ4JointDiagnostic(report,{stage},()=>{throw Error('paused boundary must not inspect');});assert.equal(report.jointDiagnostics.length,1);
+ }
+ const report={};await recordJ4JointDiagnostic(report,{stage:'joint-peer-native-hop'});assert.equal(report.jointDiagnostics.length,1);
+});

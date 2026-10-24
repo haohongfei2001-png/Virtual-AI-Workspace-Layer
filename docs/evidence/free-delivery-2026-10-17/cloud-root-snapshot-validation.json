@@ -1,0 +1,41 @@
+{
+  "status": "PASS_NODE_AND_GUARD_CONTRACTS_BROWSER_NOT_RUN_LOCALLY",
+  "baselineSourceCommit": "8d372e000d64d9fb382b54291c74e304e5ba17ab",
+  "node": "v24.19.0",
+  "command": "node --test --test-concurrency=2 $(find tests -name '*.test.mjs' -not -path '*/node_modules/*' | sort)",
+  "completeNode": {
+    "tests": 7445,
+    "pass": 7445,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "todo": 0,
+    "duration_ms": 170981.112979
+  },
+  "sourceChangedDuringRun": false,
+  "sourceManifestSha256": "e92b6e7c38fae5666280f0cddbab4bd954d76921a2dd95f2bb451d8006a6d11a",
+  "guardMutations": {
+    "selected": 12,
+    "killed": 12,
+    "pass": true,
+    "inputUnchanged": true,
+    "inputHashes": {
+      "src": "f80ee246e30bab6b8cacd73cb0ffaba574612e3b143596806900658ae2cbf5da",
+      "tests": "87c2abba22f967883f016928742ca67ef45ba14e4a2512a39d2483df86ae3c4c",
+      "simulator": "ac28ff64c62b94b96eb21eb8b51489548b37c8c13d9214171cacf64975711ef6"
+    }
+  },
+  "preservedCandidateFailure": {
+    "tests": 7445,
+    "pass": 7441,
+    "fail": 4,
+    "cause": "New capture-json-snapshot module missing from existing synthetic build static module list",
+    "repair": "Add the helper to simulator/build.mjs; existing four build/package assertions pass without changes"
+  },
+  "localBrowser": {
+    "status": "NOT_RUN",
+    "reason": "Chromium launch rejected by execution environment Unix socket policy; no formal browser or performance result was obtained"
+  },
+  "release": "NOT_RELEASE_READY",
+  "realChatGPT": "NOT_RUN"
+}

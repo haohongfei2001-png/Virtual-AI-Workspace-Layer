@@ -1,0 +1,9 @@
+{
+  "baseCommit": "eee2f26309aa86f56e7176429b141d56bf6e00d6",
+  "sha256": {
+    "src/navigation/mount-surface.mjs": "18bfa6a33bc28d084285c9c615219aa06aa33784e9e04466e035b6e7e56d833f",
+    "src/host/surface-controller.mjs": "1da5bd12d74829c71266d76c2ce3724b58e8c6558c44456ca948435238b9b953",
+    "tests/host/mount-rebind.test.mjs": "cdedc6b7538b1048458e0c0aa9c3b1a3810a101447bbb03d9ea0ee71c2c30be8",
+    "tests/host/surface-dormant-independent.test.mjs": "0387e5202d056703f25d481f933bdcfb2f6cd9e8ec86afffd1a46718e24b3b3f"
+  }
+}

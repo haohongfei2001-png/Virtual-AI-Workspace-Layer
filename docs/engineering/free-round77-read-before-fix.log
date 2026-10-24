@@ -1,0 +1,37 @@
+✔ MOCK_IDB production defaults read an empty scope without seed or any writes (18.095625ms)
+✔ MOCK_IDB owner-admitted native names and UNKNOWN flow through the existing page pipeline (7.633875ms)
+✔ MOCK_IDB old synthetic shared events never acquire production authorship (4.485333ms)
+✔ MOCK_IDB header/page use the same explicit evaluation time for expired native witnesses (4.966125ms)
+✔ MOCK_IDB Free header/page/snapshot do not modify Pro human assets or project them as native cards (4.231292ms)
+✖ MOCK_IDB compatibility snapshot honors the requested native freshness time (2.703875ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 5
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 100.882417
+
+✖ failing tests:
+
+test at tests/host/free-read-service.test.mjs:83:1
+✖ MOCK_IDB compatibility snapshot honors the requested native freshness time (2.703875ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+  + [
+  +   'p1'
+  + ]
+  - []
+  
+      at TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/host/free-read-service.test.mjs:86:9)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ 'p1' ],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }

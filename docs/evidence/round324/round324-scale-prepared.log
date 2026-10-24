@@ -1,0 +1,1 @@
+{"status":"FAIL","error":"Error: host-scale-admission-preparation-NOT_READY_AFTER_PREPARATION\n    at file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/host/host-scale-package-browser.mjs:184:11","report":"/private/tmp/round324-scale-prepared.json"}

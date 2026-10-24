@@ -1,0 +1,200 @@
+{
+  "evidence": "WEB_MECHANISM_ONLY_REAL_HEADLESS_TRUSTED_NATIVE_EDITOR_GESTURES",
+  "realChatGPT": "NOT_RUN",
+  "physicalIME": "NOT_RUN",
+  "scope": "Passive send intent observation, no authentication/transport/server ACK and no production profile certification.",
+  "scriptHash": "6c3b8afa54d5ecbda6f778ddf1c8120a06b1cd3d43bd2ea56903e77c6267b8e7",
+  "sourceHashes": {
+    "src/host/native-send-intent.mjs": "73ce4691f11858e670c6eb3c04ca2d75cecd68baf28ecfb39506b82bdc901bae",
+    "src/b1/identity.mjs": "6d7ca616701826733d4936d8a139395ccf1a3111e025ec6b1035d78c1dc05e99"
+  },
+  "results": [
+    {
+      "name": "textarea-trusted-editor-boundary-and-passive-native-handler",
+      "status": "PASS_MECHANISM_ONLY",
+      "intents": [
+        {
+          "intentId": "8d6b2367-d23e-4ec7-af3e-52e9304543dd",
+          "kind": "send",
+          "isComposing": false,
+          "observedAt": "2026-10-15T00:10:51.324Z"
+        },
+        {
+          "intentId": "6611ff84-534d-4912-a53c-938e91ca221f",
+          "kind": "send",
+          "isComposing": false,
+          "observedAt": "2026-10-15T00:10:51.358Z"
+        }
+      ],
+      "native": {
+        "click": 1,
+        "enter": 1
+      },
+      "bodyAccess": {
+        "reads": 0,
+        "writes": 0
+      },
+      "unchanged": true,
+      "prepares": 4
+    },
+    {
+      "name": "rich-trusted-editor-boundary-and-passive-native-handler",
+      "status": "PASS_MECHANISM_ONLY",
+      "intents": [
+        {
+          "intentId": "062a1ece-6f4d-47a6-a681-655cb139a5c7",
+          "kind": "send",
+          "isComposing": false,
+          "observedAt": "2026-10-15T00:10:51.503Z"
+        },
+        {
+          "intentId": "c7d17712-cbb5-4975-a6a8-b03053f04c07",
+          "kind": "send",
+          "isComposing": false,
+          "observedAt": "2026-10-15T00:10:51.536Z"
+        }
+      ],
+      "native": {
+        "click": 1,
+        "enter": 1
+      },
+      "bodyAccess": {
+        "reads": 0,
+        "writes": 0
+      },
+      "unchanged": true,
+      "prepares": 4
+    },
+    {
+      "name": "plaintext-trusted-editor-boundary-and-passive-native-handler",
+      "status": "PASS_MECHANISM_ONLY",
+      "intents": [
+        {
+          "intentId": "8ae50340-2912-405f-882f-4bf0b12ef515",
+          "kind": "send",
+          "isComposing": false,
+          "observedAt": "2026-10-15T00:10:51.696Z"
+        },
+        {
+          "intentId": "0834dc6f-47e0-463a-92f9-0498ebcec900",
+          "kind": "send",
+          "isComposing": false,
+          "observedAt": "2026-10-15T00:10:51.729Z"
+        }
+      ],
+      "native": {
+        "click": 1,
+        "enter": 1
+      },
+      "bodyAccess": {
+        "reads": 0,
+        "writes": 0
+      },
+      "unchanged": true,
+      "prepares": 4
+    },
+    {
+      "name": "role-only-trusted-editor-boundary-and-passive-native-handler",
+      "status": "PASS_MECHANISM_ONLY",
+      "intents": [],
+      "native": {
+        "click": 1,
+        "enter": 0
+      },
+      "bodyAccess": {
+        "reads": 0,
+        "writes": 0
+      },
+      "unchanged": true,
+      "prepares": 0
+    },
+    {
+      "name": "revoked-trusted-editor-boundary-and-passive-native-handler",
+      "status": "PASS_MECHANISM_ONLY",
+      "intents": [],
+      "native": {
+        "click": 1,
+        "enter": 0
+      },
+      "bodyAccess": {
+        "reads": 0,
+        "writes": 0
+      },
+      "unchanged": true,
+      "prepares": 0
+    },
+    {
+      "name": "readonly-trusted-editor-boundary-and-passive-native-handler",
+      "status": "PASS_MECHANISM_ONLY",
+      "intents": [],
+      "native": {
+        "click": 1,
+        "enter": 1
+      },
+      "bodyAccess": {
+        "reads": 0,
+        "writes": 0
+      },
+      "unchanged": true,
+      "prepares": 0
+    },
+    {
+      "name": "nested-trusted-editor-boundary-and-passive-native-handler",
+      "status": "PASS_MECHANISM_ONLY",
+      "intents": [],
+      "native": {
+        "click": 1,
+        "enter": 0
+      },
+      "bodyAccess": {
+        "reads": 0,
+        "writes": 0
+      },
+      "unchanged": true,
+      "prepares": 0
+    },
+    {
+      "name": "unapproved-rich-trusted-editor-boundary-and-passive-native-handler",
+      "status": "PASS_MECHANISM_ONLY",
+      "intents": [],
+      "native": {
+        "click": 1,
+        "enter": 1
+      },
+      "bodyAccess": {
+        "reads": 0,
+        "writes": 0
+      },
+      "unchanged": true,
+      "prepares": 0
+    },
+    {
+      "name": "CDP-composition-simulation-suppresses-Enter-candidate",
+      "status": "PASS_MECHANISM_ONLY",
+      "IME": "CDP_SIMULATION_NOT_PHYSICAL_IME",
+      "intents": [],
+      "events": [
+        {
+          "type": "compositionstart",
+          "trusted": true
+        },
+        {
+          "type": "compositionupdate",
+          "trusted": true
+        }
+      ],
+      "bodyAccess": {
+        "reads": 0,
+        "writes": 0
+      },
+      "native": {
+        "click": 0,
+        "enter": 1
+      }
+    }
+  ],
+  "status": "MECHANISM_SUCCEEDED_NOT_ACK_CERTIFICATION",
+  "browserVersion": "155.0.8059.40",
+  "sourceChangedDuringRun": false,
+  "scriptChangedDuringRun": false
+}

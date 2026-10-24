@@ -1,0 +1,12 @@
+✔ AUDIT account round trip without intermediate view erases prior display state (74.353265ms)
+✔ AUDIT other project route preserves layout only and recomputes current C (36.8268ms)
+✔ AUDIT route resume read never extends TTL (31.13991ms)
+✔ AUDIT document replacement cannot resume old document display (18.870182ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 296.197785

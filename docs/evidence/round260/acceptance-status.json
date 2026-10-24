@@ -1,0 +1,21 @@
+{
+  "status": "NOT_RELEASE_READY",
+  "sourceCommit": "913753baac56db9dd895840343f3656346c19782",
+  "CI": 38840990848,
+  "node": {
+    "passed": 5180,
+    "failed": 0,
+    "skipped": 0,
+    "guardsKilled": 12
+  },
+  "fullSYS02": "NOT_ESTABLISHED",
+  "fullJ4": "NOT_ESTABLISHED",
+  "existingSourcePendingRepairS": "NOT_ESTABLISHED",
+  "existingSourcePendingRepairAutomaticStep": "NOT_RUN_METADATA_ONLY",
+  "ui06FrameForward": "FAIL_COMPOSER_NOT_REACHED_64_TRUSTED_TAB",
+  "ui06ProductCause": "NOT_ESTABLISHED",
+  "ui06ParentAXClosedOpen": "PASS_SCOPED_ONLY",
+  "formal10kSingleProject": "FAIL_RETURN_WORKSPACE_BEFORE_FULL_AUDIT",
+  "cold": "CI55_PASS_HISTORICAL_INTERMITTENCY_OPEN",
+  "fullFree": "NOT_ESTABLISHED"
+}

@@ -1,0 +1,1052 @@
+{
+  "evidence": "MINIMAL_MV3_MECHANISM_NOT_PRODUCT_ACCEPTANCE",
+  "productAcceptance": "NOT_CERTIFIED",
+  "scope": "Temporary static extension with no VAIWL renderer, broker or production code; formal reading immediate exit FAIL remains independent.",
+  "scriptHash": "b62674a344996ae9e86572d8198328106c1157a2d1032d0daff00887adfb2dc1",
+  "sourceHashes": {
+    "manifest.json": "c621e589e8cd6590773e2cf1734928558eb2594e7a1c988c253b61d774e28f79",
+    "worker.js": "e69b1a1801e3390fbfb8f2aa904df7b0fd2ae201fcf160c9445b7c805ddcdfc8",
+    "child.html": "896c3bf28f56800fb40d228397fc4608ff9ea9abe25d7987b2491b2acfe606bc",
+    "child.js": "0032f76c81a1240b9019deeb5b6bbfe503e67d6780eaca56a02643a00d7a5519"
+  },
+  "mountMode": "production-cycle",
+  "closedLayout": "default",
+  "closedAudit": true,
+  "mountSourceHash": "8431ca3951f3dea8973d779952a318a6aa9f9da71b27232c176dc6046699ac06",
+  "extension": "/private/tmp/manual-extension-popover-L7PBXi/extension",
+  "cases": [
+    {
+      "popover": true,
+      "mode": "FRESH_PAGE_IMMEDIATE_NO_ADDED_WAIT",
+      "iframeTargets": [
+        {
+          "type": "iframe",
+          "url": "chrome-extension://bkocbfjgofimgnchopfmhpmmmddmfcgh/child.html",
+          "targetId": "BAF3574C28F48B610CEB1E567FF36B3D"
+        },
+        {
+          "type": "iframe",
+          "url": "chrome-extension://bkocbfjgofimgnchopfmhpmmmddmfcgh/child.html",
+          "targetId": "8A57A7BFE9908C8C902B64C675B20660"
+        }
+      ],
+      "oopifConfirmed": true,
+      "classification": "EXTENSION_IFRAME_TARGET_CONFIRMED",
+      "openParentAX": [
+        {
+          "nodeId": "2",
+          "ignored": false,
+          "role": "RootWebArea",
+          "name": "",
+          "frameId": "04301C40228F3C22B62D488B8CB5C82C"
+        },
+        {
+          "nodeId": "6",
+          "ignored": true,
+          "role": "none",
+          "parentId": "2"
+        },
+        {
+          "nodeId": "10",
+          "ignored": false,
+          "role": "generic",
+          "name": "",
+          "parentId": "6"
+        },
+        {
+          "nodeId": "11",
+          "ignored": false,
+          "role": "banner",
+          "name": "",
+          "parentId": "10"
+        },
+        {
+          "nodeId": "3",
+          "ignored": false,
+          "role": "form",
+          "name": "",
+          "parentId": "10"
+        },
+        {
+          "nodeId": "20",
+          "ignored": false,
+          "role": "generic",
+          "name": "",
+          "parentId": "10"
+        },
+        {
+          "nodeId": "23",
+          "ignored": false,
+          "role": "generic",
+          "name": "",
+          "parentId": "10"
+        },
+        {
+          "nodeId": "25",
+          "ignored": false,
+          "role": "StaticText",
+          "name": "Native header",
+          "parentId": "11"
+        },
+        {
+          "nodeId": "12",
+          "ignored": false,
+          "role": "button",
+          "name": "Return workspace",
+          "parentId": "11"
+        },
+        {
+          "nodeId": "4",
+          "ignored": false,
+          "role": "textbox",
+          "name": "",
+          "parentId": "3"
+        },
+        {
+          "nodeId": "21",
+          "ignored": false,
+          "role": "button",
+          "name": "返回原生阅读",
+          "parentId": "20"
+        },
+        {
+          "nodeId": "22",
+          "ignored": false,
+          "role": "Iframe",
+          "name": "工作空间",
+          "parentId": "20"
+        },
+        {
+          "nodeId": "24",
+          "ignored": false,
+          "role": "button",
+          "name": "显示原生列表",
+          "parentId": "23"
+        },
+        {
+          "nodeId": "5",
+          "ignored": false,
+          "role": "Iframe",
+          "name": "导航",
+          "parentId": "23"
+        },
+        {
+          "nodeId": "-1000000002",
+          "ignored": false,
+          "role": "InlineTextBox",
+          "name": "Native header",
+          "parentId": "25"
+        },
+        {
+          "nodeId": "26",
+          "ignored": false,
+          "role": "StaticText",
+          "name": "Return workspace",
+          "parentId": "12"
+        },
+        {
+          "nodeId": "16",
+          "ignored": false,
+          "role": "generic",
+          "name": "",
+          "parentId": "4"
+        },
+        {
+          "nodeId": "30",
+          "ignored": false,
+          "role": "StaticText",
+          "name": "返回原生阅读",
+          "parentId": "21"
+        },
+        {
+          "nodeId": "31",
+          "ignored": false,
+          "role": "StaticText",
+          "name": "显示原生列表",
+          "parentId": "24"
+        },
+        {
+          "nodeId": "-1000000003",
+          "ignored": false,
+          "role": "InlineTextBox",
+          "name": "Return workspace",
+          "parentId": "26"
+        },
+        {
+          "nodeId": "-1000000004",
+          "ignored": false,
+          "role": "InlineTextBox",
+          "name": "返回原生阅读",
+          "parentId": "30"
+        },
+        {
+          "nodeId": "-1000000005",
+          "ignored": false,
+          "role": "InlineTextBox",
+          "name": "显示原生列表",
+          "parentId": "31"
+        }
+      ],
+      "afterNativeInput": {
+        "open": 0,
+        "editorSame": true,
+        "draft": "NATIVE_CYCLE_DRAFT"
+      },
+      "closedAudits": [
+        {
+          "state": "all-closed",
+          "parentAX": [
+            {
+              "nodeId": "2",
+              "ignored": false,
+              "role": "RootWebArea",
+              "name": "",
+              "frameId": "04301C40228F3C22B62D488B8CB5C82C"
+            },
+            {
+              "nodeId": "6",
+              "ignored": true,
+              "role": "none",
+              "parentId": "2"
+            },
+            {
+              "nodeId": "10",
+              "ignored": false,
+              "role": "generic",
+              "name": "",
+              "parentId": "6"
+            },
+            {
+              "nodeId": "11",
+              "ignored": false,
+              "role": "banner",
+              "name": "",
+              "parentId": "10"
+            },
+            {
+              "nodeId": "13",
+              "ignored": false,
+              "role": "generic",
+              "name": "",
+              "parentId": "10"
+            },
+            {
+              "nodeId": "14",
+              "ignored": false,
+              "role": "navigation",
+              "name": "",
+              "parentId": "10"
+            },
+            {
+              "nodeId": "3",
+              "ignored": false,
+              "role": "form",
+              "name": "",
+              "parentId": "10"
+            },
+            {
+              "nodeId": "25",
+              "ignored": false,
+              "role": "StaticText",
+              "name": "Native header",
+              "parentId": "11"
+            },
+            {
+              "nodeId": "12",
+              "ignored": false,
+              "role": "button",
+              "name": "Return workspace",
+              "parentId": "11"
+            },
+            {
+              "nodeId": "27",
+              "ignored": false,
+              "role": "StaticText",
+              "name": "Native reading",
+              "parentId": "13"
+            },
+            {
+              "nodeId": "28",
+              "ignored": false,
+              "role": "StaticText",
+              "name": "Native history",
+              "parentId": "14"
+            },
+            {
+              "nodeId": "15",
+              "ignored": false,
+              "role": "button",
+              "name": "Native conversation",
+              "parentId": "14"
+            },
+            {
+              "nodeId": "4",
+              "ignored": false,
+              "role": "textbox",
+              "name": "",
+              "parentId": "3"
+            },
+            {
+              "nodeId": "-1000000002",
+              "ignored": false,
+              "role": "InlineTextBox",
+              "name": "Native header",
+              "parentId": "25"
+            },
+            {
+              "nodeId": "26",
+              "ignored": false,
+              "role": "StaticText",
+              "name": "Return workspace",
+              "parentId": "12"
+            },
+            {
+              "nodeId": "-1000000006",
+              "ignored": false,
+              "role": "InlineTextBox",
+              "name": "Native reading",
+              "parentId": "27"
+            },
+            {
+              "nodeId": "-1000000007",
+              "ignored": false,
+              "role": "InlineTextBox",
+              "name": "Native history",
+              "parentId": "28"
+            },
+            {
+              "nodeId": "29",
+              "ignored": false,
+              "role": "StaticText",
+              "name": "Native conversation",
+              "parentId": "15"
+            },
+            {
+              "nodeId": "16",
+              "ignored": false,
+              "role": "generic",
+              "name": "",
+              "parentId": "4"
+            },
+            {
+              "nodeId": "-1000000003",
+              "ignored": false,
+              "role": "InlineTextBox",
+              "name": "Return workspace",
+              "parentId": "26"
+            },
+            {
+              "nodeId": "-1000000008",
+              "ignored": false,
+              "role": "InlineTextBox",
+              "name": "Native conversation",
+              "parentId": "29"
+            },
+            {
+              "nodeId": "34",
+              "ignored": false,
+              "role": "StaticText",
+              "name": "NATIVE_CYCLE_DRAFT",
+              "parentId": "16"
+            },
+            {
+              "nodeId": "-1000000010",
+              "ignored": false,
+              "role": "InlineTextBox",
+              "name": "NATIVE_CYCLE_DRAFT",
+              "parentId": "34"
+            }
+          ],
+          "dom": {
+            "owned": [
+              {
+                "id": "va_9ec37da588494f378f09a0ee3ac431c0_workspace",
+                "open": false
+              },
+              {
+                "id": "va_9ec37da588494f378f09a0ee3ac431c0_sidebar",
+                "open": false
+              }
+            ],
+            "reading": {
+              "id": "reading",
+              "visibility": "visible",
+              "interactivity": "auto",
+              "rect": {
+                "x": 300,
+                "y": 50,
+                "width": 500,
+                "height": 400,
+                "top": 50,
+                "right": 800,
+                "bottom": 450,
+                "left": 300
+              }
+            },
+            "history": {
+              "id": "history",
+              "visibility": "visible",
+              "interactivity": "auto",
+              "rect": {
+                "x": 20,
+                "y": 180,
+                "width": 240,
+                "height": 400,
+                "top": 180,
+                "right": 260,
+                "bottom": 580,
+                "left": 20
+              }
+            },
+            "nativeHits": [
+              {
+                "selector": "#reading",
+                "hits": [
+                  {
+                    "tag": "SECTION",
+                    "id": "reading",
+                    "owned": false
+                  },
+                  {
+                    "tag": "HTML",
+                    "id": "",
+                    "owned": false
+                  }
+                ]
+              },
+              {
+                "selector": "#composer",
+                "hits": [
+                  {
+                    "tag": "FORM",
+                    "id": "composer",
+                    "owned": false
+                  },
+                  {
+                    "tag": "HTML",
+                    "id": "",
+                    "owned": false
+                  }
+                ]
+              },
+              {
+                "selector": "#history",
+                "hits": [
+                  {
+                    "tag": "NAV",
+                    "id": "history",
+                    "owned": false
+                  },
+                  {
+                    "tag": "HTML",
+                    "id": "",
+                    "owned": false
+                  }
+                ]
+              }
+            ]
+          },
+          "childAX": [
+            {
+              "frameURL": "chrome-extension://bkocbfjgofimgnchopfmhpmmmddmfcgh/child.html",
+              "perspective": "Child target diagnostic only; does not establish exposure through parent accessibility tree",
+              "nodes": [
+                {
+                  "ignored": false,
+                  "role": "RootWebArea",
+                  "name": ""
+                },
+                {
+                  "ignored": true,
+                  "role": "none"
+                }
+              ]
+            },
+            {
+              "frameURL": "chrome-extension://bkocbfjgofimgnchopfmhpmmmddmfcgh/child.html",
+              "perspective": "Child target diagnostic only; does not establish exposure through parent accessibility tree",
+              "nodes": [
+                {
+                  "ignored": false,
+                  "role": "RootWebArea",
+                  "name": ""
+                },
+                {
+                  "ignored": true,
+                  "role": "none"
+                }
+              ]
+            }
+          ],
+          "tabs": [
+            {
+              "tag": "BODY",
+              "id": "",
+              "title": null,
+              "owned": null,
+              "open": null
+            },
+            {
+              "tag": "BUTTON",
+              "id": "native-return",
+              "title": null,
+              "owned": null,
+              "open": null
+            },
+            {
+              "tag": "BUTTON",
+              "id": "native-history-entry",
+              "title": null,
+              "owned": null,
+              "open": null
+            },
+            {
+              "tag": "TEXTAREA",
+              "id": "",
+              "title": null,
+              "owned": null,
+              "open": null
+            },
+            {
+              "tag": "BUTTON",
+              "id": "native-return",
+              "title": null,
+              "owned": null,
+              "open": null
+            },
+            {
+              "tag": "BUTTON",
+              "id": "native-history-entry",
+              "title": null,
+              "owned": null,
+              "open": null
+            },
+            {
+              "tag": "TEXTAREA",
+              "id": "",
+              "title": null,
+              "owned": null,
+              "open": null
+            },
+            {
+              "tag": "BODY",
+              "id": "",
+              "title": null,
+              "owned": null,
+              "open": null
+            }
+          ]
+        },
+        {
+          "state": "workspace-closed",
+          "parentAX": [
+            {
+              "nodeId": "2",
+              "ignored": false,
+              "role": "RootWebArea",
+              "name": "",
+              "frameId": "04301C40228F3C22B62D488B8CB5C82C"
+            },
+            {
+              "nodeId": "6",
+              "ignored": true,
+              "role": "none",
+              "parentId": "2"
+            },
+            {
+              "nodeId": "10",
+              "ignored": false,
+              "role": "generic",
+              "name": "",
+              "parentId": "6"
+            },
+            {
+              "nodeId": "11",
+              "ignored": false,
+              "role": "banner",
+              "name": "",
+              "parentId": "10"
+            },
+            {
+              "nodeId": "13",
+              "ignored": false,
+              "role": "generic",
+              "name": "",
+              "parentId": "10"
+            },
+            {
+              "nodeId": "3",
+              "ignored": false,
+              "role": "form",
+              "name": "",
+              "parentId": "10"
+            },
+            {
+              "nodeId": "23",
+              "ignored": false,
+              "role": "generic",
+              "name": "",
+              "parentId": "10"
+            },
+            {
+              "nodeId": "25",
+              "ignored": false,
+              "role": "StaticText",
+              "name": "Native header",
+              "parentId": "11"
+            },
+            {
+              "nodeId": "12",
+              "ignored": false,
+              "role": "button",
+              "name": "Return workspace",
+              "parentId": "11"
+            },
+            {
+              "nodeId": "27",
+              "ignored": false,
+              "role": "StaticText",
+              "name": "Native reading",
+              "parentId": "13"
+            },
+            {
+              "nodeId": "4",
+              "ignored": false,
+              "role": "textbox",
+              "name": "",
+              "parentId": "3"
+            },
+            {
+              "nodeId": "24",
+              "ignored": false,
+              "role": "button",
+              "name": "显示原生列表",
+              "parentId": "23"
+            },
+            {
+              "nodeId": "5",
+              "ignored": false,
+              "role": "Iframe",
+              "name": "导航",
+              "parentId": "23"
+            },
+            {
+              "nodeId": "-1000000002",
+              "ignored": false,
+              "role": "InlineTextBox",
+              "name": "Native header",
+              "parentId": "25"
+            },
+            {
+              "nodeId": "26",
+              "ignored": false,
+              "role": "StaticText",
+              "name": "Return workspace",
+              "parentId": "12"
+            },
+            {
+              "nodeId": "-1000000015",
+              "ignored": false,
+              "role": "InlineTextBox",
+              "name": "Native reading",
+              "parentId": "27"
+            },
+            {
+              "nodeId": "16",
+              "ignored": false,
+              "role": "generic",
+              "name": "",
+              "parentId": "4"
+            },
+            {
+              "nodeId": "31",
+              "ignored": false,
+              "role": "StaticText",
+              "name": "显示原生列表",
+              "parentId": "24"
+            },
+            {
+              "nodeId": "-1000000003",
+              "ignored": false,
+              "role": "InlineTextBox",
+              "name": "Return workspace",
+              "parentId": "26"
+            },
+            {
+              "nodeId": "34",
+              "ignored": false,
+              "role": "StaticText",
+              "name": "NATIVE_CYCLE_DRAFT",
+              "parentId": "16"
+            },
+            {
+              "nodeId": "-1000000016",
+              "ignored": false,
+              "role": "InlineTextBox",
+              "name": "显示原生列表",
+              "parentId": "31"
+            },
+            {
+              "nodeId": "-1000000010",
+              "ignored": false,
+              "role": "InlineTextBox",
+              "name": "NATIVE_CYCLE_DRAFT",
+              "parentId": "34"
+            }
+          ],
+          "dom": {
+            "owned": [
+              {
+                "id": "va_9ec37da588494f378f09a0ee3ac431c0_workspace",
+                "open": false
+              },
+              {
+                "id": "va_9ec37da588494f378f09a0ee3ac431c0_sidebar",
+                "open": true
+              }
+            ],
+            "reading": {
+              "id": "reading",
+              "visibility": "visible",
+              "interactivity": "auto",
+              "rect": {
+                "x": 300,
+                "y": 50,
+                "width": 500,
+                "height": 400,
+                "top": 50,
+                "right": 800,
+                "bottom": 450,
+                "left": 300
+              }
+            },
+            "history": {
+              "id": "history",
+              "visibility": "hidden",
+              "interactivity": "inert",
+              "rect": {
+                "x": 20,
+                "y": 180,
+                "width": 240,
+                "height": 400,
+                "top": 180,
+                "right": 260,
+                "bottom": 580,
+                "left": 20
+              }
+            },
+            "nativeHits": [
+              {
+                "selector": "#reading",
+                "hits": [
+                  {
+                    "tag": "SECTION",
+                    "id": "reading",
+                    "owned": false
+                  },
+                  {
+                    "tag": "HTML",
+                    "id": "",
+                    "owned": false
+                  }
+                ]
+              },
+              {
+                "selector": "#composer",
+                "hits": [
+                  {
+                    "tag": "FORM",
+                    "id": "composer",
+                    "owned": false
+                  },
+                  {
+                    "tag": "HTML",
+                    "id": "",
+                    "owned": false
+                  }
+                ]
+              },
+              {
+                "selector": "#history",
+                "hits": [
+                  {
+                    "tag": "IFRAME",
+                    "id": "",
+                    "owned": true
+                  },
+                  {
+                    "tag": "SECTION",
+                    "id": "va_9ec37da588494f378f09a0ee3ac431c0_sidebar",
+                    "owned": true
+                  },
+                  {
+                    "tag": "HTML",
+                    "id": "",
+                    "owned": false
+                  }
+                ]
+              }
+            ]
+          },
+          "childAX": [
+            {
+              "frameURL": "chrome-extension://bkocbfjgofimgnchopfmhpmmmddmfcgh/child.html",
+              "perspective": "Child target diagnostic only; does not establish exposure through parent accessibility tree",
+              "nodes": [
+                {
+                  "ignored": false,
+                  "role": "RootWebArea",
+                  "name": ""
+                },
+                {
+                  "ignored": true,
+                  "role": "none"
+                }
+              ]
+            },
+            {
+              "frameURL": "chrome-extension://bkocbfjgofimgnchopfmhpmmmddmfcgh/child.html",
+              "perspective": "Child target diagnostic only; does not establish exposure through parent accessibility tree",
+              "nodes": [
+                {
+                  "ignored": false,
+                  "role": "RootWebArea",
+                  "name": ""
+                },
+                {
+                  "ignored": true,
+                  "role": "none"
+                },
+                {
+                  "ignored": false,
+                  "role": "generic",
+                  "name": ""
+                },
+                {
+                  "ignored": false,
+                  "role": "button",
+                  "name": "Child action"
+                },
+                {
+                  "ignored": false,
+                  "role": "StaticText",
+                  "name": "Child action"
+                },
+                {
+                  "ignored": false,
+                  "role": "InlineTextBox",
+                  "name": "Child action"
+                }
+              ]
+            }
+          ],
+          "tabs": [
+            {
+              "tag": "BUTTON",
+              "id": "native-return",
+              "title": null,
+              "owned": null,
+              "open": null
+            },
+            {
+              "tag": "BUTTON",
+              "id": "native-history-entry",
+              "title": null,
+              "owned": null,
+              "open": null
+            },
+            {
+              "tag": "TEXTAREA",
+              "id": "",
+              "title": null,
+              "owned": null,
+              "open": null
+            },
+            {
+              "tag": "BODY",
+              "id": "",
+              "title": null,
+              "owned": null,
+              "open": null
+            },
+            {
+              "tag": "BUTTON",
+              "id": "native-return",
+              "title": null,
+              "owned": null,
+              "open": null
+            },
+            {
+              "tag": "BUTTON",
+              "id": "native-history-entry",
+              "title": null,
+              "owned": null,
+              "open": null
+            },
+            {
+              "tag": "TEXTAREA",
+              "id": "",
+              "title": null,
+              "owned": null,
+              "open": null
+            },
+            {
+              "tag": "BUTTON",
+              "id": "native-return",
+              "title": null,
+              "owned": null,
+              "open": null
+            }
+          ]
+        }
+      ],
+      "afterNativeReturn": {
+        "open": 2,
+        "draft": "NATIVE_CYCLE_DRAFT"
+      },
+      "before": {
+        "rect": {
+          "x": 50,
+          "y": 80,
+          "width": 120,
+          "height": 40,
+          "top": 80,
+          "right": 170,
+          "bottom": 120,
+          "left": 50
+        },
+        "hit": "target"
+      },
+      "clicked": 1,
+      "childEvents": [
+        {
+          "type": "pointerdown",
+          "target": "BUTTON",
+          "id": "target",
+          "trusted": true,
+          "epochMs": 1792022611647
+        },
+        {
+          "type": "mousedown",
+          "target": "BUTTON",
+          "id": "target",
+          "trusted": true,
+          "epochMs": 1792022611647
+        },
+        {
+          "type": "pointerup",
+          "target": "BUTTON",
+          "id": "target",
+          "trusted": true,
+          "epochMs": 1792022611647.2
+        },
+        {
+          "type": "mouseup",
+          "target": "BUTTON",
+          "id": "target",
+          "trusted": true,
+          "epochMs": 1792022611647.2
+        },
+        {
+          "type": "click",
+          "target": "BUTTON",
+          "id": "target",
+          "trusted": true,
+          "epochMs": 1792022611647.2
+        }
+      ],
+      "parentEvents": [
+        {
+          "type": "input",
+          "target": "TEXTAREA",
+          "id": "",
+          "trusted": true,
+          "epochMs": 1792022611535.2
+        },
+        {
+          "type": "pointerdown",
+          "target": "BUTTON",
+          "id": "native-return",
+          "trusted": true,
+          "epochMs": 1792022611576.7
+        },
+        {
+          "type": "mousedown",
+          "target": "BUTTON",
+          "id": "native-return",
+          "trusted": true,
+          "epochMs": 1792022611576.7998
+        },
+        {
+          "type": "pointerup",
+          "target": "BUTTON",
+          "id": "native-return",
+          "trusted": true,
+          "epochMs": 1792022611576.7998
+        },
+        {
+          "type": "mouseup",
+          "target": "BUTTON",
+          "id": "native-return",
+          "trusted": true,
+          "epochMs": 1792022611576.7998
+        },
+        {
+          "type": "click",
+          "target": "BUTTON",
+          "id": "native-return",
+          "trusted": true,
+          "epochMs": 1792022611576.7998
+        },
+        {
+          "type": "pointerdown",
+          "target": "BUTTON",
+          "id": "",
+          "trusted": true,
+          "epochMs": 1792022611611.5999
+        },
+        {
+          "type": "mousedown",
+          "target": "BUTTON",
+          "id": "",
+          "trusted": true,
+          "epochMs": 1792022611611.5999
+        },
+        {
+          "type": "pointerup",
+          "target": "BUTTON",
+          "id": "",
+          "trusted": true,
+          "epochMs": 1792022611611.7
+        },
+        {
+          "type": "mouseup",
+          "target": "BUTTON",
+          "id": "",
+          "trusted": true,
+          "epochMs": 1792022611611.7
+        },
+        {
+          "type": "click",
+          "target": "BUTTON",
+          "id": "",
+          "trusted": true,
+          "epochMs": 1792022611611.7
+        }
+      ],
+      "state": {
+        "workspaceOpen": false,
+        "sidebarOpen": true
+      },
+      "status": "OBSERVED_SUCCESS_NOT_PRODUCT_ACCEPTANCE",
+      "screenshot": "/private/tmp/manual-extension-popover-L7PBXi/popover.png"
+    }
+  ],
+  "blockedExternal": [],
+  "workerNetworkBlocked": true,
+  "browserVersion": "155.0.8059.40",
+  "status": "MECHANISM_CASES_SUCCEEDED_NOT_CERTIFIED",
+  "scriptChangedDuringRun": false,
+  "mountSourceChangedDuringRun": false,
+  "fixtureSourceChangedDuringRun": false
+}

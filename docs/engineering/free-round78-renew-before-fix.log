@@ -1,0 +1,113 @@
+✔ formal context remains unbound without owner body proof; bounded proposals carry no scope (4.575875ms)
+✔ legacy inspect fields refer to native nodes without mutation (1.127583ms)
+✔ ambiguous boundaries, occupied return slot and overlap reject mounting (0.322375ms)
+✔ route change stops producer and requests owner rebind without minting epoch (0.212417ms)
+✔ mutation bursts coalesce and late acknowledgement after stop cannot emit (0.186875ms)
+✔ expiry rejects reads and actions; unsupported snippets and actions are explicit (0.301667ms)
+✔ fresh start uses owner epoch and old pending callback cannot affect new producer (0.162917ms)
+✔ safe ordinary href navigation is planned, never assigned by adapter (0.327625ms)
+✔ explicit retry-after retains proposal identity and sequence then accepted suppresses duplicate surface (0.233375ms)
+✔ retry budget is monotonic six seconds and stop clears timer (0.218875ms)
+✔ rejected or unknown ACK reports once and never mutation-replays identical proposal (0.224583ms)
+✔ retry observes route invalidation before any second emission (0.08775ms)
+✔ binding renewal preserves observer, producer sequence and existing navigation plan (0.192208ms)
+✔ binding renewal rejects every changed identity, excess lifetime and stale owner (0.493917ms)
+✔ MOCK document renewal preserves all identities over repeated twenty-second boundaries (2.729125ms)
+✔ MOCK exact renewal schema rejects replay foreign client and authority injection (0.228375ms)
+✔ MOCK concurrent same-sequence renew consumes once (0.451292ms)
+✔ MOCK renew cannot resurrect replaced HELLO producer (0.840291ms)
+✔ MOCK actual route or document change denies renewal without extending old expiry (0.400084ms)
+✔ MOCK already-expired and expiration-during-frame-check cannot renew (0.167792ms)
+✔ MOCK tab invalidation while awaiting browser frame prevents late renewal (0.11525ms)
+✔ MOCK six-second renewal deadline rejects pending browser check and prevents late extension (0.256416ms)
+✔ owner registration and both UiGrant ACKs gate initial dual-surface show (1.64925ms)
+✔ origin, original contentWindow, connectedness and public join shape are mandatory (0.324625ms)
+✔ exactly one four-grid return exists only in reading and opens workspace (0.220166ms)
+✔ native portal surrenders both surfaces without automatically taking focus back (0.23125ms)
+✔ route or region replacement disposes owned UI and stops adapter (0.224916ms)
+✔ grant expiry and explicit revoke remove return and dispose both surfaces (0.187208ms)
+✔ late registration or grant ACK after stop never shows stale surfaces (0.202625ms)
+✔ owner denial and stale region during registration dispose without show (0.088625ms)
+✔ both early JOINs drain only after owner ACK, with one pending nonce per role (0.131833ms)
+✔ cached JOIN cannot survive stop or changed original WindowProxy before register ACK (0.153334ms)
+✔ early forged source/origin cannot occupy cache ahead of legitimate JOIN (0.170917ms)
+✔ owned-frame public SUSPEND remains effective while registration is pending (0.257ms)
+✔ trusted session renewal extends binding/grants in place without new JOIN or return/draft mutations (0.763584ms)
+✔ session renewal rejects changed binding/scope/UI/role and overlong lifetime (1.572834ms)
+✔ six-second session deadline releases UI and late ACK cannot renew or resurrect it (0.195625ms)
+✔ stop, route and region changes fence pending session renewal (0.278084ms)
+✔ both channel orders issue exact frozen grant; neither channel alone authorizes (2.050375ms)
+✔ scope expiration bounds lease and validation never renews it (0.167ms)
+✔ sender extension, frame, active document and private partition are mandatory (0.17775ms)
+✔ parent channel rejects mount, token, region and document forgery (0.145083ms)
+✔ actual UI parent relation and current document are independently checked (0.188459ms)
+✔ same nonce replay, duplicate channel, role conflict and expired pairing fail closed (0.472792ms)
+✔ scope epoch, scope key and grant replacement revoke existing authority (0.367167ms)
+✔ scope loss denies pairing and grant validation (0.128125ms)
+✔ revoke mount, parent document, UI document and all immediately invalidate grants (0.368333ms)
+✔ pending async browser check cannot publish after revoke or scope change (0.187291ms)
+✔ anonymous capacity is finite and expired keys cannot rejoin (0.071333ms)
+✔ copied caller mount and sender objects cannot mutate recorded binding (0.05125ms)
+✔ UI document revocation during pairing cannot publish a late grant (0.0765ms)
+✔ conflicting role burns nonce instead of allowing later retry (0.0475ms)
+✔ 4000 renewals reuse one join entry; lease stays bounded by current scope expiry (35.946667ms)
+✖ renew refuses expired, revoked, wrong document and changed scope grants (0.485542ms)
+✖ revoked mount releases paired join capacity; old parent mount and grant cannot revive (0.114708ms)
+✔ renew waiting for actual browser checks cannot publish after mount revocation (0.085625ms)
+✔ expired UI-only nonce flood is reclaimed without evicting successfully paired replay protection (0.673125ms)
+✔ expired parent-confirmed pending is never evicted for anonymous WAR traffic (0.041875ms)
+✔ fixed per-role static shells bind actual sender URL, never window.name or page role (0.081291ms)
+✔ browser extension context verifies WAR documents without inventing parentFrameId (0.19375ms)
+✔ extension context existence alone cannot replace actual parent and parent confirmation (0.042ms)
+ℹ tests 61
+ℹ suites 0
+ℹ pass 59
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 91.62075
+
+✖ failing tests:
+
+test at tests/host/ui-grants.test.mjs:48:1
+✖ renew refuses expired, revoked, wrong document and changed scope grants (0.485542ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /ui-grant-expired|stale-ui-document|ui-scope-changed/. Input:
+  
+  'Error: ui-grant-mismatch'
+  
+      at async TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/host/ui-grants.test.mjs:50:52)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: Error: ui-grant-mismatch
+        at Object.renew (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/src/host/ui-grants.mjs:99:207)
+        at TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/host/ui-grants.test.mjs:50:81)
+        at async Test.run (node:internal/test_runner/test:1409:7)
+        at async Test.processPendingSubtests (node:internal/test_runner/test:974:7),
+    expected: /ui-grant-expired|stale-ui-document|ui-scope-changed/,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tests/host/ui-grants.test.mjs:53:1
+✖ revoked mount releases paired join capacity; old parent mount and grant cannot revive (0.114708ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /ui-grant-expired/. Input:
+  
+  'Error: ui-grant-mismatch'
+  
+      at async TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/host/ui-grants.test.mjs:57:2)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: Error: ui-grant-mismatch
+        at Object.renew (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/src/host/ui-grants.mjs:99:207)
+        at TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/host/ui-grants.test.mjs:57:31)
+        at async Test.run (node:internal/test_runner/test:1409:7)
+        at async Test.processPendingSubtests (node:internal/test_runner/test:974:7),
+    expected: /ui-grant-expired/,
+    operator: 'rejects',
+    diff: 'simple'
+  }

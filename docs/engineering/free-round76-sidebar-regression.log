@@ -1,0 +1,1 @@
+{"evidence":"UI_SYNTHETIC_SIDEBAR_CACHE","checks":["history-keeps-unchanged-sidebar-DOM","return-keeps-sidebar-DOM","disclosure-invalidates-cache","sidebar-visibility-invalidates-cache","snapshot-revision-refreshes-native-title","active-native-route-invalidates-cache","scope-switch-removes-prior-rows","authority-loss-removes-owned-roots"],"browser":"155.0.8059.40","fail":0}

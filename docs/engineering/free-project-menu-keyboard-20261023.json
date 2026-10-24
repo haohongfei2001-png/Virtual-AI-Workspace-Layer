@@ -1,0 +1,58 @@
+{
+  "schema": "vaiwl-project-menu-keyboard-evidence-v1",
+  "baseHead": "9559bef320ca9f34a635a5ff6f74e8d197c87e20",
+  "task": "C3/C5 project menu keyboard dismissal and same-scope update focus",
+  "findings": [
+    "Shift+Tab leaves project menu open after focus exits",
+    "Same-scope projection update removes focused menu without returning focus to its project control"
+  ],
+  "beforeFailures": [
+    "AssertionError [ERR_ASSERTION]: Shift+Tab must dismiss the project menu",
+    "AssertionError [ERR_ASSERTION]: same-scope update must return menu focus to its surviving project control"
+  ],
+  "implementation": "Use existing closeMenu on Tab; backward returns trigger, forward uses browser tab order. Capture focused menu as its trigger key during existing render focus restoration; outside focus remains untouched.",
+  "sourceHashes": {
+    "extension/frame-shell.css": "471ebf615b50b5adac417d7ad6205cf0ec1e2da82372eb8b42705151809829f4",
+    "src/navigation/navigation.mjs": "18ec5426e83e7159eabc4740b1ba89adca711c4cfab99f8be2a5d7afbb8870a4",
+    "src/navigation/styles.mjs": "42bd79e60aa097eff059b8705d9f372f9abb9fa7daebaeaf4e19614c46810e94",
+    "tests/host/frame-theme-menu-layout-browser.mjs": "b2b529276cd0df5798dee2dd716fbb4c0953ea955f974cee744943d06acc8042"
+  },
+  "validation": {
+    "browser": "156.0.8078.47",
+    "kind": "SYNTHETIC_FRAME_DOM_LAYOUT_NOT_MV3",
+    "layoutChecks": 8,
+    "tabDismissalAndFocus": true,
+    "updateFocusRestored": true,
+    "externalFocusPreserved": true,
+    "sourceStable": true,
+    "regression": {
+      "passed": 135,
+      "failed": 0,
+      "skipped": 0
+    },
+    "builds": [
+      {
+        "name": "default",
+        "status": "HOST_IMPLEMENTATION_UNVERIFIED",
+        "releaseStatus": "NOT_RELEASE_READY",
+        "files": 191
+      },
+      {
+        "name": "observed",
+        "status": "HOST_IMPLEMENTATION_UNVERIFIED",
+        "releaseStatus": "NOT_RELEASE_READY",
+        "files": 191
+      }
+    ],
+    "review": "Primary writer diff review; no independent reviewer claimed"
+  },
+  "boundaries": {
+    "realChatGPT": "NOT_RUN",
+    "MV3": "NOT_RUN",
+    "realAccountRequests": 0,
+    "productionEnabled": false,
+    "installedPackageUpdated": false,
+    "newSourceBatch": false
+  },
+  "checkpoint": ".git/vaiwl-checkpoints/20261023-project-menu-tab"
+}

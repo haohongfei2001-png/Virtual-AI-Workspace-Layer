@@ -1,0 +1,1 @@
+{"evidence":"REAL_BROWSER_SYNTHETIC_RECOVERY_UI","browser":"156.0.8078.4","checks":["native-corruption-manual-repair","evidence-corruption-manual-repair","native-composer-draft-preserved","no-native-send-replay"],"fail":0}

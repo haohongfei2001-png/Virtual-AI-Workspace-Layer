@@ -1,0 +1,352 @@
+{
+  "selected": "all",
+  "evidence": "WEB_MECHANISM_ONLY_REAL_HEADLESS_TRUSTED_NATIVE_EDITOR_GESTURES",
+  "realChatGPT": "NOT_RUN",
+  "physicalIME": "NOT_RUN",
+  "scope": "Passive send intent observation, no authentication/transport/server ACK and no production profile certification.",
+  "scriptHash": "916cfad8bd46093302d6063efb25596d88eebab2ad6ce099e0f7f49190199063",
+  "sourceHashes": {
+    "src/host/native-send-intent.mjs": "72d880a36e6e79f70ed896212b683c5e44f79cffedc1516295f9380447c2a090",
+    "src/b1/identity.mjs": "6d7ca616701826733d4936d8a139395ccf1a3111e025ec6b1035d78c1dc05e99"
+  },
+  "results": [
+    {
+      "name": "textarea-trusted-editor-boundary-and-passive-native-handler",
+      "status": "PASS_MECHANISM_ONLY",
+      "intents": [
+        {
+          "intentId": "0ab344b1-47f9-4926-9e29-a4dcd0b01d74",
+          "kind": "send",
+          "isComposing": false,
+          "observedAt": "2026-10-15T00:13:59.985Z"
+        },
+        {
+          "intentId": "a47415c4-244d-4cc7-9cd6-6011e3fe5a57",
+          "kind": "send",
+          "isComposing": false,
+          "observedAt": "2026-10-15T00:14:00.020Z"
+        }
+      ],
+      "native": {
+        "click": 1,
+        "enter": 1
+      },
+      "bodyAccess": {
+        "reads": 0,
+        "writes": 0
+      },
+      "unchanged": true,
+      "prepares": 4
+    },
+    {
+      "name": "rich-trusted-editor-boundary-and-passive-native-handler",
+      "status": "PASS_MECHANISM_ONLY",
+      "intents": [
+        {
+          "intentId": "99e5b860-fe6b-42da-8b00-f0e173b52728",
+          "kind": "send",
+          "isComposing": false,
+          "observedAt": "2026-10-15T00:14:00.156Z"
+        },
+        {
+          "intentId": "9f2ddfa1-7490-441b-9a28-b50682132e94",
+          "kind": "send",
+          "isComposing": false,
+          "observedAt": "2026-10-15T00:14:00.191Z"
+        }
+      ],
+      "native": {
+        "click": 1,
+        "enter": 1
+      },
+      "bodyAccess": {
+        "reads": 0,
+        "writes": 0
+      },
+      "unchanged": true,
+      "prepares": 4
+    },
+    {
+      "name": "plaintext-trusted-editor-boundary-and-passive-native-handler",
+      "status": "PASS_MECHANISM_ONLY",
+      "intents": [
+        {
+          "intentId": "d5aa3f0a-c770-4c82-8a0b-2e3f02b1278b",
+          "kind": "send",
+          "isComposing": false,
+          "observedAt": "2026-10-15T00:14:00.331Z"
+        },
+        {
+          "intentId": "d2db2f26-7a73-466a-9145-b5ee2ae4532d",
+          "kind": "send",
+          "isComposing": false,
+          "observedAt": "2026-10-15T00:14:00.365Z"
+        }
+      ],
+      "native": {
+        "click": 1,
+        "enter": 1
+      },
+      "bodyAccess": {
+        "reads": 0,
+        "writes": 0
+      },
+      "unchanged": true,
+      "prepares": 4
+    },
+    {
+      "name": "role-only-trusted-editor-boundary-and-passive-native-handler",
+      "status": "PASS_MECHANISM_ONLY",
+      "intents": [],
+      "native": {
+        "click": 1,
+        "enter": 0
+      },
+      "bodyAccess": {
+        "reads": 0,
+        "writes": 0
+      },
+      "unchanged": true,
+      "prepares": 0
+    },
+    {
+      "name": "revoked-trusted-editor-boundary-and-passive-native-handler",
+      "status": "PASS_MECHANISM_ONLY",
+      "intents": [],
+      "native": {
+        "click": 1,
+        "enter": 0
+      },
+      "bodyAccess": {
+        "reads": 0,
+        "writes": 0
+      },
+      "unchanged": true,
+      "prepares": 0
+    },
+    {
+      "name": "readonly-trusted-editor-boundary-and-passive-native-handler",
+      "status": "PASS_MECHANISM_ONLY",
+      "intents": [],
+      "native": {
+        "click": 1,
+        "enter": 1
+      },
+      "bodyAccess": {
+        "reads": 0,
+        "writes": 0
+      },
+      "unchanged": true,
+      "prepares": 0
+    },
+    {
+      "name": "nested-trusted-editor-boundary-and-passive-native-handler",
+      "status": "PASS_MECHANISM_ONLY",
+      "intents": [],
+      "native": {
+        "click": 1,
+        "enter": 0
+      },
+      "bodyAccess": {
+        "reads": 0,
+        "writes": 0
+      },
+      "unchanged": true,
+      "prepares": 0
+    },
+    {
+      "name": "unapproved-rich-trusted-editor-boundary-and-passive-native-handler",
+      "status": "PASS_MECHANISM_ONLY",
+      "intents": [],
+      "native": {
+        "click": 1,
+        "enter": 1
+      },
+      "bodyAccess": {
+        "reads": 0,
+        "writes": 0
+      },
+      "unchanged": true,
+      "prepares": 0
+    },
+    {
+      "name": "CDP-composition-simulation-suppresses-Enter-candidate",
+      "status": "PASS_MECHANISM_ONLY",
+      "IME": "CDP_SIMULATION_NOT_PHYSICAL_IME",
+      "intents": [],
+      "events": [
+        {
+          "type": "compositionstart",
+          "trusted": true
+        },
+        {
+          "type": "compositionupdate",
+          "trusted": true
+        }
+      ],
+      "bodyAccess": {
+        "reads": 0,
+        "writes": 0
+      },
+      "native": {
+        "click": 0,
+        "enter": 1
+      }
+    },
+    {
+      "name": "embedded-button-actual-trusted-editor-target-boundary",
+      "status": "PASS_MECHANISM_ONLY",
+      "focusBeforeEnter": {
+        "id": "descendant",
+        "tag": "BUTTON"
+      },
+      "intents": [],
+      "native": {
+        "click": 0,
+        "enter": 1
+      },
+      "bodyAccess": {
+        "reads": 0,
+        "writes": 0
+      },
+      "unchanged": true,
+      "targets": [
+        {
+          "targetId": "descendant",
+          "key": "Enter",
+          "trusted": true
+        }
+      ],
+      "clickTargets": [],
+      "prepares": 0,
+      "active": {
+        "id": "descendant",
+        "tag": "BUTTON"
+      },
+      "childEditable": false
+    },
+    {
+      "name": "editable-island-actual-trusted-editor-target-boundary",
+      "status": "PASS_MECHANISM_ONLY",
+      "focusBeforeEnter": {
+        "id": "descendant",
+        "tag": "SPAN"
+      },
+      "intents": [],
+      "native": {
+        "click": 0,
+        "enter": 1
+      },
+      "bodyAccess": {
+        "reads": 0,
+        "writes": 0
+      },
+      "unchanged": true,
+      "targets": [
+        {
+          "targetId": "descendant",
+          "key": "Enter",
+          "trusted": true
+        }
+      ],
+      "clickTargets": [],
+      "prepares": 0,
+      "active": {
+        "id": "descendant",
+        "tag": "SPAN"
+      },
+      "childEditable": true
+    },
+    {
+      "name": "text-span-actual-trusted-editor-target-boundary",
+      "status": "PASS_MECHANISM_ONLY",
+      "focusBeforeEnter": {
+        "id": "editor",
+        "tag": "DIV"
+      },
+      "intents": [
+        {
+          "intentId": "f4333591-f8fe-414a-9b7b-dcd1a644c6b4",
+          "kind": "send",
+          "isComposing": false,
+          "observedAt": "2026-10-15T00:14:01.799Z"
+        }
+      ],
+      "native": {
+        "click": 0,
+        "enter": 1
+      },
+      "bodyAccess": {
+        "reads": 0,
+        "writes": 0
+      },
+      "unchanged": true,
+      "targets": [
+        {
+          "targetId": "editor",
+          "key": "Enter",
+          "trusted": true
+        }
+      ],
+      "clickTargets": [
+        {
+          "targetId": "descendant",
+          "trusted": true
+        }
+      ],
+      "prepares": 3,
+      "active": {
+        "id": "editor",
+        "tag": "DIV"
+      },
+      "childEditable": true
+    }
+  ],
+  "pendingDescendant": {
+    "mode": "text-span",
+    "focusBeforeEnter": {
+      "id": "editor",
+      "tag": "DIV"
+    },
+    "intents": [
+      {
+        "intentId": "f4333591-f8fe-414a-9b7b-dcd1a644c6b4",
+        "kind": "send",
+        "isComposing": false,
+        "observedAt": "2026-10-15T00:14:01.799Z"
+      }
+    ],
+    "native": {
+      "click": 0,
+      "enter": 1
+    },
+    "bodyAccess": {
+      "reads": 0,
+      "writes": 0
+    },
+    "unchanged": true,
+    "targets": [
+      {
+        "targetId": "editor",
+        "key": "Enter",
+        "trusted": true
+      }
+    ],
+    "clickTargets": [
+      {
+        "targetId": "descendant",
+        "trusted": true
+      }
+    ],
+    "prepares": 3,
+    "active": {
+      "id": "editor",
+      "tag": "DIV"
+    },
+    "childEditable": true
+  },
+  "status": "MECHANISM_SUCCEEDED_NOT_ACK_CERTIFICATION",
+  "browserVersion": "155.0.8059.40",
+  "sourceChangedDuringRun": false,
+  "scriptChangedDuringRun": false
+}

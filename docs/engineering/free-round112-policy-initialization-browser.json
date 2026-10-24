@@ -1,0 +1,74 @@
+{
+  "evidence": "REAL_HEADLESS_CHROME_INDEXEDDB_POLICY_INITIALIZATION",
+  "authority": "SYNTHETIC_LOCAL_SCOPE_FIXTURE",
+  "mv3": "NOT_RUN",
+  "liveChatGPT": "NOT_RUN",
+  "sourceHashes": {
+    "tests/free/policy-initialization-browser.mjs": "cd21aa1379e753642314b75af4de69e80d4b11a0863dd1d8c39f2ae532874965",
+    "src/data/free-policy-initialization.mjs": "e0a358b12ea9454f5ee657612e4c83c247ba895b082a362be9186f4b7e898a32",
+    "src/data/schema.mjs": "4a15161852c0c0a9dcc3fab10a984c97929ed9157c33fbc97121711cb41740aa",
+    "src/b1/scope-repository.mjs": "08d5c29e4be60c9b94ac6c7dce3e7fb1c5f2e553979c5a8f872a08d7c0c2bb91",
+    "src/data/repository.mjs": "7fcd49c80cb6ee3687dcc898895f387965d6e86cf847a158ff7ba1e2becdbe9e",
+    "src/data/state.mjs": "df0eaff00a7f050c37653f0e740b8fabe19bce571c5e37f4ce437d180984c62a",
+    "src/data/free-time-policy.mjs": "8a75b5bdde8abf8ee07873ecf2aa45a19faccd030b9f03c738b56db6ba9ea17a",
+    "src/data/backup.mjs": "bb0a8639d02e2169ae15e866a464f1531b7e80e40afd7c8a4b35e99d70928396",
+    "src/data/hash.mjs": "a2eb9e315c79d9594d625b0d7f114261bd7acc066c7e18ffe27169ab1e57a72d"
+  },
+  "results": [
+    {
+      "status": "PASS",
+      "scenario": "fresh",
+      "mode": "auto",
+      "H": 30,
+      "owner": "bootstrap",
+      "scopeBUnchanged": true
+    },
+    {
+      "status": "PASS",
+      "scenario": "old-v1",
+      "mode": "fixed",
+      "B1AndProPreserved": true
+    },
+    {
+      "status": "PASS",
+      "scenario": "concurrent",
+      "initializedCount": 1,
+      "revision": 1
+    },
+    {
+      "status": "PASS",
+      "scenario": "marker-after-absence",
+      "allStoresUnchanged": true,
+      "damagedMarkerRetained": true
+    },
+    {
+      "status": "PASS",
+      "scenario": "recovery",
+      "markerPreserved": true,
+      "allStoresUnchangedAfterReinitialization": true
+    },
+    {
+      "status": "PASS",
+      "scenario": "missing-root-history",
+      "allStoresUnchanged": true,
+      "reason": "corrupt-record"
+    },
+    {
+      "status": "PASS",
+      "scenario": "missing-root-checkpoint",
+      "allStoresUnchanged": true,
+      "reason": "corrupt-record"
+    },
+    {
+      "status": "PASS",
+      "scenario": "human-backup",
+      "H": 14,
+      "mode": "fixed",
+      "owner": "human",
+      "markersExcludedFromBackup": true
+    }
+  ],
+  "pageErrors": [],
+  "sourceChangedDuringRun": false,
+  "status": "PASS"
+}

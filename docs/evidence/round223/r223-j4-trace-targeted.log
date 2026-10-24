@@ -1,0 +1,28 @@
+✔ cold diagnostic copy keeps original verified; patches only named files and detects alteration (215.387368ms)
+✔ runner preserves immediate cold navigation and collects existing worker only after failure (1.261614ms)
+✔ portable J4 assets cover all manual asset classes without authority or evidence (7.260255ms)
+✔ same asset bundle cannot be restored into other authenticated context (0.697332ms)
+✔ J4 native context switch is opt-in authenticated roster-validated service (50.985357ms)
+✔ continuous segment never claims missing atomic/schema/profile acceptance (0.261885ms)
+✔ runner uses production file import and actual lifecycle APIs without business-state injection or synthetic grants (5.490684ms)
+✔ repair fault touches only checksum of an existing production root and remains explicit (0.836783ms)
+✔ repaired UNKNOWN route uses stable identity and never expects revoked native title (0.533685ms)
+✔ recovered link oracle requires the original route, enabled UNKNOWN identity and redacted title (1.451831ms)
+✔ close and integrity failures still write diagnostic and retain original error (2.511709ms)
+✔ write failure returns report for stdout without hiding cleanup or original failure (0.411621ms)
+✔ passive trace preserves browser ordering, never replies, redacts payload and detaches (2.886725ms)
+✔ instrumented J4 copy is opt-in and verifies changed package separately (8.062094ms)
+✔ diagnostic mode returns after actual baseline before any native send or mixed stage (1.597961ms)
+✔ default formal path does not start diagnostic listeners and v2 body is reduced (0.997335ms)
+✔ trace setup is inside cleanup boundary and debugger helper is source-hashed (0.820999ms)
+✔ reports receive the same trusted event commit as the default checkout (0.746367ms)
+✔ one Node suite and two independent free browser jobs retain exact event SHA and mandatory outcomes (0.94818ms)
+✔ browser partition neither deletes nor duplicates any pre-existing actual slice (0.338751ms)
+ℹ tests 20
+ℹ suites 0
+ℹ pass 20
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 383.639398

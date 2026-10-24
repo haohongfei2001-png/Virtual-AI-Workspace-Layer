@@ -1,0 +1,34 @@
+{
+  "evidence": "HEADLESS_SYNTHETIC_REAL_IDB",
+  "browser": "154.0.8037.99",
+  "results": [
+    {
+      "name": "bounded batches resume after reconnect; done cursor resets for lexically lower new anchor",
+      "status": "PASS"
+    },
+    {
+      "name": "backfill isolates scope and does not turn historical Project metadata into native name/membership or sources",
+      "status": "PASS"
+    },
+    {
+      "name": "concurrent connections serialize cursor and preserve Pro manual assets",
+      "status": "PASS"
+    },
+    {
+      "name": "invalid limits and cancelled/late guard never advance cursor or publish partial anchors",
+      "status": "PASS"
+    },
+    {
+      "name": "injected quota error atomically rolls back both anchor and cursor, then exact batch resumes",
+      "status": "PASS"
+    },
+    {
+      "name": "corrupt root rejects backfill and shared recovery resets durable cursor (legacy)",
+      "status": "PASS"
+    },
+    {
+      "name": "corrupt root rejects backfill and shared recovery resets durable cursor (partitioned)",
+      "status": "PASS"
+    }
+  ]
+}

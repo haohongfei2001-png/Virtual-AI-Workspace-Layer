@@ -1,0 +1,85 @@
+{
+  "kind": "SYNTHETIC_FRAME_DOM_LAYOUT",
+  "checks": [
+    {
+      "width": 320,
+      "zoom": 1,
+      "results": [
+        {
+          "mode": "search",
+          "workspaceWidth": 320,
+          "workspaceScroll": 320,
+          "sectionWidth": 263,
+          "sectionScroll": 263,
+          "previewTextWidth": 228.046875,
+          "previewWidth": 231,
+          "previewWraps": true
+        },
+        {
+          "mode": "workingSet",
+          "workspaceWidth": 320,
+          "workspaceScroll": 320,
+          "sectionWidth": 263,
+          "sectionScroll": 263
+        }
+      ]
+    },
+    {
+      "width": 640,
+      "zoom": 2,
+      "results": [
+        {
+          "mode": "search",
+          "workspaceWidth": 320,
+          "workspaceScroll": 320,
+          "sectionWidth": 263,
+          "sectionScroll": 263,
+          "previewTextWidth": 456.09375,
+          "previewWidth": 462,
+          "previewWraps": true
+        },
+        {
+          "mode": "workingSet",
+          "workspaceWidth": 320,
+          "workspaceScroll": 320,
+          "sectionWidth": 263,
+          "sectionScroll": 263
+        }
+      ]
+    },
+    {
+      "width": 1000,
+      "zoom": 2,
+      "results": [
+        {
+          "mode": "search",
+          "workspaceWidth": 500,
+          "workspaceScroll": 500,
+          "sectionWidth": 404,
+          "sectionScroll": 404,
+          "previewTextWidth": 716.71875,
+          "previewWidth": 728,
+          "previewWraps": true
+        },
+        {
+          "mode": "workingSet",
+          "workspaceWidth": 500,
+          "workspaceScroll": 500,
+          "sectionWidth": 404,
+          "sectionScroll": 404
+        }
+      ]
+    }
+  ],
+  "sourceBefore": {
+    "src/navigation/navigation.mjs": "9954c1c6585333be702903881487b0fd45486bdbf6596bc44283ae9acd2824dc",
+    "src/navigation/styles.mjs": "9436bdc4cc1ff4d9b820bb31249cc3bc02caec4d8bb145fdeb0c5acb0f1d4409"
+  },
+  "browser": "155.0.8059.40",
+  "ok": true,
+  "sourceAfter": {
+    "src/navigation/navigation.mjs": "9954c1c6585333be702903881487b0fd45486bdbf6596bc44283ae9acd2824dc",
+    "src/navigation/styles.mjs": "9436bdc4cc1ff4d9b820bb31249cc3bc02caec4d8bb145fdeb0c5acb0f1d4409"
+  },
+  "sourceStable": true
+}

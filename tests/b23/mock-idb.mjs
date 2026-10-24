@@ -27,8 +27,10 @@ class Transaction {
 class Store {
   constructor(tx,name){this.tx=tx;this.name=name;}
   get data(){const d=(this.tx.local??this.tx.db.meta.stores).get(this.name);if(!d)throw error('NotFoundError');return d;}
-  get keyPath(){return this.data.keyPath;}get indexNames(){return names(this.data.indexes);}
-  createIndex(name,keyPath){this.data.indexes.set(name,keyPath);}
+  get keyPath(){return this.data.keyPath;}get autoIncrement(){return this.data.autoIncrement;}get indexNames(){return names(this.data.indexes);}
+  // Metadata is modeled for upgrade validation; unique/multiEntry query/write
+  // semantics still require real IndexedDB coverage.
+  createIndex(name,keyPath,{unique=false,multiEntry=false}={}){this.data.indexes.set(name,{keyPath:copy(keyPath),unique:!!unique,multiEntry:!!multiEntry});}
   get(key){return this.tx.enqueue(()=>copy(this.data.rows.get(String(key))));}
   put(value){return this.write(value,false);}add(value){return this.write(value,true);}
   write(value,unique){const v=copy(value);return this.tx.enqueue(()=>{if(this.tx.mode==='readonly')throw error('ReadOnlyError');
@@ -36,20 +38,28 @@ class Store {
     const k=v[this.keyPath];if(k===undefined)throw error('DataError');if(unique&&this.data.rows.has(String(k)))throw error('ConstraintError');this.data.rows.set(String(k),v);return k;});}
   delete(key){return this.tx.enqueue(()=>this.data.rows.delete(String(key)));}
   count(){return this.tx.enqueue(()=>this.data.rows.size);}
-  index(name){const field=this.data.indexes.get(name);if(!field)throw error('NotFoundError');const indexKey=row=>field.split('.').reduce((v,k)=>v?.[k],row);return {openCursor:range=>this.cursor(row=>indexKey(row)===(range?.value??range),indexKey)};}
+  index(name){const metadata=this.data.indexes.get(name);if(!metadata)throw error('NotFoundError');const field=metadata.keyPath,indexKey=row=>{if(typeof field!=='string')throw error('MockUnsupportedIndexKeyPath');return field.split('.').reduce((v,k)=>v?.[k],row);};return {...copy(metadata),openCursor:range=>this.cursor(row=>indexKey(row)===(range?.value??range),indexKey),count:query=>this.tx.enqueue(()=>[...this.data.rows.values()].filter(row=>indexKey(row)!==undefined&&(query==null||indexKey(row)===(query?.value??query))).length)};}
   openCursor(){return this.cursor(()=>true);}
-  cursor(filter,keyOf=row=>row[this.keyPath]){let rows,position=0,req;const next=()=>{rows??=[...this.data.rows.values()].filter(filter).sort((a,b)=>String(a[this.keyPath]).localeCompare(String(b[this.keyPath])));if(position>=rows.length)return null;const row=rows[position++];return {key:keyOf(row),primaryKey:row[this.keyPath],value:copy(row),continue:()=>{if(this.tx.done)throw error('TransactionInactiveError');this.tx.tasks.push({req,action:next});}};};req=this.tx.enqueue(next);return req;}
+  cursor(filter,keyOf=row=>row[this.keyPath]){
+    const compare=(a,b)=>a<b?-1:a>b?1:0;let rows,position=0,req;
+    const next=()=>{rows??=[...this.data.rows.values()].filter(filter).sort((a,b)=>compare(keyOf(a),keyOf(b))||compare(a[this.keyPath],b[this.keyPath]));if(position>=rows.length)return null;
+      const row=rows[position++];let advanced=false;
+      const advance=()=>{if(this.tx.done)throw error('TransactionInactiveError');if(advanced)throw error('InvalidStateError');advanced=true;this.tx.tasks.push({req,action:next});};
+      return {key:keyOf(row),primaryKey:row[this.keyPath],value:copy(row),continue:advance,
+        continuePrimaryKey:(key,primaryKey)=>{if(compare(key,keyOf(row))<0||compare(key,keyOf(row))===0&&compare(primaryKey,row[this.keyPath])<=0)throw error('DataError');while(position<rows.length&&(compare(keyOf(rows[position]),key)<0||compare(keyOf(rows[position]),key)===0&&compare(rows[position][this.keyPath],primaryKey)<0))position++;advance();}};
+    };req=this.tx.enqueue(next);return req;
+  }
 }
 class Database {
   constructor(factory,meta){this.factory=factory;this.meta=meta;this.closed=false;meta.handles.add(this);}
   get objectStoreNames(){return names(this.meta.stores);}get version(){return this.meta.version;}get name(){return this.meta.name;}
-  createObjectStore(name,{keyPath}={}){if(this.meta.stores.has(name))throw error('ConstraintError');this.meta.stores.set(name,{keyPath,indexes:new Map(),rows:new Map()});return new Store(this.upgradeTx,name);}
+  createObjectStore(name,{keyPath,autoIncrement=false}={}){if(this.meta.stores.has(name))throw error('ConstraintError');this.meta.stores.set(name,{keyPath,autoIncrement:!!autoIncrement,indexes:new Map(),rows:new Map()});return new Store(this.upgradeTx,name);}
   transaction(stores,mode='readonly'){if(this.closed)throw error('InvalidStateError');for(const n of typeof stores==='string'?[stores]:stores)if(!this.meta.stores.has(n))throw error('NotFoundError');return new Transaction(this,stores,mode);}
   close(){this.closed=true;this.meta.handles.delete(this);for(const retry of this.meta.waiting.splice(0))queueMicrotask(retry);}
 }
 export class MockIDBFactory {
   constructor(){this.databasesMap=new Map();this.failNextPut=false;}
-  start(meta){const tx=meta.queue[0];if(!tx||tx.started)return;tx.started=true;tx.local=new Map([...meta.stores].map(([n,d])=>[n,{keyPath:d.keyPath,indexes:new Map(d.indexes),rows:new Map([...d.rows].map(([k,v])=>[k,copy(v)]))}]));queueMicrotask(()=>tx.pump());}
+  start(meta){const tx=meta.queue[0];if(!tx||tx.started)return;tx.started=true;tx.local=new Map([...meta.stores].map(([n,d])=>[n,{keyPath:d.keyPath,autoIncrement:d.autoIncrement,indexes:new Map(d.indexes),rows:new Map([...d.rows].map(([k,v])=>[k,copy(v)]))}]));queueMicrotask(()=>tx.pump());}
   open(name,version){const req={result:null,error:null,transaction:null};let notified=false;
     const attempt=()=>{
       let meta=this.databasesMap.get(name);if(!meta){meta={name,version:0,stores:new Map(),handles:new Set(),queue:[],waiting:[]};this.databasesMap.set(name,meta);}const target=version??(meta.version||1);

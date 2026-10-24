@@ -1,0 +1,15 @@
+# Round314 — New explicit candidate activation gets its own presentation intent
+
+Base2abbf5a was pushed and independently API-confirmed on the original Draft PR16/base. This slice fixes a distinct frame-local state issue found while investigating J1: an earlier trusted input permanently interrupted every later migration until the frame was destroyed. It is not retroactively claimed as the cause of Round313, which was the separately proven same-URL content rebind.
+
+A trusted candidate activation now establishes a fresh exact actionId in the migration model before dispatch. Previous pending actions retain replay tombstones; old or mismatched migration IDs cannot reveal, focus or replace the new pending migration. Duplicate/invalid IDs cannot clear interruption. Any input after the new activation still cancels its presentation restoration. Fresh mounts retain existing inherited-migration compatibility. The existing32-entry bound remains, with no tombstone eviction. Frame integration invalidates earlier pending LIST replies, clears old restore fields and cancels obsolete location work. Broker grants, native dispatch, six-second request limits and native actions are unchanged.
+
+Independent model tests first failed7/8 against the old API. Model plus actual frame-client/lifecycle/candidate-renderer contracts92/92 PASS, including earlier scroll interruption→new trusted activation, later input cancellation and a stale LIST arriving after the new action. These are explicitly synthetic DOM/transport tests, not physical input/browser proof of the same-client edge.
+
+Actual untouched formal-package headless J1 regression:9/9 continuous steps PASS with original pagination/focus/scroll/native navigation assertions, status remains PARTIAL_J1_NOT_ACCEPTED for LEGACY-only coverage. No source changed during the run. No private ChatGPT/profile/native writes or deployment were used.
+
+J4 investigation continues: ordinary current reads and explicit calibration can consume three budgeted requests each. A proposed permanent same-proof cache was rejected because existing acceptance requires an unchanged body to discover late upstream timestamps at the next real entry. No request budget or calibration requirement was relaxed. Full Free remains NOT_RELEASE_READY.
+
+Independent review caught a capacity regression in the initial patch: migration begin returning false was preventing native dispatch. Corrected before commit: failure disables restoration only; user activation still reaches its existing broker. Added actual frame-client34-action case asserts34 dispatches and32 restorations, with all replay tombstones retained. Targeted93/93 PASS. Earlier6084 full pass belongs to the reviewed predecessor; final verification follows separately.
+
+Final complete Node6085/6085 PASS. Final untouched-package J1 again9/9 steps, PARTIAL_J1_NOT_ACCEPTED/exit2, source/script/fixture/build unchanged and cleanup successful. Independent rereview approved the capacity correction. No broadened profile/real-account claims.

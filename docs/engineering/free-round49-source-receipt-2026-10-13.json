@@ -1,0 +1,35 @@
+{
+  "baseHead": "0600133fb88ae1e133062173a1b31d02a4f05ebd",
+  "git": "UNCOMMITTED_WORKTREE_CHECKPOINT",
+  "sourceHashes": {
+    "src/data/partition-manifest.mjs": "e9363342a5b44f14fcf3c12b7a65e0838e3376c250bd6d1e5978915c58ae7ef6",
+    "src/data/partitioned.mjs": "5de6daddaf991fe4a2548871b9cef27dd485c115f6dba1f83bea449838c7ab5f",
+    "src/data/repository.mjs": "c1420e631bfca6f9a156b9c1ce8c625e4375d666186e21fd28b9fd4613524d18",
+    "src/data/shared-ref-directory.mjs": "c33dad725c2e58d7edea02d9d23b7e0370431c27373f6b20488ecbcbba47a9e4",
+    "src/data/shared-directory-reader.mjs": "0adff92a10b4109b43973f912a6025daaff4995f0fa8d1cd15a14431acc9f8bc",
+    "simulator/build.mjs": "82fb113afc08c705840bff41d8fc68db6da1aaffd59a055dbacdd4193cbe8e4e",
+    "tests/free/shared-directory-reader.test.mjs": "888f5ff9d3b1e8f7d1468feabb93eb286a275546954fd74f30ca95e6ee36da62",
+    "tests/free/shared-directory-owner.test.mjs": "721d7652f82b123a86d4e97f0328a6f429d050bb2eea6e613730f6e1090cbdd0",
+    "tests/free/shared-directory-read-contracts.mjs": "c5207a59aff08c680ab15e13c5b3b5685c3022f70ddf1d6b978a81c0b77fd464",
+    "tests/free/shared-directory-reader-browser.mjs": "679f8adda2f6e038f499f2dc4d0ea741e7c3926d14ee11bfc2cd9125dda9780a",
+    "tests/free/shared-directory-bundle.test.mjs": "89dafebd09e9ec546cb81d63fd984d99a09fdb693a927125041b20542ba50e1a"
+  },
+  "fullNode": {
+    "pass": 980,
+    "fail": 0,
+    "skip": 0,
+    "excludesLaterNewOwnerAndBundleTests": true
+  },
+  "finalTargeted": {
+    "pass": 53,
+    "fail": 0,
+    "skip": 0,
+    "scope": "27 primitive + 23 reader + 1 mock owner with six checks + 2 actual bundle factory evaluations"
+  },
+  "realIDB": "NOT_RUN_AFTER_FIXTURE_CORRECTION_APPROVAL_REVIEW_USAGE_LIMIT",
+  "initialRealIDB": "FAIL_TEST_FIXTURE_SCOPE_KEY_UNNORMALIZED_BEFORE_CORRECTION",
+  "MV3": "NOT_RUN_APPROVAL_REVIEW_USAGE_LIMIT",
+  "normalSendPerformance": "NOT_RUN_LAST_ROUND47_MIXED_100K_FAIL",
+  "migrationAndWrites": "NOT_IMPLEMENTED_DIRECTORY_WRITES_AND_RECOVERY_EXPLICITLY_REFUSED",
+  "releaseReady": false
+}

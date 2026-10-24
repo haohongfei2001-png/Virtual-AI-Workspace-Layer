@@ -1,0 +1,21 @@
+✔ 5001-ref audit equals full evidence JSON oracle and counts all three tables (410.914292ms)
+✔ empty evidence audit preserves source metadata size with no piece reads (0.1685ms)
+✔ last piece checksum corruption cannot complete full audit (402.709208ms)
+✔ global duplicate events ID across batch boundary is rejected (340.427958ms)
+✔ global duplicate hints ID across batch boundary is rejected (407.489583ms)
+✔ global duplicate coverage ID across batch boundary is rejected (353.033958ms)
+✔ distinct hint IDs sharing source and eventKey across batches are rejected (347.411917ms)
+✔ manifest total count must match actual validated rows (368.839083ms)
+✔ second batch authority loss prevents completed audit (348.600042ms)
+✔ empty inventory cannot satisfy nonzero manifest counts (0.223833ms)
+✔ one ref with multiple rows counts rows rather than references (0.322625ms)
+✔ throwing completion callback fails exactly once (0.081208ms)
+✔ legal piece-size manifest and legal batches cannot hide global evidence overflow from sources (3261.362125ms)
+ℹ tests 13
+ℹ suites 0
+ℹ pass 13
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 6333.826792

@@ -1,0 +1,391 @@
+{
+  "kind": "NATIVE_GC_AUTHORITY_AND_LEGACY_HINT_VALIDATION_NOT_RELEASE_ACCEPTANCE",
+  "baseCommit": "2f9905efd0bdc1e674498fc612dae534ce8a5e44",
+  "productionChanges": [
+    {
+      "name": "legacy-checkpoint-authority-fence",
+      "scope": "Thread the existing owner check/abort through the legacy partition writer; check callback entry separately from tolerant checkpoint validation, and before each delete; rollback all six joint stores on guard loss or delete failure."
+    },
+    {
+      "name": "ambiguous-current-work-list-reconciliation",
+      "scope": "Use a current-revision hint only when exactly one row matches; zero or multiple matches reuse existing complete old-checkpoint reconciliation in both Native formats."
+    }
+  ],
+  "sourceHashes": {
+    "src/data/native-index-writer.mjs": "3d21760b89a900f6dbad2fdf39c4f98f0c0988948c3535be691e8fb6ad787c02",
+    "src/data/native-partitions.mjs": "47ed02c63eff94900b0b4de16844df020488ff7b4675a433ff31faa5b6e89510",
+    "src/data/native-repository.mjs": "f92db173be2963592a52c6bac7b5eae964312af24951403f7dfa656e345731a3",
+    "tests/free/native-gc-ambiguous-worklist.test.mjs": "bfd8699dd50b275ae701b44a2ea8c0285cd6e438cfae2468f430f0bfa665858f",
+    "tests/free/native-legacy-checkpoint-guard.test.mjs": "4c89e0e9cbcd689d9e6fc0cb7241ee346cfaddfdcba0b79ec23275f4369974b5"
+  },
+  "preserved": [
+    "True post-commit stale-after-commit with committed:true",
+    "Full existing root and checkpoint schema/byte/checksum validation including 64-row legacy roots",
+    "Exact raw prior checkpoint envelope",
+    "Live current/prior pieces and untouched project dependencies",
+    "Operation receipts, replay, Shared publication and native continuation semantics",
+    "Original source authority, deadlines, formal 30s and two complete 10k audits"
+  ],
+  "freshBaselineRed": {
+    "duplicate": {
+      "tests": 31,
+      "pass": 21,
+      "fail": 10,
+      "skipped": 0,
+      "cancelled": 0,
+      "logSHA256": "ddeff8a1b32c3fcb524f749096b562202d4faeb3fa5c73eb8dcf396c7115e631"
+    },
+    "legacyGuard": {
+      "tests": 6,
+      "pass": 4,
+      "fail": 2,
+      "skipped": 0,
+      "cancelled": 0,
+      "logSHA256": "57e2aeed9606c4dcd46d8d8af854c5cd2b176b6249367c0c2d78f900fee933e2"
+    },
+    "guardFailurePhase": "Before production checkpoint callback entry: tx.done=false, six pending requests, global Native revision2, new Shared X only staged locally; old legacy path committed all six stores, indexed control aborted. This is not the allowed post-commit notification gap."
+  },
+  "validation": {
+    "restoredTargeted": {
+      "pass": 85,
+      "fail": 0,
+      "skipped": 0,
+      "cancelled": 0,
+      "durationMs": 1076.116084
+    },
+    "finalLabelOnlyTargeted": {
+      "pass": 42,
+      "fail": 0,
+      "skipped": 0,
+      "cancelled": 0,
+      "durationMs": 556.533019
+    },
+    "independent": {
+      "decision": "CLEAN within two-fix scope; independent focused tests and 7 target mutations completed",
+      "baselineCommit": "2f9905efd0bdc1e674498fc612dae534ce8a5e44",
+      "candidateHashesVerifiedBeforeAndAfter": {
+        "src/data/native-partitions.mjs": "47ed02c63eff94900b0b4de16844df020488ff7b4675a433ff31faa5b6e89510",
+        "src/data/native-repository.mjs": "f92db173be2963592a52c6bac7b5eae964312af24951403f7dfa656e345731a3",
+        "src/data/native-index-writer.mjs": "3d21760b89a900f6dbad2fdf39c4f98f0c0988948c3535be691e8fb6ad787c02",
+        "tests/free/native-gc-ambiguous-worklist.test.mjs": "558f42bd44f54509469182b6fb2ab55c4ce252a9771745113145ed528084ac77",
+        "tests/free/native-legacy-checkpoint-guard.test.mjs": "4c89e0e9cbcd689d9e6fc0cb7241ee346cfaddfdcba0b79ec23275f4369974b5"
+      },
+      "results": [
+        {
+          "name": "control",
+          "exitCode": 0,
+          "tests": 42,
+          "pass": 42,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "durationMs": 426.194085,
+          "failures": [],
+          "logSha256": "813748ad5c93c01a6738efe1e416c0e313a2dc2c6d060000c06c3fbac411084d"
+        },
+        {
+          "name": "owner-unwired",
+          "exitCode": 1,
+          "tests": 43,
+          "pass": 35,
+          "fail": 8,
+          "skipped": 0,
+          "cancelled": 0,
+          "durationMs": 465.628311,
+          "failures": [
+            "tests/free/native-gc-ambiguous-worklist.test.mjs",
+            "partitioned ambiguous current-hint guard loss at live checkpoint callback must abort native and shared publication",
+            "partitioned existing missing-hint guard loss at live checkpoint callback must abort native and shared publication",
+            "partitioned missing checkpoint cannot swallow pre-commit authority loss",
+            "partitioned corrupt checkpoint cannot swallow pre-commit authority loss",
+            "partitioned throwing-guard checkpoint cannot swallow pre-commit authority loss",
+            "partitioned guard-between-deletes rolls back the complete joint owner transaction",
+            "partitioned delete-error rolls back the complete joint owner transaction"
+          ],
+          "logSha256": "eefb27beba8d4c3b840030eccef20d7db01fb8b68a961ee320fbc99fad5ca6de"
+        },
+        {
+          "name": "entry-removed",
+          "exitCode": 1,
+          "tests": 42,
+          "pass": 40,
+          "fail": 2,
+          "skipped": 0,
+          "cancelled": 0,
+          "durationMs": 518.484951,
+          "failures": [
+            "partitioned missing checkpoint cannot swallow pre-commit authority loss",
+            "partitioned corrupt checkpoint cannot swallow pre-commit authority loss"
+          ],
+          "logSha256": "58626780d6912371d24416501800cf3f2101956f43d93d82b95526b7a48d5694"
+        },
+        {
+          "name": "entry-swallowed",
+          "exitCode": 1,
+          "tests": 42,
+          "pass": 37,
+          "fail": 5,
+          "skipped": 0,
+          "cancelled": 0,
+          "durationMs": 519.728438,
+          "failures": [
+            "partitioned ambiguous current-hint guard loss at live checkpoint callback must abort native and shared publication",
+            "partitioned existing missing-hint guard loss at live checkpoint callback must abort native and shared publication",
+            "partitioned missing checkpoint cannot swallow pre-commit authority loss",
+            "partitioned corrupt checkpoint cannot swallow pre-commit authority loss",
+            "partitioned throwing-guard checkpoint cannot swallow pre-commit authority loss"
+          ],
+          "logSha256": "0fcd3b0d9d6f4177b276e39cb9c32bd34a6a0aa0c8d027c027b0db6aa6ed2986"
+        },
+        {
+          "name": "per-delete-removed",
+          "exitCode": 1,
+          "tests": 42,
+          "pass": 41,
+          "fail": 1,
+          "skipped": 0,
+          "cancelled": 0,
+          "durationMs": 522.471788,
+          "failures": [
+            "partitioned guard-between-deletes rolls back the complete joint owner transaction"
+          ],
+          "logSha256": "9b9a88053e18494d3683556cb1463fc16572c47d5ccba282d4489646a828d6b8"
+        },
+        {
+          "name": "delete-fail-swallowed",
+          "exitCode": 1,
+          "tests": 42,
+          "pass": 40,
+          "fail": 2,
+          "skipped": 0,
+          "cancelled": 0,
+          "durationMs": 497.126797,
+          "failures": [
+            "partitioned guard-between-deletes rolls back the complete joint owner transaction",
+            "partitioned delete-error rolls back the complete joint owner transaction"
+          ],
+          "logSha256": "33fe4d9ddfb41f325929f6e401b9b128b550e76c47e5b1da6b8ceead1214df2f"
+        },
+        {
+          "name": "legacy-first-match",
+          "exitCode": 1,
+          "tests": 42,
+          "pass": 38,
+          "fail": 4,
+          "skipped": 0,
+          "cancelled": 0,
+          "durationMs": 496.84724,
+          "failures": [
+            "partitioned incomplete-first: retire only superseded pieces across owner revisions 1..4",
+            "partitioned all-incomplete: retire only superseded pieces across owner revisions 1..4",
+            "partitioned split-project-ref: retire only superseded pieces across owner revisions 1..4",
+            "partitioned legacy64-ambiguous: retire only superseded pieces across owner revisions 1..4"
+          ],
+          "logSha256": "494231bc76b2a8e96b12e72d819ae69cbf8b1e4fd0c88a273c5111e92536047f"
+        },
+        {
+          "name": "index-first-match",
+          "exitCode": 1,
+          "tests": 42,
+          "pass": 36,
+          "fail": 6,
+          "skipped": 0,
+          "cancelled": 0,
+          "durationMs": 465.362727,
+          "failures": [
+            "indexed incomplete-first: retire only superseded pieces across owner revisions 1..4",
+            "indexed all-incomplete: retire only superseded pieces across owner revisions 1..4",
+            "indexed split-project-ref: retire only superseded pieces across owner revisions 1..4",
+            "indexed complete-first: retire only superseded pieces across owner revisions 1..4",
+            "indexed complete-duplicate: retire only superseded pieces across owner revisions 1..4",
+            "indexed legacy64-ambiguous: retire only superseded pieces across owner revisions 1..4"
+          ],
+          "logSha256": "663483a9411a8c576bf3314bfcf474241dcd77d5685ac90bea6d2b98dd1dadcf"
+        },
+        {
+          "name": "owner-unwired-guard-only",
+          "exitCode": 1,
+          "tests": 11,
+          "pass": 4,
+          "fail": 7,
+          "skipped": 0,
+          "cancelled": 0,
+          "durationMs": 265.963019,
+          "failures": [
+            "partitioned ambiguous current-hint guard loss at live checkpoint callback must abort native and shared publication",
+            "partitioned existing missing-hint guard loss at live checkpoint callback must abort native and shared publication",
+            "partitioned missing checkpoint cannot swallow pre-commit authority loss",
+            "partitioned corrupt checkpoint cannot swallow pre-commit authority loss",
+            "partitioned throwing-guard checkpoint cannot swallow pre-commit authority loss",
+            "partitioned guard-between-deletes rolls back the complete joint owner transaction",
+            "partitioned delete-error rolls back the complete joint owner transaction"
+          ],
+          "logSha256": "43b346def693245544e17ce9584d34e81db9ca86044768102cc10b60c25de568"
+        }
+      ],
+      "runner": "node v24.19.0 --test --test-reporter=tap",
+      "scope": "Real NativeRepository and WorkspaceRepository owners over existing serial MockIDB. Not browser IndexedDB durability, timing, 10k, full Node, remote CI, or release verification. No candidate/main/remote changes.",
+      "nonBlockingNote": "Restored duplicate test quota-after-new-root hook actually throws before primary scope root put, after recovery put has been queued. Parent will relabel without changing injection condition/point; current report strictly covers 558f test bytes.",
+      "mutationNote": "owner-unwired combined run has 7 precise guard assertion failures and an extra file-level failure from late InvalidStateError activity following signal abort. Isolated unchanged 11-guard file independently yields 4 pass / 7 fail.",
+      "testInputFreezeVerified": true
+    },
+    "independentFinalLabelReview": {
+      "decision": "CLEAN; final label-only delta verified",
+      "oldTestSha256": "558f42bd44f54509469182b6fb2ab55c4ce252a9771745113145ed528084ac77",
+      "newTestSha256": "bfd8699dd50b275ae701b44a2ea8c0285cd6e438cfae2468f430f0bfa665858f",
+      "replacementCount": 2,
+      "exactReplacement": {
+        "from": "quota-after-new-root",
+        "to": "quota-before-current-root-put"
+      },
+      "allOtherFourFileHashesUnchanged": true,
+      "testBehaviorUnchanged": true,
+      "parentRunLogSha256": "5cbb989f1ad1f1e130663be3982b11e7b0b682db3dcf1383c65e4accc9c908ff",
+      "parentRunSummary": [
+        "✔ partitioned delete-error rolls back the complete joint owner transaction (3.980339ms)",
+        "ℹ tests 42",
+        "ℹ suites 0",
+        "ℹ pass 42",
+        "ℹ fail 0",
+        "ℹ cancelled 0",
+        "ℹ skipped 0",
+        "ℹ todo 0",
+        "ℹ duration_ms 556.533019"
+      ],
+      "independentPriorControl": "42/42 and 7 target mutations killed against exact pre-label bytes; no re-run needed for proven two literal relabels"
+    },
+    "frozenFullNode": {
+      "tests": 8094,
+      "pass": 8094,
+      "fail": 0,
+      "skipped": 0,
+      "cancelled": 0,
+      "durationMs": 184506.182192,
+      "node": "v24.19.0",
+      "testConcurrency": 2,
+      "exitCode": 0,
+      "logSHA256": "d45fb3f0af30681f681bd8f6ecfbcd7e9d5eb3f7ae6998d1a1a9a7f0757c691b",
+      "frozenInputFileCount": 1100,
+      "allInputHashesUnchanged": true,
+      "freezeManifestSHA256": "fca9f24b4090323cb7c58bfbf218e1644471da6c10443affe8cd06eb1c7bf24a"
+    },
+    "originalGuardMutations": {
+      "summary": {
+        "selected": 12,
+        "killed": 12,
+        "pass": true
+      },
+      "inputUnchanged": true,
+      "inputHashes": {
+        "src": "78367c7713a69d8ecc89b3d6da8834738a8062aab020f4a0190763ee78b1f774",
+        "tests": "a73a89ea4c1c6b8771c13b6a2dc72dc3ac70c4ec24bf88af9c59ed963a28df21",
+        "simulator": "ac28ff64c62b94b96eb21eb8b51489548b37c8c13d9214171cacf64975711ef6"
+      },
+      "manifestHash": "4bd2ac3f97431242d6083e0d5e38f584d17cb6dfc8b94cc2e114a331cfeeaa56",
+      "runnerHash": "e467fdab888c76e864ed2b1bd0f35269c4d046cabb384b502ff83ff6d67d5eb8",
+      "reportSHA256": "c2c90345ed8dd53cee044bde578b422e820ec723820cae080939ac5c1e8c1b71",
+      "cases": [
+        {
+          "id": "origin",
+          "status": "KILLED",
+          "sourceHash": "fddfafcca2276161e6fd3c908ac896d0dab656fce6cf06aee64f1f442f7ac7e9",
+          "testHash": "9b8fd742d87bd3f3b6798f1bedd4a3ce150964faa4226e503cb278ff1520f9a5",
+          "targetCase": "reject unsafe or ambiguous URL \"https://evil.test/c/11111111-2222-4333-8444-555555555555\""
+        },
+        {
+          "id": "missing-as-null",
+          "status": "KILLED",
+          "sourceHash": "4733a8cecdc3f4664c77da81d12441c9f2bd7cf0c16e55ec93eb94076faa4e5d",
+          "testHash": "1dea1df4e0189055122d08e521edf3b9c6bb5d863e655d7b0c085aabdb4a006a",
+          "targetCase": "maps native IDs and exact titles without name merge or invented coverage"
+        },
+        {
+          "id": "merge-by-name",
+          "status": "KILLED",
+          "sourceHash": "4733a8cecdc3f4664c77da81d12441c9f2bd7cf0c16e55ec93eb94076faa4e5d",
+          "testHash": "1dea1df4e0189055122d08e521edf3b9c6bb5d863e655d7b0c085aabdb4a006a",
+          "targetCase": "maps native IDs and exact titles without name merge or invented coverage"
+        },
+        {
+          "id": "old-epoch",
+          "status": "KILLED",
+          "sourceHash": "4733a8cecdc3f4664c77da81d12441c9f2bd7cf0c16e55ec93eb94076faa4e5d",
+          "testHash": "1dea1df4e0189055122d08e521edf3b9c6bb5d863e655d7b0c085aabdb4a006a",
+          "targetCase": "old epoch rejected"
+        },
+        {
+          "id": "self-certified-receipt",
+          "status": "KILLED",
+          "sourceHash": "4733a8cecdc3f4664c77da81d12441c9f2bd7cf0c16e55ec93eb94076faa4e5d",
+          "testHash": "1dea1df4e0189055122d08e521edf3b9c6bb5d863e655d7b0c085aabdb4a006a",
+          "targetCase": "unknown receipt rejected"
+        },
+        {
+          "id": "pre-ack-send",
+          "status": "KILLED",
+          "sourceHash": "92fdfc486bd9614028aacc197b99a26b8ad3ae254e54a980a04b0a1e90153144",
+          "testHash": "3a9b6a5beddd5ba186ba9434c680b9ff39d006719560bf2610981b4657b3d247",
+          "targetCase": "absent status cannot establish acceptance"
+        },
+        {
+          "id": "current-leaf-key",
+          "status": "KILLED",
+          "sourceHash": "7e4362115828c9b68ff3a34923587c2711e6df854d119b9b3d3a1d91b5830fc5",
+          "testHash": "c390112749cd8c21b1ec6746290ef3de13a5aa19b6328452624d19e4af6236d1",
+          "targetCase": "ACT-06/11 current leaf cannot change durable event key"
+        },
+        {
+          "id": "poll-renews-anchor",
+          "status": "KILLED",
+          "sourceHash": "2d961ee56aaddada429ba684cf08ba1aa4a4886204f2d3a43d3b52843da7de46",
+          "testHash": "7c0bc0195cce61536e2ad27da572d848e3c74bbb304561e9d0794a4e347e5da9",
+          "targetCase": "MOCK_IDB repeated message preserves first observation interval and calibration due"
+        },
+        {
+          "id": "auto-popover",
+          "status": "KILLED",
+          "sourceHash": "18bfa6a33bc28d084285c9c615219aa06aa33784e9e04466e035b6e7e56d833f",
+          "testHash": "e6fa0c8ba60b0bd7821b0a38869441603fc31c82240d2c842bbfc07da6f31a44",
+          "targetCase": "closed layout retention is confined to both exact owned IDs and closed state"
+        },
+        {
+          "id": "remove-background-inert",
+          "status": "KILLED",
+          "sourceHash": "18bfa6a33bc28d084285c9c615219aa06aa33784e9e04466e035b6e7e56d833f",
+          "testHash": "e6fa0c8ba60b0bd7821b0a38869441603fc31c82240d2c842bbfc07da6f31a44",
+          "targetCase": "native masks still depend only on owned popover-open and never receive inline display or inert"
+        },
+        {
+          "id": "async-prevent-default",
+          "status": "KILLED",
+          "sourceHash": "70cde36dffcc5940c9aa8986e7219ee8e3865a12b3de1dd5054a72054ab67f58",
+          "testHash": "134a3c5505a0a9615218498cbed7c2b79b8a115540b1e5fa9a968ec53e73121e",
+          "targetCase": "UI-01 delegated action prevents default before asynchronous RPC"
+        },
+        {
+          "id": "post-commit-continuation",
+          "status": "KILLED",
+          "sourceHash": "f92db173be2963592a52c6bac7b5eae964312af24951403f7dfa656e345731a3",
+          "testHash": "3d06aa7c68fea88f2e7d5ff2a3f6bb5a1e9f3aafdc86c9ebb8fc2a6c4d4b2ae0",
+          "targetCase": "MOCK_IDB native, shared anchor and pending evidence commit together; replay remains single and scoped"
+        }
+      ]
+    }
+  },
+  "restorationProvenance": {
+    "workspaceReplaced": true,
+    "productionAnd11GuardTests": "Reconstructed byte-identically to the pre-interruption hashes, then rerun",
+    "duplicate31Tests": "Reconstructed and reviewed as a new hash, not claimed byte-identical to the lost source; baseline RED and candidate GREEN rerun",
+    "oldUnpublishedLogs": "Not claimed available; this evidence uses fresh restored runs",
+    "quotaLabel": "Renamed consistently to quota-before-current-root-put; injection occurs after recovery put is queued but before the primary scope root put"
+  },
+  "scopeLimits": [
+    "MockIDB owner evidence is not browser IndexedDB durability or timing",
+    "Single schema-valid but semantically incomplete hint is not repaired by the duplicate-selection change",
+    "Corrupt checkpoints remain conservative retention, not authorization for deletion",
+    "No new real ChatGPT/profile permission or full Free acceptance"
+  ],
+  "browser": "PENDING_NEW_CI",
+  "realChatGPT": "NOT_RUN",
+  "release": "NOT_RELEASE_READY"
+}

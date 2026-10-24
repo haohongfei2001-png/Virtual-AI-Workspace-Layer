@@ -1,0 +1,25 @@
+{
+  "evidence": "REAL_BROWSER_SYNTHETIC_RENEWAL",
+  "results": [
+    {
+      "mode": "scope",
+      "switched": true,
+      "pages": 0,
+      "checks": 1,
+      "status": {
+        "state": "WAITING",
+        "reason": "stale-client-response"
+      }
+    },
+    {
+      "mode": "version",
+      "switched": true,
+      "pages": 0,
+      "checks": 1,
+      "status": {
+        "state": "WAITING",
+        "reason": "snapshot-revision-changed"
+      }
+    }
+  ]
+}
