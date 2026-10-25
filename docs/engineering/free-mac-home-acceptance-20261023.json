@@ -2583,5 +2583,53 @@
       "testMessagesSent": 0
     },
     "next": "Current Project is in native reading with own popup open. User confirmation is required only for this new document under AUTHORITY; continue same-document private recovery and native navigation once confirmed."
+  },
+  "privateContinuityR91_20261025": {
+    "baseHead": "5f467687a3e22351d1e28ee2fad9625d0a857dc3",
+    "environment": "Original Mac Chrome Profile 4, original extension ID, exact-PID native System Events only",
+    "actualMac": {
+      "personalConfirmation": "PASS_USER_CONFIRMED_AND_OWN_POPUP_ACK_READ_BACK",
+      "projectAfterUnlock": "PASS_ONE_FORMAL_PROJECT_TWO_MEMBERS_RETAINED",
+      "formalMemberNavigation": "PASS_EXPECTED_NATIVE_TARGET_NEW_TAB_PRESERVES_ORIGINAL",
+      "newTabPrivateLock": "PASS_NEW_DOCUMENT_LOCKED_ORIGINAL_TAB_STILL_UNLOCKED",
+      "nativeSameDocumentMemberOpen": "PASS_TARGET_TITLE_AND_PERSONAL_BINDING_RETAINED",
+      "memberFourGridReturn": "PASS_FORMAL_PROJECT_AND_TWO_MEMBERS_RETAINED_ON_MEMBER_ROUTE",
+      "nativeReturnToProject": "PASS_NATIVE_MENU_TARGET_AND_PERSONAL_BINDING_RETAINED",
+      "newChatEntry": "PASS_NATIVE_NEW_CHAT_TO_CANONICAL_HOME",
+      "newChatSendAndStableIdDiscovery": "NOT_RUN_COMPOSER_VALUE_NOT_EMPTY_OR_SINGLE_LINE_BREAK_NO_OVERWRITE",
+      "accountRiskEntry": "PASS_PROFILE_MENU_OPEN_AND_DISMISS_LOCKS_OLD_PRIVATE_DATA_NO_ACCOUNT_CHANGE",
+      "crossAccountDataIsolation": "NOT_RUN_NO_ACTUAL_ACCOUNT_SWITCH",
+      "workerRestart": "NOT_ESTABLISHED_PRIOR_STOP_RESULT_UNCHANGED_NOT_REPEATED",
+      "fullChromeRestart": "INHERITED_PRIOR_PASS_NOT_REPEATED",
+      "privateOnlyDurableRestoreAfterFreshRestart": "NOT_ESTABLISHED_SAME_DOCUMENT_PROJECTION_IS_NOT_A_NEW_DISK_RESTORE_PROOF"
+    },
+    "confirmedLimitation": {
+      "formalNavigation": "Observed profile has no complete inputRisk grammar; native-actions intentionally chooses new-tab-preserve-current for unknown risk even with a live handle. New document cannot inherit private confirmation.",
+      "code": [
+        "src/host/chatgpt-observed-profile.mjs",
+        "src/host/native-input-risk.mjs",
+        "src/host/native-actions.mjs"
+      ],
+      "resolutionBoundary": "Requires evidence-backed complete composer/attachment/upload/generation/voice/canvas risk grammar; do not mark clear from a URL, empty-looking input or partial AX observation."
+    },
+    "observerNotes": [
+      "First non-focused AXPress briefly opened frames then reading returned without suspension error; explicit focused keyboard entry remained open. Cause of first presentation change not established; no product failure invented.",
+      "Native Project menu old AX index failed before dispatch after layout change; resolved current guarded native control and dispatched once.",
+      "Composer checked only for empty/line-break booleans and length; no text logged, no edits or test send."
+    ],
+    "preservation": {
+      "sameExtensionId": "miendbcjdmecjggplepenghjnoejmaic",
+      "noReloadOrInstall": true,
+      "noOperatorDatabaseAccess": true,
+      "draftsUntouched": true,
+      "noBrowserTabClaim": true,
+      "noCDP": true,
+      "otherChromeNotOperated": true,
+      "unlockNotClickedByOperator": true,
+      "internalSourceRequests": 0,
+      "testMessagesSent": 0,
+      "oldTabsRetained": true
+    },
+    "next": "No new confirmation needed for completed continuity evidence. Remaining send requires a truly empty native test composer without discarding a draft; Worker restart needs a supported verifiable stop/restart observation. Formal same-tab navigation requires complete risk grammar. Final private state intentionally locked by risk test."
   }
 }

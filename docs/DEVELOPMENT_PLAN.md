@@ -1,6 +1,10 @@
 # VAIWL 唯一开发计划：Free 完整交付 → Pro 智能增强
 
 
+接续5f467687，原C2/C5/F4：本人确认后的Project→原生成员→四格→原生Project返回，私人绑定及正式Project/两成员实际连续保持；账户风险菜单打开/关闭后旧私人层实际锁定。正式卡片因当前inputRisk未获完整语法而保守新开标签，新文档locked不等于原grant丢失。继续保留该明确适配限制，禁止以未知风险改clear。新聊天入口已实际到首页，输入框非空，未覆盖/发送；新稳定ID、可验证Worker重启、跨账号全过程和新启动私人独有记录恢复仍未成立。原完整Chrome重启PASS不重复。当前私人层因风险验收有意锁定，不为已完成旅程再次索取确认；详见STATUS及privateContinuityR91_20261025，未宣称完整日用通过。
+
+
+
 接续ea7e25fc，原C2/C5/F4：原窗口已恢复，r89同ID原生Reload完成，Mac新首页/原生Project菜单/正式Project卡片及两成员已实际通过。旧私人层正确锁定；当前原生Project阅读页popup就绪，等待本人新文档确认后继续私人来源升级恢复验收。保留旧聊天/草稿/库，不再重复即时Project、完整Chrome重启或来源实验。详见STATUS及sourceUpgradeMacActivationR90_20261025。
 
 
