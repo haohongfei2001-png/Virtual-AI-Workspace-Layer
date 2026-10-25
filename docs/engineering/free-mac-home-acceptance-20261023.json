@@ -3573,8 +3573,14 @@
         },
         "interpretation": "Current Project document successfully responds and its real VIEW is consumed by formal renderer. Reading mode with not-attempted workspace is not a render failure. This does not retrospectively establish the old transport-error cause or prove visible UX.",
         "expandCheck": "NOT_RUN: existing toolbar close guard returned Target is not frontmost (-2700), before dispatch. No activation, retry, reload or alternate channel."
+      },
+      "projectVisibleUserConfirmation": {
+        "status": "PASS_USER_CONFIRMED_ACTUAL_MAC",
+        "result": "已看到 Project 卡片和两条成员",
+        "method": "User clicked existing four-grid after Project snapshot; no installation, refresh, new data or automated tab takeover.",
+        "scope": "Project formal card and two members actually visible; not a claim of full visual matrix or private disk recovery."
       }
     },
-    "remaining": "Current Project receiver and rendering are now verified. Final sustained visual workspace opening remains unverified because native input guard prevented the toolbar close/return interaction. Private record restoration also remains NOT_RUN; no new code defect inferred from either."
+    "remaining": "Project reception, formal rendering and actual visible card/two members now PASS. Old persisted object recovery remains NOT_RUN: current document last confirmed LOCKED; existing anonymous header counts and past personal continuity do not identify a particular older disk record. No new defect, candidate or repeated historical tests justified."
   }
 }

@@ -1,5 +1,7 @@
 # VAIWL实际状态：渐进积累工程已接线，真实来源逐项待准入
 
+**2026-10-25 r96 Project 实际显示闭环通过（接续31e10e32）：** 用户明确反馈“已看到 Project 卡片和两条成员”。结合本批精确版本指纹、Project状态通信、1卡/2行renderer回执，当前Project数据→正式渲染→四格展开可见成立，保留原安装不再重测。此确认不冒充完整视觉矩阵或旧私人数据恢复。已过新聊天入列/打开、原生搜索、四格、同文档私人/Worker连续性、重启锁定及账户风险锁定继续继承；实际跨账号切换未测试。旧持久记录恢复仍缺当前文档本人解锁及对象级旧来源证据，原弹窗最后为LOCKED。复核既有personal存储路由和NativeRepository读取校验，无新代码缺陷；不以last-known、库数量或已存在描述符证明某条旧记录恢复，不为此新出候选/重装/反复运行测试。旧数据库、草稿与安装未动，完整个人日用验收不提前宣称。
+
 **2026-10-25 r96 Project 当前文档接收与正式绘制已实机通过（接续70bd4390）：** 用户按集中请求进入已有Project并打开状态；只读原Profile自有弹窗取得同一新包指纹、module-loaded和reading。即时库revision=8，1个Project/15条聊天，VIEW groups=1/1、unknown=13/5；正式renderer回执cards=1/rows=2。当前Project的状态/布局/后台投影与框架消费通信均已成立，旧transport-error本次未复现，历史具体根因仍不倒推。控制器registered=true、双frame/双grant、geometryPaused=false、returnPresent=true，attempt=not-attempted：当前是原生阅读，不能当空投影故障。原content-session导航后保留reading与此一致，不强制覆盖原生阅读。随后原工具栏关闭动作在前台守卫处返回-2700，未发点击，未激活/重试/换通道；本次工作空间展开后的持续视觉仍NOT_RUN。旧私人库保持锁定，未读写数据/草稿、未刷新或更新包。没有新的确定代码缺陷，沿用固定r96；不重跑离线测试或以记录数量充当交付。剩余为实际四格展开后的卡片持续可见及此前未建立的旧私人记录恢复；完整个人v2.7验收仍未通过。详见原Mac回执 `r96DisplayReceiptRepair20261025.realMac.projectCurrentBuildSnapshot`。
 
 **2026-10-25 r96 固定修复批：真实首页已收到 renderer 回执，持续显示及 Project 仍未验收。** 接续2eb687fd，本轮集中修复一个确定的呈现控制缺陷：mount拒绝展开曾返回undefined，controller仍可能按成功移除四格。现要求实际workspace popover-open；拒绝时保留安全的reading/四格，原生弹层、几何、身份及scope保护不放宽。此代码反例不等于已经证明全部历史r96空白由此引起。沿原frame/client/renderer补私有授权通道的delivery→received→rendered回执，延迟投影只在真正建立节点后回报；原popup补控制器展开状态。入口在动态import前安装只读私有boot responder，精确documentId/URL与构建指纹可区分模块失败和接收端缺失，不重试、不自动注入。没有重写UI、数据层或浏览器操作器。
