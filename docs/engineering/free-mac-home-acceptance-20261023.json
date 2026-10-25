@@ -3211,6 +3211,28 @@
   },
   "v27ProductIntegration20261025": {
     "baseHead": "b5999e7033a39db9fd546815eafb2d7726df1617",
+    "evidenceClosure": {
+      "checkedHead": "39e13084f870f9206b53bdc4d0ef18dee92c62ac",
+      "userDecision": "KEEP_CURRENT_R96_INSTALLATION_EVIDENCE_ONLY_NO_ROLLBACK",
+      "newChatClosure": "INHERITED_R95_REAL_PASS_NOT_RERUN",
+      "newChatEvidence": "r95MinimumClosure20261025.newChat",
+      "persistedRecordRestore": "NOT_RUN_UNVERIFIED_NOT_PRODUCT_FAILURE",
+      "privateOnlyRecordRestore": "NOT_RUN_UNVERIFIED_NOT_PRODUCT_FAILURE",
+      "restoreEvidenceLimit": "Existing receipts do not link a specific older persisted object, source and observation time to its restoration. Personal/Worker continuity and restart locking do not prove object-level disk restoration.",
+      "currentProductBlockers": [
+        "R96_HOME_EMPTY_WITH_CANDIDATE_READ_ERROR",
+        "R96_PROJECT_CONTENT_STATUS_TRANSPORT_ERROR"
+      ],
+      "blockerRootCauses": "NOT_ESTABLISHED",
+      "dailyUseAccepted": false,
+      "scope": "EXISTING_DOCS_RECEIPT_AND_PR_CHECKPOINT_ONLY",
+      "browserActions": 0,
+      "realDatabaseReadsOrWrites": 0,
+      "installationChanges": 0,
+      "newCandidates": 0,
+      "testsRerun": 0,
+      "oldEvidencePreserved": true
+    },
     "r95ProductExperience": "REJECTED_BY_USER",
     "inheritedTechnicalPassesDoNotEstablishProductAcceptance": true,
     "candidate": "r96",
