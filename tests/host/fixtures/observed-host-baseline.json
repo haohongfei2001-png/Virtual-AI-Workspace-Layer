@@ -1,6 +1,6 @@
 {
   "schema": "chatgpt-host-observed-baseline-v1",
-  "version": "chatgpt-desktop-observed-v2",
+  "version": "chatgpt-desktop-observed-v3",
   "sourceReceipt": "docs/engineering/free-mac-home-acceptance-20261023.json",
   "rawDOMCapture": false,
   "privateData": "NONE_SYNTHETIC_IDS_AND_TEXT_ONLY",
@@ -210,14 +210,17 @@
     {
       "id": "home-history-readiness",
       "evidencePointers": [
-        "/r93ConcentratedAcceptance20261025"
+        "/r93ConcentratedAcceptance20261025",
+        "/r94ConcentratedAcceptance20261025"
       ],
       "fixture": "observed-host-replay.mjs",
       "runner": "observed-profile-browser.mjs --history-ready-only",
       "kind": "failure-supported-counterexample-not-captured-live-order",
       "facts": [
         "r93-home-row-order-refusal",
-        "private-cache-remains-locked"
+        "private-cache-remains-locked",
+        "r94-home-preparation-row-order-refusal",
+        "existing-diagnostics-do-not-record-direct-dom-row-order-or-mutations"
       ],
       "expectedSafetyContracts": [
         "full-history-proof-before-handshake",
@@ -228,15 +231,18 @@
       ],
       "unknowns": [
         "actual-home-row-structure-and-mutation-order",
-        "whether-readiness-gap-is-real-failure-only-cause"
+        "whether-readiness-gap-is-real-failure-only-cause",
+        "zero-stable-direct-rows-versus-nonconsecutive-stable-direct-rows",
+        "algorithm-versus-adapter-cause"
       ],
-      "integrationRunner": "browser-local-mv3.mjs --history-ready-only"
+      "integrationRunner": "browser-local-mv3.mjs --history-ready-only",
+      "replayLimit": "The existing reconstruction is not a reproduction of the r94 live list: no reliable real direct-row structure or mutation trace was obtained. Do not infer an implementation fix from the synthetic order."
     }
   ],
   "minimalMissingObservations": [
     {
       "id": "r93-home-history-structure",
-      "need": "Only if r94 still differs: bounded direct-row categories and ordered node changes at home readiness; no IDs, titles, body or second test send. The r93 final status does not establish the live row structure."
+      "need": "r94 actually failed in preparation. Existing popup and native AX did not establish direct DOM stable/temporary row positions, natural noncontiguity, replacement or mutation order. Obtain one bounded anonymous direct-row trace through an available local diagnostic before algorithm/adapter changes; no title, ID, body, repeated send, wait/threshold change or automatic retry."
     },
     {
       "id": "new-chat-event-order",

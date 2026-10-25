@@ -2772,5 +2772,81 @@
       "nativeInputRisk": "Observed profile still lacks complete composer/retained editors/files/upload/generation/voice/canvas state grammar. Preserve unknown-risk new-tab fallback."
     },
     "next": "ONE_FROZEN_R94_HOME_AND_EXISTING_CHAT_BATCH_THEN_PRIVATE_ONLY_RESTORE_IF_PASS_NO_PASSED_JOURNEY_REPEATS"
+  },
+  "r94ConcentratedAcceptance20261025": {
+    "baseHead": "32a407200ba89700da361b10ba02f0d21a97138f",
+    "candidate": "r94",
+    "installation": {
+      "originalId": "miendbcjdmecjggplepenghjnoejmaic",
+      "canonicalFiles": 197,
+      "sameManifest": true,
+      "candidateVerified": true,
+      "sameIdReload": "DISPATCHED_ONCE",
+      "activated": true,
+      "backup": ".git/vaiwl-artifacts/mac-r94-concentrated-20261025/previous-extension",
+      "extraFilesPreserved": true,
+      "preDispatchStops": [
+        "PID_REFERENCE_GUARD_NO_INPUT",
+        "FOREGROUND_GUARD_NO_INPUT"
+      ]
+    },
+    "actualMac": {
+      "home": "FAIL_layout-history-row-order",
+      "failurePhase": "PREPARATION_BEFORE_FORMAL_MOUNT",
+      "layoutShape": {
+        "counts": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          0
+        ],
+        "branches": []
+      },
+      "privateState": "LOCKED",
+      "newChatProjection": "NOT_RUN_HOME_PRECONDITION_FAILED",
+      "privateOnlyRestore": "NOT_RUN_DEPENDS_ON_PROJECTION_PASS",
+      "newSendCount": 0
+    },
+    "boundedDiagnosis": {
+      "popup": "EXISTING_FIXED_STATUS_AND_LAYOUT_SHAPE_READ_ONCE",
+      "sourceInterpretation": "At fresh preparation, row-order means either zero direct children bearing the stable-row marker or nonconsecutive marked direct children. The code does not distinguish these conditions.",
+      "anonymousAXAttributeInventory": "READ_ONLY_ROOT_ROLE_AND_ATTRIBUTE_NAMES_NO_TEXT_OR_ATTRIBUTE_VALUES",
+      "anonymousAXBatchedStructure": "READ_FAILED_NO_USABLE_ROW_SUMMARY_NO_RETRY",
+      "axFailureCause": "NOT_ESTABLISHED_NOT_CLASSIFIED_AS_PLATFORM_DENIAL",
+      "axCollectorOfflineSyntax": "COMPILE_ONLY_PASS_NO_BROWSER_EXECUTION",
+      "exactDOMStableTemporaryRowOrder": "NOT_ESTABLISHED",
+      "naturalNoncontiguity": "NOT_ESTABLISHED",
+      "rowNodeReplacement": "NOT_RECORDED",
+      "changeSequence": "NOT_RECORDED",
+      "existingExtensionDiagnosticCapability": "FIXED_STATUS_OUTER_ROOT_COUNTS_AND_BRANCH_SHAPE_ONLY_NO_HISTORY_ROW_TRACE",
+      "algorithmVsAdapterDecision": "INSUFFICIENT_EVIDENCE"
+    },
+    "preservation": {
+      "oldDatabaseTouchedByOperator": false,
+      "draftsChanged": false,
+      "testMessagesSent": 0,
+      "personalUnlockClickedByOperator": false,
+      "otherWindowsOperated": false,
+      "browserTabClaim": false,
+      "realCDP": false,
+      "postFailureNavigation": false,
+      "postFailureRefresh": false,
+      "newCandidateBuilt": false
+    },
+    "nextEvidenceCondition": {
+      "scope": "Current native history list only, through an explicitly available local diagnostic; no body, titles, IDs, URLs, credentials or internal requests.",
+      "required": [
+        "direct-child index and stable-marker presence, with temporary/unclassified categories kept separate",
+        "anonymous node identity sufficient only to compare replacement and ordering",
+        "relative event sequence and preparation-versus-mount failure phase",
+        "boundedness/truncation flags; no complete-order claim for an incomplete trace"
+      ],
+      "status": "NOT_CAPTURED_EXISTING_DIAGNOSTICS_INSUFFICIENT",
+      "batchBoundary": "No additional browser capture, collector installation, retry, longer waiting or r95 performed. A future scoped collector needs offline verification before any concentrated observation; this receipt does not change the user-authorized scope."
+    },
+    "decision": "R94_REMAINS_INSTALLED_HOME_ACCEPTANCE_FAIL_NO_SPECULATIVE_PRODUCT_CHANGE"
   }
 }
