@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createNavigation} from '../../src/navigation/navigation.mjs';
+import {freeNavigationSnapshot} from '../../src/navigation/free-view.mjs';
+import {projectFreeFrame} from '../../src/runtime/free-frame-projection.mjs';
 // Small DOM double exercises the existing renderer's event/data paths. Browser
 // layout and screenshots remain separate real-MV3 acceptance.
 function dom(){
@@ -34,6 +36,22 @@ function projection(role='workspace'){
 }
 function fixture(role='workspace',callback=()=>null,onHorizonRequest=null,onWorkingSetRequest=null,adapterOverride={},extra={}){const doc=dom(),intents=[];const nav=createNavigation({document:doc,surface:{role,root:doc.body},adapter:{currentURL:()=>'',isCurrent:()=>false,status(){},...adapterOverride},onHorizonRequest,onWorkingSetRequest,...extra,onProjectionRequest:callback,onPresentationRequest:v=>intents.push(v)});const pane=()=>nav.roots()[role].shadow;return {doc,nav,pane,intents,button:label=>pane().querySelectorAll('button').find(n=>n.getAttribute('aria-label')===label)};}
 const tick=async()=>{for(let i=0;i<15;i++)await Promise.resolve();};
+
+for(const role of ['workspace','sidebar'])test('reopening a folded list restores its requested window from fresh projection: '+role,async()=>{
+ const scope='scopeA',refs=Array.from({length:30},(_,i)=>({...row('R'+i),scope,membership:'PROJECT',projectId:'P1',activityDecision:{segment:role==='workspace'?2:0}}));
+ const world=stamp=>({snapshot:freeNavigationSnapshot({scope,viewMode:'free',revision:1,viewSession:{H:30,T:20000,Z:'UTC',policyRevision:0},refs:refs.map(r=>({...r,nativeTitle:stamp+r.id})),projects:[{id:'P1',scope,nativeName:'Project',members:refs.map(r=>r.id),activityDecision:{segment:0}}]})});
+ let data=world('before-');const calls=[],f=fixture(role,q=>{calls.push(q);return projectFreeFrame(data,q);});
+ const toggle=role==='workspace'?'展开旧窗口 Project':'侧栏主题 Project',more=role==='workspace'?'显示更多旧窗口 Project':'显示更多近期窗口';
+ try{
+  f.nav.updateFrameProjection(projectFreeFrame(data,{role}));f.button(toggle).click();await tick();f.button(more).click();await tick();
+  assert.equal(f.pane().querySelectorAll('[data-ref-id]').length,17);
+  f.button(toggle).click();data=world('fresh-');f.nav.updateFrameProjection(projectFreeFrame(data,{role}));
+  f.button(toggle).click();await tick();assert.equal(calls.at(-1).rowLimit,17,'folding is not a request to reset the preview to five');
+  assert.equal(f.pane().querySelectorAll('[data-ref-id]').length,17);
+  assert(f.pane().querySelector('[data-ref-id="R16"]').querySelector('.window-title').textContent.startsWith('fresh-'),'restore layout only, not old row data');
+  f.nav.updateFrameProjection({...projectFreeFrame(data,{role}),scope:'other'});f.button(toggle).click();await tick();assert.equal(calls.at(-1).rowLimit,5,'a new scope must not inherit the previous capacity');
+ }finally{f.nav.stop();}
+});
 for(const boundary of ['same-scope-refresh','scope-replacement'])test('retired sidebar scroll cannot overwrite or save the current view: '+boundary,t=>{
  const saves=[],f=fixture('sidebar',()=>null,null,null,{}, {onViewChange:(value,scope)=>saves.push({value,scope})});t.after(()=>f.nav.stop());
  f.nav.updateFrameProjection(projection('sidebar'));const retired=f.pane().querySelector('.themes'),priorView=f.nav.view();
