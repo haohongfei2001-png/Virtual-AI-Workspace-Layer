@@ -3135,5 +3135,78 @@
       "FREE_ACCEPTED",
       "RELEASE_READY"
     ]
+  },
+  "r95MinimumClosure20261025": {
+    "baseHead": "085454518363aa1a5055c4cbf469d59b02501146",
+    "candidate": "r95_UNCHANGED",
+    "acceptanceScopeAdjustment": "Previously persisted real object restored after personal confirmation; private-exclusive status and exclusion from all native history are not required. No complete locked-index baseline required.",
+    "newChat": {
+      "formalInclusion": "INHERITED_ACTUAL_MAC_PASS_r95RemainingClosures20261025",
+      "nativeOpen": "PASS_USER_MANUAL_REAL_MAC",
+      "userReportedResult": "已打开正确的原生聊天",
+      "method": "User clicked the already-included acceptance chat once in the formal r95 workspace; assistant performed no browser action.",
+      "completeClosure": "PASS_COMBINED_FORMAL_INCLUSION_AND_USER_CONFIRMED_NATIVE_TARGET",
+      "priorAppleEventError": "OPERATOR_ERROR_NOT_A_CONFIRMED_PRODUCT_DEFECT"
+    },
+    "persistentRestore": {
+      "state": "NOT_RUN",
+      "verdict": "UNVERIFIED_NOT_PRODUCT_FAILURE",
+      "existingEvidence": [
+        "privateContinuityR91_20261025",
+        "privateWorkerAndNewChatR92_20261025"
+      ],
+      "realObjectCandidate": "Previously observed real Project and two members in confirmed personal workspace; no new or synthetic record created.",
+      "missing": "No sufficient object-level identity/source/observation-time witness in existing receipts or old backup inventories to establish that a particular older record is restored in r95.",
+      "backupBoundary": "Earliest backup inventory predates these observations and cannot identify a later persisted native record. Package copies and preservation receipts are not object restoration evidence. No claim about absence of the current database.",
+      "codePathReviewed": [
+        "src/runtime/browser-local-storage.mjs",
+        "src/data/native-repository.mjs",
+        "src/data/native-facts.mjs",
+        "src/runtime/browser-local-control.mjs"
+      ],
+      "implementation": "personal scope routes to existing persistent repositories; NativeRepository.read reads and validates native_states/native_operations; field witnesses carry source identity and observedAt. Code review is not an actual record read.",
+      "notRequired": [
+        "private-only object",
+        "proof of absence from all native history",
+        "complete pre-unlock A/N comparison"
+      ]
+    },
+    "inheritedPassedCapabilities": [
+      "real Project and members",
+      "native search",
+      "same-document personal and Worker continuity",
+      "four-grid return",
+      "browser restart and old-private-data locking",
+      "account-risk revocation"
+    ],
+    "remainingLimitations": [
+      "A previously saved real object restoring from disk is not yet individually verified.",
+      "Formal navigation may intentionally open a new tab when complete native input-risk semantics are unknown; new documents retain the existing personal-data confirmation boundary.",
+      "Browser-Local accumulation covers allowed observed navigation; it does not claim a complete unseen history."
+    ],
+    "newConfirmedProductDefects": [],
+    "operations": {
+      "browserControl": 0,
+      "messagesSent": 0,
+      "reloads": 0,
+      "installs": 0,
+      "newCandidates": 0,
+      "testsRerun": 0,
+      "realDatabaseReadOrWriteByAgent": false
+    },
+    "preserved": {
+      "originalExtensionId": true,
+      "r95Package": true,
+      "oldDatabase": true,
+      "drafts": true,
+      "backups": true,
+      "stashes": true
+    },
+    "next": "Retain r95 for personal trial. Only a real previous-record restoration witness remains unverified; do not make new candidate or rerun passed journeys without a confirmed product defect.",
+    "notClaimed": [
+      "PERSISTENT_RECORD_RESTORE_PASS",
+      "FULL_FREE_ACCEPTANCE",
+      "RELEASE_READY"
+    ]
   }
 }
