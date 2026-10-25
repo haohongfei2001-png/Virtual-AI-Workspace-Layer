@@ -3501,7 +3501,7 @@
         "retry": false
       },
       "projectReceiver": "PASS_CURRENT_DOCUMENT: module loaded, private status/layout/pipeline and formal renderer receipt successfully read. Historical transport-error is not reproduced; historical cause remains unknown.",
-      "privateRecordRestore": "NOT_RUN: locked, not auto-confirmed",
+      "privateRecordRestore": "NOT_RUN_OBJECT_LEVEL_PROOF: current document personal confirmation succeeded; no fresh persistent object identity/source/observation-time receipt available. Do not infer from binding, counts or last-known.",
       "fullV27PersonalAcceptance": "NOT_PASSED",
       "projectCurrentBuildSnapshot": {
         "status": "PASS_RECEIVER_AND_RENDERER_ONLY",
@@ -3579,8 +3579,18 @@
         "result": "已看到 Project 卡片和两条成员",
         "method": "User clicked existing four-grid after Project snapshot; no installation, refresh, new data or automated tab takeover.",
         "scope": "Project formal card and two members actually visible; not a claim of full visual matrix or private disk recovery."
+      },
+      "personalConfirmationCurrentDocument": {
+        "status": "PASS_USER_CONFIRMATION_AND_OWN_POPUP_SUCCESS",
+        "result": "本地空间已绑定到当前文档。",
+        "fingerprint": "46dfc62f3b35c6bc47acc6e45c7702df04100d6eb1fcb46ef72147eb9ebea100",
+        "reader": "First native readonly sample discarded on Target changed during read. One fresh independent guarded readonly sample succeeded, no input/focus/refresh/reload.",
+        "scope": "Private control success acknowledges bind and content restart in the confirmed document. Pre-click status/layout remains a snapshot and is not post-unlock renderer evidence.",
+        "pipelineAfterConfirmation": "NOT_AVAILABLE_IN_THIS_POPUP: perform unlock replaces result text and invalidates the optional pre-click pipeline. No stale session snapshot used as personal proof.",
+        "oldRecordRestored": "NOT_ESTABLISHED_NOT_PRODUCT_FAILURE",
+        "furtherUserOperationRequested": false
       }
     },
-    "remaining": "Project reception, formal rendering and actual visible card/two members now PASS. Old persisted object recovery remains NOT_RUN: current document last confirmed LOCKED; existing anonymous header counts and past personal continuity do not identify a particular older disk record. No new defect, candidate or repeated historical tests justified."
+    "remaining": "Project actual visible card/two members and current-document personal confirmation PASS. Specific older persistent object restoration remains unverified, not a diagnosed failure. No reload, reinstall, renewed confirmation or browser experiment will be requested merely to fill this evidence gap. Full personal v2.7 acceptance is not claimed; resume only for concrete product defects or suitable existing provenance evidence."
   }
 }
