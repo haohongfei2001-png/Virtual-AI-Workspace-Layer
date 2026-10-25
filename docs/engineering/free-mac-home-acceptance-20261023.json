@@ -3066,5 +3066,74 @@
       "FREE_ACCEPTED",
       "RELEASE_READY"
     ]
+  },
+  "r95RemainingClosures20261025": {
+    "baseHead": "8578bcd9e3435869ceec3d554113449a85c3c18e",
+    "candidate": "r95_UNCHANGED_NO_RELOAD_NO_NEW_PACKAGE",
+    "scope": [
+      "previously-sent-chat-formal-inclusion-and-open",
+      "existing-private-only-object-restore"
+    ],
+    "actualMac": {
+      "knownSentChatFormalInclusion": {
+        "state": "PASS",
+        "evidence": "Existing original VAIWL workspace AXWebArea contained one matching known acceptance-chat AXLink; five-link preview present; checked title with only the fixed freshness suffix permitted. This is formal UI evidence, not native ChatGPT presence."
+      },
+      "knownSentChatOpen": {
+        "state": "NOT_RUN",
+        "reason": "Exact destination and arrival comparison not established. Native AppleEvent handler failed during the bounded link operation; subsequent read-only check still found home, not the target conversation. No repeat dispatch after uncertain result."
+      },
+      "newChatClosure": {
+        "state": "NOT_RUN",
+        "partialPass": "FORMAL_INCLUSION",
+        "remaining": "ACTUAL_OPEN_AND_EXACT_ARRIVAL"
+      },
+      "privateOnlyRestore": {
+        "state": "NOT_RUN",
+        "reason": "No complete locked-session index or preselected existing private-only object was captured before personal confirmation. The user replied ok to current-document confirmation, but the final foreground guard prevented reading back the popup/private projection. No independent persistent-only object witness established."
+      },
+      "newMessages": 0,
+      "reloads": 0,
+      "installs": 0,
+      "priorPassedJourneysRepeated": false
+    },
+    "nativeControl": {
+      "exactProfileProcessVerified": true,
+      "automaticFocusAttempts": 1,
+      "automaticFocusInitiallyPassed": true,
+      "foregroundLostBeforeNextInput": true,
+      "readOnlyForegroundEvidence": "AppKit and System Events both identified com.openai.codex; original target was still main and home. No other process was activated.",
+      "afterManualForeground": "One native four-grid click and formal known-chat inclusion succeeded; later foreground checks failed. Final bounded wait ended with no input.",
+      "operatorError": "APPLEEVENT_HANDLER_FAILED_-10000; target arrival not established, not classified as a product navigation defect",
+      "noFurtherAutomaticActivation": true
+    },
+    "evidenceBoundary": {
+      "lastKnownNotDurableProvenance": true,
+      "reason": "last-known means field evidence is not all current, including expiry of observations made this session with <=60-second TTL; B minus currently visible native targets alone cannot establish an old-private-only restore without a complete pre-unlock baseline or identified durable witness.",
+      "references": [
+        "src/data/free-projection.mjs",
+        "src/runtime/host-observation-owner.mjs",
+        "src/runtime/free-search-projection.mjs",
+        "src/runtime/browser-local-control.mjs",
+        "src/runtime/browser-local-storage.mjs",
+        "src/data/native-repository.mjs"
+      ],
+      "noRelockOrNewDocumentToManufactureEvidence": true
+    },
+    "preserved": {
+      "extensionId": true,
+      "installedPackage": true,
+      "oldDatabase": true,
+      "drafts": true,
+      "backups": true,
+      "stashes": true
+    },
+    "newConfirmedProductDefects": [],
+    "notClaimed": [
+      "TWO_CLOSURES_PASSED",
+      "PRIVATE_ONLY_RESTORE",
+      "FREE_ACCEPTED",
+      "RELEASE_READY"
+    ]
   }
 }
