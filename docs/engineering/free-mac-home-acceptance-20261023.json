@@ -2554,5 +2554,34 @@
       "stashCount": 3
     },
     "next": "Restore an original Profile 4 window, then perform original-ID native Reload and continue acceptance; no reinstall, new account experiment or synthetic-to-Mac promotion."
+  },
+  "sourceUpgradeMacActivationR90_20261025": {
+    "baseHead": "ea7e25fcf8340d65b5f70a598ce7606f84a34f1d",
+    "actualMac": {
+      "originalProfileWindow": "PASS_USER_REOPENED_EXACT_PID_AND_PROFILE_SUFFIX_CHECKED",
+      "sameIdReload": "PASS_ONCE_NATIVE_RELOAD_ORIGINAL_ID_ENABLED_READ_BACK",
+      "newHome": "PASS_CONNECTED_READING_OLD_PRIVATE_LOCKED",
+      "nativeHomeToProject": "PASS_NATIVE_PROJECT_MENU",
+      "formalWorkspace": "PASS_PROJECT_CARD_AND_TWO_POSITIVE_MEMBERS_VISIBLE",
+      "privateRecoveryAfterSourceUpgrade": "WAITING_CURRENT_DOCUMENT_PERSONAL_CONFIRMATION",
+      "fullChromeRestart": "INHERITED_PRIOR_PASS_NOT_REPEATED",
+      "newChatSend": "NOT_RUN",
+      "workerRestart": "NOT_ESTABLISHED",
+      "accountRiskJourney": "NOT_RUN"
+    },
+    "observation": "last navigation summary had accepted empty visible slice; formal UI separately confirmed retained Project and two members. Empty last slice is not a cumulative discovery result.",
+    "preservation": {
+      "sameExtensionId": "miendbcjdmecjggplepenghjnoejmaic",
+      "canonicalFilesVerified": 196,
+      "originalConversationTabRetained": true,
+      "draftsUntouched": true,
+      "databaseNotDirectlyReadOrModified": true,
+      "noBrowserTabClaim": true,
+      "noCDP": true,
+      "otherChromeNotOperated": true,
+      "unlockNotClickedByOperator": true,
+      "testMessagesSent": 0
+    },
+    "next": "Current Project is in native reading with own popup open. User confirmation is required only for this new document under AUTHORITY; continue same-document private recovery and native navigation once confirmed."
   }
 }
