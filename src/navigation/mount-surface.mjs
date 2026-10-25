@@ -115,7 +115,7 @@ export function createMountSurface({document:doc,createFrameURL,hasNativeLayer=(
     return marker.wasVisible&&root.isConnected&&m.style.isConnected&&m.style.textContent===m.styleText&&root.getAttribute(marker.attr)===m.handle.id&&root.getAttribute('class')===marker.nativeClass&&root.getAttribute('style')===marker.nativeStyle&&surface.node.isConnected&&surface.node.matches(':popover-open');
    }return false;
   },
-  showWorkspace(handle){const m=lookup(handle);if(hasNativeLayer()||doc.querySelector('dialog[open]:not([data-va-owned]),[popover]:popover-open:not([data-va-owned])')){hide(m);return;}// Re-entry follows the controller's fresh inspection. Capture only presently
+  showWorkspace(handle){const m=lookup(handle);if(hasNativeLayer()||doc.querySelector('dialog[open]:not([data-va-owned]),[popover]:popover-open:not([data-va-owned])')){hide(m);return false;}// Re-entry follows the controller's fresh inspection. Capture only presently
    // visible native roots while their own mask is closed, never hidden history.
    const closed=m.surfaces.filter(s=>!s.node.matches(':popover-open')&&(s.role!=='sidebar'||m.inspection.preserveNativeSidebar!==true));
    const markers=m.markers.filter(marker=>closed.some(s=>marker.attr==='data-va-mask-'+s.role));

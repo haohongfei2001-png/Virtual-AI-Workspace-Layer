@@ -436,3 +436,20 @@ test('owned workspace becoming visible relayouts cards and disconnects its obser
  assert.equal(cards[0].style.width,'356px');assert.equal(cards[1].style.left,'0px');
  f.nav.invalidate();assert(disconnected);assert.equal(f.nav.roots(),null);notify();assert.equal(f.nav.roots(),null);f.nav.stop();
 });
+
+test('render receipt follows actual projection DOM and carries no row text',()=>{
+ const receipts=[],f=fixture('workspace',()=>null,null,null,{}, {onFrameRendered:(dto,counts)=>receipts.push({dto,counts})});
+ const dto=projection();f.nav.updateFrameProjection(dto);
+ assert.equal(receipts.length,1);assert.equal(receipts[0].dto,dto);
+ assert.deepEqual(receipts[0].counts,{cards:f.pane().querySelectorAll('[data-theme-id]').length,rows:f.pane().querySelectorAll('[data-ref-id]').length});
+ assert(receipts[0].counts.rows>0);
+});
+
+test('frame receipt waits for pointer-deferred rendering rather than acknowledging the queued DTO',async()=>{
+ const commits=[],f=fixture('workspace',()=>null,null,null,{}, {onFrameRendered:dto=>commits.push(dto)});
+ const first=projection();f.nav.updateFrameProjection(first);
+ const control=f.button('工作空间设置'),owner=f.nav.roots().workspace.n;
+ f.doc.handlers.get('pointerdown')({pointerId:9,composedPath:()=>[control,owner]});
+ const next=projection();f.nav.updateFrameProjection(next);assert.deepEqual(commits,[first]);
+ f.doc.handlers.get('pointerup')({pointerId:9});await new Promise(r=>setTimeout(r,5));assert.equal(commits.at(-1),next);f.nav.stop();
+});

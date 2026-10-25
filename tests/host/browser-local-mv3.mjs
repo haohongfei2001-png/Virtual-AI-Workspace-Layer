@@ -89,6 +89,17 @@ try{
   report.checks.historyRecoveryPreservesDraftAndPrivateLock=true;
   await delayed.close();
  }
+ if(process.argv.includes('--entry-receipt-only')){
+  const target=await context.newPage(),control=await context.newPage();await control.goto('chrome-extension://'+id+'/status.html');
+  for(const route of ['/', '/g/'+P+'/project']){
+   await target.goto(origin+route);await target.bringToFront();
+   await target.waitForFunction(()=>document.documentElement.dataset.vaiwlBoot==='loaded');
+   const result=await control.evaluate(async()=>{const [tab]=await chrome.tabs.query({active:true,currentWindow:true}),frame=await chrome.webNavigation.getFrame({tabId:tab.id,frameId:0});const options={documentId:frame.documentId};return {boot:await chrome.tabs.sendMessage(tab.id,{v:1,type:'HOST_LOCAL_BOOT'},options),status:await chrome.tabs.sendMessage(tab.id,{v:1,type:'HOST_LOCAL_STATUS'},options)};});
+   assert.equal(result.boot.stage,'module-loaded');assert.match(result.boot.build,/^[a-f0-9]{64}$/);assert.equal(result.status.v,1);assert.equal(typeof result.status.state,'string');
+  }
+  report.checks.homeAndProjectHardNavigationReceiverSurvives=true;
+  await control.close();await target.close();
+ }
  if(process.argv.includes('--mixed-history-only')){
   page=await context.newPage();
   const markers=historyStructure.report.snapshots[0].rows.map(r=>r[3]);
@@ -111,6 +122,11 @@ try{
   assert.equal(snapshot.pipeline.storage,'session');assert.equal(snapshot.pipeline.refs,13);
   assert.equal(snapshot.pipeline.lastWorkspaceDelivery.inventory[1],13);
   assert.equal(snapshot.pipeline.lastWorkspaceDelivery.unknown[0],13);
+  assert.equal(snapshot.pipeline.workspaceReceipt.phase,'rendered');
+  assert(snapshot.pipeline.workspaceReceipt.rows>0);
+  const startup=await control.evaluate(async()=>{const [tab]=await chrome.tabs.query({active:true,currentWindow:true});const frame=await chrome.webNavigation.getFrame({tabId:tab.id,frameId:0});return chrome.tabs.sendMessage(tab.id,{v:1,type:'HOST_LOCAL_BOOT'},{documentId:frame.documentId});});
+  assert.equal(startup.stage,'module-loaded');assert.match(startup.build,/^[a-f0-9]{64}$/);
+  report.checks.currentDocumentBootAndActualRendererReceipt=true;
   const worker=context.serviceWorkers().find(w=>w.url().startsWith('chrome-extension://'+id+'/'));
   assert.deepEqual(await worker.evaluate(()=>indexedDB.databases()),[],'locked pipeline does not open the private database');
   report.checks.currentLocalStoreAndWorkspaceReplyCountsAgree=true;
@@ -152,7 +168,7 @@ try{
   report.checks.historyDiagnosticNoPrivateDatabaseOrDraftChange=true;
   await control.close();await page.close();
  }
- if(!process.argv.includes('--progressive-only')&&!process.argv.includes('--history-ready-only')&&!process.argv.includes('--history-diagnostic-only')&&!process.argv.includes('--mixed-history-only')){
+ if(!process.argv.includes('--entry-receipt-only')&&!process.argv.includes('--progressive-only')&&!process.argv.includes('--history-ready-only')&&!process.argv.includes('--history-diagnostic-only')&&!process.argv.includes('--mixed-history-only')){
  // A native row reorder invalidates the old mask; a fresh same-document
  // handshake must prove the current row run before restoring the formal UI.
  const reordered=await context.newPage();await reordered.addInitScript({content:'document.addEventListener("DOMContentLoaded",'+prepareHistoryRun.toString()+',{once:true});'});

@@ -9,7 +9,7 @@ import { project, initialView } from './projection.mjs';
 import { css } from './styles.mjs';
 function node(doc,tag,attrs={},text=''){const n=doc.createElement(tag);for(const[k,v]of Object.entries(attrs))n.setAttribute(k,v);n.textContent=text;return n;}
 /** Navigation owns only its roots and reversible view masking; never renders chat/composer. */
-export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage=null, onViewChange=()=>{},onCurrentWorkspaceEntry=()=>{},onCalibrationEntry=()=>{},surface=null,onPresentationRequest=()=>{},onDispatch=null,onNativeInteractionStart=null,onProjectionRequest=null,onHorizonRequest=null,onCompactRowsRequest=null,onWorkingSetRequest=null,onRecoveryRequest=null,onBackupRequest=null,onSnippetsRequest=null,onSnippetLocateRequest=null,onUndoTimePolicyRequest=null}) {
+export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage=null, onViewChange=()=>{},onFrameRendered=()=>{},onCurrentWorkspaceEntry=()=>{},onCalibrationEntry=()=>{},surface=null,onPresentationRequest=()=>{},onDispatch=null,onNativeInteractionStart=null,onProjectionRequest=null,onHorizonRequest=null,onCompactRowsRequest=null,onWorkingSetRequest=null,onRecoveryRequest=null,onBackupRequest=null,onSnippetsRequest=null,onSnippetLocateRequest=null,onUndoTimePolicyRequest=null}) {
   const framed=surface!==null;
   // Keep explicit choices separate from the current project's derived expansion.
   // Legacy restored open rows remain explicit; do not guess away user layout.
@@ -656,6 +656,10 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     rememberWindowPages(copy);
     groups=copy.groups.items.map(g=>({...g,current:g.lists.current.items,old:g.lists.old.items,unknown:g.lists.unknown.items}));index=null;
     layout();render();layout();
+    // Report the committed owned DOM, including a deferred interaction update.
+    // No title, ID, URL or private text is included in the numeric receipt.
+    const renderedRoot=surface.role==='workspace'?roots?.workspace?.shadow:roots?.sidebar?.shadow;
+    try{onFrameRendered(dto,{cards:renderedRoot?.querySelectorAll('[data-theme-id]').length??0,rows:renderedRoot?.querySelectorAll('[data-ref-id]').length??0});}catch{}
     if(currentEntry&&!stopped&&frameProjection?.scope===currentEntry.scope&&view.segment===0&&view.mode==='workspace')onCurrentWorkspaceEntry();
   }
   function update(value,now,timeZone,preparedIndex=null){if(value?.protocol==='vaiwl-free-frame/1')throw Error('frame-projection-requires-explicit-consumer');return applyUpdate(value,now,timeZone,preparedIndex);}

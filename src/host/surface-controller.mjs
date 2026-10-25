@@ -145,7 +145,12 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
     else{state.mode='reading';ensureReturn(state);}
     return false;
    }
-   if(shown===false)return false;
+   // A successful call is not proof that the browser opened the popover.
+   // Preserve a usable return entry when the mount declined presentation.
+   if(shown===false||typeof surface.visibility==='function'&&surface.visibility(handle)?.workspace!==true){
+    state.presentation='show-refused';surface.suspend(handle);
+    if(same()){if(adapter.hasNativeLayer()){state.mode='suspended';removeReturn(state);}else{state.mode='reading';ensureReturn(state);}reportJoin(state);}return false;
+   }
    removeReturn(state);state.mode='workspace';return true;
   }finally{publishSurface(state);}
  }
@@ -411,5 +416,10 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
   if(state.mode==='suspended')return 'suspended';
   return state.mode==='workspace'?'ready':'unavailable';
  }
- return Object.freeze({localStatus,withNativeReading,cancelDormantClose,renewDormantLease,idleReleaseBusy:()=>current?.releaseBusy===true&&dormantReady(),checkIdle,enterDormant,settleDormant,dormantReady,resumeDormant,start,presentationMode:()=>current?.mode==='workspace'?'workspace':'reading',showWorkspace,isWorkspacePresented,showReading,showNativeReading,focusFrame,isFrameTarget(role,node){return !!current&&authorized(current)&&current.frames.some(x=>x.role===role&&x.frame===node);},isReturnTarget:node=>!!current&&current.button===node&&authorized(current),intentGuard(){const state=current,revision=state?.intentEpoch;return ()=>!!state&&current===state&&state.intentEpoch===revision&&authorized(state)&&!adapter.hasNativeLayer();},readingGuard(){const state=current,revision=state?.intentEpoch;return ()=>!!state&&current===state&&state.intentEpoch===revision&&state.mode==='reading'&&authorized(state)&&!adapter.hasNativeLayer();},suspend,stop,revoke:()=>stop('ui-authority-revoked')});
+ function presentationSnapshot(){
+  const state=current;if(!state)return null;
+  let visibility=null;try{visibility=surface.visibility?.(state.handle);}catch{}
+  return {mode:state.mode,attempt:state.presentation??'not-attempted',registered:state.registered===true,frames:state.frames.filter(x=>x.frame.isConnected&&x.frame.contentWindow===x.window).length,grants:state.grants.size,workspace:typeof visibility?.workspace==='boolean'?visibility.workspace:null,sidebar:typeof visibility?.sidebar==='boolean'?visibility.sidebar:null,geometryPaused:state.geometryPaused===true,returnPresent:state.button?.isConnected===true};
+ }
+ return Object.freeze({presentationSnapshot,localStatus,withNativeReading,cancelDormantClose,renewDormantLease,idleReleaseBusy:()=>current?.releaseBusy===true&&dormantReady(),checkIdle,enterDormant,settleDormant,dormantReady,resumeDormant,start,presentationMode:()=>current?.mode==='workspace'?'workspace':'reading',showWorkspace,isWorkspacePresented,showReading,showNativeReading,focusFrame,isFrameTarget(role,node){return !!current&&authorized(current)&&current.frames.some(x=>x.role===role&&x.frame===node);},isReturnTarget:node=>!!current&&current.button===node&&authorized(current),intentGuard(){const state=current,revision=state?.intentEpoch;return ()=>!!state&&current===state&&state.intentEpoch===revision&&authorized(state)&&!adapter.hasNativeLayer();},readingGuard(){const state=current,revision=state?.intentEpoch;return ()=>!!state&&current===state&&state.intentEpoch===revision&&state.mode==='reading'&&authorized(state)&&!adapter.hasNativeLayer();},suspend,stop,revoke:()=>stop('ui-authority-revoked')});
 }

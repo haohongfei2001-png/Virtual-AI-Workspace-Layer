@@ -161,6 +161,7 @@ export function createHostBindingService({extensionId,getFrame,getContexts=null,
   if(message?.type==='HOST_UI_CURRENT_ENTRY')return views?views.enterCurrent(message,sender):{ok:false,reason:'host-view-unavailable'};
   if(message?.type==='HOST_UI_PRESENT')return views?views.present(message,sender):{ok:false,reason:'host-view-unavailable'};
   if(['HOST_UI_RESUME','HOST_UI_SAVE_VIEW'].includes(message?.type))return views?views.resume(message,sender):{ok:false,reason:'host-view-unavailable'};
+  if(message?.type==='HOST_UI_VIEW_RECEIPT')return views?views.receipt(message,sender):{ok:false,reason:'host-view-unavailable'};
   if(message?.type==='HOST_UI_VIEW')return views?views.handle(message,sender):{ok:false,reason:'host-view-unavailable'};
   if(['HOST_UI_IDLE_RELEASE','HOST_UI_IDLE_CHECK'].includes(message?.type))return ui?ui.handle({...message,type:message.type==='HOST_UI_IDLE_CHECK'?'HOST_UI_IDLE_CHECK':'HOST_UI_RELEASE'},sender,{releaseGuard:canReleaseIdleMount}):{ok:false,reason:'host-ui-unavailable'};
   if(typeof message?.type==='string'&&message.type.startsWith('HOST_UI_'))return ui?ui.handle(message,sender):{ok:false,reason:'host-ui-unavailable'};

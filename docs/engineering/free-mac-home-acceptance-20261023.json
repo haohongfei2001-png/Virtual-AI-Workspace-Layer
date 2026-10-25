@@ -3401,5 +3401,109 @@
       "rejectionReason": "Native exact-PID activation and raising the original window was considered contrary to no-tab-takeover and stop-operator constraints",
       "bypass": false
     }
+  },
+  "r96DisplayReceiptRepair20261025": {
+    "baseHead": "2eb687fdc8b4dc61430330bc4c4044a807b787fd",
+    "scope": "Existing formal display and content receiver only; no new candidate number, UI redesign, data channel, account read, send, private unlock or DB change.",
+    "confirmedCodeDefect": {
+      "modules": [
+        "src/host/surface-controller.mjs",
+        "src/navigation/mount-surface.mjs"
+      ],
+      "cause": "A mount refusal could return undefined and be treated as presentation success; the controller could remove the return control without an open workspace popover.",
+      "repair": "Require actual workspace popover-open when visibility is available; report native-layer refusal explicitly; retain reading/return when safe. All current authority and geometry checks remain.",
+      "realIncidentCausality": "NOT_ESTABLISHED: no evidence proves this branch caused every prior r96 empty-home incident."
+    },
+    "anonymousEvidence": {
+      "frame": "Private scope-bound delivery ID with received and rendered receipts. DOM commit callback reports only actual owned card/row counts, including deferred projection. Revoke/stale/out-of-order protected.",
+      "presentation": "Existing controller mode, owned frame/grant counts, actual popover-open flags and geometryPaused; not pixel visibility proof.",
+      "entry": "Private content bootstrap responder precedes module import, with build fingerprint and fixed module stage. Exact document/route probe does not inject or retry."
+    },
+    "offline": {
+      "status": "PASS",
+      "targeted": "Controller refusal/actual-open, private receipt authorization/order/revoke, deferred renderer commit, frame client, status document binding, failed module import responder, build/manifest boundaries. Existing tests only; no whole-product claim.",
+      "isolatedMV3": {
+        "mixedHistoryAndPipeline": "PASS",
+        "homeAndProjectHardNavigationReceiver": "PASS",
+        "internalRequests": 0,
+        "realAccount": false
+      }
+    },
+    "fixedPackage": {
+      "path": ".git/vaiwl-artifacts/r96-display-repair-20261025/frozen-package/extension",
+      "sha256": "e7151b947a529d7f206db32dcd4c60763e954e12a27ffb555af8205d56c4bf09",
+      "contentFingerprint": "46dfc62f3b35c6bc47acc6e45c7702df04100d6eb1fcb46ef72147eb9ebea100",
+      "files": 198
+    },
+    "installation": {
+      "sameId": true,
+      "manifestUnchanged": true,
+      "backupFiles": 2878,
+      "preservedExtraFiles": 2680,
+      "receipt": ".git/vaiwl-artifacts/r96-display-repair-20261025/install-receipt.json",
+      "disk": "UPDATED_VERIFIED",
+      "activation": "PASS_CURRENT_HOME_DOCUMENT_FINGERPRINT_MATCH",
+      "activationMethod": "User replied ok to consolidated Reload/new-home/four-grid/status-open request; own popup read verified fingerprint.",
+      "databaseTouched": false,
+      "draftsTouched": false
+    },
+    "realMac": {
+      "homeSnapshot": {
+        "status": "PASS_BOUNDED_PIPELINE_ONLY",
+        "reader": "Existing exact PID/Profile native AX own-popup allowlist; no focus, keys, tab claim or CDP",
+        "module": "module-loaded",
+        "fingerprintMatches": true,
+        "storage": "session",
+        "nativeRevision": 3,
+        "projects": 0,
+        "refs": 13,
+        "inventory": [
+          0,
+          13
+        ],
+        "unknown": [
+          13,
+          5
+        ],
+        "receipt": {
+          "deliveryId": 4,
+          "phase": "rendered",
+          "cards": 0,
+          "rows": 5
+        },
+        "presentation": {
+          "mode": "workspace",
+          "attempt": "show-returned",
+          "registered": true,
+          "frames": 2,
+          "grants": 2,
+          "workspace": true,
+          "sidebar": false,
+          "geometryPaused": false,
+          "returnPresent": false
+        },
+        "private": "LOCKED",
+        "meaning": "Known chats reached the real renderer and workspace was open at popup snapshot. Zero cards agrees with zero confirmed Projects; not a lost-chat proof or full UX acceptance."
+      },
+      "subsequentOwnFrameRead": {
+        "ownedFrames": 0,
+        "ownedLinks": 0,
+        "returnControlPresent": true,
+        "truncated": false,
+        "readErrors": [],
+        "meaning": "Later separate AX read saw return control, not open frames. Intervening presentation transition cause is not established; cannot claim sustained visibility or successful final screenshot."
+      },
+      "nativeControlAttempt": {
+        "action": "Close own status popup via existing VAIWL toolbar control",
+        "result": "NOT_DISPATCHED_TARGET_NOT_FRONTMOST",
+        "error": -2700,
+        "focusChangedByAgent": false,
+        "retry": false
+      },
+      "projectReceiver": "NOT_RUN_CURRENT_BUILD: Project navigation was not dispatched; historical transport-error remains unresolved and offline success is not a real fix.",
+      "privateRecordRestore": "NOT_RUN: locked, not auto-confirmed",
+      "fullV27PersonalAcceptance": "NOT_PASSED"
+    },
+    "remaining": "One real Project exact-document startup/status sample is still needed to locate its receiver failure. Sustained homepage visual presentation also remains unverified because the later AX reading differed from the popup snapshot. Do not infer missing data, fabricate a lifecycle cause, or repeatedly upgrade/refresh."
   }
 }

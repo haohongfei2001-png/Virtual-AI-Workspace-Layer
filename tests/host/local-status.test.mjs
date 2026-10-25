@@ -137,3 +137,10 @@ test('layout reuses status target and drops data if that route changed',async()=
  const result=await readActiveLocalLayout({target,webNavigation:{getFrame:async()=>({documentId:'doc',url:reads++?target.url+'c/private':target.url,documentLifecycle:'active'})},tabs:{query:()=>assert.fail('must reuse the exact status target'),sendMessage:async(id,m,o)=>{sends++;assert.equal(id,7);assert.deepEqual(o,{documentId:'doc'});return {v:1,shape:{counts:[1,1,1,1,1,1,1],branches:[]}};}}});
  assert.equal(result,null);assert.equal(sends,1);
 });
+
+test('anonymous presentation and frame receipt validators reject content and invented success',()=>{
+ const p={storage:'session',nativeRevision:3,projects:0,refs:13,lastWorkspaceDelivery:null,workspaceReceipt:{deliveryId:3,phase:'received',cards:null,rows:null}};
+ assert(validLocalPipeline(p));assert(!validLocalPipeline({...p,workspaceReceipt:{...p.workspaceReceipt,rows:13}}));
+ assert(validLocalPipeline({...p,workspaceReceipt:{deliveryId:3,phase:'rendered',cards:0,rows:5}}));
+ assert(!validLocalPipeline({...p,workspaceReceipt:{deliveryId:3,phase:'rendered',cards:0,rows:5,title:'private'}}));
+});

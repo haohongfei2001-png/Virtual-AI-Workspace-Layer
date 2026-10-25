@@ -16,7 +16,7 @@ import {withRequestDeadline} from '../data/request-deadline.mjs';
  * Preparation is polled in bounded RPCs; a pending read is never an empty view. */
 export function createHostViewService({ui,readService,workspaceRepository=null,prepareNavigation=null,registerCurrentNavigation=null,nativeCandidatesEnabled=false,presentSurface=null,nativeWritePending=()=>false,clock=()=>new Date().toISOString(),maxViews=32,elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout}={}){
  if(typeof nativeWritePending!=='function'||typeof ui?.withScope!=='function'||!readService||!Number.isInteger(maxViews)||maxViews<1||maxViews>128)throw Error('invalid-host-view-service');
- const views=new Map(),resumes=new Map(),readWindows=new Map();let stopped=false,refreshes=0,reads=0,scopeWork=0;
+ const views=new Map(),resumes=new Map(),readWindows=new Map();let stopped=false,refreshes=0,reads=0,scopeWork=0,deliverySequence=0;
  // A cancelled owner refresh can settle before its underlying read does.
  // Count both without changing the original deadlines or cancellation guards.
  const ownerReadService=Object.fromEntries(['freeHeader','freePage','version'].map(name=>[name,async(...args)=>{reads++;try{return await readService[name](...args);}finally{reads--;}}]));
@@ -198,9 +198,25 @@ export function createHostViewService({ui,readService,workspaceRepository=null,p
    // worker delivery, not renderer paint; keep no query, IDs or row content.
    if(delivery?.role==='workspace'&&result?.ok===true&&result.state==='ready'&&delivery.entry.isCurrent()&&delivery.generation===delivery.entry.prepareGeneration){
     const p=result.page,num=n=>Number.isSafeInteger(n)&&n>=0?n:null,evidence=typeof p.evidenceRevision==='string'&&/^\d+:\d+$/.test(p.evidenceRevision)?p.evidenceRevision.split(':').map(numString=>num(Number(numString))):num(p.evidenceRevision);
+    if(!Number.isSafeInteger(deliverySequence+1))throw Error('view-receipt-capacity');
+    result.deliveryId=++deliverySequence;
+    if(new TextEncoder().encode(JSON.stringify(result)).length>65536)throw Error('free-frame-page-too-large');
+    delivery.entry.workspaceReceipt={deliveryId:result.deliveryId,phase:'sent',cards:null,rows:null};
     delivery.entry.lastWorkspaceDelivery={versions:[num(p.revision),num(p.workspaceRevision),evidence,num(p.viewRevision)],segment:num(p.segment),inventory:[p.inventory?.projects,p.inventory?.refs].map(num),groups:[p.groups.total,p.groups.items.length].map(num),noProject:[p.entries.noProject.total,p.entries.noProject.items.length].map(num),unknown:[p.entries.unknown.total,p.entries.unknown.items.length].map(num)};
    }
    return result;}catch(error){return {ok:false,reason:reason(error)};}finally{active=false;if(delivery)releaseRead(delivery.entry,delivery.window,delivery.generation);}
+ }
+ // Receipt is local diagnostics only, never a projection or authority input.
+ async function receipt(message,sender){
+  if(!exactHostRecord(message,['v','type','grantId','mountId','deliveryId','phase','cards','rows'])||message.v!==1||message.type!=='HOST_UI_VIEW_RECEIPT'||!Number.isSafeInteger(message.deliveryId)||message.deliveryId<1||!['received','rendered'].includes(message.phase)||!['cards','rows'].every(k=>message.phase==='received'?message[k]===null:Number.isInteger(message[k])&&message[k]>=0&&message[k]<=4096))return {ok:false,reason:'invalid-view-receipt'};
+  let active=true;
+  try{return await withRequestDeadline(()=>withScope({sender,grantId:message.grantId,mountId:message.mountId},context=>{
+   const entry=views.get(message.mountId),prior=entry?.workspaceReceipt;
+   if(!active||!context.isCurrent()||context.role!=='workspace'||entry?.scopeKey!==context.scope.key||entry?.scopeGrantId!==context.scopeGrantId||!entry.isCurrent()||prior?.deliveryId!==message.deliveryId)return {ok:false,reason:'stale-view-receipt'};
+   // Out-of-order received ACKs must not erase a completed DOM commit.
+   if(prior.phase!=='rendered')entry.workspaceReceipt={deliveryId:message.deliveryId,phase:message.phase,cards:message.cards,rows:message.rows};
+   return {ok:true};
+  }),{timeoutMs:1000,now:elapsedNow,schedule,cancel});}catch{return {ok:false,reason:'view-receipt-unavailable'};}finally{active=false;}
  }
  async function enterCurrent(input,sender){
   let message;try{message=structuredClone(input);sender=structuredClone(sender);}catch{return {ok:false,reason:'invalid-ui-current-entry'};}
@@ -395,9 +411,13 @@ export function createHostViewService({ui,readService,workspaceRepository=null,p
  function confirmScope(frame,scopeKey){for(const [key,value]of resumes)if(value.tabId===frame.tabId&&value.documentId===frame.documentId&&value.scopeKey!==scopeKey)resumes.delete(key);}
  function revokeDocument(id){for(const [key,entry]of views)if(entry.parentFrame.documentId===id)remove(key);}
  function revokeTab(tabId,{preserveDocumentId=null}={}){for(const [key,value]of resumes)if(value.tabId===tabId&&(!preserveDocumentId||value.documentId!==preserveDocumentId))resumes.delete(key);for(const [key,entry]of views)if(entry.parentFrame.tabId===tabId)remove(key);}
+ function receiptSummary(frame,scopeKey){
+  const entries=[...views.values()].filter(e=>e.scopeKey===scopeKey&&e.parentFrame.tabId===frame.tabId&&e.parentFrame.documentId===frame.documentId&&e.parentFrame.actualURL===frame.actualURL&&e.isCurrent());
+  return entries.length===1&&entries[0].workspaceReceipt?structuredClone(entries[0].workspaceReceipt):null;
+ }
  function deliverySummary(frame,scopeKey){
   const matching=[...views.values()].filter(e=>e.scopeKey===scopeKey&&e.parentFrame.tabId===frame.tabId&&e.parentFrame.documentId===frame.documentId&&e.parentFrame.actualURL===frame.actualURL&&e.isCurrent());
   return matching.length===1&&matching[0].lastWorkspaceDelivery?structuredClone(matching[0].lastWorkspaceDelivery):null;
  }
- return Object.freeze({deliverySummary,isIdle,handle,resume,present,confirmScope,isForegroundReadPending:liveWindow,nativePublished(scopeKey){const window=readWindows.get(scopeKey);if(window&&!liveWindow(scopeKey)){if([...views.values()].some(entry=>entry.scopeKey===scopeKey))window.used=false;else readWindows.delete(scopeKey);}for(const entry of views.values())if(entry.scopeKey===scopeKey&&entry.pending&&entry.isCurrent())entry.deferPreparation?.();},resolveSnippetView,enterCurrent,undoAutoHorizon,setHorizon,setWorkingSet,setCompactRows,refreshScope(scopeKey){for(const entry of views.values())if(entry.scopeKey===scopeKey&&entry.isCurrent()&&!retryableRead(entry.error))begin(entry);},revokeDocument,revokeTab,revokeMount:remove,stop(){stopped=true;readWindows.clear();resumes.clear();for(const key of [...views.keys()])remove(key);}});
+ return Object.freeze({receipt,receiptSummary,deliverySummary,isIdle,handle,resume,present,confirmScope,isForegroundReadPending:liveWindow,nativePublished(scopeKey){const window=readWindows.get(scopeKey);if(window&&!liveWindow(scopeKey)){if([...views.values()].some(entry=>entry.scopeKey===scopeKey))window.used=false;else readWindows.delete(scopeKey);}for(const entry of views.values())if(entry.scopeKey===scopeKey&&entry.pending&&entry.isCurrent())entry.deferPreparation?.();},resolveSnippetView,enterCurrent,undoAutoHorizon,setHorizon,setWorkingSet,setCompactRows,refreshScope(scopeKey){for(const entry of views.values())if(entry.scopeKey===scopeKey&&entry.isCurrent()&&!retryableRead(entry.error))begin(entry);},revokeDocument,revokeTab,revokeMount:remove,stop(){stopped=true;readWindows.clear();resumes.clear();for(const key of [...views.keys()])remove(key);}});
 }

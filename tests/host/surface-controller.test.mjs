@@ -141,9 +141,9 @@ test('presentationMode is a read-only hint, reading before grants and after susp
 });
 
 test('native boundary refusal preserves reading mode and its unique return control',async()=>{
- const f=fixture();await f.controller.start({});await f.both();f.controller.showReading();const button=f.slot.children[0];
+ const f=fixture(),show=f.surface.showWorkspace;await f.controller.start({});await f.both();f.controller.showReading();const button=f.slot.children[0];
  f.surface.showWorkspace=()=>false;assert.equal(f.controller.showWorkspace(),false);assert.equal(f.controller.presentationMode(),'reading');assert.equal(f.slot.children.length,1);assert.equal(f.slot.children[0],button);
- f.surface.showWorkspace=()=>true;assert.equal(f.controller.showWorkspace(),true);assert.equal(f.controller.presentationMode(),'workspace');assert.equal(f.slot.children.length,0);f.controller.stop();
+ f.surface.showWorkspace=show;assert.equal(f.controller.showWorkspace(),true);assert.equal(f.controller.presentationMode(),'workspace');assert.equal(f.slot.children.length,0);f.controller.stop();
 });
 
 
@@ -238,7 +238,7 @@ test('expired binding, retired mount callback and stopped controller cannot publ
  const f=publishingFixture();await f.controller.start({});await f.both();const oldToggle=f.events.get('toggle');await f.controller.start({});await f.both();const before=f.sent.length;oldToggle({});assert.equal(f.sent.length,before);f.tick(60000);f.actual({workspace:false,sidebar:false});f.toggle();f.controller.suspend();assert.equal(f.sent.length,before);f.controller.stop();oldToggle({});assert.equal(f.sent.length,before);
 });
 
-function idleSurface(f){const messages=[];f.surface.visibility=()=>({workspace:false,sidebar:false});for(const item of f.frames)item.frame.contentWindow.postMessage=(data,origin)=>messages.push({data,origin});return messages;}
+function idleSurface(f){const messages=[];for(const item of f.frames)item.frame.contentWindow.postMessage=(data,origin)=>messages.push({data,origin});return messages;}
 test('dormant UI retains frames and one wake entry while revoking all old presentation guards',async()=>{
  const f=fixture(),messages=idleSurface(f);await f.controller.start({});await f.both();f.controller.showNativeReading();const before=[...f.frames],guard=f.controller.intentGuard(),reading=f.controller.readingGuard();
  assert.equal(f.controller.enterDormant(),true);assert.equal(guard(),false);assert.equal(reading(),false);assert.equal(f.controller.showWorkspace(),false);assert.equal(f.controller.showReading(),false);assert.equal(f.calls.dispose,0);assert.equal(f.slot.children.length,1);assert.deepEqual(f.frames,before);
@@ -438,7 +438,18 @@ test('workspace entry does not destroy a mount on a redundant pre-show reading s
  const inspect=f.adapter.inspect;let shown=false,preShowScans=0,observed;
  f.adapter.inspect=()=>{if(!shown&&++preShowScans>1)return {ok:false,reason:'unsafe-native-geometry'};return observed=inspect();};
  f.surface.refreshGeometry=(_handle,inspection)=>{assert.equal(inspection,observed);return inspection.ok===true;};
- f.surface.showWorkspace=()=>{shown=true;return true;};
+ const show=f.surface.showWorkspace;f.surface.showWorkspace=()=>{shown=true;show();return true;};
  assert.equal(f.controller.showWorkspace(),true);assert.equal(preShowScans,1);assert.equal(f.calls.dispose,0);
  f.controller.stop();
+});
+
+test('a declined or unopened popover never commits workspace mode or consumes the return entry',async()=>{
+ for(const result of [false,undefined]){
+  const f=fixture();f.surface.showWorkspace=()=>result;
+  await f.controller.start({});await f.both();
+  assert.equal(f.controller.localStatus(),'reading');assert.equal(f.slot.children.length,1);
+  assert.equal(f.controller.showWorkspace(),false);assert.equal(f.slot.children.length,1);
+  assert.equal(f.controller.presentationSnapshot().attempt,'show-refused');
+  assert.equal(f.controller.presentationSnapshot().workspace,false);
+ }
 });

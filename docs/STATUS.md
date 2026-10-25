@@ -1,5 +1,11 @@
 # VAIWL实际状态：渐进积累工程已接线，真实来源逐项待准入
 
+**2026-10-25 r96 固定修复批：真实首页已收到 renderer 回执，持续显示及 Project 仍未验收。** 接续2eb687fd，本轮集中修复一个确定的呈现控制缺陷：mount拒绝展开曾返回undefined，controller仍可能按成功移除四格。现要求实际workspace popover-open；拒绝时保留安全的reading/四格，原生弹层、几何、身份及scope保护不放宽。此代码反例不等于已经证明全部历史r96空白由此引起。沿原frame/client/renderer补私有授权通道的delivery→received→rendered回执，延迟投影只在真正建立节点后回报；原popup补控制器展开状态。入口在动态import前安装只读私有boot responder，精确documentId/URL与构建指纹可区分模块失败和接收端缺失，不重试、不自动注入。没有重写UI、数据层或浏览器操作器。
+
+原定向回归及隔离正式MV3通过：匿名混合列表的13条库/VIEW、正式节点回执、部分原生侧栏保留和未知重叠让位；独立窄跑首页→Project硬导航的boot/状态接收端通过，无内部请求。未重跑旧搜索、成员、重启矩阵。唯一固定包仍属r96修复批，ZIP SHA256 `e7151b947a529d7f206db32dcd4c60763e954e12a27ffb555af8205d56c4bf09`，路径`.git/vaiwl-artifacts/r96-display-repair-20261025/frozen-package/extension`。2878文件完整备份后同ID更新12个代码/构建文件，manifest、2680额外文件、数据库、草稿与3个stash保留。
+
+用户完成集中激活后，本轮只读原Profile弹窗实际取得匹配新包的boot指纹`46dfc62f…ea100`：module-loaded、即时库13聊天/0Project、VIEW unknown=13/5、rendered rows=5/cards=0；workspace=true、frames=2、grants=2、geometryPaused=false。**当前首页的接收→投影→正式节点建立与当时展开已实机确认**，末页离屏不代表全库空。0卡片与当前0个已确认Project一致，不能填假数据。旧私人库保持锁定。随后原工具栏关闭动作被现有前台守卫拒绝（-2700），没有发送点击或激活其他窗口；后续一次只读AX见四格、未见展开框架。两次读取之间的呈现变化原因未建立，故**持续可见/最终视觉仍未通过**。Project未执行导航，真实接收端故障仍开放，不能用新增诊断或离线硬导航PASS替代修复。剩余是同一真实Project文档的boot/通信状态及持续呈现证据，非新来源研究；本轮不再重装、重发消息或扩展操作器。原Mac回执 `r96DisplayReceiptRepair20261025` 保留完整匿名分层，个人v2.7验收尚未通过。
+
 **2026-10-25 r96 实际代码修复与链路快照（接续db9835ba，原目录已更新、尚未激活）：** 用户重新授权修复首页空投影和Project通信故障，以下“仅证据收口”是历史范围。本轮确认并修复候选读取的独立根因：`chatgpt-adapter` 将原生目录变化与自有popover呈现/同producer续约共用 `surfaceEpoch`，多页候选读取在内容未变化时被误判 `stale-host-loaded-read`。现仅导航候选使用独立单调revision；普通body-bearing读取、真实DOM/路由/滚动/几何变化、scope与token校验、原6秒截止保持。原匿名混合行回放加入明确标注的几何不变分页放大，修前复现候选错误、修后消失；正式隔离MV3保留原生侧栏、草稿和未知控件让位。13条聊天实际经surface提交到库与VIEW，故该缺陷**不能单独解释实机全部空投影**。
 
 用户明确补充：本轮reading/已连接、私人锁定和末页4项离屏的原弹窗来自**首页**，不是Project。源码核对确认旧摘要的accepted可能只对应首个空页，而后续数字是末页，不能推断整批接收量。复用原状态面板补本代producer累计观察/接收计数、当前已授权本地库版本/对象数量及上次workspace VIEW版本/分段数量；累计不是去重库存，VIEW回复不等于已绘制。status/layout按同一目标documentId及URL发出并复核；通信错误分为接收端缺失、回复前断开、文档变化等固定码，不重试。可选库快照独立1秒，不拖慢原绑定状态或占用确认锁；旧描述符不选库、未知manifest不报0、撤权/换文档/迟到结果丢弃，不输出ID/标题/正文/凭据。

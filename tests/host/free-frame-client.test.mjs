@@ -655,3 +655,13 @@ for(const outcome of ['success','denied','timeout'])test(`in-flight read keeps a
  if(outcome==='timeout'){const settledReads=reads,settledPages=f.pages.length;mutation.resolve({ok:true,segment:0,viewSession:{...old,H:7,policyRevision:1},workspaceRevision:6});await drain();assert.equal(reads,settledReads);assert.equal(f.pages.length,settledPages);assert.equal(writes,1);}
  f.client.stop();
 });
+
+test('ready VIEW sends received receipt and only renderer callback sends DOM receipt',async()=>{
+ const f=fixture();f.setView(async()=>({ok:true,state:'ready',deliveryId:7,page:f.page(),navigation:[]}));
+ await f.client.start();await drain();
+ const receipts=()=>f.calls.filter(m=>m.type==='HOST_UI_VIEW_RECEIPT');
+ assert.deepEqual(receipts().map(m=>m.phase),['received']);
+ f.nav.onFrameRendered(f.pages[0],{cards:0,rows:1});await drain();
+ assert.deepEqual(receipts().map(m=>m.phase),['received','rendered']);assert.equal(receipts()[1].deliveryId,7);
+ const callback=f.nav.onFrameRendered,page=f.pages[0];f.client.stop();callback(page,{cards:0,rows:1});await drain();assert.equal(receipts().length,2);
+});

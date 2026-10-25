@@ -803,3 +803,19 @@ test('workspace delivery summary is anonymous, document-scoped, and absent after
  assert.equal(h.service.views.deliverySummary(frame,'other-scope'),null);
  h.service.invalidate({tabId:1});assert.equal(h.service.views.deliverySummary(frame,scope.key),null);
 });
+
+test('frame receipt is bound to current delivery and authorized UI document, never implied by VIEW',async t=>{
+ const h=await fixture(t);await h.bind();await h.observe();await h.mount();
+ const frame={tabId:1,documentId:'document',actualURL:url},scope=h.service.authority.scopeFor({...frame,frameId:0,documentLifecycle:'active',incognito:false});
+ const sent=await ready(h);
+ const receipt=(patch={},sender=h.children.workspace)=>h.service.handle({v:1,type:'HOST_UI_VIEW_RECEIPT',grantId:h.grants.workspace.id,mountId:'mount',deliveryId:sent.deliveryId,phase:'rendered',cards:1,rows:1,...patch},sender);
+ assert.deepEqual(h.service.views.receiptSummary(frame,scope.key),{deliveryId:sent.deliveryId,phase:'sent',cards:null,rows:null});
+ assert.equal((await receipt({},h.sender)).ok,false);
+ assert.equal((await receipt({title:'private'})).ok,false);
+ assert.equal((await receipt()).ok,true);
+ assert.equal((await receipt({phase:'received',cards:null,rows:null})).ok,true);
+ assert.equal(h.service.views.receiptSummary(frame,scope.key).phase,'rendered');
+ const next=await ready(h);assert.notEqual(next.deliveryId,sent.deliveryId);
+ assert.equal((await receipt()).ok,false);assert.equal(h.service.views.receiptSummary(frame,scope.key).phase,'sent');
+ h.service.invalidate({tabId:1});assert.equal(h.service.views.receiptSummary(frame,scope.key),null);assert.equal((await receipt({deliveryId:next.deliveryId})).ok,false);
+});

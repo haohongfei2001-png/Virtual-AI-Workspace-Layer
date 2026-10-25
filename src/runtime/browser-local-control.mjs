@@ -82,7 +82,7 @@ export function createBrowserLocalControl({chrome,service,allowedURL,urlPolicy,o
    const check=await chrome.webNavigation.getFrame({tabId:frame.tabId,frameId:0}),current=await chrome.tabs.query({active:true,currentWindow:true});
    if(!guard()||current.length!==1||current[0].id!==frame.tabId||current[0].incognito!==false||check?.documentId!==frame.documentId||check.url!==frame.actualURL||check.documentLifecycle!=='active')return null;
    const count=value=>value&&Object.getPrototypeOf(value)===Object.prototype?Object.keys(value).length:null;
-   return {storage:scope.storage,nativeRevision:header.revision,projects:count(header.manifest?.projects),refs:count(header.manifest?.refs),lastWorkspaceDelivery:service.views?.deliverySummary?.(frame,scope.key)??null};
+   return {storage:scope.storage,nativeRevision:header.revision,projects:count(header.manifest?.projects),refs:count(header.manifest?.refs),lastWorkspaceDelivery:service.views?.deliverySummary?.(frame,scope.key)??null,...(service.views?.receiptSummary?{workspaceReceipt:service.views.receiptSummary(frame,scope.key)}:{})};
   },{timeoutMs:1000});}catch{return null;}finally{reading=false;}
  }
  async function handle(m,sender){

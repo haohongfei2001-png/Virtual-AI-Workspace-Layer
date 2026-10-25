@@ -15,6 +15,11 @@ const exact=(value,keys)=>value!==null&&typeof value==='object'&&!Array.isArray(
 // Bounded layout categories or numeric computed inset geometry only; never
 // native text, IDs, URLs, arbitrary CSS, attribute values or credential material.
 export function validLayoutShape(value){
+ if(exact(value,['navigation','delivery','presentation'])){
+  const p=value.presentation;
+  return validLayoutShape({navigation:value.navigation,delivery:value.delivery})&&(p===null||exact(p,['mode','attempt','registered','frames','grants','workspace','sidebar','geometryPaused','returnPresent'])&&['waiting','workspace','reading','suspended','dormant'].includes(p.mode)&&['not-attempted','showing','show-refused','show-returned','join-exception'].includes(p.attempt)&&['registered','geometryPaused','returnPresent'].every(k=>typeof p[k]==='boolean')&&['workspace','sidebar'].every(k=>p[k]===null||typeof p[k]==='boolean')&&['frames','grants'].every(k=>Number.isInteger(p[k])&&p[k]>=0&&p[k]<=2));
+ }
+
  if(exact(value,['navigation','delivery'])){
   const d=value.delivery;
   return exact(d,['pages','resolvedProjects','resolvedChats','acceptedPackets','acceptedProjects','acceptedChats','rejectedPackets','capped'])&&typeof d.capped==='boolean'&&Object.entries(d).every(([k,v])=>k==='capped'||Number.isSafeInteger(v)&&v>=0&&v<=1000000)&&validLayoutShape({navigation:value.navigation});
@@ -35,6 +40,11 @@ export function validLayoutShape(value){
 }
 /** Numeric local pipeline snapshot; no identities, query or row content. */
 export function validLocalPipeline(p){
+ if(exact(p,['storage','nativeRevision','projects','refs','lastWorkspaceDelivery','workspaceReceipt'])){
+  const {workspaceReceipt:r,...rest}=p;
+  return validLocalPipeline(rest)&&(r===null||exact(r,['deliveryId','phase','cards','rows'])&&Number.isSafeInteger(r.deliveryId)&&r.deliveryId>0&&['sent','received','rendered'].includes(r.phase)&&['cards','rows'].every(k=>r.phase==='rendered'?Number.isInteger(r[k])&&r[k]>=0&&r[k]<=4096:r[k]===null));
+ }
+
  const num=v=>Number.isSafeInteger(v)&&v>=0,optional=v=>v===null||num(v),pair=v=>Array.isArray(v)&&v.length===2&&v.every(optional);
  if(!exact(p,['storage','nativeRevision','projects','refs','lastWorkspaceDelivery'])||!['session','personal'].includes(p.storage)||!num(p.nativeRevision)||![p.projects,p.refs].every(optional))return false;
  const d=p.lastWorkspaceDelivery;
@@ -56,7 +66,7 @@ export function installLocalStatus({runtime,readState,readLayout=()=>null,observ
 }
 /** One local query. Browser URL stays in memory for document binding only;
  * no page content, permissions, authentication or retry. */
-export function readActiveLocalStatus({tabs,webNavigation=null,schedule=setTimeout,cancel=clearTimeout,onFailure=()=>{},onTarget=()=>{}}){
+export function readActiveLocalStatus({tabs,webNavigation=null,schedule=setTimeout,cancel=clearTimeout,onFailure=()=>{},onTarget=()=>{},onProbeTarget=()=>{}}){
  return new Promise(resolve=>{
   let stage='query',settled=false,timer,target=null,documentId=null,documentURL=null;const failure=code=>{try{onFailure(code);}catch{}};const finish=value=>{if(settled)return;settled=true;cancel(timer);resolve(value);};
   timer=schedule(()=>{failure('timeout');finish('unavailable');},1000);
@@ -69,6 +79,7 @@ export function readActiveLocalStatus({tabs,webNavigation=null,schedule=setTimeo
     if(typeof frame?.documentId!=='string'||!frame.documentId||frame.documentLifecycle!=='active'){failure('document-unavailable');finish('unavailable');return;}
     documentId=frame.documentId;documentURL=frame.url;
    }
+   if(documentId)try{onProbeTarget({tabId:target,documentId,url:documentURL});}catch{}
    stage='send';const reply=await tabs.sendMessage(target,{v:1,type:'HOST_LOCAL_STATUS'},documentId?{documentId}:{frameId:0});
    if(settled)return;
    if(documentId){stage='frame';const check=await webNavigation.getFrame({tabId:target,frameId:0});if(settled)return;if(check?.documentId!==documentId||check.url!==documentURL||check.documentLifecycle!=='active'){failure('document-changed');finish('unavailable');return;}}
@@ -96,4 +107,19 @@ export function readActiveLocalLayout({tabs,webNavigation=null,target=null,sched
    return !settled&&await current()?result:null;
   }).then(r=>{if(!settled)finish(exact(r,['v','shape'])&&r.v===1&&validLayoutShape(r.shape)?r.shape:null);},()=>finish(null));
  });
+}
+
+/** Independent bootstrap probe, bound to the exact document sampled above.
+ * It cannot bootstrap, inject, retry, authorize, or change the page. */
+export async function readLocalBoot({tabs,webNavigation,target,schedule=setTimeout,cancel=clearTimeout}){
+ if(!target||!webNavigation)return null;
+ let active=true,timer;
+ const current=async()=>{const frame=await webNavigation.getFrame({tabId:target.tabId,frameId:0});return active&&frame?.documentId===target.documentId&&frame.url===target.url&&frame.documentLifecycle==='active';};
+ const work=async()=>{
+  if(!await current())return null;
+  const r=await tabs.sendMessage(target.tabId,{v:1,type:'HOST_LOCAL_BOOT'},{documentId:target.documentId});
+  if(!await current())return null;
+  return exact(r,['v','stage','build'])&&r.v===1&&['module-loading','module-loaded','module-load-failed'].includes(r.stage)&&typeof r.build==='string'&&/^[a-f0-9]{64}$/.test(r.build)?r:null;
+ };
+ try{return await Promise.race([work(),new Promise(resolve=>{timer=schedule(()=>resolve(null),1000);})]);}catch{return null;}finally{active=false;cancel(timer);}
 }
