@@ -1,3 +1,4 @@
+import {nativeHistoryPresentation} from './native-history-list.mjs';
 import {profileElement,NATIVE_LAYOUT_ATTRIBUTES} from './native-surface-boundary.mjs';
 import {recoverableLayoutFailure} from './local-status.mjs';
 import {createURLPolicy} from './url-policy.mjs';
@@ -59,6 +60,9 @@ export function installBrowserLocalLifecycle({document:doc,runtime,session,profi
     if(!layout||doc.querySelector('dialog[open], [aria-modal="true"]'))return;
     const keys=project?['header','navigationSlot','historyList']:['header','reading','composer','navigationSlot','historyList','returnHitRoot',...(layout.readingViewport?['readingViewport']:[])];
     if(!keys.every(key=>{const node=profileElement(doc,profile,layout[key],route);if(!node)return false;const rect=node.getBoundingClientRect();return node.isConnected&&rect.width>0&&rect.height>0&&!node.closest('[hidden],[inert],[aria-hidden="true"]');}))return;
+    // A late history run must be completely safe before spending the existing
+    // one-shot preparation. Empty/interleaved rows do not wake a retry loop.
+    if(state.startsWith('layout-history-')&&!nativeHistoryPresentation({document:doc,source:profileElement(doc,profile,profile.regions.history,route),root:profileElement(doc,profile,layout.historyList,route),urlPolicy:createURLPolicy({origin:doc.location.origin})}))return;
     // A loading/skeleton row can outlive the initial bounded wait. Only a
     // complete current Project proof earns the one fresh preparation; repeated
     // skeleton mutations never consume it, authorize data, or extend a deadline.

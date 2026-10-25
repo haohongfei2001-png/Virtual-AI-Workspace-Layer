@@ -2701,5 +2701,76 @@
       "fixed-new-chat-projection-mac-acceptance"
     ],
     "next": "ONE_FROZEN_CANDIDATE_TARGETED_MAC_ACCEPTANCE_NO_REPEAT_SEND_OR_SOURCE_V3"
+  },
+  "r93ConcentratedAcceptance20261025": {
+    "baseHead": "39878df2156f70f20c9597112e33de96ef7e6ff0",
+    "sameIdReload": "DISPATCHED_ONCE",
+    "candidateCanonicalFiles": 197,
+    "backup": ".git/vaiwl-artifacts/mac-r93-concentrated-20261025/previous-extension",
+    "actualHome": "FAIL_surface-unsafe-native-history-list-row-order",
+    "privateState": "LOCKED",
+    "newChatProjection": "NOT_RUN_HOME_PRECONDITION_FAILED",
+    "newSendCount": 0,
+    "privateOnlyRestore": "NOT_RUN_DEPENDS_ON_PROJECTION_PASS",
+    "realRowMutationOrder": "NOT_CAPTURED",
+    "followup": "OFFLINE_COUNTEREXAMPLE_FIRST_NO_MORE_REAL_CHROME_THIS_BATCH",
+    "databaseTouched": false
+  },
+  "r94HistoryReadinessBatch20261025": {
+    "baseHead": "39878df2156f70f20c9597112e33de96ef7e6ff0",
+    "baselineVersion": "chatgpt-desktop-observed-v2",
+    "actualMacAfterFix": "NOT_RUN_SINGLE_FOLLOWUP_CANDIDATE_ONLY",
+    "confirmedIndependentGap": "Home/chat preparation compared outer roots without full history proof or ordered row stability. This can admit an unsafe or changing list before the adapter rejects it.",
+    "realFailureAttribution": "NOT_ESTABLISHED_AS_SOLE_R93_CAUSE_LIVE_ROW_STRUCTURE_AND_ORDER_NOT_CAPTURED",
+    "changes": [
+      "shared-complete-history-proof-before-ready",
+      "ordered-root-stability-with-original-total-deadline",
+      "post-synchronous-proof-deadline-check",
+      "specific-row-unstable-classification",
+      "one-existing-late-reading-recovery-only-after-current-full-proof"
+    ],
+    "validation": {
+      "readinessBefore": "FAIL_READY_ADMITTED_UNSAFE_INTERLEAVED_RUN",
+      "deadlineBefore": "FAIL_READY_ADMITTED_SYNCHRONOUS_PROOF_AFTER_DEADLINE",
+      "browserAfter": "PASS_WEB_MECHANISM_ONLY",
+      "targetedNode": "PASS_220",
+      "formalIsolatedMV3": {
+        "homePendingStableChatReorder-route-first": true,
+        "homePendingStableChatReorder-rows-first": true,
+        "lateHistoryFullProofRestoresReadingThenFormalUI": true,
+        "historyRecoveryPreservesDraftAndPrivateLock": true,
+        "noInternalRequests": true
+      },
+      "review": "READ_ONLY_REVIEW_COMPLETED_ROW_STABILITY_AND_POST_PROOF_DEADLINE_FINDINGS_FIXED"
+    },
+    "observerCorrection": {
+      "firstCombinedRun": "FAIL_OBSERVER_ASSUMED_EMPTY_DB_AFTER_PREVIOUS_AUTHORIZED_FIXTURE_PERSONAL_CASES",
+      "correction": "Assert new-document locked state and exclusion of old private-only rows; database existence is not an unlock. Fresh-profile empty-DB assertion retained for history-only run.",
+      "rerun": "PASS",
+      "preservedReport": ".git/vaiwl-artifacts/browser-local-history-readiness-20261025-r94/validation/combined-observer-failure.json"
+    },
+    "candidate": {
+      "directory": ".git/vaiwl-artifacts/browser-local-history-readiness-20261025-r94/extension",
+      "files": 197,
+      "zipSha256": "b414433425243e0272205e8f6b145c4e4f13f379d4e8297cda0d3f220576374c",
+      "verified": true,
+      "installed": false
+    },
+    "preservation": {
+      "originalInstallation": "R93_ACTIVE_SAME_ID_WITH_COMPLETE_PRE_UPGRADE_BACKUP",
+      "databaseTouchedByOperator": false,
+      "draftsChanged": false,
+      "testMessagesSent": 0,
+      "otherChromeOperated": false,
+      "browserTabClaim": false,
+      "realCDP": false
+    },
+    "remaining": {
+      "homeAndExistingTestChat": "r93 home failed before target journey; r94 actual check pending. Reuse already-sent chat, never repeat send.",
+      "privateOnlyRestore": "NOT_RUN_CONDITIONAL_ON_SUCCESSFUL_PROJECTION",
+      "longChatLocalProof": "Current overflow clipping cannot prove fixed/external-position/top-layer containment. Retain bounded complete proof; need only containment/escape structural facts, no body.",
+      "nativeInputRisk": "Observed profile still lacks complete composer/retained editors/files/upload/generation/voice/canvas state grammar. Preserve unknown-risk new-tab fallback."
+    },
+    "next": "ONE_FROZEN_R94_HOME_AND_EXISTING_CHAT_BATCH_THEN_PRIVATE_ONLY_RESTORE_IF_PASS_NO_PASSED_JOURNEY_REPEATS"
   }
 }

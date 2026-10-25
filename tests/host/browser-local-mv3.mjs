@@ -1,4 +1,4 @@
-import {HOST_BASELINE_VERSION,progressiveOrders,homeMain,longDesktopHTML,observedHomeHTML,prepareHistoryRun,reorderHistory,addPendingChat,promotePendingChat,enterStableChat,setNativeModal} from './fixtures/observed-host-replay.mjs';
+import {HOST_BASELINE_VERSION,progressiveOrders,homeMain,longDesktopHTML,observedHomeHTML,prepareHistoryRun,reorderHistory,addPendingChat,promotePendingChat,enterStableChat,setNativeModal,insertHistoryGap,clearHistoryGap} from './fixtures/observed-host-replay.mjs';
 /** Actual formal MV3 UI with an empty local memory session; offline host only. */
 import assert from 'node:assert/strict';
 import {createServer} from 'node:http';
@@ -56,7 +56,38 @@ try{
   report.checks['homePendingStableChatReorder-'+order]=true;
   await control.close();await progressive.close();
  }
- if(!process.argv.includes('--progressive-only')){
+ if(process.argv.includes('--history-ready-only')){
+  // Keep the real MV3 preparation closed through its original deadline. A
+  // later complete run earns the existing one-shot reading recovery only.
+  const delayed=await context.newPage();page=delayed;
+  await delayed.addInitScript({content:'document.addEventListener("DOMContentLoaded",()=>{('+prepareHistoryRun.toString()+')();('+insertHistoryGap.toString()+')();},{once:true});'});
+  await delayed.goto(origin+'/');
+  await delayed.waitForFunction(()=>document.documentElement.dataset.vaiwlStartup==='layout-failed',null,{timeout:10000});
+  assert.equal(await delayed.locator('iframe[src^="chrome-extension://"]').count(),0);
+  for(let n=0;n<3;n++){await delayed.locator('#fixture-history-gap').evaluate((row,n)=>row.textContent='Native pending '+n,n);await delayed.waitForTimeout(100);}
+  assert.equal(await delayed.locator('iframe[src^="chrome-extension://"]').count(),0,'unsafe mutations must not mount or spend late recovery');
+  await delayed.evaluate(clearHistoryGap);
+  await delayed.getByRole('button',{name:'返回工作空间',exact:true}).waitFor({timeout:15000});
+  assert.equal(await delayed.locator('[data-va-owned]:popover-open').count(),0,'late proof restores reading without taking native input');
+  assert.equal(await delayed.locator('textarea').inputValue(),'fixture draft');
+  await delayed.getByRole('button',{name:'返回工作空间',exact:true}).click();
+  const formal=delayed.frameLocator('iframe[src="chrome-extension://'+id+'/workspace.html"]');
+  await formal.getByRole('link',{name:'Native A',exact:true}).first().waitFor({timeout:10000});
+  await formal.getByRole('link',{name:'Native reordered',exact:true}).first().waitFor({timeout:10000});
+  const w=context.serviceWorkers().find(w=>w.url().startsWith('chrome-extension://'+id+'/'));
+  const control=await context.newPage();await control.goto('chrome-extension://'+id+'/status.html');await delayed.bringToFront();
+  assert.equal((await control.evaluate(()=>chrome.runtime.sendMessage({v:1,type:'HOST_LOCAL_SPACE',action:'status'}))).mode,'locked','late layout cannot confirm a new document');
+  // The progressive cases deliberately created a private database earlier.
+  // Its existence is not a current unlock; old private-only rows must stay out.
+  if(process.argv.includes('--progressive-only')){
+   for(const privateId of ['66666666-6666-4666-8666-666666666666','77777777-7777-4777-8777-777777777777'])assert.equal(await formal.locator('a[href="'+origin+'/c/'+privateId+'"]').count(),0);
+  }else assert.deepEqual(await w.evaluate(async()=>await indexedDB.databases()),[]);
+  await control.close();
+  report.checks.lateHistoryFullProofRestoresReadingThenFormalUI=true;
+  report.checks.historyRecoveryPreservesDraftAndPrivateLock=true;
+  await delayed.close();
+ }
+ if(!process.argv.includes('--progressive-only')&&!process.argv.includes('--history-ready-only')){
  // A native row reorder invalidates the old mask; a fresh same-document
  // handshake must prove the current row run before restoring the formal UI.
  const reordered=await context.newPage();await reordered.addInitScript({content:'document.addEventListener("DOMContentLoaded",'+prepareHistoryRun.toString()+',{once:true});'});

@@ -1,6 +1,6 @@
 {
   "schema": "chatgpt-host-observed-baseline-v1",
-  "version": "chatgpt-desktop-observed-v1",
+  "version": "chatgpt-desktop-observed-v2",
   "sourceReceipt": "docs/engineering/free-mac-home-acceptance-20261023.json",
   "rawDOMCapture": false,
   "privateData": "NONE_SYNTHETIC_IDS_AND_TEXT_ONLY",
@@ -206,9 +206,38 @@
       "unknowns": [
         "actual-private-only-object-disk-restore"
       ]
+    },
+    {
+      "id": "home-history-readiness",
+      "evidencePointers": [
+        "/r93ConcentratedAcceptance20261025"
+      ],
+      "fixture": "observed-host-replay.mjs",
+      "runner": "observed-profile-browser.mjs --history-ready-only",
+      "kind": "failure-supported-counterexample-not-captured-live-order",
+      "facts": [
+        "r93-home-row-order-refusal",
+        "private-cache-remains-locked"
+      ],
+      "expectedSafetyContracts": [
+        "full-history-proof-before-handshake",
+        "ordered-row-identity-stable-before-mount",
+        "original-deadline-not-extended",
+        "late-complete-proof-uses-existing-single-recovery",
+        "post-proof-deadline-checked"
+      ],
+      "unknowns": [
+        "actual-home-row-structure-and-mutation-order",
+        "whether-readiness-gap-is-real-failure-only-cause"
+      ],
+      "integrationRunner": "browser-local-mv3.mjs --history-ready-only"
     }
   ],
   "minimalMissingObservations": [
+    {
+      "id": "r93-home-history-structure",
+      "need": "Only if r94 still differs: bounded direct-row categories and ordered node changes at home readiness; no IDs, titles, body or second test send. The r93 final status does not establish the live row structure."
+    },
     {
       "id": "new-chat-event-order",
       "need": "Only if frozen candidate differs from counterexamples: bounded navigation/row categories and ordering, no second send or body."

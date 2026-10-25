@@ -1,3 +1,4 @@
+import {nativeHistoryPresentation} from './native-history-list.mjs';
 import {inspectNativeProjectSurface} from './native-project-surface.mjs';
 import {CHATGPT_SIDEBAR_SELECTOR,NATIVE_LAYOUT_ATTRIBUTES,profileElement,sidebarBoundaryFailure} from './native-surface-boundary.mjs';
 import {CHATGPT_SELECTION_CURRENT_BODY} from './current-body-discovery.mjs';
@@ -55,9 +56,16 @@ export function waitForNativeLayout({document,profile,timeoutMs=6000,signal=null
  const layout=route.kind==='home'?profile?.nativeHomeLayout:route.kind==='conversation'||project?profile?.nativeLayout:null;
  if(!layout)return Promise.resolve(true);
  const keys=project?['header','navigationSlot','historyList']:['header','reading','composer','navigationSlot','historyList','returnHitRoot',...(layout.readingViewport?['readingViewport']:[])],win=document.defaultView;
- let failure='layout-check-failed',shape=null,projectProof=null;
+ let failure='layout-check-failed',shape=null,historyProof=null,layoutProof=null;
  const geometryReady=nodes=>{
-  if(project){const [header,slot,history]=nodes,result=inspectNativeProjectSurface({document,profile,urlPolicy,header,slot,history,onFailure:(reason,detail)=>{failure='layout-project-'+reason;shape=detail;}});projectProof=result?.proofNodes??null;return !!result;}
+  layoutProof=null;historyProof=null;
+  const history=nodes[keys.indexOf('historyList')],source=profileElement(document,profile,profile.regions.history,route);
+  const historyPresentation=nativeHistoryPresentation({document,source,root:history,urlPolicy,onFailure:reason=>{failure='layout-history-'+reason;}});
+  if(!historyPresentation)return false;
+  // Snapshot the proved run, not just its parent. Never pin preferred roots
+  // during preparation: hydration may replace/reorder them before mounting.
+  historyProof=[source,history,...historyPresentation.maskRoots];layoutProof=historyProof;
+  if(project){const [header,slot]=nodes,result=inspectNativeProjectSurface({document,profile,urlPolicy,header,slot,history,historyPresentation,onFailure:(reason,detail)=>{failure='layout-project-'+reason;shape=detail;}});layoutProof=result?[...layoutProof,...result.proofNodes]:null;return !!result;}
   if(layout.returnPlacement!=='header-gap')return true;
   const byKey=Object.fromEntries(keys.map((key,i)=>[key,nodes[i]])),{header,reading,composer,navigationSlot,historyList,returnHitRoot,readingViewport}=byKey;
   const rect=node=>{const r=node.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height};};
@@ -68,7 +76,7 @@ export function waitForNativeLayout({document,profile,timeoutMs=6000,signal=null
  };
 
  return new Promise(resolve=>{
-  let settled=false,observer,timer,stableTimer=null,prior=[];const started=win.performance.now();
+  let settled=false,observer,timer,stableTimer=null,prior=[],priorHistory=[];const started=win.performance.now();
   const finish=value=>{if(settled)return;settled=true;observer?.disconnect();win.clearTimeout(timer);win.clearTimeout(stableTimer);signal?.removeEventListener('abort',leave);win.removeEventListener('pagehide',leave);win.removeEventListener('popstate',check);win.removeEventListener('hashchange',check);if(value===false)try{onFailure(failure,shape);}catch{}resolve(value);};
   const leave=()=>finish(false);
   const check=()=>{
@@ -85,12 +93,22 @@ export function waitForNativeLayout({document,profile,timeoutMs=6000,signal=null
     let nodes=keys.map(key=>profileElement(document,profile,layout[key],route));if(nodes.some(node=>!node))nodes=[];
     if(nodes.length){const mismatch=keys.findIndex((key,i)=>profileElement(document,profile,layout[key],route)!==nodes[i]);if(mismatch>=0){failure=keys[mismatch]==='historyList'?'layout-sidebar-'+sidebarBoundaryFailure(document,profile):'layout-missing-'+keys[mismatch];nodes=[];}}
     if(nodes.length&&!geometryReady(nodes))nodes=[];
-    if(project&&nodes.length)nodes.push(...projectProof);
+    if(nodes.length){
+     // Safe rows can keep changing without ever satisfying the stability
+     // interval. Preserve that specific late-readiness reason at the deadline.
+     if(priorHistory.length&&(historyProof.length!==priorHistory.length||historyProof.some((node,i)=>node!==priorHistory[i])))failure='layout-history-row-unstable';
+     nodes.push(...layoutProof);
+    }
+    priorHistory=nodes.length?historyProof:[];
     if(nodes.length&&nodes.length===prior.length&&nodes.every((node,i)=>node===prior[i]))return;
     win.clearTimeout(stableTimer);stableTimer=null;prior=nodes;
     if(nodes.length)stableTimer=win.setTimeout(()=>{
      const elapsed=win.performance.now()-started;
-     if(!signal?.aborted&&document.location.href===href&&elapsed>=0&&elapsed<timeoutMs&&geometryReady(nodes)&&(!project||projectProof.length===nodes.length-keys.length&&projectProof.every((node,i)=>node===nodes[keys.length+i]))&&groups.every((_,i)=>{return profileElement(document,profile,layout[keys[i]],route)===nodes[i];}))finish(true);else{prior=[];check();}
+     const proved=!signal?.aborted&&document.location.href===href&&Number.isFinite(elapsed)&&elapsed>=0&&elapsed<timeoutMs&&geometryReady(nodes)&&layoutProof.length===nodes.length-keys.length&&layoutProof.every((node,i)=>node===nodes[keys.length+i])&&groups.every((_,i)=>profileElement(document,profile,layout[keys[i]],route)===nodes[i]);
+     // Synchronous history/paint work can cross the deadline before the timeout
+     // task can run. Admission must use the clock after the complete proof.
+     const finishedElapsed=win.performance.now()-started;
+     if(proved&&!signal?.aborted&&document.location.href===href&&Number.isFinite(finishedElapsed)&&finishedElapsed>=0&&finishedElapsed<timeoutMs)finish(true);else{prior=[];check();}
     },150);
    }catch{finish(false);}
   };

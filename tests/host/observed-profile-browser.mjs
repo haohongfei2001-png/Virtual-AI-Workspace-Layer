@@ -1,4 +1,4 @@
-import {observedHomeHTML,retainHiddenTitlebar,visibilityWakeAttributes} from './fixtures/observed-host-replay.mjs';
+import {observedHomeHTML,retainHiddenTitlebar,visibilityWakeAttributes,prepareHistoryRun,insertHistoryGap,clearHistoryGap} from './fixtures/observed-host-replay.mjs';
 import {observedDesktopHTML} from './fixtures/observed-desktop.mjs';
 import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';
@@ -7,6 +7,35 @@ const require=createRequire(new URL('../../extension/tooling/package.json',impor
 const {outputFiles}=await require('esbuild').build({stdin:{contents:"export {createChatGPTAdapter} from './src/host/chatgpt-adapter.mjs';export {CHATGPT_OBSERVED_PROFILE,waitForNativeLayout} from './src/host/chatgpt-observed-profile.mjs';export {createMountSurface} from './src/navigation/mount-surface.mjs';",resolveDir:process.cwd()},bundle:true,write:false,format:'iife',globalName:'observedModule'});
 const browser=await chromium.launch({headless:true});
 try{
+ if(process.argv.includes('--history-ready-only')){
+  const page=await browser.newPage({viewport:{width:1000,height:700}}),url='https://chatgpt.com/';
+  await page.route('**/*',r=>r.request().url()===url?r.fulfill({contentType:'text/html',body:observedHomeHTML('33333333-3333-4333-8333-333333333333')}):r.abort());
+  await page.goto(url);await page.addScriptTag({content:outputFiles[0].text});
+  await page.evaluate(prepareHistoryRun);await page.evaluate(insertHistoryGap);
+  await page.evaluate(()=>{window.readyDone=false;window.readyResult=null;window.readyTask=observedModule.waitForNativeLayout({document,profile:observedModule.CHATGPT_OBSERVED_PROFILE,timeoutMs:1200}).then(v=>{window.readyResult=v;window.readyDone=true;});});
+  await page.waitForTimeout(250);assert.equal(await page.evaluate(()=>readyDone),false,'unsafe interleaved history cannot pass preparation');
+  await page.evaluate(clearHistoryGap);await page.waitForFunction(()=>readyDone);assert.equal(await page.evaluate(()=>readyResult),true);
+  const stable=await page.evaluate(async()=>{
+   const started=performance.now();let done=false;const pending=observedModule.waitForNativeLayout({document,profile:observedModule.CHATGPT_OBSERVED_PROFILE,timeoutMs:1000}).then(v=>{done=true;return v;});
+   await new Promise(r=>setTimeout(r,100));const list=document.querySelector('#list');list.prepend(list.lastElementChild);
+   await new Promise(r=>setTimeout(r,90));const stillWaiting=!done;return {stillWaiting,ready:await pending,elapsed:performance.now()-started};
+  });assert(stable.stillWaiting&&stable.ready&&stable.elapsed>=240,'row changes restart only the 150ms stability interval');
+  await page.evaluate(insertHistoryGap);
+  const blocked=await page.evaluate(async()=>{let reason;const started=performance.now();const ready=await observedModule.waitForNativeLayout({document,profile:observedModule.CHATGPT_OBSERVED_PROFILE,timeoutMs:400,onFailure:r=>reason=r});return {ready,reason,elapsed:performance.now()-started};});
+  assert.equal(blocked.ready,false);assert.equal(blocked.reason,'layout-history-row-order');assert(blocked.elapsed<800,'unsafe history cannot extend the total deadline');
+  await page.evaluate(clearHistoryGap);
+  const unstable=await page.evaluate(async()=>{
+   let reason;const list=document.querySelector('#list'),clock=setInterval(()=>list.prepend(list.lastElementChild),75);
+   try{const ready=await observedModule.waitForNativeLayout({document,profile:observedModule.CHATGPT_OBSERVED_PROFILE,timeoutMs:400,onFailure:r=>reason=r});return {ready,reason};}finally{clearInterval(clock);}
+  });assert.equal(unstable.ready,false);assert.equal(unstable.reason,'layout-history-row-unstable','safe but changing rows must remain eligible for one later full preparation');
+  const expiredDuringProof=await page.evaluate(async()=>{
+   const now=performance.now.bind(performance),computed=window.getComputedStyle;let clock=0,expire=false;
+   performance.now=()=>clock;window.getComputedStyle=function(...args){if(expire)clock=400;return computed.apply(this,args);};
+   const expireProof=setTimeout(()=>{expire=true;},75);
+   try{return await observedModule.waitForNativeLayout({document,profile:observedModule.CHATGPT_OBSERVED_PROFILE,timeoutMs:400});}finally{clearTimeout(expireProof);performance.now=now;window.getComputedStyle=computed;}
+  });assert.equal(expiredDuringProof,false,'a synchronous final proof crossing the deadline cannot be admitted');
+  console.log(JSON.stringify({status:'PASS_WEB_MECHANISM_ONLY',checks:{historyWaitsForFullProof:true,orderedRowsStable:true,unsafeHistoryDeadlinePreserved:true,unstableRowsClassifiedForBoundedRecovery:true,deadlineCheckedAfterSynchronousProof:true}}));await page.close();
+ }else{
  for(const focusableViewport of [false,true]){
  const page=await browser.newPage({viewport:{width:1000,height:700}}),id='33333333-3333-4333-8333-333333333333',url='https://chatgpt.com/c/'+id;
  await page.route('**/*',r=>r.request().url()===url?r.fulfill({contentType:'text/html',body:focusableViewport?observedDesktopHTML(id).replace('<div data-app-action-timeline-scroll>', '<div data-app-action-timeline-scroll role="region" tabindex="0">'):observedDesktopHTML(id)}):r.abort());
@@ -128,4 +157,5 @@ try{
   checks.draftPreserved=composer.querySelector('textarea').value==='home draft';await adapter.stop();return checks;
  });
  assert(Object.values(homeChecks).every(Boolean),JSON.stringify(homeChecks));console.log(JSON.stringify({status:'PASS_WEB_MECHANISM_ONLY',homeChecks}));await home.close();
+}
 }finally{await browser.close();}

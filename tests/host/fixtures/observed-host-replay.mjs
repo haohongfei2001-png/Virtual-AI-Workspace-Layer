@@ -41,3 +41,12 @@ export function setNativeModal(open){
  const dialog=document.createElement('dialog');dialog.id='fixture-native-modal';dialog.setAttribute('aria-modal','true');dialog.textContent='Native search fixture';document.body.append(dialog);dialog.showModal();
  }else{document.querySelector('#fixture-native-modal').remove();for(const node of [document.querySelector('main'),document.querySelector('nav')]){node.removeAttribute('aria-hidden');node.inert=false;}}
 }
+
+// A local counterexample for the recorded r93 startup failure category. Exact
+// real row order is unknown: these timings test the preparation contract only.
+export function insertHistoryGap(){
+ const list=document.querySelector('#list'),row=document.createElement('div');
+ row.id='fixture-history-gap';row.textContent='Native pending row';
+ list.firstElementChild.after(row);
+}
+export function clearHistoryGap(){document.querySelector('#fixture-history-gap').remove();}
