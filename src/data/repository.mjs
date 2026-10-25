@@ -309,7 +309,9 @@ export class WorkspaceRepository {
   }
 }
 export function validateView(v){
-  exact(v,['segment','oldOpen','sidebarOpen','capacities','scroll','sidebarVisible'],['freeSession']);
+  exact(v,['segment','oldOpen','sidebarOpen','capacities','scroll','sidebarVisible'],['freeSession','sidebarScroll','sidebarChoices']);
+  if(v.sidebarScroll!==undefined&&(!Number.isFinite(v.sidebarScroll)||v.sidebarScroll<0||v.sidebarScroll>1e8))throw Error('invalid-view');
+  if(v.sidebarChoices!==undefined&&(!Array.isArray(v.sidebarChoices)||v.sidebarChoices.length>256||new Set(v.sidebarChoices.map(p=>p?.[0])).size!==v.sidebarChoices.length||v.sidebarChoices.some(p=>!Array.isArray(p)||p.length!==2||typeof p[0]!=='string'||!p[0].length||p[0].length>512||/[\u0000-\u001f\u007f]/.test(p[0])||typeof p[1]!=='boolean')))throw Error('invalid-view');
   if(v.freeSession!==undefined){
     const s=v.freeSession;exact(s,['H','T','Z','policyRevision']);
     if(![7,14,30,60,90].includes(s.H)||!Number.isSafeInteger(s.T)||Math.abs(s.T)>=1000000||typeof s.Z!=='string'||s.Z.length>=100||!Number.isSafeInteger(s.policyRevision)||s.policyRevision<0)throw Error('invalid-free-session');
@@ -317,5 +319,5 @@ export function validateView(v){
   }
   if(!Number.isSafeInteger(v.segment)||v.segment<0||v.segment>10000||!Number.isFinite(v.scroll)||v.scroll<0||v.scroll>1e9||typeof v.sidebarVisible!=='boolean')throw Error('invalid-view');
   for(const k of ['oldOpen','sidebarOpen'])if(!Array.isArray(v[k])||v[k].length>20000||v[k].some(x=>typeof x!=='string'||x.length>260))throw Error('invalid-view');
-  if(!Array.isArray(v.capacities)||v.capacities.length>20000||v.capacities.some(x=>!Array.isArray(x)||x.length!==2||typeof x[0]!=='string'||x[0].length>260||!Number.isSafeInteger(x[1])||x[1]<0||x[1]>20000))throw Error('invalid-view');return v;
+  if(!Array.isArray(v.capacities)||v.capacities.length>20000||v.capacities.some(x=>!Array.isArray(x)||x.length!==2||typeof x[0]!=='string'||x[0].length>530||!Number.isSafeInteger(x[1])||x[1]<0||x[1]>20000))throw Error('invalid-view');return v;
 }

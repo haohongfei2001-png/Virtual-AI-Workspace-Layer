@@ -202,7 +202,10 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
   function explainUnavailable(control,message,{label=false}={}){
     const source=frameProjection,scope=snapshot?.scope;control.setAttribute('aria-disabled','true');control.setAttribute('aria-description',[control.getAttribute('aria-description'),message].filter(Boolean).join(' '));
     if(control.tagName.toLowerCase()==='a'){control.setAttribute('role','button');control.tabIndex=0;control.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();control.click();}});}
-    if(label)control.append(node(doc,'small',{class:'navigation-unavailable-label'},'入口暂不可用'));
+    // Capability resolution is independent from the data projection. Keep a
+    // temporary action limitation accessible without repeating transport state
+    // after every real title; activation still gives the explicit explanation.
+    if(label)control.setAttribute('title',message);
     control.addEventListener('click',event=>{event.preventDefault();if(stopped||frameProjection!==source||snapshot?.scope!==scope)return;
       const intent=advanceNavigationIntent();navigationFeedback={scope,url:adapter.currentURL(),intent,message,nativeReturn:true,href:null};sidebarDirty=true;requestRender();
     });
@@ -389,7 +392,6 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
         const ownerView=view,open=view.oldOpen.has(key),toggle=button('展开旧窗口 '+group.name,()=>{view.oldOpen.has(key)?view.oldOpen.delete(key):view.oldOpen.add(key);render();if(view.oldOpen.has(key))reopenFrameWindow(group.id,'old');},'','square old',()=>currentProjectControl(toggle,ownerView,side?'sidebar':'workspace'));toggle.innerHTML=chevron;toggle.dataset.focusKey=focusKey(kind,'toggle');toggle.setAttribute('aria-expanded',String(open));parent.append(toggle);if(!open)continue;list=node(doc,'div',{class:'old-list'});parent.append(list);
       }
       if(kind==='unknown'){const undated=node(doc,'div',{class:'undated-members','aria-label':'活动时间未确定的窗口',title:'项目归属已知，活动时间尚未确定。'});list.append(undated);list=undated;}
-      if(page.paged)list.append(node(doc,'p',{class:'row-page-notice'},'每页'+page.limit+'条；可继续翻页。'));
       for(const ref of page.items)list.append(row(ref,key));
       if(page.hasMore){const more=button(kind==='old'?'显示更多旧窗口 '+group.name:kind==='unknown'?'显示更多已知窗口':'显示更多近期窗口',()=>moreFrame(page,group.id,kind),frameIsPaged(page,group.id,kind)?'下一页':'显示更多','more');more.dataset.focusKey=focusKey(kind,'more');list.append(more);}
       if(page.offset>0){const previous=button('返回前页 '+group.name,()=>requestFrame({groupId:group.id,list:kind,rowOffset:Math.max(0,page.offset-page.limit),rowLimit:page.limit}),'上一页','more');previous.dataset.focusKey=focusKey(kind,'previous');list.append(previous);}
@@ -427,7 +429,6 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     if(kind==='unknown')list.setAttribute('title','这些已知聊天的项目归属尚未确定；正常打开即可继续使用。');
     const body=node(doc,'div',{class:'inventory-rows',id:token+'-'+key.replaceAll(':','-')});body.hidden=!open;
     if(open){
-      if(page?.paged)body.append(node(doc,'p',{class:'row-page-notice'},'每页'+page.limit+'条；可继续翻页。'));
       const cap=view.capacities.get(key)??5;
       for(const ref of page?.items??rows.slice(0,cap))body.append(row(ref,key));
       if(!total)body.append(node(doc,'p',{},'此区间没有记录；仍可查找其他已知聊天。'));
@@ -600,7 +601,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
         const card=node(doc,'section',{class:'card','data-theme-id':g.id,...(frameProjection?{tabindex:'-1','data-focus-key':'project:'+g.id}:{})}),head=node(doc,'div',{class:'card-head'}),title=node(doc,'h2'),list=node(doc,'div',{class:'members'});
         title.append(themeGlyph(g),node(doc,'span',{class:'theme-name',title:g.name},g.name));appendFreshness(title,g);head.append(title);if(framed&&free())head.append(projectCreateEntry(g));if(!framed&&free()&&adapter.projectCreateHref?.(g)){const a=node(doc,'a',{href:adapter.projectCreateHref(g),class:'square project-create','aria-label':'在项目中新建聊天 '+g.name,title:'在项目中新建聊天 '+g.name},'+');a.addEventListener('click',e=>{if(!e.ctrlKey&&!e.metaKey&&!e.shiftKey&&!e.altKey){clearTimePolicyNotice();view.mode='reading';layout();adapter.openNative(a.href,e);}});head.append(a);}themeActions(g,head);card.append(head);members(g,list);card.append(list);cards.append(card);
       }
-      if(!cards.children.length&&(frameProjection?!['noProject','unknown'].some(kind=>frameRows(null,kind).total>0):!free()||!freeListRows(snapshot,'noProject',view.segment).length&&!freeListRows(snapshot,'unknown',view.segment).length)){const empty=node(doc,'div',{class:'empty'});empty.innerHTML=gridIcon;empty.append(node(doc,'strong',{},'这里还没有活跃主题'),node(doc,'p',{},'可切换区间，或查找已有窗口。'),button('查找已知主题与窗口',()=>findKnown(),'查找窗口','more'));cards.append(empty);}page.append(cards);if(frameProjection){if(frameProjection.groups.offset>0)page.append(button('返回前页项目',()=>requestFrame({offset:Math.max(0,frameProjection.groups.offset-frameProjection.groups.limit)}),'上一页项目','more'));if(frameProjection.groups.hasMore)page.append(button('显示更多项目',()=>requestFrame({offset:frameProjection.groups.offset+frameProjection.groups.limit}),'显示更多项目','more'));}if(free()){appendFreeList(page,'noProject',view.segment);appendFreeList(page,'unknown',view.segment);}
+      if(!cards.children.length&&(frameProjection?!['noProject','unknown'].some(kind=>frameRows(null,kind).total>0):!free()||!freeListRows(snapshot,'noProject',view.segment).length&&!freeListRows(snapshot,'unknown',view.segment).length)){const empty=node(doc,'div',{class:'empty'});empty.innerHTML=gridIcon;const noKnown=frameProjection?.inventory?.projects===0&&frameProjection?.inventory?.refs===0;empty.append(node(doc,'strong',{},noKnown?'从一次聊天开始':'这个区间还没有活跃主题'),node(doc,'p',{},noKnown?'使用原生聊天与项目，已知窗口会逐渐出现在这里。':'可切换区间，或查找已有窗口。'));if(!noKnown)empty.append(button('查找已知主题与窗口',()=>findKnown(),'查找窗口','more'));cards.append(empty);}page.append(cards);if(frameProjection){if(frameProjection.groups.offset>0)page.append(button('返回前页项目',()=>requestFrame({offset:Math.max(0,frameProjection.groups.offset-frameProjection.groups.limit)}),'上一页项目','more'));if(frameProjection.groups.hasMore)page.append(button('显示更多项目',()=>requestFrame({offset:frameProjection.groups.offset+frameProjection.groups.limit}),'显示更多项目','more'));}if(free()){appendFreeList(page,'noProject',view.segment);appendFreeList(page,'unknown',view.segment);}
     }
     if(currentSlot){const ref=current().ref;if(ref&&!Array.from(page.querySelectorAll('[data-ref-id]')).some(n=>n.getAttribute('data-ref-id')===ref.id))appendCurrentContext(currentSlot);else currentSlot.remove();}
     shadow.append(page);layoutCards();page.scrollTop=specialKey===null?view.scroll:specialScroll.get(view)?.key===specialKey?specialScroll.get(view).scroll:0;restoreOwnedFocus(focused);emitView();

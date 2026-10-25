@@ -14,7 +14,7 @@ function fixture({geometry=true}={}){
  const binding={documentToken:'token',producerToken:'producer',browserDocumentId:'parent',routeEpoch:1,origin:'https://chatgpt.com',expiresAt:new Date(60000).toISOString()};
  const frames=['workspace','sidebar'].map(role=>({role,frame:{isConnected:true,ownerDocument:doc,contentWindow:{}}}));
  const adapter={start:async()=>({binding}),stop:()=>calls.push('stop'),inspect:inspection,hasNativeLayer:()=>layer};
- const surface={mount:async()=>({id:'mount'+(++id),documentToken:'token',regionEpoch:region}),frames:()=>frames,showWorkspace:()=>{calls.push('show');return true;},showReading:()=>calls.push('reading'),suspend:()=>calls.push('suspend'),dispose:()=>calls.push('dispose')};
+ const surface={mount:async()=>({id:'mount'+(++id),documentToken:'token',regionEpoch:region}),frames:()=>frames,showWorkspace:(_h,o)=>{if(o?.roles?.includes('workspace')!==false)calls.push('show');return true;},showReading:()=>calls.push('reading'),suspend:()=>calls.push('suspend'),dispose:()=>calls.push('dispose')};
  if(geometry)surface.refreshGeometry=(handle,value)=>{calls.push({handle,inspection:value});return true;};
  const bridge={registerMount:async()=>({ok:true}),confirmParent:async v=>({ok:true,grant:{id:'grant_'+v.role,mountId:v.mountId,role:v.role,parentDocumentId:'parent',uiDocumentId:'ui_'+v.role,scopeGrantId:'scope',expiresAt:new Date(21000).toISOString()}})};
  const controller=createSurfaceController({document:doc,adapter,surface,bridge,extensionOrigin:'chrome-extension://extension',now:()=>time,schedule:()=>++id,cancel:()=>{}});
@@ -29,12 +29,12 @@ test('window/visualViewport/observed native resize refresh current geometry with
 });
 test('workspace entry validates latest geometry before opening and refuses failed refresh',async()=>{
  const f=fixture();await f.controller.start({});await f.both();assert.equal(typeof f.calls.at(-2),'object');assert.equal(f.calls.at(-1),'show');f.controller.showReading();f.surface.refreshGeometry=()=>false;
- assert.equal(f.controller.showWorkspace(),false);assert.equal(f.calls.at(-1),'dispose');assert.equal(f.calls.filter(x=>x==='show').length,1);assert.equal(f.controller.showWorkspace(),false);
+ assert.equal(f.controller.showWorkspace(),false);assert.equal(f.calls.at(-1),'suspend');assert.equal(f.calls.filter(x=>x==='show').length,1);assert.equal(f.controller.showWorkspace(),false);
 });
-for(const failure of ['false','throw'])test('geometry '+failure+' disposes surfaces and listeners',async()=>{
- const f=fixture();await f.controller.start({});await f.both();f.surface.refreshGeometry=()=>{if(failure==='throw')throw Error('unsafe');return false;};f.observers[0].fn();assert.equal(f.calls.filter(x=>x==='dispose').length,1);assert.equal(f.observers[0].disconnected,true);assert.equal(f.events.get('resize').size,0);assert.equal(f.viewport.get('resize').size,0);assert.equal(f.controller.showWorkspace(),false);
+for(const failure of ['false','throw'])test('geometry '+failure+' suspends presentation but retains recovery listeners',async()=>{
+ const f=fixture();await f.controller.start({});await f.both();f.surface.refreshGeometry=()=>{if(failure==='throw')throw Error('unsafe');return false;};f.observers[0].fn();assert.equal(f.calls.filter(x=>x==='dispose').length,0);assert.equal(f.observers[0].disconnected,false);assert.equal(f.events.get('resize').size,2);assert.equal(f.viewport.get('resize').size,1);assert.equal(f.controller.showWorkspace(),false);f.surface.refreshGeometry=()=>true;f.emit('resize');assert.equal(f.controller.presentationMode(),'workspace');f.controller.stop();
 });
-for(const mutate of [f=>f.region(),f=>f.invalid(),f=>{f.doc.location.href+='c/new';},f=>{f.frames[0].frame.isConnected=false;}])test('stale native/frame identity terminates before geometry refresh',async()=>{
+for(const mutate of [f=>f.region(),f=>{f.doc.location.href+='c/new';},f=>{f.frames[0].frame.isConnected=false;}])test('stale native/frame identity terminates before geometry refresh',async()=>{
  const f=fixture();await f.controller.start({});await f.both();const count=f.refreshes().length;mutate(f);f.emit('resize');assert.equal(f.refreshes().length,count);assert.equal(f.calls.filter(x=>x==='dispose').length,1);
 });
 test('expired grants and native layers cannot use resize to open workspace',async()=>{

@@ -15,6 +15,12 @@ const exact=(value,keys)=>value!==null&&typeof value==='object'&&!Array.isArray(
 // Bounded layout categories or numeric computed inset geometry only; never
 // native text, IDs, URLs, arbitrary CSS, attribute values or credential material.
 export function validLayoutShape(value){
+ if(exact(value,['navigation','delivery','presentation'])&&value.presentation&&Object.hasOwn(value.presentation,'transitions')){
+  const {desiredMode,transitions,...legacy}=value.presentation;
+  const states=['visible','hidden','unavailable'];
+  return ['workspace','reading'].includes(desiredMode)&&Array.isArray(transitions)&&transitions.length<=16&&transitions.every(t=>exact(t,['role','reason','from','to','intentRevision','layoutRevision','elapsedMs'])&&['workspace','sidebar'].includes(t.role)&&['visibility','authority','intent','layout'].includes(t.reason)&&states.includes(t.from)&&states.includes(t.to)&&['intentRevision','layoutRevision','elapsedMs'].every(k=>Number.isSafeInteger(t[k])&&t[k]>=0)&&t.elapsedMs<=86400000)&&validLayoutShape({...value,presentation:legacy});
+ }
+
  if(exact(value,['navigation','delivery','presentation'])){
   const p=value.presentation;
   return validLayoutShape({navigation:value.navigation,delivery:value.delivery})&&(p===null||exact(p,['mode','attempt','registered','frames','grants','workspace','sidebar','geometryPaused','returnPresent'])&&['waiting','workspace','reading','suspended','dormant'].includes(p.mode)&&['not-attempted','showing','show-refused','show-returned','join-exception'].includes(p.attempt)&&['registered','geometryPaused','returnPresent'].every(k=>typeof p[k]==='boolean')&&['workspace','sidebar'].every(k=>p[k]===null||typeof p[k]==='boolean')&&['frames','grants'].every(k=>Number.isInteger(p[k])&&p[k]>=0&&p[k]<=2));

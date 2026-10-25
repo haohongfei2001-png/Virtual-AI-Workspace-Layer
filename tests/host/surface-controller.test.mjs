@@ -14,21 +14,24 @@ function fixture(options={}){
  const frames=['workspace','sidebar'].map(role=>({role,frame:{isConnected:true,ownerDocument:doc,contentWindow:{}}}));
  const binding={documentToken:'token',producerToken:'producer',browserDocumentId:'parent',routeEpoch:1,origin:'https://chatgpt.com',expiresAt:new Date(60000).toISOString()};
  const adapter={updateBinding:next=>{calls.updates.push(next);return true;},start:async()=>({binding}),stop:()=>{calls.stop++;},inspect:()=>({ok:true,regionEpoch:region,navigationSlot:slot,...roots}),hasNativeLayer:()=>layer};
- const surface={mount:async(c,i,o)=>(surrender=o.onSurrender,{id:'mount',documentToken:'token',regionEpoch:region}),frames:()=>frames,showWorkspace:()=>{visible=true;calls.show++;},showReading:()=>{visible=false;calls.reading++;},visibility:()=>({workspace:visible,sidebar:visible}),suspend:()=>{visible=false;calls.suspend++;},dispose:()=>{calls.dispose++;}};
+ const surface={mount:async(c,i,o)=>(surrender=o.onSurrender,{id:'mount',documentToken:'token',regionEpoch:region}),frames:()=>frames,showWorkspace:(_handle,options)=>{if(options?.roles?.includes('workspace')!==false){visible=true;calls.show++;}},showReading:()=>{visible=false;calls.reading++;},visibility:()=>({workspace:visible,sidebar:visible}),suspend:()=>{visible=false;calls.suspend++;},dispose:()=>{calls.dispose++;}};
  const bridge={registerMount:async()=>{calls.register++;return {ok:true};},confirmParent:async value=>{calls.confirm.push(value);return {ok:true,grant:{id:`grant_${value.role}`,mountId:'mount',role:value.role,parentDocumentId:'parent',uiDocumentId:`ui_${value.role}`,scopeGrantId:'scope',expiresAt:new Date(21000).toISOString()}};}};
  const controller=createSurfaceController({onWake:()=>false,...options,document:doc,adapter,surface,bridge,extensionOrigin:'chrome-extension://extension',onTerminated:(reason,presentation)=>calls.terminations.push({reason,presentation}),now:()=>time,elapsedNow:()=>time,schedule:(fn,ms)=>{const id=++n;timers.set(id,{fn,at:time+ms});return id;},cancel:id=>timers.delete(id)});
  const message=(role='workspace',patch={})=>{const event={source:frames.find(x=>x.role===role).frame.contentWindow,origin:'chrome-extension://extension',data:{type:'VAIWL_UI_JOIN',role,nonce:`nonce_${role}`},...patch};for(const fn of listeners.get('message')??[])fn(event);};
  const both=async()=>{message();message('sidebar');await drain();};
- return {timers,renewAck:()=>({ok:true,binding:{...binding,expiresAt:new Date(time+20000).toISOString()},grants:['workspace','sidebar'].map(role=>({id:`grant_${role}`,mountId:'mount',role,parentDocumentId:'parent',uiDocumentId:`ui_${role}`,scopeGrantId:'scope',expiresAt:new Date(time+20000).toISOString()}))}),surrender:event=>surrender?.(event),pagehide:()=>{for(const fn of listeners.get('pagehide')??[])fn();},controller,bridge,adapter,surface,doc,slot,frames,binding,calls,message,both,change:()=>observer?.(),layer:value=>{layer=value;},region:()=>{region++;},tick:ms=>{time+=ms;for(const [id,t]of [...timers])if(t.at<=time){timers.delete(id);t.fn();}}};
+ return {timers,renewAck:()=>({ok:true,binding:{...binding,expiresAt:new Date(time+20000).toISOString()},grants:['workspace','sidebar'].map(role=>({id:`grant_${role}`,mountId:'mount',role,parentDocumentId:'parent',uiDocumentId:`ui_${role}`,scopeGrantId:'scope',expiresAt:new Date(time+20000).toISOString()}))}),surrender:(event={reason:'native-input'})=>surrender?.(event),pagehide:()=>{for(const fn of listeners.get('pagehide')??[])fn();},controller,bridge,adapter,surface,doc,slot,frames,binding,calls,message,both,change:()=>observer?.(),layer:value=>{layer=value;},region:()=>{region++;},tick:ms=>{time+=ms;for(const [id,t]of [...timers])if(t.at<=time){timers.delete(id);t.fn();}}};
 }
-test('owner registration and both UiGrant ACKs gate initial dual-surface show',async()=>{const f=fixture(),held=deferred();f.bridge.registerMount=()=>held.promise;const start=f.controller.start({});await drain();f.message();assert.equal(f.calls.confirm.length,0);assert.equal(f.controller.showWorkspace(),false);held.resolve({ok:true});await start;f.message();await drain();assert.equal(f.calls.show,0);f.message('sidebar');await drain();assert.equal(f.calls.show,1);assert.deepEqual(Object.keys(f.calls.confirm[0]).sort(),['documentToken','mountId','nonce','regionEpoch','role']);});
+test('owner registration and workspace UiGrant gate workspace; sidebar joins independently',async()=>{const f=fixture(),held=deferred();f.bridge.registerMount=()=>held.promise;const start=f.controller.start({});await drain();f.message();assert.equal(f.calls.confirm.length,0);assert.equal(f.controller.showWorkspace(),false);held.resolve({ok:true});await start;f.message();await drain();assert.equal(f.calls.show,1);f.message('sidebar');await drain();assert.equal(f.calls.show,1);assert.deepEqual(Object.keys(f.calls.confirm[0]).sort(),['documentToken','mountId','nonce','regionEpoch','role']);});
 test('origin, original contentWindow, connectedness and public join shape are mandatory',async()=>{for(const mutate of [f=>f.message('workspace',{origin:'https://chatgpt.com'}),f=>f.message('workspace',{source:{}}),f=>{f.frames[0].frame.isConnected=false;f.message();},f=>f.message('workspace',{data:{type:'VAIWL_UI_JOIN',role:'workspace',nonce:'n',scope:'forged'}})]){const f=fixture();await f.controller.start({});mutate(f);await drain();assert.equal(f.calls.confirm.length,0);assert.equal(f.calls.show,0);}});
 test('exactly one four-grid return exists only in reading and opens workspace',async()=>{const f=fixture();await f.controller.start({});await f.both();assert.equal(f.slot.children.length,0);f.controller.showReading();f.controller.showReading();assert.equal(f.slot.children.length,1);assert.equal((f.slot.children[0].innerHTML.match(/<rect /g)??[]).length,4);assert.equal(f.slot.children[0]['aria-label'],'返回工作空间');f.slot.children[0].events.click({isTrusted:true});assert.equal(f.slot.children.length,0);assert.equal(f.calls.show,2);});
-test('native portal surrenders both surfaces without automatically taking focus back',async()=>{const f=fixture();await f.controller.start({});await f.both();f.controller.showReading();f.layer(true);f.change();assert.equal(f.slot.children.length,0);assert.ok(f.calls.suspend>0);assert.equal(f.controller.showWorkspace(),false);f.layer(false);f.change();assert.equal(f.calls.show,1);});
+test('native portal surrenders both surfaces without automatically taking focus back',async()=>{const f=fixture();await f.controller.start({});await f.both();f.controller.showReading();f.layer(true);f.change();assert.equal(f.slot.children.length,0);assert.ok(f.calls.suspend>0);assert.equal(f.controller.isWorkspacePresented(),false);f.layer(false);f.change();assert.equal(f.calls.show,1);});
 test('route or region replacement disposes owned UI and stops adapter',async()=>{for(const change of [f=>{f.doc.location.href+='c/new';},f=>f.region()]){const f=fixture();await f.controller.start({});await f.both();change(f);f.change();assert.equal(f.calls.dispose,1);assert.equal(f.controller.showWorkspace(),false);}});
 test('grant expiry and explicit revoke remove return and dispose both surfaces',async()=>{for(const change of [f=>f.tick(20000),f=>f.controller.revoke()]){const f=fixture();await f.controller.start({});await f.both();f.controller.showReading();change(f);assert.equal(f.slot.children.length,0);assert.equal(f.calls.dispose,1);assert.equal(f.controller.showWorkspace(),false);}});
 test('late registration or grant ACK after stop never shows stale surfaces',async()=>{for(const method of ['registerMount','confirmParent']){const f=fixture(),held=deferred(),original=f.bridge[method];f.bridge[method]=()=>held.promise;const start=f.controller.start({});await drain();if(method==='confirmParent')f.message();await drain();f.controller.stop();held.resolve(method==='registerMount'?{ok:true}:await original({role:'workspace'}));await start;await drain();assert.equal(f.calls.show,0);assert.equal(f.calls.dispose,1);}});
-test('owner denial and stale region during registration dispose without show',async()=>{for(const denied of [true,false]){const f=fixture();f.bridge.registerMount=async()=>{if(!denied)f.region();return {ok:!denied};};assert.equal(await f.controller.start({}),null);assert.equal(f.calls.dispose,1);assert.equal(f.calls.show,0);}});
+test('owner denial disposes; geometry change does not revoke document transport',async()=>{
+ const denied=fixture();denied.bridge.registerMount=async()=>({ok:false});assert.equal(await denied.controller.start({}),null);assert.equal(denied.calls.dispose,1);
+ const changed=fixture();changed.bridge.registerMount=async()=>{changed.region();return {ok:true};};assert((await changed.controller.start({})));assert.equal(changed.calls.dispose,0);assert.equal(changed.calls.show,0);changed.controller.stop();
+});
 test('both early JOINs drain only after owner ACK, with one pending nonce per role',async()=>{
  const f=fixture(),held=deferred();f.bridge.registerMount=()=>held.promise;const starting=f.controller.start({});await drain();
  f.message();f.message('workspace',{data:{type:'VAIWL_UI_JOIN',role:'workspace',nonce:'later_nonce'}});f.message('sidebar');await drain();
@@ -60,13 +63,13 @@ test('session renewal rejects changed binding/scope/UI/role and overlong lifetim
 test('six-second session deadline releases UI and late ACK cannot renew or resurrect it',async()=>{
  const f=fixture(),held=deferred();f.bridge.renewSession=()=>held.promise;await f.controller.start({});await f.both();f.tick(10000);await drain();f.tick(6000);await drain();assert.equal(f.calls.dispose,1);held.resolve(f.renewAck());await drain();assert.equal(f.calls.updates.length,0);assert.equal(f.controller.showWorkspace(),false);
 });
-test('stop, route and region changes fence pending session renewal',async()=>{
- for(const change of [f=>f.controller.stop(),f=>{f.doc.location.href+='c/new';},f=>f.region()]){
+test('stop and route changes fence pending session renewal',async()=>{
+ for(const change of [f=>f.controller.stop(),f=>{f.doc.location.href+='c/new';}]){
   const f=fixture(),held=deferred();f.bridge.renewSession=()=>held.promise;await f.controller.start({});await f.both();f.tick(10000);await drain();change(f);held.resolve(f.renewAck());await drain();assert.equal(f.calls.updates.length,0);assert.equal(f.calls.dispose,1);
  }
 });
 test('native input surrender creates one return without reopening masks or changing draft',async()=>{
- const f=fixture();await f.controller.start({});f.surrender();assert.equal(f.slot.children.length,0);await f.both();f.doc.draft='unsent';f.surrender();const button=f.slot.children[0];f.surrender();f.change();assert.equal(f.slot.children.length,1);assert.equal(f.slot.children[0],button);assert.equal(f.calls.show,1);assert.equal(f.calls.reading,0);assert.equal(f.doc.draft,'unsent');button.events.click({isTrusted:true});assert.equal(f.calls.show,2);assert.equal(f.slot.children.length,0);f.controller.stop();
+ const f=fixture();await f.controller.start({});assert.equal(f.slot.children.length,0);await f.both();f.doc.draft='unsent';f.surrender();const button=f.slot.children[0];f.surrender();f.change();assert.equal(f.slot.children.length,1);assert.equal(f.slot.children[0],button);assert.equal(f.calls.show,1);assert.equal(f.calls.reading,0);assert.equal(f.doc.draft,'unsent');button.events.click({isTrusted:true});assert.equal(f.calls.show,2);assert.equal(f.slot.children.length,0);f.controller.stop();
 });
 test('native portal removes return then restores only the entry; invalid slot never receives it',async()=>{
  const f=fixture();await f.controller.start({});await f.both();f.surrender();f.layer(true);f.change();assert.equal(f.slot.children.length,0);f.surrender();assert.equal(f.slot.children.length,0);f.layer(false);f.change();assert.equal(f.slot.children.length,1);assert.equal(f.calls.show,1);f.slot.isConnected=false;f.change();assert.equal(f.slot.children.length,0);f.controller.stop();
@@ -154,10 +157,10 @@ test('native surrender records reading for recovery even if authority expires be
  f.controller.stop('ui-grant-expired');assert.deepEqual(f.calls.terminations.at(-1),{reason:'ui-grant-expired',presentation:{mode:'reading'}});
 });
 
-for(const role of ['workspace','sidebar'])test('owned '+role+' EXIT fully disposes surfaces and the reading return',async()=>{
+for(const role of ['workspace'])test('owned '+role+' EXIT fully disposes surfaces and the reading return',async()=>{
  const f=fixture(),released=[];f.bridge.revokeMount=value=>released.push(value);await f.controller.start({});await f.both();f.controller.showReading();assert.equal(f.slot.children.length,1);const stops=f.calls.stop;
  f.message(role,{data:{type:'VAIWL_UI_EXIT',role}});await drain();
- assert.equal(f.calls.dispose,1);assert.equal(f.calls.stop,stops+1);assert.equal(f.slot.children.length,0);assert.deepEqual(released,[{mountId:'mount'}]);assert.deepEqual(f.calls.terminations,[{reason:'ui-user-exit',presentation:{mode:'reading'}}]);assert.equal(f.controller.showWorkspace(),false);
+ assert.equal(f.calls.dispose,1);assert.equal(f.calls.stop,stops);assert.equal(f.slot.children.length,0);assert.deepEqual(released,[{mountId:'mount'}]);assert.deepEqual(f.calls.terminations,[{reason:'ui-user-exit',presentation:{mode:'reading'}}]);assert.equal(f.controller.showWorkspace(),false);
  f.message(role,{data:{type:'VAIWL_UI_EXIT',role}});f.message();f.tick(60000);await drain();assert.equal(f.calls.dispose,1);assert.equal(f.calls.show,1);assert.equal(f.slot.children.length,0);
 });
 
@@ -172,12 +175,12 @@ test('EXIT rejects wrong origin, source, role, disconnected or replaced frame an
   f=>{f.frames[0].frame.isConnected=false;f.message('workspace',{data:{type:'VAIWL_UI_EXIT',role:'workspace'}});},
   f=>{f.frames[0].frame.contentWindow={};f.message('workspace',{data:{type:'VAIWL_UI_EXIT',role:'workspace'}});}
  ];
- for(const attempt of cases){const f=fixture();await f.controller.start({});await f.both();f.controller.showReading();attempt(f);await drain();assert.equal(f.calls.dispose,0);assert.equal(f.slot.children.length,1);assert.deepEqual(f.calls.terminations,[]);f.controller.stop();}
+ for(const [index,attempt] of cases.entries()){const f=fixture();await f.controller.start({});await f.both();f.controller.showReading();attempt(f);await drain();assert.equal(f.calls.dispose,index>=6?1:0);assert.equal(f.slot.children.length,index>=6?0:1);assert(!f.calls.terminations.some(x=>x.reason==='ui-user-exit'));f.controller.stop();}
 });
 
 test('owned EXIT while mount registration is pending clears queued JOINs and rejects the late registration',async()=>{
  const f=fixture(),held=deferred(),released=[];f.bridge.registerMount=()=>held.promise;f.bridge.revokeMount=value=>released.push(value);const starting=f.controller.start({});await drain();f.message();f.message('sidebar');
- f.message('sidebar',{data:{type:'VAIWL_UI_EXIT',role:'sidebar'}});await drain();assert.equal(f.calls.dispose,1);assert.equal(f.calls.terminations[0]?.reason,'ui-user-exit');assert.deepEqual(released,[{mountId:'mount'}]);
+ f.message('workspace',{data:{type:'VAIWL_UI_EXIT',role:'workspace'}});await drain();assert.equal(f.calls.dispose,1);assert.equal(f.calls.terminations[0]?.reason,'ui-user-exit');assert.deepEqual(released,[{mountId:'mount'}]);
  held.resolve({ok:true});assert.equal(await starting,null);await drain();assert.equal(f.calls.confirm.length,0);assert.equal(f.calls.show,0);assert.equal(f.calls.dispose,1);assert.equal(f.controller.showWorkspace(),false);assert.equal(f.slot.children.length,0);
 });
 
@@ -204,8 +207,8 @@ test('appearance queued for replaced frame window or retired mount cannot reach 
  f.doc.defaultView.getComputedStyle=()=>({colorScheme:theme,fontFamily:'system-ui',fontSize:'16px',direction:'ltr'});
  f.doc.defaultView.MutationObserver=class{constructor(fn){this.fn=fn;observers.push(this);}observe(node){if(node===f.doc.documentElement)this.appearance=true;}disconnect(){}};
  for(const target of f.frames)target.frame.contentWindow.postMessage=data=>sent.push(data.role);
- await f.controller.start({});await f.both();sent.length=0;theme='dark';observers.find(o=>o.appearance).fn();f.frames[0].frame.contentWindow={postMessage:()=>assert.fail('replacement frame received appearance')};f.tick(0);assert.deepEqual(sent,['sidebar']);
- f.controller.stop();theme='light';observers.find(o=>o.appearance).fn();f.tick(0);assert.deepEqual(sent,['sidebar']);
+ await f.controller.start({});await f.both();sent.length=0;theme='dark';observers.find(o=>o.appearance).fn();f.frames[0].frame.contentWindow={postMessage:()=>assert.fail('replacement frame received appearance')};f.tick(0);assert.deepEqual(sent,[]);
+ f.controller.stop();theme='light';observers.find(o=>o.appearance).fn();f.tick(0);assert.deepEqual(sent,[]);
 });
 
 function publishingFixture(){
@@ -263,7 +266,7 @@ test('already queued expiry callback cannot dispose dormant frames',async()=>{
 
 test('dormant entry requires an explicit owner wake path',async()=>{const f=fixture({onWake:null});idleSurface(f);await f.controller.start({});await f.both();f.controller.showNativeReading();assert.equal(f.controller.enterDormant(),false);assert.equal(f.controller.showWorkspace(),true);});
 
-for(const role of ['workspace','sidebar'])test('registered owned '+role+' SUSPEND synchronously terminates pending start and late registration returns no handle',async()=>{
+for(const role of ['workspace'])test('registered owned '+role+' SUSPEND synchronously terminates pending start and late registration returns no handle',async()=>{
  const f=fixture({initialMode:'reading'}),held=deferred(),released=[];let entered=false;
  f.bridge.registerMount=()=>{entered=true;return held.promise;};f.bridge.revokeMount=value=>released.push(value);
  const starting=f.controller.start({});await drain();assert.equal(entered,true);assert.equal(f.calls.dispose,0);
@@ -298,7 +301,7 @@ test('native-reading closing invalidates intent without DOM writes; actual close
 
 test('isWorkspacePresented is read-only and rejects missing authority, closed surface, portal and stale document',async()=>{
  const absent=fixture();assert.equal(absent.controller.isWorkspacePresented(),false);await absent.controller.start({});
- absent.surface.visibility=()=>({workspace:true,sidebar:true});absent.message();await drain();assert.equal(absent.controller.isWorkspacePresented(),false);assert.equal(absent.calls.show,0);absent.controller.stop();
+ absent.surface.visibility=()=>({workspace:true,sidebar:true});absent.message();await drain();assert.equal(absent.controller.isWorkspacePresented(),true);assert.equal(absent.calls.show,1);absent.controller.stop();
  for(const [index,mutate] of [
   f=>{f.surface.visibility=()=>({workspace:false,sidebar:true});},
   f=>{f.surface.visibility=()=>null;},
@@ -360,7 +363,7 @@ test('renewal diagnostics distinguish local geometry from ACK rejection without 
   const reasons=[],f=fixture({onFailure:reason=>reasons.push(reason)});
   f.bridge.renewSession=async()=>{const a=f.renewAck();change(f,a);return a;};
   await f.controller.start({});await f.both();f.tick(10000);await drain();
-  assert.deepEqual(reasons,['surface-session-renew-'+stage]);assert.equal(f.calls.dispose,1);
+  assert.deepEqual(reasons,stage==='local-validity'?[]:['surface-session-renew-'+stage]);assert.equal(f.calls.dispose,stage==='local-validity'?0:1);f.controller.stop();
  }
 });
 
@@ -385,7 +388,7 @@ test('native modal may hide background layout without destroying a live suspende
  await f.controller.start({});await f.both();f.controller.showReading();
  hidden=true;f.layer(true);f.change();
  assert.equal(f.calls.dispose,0,'native modal background hiding is presentation suspension');
- assert.equal(f.slot.children.length,0);assert.equal(f.controller.showWorkspace(),false);
+ assert.equal(f.slot.children.length,0);assert.equal(f.controller.isWorkspacePresented(),false);
  hidden=false;f.layer(false);f.change();
  assert.equal(f.slot.children.length,1);assert.equal(f.calls.show,1,'closing the modal restores only the return');
  assert.equal(f.controller.showWorkspace(),true);f.controller.stop();
@@ -396,18 +399,18 @@ test('hidden modal transport renews across expiry but cannot show until full geo
  f.adapter.inspect=()=>hidden?{ok:false,reason:'unsafe-native-history-list'}:inspect();
  f.bridge.renewSession=async()=>f.renewAck();
  await f.controller.start({});await f.both();f.controller.showReading();hidden=true;f.layer(true);f.change();
- for(let i=0;i<3;i++){f.tick(10000);await drain();assert.equal(f.calls.dispose,0);assert.equal(f.controller.showWorkspace(),false);assert.equal(f.slot.children.length,0);}
+ for(let i=0;i<3;i++){f.tick(10000);await drain();assert.equal(f.calls.dispose,0);assert.equal(f.controller.isWorkspacePresented(),false);assert.equal(f.slot.children.length,0);}
  assert.equal(f.calls.updates.length,3);
  f.layer(false);hidden=false;f.change();assert.equal(f.slot.children.length,1);assert.equal(f.calls.show,1);assert.equal(f.controller.showWorkspace(),true);f.controller.stop();
 });
-test('modal never exempts expired authority, detached roots, changed frame or route',async()=>{
- for(const invalidate of [f=>f.tick(20000),f=>{f.adapter.inspect().header.isConnected=false;},f=>{f.frames[0].frame.contentWindow={};},f=>{f.doc.location.href+='c/other';}]){
+test('modal never exempts expired authority, changed frame or route',async()=>{
+ for(const invalidate of [f=>f.tick(20000),f=>{f.frames[0].frame.contentWindow={};},f=>{f.doc.location.href+='c/other';}]){
   const f=fixture();await f.controller.start({});await f.both();f.layer(true);f.change();invalidate(f);f.change();assert.equal(f.calls.dispose,1);assert.equal(f.controller.showWorkspace(),false);
  }
 });
-test('closing modal with invalid background still withdraws the mount',async()=>{
+test('invalid background suspends workspace without revoking document transport',async()=>{
  const f=fixture(),inspect=f.adapter.inspect;let hidden=false;f.adapter.inspect=()=>hidden?{ok:false,reason:'unsafe-native-history-list'}:inspect();
- await f.controller.start({});await f.both();hidden=true;f.layer(true);f.change();assert.equal(f.calls.dispose,0);f.layer(false);f.change();assert.equal(f.calls.dispose,1);assert.equal(f.slot.children.length,0);
+ await f.controller.start({});await f.both();hidden=true;f.layer(true);f.change();assert.equal(f.calls.dispose,0);f.layer(false);f.change();assert.equal(f.calls.dispose,0);assert.equal(f.controller.isWorkspacePresented(),false);assert.equal(f.slot.children.length,0);hidden=false;f.change();assert.equal(f.controller.isWorkspacePresented(),true);f.controller.stop();
 });
 
 // Classification must not authorize an unsafe layout or expose arbitrary text.
@@ -452,4 +455,21 @@ test('a declined or unopened popover never commits workspace mode or consumes th
   assert.equal(f.controller.presentationSnapshot().attempt,'show-refused');
   assert.equal(f.controller.presentationSnapshot().workspace,false);
  }
+});
+
+test('sidebar EXIT or SUSPEND retires only sidebar and ignores its late grant',async()=>{
+ for(const type of ['VAIWL_UI_EXIT','VAIWL_UI_SUSPEND']){
+  const f=fixture(),held=deferred(),confirm=f.bridge.confirmParent,retired=[],released=[];
+  f.surface.retireRole=(_h,role)=>retired.push(role);f.surface.suspend=(_h,_reason,role)=>{assert.equal(role,'sidebar');};
+  f.bridge.releaseRole=async value=>{released.push(value);return {ok:true};};
+  f.bridge.confirmParent=value=>value.role==='sidebar'?held.promise:confirm(value);
+  await f.controller.start({});f.message();f.message('sidebar');await drain();assert.equal(f.controller.isWorkspacePresented(),true);
+  f.message('sidebar',{data:{type,role:'sidebar'}});await drain();held.resolve(await confirm({role:'sidebar'}));await drain();
+  assert.equal(f.calls.dispose,0);assert.equal(f.controller.isWorkspacePresented(),true);assert.deepEqual(retired,['sidebar']);assert.deepEqual(released,[{mountId:'mount',role:'sidebar'}]);assert.equal(f.calls.stop,0);f.controller.stop();
+ }
+});
+
+test('sidebar renewal failure cannot retire the workspace grant',async()=>{
+ const f=fixture();f.bridge.releaseRole=async()=>({ok:true});f.bridge.renewSession=async()=>{const a=f.renewAck();a.grants.find(g=>g.role==='sidebar').uiDocumentId='stale-sidebar';return a;};
+ await f.controller.start({});await f.both();f.tick(10000);await drain();assert.equal(f.calls.dispose,0);assert.equal(f.calls.updates.length,1);assert.equal(f.controller.showWorkspace(),true);f.controller.stop();
 });

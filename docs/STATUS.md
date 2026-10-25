@@ -1,5 +1,15 @@
 # VAIWL实际状态：渐进积累工程已接线，真实来源逐项待准入
 
+## Pro 最终宿主集成批（2026-10-25，接续 5580747e）
+
+按[最终任务书](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16#issuecomment-6398255622)集中修改正式实现：document/scope/producer不再受侧栏几何控制；workspace为唯一必需角色，sidebar独立授权、撤回和重挂；程序性隐藏与用户reading意图区分。VIEW先发布真实数据，动作计划仅对该已发布页独立验证；候选/动作失败不清空主区，续约不再自动重读业务页。原生已知链接沿原入口执行，草稿等实际风险仍保留；布局接原WorkspaceRepository.saveView与CAS，按角色合并，私人新文档确认后恢复冻结的历史时间基准和开合/滚动状态。
+
+同时修复自身sidebar遮罩导致迟到观察被误判不可见；完整纯列表经同一遮挡证明后提供连续侧栏高度。Project布局与成员是否到达分离，去掉装饰shadow串和整页child-count的共同准入。复用正式v2.7卡片及稀疏布局，移除逐行临时动作状态噪声，附加候选置于次级折叠区；不填假Project、不猜活动日期。
+
+隔离正式MV3连续旅程通过：侧栏frame失效不更换workspace并可重挂，晚到行/重排、Project/成员、原生草稿保护、返回、续约、实际Worker停止恢复、风险撤权、刷新/浏览器重启后确认恢复及真实IDB布局保存、自然卸载释放私有显示。四种稀疏正式界面已实际查看离线截图并对照批准原型；这些不计真实账号或完整产品PASS。返回入口对无可靠绘制边界的长聊天仍保守撤下该入口，不能由此停止工作空间或放宽遮挡保护。
+
+唯一冻结包：`/Users/hhf/Downloads/VAIWL-v27-Integrated-20261025/extension`，ZIP SHA256 `8ddad7ca08ded0251b0a70c73e29ef3e4bab6e5f5549e5a6e5c8ba5928193021`。原安装2891文件完整备份并核验后更新对应文件，2693额外副本、原manifest/ID、旧库/草稿/3个stash保留；**仅磁盘更新，尚未Reload**。原Profile 4进程仍存在，但唯一窗口核查未成立；停止自动输入，未接管标签/改其他进程。已集中请求一次激活及必要本人确认。新包真实Mac展示、真实布局恢复和完整v2.7个人交付仍NOT_RUN，不继承旧PASS冒充本批通过。详见原Mac回执`proFinalIntegrated20261025`。
+
 ## v2.7 原窗口截图与独立状态面板修正（2026-10-25，接续 b5fe03c8）
 
 用户授权精确原生前台操作和单窗口系统截图后，已实际取得原 Profile 4 展开的正式工作空间，不再将“无法取得前台”作为当前结论。截图仅保存在本机 `/private/tmp/vaiwl-workspace-atomic-20261025.png`，未上传、未接管标签、未用CDP。该早期画面一条聊天不能判作库存丢失：之后同一构建的匿名状态明确为 session revision6、12条库存、VIEW unknown12/5、renderer5行；workspace=true、sidebar=false、geometryPaused=false。当前是新首页文档、私人库锁定、已确认Project=0，不能冒用此前Project文档的本人绑定或填充假卡片。完整1Project/2成员的真实视觉对照仍未取得；历史该功能PASS保持。

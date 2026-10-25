@@ -7,9 +7,6 @@ const overlap=(a,b)=>a.width>0&&a.height>0&&a.x<b.x+b.width&&b.x<a.x+a.width&&a.
 const px=value=>/^-?\d+(?:\.\d+)?px$/.test(value)?Number.parseFloat(value):NaN;
 const noText=node=>![...node.childNodes].some(n=>n.nodeType===3&&n.length>0);
 const plain=node=>node?.tagName==='DIV'&&!node.matches('[tabindex],[contenteditable],a,button,input,select,textarea')&&!node.shadowRoot;
-// Observed composer decoration only: it is not an input, text or hit target.
-// All other shadows still require a new presentation proof.
-const composerShadow='rgba(0, 0, 0, 0.04) 0px 0px 0px 1px, rgba(0, 0, 0, 0.04) 0px 2px 8px 0px, rgba(0, 0, 0, 0.024) 0px 4px 80px 8px';
 // Only pixel-valued ancestor insets and border boxes are supported. Prove a
 // conservative interior instead of equating one CSS serialization to safety.
 // Percentages, polygons, URLs, elliptical radii and other clips stay rejected.
@@ -50,8 +47,8 @@ export function inspectNativeProjectSurface({document,profile,urlPolicy,history,
  try{
   if(profile.nativeProjectLayout!=='panel-after-composer')return null;
   stage='history';
-  historyPresentation??=nativeHistoryPresentation({document,source:history.closest(profile.regions.history),root:history,urlPolicy,isOwnedMask});
-  if(!historyPresentation)return null;
+  historyPresentation??=nativeHistoryPresentation({document,source:history?.closest(profile.regions.history),root:history,urlPolicy,isOwnedMask});
+
   const win=document.defaultView,style=node=>win.getComputedStyle(node);
   const visible=node=>{
    if(!node?.isConnected||node.ownerDocument!==document||!node.getClientRects().length)return false;
@@ -64,35 +61,33 @@ export function inspectNativeProjectSurface({document,profile,urlPolicy,history,
   const unique=(root,selector)=>{const all=root.querySelectorAll(selector);if(all.length>8)return null;const found=[...all].filter(visible);return found.length===1?found[0]:null;};
   stage='main';
   const main=unique(document,profile.projectListBoundary);
-  if(!main||main.closest('[contenteditable],dialog,[data-va-owned]')||!plain(main)||main.children.length!==1||!noText(main))return null;
-  stage='wrappers';
-  const drop=main.firstElementChild,viewport=drop.firstElementChild,content=viewport?.firstElementChild;
-  if(!drop.hasAttribute('data-chatgpt-project-conversation-drop-target')||![drop,viewport,content].every(plain)||drop.children.length!==1||viewport.children.length!==1||content.children.length!==3||![drop,viewport,content].every(noText)||!['auto','scroll'].includes(style(viewport).overflowY))return null;
+  if(!main||main.closest('[contenteditable],dialog,[data-va-owned]')||!plain(main))return null;
+  // Locate native semantic regions, not a fixed number of decorative wrappers.
+  // Any extra native controls still participate in the geometry/paint proof.
   stage='tabs-panel';
-  const [title,composerBranch,list]=content.children,[tabsBranch,reading]=list.children;
-  const tabs=tabsBranch?.getAttribute('role')==='tablist'?tabsBranch:unique(tabsBranch,'[role="tablist"]');
-  if(![title,composerBranch,list].every(plain)||tabsBranch!==tabs&&!plain(tabsBranch)||tabs?.tagName!=='DIV'||tabs.hasAttribute('contenteditable')||tabs.shadowRoot||![null,'0','-1'].includes(tabs.getAttribute('tabindex'))||reading?.tagName!=='DIV'||reading.hasAttribute('contenteditable')||reading.shadowRoot||reading.hasAttribute('tabindex')&&reading.getAttribute('tabindex')!=='0'||list.children.length!==2||!noText(list)||reading.getAttribute('role')!=='tabpanel')return null;
-  // tabindex is native on the selected panel. Never remove it or mask tabs.
+  const reading=unique(main,'[role="tabpanel"]'),tabs=unique(main,'[role="tablist"]');
+  if(!reading||reading.tagName!=='DIV'||reading.hasAttribute('contenteditable')||reading.shadowRoot||reading.hasAttribute('tabindex')&&reading.getAttribute('tabindex')!=='0'||!tabs||tabs.tagName!=='DIV'||tabs.hasAttribute('contenteditable')||tabs.shadowRoot||![null,'0','-1'].includes(tabs.getAttribute('tabindex')))return null;
   stage='composer-title';
-  const composer=unique(composerBranch,'form[data-chatgpt-composer]');
-  if(!composer||!unique(title,'h1 > button')||!visible(title)||!visible(tabs)||!visible(reading)||reading.querySelector('form,input,textarea,select,[contenteditable]'))return null;
-  stage='rows';
-  const section=reading.firstElementChild,ol=section?.firstElementChild;
-  if(reading.children.length!==1||section?.tagName!=='SECTION'||section.children.length!==1||ol?.tagName!=='OL'||![reading,section,ol].every(noText)||[...ol.children].some(n=>n.tagName!=='LI'||urlPolicy?.parse(n.querySelector(':scope > a[href]')?.getAttribute('href')).kind!=='conversation'))return null;
+  const composer=unique(main,'form[data-chatgpt-composer]'),titleControl=unique(main,'h1 > button'),title=titleControl?.parentElement;
+  if(!composer||!title||!visible(title)||!visible(tabs)||!visible(reading)||reading.querySelector('form,input,textarea,select,[contenteditable]'))return null;
+  stage='wrappers';
+  let viewport=reading.parentElement;
+  for(let depth=0;viewport&&viewport!==main&&!['auto','scroll'].includes(style(viewport).overflowY);depth++){if(depth>=64)return null;viewport=viewport.parentElement;}
+  if(!viewport||viewport===main||!plain(viewport)||!viewport.contains(composer)||!viewport.contains(title)||!viewport.contains(tabs))return null;
   stage='hit-root';
   const hitRoot=main.closest(profile.nativeLayout.returnHitRoot);
   if(!hitRoot||unique(document,profile.nativeLayout.returnHitRoot)!==hitRoot||!visible(viewport))return null;
   // Wrappers up to the hit background are layout only. Siblings (including the
   // native footer) must independently clear the workspace in the walk below.
   stage='ancestors';
-  const chain=[main,drop,viewport,content,list];
-  for(let p=main.parentElement;p;p=p.parentElement){
-   if(chain.length>=64||!plain(p)||!noText(p))return null;
+  const chain=[];
+  for(let p=reading.parentElement;p;p=p.parentElement){
+   if(chain.length>=64||!plain(p))return null;
    chain.push(p);if(p===hitRoot)break;
   }
-  if(!chain.includes(hitRoot))return null;
-  const protectedRegions=[header,title,composer,...new Set([tabsBranch,tabs])];
-  const regions={history,header,reading,composer,navigationSlot:slot,readingViewport:viewport,protectedRegions,historyMaskRoots:historyPresentation.maskRoots,preserveNativeSidebar:historyPresentation.complete===false,returnHitRoot:hitRoot,proofNodes:[history,header,reading,composer,slot,title,tabsBranch,tabs,composerBranch,...chain,...historyPresentation.maskRoots]};
+  if(!chain.includes(hitRoot)||!chain.includes(main))return null;
+  const protectedRegions=[header,title,composer,tabs];
+  const regions={history,header,reading,composer,navigationSlot:slot,readingViewport:viewport,protectedRegions,historyMaskRoots:historyPresentation?.maskRoots??[],preserveNativeSidebar:!historyPresentation||historyPresentation.complete===false,returnHitRoot:hitRoot,proofNodes:[header,reading,composer,title,tabs,...chain]};
   // Controller continuity may compare identities while a native modal blocks
   // hit testing. This result has no presentation rectangles or mount approval.
   if(!geometry){passed=true;return regions;}
@@ -112,29 +107,30 @@ export function inspectNativeProjectSurface({document,profile,urlPolicy,history,
   const visual=win.visualViewport;if(visual&&(visual.scale!==1||visual.offsetLeft!==0||visual.offsetTop!==0))return null;
   const x=Math.max(0,p.x,v.x+viewport.clientLeft),y=Math.max(0,p.y,v.y+viewport.clientTop,h.y+h.height);
   const right=Math.min(win.innerWidth,p.x+p.width,v.x+viewport.clientLeft+viewport.clientWidth),bottom=Math.min(win.innerHeight,v.y+viewport.clientTop+viewport.clientHeight);
-  const readingRect={x,y,width:right-x,height:bottom-y},sidebarRect=historyPresentation.rect;
+  const readingRect={x,y,width:right-x,height:bottom-y};let sidebarRect=historyPresentation?.rect??null;
   stage='geometry-rect';
-  if(!sidebarRect)return null;
-  if(![v,p,t,c,h,readingRect,sidebarRect].every(finite)||readingRect.width<=0||readingRect.height<=0)return null;
+
+  if(![v,p,t,c,h,readingRect].every(finite)||readingRect.width<=0||readingRect.height<=0)return null;
   stage='geometry-overlap';
-  if(p.y<t.y+t.height||p.y<c.y+c.height||protectedRegions.some(n=>overlap(box(n),readingRect)||overlap(box(n),sidebarRect))||overlap(readingRect,sidebarRect))return null;
+  if(p.y<t.y+t.height||p.y<c.y+c.height||protectedRegions.some(n=>overlap(box(n),readingRect)))return null;
+  if(sidebarRect&&(!finite(sidebarRect)||protectedRegions.some(n=>overlap(box(n),sidebarRect))||overlap(readingRect,sidebarRect)))sidebarRect=null;
   stage='return-slot';
-  const returnSlot=nativeReturnGapRect({document,header,slot,hitRoot,button,headerLayout:'transparent-containers',excluded:[history,title,composer,tabs],excludedRects:[readingRect]});
-  if(!returnSlot||clips.some(n=>!insideShellClip(n,returnSlot)))return null;
+  const returnSlot=nativeReturnGapRect({document,header,slot,hitRoot,button,headerLayout:'transparent-containers',excluded:[history,title,composer,tabs].filter(Boolean),excludedRects:[readingRect]});
+  const safeReturn=returnSlot&&!clips.some(n=>!insideShellClip(n,returnSlot))?returnSlot:null;
   // Geometry-only bounded walk: never read draft, row preview or text content.
   // Structural ancestors may surround the area, but must be layout containers.
-  // The one observed composer shadow is decorative and does not enlarge input
-  // or hit targets; all other native content/paint must clear the owned area.
+  // The identified composer body's box shadow is decorative and does not
+  // enlarge input/hit targets. Its value is not a page-layout identity.
   stage='paint';
   const ancestors=new Set(chain),walker=document.createTreeWalker(hitRoot,5);let node=hitRoot,count=0,rectangles=0;
   do{
    if(++count>2048)return null;
    const inPanel=node===reading||reading.contains(node),structural=ancestors.has(node);
-   const clear=r=>finite(r)&&!overlap(r,returnSlot)&&(inPanel||structural||!overlap(r,readingRect));
+   const clear=r=>finite(r)&&(!safeReturn||!overlap(r,safeReturn))&&(inPanel||structural||!overlap(r,readingRect));
    if(node.nodeType===1){
     const s=style(node);
     if(node.shadowRoot||node.localName.includes('-')||['transform','translate','rotate','scale','filter','backdropFilter','offsetPath','maskImage'].some(k=>s[k]!=='none')||s.clipPath!=='none'&&!provenClipNodes.has(node)||s.zoom!=='1')return null;
-    const decoration=s.boxShadow===composerShadow&&node.tagName==='DIV'&&composer.querySelectorAll('[data-composer-body]').length===1&&composer.querySelector('[data-composer-body]')===node;
+    const decoration=node.tagName==='DIV'&&composer.querySelectorAll('[data-composer-body]').length===1&&composer.querySelector('[data-composer-body]')===node;
     if(s.boxShadow!=='none'&&!decoration||s.textShadow!=='none')return null;
     if(!['none','hidden'].includes(s.outlineStyle)&&s.outlineWidth!=='0px'){
      const n=box(node),outset=Math.max(0,px(s.outlineWidth)+px(s.outlineOffset));
@@ -157,6 +153,6 @@ export function inspectNativeProjectSurface({document,profile,urlPolicy,history,
     for(const r of range.getClientRects()){if(++rectangles>2048||!clear({x:r.x,y:r.y,width:r.width,height:r.height}))return null;}
    }
   }while(node=walker.nextNode());
-  passed=true;return {...regions,readingRect,sidebarRect,returnSlot};
+  passed=true;return {...regions,readingRect,sidebarRect,returnSlot:safeReturn};
  }catch{return null;}finally{if(!passed)try{onFailure(stage,stage==='geometry-clip-shape'?clipShape:null);}catch{}}
 }

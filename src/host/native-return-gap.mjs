@@ -110,7 +110,21 @@ export function nativeReturnGapRect({document,header,slot,hitRoot,readingRoot=nu
     }
     return overlap(r,box);
    };
-   const walker=document.createTreeWalker(readingRoot,5),range=document.createRange();let node=readingRoot;
+   // A CSS paint-contained branch outside the local header band cannot paint
+   // into the return slot, including its fixed/absolute descendants. This is
+   // a browser clipping proof, not an assumption that offscreen boxes contain
+   // their descendants. Top-layer/opaque content can escape that proof.
+   const containedOutsideBand=node=>{
+    if(node.nodeType!==1)return false;
+    const css=paintStyle(node);
+    if(!/(^|\s)(paint|strict|content)(\s|$)/.test(css.contain)||css.display==='contents'||css.overflowClipMargin!=='0px'||['transform','translate','rotate','scale','boxShadow','filter','backdropFilter','offsetPath','borderImageSource'].some(k=>css[k]!=='none')||!['none','hidden'].includes(css.outlineStyle)||css.zoom!=='1')return false;
+    const b=rect(node);if(![b.x,b.y,b.width,b.height].every(Number.isFinite)||!(b.bottom<=r.y||b.top>=r.y+r.height))return false;
+    for(const n of [node,...node.querySelectorAll('*')]){
+     if(!withinBudget()||n.shadowRoot||n.localName?.includes('-')||n.matches(':popover-open,dialog[open]'))return false;
+    }
+    return true;
+   };
+   const walker=document.createTreeWalker(readingRoot,5,{acceptNode:node=>containedOutsideBand(node)?2:1}),range=document.createRange();let node=readingRoot;
    do{
     if(!withinBudget()){stage='reading-paint-budget';return reject();}
     if(node.nodeType===1){

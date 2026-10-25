@@ -25,6 +25,13 @@ try{
   const many=document.createDocumentFragment();for(let i=0;i<3000;i++){const span=document.createElement('span');span.textContent='x';many.append(span);}q('#text').append(many);
   // More than the old element AND text-rectangle caps: complete proof passes,
   // but a tiny last descendant still blocks it (no early success/truncation).
+  // Explicit paint containment permits a local proof without per-message
+  // ranges/styles. An uncontained late fixed descendant still blocks below.
+  const original=q('#text').style.cssText;q('#text').style.cssText='contain:paint;position:absolute;left:320px;top:70px;width:400px;height:400px';
+  const oldRects=Range.prototype.getClientRects;let ranges=0;Range.prototype.getClientRects=function(){ranges++;return oldRects.call(this);};
+  out.containedLongTranscriptLocal=ok()&&ranges===0;Range.prototype.getClientRects=oldRects;
+  const escaped=document.createElement('div');escaped.setAttribute('popover','manual');escaped.style.cssText='position:fixed;inset:0;margin:0;width:1000px;height:700px';q('#text').append(escaped);escaped.showPopover();
+  out.containedTopLayerNotSkipped=!ok();escaped.hidePopover();escaped.remove();q('#text').style.cssText=original;
   out.longTranscriptAllowed=ok();
   root.append(obstacle);out.lateLongTranscriptObstacleRejected=!ok();obstacle.remove();
   root.append(custom);out.lateOpaqueDescendantRejected=!ok();custom.remove();

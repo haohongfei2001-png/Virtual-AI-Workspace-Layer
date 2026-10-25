@@ -38,7 +38,7 @@ export function createChatGPTAdapter({document,urlPolicy=createURLPolicy(),profi
  if(nativeLayout.gapPolicy!==undefined&&(nativeLayout.gapPolicy!=='first-empty-header-gap'||nativeLayout.returnPlacement!=='header-gap'||!['transparent-containers','plain-containers'].includes(nativeLayout.headerLayout)))throw Error('invalid-native-layout-profile');
  let returnControl=null,returnGeometryStage=null;
  const gapMode=nativeLayout.returnPlacement==='header-gap';
- const returnGeometry=(history,header,readingRect,composer,slot)=>gapMode?nativeReturnGapRect({document,header,slot,hitRoot:one(nativeLayout.returnHitRoot),headerLayout:nativeLayout.headerLayout??null,gapPolicy:nativeLayout.gapPolicy??null,onReject:stage=>{returnGeometryStage=stage;},...(nativeLayout.readingViewport?{readingRoot:one(nativeLayout.reading),readingViewport:one(nativeLayout.readingViewport),viewportFocus:nativeLayout.viewportFocus??null,viewportMarkers:nativeLayout.viewportMarkers??null,isOwnedMask}:{}),button:returnControl,excluded:[history,composer],excludedRects:[readingRect]}):nativeReturnSlotRect({document,header,slot,excluded:[history,composer],excludedRects:[readingRect]});
+ const returnGeometry=(history,header,readingRect,composer,slot)=>gapMode?nativeReturnGapRect({document,header,slot,hitRoot:one(nativeLayout.returnHitRoot),headerLayout:nativeLayout.headerLayout??null,gapPolicy:nativeLayout.gapPolicy??null,onReject:stage=>{returnGeometryStage=stage;},...(nativeLayout.readingViewport?{readingRoot:one(nativeLayout.reading),readingViewport:one(nativeLayout.readingViewport),viewportFocus:nativeLayout.viewportFocus??null,viewportMarkers:nativeLayout.viewportMarkers??null,isOwnedMask}:{}),button:returnControl,excluded:[history,composer].filter(Boolean),excludedRects:[readingRect]}):nativeReturnSlotRect({document,header,slot,excluded:[history,composer].filter(Boolean),excludedRects:[readingRect]});
 
  inputRisk=inputRisk??createNativeInputRisk({document,profile});
  let binding=null,emit=null,discovery=null,bodyDiscovery=null,actions=null,observer=null,stopped=true,epoch=0,seq=0,url='',busy=false,dirty=false,queued=false,generation=0,last=new Map(),regionEpoch=0,priorNodes=[],failedKey=new Map(),retryTimer=null,pausedSurface=null,sendObserver=null,acceptedBody=null,snippets=null,snippetReady=()=>false,intents=[],sendGap=null,sendGapBlocked=false,surfaceParts=[],surfaceKey=null,surfaceSequence=null,surfaceWanted=true,surfaceScanning=false,surfaceCursor=null,surfacePage=0,surfacePageKey=null,surfaceEpoch=0,surfaceSnapshotEpoch=0,surfaceRetryWanted=false;const surfaceAccepted=new Map(),surfaceFailed=new Map();
@@ -377,11 +377,11 @@ if(!p){
   const presentation=historyPresentationFor(source,history);
   return !!presentation&&(!inspection||source===inspection.historySource&&presentation.maskRoots.length===inspection.historyMaskRoots.length&&presentation.maskRoots.every((n,i)=>n===inspection.historyMaskRoots[i]));
  }
- function nativeTopologyOK(history,header,reading,composer,slot){return !explicitLayout||header!==slot&&header.contains(slot)&&![history,reading,composer].some(node=>node===slot||node.contains(slot));}
+ function nativeTopologyOK(history,header,reading,composer,slot){return !explicitLayout||header!==slot&&header.contains(slot)&&![history,reading,composer].filter(Boolean).some(node=>node===slot||node.contains(slot));}
  // A scroll container is geometry only, never a mask root. This profile is
  // limited to reading, protected footer and explicitly proved nonpainting markers.
  function viewportTopologyOK(viewport,history,header,reading,composer){
-  return !!viewport&&viewport.isConnected&&viewport.ownerDocument===document&&viewport!==reading&&viewport!==composer&&[reading,composer].every(n=>n.isConnected&&n.ownerDocument===document&&n.parentElement===viewport)&&viewport.children.length>=2&&viewport.children.length<=10&&![...(viewport.childNodes??[])].some(n=>n.nodeType===3&&n.textContent.trim())&&[...viewport.children].every(n=>n===reading||n===composer||nativeLayout.viewportMarkers==='empty-div-v1'&&isEmptyViewportMarker(n,viewport,document))&&!viewport.contains(header)&&!viewport.contains(history);
+  return !!viewport&&viewport.isConnected&&viewport.ownerDocument===document&&viewport!==reading&&viewport!==composer&&[reading,composer].every(n=>n.isConnected&&n.ownerDocument===document&&n.parentElement===viewport)&&viewport.children.length>=2&&viewport.children.length<=10&&![...(viewport.childNodes??[])].some(n=>n.nodeType===3&&n.textContent.trim())&&[...viewport.children].every(n=>n===reading||n===composer||nativeLayout.viewportMarkers==='empty-div-v1'&&isEmptyViewportMarker(n,viewport,document))&&!viewport.contains(header)&&(!history||!viewport.contains(history));
  }
  function viewportRect(viewport,header,composer){
   const v=rect(viewport),h=rect(header),c=rect(composer),width=document.defaultView.innerWidth,height=document.defaultView.innerHeight;
@@ -397,7 +397,7 @@ if(!p){
   if(projectLayout())return !!currentProjectSurface(inspection);
   if(!inspection||document.location.href!==url||gapMode&&one(nativeLayout.returnHitRoot)!==inspection.returnHitRoot)return false;
   const history=one(nativeLayout.historyList??profile.regions.history),header=one(nativeLayout.header),reading=one(nativeLayout.reading),composer=one(nativeLayout.composer),slot=one(nativeLayout.navigationSlot);
-  if(!historyListCurrent(history,inspection)||history!==inspection.history||header!==inspection.header||reading!==inspection.reading||composer!==inspection.composer||slot!==inspection.navigationSlot||!nativeTopologyOK(history,header,reading,composer,slot))return false;
+  if(header!==inspection.header||reading!==inspection.reading||composer!==inspection.composer||slot!==inspection.navigationSlot||!nativeTopologyOK(history,header,reading,composer,slot))return false;
   const viewport=nativeLayout.readingViewport?one(nativeLayout.readingViewport):null;
   if(nativeLayout.readingViewport&&(viewport!==inspection.readingViewport||!viewportTopologyOK(viewport,history,header,reading,composer)))return false;
   const readingRect=viewport?viewportRect(viewport,header,composer):rect(reading);
@@ -406,17 +406,16 @@ if(!p){
  function isSameNativeRegions(inspection){
   if(!live()||document.location.href!==url||inspection?.regionEpoch!==regionEpoch)return false;
   if(projectLayout())return !!currentProjectSurface(inspection,false);
-  const nodes=[one(nativeLayout.historyList??profile.regions.history),one(nativeLayout.header),one(nativeLayout.reading),one(nativeLayout.composer),one(nativeLayout.navigationSlot)];
-  const original=[inspection.history,inspection.header,inspection.reading,inspection.composer,inspection.navigationSlot];
-  const viewport=nativeLayout.readingViewport?one(nativeLayout.readingViewport):null;
-  return nodes.every((node,i)=>node&&node===original[i]&&node===priorNodes[i]&&node.isConnected&&node.ownerDocument===document)&&(!gapMode||one(nativeLayout.returnHitRoot)===inspection.returnHitRoot)&&historyListCurrent(nodes[0],inspection)&&nativeTopologyOK(...nodes)&&(!nativeLayout.readingViewport||viewport===inspection.readingViewport&&viewport===priorNodes[5]&&viewportTopologyOK(viewport,...nodes));
+  const nodes=[one(nativeLayout.header),one(nativeLayout.reading),one(nativeLayout.composer),nativeLayout.readingViewport?one(nativeLayout.readingViewport):null];
+  const original=[inspection.header,inspection.reading,inspection.composer,inspection.readingViewport??null];
+  return nodes.every((node,i)=>node===original[i]&&(!node||node.isConnected&&node.ownerDocument===document));
  }
  const projectProofs=new WeakMap();
  const projectLayout=()=>profile.nativeProjectLayout==='panel-after-composer'&&urlPolicy.parse(document.location.href).kind==='project';
  function projectSurface(geometry=true){
   const history=one(nativeLayout.historyList??profile.regions.history),header=one(nativeLayout.header),slot=one(nativeLayout.navigationSlot);
-  if(!history||!header||!slot||!historyListCurrent(history))return null;
-  const historyPresentation=historyPresentationFor(one(profile.regions.history),history);
+  if(!header)return null;
+  let historyPresentation=history?historyPresentationFor(one(profile.regions.history),history):null;if(!historyPresentation&&history){historySelections.delete(history);historyPresentation=historyPresentationFor(one(profile.regions.history),history);}
   return inspectNativeProjectSurface({document,profile,urlPolicy,history,header,slot,button:returnControl,isOwnedMask,geometry,historyPresentation});
  }
  function currentProjectSurface(inspection,geometry=true){
@@ -424,35 +423,43 @@ if(!p){
   const proof=projectProofs.get(inspection),current=projectSurface(geometry);
   return proof&&current&&proof.length===current.proofNodes.length&&proof.every((node,i)=>node===current.proofNodes[i]&&node===priorNodes[i])?current:null;
  }
+ let sidebarRevision=0,sidebarProof=[];
+ function sidebarVersion(value){
+  const proof=[value.history,value.sidebarRect?.x,value.sidebarRect?.y,value.sidebarRect?.width,value.sidebarRect?.height,value.preserveNativeSidebar,...(value.historyMaskRoots??[])];
+  if(proof.length!==sidebarProof.length||proof.some((v,i)=>v!==sidebarProof[i])){sidebarProof=proof;sidebarRevision++;}
+  return Object.assign(value,{sidebarRevision});
+ }
  function inspect(){
   const fail=reason=>({ok:false,reason,profileId:profile.id,...(reason==='unsafe-native-history-list'&&historyFailure?{historyFailure}:{})});if(!active())return fail('stale-host-binding');try{syncRoute();}catch{return fail('host-rebind-required');}if(urlPolicy.parse(url).kind==='unsupported')return fail('unsupported-host-route');
   if(projectLayout()){
    const found=projectSurface();if(!found)return fail(projectSurface(false)?'unsafe-native-geometry':'unsafe-native-project-layout');
    const {proofNodes,...layout}=found;if(proofNodes.length!==priorNodes.length||proofNodes.some((node,i)=>node!==priorNodes[i])){regionEpoch++;priorNodes=proofNodes;}
    const inspection={ok:true,reason:null,profileId:profile.id,...layout,historySource:one(profile.regions.history),returnPlacement:'header-gap',viewMask:'declarative-css',regionEpoch};
-   projectProofs.set(inspection,proofNodes);return inspection;
+   projectProofs.set(inspection,proofNodes);return sidebarVersion(inspection);
   }
   const history=one(nativeLayout.historyList??profile.regions.history),header=one(nativeLayout.header),reading=one(nativeLayout.reading),composer=one(nativeLayout.composer),navigationSlot=one(nativeLayout.navigationSlot);
-  if(!history||!header||!reading||!composer||!navigationSlot)return {...fail('missing-or-ambiguous-native-boundary'),boundaryKey:Object.entries({history,header,reading,composer,navigationSlot}).find(([,node])=>!node)[0]};
+  if(!header||!reading||!composer)return {...fail('missing-or-ambiguous-native-boundary'),boundaryKey:Object.entries({header,reading,composer}).find(([,node])=>!node)[0]};
   if(homeLayout&&reading.querySelector('form,input,textarea,select,[contenteditable]'))return fail('unsafe-native-home-layout');
-  if(!historyListCurrent(history))return fail('unsafe-native-history-list');
   const historySource=nativeLayout.historyList?one(profile.regions.history):null;
-  const historyPresentation=nativeLayout.historyList?historyPresentationFor(historySource,history):{rect:rect(history),maskRoots:[history]};
-  if(!historyPresentation)return fail('unsafe-native-history-list');
-  if(!nativeTopologyOK(history,header,reading,composer,navigationSlot))return fail('return-slot-outside-native-header');
+  // Independent, fresh sidebar proof. Failure releases only that role. Never
+  // retain the old row selection as proof for newly reordered/replaced nodes.
+  let historyPresentation=history?(nativeLayout.historyList?historyPresentationFor(historySource,history):{rect:rect(history),maskRoots:[history]}):null;
+  if(!historyPresentation&&history){historySelections.delete(history);historyPresentation=nativeLayout.historyList?historyPresentationFor(historySource,history):null;}
   const readingViewport=nativeLayout.readingViewport?one(nativeLayout.readingViewport):null;
-  if(nativeLayout.readingViewport&&!viewportTopologyOK(readingViewport,history,header,reading,composer))return fail('unsafe-native-reading-viewport');
-  const protectedRegions=[header,composer];if(protectedRegions.some(n=>reading.contains(n)||history.contains(n))||reading.contains(history)||history.contains(reading))return fail('overlapping-native-boundary');
-  if(!gapMode&&(([...navigationSlot.children].length===0&&navigationSlot.textContent.trim())||[...navigationSlot.children].some(n=>!n.hasAttribute('data-va-owned')&&!n.hasAttribute('data-vaiwl-owned'))||[...(navigationSlot.childNodes??[])].some(n=>n.nodeType===3&&n.textContent.trim())))return fail('native-content-occupies-return-slot');
+  if(nativeLayout.readingViewport&&!viewportTopologyOK(readingViewport,null,header,reading,composer))return fail('unsafe-native-reading-viewport');
+  const protectedRegions=[header,composer];if(protectedRegions.some(n=>reading.contains(n)))return fail('overlapping-native-boundary');
+  const readingRect=readingViewport?viewportRect(readingViewport,header,composer):rect(reading),protectedRects=protectedRegions.map(rect);
+  const finite=r=>r&&Object.values(r).every(Number.isFinite)&&r.width>0&&r.height>0;
+  if(!finite(readingRect)||protectedRects.some(r=>overlaps(r,readingRect)))return fail('unsafe-native-geometry');
+  let sidebarRect=historyPresentation?.rect??null;
+  if(!finite(sidebarRect)||protectedRegions.some(n=>history?.contains(n))||history&&(reading.contains(history)||history.contains(reading))||sidebarRect&&(protectedRects.some(r=>overlaps(r,sidebarRect))||overlaps(readingRect,sidebarRect))) {sidebarRect=null;historyPresentation=null;}
+  const slotStructure=navigationSlot&&nativeTopologyOK(history,header,reading,composer,navigationSlot)&&(gapMode||!([...navigationSlot.children].some(n=>!n.hasAttribute('data-va-owned')&&!n.hasAttribute('data-vaiwl-owned'))||[...(navigationSlot.childNodes??[])].some(n=>n.nodeType===3&&n.textContent.trim())));
   returnGeometryStage=null;
-  const readingRect=readingViewport?viewportRect(readingViewport,header,composer):rect(reading),sidebarRect=historyPresentation.rect,returnSlot=gapMode?returnGeometry(history,header,readingRect,composer,navigationSlot):rect(navigationSlot),protectedRects=protectedRegions.map(rect);
-  if(!readingRect||!sidebarRect||!returnSlot||explicitLayout&&!gapMode&&!returnGeometry(history,header,readingRect,composer,navigationSlot))return {...fail('unsafe-native-geometry'),geometryStage:returnGeometryStage??'region-rect'};
-  if([...Object.values(readingRect),...Object.values(sidebarRect),...Object.values(returnSlot),...protectedRects.flatMap(Object.values)].some(v=>!Number.isFinite(v))||readingRect.width<=0||readingRect.height<=0||sidebarRect.width<=0||sidebarRect.height<=0||returnSlot.width<34||returnSlot.height<34||protectedRects.some(r=>overlaps(r,readingRect)||overlaps(r,sidebarRect))||overlaps(readingRect,sidebarRect))return fail('unsafe-native-geometry');
-  const nodes=[history,header,reading,composer,navigationSlot,readingViewport,historySource,gapMode?one(nativeLayout.returnHitRoot):null,...historyPresentation.maskRoots];if(nodes.length!==priorNodes.length||nodes.some((n,i)=>n!==priorNodes[i])){
-   if(priorNodes.length&&document.documentElement?.dataset){const roles=['history','header','reading','composer','return-slot','reading-viewport','history-source','return-hit-root'];document.documentElement.dataset.vaiwlMaskChange=JSON.stringify({before:priorNodes.slice(8).length,after:nodes.slice(8).length,retained:priorNodes.slice(8).filter(n=>nodes.slice(8).includes(n)).length});document.documentElement.dataset.vaiwlRegionChange=roles.filter((_,i)=>nodes[i]!==priorNodes[i]).concat(nodes.length!==priorNodes.length||nodes.slice(8).some((n,i)=>n!==priorNodes[i+8])?['history-mask-run']:[]).join(',');}
-   regionEpoch++;priorNodes=nodes;
-  }
-  return {ok:true,reason:null,profileId:profile.id,history,...(historySource?{historySource}:{}),header,reading,navigationSlot,composer,protectedRegions,...(readingViewport?{readingViewport}:{}),historyMaskRoots:historyPresentation.maskRoots,preserveNativeSidebar:historyPresentation.complete===false,...(gapMode?{returnPlacement:'header-gap',returnHitRoot:one(nativeLayout.returnHitRoot)}:{}),returnSlot,readingRect,sidebarRect,viewMask:'declarative-css',regionEpoch};
+  const returnSlot=slotStructure?returnGeometry(history,header,readingRect,composer,navigationSlot):null;
+  const nodes=[header,reading,composer,readingViewport];
+  if(nodes.length!==priorNodes.length||nodes.some((n,i)=>n!==priorNodes[i])){regionEpoch++;priorNodes=nodes;}
+  return sidebarVersion({ok:true,reason:null,profileId:profile.id,history,historySource,header,reading,navigationSlot,composer,protectedRegions,...(readingViewport?{readingViewport}:{}),historyMaskRoots:sidebarRect?historyPresentation.maskRoots:[],preserveNativeSidebar:!sidebarRect||historyPresentation.complete===false,...(gapMode?{returnPlacement:'header-gap',returnHitRoot:one(nativeLayout.returnHitRoot)}:{}),returnSlot,readingRect,sidebarRect,viewMask:'declarative-css',regionEpoch,
+   roles:{workspace:{available:true,revision:regionEpoch},sidebar:{available:!!sidebarRect,reason:sidebarRect?null:historyFailure??'history-unavailable'},return:{available:!!returnSlot,reason:returnSlot?null:returnGeometryStage??'return-unavailable'}}});
  }
  const api={setReturnControl(node){returnControl=node;},getReturnControlRect(inspection){
   if(projectLayout())return currentProjectSurface(inspection)?.returnSlot??null;

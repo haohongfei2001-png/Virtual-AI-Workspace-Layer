@@ -19,3 +19,13 @@ test('missing, ambiguous, detached and cross-document boundaries remain unknown'
 test('DOM exceptions, bad FileList and active nodes outside boundary fail closed',()=>{for(const kind of ['selector','value','file','active']){const f=fixture();if(kind==='selector')f.doc.querySelectorAll=()=>{throw Error('DOM error PRIVATE');};if(kind==='value')Object.defineProperty(f.editor,'value',{get(){throw Error('private');}});if(kind==='file')f.files.files=null;if(kind==='active')f.active.set('[data-fixture-upload="active"]',[f.node('BUTTON')]);assert.deepEqual(f.read()(),{state:'unknown',flags:[]});}});
 test('replacement during value read invalidates boundary and reader never writes native values',()=>{const f=fixture(),replacement=f.node('TEXTAREA');replacement.parent=f.form;let writes=0;Object.defineProperty(f.editor,'value',{get(){f.map.set('#prompt-textarea',[replacement]);return '';},set(){writes++;}});assert.equal(f.read()().state,'unknown');assert.equal(writes,0);});
 test('profile is snapshotted; results are immutable and unknown configuration never upgrades',()=>{const f=fixture(),read=f.read();f.profile.inputRisk.editorSelector='#other';assert.equal(read().state,'clear');const value=read();assert(Object.isFrozen(value)&&Object.isFrozen(value.flags));const bad=f.read();f.profile.inputRisk.editorSelector='#prompt-textarea';assert.equal(bad().state,'unknown');});
+
+test('partial observed composer preserves UNKNOWN while guarding drafts and files',()=>{
+ const f=fixture(),profile={inputPresence:{formSelector:'#composer'}};
+ f.active.set('textarea,[contenteditable="true"],[contenteditable="plaintext-only"]',[f.editor]);
+ const read=createNativeInputRisk({document:f.doc,profile});
+ assert.deepEqual(read(),{state:'unknown',flags:[]});
+ f.editor.value='PRIVATE';assert.deepEqual(read(),{state:'unknown',flags:['composer']});
+ f.files.files={length:1};assert.deepEqual(read(),{state:'unknown',flags:['composer','attachment']});
+ f.map.delete('#composer');assert.deepEqual(read(),{state:'unknown',flags:['composer']});
+});

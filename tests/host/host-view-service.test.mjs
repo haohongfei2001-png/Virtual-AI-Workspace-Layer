@@ -57,6 +57,8 @@ async function fixture(t,{prepareNavigation=null,presentSurface=null,selectionBr
  }
  return{priorityObservation,additionalMount,pass,enterCurrent,renew,get providerReads(){return providerReads;},horizon,present,base,workspaces,evidence,service,request,bind,observe,mount,view,grants,sender,children,setTime:value=>{time=value;},get bound(){return bound;},switchPrincipal(value){principal=value;service.invalidate({tabId:1,documentId:'document'});}};
 }
+const plans=async(h,result,role='workspace')=>h.service.handle({v:1,type:'HOST_UI_NAVIGATION_PLANS',grantId:h.grants[role].id,mountId:'mount',deliveryId:result.deliveryId},h.children[role]);
+const planned=async(h,result,role='workspace')=>({...result,...await plans(h,result,role)});
 const drain=()=>new Promise(resolve=>setImmediate(resolve));
 async function ready(h,role='workspace'){
  for(let i=0;i<100;i++){const result=await h.view(role);if(result.state!=='preparing')return result;await drain();}
@@ -110,7 +112,7 @@ test('MOCK_IDB cached UI view recalibrates at native source expiry under a still
 const hrefPlan=target=>{const project=Object.hasOwn(target,'projectId'),key=project?'projectId':'refId';return {[key]:target[key],targetKey:'native_target',plan:{mode:'href',planRevision:1,disposition:'same-tab',target:{kind:'resolved',entity:project?'project':'conversation',nativeId:target[key],navigationURL:target.navigationURL}}};};
 test('MOCK_IDB trusted native plan callback receives only current bounded identities and document binding',async t=>{
  const calls=[],h=await fixture(t,{prepareNavigation:async args=>{calls.push(structuredClone(args));return args.targets.map(hrefPlan);}});
- await h.bind();await h.observe();await h.mount();const result=await ready(h);
+ await h.bind();await h.observe();await h.mount();const page=await ready(h);assert.equal(calls.length,0,'data read never waits on action preparation');const result=await planned(h,page);
  assert.equal(result.state,'ready',JSON.stringify(result));assert.equal(calls.length,1);
  assert.deepEqual(calls[0].targets,[{refId:'c1',navigationURL:'https://chatgpt.com/c/c1'},{projectId:'p1',navigationURL:'https://chatgpt.com/g/p1/project'}]);
  assert.deepEqual(Object.keys(calls[0]).sort(),['binding','parentFrame','targets']);assert.equal(calls[0].parentFrame.documentId,'document');assert.deepEqual(Object.keys(calls[0].binding).sort(),['documentToken','producerToken','routeEpoch']);assert.equal(typeof calls[0].binding.documentToken,'string');
@@ -125,12 +127,12 @@ for(const mode of ['different-url','different-id','duplicate','oversize','unsafe
   if(mode==='unsafe-mode')item.plan.mode='native-click';
   return mode==='duplicate'?[item,structuredClone(item)]:[item];
  }});await h.bind();await h.observe();await h.mount();const result=await ready(h);
- assert.equal(result.ok,false);assert.equal(result.reason,mode==='oversize'?'free-frame-page-too-large':'invalid-native-plans');assert.equal(result.page,undefined);assert.equal(result.navigation,undefined);
+ assert.equal(result.ok,true);assert(result.page);assert.deepEqual(await plans(h,result),{ok:false,reason:'navigation-unavailable'});
 });
 test('MOCK_IDB invalidation while trusted native plans await prevents late UI publication',async t=>{
  let entered=false,release;const barrier=new Promise(resolve=>release=resolve);
  const h=await fixture(t,{prepareNavigation:async({targets})=>{entered=true;await barrier;return targets.map(hrefPlan);}});
- await h.bind();await h.observe();await h.mount();const pending=ready(h);
+ await h.bind();await h.observe();await h.mount();const page=await ready(h);assert.equal(page.state,'ready');const pending=plans(h,page);
  for(let i=0;i<100&&!entered;i++)await drain();assert.equal(entered,true);
  h.switchPrincipal('replacement-principal');release();const result=await pending;
  assert.equal(result.ok,false);assert.equal(result.page,undefined);assert.equal(result.navigation,undefined);
@@ -166,7 +168,7 @@ test('MOCK_IDB failed native presentation leaves shared intent unchanged',async 
 });
 test('MOCK_IDB search result receives owner navigation plan and cannot forge current conversation',async t=>{
  const calls=[],h=await fixture(t,{documentURL:'https://chatgpt.com/c/c1',prepareNavigation:async x=>{calls.push(x);return x.targets.map(hrefPlan);}});await h.bind();await h.observe();await h.mount();await ready(h);calls.length=0;
- const result=await h.view('workspace',{segment:1,search:{query:'Native conversation',offset:0,limit:5}});assert.equal(result.state,'ready',JSON.stringify(result));assert.equal(result.page.search.total,1);assert.deepEqual(result.page.search.items.map(r=>r.id),['c1']);assert(calls.at(-1).targets.some(r=>r.refId==='c1'));assert(result.navigation.some(r=>r.refId==='c1'));assert.equal(result.page.current.refId,'c1');
+ const data=await h.view('workspace',{segment:1,search:{query:'Native conversation',offset:0,limit:5}});const result=await planned(h,data);assert.equal(result.state,'ready',JSON.stringify(result));assert.equal(result.page.search.total,1);assert.deepEqual(result.page.search.items.map(r=>r.id),['c1']);assert(calls.at(-1).targets.some(r=>r.refId==='c1'));assert(result.navigation.some(r=>r.refId==='c1'));assert.equal(result.page.current.refId,'c1');
  assert.equal((await h.view('workspace',{search:{query:'Native',current:{refId:'forged'}}})).ok,false);assert.equal((await h.view('workspace',{search:{query:'Native',projectId:'unknown'}})).ok,false);
 });
 
@@ -182,7 +184,7 @@ async function seedManualWorkingSet(h){
 }
 test('MOCK_IDB working set preserves manual order and unavailable native title with reliable original links',async t=>{
  const calls=[],h=await fixture(t,{prepareNavigation:async args=>{calls.push(args);return args.targets.map(hrefPlan);}});await h.bind();await h.observe();await seedManualWorkingSet(h);await h.mount();await ready(h);calls.length=0;
- const result=await h.view('workspace',{workingSet:{offset:0,limit:24}});assert.equal(result.state,'ready',JSON.stringify(result));assert.deepEqual(result.page.workingSet.items.map(r=>r.id),['missing_saved','c1']);assert.equal(result.page.workingSet.currentRefId,'c1');assert.equal(result.page.workingSet.total,2);assert.equal(result.page.workingSet.items[0].nativeTitle,null);assert(!JSON.stringify(result.page.workingSet).includes('PRIVATE_OLD_MANUAL_LABEL'));assert(result.navigation.some(p=>p.refId==='c1'));assert.deepEqual(calls.at(-1).targets.find(p=>p.refId==='missing_saved'),{refId:'missing_saved',navigationURL:'https://chatgpt.com/c/missing_saved'});
+ const data=await h.view('workspace',{workingSet:{offset:0,limit:24}});const result=await planned(h,data);assert.equal(result.state,'ready',JSON.stringify(result));assert.deepEqual(result.page.workingSet.items.map(r=>r.id),['missing_saved','c1']);assert.equal(result.page.workingSet.currentRefId,'c1');assert.equal(result.page.workingSet.total,2);assert.equal(result.page.workingSet.items[0].nativeTitle,null);assert(!JSON.stringify(result.page.workingSet).includes('PRIVATE_OLD_MANUAL_LABEL'));assert(result.navigation.some(p=>p.refId==='c1'));assert.deepEqual(calls.at(-1).targets.find(p=>p.refId==='missing_saved'),{refId:'missing_saved',navigationURL:'https://chatgpt.com/c/missing_saved'});
  const tail=await h.view('sidebar',{workingSet:{offset:1,limit:1}});assert.deepEqual(tail.page.workingSet.items.map(r=>r.id),['c1']);assert.equal(tail.page.workingSet.hasMore,false);assert.equal(tail.page.workingSet.total,2);
 });
 test('MOCK_IDB working set rejects search combination and forged fields',async t=>{
@@ -249,7 +251,7 @@ test('MOCK_IDB document and UI lease expire before delayed horizon CAS despite u
 
 test('MOCK_IDB current ref remains separately navigable outside bounded visible history page',async t=>{
  const calls=[],h=await fixture(t,{documentURL:'https://chatgpt.com/c/c1',prepareNavigation:async x=>{calls.push(x);return x.targets.map(hrefPlan);}});await h.bind();await h.observe();await h.mount();await ready(h);
- const result=await h.view('workspace',{segment:100,offset:0,limit:1});assert.equal(result.state,'ready');assert.equal(result.page.entries.unknown.items.length,0);assert.equal(result.page.currentRef.id,'c1');assert.equal(result.page.currentRef.nativeTitle,'Native conversation');assert.equal(result.page.currentRef.membership,'UNKNOWN');assert.equal(result.page.current.refId,'c1');assert(result.navigation.some(p=>p.refId==='c1'));assert(calls.at(-1).targets.some(r=>r.refId==='c1'));assert.equal(result.page.entries.unknown.total,0);
+ const data=await h.view('workspace',{segment:100,offset:0,limit:1});const result=await planned(h,data);assert.equal(result.state,'ready');assert.equal(result.page.entries.unknown.items.length,0);assert.equal(result.page.currentRef.id,'c1');assert.equal(result.page.currentRef.nativeTitle,'Native conversation');assert.equal(result.page.currentRef.membership,'UNKNOWN');assert.equal(result.page.current.refId,'c1');assert(result.navigation.some(p=>p.refId==='c1'));assert(calls.at(-1).targets.some(r=>r.refId==='c1'));assert.equal(result.page.entries.unknown.total,0);
  assert.equal((await h.view('workspace',{currentRef:{id:'forged'}})).ok,false);
 });
 
@@ -326,7 +328,7 @@ for(const mode of ['entity','url','mixed-id','duplicate'])test('MOCK_IDB Project
   if(mode==='url')item.plan.target.navigationURL='https://chatgpt.com/g/other/project';
   if(mode==='mixed-id')item.refId=item.projectId;
   return mode==='duplicate'?[item,structuredClone(item)]:[item];
- }});await h.bind();await h.observe();await h.mount();const result=await ready(h);assert.equal(result.ok,false);assert.equal(result.reason,'invalid-native-plans');assert.equal(result.page,undefined);
+ }});await h.bind();await h.observe();await h.mount();const result=await ready(h);assert.equal(result.ok,true);assert.deepEqual(await plans(h,result),{ok:false,reason:'navigation-unavailable'});
 });
 
 async function midnightFixture(t,options={}){
@@ -574,8 +576,8 @@ test('MOCK_IDB late navigation response from an older preparation cannot release
  const clock=preparationClock();let release,entered=false,hold=true;const wait=new Promise(resolve=>release=resolve);
  const h=await fixture(t,{elapsedNow:clock.now,schedule:clock.schedule,cancel:clock.cancel,prepareNavigation:async()=>{if(hold){entered=true;await wait;}return [];}});t.after(()=>{release();h.service.stop();});
  await h.bind();await h.observe();await h.mount();assert.equal((await h.view()).state,'preparing');
- for(let i=0;i<30;i++)await drain();const old=h.view();for(let i=0;i<100&&!entered;i++)await drain();assert(entered,'old response waits in real prepareNavigation');
- assert.equal(h.service.views.isForegroundReadPending(h.bound.scope),true);clock.advance(1000);assert.equal(h.service.views.isForegroundReadPending(h.bound.scope),false);
+ for(let i=0;i<30;i++)await drain();const page=await h.view();const old=plans(h,page);for(let i=0;i<100&&!entered;i++)await drain();assert(entered,'old response waits in real prepareNavigation');
+ assert.equal(h.service.views.isForegroundReadPending(h.bound.scope),false,'action preparation does not hold inventory read window');clock.advance(1000);assert.equal(h.service.views.isForegroundReadPending(h.bound.scope),false);
  assert.equal((await h.observe(['p1','next-generation'],{raw:true})).state,'accepted');
  h.service.views.refreshScope(h.bound.scope);assert.equal(h.service.views.isForegroundReadPending(h.bound.scope),true,'new publication enables a new preparation window');
  hold=false;release();await old;await drain();
@@ -788,7 +790,7 @@ test('MOCK_IDB released view late completion cannot retire a fresh registration 
 
 test('MOCK_IDB known project search includes no-member projects outside the current card page',async t=>{
  const calls=[],h=await fixture(t,{documentURL:'https://chatgpt.com/c/c1',prepareNavigation:async x=>{calls.push(x);return x.targets.map(hrefPlan);}});await h.bind();await h.observe();await h.mount();await ready(h);
- const result=await h.view('workspace',{segment:10,search:{query:'Native Project',offset:0,limit:24}});assert.equal(result.state,'ready',JSON.stringify(result));assert.equal(result.page.groups.items.length,0);assert.deepEqual(result.page.search.items.map(r=>[r.kind,r.id]),[['project','p1']]);assert(calls.at(-1).targets.some(r=>r.projectId==='p1'));assert(!calls.at(-1).targets.some(r=>r.refId==='p1'));assert(result.navigation.some(r=>r.projectId==='p1'));assert.equal(result.page.currentRef.membership,'UNKNOWN');
+ const data=await h.view('workspace',{segment:10,search:{query:'Native Project',offset:0,limit:24}});const result=await planned(h,data);assert.equal(result.state,'ready',JSON.stringify(result));assert.equal(result.page.groups.items.length,0);assert.deepEqual(result.page.search.items.map(r=>[r.kind,r.id]),[['project','p1']]);assert(calls.at(-1).targets.some(r=>r.projectId==='p1'));assert(!calls.at(-1).targets.some(r=>r.refId==='p1'));assert(result.navigation.some(r=>r.projectId==='p1'));assert.equal(result.page.currentRef.membership,'UNKNOWN');
 });
 
 test('workspace delivery summary is anonymous, document-scoped, and absent after revoke',async t=>{
@@ -818,4 +820,12 @@ test('frame receipt is bound to current delivery and authorized UI document, nev
  const next=await ready(h);assert.notEqual(next.deliveryId,sent.deliveryId);
  assert.equal((await receipt()).ok,false);assert.equal(h.service.views.receiptSummary(frame,scope.key).phase,'sent');
  h.service.invalidate({tabId:1});assert.equal(h.service.views.receiptSummary(frame,scope.key),null);assert.equal((await receipt({deliveryId:next.deliveryId})).ok,false);
+});
+
+// The same visible page can request plans twice; only its newest attempt may register.
+test('MOCK_IDB superseded action preparation for one delivery cannot publish',async t=>{
+ const waiting=[];const h=await fixture(t,{prepareNavigation:({targets})=>new Promise(resolve=>waiting.push(()=>resolve(targets.map(hrefPlan))))});
+ await h.bind();await h.observe();await h.mount();const page=await ready(h);
+ const first=plans(h,page);while(waiting.length<1)await drain();const second=plans(h,page);while(waiting.length<2)await drain();
+ waiting[1]();assert.equal((await second).ok,true);waiting[0]();assert.deepEqual(await first,{ok:false,reason:'navigation-unavailable'});
 });

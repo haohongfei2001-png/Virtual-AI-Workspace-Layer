@@ -65,7 +65,9 @@ try{
    if(mode==='extra-panel')panel.after(panel.cloneNode(true));
    if(mode==='editable-panel')panel.contentEditable='true';
    if(mode==='file-panel')panel.replaceChildren(document.createElement('input'));
-   const reject=['shell-border-box-corner','shell-border-box-percent','shell-cut','shell-percent','shell-polygon','second-root','extra-native-widget','tiny-gap-control','composer-overflow','title-overflow','tab-overlap','pseudo-overflow','title-shadow','tab-outline','composer-shadow-changed','header-opaque','header-control','outer-clip','clip-path','css-mask','ancestor-transform','foreign-list-link','extra-panel','editable-panel','file-panel'].includes(mode);
+   const reject=['shell-border-box-corner','shell-border-box-percent','shell-cut','shell-percent','shell-polygon','second-root','extra-native-widget','tiny-gap-control','composer-overflow','title-overflow','tab-overlap','pseudo-overflow','title-shadow','tab-outline','header-opaque','header-control','outer-clip','clip-path','css-mask','ancestor-transform','foreign-list-link','extra-panel','editable-panel','file-panel'].includes(mode);
+   if(['header-opaque','header-control'].includes(mode)){const state=adapter.inspect();adapter.stop();return {mode,passed:state.ok&&state.returnSlot===null&&forbiddenReads===0,workspaceIndependent:true};}
+   if(mode==='foreign-list-link'){const state=adapter.inspect();adapter.stop();return {mode,passed:state.ok&&forbiddenReads===0,layoutIndependentOfMemberURL:true};}
    if(reject){const refused=!adapter.inspect().ok;adapter.stop();return {mode,passed:refused&&forbiddenReads===0,refused,forbiddenReads};}
    if(mode.startsWith('controller-')){
     surface=createMountSurface({document,createFrameURL:({role})=>`chrome-extension://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/${role}.html`});
@@ -118,14 +120,14 @@ try{
    if(mode==='controller-scroll'){
     await page.waitForFunction(()=>document.querySelectorAll('[data-va-owned]:popover-open').length===0);
     result.automaticSurrender=await page.locator('#project-panel').evaluate(n=>getComputedStyle(n).visibility==='visible');assert.equal(await back.count(),0);
-    await page.evaluate(()=>{document.querySelector('#project-scroll').scrollTop=0;});await back.waitFor({timeout:10000});assert.equal(await page.locator('[data-va-owned]:popover-open').count(),0);await back.click();
-    await page.waitForFunction(()=>document.querySelectorAll('[data-va-owned]:popover-open').length===2);result.explicitReturnAfterSafeGeometry=true;result.passed&&=result.automaticSurrender;
+    await page.evaluate(()=>{document.querySelector('#project-scroll').scrollTop=0;});await page.waitForFunction(()=>document.querySelector('[data-va-owned][id$="_workspace"]')?.matches(':popover-open'));
+    await page.waitForFunction(()=>document.querySelectorAll('[data-va-owned]:popover-open').length===2);result.originalWorkspaceIntentRestored=true;result.passed&&=result.automaticSurrender;
    }
    if(mode==='controller-expiry'){await page.waitForFunction(()=>!document.querySelector('[data-va-owned]'),null,{timeout:10000});result.expiredClean=await page.locator('#project-panel').evaluate(n=>getComputedStyle(n).visibility==='visible');assert.equal(await back.count(),0);result.passed&&=result.expiredClean;}
    if(mode==='controller-resize'){await page.setViewportSize({width:785,height:600});await page.waitForFunction(()=>{const n=document.querySelector('[data-va-owned][id$="_workspace"]');return n?.getBoundingClientRect().height<400;});result.automaticResize=true;}
    if(mode==='controller-popup'){
     await page.evaluate(()=>{const d=document.createElement('dialog');d.id='native-dialog';document.body.append(d);d.showModal();});await page.waitForFunction(()=>document.querySelectorAll('[data-va-owned]:popover-open').length===0);
-    result.nativePopupPriority=await page.locator('#project-panel').evaluate(n=>getComputedStyle(n).visibility==='visible');await page.evaluate(()=>document.querySelector('#native-dialog').remove());await back.waitFor({timeout:10000});assert.equal(await back.count(),1);await back.click();result.passed&&=result.nativePopupPriority;
+    result.nativePopupPriority=await page.locator('#project-panel').evaluate(n=>getComputedStyle(n).visibility==='visible');await page.evaluate(()=>document.querySelector('#native-dialog').remove());await page.waitForFunction(()=>document.querySelector('[data-va-owned][id$="_workspace"]')?.matches(':popover-open'));result.passed&&=result.nativePopupPriority;
    }
   }
   if(result.passed&&['keyboard','resize'].includes(mode)||result.passed&&mode.startsWith('controller-')){

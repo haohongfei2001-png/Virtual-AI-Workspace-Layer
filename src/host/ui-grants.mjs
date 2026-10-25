@@ -96,6 +96,7 @@ export function createUiGrants({extensionId,uiURL=null,uiURLs=null,getFrame,getC
   if(!latest||latest.mount!==entry.mount||latest.ui!==entry.ui||liveMount(mountId).mount!==mount||Date.parse(latest.grant.expiresAt)<=now())fail('ui-grant-revoked');return latest.grant;
  }
  function revokeMount(id){mounts.delete(id);for(const [key,value]of grants)if(value.grant.mountId===id)grants.delete(key);for(const entry of joins.values())if(entry.parent?.mountId===id)discard(entry);}
+ function revokeRole(mountId,role){for(const [id,entry]of grants)if(entry.grant.mountId===mountId&&entry.grant.role===role)grants.delete(id);for(const entry of joins.values())if(entry.parent?.mountId===mountId&&entry.role===role)discard(entry);}
  function revokeDocument(id){for(const [key,value]of mounts)if(value.parent.documentId===id)revokeMount(key);for(const [key,value]of grants)if(value.ui.documentId===id)grants.delete(key);for(const entry of joins.values())if(entry.ui?.documentId===id){entry.used=true;entry.revoked=true;}}
  function revokeAll(){for(const id of [...mounts.keys()])revokeMount(id);for(const entry of joins.values())discard(entry);grants.clear();}
  async function renewOnce({sender,grantId,mountId}){
@@ -116,5 +117,5 @@ export function createUiGrants({extensionId,uiURL=null,uiURLs=null,getFrame,getC
   const task=renewOnce({...args,sender}).finally(()=>{if(renewing.get(args.grantId)===task)renewing.delete(args.grantId);});
   renewing.set(args.grantId,task);return task;
  }
- return Object.freeze({validateMount:id=>{liveMount(id);},registerMount,renew,joinUI,confirmParent,validate,current,currentGrant,revokeMount,revokeDocument,revokeAll});
+ return Object.freeze({validateMount:id=>{liveMount(id);},registerMount,renew,joinUI,confirmParent,validate,current,currentGrant,revokeMount,revokeRole,revokeDocument,revokeAll});
 }

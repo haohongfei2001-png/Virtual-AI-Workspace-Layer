@@ -28,13 +28,13 @@ test('mount native focus hides both surfaces and notifies; owned controls and di
   ()=>{reading.setAttribute('hidden','');return ()=>reading.removeAttribute('hidden');},
   ()=>{history.setAttribute('aria-hidden','true');return ()=>history.removeAttribute('aria-hidden');},
   ()=>{reading.isConnected=false;return ()=>reading.isConnected=true;},
- ]){surface.showWorkspace(handle);const undo=mutate();observer();assert(doc.body.children.every(n=>!n.open),'changed native mask boundary releases both surfaces');undo();}
+ ]){surface.showWorkspace(handle);const undo=mutate();observer();assert.equal(doc.body.children[0].open,history.getAttribute('aria-hidden')==='true');assert.equal(doc.body.children[1].open,history.getAttribute('aria-hidden')!=='true');undo();}
  surface.showWorkspace(handle);observer();assert(doc.body.children.every(n=>n.open),'unchanged boundaries do not close workspace');
- reading.setAttribute('class','new-native-layout');observer();assert(doc.body.children.every(n=>!n.open));assert.equal(surface.showWorkspace(handle),true);observer();assert(doc.body.children.every(n=>n.open));assert.equal(surface.isMasked(reading),true);reading.removeAttribute('class');observer();surface.showWorkspace(handle);
+ reading.setAttribute('class','new-native-layout');observer();assert.deepEqual(surface.visibility(handle),{workspace:false,sidebar:true});assert.equal(surface.showWorkspace(handle),true);observer();assert(doc.body.children.every(n=>n.open));assert.equal(surface.isMasked(reading),true);reading.removeAttribute('class');observer();surface.showWorkspace(handle);
  const child=element(),outside=element();const originalContains=reading.contains;reading.contains=node=>node===child;
  assert.equal(surface.surrenderChanged([{type:'characterData',target:outside}]),false);assert(doc.body.children.every(n=>n.open));
- assert.equal(surface.surrenderChanged([{type:'characterData',target:child}]),true);assert(doc.body.children.every(n=>!n.open));assert.deepEqual(events.at(-1),{reason:'native-change'},'mode notification must not wait for a queued toggle');assert.equal(surface.surrenderChanged([{type:'characterData',target:child}]),false);
- surface.showWorkspace(handle);assert.equal(surface.surrenderChanged([{type:'childList',target:outside,addedNodes:[],removedNodes:[reading]}]),true);assert(doc.body.children.every(n=>!n.open));reading.contains=originalContains;surface.showWorkspace(handle);
+ assert.equal(surface.surrenderChanged([{type:'characterData',target:child}]),true);assert.deepEqual(surface.visibility(handle),{workspace:false,sidebar:true});assert.deepEqual(events.at(-1),{role:'workspace',reason:'native-change'},'mode notification must not wait for a queued toggle');assert.equal(surface.surrenderChanged([{type:'characterData',target:child}]),false);
+ surface.showWorkspace(handle);assert.equal(surface.surrenderChanged([{type:'childList',target:outside,addedNodes:[],removedNodes:[reading]}]),true);assert.deepEqual(surface.visibility(handle),{workspace:false,sidebar:true});reading.contains=originalContains;surface.showWorkspace(handle);
  surface.showReading(handle);assert.deepEqual(surface.visibility(handle),{workspace:false,sidebar:true});assert.equal(surface.isMasked(reading),false);assert.equal(surface.isMasked(history),true,'workspace closure does not impersonate sidebar closure');
  events.length=0;surface.showWorkspace(handle);assert(doc.body.children.every(n=>n.open));listeners.get('focusin')({target:composer});assert(doc.body.children.every(n=>!n.open));assert.deepEqual(events,[{reason:'native-input'}]);
  surface.showWorkspace(handle);listeners.get('pointerdown')({target:element()});assert(doc.body.children.every(n=>n.open));assert.equal(events.length,1);
@@ -45,7 +45,7 @@ test('mount native focus hides both surfaces and notifies; owned controls and di
  // A queued close from before a later open cannot surrender the new state.
  closed({target:workspace,newState:'closed'});assert.equal(events.length,1);
  workspace.hidePopover();assert.deepEqual(surface.visibility(handle),{workspace:false,sidebar:false});closed({target:sidebar,newState:'closed'});assert.equal(events.length,1);
- closed({target:workspace,newState:'closed'});assert.deepEqual(events.at(-1),{reason:'native-reading'});assert.equal(events.length,2);
+ closed({target:workspace,newState:'closed'});assert.deepEqual(events.at(-1),{role:'workspace',reason:'native-reading'});assert.equal(events.length,2);
  surface.dispose(handle);assert.equal(surface.isMasked(reading),false);assert.equal(surface.isMasked(history),false);assert.equal(surface.isMasked(fake),false);assert.equal(listeners.size,0);assert.equal(workspace.events.size,0);closed({target:workspace,newState:'closed'});assert.equal(events.length,2);
  reading.nativeVisibility='hidden';
  const hiddenHandle=await surface.mount({binding:{documentToken:'doc'}},{ok:true,viewMask:'declarative-css',reading,historyMaskRoots:[history],composer,header,protectedRegions:[composer,header],regionEpoch:2,readingRect:{x:0,y:0,width:100,height:100},sidebarRect:{x:100,y:0,width:100,height:100}});

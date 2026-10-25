@@ -60,7 +60,7 @@ for(const kind of ['withScope','renew'])test(`L ${kind}: revoking sibling role l
 for(const nth of [1,3,4])test(`L STATUS captures both original roles and rejects workspace replacement at parent check ${nth}`,async t=>{
  const h=await fixture(t),gate=h.hold(1,0,nth),pending=h.status();await gate.arrived;await h.pair(1,'workspace');gate.release();assert.equal((await pending).ok,false);assert.equal((await h.status()).ok,true);
 });
-test('L STATUS rejects sibling-role revocation after both renewals',async t=>{const h=await fixture(t),gate=h.hold(1,0,4),pending=h.status();await gate.arrived;h.owner.revokeDocument('ui_1_sidebar');gate.release();assert.equal((await pending).ok,false);});
+test('L STATUS omits revoked sidebar after both renewals while retaining workspace',async t=>{const h=await fixture(t),gate=h.hold(1,0,4),pending=h.status();await gate.arrived;h.owner.revokeDocument('ui_1_sidebar');gate.release();const result=await pending;assert.equal(result.ok,true);assert.deepEqual(result.grants.map(g=>g.role),['workspace']);});
 test('L synchronous withScope guard sees same-role replacement while work is pending',async t=>{
  const h=await fixture(t);let release,entered;const held=new Promise(r=>release=r),arrived=new Promise(r=>entered=r);let context;
  const pending=settle(h.owner.withScope(h.args(),async value=>{context=value;entered();await held;return 'stale';}));await arrived;assert.equal(context.isCurrent(),true);await h.pair(1,'workspace');assert.equal(context.isCurrent(),false);release();assert.equal(typeof (await pending).error,'string');
@@ -104,4 +104,13 @@ test('L timed-out old renewal cannot revoke a newer same-document role JOIN',asy
 
 test('expired sibling document retirement notifies recovery before later mount cleanup',async t=>{
  const retired=[],h=await fixture(t,{onRevokeDocument:id=>retired.push(id)});await h.advance(10000);assert((await h.renew(2)).ok);retired.length=0;await h.advance(10001);await h.owner.validate(h.args(2));assert(retired.includes('ui_1_workspace'));assert(!retired.includes('ui_2_workspace'));h.owner.revokeMount('mount_1');
+});
+
+test('optional role release invalidates pending joins and permits a new child without replacing workspace',{timeout:2000},async t=>{
+ const h=await fixture(t);const original=h.grants.get('1:workspace').id;
+ h.owner.revokeDocument('ui_1_sidebar');
+ const gate=h.hold(1,2,1),pending=h.join(1,'sidebar','old-sidebar-join'),confirming=h.confirm(1,'sidebar','old-sidebar-join');await gate.arrived;
+ const released=await h.owner.handle(h.message('HOST_UI_ROLE_RELEASE',1,{role:'sidebar'}),h.parents.get(1));assert.equal(released.ok,true);
+ gate.release();await tick();await h.advance(6000);assert.equal((await pending).ok,false);assert.equal((await confirming).ok,false);
+ const fresh=await h.pair(1,'sidebar');assert(fresh.id);const status=await h.status();assert.equal(status.ok,true);assert.equal(status.grants.find(g=>g.role==='workspace').id,original);
 });

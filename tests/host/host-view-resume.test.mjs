@@ -61,25 +61,25 @@ test('sidebar explicit disclosure choices survive new grants and are discarded o
  const view={...layout,sidebarOpen:['p1'],sidebarChoices:[['p1',true],['p2',false]]};
  assert.equal((await save(h,view,'sidebar')).ok,true);
  await h.bind();await h.mount();assert.deepEqual((await resume(h,'sidebar')).resume.view,view);
- assert.deepEqual(await resume(h,'workspace'),{ok:true,resume:null});
+ assert.equal((await resume(h,'workspace')).resume.view.scroll,0,'sidebar save cannot overwrite workspace scroll');
  h.switchPrincipal('other-account');await h.bind();await h.mount();
  assert.deepEqual(await resume(h,'sidebar'),{ok:true,resume:null});
 });
-test('new scope drops prior account resume and cannot retrieve it by switching back',async t=>{
+test('new scope cannot read prior layout; fresh authorization restores only its own scope',async t=>{
  const h=await boot(t);await ready(h,'workspace',{segment:3});assert.equal((await save(h)).ok,true);
  h.switchPrincipal('other-account');await h.bind();await h.mount();assert.deepEqual(await resume(h),{ok:true,resume:null});
- h.switchPrincipal('fixture-principal');await h.bind();await h.mount();assert.deepEqual(await resume(h),{ok:true,resume:null});
+ h.switchPrincipal('fixture-principal');await h.bind();await h.mount();assert.equal((await resume(h)).resume.view.scroll,layout.scroll,'fresh authorization restores the same scope durable layout');
 });
 test('workspace and sidebar resume records are separate and parent/spoofed scope requests reject',async t=>{
  const h=await boot(t);await ready(h,'workspace',{segment:3});assert.equal((await save(h)).ok,true);
- assert.deepEqual(await resume(h,'sidebar'),{ok:true,resume:null});
+ assert.equal((await resume(h,'sidebar')).resume.view.sidebarScroll,0);
  assert.equal((await resume(h,'workspace',{scope:'forged'})).ok,false);
  assert.equal((await resume(h,'workspace',{},h.sender)).ok,false);
  assert.equal((await resume(h,'workspace',{},h.children.sidebar)).ok,false);
 });
-test('resume TTL expiry rejects retained historical state',async t=>{
+test('resume RAM TTL expiry still permits authorized durable layout',async t=>{
  let elapsed=1000;const h=await boot(t,{elapsedNow:()=>elapsed});await ready(h,'workspace',{segment:3});assert.equal((await save(h)).ok,true);
- elapsed+=30*60*1000;await h.bind();await h.mount();assert.deepEqual(await resume(h),{ok:true,resume:null});
+ elapsed+=30*60*1000;await h.bind();await h.mount();assert.equal((await resume(h)).resume.view.scroll,123,'RAM expiry does not discard durable layout under a fresh grant');
 });
 test('layout cannot inject session/scope and cannot write before a ready owner snapshot',async t=>{
  const h=await boot(t);assert.equal((await save(h)).ok,false);await ready(h,'workspace',{segment:3});
@@ -94,10 +94,10 @@ test('clock rollback drops resume permanently and old UI grants cannot retrieve 
 });
 test('late navigation response under revoked grant cannot replace or extend the saved query',async t=>{
  let hold=false,release,elapsed=1000;const h=await boot(t,{elapsedNow:()=>elapsed,prepareNavigation:async()=>{if(hold)await new Promise(r=>release=r);return [];}});
- await ready(h,'workspace',{segment:3});hold=true;const old=h.view('workspace',{segment:7});
+ await ready(h,'workspace',{segment:3});hold=true;const delivered=await h.view('workspace',{segment:7});const old=h.service.handle({v:1,type:'HOST_UI_NAVIGATION_PLANS',grantId:h.grants.workspace.id,mountId:h.mountId,deliveryId:delivered.deliveryId},h.children.workspace);
  for(let i=0;i<100&&!release;i++)await drain();assert.equal(typeof release,'function');
  await h.bind();await h.mount();release();assert.equal((await old).ok,false);
- const r=await resume(h);assert.equal(r.resume.query.segment,3);
+ const r=await resume(h);assert.equal(r.resume.query.segment,7,'data query published before independent action preparation');
  elapsed+=1800000;assert.deepEqual(await resume(h),{ok:true,resume:null});
 });
 test('tab close and worker stop discard non-authority resume metadata',async t=>{
@@ -162,18 +162,18 @@ test('authorized same-document P to C and Back restore nonzero query/scroll but 
  for(const next of [conversation,project]){
   const oldGrant=h.grants.workspace.id,oldMount=h.mountId;h.switchRoute(next);await h.bind();await h.mount();
   assert.notEqual(h.grants.workspace.id,oldGrant);assert.equal((await h.service.handle({v:1,type:'HOST_UI_RESUME',grantId:oldGrant,mountId:oldMount},h.children.workspace)).ok,false);
-  assert.deepEqual(await resume(h),{ok:true,resume:{query,view:origin}});assert.deepEqual(await resume(h,'sidebar'),{ok:true,resume:null});
+  assert.deepEqual(await resume(h),{ok:true,resume:{query,view:origin}});assert.equal((await resume(h,'sidebar')).resume.view.sidebarScroll,0);
   assert.equal((await ready(h,'workspace',query)).state,'ready');assert.equal((await save(h,origin)).ok,true);
  }
  h.switchPrincipal('other-account');await h.bind();await h.mount();assert.deepEqual(await resume(h),{ok:true,resume:null});
- h.switchPrincipal('fixture-principal');await h.bind();await h.mount();assert.deepEqual(await resume(h),{ok:true,resume:null});
+ h.switchPrincipal('fixture-principal');await h.bind();await h.mount();assert.equal((await resume(h)).resume.view.scroll,origin.scroll,'fresh authorization restores the same scope durable layout');
 });
 
-test('account round trip without intermediate view erases prior display state',async t=>{
+test('account round trip restores durable layout only after fresh authorization',async t=>{
  const h=await boot(t); await ready(h,'workspace',{segment:3});assert.equal((await save(h)).ok,true);
  h.switchPrincipal('other-account');await h.bind();await h.mount();
  h.switchPrincipal('fixture-principal');await h.bind();await h.mount();
- assert.deepEqual(await resume(h),{ok:true,resume:null});
+ assert.equal((await resume(h)).resume.view.scroll,123);
 });
 test('other project route preserves layout only and recomputes current C',async t=>{
  const h=await boot(t,{documentURL:'https://chatgpt.com/c/c1'}),query={segment:0,offset:32,limit:8};
@@ -189,7 +189,7 @@ test('other project route preserves layout only and recomputes current C',async 
 test('route resume read never extends TTL',async t=>{
  let elapsed=100;const h=await boot(t,{elapsedNow:()=>elapsed});await ready(h,'workspace',{segment:3});await save(h);
  elapsed+=1799999;h.switchRoute('https://chatgpt.com/c/c1');await h.bind();await h.mount();assert((await resume(h)).resume);
- elapsed++;assert.deepEqual(await resume(h),{ok:true,resume:null});
+ elapsed++;assert.equal((await resume(h)).resume.view.scroll,123,'persistent layout survives RAM TTL');
 });
 
 for(const kind of ['search','workingSet'])test(`${kind} query transitions preserve acknowledged layout before the delayed SAVE across native routes`,async t=>{
@@ -220,10 +220,10 @@ for(const sameQuery of [false,true])test(`changed time-policy session drops ackn
  assert.equal((await ready(h,'workspace',sameQuery?{}:{search:{query:'Native'}})).state,'ready');assert.equal((await resume(h)).resume.view,null);
 });
 
-test('document replacement cannot resume old document display',async t=>{
+test('document replacement requires fresh authorization for durable display',async t=>{
  const h=await boot(t);await ready(h,'workspace',{segment:3});await save(h);
- h.service.invalidate({tabId:1,documentId:'document'});h.sender.documentId='replacement-document';await h.bind();await h.mount();
- assert.deepEqual(await resume(h),{ok:true,resume:null});
+ h.service.invalidate({tabId:1,documentId:'document'});h.sender.documentId='replacement-document';assert.equal((await resume(h)).ok,false);await h.bind();await h.mount();
+ assert.equal((await resume(h)).resume.view.scroll,123,'only fresh authority permits durable recovery');
 });
 
 // Browser-event composition regression: direct service.invalidate(documentId) tests
@@ -243,9 +243,27 @@ test('real worker history event preserves display only while revoking old grants
  // No renderer query can opt into this: only the internal browser event path.
  for(const details of [{documentId:undefined},{documentId:''},{documentId:'other-document'},{documentId:'document',url:'https://outside.example/'}]){
   chrome.webNavigation.onHistoryStateUpdated.listener({tabId:1,frameId:0,url:'https://chatgpt.com/',...details});
-  assert.equal((await resume(h)).ok,false);await h.bind();await h.mount();assert.deepEqual(await resume(h),{ok:true,resume:null});
+  assert.equal((await resume(h)).ok,false);await h.bind();await h.mount();assert.equal((await resume(h)).resume.view.scroll,origin.scroll);
   await ready(h,'workspace',query);assert.equal((await save(h,origin)).ok,true);
  }
  chrome.webNavigation.onCommitted.listener({tabId:1,frameId:0,documentId:'document',url:'https://chatgpt.com/'});
- assert.equal((await resume(h)).ok,false);await h.bind();await h.mount();assert.deepEqual(await resume(h),{ok:true,resume:null});
+ assert.equal((await resume(h)).ok,false);await h.bind();await h.mount();assert.equal((await resume(h)).resume.view.scroll,origin.scroll);
 });
+
+test('durable layout merges role-owned fields and fresh grants restore both roles',async t=>{
+ const h=await boot(t);await ready(h,'workspace',{segment:3});await ready(h,'sidebar',{segment:0});
+ const main={...layout,oldOpen:['home:P'],capacities:[['home:P',17]],scroll:432};
+ const side={...layout,segment:0,oldOpen:['side:P'],capacities:[['side:P',29]],sidebarScroll:98,sidebarVisible:false,sidebarChoices:[['P',true]],sidebarOpen:['P']};
+ const results=await Promise.all([save(h,main),save(h,side,'sidebar')]);assert(results.every(x=>x.ok),JSON.stringify(results));
+ h.switchPrincipal('fixture-principal');await h.bind();await h.mount();
+ const restored=(await resume(h)).resume.view,restoredSide=(await resume(h,'sidebar')).resume.view;
+ assert.equal(restored.segment,3);assert.equal(restored.scroll,432);assert.deepEqual(restored.oldOpen,['home:P']);assert.deepEqual(restored.capacities,[['home:P',17]]);
+ assert.equal(restoredSide.sidebarScroll,98);assert.equal(restoredSide.sidebarVisible,false);assert.deepEqual(restoredSide.oldOpen,['side:P']);assert.deepEqual(restoredSide.capacities,[['side:P',29]]);assert.deepEqual(restoredSide.sidebarChoices,[['P',true]]);
+});
+
+ test('durable historical layout preserves owner time basis across a new document and day',async t=>{
+ const h=await boot(t),first=await ready(h,'workspace',{segment:3});assert.equal((await save(h)).ok,true);
+ h.setTime(Date.parse(NOW)+86400000);h.service.invalidate({tabId:1,documentId:'document'});h.sender.documentId='next-document';
+ await h.bind();await h.mount();const restored=await resume(h);assert.equal(restored.resume.query.segment,3);
+ const next=await ready(h,'workspace',restored.resume.query);assert.deepEqual(next.page.viewSession,first.page.viewSession);
+ });

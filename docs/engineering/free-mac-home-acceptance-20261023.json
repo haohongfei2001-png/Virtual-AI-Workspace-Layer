@@ -3592,5 +3592,137 @@
       }
     },
     "remaining": "Project actual visible card/two members and current-document personal confirmation PASS. Specific older persistent object restoration remains unverified, not a diagnosed failure. No reload, reinstall, renewed confirmation or browser experiment will be requested merely to fill this evidence gap. Full personal v2.7 acceptance is not claimed; resume only for concrete product defects or suitable existing provenance evidence."
+  },
+  "proFinalIntegrated20261025": {
+    "authority": "https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16#issuecomment-6398255622",
+    "baseHead": "5580747eeb3b2ffcd05bef2f3497934ee09bea7c",
+    "sourceState": "INTEGRATED_CODE_PENDING_COMMIT",
+    "rootCauses": [
+      "sidebar topology coupled to producer and workspace lifecycle",
+      "data VIEW awaited local native action planning",
+      "renewal reread business view and shared optional-role health",
+      "layout resume was document RAM rather than existing durable saveView CAS",
+      "own sidebar mask hid late native observations from visibility proof"
+    ],
+    "implementation": {
+      "C1": "document producer independent from role layout; local history proof and optional return",
+      "C2": "workspace-required/sidebar-optional grants, roles, renewals and desiredMode",
+      "C3": "published VIEW before owner-scoped plans; local read/candidate/action failures; no business reread on lease renewal",
+      "C4": "known native anchor preserves native navigation; bounded save headstart; role-merged existing saveView CAS; frozen historic time basis restored after new confirmation",
+      "C5": "existing v2.7 cards and sparse projection retained; full proved sidebar height; quiet row affordances and secondary candidates; no fake data"
+    },
+    "isolatedMV3": {
+      "status": "PASS",
+      "report": "docs/evidence/free-delivery-2026-10-17/pro-final-integrated-mv3-20261025.json.gz",
+      "checks": {
+        "nativeHistoryReorderReplacesStaleMaskAndRestoresFormalUI": true,
+        "lateNativeSidebarStartsWithoutReload": true,
+        "lateProjectSidebarStartsWithoutReload": true,
+        "lateProjectRowsStartWithoutReload": true,
+        "failedProjectToNativeHomeRecoversWithoutReload": true,
+        "projectAndMembersInFormalUI": true,
+        "sidebarFrameLossRejoinsWithoutReplacingWorkspace": true,
+        "nativeOpenPreservesDraft": true,
+        "uniqueReturn": true,
+        "keyboardReturnKeepsFocus": true,
+        "noDatabaseOpened": true,
+        "reloadRediscoversVisibleObjects": true,
+        "replacementDoesNotExposeOldProject": true,
+        "longChatReadingReturn": true,
+        "longChatRenewalContinuity": true,
+        "explicitBindingUsesExistingIDBInSeparateNamespace": true,
+        "trustedSameDocumentNavigationRetainsPersonalSpace": true,
+        "tabFocusKeepsBinding": true,
+        "nativeModalAcrossRenewalRestoresOnlyReturn": true,
+        "nativeSearchAndUnplannedSpaKeepsBinding": true,
+        "actualWorkerStopped": true,
+        "workerRestartSameDocumentNoConfirmation": true,
+        "workerRecoveryPreservesDraft": true,
+        "accountRiskClearsContinuityAndPrivateProjection": true,
+        "explicitUnlockRestoresKnownProject": true,
+        "refreshLocksButPreservesPersonalCache": true,
+        "browserRestartLocksAndExplicitUnlockRestores": true,
+        "persistedPrivateLayoutRestoresAfterExplicitNewDocumentBinding": true,
+        "uninstallReleasesPrivateFramesAndNativeInput": true,
+        "noInternalRequests": true
+      },
+      "realAccount": false
+    },
+    "visual": {
+      "status": "REVIEWED_OFFLINE_FORMAL_MV3_ONLY",
+      "report": "docs/evidence/free-delivery-2026-10-17/pro-final-integrated-visual-20261025.json.gz",
+      "states": [
+        "empty",
+        "0 Project / 13 chats",
+        "1 Project / 2 confirmed members / 13 unknown chats",
+        "narrow Project"
+      ],
+      "observed": [
+        "356px card; narrow fit; 13px corners; expanded main members; secondary unknown disclosure",
+        "complete pure list uses proved available sidebar height; no per-row last-confirmed badges",
+        "unrelated fixture native controls remain native; screenshots are not actual ChatGPT"
+      ],
+      "realAccountScreenshot": "NOT_RUN"
+    },
+    "candidate": {
+      "directory": "/Users/hhf/Downloads/VAIWL-v27-Integrated-20261025/extension",
+      "archiveSha256": "8ddad7ca08ded0251b0a70c73e29ef3e4bab6e5f5549e5a6e5c8ba5928193021",
+      "installed": {
+        "originalDirectory": "/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/.git/vaiwl-artifacts/local-source-witness-20261022/extension",
+        "candidateDirectory": "/private/tmp/VAIWL-v27-Integrated-20261025/extension",
+        "backup": "/private/tmp/VAIWL-v27-before-integrated-20261025/original-extension.tar.gz",
+        "backupSha256": "dcd9aa1d78ec58183920a98c1ed5a01243fee9bf8b42492cc60b4d026a673517",
+        "preservedOriginalFiles": 2891,
+        "preservedExtraFiles": 2693,
+        "changedFiles": [
+          "src/data/repository.mjs",
+          "src/host/chatgpt-observed-profile.mjs",
+          "src/host/native-history-list.mjs",
+          "src/host/native-project-surface.mjs",
+          "src/host/native-return-gap.mjs",
+          "src/runtime/host-binding-service.mjs",
+          "src/runtime/host-view-service.mjs",
+          "src/runtime/host-ui-owner.mjs",
+          "src/host/ui-grants.mjs",
+          "src/host/local-status.mjs",
+          "src/host/chatgpt-adapter.mjs",
+          "src/host/native-input-risk.mjs",
+          "src/host/native-actions.mjs",
+          "src/host/content-session.mjs",
+          "src/navigation/mount-surface.mjs",
+          "src/host/surface-controller.mjs",
+          "src/host/free-frame-client.mjs",
+          "src/navigation/navigation.mjs",
+          "content.js",
+          "extension/frame-shell.css",
+          "extension/status.css",
+          "extension/classic-runtime.js",
+          "build-manifest.json"
+        ],
+        "manifestUnchanged": true,
+        "databaseAccess": "NONE",
+        "reload": "NOT_RUN",
+        "installedManifestSha256": "edcbddd60cf2b755f51c56bf24cbf1df4495c4ae8e62bb0515a13da40aa57cd6"
+      }
+    },
+    "realMac": {
+      "status": "NOT_RUN_NEW_BATCH",
+      "process": "original Profile 4 process exists; unique target window check failed; no keys or activation",
+      "reload": "NOT_RUN",
+      "next": "one grouped user activation and same-document personal confirmation, then final native visual check"
+    },
+    "limitations": [
+      "uncontained opaque reading paint still conservatively rejects unsafe return placement; it cannot stop data/workspace",
+      "browser-local confirmation is not server identity; fresh document cannot open old private data before user confirmation",
+      "real-account layout persistence and current full product visual consistency not accepted yet"
+    ],
+    "preservation": {
+      "extensionId": "miendbcjdmecjggplepenghjnoejmaic",
+      "manifestUnchanged": true,
+      "databaseAccess": "NONE",
+      "draftAccess": "NONE",
+      "stashCount": 3,
+      "internalApiReads": 0
+    }
   }
 }

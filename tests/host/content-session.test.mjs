@@ -323,8 +323,8 @@ for(const contextRecovery of [false,true])test(`HELLO starts observation before 
  f.events.get('pagehide')({persisted:true});assert.equal(stopped,1);assert.equal(client.showWorkspace(),false);client.stop();
 });
 test('verified promotion discards preauth observation before controller and never sends provisional packets',async()=>{
- const f=fixture(),order=[];const client=createHostContentSession({...f.options,adapterFactory:()=>({start:async o=>order.push(o.phase),stop:()=>order.push('discard'),inspect:()=>({ok:true})}),controllerFactory:()=>({start:async o=>{order.push('controller');assert.equal(typeof o.emit,'function');return {};},stop(){}})});
- await client.start();assert.deepEqual(order,['observation','discard','controller']);assert.deepEqual(f.calls.map(m=>m.type),['HOST_HELLO','HOST_REFRESH']);client.stop();
+ const f=fixture(),order=[];const client=createHostContentSession({...f.options,adapterFactory:()=>({start:async o=>order.push(o.phase??'producer'),stop:()=>order.push('discard'),inspect:()=>({ok:true})}),controllerFactory:()=>({start:async o=>{order.push('controller');assert.equal(typeof o.emit,'function');return {};},stop(){}})});
+ await client.start();assert.deepEqual(order,['observation','discard','producer','controller']);assert.deepEqual(f.calls.map(m=>m.type),['HOST_HELLO','HOST_REFRESH']);client.stop();
 });
 test('denied observation expires without retry, and genuine later READY creates fresh HELLO',async()=>{
  const f=fixture(),order=[];const client=createHostContentSession({...f.options,contextRecovery:true,adapterFactory:()=>({start:async()=>order.push('observe'),stop:()=>order.push('discard'),inspect:()=>({ok:true})})});
@@ -420,27 +420,12 @@ test('already-open native link use requires current proof and mismatched produce
  f.adapter.onNativeUse(intent,f.binding(),proof);await drain();assert.equal(f.calls.filter(m=>m.type==='HOST_NATIVE_LOCAL_USE').length,1);f.client.stop();
 });
 
-test('bounded layout preparation precedes HELLO and a stopped wait cannot reopen authority',async()=>{
- const f=fixture();let complete;const prepareDocument=()=>new Promise(resolve=>{complete=resolve;});
- const client=createHostContentSession({...f.options,prepareDocument});
- const pending=client.start();await drain();assert.equal(f.calls.length,0);client.stop();complete(true);assert.equal(await pending,null);assert.equal(f.calls.length,0);
- const failed=createHostContentSession({...f.options,prepareDocument:async()=>false});assert.equal(await failed.start(),null);assert.equal(f.calls.length,0);assert.equal(failed.localStatus(),'layout-failed');
- const before=f.calls.length;assert.equal(failed.localStatus(),'layout-failed');assert.equal(f.calls.length,before);
- const detailed=createHostContentSession({...f.options,prepareDocument:async({onFailure})=>{onFailure('layout-missing-reading');return false;}});await detailed.start();assert.equal(detailed.localStatus(),'layout-missing-reading');assert.equal(f.calls.length,before);
- const rejected=createHostContentSession({...f.options,prepareDocument:async({onFailure})=>{onFailure('PRIVATE_DETAIL');return false;}});await rejected.start();assert.equal(rejected.localStatus(),'layout-failed');
- f.options.document.location.href+='c/other';assert.equal(failed.localStatus(),'unavailable');f.options.document.location.href='https://chatgpt.com/';
- const ready=createHostContentSession({...f.options,prepareDocument:async()=>true});assert.deepEqual(await ready.start(),{id:'mount'});assert.equal(f.calls[0].type,'HOST_HELLO');ready.stop();
-});
-test('local layout loss uses one fresh same-scope handshake, never a recovery loop or strict-mode retry',async()=>{
- for(const local of [true,false]){
-  const f=fixture();let terminated;const factory=f.options.controllerFactory;
-  const client=createHostContentSession({...f.options,prepareDocument:local?async()=>true:null,controllerFactory:options=>{terminated=options.onTerminated;return factory(options);}});
-  f.setResponse(m=>m.type==='HOST_HELLO'?{binding:f.binding()}:m.type==='HOST_REFRESH'?{state:'verified',scopeKey:'local-scope'}:{ok:true,grants:[]});
-  await client.start();const first=f.calls.filter(m=>m.type==='HOST_HELLO').length;terminated('native-region-changed',{mode:'workspace'});await drain();
-  assert.equal(f.calls.filter(m=>m.type==='HOST_HELLO').length,first+(local?1:0));
-  if(local){terminated('native-region-changed',{mode:'workspace'});await drain();assert.equal(f.calls.filter(m=>m.type==='HOST_HELLO').length,first+1);}
-  client.stop();
- }
+test('document observation and HELLO do not depend on presentation readiness',async()=>{
+ const f=fixture();let control,starts=0;const factory=f.options.controllerFactory;
+ const client=createHostContentSession({...f.options,prepareDocument:()=>assert.fail('layout gated HELLO'),adapterFactory:()=>({start:async()=>{starts++;return {};},stop(){},inspect:()=>({ok:false})}),controllerFactory:o=>{control=o;return {...factory(o),start:async()=>null};}});
+ assert.equal(await client.start(),null);assert.equal(starts,2);assert.equal(f.calls[0].type,'HOST_HELLO');assert.equal(f.listeners.size,1);
+ const before=f.calls.length;for(const reason of ['native-region-changed','native-geometry-changed','mount-unavailable'])control.onTerminated(reason,{mode:'workspace'});await drain();assert.equal(f.calls.length,before);
+ assert.equal(await client.recoverLayout(),null);assert.equal(await client.recoverRoute(),null);client.stop();assert.equal(f.listeners.size,0);
 });
 
 test('terminated controller preserves its recorded fixed failure without new inspection or IPC',async()=>{
@@ -463,90 +448,6 @@ test('initial transport refusal stays fail-closed with bounded private reason',a
  const f=fixture();f.setResponse(()=>Promise.reject(Error('PRIVATE_TRANSPORT_DETAIL')));assert.equal(await f.client.start(),null);assert.equal(f.client.localStatus(),'hello-transport-unavailable');assert.equal(f.calls.length,1);assert.equal(f.listeners.size,0);
 });
 
-test('a newly available initial layout gets one fresh reading startup, never an automatic failure loop',async()=>{
- const f=fixture();let ready=false,prepares=0,mode;const factory=f.options.controllerFactory;
- const client=createHostContentSession({...f.options,prepareDocument:async({onFailure})=>{prepares++;if(!ready)onFailure('layout-missing-historyList');return ready;},controllerFactory:o=>{mode=o.initialMode;return factory(o);}});
- await client.start();assert.equal(f.calls.length,0);ready=true;
- assert.deepEqual(await client.recoverLayout(),{id:'mount'});assert.equal(mode,'reading');assert.equal(prepares,2);assert.equal(f.calls[0].type,'HOST_HELLO');
- assert.equal(await client.recoverLayout(),null);client.stop();
- const failed=fixture({prepareDocument:async({onFailure})=>{onFailure('layout-missing-historyList');return false;}});
- await failed.client.start();await failed.client.recoverLayout();await failed.client.recoverLayout();assert.equal(failed.calls.length,0);assert.equal(failed.client.localStatus(),'layout-missing-historyList');failed.client.stop();
-});
-test('late Project or history rows share one fresh preparation; unsafe paint does not',async()=>{
- for(const reason of ['layout-project-rows','layout-history-row-order','layout-history-row-replaced','layout-history-row-unstable','layout-project-paint','layout-history-sibling-overlap']){
-  const recoverable=['layout-project-rows','layout-history-row-order','layout-history-row-replaced','layout-history-row-unstable'].includes(reason);
-  const f=fixture();let ready=false,prepares=0;
-  const client=createHostContentSession({...f.options,prepareDocument:async({onFailure})=>{prepares++;if(!ready)onFailure(reason);return ready;}});
-  await client.start();assert.equal(f.calls.length,0);ready=true;
-  const result=await client.recoverLayout();assert.equal(!!result,recoverable);
-  assert.equal(prepares,recoverable?2:1);assert.equal(await client.recoverLayout(),null);client.stop();
- }
-});
-test('layout recovery cannot resume an explicit stop, changed route or non-layout refusal',async()=>{
- for(const change of [f=>f.client.stop(),f=>{f.document.location.href+='c/other';}]){
-  const f=fixture({prepareDocument:async({onFailure})=>{onFailure('layout-missing-historyList');return false;}});await f.client.start();change(f);assert.equal(await f.client.recoverLayout(),null);assert.equal(f.calls.length,0);f.client.stop();
- }
- const f=fixture({prepareDocument:async()=>true});f.setResponse(()=>({ok:false,reason:'denied'}));await f.client.start();const count=f.calls.length;assert.equal(await f.client.recoverLayout(),null);assert.equal(f.calls.length,count);f.client.stop();
-});
-
-test('leaving a failed Project preparation starts a fresh reading bind only on a different route',async()=>{
- let ready=false,mode;const f=fixture(),factory=f.options.controllerFactory;
- const client=createHostContentSession({...f.options,prepareDocument:async({onFailure})=>{if(!ready)onFailure('layout-project-main');return ready;},controllerFactory:o=>{mode=o.initialMode;return factory(o);}});
- f.document.location.href+='g/g-p-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/project';
- await client.start();assert.equal(f.calls.length,0);assert.equal(await client.recoverRoute(),null);
- ready=true;f.document.location.href='https://chatgpt.com/c/33333333-3333-4333-8333-333333333333';
- assert.deepEqual(await client.recoverRoute(),{id:'mount'});assert.equal(mode,'reading');assert.equal(f.calls[0].type,'HOST_HELLO');
- const count=f.calls.length;assert.equal(await client.recoverRoute(),null);assert.equal(f.calls.length,count);client.stop();
-});
-test('route recovery does not revive explicit stop, hidden document or rejected identity',async()=>{
- for(const block of ['stop','hidden','unsupported']){
-  const f=fixture({prepareDocument:async({onFailure})=>{onFailure('layout-project-main');return false;}});await f.client.start();
-  f.document.location.href='https://chatgpt.com/c/33333333-3333-4333-8333-333333333333';
-  if(block==='stop')f.client.stop();if(block==='hidden')f.document.visibilityState='hidden';if(block==='unsupported')f.document.location.href='https://chatgpt.com/settings';
-  assert.equal(await f.client.recoverRoute(),null);assert.equal(f.calls.length,0);f.client.stop();
- }
- const f=fixture({prepareDocument:async()=>true});f.setResponse(()=>({ok:false,reason:'denied'}));await f.client.start();
- f.document.location.href+='c/33333333-3333-4333-8333-333333333333';const count=f.calls.length;
- assert.equal(await f.client.recoverRoute(),null);assert.equal(f.calls.length,count);f.client.stop();
-});
-
-test('settled titlebar ambiguity allows one fresh preparation but never accepts a still-ambiguous layout',async()=>{
- for(const reason of ['layout-ambiguous-header','layout-ambiguous-navigationSlot']){
-  for(const settled of [true,false]){
-   const f=fixture();let ready=false,prepares=0;
-   const client=createHostContentSession({...f.options,prepareDocument:async({onFailure})=>{prepares++;if(!ready)onFailure(reason);return ready;}});
-   await client.start();assert.equal(f.calls.length,0);ready=settled;
-   assert.equal(!!await client.recoverLayout(),settled);assert.equal(prepares,2);
-   if(!settled)assert.equal(f.calls.length,0,'ambiguous layout never reaches HELLO');
-   assert.equal(await client.recoverLayout(),null);assert.equal(prepares,2);client.stop();
-  }
- }
-});
-
-test('native history reorder rebuilds once after transport recovery and checks the same scope',async()=>{
- const f=fixture(),factory=f.options.controllerFactory;let control,preparations=0;
- const client=createHostContentSession({...f.options,prepareDocument:async()=>{preparations++;return true;},controllerFactory:o=>{control=o;return factory(o);}});
- f.setResponse(m=>m.type==='HOST_HELLO'?{binding:f.binding()}:m.type==='HOST_REFRESH'?{state:'verified',scopeKey:'local-scope'}:{ok:true,grants:[]});
- await client.start();control.onTerminated('ui-frame-suspended',{mode:'reading'});await drain();
- assert.equal(preparations,2,'existing transport recovery was spent');
- control.onFailure('surface-unsafe-native-history-list-row-order');control.onTerminated('native-region-changed',{mode:'reading'});await drain();
- assert.equal(preparations,3);assert.equal(control.initialMode,'reading');
- control.onFailure('surface-unsafe-native-history-list-row-order');control.onTerminated('native-region-changed',{mode:'reading'});await drain();
- assert.equal(preparations,3,'failed replacement cannot reuse either recovery budget');client.stop();
-});
-
-test('history change during mount awaits a fresh proof once; strict, hidden, unsafe and changed scope stay closed',async()=>{
- for(const scenario of ['reorder','replaced','strict','hidden','unsafe','scope-change']){
-  const f=fixture(),factory=f.options.controllerFactory;let mounts=0,preparations=0;
-  if(scenario==='hidden')f.document.visibilityState='hidden';
-  f.setResponse(m=>m.type==='HOST_HELLO'?{binding:f.binding()}:m.type==='HOST_REFRESH'?{state:'verified',scopeKey:scenario==='scope-change'&&mounts?'other':'local-scope'}:{ok:true,grants:[]});
-  const client=createHostContentSession({...f.options,prepareDocument:scenario==='strict'?null:async()=>{preparations++;return true;},controllerFactory:o=>{
-   const controller=factory(o);return {...controller,start:async c=>{mounts++;if(mounts===1){o.onFailure('surface-unsafe-native-history-list-'+(scenario==='unsafe'?'row-gap':scenario==='replaced'?'row-replaced':'row-order'));o.onTerminated('mount-unavailable',{mode:'reading'});return null;}return controller.start(c);}};
-  }});
-  await client.start();await drain();
-  assert.equal(mounts,['reorder','replaced'].includes(scenario)?2:1,scenario);
-  if(scenario==='scope-change')assert.equal(preparations,2,'replacement revalidates but cannot mount another scope');
-  if(['strict','hidden','unsafe','scope-change'].includes(scenario))assert.equal(client.showWorkspace(),false,scenario);
-  client.stop();
- }
+test('legacy layout recovery cannot revive stopped or unauthorized sessions',async()=>{
+ for(const deny of [false,true]){const f=fixture();if(deny)f.setResponse(()=>({ok:false,reason:'denied'}));await f.client.start();f.client.stop();const before=f.calls.length;f.document.location.href+='c/other';assert.equal(await f.client.recoverLayout(),null);assert.equal(await f.client.recoverRoute(),null);assert.equal(f.calls.length,before);}
 });

@@ -2,10 +2,10 @@ import {projectSurfaceFailureReasons} from '../../src/host/native-project-surfac
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {readActiveLocalStatus,readActiveLocalLayout} from '../../src/host/local-status.mjs';
+import {readActiveLocalStatus,readActiveLocalLayout,validLocalPipeline} from '../../src/host/local-status.mjs';
 const source=readFileSync(new URL('../../extension/status.mjs',import.meta.url),'utf8');
 const html=readFileSync(new URL('../../extension/status.html',import.meta.url),'utf8');
-const importLine="import {HOST_CONFIG} from './config.mjs';\nimport {readActiveLocalStatus,readActiveLocalLayout} from '../src/host/local-status.mjs';\nimport {HISTORY_DIAGNOSTIC_BATCH,validHistoryStructureReport,runHistoryDiagnosticOnce} from '../src/host/history-structure-diagnostic.mjs';\n";
+const importLine="import {HOST_CONFIG} from './config.mjs';\nimport {readActiveLocalStatus,readActiveLocalLayout,readLocalBoot,validLocalPipeline} from '../src/host/local-status.mjs';\nimport {HISTORY_DIAGNOSTIC_BATCH,validHistoryStructureReport,runHistoryDiagnosticOnce} from '../src/host/history-structure-diagnostic.mjs';\n";
 assert(source.startsWith(importLine),'execute actual popup body after its exact imports');
 const AsyncFunction=Object.getPrototypeOf(async function(){}).constructor;
 async function render(initial,browserLocal=false,localState={ok:true}){
@@ -14,7 +14,7 @@ async function render(initial,browserLocal=false,localState={ok:true}){
  const elements=[];
  const document={getElementById:id=>{assert.equal(id,'status');return node;},body:{append:e=>elements.push(e)},createElement:tag=>({tag,textContent:'',listeners:{},setAttribute(){},addEventListener(type,fn){this.listeners[type]=fn;}})};
  chrome.runtime={sendMessage:async message=>{calls.push(['control',message]);return localState;}};
- await new AsyncFunction('HOST_CONFIG','readActiveLocalStatus','readActiveLocalLayout','chrome','document',source.slice(importLine.length))({browserLocal},readActiveLocalStatus,readActiveLocalLayout,chrome,document);
+ await new AsyncFunction('HOST_CONFIG','readActiveLocalStatus','readActiveLocalLayout','readLocalBoot','validLocalPipeline','chrome','document',source.slice(importLine.length))({browserLocal},readActiveLocalStatus,readActiveLocalLayout,async()=>null,validLocalPipeline,chrome,document);
  return {calls,node,elements,change:value=>{current=value;}};
 }
 const drain=async()=>{for(let i=0;i<30;i++)await Promise.resolve();};
@@ -50,8 +50,8 @@ for(const [mode,exists,expected] of [['personal',true,/已解锁.*无需重复�
  const f=await render({v:1,state:'reading'},true,{ok:true,mode,exists});
  assert.doesNotMatch(f.node.textContent,/无需重新确认/);
  assert.match(f.elements.filter(e=>e.tag==='p').at(-1).textContent,expected);
- assert.deepEqual(f.calls.filter(c=>c[0]==='control'),[['control',{v:1,type:'HOST_LOCAL_SPACE',action:'status'}]]);
- await drain();assert.equal(f.calls.length,5,'one surface, one navigation summary, one binding query; no polling or unlock');
+ assert.deepEqual(f.calls.filter(c=>c[0]==='control'),[['control',{v:1,type:'HOST_LOCAL_SPACE',action:'status'}],['control',{v:1,type:'HOST_LOCAL_SPACE',action:'pipeline'}]]);
+ await drain();assert.equal(f.calls.length,6,'one surface, navigation, binding and anonymous pipeline snapshot; no polling or unlock');
 });
 test('unknown local binding response is not presented as an unlocked workspace',async()=>{
  const f=await render({v:1,state:'ready'},true,{ok:true,mode:'PRIVATE',exists:true});
@@ -63,12 +63,12 @@ test('layout refusal does not mislabel a still-confirmed document as locked',asy
  const f=await render({v:1,state:'layout-ambiguous-header'},true,{ok:true,mode:'personal',exists:true});
  assert.match(f.node.textContent,/多个候选/);assert.doesNotMatch(f.node.textContent,/未解锁旧数据/);
  assert.match(f.elements.filter(e=>e.tag==='p').at(-1).textContent,/已解锁.*无需重复确认/);
- assert.deepEqual(f.calls.filter(c=>c[0]==='control'),[['control',{v:1,type:'HOST_LOCAL_SPACE',action:'status'}]]);
+ assert.deepEqual(f.calls.filter(c=>c[0]==='control'),[['control',{v:1,type:'HOST_LOCAL_SPACE',action:'status'}],['control',{v:1,type:'HOST_LOCAL_SPACE',action:'pipeline'}]]);
 });
 
 test('history surface failure reports actual personal binding without asking to unlock again',async()=>{
  const f=await render({v:1,state:'surface-unsafe-native-history-list-row-order'},true,{ok:true,mode:'personal',exists:true});
  assert.doesNotMatch(f.node.textContent,/未解锁旧数据/);
  assert.match(f.elements.filter(e=>e.tag==='p').at(-1).textContent,/已解锁.*无需重复确认/);
- assert.deepEqual(f.calls.filter(c=>c[0]==='control'),[['control',{v:1,type:'HOST_LOCAL_SPACE',action:'status'}]]);
+ assert.deepEqual(f.calls.filter(c=>c[0]==='control'),[['control',{v:1,type:'HOST_LOCAL_SPACE',action:'status'}],['control',{v:1,type:'HOST_LOCAL_SPACE',action:'pipeline'}]]);
 });

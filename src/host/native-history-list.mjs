@@ -28,7 +28,7 @@ export function nativeHistoryListRect({document,source,root,includeClipped=false
 }
 // This recognizer proves a presentation subtree only. Links still enter the
 // ordinary native discovery path; neither row markers nor labels prove membership.
-export function nativeHistoryListOK({document,source,root,urlPolicy,isOwnedMask=()=>false,allowClipped=false,onFailure=null}){
+export function nativeHistoryListOK({document,source,root,urlPolicy,isOwnedMask=()=>false,allowClipped=false,onFailure=null,presentationRect=null}){
  try{
   if(!source||!root||![source,root].every(n=>n.isConnected&&n.ownerDocument===document)||!source.contains(root)||root.hidden||root.inert||root.getAttribute('aria-hidden')==='true')return rejected(onFailure,'source');
   let ancestor=root,depth=0;
@@ -39,7 +39,7 @@ export function nativeHistoryListOK({document,source,root,urlPolicy,isOwnedMask=
    ancestor=ancestor.parentElement;
   }
   // The overlay rectangle must not cover native siblings outside the pure list.
-  const visible=nativeHistoryListRect({document,source,root,includeClipped:allowClipped});if(!visible)return rejected(onFailure,'geometry');
+  const visible=presentationRect??nativeHistoryListRect({document,source,root,includeClipped:allowClipped});if(!visible)return rejected(onFailure,'geometry');
   const box={left:visible.x,top:visible.y,right:visible.x+visible.width,bottom:visible.y+visible.height};
   let sibling=source,visited=0;
   while(sibling){
@@ -105,7 +105,15 @@ export function nativeHistoryPresentation(options){
   // Once the native list exposes explicit rows, keep row masks even after
   // loading/local rows disappear. Switching to the containing root would
   // invalidate an otherwise unchanged mount. Legacy pure roots stay supported.
-  if(!lists.length||preferredMaskRoots?.length===1&&preferredMaskRoots[0]===root)return nativeHistoryListOK(options)?{rect:nativeHistoryListRect(options),maskRoots:[root],complete:true}:null;
+  if(!lists.length||preferredMaskRoots?.length===1&&preferredMaskRoots[0]===root){
+   if(!nativeHistoryListOK(options))return null;
+   const rect=nativeHistoryListRect(options),available=nativeHistoryListRect({document,source,root:source});
+   const expanded=rect&&available?{...rect,height:available.y+available.height-rect.y}:null;
+   // Empty space beneath a complete list can host the continuous sidebar only
+   // after the same sibling/control proof covers the entire proposed rectangle.
+   const full=expanded&&expanded.height>=rect.height&&nativeHistoryListOK({...options,presentationRect:expanded,onFailure:null});
+   return {rect:full?expanded:rect,maskRoots:[root],complete:true};
+  }
   if(lists.length!==1)return fail('list-count');
   const children=[...lists[0].children];if(children.length>256)return fail('row-limit');
   let stable=preferredMaskRoots;
@@ -130,6 +138,12 @@ export function nativeHistoryPresentation(options){
    const a=visible[i-1].rect,b=visible[i].rect;
    if(Math.abs(a.x-b.x)>0.5||Math.abs(a.width-b.width)>0.5||Math.abs(a.y+a.height-b.y)>0.5)return fail('row-gap');
   }
-  return {rect:{x:first.x,y:first.y,width:first.width,height:last.y+last.height-first.y},maskRoots:stable,complete:stable.length===children.length};
+  const complete=stable.length===children.length,rect={x:first.x,y:first.y,width:first.width,height:last.y+last.height-first.y};
+  const available=complete&&nativeHistoryListRect({document,source,root:source});
+  const expanded=available?{...rect,height:available.y+available.height-rect.y}:null;
+  // A complete explicit list has the same empty-space entitlement as a legacy
+  // pure root, but only if its whole root and all neighboring controls pass.
+  const full=expanded&&expanded.height>=rect.height&&nativeHistoryListOK({...options,presentationRect:expanded,onFailure:null});
+  return {rect:full?expanded:rect,maskRoots:stable,complete};
  }catch{return fail('exception');}
 }

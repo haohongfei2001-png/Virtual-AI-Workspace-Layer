@@ -77,7 +77,7 @@ export function createHostUiOwner({extensionId,uiURL=null,uiURLs=null,getFrame,g
   if(releaseGuard!==null&&typeof releaseGuard!=='function')return publicFailure();
   let message;try{message=structuredClone(input);sender=structuredClone(sender);}catch{return publicFailure();}
   if(inFlight.size>=maxPending*2+maxPorts)return publicFailure();
-  const attempt={active:true,started:elapsedNow(),epoch:revocationEpoch,sender,mountId:message?.mountId,mount:registrations.get(message?.mountId),nonce:null,invalidated:false};
+  const attempt={active:true,started:elapsedNow(),epoch:revocationEpoch,sender,mountId:message?.mountId,mount:registrations.get(message?.mountId),nonce:null,role:message?.role,invalidated:false};
   inFlight.add(attempt);
   const check=()=>{
    if(!attempt.active||elapsedNow()-attempt.started>=6000)throw Error('ui-request-expired');
@@ -124,20 +124,32 @@ export function createHostUiOwner({extensionId,uiURL=null,uiURLs=null,getFrame,g
     const grant=grants.current({sender,grantId:message.grantId,mountId:message.mountId});remember(sender,grant);
     return {ok:true,grant};
    }
+   if(message.type==='HOST_UI_ROLE_RELEASE'){
+    if(!schema(message,[...bindingKeys,'mountId','role'])||message.role!=='sidebar')throw Error('invalid-ui-role-release');
+    sender=await parent(message,sender);check();const mount=registrations.get(message.mountId);
+    if(mount?.tabId!==sender.tab.id||mount.documentId!==sender.documentId)throw Error('ui-mount-mismatch');
+    const nonces=new Set([...inFlight].filter(a=>a!==attempt&&a.mountId===message.mountId&&a.role===message.role).map(a=>a.nonce).filter(Boolean));
+    invalidateAttempts(a=>a!==attempt&&(a.mountId===message.mountId&&a.role===message.role||nonces.has(a.nonce)));
+    grants.revokeRole(message.mountId,message.role);
+    for(const [id,record]of [...uiDocuments])if(record.grant.mountId===message.mountId&&record.grant.role===message.role)revokeDocument(id);
+    return {ok:true};
+   }
    if(message.type==='HOST_UI_STATUS'){
     if(!schema(message,[...bindingKeys,'mountId']))throw Error('invalid-ui-status');
     const mount=registrations.get(message.mountId),records=[...uiDocuments.values()].filter(entry=>entry.grant.mountId===message.mountId);
     sender=await parent(message,sender);check();
     if(mount?.tabId!==sender.tab.id||mount?.documentId!==sender.documentId)throw Error('ui-mount-mismatch');
-    if(records.length!==2||new Set(records.map(entry=>entry.grant.role)).size!==2)throw Error('incomplete-ui-pair');
+    if(!records.some(entry=>entry.grant.role==='workspace')||new Set(records.map(entry=>entry.grant.role)).size!==records.length)throw Error('workspace-grant-unavailable');
+    const healthy=[];
     for(const record of records){
-     await grants.renew({sender:record.sender,grantId:record.grant.id,mountId:message.mountId});check();
+     try{await grants.renew({sender:record.sender,grantId:record.grant.id,mountId:message.mountId});check();healthy.push(record);}
+     catch(error){check();if(record.grant.role==='workspace')throw error;revokeDocument(record.sender.documentId);}
     }
     sender=await parent(message,sender);check();
     // Recheck both roles after the last await; a same-role JOIN can replace the
     // first grant while the second renewal or final parent check is pending.
-    const renewed=records.map(record=>grants.current({sender:record.sender,grantId:record.grant.id,mountId:message.mountId}));
-    records.forEach((record,index)=>remember(record.sender,renewed[index]));
+    const renewed=[];
+    for(const record of healthy){try{const grant=grants.current({sender:record.sender,grantId:record.grant.id,mountId:message.mountId});remember(record.sender,grant);renewed.push(grant);}catch(error){if(record.grant.role==='workspace')throw error;}}
     return {ok:true,grants:renewed};
    }
    if(message.type==='HOST_UI_SURFACE_STATE_GET'){

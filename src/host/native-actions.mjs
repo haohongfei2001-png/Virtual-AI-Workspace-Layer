@@ -26,7 +26,7 @@ export function createNativeActions({discovery,urlPolicy,currentURL,bodyProof=()
   // this proof, so never unmask native reading merely to plan their links.
   const proof=currentConversation?bodyProof():null;let plan,node=null;
   if(currentConversation&&proof?.conversationId===chosen.nativeId&&id(proof.bodyProofId))plan={mode:'same-target',target:{...chosen,liveHandle:null},bodyProofId:proof.bodyProofId,planRevision};
-  else if(risk.state==='clear'&&risk.flags.length===0&&handle&&(node=discovery.getNode(handle)))plan={mode:'native-control',target:chosen,control:handle,planRevision};
+  else if(handle&&(node=discovery.getNode(handle))&&(risk.state==='clear'&&risk.flags.length===0||handle.controlKind==='native-search'||risk.state==='unknown'&&risk.flags.length===0&&chosen.kind==='resolved'&&node.tagName==='A'&&urlPolicy.sameTarget(node.href??node.getAttribute?.('href'),chosen.navigationURL)))plan={mode:'native-control',target:chosen,control:handle,planRevision};
   else if(chosen.kind==='resolved')plan={mode:'href',target:chosen,disposition:risk.state==='clear'?'same-tab':'new-tab-preserve-current',planRevision};
   else return unavailable(risk.state==='clear'?'stale-native-handle':'input-risk-unresolved');
   const issuedAt=now();if(!Number.isFinite(issuedAt))return unavailable('invalid-navigation-clock');

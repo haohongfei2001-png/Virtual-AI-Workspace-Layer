@@ -77,9 +77,9 @@ for(const role of ['workspace','sidebar'])for(const hidden of ['surface','docume
  if(hidden==='surface'){surface(f,8,true);await drain();assert.equal(calibrationCount(f),calibrations);}else{f.visibility('visible');await drain();}
  assert.equal(f.views,before+1,'real reappearance consumes accumulated dirty work once');
 });
-for(const role of ['workspace','sidebar'])test(`${role}: visible same-grant renewal retains normal fresh VIEW`,async t=>{
+for(const role of ['workspace','sidebar'])test(`${role}: same-grant renewal updates lease without rereading VIEW`,async t=>{
  const f=fixture(role);t.after(()=>f.client.stop());await f.client.start();await drain();surface(f,1,true);const before=f.views;
- await f.advance(10000);assert.equal(f.views,before+1);assert.equal(f.stops,0);
+ await f.advance(10000);assert.equal(f.views,before);assert.equal(f.stops,0);
 });
 for(const terminal of ['expiry','disconnect'])test(`closed surface still clears immediately on ${terminal}`,async t=>{
  const f=fixture();t.after(()=>f.client.stop());await f.client.start();await drain();surface(f,1,false);const before=f.views;
@@ -119,8 +119,8 @@ for(const retry of [false,true])for(const operation of ['present','working-set']
  pending.resolve(operation==='present'?{ok:true,presentation:{revision:99,intent:{kind:'enter-reading'}}}:{ok:true,workspaceRevision:900,workingSet:{total:1,currentRefId:'ref1'}});
  await request;await drain();assert.equal(f.views,views);assert.equal(f.presented.length,presentations);assert.equal(f.states.length,states);
 });
-for(const response of [{reason:'snapshot-revision-changed',retryToken:'retry_1'},{ok:true,reason:'snapshot-revision-changed',retryToken:'retry_1'},{ok:false,reason:'snapshot-revision-changed',retryToken:'retry_1',extra:true}])test('malformed retry DTO cannot preserve live authorization: '+JSON.stringify(response),async t=>{
- const f=fixture();t.after(()=>f.client.stop());f.setView(async()=>response);await f.client.start();await drain();assert.equal(f.readErrorShows,0);assert.equal(f.stops,1);
+for(const response of [{reason:'snapshot-revision-changed',retryToken:'retry_1'},{ok:true,reason:'snapshot-revision-changed',retryToken:'retry_1'},{ok:false,reason:'snapshot-revision-changed',retryToken:'retry_1',extra:true}])test('malformed retry DTO cannot publish data or automatically retry: '+JSON.stringify(response),async t=>{
+ const f=fixture();t.after(()=>f.client.stop());f.setView(async()=>response);await f.client.start();await drain();assert.equal(f.readErrorShows,1);assert.equal(f.stops,0);
 });
 
 for(const interruption of ['none','pointerdown','keydown','focusin','visibilitychange','disconnect','stop','renew'])test('explicit read retry focuses only the untouched current result: '+interruption,async t=>{

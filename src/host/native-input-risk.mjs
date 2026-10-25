@@ -21,9 +21,36 @@ function configuration(profile){
  for(const key of risks){const entry=value.risks[key];if(!record(entry,['rootSelector','activeSelector'])||!selector(entry.rootSelector)||!selector(entry.activeSelector))return null;copy.risks[key]={...entry};}
  return copy;
 }
+// A partial observed composer can establish presence, never whole-page safety.
+// Keep unsupported voice/canvas/generation semantics UNKNOWN. Missing or opaque
+// composer structure prevents using a page-changing native control.
+function partialComposerRisk(doc,profile){
+ const formSelector=profile?.inputPresence?.formSelector;
+ if(!selector(formSelector)||typeof doc?.querySelectorAll!=='function')return unknown;
+ return ()=>{try{
+  const forms=doc.querySelectorAll(formSelector);
+  if(forms.length!==1)return result('unknown',['composer']);
+  const form=forms[0],connected=n=>n?.isConnected&&n.ownerDocument===doc;
+  if(!connected(form)||form.tagName!=='FORM')return result('unknown',['composer']);
+  const editors=[...form.querySelectorAll('textarea,[contenteditable="true"],[contenteditable="plaintext-only"]')];
+  if(!editors.length||editors.length>32)return result('unknown',['composer']);
+  let draft=false;
+  for(const node of editors){
+   if(!connected(node)||!form.contains(node))return result('unknown',['composer']);
+   const text=node.tagName==='TEXTAREA'?node.value:node.textContent;
+   if(typeof text!=='string')return result('unknown',['composer']);
+   if(text.length||node.tagName!=='TEXTAREA'&&node.childElementCount>0)draft=true;
+  }
+  const files=[...form.querySelectorAll('input[type="file"]')];
+  if(files.length>16)return result('unknown',['attachment']);
+  let attachment=false;for(const node of files){if(!connected(node)||!node.files||!Number.isSafeInteger(node.files.length))return result('unknown',['attachment']);if(node.files.length)attachment=true;}
+  if(doc.querySelectorAll(formSelector).length!==1||doc.querySelectorAll(formSelector)[0]!==form||editors.some(n=>!connected(n)||!form.contains(n)))return result('unknown',['composer']);
+  return result('unknown',[...(draft?['composer']:[]),...(attachment?['attachment']:[])]);
+ }catch{return result('unknown',['composer']);}};
+}
 export function createNativeInputRisk({document:doc,profile}={}){
  let config;try{config=configuration(profile);}catch{return unknown;}
- if(!config||typeof doc?.querySelectorAll!=='function')return unknown;
+ if(!config||typeof doc?.querySelectorAll!=='function')return partialComposerRisk(doc,profile);
  const connected=node=>node?.isConnected===true&&node.ownerDocument===doc;
  const one=selector=>{const matches=doc.querySelectorAll(selector);if(matches.length!==1||!connected(matches[0]))throw Error('unknown-boundary');return matches[0];};
  const coversFiles=(form,files)=>{

@@ -417,9 +417,11 @@ export interface RectDTO { x: number; y: number; width: number; height: number }
 export type MountInspection =
   | { ok: false; reason: ReasonCode; profileId: ProfileId | null }
   | { ok: true; reason: null; profileId: ProfileId;
-      history: Element; header: Element; reading: Element; navigationSlot: Element | null;
+      history: Element | null; header: Element; reading: Element; navigationSlot: Element | null;
       composer: Element; protectedRegions: Element[]; historyMaskRoots: Element[];
-      returnSlot: RectDTO; readingRect: RectDTO; sidebarRect: RectDTO | null;
+      returnSlot: RectDTO | null; readingRect: RectDTO; sidebarRect: RectDTO | null;
+      /** Optional sidebar proof is independent from the workspace epoch. */
+      preserveNativeSidebar?: boolean; sidebarRevision?: number;
       viewMask: 'declarative-css'; regionEpoch: number };
 export interface SurfaceLayoutDTO {
   revision: number;
@@ -444,9 +446,11 @@ export interface UiDocumentGrant {
 }
 export interface MountSurface {
   mount(context: HostContext, inspection: Extract<MountInspection, { ok: true }>): Promise<MountHandle>;
-  showWorkspace(handle: MountHandle): void;
+  showWorkspace(handle: MountHandle, options?: { roles?: ('workspace' | 'sidebar')[] }): void | boolean;
   showReading(handle: MountHandle): void;
-  suspend(handle: MountHandle, reason: ReasonCode): void;
+  suspend(handle: MountHandle, reason?: ReasonCode, role?: 'workspace' | 'sidebar'): void;
+  retireRole(handle: MountHandle, role: 'sidebar'): void;
+  restoreRole(handle: MountHandle, role: 'sidebar'): { role: 'sidebar'; frame: HTMLIFrameElement } | null;
   dispose(handle: MountHandle): void;
 }
 export interface PublicAdapterStatus {

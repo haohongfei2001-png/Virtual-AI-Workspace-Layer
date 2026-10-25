@@ -1,4 +1,4 @@
-import {recoverableLayoutFailure,foregroundFailureStates,helloFailureStates,layoutFailureStates,surfaceFailureStates,validLayoutShape} from './local-status.mjs';
+import {foregroundFailureStates,helloFailureStates,layoutFailureStates,surfaceFailureStates,validLayoutShape} from './local-status.mjs';
 import {createIsolatedSessionReader} from './isolated-session-reader.mjs';
 import {createCandidateUpgrade} from './candidate-upgrade.mjs';
 import {createContentCandidates} from './content-candidates.mjs';
@@ -90,7 +90,7 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
  let seq=0,epoch=0,current=null,enabled=false,rebindQueued=false,rebindRun=0,restoreArmed=false,recoveryRemaining=0,contextResumeAllowed=false,contextWaitSuspended=false,contextResumeMode='workspace',contextResumeURL=null,verificationWaitURL=null;
  let activeWork=0,rawIPC=0,workRevision=0,observation=null;
  // Private, document-local presentation failure; never inferred from page data.
- let frameReplaced=false,startupFailure=null,layoutRetryURL=null,layoutRetryUsed=false,layoutRouteURL=null,historyRecoveryURL=null;
+ let frameReplaced=false,startupFailure=null;
  function stopObservation(){const prior=observation;observation=null;if(!prior)return;cancel(prior.timer);runtime.onMessage.removeListener(prior.invalidate);prior.adapter.stop();}
  async function startObservation(s){
   const adapter=s.adapter,entry={adapter,owner:s,timer:null,invalidate:null};observation=entry;
@@ -235,7 +235,7 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
  function retainMigration(s,handle){const m=liveMigration(s);if(!m)return false;try{if(typeof s.adapter?.retainLoadedHandles==='function'&&s.adapter.retainLoadedHandles(m.leaseOwner,[handle],m.elapsedDeadline)!==true){clearMigration(s);return false;}}catch{clearMigration(s);return false;}m.handle=handle;return true;}
  function dispose(s,keepObservation=false){if(!s)return;clearMigration(s);doc.removeEventListener?.('visibilitychange',s.visibility);doc.defaultView.removeEventListener('focus',s.focus);doc.defaultView.removeEventListener('blur',s.blur);s.restorePending?.();s.capturePending?.cancel();s.snippets?.stop();s.candidates?.stop();try{s.controller?.stop();}catch{}s.abort.abort();try{runtime.onMessage.removeListener(s.listener);}catch{}doc.defaultView.removeEventListener('pagehide',s.pagehide);try{if(!keepObservation||observation?.adapter!==s.adapter)s.adapter?.stop();}catch{}}
  function reset(keepObservation=false){if(!keepObservation)stopObservation();epoch++;const s=current;current=null;dispose(s,keepObservation);}
- function stop(){layoutRetryURL=null;layoutRouteURL=null;nativeUseIntent=null;contextWaitSuspended=false;verificationWaitURL=null;contextResumeAllowed=false;contextResumeMode='workspace';contextResumeURL=null;clearLearned();clearRecent();clearUpgrade();for(const type of ['pointerdown','keydown'])doc.removeEventListener?.(type,interruptUpgrade,true);enabled=false;restoreArmed=false;rebindQueued=false;rebindRun++;reset();doc.defaultView.removeEventListener('pagehide',pagehide);doc.defaultView.removeEventListener('pageshow',pageshow);}
+ function stop(){nativeUseIntent=null;contextWaitSuspended=false;verificationWaitURL=null;contextResumeAllowed=false;contextResumeMode='workspace';contextResumeURL=null;clearLearned();clearRecent();clearUpgrade();for(const type of ['pointerdown','keydown'])doc.removeEventListener?.(type,interruptUpgrade,true);enabled=false;restoreArmed=false;rebindQueued=false;rebindRun++;reset();doc.defaultView.removeEventListener('pagehide',pagehide);doc.defaultView.removeEventListener('pageshow',pageshow);}
  function pagehide(event){
   stopObservation();
   if(event?.persisted!==true){stop();return;}
@@ -262,24 +262,11 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
   // subsequent attempt; failures never schedule their own recovery loop.
   queueMicrotask(()=>{if(!enabled||run!==rebindRun)return;rebindQueued=false;void begin(true,initialMode,expectedScope);});
  }
- async function start(){historyRecoveryURL=null;layoutRouteURL=null;layoutRetryUsed=false;layoutRetryURL=null;frameReplaced=false;startupFailure=null;contextWaitSuspended=false;verificationWaitURL=null;contextResumeMode='workspace';contextResumeURL=null;contextResumeAllowed=contextRecovery===true;clearLearned();clearRecent();clearUpgrade();recoveryRemaining=1;enabled=true;restoreArmed=false;rebindQueued=false;rebindRun++;doc.defaultView.addEventListener('pageshow',pageshow);return begin();}
- // A newly available native boundary may recover one pre-HELLO layout failure.
- // This is not retry permission for scope/transport/frame failures or user exit.
- async function recoverLayout(){
-  if(!prepareDocument||layoutRetryUsed||layoutRetryURL!==doc.location.href||enabled||current||frameReplaced||doc.visibilityState==='hidden'||!recoverableLayoutFailure(startupFailure?.state))return null;
-  layoutRetryUsed=true;layoutRetryURL=null;enabled=true;restoreArmed=false;rebindQueued=false;rebindRun++;
-  doc.defaultView.addEventListener('pageshow',pageshow);
-  return begin(true,'reading');
- }
- // Only a browser invalidation for a different native route may restart a
- // failed pre-HELLO layout. No old grant/frame is reused and same-route events,
- // explicit stop, identity refusal or frame replacement never qualify.
- async function recoverRoute(){
-  if(!prepareDocument||!layoutRouteURL||layoutRouteURL===doc.location.href||enabled||current||frameReplaced||doc.visibilityState==='hidden'||createURLPolicy({origin}).parse(doc.location.href).kind==='unsupported')return null;
-  layoutRouteURL=null;layoutRetryURL=null;layoutRetryUsed=false;enabled=true;restoreArmed=false;rebindQueued=false;rebindRun++;
-  doc.defaultView.addEventListener('pageshow',pageshow);
-  return begin(true,'reading');
- }
+ async function start(){frameReplaced=false;startupFailure=null;contextWaitSuspended=false;verificationWaitURL=null;contextResumeMode='workspace';contextResumeURL=null;contextResumeAllowed=contextRecovery===true;clearLearned();clearRecent();clearUpgrade();recoveryRemaining=1;enabled=true;restoreArmed=false;rebindQueued=false;rebindRun++;doc.defaultView.addEventListener('pageshow',pageshow);return begin();}
+ // Legacy entry points remain harmless: presentation recovery now belongs to
+ // the live surface controller, never another document handshake.
+ async function recoverLayout(){return null;}
+ async function recoverRoute(){return null;}
  async function begin(rebinding=false,initialMode='workspace',expectedScope=null){
   reset();const s={run:epoch,initialMode,url:doc.location.href,abort:new AbortController(),binding:null,controller:null,adapter:null,listener:()=>{},pagehide,plans:null,rebinding,ready:false,recoveryDenied:false,snippets:null,snippetRef:null,snippetScopeGrant:null,identityChallenges:new Map(),identityPending:false,identityAuthority:0};current=s;doc.defaultView.addEventListener('pagehide',s.pagehide);
   let foregroundArmed=doc.visibilityState==='hidden',foregroundPending=false;
@@ -389,7 +376,6 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
   const reportStartup=phase=>{if(current!==s)return;startupFailure=['layout-failed','hello-failed','adapter-failed','authorization-failed','surface-failed'].includes(phase)?{url:s.url,shape:s.layoutShape??null,state:phase==='hello-failed'&&helloFailureStates.includes(s.helloFailure)?s.helloFailure:phase==='layout-failed'&&layoutFailureStates.includes(s.layoutFailure)?s.layoutFailure:phase==='surface-failed'&&surfaceFailureStates.includes(s.surfaceFailure)?s.surfaceFailure:phase}:null;if(doc.documentElement?.dataset)doc.documentElement.dataset.vaiwlStartup=phase;};
   reportStartup(startupPhase);
   try{
-   if(prepareDocument){startupPhase='layout';reportStartup(startupPhase);if(await prepareDocument({signal:s.abort.signal,onFailure:(reason,shape)=>{if(current===s&&layoutFailureStates.includes(reason)){s.layoutFailure=reason;s.layoutShape=validLayoutShape(shape)?shape:null;}}})!==true||!live(s)||doc.location.href!==s.url)throw Error('native-layout-not-ready');startupPhase='hello';reportStartup(startupPhase);}
    // A C2 transport failure withdraws capabilities but keeps the passive
    // context listener eligible for a later genuine native READY notification.
    // This helper neither retries nor handles explicit negative responses.
@@ -492,6 +478,7 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
     checkIdleMount:({handle,timeoutMs})=>{const closing=s.closing;if(!closing?.isCurrent())return Promise.resolve({ok:false});return rpc(s,{v:1,type:'HOST_UI_IDLE_CHECK',...bindingFields(s.binding),mountId:handle.id},timeoutMs,closing);},
     releaseIdleMount:({handle,timeoutMs})=>{const closing=s.closing;if(!closing?.isCurrent())return Promise.resolve({ok:false});return rpc(s,{v:1,type:'HOST_UI_IDLE_RELEASE',...bindingFields(s.binding),mountId:handle.id},timeoutMs,closing);},
     registerMount:({handle})=>rpc(s,{v:1,type:'HOST_UI_MOUNT',...bindingFields(s.binding),mountId:handle.id,regionEpoch:handle.regionEpoch}),
+    releaseRole:v=>rpc(s,{v:1,type:'HOST_UI_ROLE_RELEASE',...v,...bindingFields(s.binding)}),
     confirmParent:v=>rpc(s,{v:1,type:'HOST_UI_CONFIRM',...v,...bindingFields(s.binding)}),
     surfaceState:async value=>{
      const binding=s.binding,revision=s.autoSurfaceRevision=(s.autoSurfaceRevision??0)+1;
@@ -516,7 +503,7 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
       const authority=await rpc(s,{v:1,type:'HOST_REFRESH',clientId,seq:++seq,...bindingFields(binding)},remaining());noteScopeStatus(s,authority);
       if(authority?.state!=='verified'||authority.scopeKey!==s.scopeKey){s.recoveryDenied=true;throw Error('scope-not-verified');}
       renewalStage='ui-pair';
-      const status=await rpc(s,{v:1,type:'HOST_UI_STATUS',...bindingFields(binding),mountId:handle.id},remaining());
+      const status=handle?await rpc(s,{v:1,type:'HOST_UI_STATUS',...bindingFields(binding),mountId:handle.id},remaining()):{ok:true,grants:[]};
       if(status?.ok!==true)throw Error('ui-renewal-unavailable');
       return {...status,binding:renewed.binding};
      }catch(error){
@@ -543,29 +530,9 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
     // adapter's queued route scan. Its stop cancels that scan, so carry the
     // real URL change through the existing fresh handshake instead of losing
     // the document in a same-route context wait. No old capability is reused.
-    if(current===s&&reason==='dormant-document-changed'&&doc.location.href!==s.url){rebind(s,'reading');return;}
-    // Native history may reorder while startup awaits IPC or after a new chat.
-    // The controller has already removed the stale masks and stopped its adapter.
-    // Rebuild once for this route with a new complete proof and same-scope grant;
-    // never mutate the pinned row set of a live mount. This layout budget is
-    // independent of the single transport/Worker recovery, not a retry loop.
-    if(current===s&&prepareDocument&&['native-region-changed','mount-unavailable'].includes(reason)&&
-      ['surface-unsafe-native-history-list-row-order','surface-unsafe-native-history-list-row-replaced'].includes(s.surfaceFailure)&&
-      enabled&&live(s)&&doc.location.href===s.url&&historyRecoveryURL!==s.url&&doc.visibilityState!=='hidden'&&
-      !frameReplaced&&!s.recoveryDenied&&!s.busyClose&&(s.ready||s.mountStarting)&&s.scopeKey){
-     historyRecoveryURL=s.url;rebind(s,presentation?.mode==='workspace'?'workspace':'reading',s.scopeKey);return;
-    }
-    // Native region replacement or loss of an owned dormant frame destroys
-    // the controller and its producer even
-    // at the same URL. Drop ready/capabilities so a later genuine C2 READY can
-    // start a fresh handshake; geometry itself never retries authorization.
-    if(current===s&&['native-region-changed','native-geometry-changed','dormant-document-changed'].includes(reason)){
-     // Browser-local hydration may replace a just-mounted boundary. Withdraw
-     // the old surface first, then spend the existing single recovery attempt
-     // on a fresh document/scope handshake after bounded layout readiness.
-     if(prepareDocument&&reason==='native-region-changed'&&!['surface-unsafe-native-history-list-row-order','surface-unsafe-native-history-list-row-replaced'].includes(s.surfaceFailure)&&enabled&&live(s)&&doc.location.href===s.url&&!s.recoveryDenied&&!s.busyClose&&recoveryRemaining>0&&(s.ready||s.mountStarting)&&s.scopeKey){recoveryRemaining--;rebind(s,presentation?.mode==='workspace'?'workspace':'reading',s.scopeKey);return;}
-     contextPending();return;
-    }
+    if(current===s&&['dormant-document-changed','native-document-changed'].includes(reason)&&doc.location.href!==s.url){rebind(s,'reading');return;}
+    // Presentation proof is local to the surface, never producer authority.
+    if(current===s&&['native-region-changed','native-geometry-changed','mount-unavailable'].includes(reason))return;
     // The controller has withdrawn the old mount. Do not leave ready=true
     // swallowing future C2 READY signals; wait without retrying denied scope.
     if(current===s&&reason==='session-renew-failed'&&s.recoveryDenied){contextPending();return;}
@@ -579,8 +546,8 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
    // dormant wake and failed scope checks never acquire this startup flag.
    startupPhase='surface';reportStartup(startupPhase);
    s.surface=surface;s.mountStarting=true;let handle;
-   try{handle=await s.controller.start(adapterOptions(s,s.binding));}finally{s.mountStarting=false;}
-   if(!live(s)||!handle)throw Error('surface-start-failed');s.ready=true;reportStartup('ready');
+   try{const context=await s.adapter.start(adapterOptions(s,s.binding));if(!live(s))throw Error('stale-content-session');s.ready=true;handle=await s.controller.start({...adapterOptions(s,s.binding),context});}finally{s.mountStarting=false;}
+   if(!live(s))throw Error('surface-start-failed');reportStartup(handle?'ready':'surface-failed');
    // A real foreground transition may arrive while mount is awaiting its reply.
    // Consume the armed transition through the existing live/single-flight gate.
    s.focus();requestAutomaticIdle(s);return handle;
@@ -594,9 +561,7 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
     // remains unusable; bind the new route instead of disabling the document.
     // Same-route failures still stop, and replaced/stopped sessions cannot retry.
     if(enabled&&doc.location.href!==s.url)rebind(s);else if(error?.message==='scope-not-verified'||contextRecovery===true&&contextResumeAllowed&&['context-handshake-superseded','context-handshake-transport-unavailable'].includes(error?.message))contextPending(true);else {
-     const layoutOnly=startupPhase==='layout'&&!s.binding&&!layoutRetryUsed&&recoverableLayoutFailure(s.layoutFailure);
-     const nextRouteLayout=prepareDocument&&startupPhase==='layout'&&!s.binding&&!frameReplaced;
-     stop();if(layoutOnly)layoutRetryURL=s.url;if(nextRouteLayout)layoutRouteURL=s.url;
+     stop();
     }
    }
    return null;

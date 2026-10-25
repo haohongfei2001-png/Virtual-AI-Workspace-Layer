@@ -18,6 +18,8 @@ export const CHATGPT_OBSERVED_PROFILE=Object.freeze({
  regions:Object.freeze({projects:'nav:not([data-app-navigation-rail])',history:'nav:not([data-app-navigation-rail])',members:'[role="tabpanel"]',moveMenu:':not(*)'}),
  controls:'a[href]',conversationControls:'a[href]',maxCandidates:256,
  currentBody:CHATGPT_SELECTION_CURRENT_BODY,
+ // Positive draft/file guards only; this does not certify complete input risk.
+ inputPresence:Object.freeze({formSelector:'form[data-chatgpt-composer]'}),
  // The return slot must already be a strict descendant of its titlebar.
  // Scope selection to that relation; unrelated native titlebars are not
  // candidates. Multiple slot-bearing titlebars still fail the unique check.
