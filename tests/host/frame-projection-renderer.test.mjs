@@ -67,19 +67,19 @@ test('sidebar expansion requests bounded group page; shared presentation intent 
 test('projection cannot enter unframed/full-snapshot path and wrong role is rejected',()=>{const f=fixture();assert.throws(()=>f.nav.updateFrameProjection({...projection(),completeSnapshot:true}),/invalid-frame-projection/);assert.throws(()=>f.nav.updateFrameProjection(projection('sidebar')),/invalid-frame-projection/);const doc=dom(),nav=createNavigation({document:doc,adapter:{status(){}}});assert.throws(()=>nav.updateFrameProjection(projection()),/invalid-frame-projection/);});
 test('late page after scope replacement is discarded',async()=>{let finish;const f=fixture('workspace',()=>new Promise(r=>finish=r));f.nav.updateFrameProjection(projection());f.button('显示更多项目').click();f.nav.updateFrameProjection({...projection(),scope:'scopeB'});finish(projection());await tick();assert.equal(f.nav.status().scope,'scopeB');});
 test('bounded DTO is rejected by ordinary snapshot update and unsolicited same-scope page fences pending replies',async()=>{let finish;const f=fixture('workspace',()=>new Promise(r=>finish=r));assert.throws(()=>f.nav.update(projection()),/frame-projection-requires-explicit-consumer/);f.nav.updateFrameProjection(projection());f.button('显示更多项目').click();const fresh=projection();fresh.groups.items[0].name='Fresh owner name';f.nav.updateFrameProjection(fresh);finish(projection());await tick();assert.ok(f.pane().querySelectorAll('.theme-name').some(n=>n.textContent==='Fresh owner name'));});
-test('last-known card and rows append accessible labels without changing original names or ordering',()=>{
+test('last-known information stays in accessible descriptions without repeated visual labels',()=>{
  const f=fixture(),dto=projection();dto.groups.items[0].freshness='last-known';dto.groups.items[0].lists.current.items[0].freshness='last-known';dto.groups.items[1].freshness='current';dto.entries.unknown.items[0].freshness='last-known';
  f.nav.updateFrameProjection(dto);
  assert.deepEqual(f.pane().querySelectorAll('[data-theme-id]').map(n=>n.getAttribute('data-theme-id')),['P2','P1']);
- const card=f.pane().querySelector('[data-theme-id="P2"]');assert.equal(card.querySelector('.theme-name').textContent,'Original P2');assert.equal(card.querySelector('h2').querySelector('.freshness-label').textContent,'上次确认');
- const link=card.querySelector('[data-ref-id="P2_0"]');assert.equal(link.querySelector('.window-title').textContent,'Native P2_0');assert.equal(link.getAttribute('title'),'Native P2_0');assert.equal(link.querySelector('.freshness-label').textContent,'上次确认');assert.equal(link.querySelector('.freshness-label').getAttribute('aria-hidden'),null);
+ const card=f.pane().querySelector('[data-theme-id="P2"]');assert.equal(card.querySelector('.theme-name').textContent,'Original P2');assert.equal(card.querySelector('h2').getAttribute('data-freshness'),'last-known');
+ const link=card.querySelector('[data-ref-id="P2_0"]');assert.equal(link.querySelector('.window-title').textContent,'Native P2_0');assert(link.getAttribute('title').startsWith('Native P2_0'));assert.equal(link.querySelector('.freshness-label'),null);assert(link.getAttribute('aria-description').includes('此前已知'));
  assert.equal(f.pane().querySelector('[data-theme-id="P1"]').querySelector('.freshness-label'),null);
- assert.equal(f.pane().querySelector('[data-ref-id="unknown"]').querySelector('.freshness-label').textContent,'上次确认');
+ f.button('其他已知聊天').click();assert.equal(f.pane().querySelector('[data-ref-id="unknown"]').getAttribute('data-freshness'),'last-known');
  dto.groups.items[0].freshness='current';dto.groups.items[0].lists.current.items[0].freshness='current';dto.entries.unknown.items[0].freshness='current';f.nav.updateFrameProjection(dto);assert.equal(f.pane().querySelectorAll('.freshness-label').length,0);f.nav.stop();
 });
-test('sidebar last-known qualifier is included in the button accessible name and cleared across scope',()=>{
+test('sidebar freshness description does not rename native projects and clears across scope',()=>{
  const f=fixture('sidebar'),dto=projection('sidebar');dto.groups.items[0].freshness='last-known';f.nav.updateFrameProjection(dto);
- const button=f.button('侧栏主题 Original P2，上次确认');assert.ok(button);assert.equal(button.querySelector('.theme-name').textContent,'Original P2');assert.equal(button.querySelector('.freshness-label').textContent,'上次确认');
+ const button=f.button('侧栏主题 Original P2');assert.ok(button);assert.equal(button.querySelector('.theme-name').textContent,'Original P2');assert.equal(button.getAttribute('data-freshness'),'last-known');assert(button.getAttribute('aria-description').includes('此前已知'));assert.equal(button.querySelector('.freshness-label'),null);
  f.nav.updateFrameProjection({...projection('sidebar'),scope:'scopeB'});assert.equal(f.pane().querySelectorAll('.freshness-label').length,0);assert.ok(f.button('侧栏主题 Original P2'));f.nav.stop();
 });
 test('bounded current IDs select loaded group and row without a full index',()=>{const f=fixture('sidebar'),dto=projection('sidebar');dto.current={nativeUrl:'https://chatgpt.com/c/P1_0',refId:'P1_0',projectId:'P1'};f.nav.updateFrameProjection(dto);assert.equal(f.nav.currentRef().id,'P1_0');assert.equal(f.button('侧栏主题 Original P1').getAttribute('aria-expanded'),'true');assert.equal(f.pane().querySelectorAll('[aria-current]').find(n=>n.getAttribute('data-ref-id')==='P1_0').getAttribute('aria-current'),'page');assert.equal(f.nav.view().segment,0);});
@@ -140,13 +140,13 @@ for(const role of ['workspace','sidebar'])test(role+' keeps page-external curren
  f.nav.updateFrameProjection({...projection(role),scope:'other'});assert.equal(f.nav.currentRef(),undefined);assert.equal(f.pane().querySelector('[data-ref-id="ref28"]'),null);
 });
 test('current fallback does not duplicate an already displayed row and rejects mismatched owner identity',()=>{
- const f=fixture(),dto=projection();dto.current={nativeUrl:'https://chatgpt.com/c/unknown',refId:'unknown',projectId:null};dto.currentRef={...row('unknown'),available:true,membership:'UNKNOWN'};f.nav.updateFrameProjection(dto);assert.equal(f.pane().querySelectorAll('[data-ref-id="unknown"]').length,1);assert.equal(f.pane().querySelector('[aria-label="当前聊天"]'),null);
+ const f=fixture(),dto=projection();dto.current={nativeUrl:'https://chatgpt.com/c/unknown',refId:'unknown',projectId:null};dto.currentRef={...row('unknown'),available:true,membership:'UNKNOWN'};f.nav.updateFrameProjection(dto);assert.equal(f.pane().querySelectorAll('[data-ref-id="unknown"]').length,1);assert(f.pane().querySelector('[aria-label="当前聊天"]'));f.button('其他已知聊天').click();assert.equal(f.pane().querySelectorAll('[data-ref-id="unknown"]').length,1);assert.equal(f.pane().querySelector('[aria-label="当前聊天"]'),null);
  assert.throws(()=>f.nav.updateFrameProjection({...dto,currentRef:{...dto.currentRef,id:'wrong'}}),/invalid-frame-current-ref/);assert.throws(()=>f.nav.updateFrameProjection({...dto,currentRef:{...dto.currentRef,membership:'NONE',projectId:'P'}}),/invalid-frame-current-ref/);
  f.nav.invalidate();assert.equal(f.nav.currentRef(),undefined);
 });
 
 test('frame working-set actions are link siblings, workspace-only, and never add unavailable references',()=>{
- const f=fixture('workspace',()=>null,null,async()=>({ok:true})),dto=projection();dto.entries.unknown.items[0].available=false;f.nav.updateFrameProjection(dto);
+ const f=fixture('workspace',()=>null,null,async()=>({ok:true})),dto=projection();dto.entries.unknown.items[0].available=false;f.nav.updateFrameProjection(dto);f.button('其他已知聊天').click();
  const add=f.button('加入工作集');assert(add);assert.equal(add.parentNode.tagName,'div');assert.equal(add.parentNode.querySelector('a').querySelector('button'),null);assert.equal(f.pane().querySelector('[data-ref-id="unknown"]').parentNode.querySelectorAll('[data-working-set-action]').filter(n=>n.getAttribute('data-working-set-ref')==='unknown').length,0);
  const side=fixture('sidebar',()=>null,null,async()=>({ok:true}));side.nav.updateFrameProjection(projection('sidebar'));assert.equal(side.button('加入工作集'),undefined);
 });
@@ -414,7 +414,7 @@ test('empty known inventories do not leave large panels; a new UNKNOWN row remai
  const f=fixture(),dto=projection();dto.entries={noProject:{...page(),inventoryTotal:0},unknown:{...page(),inventoryTotal:0}};
  f.nav.updateFrameProjection(dto);assert.equal(f.pane().querySelectorAll('[data-free-list]').length,0);
  dto.entries.unknown={...page([row('still-unknown')]),inventoryTotal:1};f.nav.updateFrameProjection(dto);
- assert.deepEqual(f.pane().querySelectorAll('[data-free-list]').map(n=>n.getAttribute('data-free-list')),['unknown']);assert(f.pane().querySelector('[data-ref-id="still-unknown"]'));f.nav.stop();
+ assert.deepEqual(f.pane().querySelectorAll('[data-free-list]').map(n=>n.getAttribute('data-free-list')),['unknown']);f.button('其他已知聊天').click();assert(f.pane().querySelector('[data-ref-id="still-unknown"]'));f.nav.stop();
 });
 test('sidebar keeps navigation ahead of persistent manual-asset tools',()=>{
  const f=fixture('sidebar',()=>null,null,null,{}, {onSnippetsRequest(){}});f.nav.updateFrameProjection(projection('sidebar'));
@@ -433,6 +433,6 @@ test('owned workspace becoming visible relayouts cards and disconnects its obser
  const grid=f.pane().querySelector('.cards'),cards=grid.querySelectorAll('.card');
  assert.equal(cards[0].style.width,undefined); // Hidden frame had no measurable width.
  grid.clientWidth=573;notify();
- assert.equal(cards[0].style.width,'573px');assert.equal(cards[1].style.left,'0px');
+ assert.equal(cards[0].style.width,'356px');assert.equal(cards[1].style.left,'0px');
  f.nav.invalidate();assert(disconnected);assert.equal(f.nav.roots(),null);notify();assert.equal(f.nav.roots(),null);f.nav.stop();
 });

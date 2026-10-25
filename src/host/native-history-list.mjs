@@ -105,7 +105,7 @@ export function nativeHistoryPresentation(options){
   // Once the native list exposes explicit rows, keep row masks even after
   // loading/local rows disappear. Switching to the containing root would
   // invalidate an otherwise unchanged mount. Legacy pure roots stay supported.
-  if(!lists.length||preferredMaskRoots?.length===1&&preferredMaskRoots[0]===root)return nativeHistoryListOK(options)?{rect:nativeHistoryListRect(options),maskRoots:[root]}:null;
+  if(!lists.length||preferredMaskRoots?.length===1&&preferredMaskRoots[0]===root)return nativeHistoryListOK(options)?{rect:nativeHistoryListRect(options),maskRoots:[root],complete:true}:null;
   if(lists.length!==1)return fail('list-count');
   const children=[...lists[0].children];if(children.length>256)return fail('row-limit');
   let stable=preferredMaskRoots;
@@ -130,6 +130,6 @@ export function nativeHistoryPresentation(options){
    const a=visible[i-1].rect,b=visible[i].rect;
    if(Math.abs(a.x-b.x)>0.5||Math.abs(a.width-b.width)>0.5||Math.abs(a.y+a.height-b.y)>0.5)return fail('row-gap');
   }
-  return {rect:{x:first.x,y:first.y,width:first.width,height:last.y+last.height-first.y},maskRoots:stable};
+  return {rect:{x:first.x,y:first.y,width:first.width,height:last.y+last.height-first.y},maskRoots:stable,complete:stable.length===children.length};
  }catch{return fail('exception');}
 }

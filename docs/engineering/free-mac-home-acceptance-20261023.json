@@ -3208,5 +3208,77 @@
       "FULL_FREE_ACCEPTANCE",
       "RELEASE_READY"
     ]
+  },
+  "v27ProductIntegration20261025": {
+    "baseHead": "b5999e7033a39db9fd546815eafb2d7726df1617",
+    "r95ProductExperience": "REJECTED_BY_USER",
+    "inheritedTechnicalPassesDoNotEstablishProductAcceptance": true,
+    "candidate": "r96",
+    "packageSha256": "e0fe6f55d6c0454afd8c984dfdc8514663445b68edd8b85c239870b5de9ecee4",
+    "design": [
+      "design/approved/v2.7/VAIWL_v2.7/prototype-v2.7.html",
+      "docs/CORE_FLOW_V2_7.md",
+      "docs/INTERACTION_SPEC.md"
+    ],
+    "changes": [
+      "approved sparse card width and wrapping",
+      "compact collapsible UNKNOWN with current item reachability",
+      "last-known metadata in auxiliary descriptions",
+      "partial history keeps native sidebar without duplicate projection",
+      "existing workspace settings exposes existing actions",
+      "compact independent declarative exit without frame overlap"
+    ],
+    "offline": {
+      "formalRenderer": "PASS",
+      "focusAndScroll": "PASS",
+      "actualMV3AnonymousHistoryReplay": "PASS",
+      "realChatGPT": false,
+      "lockedInstantCandidateBridge": "PASS_EXISTING_MIXED_HISTORY_MV3"
+    },
+    "realMac": {
+      "status": "FAIL_PRODUCT_EXPERIENCE",
+      "installationUpdated": true,
+      "sameExtensionId": true,
+      "manifestUnchanged": true,
+      "upgradeCount": 1,
+      "reloadCount": 1,
+      "nativeBrowserOnly": true,
+      "browserTabClaimed": false,
+      "homeArrival": "PASS",
+      "workspaceOpened": "PASS",
+      "nativeSidebarWithoutDuplicateProjection": "PASS",
+      "homeKnownObjectsPresentation": "FAIL_EMPTY_WITH_CANDIDATE_READ_ERROR",
+      "candidateReadFailureCause": "NOT_ESTABLISHED",
+      "lastScanPageIsNotBatchSummary": true,
+      "nativeProjectArrival": "PASS",
+      "projectFormalSurface": "FAIL_CONTENT_STATUS_TRANSPORT_ERROR",
+      "projectTransportFailureCause": "NOT_ESTABLISHED",
+      "privateBinding": "LOCKED_NOT_CONFIRMED_BY_AGENT",
+      "persistedRecordRestore": "NOT_RUN",
+      "realPopulatedCardVisualReview": "NOT_RUN",
+      "realNarrowWidthReview": "NOT_RUN",
+      "extensionStillEnabled": "PASS_READ_ONLY_ORIGINAL_ID",
+      "newMessages": 0,
+      "privateDatabaseModifiedByAgent": false,
+      "newDiagnosticBatchConsumed": false,
+      "realScreenshotStoredLocallyOnly": true,
+      "screenshotCommittedToGit": false,
+      "automationErrors": [
+        "unsupported-AXURL-read-before-dispatch",
+        "invalid-AX-index-before-dispatch",
+        "foreground-guard-no-input"
+      ],
+      "automationErrorsAreNotProductFailures": true,
+      "inspectionTabClosed": true
+    },
+    "remaining": [
+      "F4: establish full observation batch acceptance and Native version versus VIEW inventory for empty home",
+      "F4: establish content receiver lifecycle after native Project navigation",
+      "actual populated v2.7 card and interaction review after those blockers",
+      "previous persisted real record restore witness after personal confirmation",
+      "unknown activity dates and unobserved inventory remain unknown",
+      "partial native sidebar is preserved, not claimed full derived sidebar acceptance"
+    ],
+    "fullFreeAccepted": false
   }
 }

@@ -14,9 +14,10 @@ export const css=`
  * They remain separate from Project cards: UNKNOWN never implies membership. */
 .free-list h2{font-size:calc(15px * var(--vaiwl-font-scale,1));line-height:calc(22px * var(--vaiwl-font-scale,1));font-weight:600;margin:0 0 8px;overflow-wrap:anywhere}
 .free-list p{font-size:calc(12px * var(--vaiwl-font-scale,1));color:var(--muted,#6e6e76);margin:8px 0}
-.workspace .free-list{max-width:1148px;margin:0 0 18px;border-radius:13px;padding:12px}
+.workspace .free-list{max-width:356px;margin:0 0 18px;padding:0;border:0}.workspace>.current-slot>.current-context{max-width:356px}
 .themes .free-list{margin-top:16px}
 .themes .free-list h2{font-size:calc(12px * var(--vaiwl-font-scale,1));line-height:1.5;font-weight:500;color:var(--muted,#6e6e76);margin:0 8px 4px}
+.inventory-toggle{display:flex;align-items:center;gap:8px;width:100%;text-align:left;padding:8px 4px;border-radius:8px;color:var(--muted,#646464);font-weight:500}.inventory-toggle svg{flex:none;transition:transform .16s ease}.inventory-toggle[aria-expanded=true] svg{transform:rotate(90deg)}.inventory-rows .row{padding:8px}.workspace .free-list h2{font-size:13px;font-weight:500;color:var(--muted,#646464)}.undated-members:not(:first-child){border-top:1px solid var(--line,#e8e8e8);margin-top:6px;padding-top:6px}
 /* Match the approved v2.7 core; all rules remain within owned shadow roots. */
 :host{font:calc(14px * var(--vaiwl-font-scale,1))/1.5 var(--vaiwl-font-family,-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC',sans-serif)}
 .workspace{padding:24px 70px 36px 24px}.cards{gap:18px;max-width:1148px;margin:0}
@@ -24,7 +25,7 @@ export const css=`
 .card h2{gap:11px;font-size:calc(15px * var(--vaiwl-font-scale,1));line-height:calc(22px * var(--vaiwl-font-scale,1));letter-spacing:0}.card h2 .theme-glyph{width:calc(25px * var(--vaiwl-font-scale,1));height:calc(25px * var(--vaiwl-font-scale,1));border-radius:7px;background:color-mix(in srgb,var(--bubble,#f4f4f4) 88%,var(--ink,#171717) 12%);color:inherit}.card .members{margin:8px 10px 9px 28px;padding-left:9px;border-color:var(--line,#d8d8d8)}
 .row{display:flex;align-items:center;gap:8px;min-width:0}.window-glyph{display:inline-flex;flex:none;color:var(--muted,#646464)}.window-title{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
 .card .row{overflow:visible;position:relative;font-size:calc(14px * var(--vaiwl-font-scale,1));line-height:calc(22px * var(--vaiwl-font-scale,1));min-height:36px;padding:7px 6px 7px 9px;gap:8px}.card .row::before{content:"";position:absolute;left:-10px;top:18px;width:7px;border-top:1px solid var(--line,#d8d8d8);pointer-events:none}
-.card-head > .project-create{width:28px;height:28px;flex:none}
+.card h2 .theme-name{white-space:normal;overflow-wrap:anywhere;overflow:visible}.card-head > .project-create{width:28px;height:28px;flex:none}
 .card-actions{width:28px;height:28px;opacity:0}.card:hover .card-actions,.card:focus-within .card-actions{opacity:1}.card .old{width:30px;height:30px;margin:3px 0 0 2px}.card .old-list{margin:3px 0 0 -9px;padding:6px 0 0 9px;border-top:1px solid var(--line,#e5e5e5);border-left:0}.card .more{padding:5px 9px}
 /* Match the reserved rail to its negative margin: a narrower leading float
    creates negative inline extent and 14px desktop scroll overflow. */

@@ -177,7 +177,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     const container=roots?.workspace?.scroller?.querySelector('.cards'),cards=container?[...container.querySelectorAll(':scope > .card')]:[];
     if(!cards.length||container.clientWidth<100)return;
     const scroller=roots.workspace.scroller,scroll=scroller.scrollTop;
-    const gap=18,columns=Math.max(1,Math.min(3,cards.length,Math.floor((container.clientWidth+gap)/346))),width=columns===1?container.clientWidth:(Math.min(container.clientWidth,columns*356+(columns-1)*gap)-gap*(columns-1))/columns;
+    const gap=18,columns=Math.max(1,Math.min(3,cards.length,Math.floor((container.clientWidth+gap)/346))),width=(Math.min(container.clientWidth,columns*356+(columns-1)*gap)-gap*(columns-1))/columns;
     for(const card of cards){card.style.position='absolute';card.style.width=width+'px';}
     const heights=cards.map(card=>card.getBoundingClientRect().height),tops=Array(columns).fill(0);
     cards.forEach((card,i)=>{const column=i%columns;card.style.left=column*(width+gap)+'px';card.style.top=tops[column]+'px';tops[column]+=heights[i]+gap;});
@@ -200,7 +200,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
   function enterReading(notify=true){if(!view)return;advanceNavigationIntent();remember();clearTimePolicyNotice();view.mode='reading';if(!framed){searchQuery=null;searchTheme=null;}layout();if(framed&&notify)onPresentationRequest({kind:'enter-reading'});}
   function openRef(ref,event){if(ref.available===false){event.preventDefault();return;}if(event.metaKey||event.ctrlKey||event.shiftKey||event.altKey||event.button!==0)return;remember();if(ref.anchor)pendingAnchor={scope:snapshot.scope,ref,anchor:ref.anchor};clearTimePolicyNotice();view.mode='reading';searchQuery=null;searchTheme=null;layout();const same=adapter.isCurrent(ref.nativeUrl);adapter.openNative(ref.nativeUrl,event);if(same){restoreFocus();locateAnchor();}}
   function explainUnavailable(control,message,{label=false}={}){
-    const source=frameProjection,scope=snapshot?.scope;control.setAttribute('aria-disabled','true');control.setAttribute('aria-description',message);
+    const source=frameProjection,scope=snapshot?.scope;control.setAttribute('aria-disabled','true');control.setAttribute('aria-description',[control.getAttribute('aria-description'),message].filter(Boolean).join(' '));
     if(control.tagName.toLowerCase()==='a'){control.setAttribute('role','button');control.tabIndex=0;control.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();control.click();}});}
     if(label)control.append(node(doc,'small',{class:'navigation-unavailable-label'},'入口暂不可用'));
     control.addEventListener('click',event=>{event.preventDefault();if(stopped||frameProjection!==source||snapshot?.scope!==scope)return;
@@ -257,7 +257,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     const unavailable=node(doc,'button',{type:'button',class:'square project-create','aria-label':'在项目中新建聊天 '+group.name,title:'当前无法确认项目入口，请返回原生页面继续。'},'+');unavailable.dataset.focusKey='project-create:'+group.id;unavailable.dataset.navigationReason='native-create-plan-unavailable';explainUnavailable(unavailable,'当前无法确认项目入口，请返回原生页面继续。');return unavailable;
   }
   const windowGlyph=node(doc,'span',{class:'window-glyph','aria-hidden':'true'});windowGlyph.innerHTML='<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.65"><path d="M4 5h16v12H9l-5 4z"/></svg>';
-  function appendFreshness(parent,value){if(value.freshness==='last-known'||value.membershipFreshness==='last-known')parent.append(node(doc,'small',{class:'freshness-label','data-freshness':'last-known',title:'上次确认的信息',style:'flex:none;font-weight:400;color:var(--muted,#646464);margin-left:4px'},'上次确认'));}
+  function appendFreshness(parent,value){if(value.freshness==='last-known'||value.membershipFreshness==='last-known'){parent.setAttribute('data-freshness','last-known');parent.setAttribute('aria-description','此前已知的信息，将随正常使用更新。');parent.setAttribute('title',[(parent.getAttribute('title')??''),'此前已知的信息，将随正常使用更新。'].filter(Boolean).join(' — '));}}
   function row(ref,context=''){const a=node(doc,'a',{class:'row','data-ref-id':ref.id,title:ref.displayTitle});const text=node(doc,'span',{class:'window-title'},ref.displayTitle??ref.nativeTitle);a.append(windowGlyph.cloneNode(true),text);appendFreshness(a,ref);a.dataset.focusKey='ref:'+context+':'+ref.id;if(frameProjection?frameProjection.current?.refId===ref.id:(index?.matches(ref.nativeUrl,adapter.currentURL())??adapter.isCurrent(ref.nativeUrl)))a.setAttribute('aria-current','page');if(ref.available===false)a.setAttribute('aria-disabled','true');if(framed)bindPlannedLink(a,ref);else{const href=adapter.nativeHref?.(ref.nativeUrl);if(href)a.setAttribute('href',href);else a.setAttribute('aria-disabled','true');a.addEventListener('click',e=>{if(!href){e.preventDefault();return;}openRef(ref,e);});}return workingSetRow(a,ref,context);}
   function projectSearchRow(project){
     const title=project.nativeName??'名称暂不可用',a=node(doc,'a',{class:'row','data-project-id':project.id,title});
@@ -379,9 +379,10 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
       if(kind==='old'){
         const ownerView=view,open=view.oldOpen.has(key),toggle=button('展开旧窗口 '+group.name,()=>{view.oldOpen.has(key)?view.oldOpen.delete(key):view.oldOpen.add(key);render();if(view.oldOpen.has(key))requestFrame({groupId:group.id,list:'old',rowOffset:0,rowLimit:5});},'','square old',()=>currentProjectControl(toggle,ownerView,side?'sidebar':'workspace'));toggle.innerHTML=chevron;toggle.dataset.focusKey=focusKey(kind,'toggle');toggle.setAttribute('aria-expanded',String(open));parent.append(toggle);if(!open)continue;list=node(doc,'div',{class:'old-list'});parent.append(list);
       }
+      if(kind==='unknown'){const undated=node(doc,'div',{class:'undated-members','aria-label':'活动时间未确定的窗口',title:'项目归属已知，活动时间尚未确定。'});list.append(undated);list=undated;}
       if(page.paged)list.append(node(doc,'p',{class:'row-page-notice'},'每页'+page.limit+'条；可继续翻页。'));
       for(const ref of page.items)list.append(row(ref,key));
-      if(page.hasMore){const more=button(kind==='old'?'显示更多旧窗口 '+group.name:kind==='unknown'?'显示更多待核对窗口':'显示更多近期窗口',()=>moreFrame(page,group.id,kind),frameIsPaged(page,group.id,kind)?'下一页':'显示更多','more');more.dataset.focusKey=focusKey(kind,'more');list.append(more);}
+      if(page.hasMore){const more=button(kind==='old'?'显示更多旧窗口 '+group.name:kind==='unknown'?'显示更多已知窗口':'显示更多近期窗口',()=>moreFrame(page,group.id,kind),frameIsPaged(page,group.id,kind)?'下一页':'显示更多','more');more.dataset.focusKey=focusKey(kind,'more');list.append(more);}
       if(page.offset>0){const previous=button('返回前页 '+group.name,()=>requestFrame({groupId:group.id,list:kind,rowOffset:Math.max(0,page.offset-page.limit),rowLimit:page.limit}),'上一页','more');previous.dataset.focusKey=focusKey(kind,'previous');list.append(previous);}
     }
   }
@@ -397,17 +398,34 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
         if(oldCap<group.old.length)list.append(button('显示更多旧窗口 '+group.name,()=>{remember();view.capacities.set('old:'+key,oldCap+12);render();},'显示更多','more'));parent.append(list);
       }else parent.append(node(doc,'div',{class:'old-list',hidden:'',id:b.getAttribute('aria-controls')}));
     }
-    if(free()&&group.unknown.length){const keyUnknown='unknown:'+key,limit=view.capacities.get(keyUnknown)??5;for(const r of group.unknown.slice(0,limit))parent.append(row(r,keyUnknown));if(group.unknown.length>limit)parent.append(button('显示更多待核对窗口',()=>{view.capacities.set(keyUnknown,limit+12);render();},'显示更多','more'));}
+    if(free()&&group.unknown.length){const keyUnknown='unknown:'+key,limit=view.capacities.get(keyUnknown)??5;for(const r of group.unknown.slice(0,limit))parent.append(row(r,keyUnknown));if(group.unknown.length>limit)parent.append(button('显示更多已知窗口',()=>{view.capacities.set(keyUnknown,limit+12);render();},'显示更多','more'));}
     if(side){const active=current().inGroup?.(group);if(active&&!parent.querySelector('[data-ref-id="'+active.id+'"]')){const context=node(doc,'div',{class:'current-context'});context.append(row(active,key));parent.append(context);}}
   }
   function appendFreeList(parent,kind,segment,side=false){
-    if(frameProjection){const page=frameRows(null,kind);if(page.total===0&&frameProjection.entries[kind].inventoryTotal===0)return;const label=kind==='noProject'?'无项目聊天':'归属待核对',list=node(doc,'section',{class:'free-list '+(side?'':'search'),'data-free-list':kind,'aria-label':label});if(page.total===0)list.setAttribute('class',list.getAttribute('class')+' empty-inventory');list.append(node(doc,'h2',{},label));if(page.paged)list.append(node(doc,'p',{class:'row-page-notice'},'每页'+page.limit+'条；可继续翻页。'));for(const ref of page.items)list.append(row(ref,kind));if(page.total===0)list.append(node(doc,'p',{},frameProjection.entries[kind].inventoryTotal>0?'此区间没有记录；其他区间仍可达。':'暂无已知记录。'));if(page.hasMore)list.append(button('显示更多'+label,()=>moreFrame(page,null,kind),frameIsPaged(page,null,kind)?'下一页':'显示更多','more'));if(page.offset>0)list.append(button('返回前页'+label,()=>requestFrame({list:kind,rowOffset:Math.max(0,page.offset-page.limit),rowLimit:page.limit}),'上一页','more'));parent.append(list);return;}
-    const rows=freeListRows(snapshot,kind,segment);if(!rows.length)return;
-    const key=(side?'side:':'home:')+kind,cap=view.capacities.get(key)??(side?5:12),label=kind==='noProject'?'无项目聊天':'归属待核对';
-    const list=node(doc,'section',{class:'free-list '+(side?'':'search'),'data-free-list':kind,'aria-label':label});list.append(node(doc,'h2',{},label));
-    for(const r of rows.slice(0,cap))list.append(row(r,key));
-    if(rows.length>cap)list.append(button('显示更多'+label,()=>{remember();view.capacities.set(key,cap+12);render();},'显示更多','more'));
-    parent.append(list);
+    const rows=frameProjection?null:freeListRows(snapshot,kind,segment),page=frameProjection?frameRows(null,kind):null;
+    const total=page?.total??rows.length,inventoryTotal=frameProjection?frameProjection.entries[kind].inventoryTotal:total;
+    if(!total&&!inventoryTotal)return;
+    const key=(side?'side:':'home:')+'inventory:'+kind,label=kind==='noProject'?'无项目聊天':'其他已知聊天';
+    // UNKNOWN remains a separate fact. The disclosure is presentation, never
+    // membership approval; the same references remain in known search.
+    const compact=kind==='unknown'&&(side||groups.length>0),open=!compact||view.oldOpen.has(key);
+    const list=node(doc,'section',{class:'free-list'+(!total?' empty-inventory':''),'data-free-list':kind,'aria-label':label});
+    if(compact){
+      const heading=node(doc,'h2'),ownerView=view;
+      const toggle=button(label,()=>{remember();view.oldOpen.has(key)?view.oldOpen.delete(key):view.oldOpen.add(key);render();},'','inventory-toggle',()=>view===ownerView&&!stopped);
+      toggle.innerHTML=chevron;toggle.append(node(doc,'span',{},label));toggle.dataset.focusKey='inventory:'+key;toggle.setAttribute('aria-expanded',String(open));toggle.setAttribute('aria-controls',token+'-'+key.replaceAll(':','-'));heading.append(toggle);list.append(heading);
+    }else list.append(node(doc,'h2',{},label));
+    if(kind==='unknown')list.setAttribute('title','这些已知聊天的项目归属尚未确定；正常打开即可继续使用。');
+    const body=node(doc,'div',{class:'inventory-rows',id:token+'-'+key.replaceAll(':','-')});body.hidden=!open;
+    if(open){
+      if(page?.paged)body.append(node(doc,'p',{class:'row-page-notice'},'每页'+page.limit+'条；可继续翻页。'));
+      const cap=view.capacities.get(key)??5;
+      for(const ref of page?.items??rows.slice(0,cap))body.append(row(ref,key));
+      if(!total)body.append(node(doc,'p',{},'此区间没有记录；仍可查找其他已知聊天。'));
+      if(page?.hasMore||!page&&total>cap)body.append(button('显示更多'+label,()=>{if(page)moreFrame(page,null,kind);else{remember();view.capacities.set(key,cap+12);render();}},page&&frameIsPaged(page,null,kind)?'下一页':'显示更多','more'));
+      if(page?.offset>0)body.append(button('返回前页'+label,()=>requestFrame({list:kind,rowOffset:Math.max(0,page.offset-page.limit),rowLimit:page.limit}),'上一页','more'));
+    }
+    list.append(body);parent.append(list);
   }
   function themeGlyph(g){const n=node(doc,'span',{class:'theme-glyph','aria-hidden':'true'}),kind=g.icon==null||g.icon==='◇'?defaultIcon(g.name):g.icon;n.dataset.icon=kind??'collection';if(iconPaths[kind])n.innerHTML=svgIcon(kind);else n.textContent=kind??'◇';return n;}
   function locateAnchor(){if(!pendingAnchor||!snapshot||!roots)return;if(pendingAnchor.scope!==snapshot.scope){pendingAnchor=null;return;}if(!adapter.isCurrent(pendingAnchor.ref.nativeUrl))return;const result=adapter.restoreSnippet?.(pendingAnchor.ref,pendingAnchor.anchor);pendingAnchor=null;anchorFeedback=result?.ok?null:'无法唯一定位已保存片段。消息可能已变化，请使用原生搜索。';if(anchorFeedback){roots.sidebar.shadow.querySelector('.anchor-feedback')?.remove();roots.sidebar.shadow.append(node(doc,'p',{class:'anchor-feedback',role:'status'},anchorFeedback));}}
@@ -459,7 +477,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     side.querySelector('section')?.remove();const panel=node(doc,'section');const tools=node(doc,'div',{class:'toolbar'});tools.append(node(doc,'strong',{},free()?'项目':'主题'),graphic(button(free()?'查找已知项目与聊天':'查找主题与派生名称',()=>findKnown()),'search'),graphic(button('折叠主题导航',()=>{remember();view.sidebarVisible=!view.sidebarVisible;render();}),view.sidebarVisible?'minus':'plus'),graphic(button(framed?'退出工作空间增强':'退出测试增强',()=>{if(stopped)return;stop();onExit();}),'close'));if(onManage)tools.append(graphic(button('管理工作空间',()=>onManage()),'more'));const footer=node(doc,'div',{class:'toolbar sidebar-footer'});const workset=button('当前工作集',()=>showWorkingSet());workset.innerHTML=svgIcon('collection');footer.append(workset);if(frameProjection&&typeof onSnippetsRequest==='function')footer.append(button('已保存片段',()=>{if(!stopped&&frameProjection)onSnippetsRequest();},'已保存片段','more'));panel.append(tools);renderNavigationFeedback(panel);if(framed&&sidebarLimited.has(view)){panel.append(node(doc,'p',{role:'status'},'侧栏开合记录已达本次布局容量，现有选择已保留。'),button('重置本次侧栏开合',()=>{if(applySidebarChoices(new Map()))sidebarLimited.delete(view);render();},'仅清除本次侧栏开合选择，不修改项目或聊天','more'));}
     const list=node(doc,'nav',{class:'themes','aria-label':'VAIWL 主题导航',tabindex:'-1','data-focus-key':'sidebar-navigation'});list.hidden=!view.sidebarVisible;
     const sideGroups=frameProjection?groups:groups.filter(g=>g.segment===0||(free()&&g.segment===null)||g===selected);
-    for(const g of sideGroups){const block=node(doc,'section',{class:'group'}),ownerView=view;const toggle=button('侧栏主题 '+g.name,()=>{if(framed){if(!chooseSidebar(g.id,!view.sidebarOpen.has(g.id))){render();return;}}else view.sidebarOpen.has(g.id)?view.sidebarOpen.delete(g.id):view.sidebarOpen.add(g.id);render();if(frameProjection&&view.sidebarOpen.has(g.id))requestFrame({groupId:g.id,list:'current',rowOffset:0,rowLimit:5});},'','theme-toggle',()=>currentProjectControl(toggle,ownerView,'sidebar'));toggle.dataset.focusKey='theme:'+g.id;toggle.append(themeGlyph(g),node(doc,'span',{class:'theme-name',title:g.name},g.name));appendFreshness(toggle,g);if(g.freshness==='last-known')toggle.setAttribute('aria-label','侧栏主题 '+g.name+'，上次确认');const disclosure=node(doc,'span',{class:'theme-disclosure','aria-hidden':'true'});disclosure.innerHTML=chevron;toggle.append(disclosure);toggle.setAttribute('aria-expanded',String(view.sidebarOpen.has(g.id)));if(framed&&free()){const head=node(doc,'div',{class:'project-group-head'});head.append(toggle,projectCreateEntry(g));block.append(head);}else block.append(toggle);
+    for(const g of sideGroups){const block=node(doc,'section',{class:'group'}),ownerView=view;const toggle=button('侧栏主题 '+g.name,()=>{if(framed){if(!chooseSidebar(g.id,!view.sidebarOpen.has(g.id))){render();return;}}else view.sidebarOpen.has(g.id)?view.sidebarOpen.delete(g.id):view.sidebarOpen.add(g.id);render();if(frameProjection&&view.sidebarOpen.has(g.id))requestFrame({groupId:g.id,list:'current',rowOffset:0,rowLimit:5});},'','theme-toggle',()=>currentProjectControl(toggle,ownerView,'sidebar'));toggle.dataset.focusKey='theme:'+g.id;toggle.append(themeGlyph(g),node(doc,'span',{class:'theme-name',title:g.name},g.name));appendFreshness(toggle,g);const disclosure=node(doc,'span',{class:'theme-disclosure','aria-hidden':'true'});disclosure.innerHTML=chevron;toggle.append(disclosure);toggle.setAttribute('aria-expanded',String(view.sidebarOpen.has(g.id)));if(framed&&free()){const head=node(doc,'div',{class:'project-group-head'});head.append(toggle,projectCreateEntry(g));block.append(head);}else block.append(toggle);
       if(view.sidebarOpen.has(g.id)){const children=node(doc,'div',{class:'children'});members(g,children,true);block.append(children);}list.append(block);}
     if(frameProjection){if(frameProjection.groups.offset>0)list.append(button('返回前页项目',()=>requestFrame({offset:Math.max(0,frameProjection.groups.offset-frameProjection.groups.limit)}),'上一页项目','more'));if(frameProjection.groups.hasMore)list.append(button('显示更多项目',()=>requestFrame({offset:frameProjection.groups.offset+frameProjection.groups.limit}),'显示更多项目','more'));}
     const independent=current().independent;if(independent&&!frameProjection){const context=node(doc,'div',{class:'current-context'});context.append(row(independent));list.append(context);}if(free()){appendFreeList(list,'noProject',0,true);appendFreeList(list,'unknown',0,true);}if(frameProjection)appendCurrentContext(list);panel.append(list,footer);side.append(panel);list.scrollTop=view.sidebarScroll??0;list.addEventListener('scroll',()=>{if(!stopped&&view&&roots?.sidebar?.shadow.querySelector('.themes')===list){view.sidebarScroll=list.scrollTop;emitView();}},{passive:true});sidebarKey=nextSidebarKey;sidebarDirty=false;locateCurrent();
@@ -467,7 +485,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     if(!roots.workspace){restoreOwnedFocus(focused);emitView();return;}
     const shadow=roots.workspace.shadow;const prior=shadow.querySelector('.workspace');if(prior)prior.remove();const page=node(doc,'div',{class:'workspace',tabindex:'-1','aria-label':'主题工作区','data-focus-key':'workspace','data-segment':String(view.segment)});roots.workspace.scroller=page;const specialKey=frameProjection?(searchQuery!==null?JSON.stringify(['search',searchQuery,searchTheme,frameSearchOffset]):view.worksetOpen?JSON.stringify(['workingSet',frameWorkingSetOffset]):null):null;workspacePages.set(page,{view,specialKey});page.addEventListener('scroll',()=>{if(roots?.workspace?.scroller===page&&view.mode==='workspace'&&roots.workspace.n.style.display!=='none'){rememberWorkspaceScroll(page);emitView();}},{passive:true});
     renderNavigationFeedback(page);
-    const currentSlot=frameProjection&&searchQuery===null&&!view.worksetOpen?node(doc,'div',{}):null;if(currentSlot)page.append(currentSlot);
+    const currentSlot=frameProjection&&searchQuery===null&&!view.worksetOpen?node(doc,'div',{class:'current-slot'}):null;if(currentSlot)page.append(currentSlot);
     let workspaceSettingsTrigger=null;
     if(frameProjection&&surface.role==='workspace'){
       const settingsScope=frameProjection.scope,settingsView=view,settingsLive=()=>!stopped&&frameProjection?.scope===settingsScope;
@@ -479,6 +497,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
       if(searchQuery===null&&!view.worksetOpen)workspaceSettingsTrigger=trigger;else page.append(trigger);
       if(settingsOpen){
         const settings=node(doc,'section',{'aria-label':'工作空间设置',class:'toolbar'});settings.append(node(doc,'strong',{},'工作空间设置'));
+        settings.append(settingsButton('查找已知项目与聊天',()=>{settingsOpen=false;findKnown();},'查找已知聊天','more'),settingsButton('当前工作集',()=>{settingsOpen=false;showWorkingSet();},'当前工作集','more'));
         if(typeof onHorizonRequest==='function'){
           const label=node(doc,'label',{},'时间范围 '),select=node(doc,'select',{'aria-label':'工作空间时间范围','data-focus-key':'free-horizon'}),policy=frameProjection.timePolicy;
           select.append(node(doc,'option',{value:'auto'},'自动'));
@@ -499,6 +518,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
         if(typeof onSnippetsRequest==='function')settings.append(settingsButton('已保存片段',()=>{if(settingsLive()&&settingsOpen)onSnippetsRequest();},'已保存片段','more'));
         if(typeof onBackupRequest==='function')settings.append(settingsButton('备份与导入',()=>{if(settingsLive()&&settingsOpen)onBackupRequest();},'备份与导入','more'));
         if(typeof onRecoveryRequest==='function')settings.append(settingsButton('本地数据恢复',()=>{if(settingsLive()&&settingsOpen)onRecoveryRequest();},'本地数据恢复','more'));
+        settings.append(settingsButton('退出工作空间增强',()=>{stop();onExit();},'退出增强','more'));
         settings.append(settingsButton('关闭设置',()=>{if(!settingsLive())return;settingsOpen=false;requestRender();},'关闭设置','more'));page.append(settings);
       }
     }
@@ -571,7 +591,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
         const card=node(doc,'section',{class:'card','data-theme-id':g.id,...(frameProjection?{tabindex:'-1','data-focus-key':'project:'+g.id}:{})}),head=node(doc,'div',{class:'card-head'}),title=node(doc,'h2'),list=node(doc,'div',{class:'members'});
         title.append(themeGlyph(g),node(doc,'span',{class:'theme-name',title:g.name},g.name));appendFreshness(title,g);head.append(title);if(framed&&free())head.append(projectCreateEntry(g));if(!framed&&free()&&adapter.projectCreateHref?.(g)){const a=node(doc,'a',{href:adapter.projectCreateHref(g),class:'square project-create','aria-label':'在项目中新建聊天 '+g.name,title:'在项目中新建聊天 '+g.name},'+');a.addEventListener('click',e=>{if(!e.ctrlKey&&!e.metaKey&&!e.shiftKey&&!e.altKey){clearTimePolicyNotice();view.mode='reading';layout();adapter.openNative(a.href,e);}});head.append(a);}themeActions(g,head);card.append(head);members(g,list);card.append(list);cards.append(card);
       }
-      if(!frameProjection&&!cards.children.length&&(!free()||!freeListRows(snapshot,'noProject',view.segment).length&&!freeListRows(snapshot,'unknown',view.segment).length)){const empty=node(doc,'div',{class:'empty'});empty.innerHTML=gridIcon;empty.append(node(doc,'strong',{},'这里还没有活跃主题'),node(doc,'p',{},'可切换区间，或查找已有窗口。'),button('查找已知主题与窗口',()=>findKnown(),'查找窗口','more'));cards.append(empty);}page.append(cards);if(frameProjection){if(frameProjection.groups.offset>0)page.append(button('返回前页项目',()=>requestFrame({offset:Math.max(0,frameProjection.groups.offset-frameProjection.groups.limit)}),'上一页项目','more'));if(frameProjection.groups.hasMore)page.append(button('显示更多项目',()=>requestFrame({offset:frameProjection.groups.offset+frameProjection.groups.limit}),'显示更多项目','more'));}if(free()){appendFreeList(page,'noProject',view.segment);appendFreeList(page,'unknown',view.segment);}
+      if(!cards.children.length&&(frameProjection?!['noProject','unknown'].some(kind=>frameRows(null,kind).total>0):!free()||!freeListRows(snapshot,'noProject',view.segment).length&&!freeListRows(snapshot,'unknown',view.segment).length)){const empty=node(doc,'div',{class:'empty'});empty.innerHTML=gridIcon;empty.append(node(doc,'strong',{},'这里还没有活跃主题'),node(doc,'p',{},'可切换区间，或查找已有窗口。'),button('查找已知主题与窗口',()=>findKnown(),'查找窗口','more'));cards.append(empty);}page.append(cards);if(frameProjection){if(frameProjection.groups.offset>0)page.append(button('返回前页项目',()=>requestFrame({offset:Math.max(0,frameProjection.groups.offset-frameProjection.groups.limit)}),'上一页项目','more'));if(frameProjection.groups.hasMore)page.append(button('显示更多项目',()=>requestFrame({offset:frameProjection.groups.offset+frameProjection.groups.limit}),'显示更多项目','more'));}if(free()){appendFreeList(page,'noProject',view.segment);appendFreeList(page,'unknown',view.segment);}
     }
     if(currentSlot){const ref=current().ref;if(ref&&!Array.from(page.querySelectorAll('[data-ref-id]')).some(n=>n.getAttribute('data-ref-id')===ref.id))appendCurrentContext(currentSlot);else currentSlot.remove();}
     shadow.append(page);layoutCards();page.scrollTop=specialKey===null?view.scroll:specialScroll.get(view)?.key===specialKey?specialScroll.get(view).scroll:0;restoreOwnedFocus(focused);emitView();

@@ -92,7 +92,7 @@ export function inspectNativeProjectSurface({document,profile,urlPolicy,history,
   }
   if(!chain.includes(hitRoot))return null;
   const protectedRegions=[header,title,composer,...new Set([tabsBranch,tabs])];
-  const regions={history,header,reading,composer,navigationSlot:slot,readingViewport:viewport,protectedRegions,historyMaskRoots:historyPresentation.maskRoots,returnHitRoot:hitRoot,proofNodes:[history,header,reading,composer,slot,title,tabsBranch,tabs,composerBranch,...chain,...historyPresentation.maskRoots]};
+  const regions={history,header,reading,composer,navigationSlot:slot,readingViewport:viewport,protectedRegions,historyMaskRoots:historyPresentation.maskRoots,preserveNativeSidebar:historyPresentation.complete===false,returnHitRoot:hitRoot,proofNodes:[history,header,reading,composer,slot,title,tabsBranch,tabs,composerBranch,...chain,...historyPresentation.maskRoots]};
   // Controller continuity may compare identities while a native modal blocks
   // hit testing. This result has no presentation rectangles or mount approval.
   if(!geometry){passed=true;return regions;}

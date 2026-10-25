@@ -49,7 +49,7 @@ for(const longTitles of [true,false])test('L real more-button events traverse 60
  const visible=()=>new Set(all(privateRoot,'[data-ref-id]').map(node=>node.getAttribute('data-ref-id')));
  const seen=visible();assert.equal(seen.size,5);let stalled=0;const actualPages=new Map([[0,visible()]]);
  for(let click=0;click<200&&seen.size<603;click++){
-  const button=all(privateRoot,'button').find(node=>node.getAttribute('aria-label')==='显示更多归属待核对');
+  const button=all(privateRoot,'button').find(node=>node.getAttribute('aria-label')==='显示更多其他已知聊天');
   assert(button,'remaining rows must have an actual more button');
   const before=seen.size;button.click();await drain();for(const id of visible())seen.add(id);
   stalled=seen.size>before?0:stalled+1;assert(stalled<=1,'at most one click may negotiate a smaller page; queries='+JSON.stringify(calls.slice(-12)));
@@ -59,7 +59,7 @@ for(const longTitles of [true,false])test('L real more-button events traverse 60
  assert.equal(rejections.length>0,longTitles,'only long titles exercise actual 64 KiB projection rejection');
  assert(calls.some(query=>query.rowOffset>0),'navigation must advance actual row offset');
  assert.deepEqual([...seen].sort(),refs.map(ref=>ref.id).sort());
- const finalOffset=calls.at(-1).rowOffset,previousButton=all(privateRoot,'button').find(node=>node.getAttribute('aria-label')==='返回前页归属待核对');
+ const finalOffset=calls.at(-1).rowOffset,previousButton=all(privateRoot,'button').find(node=>node.getAttribute('aria-label')==='返回前页其他已知聊天');
  assert(previousButton);previousButton.click();await drain();const previousOffset=calls.at(-1).rowOffset;
  assert(previousOffset<finalOffset,'actual previous button must move backwards');assert(actualPages.has(previousOffset),'previous page was actually rendered earlier');assert.deepEqual(visible(),actualPages.get(previousOffset));
  assert(!states.some(state=>state.state==='failed'));

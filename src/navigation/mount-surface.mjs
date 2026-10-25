@@ -17,6 +17,11 @@ export function createMountSurface({document:doc,createFrameURL,hasNativeLayer=(
    }
    // Validate the complete layout before changing either owned surface.
    for(const {surface,rect}of updates)for(const [key,value]of Object.entries({left:rect.x+'px',top:rect.y+'px',width:rect.width+'px',height:rect.height+'px'}))if(surface.node.style[key]!==value)surface.node.style[key]=value;
+   // A partial history run is geometry proof, not permission to duplicate a
+   // complete derived sidebar over it. New surrounding native rows can make
+   // a previously complete run partial; yield only our sidebar immediately.
+   m.inspection={...m.inspection,preserveNativeSidebar:inspection.preserveNativeSidebar===true};
+   if(m.inspection.preserveNativeSidebar)for(const s of m.surfaces)if(s.role==='sidebar'&&s.node.matches(':popover-open'))s.node.hidePopover();
    return true;
   }catch{surrender(m);return false;}
  };
@@ -54,7 +59,7 @@ export function createMountSurface({document:doc,createFrameURL,hasNativeLayer=(
    for(const [role,rect,maskRoots] of specifications){
     if(!rect)continue;if(!['x','y','width','height'].every(k=>Number.isFinite(rect[k]))||rect.width<=0||rect.height<=0)throw Error('invalid-mount-rect');
     const node=doc.createElement('section');node.id=id+'_'+role;node.dataset.vaOwned=id;node.setAttribute('popover','manual');node.style.cssText=`position:fixed;inset:auto;margin:0;box-sizing:border-box;left:${rect.x}px;top:${rect.y}px;width:${rect.width}px;height:${rect.height}px;padding:0;border:0;background:Canvas;color:CanvasText;`;
-    const button=doc.createElement('button');button.type='button';button.setAttribute('popovertarget',node.id);button.setAttribute('popovertargetaction','hide');button.textContent=role==='workspace'?'返回原生阅读':'显示原生列表';
+    const button=doc.createElement('button');button.type='button';button.setAttribute('popovertarget',node.id);button.setAttribute('popovertargetaction','hide');button.textContent='×';button.setAttribute('aria-label',role==='workspace'?'返回原生阅读':'显示原生列表');button.title=button.getAttribute('aria-label');
     const frame=doc.createElement('iframe');frame.src=urls.get(role);frame.title=role==='workspace'?'工作空间':'导航';frame.style.cssText='border:0;width:100%;min-height:0;flex:1;display:block';node.append(button,frame);surfaces.push({role,node,frame});
     for(const root of maskRoots){const attr='data-va-mask-'+role;markers.push({root,attr,previous:root.getAttribute(attr),nativeClass:root.getAttribute('class'),nativeStyle:root.getAttribute('style'),nativeHidden:root.getAttribute('hidden'),nativeAriaHidden:root.getAttribute('aria-hidden'),wasVisible:win.getComputedStyle?.(root).visibility==='visible'});root.setAttribute(attr,id);}
     // Keep the owned iframe's layout through native-input surrender. Removing
@@ -64,7 +69,7 @@ export function createMountSurface({document:doc,createFrameURL,hasNativeLayer=(
     style.textContent+=`#${node.id}:not(:popover-open){display:flex;flex-direction:column;visibility:hidden;interactivity:inert;}\n`;
     // The declarative exit belongs to this surface. Host-wide button typography
     // and padding must not consume the small native history rectangle.
-    style.textContent+=`#${node.id}:popover-open{display:flex;flex-direction:column}#${node.id}>button{flex:none;align-self:flex-start;box-sizing:border-box;max-width:100%;min-height:24px;margin:0;padding:2px 6px;border:0;border-radius:8px;font:12px/18px system-ui;color:inherit;background:transparent;cursor:pointer;overflow-wrap:anywhere}#${node.id}>button:hover{background:color-mix(in srgb,CanvasText 6%,Canvas)}#${node.id}>button:focus-visible{outline:2px solid currentColor;outline-offset:-2px}\n`;
+    style.textContent+=`#${node.id}:popover-open{display:flex;flex-direction:column}#${node.id}>button{align-self:flex-end;flex:none;display:grid;place-items:center;box-sizing:border-box;width:24px;height:24px;margin:0;padding:0;border:0;border-radius:8px;font:12px/18px system-ui;color:inherit;background:transparent;cursor:pointer;overflow-wrap:anywhere}#${node.id}>button:hover{background:color-mix(in srgb,CanvasText 6%,Canvas)}#${node.id}>button:focus-visible{outline:2px solid currentColor;outline-offset:-2px}\n`;
     style.textContent+=`${allowed}:has(#${node.id}:popover-open) [data-va-mask-${role}="${id}"]{visibility:hidden;interactivity:inert;}body:has(${nativeOpen}) #${node.id}{visibility:hidden;interactivity:inert;}\n`;
    }
    const m={handle,surfaces,markers,style,styleText:style.textContent,onSurrender,inspection:{...inspection,historyMaskRoots:[...inspection.historyMaskRoots],protectedRegions:[...inspection.protectedRegions]}};mounts.set(id,m);
@@ -112,7 +117,7 @@ export function createMountSurface({document:doc,createFrameURL,hasNativeLayer=(
   },
   showWorkspace(handle){const m=lookup(handle);if(hasNativeLayer()||doc.querySelector('dialog[open]:not([data-va-owned]),[popover]:popover-open:not([data-va-owned])')){hide(m);return;}// Re-entry follows the controller's fresh inspection. Capture only presently
    // visible native roots while their own mask is closed, never hidden history.
-   const closed=m.surfaces.filter(s=>!s.node.matches(':popover-open'));
+   const closed=m.surfaces.filter(s=>!s.node.matches(':popover-open')&&(s.role!=='sidebar'||m.inspection.preserveNativeSidebar!==true));
    const markers=m.markers.filter(marker=>closed.some(s=>marker.attr==='data-va-mask-'+s.role));
    if(markers.some(({root})=>!root.isConnected||root.ownerDocument!==doc||root.hidden||root.getAttribute('aria-hidden')==='true'||doc.defaultView.getComputedStyle(root).visibility!=='visible'||doc.defaultView.getComputedStyle(root).display==='none')){hide(m);return false;}
    for(const marker of markers){marker.nativeClass=marker.root.getAttribute('class');marker.nativeStyle=marker.root.getAttribute('style');marker.nativeHidden=marker.root.getAttribute('hidden');marker.nativeAriaHidden=marker.root.getAttribute('aria-hidden');marker.wasVisible=true;}

@@ -46,9 +46,9 @@ else{
   for(const kind of ['project','unknown']){
    report.phase='paginate-'+kind;
    const list=workspace.locator(kind==='project'?`.card[data-theme-id="${project}"] .members`:'section[data-free-list="unknown"]');
-   const moreName=kind==='project'?'显示更多待核对窗口':'显示更多归属待核对';
+   const moreName=kind==='project'?'显示更多已知窗口':'显示更多其他已知聊天';
    const read=()=>list.locator('a[data-ref-id]').evaluateAll(nodes=>nodes.map(n=>({id:n.getAttribute('data-ref-id'),title:n.querySelector('.window-title')?.textContent,href:n.getAttribute('href')})));
-   await list.waitFor();let prior=inspect(await read());const renderedPages=[prior],seen=new Set(prior),deadline=performance.now()+90000;
+   await list.waitFor();if(kind==='unknown')await list.getByRole('button',{name:'其他已知聊天',exact:true}).click();let prior=inspect(await read());const renderedPages=[prior],seen=new Set(prior),deadline=performance.now()+90000;
    for(let click=0;click<240;click++){
     const more=list.getByRole('button',{name:moreName,exact:true});if(!await more.count())break;
     assert(performance.now()<deadline,'pagination deadline');
@@ -65,7 +65,7 @@ else{
     assert(ids.length>0,'pagination cannot advance to an empty page');renderedPages.push(ids);prior=ids;
    }
    assert.equal(await list.getByRole('button',{name:moreName,exact:true}).count(),0,'bounded traversal must exhaust more');
-   const previous=list.getByRole('button',{name:kind==='project'?'返回前页 原生项目 0':'返回前页归属待核对',exact:true});
+   const previous=list.getByRole('button',{name:kind==='project'?'返回前页 原生项目 0':'返回前页其他已知聊天',exact:true});
    assert.equal(await previous.count(),1,'completed multi-page list must retain previous navigation');
    const last=JSON.stringify(prior);await previous.click();
    await workspace.waitForFunction(({kind,project,last})=>{

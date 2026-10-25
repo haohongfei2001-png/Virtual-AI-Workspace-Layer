@@ -47,7 +47,7 @@ try{
   assert.equal(await progressive.locator('textarea').inputValue(),'fixture draft');
   await progressive.getByRole('button',{name:'返回工作空间',exact:true}).click();
   await formal.locator('a[href="'+origin+'/c/'+newId+'"]').first().waitFor({timeout:15000});
-  await formal.getByText('归属待核对',{exact:true}).first().waitFor();
+  await formal.getByText('其他已知聊天',{exact:true}).first().waitFor();
   assert.equal((await control.evaluate(()=>chrome.runtime.sendMessage({v:1,type:'HOST_LOCAL_SPACE',action:'status'}))).mode,'personal');
   const w=context.serviceWorkers().find(w=>w.url().startsWith('chrome-extension://'+id+'/'));
   const passiveOnly=await w.evaluate(async()=>{
@@ -93,13 +93,16 @@ try{
   const markers=historyStructure.report.snapshots[0].rows.map(r=>r[3]);
   await page.addInitScript({content:'document.addEventListener("DOMContentLoaded",()=>('+materializeHistoryStructure.toString()+')('+JSON.stringify(markers)+'),{once:true});'});
   await page.goto(origin+'/');
-  await page.waitForFunction(()=>document.querySelectorAll('[data-va-owned]:popover-open').length===2,null,{timeout:10000});
+  await page.waitForFunction(()=>document.querySelectorAll('[data-va-owned]:popover-open').length===1,null,{timeout:10000});
   const formal=page.frameLocator('iframe[src="chrome-extension://'+id+'/workspace.html"]');
   await formal.getByRole('link',{name:'Known latest fixture',exact:true}).first().waitFor({timeout:10000});
+  // A failed candidate read must not be mistaken for an empty successful page.
+  await formal.locator('[data-vaiwl-candidate-root]').waitFor({state:'attached',timeout:10000});
+  assert.equal(await formal.getByText('加载未完成，请重试。',{exact:true}).count(),0,'locked immediate scope completes the candidate bridge');
   const proof=await page.evaluate(()=>{
    const rows=[...document.querySelector('#list').children],sidebar=document.querySelector('[data-va-owned][id$="_sidebar"]'),box=sidebar.getBoundingClientRect();
-   return {masked:rows.map((r,i)=>r.hasAttribute('data-va-mask-sidebar')?i:-1).filter(i=>i>=0),native:[0,1,2,15].every(i=>getComputedStyle(rows[i]).visibility==='visible'),outside:[0,1,2,15].every(i=>{const r=rows[i].getBoundingClientRect();return r.bottom<=box.top||r.top>=box.bottom;}),draft:document.querySelector('textarea').value==='fixture draft'};
-  });assert.deepEqual(proof,{masked:Array.from({length:12},(_,i)=>i+3),native:true,outside:true,draft:true});
+   return {masked:rows.map((r,i)=>r.hasAttribute('data-va-mask-sidebar')?i:-1).filter(i=>i>=0),native:rows.every(row=>getComputedStyle(row).visibility==='visible'),sidebarClosed:!sidebar.matches(':popover-open'),draft:document.querySelector('textarea').value==='fixture draft'};
+  });assert.deepEqual(proof,{masked:Array.from({length:12},(_,i)=>i+3),native:true,sidebarClosed:true,draft:true});
   // An unknown native control added over the selected rectangle must surrender.
   await page.evaluate(()=>{const n=document.createElement('button');n.id='fixture-overlap';n.textContent='Unknown overlap';const b=document.querySelector('[data-va-owned][id$="_sidebar"]').getBoundingClientRect();n.style.cssText='position:fixed;left:'+b.x+'px;top:'+(b.y+5)+'px;width:30px;height:20px';document.querySelector('nav').append(n);});
   await page.waitForFunction(()=>document.querySelectorAll('[data-va-owned]:popover-open').length===0,null,{timeout:5000});

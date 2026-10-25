@@ -214,3 +214,33 @@ test('single-role frame renderer reuses navigation without host DOM access',{tim
  await page.evaluate(()=>sidebarCase.stop());
  assert.deepEqual(errors,[]);
 });
+
+// Product layout regression through the formal renderer. These are fixture
+// records, not evidence of account inventory or personal-use acceptance.
+test('approved v2.7 sparse workspace, unknown inventory and native actions',{timeout:30000},async t=>{
+ const root=resolve('.'),server=http.createServer(async(req,res)=>{try{const path=new URL(req.url,'http://localhost').pathname;if(path==='/frame'){res.setHeader('Content-Type','text/html');res.end('<meta charset="utf-8"><body style="margin:0;height:900px"><div id="mount" style="height:100%"></div>');return;}if(!/^\/src\/(navigation|data|b1|host)\/[a-z0-9-]+\.mjs$/.test(path))throw Error('path');res.setHeader('Content-Type','text/javascript');res.end(await readFile(resolve(root,'.'+path)));}catch{res.writeHead(404);res.end();}});
+ await new Promise(r=>server.listen(0,'127.0.0.1',r));const origin=`http://127.0.0.1:${server.address().port}`;
+ let browser;t.after(async()=>{await browser?.close();server.closeAllConnections();await new Promise(r=>server.close(r));});browser=await chromium.launch({headless:true,executablePath:process.env.FREE_CHROME_EXECUTABLE??'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'});const context=await browser.newContext();await context.route('**/*',r=>new URL(r.request().url()).origin===origin?r.continue():r.abort());const page=await context.newPage();await page.setViewportSize({width:1150,height:900});await page.goto(origin+'/frame');
+ await page.evaluate(async()=>{
+  const {createNavigation}=await import('/src/navigation/navigation.mjs'),p=(items=[],total=items.length,offset=0,limit=5)=>({items,total,offset,limit,hasMore:offset+items.length<total});
+  const ref=(id,title,segment,membership='PROJECT')=>({id,nativeTitle:title,displayTitle:title,nativeUrl:'https://chatgpt.com/c/'+id,available:true,membership,projectId:membership==='PROJECT'?'P1':null,segment,freshness:'last-known',membershipFreshness:'last-known'});
+  const unknown=Array.from({length:48},(_,i)=>ref('U'+i,i===0?'已入列的新聊天':'已知聊天 '+i,null,'UNKNOWN'));
+  const group={id:'P1',name:'一个已知项目：原生标题很长时也应完整呈现',nativeName:'一个已知项目：原生标题很长时也应完整呈现',segment:0,freshness:'last-known',lists:{current:p([ref('C1','当前窗口',0)]),old:p([ref('C2','旧窗口',2)]),unknown:p([ref('C3','时间未定窗口',null)])}};
+  const dto={protocol:'vaiwl-free-frame/1',role:'workspace',scope:'A',completeSnapshot:false,segment:0,viewSession:{H:30,T:20000,Z:'UTC',policyRevision:0},navigation:{hasNewer:false,hasOlder:true,maxSegment:2},groups:p([group],1,0,24),entries:{noProject:{...p(),inventoryTotal:0},unknown:{...p(unknown.slice(0,5),48),inventoryTotal:48}},selection:null,current:{nativeUrl:group.lists.current.items[0].nativeUrl,refId:'C1',projectId:'P1'}};
+  let nav;const adapter={currentURL:()=>dto.current.nativeUrl,status(){},nativeHref:u=>u,navigationPlan:r=>({plan:{mode:'href',target:{kind:'resolved',entity:'conversation',nativeId:r.id,navigationURL:r.nativeUrl},disposition:'same-tab'}})};
+  nav=createNavigation({document,surface:{role:'workspace',root:document.querySelector('#mount')},adapter,onProjectionRequest:q=>{const next=structuredClone(dto);if(q.list==='unknown'&&q.groupId==null)next.selection={groupId:null,list:'unknown',...p(unknown.slice(q.rowOffset,q.rowOffset+q.rowLimit),48,q.rowOffset,q.rowLimit)};return next;}});nav.updateFrameProjection(dto);
+  globalThis.productCase={nav,dto,group,read(){const s=nav.roots().workspace.shadow,c=s.querySelector('.card'),w=s.querySelector('.workspace');return {cards:s.querySelectorAll('.card').length,width:c?.getBoundingClientRect().width,scroll:w.scrollWidth,viewport:w.clientWidth,text:s.textContent,stale:s.querySelectorAll('[data-freshness="last-known"]').length,labels:s.querySelectorAll('.freshness-label').length,selected:s.querySelectorAll('[aria-current="page"]').length,unknown:s.querySelector('[data-free-list="unknown"]')?.className,whiteSpace:c?getComputedStyle(c.querySelector('.theme-name')).whiteSpace:null};}};
+ });
+ let state=await page.evaluate(()=>productCase.read());assert.equal(state.cards,1);assert(state.width<=356.1);assert.equal(state.labels,0);assert(state.stale>=3);assert(!state.text.includes('上次确认'));assert.equal(state.whiteSpace,'normal');assert.equal(state.selected,1);assert(!state.unknown.includes('search'));
+ assert.equal(await page.getByRole('button',{name:'较近的30日',exact:true}).count(),0);assert.equal(await page.getByRole('link',{name:'旧窗口',exact:true}).count(),0);
+ await page.getByRole('button',{name:'其他已知聊天',exact:true}).click();await page.getByRole('link',{name:'已入列的新聊天',exact:true}).waitFor();assert.equal(await page.getByRole('link',{name:'已入列的新聊天',exact:true}).getAttribute('href'),'https://chatgpt.com/c/U0');
+ await page.getByRole('button',{name:'显示更多其他已知聊天',exact:true}).click();await page.waitForFunction(()=>productCase.nav.roots().workspace.shadow.querySelectorAll('[data-free-list="unknown"] [data-ref-id]').length===17);
+ await page.getByRole('button',{name:'展开旧窗口 一个已知项目：原生标题很长时也应完整呈现',exact:true}).click();await page.getByRole('link',{name:'旧窗口',exact:true}).waitFor();
+ await page.screenshot({path:'/private/tmp/vaiwl-v27-formal-desktop.png'});
+ await page.setViewportSize({width:360,height:800});await page.waitForTimeout(50);state=await page.evaluate(()=>productCase.read());assert(state.width<=state.viewport);assert(state.scroll<=state.viewport+1);await page.screenshot({path:'/private/tmp/vaiwl-v27-formal-narrow.png'});
+ // Exact layout choices survive a repaint; settings provides the same actions
+ // when the native sidebar cannot safely be replaced.
+ await page.evaluate(()=>productCase.nav.updateFrameProjection(productCase.dto));assert.equal(await page.getByRole('button',{name:'其他已知聊天',exact:true}).getAttribute('aria-expanded'),'true');
+ await page.getByRole('button',{name:'工作空间设置',exact:true}).click();assert.equal(await page.getByRole('button',{name:'查找已知项目与聊天',exact:true}).count(),1);assert.equal(await page.getByRole('button',{name:'当前工作集',exact:true}).count(),1);
+ await page.evaluate(()=>{const c=productCase;c.nav.invalidate();const empty={items:[],total:0,offset:0,limit:5,hasMore:false};c.nav.updateFrameProjection({...c.dto,current:undefined,groups:{...empty,limit:24},entries:{noProject:{...empty,inventoryTotal:0},unknown:{...empty,inventoryTotal:0}}});});await page.getByText('这里还没有活跃主题',{exact:true}).waitFor();await page.evaluate(()=>productCase.nav.stop());
+});

@@ -25,3 +25,6 @@ for(const field of ['reading','readingViewport','historyMaskRoots','composer','h
 test('refresh rejects failed inspection and missing sidebar rectangle without partially moving workspace',async()=>{
  for(const patch of [{ok:false},{viewMask:'unsupported'},{sidebarRect:null}]){const f=await fixture();try{const old=styles(f);assert.equal(f.surface.refreshGeometry(f.handle,{...f.next(),...patch}),false);assert.deepEqual(styles(f),old);assert(f.nodes.every(n=>!n.open));}finally{f.surface.dispose(f.handle);}}
 });
+test('partial native history preserves one native sidebar while workspace and joins survive',async()=>{
+ const f=await fixture();try{const frames=f.surface.frames(f.handle),before=snapshot(f);assert.equal(f.surface.refreshGeometry(f.handle,{...f.next(),preserveNativeSidebar:true}),true);assert.equal(f.nodes[0].open,true);assert.equal(f.nodes[1].open,false);assert.equal(f.surface.isMasked(f.history),false);assert.equal(f.surface.isMasked(f.reading),true);f.surface.suspend(f.handle);assert.equal(f.surface.showWorkspace(f.handle),true);assert.equal(f.nodes[0].open,true);assert.equal(f.nodes[1].open,false);assert.deepEqual(f.surface.frames(f.handle),frames);assert.deepEqual(snapshot(f),before);assert.equal(f.composer.value,'UNSENT DRAFT');}finally{f.surface.dispose(f.handle);}
+});

@@ -435,7 +435,7 @@ if(!p){
    if(priorNodes.length&&document.documentElement?.dataset){const roles=['history','header','reading','composer','return-slot','reading-viewport','history-source','return-hit-root'];document.documentElement.dataset.vaiwlMaskChange=JSON.stringify({before:priorNodes.slice(8).length,after:nodes.slice(8).length,retained:priorNodes.slice(8).filter(n=>nodes.slice(8).includes(n)).length});document.documentElement.dataset.vaiwlRegionChange=roles.filter((_,i)=>nodes[i]!==priorNodes[i]).concat(nodes.length!==priorNodes.length||nodes.slice(8).some((n,i)=>n!==priorNodes[i+8])?['history-mask-run']:[]).join(',');}
    regionEpoch++;priorNodes=nodes;
   }
-  return {ok:true,reason:null,profileId:profile.id,history,...(historySource?{historySource}:{}),header,reading,navigationSlot,composer,protectedRegions,...(readingViewport?{readingViewport}:{}),historyMaskRoots:historyPresentation.maskRoots,...(gapMode?{returnPlacement:'header-gap',returnHitRoot:one(nativeLayout.returnHitRoot)}:{}),returnSlot,readingRect,sidebarRect,viewMask:'declarative-css',regionEpoch};
+  return {ok:true,reason:null,profileId:profile.id,history,...(historySource?{historySource}:{}),header,reading,navigationSlot,composer,protectedRegions,...(readingViewport?{readingViewport}:{}),historyMaskRoots:historyPresentation.maskRoots,preserveNativeSidebar:historyPresentation.complete===false,...(gapMode?{returnPlacement:'header-gap',returnHitRoot:one(nativeLayout.returnHitRoot)}:{}),returnSlot,readingRect,sidebarRect,viewMask:'declarative-css',regionEpoch};
  }
  const api={setReturnControl(node){returnControl=node;},getReturnControlRect(inspection){
   if(projectLayout())return currentProjectSurface(inspection)?.returnSlot??null;

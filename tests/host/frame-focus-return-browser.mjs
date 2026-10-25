@@ -65,12 +65,16 @@ try{
   const {createNavigation}=await import('/src/navigation/navigation.mjs');
   nav=createNavigation({document,surface:{role:'sidebar',root:document.querySelector('#mount')},adapter:{currentURL:()=>'',isCurrent:()=>false,status(){}},onProjectionRequest:()=>sidebarFinal});nav.updateFrameProjection(dto);
  });
- await frame.getByRole('button',{name:'显示更多归属待核对',exact:true}).focus();
- await frame.getByRole('button',{name:'显示更多归属待核对',exact:true}).press('Enter');
- await frame.waitForFunction(()=>!nav.roots().sidebar.shadow.querySelector('[aria-label="显示更多归属待核对"]'));
+ await frame.getByRole('button',{name:'其他已知聊天',exact:true}).click();
+ await frame.getByRole('button',{name:'显示更多其他已知聊天',exact:true}).focus();
+ await frame.getByRole('button',{name:'显示更多其他已知聊天',exact:true}).press('Enter');
+ await frame.waitForFunction(()=>!nav.roots().sidebar.shadow.querySelector('[aria-label="显示更多其他已知聊天"]'));
  report.sidebarFinalExpansion=await frame.evaluate(()=>{const shadow=nav.roots().sidebar.shadow;return {focusWithin:!!shadow.activeElement,focusedNavigation:shadow.activeElement===shadow.querySelector('.themes'),rows:shadow.querySelectorAll('[data-ref-id]').length};});
  await frame.evaluate(()=>nav.updateFrameProjection(sidebarFinal));
  report.sidebarUpdateRetainsFocus=await frame.evaluate(()=>{const shadow=nav.roots().sidebar.shadow;return shadow.activeElement===shadow.querySelector('.themes');});
+ await page.keyboard.press('Tab');
+ report.sidebarDisclosureTab=await frame.evaluate(()=>nav.roots().sidebar.shadow.activeElement?.getAttribute('aria-label'));
+ assert.equal(report.sidebarDisclosureTab,'其他已知聊天');
  await page.keyboard.press('Tab');
  report.sidebarNextTab=await frame.evaluate(()=>nav.roots().sidebar.shadow.activeElement?.getAttribute('data-ref-id'));
  // A row can also disappear from this sidebar after a same-scope update.
