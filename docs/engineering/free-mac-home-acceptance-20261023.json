@@ -3500,10 +3500,81 @@
         "focusChangedByAgent": false,
         "retry": false
       },
-      "projectReceiver": "NOT_RUN_CURRENT_BUILD: Project navigation was not dispatched; historical transport-error remains unresolved and offline success is not a real fix.",
+      "projectReceiver": "PASS_CURRENT_DOCUMENT: module loaded, private status/layout/pipeline and formal renderer receipt successfully read. Historical transport-error is not reproduced; historical cause remains unknown.",
       "privateRecordRestore": "NOT_RUN: locked, not auto-confirmed",
-      "fullV27PersonalAcceptance": "NOT_PASSED"
+      "fullV27PersonalAcceptance": "NOT_PASSED",
+      "projectCurrentBuildSnapshot": {
+        "status": "PASS_RECEIVER_AND_RENDERER_ONLY",
+        "pageEvidence": "User replied ok after request to enter existing Project and open its VAIWL status; own popup roots [1,1,1] and Project member structure corroborate. URL/ID not recorded.",
+        "module": "module-loaded",
+        "fingerprint": "46dfc62f3b35c6bc47acc6e45c7702df04100d6eb1fcb46ef72147eb9ebea100",
+        "localStatus": "reading",
+        "storage": "session",
+        "nativeRevision": 8,
+        "projects": 1,
+        "refs": 15,
+        "delivery": {
+          "pages": 20,
+          "resolvedProjects": 12,
+          "resolvedChats": 42,
+          "acceptedPackets": 4,
+          "acceptedProjects": 4,
+          "acceptedChats": 14,
+          "rejectedPackets": 0,
+          "capped": false
+        },
+        "workspaceReply": {
+          "versions": [
+            8,
+            0,
+            [
+              0,
+              0
+            ],
+            0
+          ],
+          "inventory": [
+            1,
+            15
+          ],
+          "groups": [
+            1,
+            1
+          ],
+          "unknown": [
+            13,
+            5
+          ]
+        },
+        "workspaceReceipt": {
+          "deliveryId": 7,
+          "phase": "rendered",
+          "cards": 1,
+          "rows": 2
+        },
+        "presentation": {
+          "mode": "reading",
+          "attempt": "not-attempted",
+          "registered": true,
+          "frames": 2,
+          "grants": 2,
+          "workspace": false,
+          "sidebar": false,
+          "geometryPaused": false,
+          "returnPresent": true
+        },
+        "private": "LOCKED",
+        "reader": {
+          "ownedPopupCount": 1,
+          "nodes": 102,
+          "skippedWebAreas": 1,
+          "truncated": false,
+          "readErrors": []
+        },
+        "interpretation": "Current Project document successfully responds and its real VIEW is consumed by formal renderer. Reading mode with not-attempted workspace is not a render failure. This does not retrospectively establish the old transport-error cause or prove visible UX.",
+        "expandCheck": "NOT_RUN: existing toolbar close guard returned Target is not frontmost (-2700), before dispatch. No activation, retry, reload or alternate channel."
+      }
     },
-    "remaining": "One real Project exact-document startup/status sample is still needed to locate its receiver failure. Sustained homepage visual presentation also remains unverified because the later AX reading differed from the popup snapshot. Do not infer missing data, fabricate a lifecycle cause, or repeatedly upgrade/refresh."
+    "remaining": "Current Project receiver and rendering are now verified. Final sustained visual workspace opening remains unverified because native input guard prevented the toolbar close/return interaction. Private record restoration also remains NOT_RUN; no new code defect inferred from either."
   }
 }
