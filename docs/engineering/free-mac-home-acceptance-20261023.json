@@ -3302,5 +3302,104 @@
       "partial native sidebar is preserved, not claimed full derived sidebar acceptance"
     ],
     "fullFreeAccepted": false
+  },
+  "r96CandidateReadRepair20261025": {
+    "baseHead": "db9835ba28f7c82bc969507e26d7726a14e330db",
+    "installedCandidate": "r96",
+    "installationChanged": true,
+    "databaseChanged": false,
+    "newMessages": 0,
+    "confirmedDefect": {
+      "component": "chatgpt-adapter.loadedCandidatePages",
+      "failure": "stale-host-loaded-read",
+      "cause": "directory and presentation scheduling shared surfaceEpoch",
+      "repair": "candidate-only monotonic epoch; exact owned presentation and same-identity renewal preserve the directory; native changes still invalidate"
+    },
+    "offline": {
+      "basis": "existing observed anonymous mixed row order plus explicitly synthetic geometry-neutral pagination amplifier",
+      "before": "candidate read fails; ordinary 13 refs still reach VIEW",
+      "after": "candidate errors 0; ordinary 13 refs still reach VIEW",
+      "targetedRegression": "PASS",
+      "independentReadOnlyReview": "PASS",
+      "formalMV3MixedHistory": "PASS",
+      "homeProjectReturnTrace": "PASS_OFFLINE_ONLY",
+      "externalNetwork": "BLOCKED",
+      "realAccount": false,
+      "finalMV3Report": "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-kPpGVf/report.json",
+      "currentLocalStoreAndWorkspaceReplyCountsAgree": true,
+      "slowDiagnosticDoesNotBlockStatusOrConfirmation": true,
+      "exactDocumentAndRouteSnapshotFence": "PASS"
+    },
+    "actualUserStatus": {
+      "state": "reading",
+      "privateSpace": "locked",
+      "pageKind": "home",
+      "lastScanPage": {
+        "phase": "accepted",
+        "roots": [
+          1,
+          1,
+          0
+        ],
+        "matched": 4,
+        "visible": 0,
+        "rejected": [
+          4,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "candidates": 0,
+        "claims": 0
+      },
+      "notCumulative": true,
+      "interpretation": "Current home listener replied reading. Last-page accepted is not cumulative delivery; does not prove Project receiver recovery."
+    },
+    "realMac": {
+      "candidateFix": "NOT_RUN",
+      "homeEmptyRootCause": "NOT_ESTABLISHED",
+      "projectTransportRootCause": "NOT_ESTABLISHED",
+      "fullFreeAccepted": false
+    },
+    "excludedHypotheses": [
+      "installed and frozen r96 differ (198 files equal)",
+      "Worker restart succeeds with old binding tokens and suppresses all observations",
+      "normal foreground renewal discards the current RAM scope"
+    ],
+    "boundary": "Original extension directory updated only after explicit exception approval and complete backup. No browser action ran after approval rejection. No DB/draft changes, account requests, messages or repeated journeys. Real empty-home and Project receiver causes remain unestablished; source repair and diagnostic integrity are offline evidence only.",
+    "anonymousPipeline": {
+      "producer": "per-generation cumulative resolved row and accepted packet counts; not unique inventory",
+      "localStore": "current admitted routed repository header revision and project/ref counts; unknown manifest stays null",
+      "workspaceReply": "last successfully scope-validated workspace reply versions and per-segment counts; not proof of renderer paint",
+      "receiver": "exact browser documentId and route before and after status/layout; fixed error classes only; no retry",
+      "privacy": "No IDs, titles, credentials, message body or query stored/output; no descriptor-selected private read",
+      "statusIndependence": "Optional pipeline action is bounded separately and never holds the confirmation mutex or delays ordinary binding status/buttons"
+    },
+    "package": {
+      "path": ".git/vaiwl-artifacts/r96-source-repair-snapshot-20261025/frozen-package/extension",
+      "files": 198,
+      "sha256": "c0f84af717161b87dcd5f9090f030ba684d8540ab36a82f0de3efcc2f0066126",
+      "verified": true
+    },
+    "installation": {
+      "authorization": "User explicitly approved one repair-plus-anonymous-snapshot update before final diagnosis",
+      "receipt": ".git/vaiwl-artifacts/r96-source-repair-snapshot-20261025/receipt.json",
+      "backupFiles": 2878,
+      "manifestUnchanged": true,
+      "extensionIdUnchanged": true,
+      "disk": "UPDATED_VERIFIED",
+      "activation": "NOT_RUN",
+      "reloadCount": 0,
+      "nativeAction": "AUTO_REVIEW_REJECTED_BEFORE_EXECUTION",
+      "rejectionReason": "Native exact-PID activation and raising the original window was considered contrary to no-tab-takeover and stop-operator constraints",
+      "bypass": false
+    }
   }
 }

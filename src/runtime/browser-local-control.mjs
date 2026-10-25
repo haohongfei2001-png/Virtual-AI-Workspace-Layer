@@ -1,3 +1,4 @@
+import {withRequestDeadline} from '../data/request-deadline.mjs';
 import {tokenOK} from '../b1/identity.mjs';
 import {exactHostRecord} from '../host/contract.mjs';
 /** Explicit confirmation plus bounded browser-session continuity. Session rows
@@ -61,6 +62,29 @@ export function createBrowserLocalControl({chrome,service,allowedURL,urlPolicy,o
    }catch{service.invalidate({tabId:frame.tabId});}
   })();resumes.set(key,attempt);try{await attempt;}finally{if(resumes.get(key)===attempt)resumes.delete(key);}
  }
+ // One private-popup snapshot of already admitted local data. Never derive a
+ // scope from the durable descriptor or refresh an expired grant for this read.
+ async function pipelineSnapshot(){
+  const ticket=revision;let reading=true;
+  try{return await withRequestDeadline(async()=>{
+   await ready;
+   if(!reading||!active||ticket!==revision)return null;
+   const tabs=await chrome.tabs.query({active:true,currentWindow:true});
+   if(!reading||!active||ticket!==revision||tabs.length!==1||tabs[0].incognito!==false)return null;
+   const actual=await chrome.webNavigation.getFrame({tabId:tabs[0].id,frameId:0});
+   if(!actual||!allowedURL(actual.url)||actual.documentLifecycle!=='active')return null;
+   const frame=frameOf(tabs[0],actual),scope=service.authority.scopeFor?.(frame),grant=service.authority.peek?.(frame)?.grant;
+   if(!scope||!grant||!service.nativeRepository?.header)return null;
+   const guard=()=>reading&&active&&ticket===revision&&service.authority.isCurrentGrant(frame,grant)&&service.authority.scopeFor(frame)?.key===scope.key;
+   if(!guard())return null;
+   const header=await service.nativeRepository.header(scope,{guard});
+   if(!guard())return null;
+   const check=await chrome.webNavigation.getFrame({tabId:frame.tabId,frameId:0}),current=await chrome.tabs.query({active:true,currentWindow:true});
+   if(!guard()||current.length!==1||current[0].id!==frame.tabId||current[0].incognito!==false||check?.documentId!==frame.documentId||check.url!==frame.actualURL||check.documentLifecycle!=='active')return null;
+   const count=value=>value&&Object.getPrototypeOf(value)===Object.prototype?Object.keys(value).length:null;
+   return {storage:scope.storage,nativeRevision:header.revision,projects:count(header.manifest?.projects),refs:count(header.manifest?.refs),lastWorkspaceDelivery:service.views?.deliverySummary?.(frame,scope.key)??null};
+  },{timeoutMs:1000});}catch{return null;}finally{reading=false;}
+ }
  async function handle(m,sender){
   const popup=sender?.id===chrome.runtime.id&&sender.url===chrome.runtime.getURL('status.html')&&(sender.tab===undefined||sender.frameId===0&&sender.tab.url===sender.url);
   const content=!popup&&sender?.id===chrome.runtime.id&&sender.frameId===0&&Number.isSafeInteger(sender.tab?.id)&&tokenOK(sender.documentId)&&allowedURL(sender.url);
@@ -68,8 +92,10 @@ export function createBrowserLocalControl({chrome,service,allowedURL,urlPolicy,o
    const parsed=urlPolicy?.parse(m.target);if(!['conversation','project'].includes(parsed?.kind))return {ok:false};
    return {ok:service.authority.prepareDocumentNavigation({tabId:sender.tab.id,frameId:0,documentId:sender.documentId,documentLifecycle:sender.documentLifecycle,incognito:sender.tab.incognito,actualURL:sender.url},parsed.navigationURL)};
   }
-  if(!exactHostRecord(m,['v','type','action'])||m.v!==1||m.type!=='HOST_LOCAL_SPACE'||!['status','unlock','lock'].includes(m.action)||(!popup&&!(content&&m.action==='lock')))return {ok:false};
+  if(!exactHostRecord(m,['v','type','action'])||m.v!==1||m.type!=='HOST_LOCAL_SPACE'||!['status','pipeline','unlock','lock'].includes(m.action)||(!popup&&!(content&&m.action==='lock')))return {ok:false};
   if(m.action==='lock'){if(content)service.invalidate({tabId:sender.tab.id});await revokeAll();return {ok:true,mode:'session'};}
+  // Optional evidence must not hold the confirmation mutex or delay status.
+  if(m.action==='pipeline'){const pipeline=await pipelineSnapshot();return {ok:true,...(pipeline?{pipeline}:{})};}
   if(busy)return {ok:false,reason:'local-binding-busy'};
   busy=true;const ticket=m.action==='unlock'?++revision:revision;let stage='read-frame',bindingTab=null;
   try{

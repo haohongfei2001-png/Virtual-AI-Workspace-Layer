@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {foregroundFailureStates,installLocalStatus,readActiveLocalStatus,validLayoutShape,readActiveLocalLayout} from '../../src/host/local-status.mjs';
+import {foregroundFailureStates,installLocalStatus,readActiveLocalStatus,validLayoutShape,readActiveLocalLayout,validLocalPipeline} from '../../src/host/local-status.mjs';
 const request=()=>({v:1,type:'HOST_LOCAL_STATUS'});
 const sender=()=>({id:'extension',url:'chrome-extension://extension/status.html'});
 const drain=async()=>{for(let i=0;i<30;i++)await Promise.resolve();};
@@ -100,4 +100,40 @@ test('structure diagnostic spends before dispatch and never retries an unknown o
  const locks={request:async(key,run)=>run()};
  assert.equal((await runHistoryDiagnosticOnce({chrome,locks})).state,'outcome-unknown');
  assert.deepEqual(await runHistoryDiagnosticOnce({chrome,locks}),{state:'spent',report:null});assert.equal(sends,1);
+});
+
+test('local pipeline reports only counts and separate versions, never raw rows or IDs',()=>{
+ const p={storage:'session',nativeRevision:3,projects:1,refs:2,lastWorkspaceDelivery:{versions:[2,0,0,0],segment:0,inventory:[1,1],groups:[1,1],noProject:[0,0],unknown:[1,1]}};
+ assert(validLocalPipeline(p));assert(validLocalPipeline({...p,projects:null,refs:null,lastWorkspaceDelivery:null}));
+ for(const bad of [{...p,scope:'PRIVATE'},{...p,refs:'PRIVATE'},{...p,storage:'server'},{...p,lastWorkspaceDelivery:{...p.lastWorkspaceDelivery,url:'PRIVATE'}}])assert(!validLocalPipeline(bad));
+});
+for(const [stage,message,expected]of [['query','PRIVATE','tab-query-failed'],['send','Could not establish connection. Receiving end does not exist.','receiver-unavailable'],['send','The message port closed before a response was received.','receiver-disconnected'],['send','No tab with id: 123','tab-closed'],['send','PRIVATE','transport-error']])test('status retains fixed failure stage '+expected+' without retry or error text',async()=>{
+ let code,sends=0;const tabs={query:async()=>{if(stage==='query')throw Error(message);return [{id:7}];},sendMessage:async()=>{sends++;throw Error(message);}};
+ assert.equal(await readActiveLocalStatus({tabs,onFailure:c=>code=c}),'unavailable');assert.equal(code,expected);assert.equal(sends,stage==='query'?0:1);
+});
+
+for(const changed of [false,true])test('status targets exact browser document and rejects replacement '+changed,async()=>{
+ let reads=0,sends=0,code;const tabs={query:async()=>[{id:7}],sendMessage:async(id,message,options)=>{sends++;assert.equal(id,7);assert.deepEqual(options,{documentId:'old'});return {v:1,state:'reading'};}};
+ const webNavigation={getFrame:async()=>({documentId:changed&&reads++?'new':'old',documentLifecycle:'active',url:'https://chatgpt.com/'})};
+ const result=await readActiveLocalStatus({tabs,webNavigation,onFailure:c=>code=c});
+ assert.equal(result,changed?'unavailable':'reading');assert.equal(code,changed?'document-changed':undefined);assert.equal(sends,1);
+});
+test('status timeout during document lookup cannot later dispatch into a replacement',async()=>{
+ let release,expire,sends=0;const pending=readActiveLocalStatus({tabs:{query:async()=>[{id:7}],sendMessage:()=>{sends++;}},webNavigation:{getFrame:()=>new Promise(r=>release=r)},schedule:f=>{expire=f;return 1;},cancel:()=>{}});
+ await drain();expire();assert.equal(await pending,'unavailable');release({documentId:'late',documentLifecycle:'active'});await drain();assert.equal(sends,0);
+});
+
+test('anonymous delivery shape rejects content, extra fields and overflow',()=>{
+ const navigation={phase:'accepted',roots:[1,1,0],firstOutside:[],firstClip:[],memberShape:[],headingShape:[],memberReject:Array(7).fill(0),rejected:Array(11).fill(0),matched:0,visible:0,titles:0,association:0,candidates:0,claims:0};
+ const delivery={pages:3,resolvedProjects:0,resolvedChats:4,acceptedPackets:2,acceptedProjects:0,acceptedChats:4,rejectedPackets:0,capped:false};
+ assert(validLayoutShape({navigation,delivery}));for(const bad of [{...delivery,title:'PRIVATE'},{...delivery,pages:'PRIVATE'},{...delivery,pages:1000001}])assert(!validLayoutShape({navigation,delivery:bad}));
+});
+test('SPA replacement is rejected even with the same document ID',async()=>{
+ let reads=0,code,target;const webNavigation={getFrame:async()=>({documentId:'doc',url:reads++?'https://chatgpt.com/g/private/project':'https://chatgpt.com/',documentLifecycle:'active'})};
+ assert.equal(await readActiveLocalStatus({webNavigation,tabs:{query:async()=>[{id:7}],sendMessage:async()=>({v:1,state:'ready'})},onTarget:t=>target=t,onFailure:c=>code=c}),'unavailable');assert.equal(code,'document-changed');assert.equal(target,undefined);
+});
+test('layout reuses status target and drops data if that route changed',async()=>{
+ const target={tabId:7,documentId:'doc',url:'https://chatgpt.com/'};let reads=0,sends=0;
+ const result=await readActiveLocalLayout({target,webNavigation:{getFrame:async()=>({documentId:'doc',url:reads++?target.url+'c/private':target.url,documentLifecycle:'active'})},tabs:{query:()=>assert.fail('must reuse the exact status target'),sendMessage:async(id,m,o)=>{sends++;assert.equal(id,7);assert.deepEqual(o,{documentId:'doc'});return {v:1,shape:{counts:[1,1,1,1,1,1,1],branches:[]}};}}});
+ assert.equal(result,null);assert.equal(sends,1);
 });

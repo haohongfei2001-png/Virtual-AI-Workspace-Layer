@@ -20,7 +20,7 @@ function controlFixture(){
  const stored={},sessionStored={},sent=[],a=createBrowserLocalAuthority({allowedURL:u=>u.startsWith(origin+'/')});let getHook=null,restart={ok:true},nonce=null,probeHook=null;
  const chrome={runtime:{id:'ext',getURL:p=>'chrome-extension://ext/'+p},tabs:{query:async()=>[{id:7,incognito:false}],sendMessage:async(...args)=>{sent.push(args);const m=args[1];if(m.type==='HOST_LOCAL_CONTINUITY'){if(m.action==='probe'){if(probeHook)await probeHook();return {challenge:m.challenge,revision:0,nonce};}nonce=m.nonce;return {ok:true};}if(m.type==='HOST_LOCAL_LOCKED')nonce=null;return restart;}},webNavigation:{getFrame:async()=>({documentId:'doc',url:origin+'/',documentLifecycle:'active'})},storage:{session:{setAccessLevel:async()=>{},get:async key=>({[key]:sessionStored[key]}),set:async value=>Object.assign(sessionStored,structuredClone(value))},local:{get:async key=>{if(getHook)await getHook();return {[key]:stored[key]};},set:async value=>Object.assign(stored,value)}}};
  const service={authority:a,invalidate:({tabId})=>a.invalidateTab(tabId)},control=createBrowserLocalControl({chrome,service,allowedURL:u=>u.startsWith(origin+'/'),urlPolicy:createURLPolicy()});
- return {control,a,stored,sent,chrome,sessionStored,clearNonce:()=>nonce=null,probeHook:h=>probeHook=h,hook:h=>getHook=h,restart:r=>restart=r,popup:{id:'ext',url:chrome.runtime.getURL('status.html')},content:{id:'ext',url:origin+'/',frameId:0,documentId:'doc',documentLifecycle:'active',tab:{id:7,incognito:false}}};
+ return {control,service,a,stored,sent,chrome,sessionStored,clearNonce:()=>nonce=null,probeHook:h=>probeHook=h,hook:h=>getHook=h,restart:r=>restart=r,popup:{id:'ext',url:chrome.runtime.getURL('status.html')},content:{id:'ext',url:origin+'/',frameId:0,documentId:'doc',documentLifecycle:'active',tab:{id:7,incognito:false}}};
 }
 test('only private confirmation unlocks; descriptor alone restores nothing; failed restart revokes',async()=>{
  const f=controlFixture(),m={v:1,type:'HOST_LOCAL_SPACE',action:'unlock'};
@@ -110,4 +110,37 @@ test('titlebar recovery observer requires unique visible boundaries before spend
  mutated();await Promise.resolve();assert.equal(recoveries,0);
  duplicates=false;mutated();await Promise.resolve();assert.equal(recoveries,1);
  doc.visibilityState='hidden';mutated();await Promise.resolve();assert.equal(recoveries,1);remove();
+});
+
+for(const change of ['none','lock','document','legacy'])test('popup pipeline is counted from the current local store and fenced on '+change,async()=>{
+ const f=controlFixture();await f.a.refresh(frame);
+ const scope=f.a.scopeFor(frame),before=JSON.stringify([f.stored,f.sessionStored]);let reads=0;
+ f.service.nativeRepository={header:async(actual,{guard})=>{
+  reads++;assert.equal(actual.key,scope.key);assert.equal(actual.storage,'session');assert(guard());
+  if(change==='lock')f.a.invalidateTab(7);
+  if(change==='document')f.chrome.webNavigation.getFrame=async()=>({documentId:'new-document',url:origin+'/',documentLifecycle:'active'});
+  return {revision:3,manifest:change==='legacy'?null:{projects:{PRIVATE_PROJECT:1},refs:{PRIVATE_CHAT:1,PRIVATE_OTHER:1}}};
+ }};
+ const r=await f.control.handle({v:1,type:'HOST_LOCAL_SPACE',action:'pipeline'},f.popup);
+ assert.equal(reads,1);assert.equal(f.sent.length,0);assert.equal(JSON.stringify([f.stored,f.sessionStored]),before);
+ if(['lock','document'].includes(change))assert.equal(r.pipeline,undefined);
+ else assert.deepEqual(r.pipeline,{storage:'session',nativeRevision:3,projects:change==='legacy'?null:1,refs:change==='legacy'?null:2,lastWorkspaceDelivery:null});
+ assert(!JSON.stringify(r).includes('PRIVATE'));
+});
+test('descriptor without a current document scope never reads private pipeline data',async()=>{
+ const f=controlFixture();f.stored['vaiwl-browser-local-personal-v1']={version:1,spaceId:'old-personal'};
+ f.service.nativeRepository={header:()=>assert.fail('locked descriptor must not select a store')};
+ const r=await f.control.handle({v:1,type:'HOST_LOCAL_SPACE',action:'pipeline'},f.popup);
+ assert.equal(r.pipeline,undefined);
+ assert.equal((await f.control.handle({v:1,type:'HOST_LOCAL_SPACE',action:'status'},f.popup)).mode,'locked');
+});
+test('a slow diagnostic header cannot delay binding status or occupy the confirmation mutex',async()=>{
+ const f=controlFixture();await f.a.refresh(frame);let release,entered,lateGuard;
+ const started=new Promise(r=>entered=r);
+ f.service.nativeRepository={header:async(scope,{guard})=>{lateGuard=guard;entered();return new Promise(r=>release=()=>r({revision:1,manifest:null}));}};
+ const pending=f.control.handle({v:1,type:'HOST_LOCAL_SPACE',action:'pipeline'},f.popup);await started;
+ assert.equal((await f.control.handle({v:1,type:'HOST_LOCAL_SPACE',action:'status'},f.popup)).mode,'locked');
+ assert.equal((await f.control.handle({v:1,type:'HOST_LOCAL_SPACE',action:'unlock'},f.popup)).ok,true);
+ assert.equal(lateGuard(),false,'new confirmation fences the old diagnostic read');release();
+ assert.equal((await pending).pipeline,undefined);
 });

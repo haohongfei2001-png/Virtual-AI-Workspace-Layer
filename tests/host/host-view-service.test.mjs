@@ -790,3 +790,16 @@ test('MOCK_IDB known project search includes no-member projects outside the curr
  const calls=[],h=await fixture(t,{documentURL:'https://chatgpt.com/c/c1',prepareNavigation:async x=>{calls.push(x);return x.targets.map(hrefPlan);}});await h.bind();await h.observe();await h.mount();await ready(h);
  const result=await h.view('workspace',{segment:10,search:{query:'Native Project',offset:0,limit:24}});assert.equal(result.state,'ready',JSON.stringify(result));assert.equal(result.page.groups.items.length,0);assert.deepEqual(result.page.search.items.map(r=>[r.kind,r.id]),[['project','p1']]);assert(calls.at(-1).targets.some(r=>r.projectId==='p1'));assert(!calls.at(-1).targets.some(r=>r.refId==='p1'));assert(result.navigation.some(r=>r.projectId==='p1'));assert.equal(result.page.currentRef.membership,'UNKNOWN');
 });
+
+test('workspace delivery summary is anonymous, document-scoped, and absent after revoke',async t=>{
+ const h=await fixture(t);await h.bind();await h.observe();await h.mount();
+ const frame={tabId:1,frameId:0,documentId:'document',actualURL:url,documentLifecycle:'active',incognito:false},scope=h.service.authority.scopeFor(frame);
+ assert.equal(h.service.views.deliverySummary(frame,scope.key),null);
+ const reply=await ready(h);assert.equal(reply.state,'ready');
+ const summary=h.service.views.deliverySummary(frame,scope.key);
+ assert.deepEqual(summary,{versions:[reply.page.revision,reply.page.workspaceRevision,reply.page.evidenceRevision.split(':').map(Number),reply.page.viewRevision],segment:0,inventory:[1,1],groups:[1,1],noProject:[0,0],unknown:[1,1]});
+ await ready(h,'sidebar');assert.deepEqual(h.service.views.deliverySummary(frame,scope.key),summary);
+ assert.equal(h.service.views.deliverySummary({...frame,documentId:'other'},scope.key),null);
+ assert.equal(h.service.views.deliverySummary(frame,'other-scope'),null);
+ h.service.invalidate({tabId:1});assert.equal(h.service.views.deliverySummary(frame,scope.key),null);
+});

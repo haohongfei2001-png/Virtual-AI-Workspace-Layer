@@ -45,6 +45,16 @@ export function createChatGPTAdapter({document,urlPolicy=createURLPolicy(),profi
  const terminalWork=new Set();
  let observationOnly=false,observationRAM=null,observationExpiry=null,observationStarted=0,observationLifetime=0,observationRows=[],observationKeys=new Set(),observationCursor=null,observationScanStarted=0,observationScanning=false;
  let navigationPhase='not-scanned';
+ // Candidate enumeration concerns navigation controls, not the presentation
+ // scheduler. Same-producer renewal and an exact owned popover toggle do not
+ // change that directory. Native mutations still retire it monotonically.
+ let candidateEpoch=0;
+ // Counts are row observations in this producer generation, not unique objects
+ // or a complete inventory. Candidate-only reads never enter this ledger.
+ const emptyDelivery=()=>({pages:0,resolvedProjects:0,resolvedChats:0,acceptedPackets:0,acceptedProjects:0,acceptedChats:0,rejectedPackets:0,capped:false});
+ let delivery=emptyDelivery();
+ const tally=(key,n=1)=>{const next=delivery[key]+n;if(next>1000000)delivery.capped=true;delivery[key]=Math.min(1000000,next);};
+ const rowCount=(payload,entity)=>payload.candidates.filter(r=>r.entity===entity&&r.target.kind==='resolved').length;
  let ingestionPass=null,pass=null,passSequence=0,cursorRestarts=0,activeWork=0,loadedReads=0,idleRevision=0,nativePrepareAt=null;
  async function track(work){activeWork++;try{return await work();}finally{activeWork--;notifyIdle();}}
  // A revocable observation-readiness snapshot, never a freeze or close permit.
@@ -153,14 +163,15 @@ export function createChatGPTAdapter({document,urlPolicy=createURLPolicy(),profi
   const keys=['documentToken','producerToken','browserDocumentId','routeEpoch','origin'];
   if(!next||Object.keys(next).sort().join(',')!==[...keys,'expiresAt'].sort().join(',')||keys.some(key=>next[key]!==binding[key]))throw Error('invalid-host-binding-renewal');
   const expiry=Date.parse(next.expiresAt),time=now();if(!Number.isFinite(expiry)||expiry<=time||expiry>time+20000)throw Error('invalid-host-binding-renewal');
-  binding=Object.freeze({...next});last.delete('current-object');failedKey.delete('current-object');requestScan(true,true);return true;
+  binding=Object.freeze({...next});last.delete('current-object');failedKey.delete('current-object');requestScan(true,true,true);return true;
  }
  function proposal(page=false){if(!live())throw Error('stale-host-binding');syncRoute();const found=page?discovery.scanPage(surfaceCursor):null,payload=found?found.payload:discovery.scan();if(found){surfaceCursor=found.cursor;surfaceScanning=found.cursor!==null;}return {protocol:'vaiwl-host-observation/1',documentToken:binding.documentToken,producerToken:binding.producerToken,localSeq:++seq,routeEpoch:epoch,profileId:profile.id,profileVersion:profile.revision,bodyProofId:null,kind:'surface-delta',payload};}
  // Private content-side iterator yields bounded packets without aggregating them. This does not fetch unmounted history or authorize any native action.
  async function* loadedPageStream(signal,candidateOnly=false){
   loadedReads++;idleRevision++;try{
-  const run=generation,revision=surfaceEpoch,started=elapsedNow();let cursor=null;
-  const check=()=>{const elapsed=elapsedNow()-started;if(signal?.aborted||!active()||run!==generation||revision!==surfaceEpoch||!Number.isFinite(elapsed)||elapsed<0||elapsed>=6000)throw Error('stale-host-loaded-read');syncRoute();};
+  const revisionNow=()=>candidateOnly?candidateEpoch:surfaceEpoch;
+  const run=generation,revision=revisionNow(),started=elapsedNow();let cursor=null;
+  const check=()=>{const elapsed=elapsedNow()-started;if(signal?.aborted||!active()||run!==generation||revision!==revisionNow()||!Number.isFinite(elapsed)||elapsed<0||elapsed>=6000)throw Error('stale-host-loaded-read');syncRoute();};
   do{
    check();const found=candidateOnly?discovery.scanCandidatePage(cursor):discovery.scanPage(cursor);cursor=found.cursor;
    const source={protocol:'vaiwl-host-observation/1',documentToken:binding.documentToken,producerToken:binding.producerToken,localSeq:++seq,routeEpoch:epoch,profileId:profile.id,profileVersion:profile.revision,bodyProofId:null,kind:'surface-delta',payload:found.payload};
@@ -236,7 +247,7 @@ export function createChatGPTAdapter({document,urlPolicy=createURLPolicy(),profi
     if(document.visibilityState==='hidden')return;
     if(!surfaceParts.length&&(surfaceScanning||surfaceWanted)){
      if(!surfaceScanning){surfaceWanted=false;surfaceCursor=null;surfacePage=0;surfaceScanning=true;}
-     const source=proposal(true);surfacePageKey=surfacePage++;surfaceSequence=source.localSeq;surfaceKey=publicationKey(source);
+     const source=proposal(true);tally('pages');tally('resolvedProjects',rowCount(source.payload,'project'));tally('resolvedChats',rowCount(source.payload,'conversation'));surfacePageKey=surfacePage++;surfaceSequence=source.localSeq;surfaceKey=publicationKey(source);
      // Retain the initial empty-surface handshake; only continuation pages
      // without facts or detached handles can drain locally.
      const hasObservation=surfacePageKey===0||source.payload.candidates.length||source.payload.membershipClaims.length||source.payload.detachedHandles.length;
@@ -276,6 +287,10 @@ if(!p){
    if(remaining()<=0)return finish('host-observation-retry-budget');
    if(ack?.localSeq!==p.localSeq)return finish('host-observation-ack-unknown');
    if(p.kind==='surface-delta')navigationPhase=['accepted','duplicate','rejected','retry-after'].includes(ack.state)?ack.state:'failed';
+   if(p.kind==='surface-delta'){
+    if(ack.state==='accepted'||ack.state==='duplicate'){tally('acceptedPackets');tally('acceptedProjects',rowCount(p.payload,'project'));tally('acceptedChats',rowCount(p.payload,'conversation'));}
+    else if(ack.state==='rejected')tally('rejectedPackets');
+   }
    if(ack.state==='accepted'||ack.state==='duplicate'){if(p.kind==='send-gap'){sendGapBlocked=false;acceptedBody=null;last.delete('current-object');failedKey.delete('current-object');}if(p.kind==='current-object'||p.kind==='current-observation'){const body=p.kind==='current-observation'?p.payload.body:p.payload;acceptedBody=body.association==='explicit-body-id'&&typeof ack.bodyProofId==='string'?{proofId:ack.bodyProofId,bodyEpoch:ack.bodyEpoch,fingerprint:JSON.stringify(body),validUntil:proofExpiry}:null;}if(p.kind==='surface-delta'){surfaceParts.shift();if(!surfaceParts.length&&!surfaceScanning&&surfaceEpoch===surfaceSnapshotEpoch)finishPass('end');if(!surfaceParts.length){surfaceAccepted.set(surfacePageKey,key);surfaceFailed.delete(surfacePageKey);}}if(p.kind!=='surface-delta'||!surfaceParts.length)last.set(p.kind==='current-observation'?'current-object':p.kind,key);failedKey.delete(p.kind==='current-observation'?'current-object':p.kind);dirty=true;return finish();}
    if(ack.state==='retry-after'&&Number.isFinite(ack.delayMs)&&ack.delayMs>=0){
     const delay=Math.max(50,ack.delayMs),left=remaining();
@@ -298,10 +313,11 @@ if(!p){
   await send();
  }
  function schedule(){idleRevision++;if(!live())return;dirty=true;if(busy||queued)return;queued=true;const run=generation;queueMicrotask(()=>{if(run===generation)void pump();});}
- function requestScan(preserveProducerCursor=false,retryFailures=false){
+ function requestScan(preserveProducerCursor=false,retryFailures=false,preserveCandidates=false){
+  if(preserveCandidates!==true)candidateEpoch++;
   if(observationOnly){observationRAM=null;observationRows=[];observationKeys.clear();observationCursor=null;observationScanning=false;surfaceWanted=true;if(retryTimer!==null){cancelRetry(retryTimer);retryTimer=null;}schedule();return;}
   if(preserveProducerCursor!==true)cursorRestarts=0;
-  // Same-identity renewal invalidates independent loaded reads, but must not
+  // Same-identity renewal invalidates body-bearing loaded reads, but must not
   // starve the private finite directory pass. Never consume a pending real DOM
   // invalidation: that pass still resets before its next bounded packet.
   const preserve=preserveProducerCursor===true&&surfaceEpoch===surfaceSnapshotEpoch;
@@ -319,13 +335,14 @@ if(!p){
  function visibilityChanged(){if(document.visibilityState!=='hidden')schedule();}
  function surfaceToggle(event){
   // Only an exact live mount node may preserve the finite directory cursor.
-  // Recheck body visibility and invalidate external reads even for our masks.
+  // Recheck body visibility. Candidate pages independently re-prove native
+  // visibility under the owned mask and need not restart for presentation alone.
   let owned=false;try{owned=!!event?.target&&isOwnedSurface(event.target)===true;}catch{}
   // Synchronous native-reading probes end in the same presentation. Their
   // coalesced toggle must not enqueue another probe/pass indefinitely.
   if(owned&&event.oldState===event.newState&&['open','closed'].includes(event.newState))return;
   if(owned&&surfaceEpoch===surfaceSnapshotEpoch&&surfaceCursor)discovery?.preservePresentationCursor(surfaceCursor);
-  requestScan(owned,true);
+  requestScan(owned,true,owned);
  }
  function mutations(records){
   if(!live())return;
@@ -444,7 +461,7 @@ if(!p){
   const readingRect=viewport?viewportRect(viewport,header,composer):rect(reading);
   return readingRect?returnGeometry(history,header,readingRect,composer,slot):null;
  },isReturnSlotCurrent,kind:'chatgpt',async start(options){
-  stop();navigationPhase='not-scanned';cursorRestarts=0;const b=options?.binding,observing=options?.phase==='observation';if(options?.phase!==undefined&&!observing)throw Error('invalid-adapter-phase');if(!b||!observing&&typeof options.emit!=='function'||typeof b.documentToken!=='string'||typeof b.producerToken!=='string'||typeof b.browserDocumentId!=='string'||!Number.isSafeInteger(b.routeEpoch)||b.routeEpoch<0||b.origin!==new URL(document.location.href).origin||!Number.isFinite(Date.parse(b.expiresAt))||now()>=Date.parse(b.expiresAt))throw Error('invalid-host-binding');
+  stop();navigationPhase='not-scanned';delivery=emptyDelivery();cursorRestarts=0;const b=options?.binding,observing=options?.phase==='observation';if(options?.phase!==undefined&&!observing)throw Error('invalid-adapter-phase');if(!b||!observing&&typeof options.emit!=='function'||typeof b.documentToken!=='string'||typeof b.producerToken!=='string'||typeof b.browserDocumentId!=='string'||!Number.isSafeInteger(b.routeEpoch)||b.routeEpoch<0||b.origin!==new URL(document.location.href).origin||!Number.isFinite(Date.parse(b.expiresAt))||now()>=Date.parse(b.expiresAt))throw Error('invalid-host-binding');
   binding=Object.freeze({...b});observationOnly=observing;emit=observing?null:options.emit;ingestionPass=!observing&&typeof options.ingestionPass==='function'?options.ingestionPass:null;epoch=b.routeEpoch;seq=0;surfaceSnapshotEpoch=surfaceEpoch;url=document.location.href;stopped=false;
   discovery=createSurfaceDiscovery({document,binding,urlPolicy,profile,isOwnedMask,withNativeReading,priorityConversationId,retainControls:!observing,elapsedNow});bodyDiscovery=profile.currentBody?createCurrentBodyDiscovery({document,urlPolicy,profile,isOwnedMask}):null;
   if(observing){
@@ -465,6 +482,6 @@ if(!p){
   listen();
   const route=urlPolicy.parse(url),proof=bodyProof();const body=route.kind==='conversation'&&proof?.conversationId===route.conversationId&&typeof proof.bodyProofId==='string'&&Number.isSafeInteger(proof.bodyEpoch)?{state:'bound',proofId:proof.bodyProofId,conversationId:proof.conversationId,bodyEpoch:proof.bodyEpoch}:{state:'unbound',reason:'body-proof-unavailable'};
   return {binding,route,body,capabilities:{'conversation-identity':{state:'partial',profileId:profile.id,reason:'loaded-surfaces-only',evidence:'implementation-only'},'native-navigation':{state:'partial',profileId:profile.id,reason:'owner-authorization-required',evidence:'implementation-only'}}};
- },navigationSummary:()=>({phase:navigationPhase,...discovery?.navigationSummary?.()}),observationStatus,prepareIdle,prepareAutomaticIdle,prepareRecovery,stop,updateBinding,inspect,isSameNativeRegions,loadedPages,loadedCandidatePages,retainLoadedHandles(owner,handles,deadline){if(!active())return false;try{syncRoute();return discovery.retainHandles(owner,handles,deadline);}catch{return false;}},releaseLoadedHandles:owner=>discovery?.releaseHandles(owner),resolveLoadedTargets(targets){if(!active())return targets.map(()=>null);try{syncRoute();return discovery.resolveLoadedTargets(targets);}catch{return targets.map(()=>null);}},captureCandidateIdentity(handle){if(!active())return null;try{syncRoute();return discovery.captureCandidateIdentity(handle);}catch{return null;}},matchesCandidateIdentity(token,handle){if(!active())return false;try{syncRoute();return discovery.matchesCandidateIdentity(token,handle);}catch{return false;}},hasNativeLayer(){return !!document.querySelector('dialog[open], [aria-modal="true"]');},currentURL:()=>document.location.href,isCurrent:raw=>urlPolicy.sameTarget(document.location.href,raw),nativeHref:raw=>urlPolicy.nativeHref(raw),planNavigation(target,risk){if(!active())return {mode:'unavailable',reason:'stale-host-binding',planRevision:0};try{syncRoute();}catch{return {mode:'unavailable',reason:'host-rebind-required',planRevision:0};}return actions.planNavigation(target,risk);},planKey:plan=>active()?actions.planKey(plan):null,cancelPlan:command=>active()&&actions.cancelPlan(command),dispatchNative:command=>{idleRevision++;return active()?track(()=>actions.dispatchNative(command)):Promise.resolve({state:'blocked',reason:'stale-host-binding'});},activateNative:async()=>({state:'blocked',reason:'unsupported-native-action'}),async readLoaded(target,signal){if(!active())throw Error('stale-host-binding');if(signal?.aborted)throw Error('aborted');const p=proposal();return splitSurfacePayload(p.payload,p).map((payload,index)=>({...p,localSeq:index?++seq:p.localSeq,payload}));},snippetReady:ref=>snippetReady(ref),selectionEpoch:ref=>snippets?.selectionEpoch?.(ref)??null,selectedSnippet:ref=>snippets?.selectedSnippet(ref)??null,restoreSnippet:(ref,anchor)=>snippets?.restoreSnippet(ref,anchor)??{ok:false,reason:'unsupported-snippet-anchor'},status(value){const status=publicAdapterStatus(value);document.documentElement.dataset.vaiwlState=status.state;document.documentElement.dataset.vaiwlReason=status.reason??'';}};
+ },deliverySummary:()=>({...delivery}),navigationSummary:()=>({phase:navigationPhase,...discovery?.navigationSummary?.()}),observationStatus,prepareIdle,prepareAutomaticIdle,prepareRecovery,stop,updateBinding,inspect,isSameNativeRegions,loadedPages,loadedCandidatePages,retainLoadedHandles(owner,handles,deadline){if(!active())return false;try{syncRoute();return discovery.retainHandles(owner,handles,deadline);}catch{return false;}},releaseLoadedHandles:owner=>discovery?.releaseHandles(owner),resolveLoadedTargets(targets){if(!active())return targets.map(()=>null);try{syncRoute();return discovery.resolveLoadedTargets(targets);}catch{return targets.map(()=>null);}},captureCandidateIdentity(handle){if(!active())return null;try{syncRoute();return discovery.captureCandidateIdentity(handle);}catch{return null;}},matchesCandidateIdentity(token,handle){if(!active())return false;try{syncRoute();return discovery.matchesCandidateIdentity(token,handle);}catch{return false;}},hasNativeLayer(){return !!document.querySelector('dialog[open], [aria-modal="true"]');},currentURL:()=>document.location.href,isCurrent:raw=>urlPolicy.sameTarget(document.location.href,raw),nativeHref:raw=>urlPolicy.nativeHref(raw),planNavigation(target,risk){if(!active())return {mode:'unavailable',reason:'stale-host-binding',planRevision:0};try{syncRoute();}catch{return {mode:'unavailable',reason:'host-rebind-required',planRevision:0};}return actions.planNavigation(target,risk);},planKey:plan=>active()?actions.planKey(plan):null,cancelPlan:command=>active()&&actions.cancelPlan(command),dispatchNative:command=>{idleRevision++;return active()?track(()=>actions.dispatchNative(command)):Promise.resolve({state:'blocked',reason:'stale-host-binding'});},activateNative:async()=>({state:'blocked',reason:'unsupported-native-action'}),async readLoaded(target,signal){if(!active())throw Error('stale-host-binding');if(signal?.aborted)throw Error('aborted');const p=proposal();return splitSurfacePayload(p.payload,p).map((payload,index)=>({...p,localSeq:index?++seq:p.localSeq,payload}));},snippetReady:ref=>snippetReady(ref),selectionEpoch:ref=>snippets?.selectionEpoch?.(ref)??null,selectedSnippet:ref=>snippets?.selectedSnippet(ref)??null,restoreSnippet:(ref,anchor)=>snippets?.restoreSnippet(ref,anchor)??{ok:false,reason:'unsupported-snippet-anchor'},status(value){const status=publicAdapterStatus(value);document.documentElement.dataset.vaiwlState=status.state;document.documentElement.dataset.vaiwlReason=status.reason??'';}};
  return Object.freeze(api);
 }

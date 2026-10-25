@@ -14,6 +14,7 @@ function fixture(options={}){
  const main=node('MAIN'),header=node('HEADER',main),heading=node('H1',header,{},'Current title'),reading=node('SECTION',main,{'data-conversation-id':C}),composer=node('FORM',main),slot=node('DIV',header),history=node('NAV');
  history.getBoundingClientRect=()=>({x:0,y:70,width:200,height:400});header.getBoundingClientRect=()=>({x:220,y:0,width:700,height:60});composer.getBoundingClientRect=()=>({x:220,y:480,width:700,height:90});slot.getBoundingClientRect=()=>({x:220,y:0,width:40,height:40});
  for(let i=0;i<800;i++){const id='11111111-1111-4111-8111-'+i.toString(16).padStart(12,'0');node('A',history,{href:'https://chatgpt.com/c/'+id},'Native '+i+'x'.repeat(180));}
+ if(options.projectCandidates){const projects=node('NAV');for(let i=0;i<300;i++)node('BUTTON',projects,{},'Project '+i);selectors.set(LEGACY_SURFACE_PROFILE.regions.projects,[projects]);}
  for(const [s,n]of [[LEGACY_SURFACE_PROFILE.regions.history,history],['main > header',header],['main > section[aria-label="Conversation"]',reading],['main > form#composer',composer],['main > header > .navigation-slot',slot],[LEGACY_SURFACE_PROFILE.currentConversationReading,reading],[LEGACY_SURFACE_PROFILE.currentConversationHeader,heading]])selectors.set(s,[n]);
  document.defaultView={crypto,getComputedStyle:n=>({...n.style,visibility:masked&&n===reading?'hidden':n.style.visibility}),MutationObserver:class{constructor(cb){observer=this;this.cb=cb;}observe(){}disconnect(){}},addEventListener(){},removeEventListener(){}};installTreeWalkerDouble(document);
  const profile={...LEGACY_SURFACE_PROFILE,currentBody:undefined},binding={documentToken:'doc',producerToken:'producer',browserDocumentId:'browser',routeEpoch:1,origin:'https://chatgpt.com',expiresAt:new Date(100000).toISOString()},isOwnedMask=n=>masked&&n===reading;
@@ -46,10 +47,19 @@ test('owned toggle cannot consume a pending real native mutation invalidation',a
  f.observer().cb([{type:'characterData',target:f.history.children[0]}]);f.listeners.get('toggle')({target:owned,newState:'closed'});f.release();await settle();
  assert.equal(ids(f).size,801);assert.deepEqual(f.passes.map(p=>p.phase),['start','start','end']);assert(f.packets.some(p=>p.payload.candidates.some(c=>c.nativeTitle==='Native changed before owned toggle')));
 });
-for(const method of ['loadedPages','loadedCandidatePages'])test('owned toggle invalidates external '+method+' without cancelling private producer',async t=>{
+for(const method of ['loadedPages'])test('owned toggle invalidates external '+method+' without cancelling private producer',async t=>{
  const owned={},f=await paused(t,{isOwnedSurface:node=>node===owned}),stream=f.adapter[method](new AbortController().signal);
  assert.equal((await stream.next()).done,false);f.listeners.get('toggle')({target:owned,newState:'open'});
  await assert.rejects(stream.next(),/stale-host-loaded-read/);f.release();await settle();assert.equal(ids(f).size,801);assert.deepEqual(f.passes.map(p=>p.phase),['start','end']);
+});
+for(const mutation of [false,true])test('candidate pages retain owned presentation continuity without hiding native mutation '+mutation,async t=>{
+ const owned={},f=await paused(t,{isOwnedSurface:node=>node===owned,projectCandidates:true}),stream=f.adapter.loadedCandidatePages(new AbortController().signal);
+ const first=await stream.next();assert.equal(first.done,false);assert(first.value.payload.candidates.length>0);
+ if(mutation)f.observer().cb([{type:'characterData',target:f.history.children[0]}]);
+ f.listeners.get('toggle')({target:owned,newState:'open'});
+ if(mutation)await assert.rejects(stream.next(),/stale-host-loaded-read/);
+ else {const next=await stream.next();assert.equal(next.done,false);assert(next.value.payload.candidates.length>0);await stream.return();}
+ f.release();await settle();
 });
 test('owned toggle still rechecks current native identity and restarts a stale current association',async t=>{
  const owned={},f=await paused(t,{isOwnedSurface:node=>node===owned});f.loseCurrent();f.listeners.get('toggle')({target:owned,newState:'closed'});f.release();await settle();
@@ -62,4 +72,13 @@ test('owned toggle schedules a fresh configured body observation while retaining
  const message={parentNode:f.reading,parentElement:f.reading,ownerDocument:f.document,isConnected:true,style:{display:'block',visibility:'visible'},getClientRects:()=>[{}],getAttribute:k=>k==='data-message-id'?'fresh-native-message':null};f.reading.children.push(message);
  f.listeners.get('toggle')({target:owned,newState:'closed'});release();await settle();
  assert.deepEqual(f.packets.filter(p=>p.kind==='current-observation').at(-1).payload.body.messageIds,['fresh-native-message']);assert.deepEqual(f.passes.map(p=>p.phase),['start','end']);
+});
+
+test('delivery ledger distinguishes scanned rows, ACKed rows and independent candidate reads',async t=>{
+ const f=await paused(t,{projectCandidates:true});
+ const waiting=f.adapter.deliverySummary();assert(waiting.pages>0);assert.equal(waiting.acceptedPackets,0);
+ for await(const _page of f.adapter.loadedCandidatePages(new AbortController().signal)){}
+ assert.deepEqual(f.adapter.deliverySummary(),waiting,'candidate-only reads do not impersonate submitted observations');
+ f.release();await settle();const done=f.adapter.deliverySummary();assert(done.resolvedChats>0);assert(done.acceptedChats>0);assert(done.acceptedPackets>0);assert.equal(done.rejectedPackets,0);assert.equal(done.capped,false);
+ assert.equal(Object.values(done).every(v=>typeof v==='number'||typeof v==='boolean'),true);
 });

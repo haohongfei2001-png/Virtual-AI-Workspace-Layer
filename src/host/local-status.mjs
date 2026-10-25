@@ -15,6 +15,10 @@ const exact=(value,keys)=>value!==null&&typeof value==='object'&&!Array.isArray(
 // Bounded layout categories or numeric computed inset geometry only; never
 // native text, IDs, URLs, arbitrary CSS, attribute values or credential material.
 export function validLayoutShape(value){
+ if(exact(value,['navigation','delivery'])){
+  const d=value.delivery;
+  return exact(d,['pages','resolvedProjects','resolvedChats','acceptedPackets','acceptedProjects','acceptedChats','rejectedPackets','capped'])&&typeof d.capped==='boolean'&&Object.entries(d).every(([k,v])=>k==='capped'||Number.isSafeInteger(v)&&v>=0&&v<=1000000)&&validLayoutShape({navigation:value.navigation});
+ }
  if(exact(value,['navigation'])){
   const n=value.navigation,counts=values=>Array.isArray(values)&&values.every(v=>Number.isInteger(v)&&v>=0&&v<=256);
   const geometry=(values,lengths)=>Array.isArray(values)&&lengths.includes(values.length)&&values.every(v=>Number.isInteger(v)&&Math.abs(v)<=65536);
@@ -28,6 +32,13 @@ export function validLayoutShape(value){
  }
  if(exact(value,['projectClip']))return typeof value.projectClip==='string'&&(['inset','rect','xywh','circle','ellipse','polygon','path','url','shape','border-box','padding-box','content-box','margin-box','fill-box','stroke-box','view-box','empty','unavailable','other'].includes(value.projectClip)||projectClipDiagnostic(value.projectClip).projectClip===value.projectClip);
  return exact(value,['counts','branches'])&&Array.isArray(value.counts)&&value.counts.length===7&&value.counts.every(n=>Number.isInteger(n)&&n>=0&&n<=33)&&Array.isArray(value.branches)&&value.branches.length<=12&&value.branches.every(row=>Array.isArray(row)&&row.length===6&&['DIV','STYLE','SCRIPT','TEMPLATE','FOOTER','BUTTON','OTHER'].includes(row[0])&&row.slice(1,5).every(v=>typeof v==='boolean')&&Number.isInteger(row[5])&&row[5]>=0&&row[5]<=33);
+}
+/** Numeric local pipeline snapshot; no identities, query or row content. */
+export function validLocalPipeline(p){
+ const num=v=>Number.isSafeInteger(v)&&v>=0,optional=v=>v===null||num(v),pair=v=>Array.isArray(v)&&v.length===2&&v.every(optional);
+ if(!exact(p,['storage','nativeRevision','projects','refs','lastWorkspaceDelivery'])||!['session','personal'].includes(p.storage)||!num(p.nativeRevision)||![p.projects,p.refs].every(optional))return false;
+ const d=p.lastWorkspaceDelivery;
+ return d===null||exact(d,['versions','segment','inventory','groups','noProject','unknown'])&&Array.isArray(d.versions)&&d.versions.length===4&&d.versions.every((v,i)=>optional(v)||i===2&&pair(v))&&optional(d.segment)&&['inventory','groups','noProject','unknown'].every(k=>pair(d[k]));
 }
 /** Passive isolated-world status. This is not an authority or recovery channel. */
 export function installLocalStatus({runtime,readState,readLayout=()=>null,observeHistory=null}){
@@ -43,28 +54,46 @@ export function installLocalStatus({runtime,readState,readLayout=()=>null,observ
  runtime.onMessage.addListener(listener);
  return ()=>runtime.onMessage.removeListener(listener);
 }
-/** One local query; no URL/title reads, permissions, authentication or retry. */
-export function readActiveLocalStatus({tabs,schedule=setTimeout,cancel=clearTimeout,onFailure=()=>{}}){
+/** One local query. Browser URL stays in memory for document binding only;
+ * no page content, permissions, authentication or retry. */
+export function readActiveLocalStatus({tabs,webNavigation=null,schedule=setTimeout,cancel=clearTimeout,onFailure=()=>{},onTarget=()=>{}}){
  return new Promise(resolve=>{
-  let settled=false,timer;const failure=code=>{try{onFailure(code);}catch{}};const finish=value=>{if(settled)return;settled=true;cancel(timer);resolve(value);};
+  let stage='query',settled=false,timer,target=null,documentId=null,documentURL=null;const failure=code=>{try{onFailure(code);}catch{}};const finish=value=>{if(settled)return;settled=true;cancel(timer);resolve(value);};
   timer=schedule(()=>{failure('timeout');finish('unavailable');},1000);
-  Promise.resolve().then(()=>tabs.query({active:true,currentWindow:true})).then(rows=>{
+  Promise.resolve().then(()=>tabs.query({active:true,currentWindow:true})).then(async rows=>{
    if(settled)return;
    if(!Array.isArray(rows)||rows.length!==1||!Number.isSafeInteger(rows[0]?.id)||rows[0].id<0){failure('tab-unavailable');finish('unavailable');return;}
-   return tabs.sendMessage(rows[0].id,{v:1,type:'HOST_LOCAL_STATUS'},{frameId:0});
-  }).then(value=>{if(settled)return;const valid=exact(value,['v','state'])&&value.v===1&&states.has(value.state);if(!valid)failure('invalid-reply');finish(valid?value.state:'unavailable');},()=>{if(settled)return;failure('transport-error');finish('unavailable');});
+   target=rows[0].id;
+   if(webNavigation){
+    stage='frame';const frame=await webNavigation.getFrame({tabId:target,frameId:0});if(settled)return;
+    if(typeof frame?.documentId!=='string'||!frame.documentId||frame.documentLifecycle!=='active'){failure('document-unavailable');finish('unavailable');return;}
+    documentId=frame.documentId;documentURL=frame.url;
+   }
+   stage='send';const reply=await tabs.sendMessage(target,{v:1,type:'HOST_LOCAL_STATUS'},documentId?{documentId}:{frameId:0});
+   if(settled)return;
+   if(documentId){stage='frame';const check=await webNavigation.getFrame({tabId:target,frameId:0});if(settled)return;if(check?.documentId!==documentId||check.url!==documentURL||check.documentLifecycle!=='active'){failure('document-changed');finish('unavailable');return;}}
+   if(documentId)try{onTarget({tabId:target,documentId,url:documentURL});}catch{}
+   return reply;
+  }).then(value=>{if(settled)return;const valid=exact(value,['v','state'])&&value.v===1&&states.has(value.state);if(!valid)failure('invalid-reply');finish(valid?value.state:'unavailable');},error=>{if(settled)return;
+   // Inspect only known platform error strings in memory; never return raw text.
+   const text=typeof error?.message==='string'?error.message:'';
+   const code=stage==='query'?'tab-query-failed':stage==='frame'?'document-query-failed':text.includes('Receiving end does not exist')?'receiver-unavailable':text.includes('message port closed')||text.includes('message channel closed')?'receiver-disconnected':text.includes('No tab with id')?'tab-closed':'transport-error';
+   failure(code);finish('unavailable');});
  });
 }
 
 /** Optional same-document layout failure shape, with the same private sender gate. */
-export function readActiveLocalLayout({tabs,schedule=setTimeout,cancel=clearTimeout}){
+export function readActiveLocalLayout({tabs,webNavigation=null,target=null,schedule=setTimeout,cancel=clearTimeout}){
  return new Promise(resolve=>{
   let settled=false,timer;const finish=value=>{if(settled)return;settled=true;cancel(timer);resolve(value);};
   timer=schedule(()=>finish(null),1000);
-  Promise.resolve().then(()=>tabs.query({active:true,currentWindow:true})).then(rows=>{
+  Promise.resolve().then(()=>target?[{id:target.tabId}]:tabs.query({active:true,currentWindow:true})).then(async rows=>{
    if(settled)return;
    if(!Array.isArray(rows)||rows.length!==1||!Number.isSafeInteger(rows[0]?.id)||rows[0].id<0){finish(null);return;}
-   return tabs.sendMessage(rows[0].id,{v:1,type:'HOST_LOCAL_LAYOUT'},{frameId:0});
+   const current=async()=>{if(!target)return true;if(!webNavigation)return false;const frame=await webNavigation.getFrame({tabId:target.tabId,frameId:0});return frame?.documentId===target.documentId&&frame.url===target.url&&frame.documentLifecycle==='active';};
+   if(!await current()||settled){finish(null);return;}
+   const result=await tabs.sendMessage(rows[0].id,{v:1,type:'HOST_LOCAL_LAYOUT'},target?{documentId:target.documentId}:{frameId:0});
+   return !settled&&await current()?result:null;
   }).then(r=>{if(!settled)finish(exact(r,['v','shape'])&&r.v===1&&validLayoutShape(r.shape)?r.shape:null);},()=>finish(null));
  });
 }

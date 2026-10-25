@@ -11,6 +11,7 @@ import {packageHost} from '../../extension/package.mjs';
 import {observedProjectHTML} from './fixtures/observed-project.mjs';
 import {observedDesktopHTML} from './fixtures/observed-desktop.mjs';
 import {createHistoricalNetworkGuard,historicalNetworkGuardArgs} from './historical-network-guard.mjs';
+import {validLocalPipeline} from '../../src/host/local-status.mjs';
 const P='g-p-11111111111111111111111111111111',C='33333333-3333-4333-8333-333333333333',B='44444444-4444-4444-8444-444444444444',requests=[];
 // The native search navigation reaches a home layout, not a conversation DOM
 // under a home URL. Use the observed home boundaries while retaining the same
@@ -91,7 +92,10 @@ try{
  if(process.argv.includes('--mixed-history-only')){
   page=await context.newPage();
   const markers=historyStructure.report.snapshots[0].rows.map(r=>r[3]);
-  await page.addInitScript({content:'document.addEventListener("DOMContentLoaded",()=>('+materializeHistoryStructure.toString()+')('+JSON.stringify(markers)+'),{once:true});'});
+  // Preserve the observed anonymous row order. Empty inline descendants are
+  // an offline amplifier, not a claim about private DOM: force the existing
+  // 256-node traversal to yield across the formal popover opening.
+  await page.addInitScript({content:'document.addEventListener("DOMContentLoaded",()=>{if(window!==window.top||location.protocol!=="http:")return;('+materializeHistoryStructure.toString()+')('+JSON.stringify(markers)+');for(const a of document.querySelectorAll("#list a")){const span=document.createElement("span");for(let i=0;i<30;i++)span.append(document.createElement("span"));a.append(span);}},{once:true});'});
   await page.goto(origin+'/');
   await page.waitForFunction(()=>document.querySelectorAll('[data-va-owned]:popover-open').length===1,null,{timeout:10000});
   const formal=page.frameLocator('iframe[src="chrome-extension://'+id+'/workspace.html"]');
@@ -99,6 +103,18 @@ try{
   // A failed candidate read must not be mistaken for an empty successful page.
   await formal.locator('[data-vaiwl-candidate-root]').waitFor({state:'attached',timeout:10000});
   assert.equal(await formal.getByText('加载未完成，请重试。',{exact:true}).count(),0,'locked immediate scope completes the candidate bridge');
+  const control=await context.newPage();await control.goto('chrome-extension://'+id+'/status.html');await page.bringToFront();
+  const local=await control.evaluate(()=>chrome.runtime.sendMessage({v:1,type:'HOST_LOCAL_SPACE',action:'status'}));
+  assert.equal(local.mode,'locked');
+  const snapshot=await control.evaluate(()=>chrome.runtime.sendMessage({v:1,type:'HOST_LOCAL_SPACE',action:'pipeline'}));
+  assert.equal(snapshot.ok,true);assert(validLocalPipeline(snapshot.pipeline));
+  assert.equal(snapshot.pipeline.storage,'session');assert.equal(snapshot.pipeline.refs,13);
+  assert.equal(snapshot.pipeline.lastWorkspaceDelivery.inventory[1],13);
+  assert.equal(snapshot.pipeline.lastWorkspaceDelivery.unknown[0],13);
+  const worker=context.serviceWorkers().find(w=>w.url().startsWith('chrome-extension://'+id+'/'));
+  assert.deepEqual(await worker.evaluate(()=>indexedDB.databases()),[],'locked pipeline does not open the private database');
+  report.checks.currentLocalStoreAndWorkspaceReplyCountsAgree=true;
+  await control.close();
   const proof=await page.evaluate(()=>{
    const rows=[...document.querySelector('#list').children],sidebar=document.querySelector('[data-va-owned][id$="_sidebar"]'),box=sidebar.getBoundingClientRect();
    return {masked:rows.map((r,i)=>r.hasAttribute('data-va-mask-sidebar')?i:-1).filter(i=>i>=0),native:rows.every(row=>getComputedStyle(row).visibility==='visible'),sidebarClosed:!sidebar.matches(':popover-open'),draft:document.querySelector('textarea').value==='fixture draft'};
@@ -109,6 +125,7 @@ try{
   assert.equal(await page.locator('textarea').inputValue(),'fixture draft');
   report.checks.realAnonymousMixedRowsFormalWorkspace=true;report.checks.unknownRowsAndOtherRunRemainNative=true;
   report.checks.discoveryIndependentOfMaskRun=true;report.checks.unknownOverlapSurrenders=true;
+  report.checks.multiPageCandidatesSurviveOwnedPresentation=true;
   await page.close();
  }
  if(process.argv.includes('--history-diagnostic-only')){

@@ -388,11 +388,13 @@ test('renewal continuity must not mask pending native title invalidation',async 
  await f.start(p=>{f.emitted.push(p);if(p.kind==='surface-delta'&&!changed){changed=true;d.nodes[0].textContent='Changed before renewal';f.observer().cb([{type:'characterData',target:{nodeType:3,parentNode:d.nodes[0],parentElement:d.nodes[0]}}]);f.setTime(10000);assert(f.adapter.updateBinding({...f.binding,expiresAt:new Date(30000).toISOString()}));}return Promise.resolve(bodyAck(p));});
  for(let i=0;i<150;i++)await tick();const candidates=f.emitted.filter(p=>p.kind==='surface-delta').flatMap(p=>p.payload.candidates);assert.equal(new Set(candidates.map(c=>c.renderKey)).size,1000);assert(candidates.some(c=>c.nativeTitle==='Changed before renewal'));
 });
-for(const method of ['loadedPages','loadedCandidatePages'])test('renewal continuity invalidates external '+method+' iterator',async t=>{
+for(const method of ['loadedPages','loadedCandidatePages'])test('renewal continuity preserves only navigation candidate '+method+' iterator',async t=>{
  const f=fixture(),d=sys05Directory(f,300);t.after(()=>f.adapter.stop());f.binding.expiresAt=new Date(20000).toISOString();
  if(method==='loadedCandidatePages'){f.selectors.set(LEGACY_SURFACE_PROFILE.regions.projects,[d.root]);for(const node of d.nodes){node.tagName='BUTTON';node.getAttribute=()=>null;}}
  await f.start();for(let i=0;i<30;i++)await tick();const iterator=f.adapter[method](new AbortController().signal);assert.equal((await iterator.next()).done,false);
- f.setTime(10000);assert(f.adapter.updateBinding({...f.binding,expiresAt:new Date(30000).toISOString()}));await assert.rejects(iterator.next(),/stale-host-loaded-read/);
+ f.setTime(10000);assert(f.adapter.updateBinding({...f.binding,expiresAt:new Date(30000).toISOString()}));
+ if(method==='loadedPages')await assert.rejects(iterator.next(),/stale-host-loaded-read/);
+ else {const next=await iterator.next();assert.equal(next.done,false);assert(next.value.payload.candidates.length>0);await iterator.return();}
 });
 
 

@@ -126,7 +126,7 @@ export function createHostViewService({ui,readService,workspaceRepository=null,p
   if(message.query.search!==undefined&&message.query.workingSet!==undefined)return {ok:false,reason:'invalid-ui-view'};
   let active=true,delivery=null;const started=elapsedNow();
   const check=()=>{if(!active||elapsedNow()-started>=6000)throw Error('ui-view-expired');};
-  try{return await withRequestDeadline(()=>withScope({sender,grantId:message.grantId,mountId:message.mountId},async context=>{
+  try{const result=await withRequestDeadline(()=>withScope({sender,grantId:message.grantId,mountId:message.mountId},async context=>{
    check();for(const [id,entry]of views)if(!entry.isCurrent())remove(id);
    let entry=views.get(message.mountId);
    if(entry&&(entry.scopeKey!==context.scope.key||entry.scopeGrantId!==context.scopeGrantId)){remove(message.mountId);entry=null;}
@@ -146,7 +146,7 @@ export function createHostViewService({ui,readService,workspaceRepository=null,p
    entry.checkPreparation?.();
    if(entry.pending||entry.autoReading)return {ok:true,state:'preparing',retryAfterMs:50};
    if(entry.error){if(retryableRead(entry.error)&&!entry.retryToken)entry.retryToken=crypto.randomUUID();return {ok:false,reason:entry.error,...(retryableRead(entry.error)?{retryToken:entry.retryToken}:{})};}
-   delivery={entry,window:entry.readWindow,generation:entry.prepareGeneration};
+   delivery={entry,role:context.role,window:entry.readWindow,generation:entry.prepareGeneration};
    const current=entry.owner.current(),generation=entry.prepareGeneration;if(!current)throw Error('stale-free-view');
    const version=await readService.version(context.scope,{guard:()=>active&&context.isCurrent()});check();
    // The other surface may have begun or completed preparation while this
@@ -193,7 +193,14 @@ export function createHostViewService({ui,readService,workspaceRepository=null,p
    check();if(!context.isCurrent())throw Error('stale-view-resume');if(!locating)rememberResume(context,effectiveQuery,current.snapshot.viewSession);
    registerCurrentNavigation?.({context,grantId:message.grantId,mountId:message.mountId,navigation:navigation.filter(item=>['same-target','native-control'].includes(item.plan.mode))});
    return result;
-  }),{now:elapsedNow,schedule,cancel});}catch(error){return {ok:false,reason:reason(error)};}finally{active=false;if(delivery)releaseRead(delivery.entry,delivery.window,delivery.generation);}
+  }),{now:elapsedNow,schedule,cancel});
+   // Record only after the final withScope validation succeeds. This means
+   // worker delivery, not renderer paint; keep no query, IDs or row content.
+   if(delivery?.role==='workspace'&&result?.ok===true&&result.state==='ready'&&delivery.entry.isCurrent()&&delivery.generation===delivery.entry.prepareGeneration){
+    const p=result.page,num=n=>Number.isSafeInteger(n)&&n>=0?n:null,evidence=typeof p.evidenceRevision==='string'&&/^\d+:\d+$/.test(p.evidenceRevision)?p.evidenceRevision.split(':').map(numString=>num(Number(numString))):num(p.evidenceRevision);
+    delivery.entry.lastWorkspaceDelivery={versions:[num(p.revision),num(p.workspaceRevision),evidence,num(p.viewRevision)],segment:num(p.segment),inventory:[p.inventory?.projects,p.inventory?.refs].map(num),groups:[p.groups.total,p.groups.items.length].map(num),noProject:[p.entries.noProject.total,p.entries.noProject.items.length].map(num),unknown:[p.entries.unknown.total,p.entries.unknown.items.length].map(num)};
+   }
+   return result;}catch(error){return {ok:false,reason:reason(error)};}finally{active=false;if(delivery)releaseRead(delivery.entry,delivery.window,delivery.generation);}
  }
  async function enterCurrent(input,sender){
   let message;try{message=structuredClone(input);sender=structuredClone(sender);}catch{return {ok:false,reason:'invalid-ui-current-entry'};}
@@ -388,5 +395,9 @@ export function createHostViewService({ui,readService,workspaceRepository=null,p
  function confirmScope(frame,scopeKey){for(const [key,value]of resumes)if(value.tabId===frame.tabId&&value.documentId===frame.documentId&&value.scopeKey!==scopeKey)resumes.delete(key);}
  function revokeDocument(id){for(const [key,entry]of views)if(entry.parentFrame.documentId===id)remove(key);}
  function revokeTab(tabId,{preserveDocumentId=null}={}){for(const [key,value]of resumes)if(value.tabId===tabId&&(!preserveDocumentId||value.documentId!==preserveDocumentId))resumes.delete(key);for(const [key,entry]of views)if(entry.parentFrame.tabId===tabId)remove(key);}
- return Object.freeze({isIdle,handle,resume,present,confirmScope,isForegroundReadPending:liveWindow,nativePublished(scopeKey){const window=readWindows.get(scopeKey);if(window&&!liveWindow(scopeKey)){if([...views.values()].some(entry=>entry.scopeKey===scopeKey))window.used=false;else readWindows.delete(scopeKey);}for(const entry of views.values())if(entry.scopeKey===scopeKey&&entry.pending&&entry.isCurrent())entry.deferPreparation?.();},resolveSnippetView,enterCurrent,undoAutoHorizon,setHorizon,setWorkingSet,setCompactRows,refreshScope(scopeKey){for(const entry of views.values())if(entry.scopeKey===scopeKey&&entry.isCurrent()&&!retryableRead(entry.error))begin(entry);},revokeDocument,revokeTab,revokeMount:remove,stop(){stopped=true;readWindows.clear();resumes.clear();for(const key of [...views.keys()])remove(key);}});
+ function deliverySummary(frame,scopeKey){
+  const matching=[...views.values()].filter(e=>e.scopeKey===scopeKey&&e.parentFrame.tabId===frame.tabId&&e.parentFrame.documentId===frame.documentId&&e.parentFrame.actualURL===frame.actualURL&&e.isCurrent());
+  return matching.length===1&&matching[0].lastWorkspaceDelivery?structuredClone(matching[0].lastWorkspaceDelivery):null;
+ }
+ return Object.freeze({deliverySummary,isIdle,handle,resume,present,confirmScope,isForegroundReadPending:liveWindow,nativePublished(scopeKey){const window=readWindows.get(scopeKey);if(window&&!liveWindow(scopeKey)){if([...views.values()].some(entry=>entry.scopeKey===scopeKey))window.used=false;else readWindows.delete(scopeKey);}for(const entry of views.values())if(entry.scopeKey===scopeKey&&entry.pending&&entry.isCurrent())entry.deferPreparation?.();},resolveSnippetView,enterCurrent,undoAutoHorizon,setHorizon,setWorkingSet,setCompactRows,refreshScope(scopeKey){for(const entry of views.values())if(entry.scopeKey===scopeKey&&entry.isCurrent()&&!retryableRead(entry.error))begin(entry);},revokeDocument,revokeTab,revokeMount:remove,stop(){stopped=true;readWindows.clear();resumes.clear();for(const key of [...views.keys()])remove(key);}});
 }
