@@ -51,7 +51,7 @@ async function runProfile(profile,titleMode='all'){
    const back=page.getByRole('button',{name:'返回工作空间',exact:true});if(allowReturn&&await back.isVisible())await back.click();
    await page.waitForFunction(()=>document.querySelectorAll('[data-va-owned]:popover-open').length===2,null,{timeout:15000});
    const frames=Object.fromEntries(['workspace','sidebar'].map(role=>[role,page.frames().find(f=>f.url()===`chrome-extension://${id}/${role}.html`)]));assert(frames.workspace&&frames.sidebar);
-   await frames.workspace.locator('.workspace').waitFor();await frames.sidebar.locator('.toolbar').waitFor();
+   await frames.workspace.locator('.workspace').waitFor();await frames.sidebar.locator('.toolbar:not(.sidebar-footer)').waitFor();
    await frames.workspace.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
    return frames;
   }
@@ -84,7 +84,7 @@ async function runProfile(profile,titleMode='all'){
    // Two visible functional frames required: normal profiles cannot pass as NATIVE_ONLY.
    const measurements={};for(const role of ['workspace','sidebar']){
     measurements[role]=await observeUi10Shell(frames[role]);
-    measurements[role].theme=await frames[role].locator(role==='workspace'?'.workspace':'.toolbar').evaluate((root,expected)=>{const style=getComputedStyle(root);return {mediaMatches:matchMedia(`(prefers-color-scheme: ${expected})`).matches,color:style.color,backgroundColor:style.backgroundColor,colorScheme:style.colorScheme};},cell.colorScheme);
+    measurements[role].theme=await frames[role].locator(role==='workspace'?'.workspace':'.toolbar:not(.sidebar-footer)').evaluate((root,expected)=>{const style=getComputedStyle(root);return {mediaMatches:matchMedia(`(prefers-color-scheme: ${expected})`).matches,color:style.color,backgroundColor:style.backgroundColor,colorScheme:style.colorScheme};},cell.colorScheme);
     assert.equal(measurements[role].theme.mediaMatches,true,role+' frame color media mismatch');
    }
    assert.equal(await page.evaluate(expected=>matchMedia(`(prefers-color-scheme: ${expected})`).matches,cell.colorScheme),true);

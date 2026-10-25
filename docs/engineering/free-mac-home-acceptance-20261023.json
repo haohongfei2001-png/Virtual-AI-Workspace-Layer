@@ -3708,9 +3708,9 @@
     },
     "realMac": {
       "status": "NOT_RUN_NEW_BATCH",
-      "process": "original Profile 4 process exists; unique target window check failed; no keys or activation",
+      "process": "Original Profile 4 PID verified, native read returned zero windows; subsequent pre-action identity guard rejected Target changed (-2700). No activation/input/reload.",
       "reload": "NOT_RUN",
-      "next": "one grouped user activation and same-document personal confirmation, then final native visual check"
+      "next": "Original acceptance window must become safely addressable through existing approved native path; no new operator or alternate tab control."
     },
     "limitations": [
       "uncontained opaque reading paint still conservatively rejects unsafe return placement; it cannot stop data/workspace",
@@ -3725,6 +3725,16 @@
       "stashCount": 3,
       "internalApiReads": 0
     },
-    "codeCommit": "1ad6fae701937d53669532433d6ceeaa5d4ec1c4"
+    "codeCommit": "1ad6fae701937d53669532433d6ceeaa5d4ec1c4",
+    "ciFollowup": {
+      "baselineRun": 40195640094,
+      "baseline": "FAILURE_EXISTING",
+      "currentRun": 40207988797,
+      "current": "NOT_GREEN",
+      "targetedJ2": "PASS_OFFLINE_J2_JOURNEY_WITH_EXPLICIT_FOREGROUND_ENTRY",
+      "targetedUi10Legacy": "PASS_LAYOUT_SUBCONTRACT_ONLY",
+      "remainingFailures": "NOT_RECLASSIFIED_AS_PASS",
+      "productionPackageChanged": false
+    }
   }
 }

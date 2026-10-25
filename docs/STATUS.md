@@ -10,6 +10,10 @@
 
 唯一冻结包：`/Users/hhf/Downloads/VAIWL-v27-Integrated-20261025/extension`，ZIP SHA256 `8ddad7ca08ded0251b0a70c73e29ef3e4bab6e5f5549e5a6e5c8ba5928193021`。原安装2891文件完整备份并核验后更新对应文件，2693额外副本、原manifest/ID、旧库/草稿/3个stash保留；**仅磁盘更新，尚未Reload**。原Profile 4进程仍存在，但唯一窗口核查未成立；停止自动输入，未接管标签/改其他进程。已集中请求一次激活及必要本人确认。新包真实Mac展示、真实布局恢复和完整v2.7个人交付仍NOT_RUN，不继承旧PASS冒充本批通过。详见原Mac回执`proFinalIntegrated20261025`。
 
+补充CI核对：基线5580747e的运行40195640094已经有多项失败；本批40207988797也不是绿色，旧失败不改PASS。已明确修正两处旧验收行为：UI10使用唯一主工具栏而非同时匹配footer；J2不再依赖权限续约重复读取，改由实际原生阅读→四格返回触发既有foreground校准。原反例在隔离Chrome复现，修正后完整LEGACY J2及LEGACY布局子合同通过，生产包/hash不变。其余历史CI失败及本批未分类项仍保留，不能据这两个局部结果宣称全矩阵通过。证据`pro-final-integrated-j2-entry-20261025.json.gz`和`pro-final-integrated-ui10-toolbar-20261025.json.gz`。
+
+用户要求代办激活后进行了有限原生核查：原Profile 4进程存在，首次只读返回零窗口；随后原生动作前的进程身份核验报`Target changed (-2700)`，在激活/键鼠之前停止。未Reload、未新建窗口、未确认私人空间、未读写旧库，不能称新包已运行或已经取得真实截图。不再扩写窗口操作器或更换接管通道。
+
 ## v2.7 原窗口截图与独立状态面板修正（2026-10-25，接续 b5fe03c8）
 
 用户授权精确原生前台操作和单窗口系统截图后，已实际取得原 Profile 4 展开的正式工作空间，不再将“无法取得前台”作为当前结论。截图仅保存在本机 `/private/tmp/vaiwl-workspace-atomic-20261025.png`，未上传、未接管标签、未用CDP。该早期画面一条聊天不能判作库存丢失：之后同一构建的匿名状态明确为 session revision6、12条库存、VIEW unknown12/5、renderer5行；workspace=true、sidebar=false、geometryPaused=false。当前是新首页文档、私人库锁定、已确认Project=0，不能冒用此前Project文档的本人绑定或填充假卡片。完整1Project/2成员的真实视觉对照仍未取得；历史该功能PASS保持。
