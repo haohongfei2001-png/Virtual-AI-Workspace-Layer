@@ -1,6 +1,6 @@
 # VAIWL实际状态：渐进积累工程已接线，真实来源逐项待准入
 
-## Pro 最终宿主集成批（2026-10-25，接续 5580747e）
+## Pro 最终宿主集成批（2026-10-25，代码 1ad6fae7）
 
 按[最终任务书](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16#issuecomment-6398255622)集中修改正式实现：document/scope/producer不再受侧栏几何控制；workspace为唯一必需角色，sidebar独立授权、撤回和重挂；程序性隐藏与用户reading意图区分。VIEW先发布真实数据，动作计划仅对该已发布页独立验证；候选/动作失败不清空主区，续约不再自动重读业务页。原生已知链接沿原入口执行，草稿等实际风险仍保留；布局接原WorkspaceRepository.saveView与CAS，按角色合并，私人新文档确认后恢复冻结的历史时间基准和开合/滚动状态。
 

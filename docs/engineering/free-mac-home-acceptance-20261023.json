@@ -3596,7 +3596,7 @@
   "proFinalIntegrated20261025": {
     "authority": "https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16#issuecomment-6398255622",
     "baseHead": "5580747eeb3b2ffcd05bef2f3497934ee09bea7c",
-    "sourceState": "INTEGRATED_CODE_PENDING_COMMIT",
+    "sourceState": "COMMITTED_INTEGRATED_CODE",
     "rootCauses": [
       "sidebar topology coupled to producer and workspace lifecycle",
       "data VIEW awaited local native action planning",
@@ -3646,7 +3646,8 @@
         "uninstallReleasesPrivateFramesAndNativeInput": true,
         "noInternalRequests": true
       },
-      "realAccount": false
+      "realAccount": false,
+      "relatedRegression": "docs/evidence/free-delivery-2026-10-17/pro-final-integrated-related-20261025.tap.gz"
     },
     "visual": {
       "status": "REVIEWED_OFFLINE_FORMAL_MV3_ONLY",
@@ -3723,6 +3724,7 @@
       "draftAccess": "NONE",
       "stashCount": 3,
       "internalApiReads": 0
-    }
+    },
+    "codeCommit": "1ad6fae701937d53669532433d6ceeaa5d4ec1c4"
   }
 }
