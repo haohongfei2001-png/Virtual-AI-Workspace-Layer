@@ -3663,7 +3663,7 @@
         "complete pure list uses proved available sidebar height; no per-row last-confirmed badges",
         "unrelated fixture native controls remain native; screenshots are not actual ChatGPT"
       ],
-      "realAccountScreenshot": "NOT_RUN"
+      "realAccountScreenshot": "CAPTURED_HOME_EMPTY_AND_REAL_CHAT_PREVIEW_ONLY_NOT_FULL_PRODUCT_ACCEPTANCE"
     },
     "candidate": {
       "directory": "/Users/hhf/Downloads/VAIWL-v27-Integrated-20261025/extension",
@@ -3702,15 +3702,40 @@
         ],
         "manifestUnchanged": true,
         "databaseAccess": "NONE",
-        "reload": "NOT_RUN",
+        "reload": "NATIVE_RELOAD_DISPATCHED_ONCE_20261026",
         "installedManifestSha256": "edcbddd60cf2b755f51c56bf24cbf1df4495c4ae8e62bb0515a13da40aa57cd6"
       }
     },
     "realMac": {
-      "status": "NOT_RUN_NEW_BATCH",
-      "process": "Original Profile 4 PID verified, native read returned zero windows; subsequent pre-action identity guard rejected Target changed (-2700). No activation/input/reload.",
-      "reload": "NOT_RUN",
-      "next": "Original acceptance window must become safely addressable through existing approved native path; no new operator or alternate tab control."
+      "status": "PARTIAL_WEBSITE_BROWSER_CHECK_BLOCKED",
+      "date": "2026-10-26",
+      "process": "Original Profile 4 process and exact hongfei hao window verified; native AppleScript/System Events and window-only screenshots used. Other Profile windows untouched.",
+      "reload": "Original extension reload dispatched once; same installed directory and ID preserved; runtime build fingerprint not independently read back.",
+      "installedFiles": "197 declared package file hashes verified before reload; extras preserved.",
+      "observed": [
+        "New acceptance home reached through native omnibox; original tabs and drafts retained.",
+        "Unique four-grid control opened formal workspace without sidebar; empty immediate view was visible.",
+        "Native sidebar opened using exact AX control; desktop width then exposed existing native navigation.",
+        "Formal workspace rendered five real chat preview rows including the previously sent acceptance conversation; no message sent.",
+        "No confirmed Project card in this new home immediate view; no old private cache unlocked.",
+        "Existing native Project menu reached; project-home activation was followed by native account/browser-check failure. Project route success not established."
+      ],
+      "interference": {
+        "observed": "Official ChatGPT debugging infobar appeared and workspace withdrew during native-only operation.",
+        "corroboration": "Read-only task history of a separate PAIA capability task records claiming the connected ChatGPT homepage and opening its subscription menu in the same period; that task subsequently completed.",
+        "causalityLimit": "Conflicting control is corroborated; no new attribution of srcdoc writer or website-check cause is claimed.",
+        "recovery": "Infobar disappeared before the attempted cancel; cancel was not confirmed. One ordinary reload of the empty new acceptance home restored the four-grid. No protected tab control/CDP used by this task."
+      },
+      "results": {
+        "homeImmediateWorkspaceAndRealChatPreview": "PASS_LIMITED_VISUAL",
+        "fullV27ProjectAndMembersVisual": "NOT_RUN_CURRENT_BATCH",
+        "currentProjectNavigation": "BLOCKED_NATIVE_WEBSITE_BROWSER_CHECK",
+        "privateOldObjectAndLayoutRestore": "NOT_RUN_NO_NEW_PERSONAL_CONFIRMATION",
+        "completePersonalDelivery": "NOT_ACCEPTED"
+      },
+      "blocker": "Native website displayed account load failure and browser check not completed; no challenge retry, logout, account change or repeated install followed.",
+      "next": "Resume the same frozen candidate only after the original account page is normally usable without competing tab control; then Project visual check and, if needed, one personal confirmation for private restore. Do not repeat completed old scenarios.",
+      "screenshots": "Stored locally only; no raw private account screenshot uploaded to GitHub."
     },
     "limitations": [
       "uncontained opaque reading paint still conservatively rejects unsafe return placement; it cannot stop data/workspace",
