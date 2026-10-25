@@ -5,7 +5,7 @@ let localFailure=null;const state=await readActiveLocalStatus({tabs:chrome.tabs,
 const layoutRegionNames={header:'原生标题栏',reading:'独立阅读区',composer:'原生输入区',navigationSlot:'返回入口区域',historyList:'原生历史列表',returnHitRoot:'页面内容容器',readingViewport:'阅读滚动区域'};
 const missing=/^layout-(missing|ambiguous)-(header|reading|composer|navigationSlot|historyList|returnHitRoot|readingViewport)$/.exec(state);
 const layoutMessage=missing?'本次检查：布局未就绪，'+layoutRegionNames[missing[2]]+(missing[1]==='missing'?'尚未找到。':'存在多个候选。')+'原生页面保持可用；本地空间状态见下方。':state.startsWith('layout-project-')?'本次检查：Project 页面布局尚未就绪（'+state.slice('layout-project-'.length)+'），增强界面未挂载；原生页面和草稿保持不变。':state.startsWith('layout-sidebar-')?'本次检查：历史边界未就绪（'+state.slice(15)+'），原生页面保持可用。':state.startsWith('layout-geometry-')?'本次检查：布局安全检查未通过（'+state.slice('layout-geometry-'.length)+'），增强界面未挂载；原生页面保持可用。':state==='layout-check-failed'?'本次检查：布局准备未完成；原生页面保持可用。':null;
-document.getElementById('status').textContent=messages[state]??layoutMessage??(state.startsWith('foreground-')?'本次检查：前台连续性检查未通过（'+state.slice(11)+'），私人界面已撤回，原生页面保持可用。':null)??(state.startsWith('hello-')?'本次检查：初始文档连接未完成（'+state.slice(6)+'）。旧数据保持锁定；未启动界面或读取内部接口。':null)??(state.startsWith('surface-')?'本次检查：挂载检查未通过（'+state.slice(8)+'），原生页面保持可用；未解锁旧数据。':'本次检查：状态不可用。');
+document.getElementById('status').textContent=messages[state]??layoutMessage??(state.startsWith('foreground-')?'本次检查：前台连续性检查未通过（'+state.slice(11)+'），私人界面已撤回，原生页面保持可用。':null)??(state.startsWith('hello-')?'本次检查：初始文档连接未完成（'+state.slice(6)+'）。旧数据保持锁定；未启动界面或读取内部接口。':null)??(state.startsWith('surface-')?'本次检查：挂载检查未通过（'+state.slice(8)+'），原生页面保持可用；本地空间状态见下方。':'本次检查：状态不可用。');
 if(state==='unavailable')document.getElementById('status').textContent+=' 本地检查：'+({timeout:'查询超时。','tab-unavailable':'当前标签不可用。','invalid-reply':'未取得有效本地回复。','transport-error':'内容脚本通信不可用。'}[localFailure]??'内容脚本已响应，但会话不可用。');
 if(state.startsWith('layout-')||HOST_CONFIG.browserLocal&&['ready','reading','suspended'].includes(state)){const shape=await readActiveLocalLayout({tabs:chrome.tabs});if(shape){const note=document.createElement('pre');note.textContent=(shape.navigation?'导航接收（无内容） ':'布局类别（无内容） ')+JSON.stringify(shape);document.getElementById('status').append(note);}}
 
@@ -14,7 +14,7 @@ if(HOST_CONFIG.browserLocal){
  const result=document.createElement('p');result.setAttribute('role','status');document.body.append(result);
  // Surface readiness does not prove a personal binding. Read the existing
  // private control status once; never unlock or infer a grant from a descriptor.
- if(['ready','reading','suspended','dormant'].includes(state)||state.startsWith('layout-')){
+ if(['ready','reading','suspended','dormant'].includes(state)||state.startsWith('layout-')||state.startsWith('surface-')){
   result.textContent='正在检查当前文档的本地空间状态…';
   let timer;try{
    const r=await Promise.race([chrome.runtime.sendMessage({v:1,type:'HOST_LOCAL_SPACE',action:'status'}),new Promise(resolve=>{timer=setTimeout(()=>resolve(null),1000);})]);

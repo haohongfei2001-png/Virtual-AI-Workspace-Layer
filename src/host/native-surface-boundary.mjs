@@ -1,3 +1,6 @@
+// Shared semantic changes that can make an observed native boundary current.
+// Attribute observation only schedules a new proof; it never admits a region.
+export const NATIVE_LAYOUT_ATTRIBUTES=Object.freeze(['class','style','hidden','inert','role','tabindex','data-composer-placement','data-chatgpt-composer','data-sidebar-chatgpt-conversation-key','aria-hidden']);
 // Observed navigation boundaries only. A visible sidebar never supplies scope,
 // Project membership or native identity; the caller still validates each item.
 export const CHATGPT_SIDEBAR_SELECTOR='aside[data-app-shell-left-panel-appearance] [data-sidebar-navigation-root] [data-slate-sidebar-content], div[role="dialog"][aria-modal="true"][data-state="open"] [data-sidebar-navigation-root]';

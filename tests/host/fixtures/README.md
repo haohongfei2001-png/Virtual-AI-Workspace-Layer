@@ -75,3 +75,24 @@ has no HTTP endpoint. `setSelectedContext(id)` is also test-process-only.
 behavior and selected browser fault effects. It does not certify the production
 adapter, actual extension CSP/disable behavior, browser webRequest receipts, or
 all 81 acceptance cases. Those remain separate integration tests.
+
+## Versioned observed Host baseline
+
+`observed-host-baseline.json` links sanitized structural/behavioral cases to
+specific pointers in the existing Mac acceptance receipt. It is not a raw DOM
+capture or a recording of complete real event streams. Geometry is reconstructed
+unless the receipt explicitly records it; `facts`, `expectedSafetyContracts` and
+`unknowns` are separate. No private body, credential or real object ID is included.
+
+`observed-host-replay.mjs` reuses the existing desktop fixture. The manifest's
+`replays` values drive the visibility and progressive-order checks in existing
+runners; `cases` is the evidence/coverage index, not a new test framework.
+
+For a new stable-ID/history change, run
+`node tests/host/browser-local-mv3.mjs --progressive-only`: the formal packaged
+MV3 observes pending-to-stable rows and both route-first/rows-first orders through
+its owner, UI and isolated IDB. For boundary visibility changes, run
+`node tests/host/observed-profile-browser.mjs`. The broader existing MV3 lifecycle
+flow is only needed when the affected recovery behavior warrants it. None of
+these isolated results establishes Mac account acceptance. Add a real mismatch
+as a sanitized local counterexample before modifying the adapter or reinstalling.

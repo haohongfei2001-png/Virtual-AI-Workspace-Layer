@@ -1,3 +1,4 @@
+import {observedHomeHTML,retainHiddenTitlebar,visibilityWakeAttributes} from './fixtures/observed-host-replay.mjs';
 import {observedDesktopHTML} from './fixtures/observed-desktop.mjs';
 import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';
@@ -14,9 +15,17 @@ try{
  // the conversation titlebar ambiguous. Preserve rejection when both own slots.
  await page.evaluate(()=>{const other=document.createElement('header');other.setAttribute('data-app-shell-titlebar','');other.id='other-native-titlebar';other.style.cssText='left:0;top:0;width:200px;height:40px';document.body.prepend(other);});
  if(focusableViewport)await page.evaluate(()=>document.querySelector('[data-slate-sidebar-content]').removeAttribute('data-slate-sidebar-content'));
+ for(const attribute of visibilityWakeAttributes){
+  const ready=await page.evaluate(async attribute=>{
+   const node=document.querySelector('[data-app-shell-titlebar]:has([data-app-shell-main-titlebar])');node.setAttribute(attribute,'');
+   let settled=false;const pending=observedModule.waitForNativeLayout({document,profile:observedModule.CHATGPT_OBSERVED_PROFILE,timeoutMs:1000}).then(result=>{settled=true;return result;});
+   await new Promise(resolve=>setTimeout(resolve,180));const waited=!settled;node.removeAttribute(attribute);
+   return {waited,ready:await pending};
+  },attribute);assert.deepEqual(ready,{waited:true,ready:true},attribute+' alone wakes the complete proof');
+ }
  // Same-route retained native trees are hidden after SPA navigation. Keep the
  // duplicate in the document throughout the real layout/mount test.
- await page.evaluate(()=>{const cached=document.createElement('div');cached.id='cached-native-titlebar';cached.hidden=true;cached.append(document.querySelector('[data-app-shell-titlebar]:has([data-app-shell-main-titlebar])').cloneNode(true));document.body.append(cached);});
+ await page.evaluate(retainHiddenTitlebar);
  const readiness=await page.evaluate(async()=>{
   const sidebar=document.querySelector('[data-slate-sidebar-content]')??document.querySelector('nav');sidebar.style.display='none';let done=false;
   const pending=observedModule.waitForNativeLayout({document,profile:observedModule.CHATGPT_OBSERVED_PROFILE,timeoutMs:2000}).then(v=>{done=true;return v;});
@@ -71,7 +80,7 @@ try{
  // Home has a centered composer, not the conversation timeline. Exercise
  // only the new native boundary; reuse the existing real mount and renderer URL.
  const home=await browser.newPage({viewport:{width:1000,height:700}});
- const homeHTML=observedDesktopHTML('33333333-3333-4333-8333-333333333333').replace(/<main>[\s\S]*<\/main>/,'<main><div data-app-shell-main-content-layout><div role="main"><div class="home-composer-anchor" style="position:absolute;top:52px;width:780px;height:250px"><h1>Welcome</h1></div><form data-chatgpt-composer data-composer-placement="home" style="position:absolute;top:302px;width:780px;height:70px"><textarea>home draft</textarea><button type="button">Native tools</button></form></div></div></main>');
+ const homeHTML=observedHomeHTML('33333333-3333-4333-8333-333333333333').replace('fixture draft','home draft');
  await home.route('**/*',r=>r.request().url()==='https://chatgpt.com/'?r.fulfill({contentType:'text/html',body:homeHTML}):r.abort());
  await home.goto('https://chatgpt.com/');await home.addScriptTag({content:outputFiles[0].text});
  const homeChecks=await home.evaluate(async()=>{

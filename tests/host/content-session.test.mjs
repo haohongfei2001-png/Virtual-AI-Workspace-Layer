@@ -521,3 +521,31 @@ test('settled titlebar ambiguity allows one fresh preparation but never accepts 
   }
  }
 });
+
+test('native history reorder rebuilds once after transport recovery and checks the same scope',async()=>{
+ const f=fixture(),factory=f.options.controllerFactory;let control,preparations=0;
+ const client=createHostContentSession({...f.options,prepareDocument:async()=>{preparations++;return true;},controllerFactory:o=>{control=o;return factory(o);}});
+ f.setResponse(m=>m.type==='HOST_HELLO'?{binding:f.binding()}:m.type==='HOST_REFRESH'?{state:'verified',scopeKey:'local-scope'}:{ok:true,grants:[]});
+ await client.start();control.onTerminated('ui-frame-suspended',{mode:'reading'});await drain();
+ assert.equal(preparations,2,'existing transport recovery was spent');
+ control.onFailure('surface-unsafe-native-history-list-row-order');control.onTerminated('native-region-changed',{mode:'reading'});await drain();
+ assert.equal(preparations,3);assert.equal(control.initialMode,'reading');
+ control.onFailure('surface-unsafe-native-history-list-row-order');control.onTerminated('native-region-changed',{mode:'reading'});await drain();
+ assert.equal(preparations,3,'failed replacement cannot reuse either recovery budget');client.stop();
+});
+
+test('history change during mount awaits a fresh proof once; strict, hidden, unsafe and changed scope stay closed',async()=>{
+ for(const scenario of ['reorder','replaced','strict','hidden','unsafe','scope-change']){
+  const f=fixture(),factory=f.options.controllerFactory;let mounts=0,preparations=0;
+  if(scenario==='hidden')f.document.visibilityState='hidden';
+  f.setResponse(m=>m.type==='HOST_HELLO'?{binding:f.binding()}:m.type==='HOST_REFRESH'?{state:'verified',scopeKey:scenario==='scope-change'&&mounts?'other':'local-scope'}:{ok:true,grants:[]});
+  const client=createHostContentSession({...f.options,prepareDocument:scenario==='strict'?null:async()=>{preparations++;return true;},controllerFactory:o=>{
+   const controller=factory(o);return {...controller,start:async c=>{mounts++;if(mounts===1){o.onFailure('surface-unsafe-native-history-list-'+(scenario==='unsafe'?'row-gap':scenario==='replaced'?'row-replaced':'row-order'));o.onTerminated('mount-unavailable',{mode:'reading'});return null;}return controller.start(c);}};
+  }});
+  await client.start();await drain();
+  assert.equal(mounts,['reorder','replaced'].includes(scenario)?2:1,scenario);
+  if(scenario==='scope-change')assert.equal(preparations,2,'replacement revalidates but cannot mount another scope');
+  if(['strict','hidden','unsafe','scope-change'].includes(scenario))assert.equal(client.showWorkspace(),false,scenario);
+  client.stop();
+ }
+});

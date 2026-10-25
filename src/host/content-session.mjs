@@ -90,7 +90,7 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
  let seq=0,epoch=0,current=null,enabled=false,rebindQueued=false,rebindRun=0,restoreArmed=false,recoveryRemaining=0,contextResumeAllowed=false,contextWaitSuspended=false,contextResumeMode='workspace',contextResumeURL=null,verificationWaitURL=null;
  let activeWork=0,rawIPC=0,workRevision=0,observation=null;
  // Private, document-local presentation failure; never inferred from page data.
- let frameReplaced=false,startupFailure=null,layoutRetryURL=null,layoutRetryUsed=false,layoutRouteURL=null;
+ let frameReplaced=false,startupFailure=null,layoutRetryURL=null,layoutRetryUsed=false,layoutRouteURL=null,historyRecoveryURL=null;
  function stopObservation(){const prior=observation;observation=null;if(!prior)return;cancel(prior.timer);runtime.onMessage.removeListener(prior.invalidate);prior.adapter.stop();}
  async function startObservation(s){
   const adapter=s.adapter,entry={adapter,owner:s,timer:null,invalidate:null};observation=entry;
@@ -262,7 +262,7 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
   // subsequent attempt; failures never schedule their own recovery loop.
   queueMicrotask(()=>{if(!enabled||run!==rebindRun)return;rebindQueued=false;void begin(true,initialMode,expectedScope);});
  }
- async function start(){layoutRouteURL=null;layoutRetryUsed=false;layoutRetryURL=null;frameReplaced=false;startupFailure=null;contextWaitSuspended=false;verificationWaitURL=null;contextResumeMode='workspace';contextResumeURL=null;contextResumeAllowed=contextRecovery===true;clearLearned();clearRecent();clearUpgrade();recoveryRemaining=1;enabled=true;restoreArmed=false;rebindQueued=false;rebindRun++;doc.defaultView.addEventListener('pageshow',pageshow);return begin();}
+ async function start(){historyRecoveryURL=null;layoutRouteURL=null;layoutRetryUsed=false;layoutRetryURL=null;frameReplaced=false;startupFailure=null;contextWaitSuspended=false;verificationWaitURL=null;contextResumeMode='workspace';contextResumeURL=null;contextResumeAllowed=contextRecovery===true;clearLearned();clearRecent();clearUpgrade();recoveryRemaining=1;enabled=true;restoreArmed=false;rebindQueued=false;rebindRun++;doc.defaultView.addEventListener('pageshow',pageshow);return begin();}
  // A newly available native boundary may recover one pre-HELLO layout failure.
  // This is not retry permission for scope/transport/frame failures or user exit.
  async function recoverLayout(){
@@ -544,6 +544,17 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
     // real URL change through the existing fresh handshake instead of losing
     // the document in a same-route context wait. No old capability is reused.
     if(current===s&&reason==='dormant-document-changed'&&doc.location.href!==s.url){rebind(s,'reading');return;}
+    // Native history may reorder while startup awaits IPC or after a new chat.
+    // The controller has already removed the stale masks and stopped its adapter.
+    // Rebuild once for this route with a new complete proof and same-scope grant;
+    // never mutate the pinned row set of a live mount. This layout budget is
+    // independent of the single transport/Worker recovery, not a retry loop.
+    if(current===s&&prepareDocument&&['native-region-changed','mount-unavailable'].includes(reason)&&
+      ['surface-unsafe-native-history-list-row-order','surface-unsafe-native-history-list-row-replaced'].includes(s.surfaceFailure)&&
+      enabled&&live(s)&&doc.location.href===s.url&&historyRecoveryURL!==s.url&&doc.visibilityState!=='hidden'&&
+      !frameReplaced&&!s.recoveryDenied&&!s.busyClose&&(s.ready||s.mountStarting)&&s.scopeKey){
+     historyRecoveryURL=s.url;rebind(s,presentation?.mode==='workspace'?'workspace':'reading',s.scopeKey);return;
+    }
     // Native region replacement or loss of an owned dormant frame destroys
     // the controller and its producer even
     // at the same URL. Drop ready/capabilities so a later genuine C2 READY can
@@ -552,7 +563,7 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
      // Browser-local hydration may replace a just-mounted boundary. Withdraw
      // the old surface first, then spend the existing single recovery attempt
      // on a fresh document/scope handshake after bounded layout readiness.
-     if(prepareDocument&&reason==='native-region-changed'&&enabled&&live(s)&&doc.location.href===s.url&&!s.recoveryDenied&&!s.busyClose&&recoveryRemaining>0&&(s.ready||s.mountStarting)&&s.scopeKey){recoveryRemaining--;rebind(s,presentation?.mode==='workspace'?'workspace':'reading',s.scopeKey);return;}
+     if(prepareDocument&&reason==='native-region-changed'&&!['surface-unsafe-native-history-list-row-order','surface-unsafe-native-history-list-row-replaced'].includes(s.surfaceFailure)&&enabled&&live(s)&&doc.location.href===s.url&&!s.recoveryDenied&&!s.busyClose&&recoveryRemaining>0&&(s.ready||s.mountStarting)&&s.scopeKey){recoveryRemaining--;rebind(s,presentation?.mode==='workspace'?'workspace':'reading',s.scopeKey);return;}
      contextPending();return;
     }
     // The controller has withdrawn the old mount. Do not leave ready=true

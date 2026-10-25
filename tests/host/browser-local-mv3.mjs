@@ -1,3 +1,4 @@
+import {HOST_BASELINE_VERSION,progressiveOrders,homeMain,longDesktopHTML,observedHomeHTML,prepareHistoryRun,reorderHistory,addPendingChat,promotePendingChat,enterStableChat,setNativeModal} from './fixtures/observed-host-replay.mjs';
 /** Actual formal MV3 UI with an empty local memory session; offline host only. */
 import assert from 'node:assert/strict';
 import {createServer} from 'node:http';
@@ -13,11 +14,9 @@ const P='g-p-11111111111111111111111111111111',C='33333333-3333-4333-8333-333333
 // The native search navigation reaches a home layout, not a conversation DOM
 // under a home URL. Use the observed home boundaries while retaining the same
 // document, sidebar, draft and unplanned browser-navigation event.
-const homeMain='<div data-app-shell-main-content-layout><div role="main"><div class="home-composer-anchor" style="position:absolute;top:52px;width:780px;height:250px"><h1>Welcome</h1></div><form data-chatgpt-composer data-composer-placement="home" style="position:absolute;top:302px;width:780px;height:70px"><textarea>fixture draft</textarea><button type="button">Native tools</button></form></div></div>';
-const longDesktopHTML=id=>observedDesktopHTML(id).replace('Fixture text','Fixture text'+ '<span>x</span>'.repeat(3000));
-const server=createServer((req,res)=>{requests.push(req.url);res.writeHead(200,{'Content-Type':'text/html','Cache-Control':'no-store'});res.end(req.url==='/g/'+P+'/project'?observedProjectHTML(P,C)+`<script>document.addEventListener('click',e=>{if(e.target.closest('button')?.textContent==='Native search'){document.querySelector('main').innerHTML=${JSON.stringify(homeMain)};history.pushState({},'','/');return;}const a=e.target.closest('a[href]');if(a&&a.getAttribute('href')==='/c/${B}'&&!e.defaultPrevented){e.preventDefault();const next=a.href;const html=new DOMParser().parseFromString(${JSON.stringify(longDesktopHTML(B))},'text/html');document.body.replaceChildren(...html.body.childNodes);for(const style of document.querySelectorAll('head style'))style.remove();document.head.append(...html.head.childNodes);history.pushState({},'',next);}});</script>`:longDesktopHTML(B));});
+const server=createServer((req,res)=>{requests.push(req.url);res.writeHead(200,{'Content-Type':'text/html','Cache-Control':'no-store'});res.end(req.url==='/g/'+P+'/project'?observedProjectHTML(P,C)+`<script>document.addEventListener('click',e=>{if(e.target.closest('button')?.textContent==='Native search'){document.querySelector('main').innerHTML=${JSON.stringify(homeMain)};history.pushState({},'','/');return;}const a=e.target.closest('a[href]');if(a&&a.getAttribute('href')==='/c/${B}'&&!e.defaultPrevented){e.preventDefault();const next=a.href;const html=new DOMParser().parseFromString(${JSON.stringify(longDesktopHTML(B))},'text/html');document.body.replaceChildren(...html.body.childNodes);for(const style of document.querySelectorAll('head style'))style.remove();document.head.append(...html.head.childNodes);history.pushState({},'',next);}});</script>`:req.url==='/'?observedHomeHTML(B):longDesktopHTML(B));});
 await new Promise(r=>server.listen(0,'127.0.0.1',r));const origin='http://127.0.0.1:'+server.address().port,guard=await createHistoricalNetworkGuard({fixtureOrigin:origin});
-const dir=await mkdtemp(join(tmpdir(),'vaiwl-browser-local-mv3-')),built=packageHost(join(dir,'package'),{offlineOrigin:origin,browserLocal:true}),report={status:'RUNNING',evidence:'ISOLATED_MV3_FORMAL_UI_LOCAL_SESSION_AND_PERSONAL',realChatGPT:'NOT_RUN',package:built,checks:{},requests};
+const dir=await mkdtemp(join(tmpdir(),'vaiwl-browser-local-mv3-')),built=packageHost(join(dir,'package'),{offlineOrigin:origin,browserLocal:true}),report={status:'RUNNING',evidence:'ISOLATED_MV3_FORMAL_UI_LOCAL_SESSION_AND_PERSONAL',realChatGPT:'NOT_RUN',baseline:HOST_BASELINE_VERSION,package:built,checks:{},requests};
 let context,page;
 try{
  const launch=async()=>{
@@ -26,6 +25,54 @@ try{
  return result;};
  context=await launch();
  const cdp=await context.browser().newBrowserCDPSession(),{id}=await cdp.send('Extensions.loadUnpacked',{path:built.unpacked});
+ // Two explicit partial-order counterexamples, not claimed real event timings.
+ // Reuse formal Browser-Local owner/UI; do not inject business records or ACKs.
+ if(process.argv.includes('--progressive-only'))for(const [index,order] of progressiveOrders.entries()){
+  const newId=['66666666-6666-4666-8666-666666666666','77777777-7777-4777-8777-777777777777'][index];
+  const progressive=await context.newPage();page=progressive;
+  await progressive.addInitScript({content:'document.addEventListener("DOMContentLoaded",'+prepareHistoryRun.toString()+',{once:true});'});
+  await progressive.goto(origin+'/');
+  await progressive.waitForFunction(()=>document.querySelectorAll('[data-va-owned]:popover-open').length===2,null,{timeout:15000});
+  const control=await context.newPage();await control.goto('chrome-extension://'+id+'/status.html');await progressive.bringToFront();
+  assert.equal((await control.evaluate(()=>chrome.runtime.sendMessage({v:1,type:'HOST_LOCAL_SPACE',action:'unlock'}))).ok,true);
+  const formal=progressive.frameLocator('iframe[src="chrome-extension://'+id+'/workspace.html"]');
+  await formal.getByRole('link',{name:'Native A',exact:true}).first().waitFor({timeout:15000});
+  await progressive.getByRole('button',{name:'返回原生阅读',exact:true}).click();
+  await progressive.evaluate(addPendingChat);
+  const promote=()=>progressive.evaluate(promotePendingChat,{id:newId});
+  const navigate=()=>progressive.evaluate(enterStableChat,{html:observedDesktopHTML(newId),id:newId});
+  if(order==='route-first'){await navigate();await promote();}else{await promote();await navigate();}
+  await progressive.getByRole('button',{name:'返回工作空间',exact:true}).waitFor({timeout:15000});
+  assert.equal(await progressive.locator('textarea').inputValue(),'fixture draft');
+  await progressive.getByRole('button',{name:'返回工作空间',exact:true}).click();
+  await formal.locator('a[href="'+origin+'/c/'+newId+'"]').first().waitFor({timeout:15000});
+  await formal.getByText('归属待核对',{exact:true}).first().waitFor();
+  assert.equal((await control.evaluate(()=>chrome.runtime.sendMessage({v:1,type:'HOST_LOCAL_SPACE',action:'status'}))).mode,'personal');
+  const w=context.serviceWorkers().find(w=>w.url().startsWith('chrome-extension://'+id+'/'));
+  const passiveOnly=await w.evaluate(async()=>{
+   const db=await new Promise((resolve,reject)=>{const q=indexedDB.open('vaiwl-b1-v1');q.onsuccess=()=>resolve(q.result);q.onerror=()=>reject(q.error);});
+   try{return await new Promise((resolve,reject)=>{const tx=db.transaction('native_states'),q=tx.objectStore('native_states').getAll();tx.oncomplete=()=>{const data=JSON.stringify(q.result);resolve(!data.includes('"sentAt":')&&!data.includes('observed-self-send'));};tx.onabort=()=>reject(tx.error);});}finally{db.close();}
+  });assert(passiveOnly,'navigation and stable ID do not manufacture a send/ACK');
+  report.checks['homePendingStableChatReorder-'+order]=true;
+  await control.close();await progressive.close();
+ }
+ if(!process.argv.includes('--progressive-only')){
+ // A native row reorder invalidates the old mask; a fresh same-document
+ // handshake must prove the current row run before restoring the formal UI.
+ const reordered=await context.newPage();await reordered.addInitScript({content:'document.addEventListener("DOMContentLoaded",'+prepareHistoryRun.toString()+',{once:true});'});
+ await reordered.goto(origin+'/c/'+B);
+ await reordered.waitForFunction(()=>document.querySelectorAll('[data-va-owned]:popover-open').length===2,null,{timeout:15000});
+ const priorHistoryFrame=await reordered.locator('iframe[src="chrome-extension://'+id+'/workspace.html"]').elementHandle();
+ await reordered.getByRole('button',{name:'返回原生阅读',exact:true}).click();
+ await reordered.evaluate(reorderHistory);
+ await reordered.waitForFunction(node=>!node.isConnected,priorHistoryFrame,{timeout:10000});
+ await reordered.getByRole('button',{name:'返回工作空间',exact:true}).waitFor({timeout:15000});
+ assert.equal(await reordered.locator('textarea').inputValue(),'fixture draft');
+ assert.equal(await reordered.locator('[data-va-owned]:popover-open').count(),0,'recovery preserves native reading');
+ await reordered.getByRole('button',{name:'返回工作空间',exact:true}).click();
+ await reordered.frameLocator('iframe[src="chrome-extension://'+id+'/workspace.html"]').getByRole('link',{name:'Native reordered',exact:true}).waitFor({timeout:10000});
+ report.checks.nativeHistoryReorderReplacesStaleMaskAndRestoresFormalUI=true;
+ await reordered.close();
  // A native sidebar absent at first load can appear after the six-second
  // readiness deadline. Its appearance permits one fresh, reading-only startup.
  for(const lateRoute of ['conversation','project','project-rows']){
@@ -105,7 +152,7 @@ try{
  // Keep the real installed frames/owner alive through several renewal windows.
  await page.getByRole('button',{name:'返回原生阅读',exact:true}).click();await back.waitFor();
  const modalFrame=await page.locator('iframe[src="chrome-extension://'+id+'/workspace.html"]').elementHandle();
- await page.evaluate(()=>{const main=document.querySelector('main'),nav=document.querySelector('nav');for(const node of [main,nav]){if(!node)throw Error('missing-modal-background');node.setAttribute('aria-hidden','true');node.inert=true;}const dialog=document.createElement('dialog');dialog.id='fixture-native-modal';dialog.setAttribute('aria-modal','true');dialog.textContent='Native search fixture';document.body.append(dialog);dialog.showModal();});
+ await page.evaluate(setNativeModal,true);
  for(let at=0;at<25;at++){await new Promise(r=>setTimeout(r,1000));assert.equal(await modalFrame.evaluate(node=>node.isConnected),true,'native modal must not destroy the bound frame');assert.equal(await page.locator('[data-va-owned]:popover-open').count(),0);}
  await assertPersonal();
  await page.evaluate(()=>{document.querySelector('#fixture-native-modal').remove();for(const node of [document.querySelector('main'),document.querySelector('nav')]){node.removeAttribute('aria-hidden');node.inert=false;}});
@@ -155,6 +202,7 @@ try{
  const reopened=page.frameLocator('iframe[src="chrome-extension://'+id+'/workspace.html"]');await reopened.getByRole('link',{name:'Native A',exact:true}).first().waitFor({timeout:15000});assert.equal(await reopened.getByText('Native Project',{exact:true}).count(),0);
  const status=await context.newPage();await status.goto('chrome-extension://'+id+'/status.html');await page.bringToFront();
  const restoredBinding=await status.evaluate(()=>chrome.runtime.sendMessage({v:1,type:'HOST_LOCAL_SPACE',action:'unlock'}));assert.equal(restoredBinding.ok,true,JSON.stringify(restoredBinding));await reopened.getByText('Native Project',{exact:true}).first().waitFor({timeout:15000});report.checks.browserRestartLocksAndExplicitUnlockRestores=true;
+ }
  assert(requests.every(p=>!p.startsWith('/api/')&&!p.startsWith('/backend-api/')));report.checks.noInternalRequests=true;report.status='PASS';
 }catch(error){report.status='FAIL';report.error=error.stack;try{report.startup=await page.evaluate(()=>Object.fromEntries([...document.documentElement.attributes].filter(a=>a.name.startsWith('data-vaiwl')).map(a=>[a.name,a.value])));report.presentation=await page.evaluate(()=>({join:document.querySelector("[data-vaiwl-frame-join]")?.getAttribute("data-vaiwl-frame-join"),active:document.activeElement?.tagName,popovers:[...document.querySelectorAll('[data-va-owned][popover]')].map(n=>({open:n.matches(':popover-open'),visibility:getComputedStyle(n).visibility,rect:n.getBoundingClientRect().toJSON()})),roots:[...document.querySelectorAll('[data-va-mask-workspace],[data-va-mask-sidebar]')].map(n=>({visibility:getComputedStyle(n).visibility,display:getComputedStyle(n).display,hidden:n.hidden})),returnCount:document.querySelectorAll('[aria-label="返回工作空间"]').length}));report.frameBodies=await Promise.all(page.frames().filter(f=>f.url().startsWith('chrome-extension://')).map(async f=>({body:await f.locator('body').textContent({timeout:1500}),stage:await f.evaluate(()=>document.documentElement.getAttribute('data-vaiwl-frame-lifecycle'))})));report.page=await page.locator('body').innerText();report.frames=page.frames().map(f=>f.url());const w=context.serviceWorkers().find(w=>w.url().startsWith('chrome-extension://'));report.continuity=await w.evaluate(async()=>{const saved=(await chrome.storage.session.get('vaiwl-browser-local-continuity-v1'))['vaiwl-browser-local-continuity-v1'];const row=saved?.rows?.[0];if(!row)return {rows:saved?.rows?.length??-1};const frame=await chrome.webNavigation.getFrame({tabId:row.tabId,frameId:0});let proof;try{proof=await chrome.tabs.sendMessage(row.tabId,{type:'HOST_LOCAL_CONTINUITY',action:'probe',challenge:'failure-check'},{documentId:row.documentId});}catch{}return {rows:saved.rows.length,documentMatches:frame?.documentId===row.documentId,active:frame?.documentLifecycle==='active',noncePresent:!!proof?.nonce,nonceMatches:proof?.nonce===row.nonce,unexpired:Date.now()<row.expiresAt};});}catch{}process.exitCode=1;}
 finally{await context?.close();await new Promise(r=>server.close(r));await guard.close();await writeFile(join(dir,'report.json'),JSON.stringify(report,null,2));}

@@ -1,5 +1,5 @@
 import {inspectNativeProjectSurface} from './native-project-surface.mjs';
-import {CHATGPT_SIDEBAR_SELECTOR,profileElement,sidebarBoundaryFailure} from './native-surface-boundary.mjs';
+import {CHATGPT_SIDEBAR_SELECTOR,NATIVE_LAYOUT_ATTRIBUTES,profileElement,sidebarBoundaryFailure} from './native-surface-boundary.mjs';
 import {CHATGPT_SELECTION_CURRENT_BODY} from './current-body-discovery.mjs';
 import {nativeReturnGapRect} from './native-return-gap.mjs';
 import {createURLPolicy} from './url-policy.mjs';
@@ -95,7 +95,7 @@ export function waitForNativeLayout({document,profile,timeoutMs=6000,signal=null
    }catch{finish(false);}
   };
   if(!Number.isFinite(timeoutMs)||timeoutMs<=0||timeoutMs>6000){finish(false);return;}
-  observer=new win.MutationObserver(check);observer.observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:['class','style','role','tabindex','data-composer-placement','data-chatgpt-composer','data-sidebar-chatgpt-conversation-key','aria-hidden']});
+  observer=new win.MutationObserver(check);observer.observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:NATIVE_LAYOUT_ATTRIBUTES});
   signal?.addEventListener('abort',leave,{once:true});win.addEventListener('pagehide',leave);win.addEventListener('popstate',check);win.addEventListener('hashchange',check);timer=win.setTimeout(()=>finish(false),timeoutMs);check();
  });
 }

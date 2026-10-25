@@ -1,4 +1,4 @@
-import {profileElement} from './native-surface-boundary.mjs';
+import {profileElement,NATIVE_LAYOUT_ATTRIBUTES} from './native-surface-boundary.mjs';
 import {recoverableLayoutFailure} from './local-status.mjs';
 import {createURLPolicy} from './url-policy.mjs';
 import {exactHostRecord} from './contract.mjs';
@@ -68,7 +68,7 @@ export function installBrowserLocalLifecycle({document:doc,runtime,session,profi
   });
  };
  const layoutObserver=doc.defaultView.MutationObserver?new doc.defaultView.MutationObserver(layoutChanged):null;
- layoutObserver?.observe(doc.documentElement,{subtree:true,childList:true,attributes:true,attributeFilter:['class','style','hidden','inert','aria-hidden','role','data-sidebar-chatgpt-conversation-key']});
+ layoutObserver?.observe(doc.documentElement,{subtree:true,childList:true,attributes:true,attributeFilter:NATIVE_LAYOUT_ATTRIBUTES});
  doc.defaultView.addEventListener('resize',layoutChanged);
  const pagehide=()=>{clear();}; // BFCache also needs a new explicit confirmation.
  const message=(m,sender,reply)=>{

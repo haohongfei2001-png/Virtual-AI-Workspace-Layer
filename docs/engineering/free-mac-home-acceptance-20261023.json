@@ -2631,5 +2631,75 @@
       "oldTabsRetained": true
     },
     "next": "No new confirmation needed for completed continuity evidence. Remaining send requires a truly empty native test composer without discarding a draft; Worker restart needs a supported verifiable stop/restart observation. Formal same-tab navigation requires complete risk grammar. Final private state intentionally locked by risk test."
+  },
+  "privateWorkerAndNewChatR92_20261025": {
+    "baseHead": "965a7689785bfec2b6f1b6c3200fde767c771cf7",
+    "environment": "Original Mac Chrome Profile 4 and original extension; exact-PID native AX only; no browser tab claim or CDP",
+    "actualMac": {
+      "lockedWorkerRestart": "PASS_OWN_WORKER_THREAD_CHANGED_1_TO_2_LOCK_RETAINED",
+      "personalWorkerRestart": "PASS_OWN_WORKER_THREAD_CHANGED_2_TO_3_SAME_DOCUMENT_PERSONAL_RETAINED",
+      "personalConfirmation": "PASS_USER_CONFIRMATION_AND_PRIVATE_POPUP_STATUS_READ_BACK",
+      "testMessage": "SENT_ONCE_APPROVED_TEXT_NO_REPLAY",
+      "newConversationRoute": "PASS_CANONICAL_STABLE_CONVERSATION_ROUTE_AND_NATIVE_TITLE",
+      "newConversationFormalDiscovery": "FAIL_SURFACE_UNSAFE_NATIVE_HISTORY_LIST_ROW_ORDER",
+      "replyBody": "NOT_READ",
+      "privateOnlyDurableRestoreAfterFreshRestart": "NOT_ESTABLISHED"
+    },
+    "confirmedFailure": {
+      "stage": "surface-unsafe-native-history-list-row-order",
+      "oldMask": "PINNED_ROW_SET_REJECTED_AFTER_NATIVE_REORDER",
+      "microEventOrder": "NOT_CAPTURED_DO_NOT_INFER_FROM_FINAL_STATUS",
+      "popup": "SURFACE_FAILURE_INCORRECTLY_CLAIMED_PRIVATE_NOT_UNLOCKED_WITHOUT_QUERY"
+    },
+    "localFix": {
+      "oldMaskProtection": "UNCHANGED",
+      "recovery": "ONE_FRESH_COMPLETE_LAYOUT_AND_SAME_SCOPE_HANDSHAKE_PER_ROUTE_NO_RETRY_LOOP",
+      "popup": "READ_EXISTING_PRIVATE_BINDING_STATUS_SEPARATELY",
+      "targetedTests": "PASS_174",
+      "isolatedMV3": "PASS_NATIVE_HISTORY_REORDER_FORMAL_UI_REPLACEMENT_DRAFT_PRESERVED",
+      "actualMacAfterFix": "NOT_RUN"
+    },
+    "installCheckpoint": {
+      "candidateArchiveSha256": "777f18c17a7834d51605b203514b035cbff8cc86a2cb6660ad15b1fea6df8a99",
+      "originalPathBackedUpAndCanonicalFilesUpdated": true,
+      "manifestUnchanged": true,
+      "reload": "NOT_DISPATCHED_FOREGROUND_GUARD_STOPPED_BEFORE_KEY",
+      "databaseTouched": false,
+      "nextAction": "USER_REDIRECTED_TO_OFFLINE_BATCH_DEVELOPMENT_NO_FURTHER_REAL_CHROME_OPERATIONS"
+    },
+    "evidenceBoundary": "Worker continuity and stable native route are actual Mac evidence. Fixed recovery is offline only. No new source-v3 or extra test message. Older NOT_RUN results retained."
+  },
+  "hostBaselineBatchR93_20261025": {
+    "baseHead": "965a7689785bfec2b6f1b6c3200fde767c771cf7",
+    "baseline": "tests/host/fixtures/observed-host-baseline.json",
+    "version": "chatgpt-desktop-observed-v1",
+    "rawDOMCapture": false,
+    "changes": [
+      "bounded-fresh-same-scope-history-remount",
+      "shared-semantic-layout-wake-attributes",
+      "surface-status-separate-private-binding"
+    ],
+    "validation": {
+      "targetedNode": "PASS_185",
+      "historyAndLifecycleIsolatedMV3": "PASS",
+      "progressiveRouteFirstAndRowsFirstIsolatedMV3": "PASS",
+      "layoutVisibilityBrowser": "PASS_WEB_MECHANISM_ONLY",
+      "actualMacAfterFix": "NOT_RUN"
+    },
+    "candidate": {
+      "directory": ".git/vaiwl-artifacts/browser-local-baseline-20261025-r93/extension",
+      "files": 197,
+      "zipSha256": "5efa3504b93ec2f8c86106ef12b84f7cc79ec23d8b4ccf09744b3a921126a7a3",
+      "installed": false
+    },
+    "privateDataChanged": false,
+    "newRealAccountExperiment": false,
+    "remaining": [
+      "long-chat-local-paint-containment",
+      "full-native-input-risk-grammar",
+      "actual-private-only-object-restore",
+      "fixed-new-chat-projection-mac-acceptance"
+    ],
+    "next": "ONE_FROZEN_CANDIDATE_TARGETED_MAC_ACCEPTANCE_NO_REPEAT_SEND_OR_SOURCE_V3"
   }
 }
