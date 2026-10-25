@@ -22,7 +22,7 @@ try{
   });assert(stable.stillWaiting&&stable.ready&&stable.elapsed>=240,'row changes restart only the 150ms stability interval');
   await page.evaluate(insertHistoryGap);
   const blocked=await page.evaluate(async()=>{let reason;const started=performance.now();const ready=await observedModule.waitForNativeLayout({document,profile:observedModule.CHATGPT_OBSERVED_PROFILE,timeoutMs:400,onFailure:r=>reason=r});return {ready,reason,elapsed:performance.now()-started};});
-  assert.equal(blocked.ready,false);assert.equal(blocked.reason,'layout-history-row-order');assert(blocked.elapsed<800,'unsafe history cannot extend the total deadline');
+  assert.equal(blocked.ready,false);assert.equal(blocked.reason,'layout-history-sibling-overlap');assert(blocked.elapsed<800,'unsafe history cannot extend the total deadline');
   await page.evaluate(clearHistoryGap);
   const unstable=await page.evaluate(async()=>{
    let reason;const list=document.querySelector('#list'),clock=setInterval(()=>list.prepend(list.lastElementChild),75);

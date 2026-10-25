@@ -2,9 +2,40 @@ import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';
 import {chromium} from '../b1/tooling/node_modules/playwright/index.mjs';
 const require=createRequire(new URL('../../extension/tooling/package.json',import.meta.url));
-const {outputFiles}=await require('esbuild').build({stdin:{contents:"export {createChatGPTAdapter} from './src/host/chatgpt-adapter.mjs';export {LEGACY_SURFACE_PROFILE} from './src/host/surface-discovery.mjs';export {createMountSurface} from './src/navigation/mount-surface.mjs';",resolveDir:process.cwd()},bundle:true,write:false,format:'iife',globalName:'historyModule'});
+const {outputFiles}=await require('esbuild').build({stdin:{contents:"export {createHistoryStructureDiagnostic,validHistoryStructureReport} from './src/host/history-structure-diagnostic.mjs';export {createChatGPTAdapter} from './src/host/chatgpt-adapter.mjs';export {LEGACY_SURFACE_PROFILE} from './src/host/surface-discovery.mjs';export {createMountSurface} from './src/navigation/mount-surface.mjs';",resolveDir:process.cwd()},bundle:true,write:false,format:'iife',globalName:'historyModule'});
 const browser=await chromium.launch({headless:true});
 try{
+ if(process.argv.includes('--diagnostic-only')){
+  const page=await browser.newPage(),url='https://chatgpt.com/';
+  await page.route('**/*',r=>r.request().url()===url?r.fulfill({contentType:'text/html',body:'<nav id="source"><div id="root"><div role="list"><div role="listitem"><a href="/c/PRIVATE_ID">PRIVATE_TITLE</a></div></div></div></nav>'}):r.abort());
+  await page.goto(url);await page.addScriptTag({content:outputFiles[0].text});
+  const results=await page.evaluate(async()=>{
+   const {createHistoryStructureDiagnostic,validHistoryStructureReport}=historyModule,profile={regions:{history:'#source'},nativeHomeLayout:{historyList:'#root'}};
+   const list=document.querySelector('[role="list"]'),first=list.firstElementChild;
+   const read=Element.prototype.getAttribute;
+   Element.prototype.getAttribute=function(name){if(['href','title','data-sidebar-chatgpt-conversation-key'].includes(name))throw Error('private attribute read');return read.call(this,name);};
+   Object.defineProperty(Node.prototype,'textContent',{get(){throw Error('private text read');},configurable:true});
+   const observe=createHistoryStructureDiagnostic({document,profile,readState:()=> 'layout-history-row-order',durationMs:220});
+   const pending=observe();
+   await new Promise(r=>setTimeout(r,25));first.setAttribute('data-sidebar-chatgpt-conversation-key','PRIVATE_ID');
+   await new Promise(r=>setTimeout(r,25));const gap=document.createElement('button'),last=first.cloneNode(true);list.append(gap,last);
+   await new Promise(r=>setTimeout(r,25));list.prepend(last);
+   await new Promise(r=>setTimeout(r,25));first.replaceWith(first.cloneNode(true));
+   const report=await pending,again=await observe();
+   if(!validHistoryStructureReport(report))throw Error('invalid report');
+   if(JSON.stringify(report).includes('PRIVATE'))throw Error('leak');
+   const zero=report.snapshots[0].rows.every(r=>!r[3]),promoted=report.snapshots.some(s=>s.changes[1]>0&&s.rows[0][3]);
+   const gapSeen=report.snapshots.some(s=>s.rows.length===3&&s.rows[0][3]&&!s.rows[1][3]&&s.rows[2][3]);
+   const reordered=report.snapshots.some(s=>s.rows[0][0]===report.snapshots.find(s=>s.rows.length===3)?.rows[2][0]);
+   const replaced=report.snapshots.at(-1).rows.some(r=>r[3]&&r[0]!==report.snapshots[0].rows[0][0]&&r[0]!==report.snapshots.find(s=>s.rows.length===3)?.rows[2][0]);
+   const order=report.operations.filter(o=>o.kind==='children'),sameBatchOrder=order.some((o,i)=>o.removed.length===1&&order[i+1]?.added[0]===o.removed[0]);
+   const source=document.querySelector('#source'),boundaryObserve=createHistoryStructureDiagnostic({document,profile,readState:()=> 'layout-history-row-order',durationMs:45}),boundaryPending=boundaryObserve();source.replaceWith(source.cloneNode(true));const boundaryChanged=(await boundaryPending).reason==='boundary-changed';
+   const old=JSON.stringify(report);list.append(document.createElement('div'));await new Promise(r=>setTimeout(r,20));
+   return {zero,promoted,gapSeen,reordered,replaced,sameBatchOrder,boundaryChanged,once:again===report,detached:JSON.stringify(report)===old,phase:report.snapshots.every(s=>s.phase==='preparation'),complete:report.reason==='complete'&&!report.truncated};
+  });
+  assert(Object.values(results).every(Boolean),JSON.stringify(results));
+  console.log(JSON.stringify({status:'PASS_WEB_MECHANISM_ONLY',diagnostic:results}));
+ }else{
  const page=await browser.newPage({viewport:{width:1000,height:700}}),url='https://chatgpt.com/c/33333333-3333-4333-8333-333333333333';
  await page.route('**/*',r=>r.request().url()===url?r.fulfill({contentType:'text/html',body:`<meta charset="utf-8"><style>body{margin:0}#header{position:fixed;left:220px;top:0;width:780px;height:52px}#slot{width:40px;height:40px}#source{position:fixed;left:0;top:52px;width:200px;height:648px}#heading{height:100px}#list{height:400px}#reading{position:fixed;left:220px;top:60px;width:780px;height:400px}#composer{position:fixed;left:220px;top:500px;width:780px;height:80px}</style><nav id="source"><div id="heading"><button id="search">Native search</button><button id="project-create">Create project</button></div><div id="list" aria-hidden="false"><div data-sidebar-chatgpt-conversation-key="opaque-marker-not-membership" role="listitem"><div data-sidebar-cycle-item role="group"><a href="/c/33333333-3333-4333-8333-333333333333"><span data-thread-title>Native A</span></a><button aria-label="聊天操作" aria-haspopup="menu">…</button><button aria-label="置顶聊天">Pin</button></div></div></div></nav><header id="header"><div id="slot"></div></header><section id="reading"></section><form id="composer"><textarea>fixture draft</textarea></form>`}):r.abort());
  await page.goto(url);await page.addScriptTag({content:outputFiles[0].text});
@@ -39,4 +70,5 @@ try{
  });
  for(const [group,values]of Object.entries(result))if(typeof values==='object')for(const [key,value]of Object.entries(values))assert.equal(value,true,group+'.'+key);else assert.equal(values,true,group);
  console.log(JSON.stringify({result:'PASS_WEB_MECHANISM_ONLY',checks:result}));
+ }
 }finally{await browser.close();}

@@ -42,11 +42,26 @@ export function setNativeModal(open){
  }else{document.querySelector('#fixture-native-modal').remove();for(const node of [document.querySelector('main'),document.querySelector('nav')]){node.removeAttribute('aria-hidden');node.inert=false;}}
 }
 
-// A local counterexample for the recorded r93 startup failure category. Exact
-// real row order is unknown: these timings test the preparation contract only.
+// Independent safety counterexample: an unknown row overlaps a stable run.
+// This reconstructed geometry is not part of the real anonymous r94 capture.
 export function insertHistoryGap(){
  const list=document.querySelector('#list'),row=document.createElement('div');
  row.id='fixture-history-gap';row.textContent='Native pending row';
- list.firstElementChild.after(row);
+ const b=list.firstElementChild.getBoundingClientRect();row.style.cssText='position:fixed;left:'+b.x+'px;top:'+(b.y+1)+'px;width:'+b.width+'px;height:20px';list.firstElementChild.after(row);
 }
 export function clearHistoryGap(){document.querySelector('#fixture-history-gap').remove();}
+
+// Actual direct-row marker order from the one-time r94 anonymous observation.
+// Contents/geometry are synthetic; unmarked rows have no assumed native meaning.
+export function materializeHistoryStructure(markers){
+ const list=document.querySelector('#list'),template=list.querySelector('[data-sidebar-chatgpt-conversation-key]').cloneNode(true);
+ list.setAttribute('role','list');list.style.height='auto';list.replaceChildren();
+ markers.forEach((stable,index)=>{
+  let row;
+  if(stable){row=template.cloneNode(true);row.dataset.sidebarChatgptConversationKey='fixture-'+index;
+   row.querySelector('a').href='/c/'+String(index+1).padStart(8,'0')+'-1111-4111-8111-111111111111';
+   row.querySelector('[data-thread-title]').textContent=index===0?'Known latest fixture':'Known fixture '+index;
+  }else{row=document.createElement('div');row.setAttribute('role','listitem');const control=document.createElement('button');control.textContent='Unknown native control '+index;row.append(control);}
+  row.style.height='30px';list.append(row);
+ });
+}

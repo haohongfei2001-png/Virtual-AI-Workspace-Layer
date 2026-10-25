@@ -1,5 +1,20 @@
 # VAIWL实际状态：渐进积累工程已接线，真实来源逐项待准入
 
+## r94真实匿名结构已定位；r95固定修复及一次Mac验收（2026-10-25）
+
+接续685560a1。先复用原popup/Host观察链补有界一次性匿名诊断，隔离浏览器及实际MV3验证通过后才同ID加载；消费标记先于派发持久化，旧批次不重置。唯一真实观察得16个直接DIV/listitem：**T,F,F,T×12,F**；13条有稳定标记，3条无标记，唯一source/root/list，6秒无相关变更且最终边界仍同一。失败为preparation。本次没有读取标题、聊天ID值、正文、凭据或内部接口。无标记行的含义与观察前事件仍未知，不能称全时段天然不变。
+
+**准确根因：`nativeHistoryPresentation`把所有稳定行必须连续作为整体挂载条件，真实列表直接推翻该前提。** 不是稳定行尚未出现；未发现本窗口的替换/重排，也没有选择器错配证据。先将匿名原报告纳入原fixture/baseline v4并复现旧代码失败，再集中修改初始段选择：选择最长连续稳定段，其他稳定行和无标记行保持原生；数据发现仍消费允许的可见导航，不受mask范围限制。完整纯度、兄弟遮挡、裁剪、几何、preferred固定节点/顺序及账户检查不变，不延长等待、不扩大阈值。未知控件压入所选矩形仍撤下，不以局部侧栏冒充完整验收。
+
+旧代码在该真实结构回放失败；修后隔离正式MV3验证workspace、段外最新对象发现、12行局部mask及未知重叠让位通过。原历史纯度、重排/插入拒绝、准备总期限回归通过；只读独立审查无阻断问题。此证据不替代Mac。
+
+唯一产品候选 **r95** 已冻结、原目录备份后同ID更新/Reload一次。198文件，ZIP SHA256 `f9313343baf4c1144055b300ca1cbe00d1f1a7424ba2bfab8ef5268812777c12`。包：`/Users/hhf/Downloads/VAIWL-Browser-Local-EvidenceFix-20261025-r95/extension`；备份：`.git/vaiwl-artifacts/browser-local-evidence-run-20261025-r95/previous-extension`。原数据库/草稿/副本/stash保全。
+
+**实际Mac：** 首页已连接、原row-order不再出现；四格展开正式双surface，原工作空间AXWebArea及首批5条链接实际出现（PASS）。已发送验收聊天不在首批预览，展开检查未完成，故最终入列仍NOT_ESTABLISHED；私人独有恢复NOT_RUN，原popup明确新文档旧私人库LOCKED。Chrome标题增加内存提示后，后续前台稳定检查未通过；停止发键，未在不确定窗口操作，未增加消息/来源实验/候选或重做已过旅程。完整日用未通过。剩余集中验收只需可稳定操作原验收窗口后查完整预览，以及本人新文档确认后的私人独有恢复；不得代点确认或再凭猜测改版本。
+
+原Mac回执：`historyStructure20261025`、`evidenceRunR95_20261025`。最长段完全离屏仍保守不接管；长聊天局部包含和完整输入风险语法的既有真实结构缺口保持，不在本轮扩展。
+
+
 ## r94同ID集中实机：首页准备失败，停止猜测性迭代（2026-10-25）
 
 已核实际HEAD为32a40720。冻结r94的197个canonical文件及manifest核验通过，原目录完整备份后同ID更新并仅Reload一次；原ID `miendbcjdmecjggplepenghjnoejmaic` 保持，原数据库、草稿、旧标签及其他Chrome未动。当前原安装为r94；此前“r94未安装”是下方历史检查点。备份：`.git/vaiwl-artifacts/mac-r94-concentrated-20261025/previous-extension`。

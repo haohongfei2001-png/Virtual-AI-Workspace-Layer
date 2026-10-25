@@ -1,5 +1,6 @@
 import {projectSurfaceFailureReasons,projectClipDiagnostic} from './native-project-surface.mjs';
 import {historyFailureReasons} from './native-history-list.mjs';
+import {validHistoryStructureReport} from './history-structure-diagnostic.mjs';
 // Shared fixed frame failures; arbitrary renderer/transport error text stays private.
 export const frameFailureReasons=Object.freeze(['ui-grant-expired','ui-renew-failed','ui-join-failed','ui-port-disconnected','ui-renderer-failed','read-budget-exhausted','frame-preparation-limit','free-frame-page-too-large','frame-view-unavailable','invalid-preparation-response','invalid-frame-view','invalid-search-snippets','invalid-frame-current','invalid-frame-current-ref','invalid-frame-navigation','invalid-frame-presentation','request-timeout']);
 export const foregroundFailureStates=Object.freeze(['invalid-host-document','stale-host-document','scope-not-verified','replayed-sequence','host-refresh-unavailable','host-unavailable','capacity','transport-unavailable','scope-unverified','scope-changed'].map(reason=>'foreground-'+reason));
@@ -29,8 +30,11 @@ export function validLayoutShape(value){
  return exact(value,['counts','branches'])&&Array.isArray(value.counts)&&value.counts.length===7&&value.counts.every(n=>Number.isInteger(n)&&n>=0&&n<=33)&&Array.isArray(value.branches)&&value.branches.length<=12&&value.branches.every(row=>Array.isArray(row)&&row.length===6&&['DIV','STYLE','SCRIPT','TEMPLATE','FOOTER','BUTTON','OTHER'].includes(row[0])&&row.slice(1,5).every(v=>typeof v==='boolean')&&Number.isInteger(row[5])&&row[5]>=0&&row[5]<=33);
 }
 /** Passive isolated-world status. This is not an authority or recovery channel. */
-export function installLocalStatus({runtime,readState,readLayout=()=>null}){
+export function installLocalStatus({runtime,readState,readLayout=()=>null,observeHistory=null}){
  const listener=(message,sender,reply)=>{
+  if(exact(message,['v','type'])&&message.v===1&&message.type==='HOST_LOCAL_HISTORY_STRUCTURE'&&sender?.id===runtime.id&&sender?.url===runtime.getURL('status.html')&&sender.tab===undefined&&observeHistory){
+   Promise.resolve().then(observeHistory).then(report=>reply({v:1,report:validHistoryStructureReport(report)?report:null}),()=>reply({v:1,report:null}));return true;
+  }
   if(!exact(message,['v','type'])||message.v!==1||!['HOST_LOCAL_STATUS','HOST_LOCAL_LAYOUT'].includes(message.type)||sender?.id!==runtime.id||sender?.url!==runtime.getURL('status.html')||sender.tab!==undefined)return;
   if(message.type==='HOST_LOCAL_LAYOUT'){let shape=null;try{const value=readLayout();if(validLayoutShape(value))shape=value;}catch{}reply({v:1,shape});return;}
   let state='unavailable';try{const value=readState();if(states.has(value))state=value;}catch{}

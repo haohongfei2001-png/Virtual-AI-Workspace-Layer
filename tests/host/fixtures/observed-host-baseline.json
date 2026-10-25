@@ -1,6 +1,6 @@
 {
   "schema": "chatgpt-host-observed-baseline-v1",
-  "version": "chatgpt-desktop-observed-v3",
+  "version": "chatgpt-desktop-observed-v4",
   "sourceReceipt": "docs/engineering/free-mac-home-acceptance-20261023.json",
   "rawDOMCapture": false,
   "privateData": "NONE_SYNTHETIC_IDS_AND_TEXT_ONLY",
@@ -237,6 +237,28 @@
       ],
       "integrationRunner": "browser-local-mv3.mjs --history-ready-only",
       "replayLimit": "The existing reconstruction is not a reproduction of the r94 live list: no reliable real direct-row structure or mutation trace was obtained. Do not infer an implementation fix from the synthetic order."
+    },
+    {
+      "id": "home-interleaved-native-rows",
+      "evidencePointers": [
+        "/historyStructure20261025"
+      ],
+      "fixture": "observed-history-structure.json",
+      "runner": "browser-local-mv3.mjs --mixed-history-only",
+      "kind": "actual-anonymous-structure-with-synthetic-row-contents",
+      "facts": [
+        "one-explicit-list",
+        "16-direct-DIV-listitem-rows",
+        "stable-positions-0-and-3-through-14",
+        "unmarked-positions-1-2-15",
+        "no-relevant-mutation-during-6002ms",
+        "failure-phase-preparation"
+      ],
+      "unknowns": [
+        "unmarked-row-semantics",
+        "exact-live-pixel-geometry",
+        "events-before-observation"
+      ]
     }
   ],
   "minimalMissingObservations": [

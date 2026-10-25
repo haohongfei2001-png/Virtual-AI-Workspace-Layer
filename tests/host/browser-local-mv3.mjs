@@ -1,4 +1,5 @@
-import {HOST_BASELINE_VERSION,progressiveOrders,homeMain,longDesktopHTML,observedHomeHTML,prepareHistoryRun,reorderHistory,addPendingChat,promotePendingChat,enterStableChat,setNativeModal,insertHistoryGap,clearHistoryGap} from './fixtures/observed-host-replay.mjs';
+import historyStructure from './fixtures/observed-history-structure.json' with {type:'json'};
+import {HOST_BASELINE_VERSION,materializeHistoryStructure,progressiveOrders,homeMain,longDesktopHTML,observedHomeHTML,prepareHistoryRun,reorderHistory,addPendingChat,promotePendingChat,enterStableChat,setNativeModal,insertHistoryGap,clearHistoryGap} from './fixtures/observed-host-replay.mjs';
 /** Actual formal MV3 UI with an empty local memory session; offline host only. */
 import assert from 'node:assert/strict';
 import {createServer} from 'node:http';
@@ -87,7 +88,51 @@ try{
   report.checks.historyRecoveryPreservesDraftAndPrivateLock=true;
   await delayed.close();
  }
- if(!process.argv.includes('--progressive-only')&&!process.argv.includes('--history-ready-only')){
+ if(process.argv.includes('--mixed-history-only')){
+  page=await context.newPage();
+  const markers=historyStructure.report.snapshots[0].rows.map(r=>r[3]);
+  await page.addInitScript({content:'document.addEventListener("DOMContentLoaded",()=>('+materializeHistoryStructure.toString()+')('+JSON.stringify(markers)+'),{once:true});'});
+  await page.goto(origin+'/');
+  await page.waitForFunction(()=>document.querySelectorAll('[data-va-owned]:popover-open').length===2,null,{timeout:10000});
+  const formal=page.frameLocator('iframe[src="chrome-extension://'+id+'/workspace.html"]');
+  await formal.getByRole('link',{name:'Known latest fixture',exact:true}).first().waitFor({timeout:10000});
+  const proof=await page.evaluate(()=>{
+   const rows=[...document.querySelector('#list').children],sidebar=document.querySelector('[data-va-owned][id$="_sidebar"]'),box=sidebar.getBoundingClientRect();
+   return {masked:rows.map((r,i)=>r.hasAttribute('data-va-mask-sidebar')?i:-1).filter(i=>i>=0),native:[0,1,2,15].every(i=>getComputedStyle(rows[i]).visibility==='visible'),outside:[0,1,2,15].every(i=>{const r=rows[i].getBoundingClientRect();return r.bottom<=box.top||r.top>=box.bottom;}),draft:document.querySelector('textarea').value==='fixture draft'};
+  });assert.deepEqual(proof,{masked:Array.from({length:12},(_,i)=>i+3),native:true,outside:true,draft:true});
+  // An unknown native control added over the selected rectangle must surrender.
+  await page.evaluate(()=>{const n=document.createElement('button');n.id='fixture-overlap';n.textContent='Unknown overlap';const b=document.querySelector('[data-va-owned][id$="_sidebar"]').getBoundingClientRect();n.style.cssText='position:fixed;left:'+b.x+'px;top:'+(b.y+5)+'px;width:30px;height:20px';document.querySelector('nav').append(n);});
+  await page.waitForFunction(()=>document.querySelectorAll('[data-va-owned]:popover-open').length===0,null,{timeout:5000});
+  assert.equal(await page.locator('textarea').inputValue(),'fixture draft');
+  report.checks.realAnonymousMixedRowsFormalWorkspace=true;report.checks.unknownRowsAndOtherRunRemainNative=true;
+  report.checks.discoveryIndependentOfMaskRun=true;report.checks.unknownOverlapSurrenders=true;
+  await page.close();
+ }
+ if(process.argv.includes('--history-diagnostic-only')){
+  page=await context.newPage();
+  await page.addInitScript({content:'document.addEventListener("DOMContentLoaded",()=>{('+prepareHistoryRun.toString()+')();('+insertHistoryGap.toString()+')();},{once:true});'});
+  await page.goto(origin+'/');
+  await page.waitForFunction(()=>document.documentElement.dataset.vaiwlStartup==='layout-failed',null,{timeout:10000});
+  const control=await context.newPage();await control.goto('chrome-extension://'+id+'/status.html');await page.bringToFront();
+  await control.waitForSelector('#history-structure-report',{state:'attached'});
+  await control.evaluate(()=>{document.querySelector('details').open=true;document.querySelector('details button').click();});
+  await control.waitForFunction(()=>document.querySelector('#history-structure-report').textContent.startsWith('{'),null,{timeout:10000});
+  const result=JSON.parse(await control.locator('#history-structure-report').textContent());
+  assert.equal(result.state,'complete',JSON.stringify(result));assert.equal(result.report.reason,'complete');
+  assert(result.report.snapshots.some(s=>s.phase==='preparation'&&s.rows.length===3&&s.rows[0][3]&&!s.rows[1][3]&&s.rows[2][3]));
+  assert(!JSON.stringify(result).includes('Native'));assert(!JSON.stringify(result).includes(B));
+  await control.reload();await control.waitForSelector('#history-structure-report',{state:'attached'});
+  assert.equal(await control.locator('details button').isDisabled(),true);
+  const saved=JSON.parse(await control.locator('#history-structure-report').textContent());assert.equal(saved.state,'spent');assert.deepEqual(saved.report,result.report);
+  const w=context.serviceWorkers().find(w=>w.url().startsWith('chrome-extension://'+id+'/'));
+  assert.deepEqual(await w.evaluate(()=>indexedDB.databases()),[]);
+  assert.equal(await page.locator('textarea').inputValue(),'fixture draft');
+  report.checks.historyDiagnosticPrivateSenderAndDurableOnce=true;
+  report.checks.historyDiagnosticAnonymousGapPreparation=true;
+  report.checks.historyDiagnosticNoPrivateDatabaseOrDraftChange=true;
+  await control.close();await page.close();
+ }
+ if(!process.argv.includes('--progressive-only')&&!process.argv.includes('--history-ready-only')&&!process.argv.includes('--history-diagnostic-only')&&!process.argv.includes('--mixed-history-only')){
  // A native row reorder invalidates the old mask; a fresh same-document
  // handshake must prove the current row run before restoring the formal UI.
  const reordered=await context.newPage();await reordered.addInitScript({content:'document.addEventListener("DOMContentLoaded",'+prepareHistoryRun.toString()+',{once:true});'});

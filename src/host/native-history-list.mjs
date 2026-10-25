@@ -93,9 +93,9 @@ export function nativeHistoryListOK({document,source,root,urlPolicy,isOwnedMask=
  }catch{return rejected(onFailure,'exception');}
 }
 
-// Some native lists contain a local unsent-chat row before their stable rows.
-// Keep that row (and loading controls) native. A single consecutive stable run
-// can use the existing sidebar; never cover gaps or infer a stable ID for it.
+// Native lists may interleave several unmarked rows with stable rows. The
+// presentation owns one consecutive run, not the entire discovery source. Keep
+// all other rows native; neither their markers nor this choice imply membership.
 export function nativeHistoryPresentation(options){
  const {document,source,root,preferredMaskRoots=null}=options;
  const fail=reason=>{rejected(options.onFailure,reason);return null;};
@@ -108,7 +108,16 @@ export function nativeHistoryPresentation(options){
   if(!lists.length||preferredMaskRoots?.length===1&&preferredMaskRoots[0]===root)return nativeHistoryListOK(options)?{rect:nativeHistoryListRect(options),maskRoots:[root]}:null;
   if(lists.length!==1)return fail('list-count');
   const children=[...lists[0].children];if(children.length>256)return fail('row-limit');
-  const stable=preferredMaskRoots??children.filter(n=>n.hasAttribute('data-sidebar-chatgpt-conversation-key'));
+  let stable=preferredMaskRoots;
+  if(stable===null){
+   // Deterministic initial selection. Do not bridge gaps or expand the rectangle
+   // over unknown native controls. A mounted selection is never silently moved.
+   stable=[];let run=[];
+   for(const child of children){
+    if(child.hasAttribute('data-sidebar-chatgpt-conversation-key')){run.push(child);if(run.length>stable.length)stable=[...run];}
+    else run=[];
+   }
+  }
   if(!stable.every(n=>children.includes(n)&&n.hasAttribute('data-sidebar-chatgpt-conversation-key')))return fail('row-replaced');
   if(!stable.length||!stable.every((node,index)=>children.indexOf(node)===children.indexOf(stable[0])+index))return fail('row-order');
   const visible=stable.map(node=>({node,rect:nativeHistoryListRect({document,source,root:node})})).filter(x=>x.rect);

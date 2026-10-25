@@ -2848,5 +2848,223 @@
       "batchBoundary": "No additional browser capture, collector installation, retry, longer waiting or r95 performed. A future scoped collector needs offline verification before any concentrated observation; this receipt does not change the user-authorized scope."
     },
     "decision": "R94_REMAINS_INSTALLED_HOME_ACCEPTANCE_FAIL_NO_SPECULATIVE_PRODUCT_CHANGE"
+  },
+  "historyStructure20261025": {
+    "baseline": "685560a1",
+    "installed": "r94-with-diagnostic-only",
+    "extensionId": "miendbcjdmecjggplepenghjnoejmaic",
+    "observation": "PASS_ANONYMOUS_STRUCTURE_ONLY",
+    "report": {
+      "elapsedMs": 6002,
+      "events": 0,
+      "operations": [],
+      "reason": "complete",
+      "schema": "history-structure-v1",
+      "snapshots": [
+        {
+          "at": 0,
+          "changes": [
+            0,
+            0,
+            0
+          ],
+          "list": 19,
+          "listCount": 1,
+          "phase": "preparation",
+          "roots": [
+            17,
+            18
+          ],
+          "rows": [
+            [
+              1,
+              "DIV",
+              "listitem",
+              true,
+              0
+            ],
+            [
+              2,
+              "DIV",
+              "listitem",
+              false,
+              0
+            ],
+            [
+              3,
+              "DIV",
+              "listitem",
+              false,
+              0
+            ],
+            [
+              4,
+              "DIV",
+              "listitem",
+              true,
+              0
+            ],
+            [
+              5,
+              "DIV",
+              "listitem",
+              true,
+              0
+            ],
+            [
+              6,
+              "DIV",
+              "listitem",
+              true,
+              0
+            ],
+            [
+              7,
+              "DIV",
+              "listitem",
+              true,
+              0
+            ],
+            [
+              8,
+              "DIV",
+              "listitem",
+              true,
+              0
+            ],
+            [
+              9,
+              "DIV",
+              "listitem",
+              true,
+              0
+            ],
+            [
+              10,
+              "DIV",
+              "listitem",
+              true,
+              0
+            ],
+            [
+              11,
+              "DIV",
+              "listitem",
+              true,
+              0
+            ],
+            [
+              12,
+              "DIV",
+              "listitem",
+              true,
+              0
+            ],
+            [
+              13,
+              "DIV",
+              "listitem",
+              true,
+              0
+            ],
+            [
+              14,
+              "DIV",
+              "listitem",
+              true,
+              0
+            ],
+            [
+              15,
+              "DIV",
+              "listitem",
+              true,
+              0
+            ],
+            [
+              16,
+              "DIV",
+              "listitem",
+              false,
+              0
+            ]
+          ]
+        }
+      ],
+      "truncated": false
+    },
+    "accountRequests": 0,
+    "messagesSent": 0,
+    "privateUnlock": false,
+    "oldDatabaseTouched": false,
+    "priorBatchMarkersPreserved": true,
+    "conclusion": "stable rows nonconsecutive throughout this window; all-row continuity rejects preparation; no observed replacement or reorder",
+    "limits": [
+      "Only the six-second observation window is established.",
+      "Unmarked row semantics and exact geometry were not read.",
+      "Zero events does not exclude changes before observation."
+    ]
+  },
+  "evidenceRunR95_20261025": {
+    "baseHead": "685560a1967b98a18eb7ad6b1a5f65c01431f881",
+    "rootCause": "all stable rows required to be consecutive although actual anonymous list is T,F,F,T*12,F",
+    "classification": {
+      "stableRowsAbsent": false,
+      "stableRowsNonconsecutive": "ESTABLISHED_DURING_6_SECOND_WINDOW",
+      "replacingOrReordering": "NOT_OBSERVED_IN_WINDOW_NO_CLAIM_BEFORE_WINDOW",
+      "adapterRecognition": "ONE_ROOT_AND_LIST_MATCHED; no evidence for selector mismatch; algorithm assumption contradicted"
+    },
+    "change": "Select one initial longest consecutive stable run; keep other rows native and discovery independent; preserve all purity/geometry/overlap/account checks and fixed preferred roots",
+    "validation": {
+      "actualStructureBeforeFix": "FAIL_LAYOUT_HISTORY_ROW_ORDER",
+      "sameStructureIsolatedMV3AfterFix": "PASS_FORMAL_WORKSPACE_AND_LATEST_OUTSIDE_MASK_DISCOVERY",
+      "unknownOverlap": "PASS_SURRENDER",
+      "originalHistoryPurityAndPreferredMaskSafety": "PASS",
+      "boundedPreparationAndStableOrder": "PASS",
+      "diagnosticPrivateChannelAndDurableSingleUse": "PASS_ISOLATED_MV3",
+      "privacy": "NO_TITLES_IDS_BODY_OR_CREDENTIALS_IN_STRUCTURE_REPORT",
+      "review": "INDEPENDENT_READ_ONLY_NO_BLOCKING_FINDING"
+    },
+    "candidate": {
+      "label": "r95",
+      "path": ".git/vaiwl-artifacts/browser-local-evidence-run-20261025-r95/extension",
+      "download": "/Users/hhf/Downloads/VAIWL-Browser-Local-EvidenceFix-20261025-r95/extension",
+      "zipSha256": "f9313343baf4c1144055b300ca1cbe00d1f1a7424ba2bfab8ef5268812777c12",
+      "files": 198,
+      "sameId": "miendbcjdmecjggplepenghjnoejmaic",
+      "installedAndReloaded": true,
+      "backup": ".git/vaiwl-artifacts/browser-local-evidence-run-20261025-r95/previous-extension"
+    },
+    "actualMac": {
+      "homePreparation": "PASS_CONNECTED_READING_ROW_ORDER_ABSENT",
+      "formalWorkspace": "PASS_FOUR_GRID_OPENS_ORIGINAL_DUAL_SURFACE_AND_OWN_WORKSPACE_AXWEB_AREA",
+      "preview": "PASS_FIVE_LINK_PREVIEW_PRESENT",
+      "previouslySentChat": "NOT_ESTABLISHED_NOT_IN_FIRST_FIVE_PREVIEW_EXPANSION_NOT_COMPLETED",
+      "privateOnlyRestore": "NOT_RUN_NEW_DOCUMENT_REMAINS_LOCKED",
+      "continuousDailyAcceptance": "NOT_ESTABLISHED",
+      "finalStatus": "reading",
+      "newMessages": 0,
+      "sourceExperiments": 0,
+      "otherPassedJourneysRepeated": false
+    },
+    "nativeOperatorLimit": "Original target title gained Chrome memory-use annotation; subsequent guard could not establish stable global foreground. No input was sent after the final guard failure. No further navigation/reload/candidate.",
+    "preserved": {
+      "oldDatabase": true,
+      "drafts": true,
+      "untrackedCopies": true,
+      "stashes": true,
+      "previousConsumedBatches": true
+    },
+    "remaining": [
+      "Real observation only establishes anonymous markers during six seconds; unmarked row meanings are unknown.",
+      "Largest initial run entirely offscreen remains a conservative unsupported presentation; no invented fallback.",
+      "Private-only recovery still requires the person to confirm current account/Workspace for the new document.",
+      "Long-chat local paint containment and complete native input-risk grammar lack the previously recorded real structural evidence."
+    ],
+    "notClaimed": [
+      "FULL_SIDEBAR_ACCEPTANCE",
+      "FREE_ACCEPTED",
+      "RELEASE_READY"
+    ]
   }
 }

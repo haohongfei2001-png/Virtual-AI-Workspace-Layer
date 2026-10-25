@@ -79,3 +79,25 @@ test('Project clip diagnostic admits numeric inset geometry only',()=>{
  assert.equal(validLayoutShape({navigation}),true);
  for(const n of [{...navigation,url:'PRIVATE'},{...navigation,phase:'PRIVATE'},{...navigation,matched:257},{...navigation,roots:[1,1,1,1]},{...navigation,titles:-1}])assert.equal(validLayoutShape({navigation:n}),false);
  });
+
+test('one-time structure diagnostic accepts only the private popup and fixed anonymous report',async()=>{
+ const {validHistoryStructureReport}=await import('../../src/host/history-structure-diagnostic.mjs');
+ const report={schema:'history-structure-v1',reason:'complete',truncated:false,events:0,elapsedMs:6000,snapshots:[],operations:[]};
+ assert(validHistoryStructureReport(report));assert(!validHistoryStructureReport({...report,title:'PRIVATE'}));
+ assert(!validHistoryStructureReport({...report,operations:[{at:1,kind:'children',target:'PRIVATE',removed:[],added:[]}]}));
+ let listener,calls=0;const runtime={id:'extension',getURL:p=>'chrome-extension://extension/'+p,onMessage:{addListener:f=>listener=f,removeListener(){}}};
+ const dispose=installLocalStatus({runtime,readState:()=> 'ready',observeHistory:async()=>{calls++;return report;}});
+ const message={v:1,type:'HOST_LOCAL_HISTORY_STRUCTURE'};
+ for(const source of [{...sender(),tab:{}},{...sender(),url:'https://chatgpt.com/'}])assert.equal(listener(message,source,()=>assert.fail()),undefined);
+ const result=await new Promise(resolve=>assert.equal(listener(message,sender(),resolve),true));
+ assert.deepEqual(result,{v:1,report});assert.equal(calls,1);dispose();
+});
+
+test('structure diagnostic spends before dispatch and never retries an unknown outcome',async()=>{
+ const {HISTORY_DIAGNOSTIC_BATCH,runHistoryDiagnosticOnce}=await import('../../src/host/history-structure-diagnostic.mjs');
+ const saved={};let sends=0;
+ const chrome={storage:{local:{get:async key=>({[key]:saved[key]}),set:async value=>Object.assign(saved,value)}},tabs:{query:async()=>[{id:7,incognito:false}],sendMessage:async()=>{assert.equal(saved[HISTORY_DIAGNOSTIC_BATCH].spent,true);sends++;throw Error('PRIVATE');}}};
+ const locks={request:async(key,run)=>run()};
+ assert.equal((await runHistoryDiagnosticOnce({chrome,locks})).state,'outcome-unknown');
+ assert.deepEqual(await runHistoryDiagnosticOnce({chrome,locks}),{state:'spent',report:null});assert.equal(sends,1);
+});

@@ -1,0 +1,149 @@
+{
+  "schema": "observed-history-structure-fixture-v1",
+  "version": "20261025-r94",
+  "source": "one-authorized-anonymous-popup-observation",
+  "report": {
+    "elapsedMs": 6002,
+    "events": 0,
+    "operations": [],
+    "reason": "complete",
+    "schema": "history-structure-v1",
+    "snapshots": [
+      {
+        "at": 0,
+        "changes": [
+          0,
+          0,
+          0
+        ],
+        "list": 19,
+        "listCount": 1,
+        "phase": "preparation",
+        "roots": [
+          17,
+          18
+        ],
+        "rows": [
+          [
+            1,
+            "DIV",
+            "listitem",
+            true,
+            0
+          ],
+          [
+            2,
+            "DIV",
+            "listitem",
+            false,
+            0
+          ],
+          [
+            3,
+            "DIV",
+            "listitem",
+            false,
+            0
+          ],
+          [
+            4,
+            "DIV",
+            "listitem",
+            true,
+            0
+          ],
+          [
+            5,
+            "DIV",
+            "listitem",
+            true,
+            0
+          ],
+          [
+            6,
+            "DIV",
+            "listitem",
+            true,
+            0
+          ],
+          [
+            7,
+            "DIV",
+            "listitem",
+            true,
+            0
+          ],
+          [
+            8,
+            "DIV",
+            "listitem",
+            true,
+            0
+          ],
+          [
+            9,
+            "DIV",
+            "listitem",
+            true,
+            0
+          ],
+          [
+            10,
+            "DIV",
+            "listitem",
+            true,
+            0
+          ],
+          [
+            11,
+            "DIV",
+            "listitem",
+            true,
+            0
+          ],
+          [
+            12,
+            "DIV",
+            "listitem",
+            true,
+            0
+          ],
+          [
+            13,
+            "DIV",
+            "listitem",
+            true,
+            0
+          ],
+          [
+            14,
+            "DIV",
+            "listitem",
+            true,
+            0
+          ],
+          [
+            15,
+            "DIV",
+            "listitem",
+            true,
+            0
+          ],
+          [
+            16,
+            "DIV",
+            "listitem",
+            false,
+            0
+          ]
+        ]
+      }
+    ],
+    "truncated": false
+  },
+  "limitations": [
+    "Only the six-second observation window is established.",
+    "Unmarked row semantics and exact geometry were not read.",
+    "Zero events does not exclude changes before observation."
+  ]
+}
