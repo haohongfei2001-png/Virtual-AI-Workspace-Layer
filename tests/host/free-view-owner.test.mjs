@@ -88,3 +88,22 @@ test('private resumed history session is detached and frozen through fresh repli
 test('private resumed session rejects invalid horizon day timezone revision and extra authority',()=>{
  const base={H:7,T:20700,Z:'UTC',policyRevision:2};for(const session of [{...base,H:1},{...base,T:NaN},{...base,T:100000001},{...base,Z:'invalid-zone'},{...base,policyRevision:-1},{...base,scope:'foreign'}])assert.throws(()=>fixture({initialSession:session}),/invalid-free-view-session/);
 });
+
+for(const change of ['revoked','generation','removed-ref'])test('trusted header withdraws prior projection before failing replacement: '+change,async()=>{
+ const h=fixture(),header=h.read.freeHeader,page=h.read.freePage;let authorities={source:'generation-1'},remove=false,release;
+ h.read.freeHeader=async(...args)=>{const value=await header(...args);return {...value,sourceAuthorities:authorities,...(remove?{manifest:{...value.manifest,refVersions:{},activityVersions:{}}}:{})};};
+ await h.owner.refresh();assert(h.owner.current());
+ if(change!=='generation')h.advance();authorities=change==='revoked'?{}:change==='generation'?{source:'generation-2'}:authorities;remove=change==='removed-ref';
+ h.read.freePage=async()=>{await new Promise(resolve=>release=resolve);throw Error('request-timeout');};
+ // Ensure the removal case also requires a project replacement page.
+ if(remove){const next=h.read.freeHeader;h.read.freeHeader=async(...args)=>{const value=await next(...args);value.manifest.projectVersions.p=2;return value;};}
+ const pending=h.owner.refresh(),rejected=assert.rejects(pending,/request-timeout/);for(let i=0;i<60&&!release;i++)await Promise.resolve();
+ assert(release);assert.equal(h.owner.current(),null);assert.equal(h.owner.projectionWithdrawn(),true);release();await rejected;assert.equal(h.owner.projectionWithdrawn(),true);
+ h.read.freePage=page;await h.owner.refresh();assert(h.owner.current()?.index,'replacement must rebuild a usable index even with unchanged row revisions');assert.equal(h.owner.projectionWithdrawn(),false);h.owner.stop();
+});
+test('source addition and ordinary visibility renewal retain valid last-known on read failure',async()=>{
+ const h=fixture(),header=h.read.freeHeader;let authorities={source:'generation-1'},visibility='ttl-1';
+ h.read.freeHeader=async(...args)=>({...await header(...args),sourceAuthorities:authorities,visibilityRevision:visibility});const first=await h.owner.refresh();
+ h.advance();authorities={...authorities,other:'generation-2'};visibility='ttl-2';h.read.freePage=async()=>{throw Error('request-timeout');};
+ await assert.rejects(h.owner.refresh(),/request-timeout/);assert.equal(h.owner.current(),first);assert.equal(h.owner.projectionWithdrawn(),false);h.owner.stop();
+});

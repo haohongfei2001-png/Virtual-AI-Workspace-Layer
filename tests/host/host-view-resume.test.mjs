@@ -291,3 +291,12 @@ test('durable row expansion is restored as a bounded read query in a new documen
  const result=await resume(h);assert.deepEqual(result.resume.query.rowWindows,[{groupId:'p1',list:'current',rowOffset:0,rowLimit:17}]);
  const page=await ready(h,'workspace',result.resume.query);assert.equal(page.state,'ready');assert.equal(page.page.groups.items.find(g=>g.id==='p1').lists.current.limit,17);
 });
+
+test('fresh document restores sidebar current projects independently of workspace history',async t=>{
+ const h=await boot(t);await ready(h,'workspace',{segment:3});const before=await ready(h,'sidebar',{segment:0});assert.equal(before.page.groups.items.length,1);
+ await save(h,{...layout,segment:3,scroll:432});await save(h,{...layout,segment:0,sidebarOpen:['p1'],sidebarChoices:[['p1',true]],sidebarScroll:54},'sidebar');
+ h.service.invalidate({tabId:1,documentId:'document'});h.sender.documentId='new-document';await h.bind();await h.mount();
+ const side=await resume(h,'sidebar');assert.equal(side.resume.query.segment,0);assert.equal(side.resume.view.segment,0);assert.equal(side.resume.view.scroll,0);assert.equal(side.resume.view.sidebarScroll,54);
+ const after=await ready(h,'sidebar',side.resume.query);assert.deepEqual(after.page.groups.items.map(g=>g.id),before.page.groups.items.map(g=>g.id));
+ const main=await resume(h);assert.equal(main.resume.query.segment,3);assert.equal(main.resume.view.scroll,432);assert.deepEqual(main.resume.view.sidebarChoices,[['p1',true]]);
+});

@@ -1,5 +1,24 @@
 # VAIWL实际状态：渐进积累工程已接线，真实来源逐项待准入
 
+## C1—C5 源码收口与同批集成（2026-10-26，接续85178b21）
+
+本批继承85178b21，逐条核对Pro任务书的实际调用链，并补齐三项确定差额；没有操作日常Chrome、更新原安装或改动私人库。旧包被用户否决的事实不改写，**本批仍不是已通过真实产品验收的个人日用版本**。
+
+| 任务 | 正式实现及本轮核对结论 | 证据边界 |
+|---|---|---|
+| C1 | `content-session`持有document/scope/adapter生产者；`chatgpt-adapter.inspect`分别给workspace、sidebar、return能力；`mount-surface.surrenderChanged`只撤对应角色。侧栏重排不再停止数据生产者。继承851的可见混合行安全选择。 | 现有角色/真实结构回放及最终隔离MV3，非当前Mac证明。 |
+| C2 | `surface-controller`以desiredMode保留用户意图；workspace唯一必需，sidebar独立join/释放ACK/重挂/续约；`host-ui-owner`只核现存角色。原生reading/composer可保持独立侧栏，原生列表选择不被几何恢复覆盖；真实撤权仍全清。 | 最终隔离旅程覆盖sidebar丢失、晚到、弹层、普通续约与休眠恢复。 |
+| C3 | `host-view-service`先交付VIEW，`HOST_UI_NAVIGATION_PLANS`按role/delivery/route独立准备；候选和动作局部失败。新增HEADER来源权限指纹：明确来源撤销或换代先撤旧投影，即使替换页超时也不继续显示；普通TTL/读取失败保留合法last-known。原VIEW通道传递withdrawal，frame保留授权壳和恢复能力，不新增数据通道。 | owner、service双角色、frame实际反例及关联回归；无需内部接口。 |
+| C4 | `native-actions`/`frame-native-plans`沿已证原生入口一次派发；`HOST_UI_SAVE_VIEW`经role合并和原`WorkspaceRepository.saveView`/CAS写入b23_views。修复新文档将主区历史segment误套给侧栏：侧栏恢复当前导航及自己的滚动/开合，主区仍恢复原历史位置。 | 新文档真实MockIDB反例、最终隔离MV3的实际IDB/Worker/浏览器恢复。旧私人真实对象恢复仍未验证。 |
+| C5 | 批准renderer/styles、356px自然卡宽/18px间距/最多三列、成员层级、UNKNOWN次级折叠、旧项/分页/查找和稀疏布局直接继承；修复frame时间箭头成功切段后仍沿用旧深滚动。仅明确切段归零，后台更新/四格返回/恢复不归零。 | 既有四种正式MV3稀疏图逐项对照原型；新箭头反例及窗口保留回归。不是用合成内容替代真实截图。 |
+
+本轮相关回归532项通过；随后来源撤销强制本地重新投影的最终调整，受影响owner/service137项通过。默认沙箱第一次在Chrome启动前SIGABRT，未运行产品旅程；通过正式执行审批后使用原隔离headless脚本完成最终旅程，结果PASS。最终源码、冻结包、最终MV3测试包199项sourceHashes完全一致；测试没有内部接口请求，使用新临时Profile和拒绝外网代理。全量历史矩阵/10k/100k不重跑，历史CI红项不改PASS。
+
+**本批唯一冻结包**：`/private/tmp/VAIWL-v27-C1-C5-Integrated-20261026/extension`；ZIP SHA256 `e1d98da1b82af168df51a669fcbaba2cf1e33a8787a2b24c95437392c031028d`。替代上一节仅本地侧栏修复包作为下一次集中集成对象，未复制到日常安装目录。源代码检查未再确认另一项可独立实施的C1—C5差额；这不代表未知真实页面变体已通过。
+
+**剩余实际交付门槛**：同一固定包一次真实Mac完整v2.7持续显示/连续侧栏/导航与经本人确认的旧布局恢复；不能继承旧库存或单卡PASS当作本包通过。未知原生区域仍保留原生，不能承诺所有变体都有可遮罩侧栏/返回槽；新文档私人恢复继续本人确认，内部接口关闭。原扩展ID、旧库、草稿、备份、副本、3个stash保留。具体审计、回归与包身份写入原回执`proFinalIntegrated20261025.fullCodeClosure20261026`，未增加计划或测试平台。
+
+
 ## 用户否决集成包后：连续侧栏的实际产品修复（2026-10-26）
 
 用户已执行93a85574包的激活并反馈“还是基本残废品”。**当前完整产品体验不通过；撤回“只剩实机验收”的判断。** 下节集中贯通属于历史工程记录，不是本次产品完成证明。此轮没有再次操作、更新或重载日常Chrome，没有读取私人库或要求再次确认。

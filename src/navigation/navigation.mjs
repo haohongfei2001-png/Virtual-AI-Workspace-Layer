@@ -330,12 +330,12 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     // Presentation descriptors share the existing resume cap, never retained rows.
     while(view.capacities.size>256)view.capacities.delete(view.capacities.keys().next().value);
   }
-  function requestFrame(partial={},safeCurrentEntry=false){
+  function requestFrame(partial={},safeCurrentEntry=false,resetScroll=false){
     if(!frameProjection||typeof onProjectionRequest!=='function')return;
     const scope=frameProjection.scope,run=++projectionRequest;
     const rowWindows=visibleWindows(partial);
     const query={role:surface.role,segment:view.segment,offset:frameProjection.groups.offset,limit:frameProjection.groups.limit,...(rowWindows.length?{rowWindows}:{}),...partial};
-    const requestContext={scope,run,session:JSON.stringify(frameProjection.viewSession),segment:frameProjection.segment,query};
+    const requestContext={scope,run,session:JSON.stringify(frameProjection.viewSession),segment:frameProjection.segment,query,resetScroll};
     try{Promise.resolve(onProjectionRequest(query)).then(dto=>{if(dto&&run===projectionRequest&&!stopped&&frameProjection?.scope===scope&&dto.scope===scope){applyFrameProjection(dto,safeCurrentEntry?{scope,run}:null,requestContext);if(Object.hasOwn(partial,'segment'))calibrationEntry();}}).catch(()=>{});}catch{}
   }
   async function requestCompactRows(){
@@ -595,8 +595,8 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
       const workset=node(doc,'section',{class:'search working-set','aria-label':'当前工作集'}),top=node(doc,'div',{class:'search-top'});top.append(node(doc,'strong',{},'当前工作集'),button('返回主题视图',()=>{view.worksetOpen=false;render();},'返回主题','more'));workset.append(top,node(doc,'p',{},'只保存窗口引用与人工顺序，点击后打开。草稿与任务运行状态由原生页面保留。'));const saved=snapshot.preferences?.workingSet?.value??{refs:[],current:null};for(const id of saved.refs){const ref=index.byId(id);if(ref)workset.append(row(ref,'workset'));else workset.append(node(doc,'p',{class:'failed-ref'},'暂时无法打开的引用 '+id));}if(!saved.refs.length)workset.append(node(doc,'p',{},'还没有窗口。可在工作空间管理中加入窗口。'));if(onManage)workset.append(button('编辑当前工作集',()=>onManage(), '整理工作集','more'));page.append(workset);
     }else{
       const arrows=node(doc,'div',{class:'arrows','aria-label':'主题区间导航'});
-      if(view.segment>0)arrows.append(graphic(button('较近的'+span()+'日',()=>{if(frameProjection){requestFrame({segment:view.segment-1,offset:0},view.segment===1);return;}view.segment--;view.scroll=0;render();if(view.segment===0)onCurrentWorkspaceEntry();calibrationEntry();}),'up'));
-      const down=graphic(button('较早的'+span()+'日',()=>{if(frameProjection){requestFrame({segment:view.segment+1,offset:0});return;}view.segment++;view.scroll=0;render();calibrationEntry();}),'down');down.disabled=frameProjection?!frameProjection.navigation.hasOlder:view.segment>=Math.max(groups.reduce((max,g)=>Math.max(max,g.segment??0),0),free()?snapshot.refs.reduce((max,r)=>Math.max(max,(r.activityDecision??r.activity)?.segment??0),0):0);arrows.append(down);if(workspaceSettingsTrigger)arrows.append(workspaceSettingsTrigger);page.append(arrows);
+      if(view.segment>0)arrows.append(graphic(button('较近的'+span()+'日',()=>{if(frameProjection){requestFrame({segment:view.segment-1,offset:0},view.segment===1,true);return;}view.segment--;view.scroll=0;render();if(view.segment===0)onCurrentWorkspaceEntry();calibrationEntry();}),'up'));
+      const down=graphic(button('较早的'+span()+'日',()=>{if(frameProjection){requestFrame({segment:view.segment+1,offset:0},false,true);return;}view.segment++;view.scroll=0;render();calibrationEntry();}),'down');down.disabled=frameProjection?!frameProjection.navigation.hasOlder:view.segment>=Math.max(groups.reduce((max,g)=>Math.max(max,g.segment??0),0),free()?snapshot.refs.reduce((max,r)=>Math.max(max,(r.activityDecision??r.activity)?.segment??0),0):0);arrows.append(down);if(workspaceSettingsTrigger)arrows.append(workspaceSettingsTrigger);page.append(arrows);
       const cards=node(doc,'div',{class:'cards'});
       for(const g of (frameProjection?groups:groups.filter(g=>g.segment===view.segment||(free()&&g.segment===null&&view.segment===0)))){
         const card=node(doc,'section',{class:'card','data-theme-id':g.id,...(frameProjection?{tabindex:'-1','data-focus-key':'project:'+g.id}:{})}),head=node(doc,'div',{class:'card-head'}),title=node(doc,'h2'),list=node(doc,'div',{class:'members'});
@@ -657,6 +657,9 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     // Initialize its mode without replaying revision-zero show-workspace, which
     // would discard an owner-restored search or working-set query.
     if(!views.has(copy.scope))views.set(copy.scope,{...initialView(),mode:'workspace'});view=views.get(copy.scope);if(resumeLayout&&resumeLayout.segment===copy.segment){Object.assign(view,{...resumeLayout,oldOpen:new Set(resumeLayout.oldOpen),sidebarOpen:new Set(resumeLayout.sidebarOpen),capacities:new Map(resumeLayout.capacities)});sidebarChoices.set(view,new Map(resumeLayout.sidebarChoices??resumeLayout.sidebarOpen.map(id=>[id,true])));if(!Object.hasOwn(resumeLayout,'sidebarChoices'))sidebarLegacy.add(view);else sidebarLegacy.delete(view);}resumeLayout=null;view.segment=copy.segment;if(scopeChanged){view.worksetOpen=!!copy.workingSet;if(copy.workingSet)frameWorkingSetOffset=copy.workingSet.offset;if(copy.search){searchQuery=copy.search.query;searchTheme=copy.search.projectId;frameSearchOffset=copy.search.offset;}}
+    // Only a successfully committed explicit period change starts at the top.
+    // Background refresh, four-grid return and saved-layout restore keep position.
+    if(requestContext?.resetScroll&&copy.segment===query.segment&&copy.segment!==requestContext.segment)view.scroll=0;
     if(windowContextChanged)specialScroll.delete(view);
     if(windowContextChanged)for(const key of [...view.capacities.keys()])if(key.startsWith(windowPrefix))view.capacities.delete(key);
     // Special-page DTOs omit expanded card rows. Their background reading

@@ -838,3 +838,14 @@ test('sidebar current Project outside the page supplies bounded members and plan
  const home=await h.view('workspace',{segment:100,limit:1});assert.equal(home.page.currentProject,undefined);
  assert.equal((await h.view('sidebar',{currentProjectId:'forged'})).ok,false);
 });
+
+test('source revocation reaches both frame responses while replacement page is pending or fails',async t=>{
+ const h=await fixture(t);await h.bind();await h.observe();await h.mount();assert.equal((await ready(h)).page.groups.items.length,1);assert.equal((await ready(h,'sidebar')).page.groups.items.length,1);
+ const scope=h.service.authority.scopeFor({tabId:1,frameId:0,documentId:'document',documentLifecycle:'active',actualURL:url,incognito:false});
+ const facts=await h.service.nativeRepository.read(scope),sourceId=Object.keys(facts.sources)[0];
+ const changed=await h.service.nativeRepository.invalidate(scope,{sourceId,operationId:'withdraw_source',expectedRevision:facts.revision});assert.equal(changed.ok,true);
+ const original=h.service.nativeRepository.page;let release;h.service.nativeRepository.page=async()=>{await new Promise(resolve=>release=resolve);throw Error('request-timeout');};t.after(()=>{h.service.nativeRepository.page=original;});
+ assert.equal((await h.view()).state,'preparing');for(let i=0;i<100&&!release;i++)await drain();assert.equal(typeof release,'function');
+ for(const role of ['workspace','sidebar']){const result=await h.view(role);assert.equal(result.state,'preparing');assert.equal(result.clearProjection,true);}
+ release();for(let i=0;i<30;i++)await drain();for(const role of ['workspace','sidebar']){const result=await h.view(role);assert.equal(result.ok,false);assert.equal(result.reason,'request-timeout');assert.equal(result.clearProjection,true);}
+});

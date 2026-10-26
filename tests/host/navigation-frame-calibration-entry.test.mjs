@@ -47,3 +47,16 @@ test('failed projection produces no calibration',async()=>{
 test('superseded projection reply cannot schedule calibration',async()=>{
  const pending=[deferred(),deferred()],calls=[];let n=0;const f=fixture('workspace',()=>pending[n++].promise,null,null,{}, {onCalibrationEntry:v=>calls.push(v)});f.nav.updateFrameProjection(projection());f.button('较早的30日').click();f.button('较早的30日').click();pending[0].resolve({...projection(),segment:1,navigation:{hasNewer:true,hasOlder:true,maxSegment:8}});await drain();assert.equal(calls.length,0);pending[1].resolve({...projection(),segment:1,navigation:{hasNewer:true,hasOlder:true,maxSegment:8}});await drain();assert.equal(calls.length,1);f.nav.stop();
 });
+
+for(const start of [0,2])test(`explicit period navigation from ${start} starts at top only after its accepted reply`,async t=>{
+ const held=deferred(),f=fixture('workspace',()=>held.promise);t.after(()=>f.nav.stop());
+ f.nav.updateFrameProjection({...projection(),segment:start,navigation:{hasNewer:start>0,hasOlder:true,maxSegment:8}});f.nav.roots().workspace.scroller.scrollTop=430;
+ f.button(start?'较近的30日':'较早的30日').click();assert.equal(f.nav.roots().workspace.scroller.scrollTop,430);
+ held.resolve({...projection(),segment:start?start-1:1,navigation:{hasNewer:true,hasOlder:true,maxSegment:8}});await drain();assert.equal(f.nav.roots().workspace.scroller.scrollTop,0);
+ f.nav.roots().workspace.scroller.scrollTop=170;f.nav.updateFrameProjection({...projection(),segment:1,navigation:{hasNewer:true,hasOlder:true,maxSegment:8}});assert.equal(f.nav.roots().workspace.scroller.scrollTop,170,'ordinary same-period refresh preserves position');
+});
+test('failed or superseded period navigation cannot discard the current scroll position',async t=>{
+ const held=deferred(),f=fixture('workspace',()=>held.promise);t.after(()=>f.nav.stop());f.nav.updateFrameProjection(projection());f.nav.roots().workspace.scroller.scrollTop=430;
+ f.button('较早的30日').click();f.nav.updateFrameProjection(projection());held.resolve({...projection(),segment:1});await drain();assert.equal(f.nav.roots().workspace.scroller.scrollTop,430);
+ const failed=fixture('workspace',()=>Promise.reject(Error('offline')));t.after(()=>failed.nav.stop());failed.nav.updateFrameProjection(projection());failed.nav.roots().workspace.scroller.scrollTop=270;failed.button('较早的30日').click();await drain();assert.equal(failed.nav.roots().workspace.scroller.scrollTop,270);
+});

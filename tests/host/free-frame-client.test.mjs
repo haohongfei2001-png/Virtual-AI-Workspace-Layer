@@ -665,3 +665,15 @@ test('ready VIEW sends received receipt and only renderer callback sends DOM rec
  assert.deepEqual(receipts().map(m=>m.phase),['received','rendered']);assert.equal(receipts()[1].deliveryId,7);
  const callback=f.nav.onFrameRendered,page=f.pages[0];f.client.stop();callback(page,{cards:0,rows:1});await drain();assert.equal(receipts().length,2);
 });
+
+for(const phase of ['preparing','error'])test('owner source withdrawal clears old rows but retains the live frame: '+phase,async()=>{
+ const f=fixture();await f.client.start();await drain();assert.equal(f.pages.length,1);
+ f.setView(async()=>phase==='preparing'?{ok:true,state:'preparing',retryAfterMs:50,clearProjection:true}:{ok:false,reason:'request-timeout',clearProjection:true});
+ f.emit({type:'VAIWL_UI_DATA_CHANGED'});await drain();assert.equal(f.invalidations,1);assert.equal(f.stops,0);
+ if(phase==='preparing'){f.setView(async()=>({ok:false,reason:'request-timeout',clearProjection:true}));await f.advance(50);assert.equal(f.invalidations,1);}
+ assert.equal(f.states.at(-1).state,'read-stopped');assert.equal(f.stops,0);f.client.stop();
+});
+test('ordinary preparing and timeout retain lawful prior projection',async()=>{
+ const f=fixture();await f.client.start();await drain();f.setView(async()=>({ok:true,state:'preparing',retryAfterMs:50}));f.emit({type:'VAIWL_UI_DATA_CHANGED'});await drain();assert.equal(f.invalidations,0);
+ f.setView(async()=>({ok:false,reason:'request-timeout'}));await f.advance(50);assert.equal(f.invalidations,0);assert.equal(f.stops,0);f.client.stop();
+});

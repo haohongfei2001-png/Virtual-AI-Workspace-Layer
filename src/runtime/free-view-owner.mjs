@@ -15,7 +15,7 @@ export function createFreeViewOwner({readService,scope,guard=()=>true,clock=()=>
   if(!initialSession||Object.getPrototypeOf(initialSession)!==Object.prototype||Reflect.ownKeys(initialSession).sort().join(',')!=='H,T,Z,policyRevision'||!FREE_HORIZONS.includes(initialSession.H)||!Number.isSafeInteger(initialSession.T)||Math.abs(initialSession.T)>100000000||typeof initialSession.Z!=='string'||initialSession.Z.length>80||!Number.isSafeInteger(initialSession.policyRevision)||initialSession.policyRevision<0)throw Error('invalid-free-view-session');
   try{new Intl.DateTimeFormat('en',{timeZone:initialSession.Z});}catch{throw Error('invalid-free-view-session');}
  }
- const bound=Object.freeze({...normalized});let generation=0,stopped=false,pending=null,replica=null,published=null,session=initialSession?Object.freeze(structuredClone(initialSession)):null,cachedIndex=null;
+ const bound=Object.freeze({...normalized});let generation=0,stopped=false,pending=null,replica=null,published=null,session=initialSession?Object.freeze(structuredClone(initialSession)):null,cachedIndex=null,projectionWithdrawn=false;
  const allowed=()=>!stopped&&guard()===true;
  function invalidate(){generation++;pending?.abort.abort(Error('stale-free-view'));pending=null;replica=null;published=null;session=null;cachedIndex=null;}
  function current(){if(!allowed()){invalidate();return null;}return published;}
@@ -61,7 +61,16 @@ export function createFreeViewOwner({readService,scope,guard=()=>true,clock=()=>
   budget.begin();
   entry.promise=Promise.race([cancelled,(async()=>{
    const reply=await loadFreeHeader({scope:()=>bound.key,guard:valid,load:async()=>({ok:true,header:await request(()=>readService.freeHeader(bound,options,at,zone,session,undefined,true))})});
-   const header=reply.header,plan=planFreeReplica(replica,header);
+   const header=reply.header;
+   // A trusted HEADER can withdraw an old source before its replacement pages
+   // finish. Ordinary name/TTL renewal is not revocation and keeps last-known.
+   const previous=replica?.header;
+   const removed=previous&&(['projectVersions','refVersions'].some(kind=>Object.keys(previous.manifest[kind]).some(id=>!Object.hasOwn(header.manifest[kind],id)))||
+    previous.sourceAuthorities&&header.sourceAuthorities&&Object.entries(previous.sourceAuthorities).some(([id,value])=>header.sourceAuthorities[id]!==value));
+   if(removed){published=null;cachedIndex=null;projectionWithdrawn=true;}
+   // A withdrawn source cannot reuse rows from the old authority even when
+   // its per-object revisions happen to be unchanged. This is local IDB only.
+   const plan=planFreeReplica(removed?null:replica,header);
    const pages=await loadFreePages({requests:freeReplicaRequests(plan,size),guard:valid,load:async ids=>{
     try{const page=await request(()=>readService.freePage(bound,{revision:header.revision,offset:0,limit:size,ids,viewSession:header.viewSession,now:at},options));if(page.scope!==bound.key)throw Error('stale-free-view');return {ok:true,page};}catch(error){return {ok:false,reason:error.message};}
    }});
@@ -74,9 +83,9 @@ export function createFreeViewOwner({readService,scope,guard=()=>true,clock=()=>
    }
    check();const version=await request(()=>readService.version(bound,options));check();
    if(snapshot.scope!==bound.key||version.nativeRevision!==header.revision||version.revision!==header.workspaceRevision||version.evidenceRevision!==header.evidenceRevision||version.viewRevision!==header.viewRevision)throw Error('snapshot-revision-changed');
-   replica=candidate;session=header.viewSession;cachedIndex=index;published=Object.freeze({snapshot,index});return published;
+   replica=candidate;session=header.viewSession;cachedIndex=index;published=Object.freeze({snapshot,index});projectionWithdrawn=false;return published;
   })()]).catch(error=>{if(ticket===generation&&!allowed())invalidate();throw error;}).finally(()=>{budget.complete();abort.signal.removeEventListener('abort',onAbort);abort.abort();if(pending===entry)pending=null;});
   return entry.promise;
  }
- return Object.freeze({refresh,current,reconfigureSession,enterCurrentSession,invalidate,stop(){stopped=true;invalidate();}});
+ return Object.freeze({refresh,current,projectionWithdrawn:()=>projectionWithdrawn,reconfigureSession,enterCurrentSession,invalidate,stop(){stopped=true;invalidate();}});
 }

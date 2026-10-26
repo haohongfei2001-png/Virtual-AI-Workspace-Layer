@@ -216,9 +216,17 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
   try{while(live(ticket)){
    if(location&&!locationCurrent(location))return null;if(!location)budget.check();if(++polls>600)throw Error('frame-preparation-limit');
    const current=grant;
-   const response=await withRequestDeadline(()=>cancellable(()=>runtime.sendMessage({v:1,type:'HOST_UI_VIEW',grantId:current.id,mountId:current.mountId,query:effective,...(retryToken?{retryToken}:{}),...(location?{locateProjectId:location.projectId}:{})}),controller.signal),{timeoutMs:location?Math.max(1,6000-(elapsedNow()-location.started)):Math.min(6000,budget.remaining()),now:elapsedNow,schedule,cancel});
+   let response=await withRequestDeadline(()=>cancellable(()=>runtime.sendMessage({v:1,type:'HOST_UI_VIEW',grantId:current.id,mountId:current.mountId,query:effective,...(retryToken?{retryToken}:{}),...(location?{locateProjectId:location.projectId}:{})}),controller.signal),{timeoutMs:location?Math.max(1,6000-(elapsedNow()-location.started)):Math.min(6000,budget.remaining()),now:elapsedNow,schedule,cancel});
    retryToken=null;
    if(!live(ticket)||location&&!locationCurrent(location))return null;if(!location)budget.check();
+   // Existing VIEW transport carries a current owner's withdrawal, including
+   // while replacement data is preparing. Never retain revoked source rows
+   // merely because the subsequent read times out; keep the granted shell.
+   if(Object.hasOwn(response??{},'clearProjection')){
+    if(response.clearProjection!==true||response.ok===true&&response.state!=='preparing')throw Error('invalid-frame-withdrawal');
+    if(projectionScope!==null){navigation?.invalidate?.('source-revoked');projectionScope=null;projectionVersion=null;currentRef=null;currentDelivery=null;plans.clear();projectPlans.clear();searchSnippetIds.clear();cancel(resumeTimer);resumeTimer=null;resumeQueued=null;resumeDesired=null;resumeQuery=null;clearCandidates();}
+    const {clearProjection,...rest}=response;response=rest;
+   }
    if(response?.ok!==true){
     if(location)return null;
     if(exactHostRecord(response,['ok','reason','retryToken'])&&response.ok===false&&['snapshot-revision-changed','stale-free-page'].includes(response.reason)&&tokenOK(response.retryToken)){stopRead(response.reason,response.retryToken);return null;}

@@ -68,6 +68,10 @@ export function createHostViewService({ui,readService,workspaceRepository=null,p
  function roleLayout(value,role){
   if(!value)return null;const {freeSession,...layout}=value,prefix=role+'|';
   layout.sidebarScroll??=0;
+  // The sidebar has no historical-segment navigator. Main workspace history
+  // and scroll belong only to workspace; restoring them here hides recent
+  // projects after a new document even though its own choices survived.
+  if(role==='sidebar'){layout.segment=0;layout.scroll=0;}
   layout.oldOpen=(layout.oldOpen??[]).filter(k=>role==='sidebar'?k.startsWith('side:'):!k.startsWith('side:')).slice(-256);
   layout.capacities=(layout.capacities??[]).flatMap(([key,n])=>key.startsWith(prefix)?[[key.slice(prefix.length),n]]:!key.includes('|')&&role==='workspace'?[[key,n]]:[]).slice(-256);
   return validateFrameResumeView(layout);
@@ -190,8 +194,9 @@ export function createHostViewService({ui,readService,workspaceRepository=null,p
    entry.pageRequests??=new Map();const requestToken={};entry.pageRequests.set(context.role,requestToken);
    if(entry.currentEntryPending&&context.role==='workspace'&&((message.query.segment??0)!==0||message.query.search!==undefined||message.query.workingSet!==undefined))entry.currentEntryEligible=false;
    entry.checkPreparation?.();
-   if(entry.pending||entry.autoReading)return {ok:true,state:'preparing',retryAfterMs:50};
-   if(entry.error){if(retryableRead(entry.error)&&!entry.retryToken)entry.retryToken=crypto.randomUUID();return {ok:false,reason:entry.error,...(retryableRead(entry.error)?{retryToken:entry.retryToken}:{})};}
+   const withdrawal=entry.owner.projectionWithdrawn()?{clearProjection:true}:{};
+   if(entry.pending||entry.autoReading)return {ok:true,state:'preparing',retryAfterMs:50,...withdrawal};
+   if(entry.error){if(retryableRead(entry.error)&&!entry.retryToken)entry.retryToken=crypto.randomUUID();return {ok:false,reason:entry.error,...withdrawal,...(retryableRead(entry.error)?{retryToken:entry.retryToken}:{})};}
    delivery={entry,role:context.role,window:entry.readWindow,generation:entry.prepareGeneration};
    const current=entry.owner.current(),generation=entry.prepareGeneration;if(!current)throw Error('stale-free-view');
    const version=await readService.version(context.scope,{guard:()=>active&&context.isCurrent()});check();
