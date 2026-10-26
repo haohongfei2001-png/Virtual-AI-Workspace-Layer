@@ -3735,7 +3735,44 @@
       },
       "blocker": "Native website displayed account load failure and browser check not completed; no challenge retry, logout, account change or repeated install followed.",
       "next": "Resume the same frozen candidate only after the original account page is normally usable without competing tab control; then Project visual check and, if needed, one personal confirmation for private restore. Do not repeat completed old scenarios.",
-      "screenshots": "Stored locally only; no raw private account screenshot uploaded to GitHub."
+      "screenshots": "Stored locally only; no raw private account screenshot uploaded to GitHub.",
+      "coordinatedFollowup20261026": {
+        "control": "Other task confirmed five-minute pause; debugging infobar absent at start. No reload, install, message send, private unlock or database edit. Native read/action only; no tab claim or CDP.",
+        "runtimeBuild": "4db941c1c38e0d8b84fdb199f186a3fb7eb9724b3ce93267056cf9b516ec0f33",
+        "runtimeBuildMatchesFrozenContentEntry": true,
+        "anonymousReceipt": {
+          "storage": "session",
+          "nativeRevision": 14,
+          "projects": 0,
+          "refs": 14,
+          "viewInventory": [
+            0,
+            14
+          ],
+          "unknown": [
+            14,
+            5
+          ],
+          "workspaceReceipt": {
+            "deliveryId": 8,
+            "phase": "rendered",
+            "cards": 0,
+            "rows": 5
+          },
+          "presentation": {
+            "mode": "workspace",
+            "workspace": true,
+            "sidebar": false,
+            "geometryPaused": false
+          }
+        },
+        "visual": "Earlier screenshot showed empty state; later existing status and final exact-window screenshot agree on five real preview rows. No conclusion of lost objects or identified empty-state defect from the earlier screenshot alone.",
+        "projectNavigation": "NOT_RUN: native Project row action collapsed members; AXShowMenu opened browser context menu, which was dismissed. Project homepage was not reached. No repeated route guessing.",
+        "privateRestore": "NOT_RUN: existing private library remained locked; no personal confirmation performed by agent.",
+        "interference": "Debugging infobar reappeared in final screenshot after the agreed pause expired; no attribution beyond observed concurrent control.",
+        "productAcceptance": "NOT_ACCEPTED: confirmed home data path does not establish full v2.7 Project visual or private layout restoration.",
+        "screenshots": "Local files only, not uploaded to GitHub."
+      }
     },
     "limitations": [
       "uncontained opaque reading paint still conservatively rejects unsafe return placement; it cannot stop data/workspace",
