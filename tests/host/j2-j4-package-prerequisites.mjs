@@ -57,8 +57,11 @@ export async function runPrerequisites({output=join(tmpdir(),'free-j2-j4-prerequ
  let context,worker,id,inspectionFrame,browserHandle;const observedPages=[];
  const record=(journey,name,details={})=>report.steps.push({journey,name,status:'PASS',...details});
  async function mounted(page){
-  await page.waitForFunction(()=>document.querySelectorAll('[data-va-owned]:popover-open').length===2,null,{timeout:15000});
+  await page.waitForFunction(()=>[...document.querySelectorAll('[data-va-owned][id$="_workspace"]:popover-open')].some(n=>getComputedStyle(n).visibility==='visible'),null,{timeout:15000});
   const frame=page.frames().find(f=>f.url()===`chrome-extension://${id}/workspace.html`);assert(frame);
+  await frame.locator('.workspace').waitFor({timeout:15000});
+  const known=frame.getByRole('button',{name:'其他已知聊天',exact:true});
+  if(await known.getAttribute('aria-expanded')==='false')await known.click();
   await frame.getByText('Ordinary conversation',{exact:true}).waitFor({timeout:15000});inspectionFrame=frame;return frame;
  }
  async function observeLoss(page){

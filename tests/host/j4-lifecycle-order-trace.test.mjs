@@ -10,7 +10,8 @@ test('new commit diagnostics preserve exact API call and never refresh retained 
  const bootstrap=instrumentJ4LifecycleOrderSource(J4_ORDER_PATHS[1],await readFile(J4_ORDER_PATHS[1],'utf8'));
  assert(bootstrap.includes('contextObserver?.invalidateCommitted(details);'));assert(!bootstrap.includes('invalidateTab(details.tabId,details.documentId)'));
  assert(owner.includes('function invalidateTab(tabId){'));assert(owner.includes('__j4Order("invalidate-committed"'));assert(owner.includes('__j4Order("commit-document-preserved",{preserved:true,accepted:r.accepted===true})'));
- const preservation=owner.slice(owner.indexOf('r.commitRetained=true'),owner.indexOf('else requests.delete(id)',owner.indexOf('r.commitRetained=true')));
+ const start=owner.indexOf('r.commitRetained=true'),end=owner.indexOf('}else{requests.delete(id)',start);assert(start>=0&&end>start);
+ const preservation=owner.slice(start,end);
  assert(!preservation.includes('r.wall='));assert(!preservation.includes('r.elapsed='));assert(!preservation.includes('requestId'));assert(!preservation.includes('documentId'));
 });
 
@@ -44,10 +45,10 @@ test('actual content session preserves rebind generations and pending-ready tran
 });
 
 test('stop diagnostic retains challenge hint clearing and rejects absent or duplicate exact anchor',async()=>{
- const path=J4_ORDER_PATHS[3],source=await readFile(path,'utf8'),anchor='function stop(){contextWaitSuspended=false;verificationWaitURL=null;contextResumeAllowed=false;';
+ const path=J4_ORDER_PATHS[3],source=await readFile(path,'utf8'),anchor='function stop(){nativeUseIntent=null;contextWaitSuspended=false;verificationWaitURL=null;contextResumeAllowed=false;';
  assert.equal(source.split(anchor).length,2);
  const modified=instrumentJ4LifecycleOrderSource(path,source);
- assert(modified.includes("function stop(){__j4State('stop');contextWaitSuspended=false;verificationWaitURL=null;contextResumeAllowed=false;"),'passive stop trace precedes original clearing operations');
+ assert(modified.includes("function stop(){__j4State('stop');nativeUseIntent=null;contextWaitSuspended=false;verificationWaitURL=null;contextResumeAllowed=false;"),'passive stop trace precedes original clearing operations');
  assert.throws(()=>instrumentJ4LifecycleOrderSource(path,source.replace(anchor,'function stop(){contextResumeAllowed=false;')),/j4-order-anchor-mismatch/);
  assert.throws(()=>instrumentJ4LifecycleOrderSource(path,source+'\n'+anchor),/j4-order-anchor-mismatch/);
 });

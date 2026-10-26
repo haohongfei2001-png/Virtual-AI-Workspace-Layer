@@ -104,7 +104,7 @@ export async function runJ4(output=join(tmpdir(),'free-j4-package-journey.json')
   }catch{(report.readBudgetSnapshots??=[]).push({stage,unavailable:true});}finally{clearTimeout(timer);}}
  }
  const frame=page=>page.frames().find(f=>f.url()===`chrome-extension://${id}/workspace.html`);
- async function mounted(page){await page.waitForFunction(()=>document.querySelectorAll('[data-va-owned]:popover-open').length===2,null,{timeout:20000,polling:100});const f=frame(page);assert(f);await f.getByText('Ordinary conversation',{exact:true}).waitFor({timeout:15000});return f;}
+ async function mounted(page){await page.waitForFunction(()=>[...document.querySelectorAll('[data-va-owned][id$="_workspace"]:popover-open')].some(n=>getComputedStyle(n).visibility==='visible'),null,{timeout:20000,polling:100});const f=frame(page);assert(f);await f.locator('.workspace').waitFor({timeout:15000});const known=f.getByRole('button',{name:'其他已知聊天',exact:true});if(await known.getAttribute('aria-expanded')==='false')await known.click();await f.getByText('Ordinary conversation',{exact:true}).waitFor({timeout:15000});return f;}
  async function auxiliaryOperation(kind,work){
   const frames=context.pages().filter(p=>p.url().startsWith(server.origin+'/')).flatMap(p=>p.frames().filter(f=>f===p.mainFrame()||f.url()===`chrome-extension://${id}/workspace.html`));
   assert(frames.length>0,'missing-native-surfaces-for-auxiliary-oracle');

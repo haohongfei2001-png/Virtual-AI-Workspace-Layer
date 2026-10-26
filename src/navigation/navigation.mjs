@@ -28,7 +28,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
 
   if(framed&&(!['workspace','sidebar'].includes(surface.role)||surface.root?.ownerDocument!==doc))throw Error('invalid-navigation-surface');
   const token='vaiwl-'+Math.random().toString(36).slice(2), views=new Map();let snapshot=null,view=null,groups=[],roots=null,stopped=false,mask=null,searchQuery=null,searchTheme=null,searchCapacity=24,frameSearchOffset=0,frameSearchWaiting=false,frameWorkingSetOffset=0,frameWorkingSetWaiting=false,lastSelected=null,menu=null,selectionPending=false,pendingAnchor=null,anchorFeedback=null;
-  let navigationIntent=0,navigationFeedback=null,nativeNavigationPending=false;
+  let navigationIntent=0,presentationGeneration=0,navigationFeedback=null,nativeNavigationPending=false;
   const plannedLinks=new WeakMap();
   // An unchanged capability gets a new certificate without replacing DOM,
   // closing menus, resetting focus, or publishing another layout snapshot.
@@ -41,7 +41,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
   }
   function setNativeNavigationPending(value){nativeNavigationPending=value===true;for(const pane of [roots?.workspace,roots?.sidebar])for(const control of pane?.shadow.querySelectorAll('[data-native-plan-control]')??[]){if(nativeNavigationPending)control.setAttribute('aria-disabled','true');else control.removeAttribute('aria-disabled');}}
   function clearNavigationFeedback(){navigationFeedback=null;for(const pane of [roots?.workspace,roots?.sidebar])pane?.shadow.querySelector('.navigation-feedback')?.remove();}
-  function advanceNavigationIntent(preserveFeedback=false){navigationIntent++;if(preserveFeedback&&navigationFeedback&&navigationFeedback.scope===snapshot?.scope&&navigationFeedback.url===adapter.currentURL())navigationFeedback.intent=navigationIntent;else clearNavigationFeedback();return navigationIntent;}
+  function advanceNavigationIntent(preserveFeedback=false,passiveEntry=false){navigationIntent++;if(!passiveEntry)presentationGeneration++;if(preserveFeedback&&navigationFeedback&&navigationFeedback.scope===snapshot?.scope&&navigationFeedback.url===adapter.currentURL())navigationFeedback.intent=navigationIntent;else clearNavigationFeedback();return navigationIntent;}
   function renderNavigationFeedback(parent){
     if(!navigationFeedback||navigationFeedback.scope!==snapshot?.scope||navigationFeedback.intent!==navigationIntent)return;
     const notice=node(doc,'div',{class:'navigation-feedback toolbar',role:'status','aria-live':'polite'});notice.append(node(doc,'span',{},navigationFeedback.message??(navigationFeedback.state==='blocked'?'暂时无法打开，请使用原生入口继续。':'打开结果未确认，请先查看原生页面。')));
@@ -72,7 +72,9 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     if(args?.[4]==='frame'&&args[7]!==projectionRequest&&args[0].scope===frameProjection?.scope&&args[0].segment===frameProjection?.segment&&JSON.stringify(args[0].viewSession)===JSON.stringify(frameProjection?.viewSession))args=null;
     const paint=pendingRender;pendingRender=false;
     if(args){const [value,now,timeZone,preparedIndex,alreadyPrepared,currentEntry,requestContext]=args;if(alreadyPrepared==='frame')applyFrameProjection(value,currentEntry,requestContext);else if(alreadyPrepared)updatePreparedFree(value,now,timeZone,preparedIndex);else update(value,now,timeZone,preparedIndex);}
-    if(presentation&&!stopped&&snapshot?.scope===presentation.scope)present(presentation.intent);
+    // A queued presentation predates any input/click made while it waited.
+    // Passive workspace entry still cancels old native dispatches, not this UI intent.
+    if(presentation&&!stopped&&snapshot?.scope===presentation.scope&&presentation.generation===presentationGeneration)present(presentation.intent);
     else if(!args&&paint)render();
   }
   function requestRender(){if(stopped)return;if(interacting()||updateTimer!==null){pendingRender=true;finishInteraction();return;}render();}
@@ -759,7 +761,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
   function present(intent){
     advanceNavigationIntent(intent?.kind==='show-workspace');
     if(stopped||!snapshot||!['show-workspace','enter-reading','show-native-page','search-known','show-working-set'].includes(intent?.kind))return false;
-    if(interacting()||updateTimer!==null){pendingPresentation={scope:snapshot.scope,intent:{kind:intent.kind,...(intent.kind==='search-known'?{themeId:intent.themeId??null}:{})}};finishInteraction();return true;}
+    if(interacting()||updateTimer!==null){pendingPresentation={scope:snapshot.scope,generation:presentationGeneration,intent:{kind:intent.kind,...(intent.kind==='search-known'?{themeId:intent.themeId??null}:{})}};finishInteraction();return true;}
     if(intent?.kind==='show-workspace')showWorkspace(false);else if(['enter-reading','show-native-page'].includes(intent?.kind))enterReading(false);else if(intent?.kind==='search-known')findKnown(intent.themeId??null,false);else if(intent?.kind==='show-working-set')showWorkingSet(false);else return false;return true;}
-  return Object.freeze({focusSurface,setNativeNavigationPending,refreshNavigationPlans,needsNativeProject,workspaceEntered(){if(stopped||!framed||!frameProjection||!view)return false;advanceNavigationIntent(true);view.mode='workspace';layout();return true;},revealNativeProject,restoreFrameView(value){if(!framed||stopped)return false;resumeLayout=validateFrameResumeView(value);return true;},showTimePolicyNotice,clearTimePolicyNotice,present,updateFrameProjection,update,updatePreparedFree,layout,invalidate,stop,showWorkspace,enterReading,currentRef:()=>current().ref,status:()=>({...status}),view:()=>view,roots:()=>roots});
+  return Object.freeze({focusSurface,setNativeNavigationPending,refreshNavigationPlans,needsNativeProject,workspaceEntered(){if(stopped||!framed||!frameProjection||!view)return false;advanceNavigationIntent(true,true);view.mode='workspace';layout();return true;},revealNativeProject,restoreFrameView(value){if(!framed||stopped)return false;resumeLayout=validateFrameResumeView(value);return true;},showTimePolicyNotice,clearTimePolicyNotice,present,updateFrameProjection,update,updatePreparedFree,layout,invalidate,stop,showWorkspace,enterReading,currentRef:()=>current().ref,status:()=>({...status}),view:()=>view,roots:()=>roots});
 }

@@ -173,8 +173,10 @@ export async function runSys05(output,{execute=false,observeWork=false,backpress
    gap.peer=await phase.run(()=>facts(team),'peer-directory-isolation');
    gap.actions=server.snapshot().actions;
    gap.draftPreserved=await phase.run(()=>a.evaluate(()=>document===sys05GapDocument&&document.querySelector('#prompt-textarea')===sys05GapEditor&&sys05GapEditor.value==='preserved directory recovery draft'),'draft-preserved');
-   const sidebar=a.frames().find(f=>f.url()===`chrome-extension://${id}/sidebar.html`);assert(sidebar);
-   await phase.run(()=>sidebar.getByRole('button',{name:'查找已知项目与聊天',exact:true}).click({timeout:phase.remaining('open-search')}),'open-search');
+   // MODERN deliberately has an unsafe-short sidebar. Search remains a
+   // workspace capability, independent of that optional surface.
+   await phase.run(()=>frame(a).getByRole('button',{name:'工作空间设置',exact:true}).click({timeout:phase.remaining('open-search-settings')}),'open-search-settings');
+   await phase.run(()=>frame(a).getByRole('button',{name:'查找已知项目与聊天',exact:true}).click({timeout:phase.remaining('open-search')}),'open-search');
    await phase.run(()=>frame(a).getByRole('searchbox',{name:'已知聊天查找输入',exact:true}).fill('SYS05 directory 300',{timeout:phase.remaining('tail-search')}),'tail-search');
    const last=gap.expected.at(-1),row=frame(a).locator('.search-results a[data-ref-id="'+last.id+'"]');
    gap.tail=await phase.poll(async()=>await presented()&&await row.count()===1&&await row.isVisible()?{topLevelOpen:true,id:last.id,title:await row.locator('.window-title').textContent(),href:await row.getAttribute('href')}:null,'tail-search-visible');

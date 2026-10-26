@@ -21,9 +21,9 @@ const poll=async(fn)=>{const end=Date.now()+15000;do{const v=await fn();if(v)ret
 const nativePages=[];
 async function facts(){return readNativeEntryFacts({pages:nativePages,extensionId:id,fixtureOrigin:server.origin});}
 async function workspace(p=page){
- await p.waitForFunction(()=>document.querySelectorAll('[data-va-owned]:popover-open').length===2||[...document.querySelectorAll('button')].some(n=>n.getAttribute('aria-label')==='返回工作空间'),null,{timeout:15000});
+ await p.waitForFunction(()=>[...document.querySelectorAll('[data-va-owned][id$="_workspace"]:popover-open')].some(n=>getComputedStyle(n).visibility==='visible')||[...document.querySelectorAll('button')].some(n=>n.getAttribute('aria-label')==='返回工作空间'),null,{timeout:15000});
  const back=p.getByRole('button',{name:'返回工作空间',exact:true});if(await back.isVisible())await back.click();
- await p.waitForFunction(()=>document.querySelectorAll('[data-va-owned]:popover-open').length===2,null,{timeout:15000});const frame=p.frames().find(f=>f.url()===`chrome-extension://${id}/workspace.html`);assert(frame);await frame.locator('.workspace').waitFor();return frame;
+ await p.waitForFunction(()=>[...document.querySelectorAll('[data-va-owned][id$="_workspace"]:popover-open')].some(n=>getComputedStyle(n).visibility==='visible'),null,{timeout:15000});const frame=p.frames().find(f=>f.url()===`chrome-extension://${id}/workspace.html`);assert(frame);await frame.locator('.workspace').waitFor();return frame;
 }
 async function native(p=page){await restoreNativeEntrySurfaces(p);}
 try{

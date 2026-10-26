@@ -1480,6 +1480,53 @@
       "new-document private restoration requires personal confirmation; revoked pending writes cannot commit",
       "Mac full product and old personal object restore not established by isolated tests"
     ],
-    "nextAllowedWork": "No additional confirmed independent defect from this audit. Preserve package; one daytime real journey may supply new evidence. Do not repeat unchanged offline tests or modify daily Chrome overnight."
+    "nextAllowedWork": "No additional confirmed independent defect from this audit. Preserve package; one daytime real journey may supply new evidence. Do not repeat unchanged offline tests or modify daily Chrome overnight.",
+    "searchAndContractClosure": {
+      "baseHead": "e166bfd95d41e2a8d73c3da0d6df71ab14659552",
+      "productFix": "A queued presentation cannot clear newer typed search or override a newer explicit action. Passive workspaceEntered retains queued presentation while still invalidating old native actions. Scope invalidation continues to clear queue and private display.",
+      "counterexample": "Existing renderer, queued search under pointer-down, one newer input, pointer-up: before fix empty query instead of newer query; after fix retained. No wait extension.",
+      "ciCausality": "CI observed empty query after one fill; this independent deterministic counterexample matches symptom but does not prove the only CI ordering.",
+      "checks": {
+        "relatedNode": 438,
+        "searchBrowser": "PASS_EARLY_INPUT_RENDERER_SUBCONTRACT_ONLY",
+        "ui10Modern": "PASS_CONTROL_SUBMATRIX_ONLY",
+        "ui10ModernCoverageComplete": true,
+        "finalProductJourney": "PASS",
+        "independentReadOnlyReview": "PASS_NO_NEW_BLOCKER"
+      },
+      "testContractRepair": "Existing entry/J1/J4/repair helpers wait for actual workspace, not both optional roles; disclose unknown rows before reading; SYS05 uses workspace tool when sidebar cannot fit; passive J4 anchors retain original cleanup. Original draft, identity, causal response, budgets and native action assertions remain.",
+      "scopedResults": {
+        "nativeEntry": "PASS_LEGACY_SUBSCENARIOS_ONLY",
+        "j1": "PARTIAL_J1_NOT_ACCEPTED",
+        "prerequisites": "PARTIAL_J2_J4_NOT_ACCEPTED",
+        "sys05": "PASS_NARROW_DIAGNOSTIC_SYS05_SLICE",
+        "membership": "PASS_SCOPED_OFFLINE_D_S",
+        "existingRepair": "PASS_NARROW_EXISTING_SOURCE_PENDING_REPAIR",
+        "earlySearch": "PASS_EARLY_INPUT_RENDERER_SUBCONTRACT_ONLY",
+        "ui10Modern": "PASS_LAYOUT_SUBCONTRACT_ONLY",
+        "finalJourney": "PASS"
+      },
+      "fullCI": "NOT_ALL_GREEN: unknown-protocol worker body witness failed RESOURCE_CONTENT_UNAVAILABLE/net::ERR_ABORTED; no relaxed proof or automatic retries. Other legacy job failures reviewed separately; local subcontracts do not imply full CI acceptance.",
+      "evidence": "free-night-ci-contracts-20261027.json.gz",
+      "sourceAndFinalJourneyMatch": true,
+      "realMacChrome": "NOT_RUN",
+      "dailyInstallationUpdated": false,
+      "package": {
+        "status": "HOST_IMPLEMENTATION_UNVERIFIED",
+        "releaseStatus": "NOT_RELEASE_READY",
+        "files": 199,
+        "unpacked": "/private/tmp/VAIWL-v27-Overnight-Integrated-20261027/extension",
+        "archive": "/private/tmp/VAIWL-v27-Overnight-Integrated-20261027/vaiwl-free-host-development.zip",
+        "archiveSha256": "a19117a56c8e40f4895a18daa65cb072ca1c42963d1f6ac8ccf538df201900be"
+      },
+      "previousPackagePreserved": "/private/tmp/VAIWL-v27-Overnight-Integrated-20261027-e166-preserved",
+      "legacyGateClassification": {
+        "unknownProtocol": "NOT_ESTABLISHED: worker body witness aborted; no proof downgrade",
+        "idleReading": "legacy observer installed after initial VIEW and expects both surfaces closed; continuous sidebar deliberately remains active, not proof of product idle failure",
+        "csp": "exact-message oracle predates bounded sidebar intrinsic-size protocol; privacy leak checks remained zero; historical gate FAIL retained",
+        "partialJ3ContextPopulated": "legacy both-role, folded-UNKNOWN and composer-closes-both assumptions; no new product defect established by these failures",
+        "stale503Mutant": "expected negative-control failure, unchanged baseline passed"
+      }
+    }
   }
 }

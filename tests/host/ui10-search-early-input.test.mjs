@@ -45,3 +45,17 @@ for(const order of ['initial-first','typed-first'])test('one early input survive
  pending[1](reply(calls[1].search,[row('new')]));await tick();if(order==='typed-first'){pending[0](reply(calls[0].search,[row('old')]));await tick();}
  assert.equal(f.pane().querySelector('input').value,'一次输入不得丢失');assert(f.pane().querySelector('[data-ref-id="new"]'));assert(!f.pane().querySelector('[data-ref-id="old"]'));assert.equal(calls.length,2);f.nav.stop();
 });
+
+for(const change of ['typed','workspace-entry','none'])test('deferred search presentation respects newer input but survives passive entry: '+change,async t=>{
+ const calls=[],f=fixture('workspace',q=>{calls.push(q);return reply(q.search);});t.after(()=>f.nav.stop());
+ f.nav.updateFrameProjection(projection());
+ if(change==='typed'){f.nav.present({kind:'search-known'});await tick();}
+ const host=f.nav.roots().workspace.n;
+ f.doc.handlers.get('pointerdown')({pointerId:1,composedPath:()=>[host]});
+ f.nav.present({kind:'search-known'});
+ if(change==='typed'){const input=f.pane().querySelector('input');input.value='newer query';input.oninput();await tick();}
+ if(change==='workspace-entry')assert.equal(f.nav.workspaceEntered(),true);
+ f.doc.handlers.get('pointerup')({pointerId:1});await new Promise(r=>setTimeout(r,10));await tick();
+ assert.equal(f.pane().querySelector('input').value,change==='typed'?'newer query':'');
+ assert.deepEqual(calls.map(q=>q.search.query),change==='typed'?['','newer query']:['']);
+});
