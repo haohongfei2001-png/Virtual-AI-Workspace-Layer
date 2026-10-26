@@ -451,7 +451,10 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
  async function bootstrapResume(){
   const attempt={};bootstrapping=attempt;const current=grant,renderer=navigation,ticket=serial;
   try{const result=await withRequestDeadline(()=>runtime.sendMessage({v:1,type:'HOST_UI_RESUME',grantId:current.id,mountId:current.mountId}),{now:elapsedNow,schedule,cancel});
-   if(!live(ticket)||grant!==current||navigation!==renderer)return;
+   // A normal renewal replaces the grant object without changing authority.
+   // Keep the saved layout only for this same live bootstrap and document;
+   // expiry, revocation, replacement renderers and late old replies still fail.
+   if(bootstrapping!==attempt||!live(ticket)||navigation!==renderer||!['id','mountId','scopeGrantId','parentDocumentId','uiDocumentId','role'].every(key=>grant?.[key]===current[key]))return;
    if(result?.ok===true&&result.resume){const restored=validateResumeQuery(result.resume.query),layout=result.resume.view===null?null:validateFrameResumeView(result.resume.view);query=restored;if(layout)navigation.restoreFrameView?.(layout);}
   }catch{}finally{if(bootstrapping===attempt){bootstrapping=false;if(!closed&&navigation===renderer)invalidate();}}
  }
