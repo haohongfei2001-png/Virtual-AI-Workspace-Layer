@@ -4,6 +4,23 @@ import {foregroundFailureStates,installLocalStatus,readActiveLocalStatus,validLa
 import {validSidebarStructure,sidebarStructureCoverage} from '../../src/host/history-structure-diagnostic.mjs';
 import observedSidebar from './fixtures/observed-sidebar-structure.json' with {type:'json'};
 import observedProjectSidebar from './fixtures/observed-sidebar-project-20261026.json' with {type:'json'};
+import observedProjectDetails from './fixtures/observed-sidebar-project-details-20261026.json' with {type:'json'};
+test('received Project details retain omitted control subtrees and do not invent stable member markers',()=>{
+ const {sidebarStructure:report,coverage:recorded}=observedProjectDetails,rows=report.rows;
+ assert.equal(observedProjectDetails.build,'2dd6a78932f5cbcb2118b8daaa6940ee9a2b226282f5ec470c3e0246f13d853f');
+ assert.equal(observedProjectDetails.route,'project');assert(validSidebarStructure(report));
+ const coverage=sidebarStructureCoverage(report);assert.deepEqual(coverage,recorded);
+ assert.equal(rows.length,95);assert.deepEqual(coverage.gaps.missingChildren,[]);
+ assert.deepEqual(coverage.gaps.depthLimitRows,[66,71,73,83,88,90]);
+ assert.deepEqual(report.contextOnly,[94]);assert.equal(rows[56][3],'list');assert.equal(rows[56][5],2);
+ for(const i of [57,74]){assert.equal(rows[i][0],56);assert.equal(rows[i][3],'listitem');assert.equal(rows[i][4],32);assert.equal(rows[i][4]&1,0);}
+ for(const i of [66,83]){assert.equal(rows[i][2],'A');assert.equal(rows[i][4]&4,4);assert.equal(rows[i][8],true);}
+ // More rows/time cannot resolve an omitted subtree, and an optimistic
+ // termination label cannot turn this capture into whole-sidebar authority.
+ const mislabeled=structuredClone(report);mislabeled.reason='complete';
+ assert.equal(sidebarStructureCoverage(mislabeled).state,'PARTIAL');
+ assert.equal(sidebarStructureCoverage(mislabeled).reason,'unexplained-omission');
+});
 test('focused detail coverage names its unobserved history and never certifies the whole sidebar',()=>{
  const row=(parent,position,tag,role,flags,children,omitted=false)=>[parent,position,tag,role,flags,children,[0,0,200,20],0,omitted];
  const report={schema:'sidebar-structure-v2',reason:'complete',ancestors:[],detailRoots:[3,4],contextOnly:[5],rows:[row(-1,0,'DIV','absent',0,2),row(0,0,'SECTION','absent',2,1),row(1,0,'DIV','absent',0,2),row(2,0,'DIV','absent',8,0),row(2,1,'DIV','list',32,0),row(0,1,'SECTION','absent',2,17,true)]};

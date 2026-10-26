@@ -976,5 +976,45 @@
       "browserOperated": false,
       "runtimeActivation": "NOT_RUN"
     }
+  },
+  "receivedProjectDetails20261026": {
+    "source": "/Users/hhf/Downloads/vaiwl-sidebar-structure (1).json",
+    "sha256": "3fc4720e4ecef017fff4dbd2fc87817fa69a6e45650322b19c6a694f76c2ec19",
+    "fixture": "tests/host/fixtures/observed-sidebar-project-details-20261026.json",
+    "build": "2dd6a78932f5cbcb2118b8daaa6940ee9a2b226282f5ec470c3e0246f13d853f",
+    "documentBinding": "verified-at-capture-not-account-identity",
+    "route": "project",
+    "coverage": "PARTIAL",
+    "rows": 95,
+    "contextOnly": [
+      94
+    ],
+    "depthOmissions": [
+      66,
+      71,
+      73,
+      83,
+      88,
+      90
+    ],
+    "missingChildren": [],
+    "newFacts": [
+      "The first section contains an expandable role=button Project row, nested list with two listitems, href anchors and multiple native buttons.",
+      "flags=32 on the nested listitems means tabindex presence, not conversation marker. No stable conversation marker bit is present in that section.",
+      "The prior four missing header/row wrapper positions are now represented. Remaining omissions occur beneath anchors/buttons at local depth 16, not at the total row limit."
+    ],
+    "limits": [
+      "No href values, control action labels or omitted descendants were recorded; no additional Project/member identity or control delegation is established.",
+      "A complete anonymous tag tree alone would still not establish that native Project/menu/pin controls can be replaced without losing their actions.",
+      "Do not expand history masks to this section or hide derived Projects merely to eliminate duplicate navigation. Existing member admission continues through the separately validated main Project panel."
+    ],
+    "codeAssessment": "No new narrow production recognition defect confirmed by this report. Current nativeHistoryPresentation and independent workspace behavior remain valid but do not satisfy complete nonduplicate sidebar delivery.",
+    "verification": {
+      "command": "node --test --test-name-pattern='received Project details' tests/host/local-status.test.mjs",
+      "status": "PASS",
+      "scope": "One actual-evidence regression only; no browser, matrix, runtime activation or product acceptance"
+    },
+    "dailyChrome": "No operation/update after receiving this file; prior authorized update fingerprint is observed in the supplied receipt.",
+    "remaining": "Complete continuous sidebar remains incomplete: native Project controls lack a verified replacement/delegation contract and six control/link descendant subtrees remain unknown. No immediate recollection request or new candidate."
   }
 }
