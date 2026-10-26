@@ -139,6 +139,26 @@ test('single-role frame renderer reuses navigation without host DOM access',{tim
   const restored=nav.roots().workspace.scroller;restored.dispatchEvent(new WheelEvent('wheel',{bubbles:true,composed:true}));restored.scrollTop=200;await paint();
   mount.style.height='800px';await paint();if(nav.roots().workspace.scroller.scrollTop!==200)throw Error('restoration overrode subsequent user scroll');nav.stop();
  });
+ // Sidebar uses the same durable restoration contract as workspace. A hidden
+ // or initially taller frame must not save a browser-clamped zero as user intent.
+ await page.evaluate(async()=>{
+  const {createNavigation}=await import('/src/navigation/navigation.mjs'),empty=()=>({items:[],total:0,offset:0,limit:5,hasMore:false});
+  const mount=document.querySelector('#mount');mount.style.height='1600px';
+  const groups=Array.from({length:20},(_,i)=>({id:'S'+i,name:'Sidebar '+i,nativeName:'Sidebar '+i,lists:{current:{...empty(),items:[{id:'ref'+i,nativeTitle:'Member '+i,displayTitle:'Member '+i,nativeUrl:'https://chatgpt.com/c/ref'+i,projectId:'S'+i,membership:'PROJECT',segment:0}],total:1},old:empty(),unknown:empty()}}));
+  const dto={protocol:'vaiwl-free-frame/1',role:'sidebar',scope:'sidebar-scroll',current:{nativeUrl:'https://chatgpt.com/c/ref19',projectId:'S19',refId:'ref19'},completeSnapshot:false,segment:0,viewSession:{H:30,T:20000,Z:'UTC',policyRevision:0},navigation:{hasNewer:false,hasOlder:false,maxSegment:0},groups:{...empty(),items:groups,total:20,limit:24},entries:{noProject:{...empty(),inventoryTotal:0},unknown:{...empty(),inventoryTotal:0}},selection:null};
+  let route='https://chatgpt.com/c/ref19';const saved=[],nav=createNavigation({document,surface:{role:'sidebar',root:mount},adapter:{currentURL:()=>route,isCurrent:()=>false,status(){}},onViewChange:view=>saved.push(view.sidebarScroll)});
+  const paint=()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))),list=()=>nav.roots().sidebar.shadow.querySelector('.themes');
+  nav.restoreFrameView({segment:0,oldOpen:[],sidebarOpen:[],capacities:[],scroll:0,sidebarScroll:240,sidebarVisible:true});nav.updateFrameProjection(dto);await paint();
+  if(list().scrollTop!==0||nav.view().sidebarScroll!==240||saved.some(value=>value!==240))throw Error('sidebar initial clamp overwrote durable scroll intent');
+  mount.style.height='360px';await paint();if(list().scrollTop!==240)throw Error('settled sidebar did not restore durable position');
+  mount.style.display='none';nav.updateFrameProjection(dto);await paint();if(nav.view().sidebarScroll!==240)throw Error('hidden sidebar repaint overwrote durable position');
+  mount.style.display='block';await paint();if(list().scrollTop!==240)throw Error('visible sidebar did not recover position');
+  list().dispatchEvent(new WheelEvent('wheel',{bubbles:true,composed:true}));list().scrollTop=80;await paint();mount.style.height='340px';await paint();
+  if(list().scrollTop!==80||nav.view().sidebarScroll!==80)throw Error('sidebar restoration overrode subsequent user scroll');
+  route='https://chatgpt.com/c/ref0';nav.updateFrameProjection({...dto,current:{nativeUrl:route,projectId:'S0',refId:'ref0'}});await paint();if(list().scrollTop>=80)throw Error('current navigation did not reveal the new current row');
+  nav.updateFrameProjection({...dto,current:undefined,scope:'other-sidebar-scope'});await paint();if(nav.view().sidebarScroll!==0||list().scrollTop!==0)throw Error('sidebar position leaked to another scope');
+  nav.stop();mount.style.height='800px';
+ });
  // Horizon changes keep keyboard focus without replaying a pending choice.
  await page.evaluate(async()=>{
   const {createNavigation}=await import('/src/navigation/navigation.mjs');const empty=()=>({items:[],total:0,offset:0,limit:5,hasMore:false});let settle,calls=0;

@@ -470,6 +470,20 @@
         "databaseMutation": "NONE"
       },
       "fullProduct": "NOT_ACCEPTED"
+    },
+    "sidebarScrollRecovery": {
+      "baseHead": "dc3eeea17f5a20c6dd90dacdabceb633b5c77400",
+      "state": "OFFLINE_FIXED_NOT_MAC_VERIFIED",
+      "cause": "sidebar render and scroll callbacks saved browser-clamped scrollTop over restored sidebarScroll while frame was tall or hidden",
+      "implementation": "navigation holds scoped sidebar restoration through clamp, reapplies on ResizeObserver, yields to owned user input and subsequent current-route reveal; scope changes reset current-row locating",
+      "regression": {
+        "red": "isolated headless formal renderer failed sidebar initial clamp overwrote durable scroll intent",
+        "green": "same renderer journey passed: initial clamp, settled geometry, hidden repaint, reappearance, actual user scroll, current-row navigation, changed scope",
+        "associated": "25 tests passed in frame-resume-renderer, navigation-frame-calibration-entry and frame-window-retention",
+        "build": "Browser-Local build and verifyHost passed in /private/tmp/vaiwl-sidebar-scroll-build-t31Xqb/extension"
+      },
+      "realChrome": "NOT_RUN; installation, IndexedDB, drafts and prior artifacts unchanged",
+      "remaining": "Anonymous Project controls/member subtree was truncated; complete sidebar replacement remains unproved. No enlarged mask or final candidate."
     }
   }
 }

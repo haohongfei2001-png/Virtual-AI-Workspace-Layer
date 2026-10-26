@@ -14,7 +14,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
   const framed=surface!==null;
   // Keep explicit choices separate from the current project's derived expansion.
   // Legacy restored open rows remain explicit; do not guess away user layout.
-  const sidebarChoices=new WeakMap(),sidebarLimited=new WeakSet(),sidebarLegacy=new WeakSet(),restoredScroll=new WeakMap();
+  const sidebarChoices=new WeakMap(),sidebarLimited=new WeakSet(),sidebarLegacy=new WeakSet(),restoredScroll=new WeakMap(),restoredSidebarScroll=new WeakMap();
   function choices(){if(!sidebarChoices.has(view))sidebarChoices.set(view,new Map([...view.sidebarOpen].map(id=>[id,true])));return sidebarChoices.get(view);}
   function sidebarLayout(open=view.sidebarOpen){return {segment:view.segment,oldOpen:[...view.oldOpen],sidebarOpen:[...open],capacities:[...view.capacities],scroll:view.scroll,sidebarScroll:view.sidebarScroll??0,sidebarVisible:view.sidebarVisible};}
   function applySidebarChoices(manual){
@@ -115,8 +115,8 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
   };
   for(const [type,handler]of Object.entries(interactionHandlers))doc.addEventListener(type,handler,true);
   const windowBlur=()=>resetInteraction();win.addEventListener?.('blur',windowBlur);
-  let workspaceResize=null;
-  const windowResize=()=>{if(!stopped&&framed&&surface.role==='workspace')layoutCards();};win.addEventListener?.('resize',windowResize);
+  let surfaceResize=null;
+  const windowResize=()=>{if(!stopped&&framed){if(surface.role==='workspace')layoutCards();else applyRestoredSidebarScroll(roots?.sidebar?.shadow.querySelector('.themes'));}};win.addEventListener?.('resize',windowResize);
   const free=()=>snapshot?.viewMode==='free';
   const span=()=>snapshot?.policy?.h??snapshot?.viewSession?.H??30;
   const current=()=>{
@@ -140,12 +140,12 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
   function own(tag='div'){const n=node(doc,tag,{'data-vaiwl-owned':token});const shadow=n.attachShadow({mode:'open'});shadow.append(node(doc,'style',{},css));return {n,shadow};}
   function restoreMask(){if(!mask)return;for(const[name,prior,expected]of mask.attrs){if(mask.node.getAttribute(name)===expected){if(prior===null)mask.node.removeAttribute(name);else mask.node.setAttribute(name,prior);}}mask=null;}
   function setMask(n,enabled){if(!enabled){restoreMask();return;}if(mask?.node===n)return;restoreMask();const attrs=[['data-vaiwl-mask',n.getAttribute('data-vaiwl-mask'),token],['inert',n.getAttribute('inert'),'']];for(const[k,,v]of attrs)n.setAttribute(k,v);mask={node:n,attrs};}
-  function detach(){workspaceResize?.disconnect();workspaceResize=null;sidebarDirty=true;sidebarKey=null;closeMenu(false);restoreMask();if(roots){roots.sidebar?.n.remove();roots.workspace?.n.remove();roots.back?.remove();roots.maskStyle?.remove();roots=null;}}
+  function detach(){surfaceResize?.disconnect();surfaceResize=null;sidebarDirty=true;sidebarKey=null;closeMenu(false);restoreMask();if(roots){roots.sidebar?.n.remove();roots.workspace?.n.remove();roots.back?.remove();roots.maskStyle?.remove();roots=null;}}
   function layout(){
     if(stopped||!snapshot)return;
     if(framed){
       if(!surface.root.isConnected){detach();status={state:'WAITING',reason:'frame-surface-detached'};adapter.status?.(status);return;}
-      if(!roots){const pane=own();if(surface.role==='sidebar')pane.shadow.append(node(doc,'style',{},':host>section{height:100%;display:flex;flex-direction:column}.toolbar{flex:none;flex-wrap:wrap}.themes{max-height:none;min-height:44px;flex:1}'));pane.n.style.cssText='display:block;width:100%;height:100%;min-height:0';surface.root.append(pane.n);roots={sidebar:surface.role==='sidebar'?pane:null,workspace:surface.role==='workspace'?pane:null};if(surface.role==='workspace'&&typeof win.ResizeObserver==='function'){workspaceResize=new win.ResizeObserver(()=>{if(!stopped)layoutCards();});workspaceResize.observe(pane.n);}render();}
+      if(!roots){const pane=own();if(surface.role==='sidebar')pane.shadow.append(node(doc,'style',{},':host>section{height:100%;display:flex;flex-direction:column}.toolbar{flex:none;flex-wrap:wrap}.themes{max-height:none;min-height:44px;flex:1}'));pane.n.style.cssText='display:block;width:100%;height:100%;min-height:0';surface.root.append(pane.n);roots={sidebar:surface.role==='sidebar'?pane:null,workspace:surface.role==='workspace'?pane:null};if(typeof win.ResizeObserver==='function'){surfaceResize=new win.ResizeObserver(windowResize);surfaceResize.observe(pane.n);}render();}
       const pane=roots[surface.role];pane.n.dataset.vaiwlCompact=String(snapshot.preferences?.compactRows?.value!==false);
       if(surface.role==='workspace')layoutCards();else locateCurrent();
       status={state:'ACTIVE',mode:view.mode,scope:snapshot.scope};adapter.status?.(status);return;
@@ -178,6 +178,8 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
   function locateCurrent(){
     const list=roots?.sidebar?.shadow.querySelector('.themes');
     if(!selectionPending||!list?.clientHeight||roots.sidebar.n.style.visibility==='hidden')return;
+    // The first restored paint keeps the saved position, not automatic current-row centering.
+    if(restoredSidebarScroll.has(view)){applyRestoredSidebarScroll(list);selectionPending=false;return;}
     const link=list.querySelector('[aria-current="page"]');if(!link)return;
     const box=link.getBoundingClientRect(),nav=list.getBoundingClientRect();
     if(box.top<nav.top||box.bottom>nav.bottom)list.scrollTop+=box.top-nav.top-(nav.height-box.height)/2;
@@ -207,6 +209,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     page.scrollTop=held.target;held.applied=page.scrollTop;
   }
   function releaseRestoredScroll(){
+    if(view&&restoredSidebarScroll.has(view)){const list=roots?.sidebar?.shadow.querySelector('.themes');if(list)view.sidebarScroll=list.scrollTop;restoredSidebarScroll.delete(view);}
     if(!view||!restoredScroll.has(view))return;
     const page=roots?.workspace?.scroller;if(page&&workspacePages.get(page)?.specialKey===null)view.scroll=page.scrollTop;
     restoredScroll.delete(view);
@@ -220,7 +223,17 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     // owner VIEW arrives. Browser clamping here is not a user scroll choice.
     else if(view&&!(frameProjection&&frameWindowsSuspended))view.scroll=page.scrollTop;
   }
-  function remember(){if(view&&roots)view.sidebarScroll=roots.sidebar?.shadow.querySelector('.themes')?.scrollTop??view.sidebarScroll??0;if(view?.mode==='workspace'&&roots?.workspace?.scroller&&roots.workspace.n.style.display!=='none')rememberWorkspaceScroll(roots.workspace.scroller);}
+  function applyRestoredSidebarScroll(list){
+    const held=view&&restoredSidebarScroll.get(view);if(!held||!list)return;
+    list.scrollTop=held.target;held.applied=list.scrollTop;
+  }
+  function rememberSidebarScroll(list){
+    if(!view||!list)return;
+    const held=restoredSidebarScroll.get(view);
+    if(held){const clamped=Math.min(held.target,Math.max(0,list.scrollHeight-list.clientHeight));if(list.scrollTop===held.applied||list.scrollTop===clamped)return;restoredSidebarScroll.delete(view);}
+    view.sidebarScroll=list.scrollTop;
+  }
+  function remember(){rememberSidebarScroll(roots?.sidebar?.shadow.querySelector('.themes'));if(view?.mode==='workspace'&&roots?.workspace?.scroller&&roots.workspace.n.style.display!=='none')rememberWorkspaceScroll(roots.workspace.scroller);}
   function calibrationEntry(){if(!free()||!roots)return;const objectIds=view.segment===0?['inventory']:[...new Set([...(roots.workspace?.shadow.querySelectorAll('[data-ref-id]')??[])].map(n=>n.dataset.refId))].slice(0,64);onCalibrationEntry({kind:view.segment===0?'foreground':'history',objectIds:objectIds.length?objectIds:['inventory']});}
   function showWorkspace(notify=true){if(!view)return;advanceNavigationIntent(true);if(!framed)captureFocus();remember();const resetFrame=frameProjection&&(view.worksetOpen||searchQuery!==null||frameWindowsSuspended);view.mode='workspace';view.worksetOpen=false;searchQuery=null;searchTheme=null;if(resetFrame){projectionRequest++;requestFrame();}render();layout();queueMicrotask(()=>roots?.workspace?.shadow.querySelector('.workspace')?.focus({preventScroll:true}));if(view.segment===0)onCurrentWorkspaceEntry();calibrationEntry();if(framed&&notify)onPresentationRequest({kind:'show-workspace'});}
   function enterReading(notify=true){if(!view)return;advanceNavigationIntent();remember();clearTimePolicyNotice();view.mode='reading';if(!framed){searchQuery=null;searchTheme=null;}layout();if(framed&&notify)onPresentationRequest({kind:'enter-reading'});}
@@ -506,10 +519,10 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
       return;
     }
   }
-  function render(){if(!roots||!view)return;const focused=focusState();view.sidebarScroll=roots.sidebar?.shadow.querySelector('.themes')?.scrollTop??view.sidebarScroll??0;closeMenu(false);
+  function render(){if(!roots||!view)return;const focused=focusState();rememberSidebarScroll(roots.sidebar?.shadow.querySelector('.themes'));closeMenu(false);
     const selected=current().selected;
     if(framed)applySidebarChoices(choices());
-    if(selected&&lastSelected!==adapter.currentURL()){if(!framed)view.sidebarOpen.add(selected.id);lastSelected=adapter.currentURL();selectionPending=true;}
+    if(selected&&lastSelected!==adapter.currentURL()){if(lastSelected!==null)restoredSidebarScroll.delete(view);if(!framed)view.sidebarOpen.add(selected.id);lastSelected=adapter.currentURL();selectionPending=true;}
     // Snapshot updates always invalidate closures; local history changes keep the
     // unchanged sidebar DOM, scroll and focus instead of rebuilding every card.
     const nextSidebarKey=JSON.stringify([snapshot.scope,adapter.currentURL(),view.sidebarVisible,sidebarLimited.has(view),[...view.sidebarOpen],[...view.oldOpen].filter(k=>k.startsWith('side:')),[...view.capacities].filter(([k])=>k.startsWith('side:')||k.includes(':side:'))]);
@@ -521,7 +534,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     for(const g of sideGroups){const block=node(doc,'section',{class:'group'}),ownerView=view;const toggle=button('侧栏主题 '+g.name,()=>{if(framed){if(!chooseSidebar(g.id,!view.sidebarOpen.has(g.id))){render();return;}}else view.sidebarOpen.has(g.id)?view.sidebarOpen.delete(g.id):view.sidebarOpen.add(g.id);render();if(frameProjection&&view.sidebarOpen.has(g.id))reopenFrameWindow(g.id,'current');},'','theme-toggle',()=>currentProjectControl(toggle,ownerView,'sidebar'));toggle.dataset.focusKey='theme:'+g.id;toggle.append(themeGlyph(g),node(doc,'span',{class:'theme-name',title:g.name},g.name));appendFreshness(toggle,g);const disclosure=node(doc,'span',{class:'theme-disclosure','aria-hidden':'true'});disclosure.innerHTML=chevron;toggle.append(disclosure);toggle.setAttribute('aria-expanded',String(view.sidebarOpen.has(g.id)));if(framed&&free()){const head=node(doc,'div',{class:'project-group-head'});head.append(toggle,projectCreateEntry(g));block.append(head);}else block.append(toggle);
       if(view.sidebarOpen.has(g.id)){const children=node(doc,'div',{class:'children'});members(g,children,true);block.append(children);}list.append(block);}
     if(frameProjection){if(frameProjection.groups.offset>0)list.append(button('返回前页项目',()=>requestFrame({offset:Math.max(0,frameProjection.groups.offset-frameProjection.groups.limit)}),'上一页项目','more'));if(frameProjection.groups.hasMore)list.append(button('显示更多项目',()=>requestFrame({offset:frameProjection.groups.offset+frameProjection.groups.limit}),'显示更多项目','more'));}
-    const independent=current().independent;if(independent&&!frameProjection){const context=node(doc,'div',{class:'current-context'});context.append(row(independent));list.append(context);}if(free()){appendFreeList(list,'noProject',0,true);appendFreeList(list,'unknown',0,true);}if(frameProjection)appendCurrentContext(list);panel.append(list,footer);side.append(panel);list.scrollTop=view.sidebarScroll??0;list.addEventListener('scroll',()=>{if(!stopped&&view&&roots?.sidebar?.shadow.querySelector('.themes')===list){view.sidebarScroll=list.scrollTop;emitView();}},{passive:true});sidebarKey=nextSidebarKey;sidebarDirty=false;locateCurrent();
+    const independent=current().independent;if(independent&&!frameProjection){const context=node(doc,'div',{class:'current-context'});context.append(row(independent));list.append(context);}if(free()){appendFreeList(list,'noProject',0,true);appendFreeList(list,'unknown',0,true);}if(frameProjection)appendCurrentContext(list);panel.append(list,footer);side.append(panel);list.scrollTop=view.sidebarScroll??0;applyRestoredSidebarScroll(list);list.addEventListener('scroll',()=>{if(!stopped&&view&&roots?.sidebar?.shadow.querySelector('.themes')===list){rememberSidebarScroll(list);emitView();}},{passive:true});sidebarKey=nextSidebarKey;sidebarDirty=false;locateCurrent();
     }
     if(!roots.workspace){restoreOwnedFocus(focused);emitView();return;}
     const shadow=roots.workspace.shadow;const prior=shadow.querySelector('.workspace');if(prior)prior.remove();const page=node(doc,'div',{class:'workspace',tabindex:'-1','aria-label':'主题工作区','data-focus-key':'workspace','data-segment':String(view.segment)});roots.workspace.scroller=page;const specialKey=frameProjection?(searchQuery!==null?JSON.stringify(['search',searchQuery,searchTheme,frameSearchOffset]):view.worksetOpen?JSON.stringify(['workingSet',frameWorkingSetOffset]):null):null;workspacePages.set(page,{view,specialKey});page.addEventListener('scroll',()=>{if(roots?.workspace?.scroller===page&&view.mode==='workspace'&&roots.workspace.n.style.display!=='none'){rememberWorkspaceScroll(page);emitView();}},{passive:true});
@@ -679,14 +692,14 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     const scopeChanged=snapshot?.scope!==dto.scope;const copy=structuredClone(dto);if(scopeChanged||navigationFeedback?.url!==adapter.currentURL())clearNavigationFeedback();resetInteraction(true);sidebarDirty=true;remember();
     if(snapshot?.scope!==copy.scope){horizonPending=null;horizonError=null;detach();searchQuery=null;searchTheme=null;projectionRequest++;}
     if(copy.segment!==0||copy.search||copy.workingSet)clearTimePolicyNotice(false);
-    if(scopeChanged){clearTimePolicyNotice(false);lastTimePolicyNotice=null;settingsOpen=false;compactPending=null;compactError=null;workingSetPending=null;workingSetError=null;}projectionRequest++;frameProjection=copy;if(copy.search)frameSearchWaiting=false;if(copy.workingSet)frameWorkingSetWaiting=false;
+    if(scopeChanged){lastSelected=null;selectionPending=false;clearTimePolicyNotice(false);lastTimePolicyNotice=null;settingsOpen=false;compactPending=null;compactError=null;workingSetPending=null;workingSetError=null;}projectionRequest++;frameProjection=copy;if(copy.search)frameSearchWaiting=false;if(copy.workingSet)frameWorkingSetWaiting=false;
     // Presentation-only metadata. This intentionally has no complete refs/index
     // and never enters the prepared Free snapshot or full-snapshot update path.
     snapshot={scope:copy.scope,viewMode:'free',viewSession:copy.viewSession,preferences:{compactRows:{value:copy.compactRows!==false}}};
     // A mounted frame is the workspace presentation; the owner controls its visibility.
     // Initialize its mode without replaying revision-zero show-workspace, which
     // would discard an owner-restored search or working-set query.
-    if(!views.has(copy.scope))views.set(copy.scope,{...initialView(),mode:'workspace'});view=views.get(copy.scope);if(resumeLayout&&resumeLayout.segment===copy.segment){restoredScroll.set(view,{target:resumeLayout.scroll,applied:null});Object.assign(view,{...resumeLayout,oldOpen:new Set(resumeLayout.oldOpen),sidebarOpen:new Set(resumeLayout.sidebarOpen),capacities:new Map(resumeLayout.capacities)});sidebarChoices.set(view,new Map(resumeLayout.sidebarChoices??resumeLayout.sidebarOpen.map(id=>[id,true])));if(!Object.hasOwn(resumeLayout,'sidebarChoices'))sidebarLegacy.add(view);else sidebarLegacy.delete(view);}resumeLayout=null;view.segment=copy.segment;if(scopeChanged){view.worksetOpen=!!copy.workingSet;if(copy.workingSet)frameWorkingSetOffset=copy.workingSet.offset;if(copy.search){searchQuery=copy.search.query;searchTheme=copy.search.projectId;frameSearchOffset=copy.search.offset;}}
+    if(!views.has(copy.scope))views.set(copy.scope,{...initialView(),mode:'workspace'});view=views.get(copy.scope);if(resumeLayout&&resumeLayout.segment===copy.segment){restoredScroll.set(view,{target:resumeLayout.scroll,applied:null});restoredSidebarScroll.set(view,{target:resumeLayout.sidebarScroll??0,applied:null});Object.assign(view,{...resumeLayout,oldOpen:new Set(resumeLayout.oldOpen),sidebarOpen:new Set(resumeLayout.sidebarOpen),capacities:new Map(resumeLayout.capacities)});sidebarChoices.set(view,new Map(resumeLayout.sidebarChoices??resumeLayout.sidebarOpen.map(id=>[id,true])));if(!Object.hasOwn(resumeLayout,'sidebarChoices'))sidebarLegacy.add(view);else sidebarLegacy.delete(view);}resumeLayout=null;view.segment=copy.segment;if(scopeChanged){view.worksetOpen=!!copy.workingSet;if(copy.workingSet)frameWorkingSetOffset=copy.workingSet.offset;if(copy.search){searchQuery=copy.search.query;searchTheme=copy.search.projectId;frameSearchOffset=copy.search.offset;}}
     // Only a successfully committed explicit period change starts at the top.
     // Background refresh, four-grid return and saved-layout restore keep position.
     if(requestContext?.resetScroll&&copy.segment===query.segment&&copy.segment!==requestContext.segment){restoredScroll.delete(view);view.scroll=0;}
@@ -734,7 +747,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     const box=target.getBoundingClientRect(),bounds=viewport.getBoundingClientRect();
     const visible=doc.visibilityState!=='hidden'&&!viewport.hidden&&pane.n.style.visibility!=='hidden'&&pane.n.style.display!=='none'&&bounds.height>0&&box.height>0;
     if(!visible)return false;
-    if(visible){if(surface.role==='workspace')restoredScroll.delete(view);if(box.top<bounds.top)viewport.scrollTop+=box.top-bounds.top;else if(box.bottom>bounds.bottom)viewport.scrollTop+=Math.min(box.top-bounds.top,box.bottom-bounds.bottom);if(surface.role==='sidebar')view.sidebarScroll=viewport.scrollTop;else view.scroll=viewport.scrollTop;if(focus){if(doc.hasFocus?.()===false)return false;target.focus({preventScroll:true});if(pane.shadow.activeElement!==target)return false;}emitView();}
+    if(visible){if(surface.role==='workspace')restoredScroll.delete(view);else restoredSidebarScroll.delete(view);if(box.top<bounds.top)viewport.scrollTop+=box.top-bounds.top;else if(box.bottom>bounds.bottom)viewport.scrollTop+=Math.min(box.top-bounds.top,box.bottom-bounds.bottom);if(surface.role==='sidebar')view.sidebarScroll=viewport.scrollTop;else view.scroll=viewport.scrollTop;if(focus){if(doc.hasFocus?.()===false)return false;target.focus({preventScroll:true});if(pane.shadow.activeElement!==target)return false;}emitView();}
     if(surface.role==='sidebar'&&group.lists.current.total>0&&group.lists.current.items.length===0)requestFrame({groupId:projectId,list:'current',rowOffset:0,rowLimit:5});
     return true;
   }
