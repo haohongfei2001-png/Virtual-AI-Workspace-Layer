@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
 import {createRequire} from 'node:module';
 import {chromium} from '../b1/tooling/node_modules/playwright/index.mjs';
 const require=createRequire(new URL('../../extension/tooling/package.json',import.meta.url));
@@ -29,7 +30,28 @@ try{
    return {safe,structure,excluded,geometry,unchanged,bounded,missing:validSidebarStructure(missing)&&missing.reason==='boundary-unavailable'};
   });
   assert(Object.values(result).every(Boolean),JSON.stringify(result));
-  console.log(JSON.stringify({status:'PASS_ANONYMOUS_SIDEBAR_SNAPSHOT_ONLY',result}));
+  // Replay the actual anonymous parent/section topology. The omitted subtree
+  // is deliberately a synthetic sentinel, never claimed as captured host data.
+  const observed=JSON.parse(readFileSync(new URL('./fixtures/observed-sidebar-structure.json',import.meta.url),'utf8')).report;
+  const focus=await page.evaluate(report=>{
+   const {readSidebarStructure,validSidebarStructure}=historyModule,nodes=[];
+   for(const row of report.rows){const [parent,,tag,role,flags]=row,n=document.createElement(tag==='OTHER'?'div':tag.toLowerCase());
+    if(role!=='absent')n.setAttribute('role',role);if(flags&1)n.setAttribute('data-sidebar-chatgpt-conversation-key','PRIVATE');if(flags&2)n.setAttribute('data-app-action-sidebar-section','');
+    nodes.push(n);if(parent>=0)nodes[parent].append(n);
+   }
+   nodes[0].id='replayed-nav';document.body.append(nodes[0]);nodes[118].id='replayed-history';
+   const wrapper=document.createElement('div'),sentinel=document.createElement('button');sentinel.setAttribute('role','menuitem');wrapper.append(sentinel);nodes[92].append(wrapper);
+   const profile={regions:{projects:'#replayed-nav'},nativeLayout:{historyList:'#replayed-history'}},before=nodes[0].outerHTML;
+   const broad=readSidebarStructure({document,profile:{regions:profile.regions}}),focused=readSidebarStructure({document,profile});
+   const narrowed=validSidebarStructure(focused)&&focused.rows[0][2]==='DIV'&&focused.rows[0][5]===2&&focused.ancestors.at(-1)[2]==='NAV';
+   const covered=broad.reason==='capacity'&&!broad.rows.some(r=>r[3]==='menuitem')&&focused.reason==='complete'&&focused.rows.some(r=>r[3]==='menuitem');
+   const unchanged=nodes[0].outerHTML===before;
+   const extra=document.createElement('button');nodes[60].append(extra);const ambiguous=readSidebarStructure({document,profile});
+   const conservative=validSidebarStructure(ambiguous)&&ambiguous.rows[0][2]==='NAV';nodes[0].remove();
+   return {narrowed,covered,unchanged,conservative,private:!JSON.stringify(focused).includes('PRIVATE'),bounded:focused.rows.length<=256&&focused.ancestors.length<=8};
+  },observed);
+  assert(Object.values(focus).every(Boolean),JSON.stringify(focus));
+  console.log(JSON.stringify({status:'PASS_ANONYMOUS_SIDEBAR_SNAPSHOT_ONLY',result,focus}));
  }else if(process.argv.includes('--diagnostic-only')){
   const page=await browser.newPage(),url='https://chatgpt.com/';
   await page.route('**/*',r=>r.request().url()===url?r.fulfill({contentType:'text/html',body:'<nav id="source"><div id="root"><div role="list"><div role="listitem"><a href="/c/PRIVATE_ID">PRIVATE_TITLE</a></div></div></div></nav>'}):r.abort());

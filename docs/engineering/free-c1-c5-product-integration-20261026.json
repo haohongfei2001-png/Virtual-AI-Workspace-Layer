@@ -484,6 +484,27 @@
       },
       "realChrome": "NOT_RUN; installation, IndexedDB, drafts and prior artifacts unchanged",
       "remaining": "Anonymous Project controls/member subtree was truncated; complete sidebar replacement remains unproved. No enlarged mask or final candidate."
+    },
+    "focusedSidebarObservation": {
+      "baseHead": "2081ec946853229620f6e1a38d9267e59f184e20",
+      "state": "PREPARED_OFFLINE_ONLY",
+      "change": "When the captured two single-wrapper section branches enclose the existing history target, observe their common parent instead of spending depth on the outer NAV shell. Preserve ancestor path to NAV. Unknown sibling topology retains original boundary.",
+      "budgets": "unchanged: 256 rows, depth16, ancestors8, elapsed25ms",
+      "evidence": "Replay captured anonymous tree; explicitly synthetic descendant sentinel below previously omitted node proves old traversal truncation and corrected traversal reachability. No synthetic descendant is claimed as real host structure.",
+      "verification": {
+        "headless": "Existing snapshot privacy/bounds checks plus focus/reachability/no-mutation/conservative-fallback checks passed",
+        "unit": "100 existing local-status and partial-baseline tests passed",
+        "build": {
+          "path": "/private/tmp/vaiwl-focused-sidebar-evidence-Gim9Mg/extension",
+          "status": "HOST_IMPLEMENTATION_UNVERIFIED",
+          "releaseStatus": "NOT_RELEASE_READY",
+          "files": 198,
+          "manifestHash": "c1398dbf014dc900a6c1d9eeb94dbc2492b5146b800ca15bc68f64dd7f36c8a0",
+          "buildManifestHash": "f859aae0ebd1d7cdce91dbccb7bedc74ec2c7d820b25b7a9c7ba0b3f98686939"
+        }
+      },
+      "installation": "NOT_UPDATED; daily Chrome and databases untouched",
+      "realObservation": "NOT_RUN; previous one-off exception consumed, further update/read requires explicit scope"
     }
   }
 }

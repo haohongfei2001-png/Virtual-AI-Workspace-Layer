@@ -19,6 +19,28 @@ const sidebarRow=r=>Array.isArray(r)&&r.length===9&&Number.isInteger(r[0])&&r[0]
 export function validSidebarStructure(v){
  return exact(v,['schema','reason','ancestors','rows'])&&v.schema==='sidebar-structure-v1'&&sidebarReasons.includes(v.reason)&&Array.isArray(v.ancestors)&&v.ancestors.length<=8&&v.ancestors.every(r=>sidebarRow(r)&&r[0]===-1&&r[8])&&Array.isArray(v.rows)&&v.rows.length<=256&&v.rows.every((r,i)=>sidebarRow(r)&&(i===0?r[0]===-1:r[0]>=0&&r[0]<i));
 }
+// The captured navigation has two sibling section branches under a shared
+// wrapper. Start there when that exact relation to the existing history target
+// holds, so outer shell wrappers cannot consume the diagnostic depth budget.
+// This chooses observation scope only; it grants no mask/action capability.
+function sidebarSectionBoundary(boundary,history){
+ const section=history?.closest('[data-app-action-sidebar-section]');
+ if(!section||!boundary.contains(section))return boundary;
+ const sectionInSingleBranch=node=>{
+  for(let depth=0;node&&depth<4;depth++){
+   if(node.matches('[data-app-action-sidebar-section]'))return node;
+   if(node.children.length!==1)return null;node=node.firstElementChild;
+  }return null;
+ };
+ let node=section;
+ for(let depth=0;node&&node!==boundary&&depth<8;depth++,node=node.parentElement){
+  const parent=node.parentElement;if(!parent||!boundary.contains(parent))break;
+  if(parent.children.length!==2)continue;
+  const sections=[...parent.children].map(sectionInSingleBranch);
+  if(sections.includes(section)&&sections.every(Boolean)&&sections[0]!==sections[1])return parent;
+ }
+ return boundary;
+}
 /** One snapshot only when the existing private status popup requests layout.
  * No observers, storage, raw attributes, text, URL reads or DOM mutations.
  * This describes a boundary; it NEVER authorizes masking or membership. */
@@ -26,8 +48,11 @@ export function readSidebarStructure({document,profile}){
  const report={schema:'sidebar-structure-v1',reason:'boundary-unavailable',ancestors:[],rows:[]};
  try{
   const win=document.defaultView,start=win.performance.now();
-  const root=profileElement(document,profile,profile.regions.projects);
-  if(!root||root.closest('main,[contenteditable],[data-app-action-timeline-scroll]'))return report;
+  const boundary=profileElement(document,profile,profile.regions.projects);
+  if(!boundary||boundary.closest('main,[contenteditable],[data-app-action-timeline-scroll]'))return report;
+  const selector=profile.nativeLayout?.historyList??profile.nativeHomeLayout?.historyList;
+  const history=selector?profileElement(document,profile,selector):null;
+  const root=sidebarSectionBoundary(boundary,history);
   const number=n=>Number.isFinite(n)?Math.max(-65536,Math.min(65536,Math.round(n))):0;
   const fields=(node,parent,position,omit)=>{
    const style=win.getComputedStyle(node),rect=node.getBoundingClientRect(),role=node.getAttribute('role');
@@ -38,7 +63,7 @@ export function readSidebarStructure({document,profile}){
    return [parent,Math.min(position,65536),sidebarTags.includes(node.tagName.toUpperCase())?node.tagName.toUpperCase():'OTHER',role===null?'absent':sidebarRoles.includes(role)?role:'other',flags,Math.min(node.children.length,65536),[rect.x,rect.y,rect.width,rect.height].map(number),paint,omit];
   };
   let ancestor=root.parentElement;
-  for(;ancestor&&report.ancestors.length<8;ancestor=ancestor.parentElement)report.ancestors.push(fields(ancestor,-1,0,true));
+  for(;ancestor&&report.ancestors.length<8;ancestor=ancestor.parentElement){report.ancestors.push(fields(ancestor,-1,0,true));if(root!==boundary&&ancestor===boundary){ancestor=null;break;}}
   const stack=[{node:root,parent:-1,position:0,depth:0}];report.reason=ancestor?'capacity':'complete';
   while(stack.length){
    if(report.rows.length>=256){report.reason='capacity';break;}
