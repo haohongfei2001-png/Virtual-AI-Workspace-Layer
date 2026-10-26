@@ -4,10 +4,44 @@ import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';
 import {chromium} from '../b1/tooling/node_modules/playwright/index.mjs';
 const require=createRequire(new URL('../../extension/tooling/package.json',import.meta.url));
-const {outputFiles}=await require('esbuild').build({stdin:{contents:"export {createChatGPTAdapter} from './src/host/chatgpt-adapter.mjs';export {CHATGPT_OBSERVED_PROFILE,waitForNativeLayout} from './src/host/chatgpt-observed-profile.mjs';export {createMountSurface} from './src/navigation/mount-surface.mjs';",resolveDir:process.cwd()},bundle:true,write:false,format:'iife',globalName:'observedModule'});
+const {outputFiles}=await require('esbuild').build({stdin:{contents:"export {createChatGPTAdapter} from './src/host/chatgpt-adapter.mjs';export {CHATGPT_OBSERVED_PROFILE,waitForNativeLayout} from './src/host/chatgpt-observed-profile.mjs';export {createMountSurface} from './src/navigation/mount-surface.mjs';export {nativeHistoryPresentation,sidebarPresentationFits} from './src/host/native-history-list.mjs';export {createURLPolicy} from './src/host/url-policy.mjs';",resolveDir:process.cwd()},bundle:true,write:false,format:'iife',globalName:'observedModule'});
 const browser=await chromium.launch({headless:true});
 try{
- if(process.argv.includes('--history-ready-only')){
+ if(process.argv.includes('--sidebar-region-only')){
+  const page=await browser.newPage({viewport:{width:1000,height:700}}),url='https://chatgpt.com/';
+  await page.route('**/*',r=>r.request().url()===url?r.fulfill({contentType:'text/html',body:observedHomeHTML('33333333-3333-4333-8333-333333333333')}):r.abort());
+  await page.goto(url);await page.addScriptTag({content:outputFiles[0].text});
+  const checks=await page.evaluate(async()=>{
+   const {nativeHistoryPresentation,sidebarPresentationFits,createURLPolicy,createMountSurface}=observedModule;
+   const root=document.querySelector('#list'),source=document.querySelector('nav'),saved=root.firstElementChild;
+   source.style.cssText='height:500px;overflow:auto';root.style.height='700px';
+   const list=document.createElement('div');list.setAttribute('role','list');root.replaceChildren(list);
+   const local=document.createElement('div');local.style.height='37px';local.innerHTML='<a href="/local/fixture">Native draft</a>';list.append(local);
+   const row=n=>{const item=saved.cloneNode(true);item.style.height='37px';item.querySelector('a').href='/c/'+String(n).padStart(8,'0')+'-3333-4333-8333-333333333333';return item;};
+   const rows=[row(1),row(2)];list.append(...rows);
+   const options={document,source,root,urlPolicy:createURLPolicy()},first=nativeHistoryPresentation(options);
+   const checks={mixedRunUsesClearRemainder:first.rect.y===189&&first.rect.height===363&&sidebarPresentationFits(first.rect),onlyStableMasks:first.maskRoots.length===2&&first.maskRoots.every((n,i)=>n===rows[i])};
+   const obstacle=document.createElement('button');obstacle.textContent='Unknown native control';obstacle.style.cssText='position:fixed;left:0;top:350px;width:100px;height:30px';source.append(obstacle);
+   const blocked=nativeHistoryPresentation(options);checks.unknownControlBlocksExpansion=blocked.rect.height===74&&!sidebarPresentationFits(blocked.rect);obstacle.remove();
+   const spacer=document.createElement('div');spacer.style.height='500px';list.append(spacer,row(3),row(4),row(5));
+   const visible=nativeHistoryPresentation(options);checks.offscreenLongerRunNotChosen=visible.maskRoots[0]===rows[0]&&visible.rect.height===74;
+   spacer.style.height='20px';const fitting=nativeHistoryPresentation(options);checks.usableVisibleRunChosen=fitting.maskRoots.length===3&&sidebarPresentationFits(fitting.rect);
+   const pinned=nativeHistoryPresentation({...options,preferredMaskRoots:rows});checks.pinnedSelectionNotMoved=pinned.maskRoots[0]===rows[0]&&pinned.rect.height===74;
+   const bad=document.createElement('input');fitting.maskRoots[0].append(bad);const safe=nativeHistoryPresentation(options);checks.unsafeRunNotChosen=safe.maskRoots[0]===rows[0];bad.remove();
+   // Returning to the captured mixed shape must actually mount the formal
+   // sidebar while leaving the unmarked native draft and its action intact.
+   list.replaceChildren(local,...rows);rows.forEach(r=>r.style.height='37px');
+   const surface=createMountSurface({document,createFrameURL:({role})=>'chrome-extension://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/'+role+'.html'});
+   const adapter=observedModule.createChatGPTAdapter({document,profile:observedModule.CHATGPT_OBSERVED_PROFILE,isOwnedMask:n=>surface.isMasked(n)});
+   const binding={documentToken:'fixture',producerToken:'fixture',browserDocumentId:'fixture',routeEpoch:1,origin:location.origin,expiresAt:new Date(Date.now()+20000).toISOString()};
+   await adapter.start({binding,emit:async p=>({state:'accepted',localSeq:p.localSeq,receiptId:'fixture'})});
+   const inspected=adapter.inspect(),handle=await surface.mount({binding},inspected);surface.showWorkspace(handle);
+   checks.formalSidebarMounted=surface.visibility(handle).sidebar===true&&surface.visibility(handle).workspace===true;
+   checks.nativeDraftPreserved=!surface.isMasked(local)&&getComputedStyle(local).visibility==='visible'&&local.querySelector('a').getAttribute('href')==='/local/fixture';
+   surface.dispose(handle);await adapter.stop();return checks;
+  });
+  assert(Object.values(checks).every(Boolean),JSON.stringify(checks));console.log(JSON.stringify({status:'PASS_WEB_MECHANISM_ONLY',checks}));await page.close();
+ }else if(process.argv.includes('--history-ready-only')){
   const page=await browser.newPage({viewport:{width:1000,height:700}}),url='https://chatgpt.com/';
   await page.route('**/*',r=>r.request().url()===url?r.fulfill({contentType:'text/html',body:observedHomeHTML('33333333-3333-4333-8333-333333333333')}):r.abort());
   await page.goto(url);await page.addScriptTag({content:outputFiles[0].text});
@@ -139,9 +173,9 @@ try{
   const second=saved.cloneNode(true);second.querySelector('a').href='/c/44444444-4444-4444-8444-444444444444';group.append(second);
   const spinner=document.createElement('span');group.append(spinner);
   await adapter.stop();await adapter.start({binding,emit:async p=>({state:'accepted',localSeq:p.localSeq,receiptId:'fixture'})});
-  const partition=adapter.inspect();checks.localDraftRetained=partition.ok&&partition.historyMaskRoots.length===2&&partition.historyMaskRoots[0]===saved&&partition.sidebarRect.y===189&&partition.sidebarRect.height===74;
+  const partition=adapter.inspect();checks.localDraftRetained=partition.ok&&partition.historyMaskRoots.length===2&&partition.historyMaskRoots[0]===saved&&partition.sidebarRect.y===189&&partition.sidebarRect.height===263;
   const partitionHandle=await surface.mount({binding},partition);surface.showWorkspace(partitionHandle);
-  checks.localDraftNotMasked=!surface.isMasked(local)&&getComputedStyle(local).visibility==='visible'&&!surface.isMasked(saved)&&surface.visibility(partitionHandle).workspace&&adapter.inspect().ok;
+  checks.localDraftNotMasked=!surface.isMasked(local)&&getComputedStyle(local).visibility==='visible'&&surface.isMasked(saved)&&surface.visibility(partitionHandle).sidebar&&surface.visibility(partitionHandle).workspace&&adapter.inspect().ok;
   const mixed=adapter.inspect();local.remove();spinner.remove();
   const pure=adapter.inspect();checks.loadingCompletionKeepsRowMasks=pure.ok&&pure.regionEpoch===mixed.regionEpoch&&pure.historyMaskRoots.length===mixed.historyMaskRoots.length&&pure.historyMaskRoots.every((node,i)=>node===mixed.historyMaskRoots[i]);
   group.prepend(local);group.append(spinner);

@@ -85,6 +85,10 @@ export function createMountSurface({document:doc,createFrameURL,hasNativeLayer=(
    const ownWorkspace=surfaces.find(s=>s.role==='workspace');
    const workspaceClosing=e=>{if(ownWorkspace.closeReason||m.readingProbe?.ownClosing&&e.target===workspace&&e.oldState==='open'&&e.newState==='closed'||m.readingProbe?.ownOpening&&e.target===workspace&&e.oldState==='closed'&&e.newState==='open')return;if(m.readingProbe)m.readingProbe.cancelled=true;if(closing||e.target!==workspace||e.oldState!=='open'||e.newState!=='closed'||mounts.get(id)!==m||!workspace.isConnected||!workspace.matches(':popover-open'))return;closing=true;try{onSurrender({role:'workspace',reason:'native-reading',phase:'closing'});}catch{}finally{closing=false;}};
    const workspaceClosed=e=>{if(ownWorkspace.closeReason||e.target!==workspace||e.newState!=='closed'||mounts.get(id)!==m||!workspace.isConnected||workspace.matches(':popover-open'))return;try{onSurrender({role:'workspace',reason:'native-reading'});}catch{}};
+   const ownSidebar=surfaces.find(s=>s.role==='sidebar'),sidebar=ownSidebar.node;
+   const sidebarClosing=e=>{if(ownSidebar.closeReason||m.readingProbe?.ownClosing||m.readingProbe?.ownOpening||e.target!==sidebar||e.oldState!=='open'||e.newState!=='closed'||mounts.get(id)!==m||!sidebar.isConnected)return;try{onSurrender({role:'sidebar',reason:'native-list',phase:'closing'});}catch{}};
+   const sidebarClosed=e=>{if(ownSidebar.closeReason||e.target!==sidebar||e.newState!=='closed'||mounts.get(id)!==m||!sidebar.isConnected||sidebar.matches(':popover-open'))return;try{onSurrender({role:'sidebar',reason:'native-list'});}catch{}};
+   sidebar.addEventListener('beforetoggle',sidebarClosing);sidebar.addEventListener('toggle',sidebarClosed);
    // Match the proved reading/composer order without relocating native nodes.
    // Project home places reading below its composer; its workspace follows the
    // native branch while the sidebar still precedes it. Chat keeps its order.
@@ -96,8 +100,8 @@ export function createMountSurface({document:doc,createFrameURL,hasNativeLayer=(
    const inspectLayer=()=>{if(hasNativeLayer()||doc.querySelector(nativeOpen)){surrender(m,null,'native-layer');return;}for(const role of ['workspace','sidebar'])if(m.markers.some(({root,attr,nativeClass,nativeStyle,nativeHidden,nativeAriaHidden})=>attr==='data-va-mask-'+role&&(!root.isConnected||root.ownerDocument!==doc||root.getAttribute('class')!==nativeClass||root.getAttribute('style')!==nativeStyle||root.getAttribute('hidden')!==nativeHidden||root.getAttribute('aria-hidden')!==nativeAriaHidden)))surrender(m,role);};
    const observer=new win.MutationObserver(inspectLayer);observer.observe(doc.body,{subtree:true,childList:true,attributes:true,attributeFilter:['open','class','style','hidden','aria-hidden','aria-expanded']});
    const beforeToggle=e=>{if(e.newState==='open'&&!e.target.closest?.('[data-va-owned]'))hide(m);};doc.addEventListener('beforetoggle',beforeToggle,true);
-   const nativeInput=e=>{if(protectedNodes.some(n=>n===e.target||n.contains(e.target))){hide(m);try{onSurrender({reason:'native-input'});}catch{}}};doc.addEventListener('pointerdown',nativeInput,true);doc.addEventListener('focusin',nativeInput,true);
-   m.cleanup=()=>{workspace?.removeEventListener('beforetoggle',workspaceClosing);workspace?.removeEventListener('toggle',workspaceClosed);observer.disconnect();doc.removeEventListener('beforetoggle',beforeToggle,true);doc.removeEventListener('pointerdown',nativeInput,true);doc.removeEventListener('focusin',nativeInput,true);};return handle;
+   const nativeInput=e=>{if(protectedNodes.some(n=>n===e.target||n.contains(e.target))){const inComposer=m.inspection.composer===e.target||m.inspection.composer.contains(e.target);hide(m,inComposer?'workspace':null,'native-input');try{onSurrender({reason:'native-input'});}catch{}}};doc.addEventListener('pointerdown',nativeInput,true);doc.addEventListener('focusin',nativeInput,true);
+   m.cleanup=()=>{sidebar.removeEventListener('beforetoggle',sidebarClosing);sidebar.removeEventListener('toggle',sidebarClosed);workspace?.removeEventListener('beforetoggle',workspaceClosing);workspace?.removeEventListener('toggle',workspaceClosed);observer.disconnect();doc.removeEventListener('beforetoggle',beforeToggle,true);doc.removeEventListener('pointerdown',nativeInput,true);doc.removeEventListener('focusin',nativeInput,true);};return handle;
   },
   // Only directory-relevant records reach this method from the adapter. Release
   // an affected mask before discovery; never treat cached visibility as evidence.
@@ -151,10 +155,10 @@ export function createMountSurface({document:doc,createFrameURL,hasNativeLayer=(
    const changes=new doc.defaultView.MutationObserver(()=>{probe.cancelled=true;});
    changes.observe(doc.documentElement,{subtree:true,childList:true,attributes:true,characterData:true});
    try{
-    for(const target of m.surfaces)if(target.node.matches(':popover-open'))target.node.hidePopover();probe.ownClosing=false;
+    for(const target of m.surfaces)if(target.node.matches(':popover-open')){target.closeReason='reading-probe';target.node.hidePopover();}probe.ownClosing=false;
     if(probe.cancelled||!intact())return null;
     value=read();if(value?.then||probe.cancelled||!intact())return null;
-    probe.ownOpening=true;for(const [i,target] of m.surfaces.entries())if(states[i])target.node.showPopover();probe.ownOpening=false;
+    probe.ownOpening=true;for(const [i,target] of m.surfaces.entries())if(states[i]){target.closeReason=null;target.node.showPopover();}probe.ownOpening=false;
     ok=!probe.cancelled&&intact()&&changes.takeRecords().length===0&&m.surfaces.every((s,i)=>s.node.matches(':popover-open')===states[i]);return ok?value:null;
    }catch{return null;}finally{changes.disconnect();m.readingProbe=null;if(!ok)surrender(m);}
   },

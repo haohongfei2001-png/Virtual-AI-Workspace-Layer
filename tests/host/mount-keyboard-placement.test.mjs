@@ -26,6 +26,6 @@ for(const nested of [false,true])test(`${nested?'nested app-root':'direct body'}
  const f=await fixture(nested),frames=f.surface.frames(f.handle),owned=frames.map(({frame})=>frame.parentElement),before=f.doc.body.children.indexOf(f.anchor);
  assert.deepEqual(frames.map(v=>v.role),['workspace','sidebar']);assert.deepEqual(f.doc.body.children.slice(before-2,before),owned);assert.deepEqual(f.doc.body.children.filter(n=>!owned.includes(n)),f.originalBody);f.unchanged();
  assert.equal(f.surface.showWorkspace(f.handle),true);assert(owned.every(n=>n.open));f.surface.showReading(f.handle);assert.deepEqual(owned.map(n=>n.open),[false,true]);f.surface.showWorkspace(f.handle);assert(owned.every(n=>n.open));assert.deepEqual(f.surface.frames(f.handle),frames);f.unchanged();
- f.listeners.get('focusin')({target:f.editor});assert(owned.every(n=>!n.open));f.unchanged();
+ f.listeners.get('focusin')({target:f.editor});assert.deepEqual(owned.map(n=>n.open),[false,true]);f.unchanged();
  f.surface.dispose(f.handle);assert.deepEqual(f.doc.body.children,f.originalBody);assert(owned.every(n=>!n.isConnected));assert.equal(f.listeners.size,0);f.unchanged();
 });

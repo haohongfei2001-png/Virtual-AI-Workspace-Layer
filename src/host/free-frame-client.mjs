@@ -254,7 +254,7 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
    if(nextSession&&viewSession&&(nextSession.H!==viewSession.H||nextSession.T!==viewSession.T||nextSession.Z!==viewSession.Z)){
     const segment=relocateFreeSegment({candidateDay:viewSession.T-viewSession.H*(effective.segment??0)},nextSession);viewSession=nextSession;effective={segment,offset:0,limit:effective.limit??8,...(effective.search?{search:effective.search}:{}),...(effective.workingSet?{workingSet:effective.workingSet}:{})};continue;
    }
-   const groups=searchProjectMap(response.page.search?.items,response.page.groups?.items);
+   const groups=searchProjectMap(response.page.search?.items,[...(response.page.groups?.items??[]),...(response.page.currentProject?[response.page.currentProject]:[])]);
    const nextSnippetIds=new Map();for(const ref of response.page.search?.items??[]){if(ref.snippetMatches===undefined)continue;if(!Array.isArray(ref.snippetMatches)||ref.snippetMatches.length<1||ref.snippetMatches.length>100)throw Error('invalid-search-snippets');for(const value of ref.snippetMatches){if(!value||Object.getPrototypeOf(value)!==Object.prototype||Reflect.ownKeys(value).sort().join(',')!=='id,preview'||typeof value.id!=='string'||!/^[A-Za-z0-9_-]{1,128}$/.test(value.id)||['__proto__','constructor','prototype'].includes(value.id)||nextSnippetIds.has(value.id)||typeof value.preview!=='string'||value.preview.length>160||nextSnippetIds.size>=100)throw Error('invalid-search-snippets');nextSnippetIds.set(value.id,ref.id);}}
    const currentRoute=response.page.current;
    if(currentRoute!==undefined&&(!currentRoute||typeof currentRoute!=='object'||Array.isArray(currentRoute)||Object.keys(currentRoute).sort().join(',')!=='nativeUrl,projectId,refId'||typeof currentRoute.nativeUrl!=='string'||!policy.nativeHref(currentRoute.nativeUrl)||!['refId','projectId'].every(k=>currentRoute[k]===null||typeof currentRoute[k]==='string'&&currentRoute[k].length>0&&currentRoute[k].length<=128&&!/[\s\x00-\x1f]/.test(currentRoute[k]))))throw Error('invalid-frame-current');
@@ -484,7 +484,7 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
   }catch{return {state:'unconfirmed'};}finally{active=false;if(dispatchPending===pending){dispatchPending=null;const queued=queuedDispatchView;queuedDispatchView=null;if(!closed&&grantCurrent()&&grant?.id===current.id&&navigation===renderer){if(pending.panelRead){dirty=false;}else if(queued){dirty=false;void read(queued.value,true,queued.location);}else if(dirty){dirty=false;invalidate();}navigation?.setNativeNavigationPending?.(!!activeRead);}}pending.finish();}
  }
  function validateNavigation(items,page,current){
-  const groups=searchProjectMap(page.search?.items,page.groups?.items),currentRoute=page.current;
+  const groups=searchProjectMap(page.search?.items,[...(page.groups?.items??[]),...(page.currentProject?[page.currentProject]:[])]),currentRoute=page.current;
   if(!Array.isArray(items)||items.length>200)throw Error('invalid-frame-navigation');
    const nextPlans=new Map(),nextProjectPlans=new Map();
    for(const item of items){

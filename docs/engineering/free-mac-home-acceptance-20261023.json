@@ -4046,6 +4046,154 @@
         "installedManifestSha256": "61a48dbbd3f51ce41b59a7559d294372491dafe28707c7660b82d2a512c76517",
         "verification": "All 197 manifest payload files plus build-manifest match final frozen package; original 2696 extra copies retained. Strict clean-package verifier intentionally rejects original extra files; no deletion attempted."
       }
+    },
+    "productRejectionRepair20261026": {
+      "baseHead": "93a8557427451ddd71b9e152c094761d67319dc2",
+      "userVerdict": "REJECTED_PRODUCT_EXPERIENCE_AFTER_REPORTED_ACTIVATION",
+      "classification": "CONFIRMED_CODE_GAPS_NOT_EXCLUSIVE_CAUSE_OF_ALL_LIVE_FAILURES",
+      "implementation": [
+        "proved-visible-sidebar-run-selection-and-empty-remainder",
+        "reading-sidebar-composer-role-isolation-and-explicit-native-list-intent",
+        "owner-derived-current-project-sidebar-exception-with-bounded-members-and-plans"
+      ],
+      "targetedRegression": {
+        "status": "PASS",
+        "paths": [
+          "tests/host/surface-controller.test.mjs",
+          "tests/host/mount-keyboard-placement.test.mjs",
+          "tests/host/free-frame-projection.test.mjs",
+          "tests/host/host-view-service.test.mjs",
+          "tests/host/free-frame-client.test.mjs",
+          "tests/navigation/frame-window-retention.test.mjs",
+          "tests/host/observed-profile-browser.mjs"
+        ]
+      },
+      "isolatedMV3": {
+        "status": "PASS",
+        "checks": {
+          "nativeHistoryReorderReplacesStaleMaskAndRestoresFormalUI": true,
+          "lateNativeSidebarStartsWithoutReload": true,
+          "lateProjectSidebarStartsWithoutReload": true,
+          "lateProjectRowsStartWithoutReload": true,
+          "failedProjectToNativeHomeRecoversWithoutReload": true,
+          "projectAndMembersInFormalUI": true,
+          "nativeComposerKeepsContinuousSidebar": true,
+          "nativeListUserChoiceSurvivesGeometry": true,
+          "sidebarFrameLossRejoinsWithoutReplacingWorkspace": true,
+          "nativeOpenPreservesDraft": true,
+          "uniqueReturn": true,
+          "keyboardReturnKeepsFocus": true,
+          "noDatabaseOpened": true,
+          "reloadRediscoversVisibleObjects": true,
+          "replacementDoesNotExposeOldProject": true,
+          "longChatReadingReturn": true,
+          "longChatRenewalContinuity": true,
+          "explicitBindingUsesExistingIDBInSeparateNamespace": true,
+          "trustedSameDocumentNavigationRetainsPersonalSpace": true,
+          "tabFocusKeepsBinding": true,
+          "nativeModalAcrossRenewalRestoresReadingSidebarAndReturn": true,
+          "nativeSearchAndUnplannedSpaKeepsBinding": true,
+          "actualWorkerStopped": true,
+          "workerRestartSameDocumentNoConfirmation": true,
+          "workerRecoveryPreservesDraft": true,
+          "accountRiskClearsContinuityAndPrivateProjection": true,
+          "explicitUnlockRestoresKnownProject": true,
+          "refreshLocksButPreservesPersonalCache": true,
+          "browserRestartLocksAndExplicitUnlockRestores": true,
+          "persistedPrivateLayoutRestoresAfterExplicitNewDocumentBinding": true,
+          "uninstallReleasesPrivateFramesAndNativeInput": true,
+          "noInternalRequests": true
+        },
+        "realChatGPT": "NOT_RUN",
+        "report": "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-yDUoTe/report.json"
+      },
+      "visual": {
+        "evidence": "ISOLATED_FORMAL_MV3_NOT_REAL_ACCOUNT",
+        "reviewed": [
+          "approved-v27-chat",
+          "formal-project",
+          "formal-project-narrow"
+        ],
+        "states": [
+          {
+            "scene": "empty",
+            "image": "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-xEXrvr/formal-empty.png",
+            "metrics": {
+              "cards": [],
+              "width": 780,
+              "overflow": false,
+              "rows": 0
+            },
+            "evidence": "ISOLATED_FORMAL_MV3_NOT_REAL_ACCOUNT"
+          },
+          {
+            "scene": "ordinary",
+            "image": "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-xEXrvr/formal-ordinary.png",
+            "metrics": {
+              "cards": [],
+              "width": 780,
+              "overflow": false,
+              "rows": 5
+            },
+            "evidence": "ISOLATED_FORMAL_MV3_NOT_REAL_ACCOUNT",
+            "allKnownRowsReachable": true,
+            "privateExpandedRowsRestoreAfterExplicitBinding": true
+          },
+          {
+            "scene": "project",
+            "image": "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-xEXrvr/formal-project.png",
+            "metrics": {
+              "cards": [
+                {
+                  "width": 356,
+                  "height": 140,
+                  "radius": "13px"
+                }
+              ],
+              "width": 1060,
+              "overflow": false,
+              "rows": 2
+            },
+            "evidence": "ISOLATED_FORMAL_MV3_NOT_REAL_ACCOUNT"
+          },
+          {
+            "scene": "project-narrow",
+            "image": "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-xEXrvr/formal-project-narrow.png",
+            "metrics": {
+              "cards": [
+                {
+                  "width": 350,
+                  "height": 140,
+                  "radius": "13px"
+                }
+              ],
+              "width": 405,
+              "overflow": false,
+              "rows": 2
+            },
+            "evidence": "ISOLATED_FORMAL_MV3_NOT_REAL_ACCOUNT"
+          }
+        ],
+        "finding": "Approved card scale, hierarchy and secondary unknown group retained; continuous sidebar now present in supported isolated regions. Native fixture styling is not real ChatGPT styling."
+      },
+      "package": {
+        "status": "HOST_IMPLEMENTATION_UNVERIFIED",
+        "releaseStatus": "NOT_RELEASE_READY",
+        "files": 198,
+        "unpacked": "/private/tmp/VAIWL-v27-Continuous-Sidebar-20261026/extension",
+        "archive": "/private/tmp/VAIWL-v27-Continuous-Sidebar-20261026/vaiwl-free-host-development.zip",
+        "archiveSha256": "cba8114f46943fd01046a8afc2735eca89af023b759c7fc46df43788969c5c91"
+      },
+      "sourceHashesMatchJourneyAndVisual": 199,
+      "dailyChromeUpdated": false,
+      "privateDataTouched": false,
+      "realMacAfterFix": "NOT_RUN",
+      "personalDailyAccepted": false,
+      "remaining": [
+        "Live product experience remains user-rejected; new code has no live acceptance.",
+        "Object-level old private record restoration remains unverified.",
+        "Unknown or obstructed native sidebar regions remain native; no blanket compatibility claim."
+      ]
     }
   }
 }

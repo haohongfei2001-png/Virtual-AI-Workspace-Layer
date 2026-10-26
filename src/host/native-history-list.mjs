@@ -30,6 +30,25 @@ export function nativeHistoryListRect({document,source,root,includeClipped=false
   return {x:left,y:top,width:Math.max(0,right-left),height:Math.max(0,bottom-top)};
  }catch{return null;}
 }
+// Prove the full presentation rectangle against every unowned sibling.
+// Only separately validated native row subtrees may be excluded from this walk.
+function historyRectangleClear(source,roots,visible,onFailure){
+ const box={left:visible.x,top:visible.y,right:visible.x+visible.width,bottom:visible.y+visible.height};
+  let sibling=source,visited=0;
+  while(sibling){
+   if(++visited>2048)return rejected(onFailure,'sibling-limit');
+   if(!roots.includes(sibling)&&roots.some(root=>sibling.contains(root))&&[...sibling.childNodes].some(n=>n.nodeType===3&&n.textContent.trim()))return rejected(onFailure,'sibling-text');
+   if(!roots.includes(sibling)&&!roots.some(root=>sibling.contains(root))){
+    const rect=sibling.getBoundingClientRect();
+    if(visible.width>0&&visible.height>0&&rect.width>0&&rect.height>0&&rect.left<box.right&&rect.right>box.left&&rect.top<box.bottom&&rect.bottom>box.top)return rejected(onFailure,'sibling-overlap');
+   }
+   if(!roots.includes(sibling)&&sibling.firstElementChild){sibling=sibling.firstElementChild;continue;}
+   while(sibling!==source&&!sibling.nextElementSibling)sibling=sibling.parentElement;
+   sibling=sibling===source?null:sibling.nextElementSibling;
+  }
+ return true;
+}
+
 // This recognizer proves a presentation subtree only. Links still enter the
 // ordinary native discovery path; neither row markers nor labels prove membership.
 export function nativeHistoryListOK({document,source,root,urlPolicy,isOwnedMask=()=>false,allowClipped=false,onFailure=null,presentationRect=null}){
@@ -44,19 +63,7 @@ export function nativeHistoryListOK({document,source,root,urlPolicy,isOwnedMask=
   }
   // The overlay rectangle must not cover native siblings outside the pure list.
   const visible=presentationRect??nativeHistoryListRect({document,source,root,includeClipped:allowClipped});if(!visible)return rejected(onFailure,'geometry');
-  const box={left:visible.x,top:visible.y,right:visible.x+visible.width,bottom:visible.y+visible.height};
-  let sibling=source,visited=0;
-  while(sibling){
-   if(++visited>2048)return rejected(onFailure,'sibling-limit');
-   if(sibling!==root&&sibling.contains(root)&&[...sibling.childNodes].some(n=>n.nodeType===3&&n.textContent.trim()))return rejected(onFailure,'sibling-text');
-   if(sibling!==root&&!sibling.contains(root)){
-    const rect=sibling.getBoundingClientRect();
-    if(visible.width>0&&visible.height>0&&rect.width>0&&rect.height>0&&rect.left<box.right&&rect.right>box.left&&rect.top<box.bottom&&rect.bottom>box.top)return rejected(onFailure,'sibling-overlap');
-   }
-   if(sibling!==root&&sibling.firstElementChild){sibling=sibling.firstElementChild;continue;}
-   while(sibling!==source&&!sibling.nextElementSibling)sibling=sibling.parentElement;
-   sibling=sibling===source?null:sibling.nextElementSibling;
-  }
+  if(!historyRectangleClear(source,[root],visible,onFailure))return false;
   const rows=new Map(),ids=new Set();let node=root,count=0;
   // A finite mounted list, not an unbounded account-history traversal.
   while(node){
@@ -122,13 +129,20 @@ export function nativeHistoryPresentation(options){
   const children=[...lists[0].children];if(children.length>256)return fail('row-limit');
   let stable=preferredMaskRoots;
   if(stable===null){
-   // Deterministic initial selection. Do not bridge gaps or expand the rectangle
-   // over unknown native controls. A mounted selection is never silently moved.
-   stable=[];let run=[];
+   // Choose by proved usable viewport, not DOM row count. A longer run can
+   // be offscreen while a shorter run is the only usable sidebar region.
+   const runs=[];let run=[];
    for(const child of children){
-    if(child.hasAttribute('data-sidebar-chatgpt-conversation-key')){run.push(child);if(run.length>stable.length)stable=[...run];}
-    else run=[];
+    if(child.hasAttribute('data-sidebar-chatgpt-conversation-key'))run.push(child);
+    else if(run.length){runs.push(run);run=[];}
    }
+   if(run.length)runs.push(run);
+   let best=null,reason=null;
+   for(const rows of runs){
+    const candidate=nativeHistoryPresentation({...options,preferredMaskRoots:rows,onFailure:value=>{reason??=value;}});
+    if(candidate&&(!best||sidebarPresentationFits(candidate.rect)&&!sidebarPresentationFits(best.rect)||sidebarPresentationFits(candidate.rect)===sidebarPresentationFits(best.rect)&&candidate.rect.height>best.rect.height))best=candidate;
+   }
+   return best??fail(reason??'row-order');
   }
   if(!stable.every(n=>children.includes(n)&&n.hasAttribute('data-sidebar-chatgpt-conversation-key')))return fail('row-replaced');
   if(!stable.length||!stable.every((node,index)=>children.indexOf(node)===children.indexOf(stable[0])+index))return fail('row-order');
@@ -143,11 +157,13 @@ export function nativeHistoryPresentation(options){
    if(Math.abs(a.x-b.x)>0.5||Math.abs(a.width-b.width)>0.5||Math.abs(a.y+a.height-b.y)>0.5)return fail('row-gap');
   }
   const complete=stable.length===children.length,rect={x:first.x,y:first.y,width:first.width,height:last.y+last.height-first.y};
-  const available=complete&&nativeHistoryListRect({document,source,root:source});
+  const available=nativeHistoryListRect({document,source,root:source});
   const expanded=available?{...rect,height:available.y+available.height-rect.y}:null;
-  // A complete explicit list has the same empty-space entitlement as a legacy
-  // pure root, but only if its whole root and all neighboring controls pass.
-  const full=expanded&&expanded.height>=rect.height&&nativeHistoryListOK({...options,presentationRect:expanded,onFailure:null});
+  // A trailing stable run can use proved empty space even when preceding rows
+  // remain native. Purity was checked for EVERY selected row above. Now prove
+  // the union rectangle without requiring unrelated unmarked rows to be pure.
+  // Unknown rows/controls below or alongside the run still block expansion.
+  const full=expanded&&expanded.height>=rect.height&&historyRectangleClear(source,stable,expanded,null);
   return {rect:full?expanded:rect,maskRoots:stable,complete};
  }catch{return fail('exception');}
 }

@@ -260,7 +260,8 @@ try{
  await reordered.waitForFunction(node=>node.isConnected,priorHistoryFrame,{timeout:10000});
  await reordered.getByRole('button',{name:'返回工作空间',exact:true}).waitFor({timeout:15000});
  assert.equal(await reordered.locator('textarea').inputValue(),'fixture draft');
- assert.equal(await reordered.locator('[data-va-owned]:popover-open').count(),0,'recovery preserves native reading');
+ assert.equal(await reordered.locator('[data-va-owned][id$="_workspace"]:popover-open').count(),0,'recovery preserves native reading');
+ await reordered.waitForFunction(()=>document.querySelector('[data-va-owned][id$="_sidebar"]')?.matches(':popover-open'));
  await reordered.getByRole('button',{name:'返回工作空间',exact:true}).click();
  await reordered.frameLocator('iframe[src="chrome-extension://'+id+'/workspace.html"]').getByRole('link',{name:'Native reordered',exact:true}).waitFor({timeout:10000});
  report.checks.nativeHistoryReorderReplacesStaleMaskAndRestoresFormalUI=true;
@@ -290,7 +291,7 @@ try{
  assert.equal(await failedProject.locator('[data-va-owned]').count(),0);
  await failedProject.getByRole('button',{name:'Native search',exact:true}).click();await failedProject.waitForURL(origin+'/');
  await failedProject.getByRole('button',{name:'返回工作空间',exact:true}).waitFor({timeout:15000});
- assert.equal(await failedProject.locator('[data-va-owned]:popover-open').count(),0);
+ assert.equal(await failedProject.locator('[data-va-owned][id$="_workspace"]:popover-open').count(),0);
  assert.equal(await failedProject.locator('textarea').inputValue(),'fixture draft');
  report.checks.failedProjectToNativeHomeRecoversWithoutReload=true;await failedProject.close();
  page=await context.newPage();report.browserErrors=[];page.on('pageerror',error=>{if(report.browserErrors.length<10)report.browserErrors.push(error.message);});await page.goto(origin+'/g/'+P+'/project');
@@ -298,6 +299,22 @@ try{
  const workspace=page.frameLocator('iframe[src="chrome-extension://'+id+'/workspace.html"]'),sidebar=page.frameLocator('iframe[src="chrome-extension://'+id+'/sidebar.html"]');
  await workspace.getByRole('link',{name:'Native B',exact:true}).first().waitFor({timeout:10000});
  assert.equal(await page.locator('#draft').inputValue(),'fixture draft');report.checks.projectAndMembersInFormalUI=true;
+ await page.locator('#draft').focus();
+ await page.waitForFunction(()=>!document.querySelector('[data-va-owned][id$="_workspace"]')?.matches(':popover-open')&&document.querySelector('[data-va-owned][id$="_sidebar"]')?.matches(':popover-open'));
+ assert.equal(await page.locator('#draft').inputValue(),'fixture draft');
+ await sidebar.getByRole('button',{name:'查找已知项目与聊天',exact:true}).waitFor();
+ await page.getByRole('button',{name:'返回工作空间',exact:true}).click();
+ await workspace.getByRole('link',{name:'Native B',exact:true}).first().waitFor();
+ report.checks.nativeComposerKeepsContinuousSidebar=true;
+ await page.getByRole('button',{name:'返回原生阅读',exact:true}).click();
+ await page.getByRole('button',{name:'显示原生列表',exact:true}).click();
+ await page.evaluate(()=>dispatchEvent(new Event('resize')));
+ await page.waitForTimeout(150);
+ assert.equal(await page.locator('[data-va-owned]:popover-open').count(),0,'explicit native list must remain available');
+ await page.getByRole('button',{name:'返回工作空间',exact:true}).click();
+ await page.waitForFunction(()=>document.querySelectorAll('[data-va-owned]:popover-open').length===2);
+ report.checks.nativeListUserChoiceSurvivesGeometry=true;
+
  const workspaceNode=await page.locator('iframe[src="chrome-extension://'+id+'/workspace.html"]').elementHandle();
  await page.locator('iframe[src="chrome-extension://'+id+'/sidebar.html"]').evaluate(n=>n.remove());
  await page.waitForTimeout(150);
@@ -355,9 +372,10 @@ try{
  for(let at=0;at<25;at++){await new Promise(r=>setTimeout(r,1000));assert.equal(await modalFrame.evaluate(node=>node.isConnected),true,'native modal must not destroy the bound frame');assert.equal(await page.locator('[data-va-owned]:popover-open').count(),0);}
  await assertPersonal();
  await page.evaluate(()=>{document.querySelector('#fixture-native-modal').remove();for(const node of [document.querySelector('main'),document.querySelector('nav')]){node.removeAttribute('aria-hidden');node.inert=false;}});
- await back.waitFor({timeout:10000});assert.equal(await page.locator('[data-va-owned]:popover-open').count(),0);await back.click();
+ await back.waitFor({timeout:10000});assert.equal(await page.locator('[data-va-owned][id$="_workspace"]:popover-open').count(),0);
+ await page.waitForFunction(()=>document.querySelector('[data-va-owned][id$="_sidebar"]')?.matches(':popover-open'));await back.click();
  await workspace.getByText('Native Project',{exact:true}).first().waitFor({timeout:10000});await assertPersonal();assert.equal(await modalFrame.evaluate(node=>node.isConnected),true);await modalFrame.dispose();
- report.checks.nativeModalAcrossRenewalRestoresOnlyReturn=true;
+ report.checks.nativeModalAcrossRenewalRestoresReadingSidebarAndReturn=true;
 
  await page.getByRole('button',{name:'返回原生阅读',exact:true}).click();
  await page.getByRole('button',{name:'Native search',exact:true}).click();await page.waitForURL(origin+'/');await back.waitFor({timeout:15000});await back.click();

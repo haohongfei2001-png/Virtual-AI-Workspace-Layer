@@ -829,3 +829,12 @@ test('MOCK_IDB superseded action preparation for one delivery cannot publish',as
  const first=plans(h,page);while(waiting.length<1)await drain();const second=plans(h,page);while(waiting.length<2)await drain();
  waiting[1]();assert.equal((await second).ok,true);waiting[0]();assert.deepEqual(await first,{ok:false,reason:'navigation-unavailable'});
 });
+
+test('sidebar current Project outside the page supplies bounded members and plans from owner route only',async t=>{
+ const calls=[],h=await fixture(t,{documentURL:'https://chatgpt.com/g/p1/project',prepareNavigation:async({targets})=>{calls.push(targets);return targets.map(target=>({...(target.projectId?{projectId:target.projectId}:{refId:target.refId}),targetKey:'target_'+(target.projectId??target.refId),plan:{mode:'unavailable'}}));}});
+ await h.bind();await h.observe();await h.mount();await ready(h,'sidebar');
+ const data=await h.view('sidebar',{segment:100,limit:1});assert.equal(data.state,'ready',JSON.stringify(data));assert.equal(data.page.groups.items.length,0);assert.equal(data.page.currentProject.id,'p1');assert.equal(data.page.current.projectId,'p1');
+ const result=await plans(h,data,'sidebar');assert.equal(result.ok,true,JSON.stringify(result));assert(calls.at(-1).some(target=>target.projectId==='p1'));
+ const home=await h.view('workspace',{segment:100,limit:1});assert.equal(home.page.currentProject,undefined);
+ assert.equal((await h.view('sidebar',{currentProjectId:'forged'})).ok,false);
+});

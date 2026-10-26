@@ -206,13 +206,16 @@ export function createHostViewService({ui,readService,workspaceRepository=null,p
    const locating=Object.hasOwn(message,'locateProjectId');if(locating)validateResumeQuery(message.query);
    const location=locating?locateFreeProject(current,{projectId:message.locateProjectId,segment:frameQuery.segment??0,limit:frameQuery.limit??24}):null;
    const effectiveQuery=location?{...message.query,offset:location.offset}:message.query;
-   const page=projectFreeFrame(current,{...frameQuery,...(location?{offset:location.offset}:{}),role:context.role});check();
+   const nativeUrl=context.parentFrame.actualURL,urlPolicy=createURLPolicy({origin:new URL(nativeUrl).origin}),route=urlPolicy.parse(nativeUrl);
+   const selected=current.index.at(nativeUrl),ref=selected.ref??(route.kind==='conversation'?current.index.byId(route.conversationId):null);
+   const routeProjects=['project','project-candidate'].includes(route.kind)?current.snapshot.groups.filter(group=>typeof group.nativeUrl==='string'&&urlPolicy.sameTarget(group.nativeUrl,nativeUrl)):[];
+   const currentProjectId=ref?.membership==='PROJECT'?ref.projectId:routeProjects.length===1?routeProjects[0].id:null;
+   const page=projectFreeFrame(current,{...frameQuery,...(location?{offset:location.offset}:{}),role:context.role},{currentProjectId});check();
    if(search!==undefined)page.search=projectFreeSearch(current,search);
    if(workingSet!==undefined)page.workingSet=projectFreeWorkingSet(current,workingSet);
    page.presentation=structuredClone(entry.presentation);
-   const nativeUrl=context.parentFrame.actualURL,route=createURLPolicy({origin:new URL(nativeUrl).origin}).parse(nativeUrl);
-   const selected=current.index.at(nativeUrl),ref=selected.ref??(route.kind==='conversation'?current.index.byId(route.conversationId):null);
-   page.current={nativeUrl,refId:ref?.id??null,projectId:ref?.membership==='PROJECT'?ref.projectId:null};
+
+   page.current={nativeUrl,refId:ref?.id??null,projectId:currentProjectId};
    page.currentRef=ref?freeFrameRowDTO(ref):null;
    const navigation=[];
    const result={ok:true,state:'ready',page,navigation,...(locating?{location:{projectId:message.locateProjectId,found:location!==null}}:{}),...(nativeCandidatesEnabled?{nativeCandidates:true}:{})};
@@ -249,13 +252,13 @@ export function createHostViewService({ui,readService,workspaceRepository=null,p
     // Repeated preparation of the same delivered page supersedes the old run.
     checkDelivery();delivery.actionToken=actionToken;const check=()=>{checkDelivery();if(delivery.actionToken!==actionToken)throw Error('stale-navigation-delivery');};if(!prepareNavigation)return {ok:true,deliveryId:m.deliveryId,navigation:[]};
     const page=delivery.page,nativeUrl=context.parentFrame.actualURL;
-    const rows=new Map();for(const group of page.groups.items)for(const list of Object.values(group.lists))for(const row of list.items)rows.set(row.id,row);
+    const rows=new Map();for(const group of [...page.groups.items,...(page.currentProject?[page.currentProject]:[])])for(const list of Object.values(group.lists))for(const row of list.items)rows.set(row.id,row);
     for(const list of Object.values(page.entries))for(const row of list.items)rows.set(row.id,row);
     for(const row of page.selection?.items??[])rows.set(row.id,row);
     for(const row of page.search?.items??[])if(row.kind!=='project')rows.set(row.id,row);
     for(const row of page.workingSet?.items??[])rows.set(row.id,row);
     if(page.currentRef)rows.set(page.currentRef.id,page.currentRef);
-    const projects=new Map(page.groups.items.map(group=>[group.id,group]));
+    const projects=new Map([...page.groups.items,...(page.currentProject?[page.currentProject]:[])].map(group=>[group.id,group]));
     for(const row of page.search?.items??[])if(row.kind==='project')projects.set(row.id,row);
     const targets=[...rows.values()].filter(row=>row.available!==false&&typeof row.nativeUrl==='string').map(row=>({refId:row.id,navigationURL:row.nativeUrl}));
     for(const group of projects.values())if(group.available!==false&&typeof group.nativeUrl==='string')targets.push({projectId:group.id,navigationURL:group.nativeUrl});

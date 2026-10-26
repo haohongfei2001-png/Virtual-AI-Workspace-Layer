@@ -10,3 +10,15 @@ test('UTF8 budget rejects oversize rather than clipping native names',()=>{const
 test('global historical navigation remains accurate outside bounded page; unavailable row stays disabled',()=>{const f=fixture();f.snapshot.refs.at(-1).activityDecision.segment=77;f.snapshot.refs[0].available=false;const current=projectFreeFrame(f,{role:'workspace',limit:1});assert.deepEqual(current.navigation,{hasNewer:false,hasOlder:true,maxSegment:77});assert.equal(current.groups.items[0].lists.current.items[0].available,false);const last=projectFreeFrame(f,{role:'workspace',segment:77});assert.deepEqual(last.navigation,{hasNewer:true,hasOlder:false,maxSegment:77});});
 
 test('saved compact-row preference reaches both bounded surfaces without exposing other preferences',()=>{for(const compactRows of [false,true]){const f=fixture();f.snapshot.preferences={compactRows:{value:compactRows},savedSnippets:{value:[{text:'private'}]}};for(const role of ['workspace','sidebar']){const page=projectFreeFrame(f,{role});assert.equal(page.compactRows,compactRows);assert.equal(Object.hasOwn(page,'preferences'),false);}}});
+
+test('owner current Project exception stays outside sidebar pagination and preserves real time segment',()=>{
+ const f=fixture();f.snapshot.groups[0].activityDecision={segment:2};f.snapshot.groups[0].segment=2;
+ const query={role:'sidebar',segment:0,limit:1},page=projectFreeFrame(f,query,{currentProjectId:'p'});
+ assert.equal(page.currentProject.id,'p');assert.equal(page.currentProject.segment,2);assert.deepEqual(page.groups.items.map(g=>g.id),['other']);assert.equal(page.groups.total,1);assert.equal(page.groups.hasMore,false);
+ const selected=projectFreeFrame(f,{...query,groupId:'p',list:'current',rowOffset:5,rowLimit:17},{currentProjectId:'p'});assert.deepEqual(selected.selection.items.map(r=>r.id),['c5','c6','c7']);
+ assert.throws(()=>projectFreeFrame(f,{...query,groupId:'p',list:'current'}),/unavailable/);
+ assert.throws(()=>projectFreeFrame(f,{...query,currentProjectId:'p'}),/invalid-free-frame-query/);
+ assert.equal(projectFreeFrame(f,{role:'workspace'},{currentProjectId:'p'}).currentProject,undefined);
+ assert.equal(projectFreeFrame(f,{role:'sidebar',segment:2},{currentProjectId:'p'}).currentProject,undefined);
+ assert.equal(projectFreeFrame(f,query,{currentProjectId:'unobserved'}).currentProject,undefined);
+});

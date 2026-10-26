@@ -7,6 +7,7 @@ import { knownMatches,knownProjectMatches,searchProjectMap } from './search.mjs'
 import { defaultIcon, iconPaths, svgIcon, workspaceReturnIcon as gridIcon } from './icons.mjs';
 import { project, initialView } from './projection.mjs';
 import { css } from './styles.mjs';
+const frameGroups=dto=>[...(dto.currentProject?[dto.currentProject]:[]),...dto.groups.items];
 function node(doc,tag,attrs={},text=''){const n=doc.createElement(tag);for(const[k,v]of Object.entries(attrs))n.setAttribute(k,v);n.textContent=text;return n;}
 /** Navigation owns only its roots and reversible view masking; never renders chat/composer. */
 export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage=null, onViewChange=()=>{},onFrameRendered=()=>{},onCurrentWorkspaceEntry=()=>{},onCalibrationEntry=()=>{},surface=null,onPresentationRequest=()=>{},onDispatch=null,onNativeInteractionStart=null,onProjectionRequest=null,onHorizonRequest=null,onCompactRowsRequest=null,onWorkingSetRequest=null,onRecoveryRequest=null,onBackupRequest=null,onSnippetsRequest=null,onSnippetLocateRequest=null,onUndoTimePolicyRequest=null}) {
@@ -301,7 +302,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
   }
   function visibleWindows(partial){
     if(partial.search||partial.workingSet||partial.segment!==undefined&&partial.segment!==view.segment)return [];
-    const primary=partial.list?frameRowWindowKey({groupId:partial.groupId??null,list:partial.list}):null,ids=new Set(frameProjection.groups.items.map(g=>g.id));
+    const primary=partial.list?frameRowWindowKey({groupId:partial.groupId??null,list:partial.list}):null,ids=new Set(frameGroups(frameProjection).map(g=>g.id));
     const pageOffset=partial.offset??frameProjection.groups.offset,pageChanged=pageOffset!==frameProjection.groups.offset;
     return rememberedWindows(pageOffset).flatMap(w=>{
       if(frameRowWindowKey(w)===primary)return w.paged?[{...w,rowOffset:partial.rowOffset??0,rowLimit:partial.rowLimit??5}]:[];
@@ -312,7 +313,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
   }
   function rememberWindowPages(dto){
     if(dto.search||dto.workingSet||frameWindowsSuspended)return;
-    const pages=new Map();for(const g of dto.groups.items)for(const [list,page]of Object.entries(g.lists))pages.set(frameRowWindowKey({groupId:g.id,list}),{groupId:g.id,list,page});
+    const pages=new Map();for(const g of frameGroups(dto))for(const [list,page]of Object.entries(g.lists))pages.set(frameRowWindowKey({groupId:g.id,list}),{groupId:g.id,list,page});
     for(const [list,page]of Object.entries(dto.entries))pages.set(frameRowWindowKey({groupId:null,list}),{groupId:null,list,page});
     if(dto.selection)pages.set(frameRowWindowKey(dto.selection),{...dto.selection,page:dto.selection});
     for(const {groupId,list,page}of pages.values()){
@@ -374,7 +375,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
   function closeFrameSearch(){searchQuery=null;searchTheme=null;frameSearchWaiting=false;projectionRequest++;render();requestFrame();onPresentationRequest({kind:'show-workspace'});}
   function requestFrameWorkingSet(offset=0){frameWorkingSetOffset=offset;frameWorkingSetWaiting=true;requestFrame({workingSet:{offset,limit:24}});}
   function closeFrameWorkingSet(){view.worksetOpen=false;frameWorkingSetWaiting=false;projectionRequest++;render();requestFrame();onPresentationRequest({kind:'show-workspace'});}
-  function frameRows(groupId,list){const selected=frameProjection.selection;if(selected&&selected.groupId===groupId&&selected.list===list)return selected;return groupId===null?frameProjection.entries[list]:frameProjection.groups.items.find(g=>g.id===groupId)?.lists[list];}
+  function frameRows(groupId,list){const selected=frameProjection.selection;if(selected&&selected.groupId===groupId&&selected.list===list)return selected;return groupId===null?frameProjection.entries[list]:frameGroups(frameProjection).find(g=>g.id===groupId)?.lists[list];}
   // A successful byte-limited response establishes only a presentation cap.
   // Keep one context-bound cap in RAM; it conveys no inventory or authority.
   function rowPagingKey(dto,groupId,list){return JSON.stringify([dto.scope,dto.viewSession,dto.segment,groupId,list]);}
@@ -632,6 +633,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     if(cr!==undefined&&cr!==null&&(!cr||typeof cr!=='object'||Array.isArray(cr)||!c||cr.id!==c.refId||typeof cr.id!=='string'||typeof cr.displayTitle!=='string'||!(cr.nativeTitle===null||typeof cr.nativeTitle==='string')||!(cr.nativeUrl===null||typeof cr.nativeUrl==='string')||typeof cr.available!=='boolean'||!['PROJECT','NONE','UNKNOWN'].includes(cr.membership)||!(cr.projectId===null||typeof cr.projectId==='string')||(cr.membership==='PROJECT')!==(typeof cr.projectId==='string')||!(cr.segment===null||Number.isSafeInteger(cr.segment)&&cr.segment>=0)))throw Error('invalid-frame-current-ref');
     const pageOK=p=>p&&Array.isArray(p.items)&&Number.isSafeInteger(p.total)&&Number.isSafeInteger(p.offset)&&Number.isSafeInteger(p.limit)&&p.total>=0&&p.offset>=0&&p.limit>0&&p.limit<=200&&p.items.length<=p.limit&&(!Object.hasOwn(p,'paged')||p.paged===true)&&typeof p.hasMore==='boolean'&&p.hasMore===(p.offset+p.items.length<p.total);
     if(!Number.isSafeInteger(dto.navigation.maxSegment)||dto.navigation.maxSegment<0||dto.navigation.hasNewer!==(dto.segment>0)||dto.navigation.hasOlder!==(dto.segment<dto.navigation.maxSegment)||!pageOK(dto.groups)||dto.groups.limit>24||!['noProject','unknown'].every(k=>pageOK(dto.entries?.[k]))||dto.groups.items.some(g=>!['current','old','unknown'].every(k=>pageOK(g.lists?.[k])))||dto.selection&&!pageOK(dto.selection)||new TextEncoder().encode(JSON.stringify(dto)).length>65536)throw Error('invalid-frame-projection');
+    if(dto.currentProject!==undefined&&(surface.role!=='sidebar'||!dto.currentProject||dto.currentProject.id!==c?.projectId||dto.groups.items.some(g=>g.id===dto.currentProject.id)||!['current','old','unknown'].every(k=>pageOK(dto.currentProject.lists?.[k]))))throw Error('invalid-frame-current-project');
     if(dto.search!==undefined&&(!pageOK(dto.search)||dto.search.limit>24||typeof dto.search.query!=='string'||dto.search.query.length>200||!(dto.search.projectId===null||typeof dto.search.projectId==='string'&&dto.search.projectId.length>0&&dto.search.projectId.length<=128)))throw Error('invalid-frame-search');
     if(dto.search){searchProjectMap(dto.search.items,dto.groups.items);let count=0;const ids=new Set();for(const ref of dto.search.items){if(ref.kind==='project')continue;if(ref.snippetMatches===undefined)continue;if(!Array.isArray(ref.snippetMatches)||ref.snippetMatches.length<1||ref.snippetMatches.length>100)throw Error('invalid-frame-snippets');for(const value of ref.snippetMatches){if(!value||Object.getPrototypeOf(value)!==Object.prototype||Reflect.ownKeys(value).sort().join(',')!=='id,preview'||typeof value.id!=='string'||!/^[A-Za-z0-9_-]{1,128}$/.test(value.id)||['__proto__','constructor','prototype'].includes(value.id)||ids.has(value.id)||typeof value.preview!=='string'||value.preview.length>160||++count>100)throw Error('invalid-frame-snippets');ids.add(value.id);}}}
     if(dto.workingSet!==undefined&&(!pageOK(dto.workingSet)||dto.workingSet.limit>24||!(dto.workingSet.currentRefId===null||typeof dto.workingSet.currentRefId==='string'&&dto.workingSet.currentRefId.length>0&&dto.workingSet.currentRefId.length<=128)))throw Error('invalid-frame-working-set');
@@ -664,7 +666,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     if(copy.search||copy.workingSet)frameWindowsSuspended=true;
     else if(requestContext&&requestContext.scope===copy.scope&&requestContext.session===JSON.stringify(copy.viewSession)&&query.segment===copy.segment&&!query.search&&!query.workingSet)frameWindowsSuspended=false;
     rememberWindowPages(copy);
-    groups=copy.groups.items.map(g=>({...g,current:g.lists.current.items,old:g.lists.old.items,unknown:g.lists.unknown.items}));index=null;
+    groups=frameGroups(copy).map(g=>({...g,current:g.lists.current.items,old:g.lists.old.items,unknown:g.lists.unknown.items}));index=null;
     layout();render();layout();
     // Report the committed owned DOM, including a deferred interaction update.
     // No title, ID, URL or private text is included in the numeric receipt.

@@ -211,11 +211,11 @@ test('appearance queued for replaced frame window or retired mount cannot reach 
  f.controller.stop();theme='light';observers.find(o=>o.appearance).fn();f.tick(0);assert.deepEqual(sent,[]);
 });
 
-function publishingFixture(){
- const f=fixture(),sent=[],events=new Map();let visible=null;
+function publishingFixture(options={}){
+ const f=fixture(options),sent=[],events=new Map();let visible=null;
  f.doc.addEventListener=(type,fn)=>events.set(type,fn);f.doc.removeEventListener=(type,fn)=>{if(events.get(type)===fn)events.delete(type);};
  f.surface.visibility=()=>visible===null?null:{...visible};
- f.surface.showWorkspace=()=>{f.calls.show++;visible={workspace:true,sidebar:true};return true;};
+ f.surface.showWorkspace=(_handle,{roles=['workspace','sidebar']}={})=>{if(roles.includes('workspace'))f.calls.show++;visible={workspace:visible?.workspace??false,sidebar:visible?.sidebar??false};for(const role of roles)visible[role]=true;return visible.workspace;};
  f.surface.showReading=()=>{f.calls.reading++;visible={workspace:false,sidebar:visible?.sidebar??false};};
  f.surface.suspend=()=>{f.calls.suspend++;visible={workspace:false,sidebar:false};};
  f.bridge.surfaceState=async value=>{sent.push(value);return {ok:true};};
@@ -223,9 +223,9 @@ function publishingFixture(){
 }
 test('private state samples both actual popovers; unknown is not false, revisions increase and equal values deduplicate',async()=>{
  const f=publishingFixture();await f.controller.start({});f.toggle();await drain();assert.deepEqual(f.sent,[{mountId:'mount',revision:1,workspace:null,sidebar:null}]);
- await f.both();assert.deepEqual(f.sent.at(-1),{mountId:'mount',revision:2,workspace:true,sidebar:true});f.toggle();f.controller.showWorkspace();await drain();assert.equal(f.sent.length,2);
- f.controller.showReading();assert.deepEqual(f.sent.at(-1),{mountId:'mount',revision:3,workspace:false,sidebar:true});f.controller.showReading();assert.equal(f.sent.length,3);
- f.actual({workspace:true,sidebar:false});f.toggle();assert.deepEqual(f.sent.at(-1),{mountId:'mount',revision:4,workspace:true,sidebar:false});f.controller.suspend();assert.deepEqual(f.sent.at(-1),{mountId:'mount',revision:5,workspace:false,sidebar:false});f.controller.stop();
+ await f.both();f.toggle();assert.deepEqual(f.sent.at(-1),{mountId:'mount',revision:3,workspace:true,sidebar:true});f.toggle();f.controller.showWorkspace();await drain();assert.equal(f.sent.length,3);
+ f.controller.showReading();assert.deepEqual(f.sent.at(-1),{mountId:'mount',revision:4,workspace:false,sidebar:true});f.controller.showReading();assert.equal(f.sent.length,4);
+ f.actual({workspace:true,sidebar:false});f.toggle();assert.deepEqual(f.sent.at(-1),{mountId:'mount',revision:5,workspace:true,sidebar:true});f.controller.suspend();assert.deepEqual(f.sent.at(-1),{mountId:'mount',revision:6,workspace:false,sidebar:false});f.controller.stop();
 });
 test('native surrender immediately publishes actual closure without awaiting later toggle',async()=>{
  const f=publishingFixture();await f.controller.start({});await f.both();f.actual({workspace:false,sidebar:false});f.surrender({reason:'native-input'});assert.deepEqual(f.sent.at(-1),{mountId:'mount',revision:2,workspace:false,sidebar:false});f.controller.stop();
@@ -496,4 +496,23 @@ test('sidebar recovery attempts once per proved layout revision',async()=>{
  f.message('sidebar',{data:{type:'VAIWL_UI_SUSPEND',role:'sidebar'}});await drain();assert.equal(restored,1);
  f.message('sidebar',{data:{type:'VAIWL_UI_SUSPEND',role:'sidebar'}});await drain();f.change();await drain();assert.equal(restored,1);
  revision++;f.change();await drain();assert.equal(restored,2);assert.equal(f.calls.dispose,0);f.controller.stop();
+});
+
+test('reading keeps the independently granted sidebar and restores it after a native layer without reopening workspace',async()=>{
+ const f=publishingFixture({initialMode:'reading'});await f.controller.start({});f.message();await drain();
+ assert.deepEqual(f.surface.visibility(),{workspace:false,sidebar:false});f.message('sidebar');await drain();
+ assert.deepEqual(f.surface.visibility(),{workspace:false,sidebar:true});assert.equal(f.slot.children.length,1);
+ f.layer(true);f.change();assert.deepEqual(f.surface.visibility(),{workspace:false,sidebar:false});
+ f.layer(false);f.change();assert.deepEqual(f.surface.visibility(),{workspace:false,sidebar:true});assert.equal(f.calls.show,0);
+ f.frames[1].frame.isConnected=false;f.change();assert.equal(f.controller.isWorkspacePresented(),false);assert.equal(f.calls.dispose,0);f.controller.stop();
+});
+
+
+test('explicit native-list choice survives geometry and modal recovery until workspace entry',async()=>{
+ const f=publishingFixture({initialMode:'reading'});await f.controller.start({});await f.both();
+ f.surrender({role:'sidebar',reason:'native-list',phase:'closing'});f.actual({workspace:false,sidebar:false});f.surrender({role:'sidebar',reason:'native-list'});
+ f.change();assert.deepEqual(f.surface.visibility(),{workspace:false,sidebar:false});
+ f.layer(true);f.change();f.layer(false);f.change();assert.deepEqual(f.surface.visibility(),{workspace:false,sidebar:false});
+ assert.equal(f.slot.children.length,1);f.slot.children[0].events.click({isTrusted:true});
+ assert.deepEqual(f.surface.visibility(),{workspace:true,sidebar:true});f.controller.stop();
 });
