@@ -1496,7 +1496,8 @@
         "cspContractNode": 15,
         "pageCommandReadinessNode": 53,
         "finalContractNode": 91,
-        "ui06IndependentRolesNode": 71
+        "ui06IndependentRolesNode": 71,
+        "partialContractNode": 45
       },
       "testContractRepair": "Existing entry/J1/J4/repair helpers wait for actual workspace, not both optional roles; disclose unknown rows before reading; SYS05 uses workspace tool when sidebar cannot fit; passive J4 anchors retain original cleanup. Original draft, identity, causal response, budgets and native action assertions remain.",
       "scopedResults": {
@@ -1511,7 +1512,8 @@
         "finalJourney": "PASS",
         "csp": "PASS_NARROW_PACKAGED_FAULT_OBSERVATIONS",
         "pageCommand": "PASS_NARROW_PACKAGED_PAGE_COMMAND_AND_NO_TAP_CONTINUITY",
-        "j3Modern": "PARTIAL_NOT_J3_ACCEPTED"
+        "j3Modern": "PARTIAL_NOT_J3_ACCEPTED",
+        "partialIntegrated": "PASS_ISOLATED_PARTIAL_RECONSTRUCTION_ONLY"
       },
       "fullCI": "NOT_ALL_GREEN: unknown-protocol worker body witness failed RESOURCE_CONTENT_UNAVAILABLE/net::ERR_ABORTED; no relaxed proof or automatic retries. Other legacy job failures reviewed separately; local subcontracts do not imply full CI acceptance.",
       "evidence": "free-night-ci-contracts-20261027.json.gz",
@@ -1535,7 +1537,8 @@
         "stale503Mutant": "expected negative-control failure, unchanged baseline passed"
       },
       "pageCommandReadiness": "Existing security runner now binds visible state to the current owned workspace frame, discloses UNKNOWN once through formal UI, and verifies the expected stable object ID before the unchanged settled-IDB/attack baseline. Sidebar is optional; replacements revalidate ownership and never replay either action. Zero unexpected requests, native writes, database mutations or private leaks. Native finite-response function/results preserved. Not full SEC08/ACT20 or real-account acceptance.",
-      "j3IndependentRoles": "Fixed MODERN fixture has 110px native history and no safe sidebar. Workspace, native history and parent AX/keyboard remain verified independently; no geometry relaxation. Registered-worker run completed 13 supported steps with no send and original drafts/nodes retained. Three readable-native-Range snippet steps NOT_COVERED; production snippet profile remains disabled/not certified. Prior immediate cold-start failure and masked-Range failure retained; neither is rewritten as PASS. UNKNOWN fixture history stays in its evidenced old segment, not invented recent use."
+      "j3IndependentRoles": "Fixed MODERN fixture has 110px native history and no safe sidebar. Workspace, native history and parent AX/keyboard remain verified independently; no geometry relaxation. Registered-worker run completed 13 supported steps with no send and original drafts/nodes retained. Three readable-native-Range snippet steps NOT_COVERED; production snippet profile remains disabled/not certified. Prior immediate cold-start failure and masked-Range failure retained; neither is rewritten as PASS. UNKNOWN fixture history stays in its evidenced old segment, not invented recent use.",
+      "partialIndependentRoles": "Existing partial-window runner now checks the current UNKNOWN row independently of the folded list. Native-list release remains a real user control. Removing rows from the exact connected pure-history root (only original H2 remains) retains workspace; sidebar mask must match independently observed visibility. Rename, native search, exact 75-to-76 scoped observed union, original draft/file identity and only offsets 25/50 passed. No unknown native control masking claim; no real-account acceptance. All failed oracle attempts retained; readonly independent review passed. No production source change."
     }
   }
 }

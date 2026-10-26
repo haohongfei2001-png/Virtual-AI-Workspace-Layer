@@ -21,10 +21,10 @@ try{
  context=await chromium.launchPersistentContext(join(dir,'profile'),{headless:true,executablePath:process.env.FREE_CHROME_EXECUTABLE??(platform()==='darwin'?'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome':'/usr/bin/chromium'),ignoreDefaultArgs:['--disable-extensions'],args:['--enable-unsafe-extension-debugging']});
  await context.route('**/*',r=>r.request().url().startsWith(server.origin+'/')||r.request().url().startsWith('chrome-extension://')?r.continue():r.abort());
  const cdp=await context.browser().newBrowserCDPSession(),{id}=await cdp.send('Extensions.loadUnpacked',{path:built.unpacked});const worker=context.serviceWorkers().find(w=>w.url().startsWith(`chrome-extension://${id}/`))??await context.waitForEvent('serviceworker');report.workerExternalNetwork=await worker.evaluate(j2ExternalProbe,1500);assert.equal(report.workerExternalNetwork,'BLOCKED');page=await context.newPage();page.on('request',request=>{const url=new URL(request.url());if(url.pathname==='/backend-api/conversations'&&url.searchParams.has('offset'))report.paging.requestOffsets.push(Number(url.searchParams.get('offset')));});page.on('pageerror',e=>report.errors.push(e.message));page.on('console',message=>{const text=message.text();if(text.startsWith('VAIWL_TRANSPORT ')){try{report.transport.push(JSON.parse(text.slice(16)));}catch{}}});await page.goto(server.origin+'/c/'+ids[0]);
- const workspace=async(timeout=15000)=>{await page.waitForFunction(()=>document.querySelectorAll('[data-va-owned]:popover-open').length===2,{},{timeout});const frame=page.frames().find(f=>f.url()===`chrome-extension://${id}/workspace.html`);assert(frame);return frame;};
+ const workspace=async(timeout=15000)=>{await page.waitForFunction(()=>document.querySelector('[data-va-owned][id$="_workspace"]')?.matches(':popover-open'),{},{timeout});const frame=page.frames().find(f=>f.url()===`chrome-extension://${id}/workspace.html`);assert(frame);return frame;};
  const traceFrame=async frame=>frame.evaluate(()=>{const send=chrome.runtime.sendMessage.bind(chrome.runtime);chrome.runtime.sendMessage=async packet=>{try{const result=await send(packet);console.log('VAIWL_TRANSPORT '+JSON.stringify({role:location.pathname,type:packet.type??packet.kind,state:result?.state,ok:result?.ok,reason:result?.reason}));return result;}catch(error){console.log('VAIWL_TRANSPORT '+JSON.stringify({role:location.pathname,type:packet.type??packet.kind,reason:'transport-rejected'}));throw error;}};});
  let frame=await workspace();for(const ui of page.frames().filter(f=>f.url().startsWith('chrome-extension://'+id)))await traceFrame(ui);assert.equal(await page.locator('aside nav[aria-label="Chat history"] a').count(),25);assert.equal(await page.locator(`aside nav[aria-label="Chat history"] a[href="/c/${ids[0]}"]`).count(),0);
- let current=frame.locator('[data-free-list="unknown"]').getByRole('link',{name:'Archive conversation 1000',exact:true});await current.waitFor({timeout:15000});assert.equal(await current.getAttribute('aria-current'),'page');assert.equal(await frame.locator('[data-free-list="noProject"]').getByRole('link',{name:'Archive conversation 1000',exact:true}).count(),0);
+ let current=frame.locator('[data-free-list="unknown"], [aria-label="当前聊天"][data-current-membership="UNKNOWN"]').getByRole('link',{name:'Archive conversation 1000',exact:true});await current.waitFor({timeout:15000});assert.equal(await current.getAttribute('aria-current'),'page');assert.equal(await frame.locator('[data-free-list="noProject"]').getByRole('link',{name:'Archive conversation 1000',exact:true}).count(),0);
  report.results.push({name:'deep-link-outside-initial-25-uses-native-title-UNKNOWN-and-current',status:'PASS'});
  await page.locator('textarea').fill('PARTIAL_NATIVE_UNSENT_DRAFT');await page.locator('#composer input[type=file]').setInputFiles({name:'partial-draft.txt',mimeType:'text/plain',buffer:Buffer.from('PARTIAL native unsent attachment')});await page.evaluate(()=>{globalThis.partialOriginalEditor=document.querySelector('textarea');globalThis.partialOriginalFileInput=document.querySelector('#composer input[type=file]');globalThis.partialOriginalFile=partialOriginalFileInput.files[0];globalThis.partialOriginalDocument=document;});await page.getByRole('button',{name:'返回工作空间',exact:true}).click();frame=await workspace();
  // Read-only diagnostics use independently derived fixture keys, never grant or write authority.
@@ -52,20 +52,28 @@ try{
  report.paging.unmountPreparation=await preparePartialHistoryUnmount(page);
  assert.deepEqual(report.paging.requestOffsets,[25,50]);assert.deepEqual(server.snapshot().partialPageRequests,[25,50]);
  await page.getByRole('button',{name:'返回工作空间',exact:true}).click();frame=await workspace();
+ const surfaceState=()=>page.evaluate(()=>({state:document.documentElement.dataset.vaiwlState,reason:document.documentElement.dataset.vaiwlReason,surfaces:[...document.querySelectorAll('[data-va-owned][popover]')].map(n=>({role:n.id.endsWith('_workspace')?'workspace':'sidebar',open:n.matches(':popover-open'),visibility:getComputedStyle(n).visibility})),history:{visibility:getComputedStyle(document.querySelector('aside nav[aria-label="Chat history"]')).visibility,height:document.querySelector('aside nav[aria-label="Chat history"]').getBoundingClientRect().height},returnVisible:[...document.querySelectorAll('button[aria-label="返回工作空间"]')].some(n=>n.getClientRects().length>0)}));
+ const originalHistory=await page.locator('aside nav[aria-label="Chat history"]').elementHandle();
+ report.paging.unmountBefore=await surfaceState();
  // DOM virtualization probe only: remove exposed native history rows, without
  // changing accounts, backing facts, current route, or adapter-owned UI.
  await page.locator('aside nav[aria-label="Chat history"]').evaluate(nav=>{nav.querySelectorAll('a').forEach(a=>a.remove());});
- // Removing nodes inside the masked history MUST surrender both popovers.
- // Waiting for visible frame content here was the original CI precondition bug.
- await page.waitForFunction(()=>document.querySelectorAll('[data-va-owned]:popover-open').length===0);
- const nativeReturn=page.getByRole('button',{name:'返回工作空间',exact:true});await nativeReturn.waitFor({state:'visible'});
- report.paging.unmountTransition={surfacesClosed:true,returnControlVisible:true};
+ // Emptying this fixed pure-history root does not introduce an unknown
+ // control. Sidebar may remain valid; workspace must not depend on that role.
+ await page.waitForFunction(()=>document.querySelector('[data-va-owned][id$="_workspace"]')?.matches(':popover-open')&&document.querySelectorAll('aside nav[aria-label="Chat history"] a').length===0,null,{timeout:15000});
+ report.paging.unmountAfter=await surfaceState();
+ const sidebarOpen=report.paging.unmountAfter.surfaces.find(s=>s.role==='sidebar')?.open;assert.equal(typeof sidebarOpen,'boolean');
+ assert.equal(report.paging.unmountAfter.surfaces.find(s=>s.role==='workspace')?.visibility,'visible');
+ assert.equal(report.paging.unmountAfter.history.visibility,sidebarOpen?'hidden':'visible');
+ assert.equal(await originalHistory.evaluate(n=>n.isConnected&&n===document.querySelector('aside nav[aria-label="Chat history"]')),true);
+ assert.deepEqual(await originalHistory.evaluate(n=>[...n.children].map(c=>c.tagName)),['H2']);await originalHistory.dispose();
+ report.paging.unmountTransition={workspaceRetained:true,sidebarOpen,nativeHistoryVisible:!sidebarOpen,pureHistoryEmpty:true};
  // A real visible title mutation provides an observable accepted update after
  // removal; the current chat must remain reachable from its reading identity.
  await page.locator('main h1').evaluate(node=>{node.textContent='Archive conversation 1000 refreshed';});
  await waitObserved(50,{refreshed:true});report.paging.unmountTransition.renamedAdmitted=true;
- await nativeReturn.click();frame=await workspace();report.paging.unmountTransition.workspaceReentered=true;
- current=frame.locator('[data-free-list="unknown"]').getByRole('link',{name:'Archive conversation 1000 refreshed',exact:true});await current.waitFor({timeout:15000});assert.equal(await current.getAttribute('aria-current'),'page');
+ frame=await workspace();report.paging.unmountTransition.workspaceStillVisible=true;
+ current=frame.locator('[data-free-list="unknown"], [aria-label="当前聊天"][data-current-membership="UNKNOWN"]').getByRole('link',{name:'Archive conversation 1000 refreshed',exact:true});await current.waitFor({timeout:15000});assert.equal(await current.getAttribute('aria-current'),'page');
  assert.equal(await page.evaluate(()=>document.querySelector('textarea')===partialOriginalEditor&&partialOriginalEditor.value==='PARTIAL_NATIVE_UNSENT_DRAFT'),true);
  report.paging.afterUnmount=await waitObserved(50);
  report.results.push({name:'native-history-unmount-retains-reading-bound-current-and-editor',status:'PASS'});
