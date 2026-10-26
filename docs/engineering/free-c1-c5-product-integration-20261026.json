@@ -956,6 +956,25 @@
       "testAndStagedProductSourcesIdentical": true,
       "registeredOriginalId": "miendbcjdmecjggplepenghjnoejmaic",
       "realCapture": "NOT_RUN; original installation unchanged; a new capture requires a new bounded authorization"
+    },
+    "authorizedInstallation": {
+      "extensionId": "miendbcjdmecjggplepenghjnoejmaic",
+      "originalDirectory": "/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/.git/vaiwl-artifacts/local-source-witness-20261022/extension",
+      "candidateDirectory": "/private/tmp/VAIWL-Focused-Details-fa730665/extension",
+      "backup": "/private/tmp/VAIWL-before-focused-details-ct2iq9bn/original-extension.tar.gz",
+      "backupSha256": "bfbdcbc31cd7847bf0f94df19f7d39089f4f86c63873cc0e689980b181d1f62f",
+      "preservedOriginalFiles": 2911,
+      "preservedExtraFiles": 2713,
+      "changedFiles": [
+        "build-manifest.json",
+        "content.js",
+        "src/host/history-structure-diagnostic.mjs"
+      ],
+      "manifestUnchanged": true,
+      "candidateFilesVerified": 198,
+      "databaseAccessed": false,
+      "browserOperated": false,
+      "runtimeActivation": "NOT_RUN"
     }
   }
 }

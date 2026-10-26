@@ -2,6 +2,8 @@
 
 ## 采集交付准备复核（2026-10-26，接续fa730665）
 
+用户随后明确批准本次补取：完整备份并逐文件验证原2911文件后，更新原ID目录的3个文件，2713个额外资产及清单/权限保留；未访问数据库或操作Chrome。磁盘指纹现为 `2dd6a78932f5…`，运行Reload与真实补取尚未发生；下一步一次Reload、原Project展开、现有状态面板保存快照。完整安装回执保存在原集成记录 `authorizedInstallation`，备份为 `/private/tmp/VAIWL-before-focused-details-ct2iq9bn/original-extension.tar.gz`。
+
 复核旧隔离回执发现测试结构注入也进入扩展子框架，出现空nav异常，旧通过断言未检查该错误。现限定仅loopback顶层测试文档，并令采集链任何脚本错误失败；同一正式MV3首页/Project、导出及失效文档定向回归通过且零脚本异常，未重跑产品矩阵。统一包 `/private/tmp/VAIWL-Focused-Details-fa730665/extension` 与本次测试199项产品源码哈希一致，原清单/权限不变；原Profile 4注册路径核实仍是既有ID目录，磁盘尚为旧采集器，没有更新或操作真实Chrome。持久布局与角色隔离只读复核未确认新缺陷，不新增猜测性补丁。实际Project后代仍缺；准备完成不等于取得真实结构或完整产品交付。详见原回执 `focusedSidebarDetailRepair20261026.readinessFollowup`。
 
 ## 聚焦采集器控制流修复（2026-10-26，接续042758ec）
