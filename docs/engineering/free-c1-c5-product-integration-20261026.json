@@ -1310,5 +1310,176 @@
       "databaseAccess": false
     },
     "gitPush": "normal push low-speed timeout; local work preserved"
+  },
+  "overnightProductClosure20261027": {
+    "baseHead": "67beb8297e85bd4af0cac273969856b2c9959a47",
+    "status": "OFFLINE_INTEGRATED_REAL_CHROME_NOT_RUN",
+    "implementation": [
+      "current confirmed Project leads sidebar with selected highlight; owner ordering and manual disclosure unchanged",
+      "standalone current chat leads sidebar once; UNKNOWN/NONE/PROJECT facts and inventory paging retained",
+      "owned theme scroll containment matches approved v2.7",
+      "optional sidebar restoration keeps resource boundary last; only publishes role after valid owned insertion",
+      "detached or foreign reading viewport withdraws workspace authority; independent sidebar survives"
+    ],
+    "independentReview": {
+      "sidebar": "recovery atomicity finding repaired; final read-only review clear",
+      "renderer": "paging, missing current Project, current-only inventory and membership boundaries reviewed",
+      "persistence": "existing role-CAS and authorized-new-document wiring confirmed; no rewrite"
+    },
+    "checks": {
+      "relatedNode": "PASS",
+      "relatedNodeCount": 504,
+      "finalIsolatedMV3": {
+        "nativeHistoryReorderReplacesStaleMaskAndRestoresFormalUI": true,
+        "lateNativeSidebarStartsWithoutReload": true,
+        "lateProjectSidebarStartsWithoutReload": true,
+        "lateProjectRowsStartWithoutReload": true,
+        "failedProjectToNativeHomeRecoversWithoutReload": true,
+        "projectAndMembersInFormalUI": true,
+        "nativeComposerKeepsContinuousSidebar": true,
+        "nativeListUserChoiceSurvivesGeometry": true,
+        "sidebarFrameLossRejoinsWithoutReplacingWorkspace": true,
+        "nativeOpenPreservesDraft": true,
+        "uniqueReturn": true,
+        "keyboardReturnKeepsFocus": true,
+        "noDatabaseOpened": true,
+        "reloadRediscoversVisibleObjects": true,
+        "replacementDoesNotExposeOldProject": true,
+        "longChatReadingReturn": true,
+        "longChatRenewalContinuity": true,
+        "explicitBindingUsesExistingIDBInSeparateNamespace": true,
+        "trustedSameDocumentNavigationRetainsPersonalSpace": true,
+        "tabFocusKeepsBinding": true,
+        "nativeModalAcrossRenewalRestoresReadingSidebarAndReturn": true,
+        "nativeSearchAndUnplannedSpaKeepsBinding": true,
+        "actualWorkerStopped": true,
+        "workerRestartSameDocumentNoConfirmation": true,
+        "workerRecoveryPreservesDraft": true,
+        "accountRiskClearsContinuityAndPrivateProjection": true,
+        "explicitUnlockRestoresKnownProject": true,
+        "refreshLocksButPreservesPersonalCache": true,
+        "browserRestartLocksAndExplicitUnlockRestores": true,
+        "persistedPrivateLayoutRestoresAfterExplicitNewDocumentBinding": true,
+        "uninstallReleasesPrivateFramesAndNativeInput": true,
+        "noInternalRequests": true
+      },
+      "compositionMV3": {
+        "partitionSlotWithFormalProjectAndMembers": true,
+        "sparseSidebarFitsContent": true,
+        "centeredNativePanelDoesNotConstrainWorkspace": true,
+        "nativeInputAndReturnKeepContinuousSidebar": true,
+        "themeDisclosureSurvivesHostChange": true,
+        "nativeDisclosureDoesNotRebuildSidebar": true,
+        "nativeScrollKeepsFrameAligned": true,
+        "nativeProjectUntouchedAndSpaceReversible": true,
+        "explicitWorkspaceReturnRestoresComposition": true,
+        "nativeMemberOpenPreservesOriginalDraftAndWorkspace": true,
+        "sameDocumentMemberRetainsProjectAndReturn": true,
+        "homeInputAndReturnKeepSidebar": true,
+        "long-chatInputAndReturnKeepSidebar": true,
+        "noInternalRequests": true
+      },
+      "productStates": [
+        {
+          "scene": "empty",
+          "metrics": {
+            "cards": [],
+            "width": 780,
+            "overflow": false,
+            "rows": 0
+          },
+          "evidence": "ISOLATED_FORMAL_MV3_NOT_REAL_ACCOUNT"
+        },
+        {
+          "scene": "ordinary",
+          "metrics": {
+            "cards": [],
+            "width": 780,
+            "overflow": false,
+            "rows": 5
+          },
+          "evidence": "ISOLATED_FORMAL_MV3_NOT_REAL_ACCOUNT",
+          "allKnownRowsReachable": true,
+          "privateExpandedRowsRestoreAfterExplicitBinding": true
+        },
+        {
+          "scene": "project",
+          "metrics": {
+            "cards": [
+              {
+                "width": 356,
+                "height": 140,
+                "radius": "13px"
+              }
+            ],
+            "width": 1100,
+            "overflow": false,
+            "rows": 2
+          },
+          "evidence": "ISOLATED_FORMAL_MV3_NOT_REAL_ACCOUNT"
+        },
+        {
+          "scene": "project-narrow",
+          "metrics": {
+            "cards": [
+              {
+                "width": 356,
+                "height": 140,
+                "radius": "13px"
+              }
+            ],
+            "width": 445,
+            "overflow": false,
+            "rows": 2
+          },
+          "evidence": "ISOLATED_FORMAL_MV3_NOT_REAL_ACCOUNT"
+        }
+      ],
+      "finalReport": "free-night-product-journey-20261027.json.gz",
+      "packageAndTestIdenticalFiles": 192,
+      "environmentGeneratedDifferences": [
+        "extension/worker.mjs",
+        "extension/config.mjs",
+        "content.js",
+        "extension/frame-bootstrap.js",
+        "manifest.json",
+        "extension/classic-runtime.js"
+      ],
+      "verifyHost": "both packages PASS"
+    },
+    "visualReview": {
+      "reference": "design/approved/v2.7/VAIWL_v2.7/prototype-v2.7.html and validation/attempt1/v27-daily.png",
+      "images": "/private/tmp/VAIWL-v27-Overnight-Integrated-20261027/review",
+      "observed": [
+        "selected current Project and owning member tree",
+        "single Project card356px radius13, approved header and member branches",
+        "unknown memberships subordinate with Project, reachable with zero Projects",
+        "narrow width no horizontal overflow; empty state distinct"
+      ],
+      "notAccountScreenshot": true,
+      "limits": [
+        "native fixture controls are anonymous reconstruction, not real ChatGPT pixels",
+        "distinct fixture IDs can share Native A title after native title observation"
+      ]
+    },
+    "package": {
+      "status": "HOST_IMPLEMENTATION_UNVERIFIED",
+      "releaseStatus": "NOT_RELEASE_READY",
+      "files": 199,
+      "unpacked": "/private/tmp/VAIWL-v27-Overnight-Integrated-20261027/extension",
+      "archive": "/private/tmp/VAIWL-v27-Overnight-Integrated-20261027/vaiwl-free-host-development.zip",
+      "archiveSha256": "64207e268511a41d46a3e2348f90ada7fb2f78e119f3afe809ce49fd63f926fc"
+    },
+    "installed": false,
+    "dailyChromeModified": false,
+    "realAccountRequests": 0,
+    "realChrome": "NOT_RUN",
+    "limits": [
+      "expanded native Project management may repeat names; no validated automatic folding",
+      "uncertain rich-editor draft semantics retain safe new-tab fallback",
+      "new-document private restoration requires personal confirmation; revoked pending writes cannot commit",
+      "Mac full product and old personal object restore not established by isolated tests"
+    ],
+    "nextAllowedWork": "No additional confirmed independent defect from this audit. Preserve package; one daytime real journey may supply new evidence. Do not repeat unchanged offline tests or modify daily Chrome overnight."
   }
 }

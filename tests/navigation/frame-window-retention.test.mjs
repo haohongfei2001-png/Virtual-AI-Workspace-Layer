@@ -134,3 +134,25 @@ test('current member outside row window stays inside its expanded owning theme',
  assert.equal(f.button('侧栏主题 '+selected.name).getAttribute('aria-expanded'),'false');
  assert.equal(f.pane().querySelectorAll('[data-ref-id]').filter(n=>n.getAttribute('data-ref-id')==='current-away').length,1,'collapsed theme keeps current conversation reachable');
 });
+
+test('current theme leads sidebar without reordering the owner page or overriding manual fold',async t=>{
+ const value=projection('sidebar');value.current={nativeUrl:'https://chatgpt.com/c/P1_0',refId:'P1_0',projectId:'P1'};
+ const f=fixture('sidebar',()=>structuredClone(value));t.after(()=>f.nav.stop());f.nav.updateFrameProjection(value);
+ const heads=()=>f.pane().querySelectorAll('.theme-toggle');
+ assert.deepEqual(heads().map(n=>n.getAttribute('aria-label')),['侧栏主题 Original P1','侧栏主题 Original P2']);
+ assert.equal(heads()[0].getAttribute('data-current-project'),'true');assert.equal(heads()[1].getAttribute('data-current-project'),'false');
+ assert.deepEqual(value.groups.items.map(g=>g.id),['P2','P1'],'projection is not mutated');
+ heads()[0].click();f.nav.updateFrameProjection(structuredClone(value));assert.equal(heads()[0].getAttribute('aria-expanded'),'false');
+ value.current={nativeUrl:'https://chatgpt.com/c/P2_0',refId:'P2_0',projectId:'P2'};f.nav.updateFrameProjection(value);
+ assert.equal(heads()[0].getAttribute('aria-label'),'侧栏主题 Original P2');assert.equal(heads()[1].getAttribute('data-current-project'),'false');
+});
+
+for(const membership of ['UNKNOWN','NONE'])test(`standalone ${membership} current chat leads sidebar once, without changing membership or inventory`,async t=>{
+ const value=projection('sidebar'),ref={...row('standalone'),available:true,membership,projectId:null},kind=membership==='UNKNOWN'?'unknown':'noProject';
+ value.current={nativeUrl:ref.nativeUrl,refId:ref.id,projectId:null};value.currentRef=ref;
+ value.entries[kind]={...page([ref,row('other')],2,0,5),inventoryTotal:2};
+ const f=fixture('sidebar',()=>structuredClone(value));t.after(()=>f.nav.stop());f.nav.updateFrameProjection(value);
+ if(membership==='UNKNOWN')f.button('其他已知聊天').click();
+ const check=()=>{const list=f.pane().querySelector('.themes');assert.equal(list.children[0].getAttribute('class'),'current-context');assert.equal(list.children[0].getAttribute('data-current-membership'),membership);assert.equal(list.querySelectorAll('[data-ref-id]').filter(n=>n.getAttribute('data-ref-id')===ref.id).length,1);assert(list.querySelectorAll('[data-ref-id]').some(n=>n.getAttribute('data-ref-id')==='other'));};
+ check();f.nav.updateFrameProjection(structuredClone(value));check();assert.equal(value.entries[kind].total,2);
+});

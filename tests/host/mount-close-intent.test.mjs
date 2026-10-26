@@ -27,20 +27,18 @@ test('workspace close invalidates the prior intent synchronously even when toggl
  try{f.surface.showWorkspace(f.handle);const captured=intent;
   f.workspace.hidePopover();
   assert.notEqual(intent,captured,'the real close must invalidate pending presentation before queued toggle');
-  assert.deepEqual(reasons,[{reason:'native-reading',phase:'closing'}]);
+  assert.deepEqual(reasons,[{role:'workspace',reason:'native-reading',phase:'closing'}]);
   // A later explicit reopen can coalesce the delayed notification. The close
   // intent must already have been observed and must not be notified twice.
   f.surface.showWorkspace(f.handle);f.workspace.emit('toggle','open','open');
-  assert.deepEqual(reasons,[{reason:'native-reading',phase:'closing'}]);
+  assert.deepEqual(reasons,[{role:'workspace',reason:'native-reading',phase:'closing'}]);
  }finally{f.surface.dispose(f.handle);}
 });
 
-test('close intent and actual visibility are distinct; programmatic reading echo cannot repeat the intent',async()=>{
- let intent=0,f;const events=[];f=await fixture(e=>{events.push(e);if(e.phase==='closing')intent++;else if(e.reason==='native-reading')f.surface.showReading(f.handle);});
+test('programmatic reading changes visibility without impersonating user close intent',async()=>{
+ const events=[];const f=await fixture(e=>events.push(e));
  try{f.surface.showWorkspace(f.handle);f.surface.showReading(f.handle);
-  assert.deepEqual(events,[{reason:'native-reading',phase:'closing'}]);assert.equal(intent,1);
-  f.workspace.emit('toggle','open','closed');
-  assert.deepEqual(events,[{reason:'native-reading',phase:'closing'},{reason:'native-reading'}]);assert.equal(intent,1);
+  assert.deepEqual(events,[]);f.workspace.emit('toggle','open','closed');assert.deepEqual(events,[]);
   assert.deepEqual(f.surface.visibility(f.handle),{workspace:false,sidebar:true});
  }finally{f.surface.dispose(f.handle);}
 });

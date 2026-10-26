@@ -11,7 +11,7 @@ export function createMountSurface({document:doc,createFrameURL,hasNativeLayer=(
  // block joins native flow; closing the browser popover releases its space.
  const syncSlot=(m,placement)=>{
   const sidebar=m.surfaces.find(s=>s.role==='sidebar');
-  sidebar?.node.toggleAttribute('data-va-composed-sidebar',!!placement);
+  if(sidebar){if(placement)sidebar.node.setAttribute('data-va-composed-sidebar','');else sidebar.node.removeAttribute('data-va-composed-sidebar');}
   if(m.slot&&(m.slot.parentElement!==placement?.parent||m.slot.nextElementSibling!==placement?.before)){
    hide(m,'sidebar','sidebar-anchor');m.slot.remove();m.slot=null;m.slotProved=false;
   }
@@ -36,7 +36,7 @@ export function createMountSurface({document:doc,createFrameURL,hasNativeLayer=(
   const prior=m.inspection;
   const protectedNodes=[inspection?.header,inspection?.composer,...(inspection?.protectedRegions??[])];
   const safeRect=rect=>rect&&['x','y','width','height'].every(key=>Number.isFinite(rect[key]))&&rect.width>0&&rect.height>0&&!protectedNodes.some(node=>{const r=node?.getBoundingClientRect();return !r||r.width>0&&r.height>0&&rect.x<r.right&&rect.x+rect.width>r.left&&rect.y<r.bottom&&rect.y+rect.height>r.top;});
-  if(!inspection?.ok||inspection.viewMask!=='declarative-css'||inspection.regionEpoch!==m.handle.regionEpoch||['reading','header','composer','readingViewport'].some(key=>inspection[key]!==prior[key])||[...protectedNodes,inspection.reading].some(node=>!node?.isConnected||node.ownerDocument!==doc)||!safeRect(inspection.readingRect)){surrender(m,'workspace','workspace-geometry');return false;}
+  if(!inspection?.ok||inspection.viewMask!=='declarative-css'||inspection.regionEpoch!==m.handle.regionEpoch||['reading','header','composer','readingViewport'].some(key=>inspection[key]!==prior[key])||[...protectedNodes,inspection.reading,...(inspection.readingViewport?[inspection.readingViewport]:[])].some(node=>!node?.isConnected||node.ownerDocument!==doc)||!safeRect(inspection.readingRect)){surrender(m,'workspace','workspace-geometry');return false;}
   const workspace=m.surfaces.find(s=>s.role==='workspace');
   const layout=(surface,rect)=>{for(const [key,value]of Object.entries({left:rect.x+'px',top:rect.y+'px',width:rect.width+'px',height:rect.height+'px'}))if(surface.node.style[key]!==value)surface.node.style[key]=value;};
   layout(workspace,inspection.readingRect);
@@ -102,7 +102,7 @@ export function createMountSurface({document:doc,createFrameURL,hasNativeLayer=(
     // A label for the following native region, not a copied Project list or a
     // disclosure that pretends to control native descendants. Its layout stays
     // entirely inside our proven slot; native controls/order/state are untouched.
-    if(role==='sidebar'){const boundary=doc.createElement('div');boundary.dataset.vaNativeBoundary='';boundary.textContent='原生项目与资源';node.append(boundary);}
+    if(role==='sidebar'){const boundary=doc.createElement('div');boundary.dataset.vaNativeBoundary='';boundary.textContent='原生项目与资源';node.append(boundary);surfaces.at(-1).boundary=boundary;}
     for(const root of maskRoots){const attr='data-va-mask-'+role;markers.push({root,attr,previous:root.getAttribute(attr),nativeClass:root.getAttribute('class'),nativeStyle:root.getAttribute('style'),nativeHidden:root.getAttribute('hidden'),nativeAriaHidden:root.getAttribute('aria-hidden'),wasVisible:win.getComputedStyle?.(root).visibility==='visible'});root.setAttribute(attr,id);}
     // Keep the owned iframe's layout through native-input surrender. Removing
     // its layout on close can leave Chromium's cross-process hit target stale
@@ -183,9 +183,10 @@ export function createMountSurface({document:doc,createFrameURL,hasNativeLayer=(
   },
   restoreRole(handle,role){
    if(role!=='sidebar')throw Error('invalid-optional-role');const m=lookup(handle),target=m.surfaces.find(s=>s.role===role);
-   if(!target?.retired||m.inspection.preserveNativeSidebar)return null;
+   if(!target?.retired||m.inspection.preserveNativeSidebar||target.boundary?.parentElement!==target.node)return null;
    const previous=target.frame,frame=doc.createElement('iframe');frame.src=target.url;frame.title=previous.title;frame.style.cssText=previous.style.cssText;
-   target.frame=frame;target.retired=false;target.node.append(frame);return {role,frame};
+   // Publish a recovered role only after its owned partition is still intact.
+   target.node.insertBefore(frame,target.boundary);target.frame=frame;target.retired=false;return {role,frame};
   },
   // Synchronous visibility check only: no authority renewal, DOM replacement,
   // sidebar reopening or asynchronous work is permitted inside this window.

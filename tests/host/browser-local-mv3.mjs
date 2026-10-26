@@ -237,6 +237,7 @@ try{
    else if(scene.startsWith('project'))await formal.getByRole('link',{name:'Native B',exact:true}).first().waitFor();
    else await formal.getByRole('link',{name:'Known latest fixture',exact:true}).first().waitFor();
    if(scene!=='empty')await page.frameLocator('iframe[src="chrome-extension://'+id+'/sidebar.html"]').getByRole('button',{name:'查找已知项目与聊天',exact:true}).waitFor({timeout:10000});
+   if(scene!=='empty'){const side=page.frames().find(f=>f.url().endsWith('/sidebar.html'));assert.equal(await side.evaluate(()=>{const root=[...document.querySelectorAll('*')].find(n=>n.shadowRoot)?.shadowRoot;return getComputedStyle(root.querySelector('.themes')).overscrollBehaviorY;}),'contain');}
    const f=page.frames().find(f=>f.url().endsWith('/workspace.html'));
    const metrics=await f.evaluate(()=>{const root=[...document.querySelectorAll('*')].find(n=>n.shadowRoot)?.shadowRoot;
     const workspace=root.querySelector('.workspace'),cards=[...root.querySelectorAll('.card')];
