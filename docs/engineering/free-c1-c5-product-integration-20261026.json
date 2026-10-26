@@ -1492,7 +1492,8 @@
         "ui10Modern": "PASS_CONTROL_SUBMATRIX_ONLY",
         "ui10ModernCoverageComplete": true,
         "finalProductJourney": "PASS",
-        "independentReadOnlyReview": "PASS_NO_NEW_BLOCKER"
+        "independentReadOnlyReview": "PASS_NO_NEW_BLOCKER",
+        "cspContractNode": 15
       },
       "testContractRepair": "Existing entry/J1/J4/repair helpers wait for actual workspace, not both optional roles; disclose unknown rows before reading; SYS05 uses workspace tool when sidebar cannot fit; passive J4 anchors retain original cleanup. Original draft, identity, causal response, budgets and native action assertions remain.",
       "scopedResults": {
@@ -1504,7 +1505,8 @@
         "existingRepair": "PASS_NARROW_EXISTING_SOURCE_PENDING_REPAIR",
         "earlySearch": "PASS_EARLY_INPUT_RENDERER_SUBCONTRACT_ONLY",
         "ui10Modern": "PASS_LAYOUT_SUBCONTRACT_ONLY",
-        "finalJourney": "PASS"
+        "finalJourney": "PASS",
+        "csp": "PASS_NARROW_PACKAGED_FAULT_OBSERVATIONS"
       },
       "fullCI": "NOT_ALL_GREEN: unknown-protocol worker body witness failed RESOURCE_CONTENT_UNAVAILABLE/net::ERR_ABORTED; no relaxed proof or automatic retries. Other legacy job failures reviewed separately; local subcontracts do not imply full CI acceptance.",
       "evidence": "free-night-ci-contracts-20261027.json.gz",
@@ -1523,7 +1525,7 @@
       "legacyGateClassification": {
         "unknownProtocol": "NOT_ESTABLISHED: worker body witness aborted; no proof downgrade",
         "idleReading": "legacy observer installed after initial VIEW and expects both surfaces closed; continuous sidebar deliberately remains active, not proof of product idle failure",
-        "csp": "exact-message oracle predates bounded sidebar intrinsic-size protocol; privacy leak checks remained zero; historical gate FAIL retained",
+        "csp": "Historical CI failure retained; exact oracle and historical counter now share the existing sidebar-only 3-field integer 240..1024 size protocol. Local packaged CSP passed; zero schema violations and private leaks, foreign sender denied, original draft/selection preserved. Not full CI acceptance.",
         "partialJ3ContextPopulated": "legacy both-role, folded-UNKNOWN and composer-closes-both assumptions; no new product defect established by these failures",
         "stale503Mutant": "expected negative-control failure, unchanged baseline passed"
       }

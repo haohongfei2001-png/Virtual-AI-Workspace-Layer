@@ -15,6 +15,13 @@ test('schema rejects missing, extra, unknown or invalid control fields',()=>{
 });
 test('runner-side leak detector positive controls and empty markers',()=>{assert.equal(cspLeaks(['private grant id','normal'],['grant']),1);assert.equal(cspLeaks(['normal'],['grant']),0);assert.equal(cspLeaks(['normal'],['']),0);});
 
+test('page-visible sidebar size hint admits only the bounded content-free protocol',()=>{
+ const hint={type:'VAIWL_UI_INTRINSIC_SIZE',role:'sidebar',height:240};
+ for(const height of [240,512,1024])assert(exactCspControlMessage({...hint,height}));
+ for(const height of [239,1025,240.5,NaN,Infinity,'240',null])assert.equal(exactCspControlMessage({...hint,height}),false);
+ for(const value of [{...hint,role:'workspace'},{...hint,title:'private'},{...hint,grantId:'private'},{type:hint.type,role:hint.role}])assert.equal(exactCspControlMessage(value),false);
+});
+
 test('recursive lossless capture rejects unsupported nested values instead of silently dropping them',()=>{
  for(const value of [new Map([['private','secret']]),new ArrayBuffer(8),{nested:undefined},{nested:new Uint8Array([1])},{get secret(){return 'secret';}},[undefined],new Date(),{nested:NaN}])assert.throws(()=>copyCspMessage(value));
  assert.deepEqual(copyCspMessage({ok:true,values:[1,null,'yes']}),{ok:true,values:[1,null,'yes']});
