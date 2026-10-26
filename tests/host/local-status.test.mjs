@@ -1,11 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {foregroundFailureStates,installLocalStatus,readActiveLocalStatus,validLayoutShape,readActiveLocalLayout,validLocalPipeline} from '../../src/host/local-status.mjs';
-import {validSidebarStructure} from '../../src/host/history-structure-diagnostic.mjs';
+import {validSidebarStructure,sidebarStructureCoverage} from '../../src/host/history-structure-diagnostic.mjs';
 import observedSidebar from './fixtures/observed-sidebar-structure.json' with {type:'json'};
 test('captured sidebar topology remains partial and cannot certify omitted Project controls',()=>{
  const report=observedSidebar.report,rows=report.rows;
  assert(validSidebarStructure(report));assert.equal(report.reason,'capacity');
+ assert.equal(sidebarStructureCoverage(report).state,'PARTIAL');
  // These are anonymous snapshot indices, not selectors or native IDs.
  assert.equal(rows[61][0],rows[93][0]);
  assert.equal(rows[62][4]&2,2);assert.equal(rows[95][4]&2,2);
@@ -15,16 +16,33 @@ test('captured sidebar topology remains partial and cannot certify omitted Proje
  assert.deepEqual(recent.slice(0,4).map(row=>Boolean(row[4]&1)),[true,false,false,true]);
  assert(rows.some(row=>(row[4]&1)&&(row[7]&1)),'owned masks are present in the capture; hidden is not native absence');
 });
+test('sidebar completeness rejects missing children, duplicate positions and omitted controls even with complete termination',()=>{
+ const row=(parent,position,flags=0,children=0,omit=false)=>[parent,position,'DIV','absent',flags,children,[0,0,200,20],0,omit];
+ const report={schema:'sidebar-structure-v1',reason:'complete',ancestors:[],rows:[row(-1,0,0,2),row(0,0,2,2),[1,0,'A','absent',4,0,[0,0,100,20],0,false],[1,1,'BUTTON','button',8,0,[0,0,20,20],0,false],row(0,1,2,1),row(4,0,1)]};
+ assert.deepEqual(sidebarStructureCoverage(report),{state:'COMPLETE_SNAPSHOT',reason:'complete',rows:6,sections:[[1,1,0,0],[0,0,1,0]]});
+ const mutate=fn=>{const copy=structuredClone(report);fn(copy);return sidebarStructureCoverage(copy);};
+ assert.equal(mutate(r=>r.rows.pop()).reason,'incomplete-tree');
+ assert.equal(mutate(r=>r.rows[3][1]=0).reason,'incomplete-tree');
+ assert.equal(mutate(r=>{r.rows[5][5]=1;r.rows[5][8]=true;}).reason,'unexplained-omission');
+ assert.equal(mutate(r=>r.rows[4][4]=0).reason,'section-boundary-unconfirmed');
+ assert.equal(mutate(r=>r.reason='budget').state,'PARTIAL');
+ assert.equal(mutate(r=>r.rows=[]).reason,'incomplete-tree');
+ assert.equal(mutate(r=>{r.rows[5][2]='SVG';r.rows[5][5]=1;r.rows[5][8]=true;}).state,'COMPLETE_SNAPSHOT');
+});
 test('sidebar snapshot remains anonymous, bounded and confined to the existing layout response',()=>{
  const sidebarStructure={schema:'sidebar-structure-v1',reason:'complete',ancestors:[],rows:[[-1,0,'NAV','navigation',0,1,[0,0,200,600],0,false],[0,0,'A','absent',4,0,[0,0,200,20],0,false]]};
  const layout={counts:[0,0,0,0,0,0,0],branches:[]};
  assert(validSidebarStructure(sidebarStructure));assert(validLayoutShape({...layout,sidebarStructure}));
+ assert(validLayoutShape({sidebarStructure}));assert(!validLayoutShape({}));
+ assert(!validLayoutShape({sidebarStructure,navigation:null}));
  for(const invalid of [{...sidebarStructure,title:'PRIVATE'}, {...sidebarStructure,rows:[[0,0,'NAV','absent',0,0,[0,0,0,0],0,false]]},{...sidebarStructure,rows:[[-1,0,'PRIVATE','absent',0,0,[0,0,0,0],0,false]]},{...sidebarStructure,rows:Array(257).fill(sidebarStructure.rows[0])},{...sidebarStructure,ancestors:Array(9).fill(sidebarStructure.rows[0])}])assert(!validSidebarStructure(invalid));
  assert(!validLayoutShape({...layout,sidebarStructure,private:'PRIVATE'}));
  let reads=0,handler;const runtime={id:'extension',getURL:p=>'chrome-extension://extension/'+p,onMessage:{addListener:f=>{handler=f;},removeListener(){}}};
  installLocalStatus({runtime,readState:()=> 'ready',readLayout:()=>{reads++;return {...layout,sidebarStructure};}});
  let reply;handler({v:1,type:'HOST_LOCAL_LAYOUT'},{id:'extension',url:'https://chatgpt.com/'},r=>{reply=r;});assert.equal(reads,0);
  handler({v:1,type:'HOST_LOCAL_LAYOUT'},{id:'extension',url:runtime.getURL('status.html')},r=>{reply=r;});assert.equal(reads,1);assert.deepEqual(reply.shape.sidebarStructure,sidebarStructure);
+ installLocalStatus({runtime,readState:()=> 'connecting',readLayout:()=>({sidebarStructure})});
+ handler({v:1,type:'HOST_LOCAL_LAYOUT'},{id:'extension',url:runtime.getURL('status.html')},r=>{reply=r;});assert.deepEqual(reply.shape,{sidebarStructure});
 });
 const request=()=>({v:1,type:'HOST_LOCAL_STATUS'});
 const sender=()=>({id:'extension',url:'chrome-extension://extension/status.html'});

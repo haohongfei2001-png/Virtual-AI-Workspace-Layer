@@ -3,7 +3,7 @@ import {HOST_BASELINE_VERSION,materializeHistoryStructure,progressiveOrders,home
 /** Actual formal MV3 UI with an empty local memory session; offline host only. */
 import assert from 'node:assert/strict';
 import {createServer} from 'node:http';
-import {mkdtemp,writeFile} from 'node:fs/promises';
+import {mkdtemp,writeFile,readFile} from 'node:fs/promises';
 import {tmpdir,platform} from 'node:os';
 import {join} from 'node:path';
 import {chromium} from '../b1/tooling/node_modules/playwright/index.mjs';
@@ -27,6 +27,49 @@ try{
  return result;};
  context=await launch();report.browserErrors=[];context.on('page',p=>p.on('pageerror',e=>report.browserErrors.push(e.stack)));
  const cdp=await context.browser().newBrowserCDPSession(),{id}=await cdp.send('Extensions.loadUnpacked',{path:built.unpacked});
+ if(process.argv.includes('--sidebar-capture-only')){
+  // Exercise the production private popup and exact-document message route.
+  // The added branch is a declared synthetic completeness sentinel; the
+  // separate anonymous replay retains the actually observed outer topology.
+  page=await context.newPage();
+  await page.addInitScript(()=>document.addEventListener('DOMContentLoaded',()=>{
+   const nav=document.querySelector('nav'),history=nav.firstElementChild;
+   const root=document.createElement('div'),section=document.createElement('section');section.setAttribute('data-app-action-sidebar-section','');
+   const toggle=document.createElement('button');toggle.setAttribute('aria-expanded','true');toggle.textContent='PRIVATE_SENTINEL_CONTROL';
+   const list=document.createElement('ul'),item=document.createElement('li'),link=document.createElement('a');link.href='/c/66666666-6666-4666-8666-666666666666';link.textContent='PRIVATE_SENTINEL_TITLE';item.append(link);list.append(item);section.append(toggle,list);root.append(section,history);
+   // Observed common-parent ancestry is 60 -> 59 -> 21 -> NAV (two wrappers).
+   let shell=root;for(let i=0;i<2;i++){const wrap=document.createElement('div');wrap.append(shell);shell=wrap;}nav.append(shell);
+  },{once:true}));
+  const control=await context.newPage();await control.goto('chrome-extension://'+id+'/status.html');
+  const content=await readFile(join(built.unpacked,'content.js'),'utf8'),build=/build="([a-f0-9]{64})"/.exec(content)?.[1];assert(build);
+  let stale;
+  for(const [index,route]of ['/', '/g/'+P+'/project'].entries()){
+   await page.goto(origin+route);await page.bringToFront();
+   await page.waitForFunction(()=>document.documentElement.dataset.vaiwlBoot==='loaded');
+   const sample=await control.evaluate(async index=>{
+    const api=await import(chrome.runtime.getURL('src/host/local-status.mjs'));let target;
+    const state=await api.readActiveLocalStatus({tabs:chrome.tabs,webNavigation:chrome.webNavigation,onTarget:t=>target=t});
+    const boot=await api.readLocalBoot({tabs:chrome.tabs,webNavigation:chrome.webNavigation,target});
+    const shape=await api.readActiveLocalLayout({tabs:chrome.tabs,webNavigation:chrome.webNavigation,target});
+    await import(chrome.runtime.getURL('extension/status.mjs')+'?sidebar-capture='+index);
+    return {state,boot,shape,target,coverage:document.querySelector('#sidebar-structure-coverage')?.textContent};
+   },index);
+   assert.equal(sample.boot?.build,build);assert.equal(sample.boot.stage,'module-loaded');
+   assert(sample.shape?.sidebarStructure);assert.equal(sample.shape.sidebarStructure.reason,'complete');
+   assert.match(sample.coverage??'',/COMPLETE_SNAPSHOT/);
+   assert(!JSON.stringify(sample.shape.sidebarStructure).includes('PRIVATE_SENTINEL'));
+   assert(!JSON.stringify(sample.shape.sidebarStructure).includes('66666666'));
+   assert(sample.shape.sidebarStructure.rows.some(r=>r[2]==='A'&&(r[4]&4)));
+   if(stale){assert.notEqual(stale.documentId,sample.target.documentId);const old=await control.evaluate(async target=>{const api=await import(chrome.runtime.getURL('src/host/local-status.mjs'));return api.readActiveLocalLayout({tabs:chrome.tabs,webNavigation:chrome.webNavigation,target});},stale);assert.equal(old,null);}
+   stale=sample.target;
+   report.checks[index?'projectCollectorPopupComplete':'homeCollectorPopupComplete']=true;
+   assert.equal(await page.locator('textarea').inputValue(),'fixture draft');
+  }
+  const worker=context.serviceWorkers().find(w=>w.url().startsWith('chrome-extension://'+id+'/'));
+  assert.deepEqual(await worker.evaluate(()=>indexedDB.databases()),[]);
+  report.checks.collectorBuildReceiptMatchesPackage=true;report.checks.staleDocumentRejected=true;report.checks.noPrivateDatabaseOrDraftChanges=true;
+  await control.close();await page.close();
+ }
  // Product states use the same installed MV3 and native observation path.
  // These pixels are offline reconstruction, never real-account acceptance.
  if(process.argv.includes('--product-states-only')){
@@ -249,7 +292,7 @@ try{
   report.checks.historyDiagnosticNoPrivateDatabaseOrDraftChange=true;
   await control.close();await page.close();
  }
- if(!process.argv.includes('--entry-receipt-only')&&!process.argv.includes('--progressive-only')&&!process.argv.includes('--history-ready-only')&&!process.argv.includes('--history-diagnostic-only')&&!process.argv.includes('--mixed-history-only')&&!process.argv.includes('--product-states-only')){
+ if(!process.argv.includes('--sidebar-capture-only')&&!process.argv.includes('--entry-receipt-only')&&!process.argv.includes('--progressive-only')&&!process.argv.includes('--history-ready-only')&&!process.argv.includes('--history-diagnostic-only')&&!process.argv.includes('--mixed-history-only')&&!process.argv.includes('--product-states-only')){
  // Row reorder reproves only the sidebar mask; workspace identity survives.
  const reordered=await context.newPage();await reordered.addInitScript({content:'if(window===window.top)document.addEventListener("DOMContentLoaded",'+prepareHistoryRun.toString()+',{once:true});'});
  await reordered.goto(origin+'/c/'+B);

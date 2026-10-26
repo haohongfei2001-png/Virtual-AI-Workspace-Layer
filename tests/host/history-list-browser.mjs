@@ -3,7 +3,7 @@ import {readFileSync} from 'node:fs';
 import {createRequire} from 'node:module';
 import {chromium} from '../b1/tooling/node_modules/playwright/index.mjs';
 const require=createRequire(new URL('../../extension/tooling/package.json',import.meta.url));
-const {outputFiles}=await require('esbuild').build({stdin:{contents:"export {createHistoryStructureDiagnostic,validHistoryStructureReport,readSidebarStructure,validSidebarStructure} from './src/host/history-structure-diagnostic.mjs';export {createChatGPTAdapter} from './src/host/chatgpt-adapter.mjs';export {LEGACY_SURFACE_PROFILE} from './src/host/surface-discovery.mjs';export {createMountSurface} from './src/navigation/mount-surface.mjs';",resolveDir:process.cwd()},bundle:true,write:false,format:'iife',globalName:'historyModule'});
+const {outputFiles}=await require('esbuild').build({stdin:{contents:"export {createHistoryStructureDiagnostic,validHistoryStructureReport,readSidebarStructure,validSidebarStructure,sidebarStructureCoverage} from './src/host/history-structure-diagnostic.mjs';export {createChatGPTAdapter} from './src/host/chatgpt-adapter.mjs';export {LEGACY_SURFACE_PROFILE} from './src/host/surface-discovery.mjs';export {createMountSurface} from './src/navigation/mount-surface.mjs';",resolveDir:process.cwd()},bundle:true,write:false,format:'iife',globalName:'historyModule'});
 const browser=await chromium.launch({headless:true,proxy:{server:'http://127.0.0.1:9',bypass:'127.0.0.1,localhost'}});
 try{
  if(process.argv.includes('--sidebar-structure-only')){
@@ -27,14 +27,18 @@ try{
    const capped=readSidebarStructure({document,profile});
    const bounded=validSidebarStructure(capped)&&['capacity','budget'].includes(capped.reason)&&capped.rows.length<=256;
    native.remove();const missing=readSidebarStructure({document,profile});
-   return {safe,structure,excluded,geometry,unchanged,bounded,missing:validSidebarStructure(missing)&&missing.reason==='boundary-unavailable'};
+   const leaf=document.createElement('nav');leaf.id='source';document.body.append(leaf);
+   const clock=Object.getOwnPropertyDescriptor(performance,'now');let calls=0;
+   Object.defineProperty(performance,'now',{configurable:true,value:()=>++calls<3?0:26});
+   let lastReadBudget;try{lastReadBudget=readSidebarStructure({document,profile}).reason==='budget';}finally{if(clock)Object.defineProperty(performance,'now',clock);else delete performance.now;leaf.remove();}
+   return {safe,structure,excluded,geometry,unchanged,bounded,lastReadBudget,missing:validSidebarStructure(missing)&&missing.reason==='boundary-unavailable'};
   });
   assert(Object.values(result).every(Boolean),JSON.stringify(result));
   // Replay the actual anonymous parent/section topology. The omitted subtree
   // is deliberately a synthetic sentinel, never claimed as captured host data.
   const observed=JSON.parse(readFileSync(new URL('./fixtures/observed-sidebar-structure.json',import.meta.url),'utf8')).report;
   const focus=await page.evaluate(report=>{
-   const {readSidebarStructure,validSidebarStructure}=historyModule,nodes=[];
+   const {readSidebarStructure,validSidebarStructure,sidebarStructureCoverage}=historyModule,nodes=[];
    for(const row of report.rows){const [parent,,tag,role,flags]=row,n=document.createElement(tag==='OTHER'?'div':tag.toLowerCase());
     if(role!=='absent')n.setAttribute('role',role);if(flags&1)n.setAttribute('data-sidebar-chatgpt-conversation-key','PRIVATE');if(flags&2)n.setAttribute('data-app-action-sidebar-section','');
     nodes.push(n);if(parent>=0)nodes[parent].append(n);
@@ -45,10 +49,11 @@ try{
    const broad=readSidebarStructure({document,profile:{regions:profile.regions}}),focused=readSidebarStructure({document,profile});
    const narrowed=validSidebarStructure(focused)&&focused.rows[0][2]==='DIV'&&focused.rows[0][5]===2&&focused.ancestors.at(-1)[2]==='NAV';
    const covered=broad.reason==='capacity'&&!broad.rows.some(r=>r[3]==='menuitem')&&focused.reason==='complete'&&focused.rows.some(r=>r[3]==='menuitem');
-   const unchanged=nodes[0].outerHTML===before;
+   const unchanged=nodes[0].outerHTML===before,coverage=sidebarStructureCoverage(focused);
+   const completeness=coverage.state==='COMPLETE_SNAPSHOT'&&coverage.sections[0][1]>0&&sidebarStructureCoverage(broad).state==='PARTIAL';
    const extra=document.createElement('button');nodes[60].append(extra);const ambiguous=readSidebarStructure({document,profile});
    const conservative=validSidebarStructure(ambiguous)&&ambiguous.rows[0][2]==='NAV';nodes[0].remove();
-   return {narrowed,covered,unchanged,conservative,private:!JSON.stringify(focused).includes('PRIVATE'),bounded:focused.rows.length<=256&&focused.ancestors.length<=8};
+   return {narrowed,covered,completeness,unchanged,conservative,private:!JSON.stringify(focused).includes('PRIVATE'),bounded:focused.rows.length<=256&&focused.ancestors.length<=8};
   },observed);
   assert(Object.values(focus).every(Boolean),JSON.stringify(focus));
   console.log(JSON.stringify({status:'PASS_ANONYMOUS_SIDEBAR_SNAPSHOT_ONLY',result,focus}));

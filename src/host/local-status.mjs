@@ -17,7 +17,9 @@ const exact=(value,keys)=>value!==null&&typeof value==='object'&&!Array.isArray(
 export function validLayoutShape(value){
  if(value&&Object.hasOwn(value,'sidebarStructure')){
   const {sidebarStructure,...rest}=value;
-  return exact(value,[...Object.keys(rest),'sidebarStructure'])&&validSidebarStructure(sidebarStructure)&&validLayoutShape(rest);
+  // Passive structural evidence does not require a successful UI mount or
+  // navigation batch. Absence of those fields is not an empty inventory.
+  return exact(value,[...Object.keys(rest),'sidebarStructure'])&&validSidebarStructure(sidebarStructure)&&(Object.keys(rest).length===0||validLayoutShape(rest));
  }
  if(exact(value,['navigation','delivery','presentation'])&&value.presentation&&Object.hasOwn(value.presentation,'transitions')){
   const {desiredMode,transitions,...legacy}=value.presentation;

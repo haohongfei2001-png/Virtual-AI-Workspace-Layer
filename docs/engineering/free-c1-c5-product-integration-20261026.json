@@ -578,5 +578,103 @@
       "realProduct": "NOT_ACCEPTED; previous real local results inherited, no new Mac PASS claimed.",
       "privateOldObjectRestore": "NOT_VERIFIED; unchanged."
     }
+  },
+  "sidebarCaptureReadiness20261026": {
+    "baseHead": "12cc859960c6665c77a4555e35d3b36409818ab7",
+    "status": "OFFLINE_CAPTURE_CHAIN_VERIFIED_REAL_ACTIVATION_NOT_CONFIRMED",
+    "fixes": [
+      "Private structural snapshot no longer depends on successful layout/navigation state.",
+      "Popup reports tree completeness separately from termination and membership semantics.",
+      "Last geometry read exceeding 25ms cannot claim complete."
+    ],
+    "sourceHashes": {
+      "extension/content-entry.mjs": "9a405cd0590e352b8691ea9830e03f40521340d487794c8b92fefa572bda95b3",
+      "extension/status.mjs": "f1dba0c0d8ff4049d744c8ea107f27e1edb6344cdc794591a23af79394d1867a",
+      "src/host/history-structure-diagnostic.mjs": "b22b9e91c6b55c63583b6673d0733290048f32f4fa22a4788df0f2e73d76c9ac",
+      "src/host/local-status.mjs": "d1ec868b3635c2b47e221a4e9c61b8542ea732760367053f6c49fda1a074b935",
+      "tests/host/local-status.test.mjs": "8131cedce5d9b12f22887873e496ff3be5042c8482b779e4931e710d842c90b4",
+      "tests/host/history-list-browser.mjs": "c876a7b9aa371095ce757e2bab8025468233f2d305ffa47eee2c364c7089fcff",
+      "tests/host/browser-local-mv3.mjs": "5b6bf8c5085450af8d24db40a256b3ecfec57fee1a504bb64ffa70c39529a0c4"
+    },
+    "verification": {
+      "unit": {
+        "passed": 99,
+        "failed": 0
+      },
+      "anonymousReplay": {
+        "status": "PASS_ANONYMOUS_SIDEBAR_SNAPSHOT_ONLY",
+        "result": {
+          "safe": true,
+          "structure": true,
+          "excluded": true,
+          "geometry": true,
+          "unchanged": true,
+          "bounded": true,
+          "lastReadBudget": true,
+          "missing": true
+        },
+        "focus": {
+          "narrowed": true,
+          "covered": true,
+          "completeness": true,
+          "unchanged": true,
+          "conservative": true,
+          "private": true,
+          "bounded": true
+        }
+      },
+      "isolatedMV3": {
+        "status": "PASS",
+        "checks": {
+          "homeCollectorPopupComplete": true,
+          "projectCollectorPopupComplete": true,
+          "collectorBuildReceiptMatchesPackage": true,
+          "staleDocumentRejected": true,
+          "noPrivateDatabaseOrDraftChanges": true,
+          "noInternalRequests": true
+        },
+        "reportPath": "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-85sHZ3/report.json",
+        "realChatGPT": "NOT_RUN",
+        "syntheticDescendants": "Completeness sentinels only, not captured Project structure"
+      }
+    },
+    "installed": {
+      "profile": "Profile 4",
+      "extensionId": "miendbcjdmecjggplepenghjnoejmaic",
+      "registrationPathMatchesOriginal": true,
+      "focusedCollectorOnDisk": false,
+      "runtimeBuild": "NOT_CONFIRMED",
+      "readOnlyCurrentProcessWindowCheck": {
+        "windows": 2,
+        "authorizedProfileWindows": 0,
+        "chatgptWindows": 0
+      },
+      "noWindowActivation": true,
+      "noInstallOrReload": true
+    },
+    "preparedPackage": {
+      "status": "HOST_IMPLEMENTATION_UNVERIFIED",
+      "releaseStatus": "NOT_RELEASE_READY",
+      "files": 198,
+      "unpacked": "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-sidebar-capture-ready-c7umZj/package/extension",
+      "archive": "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-sidebar-capture-ready-c7umZj/package/vaiwl-free-host-development.zip",
+      "archiveSha256": "cf14453260fa899cb16d7d70e1718d25d24dd94faa69e32a46b3a4565d65193c",
+      "bootBuild": "d67d0d8198f0c8335c46efbf53e6d0cff10294d7cdc6816cecd51401feddd532",
+      "installed": false,
+      "realCapture": "NOT_RUN"
+    },
+    "remaining": [
+      "Actual focused build activation and authorized current Profile 4 document still unconfirmed.",
+      "Project controls/member descendants must be present and snapshot non-truncated; complete snapshot does not prove membership or permit masking.",
+      "Only after those facts are established can the continuous sidebar boundary and final product acceptance proceed."
+    ],
+    "preserved": {
+      "extensionId": true,
+      "database": true,
+      "drafts": true,
+      "stash": true,
+      "untrackedCopies": true
+    },
+    "userProjectOperationRequested": false
   }
 }

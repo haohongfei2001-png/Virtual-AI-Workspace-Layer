@@ -19,6 +19,36 @@ const sidebarRow=r=>Array.isArray(r)&&r.length===9&&Number.isInteger(r[0])&&r[0]
 export function validSidebarStructure(v){
  return exact(v,['schema','reason','ancestors','rows'])&&v.schema==='sidebar-structure-v1'&&sidebarReasons.includes(v.reason)&&Array.isArray(v.ancestors)&&v.ancestors.length<=8&&v.ancestors.every(r=>sidebarRow(r)&&r[0]===-1&&r[8])&&Array.isArray(v.rows)&&v.rows.length<=256&&v.rows.every((r,i)=>sidebarRow(r)&&(i===0?r[0]===-1:r[0]>=0&&r[0]<i));
 }
+/** Audit the returned tree, not just the collector's termination label. These
+ * counts describe anonymous section branches; they do not identify Projects,
+ * prove membership, or grant a surface/action capability. */
+export function sidebarStructureCoverage(report){
+ const result={state:'PARTIAL',reason:'invalid-report',rows:0,sections:[]};
+ if(!validSidebarStructure(report))return result;
+ result.rows=report.rows.length;result.reason=report.reason;
+ const rows=report.rows,positions=rows.map(()=>new Set()),owners=[],sectionBranches=[];
+ let consistent=rows.length>0,unexplainedOmission=false;
+ for(let i=0;i<rows.length;i++){
+  const [parent,position,tag,role,flags,children,,,omitted]=rows[i];
+  if(parent>=0){
+   if(rows[parent][8]||position>=rows[parent][5]||positions[parent].has(position))consistent=false;
+   positions[parent].add(position);
+  }else if(position!==0)consistent=false;
+  let owner=parent>=0?owners[parent]:-1;
+  if(flags&2){owner=result.sections.length;result.sections.push([0,0,0,0]);let branch=i;while(rows[branch][0]>0)branch=rows[branch][0];sectionBranches.push(branch);}
+  owners[i]=owner;
+  if(owner>=0){const counts=result.sections[owner];if(tag==='A'&&(flags&4))counts[0]++;if(tag==='BUTTON'||role==='button'||role==='menuitem')counts[1]++;if(flags&1)counts[2]++;if(omitted&&children)counts[3]++;}
+  // Only known privacy/owned leaves may deliberately hide descendants. A
+  // depth-truncated DIV must never be presented as a complete capture.
+  if(omitted&&children&&!['SVG','INPUT','TEXTAREA','MAIN','SCRIPT','STYLE'].includes(tag)&&!(flags&192))unexplainedOmission=true;
+ }
+ for(let i=0;i<rows.length;i++)if(!rows[i][8]&&positions[i].size!==rows[i][5])consistent=false;
+ if(report.reason!=='complete')return result;
+ if(!consistent){result.reason='incomplete-tree';return result;}
+ if(unexplainedOmission){result.reason='unexplained-omission';return result;}
+ if(result.sections.length!==2||rows[0][5]!==2||new Set(sectionBranches).size!==2){result.reason='section-boundary-unconfirmed';return result;}
+ result.state='COMPLETE_SNAPSHOT';result.reason='complete';return result;
+}
 // The captured navigation has two sibling section branches under a shared
 // wrapper. Start there when that exact relation to the existing history target
 // holds, so outer shell wrappers cannot consume the diagnostic depth budget.
@@ -78,6 +108,9 @@ export function readSidebarStructure({document,profile}){
    if(node.children.length>limit)report.reason='capacity';
    for(let i=limit-1;i>=0;i--)stack.push({node:node.children[i],parent:index,position:i,depth:depth+1});
   }
+  // The last layout read can itself spend the budget. Do not label that
+  // snapshot complete merely because there is no next loop iteration.
+  if(report.reason==='complete'&&win.performance.now()-start>25)report.reason='budget';
   return report;
  }catch{return {...report,reason:'unavailable'};}
 }
