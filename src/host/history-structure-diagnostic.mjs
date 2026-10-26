@@ -26,10 +26,15 @@ export function sidebarStructureCoverage(report){
  const result={state:'PARTIAL',reason:'invalid-report',rows:0,sections:[]};
  if(!validSidebarStructure(report))return result;
  result.rows=report.rows.length;result.reason=report.reason;
- const rows=report.rows,positions=rows.map(()=>new Set()),owners=[],sectionBranches=[];
+ const rows=report.rows,positions=rows.map(()=>new Set()),owners=[],sectionBranches=[],depths=[];
+ // Explain the evidence already returned, without another DOM read. Capacity
+ // may mean both depth truncation and an unfinished sibling list; decorative
+ // SVG omissions must not be counted as unknown Project controls.
+ const gaps={depthLimitRows:[],unexplainedOmissionRows:[],missingChildren:[]};
  let consistent=rows.length>0,unexplainedOmission=false;
  for(let i=0;i<rows.length;i++){
   const [parent,position,tag,role,flags,children,,,omitted]=rows[i];
+  depths[i]=parent<0?0:depths[parent]+1;
   if(parent>=0){
    if(rows[parent][8]||position>=rows[parent][5]||positions[parent].has(position))consistent=false;
    positions[parent].add(position);
@@ -40,9 +45,15 @@ export function sidebarStructureCoverage(report){
   if(owner>=0){const counts=result.sections[owner];if(tag==='A'&&(flags&4))counts[0]++;if(tag==='BUTTON'||role==='button'||role==='menuitem')counts[1]++;if(flags&1)counts[2]++;if(omitted&&children)counts[3]++;}
   // Only known privacy/owned leaves may deliberately hide descendants. A
   // depth-truncated DIV must never be presented as a complete capture.
-  if(omitted&&children&&!['SVG','INPUT','TEXTAREA','MAIN','SCRIPT','STYLE'].includes(tag)&&!(flags&192))unexplainedOmission=true;
+  if(omitted&&children&&!['SVG','INPUT','TEXTAREA','MAIN','SCRIPT','STYLE'].includes(tag)&&!(flags&192)){
+   unexplainedOmission=true;gaps.unexplainedOmissionRows.push(i);
+   if(depths[i]===16)gaps.depthLimitRows.push(i);
+  }
  }
- for(let i=0;i<rows.length;i++)if(!rows[i][8]&&positions[i].size!==rows[i][5])consistent=false;
+ for(let i=0;i<rows.length;i++)if(!rows[i][8]&&positions[i].size!==rows[i][5]){
+  consistent=false;gaps.missingChildren.push([i,Math.max(0,rows[i][5]-positions[i].size)]);
+ }
+ if(gaps.unexplainedOmissionRows.length||gaps.missingChildren.length)result.gaps=gaps;
  if(report.reason!=='complete')return result;
  if(!consistent){result.reason='incomplete-tree';return result;}
  if(unexplainedOmission){result.reason='unexplained-omission';return result;}

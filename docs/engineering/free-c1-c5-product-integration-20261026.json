@@ -777,5 +777,83 @@
       "ifPartial": "Return the same report; no automatic retry, refresh or new collection request"
     },
     "productAcceptance": "NOT_COMPLETE; continuous sidebar real boundary and final product journey remain unverified"
+  },
+  "receivedProjectSidebar20261026": {
+    "source": "User supplied original extension snapshot file; no new browser operation",
+    "sourceSha256": "5b3a828250ac95f6e47e57d146e6020b94b36c2f18053d1cefbc612b8be934bc",
+    "fixture": "tests/host/fixtures/observed-sidebar-project-20261026.json",
+    "build": "b3092e59a2d160ed6618c2b620c5753010172d7504530ab75aa2ed8acfa20e71",
+    "runtimeEvidence": "Submitted boot receipt matches prepared build; project route and same-document binding recorded. Does not establish server account, Workspace or independently attest Chrome Profile.",
+    "coverage": "PARTIAL_CAPACITY",
+    "confirmedStructure": {
+      "rows": 256,
+      "commonParentChildren": 2,
+      "sectionIndices": [
+        2,
+        46
+      ],
+      "firstSectionList": {
+        "index": 23,
+        "children": 1,
+        "nativeHrefOrConversationMarkers": 0
+      },
+      "recentList": {
+        "index": 71,
+        "declaredChildren": 17,
+        "capturedDirectChildren": 13,
+        "lastCapturedChildPartial": true
+      }
+    },
+    "preciseGaps": {
+      "firstSectionDepth16Subtrees": [
+        {
+          "index": 32,
+          "tag": "SPAN"
+        },
+        {
+          "index": 35,
+          "tag": "SPAN"
+        },
+        {
+          "index": 40,
+          "tag": "BUTTON"
+        },
+        {
+          "index": 42,
+          "tag": "SPAN"
+        }
+      ],
+      "missingChildren": [
+        [
+          71,
+          4
+        ],
+        [
+          255,
+          1
+        ]
+      ],
+      "expansionState": "NOT_RECORDED; aria-expanded presence is not its value",
+      "membership": "NOT_ESTABLISHED by this structure"
+    },
+    "cause": "Section focusing removed outer wrappers, but the Project branch still reaches depth 16 before row exhaustion. Later history traversal fills 256 rows. More rows or waiting cannot recover the four prior depth omissions.",
+    "implementation": "Coverage now reports existing anonymous omitted indices and missing child counts separately, without DOM reads, new collection, budget increase or mask authority.",
+    "verification": {
+      "command": "node --test tests/host/local-status.test.mjs",
+      "passed": 102,
+      "failed": 0,
+      "log": "/private/tmp/vaiwl-project-snapshot-analysis-unit.log",
+      "actualSnapshotRegression": true,
+      "existingProductScenariosRepeated": false
+    },
+    "unchanged": [
+      "Daily installation",
+      "IndexedDB",
+      "drafts",
+      "original incomplete evidence",
+      "native Project controls and mask boundary"
+    ],
+    "nextBoundary": "Do not immediately recollect. Four omitted first-section descendants and member/expansion semantics remain unknown; current file cannot justify full Project-region takeover. Existing workspace and validated recent region remain independent.",
+    "productAcceptance": "NOT_COMPLETE; no new real product PASS inferred"
   }
 }

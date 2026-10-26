@@ -3,6 +3,29 @@ import assert from 'node:assert/strict';
 import {foregroundFailureStates,installLocalStatus,readActiveLocalStatus,validLayoutShape,readActiveLocalLayout,validLocalPipeline,createSidebarSnapshot} from '../../src/host/local-status.mjs';
 import {validSidebarStructure,sidebarStructureCoverage} from '../../src/host/history-structure-diagnostic.mjs';
 import observedSidebar from './fixtures/observed-sidebar-structure.json' with {type:'json'};
+import observedProjectSidebar from './fixtures/observed-sidebar-project-20261026.json' with {type:'json'};
+test('real focused Project snapshot separates depth omissions from exhausted row budget',()=>{
+ const snapshot=observedProjectSidebar,report=snapshot.sidebarStructure,rows=report.rows;
+ assert.equal(snapshot.build,'b3092e59a2d160ed6618c2b620c5753010172d7504530ab75aa2ed8acfa20e71');
+ assert.equal(snapshot.route,'project');assert.equal(snapshot.documentBinding,'verified-at-capture-not-account-identity');
+ assert(validSidebarStructure(report));
+ const coverage=sidebarStructureCoverage(report);
+ assert.equal(coverage.state,'PARTIAL');assert.equal(coverage.reason,'capacity');
+ assert.deepEqual(coverage.sections,snapshot.coverage.sections);
+ // Snapshot indices only: the first section was traversed before history,
+ // so more row budget would NOT recover these four depth-truncated subtrees.
+ assert.deepEqual(coverage.gaps.depthLimitRows.filter(i=>i<44),[32,35,40,42]);
+ assert.deepEqual(coverage.gaps.missingChildren,[[71,4],[255,1]]);
+ assert.equal(rows[40][2],'BUTTON');assert.equal(rows[40][4]&8,8);
+ assert.equal(rows[23][3],'list');assert.equal(rows[23][5],1);
+ assert.equal(rows[28][3],'button');assert.equal(rows[28][4]&8,8);
+ // Presence of aria-expanded is not its value. No href/member evidence in
+ // this section establishes the expansion state or a Project member relation.
+ assert(!rows.slice(0,44).some(r=>r[4]&5));
+ assert(!coverage.gaps.unexplainedOmissionRows.includes(9),'SVG subtree is a deliberate omission');
+ const mislabeled=structuredClone(report);mislabeled.reason='complete';
+ assert.equal(sidebarStructureCoverage(mislabeled).state,'PARTIAL');
+});
 test('export binds the captured structure and strips URL, native IDs and unrelated layout data',async()=>{
  const target={tabId:7,documentId:'PRIVATE_DOCUMENT',url:'https://chatgpt.com/g/PRIVATE_PROJECT/project'},boot={v:1,stage:'module-loaded',build:'a'.repeat(64)};
  const shape={sidebarStructure:observedSidebar.report,navigation:{title:'PRIVATE_TITLE'}};
