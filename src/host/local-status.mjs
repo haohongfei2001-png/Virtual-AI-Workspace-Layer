@@ -1,6 +1,6 @@
 import {projectSurfaceFailureReasons,projectClipDiagnostic} from './native-project-surface.mjs';
 import {historyFailureReasons} from './native-history-list.mjs';
-import {validHistoryStructureReport} from './history-structure-diagnostic.mjs';
+import {validHistoryStructureReport,validSidebarStructure} from './history-structure-diagnostic.mjs';
 // Shared fixed frame failures; arbitrary renderer/transport error text stays private.
 export const frameFailureReasons=Object.freeze(['ui-grant-expired','ui-renew-failed','ui-join-failed','ui-port-disconnected','ui-renderer-failed','read-budget-exhausted','frame-preparation-limit','free-frame-page-too-large','frame-view-unavailable','invalid-preparation-response','invalid-frame-view','invalid-search-snippets','invalid-frame-current','invalid-frame-current-ref','invalid-frame-navigation','invalid-frame-presentation','request-timeout']);
 export const foregroundFailureStates=Object.freeze(['invalid-host-document','stale-host-document','scope-not-verified','replayed-sequence','host-refresh-unavailable','host-unavailable','capacity','transport-unavailable','scope-unverified','scope-changed'].map(reason=>'foreground-'+reason));
@@ -15,6 +15,10 @@ const exact=(value,keys)=>value!==null&&typeof value==='object'&&!Array.isArray(
 // Bounded layout categories or numeric computed inset geometry only; never
 // native text, IDs, URLs, arbitrary CSS, attribute values or credential material.
 export function validLayoutShape(value){
+ if(value&&Object.hasOwn(value,'sidebarStructure')){
+  const {sidebarStructure,...rest}=value;
+  return exact(value,[...Object.keys(rest),'sidebarStructure'])&&validSidebarStructure(sidebarStructure)&&validLayoutShape(rest);
+ }
  if(exact(value,['navigation','delivery','presentation'])&&value.presentation&&Object.hasOwn(value.presentation,'transitions')){
   const {desiredMode,transitions,...legacy}=value.presentation;
   const states=['visible','hidden','unavailable'];

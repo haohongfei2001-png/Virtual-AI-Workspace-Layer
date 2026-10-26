@@ -2,10 +2,35 @@ import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';
 import {chromium} from '../b1/tooling/node_modules/playwright/index.mjs';
 const require=createRequire(new URL('../../extension/tooling/package.json',import.meta.url));
-const {outputFiles}=await require('esbuild').build({stdin:{contents:"export {createHistoryStructureDiagnostic,validHistoryStructureReport} from './src/host/history-structure-diagnostic.mjs';export {createChatGPTAdapter} from './src/host/chatgpt-adapter.mjs';export {LEGACY_SURFACE_PROFILE} from './src/host/surface-discovery.mjs';export {createMountSurface} from './src/navigation/mount-surface.mjs';",resolveDir:process.cwd()},bundle:true,write:false,format:'iife',globalName:'historyModule'});
-const browser=await chromium.launch({headless:true});
+const {outputFiles}=await require('esbuild').build({stdin:{contents:"export {createHistoryStructureDiagnostic,validHistoryStructureReport,readSidebarStructure,validSidebarStructure} from './src/host/history-structure-diagnostic.mjs';export {createChatGPTAdapter} from './src/host/chatgpt-adapter.mjs';export {LEGACY_SURFACE_PROFILE} from './src/host/surface-discovery.mjs';export {createMountSurface} from './src/navigation/mount-surface.mjs';",resolveDir:process.cwd()},bundle:true,write:false,format:'iife',globalName:'historyModule'});
+const browser=await chromium.launch({headless:true,proxy:{server:'http://127.0.0.1:9',bypass:'127.0.0.1,localhost'}});
 try{
- if(process.argv.includes('--diagnostic-only')){
+ if(process.argv.includes('--sidebar-structure-only')){
+  const page=await browser.newPage({viewport:{width:1000,height:700}}),url='http://127.0.0.1:9000/';
+  await page.route('**/*',r=>r.request().url()===url?r.fulfill({contentType:'text/html',body:`<style>aside{width:240px;height:600px;overflow:auto}nav{width:220px}section{height:80px}</style><aside><nav id="source"><section><button aria-expanded="true" aria-controls="PRIVATE_ID">PRIVATE_PROJECT</button><ul><li><a href="/c/PRIVATE_ID">PRIVATE_TITLE</a><button>PRIVATE_MENU</button></li></ul></section><div data-app-action-sidebar-section><div id="history"><div role="list"><div data-sidebar-chatgpt-conversation-key="PRIVATE_ID"><a href="/c/PRIVATE_ID">PRIVATE_TITLE</a></div><button hidden>PRIVATE_PENDING</button></div></div></div><div contenteditable="true"><span>PRIVATE_BODY</span></div><svg><path d="PRIVATE_PATH"/></svg><div data-va-owned><button>PRIVATE_EXTENSION</button></div></nav></aside><main>PRIVATE_BODY</main>`}):r.abort());
+  await page.goto(url);await page.addScriptTag({content:outputFiles[0].text});
+  const result=await page.evaluate(()=>{
+   const {readSidebarStructure,validSidebarStructure}=historyModule;
+   const profile={regions:{projects:'#source'}},before=document.body.innerHTML;
+   const original=Element.prototype.getAttribute;
+   Element.prototype.getAttribute=function(name){if(!['role','aria-hidden'].includes(name))throw Error('private attribute read');return original.call(this,name);};
+   Object.defineProperty(Node.prototype,'textContent',{get(){throw Error('private text read');},configurable:true});
+   const report=readSidebarStructure({document,profile});
+   const root=report.rows[0],member=report.rows.find(r=>r[2]==='A'),section=report.rows.find(r=>r[4]&2);
+   const safe=validSidebarStructure(report)&&report.reason==='complete'&&!JSON.stringify(report).includes('PRIVATE');
+   const structure=root[2]==='NAV'&&member[0]>=0&&report.rows[member[0]][2]==='LI'&&section[0]===0&&report.ancestors[0][2]==='ASIDE';
+   const excluded=report.rows.some(r=>(r[4]&64)&&r[8])&&report.rows.some(r=>(r[4]&128)&&r[8])&&!report.rows.some(r=>r[2]==='MAIN');
+   const geometry=root[6][2]===220&&report.ancestors[0][7]===12&&report.rows.some(r=>r[2]==='BUTTON'&&(r[7]&1));
+   const unchanged=before===document.body.innerHTML;
+   const native=document.querySelector('#source');for(let i=0;i<300;i++)native.append(document.createElement('div'));
+   const capped=readSidebarStructure({document,profile});
+   const bounded=validSidebarStructure(capped)&&['capacity','budget'].includes(capped.reason)&&capped.rows.length<=256;
+   native.remove();const missing=readSidebarStructure({document,profile});
+   return {safe,structure,excluded,geometry,unchanged,bounded,missing:validSidebarStructure(missing)&&missing.reason==='boundary-unavailable'};
+  });
+  assert(Object.values(result).every(Boolean),JSON.stringify(result));
+  console.log(JSON.stringify({status:'PASS_ANONYMOUS_SIDEBAR_SNAPSHOT_ONLY',result}));
+ }else if(process.argv.includes('--diagnostic-only')){
   const page=await browser.newPage(),url='https://chatgpt.com/';
   await page.route('**/*',r=>r.request().url()===url?r.fulfill({contentType:'text/html',body:'<nav id="source"><div id="root"><div role="list"><div role="listitem"><a href="/c/PRIVATE_ID">PRIVATE_TITLE</a></div></div></div></nav>'}):r.abort());
   await page.goto(url);await page.addScriptTag({content:outputFiles[0].text});

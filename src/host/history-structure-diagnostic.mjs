@@ -8,6 +8,54 @@ const phases=['preparation','mount','connected','other'];
 const reasons=['complete','boundary-unavailable','boundary-changed','page-left','capacity','unavailable'];
 const exact=(v,keys)=>v&&Object.getPrototypeOf(v)===Object.prototype&&Reflect.ownKeys(v).length===keys.length&&keys.every(k=>Object.hasOwn(v,k));
 const int=(v,max)=>Number.isInteger(v)&&v>=0&&v<=max;
+const sidebarTags=['NAV','ASIDE','DIV','SECTION','UL','OL','LI','A','BUTTON','SPAN','H1','H2','H3','SVG','INPUT','TEXTAREA','FORM','MAIN','SCRIPT','STYLE','OTHER'];
+const sidebarRoles=['navigation','list','listitem','group','button','link','menu','menuitem','dialog','absent','other'];
+const sidebarReasons=['complete','boundary-unavailable','capacity','budget','unavailable'];
+// Rows: parent index, sibling position, tag/role enums, presence bits, child
+// count, rounded viewport rect, visibility/overflow bits, omitted subtree.
+// Presence bits never contain attribute values: conversation marker, sidebar
+// section, href, expanded, controls, tabindex, editable, owned.
+const sidebarRow=r=>Array.isArray(r)&&r.length===9&&Number.isInteger(r[0])&&r[0]>=-1&&r[0]<256&&int(r[1],65536)&&sidebarTags.includes(r[2])&&sidebarRoles.includes(r[3])&&int(r[4],255)&&int(r[5],65536)&&Array.isArray(r[6])&&r[6].length===4&&r[6].every(n=>Number.isInteger(n)&&Math.abs(n)<=65536)&&int(r[7],31)&&typeof r[8]==='boolean';
+export function validSidebarStructure(v){
+ return exact(v,['schema','reason','ancestors','rows'])&&v.schema==='sidebar-structure-v1'&&sidebarReasons.includes(v.reason)&&Array.isArray(v.ancestors)&&v.ancestors.length<=8&&v.ancestors.every(r=>sidebarRow(r)&&r[0]===-1&&r[8])&&Array.isArray(v.rows)&&v.rows.length<=256&&v.rows.every((r,i)=>sidebarRow(r)&&(i===0?r[0]===-1:r[0]>=0&&r[0]<i));
+}
+/** One snapshot only when the existing private status popup requests layout.
+ * No observers, storage, raw attributes, text, URL reads or DOM mutations.
+ * This describes a boundary; it NEVER authorizes masking or membership. */
+export function readSidebarStructure({document,profile}){
+ const report={schema:'sidebar-structure-v1',reason:'boundary-unavailable',ancestors:[],rows:[]};
+ try{
+  const win=document.defaultView,start=win.performance.now();
+  const root=profileElement(document,profile,profile.regions.projects);
+  if(!root||root.closest('main,[contenteditable],[data-app-action-timeline-scroll]'))return report;
+  const number=n=>Number.isFinite(n)?Math.max(-65536,Math.min(65536,Math.round(n))):0;
+  const fields=(node,parent,position,omit)=>{
+   const style=win.getComputedStyle(node),rect=node.getBoundingClientRect(),role=node.getAttribute('role');
+   let flags=0;for(const [i,attr]of [marker,'data-app-action-sidebar-section','href','aria-expanded','aria-controls','tabindex','contenteditable'].entries())if(node.hasAttribute(attr))flags|=1<<i;
+   if(node.hasAttribute('data-va-owned')||node.hasAttribute('data-vaiwl-owned'))flags|=128;
+   const hidden=node.hidden||node.getAttribute('aria-hidden')==='true'||style.display==='none'||style.visibility==='hidden'||style.visibility==='collapse'||style.opacity==='0';
+   const paint=(hidden?1:0)|(!node.getClientRects().length?2:0)|(['hidden','clip','auto','scroll'].includes(style.overflowX)?4:0)|(['hidden','clip','auto','scroll'].includes(style.overflowY)?8:0)|(style.clipPath&&style.clipPath!=='none'?16:0);
+   return [parent,Math.min(position,65536),sidebarTags.includes(node.tagName.toUpperCase())?node.tagName.toUpperCase():'OTHER',role===null?'absent':sidebarRoles.includes(role)?role:'other',flags,Math.min(node.children.length,65536),[rect.x,rect.y,rect.width,rect.height].map(number),paint,omit];
+  };
+  let ancestor=root.parentElement;
+  for(;ancestor&&report.ancestors.length<8;ancestor=ancestor.parentElement)report.ancestors.push(fields(ancestor,-1,0,true));
+  const stack=[{node:root,parent:-1,position:0,depth:0}];report.reason=ancestor?'capacity':'complete';
+  while(stack.length){
+   if(report.rows.length>=256){report.reason='capacity';break;}
+   if(win.performance.now()-start>25){report.reason='budget';break;}
+   const {node,parent,position,depth}=stack.pop();
+   const omit=node.matches('svg,input,textarea,main,script,style,iframe,[contenteditable],[data-app-action-timeline-scroll],[data-thread-scroll-footer],[data-va-owned],[data-vaiwl-owned]')||depth>=16;
+   const index=report.rows.length;report.rows.push(fields(node,parent,position,omit));
+   if(depth>=16&&node.children.length)report.reason='capacity';
+   if(omit)continue;
+   // Never allocate an unbounded array, even for an unexpected native tree.
+   const limit=Math.min(node.children.length,257);
+   if(node.children.length>limit)report.reason='capacity';
+   for(let i=limit-1;i>=0;i--)stack.push({node:node.children[i],parent:index,position:i,depth:depth+1});
+  }
+  return report;
+ }catch{return {...report,reason:'unavailable'};}
+}
 const phase=state=>typeof state==='string'&&state.startsWith('layout-')?'preparation':typeof state==='string'&&state.startsWith('surface-')?'mount':['ready','reading','suspended'].includes(state)?'connected':'other';
 export function validHistoryStructureReport(v){
  return exact(v,['schema','reason','truncated','events','elapsedMs','snapshots','operations'])&&v.schema==='history-structure-v1'&&reasons.includes(v.reason)&&typeof v.truncated==='boolean'&&int(v.events,256)&&int(v.elapsedMs,60000)&&Array.isArray(v.operations)&&v.operations.length<=64&&v.operations.every(o=>exact(o,['at','kind','target','removed','added'])&&int(o.at,6000)&&['children','marker','role'].includes(o.kind)&&int(o.target,1024)&&[o.removed,o.added].every(a=>Array.isArray(a)&&a.length<=256&&a.every(n=>int(n,1024))))&&Array.isArray(v.snapshots)&&v.snapshots.length<=16&&v.snapshots.every(s=>exact(s,['at','phase','roots','list','listCount','changes','rows'])&&int(s.at,6000)&&phases.includes(s.phase)&&Array.isArray(s.roots)&&s.roots.length===2&&s.roots.every(x=>int(x,1024))&&int(s.list,1024)&&int(s.listCount,33)&&Array.isArray(s.changes)&&s.changes.length===3&&s.changes.every(x=>int(x,256))&&Array.isArray(s.rows)&&s.rows.length<=256&&s.rows.every(r=>Array.isArray(r)&&r.length===5&&int(r[0],1024)&&r[0]>0&&tags.includes(r[1])&&roles.includes(r[2])&&typeof r[3]==='boolean'&&int(r[4],257)));

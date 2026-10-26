@@ -1,6 +1,6 @@
 {
   "schema": "chatgpt-host-observed-baseline-v1",
-  "version": "chatgpt-desktop-observed-v4",
+  "version": "chatgpt-desktop-observed-v5",
   "sourceReceipt": "docs/engineering/free-mac-home-acceptance-20261023.json",
   "rawDOMCapture": false,
   "privateData": "NONE_SYNTHETIC_IDS_AND_TEXT_ONLY",
@@ -258,6 +258,26 @@
         "unmarked-row-semantics",
         "exact-live-pixel-geometry",
         "events-before-observation"
+      ]
+    },
+    {
+      "id": "sidebar-project-recent-partial",
+      "fixture": "observed-sidebar-structure.json",
+      "runner": "local-status.test.mjs",
+      "kind": "real-anonymous-static-structure-partial",
+      "evidencePointers": [
+        "docs/engineering/free-c1-c5-product-integration-20261026.json#/realProductFollowup/anonymousSidebarSnapshot"
+      ],
+      "facts": [
+        "separate-shortcut-region",
+        "two-sibling-section-marked-regions",
+        "nested-button-disclosure-and-listitem-shape",
+        "interleaved-stable-and-unmarked-recent-rows"
+      ],
+      "limits": [
+        "deep-project-members-and-controls-omitted",
+        "not-mask-authority",
+        "paint-includes-existing-owned-masks"
       ]
     }
   ],

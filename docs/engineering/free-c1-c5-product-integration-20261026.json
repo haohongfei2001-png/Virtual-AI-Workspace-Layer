@@ -396,15 +396,80 @@
       "availableEvidence": [
         "tests/host/fixtures/observed-history-structure.json",
         "tests/host/fixtures/observed-project.mjs",
-        "tests/host/fixtures/observed-host-baseline.json"
+        "tests/host/fixtures/observed-host-baseline.json",
+        "tests/host/fixtures/observed-sidebar-structure.json"
       ],
       "missing": [
-        "native Project container and immediate ancestors relative to recent list",
-        "Project/member/disclosure/menu control tag-role relationships",
-        "visibility, clipping and rectangles relative to protected native controls"
+        "Project/member/disclosure/menu descendants omitted at depth 16: no complete control-purity proof",
+        "Safe replaceable Project region including descendant overflow and controls, not merely outer rectangles"
       ],
       "boundary": "Screenshot and AX positions do not prove DOM purity. Do not enlarge masks, hide duplicate data, or claim full sidebar completion without this structure."
     },
-    "installation": "No daily Chrome operation, reload, data mutation or new final candidate in this followup; local build verification only."
+    "installation": "Explicit diagnostic-update exception: original directory backed up, seven files updated, original ID retained, one Reload dispatched, content runtime fingerprint matched; no final product acceptance.",
+    "anonymousSidebarSnapshot": {
+      "purpose": "Resolve native Project/recent container topology before changing any sidebar mask. Not a product acceptance.",
+      "channel": "Existing popup HOST_LOCAL_LAYOUT, exact extension sender and document binding; no new data ingress or authority.",
+      "fields": [
+        "fixed tag/role enums",
+        "parent and sibling indices",
+        "presence bits without native values",
+        "bounded rounded geometry and clipping categories",
+        "explicit omitted subtrees and capacity/budget result"
+      ],
+      "limits": {
+        "rows": 256,
+        "ancestors": 8,
+        "depth": 16,
+        "budgetMs": 25
+      },
+      "privacy": "No text, title, href values, native IDs, body, cookies or response reads. No observers, storage, DOM writes or old batch reset.",
+      "offline": "143 local-status tests and existing headless history browser snapshot case passed. Production build verified.",
+      "installation": {
+        "originalDirectory": "/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/.git/vaiwl-artifacts/local-source-witness-20261022/extension",
+        "candidateDirectory": "/private/tmp/vaiwl-sidebar-evidence-5eTu5Q/extension",
+        "backup": "/private/tmp/VAIWL-before-sidebar-evidence-20261026/original-extension.tar.gz",
+        "backupSha256": "b423914b0015ec8350b64a6fb1365db540f4067d092e4cd28ec828bcef03e2fd",
+        "preservedOriginalFiles": 2911,
+        "preservedExtraFiles": 2713,
+        "changedFiles": [
+          "extension/content-entry.mjs",
+          "src/host/local-status.mjs",
+          "src/host/history-structure-diagnostic.mjs",
+          "src/host/free-frame-client.mjs",
+          "src/navigation/navigation.mjs",
+          "content.js",
+          "build-manifest.json"
+        ],
+        "manifestUnchanged": true,
+        "databaseAccess": "NONE",
+        "reload": "DISPATCHED_ONCE_AND_RUNTIME_FINGERPRINT_MATCHED",
+        "installedManifestSha256": "4188a28959483e605af1e1fafaebae603a065a78b99264766253a5049304019a",
+        "runtimeContentFingerprint": "8e28f2b3a7e9387763fe3a6ea0865c2ecdf64ad68d1d2c618c9d9c260bc90140"
+      },
+      "realObservation": {
+        "status": "PARTIAL",
+        "source": "tests/host/fixtures/observed-sidebar-structure.json",
+        "channel": "existing exact original-process private status popup, AX read only after user opened it",
+        "rows": 213,
+        "ancestors": 8,
+        "reason": "capacity",
+        "facts": [
+          "Native shortcut region is outside the two sibling Project/recent section wrappers.",
+          "Project row is a nested role=button with expanded/tabindex presence, not an observed direct href.",
+          "Recent list begins stable, unmarked, unmarked, stable; later stable rows include current VAIWL masks."
+        ],
+        "missing": [
+          "Descendants omitted at depth 16 include Project row controls and member region.",
+          "Static snapshot cannot establish node replacement order or control semantics."
+        ],
+        "interpretation": "Confirms full derived sidebar is being placed below retained native Project area. Does not prove the whole Project section safe to mask.",
+        "activeMode": "reading",
+        "workspaceReceipt": "Previous reading-mode delivery is not a fresh workspace visibility or data-loss test.",
+        "additionalBrowserOperations": "NONE after this snapshot",
+        "accountUnlock": "NONE",
+        "databaseMutation": "NONE"
+      },
+      "fullProduct": "NOT_ACCEPTED"
+    }
   }
 }

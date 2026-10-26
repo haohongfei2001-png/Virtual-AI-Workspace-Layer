@@ -1,6 +1,31 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {foregroundFailureStates,installLocalStatus,readActiveLocalStatus,validLayoutShape,readActiveLocalLayout,validLocalPipeline} from '../../src/host/local-status.mjs';
+import {validSidebarStructure} from '../../src/host/history-structure-diagnostic.mjs';
+import observedSidebar from './fixtures/observed-sidebar-structure.json' with {type:'json'};
+test('captured sidebar topology remains partial and cannot certify omitted Project controls',()=>{
+ const report=observedSidebar.report,rows=report.rows;
+ assert(validSidebarStructure(report));assert.equal(report.reason,'capacity');
+ // These are anonymous snapshot indices, not selectors or native IDs.
+ assert.equal(rows[61][0],rows[93][0]);
+ assert.equal(rows[62][4]&2,2);assert.equal(rows[95][4]&2,2);
+ assert.equal(rows[88][3],'button');assert.equal(rows[88][4]&8,8);
+ assert.equal(rows[92][8],true);assert(rows[92][5]>0);
+ const recent=rows.filter(row=>row[0]===120);
+ assert.deepEqual(recent.slice(0,4).map(row=>Boolean(row[4]&1)),[true,false,false,true]);
+ assert(rows.some(row=>(row[4]&1)&&(row[7]&1)),'owned masks are present in the capture; hidden is not native absence');
+});
+test('sidebar snapshot remains anonymous, bounded and confined to the existing layout response',()=>{
+ const sidebarStructure={schema:'sidebar-structure-v1',reason:'complete',ancestors:[],rows:[[-1,0,'NAV','navigation',0,1,[0,0,200,600],0,false],[0,0,'A','absent',4,0,[0,0,200,20],0,false]]};
+ const layout={counts:[0,0,0,0,0,0,0],branches:[]};
+ assert(validSidebarStructure(sidebarStructure));assert(validLayoutShape({...layout,sidebarStructure}));
+ for(const invalid of [{...sidebarStructure,title:'PRIVATE'}, {...sidebarStructure,rows:[[0,0,'NAV','absent',0,0,[0,0,0,0],0,false]]},{...sidebarStructure,rows:[[-1,0,'PRIVATE','absent',0,0,[0,0,0,0],0,false]]},{...sidebarStructure,rows:Array(257).fill(sidebarStructure.rows[0])},{...sidebarStructure,ancestors:Array(9).fill(sidebarStructure.rows[0])}])assert(!validSidebarStructure(invalid));
+ assert(!validLayoutShape({...layout,sidebarStructure,private:'PRIVATE'}));
+ let reads=0,handler;const runtime={id:'extension',getURL:p=>'chrome-extension://extension/'+p,onMessage:{addListener:f=>{handler=f;},removeListener(){}}};
+ installLocalStatus({runtime,readState:()=> 'ready',readLayout:()=>{reads++;return {...layout,sidebarStructure};}});
+ let reply;handler({v:1,type:'HOST_LOCAL_LAYOUT'},{id:'extension',url:'https://chatgpt.com/'},r=>{reply=r;});assert.equal(reads,0);
+ handler({v:1,type:'HOST_LOCAL_LAYOUT'},{id:'extension',url:runtime.getURL('status.html')},r=>{reply=r;});assert.equal(reads,1);assert.deepEqual(reply.shape.sidebarStructure,sidebarStructure);
+});
 const request=()=>({v:1,type:'HOST_LOCAL_STATUS'});
 const sender=()=>({id:'extension',url:'chrome-extension://extension/status.html'});
 const drain=async()=>{for(let i=0;i<30;i++)await Promise.resolve();};

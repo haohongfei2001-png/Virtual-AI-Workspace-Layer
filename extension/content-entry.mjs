@@ -2,7 +2,7 @@ import {installBrowserLocalLifecycle} from '../src/host/browser-local-lifecycle.
 import {loopbackProjectAssociationProfile} from '../src/host/loopback-project-association-profile.mjs';
 import {installTemporaryNativeNavigation} from '../src/host/temporary-native-navigation.mjs';
 import {installLocalStatus} from '../src/host/local-status.mjs';
-import {createHistoryStructureDiagnostic} from '../src/host/history-structure-diagnostic.mjs';
+import {createHistoryStructureDiagnostic,readSidebarStructure} from '../src/host/history-structure-diagnostic.mjs';
 import {selectHostSurfaceProfile,waitForNativeLayout} from '../src/host/chatgpt-observed-profile.mjs';
 import {createIsolatedSessionReader} from '../src/host/isolated-session-reader.mjs';
 import {createOldSendTerminalProfile} from '../src/host/old-send-terminal-profile.mjs';
@@ -29,7 +29,7 @@ if(window===window.top&&location.origin===HOST_CONFIG.origin&&HOST_CONFIG.tempor
   window.addEventListener('pagehide',event=>{if(!event.persisted)bridge.stop();});
  }
  if(HOST_CONFIG.browserLocal){const remove=installBrowserLocalLifecycle({document,runtime:chrome.runtime,session,profile});window.addEventListener('pagehide',event=>{if(!event.persisted)remove();});}
- const removeStatus=installLocalStatus({runtime:chrome.runtime,readState:session.localStatus,readLayout:session.localLayoutStatus,observeHistory:HOST_CONFIG.browserLocal?createHistoryStructureDiagnostic({document,profile,readState:session.localStatus}):null});
+ const removeStatus=installLocalStatus({runtime:chrome.runtime,readState:session.localStatus,readLayout:()=>{const layout=session.localLayoutStatus();return HOST_CONFIG.browserLocal&&layout?{...layout,sidebarStructure:readSidebarStructure({document,profile})}:layout;},observeHistory:HOST_CONFIG.browserLocal?createHistoryStructureDiagnostic({document,profile,readState:session.localStatus}):null});
  window.addEventListener('pagehide',event=>{if(!event.persisted)removeStatus();});
  void session.start();
 }
