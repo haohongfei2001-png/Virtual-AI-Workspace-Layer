@@ -322,6 +322,10 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
    if(exactHostRecord(data,['type','role','requestId'])&&data.type==='VAIWL_UI_IDLE_ACK'&&data.requestId===state.idleRequestId){state.idleAcks.add(data.role);if(dormantReady())state.resolveIdle?.(true);}
    return;
   }
+  if(exactHostRecord(data,['type','role','height'])&&data.type==='VAIWL_UI_INTRINSIC_SIZE'&&data.role==='sidebar'){
+   if(valid(state)&&authorized(state)&&Date.parse(state.grants.get('sidebar')?.expiresAt)>now()&&Number.isInteger(data.height)&&data.height>=240&&data.height<=1024){try{surface.resizeSidebar?.(state.handle,data.height,{apply:!state.nativeDispatch&&!adapter.hasNativeLayer()});}catch{/* A size hint cannot retire another role. */}}
+   return;
+  }
   // Correlated fixed failure metadata only; it can withdraw, never grant, UI access.
   if(exactHostRecord(data,['role','type','reason'])&&data.type==='VAIWL_UI_SUSPEND'&&frameFailureReasons.includes(data.reason)){try{onFailure('surface-frame-'+data.reason);}catch{}if(data.role==='sidebar')retireSidebar(state,'ui-frame-suspended');else stop('ui-frame-suspended');return;}
   if(exactHostRecord(data,['role','type'])&&['VAIWL_UI_SUSPEND','VAIWL_UI_EXIT'].includes(data.type)){if(data.role==='sidebar'&&data.type==='VAIWL_UI_SUSPEND')retireSidebar(state,'sidebar-suspended');else stop(data.type==='VAIWL_UI_EXIT'?'ui-user-exit':'ui-frame-suspended');return;}

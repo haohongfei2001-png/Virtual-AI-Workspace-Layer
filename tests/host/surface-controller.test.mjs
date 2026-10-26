@@ -533,3 +533,13 @@ test('native dispatch holds sidebar masks off across geometry and releases only 
   f.controller.stop();
  }
 });
+
+test('intrinsic sidebar size is bounded, correlated and authorized without granting presentation',async()=>{
+ const f=fixture(),sizes=[];f.surface.resizeSidebar=(_h,size)=>sizes.push(size);
+ const send=(patch={},event={})=>f.message('sidebar',{data:{type:'VAIWL_UI_INTRINSIC_SIZE',role:'sidebar',height:300,...patch},...event});
+ await f.controller.start({});send();await drain();assert.deepEqual(sizes,[]);
+ await f.both();const shown=f.calls.show;
+ send({}, {source:{}});send({}, {origin:'https://chatgpt.com'});send({height:239});send({height:1025});send({height:NaN});send({extra:true});send({role:'workspace'});await drain();assert.deepEqual(sizes,[]);
+ send();await drain();assert.deepEqual(sizes,[300]);assert.equal(f.calls.show,shown);
+ f.controller.revoke();send();await drain();assert.deepEqual(sizes,[300]);
+});

@@ -1053,5 +1053,106 @@
       "Requires block/flow-root or column nowrap flex and native vertical auto/scroll port, with 180x240 visible slot; otherwise native fallback, workspace independent.",
       "Real composed layout and full v2.7 product acceptance NOT_RUN."
     ]
+  },
+  "continuousComposition20261027": {
+    "parent": "1c01292d86331c1a9c6927560951d7c04e7e4d3a",
+    "roots": [
+      "clipped slot was mistaken for lost structural anchor",
+      "temporary hide collapsed native flow",
+      "sparse content reserved fixed large area",
+      "current member outside selected window detached from expanded owner"
+    ],
+    "implementation": [
+      "native brand -> owned theme slot -> intact native Project/history",
+      "temporary hidden slot retains geometry; explicit close/revoke releases",
+      "correlated numeric intrinsic size; hidden hints cached; fresh viewport recaps",
+      "owning theme retains current chat without overriding disclosure choices"
+    ],
+    "nativeUntouched": [
+      "Project nodes and handlers",
+      "disclosure choice",
+      "account and input",
+      "private storage schema"
+    ],
+    "offline": {
+      "unit": "296 PASS",
+      "geometry": {
+        "status": "PASS_WEB_MECHANISM_ONLY",
+        "checks": {
+          "compositionSelected": true,
+          "formalBothVisible": true,
+          "flowReserved": true,
+          "nativeProjectUnchanged": true,
+          "nativeNeverMasked": true,
+          "nativeProjectControlReachable": true,
+          "nativeInputKeepsSidebar": true,
+          "readingKeepsFrame": true,
+          "closedSlotReleasesFlow": true,
+          "scrollAnchored": true,
+          "readingProbePreservesFlow": true,
+          "clippedAnchorRetained": true,
+          "nativeCollapseDoesNotReplaceFrame": true,
+          "unknownObstructionWithdrawsOnlySidebar": true,
+          "intrinsicSizeRespectsViewport": true,
+          "viewportGrowthRestoresRequestedSize": true,
+          "hiddenLateSizePreservesFlow": true,
+          "nativeModalPreservesLayout": true,
+          "reshowAppliesDeferredSize": true,
+          "disposeLeavesNative": true,
+          "gridNotAdmitted": true
+        }
+      },
+      "mv3": {
+        "partitionSlotWithFormalProjectAndMembers": true,
+        "sparseSidebarFitsContent": true,
+        "nativeInputAndReturnKeepContinuousSidebar": true,
+        "themeDisclosureSurvivesHostChange": true,
+        "nativeDisclosureDoesNotRebuildSidebar": true,
+        "nativeScrollKeepsFrameAligned": true,
+        "nativeProjectUntouchedAndSpaceReversible": true,
+        "explicitWorkspaceReturnRestoresComposition": true,
+        "nativeMemberOpenPreservesOriginalDraftAndWorkspace": true,
+        "homeInputAndReturnKeepSidebar": true,
+        "long-chatInputAndReturnKeepSidebar": true,
+        "noInternalRequests": true
+      },
+      "sourceHashesMatched": 200,
+      "evidence": "/private/tmp/VAIWL-v27-Continuous-Sidebar-20261027/evidence"
+    },
+    "visualReview": {
+      "viewed": [
+        "partition-desktop-workspace.png",
+        "partition-narrow-workspace.png",
+        "partition-native-reading.png",
+        "partition-long-chat-reading.png"
+      ],
+      "reference": "design/approved/v2.7/VAIWL_v2.7/validation/final/v27-small.png",
+      "confirmed": [
+        "approved card header/tree/width preserved",
+        "sparse sidebar blank height removed",
+        "theme navigation above original resources",
+        "current chat reachable without date claim"
+      ],
+      "limits": [
+        "native host in screenshots is anonymous structure replay, not live design acceptance",
+        "expanded native Project remains accessible and may repeat names as a management list"
+      ]
+    },
+    "package": {
+      "status": "HOST_IMPLEMENTATION_UNVERIFIED",
+      "releaseStatus": "NOT_RELEASE_READY",
+      "files": 199,
+      "unpacked": "/private/tmp/VAIWL-v27-Continuous-Sidebar-20261027/extension",
+      "archive": "/private/tmp/VAIWL-v27-Continuous-Sidebar-20261027/vaiwl-free-host-development.zip",
+      "archiveSha256": "0c829504fe55b1293f964b38188e0f4cedd2b2965b747f902b7b978cd720e12f"
+    },
+    "realChatGPT": "NOT_RUN",
+    "dailyInstall": "UNCHANGED_PENDING_FINAL_ACTIVATION",
+    "limits": [
+      "unknown or non-flow host preserves native sidebar; workspace independent",
+      "original Chrome native tool selected separate huifei process; no inputs sent",
+      "read-only exact original process inventory found Google search window, not verified Project acceptance document",
+      "no further structure collection or operator development"
+    ]
   }
 }

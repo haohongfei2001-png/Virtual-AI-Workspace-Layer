@@ -428,8 +428,8 @@ if(!p){
  function sidebarVersion(value){
   const placement=profile.sidebarComposition==='partitioned-flow-v1'?nativeSidebarComposition({document,source:value.historySource,history:value.history,isOwnedSurface}):null;
   if(placement){
-   value.sidebarPlacement=placement;value.sidebarRect=placement.rect;value.historyMaskRoots=[];value.preserveNativeSidebar=false;
-   if(value.roles)value.roles.sidebar={available:true,reason:null};
+   value.sidebarPlacement=placement;value.sidebarRect=placement.rect;value.historyMaskRoots=[];value.preserveNativeSidebar=!placement.rect;
+   if(value.roles)value.roles.sidebar={available:!!placement.rect,reason:placement.rect?null:'composition-clipped'};
   }
   const proof=[value.history,value.sidebarPlacement?.parent,value.sidebarPlacement?.before,value.sidebarRect?.x,value.sidebarRect?.y,value.sidebarRect?.width,value.sidebarRect?.height,value.preserveNativeSidebar,...(value.historyMaskRoots??[])];
   if(proof.length!==sidebarProof.length||proof.some((v,i)=>v!==sidebarProof[i])){sidebarProof=proof;sidebarRevision++;}

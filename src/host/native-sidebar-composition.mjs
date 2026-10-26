@@ -11,7 +11,7 @@ export function nativeSidebarComposition({document,source,history,isOwnedSurface
    if(node.matches('[data-app-action-sidebar-section]'))return node;
    if(node.children.length!==1)return null;node=node.firstElementChild;
   }return null;};
-  let parent,before,project,slot;
+  let parent,before,project,recent,slot;
   for(let node=section,i=0;node&&node!==source&&i<8;i++,node=node.parentElement){
    const candidate=node.parentElement;if(!candidate||!source.contains(candidate))break;
    const children=[...candidate.children];if(children.length>3)continue;
@@ -20,8 +20,8 @@ export function nativeSidebarComposition({document,source,history,isOwnedSurface
    if(owned.length>1||native.length!==2)continue;
    const sections=native.map(sectionIn);
    if(sections[1]!==section||!sections[0]||sections[0]===section)continue;
-   if(owned.length&&children.indexOf(owned[0])!==1)return null;
-   [project,before]=native;parent=candidate;slot=owned[0]??null;break;
+   if(owned.length&&children.indexOf(owned[0])!==0)return null;
+   [project,recent]=native;before=project;parent=candidate;slot=owned[0]??null;break;
   }
   if(!parent)return null;
   const currentScrollPort=()=>{let scrollPort=null;
@@ -37,20 +37,22 @@ export function nativeSidebarComposition({document,source,history,isOwnedSurface
   }
   return scrollPort;};
   const scrollPort=currentScrollPort();if(!scrollPort)return null;
-  for(const n of [project,before]){
+  for(const n of [project,recent]){
    const s=win.getComputedStyle(n);if(!['static','relative'].includes(s.position)||s.float!=='none'||s.order!=='0')return null;
   }
   const available=nativeHistoryListRect({document,source,root:scrollPort});
-  if(!available)return null;
+  if(!available&&!slot)return null;
   const start=(slot??before).getBoundingClientRect();
-  // Only the currently usable part of the existing scrollport is reserved.
-  const top=Math.max(available.y,start.top),height=slot?.getBoundingClientRect().height||available.y+available.height-top;
-  const proposed={x:available.x,y:top,width:available.width,height:Math.min(height,available.y+available.height-top)};
-  if(!sidebarPresentationFits(proposed))return null;
-  const sameAnchor=()=>parent.isConnected&&before.parentElement===parent&&project.parentElement===parent&&source.contains(parent)&&sectionIn(before)===section;
-  return {parent,before,project,scrollPort,slot,rect:proposed,height,
+  // Keep structural admission separate from viewport admission. A temporarily
+  // clipped slot must not be removed and clamp the native scroll position.
+  const height=slot?parseFloat(slot.style.getPropertyValue('--va-slot-height')):Math.max(240,Math.min(560,available.height-160));
+  if(!Number.isFinite(height)||height<=0)return null;
+  const top=available?Math.max(available.y,start.top):0;
+  const proposed=available?{x:available.x,y:top,width:available.width,height:Math.max(0,Math.min(start.top+height,available.y+available.height)-top)}:null;
+  const sameAnchor=()=>parent.isConnected&&before.parentElement===parent&&recent.parentElement===parent&&source.contains(parent)&&sectionIn(recent)===section;
+  return {parent,before,project,recent,scrollPort,slot,rect:sidebarPresentationFits(proposed)?proposed:null,height,maxHeight:Math.max(240,Math.min(560,scrollPort.clientHeight-160)),
    measure(owned){
-    if(currentScrollPort()!==scrollPort||!sameAnchor()||parent.children.length!==3||!owned?.isConnected||owned.parentElement!==parent||owned.nextElementSibling!==before||owned.previousElementSibling!==project||!isOwnedSurface(owned))return null;
+    if(currentScrollPort()!==scrollPort||!sameAnchor()||parent.children.length!==3||!owned?.isConnected||owned.parentElement!==parent||owned.nextElementSibling!==before||owned.previousElementSibling!==null||before.nextElementSibling!==recent||!isOwnedSurface(owned))return null;
     for(let n=owned,depth=0;n;n=n.parentElement){if(++depth>128||n.hidden||n.inert||n.getAttribute('aria-hidden')==='true'&&n!==owned)return null;const s=win.getComputedStyle(n);if(s.display==='none'||s.visibility!=='visible'||Number(s.opacity)===0)return null;}
     const rect=nativeHistoryListRect({document,source,root:owned});
     if(!sidebarPresentationFits(rect)||!historyRectangleClear(source,[owned],rect,null))return null;

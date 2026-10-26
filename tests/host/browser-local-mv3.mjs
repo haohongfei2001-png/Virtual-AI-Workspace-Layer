@@ -39,6 +39,12 @@ try{
   await sidebar.getByRole('button',{name:'查找已知项目与聊天',exact:true}).waitFor();
   assert.equal(await page.locator('[data-va-mask-sidebar]').count(),0);
   report.checks.partitionSlotWithFormalProjectAndMembers=true;
+  report.images=[];
+  const capture=async name=>{const path=join(dir,name+'.png');await page.screenshot({path});report.images.push(path);};
+  await page.waitForFunction(()=>document.querySelector('[data-va-sidebar-slot]').getBoundingClientRect().height<400);
+  report.checks.sparseSidebarFitsContent=true;
+  await capture('partition-desktop-workspace');
+
   const before=await page.locator('[data-fixture-structure-row="1"]').evaluate(n=>n.outerHTML);
   await page.locator('#draft').focus();
   await page.waitForFunction(()=>!document.querySelector('[id$="_workspace"]')?.matches(':popover-open')&&document.querySelector('[id$="_sidebar"]')?.matches(':popover-open'));
@@ -46,6 +52,29 @@ try{
   await page.getByRole('button',{name:'返回工作空间',exact:true}).click();
   await workspace.getByRole('link',{name:'Native B',exact:true}).first().waitFor();
   report.checks.nativeInputAndReturnKeepContinuousSidebar=true;
+  const theme=sidebar.getByRole('button',{name:'侧栏主题 Native Project',exact:true});
+  await theme.click();
+  const selected=await theme.getAttribute('aria-expanded');
+  await page.evaluate(()=>{const marker=document.createElement('span');marker.setAttribute('data-fixture-update','');partitionedFixture.recent.append(marker);marker.remove();});
+  await page.waitForTimeout(300);
+  assert.equal(await theme.getAttribute('aria-expanded'),selected);
+  report.checks.themeDisclosureSurvivesHostChange=true;
+  await theme.click();
+  const frameIdentity=await page.locator('[id$="_sidebar"]').getAttribute('id');
+  await page.evaluate(()=>{partitionedFixture.savedDisclosure=partitionedFixture.control.getAttribute('aria-expanded');partitionedFixture.project.dataset.savedStyle=partitionedFixture.project.getAttribute('style');partitionedFixture.project.style.height='36px';partitionedFixture.control.setAttribute('aria-expanded','false');});
+  await page.waitForTimeout(300);
+  assert.equal(await page.locator('[id$="_sidebar"]').getAttribute('id'),frameIdentity);
+  assert.equal(await page.evaluate(()=>partitionedFixture.control.getAttribute('aria-expanded')),'false');
+  await capture('partition-native-collapsed');
+  await page.evaluate(()=>{const n=partitionedFixture.project;n.setAttribute('style',n.dataset.savedStyle);delete n.dataset.savedStyle;if(partitionedFixture.savedDisclosure===null)partitionedFixture.control.removeAttribute('aria-expanded');else partitionedFixture.control.setAttribute('aria-expanded',partitionedFixture.savedDisclosure);});
+  report.checks.nativeDisclosureDoesNotRebuildSidebar=true;
+  await page.setViewportSize({width:760,height:900});
+  await page.waitForTimeout(300);
+  await workspace.getByRole('link',{name:'Native B',exact:true}).first().waitFor();
+  await capture('partition-narrow-workspace');
+  await page.setViewportSize({width:1000,height:900});
+  await page.waitForTimeout(300);
+
   await page.evaluate(()=>{partitionedFixture.scroll.scrollTop=30;});
   await page.waitForFunction(()=>Math.abs(document.querySelector('[id$="_sidebar"]').getBoundingClientRect().y-document.querySelector('[data-va-sidebar-slot]').getBoundingClientRect().y)<1);
   report.checks.nativeScrollKeepsFrameAligned=true;
@@ -67,6 +96,22 @@ try{
   assert.equal(await page.locator('#draft').inputValue(),'fixture draft');
   await workspace.getByRole('link',{name:'Native B',exact:true}).first().waitFor();
   report.checks.nativeMemberOpenPreservesOriginalDraftAndWorkspace=true;
+  await page.locator('#draft').focus();
+  await page.waitForFunction(()=>document.querySelector('[id$="_sidebar"]')?.matches(':popover-open')&&!document.querySelector('[id$="_workspace"]')?.matches(':popover-open'));
+  await capture('partition-native-reading');
+  for(const [scene,path] of [['home','/'],['long-chat','/c/'+B]]){
+   await page.goto(origin+path);
+   await page.waitForFunction(()=>!!document.querySelector('[data-va-sidebar-slot]')&&document.querySelector('[id$="_sidebar"]')?.matches(':popover-open'),null,{timeout:15000});
+   await sidebar.getByRole('button',{name:'查找已知项目与聊天',exact:true}).waitFor();
+   await page.locator('textarea').focus();
+   await page.waitForFunction(()=>document.querySelector('[id$="_sidebar"]')?.matches(':popover-open')&&!document.querySelector('[id$="_workspace"]')?.matches(':popover-open'));
+   await capture('partition-'+scene+'-reading');
+   await page.getByRole('button',{name:'返回工作空间',exact:true}).click();
+   await page.waitForFunction(()=>document.querySelector('[id$="_workspace"]')?.matches(':popover-open'));
+   report.checks[scene+'InputAndReturnKeepSidebar']=true;
+  }
+
+
   assert.deepEqual(report.browserErrors,[]);
  }
  if(process.argv.includes('--sidebar-capture-only')){

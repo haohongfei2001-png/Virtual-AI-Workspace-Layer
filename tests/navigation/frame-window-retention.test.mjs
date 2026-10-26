@@ -120,3 +120,17 @@ test('current Project outside the page is expanded with members and explicit col
  f.button('侧栏主题 Original P2').click();await tick();assert.equal(calls.at(-1).groupId,'P2');assert.equal(f.button('侧栏主题 Original P2').getAttribute('aria-expanded'),'true');
  const invalid=structuredClone(value);invalid.current.projectId='P1';assert.throws(()=>f.nav.updateFrameProjection(invalid),/invalid-frame-current-project/);
 });
+
+
+test('current member outside row window stays inside its expanded owning theme',async t=>{
+ const value=projection('sidebar'),selected=value.groups.items[0];
+ value.current={nativeUrl:'https://chatgpt.com/c/current-away',refId:'current-away',projectId:selected.id};
+ value.currentRef={...row('current-away'),available:true,membership:'PROJECT',projectId:selected.id};
+ const f=fixture('sidebar',()=>structuredClone(value));t.after(()=>f.nav.stop());f.nav.updateFrameProjection(value);
+ const group=f.pane().querySelectorAll('.group').find(n=>n.querySelectorAll('[data-ref-id]').some(r=>r.getAttribute('data-ref-id')==='current-away'));
+ assert(group,'current row is in the owning expanded theme, not detached after all groups');
+ assert.equal(f.pane().querySelectorAll('[data-ref-id]').filter(n=>n.getAttribute('data-ref-id')==='current-away').length,1);
+ f.button('侧栏主题 '+selected.name).click();f.nav.updateFrameProjection(structuredClone(value));
+ assert.equal(f.button('侧栏主题 '+selected.name).getAttribute('aria-expanded'),'false');
+ assert.equal(f.pane().querySelectorAll('[data-ref-id]').filter(n=>n.getAttribute('data-ref-id')==='current-away').length,1,'collapsed theme keeps current conversation reachable');
+});
