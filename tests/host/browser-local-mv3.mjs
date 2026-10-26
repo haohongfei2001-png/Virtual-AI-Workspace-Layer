@@ -30,7 +30,10 @@ try{
  context=await launch();report.browserErrors=[];context.on('page',p=>p.on('pageerror',e=>report.browserErrors.push(e.stack)));
  const cdp=await context.browser().newBrowserCDPSession(),{id}=await cdp.send('Extensions.loadUnpacked',{path:built.unpacked});
  if(process.argv.includes('--sidebar-composition-only')){
-  page=await context.newPage();
+  page=await context.newPage();await page.setViewportSize({width:1400,height:900});
+  // The real 2026-10-27 Project screenshot has a centered member column.
+  // Replay only this geometric fact, with the existing formal renderer/data.
+  await page.addInitScript(()=>document.addEventListener('DOMContentLoaded',()=>{const content=document.querySelector('#project-content');if(content)content.style.cssText='max-width:660px;margin-inline:auto';},{once:true}));
   await page.addInitScript({content:'if(window===window.top&&location.hostname==="127.0.0.1")document.addEventListener("DOMContentLoaded",()=>{('+materializePartitionedSidebar.toString()+')('+JSON.stringify(partitionDetails.sidebarStructure.rows)+');},{once:true});'});
   await page.goto(origin+'/g/'+P+'/project');
   const workspace=page.frameLocator('iframe[src="chrome-extension://'+id+'/workspace.html"]'),sidebar=page.frameLocator('iframe[src="chrome-extension://'+id+'/sidebar.html"]');
@@ -43,6 +46,8 @@ try{
   const capture=async name=>{const path=join(dir,name+'.png');await page.screenshot({path});report.images.push(path);};
   await page.waitForFunction(()=>document.querySelector('[data-va-sidebar-slot]').getBoundingClientRect().height<400);
   report.checks.sparseSidebarFitsContent=true;
+  assert(await page.evaluate(()=>{const panel=document.querySelector('#project-panel'),workspace=document.querySelector('[id$="_workspace"]');return workspace.getBoundingClientRect().width>panel.getBoundingClientRect().width+300;}));
+  report.checks.centeredNativePanelDoesNotConstrainWorkspace=true;
   await capture('partition-desktop-workspace');
 
   const before=await page.locator('[data-fixture-structure-row="1"]').evaluate(n=>n.outerHTML);

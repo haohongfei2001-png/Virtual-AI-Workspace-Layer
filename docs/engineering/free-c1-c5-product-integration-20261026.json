@@ -1154,5 +1154,56 @@
       "read-only exact original process inventory found Google search window, not verified Project acceptance document",
       "no further structure collection or operator development"
     ]
+  },
+  "realProductScreenshots20261027": {
+    "parent": "f14159d76fd2292f0c572b9f58b160c067a505e7",
+    "realProductAcceptance": "FAIL_NOT_V27_DELIVERY",
+    "source": "Five user-supplied screenshots 2026-10-27 02:03:52 through 02:04:49; raw private screenshots are not committed",
+    "observed": [
+      "Real Project and two members visible in Project document",
+      "Workspace constrained to centered native member column",
+      "Native Project management and owned theme list both expanded",
+      "Member opens in another tab and prior theme is absent in the new instant scope",
+      "Workspace return in new document has current chat and other known chats, not prior Project",
+      "Another conversation current title remains generic in the shown snapshot"
+    ],
+    "confirmedCodeFixes": [
+      "Project workspace may use geometrically proven empty viewport gutters; a gutter control falls back to original panel width; mask remains panel-only",
+      "Unique exact member action in freshly associated Project panel wins over identical-title exact-URL sidebar duplicates; ambiguous members and draft risks retain fallback"
+    ],
+    "notEstablished": [
+      "Exact href and inputRisk flags of screenshot navigation; duplicate-handle defect is reproducible but not proven sole live cause",
+      "Safe empty rich-editor grammar",
+      "Prior private record restoration",
+      "A permitted native Project collapse action; no automatic collapse or hiding implemented"
+    ],
+    "offline": {
+      "unit": "105 PASS",
+      "width": "PASS_WEB_MECHANISM_ONLY",
+      "memberActions": "PASS_WEB_MECHANISM_ONLY",
+      "formalMV3": "PASS",
+      "checks": {
+        "partitionSlotWithFormalProjectAndMembers": true,
+        "sparseSidebarFitsContent": true,
+        "centeredNativePanelDoesNotConstrainWorkspace": true,
+        "nativeInputAndReturnKeepContinuousSidebar": true,
+        "themeDisclosureSurvivesHostChange": true,
+        "nativeDisclosureDoesNotRebuildSidebar": true,
+        "nativeScrollKeepsFrameAligned": true,
+        "nativeProjectUntouchedAndSpaceReversible": true,
+        "explicitWorkspaceReturnRestoresComposition": true,
+        "nativeMemberOpenPreservesOriginalDraftAndWorkspace": true,
+        "homeInputAndReturnKeepSidebar": true,
+        "long-chatInputAndReturnKeepSidebar": true,
+        "noInternalRequests": true
+      },
+      "sourceTestPackageMismatch": [],
+      "legacySuite": "Full project-layout browser run still has pre-existing input-surrender/controller harness assertions. Unchanged f14159d7 journey also fails inputSurrenders (expects sidebar to disappear). No full-suite PASS claimed."
+    },
+    "package": "/private/tmp/VAIWL-v27-Project-Continuity-20261027/extension",
+    "archiveSha256": "99ce32927831bf543846e3dadc2dbb90aa391429dde41ed1987d894415f01752",
+    "installation": "NOT_UPDATED; prior package files unchanged",
+    "realVerificationOfFixes": "NOT_RUN",
+    "dataSafety": "No real browser interaction, private database/drafts untouched, no cross-document scope transfer"
   }
 }

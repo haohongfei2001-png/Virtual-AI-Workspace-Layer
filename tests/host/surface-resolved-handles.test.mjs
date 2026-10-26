@@ -9,7 +9,7 @@ function fixture(){
  const document={defaultView:{crypto:{randomUUID},getComputedStyle:()=>({display:"block",visibility:"visible"})},location:{href:'https://chatgpt.com/'}};
  const binding={documentToken:'doc',routeEpoch:1},nodes={projects:[],history:[],members:[]},roots={};
  let textReads=0,walks=0;
- const makeRoot=kind=>({parentElement:null,getAttribute:()=>null,getClientRects:()=>[{width:100,height:30}],isConnected:true,ownerDocument:document,contains:n=>nodes[kind].includes(n),querySelectorAll:()=>nodes[kind]});
+ const makeRoot=kind=>({parentElement:null,querySelector:()=>null,closest:()=>null,getAttribute:()=>null,getClientRects:()=>[{width:100,height:30}],isConnected:true,ownerDocument:document,contains:n=>nodes[kind].includes(n),querySelectorAll:()=>nodes[kind]});
  for(const kind of Object.keys(nodes))roots[kind]=makeRoot(kind);
  document.querySelectorAll=selector=>{const kind=Object.keys(nodes).find(k=>LEGACY_SURFACE_PROFILE.regions[k]===selector);return kind?[roots[kind]]:[];};
  installTreeWalkerDouble(document);const walker=document.createTreeWalker;document.createTreeWalker=(...args)=>{walks++;return walker(...args);};

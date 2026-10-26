@@ -1,6 +1,6 @@
 {
   "schema": "chatgpt-host-observed-baseline-v1",
-  "version": "chatgpt-desktop-observed-v5",
+  "version": "chatgpt-desktop-observed-v6",
   "sourceReceipt": "docs/engineering/free-mac-home-acceptance-20261023.json",
   "rawDOMCapture": false,
   "privateData": "NONE_SYNTHETIC_IDS_AND_TEXT_ONLY",
@@ -279,6 +279,29 @@
         "not-mask-authority",
         "paint-includes-existing-owned-masks"
       ]
+    },
+    {
+      "id": "project-centered-panel-and-cross-document-navigation",
+      "evidencePointers": [
+        "/realProductScreenshots20261027"
+      ],
+      "fixture": "observed-project.mjs",
+      "runner": "observed-project-layout-browser.mjs --width-only; observed-project-list-browser.mjs; browser-local-mv3.mjs --sidebar-composition-only",
+      "kind": "user-screenshot-geometric-counterexample",
+      "facts": [
+        "Project member column is narrower than available main viewport",
+        "Project and two confirmed members visible in owned sidebar and workspace",
+        "native Project management remains expanded below owned theme navigation",
+        "member opened in another browser tab; new document lacks preceding Project theme",
+        "return workspace in new document contains current chat and other known chats only"
+      ],
+      "unknowns": [
+        "exact live DOM CSS and gutter controls",
+        "exact duplicate href and risk flags at original click",
+        "current account confirmation in each new document",
+        "private persisted object restoration"
+      ],
+      "privacy": "No screenshot pixels, private titles, native IDs, URLs, message body or credentials retained. Fixture geometry is a reconstructed boundary, not a measured DOM capture."
     }
   ],
   "minimalMissingObservations": [

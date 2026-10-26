@@ -47,7 +47,7 @@ export function createSurfaceDiscovery({document,binding,urlPolicy,profile=LEGAC
     const node=entry.node.deref(),root=entry.root.deref();
     return node&&root&&node.isConnected&&root.isConnected&&node.ownerDocument===document&&root.contains(node)&&node.parentNode===entry.parent.deref()&&entry.handle.routeEpoch===routeEpoch&&entry.handle.regionEpoch===regionEpoch&&fingerprint(node,root,entry.regionKind)===entry.fingerprint&&roots.get(entry.regionKind)===root;
   }
-  function control(node,root,regionKind,controlKind,resolvedKey=null) {
+  function control(node,root,regionKind,controlKind,resolvedKey=null,resolvedTitle=null) {
     // Observation-only candidates never enter the actionable handle registry or
     // retain raw DOM fingerprints. A later authorized start discovers new handles.
     if(!retainControls)return {id:`live-${instance}-${++sequence}`,documentToken:binding.documentToken,routeEpoch,regionEpoch,controlKind};
@@ -55,7 +55,7 @@ export function createSurfaceDiscovery({document,binding,urlPolicy,profile=LEGAC
     if(entry&&!valid(entry)) { detached.add(entry.handle.id);byId.delete(entry.handle.id);entry=null; }
     if(!entry) {
       const handle={id:`live-${instance}-${++sequence}`,documentToken:binding.documentToken,routeEpoch,regionEpoch,controlKind};
-      entry={handle,node:new WeakRef(node),root:new WeakRef(root),parent:new WeakRef(node.parentNode),regionKind,fingerprint:fingerprint(node,root,regionKind),resolvedKey};
+      entry={handle,node:new WeakRef(node),root:new WeakRef(root),parent:new WeakRef(node.parentNode),regionKind,fingerprint:fingerprint(node,root,regionKind),resolvedKey,resolvedTitle};
       byNode.set(node,entry);byId.set(handle.id,entry);
     }
     return {...entry.handle};
@@ -127,7 +127,7 @@ export function createSurfaceDiscovery({document,binding,urlPolicy,profile=LEGAC
       const id=parsed?.kind===entity?(entity==='project'?parsed.projectId:parsed.conversationId):null;
       if(candidateOnly&&id)return null;
       const label=isProjectList(regionKind)?observedProjectListTitle(document,node,root,code=>{if(!candidateOnly)summary.memberReject[code]=Math.min(256,summary.memberReject[code]+1);}):title(node);if(!label)return null;
-      const handle=control(node,root,regionKind,entity,id?JSON.stringify([entity,id,parsed.navigationURL]):null);
+      const handle=control(node,root,regionKind,entity,id?JSON.stringify([entity,id,parsed.navigationURL]):null,label.titleState==='exact'?label.nativeTitle:null);
       const target=id?{kind:'resolved',entity,nativeId:id,navigationURL:parsed.navigationURL,liveHandle:handle}:{kind:'live-control',control:handle,navigationURL:null};
       const result={renderKey:id?`${entity}:${id}`:`candidate:${handle.id}`,entity,...label,target,evidence:evidence(regionKind,isProjectList(regionKind)?'title-leaf':'textContent',href?'href':'button')};
       // The same conversation may expose both ordinary and container routes.
@@ -336,7 +336,7 @@ export function createSurfaceDiscovery({document,binding,urlPolicy,profile=LEGAC
       const parsed=urlPolicy.parse(target.navigationURL);
       if(parsed.kind!==target.entity||parsed.navigationURL!==target.navigationURL||(target.entity==='project'?parsed.projectId:parsed.conversationId)!==target.nativeId)throw Error('invalid-resolved-targets');
       const key=JSON.stringify([target.entity,target.nativeId,target.navigationURL]);keys.push(key);
-      if(!wanted.has(key))wanted.set(key,{count:0,handle:null});
+      if(!wanted.has(key))wanted.set(key,{count:0,handle:null,members:0,memberHandle:null,title:null,titlesAgree:true});
     }
     if(stopped||!targets.length)return keys.map(()=>null);
     refreshRoute();refreshRoots();
@@ -347,9 +347,22 @@ export function createSurfaceDiscovery({document,binding,urlPolicy,profile=LEGAC
       const result=wanted.get(entry.resolvedKey);if(!result)continue;
       // Reuse the ordinary handle gate; no new node/locator lookup or dispatch.
       if(entry.handle.documentToken!==binding.documentToken||!checkedNode(entry.handle))continue;
+      if(result.count===0)result.title=entry.resolvedTitle;
+      if(!entry.resolvedTitle||entry.resolvedTitle!==result.title)result.titlesAgree=false;
       result.count++;result.handle=result.count===1?entry.handle:null;
+      if(entry.regionKind==='members'){result.members++;result.memberHandle=entry.handle;}
     }
-    return keys.map(key=>{const result=wanted.get(key);return result.count===1?{...result.handle}:null;});
+    // A Project panel and sidebar may expose the exact same native link. A
+    // unique, positively associated member control is the page's specific
+    // navigation action, not an arbitrary first duplicate. Recheck that panel
+    // now; old observations, conflicting titles and duplicate members cannot
+    // create this preference. Dispatch still performs the ordinary risk/handle
+    // checks, and never substitutes a different URL or an unseen control.
+    let associated=false;
+    if([...wanted.values()].some(r=>r.count>1&&r.members===1&&r.titlesAgree)){
+      associated=readSurface(()=>!!observedProjectAssociation(document,profile,urlPolicy,roots.get('members')));
+    }
+    return keys.map(key=>{const result=wanted.get(key),handle=result.count===1?result.handle:associated&&result.members===1&&result.titlesAgree?result.memberHandle:null;return handle?{...handle}:null;});
   }
   function candidateEntry(handle){
     if(!handle||typeof handle!=='object'||handle.controlKind!=='project'||!getNode(handle))return null;

@@ -114,9 +114,19 @@ export function inspectNativeProjectSurface({document,profile,urlPolicy,history,
   stage='geometry-overlap';
   if(p.y<t.y+t.height||p.y<c.y+c.height||protectedRegions.some(n=>overlap(box(n),readingRect)))return null;
   if(sidebarRect&&(!finite(sidebarRect)||protectedRegions.some(n=>overlap(box(n),sidebarRect))||overlap(readingRect,sidebarRect)))sidebarRect=null;
+  // Native member lists often have a centered max-width. That is not the
+  // workspace's width: allow its own surface to use the viewport's empty
+  // gutters, but only if the same bounded paint proof clears them. The native
+  // mask remains the identified panel, never its ancestors or gutter controls.
+  const wideX=Math.max(0,v.x+viewport.clientLeft),wideRight=Math.min(win.innerWidth,v.x+viewport.clientLeft+viewport.clientWidth);
+  const wideRect={x:wideX,y,width:wideRight-wideX,height:bottom-y};
+  let wideClear=finite(wideRect)&&wideRect.width>=readingRect.width&&wideRect.height>0&&
+   !clips.some(clip=>!insideShellClip(clip,wideRect))&&
+   !protectedRegions.some(n=>overlap(box(n),wideRect))&&(!sidebarRect||!overlap(sidebarRect,wideRect));
   stage='return-slot';
   const returnSlot=nativeReturnGapRect({document,header,slot,hitRoot,button,headerLayout:'transparent-containers',excluded:[history,title,composer,tabs].filter(Boolean),excludedRects:[readingRect]});
   const safeReturn=returnSlot&&!clips.some(n=>!insideShellClip(n,returnSlot))?returnSlot:null;
+  if(safeReturn&&overlap(safeReturn,wideRect))wideClear=false;
   // Geometry-only bounded walk: never read draft, row preview or text content.
   // Structural ancestors may surround the area, but must be layout containers.
   // The identified composer body's box shadow is decorative and does not
@@ -126,7 +136,11 @@ export function inspectNativeProjectSurface({document,profile,urlPolicy,history,
   do{
    if(++count>2048)return null;
    const inPanel=node===reading||reading.contains(node),structural=ancestors.has(node);
-   const clear=r=>finite(r)&&(!safeReturn||!overlap(r,safeReturn))&&(inPanel||structural||!overlap(r,readingRect));
+   const clear=r=>{
+    if(!finite(r))return false;
+    if(!inPanel&&!structural&&overlap(r,wideRect))wideClear=false;
+    return (!safeReturn||!overlap(r,safeReturn))&&(inPanel||structural||!overlap(r,readingRect));
+   };
    if(node.nodeType===1){
     const s=style(node);
     if(node.shadowRoot||node.localName.includes('-')||['transform','translate','rotate','scale','filter','backdropFilter','offsetPath','maskImage'].some(k=>s[k]!=='none')||s.clipPath!=='none'&&!provenClipNodes.has(node)||s.zoom!=='1')return null;
@@ -153,6 +167,6 @@ export function inspectNativeProjectSurface({document,profile,urlPolicy,history,
     for(const r of range.getClientRects()){if(++rectangles>2048||!clear({x:r.x,y:r.y,width:r.width,height:r.height}))return null;}
    }
   }while(node=walker.nextNode());
-  passed=true;return {...regions,readingRect,sidebarRect,returnSlot:safeReturn};
+  passed=true;return {...regions,readingRect:wideClear?wideRect:readingRect,sidebarRect,returnSlot:safeReturn};
  }catch{return null;}finally{if(!passed)try{onFailure(stage,stage==='geometry-clip-shape'?clipShape:null);}catch{}}
 }

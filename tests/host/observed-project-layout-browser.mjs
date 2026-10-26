@@ -30,13 +30,21 @@ try{
   });
   assert(Object.values(preparation).every(Boolean),JSON.stringify(preparation));results.push({mode:'bounded-project-preparation',passed:true,checks:preparation});await page.close();
  }
- for(const mode of (baseline?['journey']:['journey','shell-border-box','shell-border-box-corner','shell-border-box-percent','shell-zero-radius','shell-asymmetric','shell-layout-ancestor','shell-cut','shell-percent','shell-polygon','hidden-old-root','second-root','extra-native-widget','tiny-gap-control','composer-overflow','title-overflow','tab-overlap','pseudo-overflow','title-shadow','tab-outline','composer-shadow-changed','header-opaque','header-control','outer-clip','clip-path','css-mask','ancestor-transform','foreign-list-link','extra-panel','editable-panel','file-panel','replace-tabs','replace-title','replace-composer','replace-scroll','route-change','scroll','resize','keyboard','controller-journey','controller-scroll','controller-route','controller-replace','controller-resize','controller-popup','controller-expiry'])){
-  const caseStarted=performance.now(),page=await browser.newPage({viewport:{width:785,height:1193}});
+ for(const mode of (baseline?['journey']:['journey','centered-panel','centered-gutter-control','shell-border-box','shell-border-box-corner','shell-border-box-percent','shell-zero-radius','shell-asymmetric','shell-layout-ancestor','shell-cut','shell-percent','shell-polygon','hidden-old-root','second-root','extra-native-widget','tiny-gap-control','composer-overflow','title-overflow','tab-overlap','pseudo-overflow','title-shadow','tab-outline','composer-shadow-changed','header-opaque','header-control','outer-clip','clip-path','css-mask','ancestor-transform','foreign-list-link','extra-panel','editable-panel','file-panel','replace-tabs','replace-title','replace-composer','replace-scroll','route-change','scroll','resize','keyboard','controller-journey','controller-scroll','controller-route','controller-replace','controller-resize','controller-popup','controller-expiry'])){
+  if(process.argv.includes('--width-only')&&!mode.startsWith('centered-'))continue;
+  const caseStarted=performance.now(),page=await browser.newPage({viewport:{width:mode.startsWith('centered-')?1400:785,height:1193}});
   await page.route('**/*',r=>r.request().url()===url?r.fulfill({contentType:'text/html',body:observedProjectHTML(project,cid)}):r.abort());
   await page.goto(url);await page.addScriptTag({content:outputFiles[0].text});
   const result=await page.evaluate(async mode=>{
    const {createChatGPTAdapter,createURLPolicy,CHATGPT_OBSERVED_PROFILE:profile,createMountSurface,createSurfaceController}=projectModule;let surface,forbiddenReads=0;
    const panel=document.querySelector('#project-panel'),draft=document.querySelector('#draft'),tabs=document.querySelector('#project-tabs');
+   // 2026-10-27 real screenshot counterexample: the native member column is
+   // centered and narrow; geometry only, no account titles/IDs/body are stored.
+   if(mode.startsWith('centered-'))document.querySelector('#project-content').style.cssText='max-width:660px;margin-inline:auto';
+   if(mode==='centered-gutter-control'){
+    const native=document.createElement('button');native.id='gutter-control';native.textContent='Native tool';
+    native.style.cssText='position:fixed;left:365px;top:500px;width:80px;height:40px';document.querySelector('#drop').append(native);
+   }
    for(const n of [panel,...panel.querySelectorAll('a,a>div,a>div>div:last-child')])for(const k of ['textContent','innerText'])Object.defineProperty(n,k,{configurable:true,get(){forbiddenReads++;throw Error('preview-read')}});
    const adapter=createChatGPTAdapter({document,profile,urlPolicy:createURLPolicy({profile:{projectId:({container})=>/^g-p-[a-f0-9]{32}$/.test(container)?container:null}}),isOwnedMask:n=>surface?.isMasked(n)===true});
    const binding={documentToken:'fixture',producerToken:'fixture',browserDocumentId:'fixture',routeEpoch:1,origin:location.origin,expiresAt:new Date(Date.now()+(mode==='controller-expiry'?5000:20000)).toISOString()};
@@ -83,6 +91,13 @@ try{
    surface=createMountSurface({document,createFrameURL:({role})=>`chrome-extension://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/${role}.html`});
    const handle=await surface.mount({binding},inspection);surface.showWorkspace(handle);
    const checks={fullHeight:initialFullHeight,maskOnlyPanel:surface.isMasked(panel)&&getComputedStyle(tabs).visibility==='visible'&&getComputedStyle(draft).visibility==='visible'&&getComputedStyle(document.querySelector('#project-title')).visibility==='visible',current:adapter.inspect().ok&&adapter.isSameNativeRegions(inspection)&&adapter.isReturnSlotCurrent(inspection),noPreviewReads:forbiddenReads===0};
+   if(mode.startsWith('centered-')){
+    const panelBox=panel.getBoundingClientRect(),viewport=document.querySelector('#project-scroll'),workspace=document.querySelector('[data-va-owned][id$="_workspace"]');
+    checks.widthProof=mode==='centered-panel'?inspection.readingRect.width===Math.min(innerWidth,viewport.getBoundingClientRect().x+viewport.clientLeft+viewport.clientWidth)-Math.max(0,viewport.getBoundingClientRect().x+viewport.clientLeft)&&inspection.readingRect.width>panelBox.width:inspection.readingRect.width===panelBox.width;
+    checks.actualSurfaceWidth=workspace.getBoundingClientRect().width===inspection.readingRect.width;
+    checks.noAncestorMask=!surface.isMasked(viewport)&&!surface.isMasked(document.querySelector('#project-content'));
+    if(mode==='centered-gutter-control')checks.nativeGutterReachable=document.elementFromPoint(380,520)===document.querySelector('#gutter-control');
+   }
    if(mode.startsWith('replace-')){const ids={tabs:'#project-tabs',title:'#project-title',composer:'form',scroll:'#project-scroll'},n=document.querySelector(ids[mode.slice(8)]);n.replaceWith(n.cloneNode(true));checks.replacementRevokes=!adapter.isSameNativeRegions(inspection)&&!adapter.isReturnSlotCurrent(inspection)&&!surface.refreshGeometry(handle,adapter.inspect())&&!surface.visibility(handle).workspace;}
    if(mode==='route-change'){history.pushState({},'','/c/44444444-4444-4444-8444-444444444444');checks.routeRevokes=!adapter.isSameNativeRegions(inspection)&&!adapter.isReturnSlotCurrent(inspection)&&!adapter.inspect().ok;}
    if(mode==='scroll'){panel.style.minHeight='2000px';document.querySelector('#project-scroll').scrollTop=300;checks.scrolledUnsafe=!adapter.inspect().ok;}
