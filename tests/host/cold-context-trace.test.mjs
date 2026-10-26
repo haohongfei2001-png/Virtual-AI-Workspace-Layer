@@ -75,7 +75,7 @@ test('diagnostic distinguishes absent delivery, rejected native event, and later
  const modules=await Promise.all([built.unpacked,copy.unpacked].map(p=>import(pathToFileURL(join(p,'src/runtime/browser-request-context.mjs')))));
  const origin='http://127.0.0.1:1234',id='33333333-3333-4333-8333-333333333333',url=origin+'/c/'+id;
  const browser={documentId:'document',documentLifecycle:'active',frameType:'outermost_frame',url},frame={tabId:1,frameId:0,documentId:'document',documentLifecycle:'active',incognito:false,actualURL:url};
- const cases=[['before-owner',null],['missing-header','invalid-account-header'],['invalid-details','invalid-details'],['endpoint','unsupported-endpoint'],['prefetch','prefetch'],['headers','invalid-headers'],['cache','invalid-completion'],['expiry','preparation-epoch-or-deadline'],['committed',null],['positive',null]];
+ const cases=[['before-owner',null],['missing-header','context-header-missing'],['invalid-details','request-metadata-rejected'],['endpoint','endpoint-or-query-rejected'],['prefetch','prefetch-rejected'],['headers','headers-unavailable'],['cache','completion-cached'],['expiry','completion-stale'],['committed',null],['positive',null]];
  async function run(module,mode){
   delete globalThis.__vaiwlColdTrace;delete globalThis.__vaiwlColdTraceDropped;
   const event=()=>{const listeners=new Set();return {addListener:f=>listeners.add(f),removeListener:f=>listeners.delete(f),emit:d=>{for(const f of listeners)f(d)}}},webRequest=Object.fromEntries(['onSendHeaders','onCompleted','onErrorOccurred','onBeforeRedirect'].map(k=>[k,event()]));
@@ -94,7 +94,7 @@ test('diagnostic distinguishes absent delivery, rejected native event, and later
  for(const [mode,reason]of cases){
   const original=await run(modules[0],mode),traced=await run(modules[1],mode);assert.deepEqual(traced.counts,original.counts,mode+' original calls and stateful clocks unchanged');assert.deepEqual(traced.receipt,original.receipt,mode+' authority decision unchanged');assert.equal(traced.dropped,0);assert(!JSON.stringify(traced.trace).includes('SECRET_SENTINEL'));
   if(mode==='positive')assert(traced.receipt);else assert.equal(traced.receipt,null,mode);
-  if(reason)assert(traced.trace.some(e=>e.reason===reason),mode+' precise rejection');
+  if(reason)assert(traced.trace.some(e=>e.stage==='owner-diagnostic'&&e.code===reason),mode+' precise rejection');
   if(mode==='before-owner'){assert(traced.trace.some(e=>e.stage==='listeners-registered'));assert(!traced.trace.some(e=>e.stage==='send-enter'));}
   if(mode==='committed'){
    const issued=traced.trace.findIndex(e=>e.stage==='receipt-issued'),committed=traced.trace.findIndex(e=>e.stage==='navigation-committed'),drop=traced.trace.findIndex(e=>e.stage==='receipt-drop'&&e.hadReceipt);

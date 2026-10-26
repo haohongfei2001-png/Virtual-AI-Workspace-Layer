@@ -516,3 +516,20 @@ test('explicit native-list choice survives geometry and modal recovery until wor
  assert.equal(f.slot.children.length,1);f.slot.children[0].events.click({isTrusted:true});
  assert.deepEqual(f.surface.visibility(),{workspace:true,sidebar:true});f.controller.stop();
 });
+
+
+test('native dispatch holds sidebar masks off across geometry and releases only current authority',async()=>{
+ for(const ending of ['release','revoke','route','deadline']){
+  const f=publishingFixture();await f.controller.start({});await f.both();
+  const release=f.controller.beginNativeDispatch();assert.equal(typeof release,'function');
+  assert.equal(f.controller.beginNativeDispatch(),null);assert.equal(f.controller.showNativeReading(),true);
+  f.change();await drain();assert.deepEqual(f.surface.visibility(),{workspace:false,sidebar:false});
+  assert.equal(f.controller.showWorkspace(),false,'presentation cannot supersede an in-flight native action');
+  if(ending==='revoke')f.controller.revoke();
+  if(ending==='route'){f.doc.location.href+='c/changed';f.change();}
+  if(ending==='deadline')f.tick(6000);
+  release();release();
+  assert.deepEqual(f.surface.visibility(),{workspace:false,sidebar:ending==='release'||ending==='deadline'});
+  f.controller.stop();
+ }
+});

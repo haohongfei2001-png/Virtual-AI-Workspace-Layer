@@ -47,13 +47,13 @@ export function createNativeActions({discovery,urlPolicy,currentURL,bodyProof=()
   if(!exact(dto,['actionId','uiGrantId','mountId','planRevision','targetKey'])||!id(dto.actionId)||!id(dto.uiGrantId)||!id(dto.mountId)||typeof dto.targetKey!=='string'||!Number.isSafeInteger(dto.planRevision))return blocked('invalid-navigation-command');
   if(actions.has(dto.actionId))return blocked('action-already-used');if(actions.size>=1024)return blocked('action-capacity');
   const entry=plans.get(dto.targetKey);if(!entry||entry.plan.planRevision!==dto.planRevision)return blocked('unknown-navigation-plan');
-  const command=Object.freeze({...dto});actions.set(dto.actionId,true);const started=now();let dispatchEvent=null,clicked=false;
+  const command=Object.freeze({...dto});actions.set(dto.actionId,true);const started=now();let dispatchEvent=null,clicked=false,releasePresentation=null;
   try{
    if(!within(started,6000))return blocked('stale-navigation-plan');
    if(await authorize(command)!==true)return blocked('unauthorized-navigation');
    if(!valid(entry)||!within(started,6000))return blocked('stale-navigation-plan');
    if(entry.plan.mode==='href')return blocked('renderer-default-required');
-   await beforeDispatch(entry.plan);
+   const release=await beforeDispatch(entry.plan);if(typeof release==='function')releasePresentation=release;
    if(!valid(entry)||!within(started,6000))return blocked('stale-navigation-plan');
    if(await authorize(command)!==true)return blocked('unauthorized-navigation');
    if(!valid(entry,true)||!within(started,6000))return blocked('stale-navigation-plan');
@@ -64,7 +64,7 @@ export function createNativeActions({discovery,urlPolicy,currentURL,bodyProof=()
    if(hookResult&&typeof hookResult.then==='function'){Promise.resolve(hookResult).catch(()=>{});throw Error('async-native-dispatch-hook');}
    if(!valid(entry,true)||!within(started,6000))return blocked('stale-navigation-plan');
    entry.node.click();clicked=true;return {state:'dispatched',actionId:dto.actionId};
-  }catch{return {state:'unconfirmed',reason:'native-dispatch-unconfirmed'};}finally{if(dispatchEvent&&!clicked)try{const result=onNativeDispatchCancelled(dispatchEvent);if(result&&typeof result.then==='function')Promise.resolve(result).catch(()=>{});}catch{}}
+  }catch{return {state:'unconfirmed',reason:'native-dispatch-unconfirmed'};}finally{if(dispatchEvent&&!clicked)try{const result=onNativeDispatchCancelled(dispatchEvent);if(result&&typeof result.then==='function')Promise.resolve(result).catch(()=>{});}catch{}if(releasePresentation)try{releasePresentation();}catch{}}
  }
  function cancelPlan(command){
   const entry=plans.get(command?.targetKey);if(!entry||entry.plan.planRevision!==command?.planRevision)return false;

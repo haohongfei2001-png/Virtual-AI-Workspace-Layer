@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import http from 'node:http';
 import {readFile} from 'node:fs/promises';
 import {resolve} from 'node:path';
+import {tmpdir} from 'node:os';
 import {chromium} from '../b1/tooling/node_modules/playwright/index.mjs';
 
 // Real DOM, empty frame document: no fabricated host.inspect() regions or host seed.
@@ -128,7 +129,15 @@ test('single-role frame renderer reuses navigation without host DOM access',{tim
   const paint=()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
   nav.updateFrameProjection(dto);nav.showWorkspace();await paint();let scroller=nav.roots().workspace.scroller;scroller.scrollTop=900;await paint();const original=scroller.scrollTop;if(original<500)throw Error('fixture workspace not scrollable');
   nav.present({kind:'search-known'});await paint();if(nav.roots().workspace.scroller.scrollTop!==0)throw Error('fixture search not short');
-  holdMain=true;nav.enterReading();nav.showWorkspace();await paint();if(nav.view().scroll!==original)throw Error('pending main VIEW overwrote saved scroll');releaseMain();await paint();if(nav.roots().workspace.scroller.scrollTop!==original)throw Error('special view lost main workspace scroll: '+nav.roots().workspace.scroller.scrollTop+' expected '+original);nav.stop();
+  holdMain=true;nav.enterReading();nav.showWorkspace();await paint();if(nav.view().scroll!==original)throw Error('pending main VIEW overwrote saved scroll');releaseMain();await paint();if(nav.roots().workspace.scroller.scrollTop!==original)throw Error('special view lost main workspace scroll: '+nav.roots().workspace.scroller.scrollTop+' expected '+original);
+  // Recorded J1 shape: restore 144, initial height 422 clamps to 129,
+  // then height 380 permits 144. Reproduce that transient clamp at larger scale.
+  const mount=document.querySelector('#mount'),extent=nav.roots().workspace.scroller.scrollHeight;
+  mount.style.height=(extent-100)+'px';nav.restoreFrameView({segment:0,oldOpen:[],sidebarOpen:[],capacities:[],scroll:original,sidebarScroll:0,sidebarVisible:true});nav.updateFrameProjection(dto);await paint();
+  if(nav.roots().workspace.scroller.scrollTop>=original||nav.view().scroll!==original)throw Error('transient frame clamp overwrote restored intent');
+  mount.style.height='900px';await paint();if(nav.roots().workspace.scroller.scrollTop!==original)throw Error('settled frame did not restore saved scroll');
+  const restored=nav.roots().workspace.scroller;restored.dispatchEvent(new WheelEvent('wheel',{bubbles:true,composed:true}));restored.scrollTop=200;await paint();
+  mount.style.height='800px';await paint();if(nav.roots().workspace.scroller.scrollTop!==200)throw Error('restoration overrode subsequent user scroll');nav.stop();
  });
  // Horizon changes keep keyboard focus without replaying a pending choice.
  await page.evaluate(async()=>{
@@ -236,11 +245,11 @@ test('approved v2.7 sparse workspace, unknown inventory and native actions',{tim
  await page.getByRole('button',{name:'其他已知聊天',exact:true}).click();await page.getByRole('link',{name:'已入列的新聊天',exact:true}).waitFor();assert.equal(await page.getByRole('link',{name:'已入列的新聊天',exact:true}).getAttribute('href'),'https://chatgpt.com/c/U0');
  await page.getByRole('button',{name:'显示更多其他已知聊天',exact:true}).click();await page.waitForFunction(()=>productCase.nav.roots().workspace.shadow.querySelectorAll('[data-free-list="unknown"] [data-ref-id]').length===17);
  await page.getByRole('button',{name:'展开旧窗口 一个已知项目：原生标题很长时也应完整呈现',exact:true}).click();await page.getByRole('link',{name:'旧窗口',exact:true}).waitFor();
- await page.screenshot({path:'/private/tmp/vaiwl-v27-formal-desktop.png'});
- await page.setViewportSize({width:360,height:800});await page.waitForTimeout(50);state=await page.evaluate(()=>productCase.read());assert(state.width<=state.viewport);assert(state.scroll<=state.viewport+1);await page.screenshot({path:'/private/tmp/vaiwl-v27-formal-narrow.png'});
+ await page.screenshot({path:resolve(tmpdir(),'vaiwl-v27-formal-desktop.png')});
+ await page.setViewportSize({width:360,height:800});await page.waitForTimeout(50);state=await page.evaluate(()=>productCase.read());assert(state.width<=state.viewport);assert(state.scroll<=state.viewport+1);await page.screenshot({path:resolve(tmpdir(),'vaiwl-v27-formal-narrow.png')});
  // Exact layout choices survive a repaint; settings provides the same actions
  // when the native sidebar cannot safely be replaced.
  await page.evaluate(()=>productCase.nav.updateFrameProjection(productCase.dto));assert.equal(await page.getByRole('button',{name:'其他已知聊天',exact:true}).getAttribute('aria-expanded'),'true');
  await page.getByRole('button',{name:'工作空间设置',exact:true}).click();assert.equal(await page.getByRole('button',{name:'查找已知项目与聊天',exact:true}).count(),1);assert.equal(await page.getByRole('button',{name:'当前工作集',exact:true}).count(),1);
- await page.evaluate(()=>{const c=productCase;c.nav.invalidate();const empty={items:[],total:0,offset:0,limit:5,hasMore:false};c.nav.updateFrameProjection({...c.dto,current:undefined,groups:{...empty,limit:24},entries:{noProject:{...empty,inventoryTotal:0},unknown:{...empty,inventoryTotal:0}}});});await page.getByText('这里还没有活跃主题',{exact:true}).waitFor();await page.evaluate(()=>productCase.nav.stop());
+ await page.evaluate(()=>{const c=productCase;c.nav.invalidate();const empty={items:[],total:0,offset:0,limit:5,hasMore:false};c.nav.updateFrameProjection({...c.dto,current:undefined,groups:{...empty,limit:24},entries:{noProject:{...empty,inventoryTotal:0},unknown:{...empty,inventoryTotal:0}}});});await page.getByText('这个区间还没有活跃主题',{exact:true}).waitFor();await page.evaluate(()=>productCase.nav.stop());
 });

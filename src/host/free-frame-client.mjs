@@ -52,7 +52,18 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
  let wasHidden=false,visibilityAttached=false,candidates=null,candidateRoot=null,candidateRun=0,candidateOffset=0,candidatePageTotal=null;
  let candidateRestore=null,candidateMigrationId=null,candidateMigrationProject=null,migrationListening=false,workspaceEntered=false,workspaceModePending=false;
  const locatedMigrations=new Map();
- const migration=createFrameCandidateMigration({now,reveal:({projectId,focus})=>navigation?.revealNativeProject?.({projectId,focus:focus&&doc.hasFocus?.()===true})===true,restoreCandidates:p=>{const offset=candidatePageTotal===null?p.offset:Math.min(p.offset,candidatePageTotal?Math.floor((candidatePageTotal-1)/32)*32:0);const position={...p,offset};candidateRestore={...position,migrationId:candidateMigrationId};if(candidateOffset!==offset){void refreshCandidates(offset);return false;}const restored=candidates?.restorePosition?.(position)===true;if(restored)candidateRestore=null;return restored;}});
+ const migration=createFrameCandidateMigration({now,
+  reveal:({projectId,focus})=>navigation?.revealNativeProject?.({projectId,focus:focus&&doc.hasFocus?.()===true})===true,
+  restoreCandidates:p=>{
+   const offset=candidatePageTotal===null?p.offset:Math.min(p.offset,candidatePageTotal?Math.floor((candidatePageTotal-1)/32)*32:0),position={...p,offset};
+   candidateRestore={...position,migrationId:candidateMigrationId};
+   if(candidateOffset!==offset){void refreshCandidates(offset);return false;}
+   // Explicit candidate activation and trusted return restore the disclosure
+   // before measuring its saved position. Ordinary data refresh never opens it.
+   if(candidateRoot)candidateRoot.open=true;
+   const restored=candidates?.restorePosition?.(position)===true;if(restored)candidateRestore=null;return restored;
+  }
+ });
  const interruptMigration=event=>{if(event.isTrusted===true){candidateRestore=null;migration.interrupt();}};
  let bootstrapping=false,resumeTimer=null,resumeQueued=null,resumeWriting=false,resumeLast=null,resumeDesired=null,resumeQuery=null;
  let panelReturnCancel=null;

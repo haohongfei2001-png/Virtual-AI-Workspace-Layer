@@ -26,7 +26,8 @@ try{
  report.stage='status';popup=await context.newPage();await popup.goto(`chrome-extension://${id}/status.html`);await page.bringToFront();
  // Same packaged popup origin and entry; query the current active fixture tab.
  const status=()=>popup.evaluate(async()=>{const {readActiveLocalStatus}=await import(chrome.runtime.getURL('src/host/local-status.mjs'));return readActiveLocalStatus({tabs:chrome.tabs});});
- report.results.ready=await status();assert.equal(report.results.ready,'ready');
+ report.results.reading=await status();assert.equal(report.results.reading,'reading');assert.equal(await page.locator('[data-va-owned][id$="_workspace"]:popover-open').count(),0);assert.equal(await page.locator('textarea').inputValue(),'STATUS_UNSENT_DRAFT');
+ await page.getByRole('button',{name:'返回工作空间',exact:true}).click();await page.locator('[data-va-owned][id$="_workspace"]:popover-open').waitFor();report.results.ready=await status();assert.equal(report.results.ready,'ready');
  await popup.evaluate(()=>import(chrome.runtime.getURL('extension/status.mjs')+'?ready'));assert.match(await popup.locator('#status').textContent(),/已连接/);assert.equal(await popup.locator('button').count(),0);
  report.results.draft=await page.locator('textarea').inputValue()==='STATUS_UNSENT_DRAFT';assert(report.results.draft);
  // Public frame documents cannot impersonate the private popup sender.

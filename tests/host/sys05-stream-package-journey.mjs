@@ -142,6 +142,7 @@ export async function runSys05(output,{execute=false,observeWork=false,backpress
   const tokensAtDurable=(await a.evaluate(()=>sys05NativeStream.snapshot())).mutations;
   const titleWaitAt=Date.now();await a.getByRole('button',{name:'返回工作空间',exact:true}).click();
   const presented=()=>a.evaluate(()=>{const surface=document.querySelector('section[data-va-owned][id$="_workspace"]');return !!surface?.matches(':popover-open')&&getComputedStyle(surface).visibility==='visible';});
+  await poll(async()=>{const f=frame(a);if(!f)return null;const more=f.getByRole('button',{name:'其他已知聊天',exact:true});if(await more.count()!==1)return null;if(await more.getAttribute('aria-expanded')==='false')await more.click();return true;},'open-known-chat-disclosure');
   const title=await poll(async()=>{if(!await presented())throw Error('sys05-workspace-closed-during-visible-title');const f=frame(a);if(!f)return null;const row=f.locator('[data-free-list="unknown"] a[data-ref-id="'+C+'"][aria-current="page"]');return await row.count()===1&&await row.isVisible()&&await row.locator('.window-title').textContent()===accepted.title?true:null;},'visible-ACK-promoted-current-row-and-original-title');
   await poll(()=>a.evaluate(tokens=>sys05NativeStream.snapshot().mutations>tokens,tokensAtDurable),'tokens-after-visible-title');
   const tokensAtVisibleTitle=(await a.evaluate(()=>sys05NativeStream.snapshot())).mutations,titleAt=Date.now();

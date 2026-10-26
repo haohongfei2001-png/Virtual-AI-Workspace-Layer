@@ -87,3 +87,14 @@ test('planning a 17-row inventory probes only the current conversation and reval
  assert.equal(probes,0);const current=actions.planNavigation(target(C));assert.equal(current.mode,'same-target');assert.equal(probes,1);
  proof=null;assert.equal((await actions.dispatchNative({actionId:'a',uiGrantId:'g',mountId:'m',targetKey:actions.planKey(current),planRevision:current.planRevision})).reason,'stale-navigation-plan');assert.equal(probes,2);
 });
+
+
+test('native presentation release spans final authorization and runs once on success or rejection',async()=>{
+ for(const ending of ['click','deny','detach','throw']){
+  let f,held=false,releases=0,auths=0;
+  f=fixture({beforeDispatch:()=>{held=true;return ()=>{held=false;releases++;};},authorize:()=>{if(++auths===2){assert.equal(held,true);if(ending==='deny')return false;if(ending==='detach')f.detach();if(ending==='throw')throw Error('authority unavailable');}return true;},click:()=>assert.equal(held,true)});
+  const result=await f.actions.dispatchNative(f.command(f.plan()));
+  assert.equal(result.state,ending==='click'?'dispatched':ending==='throw'?'unconfirmed':'blocked');
+  assert.equal(releases,1);assert.equal(held,false);assert.equal(f.clicks,ending==='click'?1:0);
+ }
+});
