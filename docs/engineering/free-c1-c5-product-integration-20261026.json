@@ -676,5 +676,106 @@
       "untrackedCopies": true
     },
     "userProjectOperationRequested": false
+  },
+  "sidebarSnapshotDelivery20261026": {
+    "baseHead": "a445caa32e7ccd8e35b37a3ba14d7f2a5633d63f",
+    "status": "DISK_UPDATED_RUNTIME_AND_REAL_PROJECT_STRUCTURE_NOT_CONFIRMED",
+    "implementation": [
+      "Existing private status popup exports its already collected anonymous sidebar snapshot with build, route category, final exact-document check and completeness; no second scan, authorization or account identity claim.",
+      "No new observer, permission, storage, network channel or browser operator. COMPLETE_SNAPSHOT remains structural only; partial evidence is retained for analysis."
+    ],
+    "sourceHashes": {
+      "src/host/local-status.mjs": "d11edf793f31af23dc984dad905762355241692224127485c753b4195208843f",
+      "extension/status.mjs": "719e383c22abf6e099609e64095cc48f7214796efbc9653a7d1bedeb934b0cf4",
+      "tests/host/local-status.test.mjs": "85cc04814f949513b5f6e7630933b8a09dd0f3ab1ecdbf342ac4a241270bddb4",
+      "tests/host/browser-local-mv3.mjs": "b39ee88d1f35901887060bb2206df4273e191794130e0e588d5cb99679862941"
+    },
+    "verification": {
+      "statusUnit": {
+        "passed": 101,
+        "failed": 0,
+        "log": "/private/tmp/vaiwl-sidebar-export-unit.log"
+      },
+      "isolatedMV3": {
+        "status": "PASS",
+        "checks": {
+          "homeCollectorPopupComplete": true,
+          "projectCollectorPopupComplete": true,
+          "collectorBuildReceiptMatchesPackage": true,
+          "staleDocumentRejected": true,
+          "noPrivateDatabaseOrDraftChanges": true,
+          "popupDownloadsBoundAnonymousSnapshot": true,
+          "noInternalRequests": true
+        },
+        "report": "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-3uxU5y/report.json",
+        "realChatGPT": "NOT_RUN",
+        "syntheticDescendants": "Explicit offline completeness sentinels, never actual Project descendants"
+      },
+      "packageAndTestSourceClosureIdentical": true
+    },
+    "package": {
+      "status": "HOST_IMPLEMENTATION_UNVERIFIED",
+      "releaseStatus": "NOT_RELEASE_READY",
+      "files": 198,
+      "unpacked": "/private/tmp/VAIWL-Sidebar-Snapshot-20261026-QJOSKM/package/extension",
+      "archive": "/private/tmp/VAIWL-Sidebar-Snapshot-20261026-QJOSKM/package/vaiwl-free-host-development.zip",
+      "archiveSha256": "8d65cede615223db38ceaf049859d9fe5fd3cf178866c576be745ed0cc996a57",
+      "bootBuild": "b3092e59a2d160ed6618c2b620c5753010172d7504530ab75aa2ed8acfa20e71",
+      "sourceFiles": 199,
+      "testSourceClosureIdentical": true,
+      "realCapture": "NOT_RUN"
+    },
+    "installation": {
+      "originalDirectory": "/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/.git/vaiwl-artifacts/local-source-witness-20261022/extension",
+      "candidateDirectory": "/private/tmp/VAIWL-Sidebar-Snapshot-20261026-QJOSKM/package/extension",
+      "backup": "/private/tmp/VAIWL-before-sidebar-snapshot-export-20261026/original-extension.tar.gz",
+      "backupSha256": "b740b53c343436f563e0e882e78a545abcb3280cd090f116270e70d9f4818fee",
+      "preservedOriginalFiles": 2911,
+      "preservedExtraFiles": 2713,
+      "changedFiles": [
+        "extension/content-entry.mjs",
+        "src/host/local-status.mjs",
+        "src/host/history-structure-diagnostic.mjs",
+        "src/host/content-session.mjs",
+        "src/host/surface-controller.mjs",
+        "src/host/free-frame-client.mjs",
+        "src/navigation/navigation.mjs",
+        "extension/status.mjs",
+        "content.js",
+        "build-manifest.json"
+      ],
+      "manifestUnchanged": true,
+      "databaseAccess": "NONE",
+      "reload": "NOT_RUN",
+      "installedManifestSha256": "b30ebf47da87fe009b2f8c2a6f72b37ccc623bfdfcc88609fb67f3b35427f28b",
+      "extensionId": "miendbcjdmecjggplepenghjnoejmaic",
+      "profile": "Profile 4",
+      "registrationPathRecheckedBeforeWrite": true,
+      "runtimeBuild": "NOT_CONFIRMED"
+    },
+    "independentReview": {
+      "paths": [
+        "src/runtime/host-view-service.mjs",
+        "src/host/mount-surface.mjs",
+        "src/host/content-session.mjs"
+      ],
+      "result": "No additional confirmed independent defect in reviewed role isolation, field-merged CAS persistence and presentation intent paths; not an exhaustive product acceptance."
+    },
+    "remainingHostFact": "Actual native Project controls and member descendants omitted in the original anonymous tree. Do not enlarge sidebar mask without that evidence.",
+    "singleUserHandoff": {
+      "profile": "hongfei hao / Profile 4",
+      "reload": "Original VAIWL only, once; no reinstall or duplicate extension",
+      "page": "New ChatGPT tab; native existing Project home and expanded native member list",
+      "entry": "VAIWL status popup -> 保存匿名侧栏快照",
+      "file": "vaiwl-sidebar-structure.json",
+      "expectedBuild": "b3092e59a2d160ed6618c2b620c5753010172d7504530ab75aa2ed8acfa20e71",
+      "checks": [
+        "route project",
+        "verified-at-capture-not-account-identity",
+        "coverage reason, omitted subtrees and child continuity reviewed before any boundary change"
+      ],
+      "ifPartial": "Return the same report; no automatic retry, refresh or new collection request"
+    },
+    "productAcceptance": "NOT_COMPLETE; continuous sidebar real boundary and final product journey remain unverified"
   }
 }

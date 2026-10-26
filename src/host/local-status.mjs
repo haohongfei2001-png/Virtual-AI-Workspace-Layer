@@ -1,6 +1,6 @@
 import {projectSurfaceFailureReasons,projectClipDiagnostic} from './native-project-surface.mjs';
 import {historyFailureReasons} from './native-history-list.mjs';
-import {validHistoryStructureReport,validSidebarStructure} from './history-structure-diagnostic.mjs';
+import {validHistoryStructureReport,validSidebarStructure,sidebarStructureCoverage} from './history-structure-diagnostic.mjs';
 // Shared fixed frame failures; arbitrary renderer/transport error text stays private.
 export const frameFailureReasons=Object.freeze(['ui-grant-expired','ui-renew-failed','ui-join-failed','ui-port-disconnected','ui-renderer-failed','read-budget-exhausted','frame-preparation-limit','free-frame-page-too-large','frame-view-unavailable','invalid-preparation-response','invalid-frame-view','invalid-search-snippets','invalid-frame-current','invalid-frame-current-ref','invalid-frame-navigation','invalid-frame-presentation','request-timeout']);
 export const foregroundFailureStates=Object.freeze(['invalid-host-document','stale-host-document','scope-not-verified','replayed-sequence','host-refresh-unavailable','host-unavailable','capacity','transport-unavailable','scope-unverified','scope-changed'].map(reason=>'foreground-'+reason));
@@ -134,4 +134,19 @@ export async function readLocalBoot({tabs,webNavigation,target,schedule=setTimeo
   return exact(r,['v','stage','build'])&&r.v===1&&['module-loading','module-loaded','module-load-failed'].includes(r.stage)&&typeof r.build==='string'&&/^[a-f0-9]{64}$/.test(r.build)?r:null;
  };
  try{return await Promise.race([work(),new Promise(resolve=>{timer=schedule(()=>resolve(null),1000);})]);}catch{return null;}finally{active=false;cancel(timer);}
+}
+
+/** Export only the already collected sidebar snapshot. The final browser
+ * document check binds boot and geometry without exporting its URL or IDs.
+ * This is transport continuity, never an account/Workspace confirmation. */
+export async function createSidebarSnapshot({webNavigation,target,boot,shape,schedule=setTimeout,cancel=clearTimeout}){
+ if(!target||!webNavigation||!exact(boot,['v','stage','build'])||boot.v!==1||boot.stage!=='module-loaded'||typeof boot.build!=='string'||!/^[a-f0-9]{64}$/.test(boot.build)||!validSidebarStructure(shape?.sidebarStructure))return null;
+ let timer;
+ try{
+  const frame=await Promise.race([webNavigation.getFrame({tabId:target.tabId,frameId:0}),new Promise(resolve=>{timer=schedule(()=>resolve(null),1000);})]);
+  if(frame?.documentId!==target.documentId||frame?.url!==target.url||frame?.documentLifecycle!=='active')return null;
+  const path=new URL(target.url).pathname;
+  const route=path==='/'?'home':/^\/g\/[^/]+\/project\/?$/.test(path)?'project':/\/c\/[^/]+\/?$/.test(path)?'conversation':'other';
+  return {schema:'vaiwl-sidebar-snapshot-v1',build:boot.build,documentBinding:'verified-at-capture-not-account-identity',route,coverage:sidebarStructureCoverage(shape.sidebarStructure),sidebarStructure:structuredClone(shape.sidebarStructure)};
+ }catch{return null;}finally{cancel(timer);}
 }

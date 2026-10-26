@@ -60,6 +60,14 @@ try{
    assert(!JSON.stringify(sample.shape.sidebarStructure).includes('PRIVATE_SENTINEL'));
    assert(!JSON.stringify(sample.shape.sidebarStructure).includes('66666666'));
    assert(sample.shape.sidebarStructure.rows.some(r=>r[2]==='A'&&(r[4]&4)));
+   const [download]=await Promise.all([control.waitForEvent('download'),control.locator('#save-sidebar-snapshot').click()]);
+   const exported=JSON.parse(await readFile(await download.path(),'utf8'));
+   assert.equal(download.suggestedFilename(),'vaiwl-sidebar-structure.json');
+   assert.equal(exported.build,build);assert.equal(exported.route,index?'project':'home');
+   assert.equal(exported.documentBinding,'verified-at-capture-not-account-identity');
+   assert.equal(exported.coverage.state,'COMPLETE_SNAPSHOT');
+   assert(!JSON.stringify(exported).includes('PRIVATE_SENTINEL')&&!JSON.stringify(exported).includes('66666666'));
+   assert(!Object.hasOwn(exported,'url')&&!Object.hasOwn(exported,'documentId'));
    if(stale){assert.notEqual(stale.documentId,sample.target.documentId);const old=await control.evaluate(async target=>{const api=await import(chrome.runtime.getURL('src/host/local-status.mjs'));return api.readActiveLocalLayout({tabs:chrome.tabs,webNavigation:chrome.webNavigation,target});},stale);assert.equal(old,null);}
    stale=sample.target;
    report.checks[index?'projectCollectorPopupComplete':'homeCollectorPopupComplete']=true;
@@ -67,7 +75,7 @@ try{
   }
   const worker=context.serviceWorkers().find(w=>w.url().startsWith('chrome-extension://'+id+'/'));
   assert.deepEqual(await worker.evaluate(()=>indexedDB.databases()),[]);
-  report.checks.collectorBuildReceiptMatchesPackage=true;report.checks.staleDocumentRejected=true;report.checks.noPrivateDatabaseOrDraftChanges=true;
+  report.checks.collectorBuildReceiptMatchesPackage=true;report.checks.staleDocumentRejected=true;report.checks.noPrivateDatabaseOrDraftChanges=true;report.checks.popupDownloadsBoundAnonymousSnapshot=true;
   await control.close();await page.close();
  }
  // Product states use the same installed MV3 and native observation path.

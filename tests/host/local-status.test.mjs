@@ -1,8 +1,23 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {foregroundFailureStates,installLocalStatus,readActiveLocalStatus,validLayoutShape,readActiveLocalLayout,validLocalPipeline} from '../../src/host/local-status.mjs';
+import {foregroundFailureStates,installLocalStatus,readActiveLocalStatus,validLayoutShape,readActiveLocalLayout,validLocalPipeline,createSidebarSnapshot} from '../../src/host/local-status.mjs';
 import {validSidebarStructure,sidebarStructureCoverage} from '../../src/host/history-structure-diagnostic.mjs';
 import observedSidebar from './fixtures/observed-sidebar-structure.json' with {type:'json'};
+test('export binds the captured structure and strips URL, native IDs and unrelated layout data',async()=>{
+ const target={tabId:7,documentId:'PRIVATE_DOCUMENT',url:'https://chatgpt.com/g/PRIVATE_PROJECT/project'},boot={v:1,stage:'module-loaded',build:'a'.repeat(64)};
+ const shape={sidebarStructure:observedSidebar.report,navigation:{title:'PRIVATE_TITLE'}};
+ const current={documentId:target.documentId,url:target.url,documentLifecycle:'active'};
+ const snapshot=await createSidebarSnapshot({target,boot,shape,webNavigation:{getFrame:async()=>current}});
+ assert.equal(snapshot.route,'project');assert.equal(snapshot.build,boot.build);assert.equal(snapshot.coverage.state,'PARTIAL');
+ assert.deepEqual(snapshot.sidebarStructure,observedSidebar.report);assert.notEqual(snapshot.sidebarStructure,observedSidebar.report);
+ assert(!JSON.stringify(snapshot).includes('PRIVATE'));
+ for(const changed of [{...current,documentId:'other'},{...current,url:'https://chatgpt.com/'},{...current,documentLifecycle:'cached'},null])assert.equal(await createSidebarSnapshot({target,boot,shape,webNavigation:{getFrame:async()=>changed}}),null);
+ for(const bad of [{...boot,stage:'module-loading'},{...boot,build:'PRIVATE'},{...boot,extra:'PRIVATE'}])assert.equal(await createSidebarSnapshot({target,boot:bad,shape,webNavigation:{getFrame:()=>assert.fail('invalid boot must not probe')}}),null);
+});
+test('export document lookup has one bounded attempt and no late report',async()=>{
+ let expire,release,calls=0;const pending=createSidebarSnapshot({target:{tabId:7,documentId:'doc',url:'https://chatgpt.com/'},boot:{v:1,stage:'module-loaded',build:'a'.repeat(64)},shape:{sidebarStructure:observedSidebar.report},webNavigation:{getFrame:()=>{calls++;return new Promise(r=>release=r);}},schedule:f=>{expire=f;return 1;},cancel:()=>{}});
+ expire();assert.equal(await pending,null);release({documentId:'doc',url:'https://chatgpt.com/',documentLifecycle:'active'});assert.equal(calls,1);
+});
 test('captured sidebar topology remains partial and cannot certify omitted Project controls',()=>{
  const report=observedSidebar.report,rows=report.rows;
  assert(validSidebarStructure(report));assert.equal(report.reason,'capacity');
