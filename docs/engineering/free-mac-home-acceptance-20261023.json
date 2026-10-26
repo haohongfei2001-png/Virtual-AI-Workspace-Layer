@@ -3707,10 +3707,10 @@
       }
     },
     "realMac": {
-      "status": "PARTIAL_WEBSITE_BROWSER_CHECK_BLOCKED",
+      "status": "PARTIAL_PROJECT_RENDER_CONFIRMED_PRODUCT_NOT_ACCEPTED",
       "date": "2026-10-26",
       "process": "Original Profile 4 process and exact hongfei hao window verified; native AppleScript/System Events and window-only screenshots used. Other Profile windows untouched.",
-      "reload": "Original extension reload dispatched once; same installed directory and ID preserved; runtime build fingerprint not independently read back.",
+      "reload": "Original extension reload dispatched once in the prior check; same directory and ID preserved. Subsequent home and Project popup reads independently matched the frozen runtime fingerprint. No reload in Project follow-up.",
       "installedFiles": "197 declared package file hashes verified before reload; extras preserved.",
       "observed": [
         "New acceptance home reached through native omnibox; original tabs and drafts retained.",
@@ -3728,13 +3728,13 @@
       },
       "results": {
         "homeImmediateWorkspaceAndRealChatPreview": "PASS_LIMITED_VISUAL",
-        "fullV27ProjectAndMembersVisual": "NOT_RUN_CURRENT_BATCH",
-        "currentProjectNavigation": "BLOCKED_NATIVE_WEBSITE_BROWSER_CHECK",
+        "fullV27ProjectAndMembersVisual": "PASS_LIMITED_CARD_AND_MEMBER_VISUAL_NOT_FULL_PRODUCT",
+        "currentProjectNavigation": "PASS_USER_NATIVE_NAVIGATION_THEN_EXTENSION_CONNECTION_AND_DISPLAY",
         "privateOldObjectAndLayoutRestore": "NOT_RUN_NO_NEW_PERSONAL_CONFIRMATION",
         "completePersonalDelivery": "NOT_ACCEPTED"
       },
-      "blocker": "Native website displayed account load failure and browser check not completed; no challenge retry, logout, account change or repeated install followed.",
-      "next": "Resume the same frozen candidate only after the original account page is normally usable without competing tab control; then Project visual check and, if needed, one personal confirmation for private restore. Do not repeat completed old scenarios.",
+      "blocker": "Earlier website browser-check failure no longer blocked this Project observation. Full continuous-sidebar presentation and object-level private/layout restoration remain unverified; no causal claim about the earlier website failure.",
+      "next": "Keep this frozen installed candidate. Preserve the confirmed Project card/member and home evidence. Do not repeat installation, sends or completed scenarios; private restoration requires personal confirmation in this document, and full sidebar/product acceptance must not be inferred from optional-sidebar fallback.",
       "screenshots": "Stored locally only; no raw private account screenshot uploaded to GitHub.",
       "coordinatedFollowup20261026": {
         "control": "Other task confirmed five-minute pause; debugging infobar absent at start. No reload, install, message send, private unlock or database edit. Native read/action only; no tab claim or CDP.",
@@ -3772,6 +3772,87 @@
         "interference": "Debugging infobar reappeared in final screenshot after the agreed pause expired; no attribution beyond observed concurrent control.",
         "productAcceptance": "NOT_ACCEPTED: confirmed home data path does not establish full v2.7 Project visual or private layout restoration.",
         "screenshots": "Local files only, not uploaded to GitHub."
+      },
+      "projectFollowup20261026": {
+        "entry": "User entered existing Project homepage once through its native menu. Exact original Profile 4 process/window verified; agent pressed the existing unique return control using native AXPress.",
+        "runtimeBuild": "4db941c1c38e0d8b84fdb199f186a3fb7eb9724b3ce93267056cf9b516ec0f33",
+        "runtimeMatchesFrozenCandidate": true,
+        "anonymousReceipt": {
+          "storage": "session",
+          "nativeRevision": 21,
+          "projects": 1,
+          "refs": 14,
+          "viewVersions": [
+            21,
+            0,
+            [
+              0,
+              0
+            ],
+            0
+          ],
+          "viewInventory": [
+            1,
+            14
+          ],
+          "groups": [
+            1,
+            1
+          ],
+          "unknown": [
+            12,
+            5
+          ],
+          "workspaceReceipt": {
+            "deliveryId": 24,
+            "phase": "rendered",
+            "cards": 1,
+            "rows": 2
+          },
+          "presentation": {
+            "mode": "workspace",
+            "desiredMode": "workspace",
+            "attempt": "show-returned",
+            "frames": 2,
+            "grants": 2,
+            "workspace": true,
+            "sidebar": false,
+            "geometryPaused": false,
+            "returnPresent": false
+          },
+          "navigation": {
+            "phase": "accepted",
+            "association": 1,
+            "claims": 2
+          },
+          "popupRead": {
+            "ownedPopupCount": 1,
+            "truncated": false,
+            "readErrors": []
+          }
+        },
+        "visualComparison": {
+          "PASS": [
+            "One real Project card with native title and two member links visible; no synthetic filler.",
+            "Approved gray card header, icon, static heading, nested member lines and default expansion visible.",
+            "Unknown-association chats are a collapsed secondary section; no per-row last-confirmed text.",
+            "Native Project title, composer, tool controls and native sidebar remain visible.",
+            "Workspace remains visible while optional sidebar is not displayed; status and exact-window screenshots agree."
+          ],
+          "LIMITATION": [
+            "This Project mounts workspace only in its proved native member-reading region, below the native composer; not evidence for a full-width homepage.",
+            "Derived continuous sidebar is not displayed on this page; original sidebar is retained. This is not full v2.7 sidebar acceptance.",
+            "Two members have no demonstrated send-time evidence in this observation; no fabricated recent/old dates."
+          ],
+          "NOT_RUN": [
+            "Private old object and persisted layout restoration: existing popup explicitly reports locked private data.",
+            "Current-batch full cross-route continuous user journey and full personal-product acceptance."
+          ]
+        },
+        "interference": "Official browser debugging infobar reappeared in the later screenshot; the workspace remained visible in that screenshot. This task used no tab claim or CDP and did not cancel another task or attribute its cause.",
+        "preservation": "No install, reload, message, unlock, database edit or other Profile action. Own status popup closed through its existing toolbar control.",
+        "screenshots": "Exact-window screenshots retained locally only; no raw account content committed or uploaded.",
+        "productAcceptance": "NOT_ACCEPTED: real Project rendering is confirmed, but it does not establish complete v2.7 or private restoration."
       }
     },
     "limitations": [
