@@ -83,7 +83,7 @@ test('an owned return cannot be classified while either surface is open',()=>{co
 test('return identity refreshes only on observed native surrender, not arbitrary closed replacement',()=>{const f=parentProbeFixture();f.setOpen(2);f.probe.read();const next=f.replace();f.setOpen(0);f.event('focusin',f.rich);assert.equal(returnKey(f,next).target,'owned-return');const other=f.replace();assert.throws(()=>returnKey(f,other),/closed owned/);});
 test('return enum never grants child or still-open parent an exception',()=>{for(const bad of [{source:'workspace',from:'owned-return',before:0,after:0},{source:'parent',from:'owned-return',before:2,after:2,target:'owned-return'},{source:'parent',from:'composer',before:2,after:2,target:'owned-return'}])assert.throws(()=>key(bad),/return/);});
 test('focus and keyup diagnostics remain bounded and cannot substitute for trusted keydown',()=>{const raw=observation();raw.documents.forEach(d=>{d.hasFocus=false;});const value=reduceUI06Key(raw);assert.deepEqual(value.diagnostic.hasFocus,[false,false,false]);assert(value.diagnostic.keyups.every(u=>u.count===0));raw.documents[0].ups=1;raw.documents[0].up={direction:'Tab',trusted:true,target:'composer',rawBody:'forbidden'};assert.throws(()=>reduceUI06Key(raw),/fields/);});
-test('backward and restored closed observations precede the unchanged forward case',()=>{const source=readFileSync(new URL('./ui06-keyboard-ax.mjs',import.meta.url),'utf8');assert(source.includes("for(const direction of ['Shift+Tab','Tab'])"));assert(source.includes("await walk('Shift+Tab','history',false);await walk('Tab','composer',false);await ax(false);}"));assert(source.indexOf("name:'显示原生列表'",source.indexOf("if(direction==='Shift+Tab')"))<source.indexOf("await walk('Shift+Tab','history',false)"));assert.deepEqual(UI06_LIMITS,{keys:64,deadlineMs:15000});assert(source.includes("await walk(direction,'composer',true,true)"));});
+test('backward and restored closed observations precede the unchanged forward case',()=>{const source=readFileSync(new URL('./ui06-keyboard-ax.mjs',import.meta.url),'utf8');assert(source.includes("for(const direction of ['Shift+Tab','Tab'])"));assert(source.includes("await walk('Shift+Tab','history',false);await walk('Tab','composer',false);await ax(false);}"));assert(source.indexOf("name:'显示原生列表'",source.indexOf("if(direction==='Shift+Tab')"))<source.indexOf("await walk('Shift+Tab','history',false)"));assert.deepEqual(UI06_LIMITS,{keys:64,deadlineMs:15000});assert(source.includes("await walk(direction,'composer',true,sidebarAvailable)"));});
 
 test('a stripped old return identity cannot become native after reopen and replacement',()=>{const f=parentProbeFixture();f.setOpen(2);f.probe.read();const next=f.replace();f.setOpen(0);f.event('focusin',f.rich);assert.equal(returnKey(f,next).target,'owned-return');delete f.button.dataset.vaOwned;assert.throws(()=>returnKey(f,f.button),/closed owned/);});
 
@@ -114,4 +114,24 @@ test('a continuous sidebar cannot conceal keyboard delivery to the hidden worksp
  const raw=observation({before:1,after:1,source:'workspace'});assert.throws(()=>reduceUI06Key({...raw,sidebarContinuous:true}),/hidden workspace/);
  const start=observation({after:1});start.documents[0].events=[{target:'composer',open:1}];const first=reduceUI06Key({...start,sidebarContinuous:true});
  assert.throws(()=>assertUI06Path(path([first,{...first,before:1,nativeFocus:[]}]),{direction:'Tab',target:'composer',open:true,sidebarContinuous:true}),/hidden workspace/);
+});
+
+test('compact history remains AX-accessible beside an independently open workspace',()=>{
+ const input=tree(true);for(const n of input.nodes){if(['history','historyOther'].includes(n.nodeId))n.ignored=false;if(n.nodeId==='sidebar')n.ignored=true;}
+ const facts=reduceUI06ParentAX(input);assertUI06AXPhase(facts,true,false,false);
+ for(const patch of [{history:false},{historyOther:false},{sidebar:true},{reading:true},{readingSentinel:true},{composer:false}])assert.throws(()=>assertUI06AXPhase({...facts,...patch},true,false,false));
+ assert.throws(()=>assertUI06AXPhase(facts,true,true,false),/unavailable/);
+});
+test('workspace-only keyboard traversal can pass native history but never masked reading or unavailable sidebar',()=>{
+ const first=observation({before:1,after:1,target:'history-other'});first.documents[0].events=[{target:'history-other',open:1}];
+ const history=reduceUI06Key({...first,sidebarAvailable:false});
+ const last=reduceUI06Key({...observation({before:1,source:'parent',from:'history-other'}),sidebarAvailable:false});
+ assertUI06Path(path([history,last],{startOpen:1}),{direction:'Tab',target:'composer',open:true,sidebarAvailable:false});
+ for(const target of ['native-background','sidebar']){const bad=structuredClone(first);bad.documents[0].focus=target;bad.documents[0].events=[{target,open:1}];assert.throws(()=>reduceUI06Key({...bad,sidebarAvailable:false}));}
+ assert.throws(()=>reduceUI06Key({...observation({before:1,source:'sidebar'}),sidebarAvailable:false}),/unavailable/);
+ assert.throws(()=>reduceUI06Key({...first,sidebarAvailable:true}),/masked/);
+});
+test('J3 sidebar expectation comes from fixed fixture profile, not observed product success',async()=>{
+ const {j3JourneyProfile}=await import('./j3-journey-profile.mjs');assert.equal(j3JourneyProfile('LEGACY').sidebarAvailable,true);assert.equal(j3JourneyProfile('MODERN').sidebarAvailable,false);
+ const source=readFileSync(new URL('./j3-package-journey.mjs',import.meta.url),'utf8');assert(source.includes('sidebarAvailable:selected.sidebarAvailable'));assert(source.includes("110,'MODERN independent compact-history fixture changed'"));
 });

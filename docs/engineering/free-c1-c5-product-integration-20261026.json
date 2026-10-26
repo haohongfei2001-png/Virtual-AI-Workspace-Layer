@@ -1493,7 +1493,10 @@
         "ui10ModernCoverageComplete": true,
         "finalProductJourney": "PASS",
         "independentReadOnlyReview": "PASS_NO_NEW_BLOCKER",
-        "cspContractNode": 15
+        "cspContractNode": 15,
+        "pageCommandReadinessNode": 53,
+        "finalContractNode": 91,
+        "ui06IndependentRolesNode": 71
       },
       "testContractRepair": "Existing entry/J1/J4/repair helpers wait for actual workspace, not both optional roles; disclose unknown rows before reading; SYS05 uses workspace tool when sidebar cannot fit; passive J4 anchors retain original cleanup. Original draft, identity, causal response, budgets and native action assertions remain.",
       "scopedResults": {
@@ -1506,7 +1509,9 @@
         "earlySearch": "PASS_EARLY_INPUT_RENDERER_SUBCONTRACT_ONLY",
         "ui10Modern": "PASS_LAYOUT_SUBCONTRACT_ONLY",
         "finalJourney": "PASS",
-        "csp": "PASS_NARROW_PACKAGED_FAULT_OBSERVATIONS"
+        "csp": "PASS_NARROW_PACKAGED_FAULT_OBSERVATIONS",
+        "pageCommand": "PASS_NARROW_PACKAGED_PAGE_COMMAND_AND_NO_TAP_CONTINUITY",
+        "j3Modern": "PARTIAL_NOT_J3_ACCEPTED"
       },
       "fullCI": "NOT_ALL_GREEN: unknown-protocol worker body witness failed RESOURCE_CONTENT_UNAVAILABLE/net::ERR_ABORTED; no relaxed proof or automatic retries. Other legacy job failures reviewed separately; local subcontracts do not imply full CI acceptance.",
       "evidence": "free-night-ci-contracts-20261027.json.gz",
@@ -1528,7 +1533,9 @@
         "csp": "Historical CI failure retained; exact oracle and historical counter now share the existing sidebar-only 3-field integer 240..1024 size protocol. Local packaged CSP passed; zero schema violations and private leaks, foreign sender denied, original draft/selection preserved. Not full CI acceptance.",
         "partialJ3ContextPopulated": "legacy both-role, folded-UNKNOWN and composer-closes-both assumptions; no new product defect established by these failures",
         "stale503Mutant": "expected negative-control failure, unchanged baseline passed"
-      }
+      },
+      "pageCommandReadiness": "Existing security runner now binds visible state to the current owned workspace frame, discloses UNKNOWN once through formal UI, and verifies the expected stable object ID before the unchanged settled-IDB/attack baseline. Sidebar is optional; replacements revalidate ownership and never replay either action. Zero unexpected requests, native writes, database mutations or private leaks. Native finite-response function/results preserved. Not full SEC08/ACT20 or real-account acceptance.",
+      "j3IndependentRoles": "Fixed MODERN fixture has 110px native history and no safe sidebar. Workspace, native history and parent AX/keyboard remain verified independently; no geometry relaxation. Registered-worker run completed 13 supported steps with no send and original drafts/nodes retained. Three readable-native-Range snippet steps NOT_COVERED; production snippet profile remains disabled/not certified. Prior immediate cold-start failure and masked-Range failure retained; neither is rewritten as PASS. UNKNOWN fixture history stays in its evidenced old segment, not invented recent use."
     }
   }
 }
