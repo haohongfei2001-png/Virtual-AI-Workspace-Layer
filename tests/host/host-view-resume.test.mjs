@@ -267,3 +267,27 @@ test('durable layout merges role-owned fields and fresh grants restore both role
  await h.bind();await h.mount();const restored=await resume(h);assert.equal(restored.resume.query.segment,3);
  const next=await ready(h,'workspace',restored.resume.query);assert.deepEqual(next.page.viewSession,first.page.viewSession);
  });
+
+
+for(const sameQuery of [false,true])test('delayed persistent SAVE respects layout intent across VIEW sameQuery='+sameQuery,async t=>{
+ const h=await boot(t);await ready(h);const scope=h.service.authority.scopeFor({tabId:1,frameId:0,documentId:'document',parentDocumentId:null,actualURL:url,documentLifecycle:'active',incognito:false});
+ let held=false,release;const context={scope,scopeGrantId:'scope',role:'workspace',parentFrame:{tabId:1,documentId:'late_layout',actualURL:url},isCurrent:()=>true};
+ const repo={viewOnly:async(...args)=>{if(held){held=false;await new Promise(r=>release=r);}return h.workspaces.viewOnly(...args);},saveView:(...args)=>h.workspaces.saveView(...args)};
+ const views=createHostViewService({ui:{withScope:async(args,fn)=>fn(context)},readService:h.service.readService,workspaceRepository:repo,clock:()=>NOW});t.after(()=>views.stop());const base={v:1,grantId:'grant',mountId:'mount'};
+ async function v(query){for(let i=0;i<100;i++){const r=await views.handle({...base,type:'HOST_UI_VIEW',query},{});if(r.state!=='preparing')return r;await drain();}assert.fail('preparation stalled');}
+ await v({segment:3});held=true;const pending=views.resume({...base,type:'HOST_UI_SAVE_VIEW',expectedQuery:{segment:3},view:layout},{});for(let i=0;i<100&&!release;i++)await drain();assert.equal(typeof release,'function');
+ const segment=sameQuery?3:7;assert.equal((await v({segment})).state,'ready');release();assert.equal((await pending).ok,sameQuery);const stored=(await h.workspaces.viewOnly(scope)).view;if(sameQuery)assert.equal(stored.value.scroll,layout.scroll);else assert.equal(stored,null);assert.equal((await views.resume({...base,type:'HOST_UI_RESUME'},{})).resume.query.segment,segment);
+});
+
+test('sidebar-first shared view remains ready when only sidebar is revoked',async t=>{
+ const h=await boot(t);assert.equal((await ready(h,'sidebar')).state,'ready');assert.equal((await ready(h)).state,'ready');
+ h.service.ui.revokeDocument(h.children.sidebar.documentId);assert.equal((await h.view()).state,'ready');
+});
+test('durable row expansion is restored as a bounded read query in a new document',async t=>{
+ const h=await boot(t);await ready(h,'workspace',{segment:0});
+ const key='frame-row:'+JSON.stringify(['p1','current',0,0,0]);
+ assert.equal((await save(h,{...layout,segment:0,capacities:[[key,17]]})).ok,true);
+ h.service.invalidate({tabId:1,documentId:'document'});h.sender.documentId='restored-document';await h.bind();await h.mount();
+ const result=await resume(h);assert.deepEqual(result.resume.query.rowWindows,[{groupId:'p1',list:'current',rowOffset:0,rowLimit:17}]);
+ const page=await ready(h,'workspace',result.resume.query);assert.equal(page.state,'ready');assert.equal(page.page.groups.items.find(g=>g.id==='p1').lists.current.limit,17);
+});

@@ -3878,6 +3878,73 @@
       "targetedUi10Legacy": "PASS_LAYOUT_SUBCONTRACT_ONLY",
       "remainingFailures": "NOT_RECLASSIFIED_AS_PASS",
       "productionPackageChanged": false
+    },
+    "completion20261026": {
+      "baseHead": "6a1cd9836a28087a5340a0e9e867b0c2a04c9933",
+      "scope": "C1-C5 integrated code and isolated formal MV3, no daily Chrome operation",
+      "rootCauses": [
+        "optional sidebar first reader owned shared FreeViewOwner lifetime",
+        "optional sidebar renewal could consume whole STATUS deadline",
+        "role release ACK did not immediately reconcile; same-layout recovery could loop",
+        "mixed but sufficiently large proved history run was unconditionally native-only",
+        "durable expanded row/page descriptors were not applied to first fresh projection",
+        "late SAVE could overwrite newer query; same-query VIEW must not invalidate current SAVE",
+        "core viewport topology continuity omitted after optional-region split"
+      ],
+      "implementation": [
+        "mount-scoped shared read owner with per-RPC role authority retained",
+        "mandatory renewal first, optional 1s deadline only with final-parent budget reserved",
+        "ACK-driven role-only recovery once per proved layout; explicit EXIT remains global",
+        "complete scrolling sidebar inside proved usable rectangle; unknown rows and clipped/unsafe regions native",
+        "role-scoped durable page/row-window intent via existing b23_views CAS, no schema migration",
+        "RAM layout-intent token keeps same-query refresh and rejects superseded layout writes",
+        "unchanged core viewport/protected-region topology validation"
+      ],
+      "evidence": {
+        "integrated-final-journey-20261026.json": "docs/evidence/free-delivery-2026-10-17/integrated-final-journey-20261026.json.gz",
+        "integrated-final-layout-20261026.json": "docs/evidence/free-delivery-2026-10-17/integrated-final-layout-20261026.json.gz",
+        "integrated-mixed-sidebar-20261026.json": "docs/evidence/free-delivery-2026-10-17/integrated-mixed-sidebar-20261026.json.gz",
+        "integrated-related-20261026.tap": "docs/evidence/free-delivery-2026-10-17/integrated-related-20261026.tap.gz",
+        "integrated-races-20261026.tap": "docs/evidence/free-delivery-2026-10-17/integrated-races-20261026.tap.gz"
+      },
+      "frozen": {
+        "status": "HOST_IMPLEMENTATION_UNVERIFIED",
+        "releaseStatus": "NOT_RELEASE_READY",
+        "files": 198,
+        "unpacked": "/Users/hhf/Downloads/VAIWL-v27-Integrated-20261026/extension",
+        "archive": "/Users/hhf/Downloads/VAIWL-v27-Integrated-20261026/vaiwl-free-host-development.zip",
+        "archiveSha256": "0cff4ac13cf36fca12f0a932094fe98a83624e451b0170849c7f8a88259b65f0",
+        "buildManifestSha256": "2eb0630d255b91a4ebd0a3cca4a2fb24a16aef7d79f3fbde239a75dc7ed6932a",
+        "contentSha256": "6330723e486d4621504f472538a0d27ab14db9460e038c6793593e60a29c48e6",
+        "installation": "NOT_UPDATED",
+        "activation": "NOT_RUN",
+        "realAccount": "NOT_RUN"
+      },
+      "isolatedProduct": {
+        "states": [
+          "empty",
+          "0 Project / 13 chats",
+          "1 Project / 2 confirmed members / secondary unknown",
+          "narrow Project"
+        ],
+        "mixedSidebar": "PASS: usable safe run scrolls; clipping and overlap only withdraw sidebar; same workspace survives",
+        "durableExpansion": "PASS: formal more -> b23_views -> fresh document locked -> explicit local fixture binding -> expanded rows restored",
+        "continuousJourney": "PASS: native open/return/draft, actual isolated Worker restart, risk revocation, refresh, full isolated restart, explicit persistent layout restore",
+        "notRealAcceptance": true
+      },
+      "remaining": [
+        "single real Mac product acceptance of this frozen build",
+        "real prior private records/layout recovery after user confirmation; no private-exclusive-object requirement",
+        "unproved return-slot paint variants remain locally unavailable; no guessing or expanded page access"
+      ],
+      "preservation": {
+        "dailyChrome": "UNTOUCHED",
+        "oldPrivateDatabase": "UNTOUCHED",
+        "drafts": "UNTOUCHED",
+        "originalExtensionId": "UNCHANGED",
+        "stashes": "all three unchanged",
+        "realMessagesSent": 0
+      }
     }
   }
 }

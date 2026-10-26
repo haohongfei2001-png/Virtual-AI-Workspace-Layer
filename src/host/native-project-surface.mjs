@@ -1,5 +1,5 @@
 import {nativeReturnGapRect} from './native-return-gap.mjs';
-import {nativeHistoryPresentation} from './native-history-list.mjs';
+import {sidebarPresentationFits,nativeHistoryPresentation} from './native-history-list.mjs';
 
 const box=node=>{const r=node.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height};};
 const finite=r=>Object.values(r).every(Number.isFinite);
@@ -87,7 +87,7 @@ export function inspectNativeProjectSurface({document,profile,urlPolicy,history,
   }
   if(!chain.includes(hitRoot)||!chain.includes(main))return null;
   const protectedRegions=[header,title,composer,tabs];
-  const regions={history,header,reading,composer,navigationSlot:slot,readingViewport:viewport,protectedRegions,historyMaskRoots:historyPresentation?.maskRoots??[],preserveNativeSidebar:!historyPresentation||historyPresentation.complete===false,returnHitRoot:hitRoot,proofNodes:[header,reading,composer,title,tabs,...chain]};
+  const regions={history,header,reading,composer,navigationSlot:slot,readingViewport:viewport,protectedRegions,historyMaskRoots:historyPresentation?.maskRoots??[],preserveNativeSidebar:!sidebarPresentationFits(historyPresentation?.rect),returnHitRoot:hitRoot,proofNodes:[header,reading,composer,title,tabs,...chain]};
   // Controller continuity may compare identities while a native modal blocks
   // hit testing. This result has no presentation rectangles or mount approval.
   if(!geometry){passed=true;return regions;}

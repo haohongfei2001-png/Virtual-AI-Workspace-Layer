@@ -58,10 +58,10 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
  function retireSidebar(state,reason){
   const target=state.frames.find(x=>x.role==='sidebar');if(!target)return;
   state.frames=state.frames.filter(x=>x!==target);state.grants.delete('sidebar');state.pending.delete('sidebar');state.earlyJoins.delete('sidebar');
-  state.roleRevision=(state.roleRevision??0)+1;state.sidebarFault=reason;state.sidebarRecoveryReady=false;state.sidebarRecoveryEpoch=null;
+  state.roleRevision=(state.roleRevision??0)+1;state.sidebarFault=reason;state.sidebarRecoveryReady=false;
   try{surface.retireRole?.(state.handle,'sidebar');surface.suspend(state.handle,reason,'sidebar');}catch{}
   const revision=state.roleRevision;
-  void Promise.resolve(bridge.releaseRole?.({mountId:state.handle.id,role:'sidebar'})).then(result=>{if(current===state&&state.roleRevision===revision&&result?.ok===true)state.sidebarRecoveryReady=true;}).catch(()=>{});
+  void Promise.resolve(bridge.releaseRole?.({mountId:state.handle.id,role:'sidebar'})).then(result=>{if(current===state&&state.roleRevision===revision&&result?.ok===true){state.sidebarRecoveryReady=true;reconcileGeometry(state);}}).catch(()=>{});
   publishSurface(state);arm(state);
  }
  function recoverSidebar(state,inspection){
@@ -306,7 +306,7 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
   }
   // Correlated fixed failure metadata only; it can withdraw, never grant, UI access.
   if(exactHostRecord(data,['role','type','reason'])&&data.type==='VAIWL_UI_SUSPEND'&&frameFailureReasons.includes(data.reason)){try{onFailure('surface-frame-'+data.reason);}catch{}if(data.role==='sidebar')retireSidebar(state,'ui-frame-suspended');else stop('ui-frame-suspended');return;}
-  if(exactHostRecord(data,['role','type'])&&['VAIWL_UI_SUSPEND','VAIWL_UI_EXIT'].includes(data.type)){if(data.role==='sidebar')retireSidebar(state,'sidebar-exit');else stop(data.type==='VAIWL_UI_EXIT'?'ui-user-exit':'ui-frame-suspended');return;}
+  if(exactHostRecord(data,['role','type'])&&['VAIWL_UI_SUSPEND','VAIWL_UI_EXIT'].includes(data.type)){if(data.role==='sidebar'&&data.type==='VAIWL_UI_SUSPEND')retireSidebar(state,'sidebar-suspended');else stop(data.type==='VAIWL_UI_EXIT'?'ui-user-exit':'ui-frame-suspended');return;}
   if(data.type==='VAIWL_UI_JOIN'){state.joinedRoles?.add(data.role);reportJoin(state);}
   if(!valid(state,false)||Object.keys(data).sort().join(',')!=='nonce,role,type'||data.type!=='VAIWL_UI_JOIN'||!tokenOK(data.nonce)||state.pending.has(data.role)||state.grants.has(data.role))return;
   if(!state.registered){if(!state.earlyJoins.has(data.role))state.earlyJoins.set(data.role,{origin:event.origin,source:event.source,data:{type:data.type,role:data.role,nonce:data.nonce}});return;}

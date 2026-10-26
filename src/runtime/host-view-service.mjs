@@ -1,7 +1,7 @@
 import {tokenOK} from '../b1/identity.mjs';
 import {isCurrentNavigationPlan,isResolvedControlNavigationPlan} from '../host/current-navigation-plan.mjs';
 import {locateFreeProject} from './free-project-location.mjs';
-import {validateFrameResumeView,validateResumeQuery} from '../host/frame-resume-state.mjs';
+import {validateFrameResumeView,validateResumeQuery,queryForFrameResume} from '../host/frame-resume-state.mjs';
 import {prepareHostAutoTimePolicy,hostAutoTimePolicyFresh} from './host-auto-time-policy.mjs';
 import {localDay} from '../navigation/projection.mjs';
 import {FREE_HORIZONS,initialFreeTimePolicy,setFreeHorizon,coolFreeTimePolicy,enableFreeAutoTimePolicy,relocateFreeSegment} from '../data/free-time-policy.mjs';
@@ -57,8 +57,11 @@ export function createHostViewService({ui,readService,workspaceRepository=null,p
   const sameSession=prior&&['H','T','Z','policyRevision'].every(k=>prior.session[k]===session[k]);
   const specialTransition=prior&&(prior.query.search||prior.query.workingSet||validatedQuery.search||validatedQuery.workingSet)&&
    [['segment',0],['offset',0],['limit',24]].every(([k,fallback])=>(prior.query[k]??fallback)===(validatedQuery[k]??fallback));
-  const retain=sameSession&&(JSON.stringify(prior.query)===JSON.stringify(validatedQuery)||specialTransition);
-  const record={tabId:context.parentFrame.tabId,documentId:context.parentFrame.documentId,scopeKey:context.scope.key,at:elapsedNow(),query:validatedQuery,session:structuredClone(session),view:view??(retain?prior.view:null)??null};
+  const sameQuery=prior&&JSON.stringify(prior.query)===JSON.stringify(validatedQuery),retain=sameSession&&(sameQuery||specialTransition);
+  // A plain same-query VIEW does not supersede an in-flight layout SAVE.
+  // New query/time basis or explicit SAVE does; the token never leaves owner RAM.
+  const layoutIntent=view===undefined&&sameSession&&sameQuery?prior.layoutIntent:{};
+  const record={tabId:context.parentFrame.tabId,documentId:context.parentFrame.documentId,scopeKey:context.scope.key,at:elapsedNow(),query:validatedQuery,session:structuredClone(session),view:view??(retain?prior.view:null)??null,layoutIntent};
   resumes.delete(key);resumes.set(key,record);while(resumes.size>32)resumes.delete(resumes.keys().next().value);
  }
  const persistent=context=>context.scope.storage!=='session'&&typeof workspaceRepository?.viewOnly==='function'&&typeof workspaceRepository?.saveView==='function';
@@ -69,7 +72,7 @@ export function createHostViewService({ui,readService,workspaceRepository=null,p
   layout.capacities=(layout.capacities??[]).flatMap(([key,n])=>key.startsWith(prefix)?[[key.slice(prefix.length),n]]:!key.includes('|')&&role==='workspace'?[[key,n]]:[]).slice(-256);
   return validateFrameResumeView(layout);
  }
- async function savePersistentLayout(context,entry,view,session,guard){
+ async function savePersistentLayout(context,entry,view,session,query,guard){
   const key=context.scope.key,previous=layoutWrites.get(key)??Promise.resolve();
   if(layoutWrites.size>=32&&!layoutWrites.has(key))throw Error('layout-save-capacity');
   const job=previous.catch(()=>{}).then(async()=>{
@@ -78,7 +81,9 @@ export function createHostViewService({ui,readService,workspaceRepository=null,p
    if(stored.diagnostics?.view)throw Error('corrupt-view');
    const prior=stored.view?.value??{segment:0,oldOpen:[],sidebarOpen:[],capacities:[],scroll:0,sidebarScroll:0,sidebarVisible:true};
    const side=context.role==='sidebar',prefix=context.role+'|',ownOld=k=>side?k.startsWith('side:'):!k.startsWith('side:');
-   const merged={...prior,oldOpen:[...prior.oldOpen.filter(k=>!ownOld(k)),...view.oldOpen.filter(ownOld)],capacities:[...prior.capacities.filter(([k])=>!k.startsWith(prefix)&&(side||k.includes('|'))),...view.capacities.map(([k,n])=>[prefix+k,n])]};
+   const capacities=view.capacities.filter(([key])=>!key.startsWith('frame-page:'));
+   if((query.offset??0)!==0||(query.limit??8)!==8)capacities.push(['frame-page:'+JSON.stringify([query.offset??0,query.limit??8]),1]);
+   const merged={...prior,oldOpen:[...prior.oldOpen.filter(k=>!ownOld(k)),...view.oldOpen.filter(ownOld)],capacities:[...prior.capacities.filter(([k])=>!k.startsWith(prefix)&&(side||k.includes('|'))),...capacities.map(([k,n])=>[prefix+k,n])]};
    if(side)Object.assign(merged,{sidebarScroll:view.sidebarScroll,sidebarOpen:view.sidebarOpen,sidebarVisible:view.sidebarVisible,...(view.sidebarChoices?{sidebarChoices:view.sidebarChoices}:{})});
    else Object.assign(merged,{segment:view.segment,scroll:view.scroll,freeSession:session});
    const result=await workspaceRepository.saveView(context.scope,merged,stored.view?.revision??0,{guard});
@@ -98,7 +103,7 @@ export function createHostViewService({ui,readService,workspaceRepository=null,p
      const stored=await workspaceRepository.viewOnly(context.scope,{guard});if(!guard())throw Error('stale-view-resume');
      const layout=stored.diagnostics?.view?null:roleLayout(stored.view?.value,context.role);
      if(!layout)return {ok:true,resume:null};
-     const query={segment:layout.segment,offset:0,limit:8};
+     const query=queryForFrameResume(layout,context.role);layout.capacities=layout.capacities.filter(([key])=>!key.startsWith('frame-page:'));
      // Durable history layout includes its frozen time basis. It is owner-read
      // only after fresh scope authorization; the frame cannot supply a session.
      if(stored.view.value.freeSession)rememberResume(context,query,stored.view.value.freeSession,layout);
@@ -107,7 +112,7 @@ export function createHostViewService({ui,readService,workspaceRepository=null,p
     const entry=views.get(m.mountId),current=entry?.owner.current();
     if(!old||JSON.stringify(m.expectedQuery)!==JSON.stringify(old.query)||!current||entry.pending||entry.error||entry.scopeKey!==context.scope.key||entry.scopeGrantId!==context.scopeGrantId||m.view.segment!==(old.query.segment??0))throw Error('stale-view-resume');
     rememberResume(context,old.query,current.snapshot.viewSession,m.view);
-    if(persistent(context)){const guard=()=>active&&elapsedNow()-started<6000&&context.isCurrent()&&views.get(m.mountId)===entry;const saved=await savePersistentLayout(context,entry,m.view,current.snapshot.viewSession,guard);return saved?.ok===true?{ok:true}:{ok:false,reason:'layout-save-unavailable'};}
+    if(persistent(context)){const intent=resumes.get(resumeKey(context)).layoutIntent;const guard=()=>active&&elapsedNow()-started>=0&&elapsedNow()-started<6000&&context.isCurrent()&&views.get(m.mountId)===entry&&resumes.get(resumeKey(context))?.layoutIntent===intent;const saved=await savePersistentLayout(context,entry,m.view,current.snapshot.viewSession,old.query,guard);return saved?.ok===true?{ok:true}:{ok:false,reason:'layout-save-unavailable'};}
     return {ok:true};
    }),{now:elapsedNow,schedule,cancel});
   }catch{return {ok:false,reason:'view-resume-unavailable'};}finally{active=false;}
@@ -177,8 +182,9 @@ export function createHostViewService({ui,readService,workspaceRepository=null,p
    }
    if(!entry){
     if(views.size>=maxViews)throw Error('free-view-capacity');
-    entry={scopeKey:context.scope.key,scopeGrantId:context.scopeGrantId,parentFrame:context.parentFrame,isCurrent:context.isCurrent,pending:false,error:null,presentation:{revision:0,intent:{kind:'show-workspace'}},
-     owner:createFreeViewOwner({readService:ownerReadService,scope:context.scope,guard:context.isCurrent,clock,elapsedNow,schedule,cancel,initialSession:(resumeFor(context,'workspace')?.query.segment??0)>0?resumeFor(context,'workspace').session:null})};
+    const ownerCurrent=context.isMountCurrent??context.isCurrent;
+    entry={scopeKey:context.scope.key,scopeGrantId:context.scopeGrantId,parentFrame:context.parentFrame,isCurrent:ownerCurrent,pending:false,error:null,presentation:{revision:0,intent:{kind:'show-workspace'}},
+     owner:createFreeViewOwner({readService:ownerReadService,scope:context.scope,guard:ownerCurrent,clock,elapsedNow,schedule,cancel,initialSession:(resumeFor(context,'workspace')?.query.segment??0)>0?resumeFor(context,'workspace').session:null})};
     views.set(message.mountId,entry);begin(entry);
    }
    entry.pageRequests??=new Map();const requestToken={};entry.pageRequests.set(context.role,requestToken);

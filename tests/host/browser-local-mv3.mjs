@@ -61,11 +61,26 @@ try{
    const image=join(dir,'formal-'+scene+'.png');await page.screenshot({path:image});
    report.productStates.push({scene,image,metrics:{...metrics,text:undefined},evidence:'ISOLATED_FORMAL_MV3_NOT_REAL_ACCOUNT'});
    if(scene==='ordinary'){
+    const control=await context.newPage();await control.goto('chrome-extension://'+id+'/status.html');await page.bringToFront();
+    assert.equal((await control.evaluate(()=>chrome.runtime.sendMessage({v:1,type:'HOST_LOCAL_SPACE',action:'unlock'}))).ok,true);
+    await formal.getByRole('link',{name:'Known latest fixture',exact:true}).first().waitFor();
     const more=formal.getByRole('button',{name:'显示更多其他已知聊天',exact:true});
     // Existing row-window pagination is exercised without inventing extra records.
     await more.waitFor();await more.click();
     await formal.getByRole('link',{name:'Known fixture 12',exact:true}).waitFor();
     report.productStates.at(-1).allKnownRowsReachable=true;
+    const worker=context.serviceWorkers().find(w=>w.url().startsWith('chrome-extension://'+id+'/'));
+    // Await the existing durable SAVE receipt, not a guessed debounce sleep.
+    const saved=async()=>worker.evaluate(async()=>{const db=await new Promise((resolve,reject)=>{const q=indexedDB.open('vaiwl-b1-v1');q.onsuccess=()=>resolve(q.result);q.onerror=()=>reject(q.error);});try{return await new Promise((resolve,reject)=>{const tx=db.transaction('b23_views'),q=tx.objectStore('b23_views').getAll();tx.oncomplete=()=>resolve(q.result.some(r=>r.payload?.value?.capacities?.some(([k,n])=>k==='workspace|frame-row:[null,\"unknown\",0,0,0]'&&n===17)));tx.onabort=()=>reject(tx.error);});}finally{db.close();}});
+    let expanded=false;for(let i=0;i<40;i++){if(await saved()){expanded=true;break;}await page.waitForTimeout(50);}
+    assert(expanded,'expanded row window is saved through WorkspaceRepository/CAS');
+    await page.reload();await formal.getByRole('link',{name:'Known latest fixture',exact:true}).first().waitFor();
+    assert.equal((await control.evaluate(()=>chrome.runtime.sendMessage({v:1,type:'HOST_LOCAL_SPACE',action:'status'}))).mode,'locked');
+    assert.equal(await formal.getByRole('link',{name:'Known fixture 12',exact:true}).count(),0,'locked new document cannot restore private layout');
+    assert.equal((await control.evaluate(()=>chrome.runtime.sendMessage({v:1,type:'HOST_LOCAL_SPACE',action:'unlock'}))).ok,true);
+    await formal.getByRole('link',{name:'Known fixture 12',exact:true}).waitFor();
+    report.productStates.at(-1).privateExpandedRowsRestoreAfterExplicitBinding=true;
+    await control.close();
    }
    await page.close();
   }
@@ -151,7 +166,7 @@ try{
   // 256-node traversal to yield across the formal popover opening.
   await page.addInitScript({content:'if(window===window.top)document.addEventListener("DOMContentLoaded",()=>{if(window!==window.top||location.protocol!=="http:")return;('+materializeHistoryStructure.toString()+')('+JSON.stringify(markers)+');for(const a of document.querySelectorAll("#list a")){const span=document.createElement("span");for(let i=0;i<30;i++)span.append(document.createElement("span"));a.append(span);}},{once:true});'});
   await page.goto(origin+'/');
-  await page.waitForFunction(()=>document.querySelectorAll('[data-va-owned]:popover-open').length===1,null,{timeout:10000});
+  await page.waitForFunction(()=>document.querySelectorAll('[data-va-owned]:popover-open').length===2,null,{timeout:10000});
   const formal=page.frameLocator('iframe[src="chrome-extension://'+id+'/workspace.html"]');
   await formal.getByRole('link',{name:'Known latest fixture',exact:true}).first().waitFor({timeout:10000});
   // A failed candidate read must not be mistaken for an empty successful page.
@@ -176,15 +191,36 @@ try{
   await control.close();
   const proof=await page.evaluate(()=>{
    const rows=[...document.querySelector('#list').children],sidebar=document.querySelector('[data-va-owned][id$="_sidebar"]'),box=sidebar.getBoundingClientRect();
-   return {masked:rows.map((r,i)=>r.hasAttribute('data-va-mask-sidebar')?i:-1).filter(i=>i>=0),native:rows.every(row=>getComputedStyle(row).visibility==='visible'),sidebarClosed:!sidebar.matches(':popover-open'),draft:document.querySelector('textarea').value==='fixture draft'};
-  });assert.deepEqual(proof,{masked:Array.from({length:12},(_,i)=>i+3),native:true,sidebarClosed:true,draft:true});
+   return {masked:rows.map((r,i)=>r.hasAttribute('data-va-mask-sidebar')?i:-1).filter(i=>i>=0),native:rows.filter((_,i)=>i<3||i>14).every(row=>getComputedStyle(row).visibility==='visible'),maskedHidden:rows.slice(3,15).every(row=>getComputedStyle(row).visibility==='hidden'),sidebarClosed:!sidebar.matches(':popover-open'),draft:document.querySelector('textarea').value==='fixture draft'};
+  });assert.deepEqual(proof,{masked:Array.from({length:12},(_,i)=>i+3),native:true,maskedHidden:true,sidebarClosed:false,draft:true});
+  const sidebarFrame=page.frames().find(f=>f.url()==='chrome-extension://'+id+'/sidebar.html');
+  const sidebarUI=page.frameLocator('iframe[src="chrome-extension://'+id+'/sidebar.html"]');
+  await sidebarUI.getByRole('button',{name:'其他已知聊天',exact:true}).click();
+  await sidebarUI.getByRole('button',{name:'显示更多其他已知聊天',exact:true}).click();
+  await sidebarUI.getByRole('link',{name:'Known fixture 14',exact:true}).waitFor();
+  const fit=await sidebarFrame.evaluate(()=>{
+   const root=[...document.querySelectorAll('*')].find(n=>n.shadowRoot)?.shadowRoot,nav=root.querySelector('.themes'),head=root.querySelector('.toolbar'),foot=root.querySelector('.sidebar-footer');
+   const bounds=n=>{const r=n.getBoundingClientRect();return {top:r.top,bottom:r.bottom,height:r.height};};
+   const before=nav.scrollTop;nav.scrollTop=nav.scrollHeight;const scrollable=nav.scrollTop>before;nav.scrollTop=before;
+   return {height:innerHeight,nav:bounds(nav),head:bounds(head),foot:bounds(foot),scrollable};
+  });
+  assert(fit.nav.height>=44&&fit.head.top>=0&&fit.foot.bottom<=fit.height+1);assert(fit.scrollable);
+  // Clipping below the declared usable size releases only the sidebar; growing
+  // the same scrollport restores it without changing workspace identity.
+  const core=await page.locator('iframe[src="chrome-extension://'+id+'/workspace.html"]').elementHandle();
+  await page.evaluate(()=>{document.querySelector('nav').style.cssText+=';height:280px;overflow:hidden';});
+  await page.waitForFunction(()=>!document.querySelector('[data-va-owned][id$="_sidebar"]').matches(':popover-open'));
+  assert(await core.evaluate(n=>n.isConnected&&n.parentElement.matches(':popover-open')));
+  await page.evaluate(()=>document.querySelector('nav').style.cssText='');
+  await page.waitForFunction(()=>document.querySelector('[data-va-owned][id$="_sidebar"]').matches(':popover-open'));await core.dispose();
+  report.checks.sidebarInternalScrollAndClippedRegionRecovery=true;
   // Sidebar uncertainty surrenders only that role, never the independent workspace.
   await page.evaluate(()=>{const n=document.createElement('button');n.id='fixture-overlap';n.textContent='Unknown overlap';const b=document.querySelector('[data-va-owned][id$="_sidebar"]').getBoundingClientRect();n.style.cssText='position:fixed;left:'+b.x+'px;top:'+(b.y+5)+'px;width:30px;height:20px';document.querySelector('nav').append(n);});
   await page.waitForFunction(()=>document.querySelector('[data-va-owned][id$="_workspace"]')?.matches(':popover-open')&&!document.querySelector('[data-va-owned][id$="_sidebar"]')?.matches(':popover-open'),null,{timeout:5000});
   await formal.getByRole('link',{name:'Known latest fixture',exact:true}).first().waitFor();
   assert.equal(await page.locator('#fixture-overlap').isVisible(),true);
   assert.equal(await page.locator('textarea').inputValue(),'fixture draft');
-  report.checks.realAnonymousMixedRowsFormalWorkspace=true;report.checks.unknownRowsAndOtherRunRemainNative=true;
+  report.checks.safeMixedRunFullSidebar=true;report.checks.realAnonymousMixedRowsFormalWorkspace=true;report.checks.unknownRowsAndOtherRunRemainNative=true;
   report.checks.discoveryIndependentOfMaskRun=true;report.checks.unknownOverlapOnlySurrendersSidebar=true;
   report.checks.multiPageCandidatesSurviveOwnedPresentation=true;
   await page.close();

@@ -23,7 +23,7 @@ function fixture(options={}){
 const tick=async()=>{await Promise.resolve();await Promise.resolve();await Promise.resolve();};
 test('formal context remains unbound without owner body proof; bounded proposals carry no scope',async()=>{const f=fixture(),context=await f.start();await tick();assert.equal(context.body.state,'unbound');assert.equal(context.route.conversationId,C);assert.equal(f.emitted.length,1);assert.equal(f.emitted[0].bodyProofId,null);assert.equal(f.emitted[0].routeEpoch,4);assert.equal(Object.hasOwn(f.emitted[0],'scope'),false);assert.deepEqual(f.emitted[0].payload.coverageClaims,[]);f.adapter.stop();});
 test('legacy inspect fields refer to native nodes without mutation',async()=>{const f=fixture();await f.start();const result=f.adapter.inspect();assert.equal(result.ok,true);assert.equal(result.reading,f.reading);assert.equal(result.composer,f.composer);assert.equal(result.navigationSlot,f.slot);assert.equal(result.viewMask,'declarative-css');assert.deepEqual(result.historyMaskRoots,[result.history]);f.adapter.stop();});
-test('ambiguous boundaries, occupied return slot and overlap reject mounting',async()=>{const f=fixture();await f.start();f.slot.textContent='native title';assert.equal(f.adapter.inspect().ok,false);f.slot.textContent='';f.selectors.set('main > form#composer',[f.composer,f.composer]);assert.equal(f.adapter.inspect().ok,false);f.selectors.set('main > form#composer',[f.composer]);f.composer.getBoundingClientRect=()=>({x:220,y:100,width:700,height:90});assert.equal(f.adapter.inspect().ok,false);f.adapter.stop();});
+test('ambiguous boundaries, occupied return slot and overlap reject mounting',async()=>{const f=fixture();await f.start();f.slot.textContent='native title';f.slot.childNodes=[{nodeType:3,textContent:'native title'}];assert.equal(f.adapter.inspect().ok,true);assert.equal(f.adapter.inspect().roles.return.available,false);f.slot.textContent='';f.slot.childNodes=[];f.selectors.set('main > form#composer',[f.composer,f.composer]);assert.equal(f.adapter.inspect().ok,false);f.selectors.set('main > form#composer',[f.composer]);f.composer.getBoundingClientRect=()=>({x:220,y:100,width:700,height:90});assert.equal(f.adapter.inspect().ok,false);f.adapter.stop();});
 test('route change stops producer and requests owner rebind without minting epoch',async()=>{const f=fixture();await f.start();await tick();f.document.location.href='https://chatgpt.com/';f.trigger();await tick();assert.equal(f.emitted.length,1);assert.equal(f.rebind.length,1);assert.equal(f.observer().closed,true);assert.equal(f.adapter.inspect().ok,false);assert.deepEqual(await f.adapter.dispatchNative({}),{state:'blocked',reason:'stale-host-binding'});});
 test('mutation bursts coalesce and late acknowledgement after stop cannot emit',async()=>{const f=fixture();let finish;await f.start(p=>{f.emitted.push(p);return new Promise(r=>finish=r);});for(let i=0;i<100;i++)f.trigger();await tick();assert.equal(f.emitted.length,1);f.adapter.stop();finish({state:'retry-after',delayMs:0});await tick();assert.equal(f.emitted.length,1);});
 test('expiry rejects reads and actions; unsupported snippets and actions are explicit',async()=>{const f=fixture();await f.start();assert.equal(f.adapter.selectedSnippet({}),null);assert.equal((await f.adapter.activateNative('new-chat',{})).state,'blocked');assert.equal(f.adapter.restoreSnippet({},{}).ok,false);f.setTime(100000);await assert.rejects(f.adapter.readLoaded({},new AbortController().signal),/stale-host-binding/);assert.equal((await f.adapter.dispatchNative({})).state,'blocked');f.adapter.stop();});
@@ -539,23 +539,23 @@ for(const kind of ['missing','ambiguous','occupied','overlap','bad-selector','ou
  const f=layoutFixture();await f.start();
  if(kind==='missing')f.selectors.delete(explicitLayout.composer);
  if(kind==='ambiguous')f.selectors.set(explicitLayout.composer,[f.composer,f.composer]);
- if(kind==='occupied')f.slot.textContent='native control';
+ if(kind==='occupied'){f.slot.textContent='native control';f.slot.childNodes=[{nodeType:3,textContent:'native control'}];}
  if(kind==='outside-header')f.selectors.get(explicitLayout.header)[0].contains=()=>false;
  if(kind==='slot-is-header')f.selectors.set(explicitLayout.navigationSlot,f.selectors.get(explicitLayout.header));
  if(kind==='slot-in-composer')f.composer.contains=n=>n===f.slot;
  if(kind==='slot-in-reading')f.reading.contains=n=>n===f.slot;
  if(kind==='overlap')f.composer.getBoundingClientRect=()=>({x:220,y:100,width:700,height:90});
  if(kind==='bad-selector')f.document.querySelectorAll=()=>{throw Error('invalid selector');};
- assert.equal(f.adapter.inspect().ok,false);f.adapter.stop();
+ const result=f.adapter.inspect(),optional=['occupied','outside-header','slot-is-header','slot-in-composer','slot-in-reading'].includes(kind);assert.equal(result.ok,optional);if(optional){assert.equal(result.returnSlot,null);assert.equal(result.roles.return.available,false);}f.adapter.stop();
 });
 for(const nativeLayout of [null,{}, {...explicitLayout,extra:'#other'},{...explicitLayout,composer:''},{...explicitLayout,reading:42},{...explicitLayout,viewportFocus:'native-scroll-region'},{...explicitLayout,readingViewport:'#viewport',viewportFocus:'unknown'},{...explicitLayout,readingViewport:'#viewport',viewportFocus:'native-scroll-region'}])test('invalid explicit native layout cannot fall back to legacy '+JSON.stringify(nativeLayout),()=>{
  assert.throws(()=>fixture({profile:{...LEGACY_SURFACE_PROFILE,nativeLayout}}),/invalid-native-layout-profile/);
 });
 
-test('explicit layout continuity rejects same slot node reparented out of header',async()=>{
+test('return slot reparenting retires only the return entry',async()=>{
  const f=layoutFixture();await f.start();const first=f.adapter.inspect();assert.equal(first.ok,true);assert.equal(f.adapter.isSameNativeRegions(first),true);
  f.selectors.get(explicitLayout.header)[0].contains=()=>false;f.composer.contains=n=>n===f.slot;
- assert.equal(f.adapter.isSameNativeRegions(first),false);assert.equal(f.adapter.inspect().ok,false);f.adapter.stop();
+ assert.equal(f.adapter.isSameNativeRegions(first),true);assert.equal(f.adapter.isReturnSlotCurrent(first),false);assert.equal(f.adapter.inspect().ok,true);assert.equal(f.adapter.inspect().roles.return.available,false);f.adapter.stop();
 });
 
 function viewportFixture(){
@@ -601,7 +601,7 @@ test('viewport topology changes invalidate continuity even with identical nodes'
 
 test('explicit slot moved over composer rejects inspection and dormant geometry without reviving adapter',async()=>{
  const f=layoutFixture();await f.start();const first=f.adapter.inspect();assert.equal(first.ok,true);assert.equal(f.adapter.isReturnSlotCurrent(first),true);
- f.slot.getBoundingClientRect=()=>({x:220,y:490,width:40,height:40});assert.equal(f.adapter.inspect().ok,false);f.adapter.stop();assert.equal(f.adapter.isReturnSlotCurrent(first),false);
+ f.slot.getBoundingClientRect=()=>({x:220,y:490,width:40,height:40});assert.equal(f.adapter.inspect().ok,true);assert.equal(f.adapter.inspect().roles.return.available,false);f.adapter.stop();assert.equal(f.adapter.isReturnSlotCurrent(first),false);
  f.slot.getBoundingClientRect=()=>({x:220,y:0,width:40,height:40});assert.equal(f.adapter.isReturnSlotCurrent(first),true);assert.equal(f.adapter.inspect().ok,false,'presentation geometry cannot revive stopped binding');
 });
 

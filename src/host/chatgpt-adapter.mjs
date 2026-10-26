@@ -1,7 +1,7 @@
 import {profileElement} from './native-surface-boundary.mjs';
 import {inspectNativeProjectSurface} from './native-project-surface.mjs';
 import {nativeReturnGapRect,isEmptyViewportMarker} from './native-return-gap.mjs';
-import {nativeHistoryPresentation,historyFailureReasons} from './native-history-list.mjs';
+import {sidebarPresentationFits,nativeHistoryPresentation,historyFailureReasons} from './native-history-list.mjs';
 import {nativeReturnSlotRect} from './native-return-slot.mjs';
 import {currentObservation,currentSurfaceSlice} from './current-observation-batch.mjs';
 import {sha256} from '../data/hash.mjs';
@@ -408,7 +408,7 @@ if(!p){
   if(projectLayout())return !!currentProjectSurface(inspection,false);
   const nodes=[one(nativeLayout.header),one(nativeLayout.reading),one(nativeLayout.composer),nativeLayout.readingViewport?one(nativeLayout.readingViewport):null];
   const original=[inspection.header,inspection.reading,inspection.composer,inspection.readingViewport??null];
-  return nodes.every((node,i)=>node===original[i]&&(!node||node.isConnected&&node.ownerDocument===document));
+  return nodes.every((node,i)=>node===original[i]&&(!node||node.isConnected&&node.ownerDocument===document))&&(!nativeLayout.readingViewport||viewportTopologyOK(nodes[3],null,nodes[0],nodes[1],nodes[2]));
  }
  const projectProofs=new WeakMap();
  const projectLayout=()=>profile.nativeProjectLayout==='panel-after-composer'&&urlPolicy.parse(document.location.href).kind==='project';
@@ -458,8 +458,8 @@ if(!p){
   const returnSlot=slotStructure?returnGeometry(history,header,readingRect,composer,navigationSlot):null;
   const nodes=[header,reading,composer,readingViewport];
   if(nodes.length!==priorNodes.length||nodes.some((n,i)=>n!==priorNodes[i])){regionEpoch++;priorNodes=nodes;}
-  return sidebarVersion({ok:true,reason:null,profileId:profile.id,history,historySource,header,reading,navigationSlot,composer,protectedRegions,...(readingViewport?{readingViewport}:{}),historyMaskRoots:sidebarRect?historyPresentation.maskRoots:[],preserveNativeSidebar:!sidebarRect||historyPresentation.complete===false,...(gapMode?{returnPlacement:'header-gap',returnHitRoot:one(nativeLayout.returnHitRoot)}:{}),returnSlot,readingRect,sidebarRect,viewMask:'declarative-css',regionEpoch,
-   roles:{workspace:{available:true,revision:regionEpoch},sidebar:{available:!!sidebarRect,reason:sidebarRect?null:historyFailure??'history-unavailable'},return:{available:!!returnSlot,reason:returnSlot?null:returnGeometryStage??'return-unavailable'}}});
+  return sidebarVersion({ok:true,reason:null,profileId:profile.id,history,historySource,header,reading,navigationSlot,composer,protectedRegions,...(readingViewport?{readingViewport}:{}),historyMaskRoots:sidebarRect?historyPresentation.maskRoots:[],preserveNativeSidebar:!sidebarPresentationFits(sidebarRect),...(gapMode?{returnPlacement:'header-gap',returnHitRoot:one(nativeLayout.returnHitRoot)}:{}),returnSlot,readingRect,sidebarRect,viewMask:'declarative-css',regionEpoch,
+   roles:{workspace:{available:true,revision:regionEpoch},sidebar:{available:sidebarPresentationFits(sidebarRect),reason:sidebarPresentationFits(sidebarRect)?null:sidebarRect?'history-region-too-small':historyFailure??'history-unavailable'},return:{available:!!returnSlot,reason:returnSlot?null:returnGeometryStage??'return-unavailable'}}});
  }
  const api={setReturnControl(node){returnControl=node;},getReturnControlRect(inspection){
   if(projectLayout())return currentProjectSurface(inspection)?.returnSlot??null;

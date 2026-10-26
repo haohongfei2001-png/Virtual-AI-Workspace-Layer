@@ -1,3 +1,7 @@
+// Presentation fit only, applied after the unchanged native-region proof.
+// 240 CSS px reserves exit/toolbar/footer plus a useful scroll viewport; a
+// single row is never treated as a complete sidebar. This never expands a mask.
+export const sidebarPresentationFits=rect=>!!rect&&Number.isFinite(rect.width)&&Number.isFinite(rect.height)&&rect.width>=180&&rect.height>=240;
 export const historyFailureReasons=Object.freeze(['source','hidden','ancestor-limit','visibility','geometry','sibling-limit','sibling-text','sibling-overlap','node-limit','tag','editable','row-structure','role','namespace','link','button','tabindex','outside-text','row-count','exception','source-replaced','list-count','row-limit','row-replaced','row-order','offscreen','row-gap']);
 const rejected=(report,reason)=>{try{report?.(reason);}catch{}return false;};
 // The list can extend below its native scrollport. Only its visible rectangle

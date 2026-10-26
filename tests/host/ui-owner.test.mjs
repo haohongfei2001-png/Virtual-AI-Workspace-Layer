@@ -261,3 +261,24 @@ for(const action of ['document','parent','mount','tab','all','disconnect'])test(
  assert(retired.includes('ui'));await assert.rejects(f.owner.validate({sender:f.ui,grantId:grant.id,mountId:'mount'}));
 });
 test('local cleanup failure cannot block UI revocation',async()=>{const f=fixture({onRevokeDocument:()=>{throw Error('cleanup');}}),grant=await pair(f);f.owner.revokeDocument('parent');await assert.rejects(f.owner.validate({sender:f.ui,grantId:grant.id,mountId:'mount'}));});
+
+test('optional sidebar renewal timeout preserves workspace and cannot publish a late grant',async()=>{
+ const f=fixture();await pairBoth(f);let release,entered=false;
+ f.setFrameHook(async id=>{if(id===3){entered=true;await new Promise(r=>release=r);}});
+ const pending=f.owner.handle(statusMessage(),f.parent);for(let i=0;i<20&&!entered;i++)await tick();assert(entered);
+ await f.advance(1000);const result=await pending;assert.equal(result.ok,true);assert.deepEqual(result.grants.map(g=>g.role),['workspace']);assert.equal(f.owner.isIdle(),false);
+ release();await tick();assert.equal(f.owner.isIdle(),true);f.setFrameHook(null);
+ assert.deepEqual((await f.owner.handle(statusMessage(),f.parent)).grants.map(g=>g.role),['workspace']);
+});
+test('slow mandatory renewal leaves optional sidebar unattempted instead of timing out STATUS',async()=>{
+ const f=fixture();await pairBoth(f);let release,entered=false,sidebarCalls=0;
+ f.setFrameHook(async id=>{if(id===2&&!entered){entered=true;await new Promise(r=>release=r);}if(id===3)sidebarCalls++;});
+ const pending=f.owner.handle(statusMessage(),f.parent);for(let i=0;i<20&&!entered;i++)await tick();assert(entered);
+ await f.advance(5200);release();const result=await pending;assert.equal(result.ok,true);assert.deepEqual(result.grants.map(g=>g.role),['workspace']);assert.equal(sidebarCalls,0);assert.equal(f.timers.size,0);
+});
+test('shared mount currentness survives child retirement but not parent revocation',async()=>{
+ const f=fixture(),grants=await pairBoth(f);let context;
+ const sidebar=grants.find(g=>g.role==='sidebar');await f.owner.withScope({sender:f.sidebar,grantId:sidebar.id,mountId:'mount'},c=>{context=c;});
+ f.owner.revokeDocument('sidebar');assert.equal(context.isCurrent(),false);assert.equal(context.isMountCurrent(),true);
+ f.owner.revokeDocument('parent');assert.equal(context.isMountCurrent(),false);
+});

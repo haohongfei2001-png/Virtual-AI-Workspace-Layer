@@ -457,8 +457,8 @@ test('a declined or unopened popover never commits workspace mode or consumes th
  }
 });
 
-test('sidebar EXIT or SUSPEND retires only sidebar and ignores its late grant',async()=>{
- for(const type of ['VAIWL_UI_EXIT','VAIWL_UI_SUSPEND']){
+test('sidebar SUSPEND retires only sidebar and ignores its late grant',async()=>{
+ for(const type of ['VAIWL_UI_SUSPEND']){
   const f=fixture(),held=deferred(),confirm=f.bridge.confirmParent,retired=[],released=[];
   f.surface.retireRole=(_h,role)=>retired.push(role);f.surface.suspend=(_h,_reason,role)=>{assert.equal(role,'sidebar');};
   f.bridge.releaseRole=async value=>{released.push(value);return {ok:true};};
@@ -472,4 +472,28 @@ test('sidebar EXIT or SUSPEND retires only sidebar and ignores its late grant',a
 test('sidebar renewal failure cannot retire the workspace grant',async()=>{
  const f=fixture();f.bridge.releaseRole=async()=>({ok:true});f.bridge.renewSession=async()=>{const a=f.renewAck();a.grants.find(g=>g.role==='sidebar').uiDocumentId='stale-sidebar';return a;};
  await f.controller.start({});await f.both();f.tick(10000);await drain();assert.equal(f.calls.dispose,0);assert.equal(f.calls.updates.length,1);assert.equal(f.controller.showWorkspace(),true);f.controller.stop();
+});
+
+
+test('sidebar release completion rechecks current geometry without waiting for unrelated mutations',async()=>{
+ const f=fixture(),released=deferred();let restored=0;const inspect=f.adapter.inspect;
+ f.adapter.inspect=()=>({...inspect(),sidebarRect:{x:0,y:0,width:240,height:400},sidebarRevision:1,preserveNativeSidebar:false});
+ f.surface.refreshGeometry=()=>true;f.surface.retireRole=()=>{};f.surface.suspend=()=>{};
+ f.surface.restoreRole=()=>{restored++;return f.frames[1];};f.bridge.releaseRole=()=>released.promise;
+ await f.controller.start({});await f.both();f.message('sidebar',{data:{type:'VAIWL_UI_SUSPEND',role:'sidebar'}});f.change();await drain();assert.equal(restored,0);
+ released.resolve({ok:true});await drain();assert.equal(restored,1);assert.equal(f.calls.dispose,0);assert.equal(f.calls.register,1);assert.equal(f.controller.isWorkspacePresented(),true);f.controller.stop();
+});
+
+
+test('explicit sidebar user exit stops enhancement rather than automatically rejoining',async()=>{
+ const f=fixture();await f.controller.start({});await f.both();f.message('sidebar',{data:{type:'VAIWL_UI_EXIT',role:'sidebar'}});await drain();assert.equal(f.calls.dispose,1);assert.equal(f.controller.isWorkspacePresented(),false);
+});
+test('sidebar recovery attempts once per proved layout revision',async()=>{
+ const f=fixture();let restored=0,revision=1;const inspect=f.adapter.inspect;
+ f.adapter.inspect=()=>({...inspect(),sidebarRect:{x:0,y:0,width:240,height:400},sidebarRevision:revision,preserveNativeSidebar:false});
+ f.surface.refreshGeometry=()=>true;f.surface.retireRole=()=>{};f.surface.suspend=()=>{};f.surface.restoreRole=()=>{restored++;return f.frames[1];};f.bridge.releaseRole=async()=>({ok:true});
+ await f.controller.start({});await f.both();
+ f.message('sidebar',{data:{type:'VAIWL_UI_SUSPEND',role:'sidebar'}});await drain();assert.equal(restored,1);
+ f.message('sidebar',{data:{type:'VAIWL_UI_SUSPEND',role:'sidebar'}});await drain();f.change();await drain();assert.equal(restored,1);
+ revision++;f.change();await drain();assert.equal(restored,2);assert.equal(f.calls.dispose,0);f.controller.stop();
 });

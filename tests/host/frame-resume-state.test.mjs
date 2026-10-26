@@ -14,3 +14,11 @@ test('sidebar choices preserve explicit close without treating legacy open rows 
  const chosen={...legacy,sidebarChoices:[['p',false],['other',true]]};assert.deepEqual(view(chosen),chosen);
  for(const sidebarChoices of [null,[['p',false],['p',true]],[['p',0]],[['p']],[['bad\nkey',true]],Array.from({length:257},(_,i)=>['p'+i,true])])assert.throws(()=>view({...legacy,sidebarChoices}),/invalid-frame-resume/);
 });
+
+test('durable role layout restores the selected group page and only open row windows',async()=>{
+ const {queryForFrameResume}=await import('../../src/host/frame-resume-state.mjs');
+ const row=(id,list,offset=8)=>['frame-row:'+JSON.stringify([id,list,17,1,offset]),17];
+ const layout={...fixture(),sidebarOpen:['p'],oldOpen:['home:p'],capacities:[['frame-page:[8,8]',1],row('p','current'),row('p','old'),row('q','current'),row('prior','current',0)]};
+ const workspace=queryForFrameResume(layout,'workspace');assert.equal(workspace.offset,8);assert.deepEqual(workspace.rowWindows.map(w=>[w.groupId,w.list]),[['p','current'],['p','old'],['q','current']]);
+ const sidebar=queryForFrameResume(layout,'sidebar');assert.deepEqual(sidebar.rowWindows,[{groupId:'p',list:'current',rowOffset:17,rowLimit:17,paged:true}]);
+});

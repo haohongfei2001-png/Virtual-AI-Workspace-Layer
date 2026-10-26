@@ -141,8 +141,20 @@ export function createHostUiOwner({extensionId,uiURL=null,uiURLs=null,getFrame,g
     if(mount?.tabId!==sender.tab.id||mount?.documentId!==sender.documentId)throw Error('ui-mount-mismatch');
     if(!records.some(entry=>entry.grant.role==='workspace')||new Set(records.map(entry=>entry.grant.role)).size!==records.length)throw Error('workspace-grant-unavailable');
     const healthy=[];
-    for(const record of records){
-     try{await grants.renew({sender:record.sender,grantId:record.grant.id,mountId:message.mountId});check();healthy.push(record);}
+    for(const record of records.sort((a,b)=>Number(b.grant.role==='workspace')-Number(a.grant.role==='workspace'))){
+     try{
+      const renew=()=>grants.renew({sender:record.sender,grantId:record.grant.id,mountId:message.mountId});
+      // Optional sidebar liveness cannot consume the mandatory parent's full
+      // RPC budget. A late renewal still encounters the revoked document.
+      if(record.grant.role==='sidebar'){
+       // Reserve the mandatory final parent check; a slow workspace check
+       // must not make an optional role spend the remaining outer deadline.
+       if(6000-(elapsedNow()-attempt.started)<=2000){revokeDocument(record.sender.documentId);continue;}
+       await withRequestDeadline(()=>track(renew),{timeoutMs:1000,now:elapsedNow,schedule,cancel});
+      }
+      else await renew();
+      check();healthy.push(record);
+     }
      catch(error){check();if(record.grant.role==='workspace')throw error;revokeDocument(record.sender.documentId);}
     }
     sender=await parent(message,sender);check();
@@ -261,13 +273,17 @@ export function createHostUiOwner({extensionId,uiURL=null,uiURLs=null,getFrame,g
   const frame=Object.freeze({tabId:mount.tabId,frameId:0,documentId:mount.documentId,actualURL:mount.url,documentLifecycle:'active',incognito:false});
   const scope=authority.scopeFor(frame);
   const parentSender={id:extensionId,tab:{id:mount.tabId,incognito:false},frameId:0,documentId:mount.documentId,documentLifecycle:'active',url:mount.url};
+  const mountCurrent=()=>{
+   try{grants.validateMount(grant.mountId);}catch{return false;}
+   return registrations.get(grant.mountId)===mount&&handshake.isBound?.(mount.binding,parentSender)===true&&authority.peek(frame)?.grant?.id===grant.scopeGrantId&&authority.scopeFor(frame)?.key===scope?.key;
+  };
   const current=()=>{
    const live=uiDocuments.get(sender.documentId);
    try{grants.current({sender,grantId:grant.id,mountId:grant.mountId});}catch{return false;}
-   return registrations.get(grant.mountId)===mount&&live?.grant.id===grant.id&&live.grant.scopeGrantId===grant.scopeGrantId&&sameSender(live.sender,sender)&&Date.parse(live.grant.expiresAt)>now()&&handshake.isBound?.(mount.binding,parentSender)===true&&authority.peek(frame)?.grant?.id===grant.scopeGrantId&&authority.scopeFor(frame)?.key===scope?.key;
+   return mountCurrent()&&live?.grant.id===grant.id&&live.grant.scopeGrantId===grant.scopeGrantId&&sameSender(live.sender,sender)&&Date.parse(live.grant.expiresAt)>now()&&handshake.isBound?.(mount.binding,parentSender)===true&&authority.peek(frame)?.grant?.id===grant.scopeGrantId&&authority.scopeFor(frame)?.key===scope?.key;
   };
   if(!scope||!current())throw Error('ui-scope-changed');
-  const result=await work(Object.freeze({scope,parentFrame:frame,binding:mount.binding,scopeGrantId:grant.scopeGrantId,role:grant.role,isCurrent:current}));
+  const result=await work(Object.freeze({scope,parentFrame:frame,binding:mount.binding,scopeGrantId:grant.scopeGrantId,role:grant.role,isCurrent:current,isMountCurrent:mountCurrent}));
   await validate({...args,sender});if(!current())throw Error('ui-scope-changed');return result;
  }
  return Object.freeze({isIdle:()=>activeWork===0&&inFlight.size===0&&pending.size===0,handle,validate,withScope,notifyScope,notifyBackground,notifyMount,connectPort,revokeDocument,revokeMount,revokeTab,revokeAll});
