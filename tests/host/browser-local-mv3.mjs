@@ -1,4 +1,5 @@
 import historyStructure from './fixtures/observed-history-structure.json' with {type:'json'};
+import projectSidebarSnapshot from './fixtures/observed-sidebar-project-20261026.json' with {type:'json'};
 import {HOST_BASELINE_VERSION,materializeHistoryStructure,progressiveOrders,homeMain,longDesktopHTML,observedHomeHTML,prepareHistoryRun,reorderHistory,addPendingChat,promotePendingChat,enterStableChat,setNativeModal,insertHistoryGap,clearHistoryGap} from './fixtures/observed-host-replay.mjs';
 /** Actual formal MV3 UI with an empty local memory session; offline host only. */
 import assert from 'node:assert/strict';
@@ -32,14 +33,20 @@ try{
   // The added branch is a declared synthetic completeness sentinel; the
   // separate anonymous replay retains the actually observed outer topology.
   page=await context.newPage();
-  await page.addInitScript(()=>document.addEventListener('DOMContentLoaded',()=>{
+  await page.addInitScript(rows=>document.addEventListener('DOMContentLoaded',()=>{
    const nav=document.querySelector('nav'),history=nav.firstElementChild;
-   const root=document.createElement('div'),section=document.createElement('section');section.setAttribute('data-app-action-sidebar-section','');
-   const toggle=document.createElement('button');toggle.setAttribute('aria-expanded','true');toggle.textContent='PRIVATE_SENTINEL_CONTROL';
-   const list=document.createElement('ul'),item=document.createElement('li'),link=document.createElement('a');link.href='/c/66666666-6666-4666-8666-666666666666';link.textContent='PRIVATE_SENTINEL_TITLE';item.append(link);list.append(item);section.append(toggle,list);root.append(section,history);
+   const nodes=[];
+   for(const [parent,,tag,role,flags]of rows){const n=document.createElement(tag==='OTHER'?'div':tag.toLowerCase());
+    if(role!=='absent')n.setAttribute('role',role);for(const [i,attr]of ['data-sidebar-chatgpt-conversation-key','data-app-action-sidebar-section','href','aria-expanded','aria-controls','tabindex'].entries())if(flags&(1<<i))n.setAttribute(attr,'PRIVATE');
+    nodes.push(n);if(parent>=0)nodes[parent].append(n);
+   }
+   // Real outer topology; four synthetic sentinels at its explicitly unknown
+   // cut points test reach/transport, never establish actual member semantics.
+   for(const index of [32,35,40,42]){const span=document.createElement('span'),button=document.createElement('button');button.setAttribute('role','menuitem');button.textContent='PRIVATE_SENTINEL_CONTROL';span.append(button);nodes[index].append(span);}
+   const root=nodes[0];root.append(history);
    // Observed common-parent ancestry is 60 -> 59 -> 21 -> NAV (two wrappers).
    let shell=root;for(let i=0;i<2;i++){const wrap=document.createElement('div');wrap.append(shell);shell=wrap;}nav.append(shell);
-  },{once:true}));
+  },{once:true}),projectSidebarSnapshot.sidebarStructure.rows.slice(0,44));
   const control=await context.newPage();await control.goto('chrome-extension://'+id+'/status.html');
   const content=await readFile(join(built.unpacked,'content.js'),'utf8'),build=/build="([a-f0-9]{64})"/.exec(content)?.[1];assert(build);
   let stale;
@@ -56,16 +63,18 @@ try{
    },index);
    assert.equal(sample.boot?.build,build);assert.equal(sample.boot.stage,'module-loaded');
    assert(sample.shape?.sidebarStructure);assert.equal(sample.shape.sidebarStructure.reason,'complete');
-   assert.match(sample.coverage??'',/COMPLETE_SNAPSHOT/);
+   assert.match(sample.coverage??'',/COMPLETE_FOCUSED_SNAPSHOT/);
    assert(!JSON.stringify(sample.shape.sidebarStructure).includes('PRIVATE_SENTINEL'));
    assert(!JSON.stringify(sample.shape.sidebarStructure).includes('66666666'));
-   assert(sample.shape.sidebarStructure.rows.some(r=>r[2]==='A'&&(r[4]&4)));
+   assert.equal(sample.shape.sidebarStructure.rows.filter(r=>r[3]==='menuitem').length,4);
    const [download]=await Promise.all([control.waitForEvent('download'),control.locator('#save-sidebar-snapshot').click()]);
    const exported=JSON.parse(await readFile(await download.path(),'utf8'));
    assert.equal(download.suggestedFilename(),'vaiwl-sidebar-structure.json');
    assert.equal(exported.build,build);assert.equal(exported.route,index?'project':'home');
    assert.equal(exported.documentBinding,'verified-at-capture-not-account-identity');
-   assert.equal(exported.coverage.state,'COMPLETE_SNAPSHOT');
+   assert.equal(exported.coverage.state,'COMPLETE_FOCUSED_SNAPSHOT');
+   assert.equal(exported.coverage.scope,'non-history-section-details');
+   assert.equal(exported.coverage.contextOnly.length,1);
    assert(!JSON.stringify(exported).includes('PRIVATE_SENTINEL')&&!JSON.stringify(exported).includes('66666666'));
    assert(!Object.hasOwn(exported,'url')&&!Object.hasOwn(exported,'documentId'));
    if(stale){assert.notEqual(stale.documentId,sample.target.documentId);const old=await control.evaluate(async target=>{const api=await import(chrome.runtime.getURL('src/host/local-status.mjs'));return api.readActiveLocalLayout({tabs:chrome.tabs,webNavigation:chrome.webNavigation,target});},stale);assert.equal(old,null);}

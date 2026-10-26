@@ -56,7 +56,42 @@ try{
    return {narrowed,covered,completeness,unchanged,conservative,private:!JSON.stringify(focused).includes('PRIVATE'),bounded:focused.rows.length<=256&&focused.ancestors.length<=8};
   },observed);
   assert(Object.values(focus).every(Boolean),JSON.stringify(focus));
-  console.log(JSON.stringify({status:'PASS_ANONYMOUS_SIDEBAR_SNAPSHOT_ONLY',result,focus}));
+  const latest=JSON.parse(readFileSync(new URL('./fixtures/observed-sidebar-project-20261026.json',import.meta.url),'utf8')).sidebarStructure;
+  const details=await page.evaluate(report=>{
+   const {readSidebarStructure,validSidebarStructure,sidebarStructureCoverage}=historyModule,nodes=[];
+   for(const row of report.rows){const [parent,,tag,role,flags]=row,n=document.createElement(tag==='OTHER'?'div':tag.toLowerCase());
+    if(role!=='absent')n.setAttribute('role',role);
+    for(const [i,a]of ['data-sidebar-chatgpt-conversation-key','data-app-action-sidebar-section','href','aria-expanded','aria-controls','tabindex'].entries())if(flags&(1<<i))n.setAttribute(a,'PRIVATE');
+    nodes.push(n);if(parent>=0)nodes[parent].append(n);
+   }
+   const nav=document.createElement('nav');nav.id='detail-nav';let wrap=nav;
+   for(let i=0;i<2;i++){const n=document.createElement('div');wrap.append(n);wrap=n;}wrap.append(nodes[0]);document.body.append(nav);nodes[68].id='detail-history';
+   // Explicit synthetic sentinels at the FOUR actually omitted first-section
+   // subtrees. They test capture reach, never supply native control semantics.
+   for(const index of [32,35,40,42]){let n=nodes[index];for(let i=0;i<3;i++){const child=document.createElement('span');n.append(child);n=child;}const button=document.createElement('button');button.setAttribute('role','menuitem');n.append(button);}
+   // Known history is context-only. Even more rows must not consume its budget
+   // or trigger layout reads of descendants unrelated to the missing section.
+   for(let i=0;i<300;i++)nodes[71].append(document.createElement('div'));
+   for(const n of [nodes[71],...nodes[71].querySelectorAll('*')])n.getBoundingClientRect=()=>{throw Error('history detail must not be reread');};
+   const profile={regions:{projects:'#detail-nav'},nativeLayout:{historyList:'#detail-history'}},before=nav.outerHTML;
+   const focused=readSidebarStructure({document,profile}),coverage=sidebarStructureCoverage(focused);
+   const bounded=validSidebarStructure(focused)&&focused.rows.length<=256&&focused.ancestors.length<=8;
+   const covered=focused.reason==='complete'&&focused.rows.filter(r=>r[3]==='menuitem').length===4&&focused.detailRoots.length===2;
+   const honest=coverage.state==='COMPLETE_FOCUSED_SNAPSHOT'&&coverage.scope==='non-history-section-details'&&coverage.contextOnly.length===1&&focused.rows[coverage.contextOnly[0]][8]===true;
+   const unchanged=nav.outerHTML===before;
+   // A local subtree can still exceed its own depth allowance: fail honestly,
+   // not by increasing the limit or treating the unknown descendants as safe.
+   let deep=nodes[32];const chain=document.createElement('span');deep.append(chain);deep=chain;
+   for(let i=0;i<20;i++){const child=document.createElement('span');deep.append(child);deep=child;}
+   const limited=readSidebarStructure({document,profile}),limitedCoverage=sidebarStructureCoverage(limited);
+   const depthGuard=limited.reason==='capacity'&&limitedCoverage.state==='PARTIAL'&&limitedCoverage.gaps.depthLimitRows.length>0;chain.remove();
+   const extra=document.createElement('button');nodes[0].append(extra);
+   const ambiguous=readSidebarStructure({document,profile});
+   const conservative=ambiguous.schema==='sidebar-structure-v1';nav.remove();
+   return {bounded,covered,honest,unchanged,depthGuard,conservative,private:!JSON.stringify(focused).includes('PRIVATE')};
+  },latest);
+  assert(Object.values(details).every(Boolean),JSON.stringify(details));
+  console.log(JSON.stringify({status:'PASS_ANONYMOUS_SIDEBAR_SNAPSHOT_ONLY',result,focus,details}));
  }else if(process.argv.includes('--diagnostic-only')){
   const page=await browser.newPage(),url='https://chatgpt.com/';
   await page.route('**/*',r=>r.request().url()===url?r.fulfill({contentType:'text/html',body:'<nav id="source"><div id="root"><div role="list"><div role="listitem"><a href="/c/PRIVATE_ID">PRIVATE_TITLE</a></div></div></div></nav>'}):r.abort());

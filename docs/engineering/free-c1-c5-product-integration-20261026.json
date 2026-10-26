@@ -855,5 +855,72 @@
     ],
     "nextBoundary": "Do not immediately recollect. Four omitted first-section descendants and member/expansion semantics remain unknown; current file cannot justify full Project-region takeover. Existing workspace and validated recent region remain independent.",
     "productAcceptance": "NOT_COMPLETE; no new real product PASS inferred"
+  },
+  "focusedSidebarDetailRepair20261026": {
+    "baseHead": "042758ec2087e39bfd72ed3c95ff4320a48a641c",
+    "status": "OFFLINE_DETAIL_CAPTURE_REPAIRED_NO_LIVE_UPDATE",
+    "confirmedDefect": "The previous common-root traversal spends its depth budget on already observed wrappers and its row budget on known history. Recording omissions alone did not repair this.",
+    "implementation": "Recognize only the observed two-section/header/list relationship. Preserve its full outer tree and use the header and list as explicit detail roots; mark the history section context-only without walking it. The total 256 returned rows and 25ms remain shared, each named local detail root has depth 16. This is explicitly versioned sidebar-structure-v2, not silent whole-tree completeness.",
+    "coverage": "COMPLETE_FOCUSED_SNAPSHOT applies only to non-history section details; history is explicitly unobserved. Unmatched structure falls back conservatively. Local depth/row/time exhaustion remains PARTIAL. No mask, membership or account authority is produced.",
+    "sourceHashes": {
+      "src/host/history-structure-diagnostic.mjs": "e46c2ece8ee2a49cf2f9a541a81a6912320de06d5bb862f8ed22d351509e59a0",
+      "tests/host/history-list-browser.mjs": "cb149351e201390dab567c995e83cef710662e3f3ec4bb76c932da9e0d3a8e6c",
+      "tests/host/browser-local-mv3.mjs": "913b60433c672d72608b3ad1e205c3d9b141d136118d2007b10500b2252b40d7",
+      "tests/host/local-status.test.mjs": "ce3cac00a25d2f9fd5a73d09ae4b5e68602ac8f0c14f315794f021461df22b29"
+    },
+    "verification": {
+      "unit": {
+        "passed": 103,
+        "failed": 0,
+        "log": "/private/tmp/vaiwl-focused-detail-unit.log"
+      },
+      "realTopologyReplay": {
+        "status": "PASS_ANONYMOUS_SIDEBAR_SNAPSHOT_ONLY",
+        "result": {
+          "safe": true,
+          "structure": true,
+          "excluded": true,
+          "geometry": true,
+          "unchanged": true,
+          "bounded": true,
+          "lastReadBudget": true,
+          "missing": true
+        },
+        "focus": {
+          "narrowed": true,
+          "covered": true,
+          "completeness": true,
+          "unchanged": true,
+          "conservative": true,
+          "private": true,
+          "bounded": true
+        },
+        "details": {
+          "bounded": true,
+          "covered": true,
+          "honest": true,
+          "unchanged": true,
+          "depthGuard": true,
+          "conservative": true,
+          "private": true
+        }
+      },
+      "isolatedMV3": {
+        "status": "PASS",
+        "checks": {
+          "homeCollectorPopupComplete": true,
+          "projectCollectorPopupComplete": true,
+          "collectorBuildReceiptMatchesPackage": true,
+          "staleDocumentRejected": true,
+          "noPrivateDatabaseOrDraftChanges": true,
+          "popupDownloadsBoundAnonymousSnapshot": true,
+          "noInternalRequests": true
+        },
+        "report": "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-9UNroq/report.json"
+      },
+      "sentinels": "Four explicit synthetic controls beneath actual omitted nodes test reach only. They are not real native descendants. History pressure and over-depth counterexamples validate scope/bounds."
+    },
+    "dailyChrome": "UNCHANGED; no new activation, collection, candidate or product acceptance",
+    "remaining": "Actual Project control/member descendants remain unknown. Do not widen native takeover or claim full v2.7 delivery from offline capture success."
   }
 }

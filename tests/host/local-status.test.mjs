@@ -4,6 +4,17 @@ import {foregroundFailureStates,installLocalStatus,readActiveLocalStatus,validLa
 import {validSidebarStructure,sidebarStructureCoverage} from '../../src/host/history-structure-diagnostic.mjs';
 import observedSidebar from './fixtures/observed-sidebar-structure.json' with {type:'json'};
 import observedProjectSidebar from './fixtures/observed-sidebar-project-20261026.json' with {type:'json'};
+test('focused detail coverage names its unobserved history and never certifies the whole sidebar',()=>{
+ const row=(parent,position,tag,role,flags,children,omitted=false)=>[parent,position,tag,role,flags,children,[0,0,200,20],0,omitted];
+ const report={schema:'sidebar-structure-v2',reason:'complete',ancestors:[],detailRoots:[3,4],contextOnly:[5],rows:[row(-1,0,'DIV','absent',0,2),row(0,0,'SECTION','absent',2,1),row(1,0,'DIV','absent',0,2),row(2,0,'DIV','absent',8,0),row(2,1,'DIV','list',32,0),row(0,1,'SECTION','absent',2,17,true)]};
+ assert(validSidebarStructure(report));assert(validLayoutShape({sidebarStructure:report}));
+ const coverage=sidebarStructureCoverage(report);
+ assert.equal(coverage.state,'COMPLETE_FOCUSED_SNAPSHOT');assert.equal(coverage.scope,'non-history-section-details');assert.deepEqual(coverage.contextOnly,[5]);
+ for(const mutate of [r=>r.detailRoots=[3,3],r=>r.contextOnly=[9],r=>r.detailRoots='PRIVATE']){const copy=structuredClone(report);mutate(copy);assert(!validSidebarStructure(copy));}
+ for(const mutate of [r=>r.contextOnly=[],r=>r.contextOnly=[3],r=>r.detailRoots=[3,5],r=>r.rows[3][4]=0,r=>r.rows[4][3]='button']){const copy=structuredClone(report);mutate(copy);assert.equal(sidebarStructureCoverage(copy).state,'PARTIAL');}
+ const late=structuredClone(report);late.contextOnly=[];late.reason='capacity';
+ assert.equal(sidebarStructureCoverage(late).reason,'capacity');
+});
 test('real focused Project snapshot separates depth omissions from exhausted row budget',()=>{
  const snapshot=observedProjectSidebar,report=snapshot.sidebarStructure,rows=report.rows;
  assert.equal(snapshot.build,'b3092e59a2d160ed6618c2b620c5753010172d7504530ab75aa2ed8acfa20e71');

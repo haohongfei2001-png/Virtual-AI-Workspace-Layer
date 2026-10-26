@@ -17,7 +17,8 @@ const sidebarReasons=['complete','boundary-unavailable','capacity','budget','una
 // section, href, expanded, controls, tabindex, editable, owned.
 const sidebarRow=r=>Array.isArray(r)&&r.length===9&&Number.isInteger(r[0])&&r[0]>=-1&&r[0]<256&&int(r[1],65536)&&sidebarTags.includes(r[2])&&sidebarRoles.includes(r[3])&&int(r[4],255)&&int(r[5],65536)&&Array.isArray(r[6])&&r[6].length===4&&r[6].every(n=>Number.isInteger(n)&&Math.abs(n)<=65536)&&int(r[7],31)&&typeof r[8]==='boolean';
 export function validSidebarStructure(v){
- return exact(v,['schema','reason','ancestors','rows'])&&v.schema==='sidebar-structure-v1'&&sidebarReasons.includes(v.reason)&&Array.isArray(v.ancestors)&&v.ancestors.length<=8&&v.ancestors.every(r=>sidebarRow(r)&&r[0]===-1&&r[8])&&Array.isArray(v.rows)&&v.rows.length<=256&&v.rows.every((r,i)=>sidebarRow(r)&&(i===0?r[0]===-1:r[0]>=0&&r[0]<i));
+ const focused=v?.schema==='sidebar-structure-v2';
+ return exact(v,focused?['schema','reason','ancestors','rows','detailRoots','contextOnly']:['schema','reason','ancestors','rows'])&&(focused||v.schema==='sidebar-structure-v1')&&sidebarReasons.includes(v.reason)&&Array.isArray(v.ancestors)&&v.ancestors.length<=8&&v.ancestors.every(r=>sidebarRow(r)&&r[0]===-1&&r[8])&&Array.isArray(v.rows)&&v.rows.length<=256&&v.rows.every((r,i)=>sidebarRow(r)&&(i===0?r[0]===-1:r[0]>=0&&r[0]<i))&&(!focused||[v.detailRoots,v.contextOnly].every(a=>Array.isArray(a)&&a.length<=2&&new Set(a).size===a.length&&a.every(i=>Number.isInteger(i)&&i>0&&i<v.rows.length)));
 }
 /** Audit the returned tree, not just the collector's termination label. These
  * counts describe anonymous section branches; they do not identify Projects,
@@ -26,7 +27,8 @@ export function sidebarStructureCoverage(report){
  const result={state:'PARTIAL',reason:'invalid-report',rows:0,sections:[]};
  if(!validSidebarStructure(report))return result;
  result.rows=report.rows.length;result.reason=report.reason;
- const rows=report.rows,positions=rows.map(()=>new Set()),owners=[],sectionBranches=[],depths=[];
+ const rows=report.rows,positions=rows.map(()=>new Set()),owners=[],sectionBranches=[],depths=[],focused=report.schema==='sidebar-structure-v2';
+ const detailRoots=focused?report.detailRoots:[],contextOnly=focused?report.contextOnly:[];
  // Explain the evidence already returned, without another DOM read. Capacity
  // may mean both depth truncation and an unfinished sibling list; decorative
  // SVG omissions must not be counted as unknown Project controls.
@@ -34,7 +36,7 @@ export function sidebarStructureCoverage(report){
  let consistent=rows.length>0,unexplainedOmission=false;
  for(let i=0;i<rows.length;i++){
   const [parent,position,tag,role,flags,children,,,omitted]=rows[i];
-  depths[i]=parent<0?0:depths[parent]+1;
+  depths[i]=parent<0||detailRoots.includes(i)?0:depths[parent]+1;
   if(parent>=0){
    if(rows[parent][8]||position>=rows[parent][5]||positions[parent].has(position))consistent=false;
    positions[parent].add(position);
@@ -45,7 +47,7 @@ export function sidebarStructureCoverage(report){
   if(owner>=0){const counts=result.sections[owner];if(tag==='A'&&(flags&4))counts[0]++;if(tag==='BUTTON'||role==='button'||role==='menuitem')counts[1]++;if(flags&1)counts[2]++;if(omitted&&children)counts[3]++;}
   // Only known privacy/owned leaves may deliberately hide descendants. A
   // depth-truncated DIV must never be presented as a complete capture.
-  if(omitted&&children&&!['SVG','INPUT','TEXTAREA','MAIN','SCRIPT','STYLE'].includes(tag)&&!(flags&192)){
+  if(omitted&&children&&!contextOnly.includes(i)&&!['SVG','INPUT','TEXTAREA','MAIN','SCRIPT','STYLE'].includes(tag)&&!(flags&192)){
    unexplainedOmission=true;gaps.unexplainedOmissionRows.push(i);
    if(depths[i]===16)gaps.depthLimitRows.push(i);
   }
@@ -54,25 +56,36 @@ export function sidebarStructureCoverage(report){
   consistent=false;gaps.missingChildren.push([i,Math.max(0,rows[i][5]-positions[i].size)]);
  }
  if(gaps.unexplainedOmissionRows.length||gaps.missingChildren.length)result.gaps=gaps;
+ if(focused){
+  result.scope='non-history-section-details';result.contextOnly=[...contextOnly];
+  if(report.reason!=='complete')return result;
+  // A focused report is never whole-sidebar completeness. Require the exact
+  // observed section/header/list relation before accepting its local coverage.
+  const [header,list]=detailRoots,[context]=contextOnly;
+  const headerParent=rows[header]?.[0],section=rows[headerParent]?.[0];
+  let body=list;for(let n=0;n<3&&rows[body]?.[0]!==headerParent;n++)body=rows[body]?.[0];
+  const shape=detailRoots.length===2&&contextOnly.length===1&&rows[header]?.[2]==='DIV'&&(rows[header]?.[4]&8)&&rows[header]?.[1]===0&&rows[list]?.[3]==='list'&&rows[body]?.[0]===headerParent&&rows[body]?.[1]===1&&rows[headerParent]?.[5]===2&&(rows[section]?.[4]&2)&&(rows[context]?.[4]&2)&&rows[context]?.[8]===true&&owners[header]===owners[list]&&owners[context]!==owners[header];
+  if(!shape){result.reason='detail-boundary-unconfirmed';return result;}
+ }
  if(report.reason!=='complete')return result;
  if(!consistent){result.reason='incomplete-tree';return result;}
  if(unexplainedOmission){result.reason='unexplained-omission';return result;}
  if(result.sections.length!==2||rows[0][5]!==2||new Set(sectionBranches).size!==2){result.reason='section-boundary-unconfirmed';return result;}
- result.state='COMPLETE_SNAPSHOT';result.reason='complete';return result;
+ result.state=focused?'COMPLETE_FOCUSED_SNAPSHOT':'COMPLETE_SNAPSHOT';result.reason='complete';return result;
 }
 // The captured navigation has two sibling section branches under a shared
 // wrapper. Start there when that exact relation to the existing history target
 // holds, so outer shell wrappers cannot consume the diagnostic depth budget.
 // This chooses observation scope only; it grants no mask/action capability.
-function sidebarSectionBoundary(boundary,history){
- const section=history?.closest('[data-app-action-sidebar-section]');
- if(!section||!boundary.contains(section))return boundary;
- const sectionInSingleBranch=node=>{
+function sectionInSingleBranch(node){
   for(let depth=0;node&&depth<4;depth++){
    if(node.matches('[data-app-action-sidebar-section]'))return node;
    if(node.children.length!==1)return null;node=node.firstElementChild;
   }return null;
- };
+}
+function sidebarSectionBoundary(boundary,history){
+ const section=history?.closest('[data-app-action-sidebar-section]');
+ if(!section||!boundary.contains(section))return boundary;
  let node=section;
  for(let depth=0;node&&node!==boundary&&depth<8;depth++,node=node.parentElement){
   const parent=node.parentElement;if(!parent||!boundary.contains(parent))break;
@@ -81,6 +94,25 @@ function sidebarSectionBoundary(boundary,history){
   if(sections.includes(section)&&sections.every(Boolean)&&sections[0]!==sections[1])return parent;
  }
  return boundary;
+}
+// The real focused snapshot contains a section header and a separately wrapped
+// list. Capture these as two local subtrees under one total row/time budget.
+// Their already observed wrappers remain in the report. The history section is
+// explicitly context-only, not re-traversed and never certified by this report.
+function sidebarDetailPlan(root,history){
+ if(root.children.length!==2)return null;
+ const sections=[...root.children].map(sectionInSingleBranch),historySection=history?.closest('[data-app-action-sidebar-section]');
+ if(!historySection||!sections.includes(historySection)||!sections.every(Boolean))return null;
+ const section=sections.find(n=>n!==historySection),shell=section.firstElementChild;
+ if(section.children.length!==1||shell?.tagName!=='DIV'||shell.children.length!==2)return null;
+ const [header,body]=shell.children;
+ if(header.tagName!=='DIV'||!header.hasAttribute('aria-expanded')||body.tagName!=='DIV')return null;
+ let list=body;
+ for(let n=0;n<4;n++){
+  if(list.getAttribute('role')==='list')return {roots:[header,list],historySection};
+  if(list.tagName!=='DIV'||list.children.length!==1)return null;list=list.firstElementChild;
+ }
+ return null;
 }
 /** One snapshot only when the existing private status popup requests layout.
  * No observers, storage, raw attributes, text, URL reads or DOM mutations.
@@ -94,6 +126,8 @@ export function readSidebarStructure({document,profile}){
   const selector=profile.nativeLayout?.historyList??profile.nativeHomeLayout?.historyList;
   const history=selector?profileElement(document,profile,selector):null;
   const root=sidebarSectionBoundary(boundary,history);
+  const detail=sidebarDetailPlan(root,history);
+  if(detail){report.schema='sidebar-structure-v2';report.detailRoots=[];report.contextOnly=[];}
   const number=n=>Number.isFinite(n)?Math.max(-65536,Math.min(65536,Math.round(n))):0;
   const fields=(node,parent,position,omit)=>{
    const style=win.getComputedStyle(node),rect=node.getBoundingClientRect(),role=node.getAttribute('role');
@@ -109,9 +143,12 @@ export function readSidebarStructure({document,profile}){
   while(stack.length){
    if(report.rows.length>=256){report.reason='capacity';break;}
    if(win.performance.now()-start>25){report.reason='budget';break;}
-   const {node,parent,position,depth}=stack.pop();
-   const omit=node.matches('svg,input,textarea,main,script,style,iframe,[contenteditable],[data-app-action-timeline-scroll],[data-thread-scroll-footer],[data-va-owned],[data-vaiwl-owned]')||depth>=16;
+   const item=stack.pop(),{node,parent,position}=item,depth=detail?.roots.includes(node)?0:item.depth;
+   const context=node===detail?.historySection;
+   const omit=context||node.matches('svg,input,textarea,main,script,style,iframe,[contenteditable],[data-app-action-timeline-scroll],[data-thread-scroll-footer],[data-va-owned],[data-vaiwl-owned]')||depth>=16;
    const index=report.rows.length;report.rows.push(fields(node,parent,position,omit));
+   if(detail?.roots.includes(node))report.detailRoots.push(index);
+   if(context)report.contextOnly.push(index);
    if(depth>=16&&node.children.length)report.reason='capacity';
    if(omit)continue;
    // Never allocate an unbounded array, even for an unexpected native tree.
