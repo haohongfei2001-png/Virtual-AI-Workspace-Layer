@@ -4490,8 +4490,33 @@
         "extension/tooling/package.json": "eae0628aefa50bf39eab0053f7ff0abb687f30c84607220e4ff0dae7b8e664d1",
         "extension/tooling/package-lock.json": "4609d990146911013da85142a111efcd9209a26f3d51ce56a83d5d6a3bb58180"
       },
-      "realMac": "NOT_RUN_THIS_BATCH_NO_DAILY_CHROME_ACTIONS",
-      "installed": "UNCHANGED_NO_COPY_NO_RELOAD",
+      "realMac": "NOT_RUN_FINAL_NATIVE_ENTRY_UNAVAILABLE",
+      "installed": {
+        "originalDirectory": "/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/.git/vaiwl-artifacts/local-source-witness-20261022/extension",
+        "candidateDirectory": "/private/tmp/VAIWL-v27-C1-C5-Integrated-20261026/extension",
+        "backup": "/private/tmp/VAIWL-v27-before-C1-C5-20261026/original-extension.tar.gz",
+        "backupSha256": "c0de7ca0bd7c90954876fa172a45acd3ab61044f429f4a3ff9728417c178903c",
+        "preservedOriginalFiles": 2894,
+        "preservedExtraFiles": 2696,
+        "changedFiles": [
+          "src/host/native-history-list.mjs",
+          "src/runtime/free-read-service.mjs",
+          "src/runtime/host-view-service.mjs",
+          "src/runtime/free-view-owner.mjs",
+          "src/runtime/free-frame-projection.mjs",
+          "src/navigation/mount-surface.mjs",
+          "src/host/surface-controller.mjs",
+          "src/host/free-frame-client.mjs",
+          "src/navigation/navigation.mjs",
+          "content.js",
+          "extension/classic-runtime.js",
+          "build-manifest.json"
+        ],
+        "manifestUnchanged": true,
+        "databaseAccess": "NONE",
+        "reload": "NOT_RUN",
+        "installedManifestSha256": "229fe9a041f62b4ba6215343a60e729889e22475eb1abc04961faa04b9e8fbc9"
+      },
       "freeAccepted": false,
       "releaseReady": false,
       "remaining": [
@@ -4512,7 +4537,20 @@
         "internal interfaces disabled",
         "historical CI failures unchanged",
         "10k/100k deferred"
-      ]
+      ],
+      "productCommit": "1bd31094391b854ab0b415eaf72bd4db622d8a99",
+      "finalNativeAccess": {
+        "operation": "cua.getApp(com.google.Chrome)",
+        "result": "timeoutReached -10005",
+        "browserInput": "NONE",
+        "realPageRead": "NONE",
+        "retry": "NONE"
+      },
+      "push": {
+        "result": "FAILED_GITHUB_443_CONNECT_TIMEOUT_75036MS",
+        "force": false,
+        "networkSettingsChanged": false
+      }
     }
   }
 }
