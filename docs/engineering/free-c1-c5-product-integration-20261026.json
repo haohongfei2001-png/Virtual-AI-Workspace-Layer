@@ -506,5 +506,77 @@
       "installation": "NOT_UPDATED; daily Chrome and databases untouched",
       "realObservation": "NOT_RUN; previous one-off exception consumed, further update/read requires explicit scope"
     }
+  },
+  "independentContinuityClosure20261026": {
+    "baseHead": "7db6c4169a57b3ef10226a34f5400c57e3b7c7fe",
+    "scope": "Continue independent original C1-C5 engineering; no real browser, installation, private data access or new plan.",
+    "fixes": [
+      {
+        "files": [
+          "src/host/surface-controller.mjs",
+          "src/host/content-session.mjs"
+        ],
+        "cause": "Transient native-layer/geometry suspension was stored as reading by termination, same-document replacement and BFCache recovery.",
+        "change": "Carry desired presentation only; keep actual visibility separate, fresh authorization and changed-route reading remain."
+      },
+      {
+        "files": [
+          "src/host/surface-controller.mjs"
+        ],
+        "cause": "A dormant four-grid wake did not update desiredMode until presentation; a layer during authorization restored prior reading.",
+        "change": "Record wake intent before asynchronous work; subsequent native input still supersedes it."
+      },
+      {
+        "files": [
+          "src/navigation/navigation.mjs"
+        ],
+        "cause": "Zero visible objects with positive omitted inventory was described as a first empty space.",
+        "change": "Use the existing empty state to distinguish unavailable known projection, keeping known search; do not infer deletion, loading or authority."
+      }
+    ],
+    "regression": {
+      "counterexamples": "Existing termination, dormant-entry, content-session and frame-projection-renderer tests reproduced failures before fixes.",
+      "associated": "357 tests passed; final document-invalidation branch and input priority addition verified in the affected two suites (136 passed), not additive full-suite counts.",
+      "correctedLegacyAssertions": "Producer cleanup belongs to content session; workspace requires only its own grant; independently authorized sidebar remains during native input.",
+      "browser": {
+        "evidence": "free-c1-c5-independent-continuity-20261026.json.gz",
+        "sha256": "a314a5a84e095c11af821d28878d0fb262f1b3a7716e1fe68ac55c0be5cad09f",
+        "status": "PASS",
+        "realChatGPT": "NOT_RUN",
+        "qualification": "Existing isolated headless Browser-Local formal MV3 journey, disposable profile and reject-external-network proxy. Initial sandbox Chrome launch SIGABRT; approved unsandboxed isolated run passed.",
+        "sourceFilesVerified": 199,
+        "sourceDrift": []
+      }
+    },
+    "review": {
+      "C1_C2": "Presentation intent fix; document/scope retirement and independent sidebar capability retained.",
+      "C3": "Existing display/action/candidate isolation inherited; no new confirmed defect in this focused audit.",
+      "C4": "Existing host-view-service merge, WorkspaceRepository.saveView/CAS and prior 7db6c416 restoration fix inherited.",
+      "C5": "Existing v2.7 renderer retained; explicit omitted-inventory state corrected. Full real sidebar still not accepted."
+    },
+    "build": {
+      "build": {
+        "status": "HOST_IMPLEMENTATION_UNVERIFIED",
+        "releaseStatus": "NOT_RELEASE_READY",
+        "files": 198,
+        "unpacked": "/private/tmp/vaiwl-independent-integration-build-ihn7AU/package/extension",
+        "archive": "/private/tmp/vaiwl-independent-integration-build-ihn7AU/package/vaiwl-free-host-development.zip",
+        "archiveSha256": "4b587b0120cdc32acc38e8db0e503ba4ab9a346a6dacc81b1eed5c10303b78b9"
+      },
+      "verified": {
+        "status": "HOST_IMPLEMENTATION_UNVERIFIED",
+        "releaseStatus": "NOT_RELEASE_READY",
+        "files": 198
+      },
+      "testedSourceFiles": 199,
+      "sourceDrift": [],
+      "installed": false,
+      "realChatGPT": "NOT_RUN"
+    },
+    "remaining": {
+      "projectSidebar": "Only actual Project-row descendants in common Project/recent parent remain missing from the bounded real structure. Existing 213-row truncated evidence cannot authorize expanded masks.",
+      "realProduct": "NOT_ACCEPTED; previous real local results inherited, no new Mac PASS claimed.",
+      "privateOldObjectRestore": "NOT_VERIFIED; unchanged."
+    }
   }
 }

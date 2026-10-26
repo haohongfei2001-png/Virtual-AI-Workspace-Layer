@@ -236,6 +236,7 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
  function dispose(s,keepObservation=false){if(!s)return;clearMigration(s);doc.removeEventListener?.('visibilitychange',s.visibility);doc.defaultView.removeEventListener('focus',s.focus);doc.defaultView.removeEventListener('blur',s.blur);s.restorePending?.();s.capturePending?.cancel();s.snippets?.stop();s.candidates?.stop();try{s.controller?.stop();}catch{}s.abort.abort();try{runtime.onMessage.removeListener(s.listener);}catch{}doc.defaultView.removeEventListener('pagehide',s.pagehide);try{if(!keepObservation||observation?.adapter!==s.adapter)s.adapter?.stop();}catch{}}
  function reset(keepObservation=false){if(!keepObservation)stopObservation();epoch++;const s=current;current=null;dispose(s,keepObservation);}
  function stop(){nativeUseIntent=null;contextWaitSuspended=false;verificationWaitURL=null;contextResumeAllowed=false;contextResumeMode='workspace';contextResumeURL=null;clearLearned();clearRecent();clearUpgrade();for(const type of ['pointerdown','keydown'])doc.removeEventListener?.(type,interruptUpgrade,true);enabled=false;restoreArmed=false;rebindQueued=false;rebindRun++;reset();doc.defaultView.removeEventListener('pagehide',pagehide);doc.defaultView.removeEventListener('pageshow',pageshow);}
+ function presentationIntent(state){return (state.controller?.presentationIntent?.()??state.controller?.presentationMode?.()??state.initialMode)==='workspace'?'workspace':'reading';}
  function pagehide(event){
   stopObservation();
   if(event?.persisted!==true){stop();return;}
@@ -248,14 +249,14 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
   if(!enabled)return;
   // BFCache restores the same document, but every capability is replaced.
   // Retain only presentation intent so reading does not reopen the workspace.
-  if(current){contextResumeMode=doc.location.href!==current.url?'reading':(current.controller?.presentationMode?.()??current.initialMode)==='reading'?'reading':'workspace';contextResumeURL=doc.location.href;}
+  if(current){contextResumeMode=doc.location.href!==current.url?'reading':presentationIntent(current);contextResumeURL=doc.location.href;}
   clearLearned();clearRecent();clearUpgrade();restoreArmed=true;rebindQueued=false;rebindRun++;reset();
   doc.defaultView.addEventListener('pagehide',pagehide);
  }
  function pageshow(event){if(event?.persisted===true&&contextWaitSuspended){contextWaitSuspended=false;return;}if(event?.persisted!==true||!enabled||!restoreArmed)return;restoreArmed=false;void begin(false,contextResumeMode);}
  function rebind(s,initialMode=null,expectedScope=null){
   if(!enabled||current!==s||rebindQueued||s.busyClose===true&&doc.location.href===s.url)return;
-  if(initialMode===null)initialMode=s.controller?.presentationMode?.()==='workspace'?'workspace':'reading';
+  if(initialMode===null)initialMode=presentationIntent(s);
   if(doc.location.href!==s.url){rememberDepartingRoute(s);upgrade.navigate({url:doc.location.href});initialMode='reading';}else if(!upgrade.isTarget({url:doc.location.href}))clearUpgrade();
   rebindQueued=true;const run=++rebindRun;reset();doc.defaultView.addEventListener('pagehide',pagehide);
   // Collapse a burst into one replacement. Only external events can request a
@@ -587,7 +588,7 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
   // They still require the new handshake's scope/document checks; no old grant,
   // handle, mount or controller is reused.
   if(current){
-   contextResumeMode=doc.location.href!==current.url?'reading':(current.controller?.presentationMode?.()??current.initialMode)==='reading'?'reading':'workspace';
+   contextResumeMode=doc.location.href!==current.url?'reading':presentationIntent(current);
    if(doc.location.href!==current.url&&!upgrade.navigate({url:doc.location.href}))clearUpgrade();
    contextResumeURL=doc.location.href;
   }

@@ -12,7 +12,7 @@ function fixture({onWake=()=>false}={}){
  const binding={documentToken:'doc',producerToken:'producer',browserDocumentId:'parent',routeEpoch:1,origin:'https://chatgpt.com',expiresAt:new Date(21000).toISOString()};
  const inspection={ok:true,regionEpoch:1,navigationSlot:slot};
  const adapter={start:async()=>({binding}),stop(){},inspect:()=>occupied?{ok:false,reason:'native-content-occupies-return-slot'}:inspection,hasNativeLayer:()=>layer,updateBinding:()=>true};
- const surface={mount:async(context,inspection,options)=>{surrender=options.onSurrender;return {id:'mount',documentToken:'doc',regionEpoch:1};},frames:()=>frames,showWorkspace(){calls.shown++;visible.workspace=visible.sidebar=true;},showReading(){visible.workspace=false;},suspend(){calls.suspended++;visible.workspace=visible.sidebar=false;},dispose(){calls.disposed++;},visibility:()=>({...visible})};
+ const surface={mount:async(context,inspection,options)=>{surrender=options.onSurrender;return {id:'mount',documentToken:'doc',regionEpoch:1};},frames:()=>frames,showWorkspace(_handle,{roles=['workspace','sidebar']}={}){if(roles.includes('workspace'))calls.shown++;for(const role of roles)visible[role]=true;},showReading(){visible.workspace=false;},suspend(){calls.suspended++;visible.workspace=visible.sidebar=false;},dispose(){calls.disposed++;},visibility:()=>({...visible})};
  const bridge={registerMount:async()=>({ok:true}),confirmParent:async({role})=>{calls.confirmed++;return {ok:true,grant:{id:'grant_'+role,mountId:'mount',role,parentDocumentId:'parent',uiDocumentId:'ui_'+role,scopeGrantId:'scope',expiresAt:new Date(21000).toISOString()}};}};
  const controller=createSurfaceController({document:doc,adapter,surface,bridge,extensionOrigin:'chrome-extension://ext',onWake,onTerminated:reason=>calls.ended.push(reason),now:()=>time,elapsedNow:()=>time,schedule:(fn,ms)=>{const id=++next;timers.set(id,{fn,at:time+ms});return id;},cancel:id=>timers.delete(id)});
  const message=(role,type='VAIWL_UI_JOIN',extra={},overrides={})=>{const event={origin:'chrome-extension://ext',source:frames.find(x=>x.role===role).frame.contentWindow,data:{type,role,...(type==='VAIWL_UI_JOIN'?{nonce:'nonce_'+role}:{}),...extra},...overrides};for(const fn of events.get('message')??[])fn(event);};
@@ -45,7 +45,7 @@ test('untrusted click and programmatic resume do not manufacture workspace entry
 for(const reason of ['native-input','native-layer','registration-failure','stop'])test('trusted dormant entry is suppressed by '+reason,async()=>{
  const f=await dormant();let release;f.bridge.registerMount=()=>new Promise(resolve=>release=resolve);f.click();await flush();assert.equal(f.entries.length,0);
  if(reason==='native-input')f.nativeInput();if(reason==='native-layer')f.layer(true);if(reason==='stop')f.controller.stop();release({ok:reason!=='registration-failure'});await flush();await joins(f);
- assert.equal(f.entries.length,0);if(reason==='native-input')assert.equal(f.controller.presentationMode(),'reading');if(['registration-failure','stop'].includes(reason))assert.equal(f.calls.disposed,1);f.controller.stop();
+ assert.equal(f.entries.length,0);if(reason==='native-input'){assert.equal(f.controller.presentationMode(),'reading');assert.equal(f.controller.presentationIntent(),'reading');}if(['registration-failure','stop'].includes(reason))assert.equal(f.calls.disposed,1);f.controller.stop();
 });
 for(const notify of ['throw','reject'])test('dormant entry notification '+notify+' cannot revoke opened UI',async()=>{
  const f=await dormant({notify});f.click();await flush();await joins(f);assert.equal(f.entries.length,1);assert.equal(f.controller.presentationMode(),'workspace');assert.equal(f.calls.disposed,0);assert.equal(f.controller.showWorkspace(),true);f.controller.stop();
@@ -54,8 +54,8 @@ for(const notify of ['throw','reject'])test('dormant entry notification '+notify
 for(const reason of ['native-input','native-layer'])test('synchronous '+reason+' while opening fresh surfaces cancels dormant entry notification',async()=>{
  const f=await dormant();f.click();await flush();
  const show=f.surface.showWorkspace,frames=f.frames.map(target=>target.frame),beforeSuspended=f.calls.suspended;
- f.surface.showWorkspace=()=>{show();if(reason==='native-input'){f.surface.suspend();f.nativeInput();}else{f.layer(true);f.controller.suspend('native-layer');}show();return true;};
- await joins(f);assert.equal(f.entries.length,0);assert.equal(f.calls.disposed,0);assert.equal(f.controller.presentationMode(),'reading');assert.deepEqual(f.surface.visibility(),{workspace:false,sidebar:false},'later surface opening must be closed after synchronous surrender');assert(f.calls.suspended>beforeSuspended);
+ f.surface.showWorkspace=(handle,options)=>{show(handle,options);if(options?.roles?.length===1&&options.roles[0]==='sidebar')return true;if(reason==='native-input'){f.surface.suspend();f.nativeInput();}else{f.layer(true);f.controller.suspend('native-layer');}show(handle,options);return true;};
+ await joins(f);assert.equal(f.entries.length,0);assert.equal(f.calls.disposed,0);assert.equal(f.controller.presentationMode(),'reading');assert.deepEqual(f.surface.visibility(),{workspace:false,sidebar:reason==='native-input'},'input preserves the independently authorized sidebar; a native layer hides both');assert(f.calls.suspended>beforeSuspended);
  for(let i=0;i<frames.length;i++)assert.equal(f.frames[i].frame,frames[i]);
  if(reason==='native-input'){assert.equal(f.slot.children.length,1);assert.equal(f.controller.isReturnTarget(f.slot.children[0]),true);}else{assert.equal(f.slot.children.length,0);f.surface.showWorkspace=show;f.layer(false);f.mutate();assert.equal(f.controller.presentationMode(),'workspace');assert.equal(f.surface.visibility().workspace,true);assert.equal(f.entries.length,0);}
  f.controller.stop();
@@ -68,4 +68,14 @@ for(const replacement of [false,true])test('synchronous '+(replacement?'replacem
  if(replacement){await next;await joins(f);f.controller.showNativeReading();const currentReturn=f.slot.children[0];assert(currentReturn);assert.notEqual(currentReturn,oldReturn);assert.equal(f.slot.children.length,1);assert.equal(f.controller.isReturnTarget(currentReturn),true);oldReturn.events.click({isTrusted:true});assert.equal(f.slot.children[0],currentReturn);assert.equal(f.controller.presentationMode(),'reading');assert.equal(entered.length,0);}
  else{assert.equal(f.slot.children.length,0);assert.equal(f.controller.showWorkspace(),false);}
  f.controller.stop();
+});
+
+test('dormant workspace intent survives a native layer during fresh authorization',async()=>{
+ const f=await dormant();let release;f.bridge.registerMount=()=>new Promise(resolve=>release=resolve);
+ f.click();await flush();f.layer(true);release({ok:true});await flush();await joins(f);
+ assert.equal(f.surface.visibility().workspace,false);assert.equal(f.entries.length,0);
+ f.layer(false);f.mutate();
+ assert.equal(f.controller.presentationSnapshot().desiredMode,'workspace');
+ assert.equal(f.controller.presentationMode(),'workspace');assert.equal(f.surface.visibility().workspace,true);
+ assert.equal(f.entries.length,0,'restored visibility must not fabricate another user entry');f.controller.stop();
 });

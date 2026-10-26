@@ -152,7 +152,7 @@ test('native boundary refusal preserves reading mode and its unique return contr
 
 test('native surrender records reading for recovery even if authority expires before toggle',async()=>{
  const f=fixture();await f.controller.start({});await f.both();assert.equal(f.controller.presentationMode(),'workspace');
- f.binding.expiresAt=new Date(0).toISOString();f.surrender({reason:'native-change'});
+ f.binding.expiresAt=new Date(0).toISOString();f.surrender({reason:'native-input'});
  assert.equal(f.controller.presentationMode(),'reading');assert.equal(f.slot.children.length,0,'expired grant cannot create a return control');
  f.controller.stop('ui-grant-expired');assert.deepEqual(f.calls.terminations.at(-1),{reason:'ui-grant-expired',presentation:{mode:'reading'}});
 });

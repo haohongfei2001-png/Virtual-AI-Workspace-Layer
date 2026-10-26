@@ -471,3 +471,16 @@ test('frame receipt waits for pointer-deferred rendering rather than acknowledgi
  const next=projection();f.nav.updateFrameProjection(next);assert.deepEqual(commits,[first]);
  f.doc.handlers.get('pointerup')({pointerId:9});await new Promise(r=>setTimeout(r,5));assert.equal(commits.at(-1),next);f.nav.stop();
 });
+
+test('omitted known inventory is not presented as a first empty workspace',()=>{
+ for(const omitted of [0,3,null]){
+  const f=fixture(),dto=projection();try{
+   dto.groups=page();dto.entries={noProject:{...page(),inventoryTotal:0},unknown:{...page(),inventoryTotal:0}};
+   dto.inventory={projects:0,refs:0,omittedProjects:omitted,omittedRefs:omitted};
+   f.nav.updateFrameProjection(dto);const empty=f.pane().querySelector('.empty');
+   assert.equal(empty.querySelector('strong').textContent,omitted===3?'当前没有可显示的已知记录':'从一次聊天开始');
+   assert.equal(!!empty.querySelector('button'),omitted===3);
+   assert.equal(f.pane().querySelectorAll('[data-ref-id]').length,0);
+  }finally{f.nav.stop();}
+ }
+});

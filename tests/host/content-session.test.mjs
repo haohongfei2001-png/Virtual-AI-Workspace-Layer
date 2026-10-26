@@ -178,12 +178,12 @@ test('private ingestion scheduling uses bound transport and a six-second RPC wit
 });
 
 function c2PresentationFixture(){
- const modes=[];let mode='workspace';
+ const modes=[];let mode='workspace',hidden=false;
  const f=fixture({contextRecovery:true,controllerFactory:options=>{
-  modes.push(options.initialMode);mode=options.initialMode;
-  return {start:async()=>{await options.bridge.registerMount({handle:{id:'mount',regionEpoch:1}});return {id:'mount'};},stop:()=>{},presentationMode:()=>mode,showWorkspace:()=>{mode='workspace';return true;},showReading:()=>{mode='reading';return true;}};
+  modes.push(options.initialMode);mode=options.initialMode;hidden=false;
+  return {start:async()=>{await options.bridge.registerMount({handle:{id:'mount',regionEpoch:1}});return {id:'mount'};},stop:()=>{},presentationMode:()=>hidden?'reading':mode,presentationIntent:()=>mode,showWorkspace:()=>{mode='workspace';return true;},showReading:()=>{mode='reading';return true;}};
  }});
- return {...f,modes};
+ return {...f,modes,suspendPresentation(){hidden=true;}};
 }
 for(const mode of ['reading','workspace'])for(const transition of ['restore','pending','denied','stop'])test('active BFCache retains '+mode+' through '+transition,async()=>{
  const f=c2PresentationFixture();try{
@@ -450,4 +450,15 @@ test('initial transport refusal stays fail-closed with bounded private reason',a
 
 test('legacy layout recovery cannot revive stopped or unauthorized sessions',async()=>{
  for(const deny of [false,true]){const f=fixture();if(deny)f.setResponse(()=>({ok:false,reason:'denied'}));await f.client.start();f.client.stop();const before=f.calls.length;f.document.location.href+='c/other';assert.equal(await f.client.recoverLayout(),null);assert.equal(await f.client.recoverRoute(),null);assert.equal(f.calls.length,before);}
+});
+
+for(const transition of ['context-pending','bfcache','document-invalidation'])test('temporary presentation yield retains workspace intent through '+transition,async()=>{
+ const f=c2PresentationFixture();try{
+  await f.client.start();f.suspendPresentation();const before=f.calls.length;
+  if(transition==='context-pending'){f.client.contextPending();await f.client.contextReady();}
+  else if(transition==='document-invalidation'){[...f.listeners][0]({type:'HOST_DOCUMENT_INVALIDATED'},{id:'extension'});await drain();}
+  else{f.events.get('pagehide')({persisted:true});f.events.get('pageshow')({persisted:true});await drain();}
+  assert.deepEqual(f.modes,['workspace','workspace']);
+  assert.deepEqual(f.calls.slice(before).filter(m=>['HOST_HELLO','HOST_REFRESH','HOST_UI_MOUNT'].includes(m.type)).map(m=>m.type),['HOST_HELLO','HOST_REFRESH','HOST_UI_MOUNT']);
+ }finally{f.client.stop();}
 });
