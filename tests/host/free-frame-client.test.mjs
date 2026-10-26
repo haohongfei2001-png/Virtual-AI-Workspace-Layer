@@ -677,3 +677,81 @@ test('ordinary preparing and timeout retain lawful prior projection',async()=>{
  const f=fixture();await f.client.start();await drain();f.setView(async()=>({ok:true,state:'preparing',retryAfterMs:50}));f.emit({type:'VAIWL_UI_DATA_CHANGED'});await drain();assert.equal(f.invalidations,0);
  f.setView(async()=>({ok:false,reason:'request-timeout'}));await f.advance(50);assert.equal(f.invalidations,0);assert.equal(f.stops,0);f.client.stop();
 });
+
+function expiringNavigationFixture(){
+ const f=fixture(),id='33333333-3333-4333-8333-333333333333',url='https://chatgpt.com/c/'+id;
+ const control={id:'handle',documentToken:'document',routeEpoch:0,regionEpoch:0,controlKind:'conversation'};
+ const target={kind:'resolved',entity:'conversation',nativeId:id,navigationURL:url,liveHandle:control};
+ let revisions=0,answer=null;const send=f.runtime.sendMessage;
+ const context={scope:{key:'A'},scopeGrantId:'scope',role:'workspace',binding:{documentToken:'document',producerToken:'producer',routeEpoch:0},parentFrame:{tabId:1,frameId:0,documentId:'parent',actualURL:'https://chatgpt.com/'},isCurrent:()=>f.stops===0};
+ const registry=createHostCurrentNavigation({ui:{withScope:async(args,fn)=>fn(context)},observations:{withCurrent:async()=>{throw Error('unexpected-body-read');}},bridge:async()=>({state:'dispatched'}),elapsedNow:()=>Date.parse(f.grant().expiresAt)-20000});
+ f.setView(async()=>({ok:true,state:'ready',deliveryId:f.views,page:f.page(),navigation:[]}));
+ f.runtime.sendMessage=m=>{
+  if(m.type==='HOST_UI_NAVIGATION_PLANS'){
+   f.calls.push(m);const n=++revisions;
+   if(answer)return answer(m,n);
+   const hrefId='44444444-4444-4444-8444-444444444444';
+   const navigation=[{refId:id,targetKey:'key_'+n,plan:{mode:'native-control',target,control,planRevision:n}},{refId:hrefId,targetKey:'href',plan:{mode:'href',planRevision:n,disposition:'new-tab-preserve-current',target:{kind:'resolved',entity:'conversation',nativeId:hrefId,navigationURL:'https://chatgpt.com/c/'+hrefId,liveHandle:null}}}];
+   registry.register({context,grantId:'grant',mountId:'mount',navigation:navigation.filter(item=>item.plan.mode==='native-control')});
+   return Promise.resolve({ok:true,deliveryId:m.deliveryId,navigation});
+  }
+  if(m.type==='HOST_UI_DISPATCH_NATIVE'){f.calls.push(m);return registry.handle(m,'owned');}
+  return send(m);
+ };
+ return {f,id,get revisions(){return revisions;},setAnswer(value){answer=value;},issued:()=>f.nav.adapter.navigationPlan({id})};
+}
+test('delegated navigation renews current delivery independently of VIEW and authority keepalive',async()=>{
+ const x=expiringNavigationFixture(),{f}=x;await f.client.start();await drain();assert.equal(x.revisions,1);
+ const page=f.pages.at(-1);
+ for(let i=0;i<4;i++)await f.advance(10000);
+ assert.equal(x.revisions,3);assert.equal(f.views,1);assert.equal(f.factories,1);assert.equal(f.invalidations,0);assert.equal(f.pages.at(-1),page);
+ assert(f.calls.filter(m=>m.type==='HOST_UI_NAVIGATION_PLANS').every(m=>m.deliveryId===1));
+ const issued=x.issued();assert.equal(issued.plan.planRevision,3);
+ assert.deepEqual(await f.nav.onDispatch({actionId:'action',uiGrantId:issued.uiGrantId,mountId:issued.mountId,planRevision:issued.plan.planRevision,targetKey:issued.targetKey}),{state:'dispatched'});
+ f.client.stop();
+});
+test('delegated navigation refresh waits for pressed control and disables dispatch while replacement is pending',async()=>{
+ const x=expiringNavigationFixture(),{f}=x;await f.client.start();await drain();await f.advance(10000);await f.advance(9500);
+ const release=f.nav.onNativeInteractionStart();assert.equal(typeof release,'function');const old=x.issued();
+ await f.advance(500);assert.equal(x.revisions,1);assert.equal(x.issued(),old);
+ const held=deferred();x.setAnswer(()=>held.promise);release();await drain();assert.equal(x.revisions,2);assert.equal(f.nativePending.at(-1),true);
+ assert.equal(f.nav.onNativeInteractionStart(),null);
+ assert.deepEqual(await f.nav.onDispatch({actionId:'old',uiGrantId:old.uiGrantId,mountId:old.mountId,planRevision:old.plan.planRevision,targetKey:old.targetKey}),{state:'blocked'});
+ assert.equal(f.calls.some(m=>m.type==='HOST_UI_DISPATCH_NATIVE'),false);
+ held.resolve({ok:true,deliveryId:1,navigation:[]});await drain();assert.equal(f.nativePending.at(-1),false);assert.equal(x.issued(),undefined);assert.equal(f.views,1);f.client.stop();
+});
+test('failed action refresh retains VIEW without retrying stale delegation',async()=>{
+ const x=expiringNavigationFixture(),{f}=x;await f.client.start();await drain();const page=f.pages.at(-1);
+ x.setAnswer(()=>Promise.resolve({ok:false,reason:'stale-navigation-delivery'}));
+ await f.advance(10000);await f.advance(10000);assert.equal(x.issued(),undefined);assert.equal(f.nav.adapter.navigationPlan({id:'44444444-4444-4444-8444-444444444444'}).plan.mode,'href');assert.equal(f.pages.at(-1),page);assert.equal(f.views,1);assert.equal(f.invalidations,0);assert.equal(f.nativePending.at(-1),false);
+ await f.advance(10000);await f.advance(10000);assert.equal(x.revisions,2);f.client.stop();
+});
+test('late action refresh cannot replace newer VIEW or revive revoked frame',async()=>{
+ for(const revoke of [false,true]){
+  const x=expiringNavigationFixture(),{f}=x;await f.client.start();await drain();const held=deferred();x.setAnswer(()=>held.promise);
+  await f.advance(10000);await f.advance(10000);
+  if(revoke)f.disconnect();else{x.setAnswer(null);f.emit({type:'VAIWL_UI_DATA_CHANGED'});await drain();assert.equal(x.issued().plan.planRevision,3);}
+  const count=f.pages.length;held.resolve({ok:true,deliveryId:1,navigation:[]});await drain();assert.equal(f.pages.length,count);
+  if(revoke)assert.equal(x.issued(),undefined);else assert.equal(x.issued().plan.planRevision,3);
+  f.client.stop();
+ }
+});
+test('hidden surface does not refresh action capabilities and reappearance uses fresh VIEW',async()=>{
+ const x=expiringNavigationFixture(),{f}=x;await f.client.start();await drain();
+ f.emit({type:'VAIWL_UI_SURFACE_STATE',revision:1,visible:false});
+ await f.advance(10000);await f.advance(10000);assert.equal(x.revisions,1);
+ f.emit({type:'VAIWL_UI_SURFACE_STATE',revision:2,visible:true});await drain();assert.equal(f.views,2);assert.equal(x.revisions,2);f.client.stop();
+});
+
+
+test('authority renewal cannot retire the one-second pressed-control hold before action refresh',async()=>{
+ const x=expiringNavigationFixture(),{f}=x,first=deferred();f.setView(()=>first.promise);
+ await f.client.start();await drain();await f.advance(500);
+ first.resolve({ok:true,state:'ready',deliveryId:1,page:f.page(),navigation:[]});await drain();assert.equal(x.revisions,1);
+ await f.advance(9500);await f.advance(9900);
+ const release=f.nav.onNativeInteractionStart();assert.equal(typeof release,'function');
+ await f.advance(100); // Same scope/document renewal creates a new grant object.
+ await f.advance(500); // Plans are due; the physical press is only 600ms old.
+ assert.equal(x.revisions,1);assert.equal(x.issued().plan.planRevision,1);
+ release();await drain();assert.equal(x.revisions,2);assert.equal(f.views,1);f.client.stop();
+});

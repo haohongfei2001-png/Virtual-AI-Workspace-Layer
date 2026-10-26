@@ -367,5 +367,44 @@
     "completeFree": "NOT_ACCEPTED",
     "priorEvidence": "INHERITED_WITHOUT_PROMOTION",
     "remaining": "One final actual Mac product journey and real owned-region screenshot; user confirmation only for new-document private restore."
+  },
+  "realProductFollowup": {
+    "status": "NOT_ACCEPTED",
+    "evidence": "One PID/window-verified local real Project screenshot after user reported final activation; no new title/ID/body capture committed.",
+    "visible": {
+      "projectCards": 1,
+      "confirmedMembers": 2,
+      "nativeAndDerivedProjectListsDuplicated": true
+    },
+    "notProved": [
+      "runtime package fingerprint",
+      "member activation from this surface",
+      "old private record recovery",
+      "full continuous sidebar"
+    ],
+    "independentCodeDefect": {
+      "cause": "Delegated plans expire at 30 seconds; an unchanged visible VIEW had no capability renewal. Normal authority renewal could also retire a pointer hold by object identity.",
+      "fix": "Refresh current delivery action capabilities independently before expiry; preserve data, unchanged link DOM, menu, focus, pointer and dispatch reservations. Bind pointer hold to unchanged authority fields, not grant object identity. No TTL extension or click retry.",
+      "modules": [
+        "src/host/free-frame-client.mjs",
+        "src/navigation/navigation.mjs"
+      ],
+      "verification": "Existing frame/registry/renderer regression suites and existing isolated headless pointer journey pass. Latest tuple dispatch, unchanged node and open menu checked. Not real ChatGPT verification."
+    },
+    "remainingStructuralGap": {
+      "cause": "Observed profile proves only a recent-history segment, then places the full derived sidebar there; native Project region remains above it.",
+      "availableEvidence": [
+        "tests/host/fixtures/observed-history-structure.json",
+        "tests/host/fixtures/observed-project.mjs",
+        "tests/host/fixtures/observed-host-baseline.json"
+      ],
+      "missing": [
+        "native Project container and immediate ancestors relative to recent list",
+        "Project/member/disclosure/menu control tag-role relationships",
+        "visibility, clipping and rectangles relative to protected native controls"
+      ],
+      "boundary": "Screenshot and AX positions do not prove DOM purity. Do not enlarge masks, hide duplicate data, or claim full sidebar completion without this structure."
+    },
+    "installation": "No daily Chrome operation, reload, data mutation or new final candidate in this followup; local build verification only."
   }
 }

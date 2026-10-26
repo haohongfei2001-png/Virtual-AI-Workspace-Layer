@@ -29,20 +29,20 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
  }
 
  let dispatchEpoch=0,dispatchPending=null,queuedDispatchView=null,calibrationPending=null;
- let nativeInteraction=null;
+ let nativeInteraction=null,navigationRefresh=null,navigationPreparation=null;
  // Reserve only the gap between a ready control's pointerdown and its click.
  // Unsent background VIEWs wait; authorization and request deadlines do not.
  function clearNativeInteraction(){const held=nativeInteraction;nativeInteraction=null;if(held)cancel(held.timer);}
  function nativeInteractionActive(){
   const held=nativeInteraction;if(!held)return false;
   const elapsed=elapsedNow()-held.started;
-  if(!closed&&grantCurrent()&&grant===held.grant&&navigation===held.renderer&&Date.parse(grant.expiresAt)>now()&&Number.isFinite(elapsed)&&elapsed>=0&&elapsed<1000)return true;
+  if(!closed&&grantCurrent()&&['id','mountId','scopeGrantId','parentDocumentId','uiDocumentId','role'].every(key=>grant?.[key]===held.grant[key])&&navigation===held.renderer&&Date.parse(grant.expiresAt)>now()&&Number.isFinite(elapsed)&&elapsed>=0&&elapsed<1000)return true;
   clearNativeInteraction();return false;
  }
  function beginNativeInteraction(){
-  if(nativeInteractionActive()||closed||readTerminal||bootstrapping||activeRead||dispatchPending||horizonPending||backup||recovery||snippets||!grantCurrent()||Date.parse(grant?.expiresAt)<=now()||doc.visibilityState==='hidden'||surfaceVisible===false)return null;
+  if(nativeInteractionActive()||closed||readTerminal||bootstrapping||activeRead||navigationPreparation||dispatchPending||horizonPending||backup||recovery||snippets||!grantCurrent()||Date.parse(grant?.expiresAt)<=now()||doc.visibilityState==='hidden'||surfaceVisible===false)return null;
   const held={grant,renderer:navigation,started:elapsedNow(),timer:null};nativeInteraction=held;
-  const release=()=>{if(nativeInteraction!==held)return;clearNativeInteraction();if(dirty)invalidate(true);};
+  const release=()=>{if(nativeInteraction!==held)return;clearNativeInteraction();if(dirty)invalidate(true);else refreshNavigationIfDue();};
   held.timer=schedule(release,1000);return release;
  }
  let currentDelivery=null,freshnessTimer=null;
@@ -72,7 +72,7 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
  const recoverable=reason=>isFreeRecoveryReason(reason)||['corrupt-record','invalid-partition-manifest','invalid-partition-piece'].includes(reason);
  const budget=createReadRecoveryBudget({now:elapsedNow,schedule,cancel,onExpire:()=>fail('read-budget-exhausted')});
  function state(value){try{onState(value);}catch{}}
- function clear(){cancel(freshnessTimer);freshnessTimer=null;currentDelivery=null;clearNativeInteraction();panelReturnCancel?.();readEpoch++;readTerminal=null;readErrorPanel?.stop();readErrorPanel=null;readErrorRoot?.remove();readErrorRoot=null;surfaceVisible=null;surfaceRevision=0;calibrationPending=null;dispatchPending=null;queuedDispatchView=null;dispatchEpoch++;migration.clear();candidateRestore=null;candidateMigrationId=null;candidateMigrationProject=null;locatedMigrations.clear();workspaceEntered=false;workspaceModePending=false;for(const type of ['pointerdown','keydown','wheel'])doc.removeEventListener?.(type,interruptMigration,true);migrationListening=false;candidateOffset=0;candidatePageTotal=null;candidateRun++;candidates?.stop();candidates=null;candidateRoot?.remove();candidateRoot=null;if(visibilityAttached)doc.removeEventListener?.('visibilitychange',foreground);visibilityAttached=false;wasHidden=false;bootstrapping=false;cancel(resumeTimer);resumeTimer=null;resumeQueued=null;resumeWriting=false;resumeLast=null;resumeDesired=null;resumeQuery=null;searchSnippetIds.clear();snippetLocatePending=false;snippets?.stop();snippets=null;snippetsRoot?.remove();snippetsRoot=null;currentRef=null;clearAutoNotice();backup?.stop();backup=null;backupRoot?.remove();backupRoot=null;recovery?.stop();recovery=null;recoveryRoot?.remove();recoveryRoot=null;workspaceRevision=null;viewSession=null;projectionScope=null;projectionVersion=null;horizonPending=false;presentationRevision=0;presentationIntent='';currentNativeURL='';closed=true;dirty=false;serial++;activeRead?.abort();activeRead=null;activeLocation=null;budget.reset();grant=null;query={segment:0,offset:0,limit:8};plans.clear();projectPlans.clear();navigation?.stop();navigation=null;root?.remove();root=null;}
+ function clear(){clearNavigationRefresh();cancel(freshnessTimer);freshnessTimer=null;currentDelivery=null;clearNativeInteraction();panelReturnCancel?.();readEpoch++;readTerminal=null;readErrorPanel?.stop();readErrorPanel=null;readErrorRoot?.remove();readErrorRoot=null;surfaceVisible=null;surfaceRevision=0;calibrationPending=null;dispatchPending=null;queuedDispatchView=null;dispatchEpoch++;migration.clear();candidateRestore=null;candidateMigrationId=null;candidateMigrationProject=null;locatedMigrations.clear();workspaceEntered=false;workspaceModePending=false;for(const type of ['pointerdown','keydown','wheel'])doc.removeEventListener?.(type,interruptMigration,true);migrationListening=false;candidateOffset=0;candidatePageTotal=null;candidateRun++;candidates?.stop();candidates=null;candidateRoot?.remove();candidateRoot=null;if(visibilityAttached)doc.removeEventListener?.('visibilitychange',foreground);visibilityAttached=false;wasHidden=false;bootstrapping=false;cancel(resumeTimer);resumeTimer=null;resumeQueued=null;resumeWriting=false;resumeLast=null;resumeDesired=null;resumeQuery=null;searchSnippetIds.clear();snippetLocatePending=false;snippets?.stop();snippets=null;snippetsRoot?.remove();snippetsRoot=null;currentRef=null;clearAutoNotice();backup?.stop();backup=null;backupRoot?.remove();backupRoot=null;recovery?.stop();recovery=null;recoveryRoot?.remove();recoveryRoot=null;workspaceRevision=null;viewSession=null;projectionScope=null;projectionVersion=null;horizonPending=false;presentationRevision=0;presentationIntent='';currentNativeURL='';closed=true;dirty=false;serial++;activeRead?.abort();activeRead=null;activeLocation=null;budget.reset();grant=null;query={segment:0,offset:0,limit:8};plans.clear();projectPlans.clear();navigation?.stop();navigation=null;root?.remove();root=null;}
  function ensureCandidates(){
   if(!candidates){candidateRoot=doc.createElement('details');candidateRoot.setAttribute('data-vaiwl-candidate-root','');const summary=doc.createElement('summary');summary.textContent='更多原生入口';const content=doc.createElement('div');candidateRoot.append(summary,content);privateRoot.append(candidateRoot);candidates=createFreeFrameCandidates({document:doc,container:content,onPageRequest:next=>refreshCandidates(next),onActivate:async(renderKey,presentation)=>{
     const active=grant;if(closed||!grantCurrent()||backup||recovery||snippets)return {ok:false};
@@ -116,7 +116,7 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
  function clearCandidates(){candidateRun++;candidatePageTotal=null;candidates?.clear();}
  function stopRead(reason,retryToken){
   if(closed||!grantCurrent()||Date.parse(grant?.expiresAt)<=now())return;
-  readEpoch++;serial++;dispatchEpoch++;activeRead?.abort();activeRead=null;activeLocation=null;dirty=false;queuedDispatchView=null;budget.complete();
+  clearNavigationRefresh();readEpoch++;serial++;dispatchEpoch++;activeRead?.abort();activeRead=null;activeLocation=null;dirty=false;queuedDispatchView=null;budget.complete();
   clearCandidates();migration.clear();candidateRestore=null;candidateMigrationId=null;candidateMigrationProject=null;locatedMigrations.clear();
   plans.clear();projectPlans.clear();searchSnippetIds.clear();currentDelivery=null;
   cancel(resumeTimer);resumeTimer=null;resumeQueued=null;resumeDesired=null;resumeQuery=null;clearAutoNotice();navigation?.setNativeNavigationPending?.(true);
@@ -220,7 +220,7 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
    if(JSON.stringify(query)!==JSON.stringify(requested)){dispatchEpoch++;cancelPendingNavigation();cancel(resumeTimer);resumeTimer=null;resumeQueued=null;resumeDesired=null;}
    if(!location)query=requested;
    queuedDispatchView={value:requested,location};return null;
-  }if(JSON.stringify(query)!==JSON.stringify(requested)){cancel(resumeTimer);resumeTimer=null;resumeQueued=null;resumeDesired=null;}if(!location)query=requested;const ticket=++serial;activeRead?.abort();const controller=new AbortController();activeRead=controller;activeLocation=location;navigation?.setNativeNavigationPending?.(true);
+  }if(JSON.stringify(query)!==JSON.stringify(requested)){cancel(resumeTimer);resumeTimer=null;resumeQueued=null;resumeDesired=null;}if(!location)query=requested;const ticket=++serial;clearNavigationRefresh();activeRead?.abort();const controller=new AbortController();activeRead=controller;activeLocation=location;navigation?.setNativeNavigationPending?.(true);
   if(budget.remaining()===Infinity)splits=0;
   if(!location&&!budget.begin()){fail('read-budget-exhausted');return null;}
   let effective={...requested},polls=0;
@@ -286,7 +286,7 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
   // A read that began before a preference write can finish while that write
   // owns the view. Keep its dirty hint for finishMutation; starting a successor
   // here would retire the write's serial before its reply can be accepted.
-  finally{if(activeRead===controller){activeRead=null;activeLocation=null;if(dirty&&live(ticket)&&backgroundRefreshAllowed()&&!horizonPending){dirty=false;void read(query,true);}else if(!dirty&&live(ticket))applyCandidateMigration();navigation?.setNativeNavigationPending?.(!!activeRead||!!dispatchPending);}}
+  finally{if(activeRead===controller){activeRead=null;activeLocation=null;if(dirty&&live(ticket)&&backgroundRefreshAllowed()&&!horizonPending){dirty=false;void read(query,true);}else if(!dirty&&live(ticket))applyCandidateMigration();navigation?.setNativeNavigationPending?.(!!activeRead||!!dispatchPending||!!navigationPreparation);}}
   return null;
  }
  // Ordinary data hints need no new projection in a hidden UI document. Keep a
@@ -429,6 +429,7 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
   if(horizonPending!==attempt)return;
   horizonPending=false;
   if(dirty&&!closed){dirty=false;invalidate();}else if(applyMigration)applyCandidateMigration();
+  refreshNavigationIfDue();
  }
  async function locateSearchSnippet(value){if(readTerminal)return;
   if(!value||Object.getPrototypeOf(value)!==Object.prototype||Reflect.ownKeys(value).join(',')!=='id'||closed||snippets||backup||recovery||snippetLocatePending||!query.search||!currentRef||searchSnippetIds.get(value?.id)!==currentRef.id||!Number.isSafeInteger(workspaceRevision)||!grantCurrent()||Date.parse(grant?.expiresAt)<=now())return {ok:false};
@@ -479,7 +480,7 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
   if(!exactHostRecord(command,['actionId','uiGrantId','mountId','planRevision','targetKey'])||closed||!grantCurrent()||backup||recovery||snippets||command.uiGrantId!==grant?.id||command.mountId!==grant?.mountId)return {state:'blocked'};
   const attempt=dispatchEpoch,current=grant,renderer=navigation,issued=[...plans.values(),...projectPlans.values()].find(item=>item.targetKey===command.targetKey&&item.plan.planRevision===command.planRevision&&(isCurrentNavigationPlan(item.plan)||isResolvedControlNavigationPlan(item.plan)));
   // Old rendered controls cannot activate while their replacement VIEW is pending.
-  if(!issued||activeRead||dispatchPending||horizonPending)return {state:'blocked'};
+  if(!issued||activeRead||navigationPreparation||dispatchPending||horizonPending)return {state:'blocked'};
   const pending={command:{grantId:current.id,mountId:current.mountId,actionId:command.actionId,planRevision:command.planRevision,targetKey:command.targetKey},cancelSent:false,panelRead:false};pending.done=new Promise(resolve=>{pending.finish=resolve;});dispatchPending=pending;navigation?.setNativeNavigationPending?.(true);
   let active=true;const started=elapsedNow(),dispatchQuery=JSON.stringify(query);
   const valid=()=>active&&elapsedNow()-started>=0&&elapsedNow()-started<6000&&!closed&&grantCurrent()&&grant?.id===current.id&&navigation===renderer&&dispatchEpoch===attempt&&!backup&&!recovery&&!snippets&&JSON.stringify(query)===dispatchQuery;
@@ -500,7 +501,7 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
    if(closed||!grantCurrent()||grant?.id!==current.id||navigation!==renderer||dispatchEpoch!==attempt||backup||recovery||snippets||![...plans.values(),...projectPlans.values()].includes(issued)||result?.ok!==true)return {state:'blocked'};
    if(issued.plan.mode==='native-control'&&result.state==='unconfirmed')return {state:'unconfirmed'};
    return result.state===(issued.plan.mode==='native-control'?'dispatched':'already-current')?{state:result.state}:{state:'blocked'};
-  }catch{return {state:'unconfirmed'};}finally{active=false;if(dispatchPending===pending){dispatchPending=null;const queued=queuedDispatchView;queuedDispatchView=null;if(!closed&&grantCurrent()&&grant?.id===current.id&&navigation===renderer){if(pending.panelRead){dirty=false;}else if(queued){dirty=false;void read(queued.value,true,queued.location);}else if(dirty){dirty=false;invalidate();}navigation?.setNativeNavigationPending?.(!!activeRead);}}pending.finish();}
+  }catch{return {state:'unconfirmed'};}finally{active=false;if(dispatchPending===pending){dispatchPending=null;const queued=queuedDispatchView;queuedDispatchView=null;if(!closed&&grantCurrent()&&grant?.id===current.id&&navigation===renderer){if(pending.panelRead){dirty=false;}else if(queued){dirty=false;void read(queued.value,true,queued.location);}else if(dirty){dirty=false;invalidate();}refreshNavigationIfDue();navigation?.setNativeNavigationPending?.(!!activeRead||!!navigationPreparation);}}pending.finish();}
  }
  function validateNavigation(items,page,current){
   const groups=searchProjectMap(page.search?.items,[...(page.groups?.items??[]),...(page.currentProject?[page.currentProject]:[])]),currentRoute=page.current;
@@ -513,18 +514,49 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
    }
   return {nextPlans,nextProjectPlans};
  }
- async function preparePageNavigation(response,current,ticket){
+ // VIEW lifetime is independent of the 30-second delegated action lifetime.
+ // Refresh only the current delivery, before its capabilities expire. Never
+ // rebuild the business projection, extend a certificate or replay a click.
+ function clearNavigationRefresh(){
+  cancel(navigationRefresh?.timer);navigationRefresh=null;navigationPreparation=null;
+ }
+ function navigationDeliveryCurrent(record){return record===navigationRefresh&&live(record.ticket)&&grant?.id===record.current.id&&grant?.mountId===record.current.mountId&&grant?.scopeGrantId===record.current.scopeGrantId&&currentDelivery===record.response.deliveryId&&!readTerminal&&!backup&&!recovery&&!snippets;}
+ function refreshNavigationIfDue(){
+  const record=navigationRefresh;
+  if(!record?.due||!navigationDeliveryCurrent(record)||navigationPreparation||activeRead||dispatchPending||horizonPending||!backgroundRefreshAllowed())return;
+  record.due=false;void preparePageNavigation(record.response,record.current,record.ticket,true);
+ }
+ async function preparePageNavigation(response,current,ticket,refresh=false){
   if(!Number.isSafeInteger(response.deliveryId))return;
-  const valid=()=>live(ticket)&&grant?.id===current.id&&currentDelivery===response.deliveryId;
+  clearNavigationRefresh();
+  const record={response,current,ticket,timer:null,due:false,started:elapsedNow()};navigationRefresh=record;
+  const valid=()=>navigationDeliveryCurrent(record);
+  if(!valid())return;
+  navigationPreparation=record;navigation?.setNativeNavigationPending?.(true);
   try{
    const answer=await withRequestDeadline(()=>runtime.sendMessage({v:1,type:'HOST_UI_NAVIGATION_PLANS',grantId:current.id,mountId:current.mountId,deliveryId:response.deliveryId}),{timeoutMs:6000,now:elapsedNow,schedule,cancel});
-   if(!valid()||answer?.ok!==true||answer.deliveryId!==response.deliveryId)return;
+   if(!valid())return;
+   if(answer?.ok!==true||answer.deliveryId!==response.deliveryId)throw Error('navigation-unavailable');
    const next=validateNavigation(answer.navigation,response.page,current);if(!valid())return;
-   // Never replace a pressed control or resurrect a projection during dispatch.
-   if(nativeInteractionActive()||dispatchPending||activeRead||backup||recovery||snippets){dirty=true;return;}
+   // Pending preparation disables delegation. Data changes retire this record;
+   // no late reply may replace a newer delivery or an active native dispatch.
+   if(nativeInteractionActive()||dispatchPending||activeRead||horizonPending){dirty=true;return;}
+   const sameEntries=plans.size===next.nextPlans.size&&projectPlans.size===next.nextProjectPlans.size&&[...plans.keys()].every(id=>next.nextPlans.has(id))&&[...projectPlans.keys()].every(id=>next.nextProjectPlans.has(id));
    plans=next.nextPlans;projectPlans=next.nextProjectPlans;
-   navigation?.updateFrameProjection(response.page);
-  }catch{/* A local action failure never invalidates the accepted projection. */}
+   if(!refresh||!sameEntries||navigation?.refreshNavigationPlans?.()!==true)navigation?.updateFrameProjection(response.page);
+   if([...plans.values(),...projectPlans.values()].some(item=>['same-target','native-control'].includes(item.plan.mode))){
+    record.timer=schedule(()=>{record.timer=null;record.due=true;refreshNavigationIfDue();},Math.max(0,20000-(elapsedNow()-record.started)));
+   }
+  }catch{
+   if(valid()){
+    // No retry loop, no stale enabled delegated buttons, no loss of data or
+    // independently verified hrefs. A later fresh VIEW can re-establish plans.
+    for(const map of [plans,projectPlans])for(const [id,item]of map)if(['same-target','native-control'].includes(item.plan.mode))map.delete(id);
+    navigation?.updateFrameProjection(response.page);
+   }
+  }finally{
+   if(navigationPreparation===record){navigationPreparation=null;navigation?.setNativeNavigationPending?.(!!activeRead||!!dispatchPending||!!readTerminal);}
+  }
  }
  function onGrant(value,{isCurrent}){
   closed=false;grant=value;grantCurrent=isCurrent;void refreshSurfaceState();
