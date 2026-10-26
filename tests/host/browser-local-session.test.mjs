@@ -45,6 +45,13 @@ test('actual Host pipeline accepts current surface into formal projection with z
  const [joined,confirmed]=await Promise.all([service.handle({v:1,type:'HOST_UI_JOIN',nonce:'nonce',role:'workspace'},ui),service.handle({v:1,type:'HOST_UI_CONFIRM',...packet,mountId:'mount',regionEpoch:1,nonce:'nonce',role:'workspace'},sender)]);assert(joined.ok&&confirmed.ok);
  let view;for(let n=0;n<20;n++){view=await service.handle({v:1,type:'HOST_UI_VIEW',grantId:joined.grant.id,mountId:'mount',query:{}},ui);if(view.state!=='preparing')break;await new Promise(r=>setTimeout(r,10));}
  assert.equal(view.ok,true,JSON.stringify(view));assert.notEqual(view.state,'preparing');assert(JSON.stringify(view).includes('Visible native title'));
+ // Same-document early REFRESH used to discard this real admitted RAM row.
+ const nextFrame={...frame,actualURL:url+'c/'+C};
+ assert.equal((await service.authority.revalidate(nextFrame)).state,'unverified');
+ service.invalidate({tabId:1,localNavigation:{documentId:'doc',url:nextFrame.actualURL,documentLifecycle:'active'},preserveViewDocumentId:'doc'});
+ assert.equal(service.authority.scopeFor(nextFrame).key,scope.key);
+ const retained=await service.readService.freeSnapshot(scope,{guard:()=>true});
+ assert.equal(retained.refs.length,1);assert.equal(retained.refs[0].displayTitle,'Visible native title');
  service.invalidate({tabId:1});assert.equal(service.authority.scopeFor(frame),null);
  assert.equal((await service.handle({v:1,type:'HOST_UI_VIEW',grantId:joined.grant.id,mountId:'mount',query:{}},ui)).ok,false);
  assert.equal((await service.handle(proposal,sender)).state,'rejected');

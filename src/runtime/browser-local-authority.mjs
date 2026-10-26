@@ -10,7 +10,7 @@ export function createBrowserLocalAuthority({allowedURL,now=Date.now,makeId=()=>
  function remove(k){const entry=entries.get(k);if(entry){entries.delete(k);onDiscard(entry.scope.key);}}
  function peek(frame){
   if(!valid(frame))return deny();const e=entries.get(key(frame));
-  if(!e||e.url!==frame.actualURL)return deny();
+  if(!e||e.routePending||e.url!==frame.actualURL)return deny();
   if(now()<e.issued||now()>=e.selectionUntil){remove(key(frame));return deny();}
   if(now()>=Date.parse(e.grant.expiresAt))return deny();
   return {state:'verified',grant:e.grant};
@@ -18,9 +18,13 @@ export function createBrowserLocalAuthority({allowedURL,now=Date.now,makeId=()=>
  function issue(frame,signal){
   if(signal?.aborted||!valid(frame))return Promise.resolve(deny());
   const k=key(frame);let e=entries.get(k);
-  if(e&&e.url!==frame.actualURL){remove(k);e=null;}
   for(const [id,row]of entries)if(now()<row.issued||now()>=row.selectionUntil)remove(id);
   e=entries.get(k);
+  // The content handshake can beat webNavigation's same-document event. Do
+  // not turn that ordering into deletion of the document's admitted objects.
+  // Neither the old nor new route may use the held selection until the browser
+  // event advances it. A replacement/risk still discards it normally.
+  if(e&&(e.routePending||e.url!==frame.actualURL)){e.routePending=true;return Promise.resolve(deny());}
   if(!e){
    if(entries.size>=32)return Promise.resolve(deny());
    const scope=normalizedScope({kind:'browser-local',storage:'session',spaceId:makeId()});
@@ -74,12 +78,15 @@ export function createBrowserLocalAuthority({allowedURL,now=Date.now,makeId=()=>
      // Revoke old grant/epoch, retain only the same explicitly selected local
      // store within this still-confirmed live document. Only actual matching
      // activation gets an activity arrival; search/new-chat routing does not.
-     delete e.arrival;if(intent?.target===navigation.url&&now()<intent.until)e.arrival={actionId:intent.actionId,until:intent.until};e.url=navigation.url;e.epoch=++epoch;e.id=makeId();
+     delete e.routePending;delete e.arrival;if(intent?.target===navigation.url&&now()<intent.until)e.arrival={actionId:intent.actionId,until:intent.until};e.url=navigation.url;e.epoch=++epoch;e.id=makeId();
      void issue({tabId,frameId:0,documentId:e.documentId,actualURL:e.url,documentLifecycle:'active',incognito:false});
     }else remove(k);
    }
   },
-  hasPersonalSelection(frame){const e=valid(frame)&&entries.get(key(frame));return !!e&&e.url===frame.actualURL&&e.scope.storage==='personal'&&now()>=e.issued&&now()<e.selectionUntil;},
+  hasPersonalSelection(frame){const e=valid(frame)&&entries.get(key(frame));return !!e&&!e.routePending&&e.url===frame.actualURL&&e.scope.storage==='personal'&&now()>=e.issued&&now()<e.selectionUntil;},
+  // Presence is not an access grant. Used only to avoid re-binding/discarding
+  // a live document while its trusted route event is pending.
+  hasDocumentSelection(frame){const e=valid(frame)&&entries.get(key(frame));return !!e&&now()>=e.issued&&now()<e.selectionUntil;},
   frames:()=>[...entries.values()].map(e=>({tabId:e.tabId,documentId:e.documentId})),
   invalidateAll(){for(const k of [...entries.keys()])remove(k);}});
 }

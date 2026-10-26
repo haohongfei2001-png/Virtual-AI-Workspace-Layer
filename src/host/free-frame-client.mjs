@@ -54,7 +54,7 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
    if(closed||!grantCurrent()||Date.parse(grant?.expiresAt)<=now())return;
    const panel=navigation?.roots?.()?.sidebar?.shadow?.querySelector('section');if(!panel)return;
    const extent=n=>{if(n.hidden)return 0;const style=doc.defaultView.getComputedStyle(n);return n.getBoundingClientRect().height+(parseFloat(style.marginTop)||0)+(parseFloat(style.marginBottom)||0);};
-   let height=24;
+   let height=52;
    for(const child of panel.children){
     if(child.classList.contains('themes')){if(!child.hidden)height+=Math.max(44,Math.min(560,[...child.children].reduce((n,c)=>n+extent(c),0)+7));}
     else height+=extent(child);
@@ -94,7 +94,7 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
  function state(value){try{onState(value);}catch{}}
  function clear(){cancel(sidebarSizeTimer);sidebarSizeTimer=null;lastSidebarSize=null;clearNavigationRefresh();cancel(freshnessTimer);freshnessTimer=null;currentDelivery=null;clearNativeInteraction();panelReturnCancel?.();readEpoch++;readTerminal=null;readErrorPanel?.stop();readErrorPanel=null;readErrorRoot?.remove();readErrorRoot=null;surfaceVisible=null;surfaceRevision=0;calibrationPending=null;dispatchPending=null;queuedDispatchView=null;dispatchEpoch++;migration.clear();candidateRestore=null;candidateMigrationId=null;candidateMigrationProject=null;locatedMigrations.clear();workspaceEntered=false;workspaceModePending=false;for(const type of ['pointerdown','keydown','wheel'])doc.removeEventListener?.(type,interruptMigration,true);migrationListening=false;candidateOffset=0;candidatePageTotal=null;candidateRun++;candidates?.stop();candidates=null;candidateRoot?.remove();candidateRoot=null;if(visibilityAttached)doc.removeEventListener?.('visibilitychange',foreground);visibilityAttached=false;wasHidden=false;bootstrapping=false;cancel(resumeTimer);resumeTimer=null;resumeQueued=null;resumeWriting=false;resumeLast=null;resumeDesired=null;resumeQuery=null;searchSnippetIds.clear();snippetLocatePending=false;snippets?.stop();snippets=null;snippetsRoot?.remove();snippetsRoot=null;currentRef=null;clearAutoNotice();backup?.stop();backup=null;backupRoot?.remove();backupRoot=null;recovery?.stop();recovery=null;recoveryRoot?.remove();recoveryRoot=null;workspaceRevision=null;viewSession=null;projectionScope=null;projectionVersion=null;horizonPending=false;presentationRevision=0;presentationIntent='';currentNativeURL='';closed=true;dirty=false;serial++;activeRead?.abort();activeRead=null;activeLocation=null;budget.reset();grant=null;query={segment:0,offset:0,limit:8};plans.clear();projectPlans.clear();navigation?.stop();navigation=null;root?.remove();root=null;}
  function ensureCandidates(){
-  if(!candidates){candidateRoot=doc.createElement('details');candidateRoot.setAttribute('data-vaiwl-candidate-root','');const summary=doc.createElement('summary');summary.textContent='更多原生入口';const content=doc.createElement('div');candidateRoot.append(summary,content);privateRoot.append(candidateRoot);candidates=createFreeFrameCandidates({document:doc,container:content,onPageRequest:next=>refreshCandidates(next),onActivate:async(renderKey,presentation)=>{
+  if(!candidates){candidateRoot=doc.createElement('details');candidateRoot.setAttribute('data-vaiwl-candidate-root','');const summary=doc.createElement('summary');summary.textContent='其他原生项目';const content=doc.createElement('div');candidateRoot.append(summary,content);privateRoot.append(candidateRoot);candidates=createFreeFrameCandidates({document:doc,container:content,onPageRequest:next=>refreshCandidates(next),onActivate:async(renderKey,presentation)=>{
     const active=grant;if(closed||!grantCurrent()||backup||recovery||snippets)return {ok:false};
     const actionId=doc.defaultView.crypto.randomUUID();if(!migration.beginActivation(actionId))migration.interrupt();
     candidateRun++;candidateRestore=null;candidateMigrationId=null;candidateMigrationProject=null;
@@ -105,7 +105,7 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
  function candidateReadFailed(offset){
   candidatePageTotal=null;
   migration.revoke();candidateRestore=null;candidateMigrationId=null;candidateMigrationProject=null;
-  ensureCandidates();candidates.showError(offset);return {ok:false};
+  ensureCandidates();candidateRoot.hidden=false;candidates.showError(offset);return {ok:false};
  }
  async function refreshCandidates(offset=candidateOffset){
   if(readTerminal||closed||backup||recovery||snippets||!grantCurrent())return;
@@ -114,7 +114,7 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
   try{
    const result=await withRequestDeadline(()=>runtime.sendMessage({v:1,type:'HOST_UI_CANDIDATES',grantId:current.id,mountId:current.mountId,offset}),{now:elapsedNow,schedule,cancel});
    if(!valid())return {ok:false};if(result?.ok!==true)return candidateReadFailed(offset);
-   ensureCandidates();candidates.update(result.items,result.page);queueSidebarSize();candidateOffset=result.page?.offset??0;candidatePageTotal=result.page?.total??result.items.length;if(result.migration){if(migration.offer(result.migration)){candidateMigrationId=result.migration.id;candidateMigrationProject=result.migration.projectId;}if(candidateRestore?.migrationId!==candidateMigrationId)candidateRestore=null;}else{migration.revoke();candidateRestore=null;candidateMigrationId=null;candidateMigrationProject=null;}applyCandidateMigration();return {ok:true};
+   ensureCandidates();candidates.update(result.items,result.page);candidateRoot.hidden=(result.page?.total??result.items.length)===0;queueSidebarSize();candidateOffset=result.page?.offset??0;candidatePageTotal=result.page?.total??result.items.length;if(result.migration){if(migration.offer(result.migration)){candidateMigrationId=result.migration.id;candidateMigrationProject=result.migration.projectId;}if(candidateRestore?.migrationId!==candidateMigrationId)candidateRestore=null;}else{migration.revoke();candidateRestore=null;candidateMigrationId=null;candidateMigrationProject=null;}applyCandidateMigration();return {ok:true};
   }catch{if(valid())return candidateReadFailed(offset);return {ok:false};}
  }
  function applyCandidateMigration(){
@@ -460,13 +460,21 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
  }
  function saveResumeView(value){if(readTerminal)return;
   if(closed||bootstrapping||!grantCurrent()||!resumeQuery||JSON.stringify(resumeQuery)!==JSON.stringify(query))return;
-  try{const {freeSession,...layout}=value,view=validateFrameResumeView(layout),expectedQuery=validateResumeQuery(resumeQuery),key=JSON.stringify([expectedQuery,view]);if(key===resumeDesired?.key)return;resumeDesired={view,key,expectedQuery};if(key===resumeLast&&!resumeWriting){cancel(resumeTimer);resumeTimer=null;resumeQueued=null;return;}resumeQueued=resumeDesired;if(resumeTimer===null&&!resumeWriting)resumeTimer=schedule(flushResume,100);}catch{}
+  try{const {freeSession,...layout}=value,view=validateFrameResumeView(layout),expectedQuery=validateResumeQuery(resumeQuery),key=JSON.stringify([expectedQuery,view]);if(key===resumeDesired?.key)return;
+   // A workspace action cannot flush another frame's debounce. Commit explicit
+   // sidebar choices promptly; only scrolling is coalesced. Otherwise clicking
+   // a member immediately after a fold loses that choice on SPA remount.
+   const structure=v=>v&&JSON.stringify([v.sidebarVisible,v.sidebarChoices,v.sidebarOpen,v.oldOpen,v.capacities]);
+   const urgent=role==='sidebar'&&structure(view)!==structure(resumeDesired?.view);
+   resumeDesired={view,key,expectedQuery,urgent};if(key===resumeLast&&!resumeWriting){cancel(resumeTimer);resumeTimer=null;resumeQueued=null;return;}resumeQueued=resumeDesired;
+   if(!resumeWriting){if(urgent){cancel(resumeTimer);resumeTimer=null;void flushResume();}else if(resumeTimer===null)resumeTimer=schedule(flushResume,100);}
+  }catch{}
  }
  function flushResume(){
   resumeTimer=null;if(!resumeQueued||closed||!grantCurrent())return;
   const item=resumeQueued;resumeQueued=null;if(JSON.stringify(item.expectedQuery)!==JSON.stringify(query))return;const current=grant,renderer=navigation,attempt={};resumeWriting=attempt;resumeLast=null;
   attempt.done=(async()=>{try{const result=await withRequestDeadline(()=>runtime.sendMessage({v:1,type:'HOST_UI_SAVE_VIEW',grantId:current.id,mountId:current.mountId,expectedQuery:item.expectedQuery,view:item.view}),{now:elapsedNow,schedule,cancel});if(!closed&&grant?.id===current.id&&navigation===renderer&&JSON.stringify(query)===JSON.stringify(item.expectedQuery)&&result?.ok===true){resumeLast=item.key;return true;}return false;}catch{return false;}
-  finally{if(resumeWriting===attempt){resumeWriting=false;if(!closed&&navigation===renderer&&resumeQueued&&resumeTimer===null)resumeTimer=schedule(flushResume,100);}}})();return attempt.done;
+  finally{if(resumeWriting===attempt){resumeWriting=false;if(!closed&&navigation===renderer&&resumeQueued&&resumeTimer===null)resumeTimer=schedule(flushResume,resumeQueued.urgent?0:100);}}})();return attempt.done;
  }
  async function bootstrapResume(){
   const attempt={};bootstrapping=attempt;const current=grant,renderer=navigation,ticket=serial;

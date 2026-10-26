@@ -16,6 +16,31 @@ test('local native intent retains store once, renews grant, never authorizes rep
  await a.bindPersonal(frame,'mine');a.prepareNavigation(frame,target);now+=6000;a.invalidateTab(7,{documentId:'doc',url:target,documentLifecycle:'active'});assert.equal(a.scopeFor(next).storage,'personal');assert.equal(a.takeArrival(next),null);
  await a.bindPersonal(frame,'mine');a.prepareNavigation(frame,target);a.invalidateTab(7,{documentId:'replacement',url:target,documentLifecycle:'active'});assert.equal(a.scopeFor({...next,documentId:'replacement'}),null);
 });
+// Content HELLO/REFRESH and browser navigation are independent event queues.
+for(const storage of ['session','personal'])test(`${storage}: early route handshake holds metadata but cannot authorize either route`,async()=>{
+ const discarded=[],a=createBrowserLocalAuthority({allowedURL:u=>u.startsWith(origin+'/'),onDiscard:k=>discarded.push(k)});
+ if(storage==='personal')await a.bindPersonal(frame,'mine');else await a.revalidate(frame);
+ const scope=a.scopeFor(frame),grant=a.peek(frame).grant,next={...frame,actualURL:target};
+ assert.equal((await a.revalidate(next)).state,'unverified');
+ assert.equal(a.peek(frame).state,'unverified');assert.equal(a.peek(next).state,'unverified');
+ assert.equal(a.isCurrentGrant(frame,grant),false);assert.equal(a.hasPersonalSelection(frame),false);
+ assert.equal((await a.revalidate(frame)).state,'unverified','stale old-route handshake cannot reopen held authority');
+ assert.deepEqual(discarded,[]);assert(a.hasDocumentSelection(next));
+ a.invalidateTab(frame.tabId,{documentId:frame.documentId,url:target,documentLifecycle:'active'});
+ assert.equal((await a.revalidate(next)).state,'verified');assert.equal(a.scopeFor(next).key,scope.key);
+ assert.equal(a.isCurrentGrant(next,grant),false);assert.deepEqual(discarded,[]);
+ // A second early route followed by an actual replacement cannot retain it.
+ await a.revalidate(frame);a.invalidateTab(frame.tabId,{documentId:'replacement',url:target,documentLifecycle:'active'});
+ assert.deepEqual(discarded,[scope.key]);assert.equal(a.hasDocumentSelection(next),false);
+ const replacement={...next,documentId:'replacement'};await a.revalidate(replacement);
+ assert.equal(a.scopeFor(replacement).storage,'session');assert.notEqual(a.scopeFor(replacement).key,scope.key);
+});
+test('explicit risk during a pending SPA route discards the held selection',async()=>{
+ const discarded=[],a=createBrowserLocalAuthority({allowedURL:()=>true,onDiscard:k=>discarded.push(k)});
+ await a.bindPersonal(frame,'mine');const scope=a.scopeFor(frame);await a.revalidate({...frame,actualURL:target});
+ a.invalidateAll();a.invalidateTab(frame.tabId,{documentId:frame.documentId,url:target,documentLifecycle:'active'});
+ assert.deepEqual(discarded,[scope.key]);assert.equal(a.scopeFor({...frame,actualURL:target}),null);
+});
 function controlFixture(){
  const stored={},sessionStored={},sent=[],a=createBrowserLocalAuthority({allowedURL:u=>u.startsWith(origin+'/')});let getHook=null,restart={ok:true},nonce=null,probeHook=null;
  const chrome={runtime:{id:'ext',getURL:p=>'chrome-extension://ext/'+p},tabs:{query:async()=>[{id:7,incognito:false}],sendMessage:async(...args)=>{sent.push(args);const m=args[1];if(m.type==='HOST_LOCAL_CONTINUITY'){if(m.action==='probe'){if(probeHook)await probeHook();return {challenge:m.challenge,revision:0,nonce};}nonce=m.nonce;return {ok:true};}if(m.type==='HOST_LOCAL_LOCKED')nonce=null;return restart;}},webNavigation:{getFrame:async()=>({documentId:'doc',url:origin+'/',documentLifecycle:'active'})},storage:{session:{setAccessLevel:async()=>{},get:async key=>({[key]:sessionStored[key]}),set:async value=>Object.assign(sessionStored,structuredClone(value))},local:{get:async key=>{if(getHook)await getHook();return {[key]:stored[key]};},set:async value=>Object.assign(stored,value)}}};
@@ -91,6 +116,19 @@ test('a stale pre-SPA sender URL cannot block exact-document restoration or loca
  const next=restartedControl(f);await next.control.resume(f.content);assert.equal(next.a.scopeFor({...frame,actualURL:target}).storage,'personal');
  assert.equal((await next.control.handle({v:1,type:'HOST_LOCAL_SPACE',action:'prepare-navigation',target:origin+'/c/44444444-4444-4444-8444-444444444444'},f.content)).ok,true);
 });
+test('live private selection is not rebound by continuity restoration ahead of the browser route event',async()=>{
+ const f=controlFixture();await f.control.handle({v:1,type:'HOST_LOCAL_SPACE',action:'unlock'},f.popup);
+ const old=f.a.scopeFor(frame),issued=f.a.peek(frame).grant;
+ f.chrome.webNavigation.getFrame=async()=>({documentId:'doc',url:target,documentLifecycle:'active'});
+ let binds=0;const service={authority:{...f.a,bindPersonal:async(...args)=>{binds++;return f.a.bindPersonal(...args);}}};
+ const control=createBrowserLocalControl({chrome:f.chrome,service,allowedURL:u=>u.startsWith(origin+'/'),urlPolicy:createURLPolicy()});
+ await control.resume(f.content);assert.equal(binds,0);
+ assert.equal((await f.a.revalidate({...frame,actualURL:target})).state,'unverified');
+ await control.resume(f.content);assert.equal(binds,0);assert.equal(f.a.isCurrentGrant(frame,issued),false);
+ f.a.invalidateTab(7,{documentId:'doc',url:target,documentLifecycle:'active'});
+ assert.equal(f.a.scopeFor({...frame,actualURL:target}).key,old.key);control.stop();f.control.stop();
+});
+
 test('account risk revokes all confirmed documents, not just the triggering tab',async()=>{
  const f=controlFixture();await f.control.handle({v:1,type:'HOST_LOCAL_SPACE',action:'unlock'},f.popup);
  const other={...frame,tabId:8,documentId:'other'};await f.a.bindPersonal(other,'mine');

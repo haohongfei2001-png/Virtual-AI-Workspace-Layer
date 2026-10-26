@@ -1205,5 +1205,110 @@
     "installation": "NOT_UPDATED; prior package files unchanged",
     "realVerificationOfFixes": "NOT_RUN",
     "dataSafety": "No real browser interaction, private database/drafts untouched, no cross-document scope transfer"
+  },
+  "sameDocumentThemeContinuity20261027": {
+    "baseHead": "7e9a2d8eb88c3357b32c7a23b69bd97a84c919ae",
+    "status": "OFFLINE_INTEGRATED_REAL_JOURNEY_NOT_RUN",
+    "causes": [
+      "early new-route handshake deleted live document scope and admitted RAM objects before trusted navigation event",
+      "sidebar disclosure save debounce lost explicit choice when workspace dispatched member navigation immediately"
+    ],
+    "implementation": [
+      "hold route-pending selection without granting either URL; only trusted same-document event resumes, risk/replacement/expiry still discard",
+      "control resume avoids re-binding live document; existing contextReady recovery enabled for BrowserLocal",
+      "explicit sidebar structure saves immediately using existing role/CAS contract; scroll remains coalesced",
+      "owned native-resource boundary; empty candidate disclosure omitted; native controls unchanged"
+    ],
+    "checks": {
+      "authorityAndHost": 26,
+      "frameAndResume": 235,
+      "contentAndFrameEarlierRelated": 346,
+      "formalMV3": {
+        "status": "PASS",
+        "evidence": "ISOLATED_MV3_FORMAL_UI_LOCAL_SESSION_AND_PERSONAL",
+        "realChatGPT": "NOT_RUN",
+        "baseline": "chatgpt-desktop-observed-v6",
+        "package": {
+          "status": "OFFLINE_HOST_RECONSTRUCTION",
+          "releaseStatus": "NOT_RELEASE_READY",
+          "files": 199,
+          "unpacked": "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-iMNfv7/package/extension",
+          "archive": "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-iMNfv7/package/vaiwl-free-host-development.zip",
+          "archiveSha256": "bd486f03127f011abe29bc19945706a552c0cd1a22628344ef90f5ed7f6bc5fd"
+        },
+        "checks": {
+          "partitionSlotWithFormalProjectAndMembers": true,
+          "sparseSidebarFitsContent": true,
+          "centeredNativePanelDoesNotConstrainWorkspace": true,
+          "nativeInputAndReturnKeepContinuousSidebar": true,
+          "themeDisclosureSurvivesHostChange": true,
+          "nativeDisclosureDoesNotRebuildSidebar": true,
+          "nativeScrollKeepsFrameAligned": true,
+          "nativeProjectUntouchedAndSpaceReversible": true,
+          "explicitWorkspaceReturnRestoresComposition": true,
+          "nativeMemberOpenPreservesOriginalDraftAndWorkspace": true,
+          "sameDocumentMemberRetainsProjectAndReturn": true,
+          "homeInputAndReturnKeepSidebar": true,
+          "long-chatInputAndReturnKeepSidebar": true,
+          "noInternalRequests": true
+        },
+        "requests": [
+          "/g/g-p-11111111111111111111111111111111/project",
+          "/c/44444444-4444-4444-8444-444444444444",
+          "/g/g-p-11111111111111111111111111111111/project",
+          "/",
+          "/c/44444444-4444-4444-8444-444444444444"
+        ],
+        "browserErrors": [],
+        "images": [
+          "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-iMNfv7/partition-desktop-workspace.png",
+          "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-iMNfv7/partition-native-collapsed.png",
+          "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-iMNfv7/partition-narrow-workspace.png",
+          "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-iMNfv7/partition-member-return.png",
+          "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-iMNfv7/partition-native-reading.png",
+          "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-iMNfv7/partition-home-reading.png",
+          "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-iMNfv7/partition-long-chat-reading.png"
+        ]
+      },
+      "sourceAndTestModulesEqual": 186,
+      "installedPreviousPackageFilesUnchanged": 198
+    },
+    "package": {
+      "path": "/private/tmp/VAIWL-v27-Theme-Continuity-20261027/extension",
+      "archiveSha256": "1226d19ea998577e7618757ed62e95f5c9df53eab3b040214fe983bba925d38a",
+      "installed": false,
+      "diskPrepared": true
+    },
+    "limitations": [
+      "new-document private restore requires existing personal confirmation",
+      "unverified rich-editor empty grammar remains conservative; draft-risk fallback can use a new tab",
+      "native expanded Project management may repeat names; no verified automatic folding or hiding introduced",
+      "real product journey and old private object restoration remain NOT_RUN"
+    ],
+    "realAccountRequests": 0,
+    "dailyChromeModified": "package files updated after full backup; no browser interaction or reload",
+    "installation": {
+      "source": "/private/tmp/VAIWL-v27-Theme-Continuity-20261027/extension",
+      "installedDirectory": "/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/.git/vaiwl-artifacts/local-source-witness-20261022/extension",
+      "backup": "/private/tmp/VAIWL-before-theme-continuity-qvs16ssi/original-extension.tar.gz",
+      "preservedOriginalFiles": 2950,
+      "changedFiles": [
+        "src/runtime/browser-local-control.mjs",
+        "src/host/native-project-surface.mjs",
+        "src/host/surface-discovery.mjs",
+        "src/runtime/browser-local-authority.mjs",
+        "extension/content-entry.mjs",
+        "src/host/browser-local-lifecycle.mjs",
+        "src/navigation/mount-surface.mjs",
+        "src/host/free-frame-client.mjs",
+        "content.js",
+        "extension/classic-runtime.js",
+        "build-manifest.json"
+      ],
+      "extensionId": "miendbcjdmecjggplepenghjnoejmaic",
+      "runtimeReload": "NOT_RUN",
+      "databaseAccess": false
+    },
+    "gitPush": "normal push low-speed timeout; local work preserved"
   }
 }

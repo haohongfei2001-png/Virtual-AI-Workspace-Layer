@@ -42,6 +42,8 @@ try{
   await sidebar.getByRole('button',{name:'查找已知项目与聊天',exact:true}).waitFor();
   assert.equal(await page.locator('[data-va-mask-sidebar]').count(),0);
   report.checks.partitionSlotWithFormalProjectAndMembers=true;
+  await page.getByText('原生项目与资源',{exact:true}).waitFor();
+  assert.equal(await workspace.locator('[data-vaiwl-candidate-root]:visible').count(),0,'no empty native-project disclosure');
   report.images=[];
   const capture=async name=>{const path=join(dir,name+'.png');await page.screenshot({path});report.images.push(path);};
   await page.waitForFunction(()=>document.querySelector('[data-va-sidebar-slot]').getBoundingClientRect().height<400);
@@ -101,6 +103,31 @@ try{
   assert.equal(await page.locator('#draft').inputValue(),'fixture draft');
   await workspace.getByRole('link',{name:'Native B',exact:true}).first().waitFor();
   report.checks.nativeMemberOpenPreservesOriginalDraftAndWorkspace=true;
+  // Same-document native activation must retain observed Project facts even
+  // when the native SPA replaces every body node. No private authorization is
+  // imported from another document and no fixture business rows are injected.
+  await page.locator('#draft').fill('');
+  await page.getByRole('button',{name:'返回工作空间',exact:true}).click();
+  await workspace.getByRole('link',{name:'Native B',exact:true}).first().waitFor();
+  if(await theme.getAttribute('aria-expanded')==='true')await theme.click();
+  assert.equal(await theme.getAttribute('aria-expanded'),'false');
+  const pagesBefore=context.pages().length;
+  await workspace.getByRole('link',{name:'Native B',exact:true}).first().click();
+  await page.waitForURL(origin+'/c/'+B,{timeout:15000});
+  assert.equal(context.pages().length,pagesBefore,'safe exact native action stays in this document');
+  await sidebar.getByRole('button',{name:'侧栏主题 Native Project',exact:true}).waitFor({timeout:15000});
+  assert.equal(await theme.getAttribute('aria-expanded'),'false','same-document navigation preserves the explicit theme choice');
+  await theme.click();
+  await sidebar.locator('a[href="'+origin+'/c/'+B+'"]').first().waitFor();
+  await page.getByRole('button',{name:'返回工作空间',exact:true}).click();
+  await workspace.getByRole('link',{name:'Native A',exact:true}).first().waitFor();
+  await workspace.locator('a[href="'+origin+'/c/'+B+'"]').first().waitFor();
+  report.checks.sameDocumentMemberRetainsProjectAndReturn=true;
+  await capture('partition-member-return');
+  // The following independent home/long-reading scenes keep their old draft.
+  await page.goto(origin+'/g/'+P+'/project');
+  await workspace.getByRole('link',{name:'Native B',exact:true}).first().waitFor();
+
   await page.locator('#draft').focus();
   await page.waitForFunction(()=>document.querySelector('[id$="_sidebar"]')?.matches(':popover-open')&&!document.querySelector('[id$="_workspace"]')?.matches(':popover-open'));
   await capture('partition-native-reading');

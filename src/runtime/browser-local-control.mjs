@@ -52,7 +52,7 @@ export function createBrowserLocalControl({chrome,service,allowedURL,urlPolicy,o
     // MessageSender.url may retain the script document's pre-SPA URL. The
     // browser's exact document lookup, rechecked below, supplies current route.
     frame.actualURL=actual.url;frame.documentLifecycle=actual.documentLifecycle;
-    if(service.authority.hasPersonalSelection?.(frame))return;
+    if(service.authority.hasDocumentSelection?.(frame)||service.authority.hasPersonalSelection?.(frame))return;
     if(!storageOK||!row||!validRow(row)||row.documentId!==frame.documentId)return;
     const challenge=crypto.randomUUID(),proof=await send(frame.tabId,frame.documentId,{type:'HOST_LOCAL_CONTINUITY',action:'probe',challenge});
     const check=await chrome.webNavigation.getFrame({tabId:frame.tabId,frameId:0});

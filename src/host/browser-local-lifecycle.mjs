@@ -89,7 +89,7 @@ export function installBrowserLocalLifecycle({document:doc,runtime,session,profi
   if(!exactHostRecord(m,['type']))return;
   if(m.type==='HOST_LOCAL_LOCKED'){clear();waiting=true;run++;session.stop();reply({ok:true});return;}
   if(m.type==='HOST_LOCAL_RESTART'){void restart().then(ok=>reply({ok}),()=>reply({ok:false}));return true;}
-  if(m.type==='HOST_DOCUMENT_INVALIDATED'){if(waiting)void restart();else void session.recoverRoute?.().catch(()=>{});}
+  if(m.type==='HOST_DOCUMENT_INVALIDATED'){if(waiting)void restart();else void session.contextReady?.().catch(()=>{});}
  };
  doc.defaultView.addEventListener('focus',focus);doc.defaultView.addEventListener('pagehide',pagehide);doc.addEventListener('pointerdown',pointer,true);doc.addEventListener('keydown',keyboard,true);doc.addEventListener('click',navigation,true);runtime.onMessage.addListener(message);
  return ()=>{stopped=true;layoutObserver?.disconnect();doc.defaultView.removeEventListener('resize',layoutChanged);clear();run++;session.stop();doc.defaultView.removeEventListener('focus',focus);doc.defaultView.removeEventListener('pagehide',pagehide);doc.removeEventListener('pointerdown',pointer,true);doc.removeEventListener('keydown',keyboard,true);doc.removeEventListener('click',navigation,true);runtime.onMessage.removeListener(message);};

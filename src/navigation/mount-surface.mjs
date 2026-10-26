@@ -10,6 +10,8 @@ export function createMountSurface({document:doc,createFrameURL,hasNativeLayer=(
  // The frame stays in its original top-layer surface. Only this empty owned
  // block joins native flow; closing the browser popover releases its space.
  const syncSlot=(m,placement)=>{
+  const sidebar=m.surfaces.find(s=>s.role==='sidebar');
+  sidebar?.node.toggleAttribute('data-va-composed-sidebar',!!placement);
   if(m.slot&&(m.slot.parentElement!==placement?.parent||m.slot.nextElementSibling!==placement?.before)){
    hide(m,'sidebar','sidebar-anchor');m.slot.remove();m.slot=null;m.slotProved=false;
   }
@@ -97,6 +99,10 @@ export function createMountSurface({document:doc,createFrameURL,hasNativeLayer=(
     const node=doc.createElement('section');node.id=id+'_'+role;node.dataset.vaOwned=id;node.setAttribute('popover','manual');node.style.cssText=`position:fixed;inset:auto;margin:0;box-sizing:border-box;left:${rect.x}px;top:${rect.y}px;width:${rect.width}px;height:${rect.height}px;padding:0;border:0;background:Canvas;color:CanvasText;`;
     const button=doc.createElement('button');button.type='button';button.setAttribute('popovertarget',node.id);button.setAttribute('popovertargetaction','hide');button.textContent='×';button.setAttribute('aria-label',role==='workspace'?'返回原生阅读':'显示原生列表');button.title=button.getAttribute('aria-label');
     const frame=doc.createElement('iframe');frame.src=urls.get(role);frame.title=role==='workspace'?'工作空间':'导航';frame.style.cssText='border:0;width:100%;min-height:0;flex:1;display:block';node.append(button,frame);surfaces.push({role,node,frame,url:urls.get(role)});
+    // A label for the following native region, not a copied Project list or a
+    // disclosure that pretends to control native descendants. Its layout stays
+    // entirely inside our proven slot; native controls/order/state are untouched.
+    if(role==='sidebar'){const boundary=doc.createElement('div');boundary.dataset.vaNativeBoundary='';boundary.textContent='原生项目与资源';node.append(boundary);}
     for(const root of maskRoots){const attr='data-va-mask-'+role;markers.push({root,attr,previous:root.getAttribute(attr),nativeClass:root.getAttribute('class'),nativeStyle:root.getAttribute('style'),nativeHidden:root.getAttribute('hidden'),nativeAriaHidden:root.getAttribute('aria-hidden'),wasVisible:win.getComputedStyle?.(root).visibility==='visible'});root.setAttribute(attr,id);}
     // Keep the owned iframe's layout through native-input surrender. Removing
     // its layout on close can leave Chromium's cross-process hit target stale
@@ -108,6 +114,7 @@ export function createMountSurface({document:doc,createFrameURL,hasNativeLayer=(
     style.textContent+=`#${node.id}:popover-open{display:flex;flex-direction:column}#${node.id}>button{align-self:flex-end;flex:none;display:grid;place-items:center;box-sizing:border-box;width:24px;height:24px;margin:0;padding:0;border:0;border-radius:8px;font:12px/18px system-ui;color:inherit;background:transparent;cursor:pointer;overflow-wrap:anywhere}#${node.id}>button:hover{background:color-mix(in srgb,CanvasText 6%,Canvas)}#${node.id}>button:focus-visible{outline:2px solid currentColor;outline-offset:-2px}\n`;
     style.textContent+=`${allowed}:has(#${node.id}:popover-open) [data-va-mask-${role}="${id}"]{visibility:hidden;interactivity:inert;}body:has(${nativeOpen}) #${node.id}{visibility:hidden;interactivity:inert;}\n`;
    }
+   style.textContent+=`#${id}_sidebar>[data-va-native-boundary]{display:none}#${id}_sidebar[data-va-composed-sidebar]>[data-va-native-boundary]{display:block;flex:none;box-sizing:border-box;height:28px;padding:5px 12px 4px;border-top:1px solid color-mix(in srgb,CanvasText 10%,Canvas);font:11px/18px system-ui;color:color-mix(in srgb,CanvasText 60%,Canvas);background:Canvas;pointer-events:none}`;
    style.textContent+=`#${id}_slot{display:block;box-sizing:border-box;width:100%;height:0;min-height:0;flex:0 0 auto;margin:0;padding:0;border:0;overflow:hidden;pointer-events:none;} body:has(#${id}_sidebar:popover-open) #${id}_slot,#${id}_slot[data-va-slot-retained]{height:var(--va-slot-height);}`;
    const m={handle,surfaces,markers,style,styleText:style.textContent,onSurrender,inspection:{...inspection,preserveNativeSidebar:inspection.preserveNativeSidebar===true||!inspection.sidebarRect,historyMaskRoots:[...inspection.historyMaskRoots],protectedRegions:[...inspection.protectedRegions]}};mounts.set(id,m);syncSlot(m,inspection.sidebarPlacement);
    const workspace=surfaces.find(s=>s.role==='workspace')?.node;
