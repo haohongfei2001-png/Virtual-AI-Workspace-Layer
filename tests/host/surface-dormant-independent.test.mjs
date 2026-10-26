@@ -3,24 +3,30 @@ import assert from 'node:assert/strict';
 import {createSurfaceController} from '../../src/host/surface-controller.mjs';
 const flush=async()=>{for(let i=0;i<30;i++)await Promise.resolve();};
 function fixture({onWake=()=>false}={}){
- let time=1000,next=0,layer=false,occupied=false;const events=new Map(),timers=new Map(),mutations=[];
+ let time=1000,next=0,layer=false,occupied=false,workspaceVisible=false;const events=new Map(),timers=new Map(),mutations=[];
  const calls={disposed:0,suspended:0,renewed:0,confirmed:0,shown:0,messages:[],ended:[]};
  const win={addEventListener(k,fn){if(!events.has(k))events.set(k,new Set());events.get(k).add(fn);},removeEventListener(k,fn){events.get(k)?.delete(fn);},MutationObserver:class{constructor(fn){mutations.push(fn);}observe(){}disconnect(){}}};
- const doc={defaultView:win,location:{href:'https://chatgpt.com/'},body:{},createElement(){return {dataset:{},events:{},setAttribute(k,v){this[k]=v;},addEventListener(k,v){this.events[k]=v;},remove(){if(this.parent)this.parent.children=this.parent.children.filter(n=>n!==this);}};}};
+ const doc={defaultView:win,location:{href:'https://chatgpt.com/'},body:{},createElement(){return {dataset:{},style:{},events:{},setAttribute(k,v){this[k]=v;},addEventListener(k,v){this.events[k]=v;},remove(){if(this.parent)this.parent.children=this.parent.children.filter(n=>n!==this);}};}};
  const slot={isConnected:true,ownerDocument:doc,children:[],append(button){this.children.push(button);button.parent=this;},contains(node){return this.children.includes(node);}};
  const frames=['workspace','sidebar'].map(role=>({role,frame:{isConnected:true,ownerDocument:doc,contentWindow:{postMessage(data,origin){calls.messages.push({data,origin});}}}}));
  const binding={documentToken:'doc',producerToken:'producer',browserDocumentId:'parent',routeEpoch:1,origin:'https://chatgpt.com',expiresAt:new Date(21000).toISOString()};
  const inspection={ok:true,regionEpoch:1,navigationSlot:slot};
  const adapter={start:async()=>({binding}),stop(){},inspect:()=>occupied?{ok:false,reason:'native-content-occupies-return-slot'}:inspection,hasNativeLayer:()=>layer,updateBinding:()=>true};
- const surface={mount:async()=>({id:'mount',documentToken:'doc',regionEpoch:1}),frames:()=>frames,showWorkspace(){calls.shown++;},showReading(){},suspend(){calls.suspended++;},dispose(){calls.disposed++;},visibility:()=>({workspace:false,sidebar:false})};
+ const surface={mount:async()=>({id:'mount',documentToken:'doc',regionEpoch:1}),frames:()=>frames,showWorkspace(_handle,{roles=['workspace','sidebar']}={}){if(roles.includes('workspace')){calls.shown++;workspaceVisible=true;}return true;},showReading(){workspaceVisible=false;},suspend(_handle,_reason,role){calls.suspended++;if(role!=='sidebar')workspaceVisible=false;},dispose(){calls.disposed++;},visibility:()=>({workspace:workspaceVisible,sidebar:false})};
  const bridge={registerMount:async()=>({ok:true}),confirmParent:async({role})=>{calls.confirmed++;return {ok:true,grant:{id:'grant_'+role,mountId:'mount',role,parentDocumentId:'parent',uiDocumentId:'ui_'+role,scopeGrantId:'scope',expiresAt:new Date(21000).toISOString()}};}};
  const controller=createSurfaceController({document:doc,adapter,surface,bridge,extensionOrigin:'chrome-extension://ext',onWake,onTerminated:reason=>calls.ended.push(reason),now:()=>time,elapsedNow:()=>time,schedule:(fn,ms)=>{const id=++next;timers.set(id,{fn,at:time+ms});return id;},cancel:id=>timers.delete(id)});
  const message=(role,type='VAIWL_UI_JOIN',extra={},overrides={})=>{const event={origin:'chrome-extension://ext',source:frames.find(x=>x.role===role).frame.contentWindow,data:{type,role,...(type==='VAIWL_UI_JOIN'?{nonce:'nonce_'+role}:{}),...extra},...overrides};for(const fn of events.get('message')??[])fn(event);};
  return {controller,adapter,surface,bridge,calls,slot,frames,doc,timers,message,layer(v){layer=v;},occupied(v){occupied=v;},mutate(){for(const fn of mutations)fn();},async ready(){await controller.start({});message('workspace');message('sidebar');await flush();controller.showNativeReading();},advance(ms){time+=ms;for(const [id,t]of [...timers])if(t.at<=time){timers.delete(id);t.fn();}}};
 }
-for(const role of ['workspace','sidebar'])test('failed '+role+' idle dispatch cannot claim dormant success with a live unrevoked client',async()=>{
- const f=fixture();await f.ready();f.frames.find(x=>x.role===role).frame.contentWindow.postMessage=()=>{throw Error('closed-or-unavailable-frame');};
- assert.equal(f.controller.enterDormant(),false);assert.equal(f.calls.disposed,1);assert.equal(f.slot.children.length,0);
+for(const role of ['workspace','sidebar'])test('failed '+role+' idle dispatch withdraws only its required authority',async()=>{
+ const f=fixture();await f.ready();let released=0;
+ f.surface.retireRole=(_handle,role)=>{f.frames.find(x=>x.role===role).frame.isConnected=false;};
+ f.bridge.releaseRole=async({role})=>{assert.equal(role,'sidebar');released++;return {ok:true};};
+ f.frames.find(x=>x.role===role).frame.contentWindow.postMessage=()=>{throw Error('closed-or-unavailable-frame');};
+ assert.equal(f.controller.enterDormant(),role==='sidebar');assert.equal(f.calls.disposed,role==='workspace'?1:0);
+ if(role==='sidebar'){acknowledgeIdle(f,'workspace');await flush();assert.equal(released,1);assert.equal(f.controller.dormantReady(),true);assert.equal(f.frames[1].frame.isConnected,false);}
+ else assert.equal(f.slot.children.length,0);
+ f.controller.stop();
 });
 test('dormant return yields an original slot subsequently occupied by native UI',async()=>{
  const f=fixture();await f.ready();assert.equal(f.controller.enterDormant(),true);const native={isConnected:true,ownerDocument:f.doc,hasAttribute:()=>false};f.slot.children.push(native);f.occupied(true);f.mutate();assert(!f.slot.children.some(n=>n.dataset?.vaOwned));assert(f.slot.children.includes(native));
@@ -72,7 +78,7 @@ test('dormant resume registers fresh binding on original frames before starting 
  assert.equal(f.rebinds(),1);assert.equal(f.calls.messages.filter(x=>x.data.type==='VAIWL_UI_WAKE').length,0);assert.equal(f.controller.showWorkspace(),false);
  assert.equal(await f.controller.resumeDormant({binding:f.fresh}),null);register({ok:true});const handle=await pending;assert.equal(handle.documentToken,'fresh-doc');assert.equal(f.controller.showWorkspace(),false);
  const wake=f.calls.messages.filter(x=>x.data.type==='VAIWL_UI_WAKE');assert.equal(wake.length,2);assert(wake.every(x=>x.data.requestId===f.calls.messages.find(y=>y.data.type==='VAIWL_UI_IDLE').data.requestId));assert.equal(f.calls.shown,shown);
- f.message('workspace');await flush();assert.equal(f.controller.showWorkspace(),false);f.message('sidebar');await flush();assert.equal(f.controller.showWorkspace(),true);assert.deepEqual(f.frames.map(x=>x.frame),original);assert.equal(f.calls.disposed,0);f.controller.stop();
+ f.message('workspace');await flush();assert.equal(f.controller.showWorkspace(),true);f.message('sidebar');await flush();assert.equal(f.controller.showWorkspace(),true);assert.deepEqual(f.frames.map(x=>x.frame),original);assert.equal(f.calls.disposed,0);f.controller.stop();
 });
 for(const bad of ['producerToken','browserDocumentId','origin','expiresAt'])test('resume rejects invalid fresh '+bad+' without waking frames',async()=>{
  const f=await dormantForResume(),values={producerToken:'producer',browserDocumentId:'other',origin:'https://other.test',expiresAt:new Date(0).toISOString()};
@@ -151,4 +157,12 @@ test('dormant return rechecks current slot geometry before observer and never wa
 
 test('native slot occupation blocks dormant click before mutation delivery',async()=>{
  let woke=0;const f=fixture({onWake:()=>{woke++;}});await f.ready();assert.equal(f.controller.enterDormant(),true);const button=f.slot.children[0],native={};f.slot.children.push(native);button.events.click({isTrusted:true});assert.equal(woke,0);assert.deepEqual(f.slot.children,[native]);f.controller.stop();
+});
+
+for(const role of ['workspace','sidebar'])test('dormant wake transport failure is local for '+role,async()=>{
+ const f=await dormantForResume();let released=0;f.surface.retireRole=(_handle,role)=>{f.frames.find(x=>x.role===role).frame.isConnected=false;};f.bridge.releaseRole=async()=>{released++;return {ok:true};};
+ f.frames.find(x=>x.role===role).frame.contentWindow.postMessage=()=>{throw Error('closed-frame');};
+ const handle=await f.controller.resumeDormant({binding:f.fresh});
+ if(role==='workspace'){assert.equal(handle,null);assert.equal(f.calls.disposed,1);}else{assert(handle);f.message('workspace');await flush();assert.equal(released,1);assert.equal(f.calls.disposed,0);assert.equal(f.controller.showWorkspace(),true);}
+ f.controller.stop();
 });

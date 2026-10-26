@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {createSurfaceController} from '../../src/host/surface-controller.mjs';
 const flush=async()=>{for(let i=0;i<30;i++)await Promise.resolve();};
 function fixture({onWake=()=>false}={}){
- let time=1000,next=0,layer=false,occupied=false;const events=new Map(),timers=new Map(),mutations=[];
+ let time=1000,next=0,layer=false,occupied=false,workspaceVisible=false;const events=new Map(),timers=new Map(),mutations=[];
  const calls={disposed:0,suspended:0,renewed:0,confirmed:0,shown:0,messages:[],ended:[]};
  const win={addEventListener(k,fn){if(!events.has(k))events.set(k,new Set());events.get(k).add(fn);},removeEventListener(k,fn){events.get(k)?.delete(fn);},MutationObserver:class{constructor(fn){mutations.push(fn);}observe(){}disconnect(){}}};
  const doc={defaultView:win,location:{href:'https://chatgpt.com/'},body:{},createElement(){return {dataset:{},style:{},events:{},setAttribute(k,v){this[k]=v;},addEventListener(k,v){this.events[k]=v;},remove(){if(this.parent)this.parent.children=this.parent.children.filter(n=>n!==this);}};}};
@@ -12,7 +12,7 @@ function fixture({onWake=()=>false}={}){
  const binding={documentToken:'doc',producerToken:'producer',browserDocumentId:'parent',routeEpoch:1,origin:'https://chatgpt.com',expiresAt:new Date(21000).toISOString()};
  const inspection={ok:true,regionEpoch:1,navigationSlot:slot};
  const adapter={start:async()=>({binding}),stop(){},inspect:()=>occupied?{ok:false,reason:'native-content-occupies-return-slot'}:inspection,hasNativeLayer:()=>layer,updateBinding:()=>true};
- const surface={mount:async()=>({id:'mount',documentToken:'doc',regionEpoch:1}),frames:()=>frames,showWorkspace(){calls.shown++;},showReading(){},suspend(){calls.suspended++;},dispose(){calls.disposed++;},visibility:()=>({workspace:false,sidebar:false})};
+ const surface={mount:async()=>({id:'mount',documentToken:'doc',regionEpoch:1}),frames:()=>frames,showWorkspace(_handle,{roles=['workspace','sidebar']}={}){calls.shown++;if(roles.includes('workspace'))workspaceVisible=true;return true;},showReading(){workspaceVisible=false;},suspend(_handle,_reason,role){calls.suspended++;if(role!=='sidebar')workspaceVisible=false;},dispose(){calls.disposed++;},visibility:()=>({workspace:workspaceVisible,sidebar:false})};
  const bridge={registerMount:async()=>({ok:true}),confirmParent:async({role})=>{calls.confirmed++;return {ok:true,grant:{id:'grant_'+role,mountId:'mount',role,parentDocumentId:'parent',uiDocumentId:'ui_'+role,scopeGrantId:'scope',expiresAt:new Date(21000).toISOString()}};}};
  const controller=createSurfaceController({document:doc,adapter,surface,bridge,extensionOrigin:'chrome-extension://ext',onWake,onTerminated:reason=>calls.ended.push(reason),now:()=>time,elapsedNow:()=>time,schedule:(fn,ms)=>{const id=++next;timers.set(id,{fn,at:time+ms});return id;},cancel:id=>timers.delete(id)});
  const message=(role,type='VAIWL_UI_JOIN',extra={},overrides={})=>{const event={origin:'chrome-extension://ext',source:frames.find(x=>x.role===role).frame.contentWindow,data:{type,role,...(type==='VAIWL_UI_JOIN'?{nonce:'nonce_'+role}:{}),...extra},...overrides};for(const fn of events.get('message')??[])fn(event);};
@@ -32,7 +32,7 @@ async function dormant(t,{busy=true}={}){
 const renewed=binding=>({...binding,expiresAt:new Date(22000).toISOString()});
 
 async function renewable(t){const f=await dormant(t);f.bridge.renewDormantBinding=async({binding})=>({ok:true,binding:renewed(binding)});assert.equal(await f.controller.renewDormantLease(),true);return f;}
-test('cancelled busy close keeps original frames and only fresh dual JOIN restores authority',async t=>{
+test('cancelled busy close keeps original frames and fresh workspace JOIN restores authority independently',async t=>{
  const f=await renewable(t),frames=f.frames.map(item=>item.frame),confirmed=f.calls.confirmed,shown=f.calls.shown;
  let ready=0;f.bridge.cancelledCloseReady=()=>ready++;
  f.surface.rebind=()=>assert.fail('must not rebind');f.bridge.registerMount=()=>assert.fail('must not register again');
@@ -40,7 +40,7 @@ test('cancelled busy close keeps original frames and only fresh dual JOIN restor
  const idle=f.calls.messages.find(item=>item.data.type==='VAIWL_UI_IDLE').data.requestId,wakes=f.calls.messages.filter(item=>item.data.type==='VAIWL_UI_WAKE');
  assert.equal(wakes.length,2);assert(wakes.every(item=>item.data.requestId===idle));assert.deepEqual(f.frames.map(item=>item.frame),frames);
  assert.equal(f.controller.showWorkspace(),false);assert.equal(f.controller.focusFrame('workspace'),false);assert.equal(f.calls.confirmed,confirmed);assert.equal(ready,0);
- f.message('workspace');await flush();assert.equal(f.controller.showWorkspace(),false);assert.equal(f.calls.confirmed,confirmed+1);assert.equal(ready,0);
+ f.message('workspace');await flush();assert.equal(f.controller.presentationMode(),'reading');assert.equal(f.calls.confirmed,confirmed+1);assert.equal(ready,1);
  f.message('sidebar');await flush();assert.equal(f.calls.confirmed,confirmed+2);assert.equal(ready,1);assert.equal(f.calls.shown,shown,'dual JOIN resumes reading');assert.equal(f.controller.presentationMode(),'reading');assert.equal(f.controller.showWorkspace(),true);assert.equal(f.calls.disposed,0);
  assert.equal(f.controller.cancelDormantClose(),false,'consumed transition cannot resend WAKE');assert.equal(f.calls.messages.filter(item=>item.data.type==='VAIWL_UI_WAKE').length,2);
 });
@@ -54,16 +54,16 @@ for(const reason of ['no-busy','not-renewed','renew-failed','expired','route','f
 test('native layer during cancellation cannot strand successful dual grant notification',async t=>{
  const f=await renewable(t);let ready=0;f.bridge.cancelledCloseReady=()=>ready++;
  assert.equal(f.controller.cancelDormantClose(),true);f.layer(true);f.controller.suspend('native-layer');
- const shown=f.calls.shown;f.message('workspace');await flush();assert.equal(ready,0);
+ const shown=f.calls.shown;f.message('workspace');await flush();assert.equal(ready,1);
  f.message('sidebar');await flush();assert.equal(ready,1);assert.equal(f.calls.shown,shown);assert.equal(f.controller.showWorkspace(),false);
 });
 
-for(const joined of [null,'workspace','sidebar'])test('partial cancelled close destroys both frames before one guarded handoff '+joined,async t=>{
+for(const joined of [null,'sidebar'])test('partial cancelled close destroys both frames before one guarded handoff '+joined,async t=>{
  const f=await renewable(t);let release=0,revoked=0,heldResolve;const held=new Promise(r=>heldResolve=r);
  f.surface.dispose=()=>{f.calls.disposed++;for(const item of f.frames)item.frame.isConnected=false;};
  f.bridge.revokeMount=()=>{revoked++;};f.bridge.releaseCancelledClose=async request=>{release++;assert.equal(request.isCurrent(),true);assert(f.frames.every(x=>!x.frame.isConnected));assert.equal(f.calls.disposed,1);assert.equal(revoked,0);await held;return true;};
  assert.equal(f.controller.cancelDormantClose(),true);if(joined){f.message(joined);await flush();}
- f.message(joined??'workspace','VAIWL_UI_SUSPEND');await flush();assert.equal(release,1);assert.equal(revoked,0);assert.equal(f.controller.showWorkspace(),false);assert.equal(f.slot.children.length,0);
+ f.message('workspace','VAIWL_UI_SUSPEND');await flush();assert.equal(release,1);assert.equal(revoked,0);assert.equal(f.controller.showWorkspace(),false);assert.equal(f.slot.children.length,0);
  heldResolve();await flush();assert.equal(revoked,1);f.controller.stop();await flush();assert.equal(release,1);
 });
 for(const cause of ['connected-frame','user-exit','lease-expired'])test('cancelled close does not offer unsafe handoff '+cause,async t=>{
@@ -95,15 +95,15 @@ for(const cleanup of ['quiet','pending-cancel'])test('partial JOIN termination h
  const mount=f.surface.mount;f.surface.mount=async(...args)=>{for(const x of f.frames)x.frame.isConnected=true;return mount(...args);};
  f.surface.dispose=()=>{f.calls.disposed++;for(const x of f.frames)x.frame.isConnected=false;};
  const session=createHostContentSession({document:f.doc,runtime,now:()=>1000,elapsedNow:()=>1000,makeId:()=> 'client',identityReader:{read:async()=>({}),prepareIdle:()=>({isCurrent:()=>true})},adapterFactory:()=>f.adapter,surfaceFactory:()=>f.surface,plansFactory:()=>({}),controllerFactory:o=>{options=o;controller=createSurfaceController({...o,now:()=>1000,elapsedNow:()=>1000});return controller;}});
- t.after(()=>session.stop());await session.start();f.message('workspace');f.message('sidebar');await flush();session.showReading();
+ t.after(()=>session.stop());await session.start();f.message('workspace');f.message('sidebar');await flush();session.showReading();await flush();
  const closing=session.enterDormant();await flush();
  const idle=f.calls.messages.find(x=>x.data.type==='VAIWL_UI_IDLE').data.requestId;
  f.message('workspace','VAIWL_UI_IDLE_ACK',{requestId:idle});f.message('sidebar','VAIWL_UI_IDLE_ACK',{requestId:idle});
  await closing;await flush();assert.equal(releases,1);assert.equal(hello,1);assert.equal(controller.showWorkspace(),false);
- f.message('workspace');await flush();assert.equal(controller.showWorkspace(),false);
- if(cleanup==='pending-cancel')cancelOnStop=true;
- f.message('sidebar','VAIWL_UI_SUSPEND');for(let i=0;i<4;i++)await flush();
- if(cleanup==='pending-cancel'){assert.equal(releases,1);assert.equal(hello,1);assert(f.frames.every(x=>!x.frame.isConnected));resolveCancel({ok:true});for(let i=0;i<4;i++)await flush();}
+ f.message('sidebar');await flush();assert.equal(controller.showWorkspace(),false);
+ let inFlight;if(cleanup==='pending-cancel')inFlight=adapterStart.ingestionPass({phase:'cancel',passSeq:1,profileId:'surface'});
+ await flush();f.message('workspace','VAIWL_UI_SUSPEND');for(let i=0;i<4;i++)await flush();
+ if(cleanup==='pending-cancel'){assert.equal(releases,1);assert.equal(hello,1);assert(f.frames.every(x=>!x.frame.isConnected));resolveCancel({ok:true});await inFlight;for(let i=0;i<4;i++)await flush();assert.equal(releases,1);assert.equal(hello,1,'late drain cannot authorize an abandoned release');return;}
  assert.equal(releases,2);assert.equal(hello,2);assert.equal(options.initialMode,'reading');assert.equal(f.calls.disposed,1);
  const releaseIndex=calls.findLastIndex(m=>m.type==='HOST_UI_IDLE_RELEASE'),helloIndex=calls.findLastIndex(m=>m.type==='HOST_HELLO');assert(releaseIndex<helloIndex);
  assert.equal(calls[releaseIndex].producerToken,'producer_1');assert.equal(calls.filter(m=>m.type==='HOST_REFRESH').at(-1).producerToken,'producer_2');
@@ -111,14 +111,33 @@ for(const cleanup of ['quiet','pending-cancel'])test('partial JOIN termination h
 });
 
 for(const outcome of ['complete','deadline','reject','route','stop'])test('partial cleanup retains original six-second total and cannot revive after '+outcome,async t=>{
- const f=await renewable(t);let finish,reject,release=0,revoke=0,remaining;
- const pending=new Promise((resolve,fail)=>{finish=resolve;reject=fail;});
- f.adapter.stop=()=>pending;f.surface.dispose=()=>{for(const x of f.frames)x.frame.isConnected=false;};
- f.bridge.revokeMount=()=>revoke++;f.bridge.releaseCancelledClose=async request=>{release++;remaining=request.timeoutMs;return true;};
- assert.equal(f.controller.cancelDormantClose(),true);f.message('sidebar','VAIWL_UI_SUSPEND');await flush();
- assert(f.frames.every(x=>!x.frame.isConnected));assert.equal(release,0);assert.equal(revoke,0);
- if(outcome==='deadline'){f.advance(6000);await flush();assert.equal(revoke,1);finish(true);}
- else if(outcome==='reject')reject(Error('cleanup-failed'));
- else {f.advance(4000);if(outcome==='route')f.doc.location.href+='changed';if(outcome==='stop')f.controller.stop();finish(true);}
- await flush();assert.equal(release,outcome==='complete'?1:0);if(outcome==='complete')assert.equal(remaining,2000);assert.equal(revoke,1);
+ const f=await renewable(t);let release=0,revoke=0,remaining;
+ f.adapter.stop=()=>assert.fail('surface cleanup cannot stop producer');
+ f.surface.dispose=()=>{for(const x of f.frames)x.frame.isConnected=false;f.advance(outcome==='deadline'?6000:4000);if(outcome==='route')f.doc.location.href+='changed';};
+ f.bridge.revokeMount=()=>revoke++;f.bridge.releaseCancelledClose=async request=>{release++;remaining=request.timeoutMs;if(outcome==='reject')throw Error('release-denied');return true;};
+ assert.equal(f.controller.cancelDormantClose(),true);f.message('workspace','VAIWL_UI_SUSPEND');if(outcome==='stop')f.controller.stop();await flush();
+ assert(f.frames.every(x=>!x.frame.isConnected));assert.equal(release,['complete','reject'].includes(outcome)?1:0);if(release)assert.equal(remaining,2000);assert.equal(revoke,1);
+});
+test('sidebar loss before its idle ACK does not strand the acknowledged workspace',async t=>{
+ const f=fixture();t.after(()=>f.controller.stop());await f.ready();assert.equal(f.controller.enterDormant(),true);
+ const requestId=f.calls.messages.find(x=>x.data.type==='VAIWL_UI_IDLE').data.requestId;
+ f.message('workspace','VAIWL_UI_IDLE_ACK',{requestId});assert.equal(f.controller.dormantReady(),false);
+ f.frames[1].frame.isConnected=false;f.mutate();await flush();
+ assert.equal(f.controller.dormantReady(),true);assert.equal(f.calls.disposed,0);assert.equal(f.calls.ended.length,0);
+ f.bridge.releaseIdleMount=async()=>({ok:true});assert.equal(await f.controller.settleDormant({isCurrent:()=>true}),true);
+});
+test('workspace srcdoc remains a security rejection while dormant',async t=>{
+ const f=await dormant(t);f.frames[0].frame.hasAttribute=name=>name==='srcdoc';f.message('workspace','VAIWL_UI_IDLE_ACK',{requestId:'ignored'});await flush();assert.equal(f.calls.ended.at(-1),'ui-frame-document-replaced');assert.equal(f.controller.dormantReady(),false);
+});
+test('sidebar suspend after fresh workspace JOIN keeps original producer presentation',async t=>{
+ const f=await renewable(t);let ready=0,release=0;f.bridge.cancelledCloseReady=()=>ready++;f.bridge.releaseCancelledClose=()=>release++;
+ assert.equal(f.controller.cancelDormantClose(),true);f.message('workspace');await flush();f.message('sidebar','VAIWL_UI_SUSPEND');await flush();
+ assert.equal(ready,1);assert.equal(release,0);assert.equal(f.calls.disposed,0);assert.equal(f.controller.showWorkspace(),true);
+});
+
+for(const role of ['workspace','sidebar'])test('cancelled close wake transport failure is local for '+role,async t=>{
+ const f=await renewable(t);let released=0;f.surface.retireRole=(_handle,role)=>{f.frames.find(x=>x.role===role).frame.isConnected=false;};f.bridge.releaseRole=async()=>{released++;return {ok:true};};
+ f.frames.find(x=>x.role===role).frame.contentWindow.postMessage=()=>{throw Error('closed-frame');};
+ assert.equal(f.controller.cancelDormantClose(),role==='sidebar');
+ if(role==='workspace')assert.equal(f.calls.disposed,1);else{f.message('workspace');await flush();assert.equal(released,1);assert.equal(f.calls.disposed,0);assert.equal(f.controller.showWorkspace(),true);}
 });

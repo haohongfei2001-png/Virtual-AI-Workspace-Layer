@@ -531,6 +531,9 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
     // real URL change through the existing fresh handshake instead of losing
     // the document in a same-route context wait. No old capability is reused.
     if(current===s&&['dormant-document-changed','native-document-changed'].includes(reason)&&doc.location.href!==s.url){rebind(s,'reading');return;}
+    // A released dormant mount cannot revive its old grants. Retire that
+    // session and wait for fresh context instead of swallowing READY forever.
+    if(current===s&&reason==='dormant-document-changed'){contextPending();return;}
     // Presentation proof is local to the surface, never producer authority.
     if(current===s&&['native-region-changed','native-geometry-changed','mount-unavailable'].includes(reason))return;
     // The controller has withdrawn the old mount. Do not leave ready=true

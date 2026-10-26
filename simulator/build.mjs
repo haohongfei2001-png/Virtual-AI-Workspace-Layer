@@ -8,7 +8,7 @@ export function bundle(entry){const factories=new Map();
  function visit(path){if(factories.has(path))return;const text=readFileSync(resolve(root,path),'utf8'),deps=[];
   const names=[...text.matchAll(/export\s+(?:async\s+)?(?:function|class|const|let)\s+(\w+)/g)].map(m=>m[1]);
   let body=text.replace(/import\s*\{([^}]+)\}\s*from\s*['"]([^'"]+)['"];?/g,(_,symbols,source)=>{
-   const dep=relative(root,resolve(root,dirname(path),source));if(dep.startsWith('..'))throw Error('outside-source-root');deps.push(dep);return `const {${symbols}} = require(${JSON.stringify(dep)});`;}).replace(/\bexport\s+/g,'');
+   const dep=relative(root,resolve(root,dirname(path),source));if(dep.startsWith('..'))throw Error('outside-source-root');deps.push(dep);const bindings=symbols.replace(/\b(\w+)\s+as\s+(\w+)\b/g,'$1: $2');return `const {${bindings}} = require(${JSON.stringify(dep)});`;}).replace(/\bexport\s+/g,'');
   factories.set(path,body+`\nreturn {${names.join(',')}};`);deps.forEach(visit);
  }visit(entry);
  return `(()=>{'use strict';const modules={${[...factories].map(([p,b])=>`${JSON.stringify(p)}:require=>{\n${b}\n}`).join(',\n')}};const cache={};const require=p=>cache[p]??(cache[p]=modules[p](require));require(${JSON.stringify(entry)});})();\n`;

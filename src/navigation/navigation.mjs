@@ -205,7 +205,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     // Capability resolution is independent from the data projection. Keep a
     // temporary action limitation accessible without repeating transport state
     // after every real title; activation still gives the explicit explanation.
-    if(label)control.setAttribute('title',message);
+    if(label&&!control.getAttribute('title'))control.setAttribute('title',message);
     control.addEventListener('click',event=>{event.preventDefault();if(stopped||frameProjection!==source||snapshot?.scope!==scope)return;
       const intent=advanceNavigationIntent();navigationFeedback={scope,url:adapter.currentURL(),intent,message,nativeReturn:true,href:null};sidebarDirty=true;requestRender();
     });

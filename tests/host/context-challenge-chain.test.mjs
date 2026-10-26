@@ -38,7 +38,7 @@ function fixture(t){
  const record=(type,extra={})=>trace.push({type,...provenance.getStore(),...extra});
  const response=()=>({url:origin+'/api/auth/session',status:403,redirected:false,
   headers:new Headers({'cf-mitigated':'challenge','content-type':'text/html'}),
-  get body(){bodyReads++;throw Error('challenge-body-must-not-be-read');},
+  get body(){return {cancel:async()=>{},getReader(){bodyReads++;throw Error('challenge-body-must-not-be-read');}};},
   text(){bodyReads++;throw Error('challenge-text-must-not-be-read');},
   json(){bodyReads++;throw Error('challenge-json-must-not-be-read');}});
  t.mock.method(globalThis,'fetch',(target,options)=>{

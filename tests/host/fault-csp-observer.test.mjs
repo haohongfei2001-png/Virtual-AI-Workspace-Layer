@@ -8,6 +8,9 @@ test('extension observer preserves original Promise, request and reply without a
 });
 test('schema rejects missing, extra, unknown or invalid control fields',()=>{
  assert(exactCspControlMessage({type:'VAIWL_UI_JOIN',role:'workspace',nonce:'abc'}));
+ assert(exactCspControlMessage({type:'VAIWL_UI_BOOT',role:'sidebar',stage:'module-ready'}));
+ assert(exactCspControlMessage({type:'VAIWL_UI_SUSPEND',role:'sidebar',reason:'ui-renew-failed'}));
+ for(const m of [{type:'VAIWL_UI_BOOT',role:'workspace',stage:'private title'},{type:'VAIWL_UI_SUSPEND',role:'sidebar',reason:'private value'},{type:'VAIWL_UI_BOOT',role:'workspace',stage:'entry-ready',grantId:'secret'}])assert.equal(exactCspControlMessage(m),false);
  for(const m of [{type:'VAIWL_UI_JOIN',role:'workspace'},{type:'VAIWL_UI_JOIN',role:'workspace',nonce:'abc',title:'private'},{type:'VAIWL_UI_JOIN',role:'other',nonce:'abc'},{type:'UNKNOWN',role:'workspace'},{type:'VAIWL_UI_IDLE_ACK',role:'sidebar',requestId:''}])assert.equal(exactCspControlMessage(m),false);
 });
 test('runner-side leak detector positive controls and empty markers',()=>{assert.equal(cspLeaks(['private grant id','normal'],['grant']),1);assert.equal(cspLeaks(['normal'],['grant']),0);assert.equal(cspLeaks(['normal'],['']),0);});

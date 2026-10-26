@@ -3881,7 +3881,7 @@
     },
     "completion20261026": {
       "baseHead": "6a1cd9836a28087a5340a0e9e867b0c2a04c9933",
-      "scope": "C1-C5 integrated code and isolated formal MV3, no daily Chrome operation",
+      "scope": "C1-C5 integrated product source and isolated formal MV3; daily activation pending",
       "rootCauses": [
         "optional sidebar first reader owned shared FreeViewOwner lifetime",
         "optional sidebar renewal could consume whole STATUS deadline",
@@ -3907,19 +3907,6 @@
         "integrated-related-20261026.tap": "docs/evidence/free-delivery-2026-10-17/integrated-related-20261026.tap.gz",
         "integrated-races-20261026.tap": "docs/evidence/free-delivery-2026-10-17/integrated-races-20261026.tap.gz"
       },
-      "frozen": {
-        "status": "HOST_IMPLEMENTATION_UNVERIFIED",
-        "releaseStatus": "NOT_RELEASE_READY",
-        "files": 198,
-        "unpacked": "/Users/hhf/Downloads/VAIWL-v27-Integrated-20261026/extension",
-        "archive": "/Users/hhf/Downloads/VAIWL-v27-Integrated-20261026/vaiwl-free-host-development.zip",
-        "archiveSha256": "0cff4ac13cf36fca12f0a932094fe98a83624e451b0170849c7f8a88259b65f0",
-        "buildManifestSha256": "2eb0630d255b91a4ebd0a3cca4a2fb24a16aef7d79f3fbde239a75dc7ed6932a",
-        "contentSha256": "6330723e486d4621504f472538a0d27ab14db9460e038c6793593e60a29c48e6",
-        "installation": "NOT_UPDATED",
-        "activation": "NOT_RUN",
-        "realAccount": "NOT_RUN"
-      },
       "isolatedProduct": {
         "states": [
           "empty",
@@ -3933,17 +3920,131 @@
         "notRealAcceptance": true
       },
       "remaining": [
-        "single real Mac product acceptance of this frozen build",
-        "real prior private records/layout recovery after user confirmation; no private-exclusive-object requirement",
-        "unproved return-slot paint variants remain locally unavailable; no guessing or expanded page access"
+        "one final real Mac product acceptance of finalFreeze",
+        "real existing private record/layout recovery after user confirmation; no exclusive-object or full-history proof",
+        "unproved return-slot paint variants stay locally unavailable; no widened access"
       ],
       "preservation": {
-        "dailyChrome": "UNTOUCHED",
+        "dailyChrome": "one original-profile empty tab, then extension management; no ChatGPT interaction",
         "oldPrivateDatabase": "UNTOUCHED",
         "drafts": "UNTOUCHED",
         "originalExtensionId": "UNCHANGED",
         "stashes": "all three unchanged",
         "realMessagesSent": 0
+      },
+      "codeCommit": "ce3517b50f8c3b8486001beeafaf838c9713a729",
+      "installed": {
+        "originalDirectory": "/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/.git/vaiwl-artifacts/local-source-witness-20261022/extension",
+        "candidateDirectory": "/Users/hhf/Downloads/VAIWL-v27-Integrated-20261026/extension",
+        "backup": "/private/tmp/VAIWL-v27-before-integrated-20261026/original-extension.tar.gz",
+        "backupSha256": "4bfc7c1bd67665e4a758db8f63fbdae247b1ea4b9ce44aa8dc7bb47a2b6a9acd",
+        "preservedOriginalFiles": 2894,
+        "preservedExtraFiles": 2696,
+        "changedFiles": [
+          "src/host/native-history-list.mjs",
+          "src/host/native-project-surface.mjs",
+          "src/runtime/host-view-service.mjs",
+          "src/host/frame-resume-state.mjs",
+          "src/runtime/host-ui-owner.mjs",
+          "src/host/chatgpt-adapter.mjs",
+          "src/host/surface-controller.mjs",
+          "content.js",
+          "extension/classic-runtime.js",
+          "build-manifest.json"
+        ],
+        "manifestUnchanged": true,
+        "databaseAccess": "NONE",
+        "reload": "NOT_RUN",
+        "installedManifestSha256": "2eb0630d255b91a4ebd0a3cca4a2fb24a16aef7d79f3fbde239a75dc7ed6932a"
+      },
+      "realMacAttempt": {
+        "newTab": "one new acceptance tab opened in verified original Profile 4; prior Project/drafts preserved",
+        "navigation": "ARRIVED chrome://extensions/",
+        "reload": "NOT_DISPATCHED: existing readback guard returned Not main (-2700)",
+        "policy": "no retry, alternate control channel, page takeover or CDP",
+        "productAcceptance": "NOT_RUN"
+      },
+      "preCompletionFreeze": {
+        "status": "HOST_IMPLEMENTATION_UNVERIFIED",
+        "releaseStatus": "NOT_RELEASE_READY",
+        "files": 198,
+        "unpacked": "/Users/hhf/Downloads/VAIWL-v27-Integrated-20261026/extension",
+        "archive": "/Users/hhf/Downloads/VAIWL-v27-Integrated-20261026/vaiwl-free-host-development.zip",
+        "archiveSha256": "0cff4ac13cf36fca12f0a932094fe98a83624e451b0170849c7f8a88259b65f0",
+        "buildManifestSha256": "2eb0630d255b91a4ebd0a3cca4a2fb24a16aef7d79f3fbde239a75dc7ed6932a",
+        "contentSha256": "6330723e486d4621504f472538a0d27ab14db9460e038c6793593e60a29c48e6",
+        "installation": "ORIGINAL_DIRECTORY_UPDATED_AFTER_COMPLETE_OFFLINE_INTEGRATION",
+        "activation": "RELOAD_NOT_DISPATCHED",
+        "realAccount": "NOT_RUN",
+        "statusAtReview": "HELD_NOT_ACTIVATED; replaced by finalFreeze after related regression found dormant integration gaps"
+      },
+      "integratedFinal": {
+        "baseHead": "ce3517b50f8c3b8486001beeafaf838c9713a729",
+        "actualProductFixes": [
+          "same-document dormant workspace loss retires session and accepts fresh context instead of swallowing READY",
+          "optional sidebar idle/wake transport failure retires only sidebar; surviving workspace ACK can settle without a second ACK",
+          "srcdoc and mandatory workspace failures retain authority/security guards; no old capability revived",
+          "navigation action-unavailable explanation no longer overwrites real title/freshness tooltip",
+          "existing historical build compiler translates named import aliases to valid destructuring"
+        ],
+        "contractUpdates": "old both-frame/global-exit assertions replaced with role-local isolation; real mount doubles create fresh frames; CSP observer allows only fixed BOOT metadata; UI10 records narrow native-sidebar fallback separately",
+        "evidence": {
+          "integrated-frozen-journey-20261026.json": "docs/evidence/free-delivery-2026-10-17/integrated-frozen-journey-20261026.json.gz",
+          "integrated-completion-regression-20261026.tap": "docs/evidence/free-delivery-2026-10-17/integrated-completion-regression-20261026.tap.gz",
+          "integrated-dormant-completion-20261026.tap": "docs/evidence/free-delivery-2026-10-17/integrated-dormant-completion-20261026.tap.gz",
+          "integrated-modern-layout-20261026.json": "docs/evidence/free-delivery-2026-10-17/integrated-modern-layout-20261026.json.gz",
+          "integrated-csp-20261026.json": "docs/evidence/free-delivery-2026-10-17/integrated-csp-20261026.json.gz",
+          "integrated-native-default-20261026.json": "docs/evidence/free-delivery-2026-10-17/integrated-native-default-20261026.json.gz"
+        },
+        "regression": {
+          "associatedBatch": "671 PASS",
+          "postFinalGuard": "84 PASS",
+          "formalMV3Journey": "PASS",
+          "formalAndOfflineSourceClosure": "199 exact matching source hashes",
+          "realMac": "NOT_RUN"
+        },
+        "ciLimits": {
+          "headBeforeFinal": "ce3517b5 broad CI remains red; not relabeled PASS",
+          "unrelatedKnownLegacyDiagnostic": "cold-context-trace instrumenter has obsolete browser-request-context string anchors; not in Browser-Local production path; no renewed source-v3 experiment",
+          "fullHistoricalMatrix": "NOT_ESTABLISHED"
+        },
+        "dailyChromeAfterRegression": "NO_RELOAD_NO_NAVIGATION_NO_ACCOUNT_OPERATION"
+      },
+      "finalFreeze": {
+        "status": "HOST_IMPLEMENTATION_UNVERIFIED",
+        "releaseStatus": "NOT_RELEASE_READY",
+        "files": 198,
+        "unpacked": "/Users/hhf/Downloads/VAIWL-v27-Integrated-Final-20261026/extension",
+        "archive": "/Users/hhf/Downloads/VAIWL-v27-Integrated-Final-20261026/vaiwl-free-host-development.zip",
+        "archiveSha256": "f816e3ce1bfffd677b8fc6963c9b41c52230dd365535cc628133538555a4d0d9",
+        "buildManifestSha256": "61a48dbbd3f51ce41b59a7559d294372491dafe28707c7660b82d2a512c76517",
+        "contentSha256": "e70135a481c1549baf53acedf8da06f59371307e13bbaccda0e9cd64bcb9bd66",
+        "sourceClosureFiles": 199,
+        "sourceUnchangedAtVerification": true,
+        "offlineFlags": [],
+        "activation": "NOT_RUN",
+        "realAccount": "NOT_RUN",
+        "installation": "ORIGINAL_DIRECTORY_FINAL_PAYLOAD_MATCHES; RUNTIME_NOT_ACTIVATED"
+      },
+      "finalInstalled": {
+        "originalDirectory": "/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/.git/vaiwl-artifacts/local-source-witness-20261022/extension",
+        "candidateDirectory": "/Users/hhf/Downloads/VAIWL-v27-Integrated-Final-20261026/extension",
+        "backup": "/private/tmp/VAIWL-v27-before-integrated-final-20261026/original-extension.tar.gz",
+        "backupSha256": "d96cd1c9e681d4ed5eb46afa3543d8e0e3f3c97c077fd7b7e84ff0d483e67d3e",
+        "preservedOriginalFiles": 2894,
+        "preservedExtraFiles": 2696,
+        "changedFiles": [
+          "src/host/content-session.mjs",
+          "src/host/surface-controller.mjs",
+          "src/navigation/navigation.mjs",
+          "content.js",
+          "build-manifest.json"
+        ],
+        "manifestUnchanged": true,
+        "databaseAccess": "NONE",
+        "reload": "NOT_RUN",
+        "installedManifestSha256": "61a48dbbd3f51ce41b59a7559d294372491dafe28707c7660b82d2a512c76517",
+        "verification": "All 197 manifest payload files plus build-manifest match final frozen package; original 2696 extra copies retained. Strict clean-package verifier intentionally rejects original extra files; no deletion attempted."
       }
     }
   }

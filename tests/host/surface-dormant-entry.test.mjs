@@ -32,9 +32,9 @@ async function dormant({notify='ok'}={}){
  return Object.assign(f,{entries,wakes:()=>wakeCount,click(trusted=true){f.slot.children[0].events.click({isTrusted:trusted});}});
 }
 async function joins(f){f.message('workspace');await flush();f.message('sidebar');await flush();}
-test('trusted dormant return notifies once only after both fresh grants',async()=>{
+test('trusted dormant return notifies once after mandatory workspace grant',async()=>{
  const f=await dormant();f.click();f.click();await flush();assert.equal(f.wakes(),1);assert.equal(f.entries.length,0);
- f.message('workspace');await flush();assert.equal(f.entries.length,0);
+ f.message('workspace');await flush();assert.deepEqual(f.entries,[{mountId:'mount'}]);
  f.message('sidebar');await flush();assert.deepEqual(f.entries,[{mountId:'mount'}]);assert.equal(f.controller.presentationMode(),'workspace');
  f.message('sidebar');f.message('workspace');await flush();assert.equal(f.entries.length,1);f.controller.stop();
 });
@@ -57,7 +57,7 @@ for(const reason of ['native-input','native-layer'])test('synchronous '+reason+'
  f.surface.showWorkspace=()=>{show();if(reason==='native-input'){f.surface.suspend();f.nativeInput();}else{f.layer(true);f.controller.suspend('native-layer');}show();return true;};
  await joins(f);assert.equal(f.entries.length,0);assert.equal(f.calls.disposed,0);assert.equal(f.controller.presentationMode(),'reading');assert.deepEqual(f.surface.visibility(),{workspace:false,sidebar:false},'later surface opening must be closed after synchronous surrender');assert(f.calls.suspended>beforeSuspended);
  for(let i=0;i<frames.length;i++)assert.equal(f.frames[i].frame,frames[i]);
- if(reason==='native-input'){assert.equal(f.slot.children.length,1);assert.equal(f.controller.isReturnTarget(f.slot.children[0]),true);}else{assert.equal(f.slot.children.length,0);f.layer(false);f.mutate();assert.equal(f.slot.children.length,1);}
+ if(reason==='native-input'){assert.equal(f.slot.children.length,1);assert.equal(f.controller.isReturnTarget(f.slot.children[0]),true);}else{assert.equal(f.slot.children.length,0);f.surface.showWorkspace=show;f.layer(false);f.mutate();assert.equal(f.controller.presentationMode(),'workspace');assert.equal(f.surface.visibility().workspace,true);assert.equal(f.entries.length,0);}
  f.controller.stop();
 });
 

@@ -54,33 +54,11 @@ test('successful renewal consumes early READY without replay or extra handshake'
  f.setAnswer({state:'unknown'});await assert.rejects(old.options.bridge.renewSession({handle:{id:'mount1'},binding:old.binding}),/scope-not-verified/);old.terminate();await drain();assert.equal(f.hellos(),1);assert.equal(f.session.showWorkspace(),false);
 });
 
-// A controller can withdraw a mount without an authority failure when native
-// React replaces a region at the same URL. A stopped producer is never ready.
-for(const reason of ['native-region-changed','native-geometry-changed']){
- test(reason+' waits without requests, then fresh context rebuilds the producer',async t=>{
-  const f=fixture(t);await f.session.start();const old=f.controllers[0];old.terminate(reason);await drain();
-  assert.equal(f.session.localStatus(),'waiting');assert.equal(f.session.showWorkspace(),false);
-  const count=f.calls.length;old.terminate(reason);await f.advance(30000);assert.equal(f.calls.length,count,'geometry is not permission to retry identity');
-  f.setAnswer({state:'verified',scopeKey:'new-scope'});await f.ready();await drain();
-  assert.equal(f.hellos(),2);assert.equal(f.controllers.length,2);assert.equal(f.session.showWorkspace(),true);
-  assert.notEqual(f.controllers[1].binding.producerToken,old.binding.producerToken);
-  assert.deepEqual(f.calls.filter(m=>m.type==='HOST_REFRESH').map(m=>m.documentToken),['document1','document2']);
-  old.terminate(reason);await f.ready();await drain();assert.equal(f.hellos(),2,'old termination and duplicate READY cannot restart live replacement');
-  assert.equal(f.document.draft,'UNSENT');
- });
- test(reason+' does not restore unverified scope or retry without another READY',async t=>{
-  const f=fixture(t);await f.session.start();f.controllers[0].terminate(reason);f.setAnswer({state:'unknown'});
-  await f.ready();await drain();assert.equal(f.hellos(),2);assert.equal(f.controllers.length,1);assert.equal(f.session.showWorkspace(),false);
-  await f.advance(60000);assert.equal(f.hellos(),2);
- });
- for(const action of ['stop','pagehide'])test(reason+' '+action+' fences later context and old callbacks',async t=>{
-  const f=fixture(t);await f.session.start();const old=f.controllers[0];old.terminate(reason);
-  if(action==='stop')f.session.stop();else f.pagehide();
-  await f.ready();old.terminate(reason);await f.advance(30000);assert.equal(f.hellos(),1);assert.equal(f.session.showWorkspace(),false);
- });
-}
-
-for(const reason of ['native-region-changed','native-geometry-changed'])test(reason+' without context recovery remains stopped',async t=>{
- const f=fixture(t,false);await f.session.start();f.controllers[0].terminate(reason);await f.ready();await f.advance(30000);
- assert.equal(f.session.localStatus(),'surface-'+reason);assert.equal(f.session.showWorkspace(),false);assert.equal(f.hellos(),1);assert.equal(f.listeners.size,0);
+// Geometry continuation is exercised with the real controller in
+// content-region-recovery.test.mjs. A legacy termination notification itself
+// cannot authorize a new producer or revive a frame.
+for(const contextRecovery of [false,true])for(const reason of ['native-region-changed','native-geometry-changed'])test(reason+' cannot request new identity; contextRecovery='+contextRecovery,async t=>{
+ const f=fixture(t,contextRecovery);await f.session.start();const old=f.controllers[0];old.terminate(reason);await drain();
+ const count=f.calls.length;await f.ready();await f.advance(30000);assert.equal(f.calls.length,count);assert.equal(f.hellos(),1);assert.equal(f.controllers.length,1);assert.equal(f.listeners.size,1);assert.equal(f.document.draft,'UNSENT');
+ f.session.stop();old.terminate(reason);await f.ready();assert.equal(f.hellos(),1);assert.equal(f.listeners.size,0);assert.equal(f.session.showWorkspace(),false);
 });

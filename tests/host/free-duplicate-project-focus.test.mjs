@@ -23,7 +23,7 @@ for(const kind of ['current','old','unknown'])for(const direction of ['more','pr
  const {f,requests}=setup(t);if(kind==='old'){button(f,'P2','展开旧窗口 '+nativeName).click();button(f,'P1','展开旧窗口 '+nativeName).click();await tick();}
  const value=dto();if(direction==='previous')for(const group of value.groups.items)group.lists[kind]=page([row(group.id+'_'+kind)],30,5,5);
  f.nav.updateFrameProjection(value);
- const label=direction==='previous'?'返回前页 '+nativeName:kind==='old'?'显示更多旧窗口 '+nativeName:kind==='unknown'?'显示更多待核对窗口':'显示更多近期窗口';
+ const label=direction==='previous'?'返回前页 '+nativeName:kind==='old'?'显示更多旧窗口 '+nativeName:kind==='unknown'?'显示更多已知窗口':'显示更多近期窗口';
  const target=button(f,'P1',label);assert(target);target.focus();target.click();await tick();assert.equal(requests.at(-1).groupId,'P1');assert.equal(requests.at(-1).list,kind);
  // A valid subsequent projection preserves the requested control. The oracle
  // checks DOM Project identity, not the implementation's chosen focus key.

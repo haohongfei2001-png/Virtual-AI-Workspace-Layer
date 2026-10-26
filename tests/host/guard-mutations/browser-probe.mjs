@@ -38,6 +38,7 @@ try{
     report.observation=await page.evaluate(()=>{const n=document.querySelector('nav[aria-label="Chat history"] a');n.focus();return {focused:document.activeElement===n,visibility:getComputedStyle(n).visibility,interactivity:getComputedStyle(n).interactivity,nativeInert:n.closest('[inert]')!==null};});
     report.phase='target';assert.equal(report.observation.focused,false,'UI-06 native history must not accept focus behind open workspace/sidebar');assert.equal(report.observation.nativeInert,false,'no HTML inert mutation');
    }else if(id==='async-default'){
+    const unknown=frame.getByRole('button',{name:'其他已知聊天',exact:true});await unknown.waitFor();if(await unknown.getAttribute('aria-expanded')==='false')await unknown.click();
     const link=frame.getByRole('link',{name:'Ordinary conversation',exact:true}).first();await link.waitFor();await frame.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));await page.waitForTimeout(200);
     await link.click();const until=Date.now()+5000;while(!observations.length&&Date.now()<until)await new Promise(r=>setTimeout(r,20));
     if(!observations.length)throw Error('missing-browser-click-observation');report.observation=observations;

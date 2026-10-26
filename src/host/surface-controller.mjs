@@ -48,8 +48,8 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
    const remaining=()=>{const elapsed=elapsedNow()-started;if(!Number.isFinite(elapsed)||elapsed<0||elapsed>=6000)throw Error('cancel-cleanup-deadline');return 6000-elapsed;};
    void Promise.resolve().then(async()=>{
     if(!isCurrent())return false;
-    // Await only adapter terminal cleanup already initiated by stop. It never
-    // proves idle; the original content and atomic worker guards still decide.
+    // Surface disposal is synchronous. It never proves producer idle;
+    // the original content and atomic worker guards still decide.
     if(await withRequestDeadline(()=>cleanup,{timeoutMs:remaining(),now:elapsedNow,schedule,cancel})===false||!isCurrent())return false;
     return bridge.releaseCancelledClose({handle:prior.handle,binding:prior.context.binding,isCurrent,timeoutMs:remaining()});
    }).catch(()=>false).finally(()=>{try{Promise.resolve(bridge.revokeMount?.({mountId:prior.handle.id})).catch(()=>{});}catch{}});
@@ -62,6 +62,7 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
   try{surface.retireRole?.(state.handle,'sidebar');surface.suspend(state.handle,reason,'sidebar');}catch{}
   const revision=state.roleRevision;
   void Promise.resolve(bridge.releaseRole?.({mountId:state.handle.id,role:'sidebar'})).then(result=>{if(current===state&&state.roleRevision===revision&&result?.ok===true){state.sidebarRecoveryReady=true;reconcileGeometry(state);}}).catch(()=>{});
+  if(state.dormant&&dormantReady())state.resolveIdle?.(true);
   publishSurface(state);arm(state);
  }
  function recoverSidebar(state,inspection){
@@ -78,7 +79,7 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
   if(current===state&&doc.location.href!==state.url&&!state.frames.some(x=>x.frame.hasAttribute?.('srcdoc'))){stop('native-document-changed');return false;}
   for(const target of [...(state.frames??[])])if(target.frame.hasAttribute?.('srcdoc')||!target.frame.isConnected||target.frame.contentWindow!==target.window){
    if(target.role==='sidebar'){retireSidebar(state,'ui-frame-document-replaced');continue;}
-   reportJoin(state);if(current===state)stop('ui-frame-document-replaced');return false;
+   reportJoin(state);if(current===state)stop(state.dormant&&!target.frame.hasAttribute?.('srcdoc')?'dormant-document-changed':'ui-frame-document-replaced');return false;
   }
   return true;
  }
@@ -109,7 +110,7 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
  function renewalAllowed(state){return current===state&&!state.dormant&&state.epoch===epoch&&doc.location.href===state.url&&Date.parse(state.context.binding.expiresAt)>now()&&(!state.handle||authorized(state));}
  function reconcileGeometry(state){
   if(current!==state)return false;
-  if(state.dormant){if(doc.location.href!==state.url||state.frames.some(({frame,window})=>!frame.isConnected||frame.contentWindow!==window)){stop('dormant-document-changed');return false;}ensureReturn(state);return false;}
+  if(state.dormant){if(!frameDocumentsIntact(state))return false;ensureReturn(state);return false;}
   if(!valid(state)){stop('native-document-changed');return false;}
   if(adapter.hasNativeLayer()){suspend('native-layer');return false;}
   const inspection=adapter.inspect();
@@ -342,6 +343,13 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
  }
  // Caller must freeze its producer and obtain worker admission first. This
  // local transition only relinquishes UI authority; it does not grant idle permission.
+ function postFrameTransition(state,type,requestId){
+  for(const target of [...state.frames]){
+   try{if(typeof target.window.postMessage!=='function')throw Error('frame-unavailable');target.window.postMessage({type,role:target.role,requestId},trustedOrigin);}
+   catch(error){if(current===state&&target.role==='sidebar')retireSidebar(state,'sidebar-transition-unavailable');else throw error;}
+   if(current!==state)throw Error('stale-frame-transition');
+  }
+ }
  function enterDormant(){
   const state=current;if(typeof onWake!=='function'||!state||!['reading','suspended'].includes(state.mode)||state.renewing||state.pending.size||!authorized(state)||typeof surface.visibility!=='function')return false;
   let visible;try{visible=surface.visibility(state.handle);}catch{return false;}
@@ -352,7 +360,7 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
   state.grants.clear();state.earlyJoins.clear();state.appearanceKeys.clear();
   try{surface.suspend(state.handle,'ui-idle');}catch{if(current===state)stop('idle-suspend-failed');return false;}
   if(current!==state)return false;
-  for(const target of state.frames){try{if(typeof target.window.postMessage!=='function')throw Error('idle-frame-unavailable');target.window.postMessage({type:'VAIWL_UI_IDLE',role:target.role,requestId:state.idleRequestId},trustedOrigin);}catch{if(current===state)stop('idle-frame-unavailable');return false;}if(current!==state)return false;}
+  try{postFrameTransition(state,'VAIWL_UI_IDLE',state.idleRequestId);}catch{if(current===state)stop('idle-frame-unavailable');return false;}
   ensureReturn(state);return true;
  }
  // Clear both actual frame roots before asking the worker to retire this mount.
@@ -395,7 +403,7 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
   state.dormant=false;state.registered=true;state.mode='waiting';state.resumeMode='reading';state.cancelCloseJoining=true;state.surfaceKey=null;state.pendingWakeEntry=false;state.intentEpoch++;state.idleAcks.clear();removeReturn(state);
   try{
    if(!valid(state))throw Error('stale-close-cancellation');arm(state);
-   for(const target of state.frames){target.window.postMessage({type:'VAIWL_UI_WAKE',role:target.role,requestId},trustedOrigin);if(current!==state)throw Error('stale-close-cancellation');}
+   postFrameTransition(state,'VAIWL_UI_WAKE',requestId);
    return true;
   }catch{if(current===state)stop('close-cancellation-failed');return false;}
  }
@@ -417,7 +425,7 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
    if(!intact()||ack?.ok!==true||surface.isRebindCurrent(state.handle,adapter.inspect())!==true)throw Error('mount-registration-denied');
    state.dormant=false;state.resuming=false;state.registered=true;state.mode='waiting';state.resumeMode=mode;state.surfaceKey=null;state.idleAcks.clear();removeReturn(state);
    if(!valid(state))throw Error('stale-mount-registration');arm(state);
-   for(const target of state.frames){target.window.postMessage({type:'VAIWL_UI_WAKE',role:target.role,requestId},trustedOrigin);if(current!==state)throw Error('stale-dormant-resume');}
+   postFrameTransition(state,'VAIWL_UI_WAKE',requestId);
    return handle;
   }catch{if(current===state)stop('dormant-resume-failed');return null;}
  }

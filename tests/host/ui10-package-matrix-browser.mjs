@@ -33,7 +33,7 @@ async function runProfile(profile,titleMode='all'){
  report.profiles.push(result);
  let server,context,page,built,info,manifestHash;
  try{
-  server=profile==='LEGACY'?await createHostFixtureServer({profile}):await createVariantHostFixtureServer({profile,ui10ConversationTitle:titleMode==='long-Chinese'?UI10_LONG_CHINESE:null});assert.equal(server.manifest.profile,profile);result.fixture=server.manifest;
+  server=profile==='LEGACY'?await createHostFixtureServer({profile}):await createVariantHostFixtureServer({profile,ui10FullSidebar:true,ui10ConversationTitle:titleMode==='long-Chinese'?UI10_LONG_CHINESE:null});assert.equal(server.manifest.profile,profile);result.fixture=server.manifest;
   const dir=await mkdtemp(join(tmpdir(),'vaiwl-ui10-'));result.artifactDirectory=dir;
   built=packageHost(join(dir,'package'),ui10PackageOptions(profile,server.origin));result.package=built;
   const manifestBytes=await readFile(join(built.unpacked,'build-manifest.json'));manifestHash=hash(manifestBytes);info=JSON.parse(manifestBytes);result.sourceHashes=info.sourceHashes;
@@ -47,11 +47,15 @@ async function runProfile(profile,titleMode='all'){
   page=await context.newPage();page.on('pageerror',error=>result.errors.push(error.message));
   await page.goto(server.origin+ui10Entry(profile));
   async function workspace(allowReturn=false){
-   await page.waitForFunction(()=>document.querySelectorAll('[data-va-owned]:popover-open').length===2||[...document.querySelectorAll('button')].some(n=>n.getAttribute('aria-label')==='返回工作空间'),null,{timeout:15000});
+   await page.waitForFunction(()=>document.querySelector('[data-va-owned][id$="_workspace"]:popover-open')||[...document.querySelectorAll('button')].some(n=>n.getAttribute('aria-label')==='返回工作空间'),null,{timeout:15000});
    const back=page.getByRole('button',{name:'返回工作空间',exact:true});if(allowReturn&&await back.isVisible())await back.click();
-   await page.waitForFunction(()=>document.querySelectorAll('[data-va-owned]:popover-open').length===2,null,{timeout:15000});
-   const frames=Object.fromEntries(['workspace','sidebar'].map(role=>[role,page.frames().find(f=>f.url()===`chrome-extension://${id}/${role}.html`)]));assert(frames.workspace&&frames.sidebar);
-   await frames.workspace.locator('.workspace').waitFor();await frames.sidebar.locator('.toolbar:not(.sidebar-footer)').waitFor();
+   await page.waitForFunction(()=>!!document.querySelector('[data-va-owned][id$="_workspace"]:popover-open'),null,{timeout:15000});
+   const nativeHistory=await page.locator('nav[aria-label="Chat history"]').evaluate(n=>{const r=n.getBoundingClientRect();return {width:r.width,height:r.height,visible:getComputedStyle(n).visibility==='visible'};});
+   const sidebarFits=profile==='LEGACY'||nativeHistory.width>=180&&nativeHistory.height>=240;
+   if(sidebarFits)await page.waitForFunction(()=>!!document.querySelector('[data-va-owned][id$="_sidebar"]:popover-open'),null,{timeout:15000});
+   else{await page.waitForFunction(()=>!document.querySelector('[data-va-owned][id$="_sidebar"]:popover-open')&&getComputedStyle(document.querySelector('nav[aria-label="Chat history"]')).visibility==='visible',null,{timeout:15000});}
+   const frames=Object.fromEntries(['workspace','sidebar'].map(role=>[role,role==='sidebar'&&!sidebarFits?null:page.frames().find(f=>f.url()===`chrome-extension://${id}/${role}.html`)]));assert(frames.workspace);if(sidebarFits)assert(frames.sidebar);
+   await frames.workspace.locator('.workspace').waitFor();if(frames.sidebar)await frames.sidebar.locator('.toolbar:not(.sidebar-footer)').waitFor();
    await frames.workspace.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
    return frames;
   }
@@ -81,15 +85,15 @@ async function runProfile(profile,titleMode='all'){
    await configureUi10Environment(page,cell);
    const frames=await workspace();await continuity();
    const titleObservation=cell.title==='long-Chinese'?await waitForVisibleUi10Title(frames.workspace,UI10_LONG_CHINESE):null;
-   // Two visible functional frames required: normal profiles cannot pass as NATIVE_ONLY.
-   const measurements={};for(const role of ['workspace','sidebar']){
+   // Workspace stays functional; an insufficient native region is separately recorded as native sidebar, never a sidebar visual PASS.
+   const measurements={};if(!frames.sidebar)measurements.sidebar={evidence:'NATIVE_SIDEBAR_RETAINED_INSUFFICIENT_REGION',formalSidebarVisual:'NOT_RUN'};for(const role of ['workspace','sidebar'].filter(role=>frames[role])){
     measurements[role]=await observeUi10Shell(frames[role]);
     measurements[role].theme=await frames[role].locator(role==='workspace'?'.workspace':'.toolbar:not(.sidebar-footer)').evaluate((root,expected)=>{const style=getComputedStyle(root);return {mediaMatches:matchMedia(`(prefers-color-scheme: ${expected})`).matches,color:style.color,backgroundColor:style.backgroundColor,colorScheme:style.colorScheme};},cell.colorScheme);
     assert.equal(measurements[role].theme.mediaMatches,true,role+' frame color media mismatch');
    }
    assert.equal(await page.evaluate(expected=>matchMedia(`(prefers-color-scheme: ${expected})`).matches,cell.colorScheme),true);
    const screenshot=join(dir,`${cell.id.replaceAll('/','-')}-${phase}.png`);await page.screenshot({path:screenshot});
-   const interactions=runInteractions&&phase!=='restored'?await exerciseUi10Interactions({page,frames,workspace,continuity,nativeActions:()=>server.snapshot().actions,capture:async view=>{const imageId=ui10ControlCaptureId({...cell,phase,view}),capturePreparation=imageId&&profiles.length===1?await prepareUi10Capture(frames.workspace,view,page):null;const path=join(dir,`${cell.id.replaceAll('/','-')}-${phase}-${view}.png`);const bytes=await page.screenshot({path,animations:'disabled'});if(imageId&&profiles.length===1){const png=inspectSyntheticPng(bytes),metadata={lane:'ACTUAL_MV3_OFFLINE',synthetic:true,profile,scene:view,capturePreparation,viewport:cell.viewport,theme:cell.colorScheme,zoom:1,dpr:await page.evaluate(()=>devicePixelRatio),comparisonBasis:'Approved v2.7 visual tokens/layout; current INTERACTION_SPEC sections 3/6 behavior for controls absent from prototype.',browserVersion:context.browser().version(),buildManifestHash:manifestHash,sourceSetSha256:hash(JSON.stringify(info.sourceHashes)),fixtureSetSha256:hash(JSON.stringify(report.testHashesBefore)),limits:['Synthetic fixture only; no approved visual verdict.','Working set and snippets are empty; search is a no-result query.','Not populated asset experience, physical IME, or real ChatGPT.']};visualCaptures.push({capture:{id:imageId,bytes,metadata},owner:result});(result.visualCaptures??=[]).push({id:imageId,...png,metadata});}return path;}}):null;
+   const interactions=runInteractions&&phase!=='restored'&&frames.sidebar?await exerciseUi10Interactions({page,frames,workspace,continuity,nativeActions:()=>server.snapshot().actions,capture:async view=>{const imageId=ui10ControlCaptureId({...cell,phase,view}),capturePreparation=imageId&&profiles.length===1?await prepareUi10Capture(frames.workspace,view,page):null;const path=join(dir,`${cell.id.replaceAll('/','-')}-${phase}-${view}.png`);const bytes=await page.screenshot({path,animations:'disabled'});if(imageId&&profiles.length===1){const png=inspectSyntheticPng(bytes),metadata={lane:'ACTUAL_MV3_OFFLINE',synthetic:true,profile,scene:view,capturePreparation,viewport:cell.viewport,theme:cell.colorScheme,zoom:1,dpr:await page.evaluate(()=>devicePixelRatio),comparisonBasis:'Approved v2.7 visual tokens/layout; current INTERACTION_SPEC sections 3/6 behavior for controls absent from prototype.',browserVersion:context.browser().version(),buildManifestHash:manifestHash,sourceSetSha256:hash(JSON.stringify(info.sourceHashes)),fixtureSetSha256:hash(JSON.stringify(report.testHashesBefore)),limits:['Synthetic fixture only; no approved visual verdict.','Working set and snippets are empty; search is a no-result query.','Not populated asset experience, physical IME, or real ChatGPT.']};visualCaptures.push({capture:{id:imageId,bytes,metadata},owner:result});(result.visualCaptures??=[]).push({id:imageId,...png,metadata});}return path;}}):null;
    result.steps.push({id:cell.id,phase,status:'PASS_LAYOUT_SUBCONTRACT',measurements,titleObservation,screenshot,interactions});
    const entry=report.cells.find(c=>c.id===cell.id);entry.nativeEvidence='PASS_LAYOUT_SUBCONTRACT_ONLY';
   }
