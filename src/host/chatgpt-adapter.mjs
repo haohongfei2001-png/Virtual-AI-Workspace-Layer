@@ -1,4 +1,5 @@
 import {profileElement} from './native-surface-boundary.mjs';
+import {nativeSidebarComposition} from './native-sidebar-composition.mjs';
 import {inspectNativeProjectSurface} from './native-project-surface.mjs';
 import {nativeReturnGapRect,isEmptyViewportMarker} from './native-return-gap.mjs';
 import {sidebarPresentationFits,nativeHistoryPresentation,historyFailureReasons} from './native-history-list.mjs';
@@ -425,7 +426,12 @@ if(!p){
  }
  let sidebarRevision=0,sidebarProof=[];
  function sidebarVersion(value){
-  const proof=[value.history,value.sidebarRect?.x,value.sidebarRect?.y,value.sidebarRect?.width,value.sidebarRect?.height,value.preserveNativeSidebar,...(value.historyMaskRoots??[])];
+  const placement=profile.sidebarComposition==='partitioned-flow-v1'?nativeSidebarComposition({document,source:value.historySource,history:value.history,isOwnedSurface}):null;
+  if(placement){
+   value.sidebarPlacement=placement;value.sidebarRect=placement.rect;value.historyMaskRoots=[];value.preserveNativeSidebar=false;
+   if(value.roles)value.roles.sidebar={available:true,reason:null};
+  }
+  const proof=[value.history,value.sidebarPlacement?.parent,value.sidebarPlacement?.before,value.sidebarRect?.x,value.sidebarRect?.y,value.sidebarRect?.width,value.sidebarRect?.height,value.preserveNativeSidebar,...(value.historyMaskRoots??[])];
   if(proof.length!==sidebarProof.length||proof.some((v,i)=>v!==sidebarProof[i])){sidebarProof=proof;sidebarRevision++;}
   return Object.assign(value,{sidebarRevision});
  }

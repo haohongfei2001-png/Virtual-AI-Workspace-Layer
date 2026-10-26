@@ -1,6 +1,7 @@
+import partitionDetails from './fixtures/observed-sidebar-project-details-20261026.json' with {type:'json'};
 import historyStructure from './fixtures/observed-history-structure.json' with {type:'json'};
 import projectSidebarSnapshot from './fixtures/observed-sidebar-project-20261026.json' with {type:'json'};
-import {HOST_BASELINE_VERSION,materializeHistoryStructure,progressiveOrders,homeMain,longDesktopHTML,observedHomeHTML,prepareHistoryRun,reorderHistory,addPendingChat,promotePendingChat,enterStableChat,setNativeModal,insertHistoryGap,clearHistoryGap} from './fixtures/observed-host-replay.mjs';
+import {HOST_BASELINE_VERSION,materializePartitionedSidebar,materializeHistoryStructure,progressiveOrders,homeMain,longDesktopHTML,observedHomeHTML,prepareHistoryRun,reorderHistory,addPendingChat,promotePendingChat,enterStableChat,setNativeModal,insertHistoryGap,clearHistoryGap} from './fixtures/observed-host-replay.mjs';
 /** Actual formal MV3 UI with an empty local memory session; offline host only. */
 import assert from 'node:assert/strict';
 import {createServer} from 'node:http';
@@ -28,6 +29,46 @@ try{
  return result;};
  context=await launch();report.browserErrors=[];context.on('page',p=>p.on('pageerror',e=>report.browserErrors.push(e.stack)));
  const cdp=await context.browser().newBrowserCDPSession(),{id}=await cdp.send('Extensions.loadUnpacked',{path:built.unpacked});
+ if(process.argv.includes('--sidebar-composition-only')){
+  page=await context.newPage();
+  await page.addInitScript({content:'if(window===window.top&&location.hostname==="127.0.0.1")document.addEventListener("DOMContentLoaded",()=>{('+materializePartitionedSidebar.toString()+')('+JSON.stringify(partitionDetails.sidebarStructure.rows)+');},{once:true});'});
+  await page.goto(origin+'/g/'+P+'/project');
+  const workspace=page.frameLocator('iframe[src="chrome-extension://'+id+'/workspace.html"]'),sidebar=page.frameLocator('iframe[src="chrome-extension://'+id+'/sidebar.html"]');
+  await workspace.getByRole('link',{name:'Native B',exact:true}).first().waitFor({timeout:15000});
+  await page.waitForFunction(()=>!!document.querySelector('[data-va-sidebar-slot]')&&document.querySelector('[id$="_sidebar"]')?.matches(':popover-open'),null,{timeout:15000});
+  await sidebar.getByRole('button',{name:'查找已知项目与聊天',exact:true}).waitFor();
+  assert.equal(await page.locator('[data-va-mask-sidebar]').count(),0);
+  report.checks.partitionSlotWithFormalProjectAndMembers=true;
+  const before=await page.locator('[data-fixture-structure-row="1"]').evaluate(n=>n.outerHTML);
+  await page.locator('#draft').focus();
+  await page.waitForFunction(()=>!document.querySelector('[id$="_workspace"]')?.matches(':popover-open')&&document.querySelector('[id$="_sidebar"]')?.matches(':popover-open'));
+  assert.equal(await page.locator('#draft').inputValue(),'fixture draft');
+  await page.getByRole('button',{name:'返回工作空间',exact:true}).click();
+  await workspace.getByRole('link',{name:'Native B',exact:true}).first().waitFor();
+  report.checks.nativeInputAndReturnKeepContinuousSidebar=true;
+  await page.evaluate(()=>{partitionedFixture.scroll.scrollTop=30;});
+  await page.waitForFunction(()=>Math.abs(document.querySelector('[id$="_sidebar"]').getBoundingClientRect().y-document.querySelector('[data-va-sidebar-slot]').getBoundingClientRect().y)<1);
+  report.checks.nativeScrollKeepsFrameAligned=true;
+  await page.evaluate(()=>{partitionedFixture.scroll.scrollTop=0;});
+  await page.getByRole('button',{name:'显示原生列表',exact:true}).click();
+  await page.waitForFunction(()=>document.querySelector('[data-va-sidebar-slot]').getBoundingClientRect().height===0);
+  assert.equal(await page.locator('[data-fixture-structure-row="1"]').evaluate(n=>n.outerHTML),before);
+  report.checks.nativeProjectUntouchedAndSpaceReversible=true;
+  // Explicit workspace return reopens both roles under the existing intent contract.
+  await page.getByRole('button',{name:'返回原生阅读',exact:true}).click();
+  await page.getByRole('button',{name:'返回工作空间',exact:true}).click();
+  await workspace.getByRole('link',{name:'Native B',exact:true}).first().waitFor();
+  assert((await page.locator('[data-va-sidebar-slot]').evaluate(n=>n.getBoundingClientRect().height))>=240);
+  report.checks.explicitWorkspaceReturnRestoresComposition=true;
+  const opened=context.waitForEvent('page');
+  await workspace.getByRole('link',{name:'Native B',exact:true}).first().click();
+  const chat=await opened;await chat.waitForURL(origin+'/c/'+B);
+  assert.equal(await chat.evaluate(()=>opener),null);await chat.close();
+  assert.equal(await page.locator('#draft').inputValue(),'fixture draft');
+  await workspace.getByRole('link',{name:'Native B',exact:true}).first().waitFor();
+  report.checks.nativeMemberOpenPreservesOriginalDraftAndWorkspace=true;
+  assert.deepEqual(report.browserErrors,[]);
+ }
  if(process.argv.includes('--sidebar-capture-only')){
   // Exercise the production private popup and exact-document message route.
   // The added branch is a declared synthetic completeness sentinel; the
@@ -316,7 +357,7 @@ try{
   report.checks.historyDiagnosticNoPrivateDatabaseOrDraftChange=true;
   await control.close();await page.close();
  }
- if(!process.argv.includes('--sidebar-capture-only')&&!process.argv.includes('--entry-receipt-only')&&!process.argv.includes('--progressive-only')&&!process.argv.includes('--history-ready-only')&&!process.argv.includes('--history-diagnostic-only')&&!process.argv.includes('--mixed-history-only')&&!process.argv.includes('--product-states-only')){
+ if(!process.argv.includes('--sidebar-composition-only')&&!process.argv.includes('--sidebar-capture-only')&&!process.argv.includes('--entry-receipt-only')&&!process.argv.includes('--progressive-only')&&!process.argv.includes('--history-ready-only')&&!process.argv.includes('--history-diagnostic-only')&&!process.argv.includes('--mixed-history-only')&&!process.argv.includes('--product-states-only')){
  // Row reorder reproves only the sidebar mask; workspace identity survives.
  const reordered=await context.newPage();await reordered.addInitScript({content:'if(window===window.top)document.addEventListener("DOMContentLoaded",'+prepareHistoryRun.toString()+',{once:true});'});
  await reordered.goto(origin+'/c/'+B);

@@ -12,6 +12,7 @@ export const CHATGPT_OBSERVED_PROFILE=Object.freeze({
  memberAssociation:'route-linked-project-panel-v1',
  nativeProjectLayout:'panel-after-composer',
  visibleLayoutBoundary:true,
+ sidebarComposition:'partitioned-flow-v1',
  sidebarBoundary:CHATGPT_SIDEBAR_SELECTOR,
  sidebarBoundaryFallback:'nav:not([data-app-navigation-rail]):has([data-app-action-sidebar-section] [data-sidebar-chatgpt-conversation-key])',
  projectListBoundary:'main[data-app-shell-main-surface] [data-app-shell-main-content-layout] [role="main"]:has(h1 > button):has([role="tabpanel"])',

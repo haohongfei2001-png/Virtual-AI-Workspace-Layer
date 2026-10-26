@@ -1016,5 +1016,42 @@
     },
     "dailyChrome": "No operation/update after receiving this file; prior authorized update fingerprint is observed in the supplied receipt.",
     "remaining": "Complete continuous sidebar remains incomplete: native Project controls lack a verified replacement/delegation contract and six control/link descendant subtrees remain unknown. No immediate recollection request or new candidate."
+  },
+  "partitionedSidebarComposition20261026": {
+    "base": "6d3e8642",
+    "status": "OFFLINE_INTEGRATED_REAL_PRODUCT_NOT_RUN",
+    "design": "Existing v2.7 renderer in independent flow slot, native Project preserved",
+    "files": [
+      "src/host/native-sidebar-composition.mjs",
+      "src/host/chatgpt-adapter.mjs",
+      "src/host/chatgpt-observed-profile.mjs",
+      "src/host/native-history-list.mjs",
+      "src/host/surface-controller.mjs",
+      "src/navigation/mount-surface.mjs"
+    ],
+    "counterexample": "Closing composed sidebar during native read clamps native scrollTop. Failed before fix; observation now keeps only a proved owned slot with no native masks open.",
+    "evidence": {
+      "receivedTree": "tests/host/fixtures/observed-sidebar-project-details-20261026.json",
+      "omittedDescendants": "retained, not materialized",
+      "geometry": "offline translation and declared native scrollport; not real CSS evidence",
+      "mechanism": "node tests/host/observed-profile-browser.mjs --sidebar-composition-only",
+      "fallback": "node tests/host/observed-profile-browser.mjs --sidebar-region-only",
+      "controller": "node --test tests/host/surface-controller.test.mjs",
+      "mv3": "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-mmyKPK/report.json",
+      "normalLifecycle": "/private/tmp/vaiwl-partition-mount-lifecycle.json",
+      "hardKillWithoutActiveLifecycle": "existing measured failure; not claimed fixed"
+    },
+    "package": {
+      "directory": "/private/tmp/VAIWL-v27-Partitioned-Sidebar-20261026/extension",
+      "archiveSha256": "7bc7ecb8fc8389d107be96f2cf1875c144c4246db43f335dda8d4a98f396d8ab",
+      "dailyInstallChanged": false,
+      "databaseChanged": false,
+      "manifestDifference": "one additional local Host module in web_accessible_resources; permissions and matches unchanged"
+    },
+    "limits": [
+      "No verified native Project collapse action; expanded native Project and derived themes can both remain. No automatic action or hiding.",
+      "Requires block/flow-root or column nowrap flex and native vertical auto/scroll port, with 180x240 visible slot; otherwise native fallback, workspace independent.",
+      "Real composed layout and full v2.7 product acceptance NOT_RUN."
+    ]
   }
 }

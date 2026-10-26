@@ -32,7 +32,7 @@ export function nativeHistoryListRect({document,source,root,includeClipped=false
 }
 // Prove the full presentation rectangle against every unowned sibling.
 // Only separately validated native row subtrees may be excluded from this walk.
-function historyRectangleClear(source,roots,visible,onFailure){
+export function historyRectangleClear(source,roots,visible,onFailure){
  const box={left:visible.x,top:visible.y,right:visible.x+visible.width,bottom:visible.y+visible.height};
   let sibling=source,visited=0;
   while(sibling){

@@ -65,3 +65,26 @@ export function materializeHistoryStructure(markers){
   row.style.height='30px';list.append(row);
  });
 }
+
+// Replays the received 95-row tree without filling any omitted descendants.
+// Native Project rectangles are translated as a group; the history fixture and
+// scrollport are explicit offline layout inputs, not inferred website behavior.
+export function materializePartitionedSidebar(rows){
+ const nav=document.querySelector('nav'),history=nav.firstElementChild,nodes=[];
+ nav.style.cssText='width:240px;height:calc(100vh - 52px);overflow:auto';
+ document.querySelector('[data-slate-sidebar-content]').style.width='240px';
+ const attrs=['data-sidebar-chatgpt-conversation-key','data-app-action-sidebar-section','href','aria-expanded','aria-controls','tabindex'];
+ for(let index=0;index<rows.length;index++){
+  const [parent,,tag,role,flags,,rect]=rows[index],n=document.createElement(tag==='OTHER'?'div':tag.toLowerCase());
+  if(role!=='absent')n.setAttribute('role',role);
+  attrs.forEach((attr,bit)=>{if(flags&(1<<bit))n.setAttribute(attr,attr==='href'?'#fixture':attr==='tabindex'?'0':'fixture');});
+  n.dataset.fixtureStructureRow=String(index);nodes.push(n);if(parent>=0)nodes[parent].append(n);
+  if(index>1&&index<92){const p=rows[parent][6];n.style.cssText=`position:absolute;box-sizing:border-box;margin:0;padding:0;border:0;left:${rect[0]-p[0]}px;top:${rect[1]-p[1]}px;width:${rect[2]}px;height:${rect[3]}px`;}
+ }
+ nodes[1].style.cssText='position:relative;height:151px;width:240px';
+ nodes[94].replaceWith(history);history.querySelector('#heading').style.height='40px';
+ const prefix=document.createElement('div');prefix.style.height='80px';prefix.textContent='Native brand / controls';
+ nav.replaceChildren(prefix,nodes[0]);
+ if(!document.querySelector('main[data-app-shell-main-surface]'))for(const n of document.querySelectorAll('header,[data-app-shell-main-content-layout],[data-app-action-timeline-scroll]'))n.style.left='260px';
+ window.partitionedFixture={root:nodes[0],project:nodes[1],recent:nodes[92],control:nodes[7],scroll:nav};
+}

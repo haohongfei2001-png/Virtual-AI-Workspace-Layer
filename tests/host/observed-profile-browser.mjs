@@ -1,13 +1,45 @@
-import {observedHomeHTML,retainHiddenTitlebar,visibilityWakeAttributes,prepareHistoryRun,insertHistoryGap,clearHistoryGap} from './fixtures/observed-host-replay.mjs';
+import projectDetails from './fixtures/observed-sidebar-project-details-20261026.json' with {type:'json'};
+import {materializePartitionedSidebar,observedHomeHTML,retainHiddenTitlebar,visibilityWakeAttributes,prepareHistoryRun,insertHistoryGap,clearHistoryGap} from './fixtures/observed-host-replay.mjs';
 import {observedDesktopHTML} from './fixtures/observed-desktop.mjs';
 import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';
 import {chromium} from '../b1/tooling/node_modules/playwright/index.mjs';
 const require=createRequire(new URL('../../extension/tooling/package.json',import.meta.url));
 const {outputFiles}=await require('esbuild').build({stdin:{contents:"export {createChatGPTAdapter} from './src/host/chatgpt-adapter.mjs';export {CHATGPT_OBSERVED_PROFILE,waitForNativeLayout} from './src/host/chatgpt-observed-profile.mjs';export {createMountSurface} from './src/navigation/mount-surface.mjs';export {nativeHistoryPresentation,sidebarPresentationFits} from './src/host/native-history-list.mjs';export {createURLPolicy} from './src/host/url-policy.mjs';",resolveDir:process.cwd()},bundle:true,write:false,format:'iife',globalName:'observedModule'});
-const browser=await chromium.launch({headless:true});
+const browser=await chromium.launch({headless:true,proxy:{server:'http://127.0.0.1:9',bypass:'127.0.0.1,localhost'}});
 try{
- if(process.argv.includes('--sidebar-region-only')){
+ if(process.argv.includes('--sidebar-composition-only')){
+  const page=await browser.newPage({viewport:{width:1100,height:900}}),url='https://chatgpt.com/';
+  await page.route('**/*',r=>r.request().url()===url?r.fulfill({contentType:'text/html',body:observedHomeHTML('33333333-3333-4333-8333-333333333333')}):r.abort());
+  await page.goto(url);await page.evaluate(materializePartitionedSidebar,projectDetails.sidebarStructure.rows);await page.addScriptTag({content:outputFiles[0].text});
+  const checks=await page.evaluate(async()=>{
+   const {createMountSurface,createChatGPTAdapter,CHATGPT_OBSERVED_PROFILE}=observedModule;
+   const surface=createMountSurface({document,createFrameURL:({role})=>'chrome-extension://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/'+role+'.html'});
+   const adapter=createChatGPTAdapter({document,profile:{...CHATGPT_OBSERVED_PROFILE,origins:[location.origin]},isOwnedMask:n=>surface.isMasked(n),isOwnedSurface:n=>surface.isOwnedSurface(n)});
+   const binding={documentToken:'fixture',producerToken:'fixture',browserDocumentId:'fixture',routeEpoch:1,origin:location.origin,expiresAt:new Date(Date.now()+20000).toISOString()};
+   await adapter.start({binding,emit:async p=>({state:'accepted',localSeq:p.localSeq,receiptId:'fixture'})});
+   const inspected=adapter.inspect();if(!inspected.sidebarPlacement)throw Error('missing placement '+JSON.stringify({ok:inspected.ok,reason:inspected.reason,rect:inspected.sidebarRect}));
+   const {project,recent,root,control,scroll}=partitionedFixture,nativeHTML=project.outerHTML,top=recent.getBoundingClientRect().top;
+   const handle=await surface.mount({binding},inspected);surface.showWorkspace(handle);
+   const slot=root.querySelector('[data-va-sidebar-slot]'),sidebar=document.querySelector('[id$="_sidebar"]'),frame=surface.frames(handle).find(s=>s.role==='sidebar').frame;
+   const checks={compositionSelected:inspected.historyMaskRoots.length===0,formalBothVisible:surface.visibility(handle).sidebar&&surface.visibility(handle).workspace,flowReserved:recent.getBoundingClientRect().top>top+240,nativeProjectUnchanged:project.outerHTML===nativeHTML,nativeNeverMasked:!document.querySelector('[data-va-mask-sidebar]')};
+   const b=control.getBoundingClientRect();checks.nativeProjectControlReachable=control.contains(document.elementFromPoint(b.x+8,b.y+8));
+   document.querySelector('textarea').focus();checks.nativeInputKeepsSidebar=surface.visibility(handle).sidebar&&!surface.visibility(handle).workspace;
+   surface.showWorkspace(handle);surface.showReading(handle);checks.readingKeepsFrame=surface.visibility(handle).sidebar&&frame===surface.frames(handle).find(s=>s.role==='sidebar').frame;
+   surface.showWorkspace(handle);surface.suspend(handle,'test','sidebar');checks.closedSlotReleasesFlow=slot.getBoundingClientRect().height===0&&recent.getBoundingClientRect().top===top;
+   surface.showWorkspace(handle,{roles:['sidebar']});scroll.scrollTop=50;
+   const next=adapter.inspect();surface.refreshGeometry(handle,next);checks.scrollAnchored=sidebar.getBoundingClientRect().y===slot.getBoundingClientRect().y&&surface.visibility(handle).workspace;
+   const scrollBefore=scroll.scrollTop,probe=surface.withNativeReading(handle,()=>({top:scroll.scrollTop,height:slot.getBoundingClientRect().height}),()=>true);checks.readingProbePreservesFlow=!!probe&&probe.top===scrollBefore&&probe.height>=240&&scroll.scrollTop===scrollBefore;
+   scroll.scrollTop=0;surface.refreshGeometry(handle,adapter.inspect());
+   const unknown=document.createElement('button');unknown.style.cssText='position:fixed;left:0;top:400px;width:100px;height:30px';unknown.textContent='Unknown';root.append(unknown);
+   await new Promise(r=>setTimeout(r,0));checks.unknownObstructionWithdrawsOnlySidebar=!surface.visibility(handle).sidebar&&surface.visibility(handle).workspace;
+   unknown.remove();surface.refreshGeometry(handle,adapter.inspect());surface.showWorkspace(handle,{roles:['sidebar']});
+   const dialog=document.createElement('dialog');document.body.append(dialog);dialog.showModal();await new Promise(r=>setTimeout(r,0));checks.nativeModalReleasesSlot=slot.getBoundingClientRect().height===0&&!surface.visibility(handle).sidebar;dialog.remove();
+   surface.dispose(handle);checks.disposeLeavesNative=project.outerHTML===nativeHTML&&!root.querySelector('[data-va-sidebar-slot]');
+   root.style.display='grid';checks.gridNotAdmitted=!adapter.inspect().sidebarPlacement;
+   await adapter.stop();return checks;
+  });assert(Object.values(checks).every(Boolean),JSON.stringify(checks));console.log(JSON.stringify({status:'PASS_WEB_MECHANISM_ONLY',checks}));await page.close();
+ }else if(process.argv.includes('--sidebar-region-only')){
   const page=await browser.newPage({viewport:{width:1000,height:700}}),url='https://chatgpt.com/';
   await page.route('**/*',r=>r.request().url()===url?r.fulfill({contentType:'text/html',body:observedHomeHTML('33333333-3333-4333-8333-333333333333')}):r.abort());
   await page.goto(url);await page.addScriptTag({content:outputFiles[0].text});
