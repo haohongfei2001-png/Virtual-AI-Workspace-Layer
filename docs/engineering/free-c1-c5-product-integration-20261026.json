@@ -921,6 +921,41 @@
       "sentinels": "Four explicit synthetic controls beneath actual omitted nodes test reach only. They are not real native descendants. History pressure and over-depth counterexamples validate scope/bounds."
     },
     "dailyChrome": "UNCHANGED; no new activation, collection, candidate or product acceptance",
-    "remaining": "Actual Project control/member descendants remain unknown. Do not widen native takeover or claim full v2.7 delivery from offline capture success."
+    "remaining": "Actual Project control/member descendants remain unknown. Do not widen native takeover or claim full v2.7 delivery from offline capture success.",
+    "readinessFollowup": {
+      "defect": "The offline capture init script also ran in formal extension child frames and threw on absent nav. Its old positive transport checks did not assert absence of these errors.",
+      "fix": "Fixture injection is restricted to the loopback top document; capture-only mode now fails on any page script error. No product collection permission or boundary changes.",
+      "isolatedReport": "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-LTt3SZ/report.json",
+      "status": "PASS",
+      "checks": {
+        "homeCollectorPopupComplete": true,
+        "projectCollectorPopupComplete": true,
+        "collectorBuildReceiptMatchesPackage": true,
+        "staleDocumentRejected": true,
+        "noPrivateDatabaseOrDraftChanges": true,
+        "popupDownloadsBoundAnonymousSnapshot": true,
+        "captureAndFramesWithoutScriptErrors": true,
+        "noInternalRequests": true
+      },
+      "browserErrors": [],
+      "package": "/private/tmp/VAIWL-Focused-Details-fa730665/extension",
+      "archiveSha256": "2fb72e7576648f8ce2af28740fd72c1c8ced62738907174cb68c0ee2e5e66273",
+      "readiness": {
+        "sourceHead": "fa730665c4d8e3c4e1146331f83f907fc5fc12c1",
+        "sourceHashCount": 199,
+        "sourceMismatches": [],
+        "manifestUnchanged": true,
+        "changedInstallationFiles": [
+          "src/host/history-structure-diagnostic.mjs",
+          "content.js"
+        ],
+        "bootBuild": "2dd6a78932f5cbcb2118b8daaa6940ee9a2b226282f5ec470c3e0246f13d853f",
+        "installedCollectorUnchanged": true,
+        "dailyChromeUpdated": false
+      },
+      "testAndStagedProductSourcesIdentical": true,
+      "registeredOriginalId": "miendbcjdmecjggplepenghjnoejmaic",
+      "realCapture": "NOT_RUN; original installation unchanged; a new capture requires a new bounded authorization"
+    }
   }
 }

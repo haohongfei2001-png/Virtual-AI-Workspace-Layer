@@ -33,7 +33,11 @@ try{
   // The added branch is a declared synthetic completeness sentinel; the
   // separate anonymous replay retains the actually observed outer topology.
   page=await context.newPage();
-  await page.addInitScript(rows=>document.addEventListener('DOMContentLoaded',()=>{
+  await page.addInitScript(rows=>{
+   // Playwright init scripts also run in extension child frames. Materialize
+   // the anonymous native topology only in the fixture's top document.
+   if(window!==window.top||location.hostname!=='127.0.0.1'||location.protocol!=='http:')return;
+   document.addEventListener('DOMContentLoaded',()=>{
    const nav=document.querySelector('nav'),history=nav.firstElementChild;
    const nodes=[];
    for(const [parent,,tag,role,flags]of rows){const n=document.createElement(tag==='OTHER'?'div':tag.toLowerCase());
@@ -46,7 +50,8 @@ try{
    const root=nodes[0];root.append(history);
    // Observed common-parent ancestry is 60 -> 59 -> 21 -> NAV (two wrappers).
    let shell=root;for(let i=0;i<2;i++){const wrap=document.createElement('div');wrap.append(shell);shell=wrap;}nav.append(shell);
-  },{once:true}),projectSidebarSnapshot.sidebarStructure.rows.slice(0,44));
+   },{once:true});
+  },projectSidebarSnapshot.sidebarStructure.rows.slice(0,44));
   const control=await context.newPage();await control.goto('chrome-extension://'+id+'/status.html');
   const content=await readFile(join(built.unpacked,'content.js'),'utf8'),build=/build="([a-f0-9]{64})"/.exec(content)?.[1];assert(build);
   let stale;
@@ -86,6 +91,8 @@ try{
   assert.deepEqual(await worker.evaluate(()=>indexedDB.databases()),[]);
   report.checks.collectorBuildReceiptMatchesPackage=true;report.checks.staleDocumentRejected=true;report.checks.noPrivateDatabaseOrDraftChanges=true;report.checks.popupDownloadsBoundAnonymousSnapshot=true;
   await control.close();await page.close();
+  assert.deepEqual(report.browserErrors,[],'capture fixture and formal frames must complete without script errors');
+  report.checks.captureAndFramesWithoutScriptErrors=true;
  }
  // Product states use the same installed MV3 and native observation path.
  // These pixels are offline reconstruction, never real-account acceptance.
