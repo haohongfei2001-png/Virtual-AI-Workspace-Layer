@@ -799,3 +799,23 @@ test('current row reveal publishes expanded flow height before its bounded coord
  await f.advance(0);assert.equal(f.parentMessages.length,2,'scheduled size update must not duplicate delivery');
  f.disconnect();const retiredCount=f.parentMessages.length;f.nav.onSidebarReveal({top:800,bottom:834,height:34});assert.equal(f.parentMessages.length,retiredCount);
 });
+
+test('restored keyboard focus sizes an expanded native-NAV frame before reveal',async()=>{
+ let height=200,focused=true;const panel={hidden:false,classList:{contains:()=>false},getBoundingClientRect:()=>({height})};
+ const f=fixture('sidebar',options=>createFreeFrameClient({...options,
+  document:{...options.document,hasFocus:()=>focused,defaultView:{...options.document.defaultView,innerHeight:200,getComputedStyle:()=>({marginTop:'0',marginBottom:'0'})}},
+  navigationFactory:args=>({...options.navigationFactory(args),roots:()=>({sidebar:{shadow:{querySelector:()=>panel}}})})}));
+ const focus=box=>{const event=new Event('focusin');event.composedPath=()=>[{getBoundingClientRect:()=>box}];f.focusEvents.dispatchEvent(event);};
+ await f.client.start();await drain();await f.advance(0);f.parentMessages.length=0;
+ height=900;f.nav.onSidebarLayout();focus({top:800,bottom:834,height:34});
+ assert.deepEqual(f.parentMessages.map(p=>p.message),[
+  {type:'VAIWL_UI_INTRINSIC_SIZE',role:'sidebar',height:900},
+  {type:'VAIWL_UI_REVEAL_FOCUS',role:'sidebar',top:800,bottom:834}
+ ]);
+ await f.advance(0);assert.equal(f.parentMessages.length,2);
+ for(const box of [{top:800,bottom:901,height:101},{top:-1,bottom:33,height:34},{top:NaN,bottom:40,height:34},{top:20,bottom:20,height:0}])focus(box);
+ assert.equal(f.parentMessages.length,2,'invalid or outside natural content cannot request reveal');
+ focused=false;focus({top:800,bottom:834,height:34});assert.equal(f.parentMessages.length,2);
+ focused=true;f.emit({type:'VAIWL_UI_SURFACE_STATE',revision:1,visible:false});focus({top:800,bottom:834,height:34});assert.equal(f.parentMessages.length,2);
+ f.disconnect();const retiredCount=f.parentMessages.length;focus({top:800,bottom:834,height:34});assert.equal(f.parentMessages.length,retiredCount);
+});

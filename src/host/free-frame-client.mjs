@@ -50,17 +50,21 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
  function revealSidebarFocus(event){
   if(role!=='sidebar'||closed||!grantCurrent()||Date.parse(grant?.expiresAt)<=now()||doc.hasFocus?.()!==true||surfaceVisible===false)return;
   const target=event.composedPath?.()[0],box=target?.getBoundingClientRect?.();
-  if(!box||box.height<=0||box.top<0||box.bottom>doc.defaultView.innerHeight)return;
+  if(!validSidebarRect(box))return;
+  // Restoring focus uses preventScroll. A newly expanded row can be below
+  // the old iframe viewport even though it is inside the current content.
+  const height=publishSidebarSize();if(!height||box.bottom>height)return;
   doc.defaultView.parent.postMessage({type:'VAIWL_UI_REVEAL_FOCUS',role:'sidebar',top:Math.floor(box.top),bottom:Math.ceil(box.bottom)},parentOrigin);
  }
  // Native NAV owns scrolling. The flow iframe has no internal scrollport;
  // trusted wheel events chain through Chromium rather than coordinate relays.
  let sidebarSizeTimer=null,lastSidebarSize=null,sidebarRestore=undefined;
+ const validSidebarRect=box=>!!box&&[box.top,box.bottom,box.height].every(Number.isFinite)&&box.height>0&&box.top>=0&&box.bottom>box.top&&box.bottom<=1000000;
  function revealSidebarRect(box){
-  if(role!=='sidebar'||!grantCurrent()||closed||surfaceVisible===false||!box||![box.top,box.bottom,box.height].every(Number.isFinite)||box.height<=0||box.top<0||box.bottom<=box.top||box.bottom>1000000)return;
+  if(role!=='sidebar'||!grantCurrent()||closed||surfaceVisible===false||!validSidebarRect(box))return;
   // The renderer may just have expanded a group. Its natural size must reach
   // the parent before reveal coordinates, which the parent bounds by that size.
-  if(!publishSidebarSize())return;
+  const height=publishSidebarSize();if(!height||box.bottom>height)return;
   doc.defaultView.parent.postMessage({type:'VAIWL_UI_REVEAL_ROW',role:'sidebar',top:Math.floor(box.top),bottom:Math.ceil(box.bottom)},parentOrigin);
  }
  function publishSidebarSize(){
@@ -76,7 +80,7 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
    if(!Number.isSafeInteger(height)||height>1000000)return false;
    if(height!==lastSidebarSize){lastSidebarSize=height;doc.defaultView.parent.postMessage({type:'VAIWL_UI_INTRINSIC_SIZE',role:'sidebar',height},parentOrigin);}
    if(sidebarRestore!==undefined){const scroll=sidebarRestore;sidebarRestore=undefined;doc.defaultView.parent.postMessage({type:'VAIWL_UI_SIDEBAR_RESTORE',role:'sidebar',scroll},parentOrigin);}
-   return true;
+   return height;
  }
  function queueSidebarSize(){
   if(role!=='sidebar'||sidebarSizeTimer!==null)return;
