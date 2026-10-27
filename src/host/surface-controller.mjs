@@ -122,7 +122,16 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
  }
  function inspectPresentation(state){
   if(surface.backend!=='document-flow'||!state?.handle)return adapter.inspect();
-  if(surface.isSameNativeRegions(state.handle)!==true)return {ok:false,reason:'native-region-changed'};
+  if(surface.isSameNativeRegions(state.handle)!==true){
+   // Native input can legitimately keep new focus/presentation classes.
+   // Re-proof only after the original layout is restored; never bless a
+   // visible mutated layout, stale lease, native dispatch or new identity.
+   if(!state.nativeDispatch&&authorized(state)&&!adapter.hasNativeLayer()){
+    const refreshed=surface.refreshNativeBaseline?.(state.handle,()=>adapter.inspect());
+    if(refreshed?.ok)return refreshed;
+   }
+   return {ok:false,reason:'native-region-changed'};
+  }
   return adapter.inspectStructure(state.inspection);
  }
  function refreshGeometry(state,inspection=null){
@@ -255,7 +264,12 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
    if(state.mode!=='reading')state.intentEpoch++;
    state.mode='reading';return;
   }
-  try{if(event?.reason==='native-input')state.pendingWakeEntry=false;if(current===state&&state.resuming&&event?.reason==='native-input')state.pendingNativeInput=true;if(current!==state||state.dormant||state.geometryPaused)return;if(state.mode==='waiting'){if(event?.reason==='native-input'){state.pendingNativeInput=true;state.intentEpoch++;}return;}if(event?.reason!=='native-reading'||state.mode!=='reading')state.intentEpoch++;state.mode='reading';if(!authorized(state))return;if(adapter.hasNativeLayer()){suspend('native-layer');return;}ensureReturn(state);}finally{publishSurface(state);}}
+  try{if(event?.reason==='native-input')state.pendingWakeEntry=false;if(current===state&&state.resuming&&event?.reason==='native-input')state.pendingNativeInput=true;if(current!==state||state.dormant)return;
+   // The pointer handoff has now closed the workspace and restored native
+   // flow. Re-proof here: popover state/gesture attributes need not produce a
+   // later geometry event, and waiting for renewal would lose the live frames.
+   if(state.geometryPaused){if(event?.reason!=='native-input'||!reconcileGeometry(state))return;}
+   if(state.mode==='waiting'){if(event?.reason==='native-input'){state.pendingNativeInput=true;state.intentEpoch++;}return;}if(event?.reason!=='native-reading'||state.mode!=='reading')state.intentEpoch++;state.mode='reading';if(!authorized(state))return;if(adapter.hasNativeLayer()){suspend('native-layer');return;}ensureReturn(state);}finally{publishSurface(state);}}
  function hasProtectedFocus(state){
   if(surface.backend==='document-flow')return surface.hasNativeInputFocus(state.handle)===true;
   const roots=[state.inspection.composer,state.inspection.header,...(state.inspection.protectedRegions??[])];

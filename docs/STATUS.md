@@ -1,5 +1,16 @@
 # VAIWL实际状态：渐进积累工程已接线，真实来源逐项待准入
 
+## 2026-10-28 原生输入样式变化的观察循环与返回恢复（原安装不变）
+
+正式 MV3 反例确定：输入 pointerdown 后原生 composer 保留样式类，flow 的 `hide` 每次重复写入同一输入让位属性；adapter 全属性观察再次调用几何检查，形成 MutationObserver 自触发，阻塞 pointerup 和续约，直到原授权过期才重建两个 frame。隔离 CPU 采样确认热路径为 adapter mutations → surface discovery → flow geometry。另有两个独立恢复差额：旧样式基线永久拒绝正常新 presentation；geometryPaused 的输入完成事件直接返回，未建立四格入口。
+
+现让输入标记写入幂等，在输入完成、工作区已关闭后重新证明原生布局；仅同节点、同语义、同 epoch、有效原授权、无在途手势/弹层/原生派发及旧受保护控件完整时更新 CSS 基线。原 frame、草稿与授权不重建，未知结构不获准。自有 HEAD 样式内容损坏也即时撤回，不再依赖 body 观察器。
+
+修复前正式 MV3 捕获约20秒阻塞和 frame 替换；修复后 home/Project/conversation 保留持久 composer 样式、原两个 frame 和草稿，完整关联旅程通过。证据 `/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-CedCvI/report.json`；局部负向几何与122项关联控制合同通过，独立只读复核无新增问题。实际返回 renderer 图已查看；匿名原生灰块与夹具输入不是 ChatGPT 真实外观，不能用来判定完整 v2.7 设计通过。
+
+本批没有操作日常 Chrome、覆盖原安装、读取旧库或要求用户参与。运行构建 UNKNOWN、真实 Mac NOT_RUN、完整产品 NOT_ACCEPTED 保持。此次解决可复现的正式输入/返回代码故障，不据此声称真实启动问题或全部产品完成。
+
+
 ## 2026-10-28 原生入口回归恢复实际文档流检查（原安装不变）
 
 原 CI 的 native-entry runner 仍等待私人 workspace `:popover-open`，在方案 B 下尚未进入原生操作就超时。现改为实际非 Popover 文档流节点、可见尺寸和 iframe 检查；四格仅可作为准备信号，不能替代工作区已展开。现有取消、示例排除、确认后建卡及 Project/全局新建归属 oracle 均保留，并在同一正式包的隔离 LEGACY 宿主实际通过，报告 `/private/tmp/vaiwl-native-entry-flow.json`。这次是验证入口修正，没有新增生产功能或改变授权；真实 Mac NOT_RUN、运行构建 UNKNOWN、产品 NOT_ACCEPTED 保持。独立布局保存链复核未发现新的确定反例，未制造额外修复或操作日常 Chrome。

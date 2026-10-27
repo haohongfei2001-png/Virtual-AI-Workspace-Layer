@@ -12,7 +12,9 @@ export function createFlowMountSurface({document:doc,createFrameURL,hasNativeLay
  const intact=(m,s)=>s.node.isConnected&&s.frame.isConnected&&s.frame.parentElement===s.node&&!s.frame.hasAttribute('srcdoc')&&s.frame.src===s.url&&s.node.ownerDocument===doc&&m.style.isConnected&&m.style.textContent===m.css;
  const nativeLayer=()=>hasNativeLayer()||!!doc.querySelector('dialog[open]:not([data-va-owned]),[aria-modal="true"]:not([data-va-owned]),[popover]:popover-open:not([data-va-owned])');
  function hide(m,role,reason='suspended'){
-  for(const s of m.roles)if(!role||s.role===role){s.reason=reason;if(['native-layer','workspace-geometry'].includes(reason)&&s.role==='workspace'&&m.inputPointerActive?.()&&intact(m,s)&&isSameNativeRegions(m.plan,{allowPresentationChange:true})){s.node.setAttribute('data-va-input-handoff','');continue;}if(open(s))s.exit.hidePopover();}
+  // Native observation sees owned attribute writes too. Rewriting the same
+  // handoff marker would feed geometry back into itself and starve pointerup.
+  for(const s of m.roles)if(!role||s.role===role){s.reason=reason;if(['native-layer','workspace-geometry'].includes(reason)&&s.role==='workspace'&&m.inputPointerActive?.()&&intact(m,s)&&isSameNativeRegions(m.plan,{allowPresentationChange:true})){if(!s.node.hasAttribute('data-va-input-handoff'))s.node.setAttribute('data-va-input-handoff','');continue;}if(open(s))s.exit.hidePopover();}
  }
  function sidebarIntact(m){
   const p=m.inspection.sidebarPlacement,s=m.roles[1];
@@ -103,6 +105,9 @@ export function createFlowMountSurface({document:doc,createFrameURL,hasNativeLay
     const leaveGesture=()=>{pointer=null;if(gestureDeadline!==null)win.clearTimeout(gestureDeadline);gestureDeadline=null;workspace.exit.removeAttribute('data-va-gesture');workspace.node.removeAttribute('data-va-input-handoff');if(['native-layer','workspace-geometry'].includes(workspace.reason)&&open(workspace))workspace.exit.hidePopover();};const visibility=()=>{if(doc.visibilityState==='hidden')leaveGesture();};win.addEventListener('blur',leaveGesture);win.addEventListener('pagehide',leaveGesture);doc.addEventListener('visibilitychange',visibility);
     const observe=()=>{if(!mounts.has(id))return;if(nativeLayer()){hide(m,null,'native-layer');onSurrender({reason:'native-layer'});return;}if(!geometry(m))onSurrender({role:'workspace',reason:'workspace-geometry'});};
     const observer=new win.MutationObserver(observe);observer.observe(doc.body,{subtree:true,childList:true,attributes:true,attributeFilter:['class','style','hidden','aria-hidden','role','tabindex','contenteditable','inert','open','aria-modal']});
+    // The owned rules live in HEAD, outside the native body observer. Changes
+    // there must surrender immediately too, including during input handoff.
+    observer.observe(m.style,{subtree:true,childList:true,characterData:true});
     bindSidebar(m);
     m.cleanup=()=>{m.unbindSidebar?.();m.management?.stop();leaveGesture();win.removeEventListener('blur',leaveGesture);win.removeEventListener('pagehide',leaveGesture);doc.removeEventListener('visibilitychange',visibility);if(inputTimer!==null)win.clearTimeout(inputTimer);doc.removeEventListener('pointerdown',down,true);doc.removeEventListener('pointerup',up,true);doc.removeEventListener('pointercancel',up,true);for(const type of ['focusin','click','keydown','beforeinput','compositionstart'])doc.removeEventListener(type,input,true);observer.disconnect();for(const s of m.roles)s.cleanup();};return handle;
    }catch(error){m.cleanup();for(const s of m.roles){s.node.remove();s.exit.remove();}m.style.remove();for(const {node,attr,previous} of m.markers)if(node.getAttribute(attr)===id){if(previous===null)node.removeAttribute(attr);else node.setAttribute(attr,previous);}mounts.delete(id);throw error;}
@@ -110,6 +115,21 @@ export function createFlowMountSurface({document:doc,createFrameURL,hasNativeLay
   readNativeManagement(handle){return lookup(handle).management?.read()??[];},
   validateActiveLayout(handle){return active(lookup(handle));},
   isSameNativeRegions(handle){return isSameNativeRegions(lookup(handle).plan);},
+  refreshNativeBaseline(handle,inspect){
+   const m=lookup(handle),workspace=m.roles[0],prior=m.plan;
+   // Only remeasure the actual restored native page. An in-flight first
+   // gesture, visible workspace, layer or damaged owned frame cannot rebase.
+   const ready=()=>!open(workspace)&&!m.inputPointerActive?.()&&!nativeLayer()&&intact(m,workspace)&&isSameNativeRegions(prior,{allowPresentationChange:true});
+   if(typeof inspect!=='function'||!ready())return null;
+   const inspection=inspect();if(!ready()||!inspection?.ok||inspection.regionEpoch!==handle.regionEpoch)return null;
+   const next=captureNativeBaseline({document:doc,inspection,isOwnedSurface:owned});
+   if(!next||['root','reading','composer','header','kind','headerInside'].some(k=>next[k]!==prior[k])||['leaves','shells','protectedNodes'].some(k=>next[k].length!==prior[k].length||next[k].some((node,i)=>node!==prior[k][i])))return null;
+   if(prior.nativeControls.some(old=>!next.nativeControls.some(current=>current.node===old.node&&current.parent===old.parent)))return null;
+   const options={id:handle.id,exitId:workspace.exit.id,workspaceId:workspace.node.id},oldRules=flowLayoutRules(prior,options);
+   if(!m.css.startsWith(oldRules))return null;
+   m.css=flowLayoutRules(next,options)+m.css.slice(oldRules.length);m.plan=next;m.style.textContent=m.css;
+   return inspection;
+  },
   hasNativeInputFocus(handle){const m=lookup(handle);return m.plan.composer.contains(doc.activeElement);},
   prepareWorkspace(){return null;},
   refreshGeometry(handle,inspection){const m=lookup(handle);if(!inspection?.ok||inspection.regionEpoch!==handle.regionEpoch)return false;m.inspection=inspection;bindSidebar(m);applySidebarSize(m);restorePendingScroll(m);return geometry(m);},

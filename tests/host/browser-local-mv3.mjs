@@ -47,11 +47,18 @@ try{
    assert(await sidebar.locator('main').evaluate(n=>getComputedStyle(n).overflowY==='visible'));
    const image=join(dir,'flow-'+scene+'.png');await page.screenshot({path:image});report.images.push(image);
    const draft=await page.locator('textarea').inputValue();
+   await page.locator('textarea').evaluate(n=>{
+    window.flowInputFrames=[...document.querySelectorAll('iframe[src^="chrome-extension://"]')];
+    n.addEventListener('pointerdown',()=>n.closest('[data-va-flow-composer]').classList.add('native-focus-ring'),{once:true});
+   });
    await page.locator('textarea').click();await page.keyboard.type('x');assert.equal(await page.locator('textarea').inputValue(),draft+'x');
    await page.locator('[id$="_workspace"]:visible').waitFor({state:'hidden'});
    await page.getByRole('button',{name:'返回工作空间',exact:true}).click();
    await page.locator('[id$="_workspace"]:visible').waitFor();
    assert.equal(await page.locator('textarea').inputValue(),draft+'x');
+   assert(await page.locator('textarea').evaluate(n=>n.closest('[data-va-flow-composer]').classList.contains('native-focus-ring')),'return must accept the safely re-proved persistent native presentation');
+   const inputFrames=await page.evaluate(()=>({before:window.flowInputFrames.map(n=>({role:n.src.split('/').pop(),connected:n.isConnected})),after:[...document.querySelectorAll('iframe[src^="chrome-extension://"]')].map(n=>({role:n.src.split('/').pop(),retained:window.flowInputFrames.includes(n)}))}));
+   assert(inputFrames.before.every(n=>n.connected)&&inputFrames.after.every(n=>n.retained),'native presentation recovery must retain the existing frames: '+JSON.stringify(inputFrames));
    report.checks[scene+'FormalFlowInputReturn']=true;
    if(scene==='project'){
     await page.locator('#project-tool').evaluate(n=>{window.fixtureToolClicks=0;n.addEventListener('click',()=>window.fixtureToolClicks++);return n;});

@@ -2,6 +2,8 @@
 
 ## 2026-10-27 双 Pro 最终裁决：正式文档流 Host（方案 B）
 
+2026-10-28原C2/C4/F-04修复输入让位标记反复写入造成的观察器自激，以及持久原生样式变化后的闭合布局复核和四格恢复；保留原frame、授权与草稿，相关正式隔离旅程和独立复核通过。未更新原安装、未运行真实Mac，不将技术恢复冒充完整产品；详见STATUS。
+
 2026-10-28 续原 C2/C4/F3：恢复 runner 不再要求不受支持侧栏也必须挂载；采样实际角色并保持全部在途工作、身份与最终 CHECK/RELEASE 保护。严格 C2 两条恢复及安全变异以同源码隔离回归闭合；不以历史双 frame 前置超时归因于产品。真实启动及完整 v2.7 验收未因此关闭，详见 STATUS，日常安装未更新。
 
 用户正式采纳 [产品 F-01—F-08](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16#issuecomment-6437805652) 和 [Host 方案 B](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16#issuecomment-6437829589)。沿原 C1—C5、唯一分支/PR16 实施；不是新计划。

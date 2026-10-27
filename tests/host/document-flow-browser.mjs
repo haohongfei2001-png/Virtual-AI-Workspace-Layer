@@ -110,15 +110,33 @@ try{
    assert.equal(await page.evaluate(()=>getComputedStyle(document.querySelector('[data-va-input-handoff]')).visibility),'hidden');
    await page.mouse.up();await page.waitForFunction(()=>handoffClicks===1);
    assert.equal(await page.evaluate(()=>gestureProbe.surface.visibility(gestureProbe.handle).workspace),false);
+   // Native focus state may keep its class after the first input gesture.
+   // Re-prove the closed native layout without recreating either private frame.
+   await page.waitForFunction(()=>!document.getElementById(gestureProbe.handle.id+'_workspace_exit').matches(':popover-open'));
+   const reproof=await page.evaluate(()=>{
+    const {surface,handle,adapter}=gestureProbe,frames=surface.frames(handle).map(x=>x.frame),form=document.querySelector('form');
+    const oldProofRejected=!surface.isSameNativeRegions(handle);
+    const refreshed=surface.refreshNativeBaseline?.(handle,()=>adapter.inspect());
+    const reopened=!!refreshed&&surface.showWorkspace(handle)&&surface.validateActiveLayout(handle);
+    let reads=0;const activeRejected=surface.refreshNativeBaseline?.(handle,()=>{reads++;return adapter.inspect();})===null&&reads===0;
+    surface.showReading(handle);form.setAttribute('tabindex','0');
+    const semanticRejected=surface.refreshNativeBaseline?.(handle,()=>adapter.inspect())===null;
+    form.removeAttribute('tabindex');
+    const tool=form.querySelector('button'),oldStyle=tool.getAttribute('style');tool.style.display='none';
+    const hiddenControlRejected=surface.refreshNativeBaseline?.(handle,()=>adapter.inspect())===null;
+    if(oldStyle===null)tool.removeAttribute('style');else tool.setAttribute('style',oldStyle);surface.showWorkspace(handle);
+    return {oldProofRejected,reopened,framesPreserved:surface.frames(handle).every((x,i)=>x.frame===frames[i]),activeRejected,semanticRejected,hiddenControlRejected};
+   });
+   assert.deepEqual(reproof,{oldProofRejected:true,reopened:true,framesPreserved:true,activeRejected:true,semanticRejected:true,hiddenControlRejected:true});
    await page.clock.install();
-   await page.evaluate(()=>{document.querySelector('form').classList.remove('native-focus-ring');gestureProbe.surface.showWorkspace(gestureProbe.handle);handoffButton.addEventListener('pointerdown',()=>document.querySelector('form').classList.add('native-focus-ring'),{once:true});});
+   await page.evaluate(()=>{document.querySelector('form').classList.remove('native-focus-ring');gestureProbe.surface.showReading(gestureProbe.handle);gestureProbe.surface.refreshNativeBaseline(gestureProbe.handle,()=>gestureProbe.adapter.inspect());if(!gestureProbe.surface.showWorkspace(gestureProbe.handle))throw Error('gesture-probe-workspace-not-open');handoffButton.addEventListener('pointerdown',()=>document.querySelector('form').classList.add('native-focus-ring'),{once:true});});
    const expiryBox=await page.evaluate(()=>handoffButton.getBoundingClientRect().toJSON());
    await page.mouse.move(expiryBox.x+expiryBox.width/2,expiryBox.y+expiryBox.height/2);await page.mouse.down();
    await page.clock.fastForward(3001);
    assert.equal(await page.evaluate(()=>document.querySelector('[data-va-input-handoff]')),null,'missing parent pointerup cannot retain handoff');
    assert.equal(await page.evaluate(()=>document.getElementById(gestureProbe.handle.id+'_workspace_exit').matches(':popover-open')),false);
    await page.mouse.up();
-   await page.evaluate(()=>{document.querySelector('form').classList.remove('native-focus-ring');gestureProbe.surface.showWorkspace(gestureProbe.handle);});
+   await page.evaluate(()=>{document.querySelector('form').classList.remove('native-focus-ring');gestureProbe.surface.showReading(gestureProbe.handle);gestureProbe.surface.refreshNativeBaseline(gestureProbe.handle,()=>gestureProbe.adapter.inspect());if(!gestureProbe.surface.showWorkspace(gestureProbe.handle))throw Error('gesture-probe-workspace-not-open');});
    const corruptBox=await page.evaluate(()=>handoffButton.getBoundingClientRect().toJSON());
    await page.mouse.move(corruptBox.x+corruptBox.width/2,corruptBox.y+corruptBox.height/2);await page.mouse.down();
    await page.evaluate(()=>{document.querySelector('style[data-va-owned]').textContent+=' /* changed */';});

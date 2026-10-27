@@ -624,3 +624,38 @@ test('sidebar edge wheel requires a correlated live grant and bounded geometry; 
  f.layer(false);send();await drain();assert.deepEqual(scrolls,[{x:40,y:50,delta:80}]);assert.equal(f.calls.show,shown);
  f.controller.revoke();send();await drain();assert.equal(scrolls.length,1);
 });
+
+// Presentation-only reproof must not replace the existing document or grants.
+test('closed flow layout reproof restores workspace after persistent native presentation change',async()=>{
+ const f=fixture();await f.controller.start({});await f.both();f.controller.showReading();
+ let same=false,reproofs=0;f.surface.backend='document-flow';f.surface.isSameNativeRegions=()=>same;
+ f.surface.hasNativeInputFocus=()=>false;f.adapter.inspectStructure=()=>f.adapter.inspect();
+ f.surface.refreshNativeBaseline=(_handle,inspect)=>{reproofs++;const result=inspect();same=true;return result;};
+ assert.equal(f.controller.showWorkspace(true),true);assert.equal(reproofs,1);
+ assert.equal(f.calls.register,1);assert.equal(f.calls.confirm.length,2);assert.equal(f.calls.dispose,0);
+ assert.equal(f.controller.showWorkspace(),true);assert.equal(reproofs,1);f.controller.stop();
+});
+for(const boundary of ['layer','dispatch','expired','route'])test('flow reproof cannot cross '+boundary+' boundary',async()=>{
+ const f=fixture();await f.controller.start({});await f.both();f.controller.showReading();
+ let reproofs=0;f.surface.backend='document-flow';f.surface.isSameNativeRegions=()=>false;f.surface.hasNativeInputFocus=()=>false;
+ f.surface.refreshNativeBaseline=()=>{reproofs++;return f.adapter.inspect();};
+ if(boundary==='layer')f.layer(true);
+ if(boundary==='dispatch')f.controller.beginNativeDispatch();
+ if(boundary==='expired')f.tick(22000);
+ if(boundary==='route')f.doc.location.href+='c/changed';
+ assert.equal(f.controller.showWorkspace(),false);assert.equal(reproofs,0);f.controller.stop();
+});
+
+test('completed native input reproof repairs paused layout without waiting for renewal',async()=>{
+ const f=fixture();await f.controller.start({});await f.both();
+ let same=false,reproofs=0;f.surface.backend='document-flow';f.surface.isSameNativeRegions=()=>same;
+ f.surface.hasNativeInputFocus=()=>true;f.adapter.inspectStructure=()=>f.adapter.inspect();
+ f.surface.refreshNativeBaseline=(_handle,inspect)=>{reproofs++;same=true;return inspect();};
+ f.surrender({role:'workspace',reason:'workspace-geometry'});
+ assert.equal(f.slot.children.length,0);assert.equal(reproofs,0);
+ f.surrender({role:'workspace',reason:'native-input'});
+ assert.equal(reproofs,1);assert.equal(f.slot.children.length,1);assert.equal(f.calls.dispose,0);
+ assert.equal(f.calls.register,1);assert.equal(f.calls.confirm.length,2);assert.equal(f.calls.show,1);
+ f.surface.hasNativeInputFocus=()=>false;f.slot.children[0].events.click({isTrusted:true});
+ assert.equal(f.calls.show,2);assert.equal(f.calls.dispose,0);f.controller.stop();
+});
