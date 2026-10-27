@@ -1,5 +1,14 @@
 # VAIWL实际状态：渐进积累工程已接线，真实来源逐项待准入
 
+## 2026-10-28 隐藏期间 VIEW 更新保留主工作区返回位置（原安装不变）
+
+真实 DOM 离线反例确认：工作区在 900px 进入原生阅读，owner 隐藏后收到新 VIEW 并重建滚动容器；四格展示先于 owner 尺寸恢复时实际返回 0px，布局描述符仍为 900px。正式 navigation 现将隐藏态的浏览器夹值与用户位置分开，复用既有按 view 隔离的待恢复目标；可见尺寸恢复后应用原位置，用户后续主动滚动仍优先。没有新增定时重试、授权、数据来源或存储格式。
+
+同一反例修复后通过；既有正式 renderer 的分页、键盘、IME、主区/特殊页返回和用户滚动优先回归，以及关联保存合同通过。旧测试同步正式 Free 文案与 F-03 默认展开，稀疏夹具按既有 rowWindows 合同保留其他展开列表，避免错误截短视觉样本。独立只读复核未发现新增问题。正式隔离 MV3 的原生首手势、Project→成员→阅读→返回、Worker 连续、隔离私人布局恢复、撤权及卸载恢复通过：`/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-SijI6F/report.json`。其源码包 SHA256 为 `32ce924b02aa6cc0c2f1d080d396723d5c2e84a6e39c4e35cbf322fed58f2103`，仅 OFFLINE_HOST_RECONSTRUCTION，不用于日常安装。
+
+已查看本轮返回整屏与正式 renderer 桌面/窄屏图；匿名原生占位仍不是实际 ChatGPT 外观或完整产品验收。原安装、旧库、草稿、stash 均未改；当前运行构建 UNKNOWN、真实 Mac NOT_RUN、完整产品 NOT_ACCEPTED。尚未取得真实启动故障的当前回执，不由本次滚动修复推断真实启动已解决。
+
+
 ## 2026-10-28 原生输入样式变化的观察循环与返回恢复（原安装不变）
 
 正式 MV3 反例确定：输入 pointerdown 后原生 composer 保留样式类，flow 的 `hide` 每次重复写入同一输入让位属性；adapter 全属性观察再次调用几何检查，形成 MutationObserver 自触发，阻塞 pointerup 和续约，直到原授权过期才重建两个 frame。隔离 CPU 采样确认热路径为 adapter mutations → surface discovery → flow geometry。另有两个独立恢复差额：旧样式基线永久拒绝正常新 presentation；geometryPaused 的输入完成事件直接返回，未建立四格入口。

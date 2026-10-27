@@ -94,7 +94,7 @@ test('single-role frame renderer reuses navigation without host DOM access',{tim
   await page.keyboard.press('Enter');await page.keyboard.press('Space');assert.equal(await page.evaluate(()=>pagerCase.calls.length),2);
   await page.evaluate(()=>pagerCase.complete());await page.waitForFunction(label=>{const s=pagerCase.nav.roots().workspace.shadow,n=s.querySelector('[aria-label="'+label+'"]');return n&&n.getAttribute('aria-disabled')!=='true'&&s.activeElement===n;},label);
   await page.keyboard.press('Enter');assert.equal(await page.evaluate(kind=>pagerCase.calls.at(-1)[kind].offset,kind),48);
-  const back=kind==='search'?'关闭派生查找':'返回主题视图';await page.getByRole('button',{name:back,exact:true}).focus();await page.evaluate(()=>pagerCase.complete());
+  const back=kind==='search'?'关闭已知查找':'返回主题视图';await page.getByRole('button',{name:back,exact:true}).focus();await page.evaluate(()=>pagerCase.complete());
   await page.waitForFunction(()=>pagerCase.nav.roots().workspace.shadow.querySelector('[data-ref-id="ref48"]'));
   assert.equal(await page.getByRole('button',{name:back,exact:true}).evaluate(n=>n.getRootNode().activeElement===n),true);await page.evaluate(()=>pagerCase.nav.stop());
  }
@@ -128,6 +128,11 @@ test('single-role frame renderer reuses navigation without host DOM access',{tim
   let releaseMain,holdMain=false;const nav=createNavigation({document,surface:{role:'workspace',root:document.querySelector('#mount')},adapter:{currentURL:()=>'',isCurrent:()=>false,status(){}},onProjectionRequest:q=>q.search?{...dto,groups:{...dto.groups,items:[],total:0},search:{...q.search,items:[],total:0,hasMore:false}}:holdMain?new Promise(resolve=>{releaseMain=()=>resolve(dto);}):dto});
   const paint=()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
   nav.updateFrameProjection(dto);nav.showWorkspace();await paint();let scroller=nav.roots().workspace.scroller;scroller.scrollTop=900;await paint();const original=scroller.scrollTop;if(original<500)throw Error('fixture workspace not scrollable');
+  // The owner hides the real workspace frame during native reading. Its VIEW
+  // can still refresh before the four-grid presentation and frame resize arrive.
+  const hostMount=document.querySelector('#mount');nav.enterReading();hostMount.style.display='none';await paint();
+  nav.updateFrameProjection(dto);nav.showWorkspace();await paint();hostMount.style.display='block';await paint();
+  if(nav.roots().workspace.scroller.scrollTop!==original||nav.view().scroll!==original)throw Error('hidden reading refresh lost workspace return position: '+nav.roots().workspace.scroller.scrollTop+' / '+nav.view().scroll+' expected '+original);
   nav.present({kind:'search-known'});await paint();if(nav.roots().workspace.scroller.scrollTop!==0)throw Error('fixture search not short');
   holdMain=true;nav.enterReading();nav.showWorkspace();await paint();if(nav.view().scroll!==original)throw Error('pending main VIEW overwrote saved scroll');releaseMain();await paint();if(nav.roots().workspace.scroller.scrollTop!==original)throw Error('special view lost main workspace scroll: '+nav.roots().workspace.scroller.scrollTop+' expected '+original);
   // Recorded J1 shape: restore 144, initial height 422 clamps to 129,
@@ -155,14 +160,14 @@ test('single-role frame renderer reuses navigation without host DOM access',{tim
   mount.style.display='block';await paint();if(list().scrollTop!==240)throw Error('visible sidebar did not recover position');
   list().dispatchEvent(new WheelEvent('wheel',{bubbles:true,composed:true}));list().scrollTop=80;await paint();mount.style.height='340px';await paint();
   if(list().scrollTop!==80||nav.view().sidebarScroll!==80)throw Error('sidebar restoration overrode subsequent user scroll');
-  const fold=()=>nav.roots().sidebar.shadow.querySelector('[aria-label="折叠主题导航"]').click();
+  const fold=()=>nav.roots().sidebar.shadow.querySelector('[aria-label="'+(nav.view().sidebarVisible?'隐藏项目导航':'显示项目导航')+'"]').click();
   fold();await paint();nav.updateFrameProjection(dto);await paint();
   if(nav.view().sidebarScroll!==80)throw Error('collapsed sidebar background refresh erased user scroll');
   fold();await paint();
   if(list().scrollTop!==80)throw Error('expanded sidebar did not restore user scroll');
 
   nav.restoreFrameView({segment:0,oldOpen:[],sidebarOpen:[],capacities:[],scroll:0,sidebarScroll:180,sidebarVisible:false});nav.updateFrameProjection(dto);await paint();
-  const expand=nav.roots().sidebar.shadow.querySelector('[aria-label="折叠主题导航"]');
+  const expand=nav.roots().sidebar.shadow.querySelector('[aria-label="显示项目导航"]');
   expand.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,composed:true,pointerId:7}));
   expand.dispatchEvent(new PointerEvent('pointerup',{bubbles:true,composed:true,pointerId:7}));expand.click();await paint();
   if(list().scrollTop!==180||nav.view().sidebarScroll!==180)throw Error('first expansion erased durable folded sidebar position');
@@ -245,12 +250,12 @@ test('single-role frame renderer reuses navigation without host DOM access',{tim
   let nav=make();const route=id=>{url='https://chatgpt.com/c/'+id;nav.updateFrameProjection({protocol:'vaiwl-free-frame/1',role:'sidebar',scope:'A',completeSnapshot:false,segment:0,viewSession:{H:30,T:20000,Z:'UTC',policyRevision:0},navigation:{hasNewer:false,hasOlder:false,maxSegment:0},groups:{...empty(),items:['P1','P2'].map(id=>({id,name:id,nativeName:id,lists:{current:empty(),old:empty(),unknown:empty()}})),total:2},entries:{noProject:{...empty(),inventoryTotal:0},unknown:{...empty(),inventoryTotal:0}},selection:null,current:{nativeUrl:url,refId:id,projectId:id}});};
   window.sidebarCase={route,remount(){const {freeSession,...layout}=saved;nav.stop();nav=make();nav.restoreFrameView(layout);route('P2');},stop:()=>nav.stop()};route('P1');route('P2');
  });
- assert.equal(await page.getByRole('button',{name:'侧栏主题 P1',exact:true}).getAttribute('aria-expanded'),'false');
- assert.equal(await page.getByRole('button',{name:'侧栏主题 P2',exact:true}).getAttribute('aria-expanded'),'true');
- await page.getByRole('button',{name:'侧栏主题 P2',exact:true}).click();
- assert.equal(await page.getByRole('button',{name:'侧栏主题 P2',exact:true}).getAttribute('aria-expanded'),'false');
+ assert.equal(await page.getByRole('button',{name:'侧栏项目 P1',exact:true}).getAttribute('aria-expanded'),'false');
+ assert.equal(await page.getByRole('button',{name:'侧栏项目 P2',exact:true}).getAttribute('aria-expanded'),'true');
+ await page.getByRole('button',{name:'侧栏项目 P2',exact:true}).click();
+ assert.equal(await page.getByRole('button',{name:'侧栏项目 P2',exact:true}).getAttribute('aria-expanded'),'false');
  await page.evaluate(()=>sidebarCase.remount());
- assert.equal(await page.getByRole('button',{name:'侧栏主题 P2',exact:true}).getAttribute('aria-expanded'),'false');
+ assert.equal(await page.getByRole('button',{name:'侧栏项目 P2',exact:true}).getAttribute('aria-expanded'),'false');
  await page.evaluate(()=>sidebarCase.stop());
  assert.deepEqual(errors,[]);
 });
@@ -268,14 +273,15 @@ test('approved v2.7 sparse workspace, unknown inventory and native actions',{tim
   const group={id:'P1',name:'一个已知项目：原生标题很长时也应完整呈现',nativeName:'一个已知项目：原生标题很长时也应完整呈现',segment:0,freshness:'last-known',lists:{current:p([ref('C1','当前窗口',0)]),old:p([ref('C2','旧窗口',2)]),unknown:p([ref('C3','时间未定窗口',null)])}};
   const dto={protocol:'vaiwl-free-frame/1',role:'workspace',scope:'A',completeSnapshot:false,segment:0,viewSession:{H:30,T:20000,Z:'UTC',policyRevision:0},navigation:{hasNewer:false,hasOlder:true,maxSegment:2},groups:p([group],1,0,24),entries:{noProject:{...p(),inventoryTotal:0},unknown:{...p(unknown.slice(0,5),48),inventoryTotal:48}},selection:null,current:{nativeUrl:group.lists.current.items[0].nativeUrl,refId:'C1',projectId:'P1'}};
   let nav;const adapter={currentURL:()=>dto.current.nativeUrl,status(){},nativeHref:u=>u,navigationPlan:r=>({plan:{mode:'href',target:{kind:'resolved',entity:'conversation',nativeId:r.id,navigationURL:r.nativeUrl},disposition:'same-tab'}})};
-  nav=createNavigation({document,surface:{role:'workspace',root:document.querySelector('#mount')},adapter,onProjectionRequest:q=>{const next=structuredClone(dto);if(q.list==='unknown'&&q.groupId==null)next.selection={groupId:null,list:'unknown',...p(unknown.slice(q.rowOffset,q.rowOffset+q.rowLimit),48,q.rowOffset,q.rowLimit)};return next;}});nav.updateFrameProjection(dto);
+  nav=createNavigation({document,surface:{role:'workspace',root:document.querySelector('#mount')},adapter,onProjectionRequest:q=>{const next=structuredClone(dto);for(const w of q.rowWindows??[])if(w.groupId===null&&w.list==='unknown')next.entries.unknown={...p(unknown.slice(w.rowOffset,w.rowOffset+w.rowLimit),48,w.rowOffset,w.rowLimit),inventoryTotal:48};if(q.list==='unknown'&&q.groupId==null)next.selection={groupId:null,list:'unknown',...p(unknown.slice(q.rowOffset,q.rowOffset+q.rowLimit),48,q.rowOffset,q.rowLimit)};return next;}});nav.updateFrameProjection(dto);
   globalThis.productCase={nav,dto,group,read(){const s=nav.roots().workspace.shadow,c=s.querySelector('.card'),w=s.querySelector('.workspace');return {cards:s.querySelectorAll('.card').length,width:c?.getBoundingClientRect().width,scroll:w.scrollWidth,viewport:w.clientWidth,text:s.textContent,stale:s.querySelectorAll('[data-freshness="last-known"]').length,labels:s.querySelectorAll('.freshness-label').length,selected:s.querySelectorAll('[aria-current="page"]').length,unknown:s.querySelector('[data-free-list="unknown"]')?.className,whiteSpace:c?getComputedStyle(c.querySelector('.theme-name')).whiteSpace:null};}};
  });
  let state=await page.evaluate(()=>productCase.read());assert.equal(state.cards,1);assert(state.width<=356.1);assert.equal(state.labels,0);assert(state.stale>=3);assert(!state.text.includes('上次确认'));assert.equal(state.whiteSpace,'normal');assert.equal(state.selected,1);assert(!state.unknown.includes('search'));
  assert.equal(await page.getByRole('button',{name:'较近的30日',exact:true}).count(),0);assert.equal(await page.getByRole('link',{name:'旧窗口',exact:true}).count(),0);
- await page.getByRole('button',{name:'其他已知聊天',exact:true}).click();await page.getByRole('link',{name:'已入列的新聊天',exact:true}).waitFor();assert.equal(await page.getByRole('link',{name:'已入列的新聊天',exact:true}).getAttribute('href'),'https://chatgpt.com/c/U0');
+ assert.equal(await page.getByRole('button',{name:'其他已知聊天',exact:true}).getAttribute('aria-expanded'),'true');await page.getByRole('link',{name:'已入列的新聊天',exact:true}).waitFor();assert.equal(await page.getByRole('link',{name:'已入列的新聊天',exact:true}).getAttribute('href'),'https://chatgpt.com/c/U0');
  await page.getByRole('button',{name:'显示更多其他已知聊天',exact:true}).click();await page.waitForFunction(()=>productCase.nav.roots().workspace.shadow.querySelectorAll('[data-free-list="unknown"] [data-ref-id]').length===17);
  await page.getByRole('button',{name:'展开旧窗口 一个已知项目：原生标题很长时也应完整呈现',exact:true}).click();await page.getByRole('link',{name:'旧窗口',exact:true}).waitFor();
+ assert.equal(await page.evaluate(()=>productCase.nav.roots().workspace.shadow.querySelectorAll('[data-free-list="unknown"] [data-ref-id]').length),17);
  await page.screenshot({path:resolve(tmpdir(),'vaiwl-v27-formal-desktop.png')});
  await page.setViewportSize({width:360,height:800});await page.waitForTimeout(50);state=await page.evaluate(()=>productCase.read());assert(state.width<=state.viewport);assert(state.scroll<=state.viewport+1);await page.screenshot({path:resolve(tmpdir(),'vaiwl-v27-formal-narrow.png')});
  // Exact layout choices survive a repaint; settings provides the same actions

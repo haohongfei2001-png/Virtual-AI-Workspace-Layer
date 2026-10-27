@@ -233,10 +233,14 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
       if(list&&!list.hidden&&list.clientHeight>0){view.sidebarScroll=list.scrollTop;restoredSidebarScroll.delete(view);}
     }
     if(!view||!restoredScroll.has(view))return;
-    const page=roots?.workspace?.scroller;if(page&&workspacePages.get(page)?.specialKey===null)view.scroll=page.scrollTop;
+    const page=roots?.workspace?.scroller;if(page?.getClientRects?.().length===0)return;
+    if(page&&workspacePages.get(page)?.specialKey===null)view.scroll=page.scrollTop;
     restoredScroll.delete(view);
   }
   function rememberWorkspaceScroll(page){
+    // An owner-hidden frame has no scrollbox. Its zero is browser clamping,
+    // not a new user position, even if presentation arrived before visibility.
+    if(page?.getClientRects?.().length===0)return;
     const state=workspacePages.get(page);if(state&&state.view!==view)return;
     const held=view&&restoredScroll.get(view);
     if(held&&state?.specialKey===null){const clamped=Math.min(held.target,Math.max(0,page.scrollHeight-page.clientHeight));if(page.scrollTop===held.applied||page.scrollTop===clamped)return;restoredScroll.delete(view);}
@@ -712,7 +716,12 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     }
     if(currentSlot){const ref=current().ref;if(ref&&!Array.from(page.querySelectorAll('[data-ref-id]')).some(n=>n.getAttribute('data-ref-id')===ref.id))appendCurrentContext(currentSlot);else currentSlot.remove();}
     if(framed&&searchQuery===null&&!view.worksetOpen)(page.querySelector('.workspace-core')??page).append(node(doc,'slot',{name:'native-candidates'}));
-    shadow.append(page);layoutCards();page.scrollTop=specialKey===null?view.scroll:specialScroll.get(view)?.key===specialKey?specialScroll.get(view).scroll:0;applyRestoredScroll(page);restoreOwnedFocus(focused);emitView();
+    shadow.append(page);
+    // VIEW updates continue while native reading hides the workspace frame.
+    // Retain the main-view position until the owner's visible resize creates
+    // a scrollbox; use the same bounded intent as durable layout restoration.
+    if(specialKey===null&&page.getClientRects?.().length===0&&!restoredScroll.has(view))restoredScroll.set(view,{target:view.scroll,applied:null});
+    layoutCards();page.scrollTop=specialKey===null?view.scroll:specialScroll.get(view)?.key===specialKey?specialScroll.get(view).scroll:0;applyRestoredScroll(page);restoreOwnedFocus(focused);emitView();
   }
   function applyUpdate(value,now,timeZone,preparedIndex=null,alreadyPrepared=false){
     if(stopped)return;
