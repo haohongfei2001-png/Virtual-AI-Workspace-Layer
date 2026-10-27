@@ -28,7 +28,7 @@ test('window/visualViewport/observed native resize refresh current geometry with
  await f.both();const focus=f.doc.activeElement;f.controller.showReading();const guard=f.controller.readingGuard(),n=f.calls.filter(x=>x==='show').length;f.emit('resize');assert.equal(guard(),true);assert.equal(f.doc.activeElement,focus);assert.equal(f.doc.draft,'UNSENT');assert.equal(f.calls.filter(x=>x==='show').length,n);f.controller.stop();
 });
 test('workspace entry validates latest geometry before opening and refuses failed refresh',async()=>{
- const f=fixture();await f.controller.start({});await f.both();assert.equal(typeof f.calls.at(-2),'object');assert.equal(f.calls.at(-1),'show');f.controller.showReading();f.surface.refreshGeometry=()=>false;
+ const f=fixture();await f.controller.start({});await f.both();const shown=f.calls.indexOf('show');assert.ok(shown>0);assert.equal(typeof f.calls[shown-1],'object');f.controller.showReading();f.surface.refreshGeometry=()=>false;
  assert.equal(f.controller.showWorkspace(),false);assert.equal(f.calls.at(-1),'suspend');assert.equal(f.calls.filter(x=>x==='show').length,1);assert.equal(f.controller.showWorkspace(),false);
 });
 for(const failure of ['false','throw'])test('geometry '+failure+' suspends presentation but retains recovery listeners',async()=>{

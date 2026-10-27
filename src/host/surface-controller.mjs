@@ -71,8 +71,11 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
  function recoverSidebar(state,inspection){
   // Recovery is driven by a new, proved native layout, never a timer retry.
   if(!state.sidebarRecoveryReady||inspection.preserveNativeSidebar||!inspection.sidebarRect||state.sidebarRecoveryEpoch===inspection.sidebarRevision)return;
-  state.sidebarRecoveryEpoch=inspection.sidebarRevision;state.sidebarRecoveryReady=false;
-  const target=surface.restoreRole?.(state.handle,'sidebar');if(!target)return;
+  state.sidebarRecoveryEpoch=inspection.sidebarRevision;
+  // A missing owned insertion point consumes this layout attempt, not every
+  // future recovery. Wait for a new proved revision; never retry on a timer.
+  let target;try{target=surface.restoreRole?.(state.handle,'sidebar');}catch{return;}
+  if(!target)return;state.sidebarRecoveryReady=false;
   state.frames.push({...target,window:target.frame.contentWindow});state.frameObserver?.observe(target.frame,{attributes:true,attributeFilter:['srcdoc']});
  }
  function frameDocumentsIntact(state){
@@ -118,7 +121,7 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
   if(adapter.hasNativeLayer()){suspend('native-layer');return false;}
   const inspection=adapter.inspect();
   if(inspection?.ok&&inspection.regionEpoch!==state.handle.regionEpoch){
-   const context=state.context,mode=state.desiredMode;void start({context,mode});return false;
+   const context=state.context,mode=state.desiredMode;void start({context,mode},state.sidebarDesired);return false;
   }
   if(!inspection?.ok){
    reportBoundary(inspection);state.geometryPaused=true;state.mode='suspended';removeReturn(state);surface.suspend(state.handle,'workspace-geometry');return false;
@@ -270,8 +273,11 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
   }catch{if(current===state&&!state.dormant){if(renewalStage)try{onFailure('surface-session-renew-'+renewalStage);}catch{}stop('session-renew-failed');}}
   finally{state.renewing=false;if(current===state&&!state.dormant){arm(state);publishSurface(state);}}
  }
- async function start(options){
+ async function start(options,sidebarDesired=true){
   stop('surface-restart');lastBoundary=null;const run=epoch,state={startedAt:elapsedNow(),epoch:run,intentEpoch:0,url:doc.location.href,registered:false,handle:null,grants:new Map(),earlyJoins:new Map(),pending:new Set(),button:null,timer:null,renewTimer:null,renewing:false,renewalCeiling:null,observer:null,appearanceObserver:null,appearanceTimer:null,appearanceKeys:new Map(),frames:[],surfaceKey:null,surfaceRevision:0,mode:'waiting',desiredMode:options?.mode??initialMode,resumeMode:options?.mode??initialMode,dormant:false,waking:false,geometryPaused:false,geometryRevision:0};current=state;
+  // Only the internal same-document layout restart passes this presentation
+  // choice. New starts default to visible and still require fresh frame grants.
+  state.sidebarDesired=sidebarDesired!==false;
   try{
    state.context=options?.context??await adapter.start(options);if(current!==state)return null;
    return await mountState(state);

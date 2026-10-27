@@ -517,6 +517,32 @@ test('explicit native-list choice survives geometry and modal recovery until wor
  assert.deepEqual(f.surface.visibility(),{workspace:true,sidebar:true});f.controller.stop();
 });
 
+test('same-document layout replacement preserves native-list choice but never old frame grants',async()=>{
+ const f=publishingFixture({initialMode:'reading'});await f.controller.start({});await f.both();
+ f.surrender({role:'sidebar',reason:'native-list'});f.actual({workspace:false,sidebar:false});
+ f.region();f.change();await drain();
+ assert.equal(f.calls.register,2);assert.deepEqual(f.surface.visibility(),{workspace:false,sidebar:false});
+ assert.equal(f.controller.isWorkspacePresented(),false,'replacement must acquire fresh grants');
+ await f.both();assert.deepEqual(f.surface.visibility(),{workspace:false,sidebar:false});
+ f.controller.showReading();f.slot.children[0].events.click({isTrusted:true});
+ assert.deepEqual(f.surface.visibility(),{workspace:true,sidebar:true});f.controller.stop();
+});
+
+for(const failure of ['missing-boundary','insertion-error'])test('sidebar '+failure+' remains local and recovers only on a new proved revision',async()=>{
+ const f=publishingFixture();let attempts=0,revision=1;const inspect=f.adapter.inspect;
+ f.adapter.inspect=()=>({...inspect(),sidebarRect:{x:0,y:0,width:240,height:400},sidebarRevision:revision,preserveNativeSidebar:false});
+ f.surface.refreshGeometry=()=>true;f.surface.retireRole=()=>{};f.surface.suspend=(_h,_reason,role)=>{if(role==='sidebar')f.actual({workspace:true,sidebar:false});};
+ f.surface.restoreRole=()=>{attempts++;if(attempts===1){if(failure==='insertion-error')throw Error('detached-boundary');return null;}return f.frames[1];};
+ f.bridge.releaseRole=async()=>({ok:true});await f.controller.start({});await f.both();
+ f.message('sidebar',{data:{type:'VAIWL_UI_SUSPEND',role:'sidebar'}});await drain();
+ assert.equal(attempts,1);assert.equal(f.controller.isWorkspacePresented(),true);
+ f.change();f.change();await drain();assert.equal(attempts,1,'no same-layout retries');
+ revision++;f.change();await drain();assert.equal(attempts,2);
+ assert.deepEqual(f.surface.visibility(),{workspace:true,sidebar:false},'restoration alone never grants presentation');
+ f.message('sidebar');await drain();assert.deepEqual(f.surface.visibility(),{workspace:true,sidebar:true});
+ assert.equal(f.calls.dispose,0);f.controller.revoke();revision++;f.change();await drain();assert.equal(attempts,2);
+});
+
 
 test('native dispatch holds sidebar masks off across geometry and releases only current authority',async()=>{
  for(const ending of ['release','revoke','route','deadline']){

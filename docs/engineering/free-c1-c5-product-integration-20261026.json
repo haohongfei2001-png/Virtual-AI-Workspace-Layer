@@ -1539,6 +1539,91 @@
       "pageCommandReadiness": "Existing security runner now binds visible state to the current owned workspace frame, discloses UNKNOWN once through formal UI, and verifies the expected stable object ID before the unchanged settled-IDB/attack baseline. Sidebar is optional; replacements revalidate ownership and never replay either action. Zero unexpected requests, native writes, database mutations or private leaks. Native finite-response function/results preserved. Not full SEC08/ACT20 or real-account acceptance.",
       "j3IndependentRoles": "Fixed MODERN fixture has 110px native history and no safe sidebar. Workspace, native history and parent AX/keyboard remain verified independently; no geometry relaxation. Registered-worker run completed 13 supported steps with no send and original drafts/nodes retained. Three readable-native-Range snippet steps NOT_COVERED; production snippet profile remains disabled/not certified. Prior immediate cold-start failure and masked-Range failure retained; neither is rewritten as PASS. UNKNOWN fixture history stays in its evidenced old segment, not invented recent use.",
       "partialIndependentRoles": "Existing partial-window runner now checks the current UNKNOWN row independently of the folded list. Native-list release remains a real user control. Removing rows from the exact connected pure-history root (only original H2 remains) retains workspace; sidebar mask must match independently observed visibility. Rename, native search, exact 75-to-76 scoped observed union, original draft/file identity and only offsets 25/50 passed. No unknown native control masking claim; no real-account acceptance. All failed oracle attempts retained; readonly independent review passed. No production source change."
+    },
+    "sidebarRecoveryContinuity20261027": {
+      "baseHead": "9951fbb23250d228d08d1563e58eeafbbac6b0b0",
+      "status": "PRODUCT_CODE_FIXED_REAL_NOT_RUN",
+      "module": "src/host/surface-controller.mjs",
+      "changes": [
+        "preserve native-list presentation choice across internal same-document region rebuild without reusing grants",
+        "retain sidebar recovery admission after null/throw only for a new proved layout revision"
+      ],
+      "regression": "three minimal failures reproduced; controller, geometry, native focus, termination and dormant suites passed",
+      "existingOracleCorrection": "geometry call-order assertion failed unchanged base; now checks proof immediately before workspace show, with rejection checks retained",
+      "independentReview": "night_sidebar_audit read-only review accepted scope and recovery guards",
+      "isolatedJourney": {
+        "status": "PASS",
+        "evidence": "ISOLATED_MV3_FORMAL_UI_LOCAL_SESSION_AND_PERSONAL",
+        "realChatGPT": "NOT_RUN",
+        "baseline": "chatgpt-desktop-observed-v6",
+        "package": {
+          "status": "OFFLINE_HOST_RECONSTRUCTION",
+          "releaseStatus": "NOT_RELEASE_READY",
+          "files": 199,
+          "unpacked": "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-3Xf7sp/package/extension",
+          "archive": "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-3Xf7sp/package/vaiwl-free-host-development.zip",
+          "archiveSha256": "2da348b2a58a0e9aa243f0c0583078d862ae9ef24c6c12bc8fee881575a8bf8c"
+        },
+        "checks": {
+          "partitionSlotWithFormalProjectAndMembers": true,
+          "sparseSidebarFitsContent": true,
+          "centeredNativePanelDoesNotConstrainWorkspace": true,
+          "nativeInputAndReturnKeepContinuousSidebar": true,
+          "themeDisclosureSurvivesHostChange": true,
+          "nativeDisclosureDoesNotRebuildSidebar": true,
+          "nativeScrollKeepsFrameAligned": true,
+          "nativeProjectUntouchedAndSpaceReversible": true,
+          "explicitWorkspaceReturnRestoresComposition": true,
+          "nativeMemberOpenPreservesOriginalDraftAndWorkspace": true,
+          "sameDocumentMemberRetainsProjectAndReturn": true,
+          "homeInputAndReturnKeepSidebar": true,
+          "long-chatInputAndReturnKeepSidebar": true,
+          "noInternalRequests": true
+        },
+        "requests": [
+          "/g/g-p-11111111111111111111111111111111/project",
+          "/c/44444444-4444-4444-8444-444444444444",
+          "/g/g-p-11111111111111111111111111111111/project",
+          "/",
+          "/c/44444444-4444-4444-8444-444444444444"
+        ],
+        "browserErrors": [],
+        "images": [
+          "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-3Xf7sp/partition-desktop-workspace.png",
+          "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-3Xf7sp/partition-native-collapsed.png",
+          "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-3Xf7sp/partition-narrow-workspace.png",
+          "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-3Xf7sp/partition-member-return.png",
+          "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-3Xf7sp/partition-native-reading.png",
+          "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-3Xf7sp/partition-home-reading.png",
+          "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-3Xf7sp/partition-long-chat-reading.png"
+        ]
+      },
+      "package": {
+        "status": "HOST_IMPLEMENTATION_UNVERIFIED",
+        "releaseStatus": "NOT_RELEASE_READY",
+        "files": 199,
+        "unpacked": "/private/tmp/VAIWL-v27-Continuity-Integrated-20261027/extension",
+        "archive": "/private/tmp/VAIWL-v27-Continuity-Integrated-20261027/vaiwl-free-host-development.zip",
+        "archiveSha256": "b3e081ad042c681c5058be11e188d17785fb6026e36386012e7e0b44a2955cf2"
+      },
+      "sourceMismatches": [],
+      "offlinePackageDifferences": [
+        "content.js",
+        "extension/classic-runtime.js",
+        "extension/config.mjs",
+        "extension/frame-bootstrap.js",
+        "extension/worker.mjs",
+        "manifest.json"
+      ],
+      "dailyChromeModified": false,
+      "realChrome": "NOT_RUN",
+      "privateOldObjectRecovery": "NOT_RUN",
+      "fullProductAccepted": false,
+      "limits": [
+        "native Project management disclosure remains intact and may repeat theme names",
+        "ambiguous rich-text draft uses new-tab safety fallback",
+        "new-document private recovery still requires person confirmation"
+      ]
     }
   }
 }
