@@ -155,6 +155,17 @@ test('single-role frame renderer reuses navigation without host DOM access',{tim
   mount.style.display='block';await paint();if(list().scrollTop!==240)throw Error('visible sidebar did not recover position');
   list().dispatchEvent(new WheelEvent('wheel',{bubbles:true,composed:true}));list().scrollTop=80;await paint();mount.style.height='340px';await paint();
   if(list().scrollTop!==80||nav.view().sidebarScroll!==80)throw Error('sidebar restoration overrode subsequent user scroll');
+  const fold=()=>nav.roots().sidebar.shadow.querySelector('[aria-label="折叠主题导航"]').click();
+  fold();await paint();nav.updateFrameProjection(dto);await paint();
+  if(nav.view().sidebarScroll!==80)throw Error('collapsed sidebar background refresh erased user scroll');
+  fold();await paint();
+  if(list().scrollTop!==80)throw Error('expanded sidebar did not restore user scroll');
+
+  nav.restoreFrameView({segment:0,oldOpen:[],sidebarOpen:[],capacities:[],scroll:0,sidebarScroll:180,sidebarVisible:false});nav.updateFrameProjection(dto);await paint();
+  const expand=nav.roots().sidebar.shadow.querySelector('[aria-label="折叠主题导航"]');
+  expand.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,composed:true,pointerId:7}));
+  expand.dispatchEvent(new PointerEvent('pointerup',{bubbles:true,composed:true,pointerId:7}));expand.click();await paint();
+  if(list().scrollTop!==180||nav.view().sidebarScroll!==180)throw Error('first expansion erased durable folded sidebar position');
   route='https://chatgpt.com/c/ref0';nav.updateFrameProjection({...dto,current:{nativeUrl:route,projectId:'S0',refId:'ref0'}});await paint();if(list().scrollTop>=80)throw Error('current navigation did not reveal the new current row');
   nav.updateFrameProjection({...dto,current:undefined,scope:'other-sidebar-scope'});await paint();if(nav.view().sidebarScroll!==0||list().scrollTop!==0)throw Error('sidebar position leaked to another scope');
   nav.stop();mount.style.height='800px';

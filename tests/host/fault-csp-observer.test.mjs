@@ -77,3 +77,8 @@ test('focus reveal exposes only bounded owned geometry and no focused content',(
  assert(exactCspControlMessage({type:'VAIWL_UI_REVEAL_FOCUS',role:'sidebar',top:10,bottom:40}));
  for(const value of [{type:'VAIWL_UI_REVEAL_FOCUS',role:'workspace'},{type:'VAIWL_UI_REVEAL_FOCUS',role:'sidebar',title:'private'}])assert.equal(exactCspControlMessage(value),false);
 });
+
+test('page-visible sidebar wheel carries only bounded geometry, no content or authority',()=>{
+ const hint={type:'VAIWL_UI_SIDEBAR_WHEEL',role:'sidebar',x:40,y:50,delta:-80};assert(exactCspControlMessage(hint));
+ for(const patch of [{role:'workspace'},{x:-1},{y:1025},{delta:0},{delta:1025},{delta:NaN},{title:'private'},{grantId:'private'}])assert.equal(exactCspControlMessage({...hint,...patch}),false);
+});

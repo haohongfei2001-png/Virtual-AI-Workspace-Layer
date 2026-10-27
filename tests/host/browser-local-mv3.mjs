@@ -36,7 +36,7 @@ try{
   await page.addInitScript(()=>document.addEventListener('DOMContentLoaded',()=>{const content=document.querySelector('#project-content');if(content)content.style.cssText='max-width:660px;margin-inline:auto';const welcome=document.querySelector('.home-composer-anchor');if(welcome)welcome.style.cssText='position:absolute;left:100px;top:110px;width:400px;height:120px';},{once:true}));
   await page.addInitScript({content:'if(window===window.top&&location.hostname==="127.0.0.1")document.addEventListener("DOMContentLoaded",()=>{('+materializePartitionedSidebar.toString()+')('+JSON.stringify(partitionDetails.sidebarStructure.rows)+');},{once:true});'});
   report.controlEvents=[];await page.exposeFunction('__recordControl',v=>{if(report.controlEvents.length<120)report.controlEvents.push(v);});
-  await page.addInitScript(()=>addEventListener('message',e=>{const d=e.data;if(e.origin.startsWith('chrome-extension://')&&d&&['VAIWL_UI_SUSPEND','VAIWL_UI_REVEAL_FOCUS','VAIWL_UI_BOOT'].includes(d.type))window.__recordControl({type:d.type,role:d.role,reason:d.reason,stage:d.stage});}));
+  await page.addInitScript(()=>addEventListener('message',e=>{const d=e.data;if(e.origin.startsWith('chrome-extension://')&&d&&['VAIWL_UI_SUSPEND','VAIWL_UI_REVEAL_FOCUS','VAIWL_UI_SIDEBAR_WHEEL','VAIWL_UI_BOOT'].includes(d.type))window.__recordControl({type:d.type,role:d.role,reason:d.reason,stage:d.stage});}));
   await page.goto(origin+'/g/'+P+'/project');
   const workspace=page.frameLocator('iframe[src="chrome-extension://'+id+'/workspace.html"]'),sidebar=page.frameLocator('iframe[src="chrome-extension://'+id+'/sidebar.html"]');
   await workspace.getByRole('link',{name:'Native B',exact:true}).first().waitFor({timeout:15000});
@@ -117,6 +117,31 @@ try{
 
   await page.evaluate(()=>{partitionedFixture.scroll.style.height='400px';});
   await page.waitForTimeout(200);
+  // A composed sidebar is one navigation journey: wheel at the end of our
+  // short theme list must reach the adjacent native management/recents region.
+  const wheelTarget=await theme.boundingBox();
+  await page.mouse.move(wheelTarget.x+wheelTarget.width/2,wheelTarget.y+wheelTarget.height/2);
+  const themes=sidebar.locator('.themes');
+  await themes.evaluate(n=>{const probe=document.createElement('div');probe.dataset.wheelProbe='';probe.style.height='700px';n.append(probe);n.scrollTop=0;});
+  await page.mouse.wheel(0,60);
+  await page.waitForFunction(()=>{const frame=document.querySelector('[id$="_sidebar"] iframe');return !!frame;});
+  await themes.evaluate(n=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+  assert((await themes.evaluate(n=>n.scrollTop))>0,'owned overflow consumes wheel before native scrolling');
+  assert.equal(await page.evaluate(()=>partitionedFixture.scroll.scrollTop),0);
+  await themes.evaluate(n=>{n.querySelector('[data-wheel-probe]').remove();n.scrollTop=n.scrollHeight;n.dispatchEvent(new WheelEvent('wheel',{bubbles:true,composed:true,cancelable:true,deltaY:80,clientX:30,clientY:30}));});
+  await themes.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+  assert.equal(await page.evaluate(()=>partitionedFixture.scroll.scrollTop),0,'synthetic wheel cannot move native sidebar');
+  await page.mouse.wheel(80,0);
+  await themes.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+  assert.equal(await page.evaluate(()=>partitionedFixture.scroll.scrollTop),0,'horizontal gestures do not become native vertical scroll');
+  await page.mouse.wheel(0,80);
+  await page.waitForFunction(()=>partitionedFixture.scroll.scrollTop>0,null,{timeout:2000});
+  assert.equal(await page.locator('#draft').inputValue(),'fixture draft');
+  report.checks.ownedSidebarWheelContinuesNativeFlow=true;
+  await page.evaluate(()=>{partitionedFixture.scroll.scrollTop=0;});
+  await themes.evaluate(n=>{n.scrollTop=0;});
+  await page.mouse.move(999,899);
+  await page.waitForFunction(()=>Math.abs(document.querySelector('[id$="_sidebar"]').getBoundingClientRect().top-document.querySelector('[data-va-sidebar-slot]').getBoundingClientRect().top)<1);
   const sidebarCanvasHeight=await page.locator('[id$="_sidebar"] iframe').evaluate(n=>n.getBoundingClientRect().height);
   const themeBeforeNativeScroll=await theme.boundingBox();
   await page.evaluate(()=>{partitionedFixture.scroll.scrollTop=30;});

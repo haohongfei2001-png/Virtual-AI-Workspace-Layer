@@ -1,5 +1,11 @@
 # VAIWL实际状态：渐进积累工程已接线，真实来源逐项待准入
 
+## 侧栏操作连续性（2026-10-27，接续bf85ecea；非产品完成）
+
+正式MV3复现并修复了主题frame滚动到边缘后无法继续到原生Project/近期区的问题。仅真实垂直滚轮、有效文档/grant、当前可见自有frame命中且内部滚动已到边缘时，向已证明的原生scrollport转交有界增量；水平/缩放/合成输入、原生弹层、撤权均不转交，不改变原生节点、展开选择或遮罩。另修复普通折叠后VIEW刷新、持久折叠布局首次展开，以及新恢复目标尚未绘制时旧DOM回写，三条滚动位置归零路径。
+
+反例先失败，修复后正式renderer定向回归及同包隔离MV3关联旅程通过，独立只读复核覆盖消息边界和恢复旁路。最后实际查看桌面、成员阅读和四格返回整屏图：`/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-K7nZHj/`。这仍是匿名结构/合成记录上的正式组件，不能当作真实账户视觉完成。原型最终`.board`为左对齐、max-width1240，356px自然卡宽继承；不拉大稀疏卡片或填假数据。原生composer/管理区的整体呈现差距仍按下节具体边界保留，**没有宣布只剩验收，也未冻结新的最终候选**。日常Chrome、原安装、旧库、草稿和三份stash未动；本批真实Mac NOT_RUN。
+
 ## 首页展示空间与原生输入连续性（2026-10-27，接续5465b05d；非最终交付）
 
 正式Host已将首页欢迎节点的遮罩范围和workspace展示范围分开：`inspectNativeHomeSurface()`在同一受支持main内证明header下方、原生composer上方的可用区域，`chatgpt-adapter`的inspect/return/区域身份比较一致消费它，controller观察相应布局祖先。仍只遮罩原welcome，不移动composer、不隐藏原生控件。扩大区域必须经过包含body外部兄弟分支、HTML伪元素、裁剪和布局效果的有界paint检查；失败只退回原welcome矩形。只有mount私有Map中的真实自有节点可跳过，伪造data属性无效。

@@ -57,6 +57,24 @@ export function createMountSurface({document:doc,createFrameURL,hasNativeLayer=(
   const delta=top<clip.y||bottom-top>clip.height?top-clip.y:bottom>end?bottom-end:0;
   if(delta){port.scrollTop+=delta;return placeSidebar(m,placement);}return true;
  };
+ // The top-layer frame is not a DOM child of the native scrollport, so the
+ // browser cannot chain its wheel there. Only the owned, visible hit location
+ // may forward a bounded vertical delta; no presentation or native action.
+ const scrollSidebar=(m,input)=>{
+  const placement=m.inspection.sidebarPlacement,sidebar=m.surfaces.find(s=>s.role==='sidebar');
+  if(!placement||!m.slotProved||!sidebar?.node.matches(':popover-open')||hasNativeLayer())return false;
+  const measured=placement.measure(m.slot),frame=sidebar.frame.getBoundingClientRect();
+  if(!measured||!input||![input.x,input.y,input.delta].every(Number.isFinite)||input.delta===0||Math.abs(input.delta)>1024||input.x<0||input.y<0||input.x>=frame.width||input.y>=frame.height)return false;
+  const x=frame.x+input.x,y=frame.y+input.y;
+  if(x<measured.x||x>=measured.x+measured.width||y<measured.y||y>=measured.y+measured.height||doc.elementFromPoint(x,y)!==sidebar.frame)return false;
+  const port=placement.scrollPort,before=port.scrollTop;
+  port.scrollTop=Math.max(0,Math.min(port.scrollHeight-port.clientHeight,before+input.delta));
+  if(port.scrollTop===before)return false;
+  // A completely clipped slot withdraws only this role. Its retained flow
+  // space allows ordinary native scrolling to reveal it again.
+  if(!placeSidebar(m,placement))surrender(m,'sidebar','sidebar-geometry');
+  return true;
+ };
  const refreshGeometry=(m,inspection)=>{
   const prior=m.inspection;
   const protectedNodes=[inspection?.header,inspection?.composer,...(inspection?.protectedRegions??[])];
@@ -86,6 +104,7 @@ export function createMountSurface({document:doc,createFrameURL,hasNativeLayer=(
  };
  return {
   revealSidebar(handle,focus){return revealSidebar(lookup(handle),focus);},
+  scrollSidebar(handle,input){return scrollSidebar(lookup(handle),input);},
   resizeSidebar(handle,height,{apply=true}={}){
    const m=lookup(handle),placement=m.inspection.sidebarPlacement;
    if(!placement||!Number.isInteger(height)||height<(placement.minHeight??240)||height>1024)return false;

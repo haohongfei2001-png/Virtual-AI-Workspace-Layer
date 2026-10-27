@@ -581,3 +581,15 @@ test('sidebar focus reveal needs the live focused frame and cannot grant present
  f.layer(false);send();await drain();assert.equal(reveals.length,1);assert.equal(f.calls.show,shown);
  f.controller.revoke();send();await drain();assert.equal(reveals.length,1);
 });
+
+test('sidebar edge wheel requires a correlated live grant and bounded geometry; never presents',async()=>{
+ const f=fixture(),scrolls=[];f.surface.scrollSidebar=(_handle,input)=>scrolls.push(input);
+ const send=(patch={},event={})=>f.message('sidebar',{data:{type:'VAIWL_UI_SIDEBAR_WHEEL',role:'sidebar',x:40,y:50,delta:80,...patch},...event});
+ await f.controller.start({});send();await drain();assert.deepEqual(scrolls,[]);
+ await f.both();const shown=f.calls.show;
+ send({}, {source:{}});send({}, {origin:'https://chatgpt.com'});
+ for(const patch of [{role:'workspace'},{x:-1},{x:4097},{y:1025},{delta:0},{delta:1025},{delta:NaN},{delta:1.5},{extra:true}])send(patch);
+ f.layer(true);send();await drain();assert.deepEqual(scrolls,[]);
+ f.layer(false);send();await drain();assert.deepEqual(scrolls,[{x:40,y:50,delta:80}]);assert.equal(f.calls.show,shown);
+ f.controller.revoke();send();await drain();assert.equal(scrolls.length,1);
+});

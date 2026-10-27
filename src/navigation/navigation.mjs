@@ -211,7 +211,12 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     page.scrollTop=held.target;held.applied=page.scrollTop;
   }
   function releaseRestoredScroll(){
-    if(view&&restoredSidebarScroll.has(view)){const list=roots?.sidebar?.shadow.querySelector('.themes');if(list)view.sidebarScroll=list.scrollTop;restoredSidebarScroll.delete(view);}
+    if(view&&restoredSidebarScroll.has(view)){
+      const list=roots?.sidebar?.shadow.querySelector('.themes');
+      // Clicking the disclosure is not a scroll choice in its hidden list.
+      // Keep the durable target until expansion creates a real scrollbox.
+      if(list&&!list.hidden&&list.clientHeight>0){view.sidebarScroll=list.scrollTop;restoredSidebarScroll.delete(view);}
+    }
     if(!view||!restoredScroll.has(view))return;
     const page=roots?.workspace?.scroller;if(page&&workspacePages.get(page)?.specialKey===null)view.scroll=page.scrollTop;
     restoredScroll.delete(view);
@@ -230,8 +235,14 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     list.scrollTop=held.target;held.applied=list.scrollTop;
   }
   function rememberSidebarScroll(list){
-    if(!view||!list)return;
+    // Folding or temporarily hiding the owned frame removes its scrollbox.
+    // The browser's clamped zero is not a user choice and must never overwrite
+    // the position saved for expanding/returning to the continuous sidebar.
+    if(!view||!list||list.hidden||list.clientHeight===0)return;
     const held=restoredSidebarScroll.get(view);
+    // A newly supplied layout has not painted yet; the previous DOM still
+    // belongs to the old layout and cannot replace that restoration target.
+    if(held?.applied===null)return;
     if(held){const clamped=Math.min(held.target,Math.max(0,list.scrollHeight-list.clientHeight));if(list.scrollTop===held.applied||list.scrollTop===clamped)return;restoredSidebarScroll.delete(view);}
     view.sidebarScroll=list.scrollTop;
   }
