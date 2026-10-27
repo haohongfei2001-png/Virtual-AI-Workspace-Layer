@@ -6,7 +6,7 @@ import {waitForSnippetCapture} from './snippet-capture-wait.mjs';
 import {createSnippetSelectionSession} from './snippet-selection-session.mjs';
 import {createChatGPTAdapter} from './chatgpt-adapter.mjs';
 import {createURLPolicy} from './url-policy.mjs';
-import {createMountSurface} from '../navigation/mount-surface.mjs';
+import {createFlowMountSurface} from '../navigation/flow-mount-surface.mjs';
 import {createSurfaceController} from './surface-controller.mjs';
 import {createFrameNativePlans} from './frame-native-plans.mjs';
 import {exactHostRecord} from './contract.mjs';
@@ -15,7 +15,7 @@ import {withRequestDeadline} from '../data/request-deadline.mjs';
 
 /** Isolated content composition. The entry must restrict supported hosts; this
  * module never exposes its runtime bridge or authority on the page window. */
-export function createHostContentSession({document:doc,runtime,origin=doc?.location?.origin,adapterFactory=createChatGPTAdapter,prepareDocument=null,identityReader=null,contextRecovery=false,automaticDormancy=false,surfaceFactory=createMountSurface,controllerFactory=createSurfaceController,plansFactory=createFrameNativePlans,now=Date.now,elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout,makeId=()=>crypto.randomUUID()}={}){
+export function createHostContentSession({document:doc,runtime,origin=doc?.location?.origin,adapterFactory=createChatGPTAdapter,prepareDocument=null,identityReader=null,contextRecovery=false,automaticDormancy=false,surfaceFactory=createFlowMountSurface,controllerFactory=createSurfaceController,plansFactory=createFrameNativePlans,now=Date.now,elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout,makeId=()=>crypto.randomUUID()}={}){
  if(prepareDocument!==null&&typeof prepareDocument!=='function')throw Error('invalid-document-readiness');
  if(typeof automaticDormancy!=='boolean')throw Error('invalid-automatic-dormancy');
  if(!doc?.defaultView||new URL(origin).origin!==origin||doc.location.origin!==origin||!['http:','https:'].includes(new URL(origin).protocol)||!tokenOK(runtime?.id)||typeof runtime.sendMessage!=='function'||typeof runtime.getURL!=='function'||!runtime.onMessage?.addListener)throw Error('invalid-content-session');
@@ -364,6 +364,10 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
      const anchor=s.snippets.read(m.selectionId,s.snippetRef);reply(anchor?{ok:true,anchor}:{ok:false});return;
     }catch{reply({ok:false});return;}
    }
+   if(m?.type==='HOST_NATIVE_MANAGEMENT'){
+    const allowed=exactHostRecord(m,['type','documentToken','producerToken','routeEpoch'])&&s.ready&&s.binding&&live(s)&&Date.parse(s.binding.expiresAt)>now()&&Object.entries(bindingFields(s.binding)).every(([k,v])=>m[k]===v);
+    reply(allowed?s.controller?.readNativeManagement?.()??[]:null);return;
+   }
    if(m?.type==='HOST_PRESENT_SURFACE'){
     const allowed=exactHostRecord(m,['type','documentToken','producerToken','routeEpoch','mode'])&&['workspace','workspace-current','reading','native-page'].includes(m.mode)&&s.ready&&s.binding&&live(s)&&Date.parse(s.binding.expiresAt)>now()&&Object.entries(bindingFields(s.binding)).every(([k,v])=>m[k]===v);
     if(!allowed){reply({ok:false});return;}
@@ -452,7 +456,7 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
    s.snippets=createSnippetSelectionSession({adapter:{selectedSnippet:ref=>adapter.selectedSnippet?.(ref)??null},now,elapsedNow,makeId,
     currentBinding:()=>live(s)&&s.ready&&s.binding&&Date.parse(s.binding.expiresAt)>now()&&s.snippetScopeGrant?JSON.stringify({...bindingFields(s.binding),scopeGrantId:s.snippetScopeGrant}):null,
     currentSelectionEpoch:()=>s.snippetRef?adapter.selectionEpoch?.(s.snippetRef)??null:null});
-   s.plans=plansFactory({adapter,showNativeReading:()=>s.adapter?.hasNativeLayer?.()!==true&&s.controller?.showNativeReading?.()===true,captureIntent:()=>s.controller?.intentGuard?.()??(()=>false),showReading:()=>s.adapter?.hasNativeLayer?.()!==true&&s.controller?.showReading()===true,now,elapsedNow,schedule,cancel,bindingCurrent:()=>live(s)&&Date.parse(s.binding.expiresAt)>now()&&adapter.inspect().ok?s.binding.documentToken+':'+s.binding.producerToken+':'+s.binding.routeEpoch:false});
+   s.plans=plansFactory({adapter,showNativeReading:()=>s.adapter?.hasNativeLayer?.()!==true&&s.controller?.showNativeReading?.()===true,captureIntent:()=>s.controller?.intentGuard?.()??(()=>false),showReading:()=>s.adapter?.hasNativeLayer?.()!==true&&s.controller?.showReading()===true,now,elapsedNow,schedule,cancel,bindingCurrent:()=>live(s)&&Date.parse(s.binding.expiresAt)>now()&&(s.controller?.isNativeStructureCurrent?.()??adapter.inspect().ok)?s.binding.documentToken+':'+s.binding.producerToken+':'+s.binding.routeEpoch:false});
    surface=surfaceFactory({document:doc,createFrameURL:({role})=>runtime.getURL(role+'.html'),hasNativeLayer:()=>adapter.hasNativeLayer()});
    const bridge={
     cancelledCloseReady:()=>{if(enabled&&live(s)&&s.ready&&!s.recoveryDenied)s.busyClose=false;},

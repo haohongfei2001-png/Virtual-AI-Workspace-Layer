@@ -28,3 +28,15 @@ test('editorKinds is copied rather than following later profile mutation',()=>{c
 test('rich boundary with editable parent cannot certify independent composer',()=>{const f=fixture();f.form.isContentEditable=true;assert.deepEqual(f.read(),{state:'unknown',flags:[]});});
 for(const count of [NaN,Infinity,-1,0.5,'0',undefined])test(`invalid rich childElementCount ${String(count)} remains unknown`,()=>{const f=fixture();f.editor.childElementCount=count;assert.deepEqual(f.read(),{state:'unknown',flags:[]});});
 test('throwing rich childElementCount getter remains unknown without writes',()=>{const f=fixture();Object.defineProperty(f.editor,'childElementCount',{get(){throw Error('PRIVATE STRUCTURE');}});assert.deepEqual(f.read(),{state:'unknown',flags:[]});assert.equal(f.writes(),0);});
+
+test('plain empty rich paragraph and break do not create a draft; opaque empty structures remain protected',()=>{
+ const f=fixture(),br={nodeType:1,tagName:'BR',attributes:[],childNodes:[]},p={nodeType:1,tagName:'P',attributes:[],childNodes:[br]};
+ f.editor.childElementCount=1;f.editor.childNodes=[p];assert.deepEqual(f.read(),{state:'clear',flags:[]});
+ for(const mutate of [()=>p.attributes.push({name:'data-attachment'}),()=>br.tagName='IMG',()=>p.childNodes.push(br)]){p.attributes=[];br.tagName='BR';p.childNodes=[br];mutate();assert.deepEqual(f.read(),{state:'unsaved',flags:['composer']});}
+});
+test('known empty rich placeholder never upgrades incomplete page risk to CLEAR',()=>{
+ const f=fixture(),br={nodeType:1,tagName:'BR',attributes:[],childNodes:[]};f.editor.childElementCount=1;f.editor.childNodes=[{nodeType:1,tagName:'P',attributes:[],childNodes:[br]}];
+ f.form.querySelectorAll=s=>s==='input[type="file"]'?[f.files]:[f.editor];
+ assert.deepEqual(createNativeInputRisk({document:f.doc,profile:{inputPresence:{formSelector:'#form'}}})(),{state:'unknown',flags:[]});
+ f.editor.textContent='x';assert.deepEqual(createNativeInputRisk({document:f.doc,profile:{inputPresence:{formSelector:'#form'}}})(),{state:'unknown',flags:['composer']});
+});

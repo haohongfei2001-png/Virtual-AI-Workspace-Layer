@@ -87,7 +87,7 @@ export function installBrowserLocalLifecycle({document:doc,runtime,session,profi
    reply({ok:false});return;
   }
   if(!exactHostRecord(m,['type']))return;
-  if(m.type==='HOST_LOCAL_LOCKED'){clear();waiting=true;run++;session.stop();reply({ok:true});return;}
+  if(m.type==='HOST_LOCAL_LOCKED'){clear();waiting=true;run++;session.stop();reply({ok:true});if(doc.visibilityState==='visible')void restart();return;}
   if(m.type==='HOST_LOCAL_RESTART'){void restart().then(ok=>reply({ok}),()=>reply({ok:false}));return true;}
   if(m.type==='HOST_DOCUMENT_INVALIDATED'){if(waiting)void restart();else void session.contextReady?.().catch(()=>{});}
  };

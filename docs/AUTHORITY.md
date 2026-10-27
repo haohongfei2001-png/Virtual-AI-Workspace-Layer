@@ -1,5 +1,14 @@
 # VAIWL：权威、权限与文档职责
 
+## 2026-10-27 双 Pro 最终裁决：正式文档流 Host（方案 B）
+
+用户正式采纳 [产品 F-01—F-08](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16#issuecomment-6437805652) 和 [Host 方案 B](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16#issuecomment-6437829589)。沿原 C1—C5、唯一分支/PR16 实施；不是新计划。
+
+本节替代下文历史 manual/fixed 私人双 surface、100vh 占位和滚走输入的承载合同：双 extension-origin iframe、正式 renderer、Worker、授权和原库保留；工作区/侧栏成为已证原生文档流布局成员。仅空的声明式退出开关可使用 Popover，不承载私人内容。原生节点不复制、移动或重绑；基线身份和增强态几何分别验证，关闭/失效/撤权/停用后条件 CSS 失效恢复。输入首手势完成前只保留几何，私人内容遇真实弹层立即让位；已关闭的退出开关不能被遗留手势重新激活。
+
+原生 NAV 是侧栏唯一滚动所有者；持久字段 `sidebarViewport:{owner:'native-nav',scroll}` 与主区 scroll 分开 CAS 合并，旧 sidebarScroll 不重解释为 NAV 坐标。F-01 管理去重仅接受当前文档、真实 ID、可信展开动作及实际可见重复行；未知原生管理语义保留其能力，不猜测折叠/隐藏。新文档私人确认、账号撤权和原生数据边界不变。实验 ZIP 尚未取得，本轮独立实现不声称应用/运行 Pro 的18文件补丁。历史验收保留但不自动适用于新 backend；真实 Mac 未运行仍 NOT_RUN。
+
+
 2026-10-22用户采纳[PR16体验裁决](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16#issuecomment-6335005042)：本人Mac Chrome主用连续体验为个人交付标准。原计划及81项原表按①个人必需/②发布完善/③后续优化/④取消简化分层；历史结果不改PASS，取消的全历史与逐消息完整审计不转为发布欠账。安全、权限、正确归属、资产、完整v2.7不削弱。
 
 2026-10-23用户正式采纳[PR16渐进积累修正6356448353](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16#issuecomment-6356448353)：Free按同scope/nativeID多来源逐字段积累，不以统一接口、全历史或逐消息完整审计作为首次可用前提。产品路线GO不代表网站提取许可；未获准的接口、DOM程序化提取和截获仍关闭，不改变身份/空间、成员证据、资产或恢复边界。

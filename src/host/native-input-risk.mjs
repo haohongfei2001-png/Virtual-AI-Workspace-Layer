@@ -24,6 +24,16 @@ function configuration(profile){
 // A partial observed composer can establish presence, never whole-page safety.
 // Keep unsupported voice/canvas/generation semantics UNKNOWN. Missing or opaque
 // composer structure prevents using a page-changing native control.
+// Empty rich editors often retain one plain paragraph / break. Recognize only
+// this inert grammar, not arbitrary empty elements (attachments can have no text).
+// This proves composer emptiness only; partial profiles still return UNKNOWN.
+function emptyRichPlaceholder(node){
+ if(node.childElementCount===0)return true;
+ const children=node.childNodes;if(!children||children.length!==1)return false;
+ const p=children[0];if(p.nodeType!==1||p.tagName!=='P'||p.attributes.length!==0||p.childNodes.length>1)return false;
+ if(p.childNodes.length===0)return true;
+ const br=p.childNodes[0];return br.nodeType===1&&br.tagName==='BR'&&br.attributes.length===0&&br.childNodes.length===0;
+}
 function partialComposerRisk(doc,profile){
  const formSelector=profile?.inputPresence?.formSelector;
  if(!selector(formSelector)||typeof doc?.querySelectorAll!=='function')return unknown;
@@ -39,7 +49,7 @@ function partialComposerRisk(doc,profile){
    if(!connected(node)||!form.contains(node))return result('unknown',['composer']);
    const text=node.tagName==='TEXTAREA'?node.value:node.textContent;
    if(typeof text!=='string')return result('unknown',['composer']);
-   if(text.length||node.tagName!=='TEXTAREA'&&node.childElementCount>0)draft=true;
+   if(text.length||node.tagName!=='TEXTAREA'&&!emptyRichPlaceholder(node))draft=true;
   }
   const files=[...form.querySelectorAll('input[type="file"]')];
   if(files.length>16)return result('unknown',['attachment']);
@@ -85,7 +95,7 @@ export function createNativeInputRisk({document:doc,profile}={}){
   for(let i=0;i<draftNodes.length;i++){
    const node=draftNodes[i],rich=kinds[i]==='contenteditable',text=rich?node.textContent:node.value,children=rich?node.childElementCount:0;
    if(typeof text!=='string'||!Number.isSafeInteger(children)||children<0)return unknown();
-   if(text.length||children)draft=true;
+   if(text.length||rich&&!emptyRichPlaceholder(node))draft=true;
   }
   const selected=files.files;
   if(!selected||!Number.isSafeInteger(selected.length)||selected.length<0)return unknown();

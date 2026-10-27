@@ -13,7 +13,7 @@ export function isEmptyViewportMarker(node,viewport,document){
 }
 // Explicit presentation variant for the observed pointer-transparent titlebar.
 // This proves an empty rectangle; it never supplies account or scope evidence.
-export function nativeReturnGapRect({document,header,slot,hitRoot,readingRoot=null,readingViewport=null,viewportFocus=null,viewportMarkers=null,headerLayout=null,gapPolicy=null,onReject=()=>{},isOwnedMask=()=>false,button=null,excluded=[],excludedRects=[]}){
+export function nativeReturnGapRect({document,header,slot,hitRoot,readingRoot=null,readingViewport=null,viewportFocus=null,viewportMarkers=null,headerLayout=null,gapPolicy=null,onReject=()=>{},isOwnedMask=()=>false,isOwnedSurface=()=>false,button=null,excluded=[],excludedRects=[]}){
  let stage='roots';const reject=()=>{try{onReject(stage);}catch{}return null;};
  try{
   const win=document.defaultView,rect=n=>n.getBoundingClientRect(),overlap=(a,b)=>a.x<b.x+b.width&&b.x<a.x+a.width&&a.y<b.y+b.height&&b.y<a.y+a.height;
@@ -25,7 +25,7 @@ export function nativeReturnGapRect({document,header,slot,hitRoot,readingRoot=nu
    const s=win.getComputedStyle(n);
    return s.pointerEvents==='none'&&s.opacity==='1'&&(s.backgroundColor==='rgba(0, 0, 0, 0)'||headerLayout==='plain-containers'&&/^rgb\(\d+, \d+, \d+\)$/.test(s.backgroundColor))&&s.backgroundImage==='none'&&s.mixBlendMode==='normal'&&['borderLeftWidth','borderRightWidth','borderTopWidth','borderBottomWidth'].every(k=>s[k]==='0px')&&['none','hidden'].includes(s.outlineStyle)&&['transform','translate','rotate','scale','filter','backdropFilter','boxShadow','textShadow','offsetPath','clipPath','maskImage'].every(k=>s[k]==='none')&&s.zoom==='1'&&['::before','::after'].every(p=>['none','normal'].includes(win.getComputedStyle(n,p).content));
   };
-  const h=rect(header),s=rect(slot),r={x:s.x+8,y:h.y+8,width:36,height:36},gapBlocks=[];
+  const h=rect(header),s=rect(slot),r={x:s.x+8,y:h.y+8,width:32,height:32},gapBlocks=[];
   // Some native chat headers contain a Project breadcrumb in the original
   // left gutter. Select an empty gap without moving or covering native controls.
   // The complete paint, hit-test and protected-region proof below still applies.
@@ -59,7 +59,7 @@ export function nativeReturnGapRect({document,header,slot,hitRoot,readingRoot=nu
    // An explicit native scroll region keeps its own tab stop and keyboard
    // behavior. Only the reading child is masked; never the viewport itself.
    const scrollRegion=viewportFocus==='native-scroll-region'&&readingViewport.getAttribute('role')==='region'&&readingViewport.getAttribute('tabindex')==='0'&&!readingViewport.hasAttribute('contenteditable')&&['auto','scroll'].includes(win.getComputedStyle(readingViewport).overflowY);
-   if(!readingRoot||readingViewport===hitRoot||readingRoot.parentElement!==readingViewport||!readingViewport.isConnected||readingViewport.ownerDocument!==document||!hitRoot.contains(readingViewport)||readingViewport.tagName!=='DIV'||!scrollRegion&&readingViewport.matches('[role],[tabindex],[contenteditable]')||readingViewport.shadowRoot||[...readingViewport.childNodes].some(n=>n.nodeType===3&&n.textContent.trim())||readingViewport.children.length>10||[...readingViewport.children].some(n=>n!==readingRoot&&!excluded.includes(n)&&!(viewportMarkers==='empty-div-v1'&&isEmptyViewportMarker(n,readingViewport,document))))return reject();
+   if(!readingRoot||readingViewport===hitRoot||readingRoot.parentElement!==readingViewport||!readingViewport.isConnected||readingViewport.ownerDocument!==document||!hitRoot.contains(readingViewport)||readingViewport.tagName!=='DIV'||!scrollRegion&&readingViewport.matches('[role],[tabindex],[contenteditable]')||readingViewport.shadowRoot||[...readingViewport.childNodes].some(n=>n.nodeType===3&&n.textContent.trim())||readingViewport.children.length>10||[...readingViewport.children].some(n=>n!==readingRoot&&!excluded.includes(n)&&!(isOwnedSurface(n)&&win.getComputedStyle(n).display==='none')&&!(viewportMarkers==='empty-div-v1'&&isEmptyViewportMarker(n,readingViewport,document))))return reject();
    for(const pseudo of ['::before','::after'])if(!['none','normal'].includes(win.getComputedStyle(readingViewport,pseudo).content))return reject();
    let n=readingViewport,depth=0;for(;n;n=n.parentElement){const style=win.getComputedStyle(n);if(++depth>128||n.hidden||n.inert||n.getAttribute('aria-hidden')==='true'||style.display==='none'||style.visibility!=='visible'||Number(style.opacity)===0)return reject();}
   }
@@ -183,7 +183,7 @@ export function nativeReturnGapRect({document,header,slot,hitRoot,readingRoot=nu
   stage='hit-test';
   const buttonStyle=button&&win.getComputedStyle(button);
   const rounded=buttonStyle&&['borderTopLeftRadius','borderTopRightRadius','borderBottomLeftRadius','borderBottomRightRadius'].every(k=>buttonStyle[k]==='9px')&&buttonStyle.clipPath==='none';
-  const points=[[1,1,!rounded],[35,1,!rounded],[1,35,!rounded],[35,35,!rounded],[18,18,true],...(rounded?[[10,10,true],[26,10,true],[10,26,true],[26,26,true]]:[])];
+  const points=[[1,1,!rounded],[31,1,!rounded],[1,31,!rounded],[31,31,!rounded],[16,16,true],...(rounded?[[10,10,true],[22,10,true],[10,22,true],[22,22,true]]:[])];
   for(const [dx,dy,buttonHit]of points){
    const x=r.x+dx,y=r.y+dy;
    const hits=document.elementsFromPoint(x,y),top=hits[0];

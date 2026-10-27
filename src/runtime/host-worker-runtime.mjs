@@ -68,6 +68,14 @@ export function createHostWorkerRuntime({chrome,indexedDB,origin='https://chatgp
    if(browserLocal&&mode==='native-control')service.authority.prepareNavigation(context.parentFrame,navigationURL);
    return chrome.tabs.sendMessage(context.parentFrame.tabId,{type:mode==='cancel'?'HOST_NATIVE_CANCEL_PLAN':mode==='native-control'?'HOST_NATIVE_DISPATCH_PLAN':'HOST_NATIVE_DISPATCH_CURRENT',...context.binding,command,expiresAt:new Date(Date.now()+remainingMs).toISOString()},{documentId:context.parentFrame.documentId});
   },
+  openLocalData:async({parentFrame,guard})=>{
+   if(!guard()||typeof chrome.action?.openPopup!=='function')return false;
+   const tab=await chrome.tabs.get(parentFrame.tabId),frame=await chrome.webNavigation.getFrame({tabId:parentFrame.tabId,frameId:0});
+   if(!guard()||tab.active!==true||tab.incognito||!Number.isInteger(tab.windowId)||frame?.documentId!==parentFrame.documentId||frame.documentLifecycle!=='active'||!allowedURL(frame.url))return false;
+   // Only the current parent window. No new tab, focus transfer or identity action.
+   await chrome.action.openPopup({windowId:tab.windowId});return guard();
+  },
+  readNativeManagement:({parentFrame,binding})=>chrome.tabs.sendMessage(parentFrame.tabId,{type:'HOST_NATIVE_MANAGEMENT',...binding},{documentId:parentFrame.documentId}),
   prepareNavigation:({parentFrame,binding,targets})=>chrome.tabs.sendMessage(parentFrame.tabId,{type:'HOST_NATIVE_PLAN',...binding,targets},{documentId:parentFrame.documentId})});
  oldSendObserver=offlineOldSendTerminal?createBrowserOldSendTerminal({webRequest:chrome.webRequest,origin,onTerminal:event=>service.oldSendTerminal?.terminal(event)}):null;
  firstSendObserver=offlineFirstSend?createBrowserFirstSend({webRequest:chrome.webRequest,origin,onSubmit:event=>service.firstSend?.submit(event)}):null;

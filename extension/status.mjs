@@ -8,21 +8,22 @@ const missing=/^layout-(missing|ambiguous)-(header|reading|composer|navigationSl
 const layoutMessage=missing?'本次检查：布局未就绪，'+layoutRegionNames[missing[2]]+(missing[1]==='missing'?'尚未找到。':'存在多个候选。')+'原生页面保持可用；本地空间状态见下方。':state.startsWith('layout-project-')?'本次检查：Project 页面布局尚未就绪（'+state.slice('layout-project-'.length)+'），增强界面未挂载；原生页面和草稿保持不变。':state.startsWith('layout-history-')?'本次检查：原生近期列表尚未就绪（'+state.slice(15)+'），原生页面保持可用。':state.startsWith('layout-sidebar-')?'本次检查：历史边界未就绪（'+state.slice(15)+'），原生页面保持可用。':state.startsWith('layout-geometry-')?'本次检查：布局安全检查未通过（'+state.slice('layout-geometry-'.length)+'），增强界面未挂载；原生页面保持可用。':state==='layout-check-failed'?'本次检查：布局准备未完成；原生页面保持可用。':null;
 document.getElementById('status').textContent=messages[state]??layoutMessage??(state.startsWith('foreground-')?'本次检查：前台连续性检查未通过（'+state.slice(11)+'），私人界面已撤回，原生页面保持可用。':null)??(state.startsWith('hello-')?'本次检查：初始文档连接未完成（'+state.slice(6)+'）。旧数据保持锁定；未启动界面或读取内部接口。':null)??(state.startsWith('surface-')?'本次检查：挂载检查未通过（'+state.slice(8)+'），原生页面保持可用；本地空间状态见下方。':'本次检查：状态不可用。');
 if(state==='unavailable')document.getElementById('status').textContent+=' 本地检查：'+({timeout:'查询超时。','tab-unavailable':'当前标签不可用。','invalid-reply':'未取得有效本地回复。','transport-error':'内容脚本通信不可用。','tab-query-failed':'当前标签查询失败。','document-query-failed':'当前文档查询失败。','document-unavailable':'当前文档尚未激活。','document-changed':'检查期间文档发生变化；未将旧回复用于新页面。','receiver-unavailable':'本次发送时内容脚本接收端不存在。','receiver-disconnected':'接收端在回复前断开。','tab-closed':'本次发送时标签已关闭。'}[localFailure]??'内容脚本已响应，但会话不可用。');
+const diagnostics=document.createElement('details'),diagnosticHeading=document.createElement('summary');diagnostics.id='diagnostic-details';diagnosticHeading.textContent='诊断详情';diagnostics.append(diagnosticHeading);document.body.append(diagnostics);
 const bootReceipt=readLocalBoot({tabs:chrome.tabs,webNavigation:chrome.webNavigation,target:bootTarget});
-void bootReceipt.then(boot=>{if(boot){const note=document.createElement('pre');note.textContent='当前文档启动（无内容） '+JSON.stringify(boot);document.getElementById('status').append(note);}});
+void bootReceipt.then(boot=>{if(boot){const note=document.createElement('pre');note.textContent='当前文档启动（无内容） '+JSON.stringify(boot);diagnostics.append(note);}});
 if(state.startsWith('layout-')||HOST_CONFIG.browserLocal&&localTarget&&state!=='verification-required'){const shape=await readActiveLocalLayout({tabs:chrome.tabs,webNavigation:chrome.webNavigation,target:localTarget});if(shape){
- if(shape.sidebarStructure){const coverage=document.createElement('pre');coverage.id='sidebar-structure-coverage';coverage.textContent='侧栏快照完整性（仅结构，不证明成员归属或允许接管） '+JSON.stringify(sidebarStructureCoverage(shape.sidebarStructure));document.getElementById('status').append(coverage);}
+ if(shape.sidebarStructure){const coverage=document.createElement('pre');coverage.id='sidebar-structure-coverage';coverage.textContent='侧栏快照完整性（仅结构，不证明成员归属或允许接管） '+JSON.stringify(sidebarStructureCoverage(shape.sidebarStructure));diagnostics.append(coverage);}
  const snapshot=HOST_CONFIG.browserLocal?await createSidebarSnapshot({webNavigation:chrome.webNavigation,target:localTarget,boot:await bootReceipt,shape}):null;
  if(HOST_CONFIG.browserLocal){
-  const receipt=document.createElement('p');receipt.id='sidebar-snapshot-receipt';receipt.textContent=snapshot?'匿名快照已绑定本次文档；构建 '+snapshot.build.slice(0,12)+'；结构 '+snapshot.coverage.state+'。完整快照不等于成员语义已确认。':'本次匿名快照未取得有效构建及文档绑定；没有生成可交付报告。';document.getElementById('status').append(receipt);
+  const receipt=document.createElement('p');receipt.id='sidebar-snapshot-receipt';receipt.textContent=snapshot?'匿名快照已绑定本次文档；构建 '+snapshot.build.slice(0,12)+'；结构 '+snapshot.coverage.state+'。完整快照不等于成员语义已确认。':'本次匿名快照未取得有效构建及文档绑定；没有生成可交付报告。';diagnostics.append(receipt);
   if(snapshot){const save=document.createElement('button');save.id='save-sidebar-snapshot';save.textContent='保存匿名侧栏快照';save.addEventListener('click',()=>{
    const url=URL.createObjectURL(new Blob([JSON.stringify(snapshot,null,2)+'\n'],{type:'application/json'})),a=document.createElement('a');a.href=url;a.download='vaiwl-sidebar-structure.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
-  });document.getElementById('status').append(save);}
+  });diagnostics.append(save);}
  }
- const note=document.createElement('pre');note.id='local-layout-shape';note.textContent=(shape.navigation?'导航末页及本代累计接收（无内容；累计不是去重库存） ':'布局类别（无内容） ')+JSON.stringify(shape);document.getElementById('status').append(note);}}
+ const note=document.createElement('pre');note.id='local-layout-shape';note.textContent=(shape.navigation?'导航末页及本代累计接收（无内容；累计不是去重库存） ':'布局类别（无内容） ')+JSON.stringify(shape);diagnostics.append(note);}}
 
 if(HOST_CONFIG.browserLocal){
- const note=document.createElement('p');note.className='note';note.textContent='即时层只显示本页已知导航。确认后，才读写你绑定的本地个人空间。这不是服务器身份认证：请确认当前账号及 Workspace 正确。同一页面内切换标签、普通操作和后台恢复无需重新确认。账户或空间切换风险会锁定旧数据。刷新和完整重启浏览器后先显示即时视图，恢复旧资料时再确认。';document.body.append(note);
+ const note=document.createElement('p');note.className='note';note.textContent='本页记录可继续使用。恢复本地资料需确认当前账号与空间。';document.body.append(note);
  const result=document.createElement('p');result.setAttribute('role','status');document.body.append(result);let pipelineCurrent=true;
  // Surface readiness does not prove a personal binding. Read the existing
  // private control status once; never unlock or infer a grant from a descriptor.
@@ -41,15 +42,18 @@ if(HOST_CONFIG.browserLocal){
  // buttons, and its late result must not overwrite a new confirmation/lock.
  if(['ready','reading','suspended','dormant'].includes(state)||state.startsWith('layout-')||state.startsWith('surface-')){
   let timer;void Promise.race([chrome.runtime.sendMessage({v:1,type:'HOST_LOCAL_SPACE',action:'pipeline'}),new Promise(resolve=>{timer=setTimeout(()=>resolve(null),1000);})]).then(r=>{
-   if(pipelineCurrent&&r?.ok===true&&validLocalPipeline(r.pipeline)){const trace=document.createElement('pre');trace.textContent='本地库、工作空间回复与框架回执（仅数量/版本；rendered仅证明节点已建立，不代表可见） '+JSON.stringify(r.pipeline);result.append(trace);}
+   if(pipelineCurrent&&r?.ok===true&&validLocalPipeline(r.pipeline)){const trace=document.createElement('pre');trace.textContent='本地库、工作空间回复与框架回执（仅数量/版本；rendered仅证明节点已建立，不代表可见） '+JSON.stringify(r.pipeline);diagnostics.append(trace);}
   },()=>{}).finally(()=>clearTimeout(timer));
  }
  if(chrome.storage?.local&&globalThis.navigator?.locks){
  const diagnostic=document.createElement('details'),summary=document.createElement('summary');summary.textContent='本次匿名近期列表诊断（一次性）';diagnostic.append(summary);
  const explain=document.createElement('p');explain.textContent='仅本首页，最多6秒；记录行类别、标记是否存在、位置及匿名节点变化。不读取标题、聊天ID、正文或凭据，不解锁旧库、不刷新、不联网。已消费后只显示原报告。';diagnostic.append(explain);
- const run=document.createElement('button');run.textContent='执行一次匿名列表观察';const report=document.createElement('pre');report.id='history-structure-report';diagnostic.append(run,report);document.body.append(diagnostic);
+ const run=document.createElement('button');run.textContent='执行一次匿名列表观察';const report=document.createElement('pre');report.id='history-structure-report';diagnostic.append(run,report);diagnostics.append(diagnostic);
  const saved=(await chrome.storage.local.get(HISTORY_DIAGNOSTIC_BATCH))[HISTORY_DIAGNOSTIC_BATCH];
  if(saved!==undefined){run.disabled=true;report.textContent=JSON.stringify({state:'spent',report:validHistoryStructureReport(saved?.report)?saved.report:null});}
  run.addEventListener('click',async()=>{run.disabled=true;report.textContent='正在进行一次只读观察…';try{report.textContent=JSON.stringify(await runHistoryDiagnosticOnce({chrome,locks:navigator.locks}));}catch{report.textContent='诊断不可用；不自动重试。';}});
  }
 }
+
+// Keep optional engineering details after the local-data controls.
+document.body.append(diagnostics);

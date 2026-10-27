@@ -22,3 +22,8 @@ test('durable role layout restores the selected group page and only open row win
  const workspace=queryForFrameResume(layout,'workspace');assert.equal(workspace.offset,8);assert.deepEqual(workspace.rowWindows.map(w=>[w.groupId,w.list]),[['p','current'],['p','old'],['q','current']]);
  const sidebar=queryForFrameResume(layout,'sidebar');assert.deepEqual(sidebar.rowWindows,[{groupId:'p',list:'current',rowOffset:17,rowLimit:17,paged:true}]);
 });
+
+test('inventory disclosure stores two independent bounded choices without changing legacy layouts',()=>{
+ const v={...fixture(),inventoryChoices:[['home',false],['side',true]]},copy=view(v);assert.deepEqual(copy,v);v.inventoryChoices[0][1]=true;assert.equal(copy.inventoryChoices[0][1],false);
+ for(const inventoryChoices of [[['home',true],['home',false]],[['project',true]],[['home',0]],null])assert.throws(()=>view({...fixture(),inventoryChoices}));
+});

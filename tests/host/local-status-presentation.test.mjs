@@ -5,14 +5,14 @@ import {readFileSync} from 'node:fs';
 import {readActiveLocalStatus,readActiveLocalLayout,validLocalPipeline} from '../../src/host/local-status.mjs';
 const source=readFileSync(new URL('../../extension/status.mjs',import.meta.url),'utf8');
 const html=readFileSync(new URL('../../extension/status.html',import.meta.url),'utf8');
-const importLine="import {HOST_CONFIG} from './config.mjs';\nimport {readActiveLocalStatus,readActiveLocalLayout,readLocalBoot,validLocalPipeline} from '../src/host/local-status.mjs';\nimport {HISTORY_DIAGNOSTIC_BATCH,validHistoryStructureReport,runHistoryDiagnosticOnce} from '../src/host/history-structure-diagnostic.mjs';\n";
+const importLine="import {HOST_CONFIG} from './config.mjs';\nimport {readActiveLocalStatus,readActiveLocalLayout,readLocalBoot,validLocalPipeline,createSidebarSnapshot} from '../src/host/local-status.mjs';\nimport {HISTORY_DIAGNOSTIC_BATCH,validHistoryStructureReport,runHistoryDiagnosticOnce,sidebarStructureCoverage} from '../src/host/history-structure-diagnostic.mjs';\n";
 assert(source.startsWith(importLine),'execute actual popup body after its exact imports');
 const AsyncFunction=Object.getPrototypeOf(async function(){}).constructor;
 async function render(initial,browserLocal=false,localState={ok:true}){
  let current=initial;const calls=[],node={textContent:''};
  const chrome={tabs:{query:async args=>{calls.push(['query',args]);return [{id:7,get title(){throw Error('PRIVATE_TITLE');},get url(){throw Error('PRIVATE_URL');}}];},sendMessage:async(...args)=>{calls.push(['send',...args]);return args[1]?.type==='HOST_LOCAL_LAYOUT'?{v:1,shape:null}:current;}}};
  const elements=[];
- const document={getElementById:id=>{assert.equal(id,'status');return node;},body:{append:e=>elements.push(e)},createElement:tag=>({tag,textContent:'',listeners:{},setAttribute(){},addEventListener(type,fn){this.listeners[type]=fn;}})};
+ const document={getElementById:id=>{assert.equal(id,'status');return node;},body:{append:e=>elements.push(e)},createElement:tag=>({tag,textContent:'',children:[],append(...nodes){this.children.push(...nodes);},listeners:{},setAttribute(){},addEventListener(type,fn){this.listeners[type]=fn;}})};
  chrome.runtime={sendMessage:async message=>{calls.push(['control',message]);return localState;}};
  await new AsyncFunction('HOST_CONFIG','readActiveLocalStatus','readActiveLocalLayout','readLocalBoot','validLocalPipeline','chrome','document',source.slice(importLine.length))({browserLocal},readActiveLocalStatus,readActiveLocalLayout,async()=>null,validLocalPipeline,chrome,document);
  return {calls,node,elements,change:value=>{current=value;}};
@@ -51,7 +51,7 @@ for(const [mode,exists,expected] of [['personal',true,/已解锁.*无需重复�
  assert.doesNotMatch(f.node.textContent,/无需重新确认/);
  assert.match(f.elements.filter(e=>e.tag==='p').at(-1).textContent,expected);
  assert.deepEqual(f.calls.filter(c=>c[0]==='control'),[['control',{v:1,type:'HOST_LOCAL_SPACE',action:'status'}],['control',{v:1,type:'HOST_LOCAL_SPACE',action:'pipeline'}]]);
- await drain();assert.equal(f.calls.length,6,'one surface, navigation, binding and anonymous pipeline snapshot; no polling or unlock');
+ await drain();assert.equal(f.calls.length,4,'legacy transport has no trusted document target: surface, binding and pipeline only; no polling or unlock');
 });
 test('unknown local binding response is not presented as an unlocked workspace',async()=>{
  const f=await render({v:1,state:'ready'},true,{ok:true,mode:'PRIVATE',exists:true});
@@ -71,4 +71,10 @@ test('history surface failure reports actual personal binding without asking to 
  assert.doesNotMatch(f.node.textContent,/未解锁旧数据/);
  assert.match(f.elements.filter(e=>e.tag==='p').at(-1).textContent,/已解锁.*无需重复确认/);
  assert.deepEqual(f.calls.filter(c=>c[0]==='control'),[['control',{v:1,type:'HOST_LOCAL_SPACE',action:'status'}],['control',{v:1,type:'HOST_LOCAL_SPACE',action:'pipeline'}]]);
+});
+
+test('engineering diagnostics are closed and separate from local confirmation controls',async()=>{
+ const f=await render({v:1,state:'reading'},true,{ok:true,mode:'locked',exists:true});
+ const detail=f.elements.find(e=>e.id==='diagnostic-details');assert(detail);assert.notEqual(detail.open,true);assert.equal(detail.children[0].textContent,'诊断详情');
+ assert(f.elements.some(e=>e.tag==='button'&&e.textContent.includes('确认当前账号')));assert(!detail.children.some(e=>e.tag==='button'&&e.textContent.includes('确认当前账号')));
 });

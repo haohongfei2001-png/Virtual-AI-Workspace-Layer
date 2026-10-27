@@ -309,9 +309,11 @@ export class WorkspaceRepository {
   }
 }
 export function validateView(v){
-  exact(v,['segment','oldOpen','sidebarOpen','capacities','scroll','sidebarVisible'],['freeSession','sidebarScroll','sidebarChoices']);
+  exact(v,['segment','oldOpen','sidebarOpen','capacities','scroll','sidebarVisible'],['freeSession','sidebarScroll','sidebarChoices','inventoryChoices','sidebarViewport']);
   if(v.sidebarScroll!==undefined&&(!Number.isFinite(v.sidebarScroll)||v.sidebarScroll<0||v.sidebarScroll>1e8))throw Error('invalid-view');
+  if(v.sidebarViewport!==undefined){exact(v.sidebarViewport,['owner','scroll']);if(v.sidebarViewport.owner!=='native-nav'||!Number.isSafeInteger(v.sidebarViewport.scroll)||v.sidebarViewport.scroll<0||v.sidebarViewport.scroll>1e8)throw Error('invalid-view');}
   if(v.sidebarChoices!==undefined&&(!Array.isArray(v.sidebarChoices)||v.sidebarChoices.length>256||new Set(v.sidebarChoices.map(p=>p?.[0])).size!==v.sidebarChoices.length||v.sidebarChoices.some(p=>!Array.isArray(p)||p.length!==2||typeof p[0]!=='string'||!p[0].length||p[0].length>512||/[\u0000-\u001f\u007f]/.test(p[0])||typeof p[1]!=='boolean')))throw Error('invalid-view');
+  if(v.inventoryChoices!==undefined&&(!Array.isArray(v.inventoryChoices)||v.inventoryChoices.length>2||new Set(v.inventoryChoices.map(p=>p?.[0])).size!==v.inventoryChoices.length||v.inventoryChoices.some(p=>!Array.isArray(p)||p.length!==2||!['home','side'].includes(p[0])||typeof p[1]!=='boolean')))throw Error('invalid-view');
   if(v.freeSession!==undefined){
     const s=v.freeSession;exact(s,['H','T','Z','policyRevision']);
     if(![7,14,30,60,90].includes(s.H)||!Number.isSafeInteger(s.T)||Math.abs(s.T)>=1000000||typeof s.Z!=='string'||s.Z.length>=100||!Number.isSafeInteger(s.policyRevision)||s.policyRevision<0)throw Error('invalid-free-session');

@@ -41,8 +41,8 @@ test('first history DTO restores expanded old rows and workspace scroll, later D
  f.nav.roots().workspace.scroller.scrollTop=211;f.nav.updateFrameProjection(dto());assert.equal(f.nav.roots().workspace.scroller.scrollTop,211);assert.equal(f.button('展开旧窗口 Original P2').getAttribute('aria-expanded'),'true');f.nav.stop();
 });
 test('sidebar restores actual expansion and sidebar scroll across subsequent projection',()=>{
- const f=fixture('sidebar');f.nav.restoreFrameView(layout());f.nav.updateFrameProjection(dto('sidebar'));assert.equal(f.button('侧栏主题 Original P2').getAttribute('aria-expanded'),'true');assert.equal(f.button('展开旧窗口 Original P2').getAttribute('aria-expanded'),'true');assert.equal(f.pane().querySelector('.themes').scrollTop,89);
- f.pane().querySelector('.themes').scrollTop=101;f.nav.updateFrameProjection(dto('sidebar'));assert.equal(f.pane().querySelector('.themes').scrollTop,101);f.nav.stop();
+ const f=fixture('sidebar');f.nav.restoreFrameView(layout());f.nav.updateFrameProjection(dto('sidebar'));assert.equal(f.button('侧栏项目 Original P2').getAttribute('aria-expanded'),'true');assert.equal(f.button('展开旧窗口 Original P2').getAttribute('aria-expanded'),'true');assert.equal(f.pane().querySelector('.themes').scrollTop,89);
+ f.pane().querySelector('.themes').clientHeight=200;f.pane().querySelector('.themes').scrollHeight=600;f.pane().querySelector('.themes').scrollTop=101;f.nav.updateFrameProjection(dto('sidebar'));assert.equal(f.pane().querySelector('.themes').scrollTop,101);f.nav.stop();
 });
 test('pending restore is consumed once and does not apply to a later different scope',()=>{
  const f=fixture();f.nav.restoreFrameView(layout());f.nav.updateFrameProjection(dto());f.nav.showWorkspace();f.nav.updateFrameProjection(dto('workspace','scopeB'));assert.equal(f.nav.view().oldOpen.size,0);assert.equal(f.nav.view().sidebarOpen.size,0);assert.equal(f.nav.view().capacities.size,0);assert.equal(f.nav.roots().workspace.scroller.scrollTop,0);f.nav.stop();

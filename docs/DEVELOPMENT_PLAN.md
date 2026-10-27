@@ -1,5 +1,14 @@
 # VAIWL 唯一开发计划：Free 完整交付 → Pro 智能增强
 
+## 2026-10-27 双 Pro 最终裁决：正式文档流 Host（方案 B）
+
+用户正式采纳 [产品 F-01—F-08](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16#issuecomment-6437805652) 和 [Host 方案 B](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16#issuecomment-6437829589)。沿原 C1—C5、唯一分支/PR16 实施；不是新计划。
+
+本节替代下文历史 manual/fixed 私人双 surface、100vh 占位和滚走输入的承载合同：双 extension-origin iframe、正式 renderer、Worker、授权和原库保留；工作区/侧栏成为已证原生文档流布局成员。仅空的声明式退出开关可使用 Popover，不承载私人内容。原生节点不复制、移动或重绑；基线身份和增强态几何分别验证，关闭/失效/撤权/停用后条件 CSS 失效恢复。输入首手势完成前只保留几何，私人内容遇真实弹层立即让位；已关闭的退出开关不能被遗留手势重新激活。
+
+原生 NAV 是侧栏唯一滚动所有者；持久字段 `sidebarViewport:{owner:'native-nav',scroll}` 与主区 scroll 分开 CAS 合并，旧 sidebarScroll 不重解释为 NAV 坐标。F-01 管理去重仅接受当前文档、真实 ID、可信展开动作及实际可见重复行；未知原生管理语义保留其能力，不猜测折叠/隐藏。新文档私人确认、账号撤权和原生数据边界不变。实验 ZIP 尚未取得，本轮独立实现不声称应用/运行 Pro 的18文件补丁。历史验收保留但不自动适用于新 backend；真实 Mac 未运行仍 NOT_RUN。
+
+
 2026-10-27原C2/C4/C5继续解决用户截图对应的可证代码差额：严格透明composer包装路径、结构身份与绘制回退分离、语义改变撤回停靠，以及sidebar首个尺寸消息在授权join竞态后的有界重测。正式隔离输入/四格/成员连续旅程和同包闭包已核；原安装不动。已核磁盘8545f5e4但运行构建UNKNOWN；Project未知日期默认可达，截图缺少同期库/VIEW/绑定回执，未猜定其丢失层。真实产品仍NOT_ACCEPTED，不将隔离通过或审阅包称为交付，详见STATUS首节。
 
 2026-10-27按最新用户可逆布局授权，原C2/C4/C5首页整合已接入主画布/输入目的区双重绘制证明、同节点条件CSS、实际应用后复核和存续失败撤回；原生工具click完成再让位，reading/关闭/节点替换/撤权/disable恢复原布局。继承分区管理语义、卡片和持久化，未新增路线。关联正式MV3与桌面/窄屏图已核，日常安装不更新；本批真实Mac NOT_RUN，未知宿主变体保留原生，不冒充完整产品验收。详见STATUS首节；先前“首页不能移动输入”的限制由AUTHORITY最新用户授权替代，历史证据保留。

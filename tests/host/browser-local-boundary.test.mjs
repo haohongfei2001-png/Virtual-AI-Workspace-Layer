@@ -182,3 +182,9 @@ test('a slow diagnostic header cannot delay binding status or occupy the confirm
  assert.equal(lateGuard(),false,'new confirmation fences the old diagnostic read');release();
  assert.equal((await pending).pipeline,undefined);
 });
+
+test('worker lock notification after focus clears the witness and restarts only a fresh instant session',async()=>{
+ const f=lifecycleFixture();await f.message({type:'HOST_LOCAL_CONTINUITY',action:'arm',nonce:'nonce',revision:0,expiresAt:Date.now()+60000});
+ f.win.dispatchEvent(new Event('focus'));await f.message({type:'HOST_LOCAL_LOCKED'});await new Promise(r=>setImmediate(r));
+ assert.equal(f.starts(),1);assert.equal((await f.message({type:'HOST_LOCAL_CONTINUITY',action:'probe',challenge:'check'})).nonce,null);f.remove();
+});

@@ -11,7 +11,7 @@ import {validateCurrentBodyProposal} from '../../src/host/current-body-claim.mjs
 import {createURLPolicy} from '../../src/host/url-policy.mjs';
 const NOW='2026-10-14T00:00:00Z',url='https://chatgpt.com/';
 // Mock IndexedDB and explicitly authored provider response; no browser auth claim.
-async function fixture(t,{prepareNavigation=null,presentSurface=null,selectionBridge=null,documentURL=url,priorityProof=false,elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout}={}){
+async function fixture(t,{prepareNavigation=null,presentSurface=null,readNativeManagement=null,openLocalData=null,selectionBridge=null,documentURL=url,priorityProof=false,elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout}={}){
  const base=new ScopeRepository({indexedDB:new MockIDBFactory(),databaseName:'host-read-binding'});t.after(()=>base.close());
  const workspaces=new WorkspaceRepository({baseRepository:base,clock:()=>NOW});
  const evidence=new FreeEvidenceRepository({baseRepository:base,clock:()=>NOW});
@@ -21,7 +21,7 @@ async function fixture(t,{prepareNavigation=null,presentSurface=null,selectionBr
  if(priorityProof)Object.assign(profile,{currentBody:{rootSelector:'main',conversationIdAttribute:'data-id',messageSelector:'article',messageIdAttribute:'data-id'},sendIntent:{formSelector:'form',editorSelector:'textarea',sendButtonSelector:'button'}});
  const uiURLs={workspace:'chrome-extension://extension/workspace.html',sidebar:'chrome-extension://extension/sidebar.html'};
  const children=Object.fromEntries(Object.entries(uiURLs).map(([role,url],i)=>[role,{...sender,frameId:i+1,documentId:'ui_'+role,url}]));
- const service=createHostBindingService({currentMetadataReadEnabled:priorityProof,sendCandidatesEnabled:priorityProof,elapsedNow,schedule,cancel,extensionId:'extension',prepareNavigation,presentSurface,selectionBridge,uiURLs,getContexts:async({documentIds})=>Object.values(children).filter(c=>documentIds.includes(c.documentId)).map(c=>({contextType:'TAB',documentId:c.documentId,frameId:c.frameId,tabId:1,incognito:false,documentUrl:c.url,documentOrigin:'chrome-extension://extension'})),getFrame:async()=>({documentId:'document',documentLifecycle:'active',url:documentURL}),allowedURL:value=>value===documentURL,repository:base,workspaceRepository:workspaces,freeEvidenceRepository:evidence,provider:{readCurrentConversation:async()=>({principalKey:'principal_'+digest(['chatgpt-principal-v1',principal]),contextKey:'context_'+digest(['chatgpt-context-v1',principal,'personal']),expiresAt:'2026-10-14T01:00:00Z',providerProfile:'explicit-test-provider',transport:'worker-fixed-fetch',metadata:{protocol:'vaiwl-conversation-metadata-candidate/1',conversationId:'c1',state:'candidate',messages:[],gaps:[],coverage:'observed-only'}}),read:async()=>{providerReads++;return {principalId:principal,expiresAt:'2026-10-14T01:00:00Z',contexts:[{id:'personal',kind:'personal'}],providerProfile:'explicit-test-provider',transport:'worker-fixed-fetch'};}},profile:{id:'personal',singlePersonalDefault:true},surfaceProfiles:new Map([[profile.id,profile]]),now:()=>time,makeId:()=>`token_${++n}`});
+ const service=createHostBindingService({currentMetadataReadEnabled:priorityProof,sendCandidatesEnabled:priorityProof,elapsedNow,schedule,cancel,extensionId:'extension',prepareNavigation,presentSurface,readNativeManagement,openLocalData,selectionBridge,uiURLs,getContexts:async({documentIds})=>Object.values(children).filter(c=>documentIds.includes(c.documentId)).map(c=>({contextType:'TAB',documentId:c.documentId,frameId:c.frameId,tabId:1,incognito:false,documentUrl:c.url,documentOrigin:'chrome-extension://extension'})),getFrame:async()=>({documentId:'document',documentLifecycle:'active',url:documentURL}),allowedURL:value=>value===documentURL,repository:base,workspaceRepository:workspaces,freeEvidenceRepository:evidence,provider:{readCurrentConversation:async()=>({principalKey:'principal_'+digest(['chatgpt-principal-v1',principal]),contextKey:'context_'+digest(['chatgpt-context-v1',principal,'personal']),expiresAt:'2026-10-14T01:00:00Z',providerProfile:'explicit-test-provider',transport:'worker-fixed-fetch',metadata:{protocol:'vaiwl-conversation-metadata-candidate/1',conversationId:'c1',state:'candidate',messages:[],gaps:[],coverage:'observed-only'}}),read:async()=>{providerReads++;return {principalId:principal,expiresAt:'2026-10-14T01:00:00Z',contexts:[{id:'personal',kind:'personal'}],providerProfile:'explicit-test-provider',transport:'worker-fixed-fetch'};}},profile:{id:'personal',singlePersonalDefault:true},surfaceProfiles:new Map([[profile.id,profile]]),now:()=>time,makeId:()=>`token_${++n}`});
  const request=(type,extra={})=>service.handle({v:1,type,clientId:'client',seq:++seq,...extra},sender);
  let binding,bound;
  async function bind(){const hello=await request('HOST_HELLO');assert.equal(hello.ok,true);binding=hello.binding;const {documentToken,producerToken,routeEpoch}=binding;assert.equal((await request('HOST_REFRESH',{documentToken,producerToken,routeEpoch})).state,'verified');bound=await request('BIND');assert.equal(bound.ok,true,JSON.stringify(bound));return bound;}
@@ -848,4 +848,20 @@ test('source revocation reaches both frame responses while replacement page is p
  assert.equal((await h.view()).state,'preparing');for(let i=0;i<100&&!release;i++)await drain();assert.equal(typeof release,'function');
  for(const role of ['workspace','sidebar']){const result=await h.view(role);assert.equal(result.state,'preparing');assert.equal(result.clearProjection,true);}
  release();for(let i=0;i<30;i++)await drain();for(const role of ['workspace','sidebar']){const result=await h.view(role);assert.equal(result.ok,false);assert.equal(result.reason,'request-timeout');assert.equal(result.clearProjection,true);}
+});
+
+test('local data entry opens only from exact current sidebar grant and never confirms identity',async t=>{
+ let opened=0;const h=await fixture(t,{openLocalData:async({parentFrame,guard})=>{assert.equal(parentFrame.documentId,'document');assert(guard());opened++;return true;}});
+ await h.bind();await h.mount();const message=role=>({v:1,type:'HOST_UI_LOCAL_DATA',grantId:h.grants[role].id,mountId:'mount'});
+ assert.equal((await h.service.handle(message('sidebar'),h.children.sidebar)).ok,true);assert.equal(opened,1);
+ assert.equal((await h.service.handle(message('workspace'),h.children.workspace)).ok,false);
+ assert.equal((await h.service.handle(message('sidebar'),h.sender)).ok,false);
+ h.switchPrincipal('different');assert.equal((await h.service.handle(message('sidebar'),h.children.sidebar)).ok,false);assert.equal(opened,1);
+});
+test('native management is scope-bound presentation, independent of VIEW and cannot publish stale replies',async t=>{
+ let release;const h=await fixture(t,{readNativeManagement:()=>new Promise(r=>release=r)});await h.bind();await h.mount();
+ const message={v:1,type:'HOST_UI_NATIVE_MANAGEMENT',grantId:h.grants.sidebar.id,mountId:'mount'};
+ const pending=h.service.handle(message,h.children.sidebar);for(let i=0;i<30&&!release;i++)await drain();assert(release);
+ h.switchPrincipal('different');release([{projectId:'p1',refIds:['c1']}]);assert.equal((await pending).ok,false);
+ assert.equal((await h.service.handle(message,h.children.sidebar)).ok,false);
 });

@@ -78,3 +78,9 @@ html[data-vaiwl-theme="dark"] body[data-frame-role="sidebar"] { --surface:#17171
 /* This is the existing temporary native-entry panel, slotted into the formal
    renderer. Keep it beside known content, never pinned below an empty screen. */
 body[data-frame-role="workspace"] [data-vaiwl-candidate-root] { max-width:356px; padding:6px 4px; }
+
+/* Document-flow sidebar: the native NAV is the sole scroll owner. No viewport
+   sizing, nested theme scrollbox, or candidate-height cap in this role. */
+html:has(body[data-frame-role="sidebar"]), body[data-frame-role="sidebar"],
+body[data-frame-role="sidebar"] main {height:auto;overflow:visible;}
+body[data-frame-role="sidebar"] main > div, body[data-frame-role="sidebar"] [data-vaiwl-candidate-root][open] > div {flex:none;max-height:none;overflow:visible;}

@@ -14,7 +14,7 @@ import {projectFreeFrame,freeFrameRowDTO} from './free-frame-projection.mjs';
 import {withRequestDeadline} from '../data/request-deadline.mjs';
 /** One privileged replica per mount, shared by its two granted UI documents.
  * Preparation is polled in bounded RPCs; a pending read is never an empty view. */
-export function createHostViewService({ui,readService,workspaceRepository=null,prepareNavigation=null,registerCurrentNavigation=null,nativeCandidatesEnabled=false,presentSurface=null,nativeWritePending=()=>false,clock=()=>new Date().toISOString(),maxViews=32,elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout}={}){
+export function createHostViewService({ui,readService,workspaceRepository=null,prepareNavigation=null,readNativeManagement=null,openLocalData=null,registerCurrentNavigation=null,nativeCandidatesEnabled=false,presentSurface=null,nativeWritePending=()=>false,clock=()=>new Date().toISOString(),maxViews=32,elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout}={}){
  if(typeof nativeWritePending!=='function'||typeof ui?.withScope!=='function'||!readService||!Number.isInteger(maxViews)||maxViews<1||maxViews>128)throw Error('invalid-host-view-service');
  const views=new Map(),resumes=new Map(),readWindows=new Map();let stopped=false,refreshes=0,reads=0,scopeWork=0,deliverySequence=0;const layoutWrites=new Map();
  // A cancelled owner refresh can settle before its underlying read does.
@@ -68,6 +68,8 @@ export function createHostViewService({ui,readService,workspaceRepository=null,p
  function roleLayout(value,role){
   if(!value)return null;const {freeSession,...layout}=value,prefix=role+'|';
   layout.sidebarScroll??=0;
+  if(role!=='sidebar')delete layout.sidebarViewport;
+  if(layout.inventoryChoices)layout.inventoryChoices=layout.inventoryChoices.filter(([owner])=>owner===(role==='sidebar'?'side':'home'));
   // The sidebar has no historical-segment navigator. Main workspace history
   // and scroll belong only to workspace; restoring them here hides recent
   // projects after a new document even though its own choices survived.
@@ -88,7 +90,8 @@ export function createHostViewService({ui,readService,workspaceRepository=null,p
    const capacities=view.capacities.filter(([key])=>!key.startsWith('frame-page:'));
    if((query.offset??0)!==0||(query.limit??8)!==8)capacities.push(['frame-page:'+JSON.stringify([query.offset??0,query.limit??8]),1]);
    const merged={...prior,oldOpen:[...prior.oldOpen.filter(k=>!ownOld(k)),...view.oldOpen.filter(ownOld)],capacities:[...prior.capacities.filter(([k])=>!k.startsWith(prefix)&&(side||k.includes('|'))),...capacities.map(([k,n])=>[prefix+k,n])]};
-   if(side)Object.assign(merged,{sidebarScroll:view.sidebarScroll,sidebarOpen:view.sidebarOpen,sidebarVisible:view.sidebarVisible,...(view.sidebarChoices?{sidebarChoices:view.sidebarChoices}:{})});
+   if(view.inventoryChoices){const owner=side?'side':'home';merged.inventoryChoices=[...(prior.inventoryChoices??[]).filter(([key])=>key!==owner),...view.inventoryChoices.filter(([key])=>key===owner)];}
+   if(side)Object.assign(merged,{sidebarScroll:view.sidebarScroll,sidebarOpen:view.sidebarOpen,sidebarVisible:view.sidebarVisible,...(view.sidebarViewport?{sidebarViewport:view.sidebarViewport}:{}),...(view.sidebarChoices?{sidebarChoices:view.sidebarChoices}:{})});
    else Object.assign(merged,{segment:view.segment,scroll:view.scroll,freeSession:session});
    const result=await workspaceRepository.saveView(context.scope,merged,stored.view?.revision??0,{guard});
    if(result?.ok===true&&guard())entry.persistedViewRevision=result.revision;
@@ -247,6 +250,29 @@ export function createHostViewService({ui,readService,workspaceRepository=null,p
     delivery.entry.lastWorkspaceDelivery={versions:[num(p.revision),num(p.workspaceRevision),evidence,num(p.viewRevision)],segment:num(p.segment),inventory:[p.inventory?.projects,p.inventory?.refs].map(num),groups:[p.groups.total,p.groups.items.length].map(num),noProject:[p.entries.noProject.total,p.entries.noProject.items.length].map(num),unknown:[p.entries.unknown.total,p.entries.unknown.items.length].map(num)};
    }
    return result;}catch(error){return {ok:false,reason:reason(error)};}finally{active=false;if(delivery)releaseRead(delivery.entry,delivery.window,delivery.generation);}
+ }
+ // Presentation-only native management evidence uses the exact granted parent
+ // document. It is independent of VIEW availability and navigation plan success.
+ // Opens the existing extension-owned confirmation UI; never unlocks data.
+ async function localData(input,sender){
+  if(!exactHostRecord(input,['v','type','grantId','mountId'])||input.v!==1||input.type!=='HOST_UI_LOCAL_DATA')return {ok:false};
+  let active=true;
+  try{return await withRequestDeadline(()=>withScope({sender,grantId:input.grantId,mountId:input.mountId},async context=>{
+   if(context.role!=='sidebar'||typeof openLocalData!=='function')return {ok:false};
+   const guard=()=>active&&context.isCurrent();
+   return {ok:await openLocalData({parentFrame:context.parentFrame,guard})===true&&guard()};
+  }),{timeoutMs:1000,now:elapsedNow,schedule,cancel});}catch{return {ok:false};}finally{active=false;}
+ }
+ async function nativeManagement(input,sender){
+  if(!exactHostRecord(input,['v','type','grantId','mountId'])||input.v!==1||input.type!=='HOST_UI_NATIVE_MANAGEMENT')return {ok:false};
+  let active=true;
+  try{return await withRequestDeadline(()=>withScope({sender,grantId:input.grantId,mountId:input.mountId},async context=>{
+   if(context.role!=='sidebar'||!readNativeManagement)return {ok:true,items:[]};
+   const items=await readNativeManagement({parentFrame:context.parentFrame,binding:context.binding});
+   if(!active||!context.isCurrent()||!Array.isArray(items)||items.length>32)throw Error('stale-native-management');
+   const seen=new Set();for(const item of items){if(!exactHostRecord(item,['projectId','refIds'])||!tokenOK(item.projectId)||seen.has(item.projectId)||!Array.isArray(item.refIds)||item.refIds.length>200||item.refIds.some(id=>!tokenOK(id))||new Set(item.refIds).size!==item.refIds.length)throw Error('invalid-native-management');seen.add(item.projectId);}
+   return {ok:true,items};
+  }),{timeoutMs:1000,now:elapsedNow,schedule,cancel});}catch{return {ok:false};}finally{active=false;}
  }
  async function navigationPlans(input,sender){
   let m,active=true;const started=elapsedNow();
@@ -493,5 +519,5 @@ export function createHostViewService({ui,readService,workspaceRepository=null,p
   const matching=[...views.values()].filter(e=>e.scopeKey===scopeKey&&e.parentFrame.tabId===frame.tabId&&e.parentFrame.documentId===frame.documentId&&e.parentFrame.actualURL===frame.actualURL&&e.isCurrent());
   return matching.length===1&&matching[0].lastWorkspaceDelivery?structuredClone(matching[0].lastWorkspaceDelivery):null;
  }
- return Object.freeze({navigationPlans,receipt,receiptSummary,deliverySummary,isIdle,handle,resume,present,confirmScope,isForegroundReadPending:liveWindow,nativePublished(scopeKey){const window=readWindows.get(scopeKey);if(window&&!liveWindow(scopeKey)){if([...views.values()].some(entry=>entry.scopeKey===scopeKey))window.used=false;else readWindows.delete(scopeKey);}for(const entry of views.values())if(entry.scopeKey===scopeKey&&entry.pending&&entry.isCurrent())entry.deferPreparation?.();},resolveSnippetView,enterCurrent,undoAutoHorizon,setHorizon,setWorkingSet,setCompactRows,refreshScope(scopeKey){for(const entry of views.values())if(entry.scopeKey===scopeKey&&entry.isCurrent()&&!retryableRead(entry.error))begin(entry);},revokeDocument,revokeTab,revokeMount:remove,stop(){stopped=true;readWindows.clear();resumes.clear();for(const key of [...views.keys()])remove(key);}});
+ return Object.freeze({navigationPlans,nativeManagement,localData,receipt,receiptSummary,deliverySummary,isIdle,handle,resume,present,confirmScope,isForegroundReadPending:liveWindow,nativePublished(scopeKey){const window=readWindows.get(scopeKey);if(window&&!liveWindow(scopeKey)){if([...views.values()].some(entry=>entry.scopeKey===scopeKey))window.used=false;else readWindows.delete(scopeKey);}for(const entry of views.values())if(entry.scopeKey===scopeKey&&entry.pending&&entry.isCurrent())entry.deferPreparation?.();},resolveSnippetView,enterCurrent,undoAutoHorizon,setHorizon,setWorkingSet,setCompactRows,refreshScope(scopeKey){for(const entry of views.values())if(entry.scopeKey===scopeKey&&entry.isCurrent()&&!retryableRead(entry.error))begin(entry);},revokeDocument,revokeTab,revokeMount:remove,stop(){stopped=true;readWindows.clear();resumes.clear();for(const key of [...views.keys()])remove(key);}});
 }

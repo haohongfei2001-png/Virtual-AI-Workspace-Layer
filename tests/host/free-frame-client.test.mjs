@@ -770,7 +770,7 @@ test('authority renewal cannot retire the one-second pressed-control hold before
 test('sidebar reannounces its intrinsic size when the parent confirms visibility after grant join',async()=>{
  const classes=names=>({contains:name=>names.includes(name)});
  const row={hidden:false,classList:classes([]),getBoundingClientRect:()=>({height:40})};
- const panel={children:[{hidden:false,classList:classes(['themes']),children:[row]}, {hidden:false,classList:classes(['sidebar-footer']),getBoundingClientRect:()=>({height:40})}]};
+ const panel={hidden:false,classList:classes([]),getBoundingClientRect:()=>({height:200}),children:[{hidden:false,classList:classes(['themes']),children:[row]}, {hidden:false,classList:classes(['sidebar-footer']),getBoundingClientRect:()=>({height:40})}]};
  const f=fixture('sidebar',options=>createFreeFrameClient({...options,
   document:{...options.document,defaultView:{...options.document.defaultView,getComputedStyle:()=>({marginTop:'0',marginBottom:'0'})}},
   navigationFactory:args=>({...options.navigationFactory(args),roots:()=>({sidebar:{shadow:{querySelector:()=>panel}}})})}));

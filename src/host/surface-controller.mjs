@@ -120,9 +120,14 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
   if(win.MutationObserver&&doc.documentElement){state.appearanceObserver=new win.MutationObserver(state.appearanceChanged);syncAppearanceRoots(state);}
   state.media=win.matchMedia?.('(prefers-color-scheme: dark)');state.media?.addEventListener?.('change',state.appearanceChanged);win.addEventListener('resize',state.appearanceChanged);
  }
+ function inspectPresentation(state){
+  if(surface.backend!=='document-flow'||!state?.handle)return adapter.inspect();
+  if(surface.isSameNativeRegions(state.handle)!==true)return {ok:false,reason:'native-region-changed'};
+  return adapter.inspectStructure(state.inspection);
+ }
  function refreshGeometry(state,inspection=null){
   if(typeof surface.refreshGeometry!=='function')return true;
-  try{if(surface.refreshGeometry(state.handle,inspection??adapter.inspect())===true)return true;}catch{}
+  try{if(surface.refreshGeometry(state.handle,inspection??inspectPresentation(state))===true)return true;}catch{}
   if(current===state){state.geometryPaused=true;state.mode='suspended';surface.suspend(state.handle,'workspace-geometry','workspace');removeReturn(state);}return false;
  }
  function renewalAllowed(state){return current===state&&!state.dormant&&state.epoch===epoch&&doc.location.href===state.url&&Date.parse(state.context.binding.expiresAt)>now()&&(!state.handle||authorized(state));}
@@ -131,12 +136,12 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
   if(state.dormant){if(!frameDocumentsIntact(state))return false;ensureReturn(state);return false;}
   if(!valid(state)){stop('native-document-changed');return false;}
   if(adapter.hasNativeLayer()){suspend('native-layer');return false;}
-  const inspection=adapter.inspect();
+  const inspection=inspectPresentation(state);
   if(inspection?.ok&&inspection.regionEpoch!==state.handle.regionEpoch){
    const context=state.context,mode=state.desiredMode;void start({context,mode},state.sidebarDesired);return false;
   }
   if(!inspection?.ok){
-   reportBoundary(inspection);state.geometryPaused=true;state.mode='suspended';removeReturn(state);surface.suspend(state.handle,'workspace-geometry');return false;
+   reportBoundary(inspection);state.geometryPaused=true;state.mode='suspended';removeReturn(state);surface.suspend(state.handle,'workspace-geometry','workspace');return false;
   }
   // A native action is between its release and final authorization. Keep both
   // masks off; geometry callbacks must not hide its still-live target again.
@@ -176,13 +181,13 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
    // Before presentation there is no native mutation or asynchronous boundary.
    // Use the same complete proof for authorization and mount geometry. A second
    // reading scan can exhaust its own budget and wrongly destroy a valid mount.
-   let inspection=adapter.inspect();
+   let inspection=inspectPresentation(state);
    if(!fresh(inspection)||!inspection?.ok||inspection.regionEpoch!==handle.regionEpoch)return false;if(adapter.hasNativeLayer()){suspend('native-layer');return false;}
    if(!refreshGeometry(state,inspection)||!fresh(inspection))return false;
    // Only explicit entry may align a proved Project scrollport. A separately
    // proved home composer may dock whenever workspace presentation is desired;
    // this never scrolls native content or changes account authorization.
-   if((explicitEntry||inspection.homeDock)&&typeof surface.prepareWorkspace==='function'){
+   if(surface.backend!=='document-flow'&&(explicitEntry||inspection.homeDock)&&typeof surface.prepareWorkspace==='function'){
     settleLayout=surface.prepareWorkspace(handle,{explicitEntry});
     if(settleLayout){
      let aligned=adapter.inspect();
@@ -206,7 +211,7 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
    // A successful call is not proof that the browser opened the popover.
    // Preserve a usable return entry when the mount declined presentation.
    if(shown===false||typeof surface.visibility==='function'&&surface.visibility(handle)?.workspace!==true){
-    state.presentation='show-refused';surface.suspend(handle);
+    state.presentation='show-refused';surface.suspend(handle,'workspace-geometry','workspace');
     if(same()){if(adapter.hasNativeLayer()){state.mode='suspended';removeReturn(state);}else{state.mode='reading';ensureReturn(state);}reportJoin(state);}return false;
    }
    removeReturn(state);state.mode='workspace';layoutAccepted=true;return true;
@@ -225,7 +230,7 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
   const inspection=state.dormant?state.inspection:adapter.inspect(),slot=inspection.navigationSlot;
   if(Object.hasOwn(inspection??{},'returnSlot')&&!inspection.returnSlot||!slot?.isConnected||slot!==state.inspection.navigationSlot||adapter.isReturnSlotCurrent?.(inspection)===false){removeReturn(state);return false;}
   if(state.dormant&&slotOccupied(state,slot)){removeReturn(state);return false;}
-  if(!state.button){const button=doc.createElement('button');button.type='button';button.dataset.vaOwned=state.handle.id;button.setAttribute('aria-label','返回工作空间');button.title='返回工作空间';button.innerHTML=workspaceReturnIcon;button.style.cssText='width:34px;height:34px;flex:none;display:inline-grid;place-items:center;border:0;border-radius:9px;background:transparent;color:inherit;cursor:pointer';button.addEventListener('click',event=>{if(current!==state||event?.isTrusted!==true)return;const keyboardEntry=event.detail===0&&doc.activeElement===button;if(state.dormant){if(slotOccupied(state,slot)||adapter.isReturnSlotCurrent?.(state.inspection)===false){removeReturn(state);return;}if(state.waking||doc.location.href!==state.url||adapter.hasNativeLayer())return;state.waking=true;state.pendingWakeEntry=true;try{Promise.resolve(onWake()).catch(()=>{state.pendingWakeEntry=false;}).finally(()=>{state.waking=false;if(state.dormant)state.pendingWakeEntry=false;});}catch{state.waking=false;state.pendingWakeEntry=false;}return;}state.sidebarDesired=true;if(!showWorkspace(true))return;if(keyboardEntry)focusFrame('workspace');workspaceEntered(state);});if(inspection.returnPlacement==='header-gap'){const box=inspection.returnSlot;Object.assign(button.style,{boxSizing:'border-box',margin:'0',padding:'0',position:'fixed',left:box.x+'px',top:box.y+'px',width:box.width+'px',height:box.height+'px',zIndex:'30',pointerEvents:'auto'});doc.body.append(button);}else slot.append(button);state.button=button;adapter.setReturnControl?.(button);}
+  if(!state.button){const button=doc.createElement('button');button.type='button';button.dataset.vaOwned=state.handle.id;button.setAttribute('aria-label','返回工作空间');button.title='返回工作空间';button.innerHTML=workspaceReturnIcon;button.style.cssText='width:32px;height:32px;flex:none;display:inline-grid;place-items:center;border:0;border-radius:9px;background:transparent;color:inherit;cursor:pointer';button.addEventListener('click',event=>{if(current!==state||event?.isTrusted!==true)return;const keyboardEntry=event.detail===0&&doc.activeElement===button;if(state.dormant){if(slotOccupied(state,slot)||adapter.isReturnSlotCurrent?.(state.inspection)===false){removeReturn(state);return;}if(state.waking||doc.location.href!==state.url||adapter.hasNativeLayer())return;state.waking=true;state.pendingWakeEntry=true;try{Promise.resolve(onWake()).catch(()=>{state.pendingWakeEntry=false;}).finally(()=>{state.waking=false;if(state.dormant)state.pendingWakeEntry=false;});}catch{state.waking=false;state.pendingWakeEntry=false;}return;}state.sidebarDesired=true;if(!showWorkspace(true))return;if(keyboardEntry)focusFrame('workspace');workspaceEntered(state);});if(inspection.returnPlacement==='header-gap'){const box=inspection.returnSlot;Object.assign(button.style,{boxSizing:'border-box',margin:'0',padding:'0',position:'fixed',left:box.x+'px',top:box.y+'px',width:box.width+'px',height:box.height+'px',zIndex:'30',pointerEvents:'auto'});doc.body.append(button);}else slot.append(button);state.button=button;adapter.setReturnControl?.(button);}
   if(inspection.returnPlacement==='header-gap'){const box=adapter.getReturnControlRect?.(inspection);if(!box){removeReturn(state);return false;}Object.assign(state.button.style,{boxSizing:'border-box',margin:'0',padding:'0',position:'fixed',left:box.x+'px',top:box.y+'px',width:box.width+'px',height:box.height+'px',zIndex:'30',pointerEvents:'auto'});state.returnStyle=state.button.getAttribute('style');}
   return true;
  }
@@ -244,6 +249,7 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
   }
   try{if(event?.reason==='native-input')state.pendingWakeEntry=false;if(current===state&&state.resuming&&event?.reason==='native-input')state.pendingNativeInput=true;if(current!==state||state.dormant||state.geometryPaused)return;if(state.mode==='waiting'){if(event?.reason==='native-input'){state.pendingNativeInput=true;state.intentEpoch++;}return;}if(event?.reason!=='native-reading'||state.mode!=='reading')state.intentEpoch++;state.mode='reading';if(!authorized(state))return;if(adapter.hasNativeLayer()){suspend('native-layer');return;}ensureReturn(state);}finally{publishSurface(state);}}
  function hasProtectedFocus(state){
+  if(surface.backend==='document-flow')return surface.hasNativeInputFocus(state.handle)===true;
   const roots=[state.inspection.composer,state.inspection.header,...(state.inspection.protectedRegions??[])];
   for(let active=doc.activeElement;active?.isConnected&&active.ownerDocument===doc;active=active.shadowRoot?.activeElement){
    if(roots.some(node=>node?.isConnected&&node.ownerDocument===doc&&(node===active||node.contains?.(active))))return true;
@@ -252,10 +258,10 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
  function isWorkspacePresented(){
   const state=current,handle=state?.handle,intent=state?.intentEpoch;
   const same=()=>{const target=state?.frames.find(x=>x.role==='workspace'),grant=state?.grants.get('workspace');return !!state&&current===state&&state.handle===handle&&state.intentEpoch===intent&&state.mode==='workspace'&&!state.dormant&&state.registered&&state.epoch===epoch&&doc.location.href===state.url&&Date.parse(state.context.binding.expiresAt)>now()&&!!grant&&Date.parse(grant.expiresAt)>now()&&target?.frame.isConnected&&target.frame.ownerDocument===doc&&target.frame.contentWindow===target.window&&!target.frame.hasAttribute?.('srcdoc');};
-  try{const inspection=adapter.inspect();return same()&&!state.geometryPaused&&inspection?.ok&&inspection.regionEpoch===handle.regionEpoch&&!adapter.hasNativeLayer()&&!hasProtectedFocus(state)&&surface.visibility(handle)?.workspace===true&&same();}catch{return false;}
+  try{const inspection=inspectPresentation(state);return same()&&!state.geometryPaused&&inspection?.ok&&inspection.regionEpoch===handle.regionEpoch&&!adapter.hasNativeLayer()&&!hasProtectedFocus(state)&&surface.visibility(handle)?.workspace===true&&same();}catch{return false;}
  }
  function showReading(){const state=current;try{if(state){state.intentEpoch++;state.desiredMode='reading';}if(!state||!authorized(state))return false;if(adapter.hasNativeLayer()){suspend('native-layer');return false;}surface.showReading(state.handle);state.mode='reading';reconcileGeometry(state);return ensureReturn(state);}finally{publishSurface(state);}}
- function showNativeReading(){const state=current;try{if(state){state.intentEpoch++;state.desiredMode='reading';}if(!state||!authorized(state)||adapter.hasNativeLayer())return false;surface.suspend(state.handle);state.mode='reading';ensureReturn(state);return true;}finally{publishSurface(state);}}
+ function showNativeReading(){const state=current;try{if(state){state.intentEpoch++;state.desiredMode='reading';}if(!state||!authorized(state)||adapter.hasNativeLayer())return false;if(surface.backend==='document-flow')surface.showReading(state.handle);else surface.suspend(state.handle);state.mode='reading';ensureReturn(state);return true;}finally{publishSurface(state);}}
  function beginNativeDispatch(){
   const state=current;if(!state||state.nativeDispatch||!authorized(state)||adapter.hasNativeLayer())return null;
   const held={timer:null};state.nativeDispatch=held;
@@ -318,7 +324,7 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
   state.layoutObserver?.disconnect();state.layoutObserver=null;state.mounting=true;
   try{
    state.policyViolation=event=>{if(current!==state||!['frame-src','child-src'].includes(event.effectiveDirective))return;let blocked;try{blocked=new URL(event.blockedURI);}catch{return;}if(blocked.protocol+'//'+blocked.host!==trustedOrigin)return;state.framePolicy=event.disposition==='enforce'?'frame-blocked':'frame-report-only';reportJoin(state);};doc.addEventListener?.('securitypolicyviolation',state.policyViolation);
-   state.handle=await surface.mount(state.context,state.inspection,{onSurrender:event=>nativeSurrender(state,event)});if(current!==state){dispose(state,'stale-mount');return null;}
+   state.handle=await surface.mount(state.context,state.inspection,{onSurrender:event=>nativeSurrender(state,event),onManagementChanged:()=>{const g=state.grants.get('sidebar'),f=state.frames.find(f=>f.role==='sidebar');if(current===state&&valid(state)&&authorized(state)&&g&&Date.parse(g.expiresAt)>now()&&f)f.window.postMessage({type:'VAIWL_UI_MANAGEMENT_CHANGED',role:'sidebar',mountId:state.handle.id,grantId:g.id},trustedOrigin);},onSidebarScroll:scroll=>{const g=state.grants.get('sidebar'),frame=state.frames.find(f=>f.role==='sidebar');if(current===state&&valid(state)&&authorized(state)&&g&&Date.parse(g.expiresAt)>now()&&frame)frame.window.postMessage({type:'VAIWL_UI_SIDEBAR_VIEWPORT',role:'sidebar',mountId:state.handle.id,grantId:g.id,scroll},trustedOrigin);}});if(current!==state){dispose(state,'stale-mount');return null;}
    state.loadedRoles=new Set();state.joinedRoles=new Set();state.moduleRoles=new Set();
    state.frames=surface.frames(state.handle).map(value=>({...value,window:value.frame.contentWindow}));if(!state.frames.some(x=>x.role==='workspace')||new Set(state.frames.map(x=>x.role)).size!==state.frames.length||state.frames.some(x=>!['workspace','sidebar'].includes(x.role)))throw Error('incomplete-dual-surface');
    for(const target of state.frames)target.frame.addEventListener?.('load',()=>{if(current===state){state.loadedRoles.add(target.role);reportJoin(state);frameDocumentsIntact(state);}},{once:true});
@@ -352,16 +358,22 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
    if(exactHostRecord(data,['type','role','requestId'])&&data.type==='VAIWL_UI_IDLE_ACK'&&data.requestId===state.idleRequestId){state.idleAcks.add(data.role);if(dormantReady())state.resolveIdle?.(true);}
    return;
   }
+  if(exactHostRecord(data,['type','role','scroll'])&&data.type==='VAIWL_UI_SIDEBAR_RESTORE'&&data.role==='sidebar'){
+   if(surface.backend==='document-flow'&&valid(state)&&authorized(state)&&Date.parse(state.grants.get('sidebar')?.expiresAt)>now()&&(data.scroll===null||Number.isSafeInteger(data.scroll)&&data.scroll>=0&&data.scroll<=100000000))try{surface.restoreSidebar?.(state.handle,data.scroll,{apply:!state.nativeDispatch&&!adapter.hasNativeLayer()});}catch{}return;
+  }
+  if(exactHostRecord(data,['type','role','top','bottom'])&&data.type==='VAIWL_UI_REVEAL_ROW'&&data.role==='sidebar'){
+   if(surface.backend==='document-flow'&&valid(state)&&authorized(state)&&Date.parse(state.grants.get('sidebar')?.expiresAt)>now()&&!state.nativeDispatch&&!adapter.hasNativeLayer()&&Number.isInteger(data.top)&&Number.isInteger(data.bottom)&&data.top>=0&&data.bottom>data.top&&data.bottom<=1000000)try{surface.revealSidebar?.(state.handle,{top:data.top,bottom:data.bottom});}catch{}return;
+  }
   if(exactHostRecord(data,['type','role','top','bottom'])&&data.type==='VAIWL_UI_REVEAL_FOCUS'&&data.role==='sidebar'){
-   if(valid(state)&&authorized(state)&&Date.parse(state.grants.get('sidebar')?.expiresAt)>now()&&!state.nativeDispatch&&!adapter.hasNativeLayer()&&doc.activeElement===target.frame&&Number.isInteger(data.top)&&Number.isInteger(data.bottom)&&data.top>=0&&data.bottom>data.top&&data.bottom<=1024){try{surface.revealSidebar?.(state.handle,{top:data.top,bottom:data.bottom});}catch{}}
+   if(valid(state)&&authorized(state)&&Date.parse(state.grants.get('sidebar')?.expiresAt)>now()&&!state.nativeDispatch&&!adapter.hasNativeLayer()&&doc.activeElement===target.frame&&Number.isInteger(data.top)&&Number.isInteger(data.bottom)&&data.top>=0&&data.bottom>data.top&&data.bottom<=(surface.backend==='document-flow'?1000000:1024)){try{surface.revealSidebar?.(state.handle,{top:data.top,bottom:data.bottom});}catch{}}
    return;
   }
   if(exactHostRecord(data,['type','role','x','y','delta'])&&data.type==='VAIWL_UI_SIDEBAR_WHEEL'&&data.role==='sidebar'){
-   if(valid(state)&&authorized(state)&&Date.parse(state.grants.get('sidebar')?.expiresAt)>now()&&!state.nativeDispatch&&!adapter.hasNativeLayer()&&[data.x,data.y,data.delta].every(Number.isInteger)&&data.x>=0&&data.x<=4096&&data.y>=0&&data.y<=1024&&data.delta!==0&&Math.abs(data.delta)<=1024){try{surface.scrollSidebar?.(state.handle,{x:data.x,y:data.y,delta:data.delta});}catch{}}
+   if(surface.backend!=='document-flow'&&valid(state)&&authorized(state)&&Date.parse(state.grants.get('sidebar')?.expiresAt)>now()&&!state.nativeDispatch&&!adapter.hasNativeLayer()&&[data.x,data.y,data.delta].every(Number.isInteger)&&data.x>=0&&data.x<=4096&&data.y>=0&&data.y<=(surface.backend==='document-flow'?1000000:1024)&&data.delta!==0&&Math.abs(data.delta)<=1024){try{surface.scrollSidebar?.(state.handle,{x:data.x,y:data.y,delta:data.delta});}catch{}}
    return;
   }
   if(exactHostRecord(data,['type','role','height'])&&data.type==='VAIWL_UI_INTRINSIC_SIZE'&&data.role==='sidebar'){
-   if(valid(state)&&authorized(state)&&Date.parse(state.grants.get('sidebar')?.expiresAt)>now()&&Number.isInteger(data.height)&&data.height>=128&&data.height<=1024){try{surface.resizeSidebar?.(state.handle,data.height,{apply:!state.nativeDispatch&&!adapter.hasNativeLayer()});}catch{/* A size hint cannot retire another role. */}}
+   if(valid(state)&&authorized(state)&&Date.parse(state.grants.get('sidebar')?.expiresAt)>now()&&Number.isInteger(data.height)&&data.height>=128&&data.height<=(surface.backend==='document-flow'?1000000:1024)){try{surface.resizeSidebar?.(state.handle,data.height,{apply:!state.nativeDispatch&&!adapter.hasNativeLayer()});}catch{/* A size hint cannot retire another role. */}}
    return;
   }
   // Correlated fixed failure metadata only; it can withdraw, never grant, UI access.
@@ -534,5 +546,5 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
   let visibility=null;try{visibility=surface.visibility?.(state.handle);}catch{}
   return {mode:state.mode,desiredMode:state.desiredMode,transitions:structuredClone(transitions),attempt:state.presentation??'not-attempted',registered:state.registered===true,frames:state.frames.filter(x=>x.frame.isConnected&&x.frame.contentWindow===x.window).length,grants:state.grants.size,workspace:typeof visibility?.workspace==='boolean'?visibility.workspace:null,sidebar:typeof visibility?.sidebar==='boolean'?visibility.sidebar:null,geometryPaused:state.geometryPaused===true,returnPresent:state.button?.isConnected===true};
  }
- return Object.freeze({presentationSnapshot,localStatus,withNativeReading,cancelDormantClose,renewDormantLease,idleReleaseBusy:()=>current?.releaseBusy===true&&dormantReady(),checkIdle,enterDormant,settleDormant,dormantReady,resumeDormant,start,presentationIntent:()=>current?.desiredMode==='workspace'?'workspace':'reading',presentationMode:()=>current?.mode==='workspace'?'workspace':'reading',showWorkspace(){if(current)current.sidebarDesired=true;return showWorkspace(true);},isWorkspacePresented,showReading,showNativeReading,beginNativeDispatch,focusFrame,isFrameTarget(role,node){return !!current&&authorized(current)&&current.frames.some(x=>x.role===role&&x.frame===node);},isReturnTarget:node=>!!current&&current.button===node&&authorized(current),intentGuard(){const state=current,revision=state?.intentEpoch;return ()=>!!state&&current===state&&state.intentEpoch===revision&&authorized(state)&&!adapter.hasNativeLayer();},readingGuard(){const state=current,revision=state?.intentEpoch;return ()=>!!state&&current===state&&state.intentEpoch===revision&&state.mode==='reading'&&authorized(state)&&!adapter.hasNativeLayer();},suspend,stop,revoke:()=>stop('ui-authority-revoked')});
+ return Object.freeze({readNativeManagement(){const s=current;return s&&valid(s)&&authorized(s)&&s.handle?surface.readNativeManagement?.(s.handle)??[]:[];},isNativeStructureCurrent(){try{return !!current&&authorized(current)&&inspectPresentation(current)?.ok===true;}catch{return false;}},presentationSnapshot,localStatus,withNativeReading,cancelDormantClose,renewDormantLease,idleReleaseBusy:()=>current?.releaseBusy===true&&dormantReady(),checkIdle,enterDormant,settleDormant,dormantReady,resumeDormant,start,presentationIntent:()=>current?.desiredMode==='workspace'?'workspace':'reading',presentationMode:()=>current?.mode==='workspace'?'workspace':'reading',showWorkspace(){if(current)current.sidebarDesired=true;return showWorkspace(true);},isWorkspacePresented,showReading,showNativeReading,beginNativeDispatch,focusFrame,isFrameTarget(role,node){return !!current&&authorized(current)&&current.frames.some(x=>x.role===role&&x.frame===node);},isReturnTarget:node=>!!current&&current.button===node&&authorized(current),intentGuard(){const state=current,revision=state?.intentEpoch;return ()=>!!state&&current===state&&state.intentEpoch===revision&&authorized(state)&&!adapter.hasNativeLayer();},readingGuard(){const state=current,revision=state?.intentEpoch;return ()=>!!state&&current===state&&state.intentEpoch===revision&&state.mode==='reading'&&authorized(state)&&!adapter.hasNativeLayer();},suspend,stop,revoke:()=>stop('ui-authority-revoked')});
 }

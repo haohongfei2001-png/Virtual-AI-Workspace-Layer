@@ -37,6 +37,7 @@ export const css=`
 
 /* Original quiet rows: secondary workset actions keep a reserved square,
    appear on pointer/focus, and never shorten the title by a text-button width. */
+.new-tab-notice{margin-left:auto;flex:none;color:var(--muted,#646464)}
 .working-set-inline{flex-wrap:nowrap!important;gap:0!important}
 .working-set-inline>.row{flex:1 1 0!important}
 .working-set-add{width:28px;height:28px;opacity:0;color:var(--muted,#646464)}
@@ -85,3 +86,5 @@ export const css=`
  .working-set-row>.row{flex-basis:100%!important;width:100%}
 }
 `;
+
+export const sidebarSettingsStyle = `:host([data-vaiwl-frame-role="sidebar"]) .sidebar-footer{flex-wrap:wrap;height:auto;min-height:40px;padding-block:5px}.sidebar-settings{margin-left:auto;min-width:32px}.sidebar-settings summary{list-style:none;cursor:pointer}.sidebar-settings summary::-webkit-details-marker{display:none}.sidebar-settings[open]{flex-basis:100%;border-top:1px solid var(--line,#e8e8e8);padding-top:4px}.sidebar-settings[open]>summary{float:right}`;

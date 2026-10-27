@@ -1625,5 +1625,139 @@
         "new-document private recovery still requires person confirmation"
       ]
     }
+  },
+  "documentFlowDualPro20261027": {
+    "baseHead": "ff678f3918464327e83caafd59987a3067d5b562",
+    "verdicts": [
+      "6437805652",
+      "6437829589"
+    ],
+    "implementation": "independent-formal-scheme-B-not-library-patch",
+    "sourceStatus": "INTEGRATED",
+    "realChatGPT": "NOT_RUN",
+    "productAcceptance": "NOT_ACCEPTED",
+    "package": "/private/tmp/VAIWL-v27-Document-Flow-20261027/extension",
+    "archiveSha256": "8bd4e37d3e1d65c930c006d8ad90197d399459ee08e3834eb3ea7bfd26c70d41",
+    "sourceCount": 202,
+    "sourceClosureMatchesFinalJourney": true,
+    "formalMV3": {
+      "status": "PASS",
+      "evidence": "ISOLATED_MV3_FORMAL_UI_LOCAL_SESSION_AND_PERSONAL",
+      "realChatGPT": "NOT_RUN",
+      "baseline": "chatgpt-desktop-observed-v6",
+      "package": {
+        "status": "OFFLINE_HOST_RECONSTRUCTION",
+        "releaseStatus": "NOT_RELEASE_READY",
+        "files": 201,
+        "unpacked": "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-eQZmTg/package/extension",
+        "archive": "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-eQZmTg/package/vaiwl-free-host-development.zip",
+        "archiveSha256": "8526ffbb266abfdac0eefec2c5d489e6ac407b545e08e4716b1c4903c1f17171"
+      },
+      "checks": {
+        "projectFooter": {
+          "y": 160,
+          "bottom": 200,
+          "height": 40,
+          "viewport": 200,
+          "panel": 200
+        },
+        "projectFormalFlowInputReturn": true,
+        "firstNativeToolGesture": true,
+        "homeFooter": {
+          "y": 61,
+          "bottom": 101,
+          "height": 40,
+          "viewport": 128,
+          "panel": 101
+        },
+        "homeFormalFlowInputReturn": true,
+        "conversationFooter": {
+          "y": 92,
+          "bottom": 132,
+          "height": 40,
+          "viewport": 132,
+          "panel": 132
+        },
+        "conversationFormalFlowInputReturn": true,
+        "afterUnlock": {
+          "ok": true,
+          "exists": true,
+          "mode": "personal"
+        },
+        "nativeNavScrollChain": true,
+        "localSidebarFailurePreservesWorkspace": true,
+        "beforeMember": {
+          "ok": true,
+          "exists": true,
+          "mode": "personal"
+        },
+        "afterMember": {
+          "ok": true,
+          "exists": true,
+          "mode": "personal"
+        },
+        "navigationTrace": [
+          {
+            "type": "history",
+            "documentId": "69DDC1266D8CC693EF970ED9229F42BE"
+          }
+        ],
+        "sameDocumentProjectMemberReadingReturn": true,
+        "persistedNativeNav": [
+          {
+            "segment": 0,
+            "oldOpen": [],
+            "sidebarOpen": [],
+            "capacities": [],
+            "scroll": 0,
+            "sidebarScroll": 0,
+            "sidebarVisible": true,
+            "inventoryChoices": [],
+            "sidebarChoices": [
+              [
+                "g-p-11111111111111111111111111111111",
+                false
+              ]
+            ],
+            "freeSession": {
+              "H": 30,
+              "T": 20753,
+              "Z": "Asia/Shanghai",
+              "policyRevision": 0
+            },
+            "sidebarViewport": {
+              "owner": "native-nav",
+              "scroll": 117
+            }
+          }
+        ],
+        "workerRecoveryKeepsPersonalAndUserExpansion": true,
+        "newDocumentLocksAndConfirmedPrivateObjectAndLayoutRestore": true,
+        "privateScopeRevokeClearsPriorProject": true,
+        "actualIsolatedUninstallRestoresNativeGeometryDraftAndInput": true,
+        "noInternalRequests": true
+      },
+      "requests": [
+        "/g/g-p-11111111111111111111111111111111/project",
+        "/",
+        "/c/44444444-4444-4444-8444-444444444444",
+        "/g/g-p-11111111111111111111111111111111/project",
+        "/c/44444444-4444-4444-8444-444444444444"
+      ],
+      "browserErrors": [],
+      "images": [
+        "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-eQZmTg/flow-project.png",
+        "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-eQZmTg/flow-home.png",
+        "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-eQZmTg/flow-conversation.png",
+        "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-eQZmTg/flow-journey-reading.png",
+        "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-eQZmTg/flow-journey-return.png",
+        "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-eQZmTg/flow-journey-narrow.png"
+      ]
+    },
+    "review": "/private/tmp/VAIWL-v27-Document-Flow-20261027/review/REVIEW.md",
+    "nativeManagementBoundary": "Explicit trusted disclosure with unique aria-controls, actual visible duplicate IDs only. Existing real snapshot does not establish this interaction; preserve native controls where unknown.",
+    "installation": "UNCHANGED",
+    "libraryPatch": "NOT_ACQUIRED_NOT_RUN",
+    "independentReview": "Read-only flow_contract_review: no new blocking finding; not real acceptance"
   }
 }

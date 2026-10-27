@@ -1,3 +1,4 @@
+import {sidebarSettingsStyle} from './styles.mjs';
 import {validateFrameRowWindows,frameRowWindowKey} from '../host/frame-row-windows.mjs';
 import {isResolvedControlNavigationPlan} from '../host/current-navigation-plan.mjs';
 import {validateFrameResumeView} from '../host/frame-resume-state.mjs';
@@ -10,13 +11,22 @@ import { css } from './styles.mjs';
 const frameGroups=dto=>[...(dto.currentProject?[dto.currentProject]:[]),...dto.groups.items];
 function node(doc,tag,attrs={},text=''){const n=doc.createElement(tag);for(const[k,v]of Object.entries(attrs))n.setAttribute(k,v);n.textContent=text;return n;}
 /** Navigation owns only its roots and reversible view masking; never renders chat/composer. */
-export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage=null, onViewChange=()=>{},onFrameRendered=()=>{},onSidebarLayout=()=>{},onCurrentWorkspaceEntry=()=>{},onCalibrationEntry=()=>{},surface=null,onPresentationRequest=()=>{},onDispatch=null,onNativeInteractionStart=null,onProjectionRequest=null,onHorizonRequest=null,onCompactRowsRequest=null,onWorkingSetRequest=null,onRecoveryRequest=null,onBackupRequest=null,onSnippetsRequest=null,onSnippetLocateRequest=null,onUndoTimePolicyRequest=null}) {
-  const framed=surface!==null;
+export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage=null, onViewChange=()=>{},onFrameRendered=()=>{},onSidebarLayout=()=>{},onSidebarReveal=()=>{},onSidebarRestore=()=>{},onCurrentWorkspaceEntry=()=>{},onCalibrationEntry=()=>{},surface=null,onPresentationRequest=()=>{},onDispatch=null,onNativeInteractionStart=null,onProjectionRequest=null,onHorizonRequest=null,onCompactRowsRequest=null,onWorkingSetRequest=null,onRecoveryRequest=null,onBackupRequest=null,onLocalDataRequest=null,onSnippetsRequest=null,onSnippetLocateRequest=null,onUndoTimePolicyRequest=null}) {
+  const framed=surface!==null,nativeSidebar=surface?.role==='sidebar'&&surface.scrollOwner==='native-nav';
+  const nativeScrollRestored=new WeakSet();
+  let nativeManagement=new Map();
+  const managedMember=(projectId,refId)=>nativeSidebar&&nativeManagement.get(projectId)?.has(refId);
   // Keep explicit choices separate from the current project's derived expansion.
   // Legacy restored open rows remain explicit; do not guess away user layout.
   const sidebarChoices=new WeakMap(),sidebarLimited=new WeakSet(),sidebarLegacy=new WeakSet(),restoredScroll=new WeakMap(),restoredSidebarScroll=new WeakMap();
   function choices(){if(!sidebarChoices.has(view))sidebarChoices.set(view,new Map([...view.sidebarOpen].map(id=>[id,true])));return sidebarChoices.get(view);}
-  function sidebarLayout(open=view.sidebarOpen){return {segment:view.segment,oldOpen:[...view.oldOpen],sidebarOpen:[...open],capacities:[...view.capacities],scroll:view.scroll,sidebarScroll:view.sidebarScroll??0,sidebarVisible:view.sidebarVisible};}
+  // A first-use default is a saved presentation choice, never an activity or
+  // membership fact. Older layouts already represent an explicit open/closed state.
+  function restoreInventoryChoice(target,layout){
+    if(nativeSidebar){target.sidebarViewport=layout.sidebarViewport?{...layout.sidebarViewport}:undefined;nativeScrollRestored.delete(target);}
+    target.inventoryChoices=new Map(layout.inventoryChoices??['home','side'].map(owner=>[owner,layout.oldOpen.includes(owner+':inventory:unknown')]));
+  }
+  function sidebarLayout(open=view.sidebarOpen){return {segment:view.segment,oldOpen:[...view.oldOpen],sidebarOpen:[...open],inventoryChoices:[...(view.inventoryChoices??[])],capacities:[...view.capacities],scroll:view.scroll,sidebarScroll:view.sidebarScroll??0,sidebarVisible:view.sidebarVisible,...(nativeSidebar&&view.sidebarViewport?{sidebarViewport:view.sidebarViewport}:{})};}
   function applySidebarChoices(manual){
     const open=new Set([...manual].filter(([,value])=>value).map(([id])=>id)),selected=current().selected;
     if(selected&&manual.get(selected.id)!==false)open.add(selected.id);
@@ -147,7 +157,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     if(stopped||!snapshot)return;
     if(framed){
       if(!surface.root.isConnected){detach();status={state:'WAITING',reason:'frame-surface-detached'};adapter.status?.(status);return;}
-      if(!roots){const pane=own();pane.n.setAttribute('data-vaiwl-frame-role',surface.role);if(surface.role==='sidebar')pane.shadow.append(node(doc,'style',{},':host>section{height:100%;display:flex;flex-direction:column}.toolbar{flex:none;flex-wrap:wrap}.themes{max-height:none;min-height:44px;flex:1}'));pane.n.style.cssText='display:block;width:100%;height:100%;min-height:0';surface.root.append(pane.n);roots={sidebar:surface.role==='sidebar'?pane:null,workspace:surface.role==='workspace'?pane:null};if(typeof win.ResizeObserver==='function'){surfaceResize=new win.ResizeObserver(windowResize);surfaceResize.observe(pane.n);}render();}
+      if(!roots){const pane=own();pane.n.setAttribute('data-vaiwl-frame-role',surface.role);if(surface.role==='sidebar')pane.shadow.append(node(doc,'style',{},nativeSidebar?':host>section{height:auto;display:flex;flex-direction:column}.toolbar{flex:none;flex-wrap:wrap}.themes{max-height:none;overflow:visible;min-height:0;flex:none}.sidebar-footer{margin-top:0}':':host>section{height:100%;display:flex;flex-direction:column}.toolbar{flex:none;flex-wrap:wrap}.themes{max-height:none;min-height:44px;flex:1}'));pane.n.style.cssText='display:block;width:100%;height:'+(nativeSidebar?'auto':'100%')+';min-height:0';surface.root.append(pane.n);roots={sidebar:surface.role==='sidebar'?pane:null,workspace:surface.role==='workspace'?pane:null};if(typeof win.ResizeObserver==='function'){surfaceResize=new win.ResizeObserver(windowResize);surfaceResize.observe(pane.n);}render();}
       const pane=roots[surface.role];pane.n.dataset.vaiwlCompact=String(snapshot.preferences?.compactRows?.value!==false);
       if(surface.role==='workspace')layoutCards();else locateCurrent();
       status={state:'ACTIVE',mode:view.mode,scope:snapshot.scope};adapter.status?.(status);return;
@@ -180,6 +190,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
   function locateCurrent(){
     const list=roots?.sidebar?.shadow.querySelector('.themes');
     if(!selectionPending||!list?.clientHeight||roots.sidebar.n.style.visibility==='hidden')return;
+    if(nativeSidebar){if(!nativeScrollRestored.has(view)){nativeScrollRestored.add(view);onSidebarRestore(view.sidebarViewport?.scroll??null);selectionPending=false;return;}const link=list.querySelector('[aria-current="page"]');if(link){onSidebarReveal(link.getBoundingClientRect());selectionPending=false;}return;}
     // The first restored paint keeps the saved position, not automatic current-row centering.
     if(restoredSidebarScroll.has(view)){applyRestoredSidebarScroll(list);selectionPending=false;return;}
     const link=list.querySelector('[aria-current="page"]');if(!link)return;
@@ -199,7 +210,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     cards.forEach((card,i)=>{const column=i%columns;card.style.left=column*(width+gap)+'px';card.style.top=tops[column]+'px';tops[column]+=heights[i]+gap;});
     container.style.position='relative';container.style.display='block';container.style.height=Math.max(...tops)+'px';scroller.scrollTop=scroll;applyRestoredScroll(scroller);
   }
-  function emitView(){const metadata=framed&&view?sidebarChoiceMetadata():{};if(metadata===null){const notify=!sidebarLimited.has(view);sidebarLimited.add(view);if(notify)render();return;}if(view&&snapshot)onViewChange({segment:view.segment,oldOpen:[...view.oldOpen],sidebarOpen:[...view.sidebarOpen],...metadata,capacities:[...view.capacities],scroll:view.scroll,sidebarScroll:view.sidebarScroll??0,sidebarVisible:view.sidebarVisible,...(free()&&snapshot.viewSession?{freeSession:snapshot.viewSession}:{})},snapshot.scope,...(framed?[{role:surface.role}]:[]));}
+  function emitView(){const metadata=framed&&view?sidebarChoiceMetadata():{};if(metadata===null){const notify=!sidebarLimited.has(view);sidebarLimited.add(view);if(notify)render();return;}if(view&&snapshot)onViewChange({segment:view.segment,oldOpen:[...view.oldOpen],sidebarOpen:[...view.sidebarOpen],...metadata,inventoryChoices:[...(view.inventoryChoices??[])],capacities:[...view.capacities],scroll:view.scroll,sidebarScroll:view.sidebarScroll??0,sidebarVisible:view.sidebarVisible,...(nativeSidebar&&view.sidebarViewport?{sidebarViewport:view.sidebarViewport}:{}),...(free()&&snapshot.viewSession?{freeSession:snapshot.viewSession}:{})},snapshot.scope,...(framed?[{role:surface.role}]:[]));}
   // Main-list return layout must not be overwritten by a short search/workset.
   // Special scrolling is bounded to one transient presentation per scoped view.
   const workspacePages=new WeakMap(),specialScroll=new WeakMap();
@@ -211,7 +222,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     page.scrollTop=held.target;held.applied=page.scrollTop;
   }
   function releaseRestoredScroll(){
-    if(view&&restoredSidebarScroll.has(view)){
+    if(!nativeSidebar&&view&&restoredSidebarScroll.has(view)){
       const list=roots?.sidebar?.shadow.querySelector('.themes');
       // Clicking the disclosure is not a scroll choice in its hidden list.
       // Keep the durable target until expansion creates a real scrollbox.
@@ -231,10 +242,12 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     else if(view&&!(frameProjection&&frameWindowsSuspended))view.scroll=page.scrollTop;
   }
   function applyRestoredSidebarScroll(list){
+    if(nativeSidebar)return;
     const held=view&&restoredSidebarScroll.get(view);if(!held||!list)return;
     list.scrollTop=held.target;held.applied=list.scrollTop;
   }
   function rememberSidebarScroll(list){
+    if(nativeSidebar)return;
     // Folding or temporarily hiding the owned frame removes its scrollbox.
     // The browser's clamped zero is not a user choice and must never overwrite
     // the position saved for expanding/returning to the continuous sidebar.
@@ -277,6 +290,11 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     const delegation=['native-control','same-target'].includes(plan?.mode)&&typeof onDispatch==='function'&&['targetKey','uiGrantId','mountId'].every(key=>typeof issued?.[key]==='string'&&issued[key])&&Number.isSafeInteger(plan.planRevision);
     const valid=ref.available!==false&&!ref.anchor&&((plan?.mode==='href'&&resolvedOK&&['same-tab','new-tab-preserve-current'].includes(plan.disposition))||(delegation&&(resolvedOK||plan.target?.kind==='live-control')));
     if(!valid){a.dataset.navigationReason=ref.anchor?'snippet-frame-controller-unavailable':'native-plan-unavailable';explainUnavailable(a,ref.anchor?'该片段暂不能直接定位，请返回原生页面使用搜索。':(entity==='project'?'当前无法确认项目入口，请返回原生页面继续。':'当前无法确认聊天入口，请返回原生页面继续。'),{label:true});return;}
+    if(plan.mode==='href'&&plan.disposition==='new-tab-preserve-current'){
+      const description='保留当前页面，在新标签打开',notice=node(doc,'span',{class:'new-tab-notice','aria-hidden':'true'});
+      notice.innerHTML='<svg aria-hidden="true" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14 3h7v7M21 3 10 14M10 3H3v18h18v-7"/></svg>';
+      if(!a.getAttribute('class')?.split(/\s+/).includes('square'))a.append(notice);a.setAttribute('aria-description',description);a.setAttribute('title',[a.getAttribute('title'),description].filter(Boolean).join(' · '));
+    }
     if(delegation){a.setAttribute('data-native-plan-control','');if(nativeNavigationPending)a.setAttribute('aria-disabled','true');}
     if(safeHref){a.href=safeHref;a.target=plan.mode==='href'&&plan.disposition==='same-tab'?'_top':'_blank';a.rel='noopener noreferrer';}
     else{a.setAttribute('role','button');a.tabIndex=0;}
@@ -449,13 +467,13 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
         const ownerView=view,open=view.oldOpen.has(key),toggle=button('展开旧窗口 '+group.name,()=>{view.oldOpen.has(key)?view.oldOpen.delete(key):view.oldOpen.add(key);render();if(view.oldOpen.has(key))reopenFrameWindow(group.id,'old');},'','square old',()=>currentProjectControl(toggle,ownerView,side?'sidebar':'workspace'));toggle.innerHTML=chevron;toggle.dataset.focusKey=focusKey(kind,'toggle');toggle.setAttribute('aria-expanded',String(open));parent.append(toggle);if(!open)continue;list=node(doc,'div',{class:'old-list'});parent.append(list);
       }
       if(kind==='unknown'){const undated=node(doc,'div',{class:'undated-members','aria-label':'活动时间未确定的窗口',title:'项目归属已知，活动时间尚未确定。'});list.append(undated);list=undated;}
-      for(const ref of page.items)list.append(row(ref,key));
+      for(const ref of page.items)if(!side||!managedMember(group.id,ref.id))list.append(row(ref,key));
       if(page.hasMore){const more=button(kind==='old'?'显示更多旧窗口 '+group.name:kind==='unknown'?'显示更多已知窗口':'显示更多近期窗口',()=>moreFrame(page,group.id,kind),frameIsPaged(page,group.id,kind)?'下一页':'显示更多','more');more.dataset.focusKey=focusKey(kind,'more');list.append(more);}
       if(page.offset>0){const previous=button('返回前页 '+group.name,()=>requestFrame({groupId:group.id,list:kind,rowOffset:Math.max(0,page.offset-page.limit),rowLimit:page.limit}),'上一页','more');previous.dataset.focusKey=focusKey(kind,'previous');list.append(previous);}
     }
   }
   function members(group,parent,side=false){
-    if(frameProjection){frameMembers(group,parent,side);const active=side&&current().ref;if(active&&frameProjection.current?.projectId===group.id&&!Array.from(parent.querySelectorAll('[data-ref-id]')).some(n=>n.getAttribute('data-ref-id')===active.id)){const context=node(doc,'div',{class:'current-context','aria-label':'正在查看'});context.append(row(active,(side?'side:':'home:')+group.id));parent.append(context);}return;}
+    if(frameProjection){frameMembers(group,parent,side);const active=side&&current().ref;if(active&&frameProjection.current?.projectId===group.id&&!Array.from(parent.querySelectorAll('[data-ref-id]')).some(n=>n.getAttribute('data-ref-id')===active.id)){const context=node(doc,'div',{class:'current-context','aria-label':'正在查看'});context.append(row(active,(side?'side:':'home:')+group.id));if(!managedMember(group.id,active.id))parent.append(context);}return;}
     const key=(side?'side:':'home:')+group.id,cap=view.capacities.get(key)??5;
     for(const r of group.current.slice(0,cap))parent.append(row(r,key));
     if(cap<group.current.length){const more=button('显示更多近期窗口',()=>{remember();view.capacities.set(key,cap+12);render();},'显示更多','more');more.dataset.focusKey='more:'+key;parent.append(more);}
@@ -478,11 +496,18 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     const key=(side?'side:':'home:')+'inventory:'+kind,label=kind==='noProject'?'无项目聊天':'其他已知聊天';
     // UNKNOWN remains a separate fact. The disclosure is presentation, never
     // membership approval; the same references remain in known search.
-    const compact=kind==='unknown'&&(side||groups.length>0),open=!compact||view.oldOpen.has(key);
+    const compact=kind==='unknown',owner=side?'side':'home';
+    view.inventoryChoices??=new Map();
+    if(compact&&!view.inventoryChoices.has(owner)&&segment===0){
+      const projectCount=frameProjection?frameProjection.groups.total:groups.filter(g=>g.segment===0||g.segment===null).length;
+      const initial=view.oldOpen.has(key)||(!side&&projectCount<=1);
+      view.inventoryChoices.set(owner,initial);if(initial)view.oldOpen.add(key);
+    }
+    const open=!compact||(view.inventoryChoices.get(owner)??view.oldOpen.has(key));
     const list=node(doc,'section',{class:'free-list'+(!total?' empty-inventory':''),'data-free-list':kind,'aria-label':label});
     if(compact){
       const heading=node(doc,'h2'),ownerView=view;
-      const toggle=button(label,()=>{remember();view.oldOpen.has(key)?view.oldOpen.delete(key):view.oldOpen.add(key);render();},'','inventory-toggle',()=>view===ownerView&&!stopped);
+      const toggle=button(label,()=>{remember();view.inventoryChoices.set(owner,!open);open?view.oldOpen.delete(key):view.oldOpen.add(key);render();},'','inventory-toggle',()=>view===ownerView&&!stopped);
       toggle.innerHTML=chevron;toggle.append(node(doc,'span',{},label));toggle.dataset.focusKey='inventory:'+key;toggle.setAttribute('aria-expanded',String(open));toggle.setAttribute('aria-controls',token+'-'+key.replaceAll(':','-'));heading.append(toggle);list.append(heading);
     }else list.append(node(doc,'h2',{},label));
     if(kind==='unknown')list.setAttribute('title','这些已知聊天的项目归属尚未确定；正常打开即可继续使用。');
@@ -501,10 +526,10 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
   function showWorkingSet(notify=true){if(!view)return;if(frameProjection&&surface.role==='sidebar'){if(notify)onPresentationRequest({kind:'show-working-set'});return;}remember();if(frameProjection)frameWindowsSuspended=true;view.mode='workspace';view.worksetOpen=true;searchQuery=null;searchTheme=null;frameWorkingSetOffset=0;frameWorkingSetWaiting=!!frameProjection;render();layout();if(frameProjection)requestFrameWorkingSet();if(framed&&notify)onPresentationRequest({kind:'show-working-set'});}
   function findKnown(theme=null,notify=true){if(!view)return;if(frameProjection&&surface.role==='sidebar'){if(notify)onPresentationRequest({kind:'search-known',themeId:theme});return;}remember();if(frameProjection)frameWindowsSuspended=true;view.mode='workspace';view.worksetOpen=false;searchQuery='';searchTheme=theme;searchCapacity=24;frameSearchOffset=0;frameSearchWaiting=!!frameProjection;render();layout();queueMicrotask(()=>roots?.workspace?.shadow.querySelector('input')?.focus());if(frameProjection)requestFrameSearch();if(framed&&notify)onPresentationRequest({kind:'search-known',themeId:theme});}
   function closeMenu(focus=true){if(!menu)return;const prior=menu;menu=null;prior.n.remove();prior.trigger.setAttribute('aria-expanded','false');doc.removeEventListener('pointerdown',prior.outside,true);if(focus&&prior.trigger.isConnected)prior.trigger.focus({preventScroll:true});}
-  function themeActions(g,head){const trigger=graphic(button('主题操作 '+g.name,()=>{
-      if(menu?.trigger===trigger){closeMenu();return;}closeMenu(false);const popup=node(doc,'div',{class:'menu',role:'menu','aria-label':'主题操作 '+g.name});
+  function themeActions(g,head){const trigger=graphic(button((free()?'项目操作 ':'主题操作 ')+g.name,()=>{
+      if(menu?.trigger===trigger){closeMenu();return;}closeMenu(false);const popup=node(doc,'div',{class:'menu',role:'menu','aria-label':(free()?'项目操作 ':'主题操作 ')+g.name});
       const item=(label,fn)=>{const b=button(label,()=>{closeMenu(false);fn();},label,'');b.setAttribute('role','menuitem');popup.append(b);};
-      if(onManage&&!free())item('编辑主题',()=>onManage({workspaceId:g.id}));item('查找此主题',()=>findKnown(g.id));
+      if(onManage&&!free())item('编辑主题',()=>onManage({workspaceId:g.id}));item(free()?'查找此项目':'查找此主题',()=>findKnown(g.id));
       // Tab exits the menu: backward to its trigger, forward to the next control.
       popup.addEventListener('keydown',e=>{const items=[...popup.querySelectorAll('button')],i=items.indexOf(doc.activeElement?.shadowRoot?.activeElement??popup.getRootNode().activeElement);if(e.key==='Escape'){e.preventDefault();e.stopPropagation();closeMenu();}else if(e.key==='Tab'){closeMenu();if(e.shiftKey)e.preventDefault();}else if(['ArrowDown','ArrowUp','Home','End'].includes(e.key)){e.preventDefault();items[e.key==='Home'?0:e.key==='End'?items.length-1:(i+(e.key==='ArrowDown'?1:items.length-1))%items.length]?.focus();}});
       const outside=e=>{if(!e.composedPath().includes(popup)&&!e.composedPath().includes(trigger))closeMenu(false);};menu={n:popup,trigger,outside};trigger.setAttribute('aria-expanded','true');head.append(popup);doc.addEventListener('pointerdown',outside,true);popup.querySelector('button')?.focus();
@@ -543,24 +568,34 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     const nextSidebarKey=JSON.stringify([snapshot.scope,adapter.currentURL(),view.sidebarVisible,sidebarLimited.has(view),[...view.sidebarOpen],[...view.oldOpen].filter(k=>k.startsWith('side:')),[...view.capacities].filter(([k])=>k.startsWith('side:')||k.includes(':side:'))]);
     const side=roots.sidebar?.shadow;
     if(side&&(sidebarDirty||sidebarKey!==nextSidebarKey||!side.querySelector('section'))){
-    side.querySelector('section')?.remove();const panel=node(doc,'section');const tools=node(doc,'div',{class:'toolbar'});tools.append(node(doc,'strong',{},'主题导航'),graphic(button(free()?'查找已知项目与聊天':'查找主题与派生名称',()=>findKnown()),'search'),graphic(button('折叠主题导航',()=>{remember();view.sidebarVisible=!view.sidebarVisible;render();}),view.sidebarVisible?'minus':'plus'));if(!framed)tools.append(graphic(button('退出测试增强',()=>{stop();onExit();}),'close'));if(onManage)tools.append(graphic(button('管理工作空间',()=>onManage()),'more'));const footer=node(doc,'div',{class:'toolbar sidebar-footer',...(framed?{'aria-label':'VAIWL 工作空间工具'}:{})});
+    side.querySelector('section')?.remove();const panel=node(doc,'section');const tools=node(doc,'div',{class:'toolbar'});tools.append(node(doc,'strong',{},free()?'项目导航':'主题导航'),graphic(button(free()?'查找已知项目与聊天':'查找主题与派生名称',()=>findKnown()),'search'));if(!framed)tools.append(graphic(button('折叠主题导航',()=>{remember();view.sidebarVisible=!view.sidebarVisible;render();}),view.sidebarVisible?'minus':'plus'));if(!framed)tools.append(graphic(button('退出测试增强',()=>{stop();onExit();}),'close'));if(onManage)tools.append(graphic(button('管理工作空间',()=>onManage()),'more'));const footer=node(doc,'div',{class:'toolbar sidebar-footer',...(framed?{'aria-label':'VAIWL 工作空间工具'}:{})});
     // The approved sidebar puts topics first and extension tools in a quiet
     // lower bar. Keep the same actions; do not add another plugin heading.
     if(framed){footer.append(node(doc,'span',{class:'extension-label'},'VAIWL'));footer.append(...[...tools.children].filter(n=>n.tagName!=='STRONG'));}else panel.append(tools);
+    if(framed){const settings=node(doc,'details',{class:'sidebar-settings'}),summary=node(doc,'summary',{'aria-label':'项目导航设置',title:'项目导航设置',class:'square'});summary.innerHTML=svgIcon('more');settings.append(summary,button(view.sidebarVisible?'隐藏项目导航':'显示项目导航',()=>{remember();view.sidebarVisible=!view.sidebarVisible;sidebarDirty=true;render();},view.sidebarVisible?'隐藏项目导航':'显示项目导航','more'));if(typeof onLocalDataRequest==='function'){const local=button('本地资料',async()=>{if(local.disabled)return;local.disabled=true;try{const result=await onLocalDataRequest();if(result?.ok!==true&&local.isConnected){const note=node(doc,'p',{role:'status'},'请点击浏览器工具栏中的 VAIWL，管理本地资料。');settings.querySelector('[role="status"]')?.remove();settings.append(note);onSidebarLayout();}}finally{local.disabled=false;}},'查看本地资料状态与恢复入口','more');settings.append(local);}settings.addEventListener('toggle',()=>onSidebarLayout());footer.append(settings);}
     const workset=button('当前工作集',()=>showWorkingSet(),'','square');workset.innerHTML=svgIcon('collection');footer.append(workset);
     if(frameProjection&&typeof onSnippetsRequest==='function'){const snippets=button('已保存片段',()=>{if(!stopped&&frameProjection)onSnippetsRequest();},'','square');snippets.innerHTML=svgIcon('book');footer.append(snippets);}renderNavigationFeedback(panel);if(framed&&sidebarLimited.has(view)){panel.append(node(doc,'p',{role:'status'},'侧栏开合记录已达本次布局容量，现有选择已保留。'),button('重置本次侧栏开合',()=>{if(applySidebarChoices(new Map()))sidebarLimited.delete(view);render();},'仅清除本次侧栏开合选择，不修改项目或聊天','more'));}
-    const list=node(doc,'nav',{class:'themes','aria-label':'VAIWL 主题导航',tabindex:'-1','data-focus-key':'sidebar-navigation'});list.hidden=!view.sidebarVisible;
+    const list=node(doc,'nav',{class:'themes','aria-label':free()?'VAIWL 项目导航':'VAIWL 主题导航',tabindex:'-1','data-focus-key':'sidebar-navigation'});list.hidden=!view.sidebarVisible;
     if(frameProjection&&!selected)appendCurrentContext(list);
     const eligibleGroups=frameProjection?groups:groups.filter(g=>g.segment===0||(free()&&g.segment===null)||g===selected);
     // Current context leads navigation; the owner's inventory/page order stays intact.
     const sideGroups=selected?[selected,...eligibleGroups.filter(g=>g.id!==selected.id)]:eligibleGroups;
-    for(const g of sideGroups){const block=node(doc,'section',{class:'group'}),ownerView=view;const toggle=button('侧栏主题 '+g.name,()=>{if(framed){if(!chooseSidebar(g.id,!view.sidebarOpen.has(g.id))){render();return;}}else view.sidebarOpen.has(g.id)?view.sidebarOpen.delete(g.id):view.sidebarOpen.add(g.id);render();if(frameProjection&&view.sidebarOpen.has(g.id))reopenFrameWindow(g.id,'current');},'','theme-toggle',()=>currentProjectControl(toggle,ownerView,'sidebar'));toggle.dataset.focusKey='theme:'+g.id;toggle.setAttribute('data-current-project',String(g.id===selected?.id));toggle.append(themeGlyph(g),node(doc,'span',{class:'theme-name',title:g.name},g.name));appendFreshness(toggle,g);const disclosure=node(doc,'span',{class:'theme-disclosure','aria-hidden':'true'});disclosure.innerHTML=chevron;toggle.append(disclosure);toggle.setAttribute('aria-expanded',String(view.sidebarOpen.has(g.id)));if(framed&&free()){const head=node(doc,'div',{class:'project-group-head'});head.append(toggle,projectCreateEntry(g));block.append(head);}else block.append(toggle);
+    for(const g of sideGroups){
+      if(nativeSidebar&&nativeManagement.has(g.id)){
+       const block=node(doc,'section',{class:'group native-management-context','aria-label':'原生项目管理已展开'});
+       // Duplicate navigation pauses only for this exact project and members
+       // actually exposed by its native panel. No model/choice is deleted.
+       const context=node(doc,'div',{class:'theme-toggle'});context.append(themeGlyph(g),node(doc,'span',{class:'theme-name'},g.name),node(doc,'small',{},'原生管理'));block.append(context);
+       const active=current().ref;if(active&&managedMember(g.id,active.id))block.append(node(doc,'div',{class:'current-context','data-ref-id':active.id,'aria-current':'page'},active.displayTitle??active.nativeTitle??'当前聊天'));
+       const children=node(doc,'div',{class:'children'});members(g,children,true);block.append(children);list.append(block);continue;
+      }
+      const block=node(doc,'section',{class:'group'}),ownerView=view;const toggle=button((free()?'侧栏项目 ':'侧栏主题 ')+g.name,()=>{if(framed){if(!chooseSidebar(g.id,!view.sidebarOpen.has(g.id))){render();return;}}else view.sidebarOpen.has(g.id)?view.sidebarOpen.delete(g.id):view.sidebarOpen.add(g.id);render();if(frameProjection&&view.sidebarOpen.has(g.id))reopenFrameWindow(g.id,'current');},'','theme-toggle',()=>currentProjectControl(toggle,ownerView,'sidebar'));toggle.dataset.focusKey='theme:'+g.id;toggle.setAttribute('data-current-project',String(g.id===selected?.id));toggle.append(themeGlyph(g),node(doc,'span',{class:'theme-name',title:g.name},g.name));appendFreshness(toggle,g);const disclosure=node(doc,'span',{class:'theme-disclosure','aria-hidden':'true'});disclosure.innerHTML=chevron;toggle.append(disclosure);toggle.setAttribute('aria-expanded',String(view.sidebarOpen.has(g.id)));if(framed&&free()){const head=node(doc,'div',{class:'project-group-head'});head.append(toggle,projectCreateEntry(g));block.append(head);}else block.append(toggle);
       if(view.sidebarOpen.has(g.id)){const children=node(doc,'div',{class:'children'});members(g,children,true);block.append(children);}list.append(block);}
     if(frameProjection){if(frameProjection.groups.offset>0)list.append(button('返回前页项目',()=>requestFrame({offset:Math.max(0,frameProjection.groups.offset-frameProjection.groups.limit)}),'上一页项目','more'));if(frameProjection.groups.hasMore)list.append(button('显示更多项目',()=>requestFrame({offset:frameProjection.groups.offset+frameProjection.groups.limit}),'显示更多项目','more'));}
-    const independent=current().independent;if(independent&&!frameProjection){const context=node(doc,'div',{class:'current-context'});context.append(row(independent));list.append(context);}if(free()){appendFreeList(list,'noProject',0,true);appendFreeList(list,'unknown',0,true);}if(frameProjection&&selected)appendCurrentContext(list);panel.append(list);if(framed)panel.append(node(doc,'slot',{name:'native-candidates'}));panel.append(footer);side.append(panel);list.scrollTop=view.sidebarScroll??0;applyRestoredSidebarScroll(list);list.addEventListener('scroll',()=>{if(!stopped&&view&&roots?.sidebar?.shadow.querySelector('.themes')===list){rememberSidebarScroll(list);emitView();}},{passive:true});sidebarKey=nextSidebarKey;sidebarDirty=false;locateCurrent();
+    const independent=current().independent;if(independent&&!frameProjection){const context=node(doc,'div',{class:'current-context'});context.append(row(independent));list.append(context);}if(free()){appendFreeList(list,'noProject',0,true);appendFreeList(list,'unknown',0,true);}if(frameProjection&&selected)appendCurrentContext(list);panel.append(list);if(framed)panel.append(node(doc,'slot',{name:'native-candidates'}));panel.append(footer);const settingsStyle=node(doc,'style');settingsStyle.textContent=sidebarSettingsStyle;panel.append(settingsStyle);side.append(panel);if(!nativeSidebar)list.scrollTop=view.sidebarScroll??0;if(nativeSidebar&&!nativeScrollRestored.has(view)){nativeScrollRestored.add(view);onSidebarRestore(view.sidebarViewport?.scroll??null);selectionPending=false;}applyRestoredSidebarScroll(list);list.addEventListener('scroll',()=>{if(!stopped&&view&&roots?.sidebar?.shadow.querySelector('.themes')===list){rememberSidebarScroll(list);emitView();}},{passive:true});sidebarKey=nextSidebarKey;sidebarDirty=false;locateCurrent();
     }
     if(!roots.workspace){restoreOwnedFocus(focused);emitView();try{onSidebarLayout();}catch{}return;}
-    const shadow=roots.workspace.shadow;const prior=shadow.querySelector('.workspace');if(prior)prior.remove();const page=node(doc,'div',{class:'workspace',tabindex:'-1','aria-label':'主题工作区','data-focus-key':'workspace','data-segment':String(view.segment)});roots.workspace.scroller=page;const specialKey=frameProjection?(searchQuery!==null?JSON.stringify(['search',searchQuery,searchTheme,frameSearchOffset]):view.worksetOpen?JSON.stringify(['workingSet',frameWorkingSetOffset]):null):null;workspacePages.set(page,{view,specialKey});page.addEventListener('scroll',()=>{if(roots?.workspace?.scroller===page&&view.mode==='workspace'&&roots.workspace.n.style.display!=='none'){rememberWorkspaceScroll(page);emitView();}},{passive:true});
+    const shadow=roots.workspace.shadow;const prior=shadow.querySelector('.workspace');if(prior)prior.remove();const page=node(doc,'div',{class:'workspace',tabindex:'-1','aria-label':free()?'工作空间':'主题工作区','data-focus-key':'workspace','data-segment':String(view.segment)});roots.workspace.scroller=page;const specialKey=frameProjection?(searchQuery!==null?JSON.stringify(['search',searchQuery,searchTheme,frameSearchOffset]):view.worksetOpen?JSON.stringify(['workingSet',frameWorkingSetOffset]):null):null;workspacePages.set(page,{view,specialKey});page.addEventListener('scroll',()=>{if(roots?.workspace?.scroller===page&&view.mode==='workspace'&&roots.workspace.n.style.display!=='none'){rememberWorkspaceScroll(page);emitView();}},{passive:true});
     renderNavigationFeedback(page);
     const currentSlot=frameProjection&&searchQuery===null&&!view.worksetOpen?node(doc,'div',{class:'current-slot'}):null;
     let workspaceSettingsTrigger=null;
@@ -603,7 +638,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     if(frameProjection&&workingSetError)page.append(node(doc,'p',{role:'alert'},workingSetError));
     if(frameProjection&&searchQuery!==null){
       const section=node(doc,'section',{class:'search'}),top=node(doc,'div',{class:'search-top'}),theme=groups.find(g=>g.id===searchTheme);
-      top.append(node(doc,'strong',{title:theme?.name??'查找已知项目与聊天'},theme?.name??'查找已知项目与聊天'),graphic(button('关闭派生查找',closeFrameSearch),'close'));section.append(top);
+      top.append(node(doc,'strong',{title:theme?.name??'查找已知项目与聊天'},theme?.name??'查找已知项目与聊天'),graphic(button(free()?'关闭已知查找':'关闭派生查找',closeFrameSearch),'close'));section.append(top);
       const input=node(doc,'input',{'aria-label':'已知聊天查找输入',placeholder:'输入项目、聊天名称或已保存片段','data-focus-key':'search-input',type:'search',maxlength:'200'});input.value=searchQuery;
       const results=node(doc,'div',{class:'search-results'});
       const display=()=>{results.replaceChildren();const found=frameProjection.search;
@@ -648,9 +683,9 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
       }page.append(section);
     }else if(searchQuery!==null){
       const search=node(doc,'section',{class:'search'}),top=node(doc,'div',{class:'search-top'}),theme=groups.find(g=>g.id===searchTheme);
-      top.append(node(doc,'strong',{title:theme?.name??(free()?'查找已知项目与聊天':'查找主题与派生名称')},theme?.name??(free()?'查找已知项目与聊天':'查找主题与派生名称')),graphic(button('关闭派生查找',()=>{searchQuery=null;searchTheme=null;render();queueMicrotask(()=>roots?.workspace?.shadow.querySelector('.workspace')?.focus({preventScroll:true}));}),'close'));search.append(top);
-      const input=node(doc,'input',{'aria-label':free()?'已知聊天查找输入':'派生查找输入',placeholder:'输入主题或窗口名称','data-focus-key':'search-input',type:'search'});input.value=searchQuery;
-      search.append(input,node(doc,'p',{},'仅查找已知主题与窗口，包含时间尚未确认的记录。原生搜索独立保留。'));
+      top.append(node(doc,'strong',{title:theme?.name??(free()?'查找已知项目与聊天':'查找主题与派生名称')},theme?.name??(free()?'查找已知项目与聊天':'查找主题与派生名称')),graphic(button(free()?'关闭已知查找':'关闭派生查找',()=>{searchQuery=null;searchTheme=null;render();queueMicrotask(()=>roots?.workspace?.shadow.querySelector('.workspace')?.focus({preventScroll:true}));}),'close'));search.append(top);
+      const input=node(doc,'input',{'aria-label':free()?'已知聊天查找输入':'派生查找输入',placeholder:free()?'输入项目或聊天名称':'输入主题或窗口名称','data-focus-key':'search-input',type:'search'});input.value=searchQuery;
+      search.append(input,node(doc,'p',{},free()?'仅查找已知项目与聊天。更多记录请使用 ChatGPT 搜索聊天。':'仅查找已知主题与窗口，包含时间尚未确认的记录。原生搜索独立保留。'));
       const results=node(doc,'div',{class:'search-results'});
       const update=()=>{searchQuery=input.value;results.replaceChildren();const found=[...knownMatches(snapshot,searchQuery,searchTheme),...knownProjectMatches(snapshot,searchQuery,searchTheme).map(g=>({...g,kind:'project'}))];
         for(const r of found.slice(0,searchCapacity)){if(r.kind==='project'){results.append(projectSearchRow(r));continue;}const link=row(r,r.anchor?'snippet:'+r.anchor.id:'search');if(r.anchor){link.dataset.snippetId=r.anchor.id;link.setAttribute('aria-label','定位片段 '+r.displayTitle);link.append(node(doc,'span',{class:'snippet-preview'},r.anchor.text));}results.append(link);}
@@ -682,6 +717,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     if(!views.has(value.scope)){
       const initial=initialView(),v=value.view;
       if(v)Object.assign(initial,{segment:v.segment,oldOpen:new Set(v.oldOpen),sidebarOpen:new Set(v.sidebarOpen),capacities:new Map(v.capacities),scroll:v.scroll,sidebarVisible:v.sidebarVisible});
+      if(v)restoreInventoryChoice(initial,v);
       views.set(value.scope,initial);
     }
     view=views.get(value.scope);if(priorSession&&value.viewSession&&priorSession.H!==value.viewSession.H){const anchorDay=priorSession.T-view.segment*priorSession.H;view.segment=Math.max(0,Math.floor((value.viewSession.T-anchorDay)/value.viewSession.H));}groups=value.groups??project(value,now,timeZone);index=preparedIndex??currentIndex(value,groups);
@@ -714,7 +750,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     const query=requestContext?.query;
     if(selection&&query&&dto.scope===requestContext.scope&&JSON.stringify(dto.viewSession)===requestContext.session&&dto.segment===query.segment&&selection.groupId===(query.groupId??null)&&selection.list===query.list&&selection.offset===(query.rowOffset??0)&&Number.isSafeInteger(query.rowLimit)&&selection.limit<query.rowLimit)frameRowPaging={key,limit:selection.limit};
     const windowContextChanged=frameProjection&&(frameProjection.scope!==dto.scope||frameProjection.segment!==dto.segment||JSON.stringify(frameProjection.viewSession)!==JSON.stringify(dto.viewSession));
-    const scopeChanged=snapshot?.scope!==dto.scope;const copy=structuredClone(dto);if(scopeChanged||navigationFeedback?.url!==adapter.currentURL())clearNavigationFeedback();resetInteraction(true);sidebarDirty=true;remember();
+    const scopeChanged=snapshot?.scope!==dto.scope;if(snapshot&&scopeChanged)nativeManagement=new Map();const copy=structuredClone(dto);if(scopeChanged||navigationFeedback?.url!==adapter.currentURL())clearNavigationFeedback();resetInteraction(true);sidebarDirty=true;remember();
     if(snapshot?.scope!==copy.scope){horizonPending=null;horizonError=null;detach();searchQuery=null;searchTheme=null;projectionRequest++;}
     if(copy.segment!==0||copy.search||copy.workingSet)clearTimePolicyNotice(false);
     if(scopeChanged){lastSelected=null;selectionPending=false;clearTimePolicyNotice(false);lastTimePolicyNotice=null;settingsOpen=false;compactPending=null;compactError=null;workingSetPending=null;workingSetError=null;}projectionRequest++;frameProjection=copy;if(copy.search)frameSearchWaiting=false;if(copy.workingSet)frameWorkingSetWaiting=false;
@@ -724,7 +760,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     // A mounted frame is the workspace presentation; the owner controls its visibility.
     // Initialize its mode without replaying revision-zero show-workspace, which
     // would discard an owner-restored search or working-set query.
-    if(!views.has(copy.scope))views.set(copy.scope,{...initialView(),mode:'workspace'});view=views.get(copy.scope);if(resumeLayout&&resumeLayout.segment===copy.segment){restoredScroll.set(view,{target:resumeLayout.scroll,applied:null});restoredSidebarScroll.set(view,{target:resumeLayout.sidebarScroll??0,applied:null});Object.assign(view,{...resumeLayout,oldOpen:new Set(resumeLayout.oldOpen),sidebarOpen:new Set(resumeLayout.sidebarOpen),capacities:new Map(resumeLayout.capacities)});sidebarChoices.set(view,new Map(resumeLayout.sidebarChoices??resumeLayout.sidebarOpen.map(id=>[id,true])));if(!Object.hasOwn(resumeLayout,'sidebarChoices'))sidebarLegacy.add(view);else sidebarLegacy.delete(view);}resumeLayout=null;view.segment=copy.segment;if(scopeChanged){view.worksetOpen=!!copy.workingSet;if(copy.workingSet)frameWorkingSetOffset=copy.workingSet.offset;if(copy.search){searchQuery=copy.search.query;searchTheme=copy.search.projectId;frameSearchOffset=copy.search.offset;}}
+    if(!views.has(copy.scope))views.set(copy.scope,{...initialView(),mode:'workspace'});view=views.get(copy.scope);if(resumeLayout&&resumeLayout.segment===copy.segment){restoredScroll.set(view,{target:resumeLayout.scroll,applied:null});restoredSidebarScroll.set(view,{target:resumeLayout.sidebarScroll??0,applied:null});Object.assign(view,{...resumeLayout,oldOpen:new Set(resumeLayout.oldOpen),sidebarOpen:new Set(resumeLayout.sidebarOpen),capacities:new Map(resumeLayout.capacities)});restoreInventoryChoice(view,resumeLayout);sidebarChoices.set(view,new Map(resumeLayout.sidebarChoices??resumeLayout.sidebarOpen.map(id=>[id,true])));if(!Object.hasOwn(resumeLayout,'sidebarChoices'))sidebarLegacy.add(view);else sidebarLegacy.delete(view);}resumeLayout=null;view.segment=copy.segment;if(scopeChanged){view.worksetOpen=!!copy.workingSet;if(copy.workingSet)frameWorkingSetOffset=copy.workingSet.offset;if(copy.search){searchQuery=copy.search.query;searchTheme=copy.search.projectId;frameSearchOffset=copy.search.offset;}}
     // Only a successfully committed explicit period change starts at the top.
     // Background refresh, four-grid return and saved-layout restore keep position.
     if(requestContext?.resetScroll&&copy.segment===query.segment&&copy.segment!==requestContext.segment){restoredScroll.delete(view);view.scroll=0;}
@@ -772,6 +808,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     const box=target.getBoundingClientRect(),bounds=viewport.getBoundingClientRect();
     const visible=doc.visibilityState!=='hidden'&&!viewport.hidden&&pane.n.style.visibility!=='hidden'&&pane.n.style.display!=='none'&&bounds.height>0&&box.height>0;
     if(!visible)return false;
+    if(visible&&nativeSidebar){onSidebarReveal(box);if(focus){if(doc.hasFocus?.()===false)return false;target.focus({preventScroll:true});}return true;}
     if(visible){if(surface.role==='workspace')restoredScroll.delete(view);else restoredSidebarScroll.delete(view);if(box.top<bounds.top)viewport.scrollTop+=box.top-bounds.top;else if(box.bottom>bounds.bottom)viewport.scrollTop+=Math.min(box.top-bounds.top,box.bottom-bounds.bottom);if(surface.role==='sidebar')view.sidebarScroll=viewport.scrollTop;else view.scroll=viewport.scrollTop;if(focus){if(doc.hasFocus?.()===false)return false;target.focus({preventScroll:true});if(pane.shadow.activeElement!==target)return false;}emitView();}
     if(surface.role==='sidebar'&&group.lists.current.total>0&&group.lists.current.items.length===0)requestFrame({groupId:projectId,list:'current',rowOffset:0,rowLimit:5});
     return true;
@@ -789,5 +826,10 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     if(stopped||!framed||!pane||element?.ownerDocument!==doc||element.tagName?.toLowerCase()!=='details'||!element.hasAttribute('data-vaiwl-candidate-root'))return false;
     element.setAttribute('slot','native-candidates');if(element.parentNode!==pane.n)pane.n.append(element);return true;
   }
-  return Object.freeze({attachNativeCandidates,focusSurface,setNativeNavigationPending,refreshNavigationPlans,needsNativeProject,workspaceEntered(){if(stopped||!framed||!frameProjection||!view)return false;advanceNavigationIntent(true,true);view.mode='workspace';layout();return true;},revealNativeProject,restoreFrameView(value){if(!framed||stopped)return false;resumeLayout=validateFrameResumeView(value);return true;},showTimePolicyNotice,clearTimePolicyNotice,present,updateFrameProjection,update,updatePreparedFree,layout,invalidate,stop,showWorkspace,enterReading,currentRef:()=>current().ref,status:()=>({...status}),view:()=>view,roots:()=>roots});
+  return Object.freeze({setNativeManagement(items){
+    if(!nativeSidebar||stopped||!Array.isArray(items)||items.length>32)return false;
+    const next=new Map();for(const item of items){if(typeof item?.projectId!=='string'||!Array.isArray(item.refIds)||item.refIds.length>200||item.refIds.some(id=>typeof id!=='string'))return false;next.set(item.projectId,new Set(item.refIds));}
+    if(JSON.stringify([...nativeManagement].map(([id,refs])=>[id,[...refs]]))===JSON.stringify([...next].map(([id,refs])=>[id,[...refs]])))return true;
+    nativeManagement=next;sidebarDirty=true;if(view&&snapshot)render();return true;
+  },updateNativeSidebarScroll(scroll){if(!nativeSidebar||!view||stopped||!Number.isSafeInteger(scroll)||scroll<0||scroll>1e8)return false;view.sidebarViewport={owner:'native-nav',scroll};emitView();return true;},attachNativeCandidates,focusSurface,setNativeNavigationPending,refreshNavigationPlans,needsNativeProject,workspaceEntered(){if(stopped||!framed||!frameProjection||!view)return false;advanceNavigationIntent(true,true);view.mode='workspace';layout();return true;},revealNativeProject,restoreFrameView(value){if(!framed||stopped)return false;resumeLayout=validateFrameResumeView(value);return true;},showTimePolicyNotice,clearTimePolicyNotice,present,updateFrameProjection,update,updatePreparedFree,layout,invalidate,stop,showWorkspace,enterReading,currentRef:()=>current().ref,status:()=>({...status}),view:()=>view,roots:()=>roots});
 }

@@ -6,7 +6,7 @@ import {withRequestDeadline} from '../data/request-deadline.mjs';
 
 /** Normal-JS frame lifecycle only; frozen processes/browser hard-kill need their
  * own acceptance evidence. Private data never travels through parent messages. */
-export function createUiFrameClient({document:doc,runtime,role,parentOrigin,onGrant=()=>{},onClear=()=>{},onInvalidate=()=>{},onWorkspaceEntry=()=>{},onSurfaceState=()=>{},onAppearance=()=>{},privateRoot=doc?.body,now=Date.now,elapsedNow=()=>performance.now(),makeNonce=()=>crypto.randomUUID(),schedule=setTimeout,cancel=clearTimeout}={}){
+export function createUiFrameClient({document:doc,runtime,role,parentOrigin,onGrant=()=>{},onClear=()=>{},onInvalidate=()=>{},onWorkspaceEntry=()=>{},onSurfaceState=()=>{},onSidebarViewport=()=>{},onManagementChanged=()=>{},onAppearance=()=>{},privateRoot=doc?.body,now=Date.now,elapsedNow=()=>performance.now(),makeNonce=()=>crypto.randomUUID(),schedule=setTimeout,cancel=clearTimeout}={}){
  const parsed=new URL(parentOrigin);
  if(!['workspace','sidebar'].includes(role)||!doc?.defaultView?.parent||!privateRoot||typeof privateRoot.replaceChildren!=='function'||typeof runtime?.connect!=='function'||typeof runtime.sendMessage!=='function'||parsed.origin!==parentOrigin||!['https:','http:'].includes(parsed.protocol))throw Error('invalid-ui-frame-client');
  const appearance=doc.documentElement?.style?createFrameAppearance({document:doc}):null;
@@ -99,6 +99,8 @@ export function createUiFrameClient({document:doc,runtime,role,parentOrigin,onGr
     if(acknowledged&&!active&&epoch===stoppedEpoch){idleAck={epoch:stoppedEpoch,requestId:data.requestId};finishIdle();}
     return;
    }
+   if(exactHostRecord(data,['type','role','mountId','grantId'])&&data.type==='VAIWL_UI_MANAGEMENT_CHANGED'&&role==='sidebar'&&data.role===role&&grant&&now()<Date.parse(grant.expiresAt)&&data.mountId===grant.mountId&&data.grantId===grant.id){try{onManagementChanged();}catch{}return;}
+   if(exactHostRecord(data,['type','role','mountId','grantId','scroll'])&&data.type==='VAIWL_UI_SIDEBAR_VIEWPORT'&&role==='sidebar'&&data.role===role&&grant&&now()<Date.parse(grant.expiresAt)&&data.mountId===grant.mountId&&data.grantId===grant.id&&Number.isSafeInteger(data.scroll)&&data.scroll>=0&&data.scroll<=100000000){try{onSidebarViewport(data.scroll);}catch{}return;}
    if(!exactHostRecord(data,['type','role','appearance'])||data.type!=='VAIWL_UI_APPEARANCE'||data.role!==role)return;try{const value=validateFrameAppearance(data.appearance),key=JSON.stringify(value);if(key===appearanceKey)return;appearance?.apply(value);appearanceKey=key;onAppearance(value);}catch{/* Cosmetic input cannot change authority or restart the client. */}};
   doc.defaultView.addEventListener?.('message',appearanceListener);
   abort=new AbortController();const signal=abort.signal;

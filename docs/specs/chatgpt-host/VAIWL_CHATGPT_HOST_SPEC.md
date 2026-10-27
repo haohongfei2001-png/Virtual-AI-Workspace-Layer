@@ -1,5 +1,14 @@
 # VAIWL：ChatGPT 生产宿主适配工程规格
 
+## 2026-10-27 双 Pro 最终裁决：正式文档流 Host（方案 B）
+
+用户正式采纳 [产品 F-01—F-08](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16#issuecomment-6437805652) 和 [Host 方案 B](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16#issuecomment-6437829589)。沿原 C1—C5、唯一分支/PR16 实施；不是新计划。
+
+本节替代下文历史 manual/fixed 私人双 surface、100vh 占位和滚走输入的承载合同：双 extension-origin iframe、正式 renderer、Worker、授权和原库保留；工作区/侧栏成为已证原生文档流布局成员。仅空的声明式退出开关可使用 Popover，不承载私人内容。原生节点不复制、移动或重绑；基线身份和增强态几何分别验证，关闭/失效/撤权/停用后条件 CSS 失效恢复。输入首手势完成前只保留几何，私人内容遇真实弹层立即让位；已关闭的退出开关不能被遗留手势重新激活。
+
+原生 NAV 是侧栏唯一滚动所有者；持久字段 `sidebarViewport:{owner:'native-nav',scroll}` 与主区 scroll 分开 CAS 合并，旧 sidebarScroll 不重解释为 NAV 坐标。F-01 管理去重仅接受当前文档、真实 ID、可信展开动作及实际可见重复行；未知原生管理语义保留其能力，不猜测折叠/隐藏。新文档私人确认、账号撤权和原生数据边界不变。实验 ZIP 尚未取得，本轮独立实现不声称应用/运行 Pro 的18文件补丁。历史验收保留但不自动适用于新 backend；真实 Mac 未运行仍 NOT_RUN。
+
+
 2026-10-25 用户正式采纳 [PR16 最终宿主集成任务书](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16#issuecomment-6398255622)。本轮仅修正共同成败关系：content-session 拥有文档/scope/producer；workspace 是唯一必需角色，sidebar/返回几何各自失效与重新证明。VIEW 先发布已授权数据，原生动作计划仅针对已发布页独立取得；候选或动作失败不清有效投影。程序性隐藏不改用户展示意图；真实文档/scope/grant撤销仍清私人展示。原81项历史与身份、原生交互保护原义保留，冲突的全局退出预期由本决定覆盖。
 
 2026-10-22用户正式采纳[PR16体验裁决](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16#issuecomment-6335005042)：本人Mac Chrome主用Workspace的近期真实P/C、正确归属、自然新聊天更新、可信最近活动、原生搜索/输入/返回、普通刷新休眠恢复、隔离和成熟v2.7均为个人交付必需。全账户严格历史完整性、逐消息本人作者/ACK/原始时间完整审计取消为默认产品前提，不转为发布欠账。81个ID、子场景和历史结果保留；①个人必需、②发布前完善、③后续优化、④取消/简化的逐ID适用范围见原离线验收§4，延期不改PASS。10k/100k及全库密度自动H为③/DEFERRED，原阈值不变；保留默认30天和已有手动切换。个人切片不冒领旧完整旅程、FREE-ACCEPTED或RELEASE-READY。

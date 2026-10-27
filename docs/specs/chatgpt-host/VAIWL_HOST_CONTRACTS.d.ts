@@ -1,3 +1,8 @@
+/** 2026-10-27 accepted scheme B supersedes historical private manual-surface
+ * mounting semantics: extension-origin frames are native flow members; only
+ * empty exit switches use popover. See AUTHORITY and the existing plan.
+ * Authorization/data contracts remain unchanged. Native NAV scroll uses the
+ * explicit sidebarViewport owner marker, not legacy inner-frame scroll. */
 /**
  * VA-HOST/1, revision 1.1 FINAL — 2026-10-13.
  * Design contract only; not an implementation or a trust credential.
