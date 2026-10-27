@@ -144,6 +144,26 @@ test('single-role frame renderer reuses navigation without host DOM access',{tim
   const restored=nav.roots().workspace.scroller;restored.dispatchEvent(new WheelEvent('wheel',{bubbles:true,composed:true}));restored.scrollTop=200;await paint();
   mount.style.height='800px';await paint();if(nav.roots().workspace.scroller.scrollTop!==200)throw Error('restoration overrode subsequent user scroll');nav.stop();
  });
+ // Native reading can hide a long search/workset without closing that page.
+ // A hidden VIEW refresh must preserve its own position until visible resize.
+ for(const kind of ['search','workingSet'])await page.evaluate(async kind=>{
+  const {createNavigation}=await import('/src/navigation/navigation.mjs');
+  const empty=()=>({items:[],total:0,offset:0,limit:24,hasMore:false});
+  const base={protocol:'vaiwl-free-frame/1',role:'workspace',scope:'special-scroll',completeSnapshot:false,segment:0,viewSession:{H:30,T:20000,Z:'UTC',policyRevision:0},navigation:{hasNewer:false,hasOlder:false,maxSegment:0},groups:empty(),entries:{noProject:{...empty(),inventoryTotal:0},unknown:{...empty(),inventoryTotal:0}},selection:null};
+  const rows=Array.from({length:24},(_,i)=>({id:'special'+i,nativeTitle:'Known '+i,displayTitle:'Known '+i,nativeUrl:'https://chatgpt.com/c/special'+i,membership:'UNKNOWN',projectId:null,segment:null}));
+  let latest;const mount=document.querySelector('#mount'),paint=()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
+  mount.style.height='400px';
+  const nav=createNavigation({document,surface:{role:'workspace',root:mount},adapter:{currentURL:()=>'',isCurrent:()=>false,status(){}},onProjectionRequest:q=>latest={...base,[kind]:{...q[kind],items:rows,total:24,hasMore:false,...(kind==='workingSet'?{currentRefId:null}:{})}}});
+  nav.updateFrameProjection(base);nav.present({kind:kind==='search'?'search-known':'show-working-set'});await paint();
+  nav.roots().workspace.scroller.scrollTop=320;await paint();
+  if(nav.roots().workspace.scroller.scrollTop!==320)throw Error(kind+' fixture not scrollable');
+  nav.enterReading();mount.style.display='none';await paint();nav.updateFrameProjection(latest);nav.workspaceEntered();await paint();mount.style.display='block';await paint();
+  if(nav.roots().workspace.scroller.scrollTop!==320)throw Error(kind+' hidden return lost position: '+nav.roots().workspace.scroller.scrollTop);
+  if(nav.view().scroll!==0)throw Error(kind+' overwrote main workspace position');
+  const scroller=nav.roots().workspace.scroller;scroller.dispatchEvent(new WheelEvent('wheel',{bubbles:true,composed:true}));scroller.scrollTop=100;await paint();mount.style.height='450px';await paint();
+  if(nav.roots().workspace.scroller.scrollTop!==100)throw Error(kind+' restoration overrode user scroll');
+  nav.stop();mount.style.height='800px';
+ },kind);
  // Sidebar uses the same durable restoration contract as workspace. A hidden
  // or initially taller frame must not save a browser-clamped zero as user intent.
  await page.evaluate(async()=>{

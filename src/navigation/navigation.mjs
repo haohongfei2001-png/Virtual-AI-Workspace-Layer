@@ -221,9 +221,10 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
   // A restored document can initially have a taller frame, then settle after
   // native layout arrives. Its browser-clamped scroll is not a new user choice.
   function applyRestoredScroll(page){
-    const held=view&&restoredScroll.get(view),state=page&&workspacePages.get(page);
-    if(!held||state?.view!==view||state.specialKey!==null)return;
-    page.scrollTop=held.target;held.applied=page.scrollTop;
+    const state=page&&workspacePages.get(page);if(!view||state?.view!==view)return;
+    const special=state.specialKey!==null,held=special?specialScroll.get(view):restoredScroll.get(view);
+    if(!held||special&&(held.key!==state.specialKey||!held.pending))return;
+    page.scrollTop=special?held.scroll:held.target;held.applied=page.scrollTop;
   }
   function releaseRestoredScroll(){
     if(!nativeSidebar&&view&&restoredSidebarScroll.has(view)){
@@ -232,8 +233,15 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
       // Keep the durable target until expansion creates a real scrollbox.
       if(list&&!list.hidden&&list.clientHeight>0){view.sidebarScroll=list.scrollTop;restoredSidebarScroll.delete(view);}
     }
-    if(!view||!restoredScroll.has(view))return;
+    if(!view)return;
     const page=roots?.workspace?.scroller;if(page?.getClientRects?.().length===0)return;
+    const state=page&&workspacePages.get(page);
+    if(state&&state.specialKey!==null){
+      const held=specialScroll.get(view);
+      if(held?.key===state.specialKey&&held.pending){held.scroll=page.scrollTop;held.pending=false;}
+      return;
+    }
+    if(!restoredScroll.has(view))return;
     if(page&&workspacePages.get(page)?.specialKey===null)view.scroll=page.scrollTop;
     restoredScroll.delete(view);
   }
@@ -244,7 +252,11 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     const state=workspacePages.get(page);if(state&&state.view!==view)return;
     const held=view&&restoredScroll.get(view);
     if(held&&state?.specialKey===null){const clamped=Math.min(held.target,Math.max(0,page.scrollHeight-page.clientHeight));if(page.scrollTop===held.applied||page.scrollTop===clamped)return;restoredScroll.delete(view);}
-    if(state&&state.specialKey!==null)specialScroll.set(view,{key:state.specialKey,scroll:page.scrollTop});
+    if(state&&state.specialKey!==null){
+      const special=specialScroll.get(view);
+      if(special?.key===state.specialKey&&special.pending){const clamped=Math.min(special.scroll,Math.max(0,page.scrollHeight-page.clientHeight));if(page.scrollTop===special.applied||page.scrollTop===clamped)return;}
+      specialScroll.set(view,{key:state.specialKey,scroll:page.scrollTop});
+    }
     // A returning main page still contains the short special DTO until its
     // owner VIEW arrives. Browser clamping here is not a user scroll choice.
     else if(view&&!(frameProjection&&frameWindowsSuspended))view.scroll=page.scrollTop;
@@ -718,9 +730,12 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     if(framed&&searchQuery===null&&!view.worksetOpen)(page.querySelector('.workspace-core')??page).append(node(doc,'slot',{name:'native-candidates'}));
     shadow.append(page);
     // VIEW updates continue while native reading hides the workspace frame.
-    // Retain the main-view position until the owner's visible resize creates
-    // a scrollbox; use the same bounded intent as durable layout restoration.
-    if(specialKey===null&&page.getClientRects?.().length===0&&!restoredScroll.has(view))restoredScroll.set(view,{target:view.scroll,applied:null});
+    // Retain each page's position until the owner's resize creates a scrollbox.
+    // Search/workset targets remain transient and never replace durable main scroll.
+    if(page.getClientRects?.().length===0){
+      if(specialKey===null&&!restoredScroll.has(view))restoredScroll.set(view,{target:view.scroll,applied:null});
+      else if(specialKey!==null){const held=specialScroll.get(view);if(held?.key===specialKey){held.pending=true;held.applied=null;}}
+    }
     layoutCards();page.scrollTop=specialKey===null?view.scroll:specialScroll.get(view)?.key===specialKey?specialScroll.get(view).scroll:0;applyRestoredScroll(page);restoreOwnedFocus(focused);emitView();
   }
   function applyUpdate(value,now,timeZone,preparedIndex=null,alreadyPrepared=false){
