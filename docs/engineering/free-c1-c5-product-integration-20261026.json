@@ -2040,13 +2040,37 @@
         "path": "/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/.git/vaiwl-artifacts/local-source-witness-20261022/extension",
         "previousDa07FilesCopied": true,
         "previousBackup": "/private/tmp/VAIWL-before-document-flow-20261027-193201/extension",
-        "followupCopied": false,
+        "followupCopied": true,
         "reload": "NOT_RUN",
         "runtimeBuild": "UNKNOWN",
         "nativeEntry": "selected unrelated huifei recruiting window; no input sent",
         "browserEntry": "Local browser use disabled in Work settings",
-        "dataChanged": false
-      }
+        "dataChanged": false,
+        "followupReceipt": {
+          "sourceCommit": "40d1cd1a",
+          "source": "/private/tmp/VAIWL-v27-Document-Flow-Integrated-20261027/extension",
+          "destination": "/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/.git/vaiwl-artifacts/local-source-witness-20261022/extension",
+          "backup": "/private/tmp/VAIWL-before-flow-integrated-20261027-211914/extension",
+          "backupFiles": 2953,
+          "verifiedPackageFiles": 201,
+          "changed": [
+            "src/host/surface-discovery.mjs",
+            "src/navigation/flow-mount-surface.mjs",
+            "src/host/document-flow-layout.mjs",
+            "src/host/free-frame-client.mjs",
+            "content.js",
+            "extension/classic-runtime.js",
+            "build-manifest.json"
+          ],
+          "untouchedExtraFiles": 2752,
+          "manifestUnchanged": true,
+          "extensionId": "miendbcjdmecjggplepenghjnoejmaic",
+          "profileDataAccessed": false,
+          "reload": "NOT_RUN",
+          "runtimeBuild": "UNKNOWN"
+        }
+      },
+      "implementationCommit": "40d1cd1a"
     }
   }
 }

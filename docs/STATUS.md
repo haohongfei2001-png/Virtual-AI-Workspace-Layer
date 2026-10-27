@@ -7,7 +7,7 @@
 
 统一审阅包 `/private/tmp/VAIWL-v27-Document-Flow-Integrated-20261027/extension`，zip SHA256 `e5328c519dc4b99c3ebe0916c1a7e73d89027e0d8f78c5f5015beb4e09af1a83`；202项源码哈希与最终隔离 MV3 包一致、权限及清单与前包一致。正式连续旅程覆盖首页/Project/阅读、原生首输入和工具、成员/唯一页头返回、NAV单滚动、局部侧栏失败、窄屏、Worker恢复、确认后的隔离旧对象/布局恢复、撤权和实际隔离卸载。相关合同回归与首手势保护通过；非作者只读复核的有限期限及完整性缺口已补齐。旧全量历史运行仍有失败，不能称全套 CI 通过；独立旧 UI10 矩阵在超时后停止，未记 PASS。旧严格认证J4的修复后界面等待失败已确认为测试使用不存在的DOM标记；改为正式workspace后，同一片段无错误，索引修复/来源撤销/恢复UNKNOWN可达/停用/卸载及原草稿保留通过，整体仍按既有合同记PARTIAL_J4_NOT_ACCEPTED。
 
-安装事实更正：此前 da07 固定包已经完整备份后写入原 `.git/vaiwl-artifacts/local-source-witness-20261022/extension`，但没有成功 Reload 回执；下节“不更新日常安装”只对应构建时刻，不能描述后续复制。此次运行中构建仍为 **UNKNOWN**。工具浏览器入口返回本地浏览器使用禁用，原生应用入口选中另一套 huifei 投递窗口，未对它发键、Reload 或修改数据；不换通道绕过、不反复抢前台。本补修包尚未写入日常目录。原扩展ID、旧库、草稿及三份stash保留。
+安装事实更正：此前 da07 固定包已经完整备份后写入原 `.git/vaiwl-artifacts/local-source-witness-20261022/extension`，但没有成功 Reload 回执；下节“不更新日常安装”只对应构建时刻，不能描述后续复制。此次运行中构建仍为 **UNKNOWN**。工具浏览器入口返回本地浏览器使用禁用，原生应用入口选中另一套 huifei 投递窗口，未对它发键、Reload 或修改数据；不换通道绕过、不反复抢前台。本补修包随后已完整备份至`/private/tmp/VAIWL-before-flow-integrated-20261027-211914/extension`，仅同步7项差异文件；201项包文件校验一致，2752项额外资产不变。仍未Reload，运行构建UNKNOWN。原扩展ID、旧库、草稿及三份stash保留。
 
 真实方案 B Mac 连续产品验收 **NOT_RUN**，完整v2.7 **NOT_ACCEPTED**。审阅图是匿名宿主里的正式 renderer，不是实际 ChatGPT；真实 React/IME/附件/管理展开语义与本人旧记录恢复不能由离线结果替代。当前无法安全自动激活正确 Profile 是实机步骤的具体限制，不是服务器接口或产品源码失败。
 
