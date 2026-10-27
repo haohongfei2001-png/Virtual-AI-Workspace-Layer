@@ -1,4 +1,4 @@
-import {foregroundFailureStates,helloFailureStates,layoutFailureStates,surfaceFailureStates,validLayoutShape} from './local-status.mjs';
+import {initializationFailureStates,foregroundFailureStates,helloFailureStates,layoutFailureStates,surfaceFailureStates,validLayoutShape} from './local-status.mjs';
 import {createIsolatedSessionReader} from './isolated-session-reader.mjs';
 import {createCandidateUpgrade} from './candidate-upgrade.mjs';
 import {createContentCandidates} from './content-candidates.mjs';
@@ -378,7 +378,7 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
    });
   };runtime.onMessage.addListener(s.listener);
   let startupPhase='hello';
-  const reportStartup=phase=>{if(current!==s)return;startupFailure=['layout-failed','hello-failed','adapter-failed','authorization-failed','surface-failed'].includes(phase)?{url:s.url,shape:s.layoutShape??null,state:phase==='hello-failed'&&helloFailureStates.includes(s.helloFailure)?s.helloFailure:phase==='layout-failed'&&layoutFailureStates.includes(s.layoutFailure)?s.layoutFailure:phase==='surface-failed'&&surfaceFailureStates.includes(s.surfaceFailure)?s.surfaceFailure:phase}:null;if(doc.documentElement?.dataset)doc.documentElement.dataset.vaiwlStartup=phase;};
+  const reportStartup=phase=>{if(current!==s)return;startupFailure=[...initializationFailureStates,'layout-failed','hello-failed','adapter-failed','authorization-failed','surface-failed'].includes(phase)?{url:s.url,shape:s.layoutShape??null,state:phase==='hello-failed'&&helloFailureStates.includes(s.helloFailure)?s.helloFailure:phase==='layout-failed'&&layoutFailureStates.includes(s.layoutFailure)?s.layoutFailure:phase==='surface-failed'&&surfaceFailureStates.includes(s.surfaceFailure)?s.surfaceFailure:phase}:null;if(doc.documentElement?.dataset)doc.documentElement.dataset.vaiwlStartup=phase;};
   reportStartup(startupPhase);
   try{
    // A C2 transport failure withdraws capabilities but keeps the passive
@@ -399,12 +399,14 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
    await startObservation(s);
    startupPhase='authorization';reportStartup(startupPhase);
    const auth=await handshake(s,{v:1,type:'HOST_REFRESH',clientId,seq:++seq,...bindingFields(s.binding)});noteScopeStatus(s,auth);if(auth?.state!=='verified')throw Error('scope-not-verified');if(expectedScope!==null&&auth.scopeKey!==expectedScope)throw Error('recovery-scope-changed');s.contextReadyPending=false;s.scopeKey=auth.scopeKey;s.ackProjects=new Set();s.upgraded=null;
+   startupPhase='initialization-preparation';reportStartup(startupPhase);
    if(learnedScope!==s.scopeKey||learnedDocument!==s.binding.browserDocumentId)clearLearned();learnedScope=s.scopeKey;learnedDocument=s.binding.browserDocumentId;
    recentId(s);
    // Authentication never adopts provisional candidates: destroy the RAM
    // snapshot/handles, then the existing controller starts a fresh producer scan.
    if(Date.parse(s.binding.expiresAt)<=now()||s.adapter.observationStatus?.().state==='stopped')throw Error('stale-content-session');
    stopObservation();
+   startupPhase='initialization-candidates';reportStartup(startupPhase);
    s.candidates=createContentCandidates({adapter,streaming:true,current:()=>live(s)&&s.ready&&Date.parse(s.binding.expiresAt)>now(),showReading:()=>s.controller?.showReading()===true,
     beginScan:()=>{
      // Only fixed-size document identities are staged. Visiting a row cannot
@@ -453,10 +455,13 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
      }};
     },
     isUpgraded:row=>{const matches=identity=>adapter.matchesCandidateIdentity?.(identity,row.target.control)===true;return !!(s.upgraded&&s.ackProjects.has(s.upgraded.projectId)&&matches(s.upgraded.identity)||learned.some(item=>matches(item.identity)));},now,elapsedNow});
+   startupPhase='initialization-snippets';reportStartup(startupPhase);
    s.snippets=createSnippetSelectionSession({adapter:{selectedSnippet:ref=>adapter.selectedSnippet?.(ref)??null},now,elapsedNow,makeId,
     currentBinding:()=>live(s)&&s.ready&&s.binding&&Date.parse(s.binding.expiresAt)>now()&&s.snippetScopeGrant?JSON.stringify({...bindingFields(s.binding),scopeGrantId:s.snippetScopeGrant}):null,
     currentSelectionEpoch:()=>s.snippetRef?adapter.selectionEpoch?.(s.snippetRef)??null:null});
+   startupPhase='initialization-navigation';reportStartup(startupPhase);
    s.plans=plansFactory({adapter,showNativeReading:()=>s.adapter?.hasNativeLayer?.()!==true&&s.controller?.showNativeReading?.()===true,captureIntent:()=>s.controller?.intentGuard?.()??(()=>false),showReading:()=>s.adapter?.hasNativeLayer?.()!==true&&s.controller?.showReading()===true,now,elapsedNow,schedule,cancel,bindingCurrent:()=>live(s)&&Date.parse(s.binding.expiresAt)>now()&&(s.controller?.isNativeStructureCurrent?.()??adapter.inspect().ok)?s.binding.documentToken+':'+s.binding.producerToken+':'+s.binding.routeEpoch:false});
+   startupPhase='initialization-surface';reportStartup(startupPhase);
    surface=surfaceFactory({document:doc,createFrameURL:({role})=>runtime.getURL(role+'.html'),hasNativeLayer:()=>adapter.hasNativeLayer()});
    const bridge={
     cancelledCloseReady:()=>{if(enabled&&live(s)&&s.ready&&!s.recoveryDenied)s.busyClose=false;},
@@ -526,6 +531,7 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
      }
     })
    };
+   startupPhase='initialization-controller';reportStartup(startupPhase);
    s.controller=controllerFactory({document:doc,adapter,surface,extensionOrigin:'chrome-extension://'+runtime.id,bridge,initialMode,onWake:()=>wake(s),onFailure:code=>{if(current===s&&surfaceFailureStates.includes(code)){s.surfaceFailure=code;startupFailure={url:s.url,state:code,shape:null};}},onTerminated:(reason,presentation)=>{
     if(current===s&&!s.surfaceFailure&&surfaceFailureStates.includes('surface-'+reason)){s.surfaceFailure='surface-'+reason;startupFailure={url:s.url,state:s.surfaceFailure,shape:null};}
     const publicStops=['ui-frame-document-replaced','native-region-changed','native-geometry-changed','dormant-document-changed','mount-unavailable','ui-frame-suspended','ui-grant-expired','session-renew-failed','surface-stopped','ui-authority-revoked','ui-user-exit'];

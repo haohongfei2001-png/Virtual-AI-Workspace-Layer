@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {foregroundFailureStates,installLocalStatus,readActiveLocalStatus,validLayoutShape,readActiveLocalLayout,validLocalPipeline,createSidebarSnapshot} from '../../src/host/local-status.mjs';
+import {initializationFailureStates,foregroundFailureStates,installLocalStatus,readActiveLocalStatus,validLayoutShape,readActiveLocalLayout,validLocalPipeline,createSidebarSnapshot} from '../../src/host/local-status.mjs';
 import {validSidebarStructure,sidebarStructureCoverage} from '../../src/host/history-structure-diagnostic.mjs';
 import observedSidebar from './fixtures/observed-sidebar-structure.json' with {type:'json'};
 import observedProjectSidebar from './fixtures/observed-sidebar-project-20261026.json' with {type:'json'};
@@ -119,7 +119,7 @@ function listenerFixture(readState=()=> 'ready'){
  const dispose=installLocalStatus({runtime,readState:()=>{reads++;return readState();}});
  return {listeners,dispose,reads:()=>reads,dispatch(message=request(),source=sender()){const replies=[];for(const listener of listeners)listener(message,source,value=>replies.push(value));return replies;}};
 }
-for(const state of ['ready','reading','suspended','dormant','connecting','waiting','verification-required','frame-blocked','layout-failed','hello-failed','adapter-failed','authorization-failed','surface-failed','layout-missing-reading','layout-geometry-header-gap','layout-history-row-order','unavailable'])test('fixed popup receives only local '+state+' enum',()=>{
+for(const state of [...initializationFailureStates,'ready','reading','suspended','dormant','connecting','waiting','verification-required','frame-blocked','layout-failed','hello-failed','adapter-failed','authorization-failed','surface-failed','layout-missing-reading','layout-geometry-header-gap','layout-history-row-order','unavailable'])test('fixed popup receives only local '+state+' enum',()=>{
  const f=listenerFixture(()=>state);assert.deepEqual(f.dispatch(),[{v:1,state}]);assert.equal(f.reads(),1);f.dispose();assert.equal(f.listeners.size,0);assert.deepEqual(f.dispatch(),[]);f.dispose();
 });
 for(const source of [null,{}, {...sender(),id:'other'},{...sender(),url:'https://chatgpt.com/'},{...sender(),url:'chrome-extension://extension/workspace.html'},{...sender(),url:'chrome-extension://extension/status.html#x'},{...sender(),url:'chrome-extension://extension/status.html?x'},{...sender(),tab:{}},{...sender(),tab:null}])test('reject non-popup sender '+JSON.stringify(source),()=>{
@@ -138,7 +138,7 @@ function popupFixture({query=async()=>[{id:7}],send=async()=>({v:1,state:'ready'
  const schedule=(fn,ms)=>{const id=++serial;timers.set(id,{fn,ms});return id;},cancel=id=>timers.delete(id);
  return {calls,timers,run:()=>readActiveLocalStatus({tabs,schedule,cancel}),expire(){for(const[id,timer]of [...timers]){timers.delete(id);timer.fn();}}};
 }
-for(const state of ['ready','reading','suspended','dormant','connecting','waiting','verification-required','frame-blocked','layout-failed','hello-failed','adapter-failed','authorization-failed','surface-failed','layout-missing-reading','layout-geometry-header-gap','layout-history-row-order','unavailable'])test('active tab lookup has one topframe request and exact '+state+' result',async()=>{
+for(const state of [...initializationFailureStates,'ready','reading','suspended','dormant','connecting','waiting','verification-required','frame-blocked','layout-failed','hello-failed','adapter-failed','authorization-failed','surface-failed','layout-missing-reading','layout-geometry-header-gap','layout-history-row-order','unavailable'])test('active tab lookup has one topframe request and exact '+state+' result',async()=>{
  const f=popupFixture({query:async()=>[{id:7,get url(){throw Error('must not read private URL');},get title(){throw Error('must not read private title');}}],send:async()=>({v:1,state})});assert.equal(await f.run(),state);
  assert.deepEqual(f.calls,[['query',{active:true,currentWindow:true}],['send',7,request(),{frameId:0}]]);assert.equal(f.timers.size,0);
 });

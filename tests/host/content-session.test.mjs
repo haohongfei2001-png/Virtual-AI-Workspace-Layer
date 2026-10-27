@@ -462,3 +462,13 @@ for(const transition of ['context-pending','bfcache','document-invalidation'])te
   assert.deepEqual(f.calls.slice(before).filter(m=>['HOST_HELLO','HOST_REFRESH','HOST_UI_MOUNT'].includes(m.type)).map(m=>m.type),['HOST_HELLO','HOST_REFRESH','HOST_UI_MOUNT']);
  }finally{f.client.stop();}
 });
+
+for(const [factory,expected] of [['plansFactory','initialization-navigation-failed'],['surfaceFactory','initialization-surface-failed'],['controllerFactory','initialization-controller-failed']])test('verified authority is not blamed for '+factory+' failure',async()=>{
+ const f=fixture({[factory]:()=>{throw Error('PRIVATE_INITIALIZER_DETAIL');}});
+ assert.equal(await f.client.start(),null);
+ assert.equal(f.calls.filter(m=>m.type==='HOST_REFRESH').length,1);
+ assert.equal(f.client.localStatus(),expected);
+ assert.equal(f.client.showWorkspace(),false);
+ assert.equal(f.listeners.size,0);
+ const before=f.calls.length;await f.advance(30000);assert.equal(f.calls.length,before);
+});

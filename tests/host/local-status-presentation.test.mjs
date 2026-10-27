@@ -2,19 +2,19 @@ import {projectSurfaceFailureReasons} from '../../src/host/native-project-surfac
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {readActiveLocalStatus,readActiveLocalLayout,validLocalPipeline} from '../../src/host/local-status.mjs';
+import {initializationFailureStates,readActiveLocalStatus,readActiveLocalLayout,validLocalPipeline} from '../../src/host/local-status.mjs';
 const source=readFileSync(new URL('../../extension/status.mjs',import.meta.url),'utf8');
 const html=readFileSync(new URL('../../extension/status.html',import.meta.url),'utf8');
 const importLine="import {HOST_CONFIG} from './config.mjs';\nimport {readActiveLocalStatus,readActiveLocalLayout,readLocalBoot,validLocalPipeline,createSidebarSnapshot} from '../src/host/local-status.mjs';\nimport {HISTORY_DIAGNOSTIC_BATCH,validHistoryStructureReport,runHistoryDiagnosticOnce,sidebarStructureCoverage} from '../src/host/history-structure-diagnostic.mjs';\n";
 assert(source.startsWith(importLine),'execute actual popup body after its exact imports');
 const AsyncFunction=Object.getPrototypeOf(async function(){}).constructor;
-async function render(initial,browserLocal=false,localState={ok:true}){
+async function render(initial,browserLocal=false,localState={ok:true},boot=null){
  let current=initial;const calls=[],node={textContent:''};
  const chrome={tabs:{query:async args=>{calls.push(['query',args]);return [{id:7,get title(){throw Error('PRIVATE_TITLE');},get url(){throw Error('PRIVATE_URL');}}];},sendMessage:async(...args)=>{calls.push(['send',...args]);return args[1]?.type==='HOST_LOCAL_LAYOUT'?{v:1,shape:null}:current;}}};
  const elements=[];
  const document={getElementById:id=>{assert.equal(id,'status');return node;},body:{append:e=>elements.push(e)},createElement:tag=>({tag,textContent:'',children:[],append(...nodes){this.children.push(...nodes);},listeners:{},setAttribute(){},addEventListener(type,fn){this.listeners[type]=fn;}})};
  chrome.runtime={sendMessage:async message=>{calls.push(['control',message]);return localState;}};
- await new AsyncFunction('HOST_CONFIG','readActiveLocalStatus','readActiveLocalLayout','readLocalBoot','validLocalPipeline','chrome','document',source.slice(importLine.length))({browserLocal},readActiveLocalStatus,readActiveLocalLayout,async()=>null,validLocalPipeline,chrome,document);
+ await new AsyncFunction('HOST_CONFIG','readActiveLocalStatus','readActiveLocalLayout','readLocalBoot','validLocalPipeline','chrome','document',source.slice(importLine.length))({browserLocal},readActiveLocalStatus,readActiveLocalLayout,async()=>boot,validLocalPipeline,chrome,document);
  return {calls,node,elements,change:value=>{current=value;}};
 }
 const drain=async()=>{for(let i=0;i<30;i++)await Promise.resolve();};
@@ -77,4 +77,25 @@ test('engineering diagnostics are closed and separate from local confirmation co
  const f=await render({v:1,state:'reading'},true,{ok:true,mode:'locked',exists:true});
  const detail=f.elements.find(e=>e.id==='diagnostic-details');assert(detail);assert.notEqual(detail.open,true);assert.equal(detail.children[0].textContent,'诊断详情');
  assert(f.elements.some(e=>e.tag==='button'&&e.textContent.includes('确认当前账号')));assert(!detail.children.some(e=>e.tag==='button'&&e.textContent.includes('确认当前账号')));
+});
+
+for(const state of initializationFailureStates)test('post-authorization initializer failure is not an account confirmation request: '+state,async()=>{
+ const f=await render({v:1,state});
+ assert.match(f.node.textContent,/已通过本次工作空间授权检查/);
+ assert.match(f.node.textContent,/无需重复确认或重装扩展/);
+ assert(f.node.textContent.includes(state));
+ assert.doesNotMatch(f.node.textContent,/旧私人数据保持锁定|已解锁/);
+ assert.equal(f.calls.length,2);
+});
+test('existing current-document build receipt is visible without expanding diagnostics or new requests',async()=>{
+ const boot={v:1,stage:'module-loaded',build:'a'.repeat(64)};
+ const f=await render({v:1,state:'authorization-failed'},false,{},boot);await drain();
+ const note=f.elements.find(e=>e.id==='runtime-build');
+ assert.equal(note.tag,'p');assert(note.textContent.includes(boot.build));assert(note.textContent.includes(boot.stage));
+ assert.match(note.textContent,/不代表产品验收通过/);assert.equal(f.calls.length,2);
+});
+test('missing runtime receipt does not infer activated build from disk or user Reload',async()=>{
+ const f=await render({v:1,state:'authorization-failed'});await drain();
+ assert.match(f.elements.find(e=>e.id==='runtime-build').textContent,/未核实.*不能用磁盘文件推定运行版本/);
+ assert.equal(f.calls.length,2);
 });
