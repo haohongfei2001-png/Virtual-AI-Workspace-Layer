@@ -73,8 +73,10 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
   const owned=e=>e.composedPath().some(n=>n?.getAttribute?.('data-vaiwl-owned')===token);
   const interacting=()=>nativeInteraction!==null||pointers.size>0||keys.size>0||composing||dragging;
   const clearUpdateTimer=()=>{if(updateTimer!==null){win.clearTimeout(updateTimer);updateTimer=null;}};
+  let renderRevision=0;
   function flushUpdate(){
     clearUpdateTimer();if(interacting()||stopped)return;
+    const paintedBefore=renderRevision;
     const presentation=pendingPresentation;pendingPresentation=null;
     let args=pendingUpdate;pendingUpdate=null;
     // An older deferred paint must not cancel a request made by the click that
@@ -85,7 +87,9 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     // A queued presentation predates any input/click made while it waited.
     // Passive workspace entry still cancels old native dispatches, not this UI intent.
     if(presentation&&!stopped&&snapshot?.scope===presentation.scope&&presentation.generation===presentationGeneration)present(presentation.intent);
-    else if(!args&&paint)render();
+    // Reading-only presentation changes layout without consuming a queued paint.
+    // Conversely, an update or workspace presentation that rendered already owns it.
+    if(paint&&renderRevision===paintedBefore)requestRender();
   }
   function requestRender(){if(stopped)return;if(interacting()||updateTimer!==null){pendingRender=true;finishInteraction();return;}render();}
   function clearTimePolicyNotice(paint=true){
@@ -559,7 +563,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
       return;
     }
   }
-  function render(){if(!roots||!view)return;const focused=focusState();rememberSidebarScroll(roots.sidebar?.shadow.querySelector('.themes'));closeMenu(false);
+  function render(){if(!roots||!view)return;renderRevision++;const focused=focusState();rememberSidebarScroll(roots.sidebar?.shadow.querySelector('.themes'));closeMenu(false);
     const selected=current().selected;
     if(framed)applySidebarChoices(choices());
     if(selected&&lastSelected!==adapter.currentURL()){if(lastSelected!==null)restoredSidebarScroll.delete(view);if(!framed)view.sidebarOpen.add(selected.id);lastSelected=adapter.currentURL();selectionPending=true;}
@@ -830,6 +834,6 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     if(!nativeSidebar||stopped||!Array.isArray(items)||items.length>32)return false;
     const next=new Map();for(const item of items){if(typeof item?.projectId!=='string'||!Array.isArray(item.refIds)||item.refIds.length>200||item.refIds.some(id=>typeof id!=='string'))return false;next.set(item.projectId,new Set(item.refIds));}
     if(JSON.stringify([...nativeManagement].map(([id,refs])=>[id,[...refs]]))===JSON.stringify([...next].map(([id,refs])=>[id,[...refs]])))return true;
-    nativeManagement=next;sidebarDirty=true;if(view&&snapshot)render();return true;
+    nativeManagement=next;sidebarDirty=true;if(view&&snapshot)requestRender();return true;
   },updateNativeSidebarScroll(scroll){if(!nativeSidebar||!view||stopped||!Number.isSafeInteger(scroll)||scroll<0||scroll>1e8)return false;view.sidebarViewport={owner:'native-nav',scroll};emitView();return true;},attachNativeCandidates,focusSurface,setNativeNavigationPending,refreshNavigationPlans,needsNativeProject,workspaceEntered(){if(stopped||!framed||!frameProjection||!view)return false;advanceNavigationIntent(true,true);view.mode='workspace';layout();return true;},revealNativeProject,restoreFrameView(value){if(!framed||stopped)return false;resumeLayout=validateFrameResumeView(value);return true;},showTimePolicyNotice,clearTimePolicyNotice,present,updateFrameProjection,update,updatePreparedFree,layout,invalidate,stop,showWorkspace,enterReading,currentRef:()=>current().ref,status:()=>({...status}),view:()=>view,roots:()=>roots});
 }

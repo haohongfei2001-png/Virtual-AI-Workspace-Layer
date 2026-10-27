@@ -50,3 +50,29 @@ test('native management pauses only repeated IDs, keeps missing members and rest
 test('local data is one settings entry and invokes private extension action only on user activation',async t=>{
  let calls=0;const f=setup(t,'sidebar',{onLocalDataRequest:async()=>{calls++;return {ok:true};}});assert.equal(calls,0);const button=f.button('本地资料');assert(button);assert.equal(button.parentNode.tagName.toLowerCase(),'details');button.click();await tick();assert.equal(calls,1);
 });
+
+for(const eventType of ['pointerdown','compositionstart'])test('native management reply preserves an active '+eventType+' target until interaction completes',async t=>{
+ const f=fixture('sidebar',()=>null,null,null,{}, {nativeSidebar:true});t.after(()=>f.nav.stop());
+ const dto=projection('sidebar'),g=dto.groups.items[0],ref=g.lists.current.items[0];f.nav.updateFrameProjection(dto);f.button('侧栏项目 '+g.name).click();await tick();
+ const target=f.pane().querySelector('[data-ref-id="'+ref.id+'"]');assert(target);
+ const owned=f.nav.roots().sidebar.n,event={pointerId:7,composedPath:()=>[target,owned]};f.doc.handlers.get(eventType)(event);
+ f.nav.setNativeManagement([{projectId:g.id,refIds:[ref.id]}]);
+ assert.equal(f.pane().querySelector('[data-ref-id="'+ref.id+'"]'),target,'background management update replaced the in-flight target');
+ assert.equal(f.pane().querySelector('.native-management-context'),null);
+ f.doc.handlers.get(eventType==='pointerdown'?'pointerup':'compositionend')(event);
+ await new Promise(resolve=>setTimeout(resolve,5));assert(f.pane().querySelector('.native-management-context'));
+ assert.equal(f.pane().querySelectorAll('a').some(n=>n.dataset?.refId===ref.id),false);
+});
+test('scope invalidation clears a queued management presentation immediately',async t=>{
+ const f=fixture('sidebar',()=>null,null,null,{}, {nativeSidebar:true});t.after(()=>f.nav.stop());const dto=projection('sidebar'),g=dto.groups.items[0];f.nav.updateFrameProjection(dto);
+ f.doc.handlers.get('pointerdown')({pointerId:9,composedPath:()=>[f.nav.roots().sidebar.n]});
+ f.nav.setNativeManagement([{projectId:g.id,refIds:[]}]);f.nav.invalidate('scope-revoked');assert.equal(f.nav.roots(),null);
+ await new Promise(resolve=>setTimeout(resolve,5));assert.equal(f.nav.roots(),null);
+});
+
+for(const kind of ['enter-reading','show-native-page'])test('queued '+kind+' also consumes the latest management paint without losing the active target',async t=>{
+ const f=fixture('sidebar',()=>null,null,null,{}, {nativeSidebar:true});t.after(()=>f.nav.stop());const dto=projection('sidebar'),g=dto.groups.items[0],ref=g.lists.current.items[0];f.nav.updateFrameProjection(dto);f.button('侧栏项目 '+g.name).click();await tick();
+ const target=f.pane().querySelector('[data-ref-id="'+ref.id+'"]'),event={pointerId:17,composedPath:()=>[target,f.nav.roots().sidebar.n]};assert(target);f.doc.handlers.get('pointerdown')(event);
+ f.nav.setNativeManagement([{projectId:g.id,refIds:[ref.id]}]);assert.equal(f.nav.present({kind}),true);assert.equal(f.pane().querySelector('[data-ref-id="'+ref.id+'"]'),target);
+ f.doc.handlers.get('pointerup')(event);await new Promise(resolve=>setTimeout(resolve,5));assert.equal(f.nav.view().mode,'reading');assert(f.pane().querySelector('.native-management-context'));assert.equal(f.pane().querySelectorAll('a').some(n=>n.dataset?.refId===ref.id),false);
+});
