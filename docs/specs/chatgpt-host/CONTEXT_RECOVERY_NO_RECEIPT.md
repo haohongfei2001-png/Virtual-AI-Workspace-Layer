@@ -129,6 +129,8 @@ content 原 `recoveryRemaining=1` 的 transport/mount 一次恢复、原六秒�
 
 ## 7. Free 实际整合的精确接线 diff
 
+2026-10-27 当前工程说明：以下 diff 与前向/reverse-check 是 `3276ab8` 时的历史交付证据，原样保留。接线现已进入正式 service，随后 Browser-Local、空闲检测等修改使旧上下文不再适用。当前 integration 测试直接复制并逐字核对当前正式源码，执行原有授权、并发、撤权和恢复行为断言，不再应用历史补丁，也不以旧补丁匹配代替安全验证。
+
 下面只改 `src/runtime/host-binding-service.mjs`，包含 dot 独审后修订的并发交付收尾。Pro 原协作提交没有直接改该文件；Free 整合应用此精确 diff。不修改 content-session、bootstrap、authority、provider、存储或 profile。原 browser owner → service.invalidate → PENDING 与 READY → content.begin(true) 保持；首次 probe 也能读取 READY 通知发出早于 service 挂载时已经建立的真实 receipt，不重放通知。
 
 适用基准为 Free `3276ab8`（其 service 与 Pro 原验证基准字节相同）。diff 的 UTF-8 字节（含末尾换行）SHA-256 为 `02ea832012db671c9f8dc27fc5aeaf5c73ecb4380b06563a3c89cd77f767ab4e`。dot 在最新 Free 自己的工作区核对 WIP 后 `git apply --check`，若该文件已推进，应逐 hunk 合并而非覆盖。本次 Free 整合包含该实际接线；专项测试仍只在新临时源码副本执行前向或完整 reverse-check，运行实际 service / authority / UiGrant / VIEW，不以副本测试替代已提交源码与浏览器结果。

@@ -1,4 +1,4 @@
-/** L-only integration of the exact proposed wiring, real binding/authority/UI/
+/** L-only integration of the current production wiring, real binding/authority/UI/
  * VIEW owners and actual repositories. Chrome, native HTTP completion, identity,
  * body association and IndexedDB are explicit offline doubles. No browser,
  * credentials, private conversation, production profile or G claim is involved.
@@ -6,11 +6,10 @@
 import test, {after} from 'node:test';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
-import {cp, mkdtemp, readFile, rm, writeFile} from 'node:fs/promises';
+import {cp, mkdtemp, readFile, rm} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {fileURLToPath, pathToFileURL} from 'node:url';
-import {spawnSync} from 'node:child_process';
 import {createContext, runInContext} from 'node:vm';
 import {MockIDBFactory} from '../../b23/mock-idb.mjs';
 import {currentJ4Grant, waitJ4PeerScope} from '../../host/j4-joint-interruption.mjs';
@@ -19,36 +18,13 @@ import {installJ4GrantObserver} from '../../host/j4-grant-observer.mjs';
 const repositoryRoot=fileURLToPath(new URL('../../../',import.meta.url));
 const sourcePath=join(repositoryRoot,'src/runtime/host-binding-service.mjs');
 const originalSource=await readFile(sourcePath,'utf8');
-const specification=await readFile(join(repositoryRoot,'docs/specs/chatgpt-host/CONTEXT_RECOVERY_NO_RECEIPT.md'),'utf8');
-const marked=/<!-- BEGIN CONTEXT_RECOVERY_WIRING_DIFF -->\s*```diff\n([\s\S]*?)\n```\s*<!-- END CONTEXT_RECOVERY_WIRING_DIFF -->/g;
-const matches=[...specification.matchAll(marked)];
-assert.equal(matches.length,1,'exactly one reviewable wiring diff is required');
-const wiring=matches[0][1]+'\n';
-const touched=[...wiring.matchAll(/^diff --git a\/(\S+) b\/(\S+)$/gm)];
-assert.equal(touched.length,1,'the integration proposal must remain the minimal service seam');
-assert.deepEqual(touched.map(match=>[match[1],match[2]]),[['src/runtime/host-binding-service.mjs','src/runtime/host-binding-service.mjs']]);
 const temporaryRoot=await mkdtemp(join(tmpdir(),'vaiwl-no-receipt-wiring-'));
-let modules,wiringMode;
+let modules;
 try{
  await cp(join(repositoryRoot,'src'),join(temporaryRoot,'src'),{recursive:true});
- const patchPath=join(temporaryRoot,'wiring.patch');await writeFile(patchPath,wiring);
- const apply=(...options)=>{
-  const result=spawnSync('git',['apply',...options,'--whitespace=error-all',patchPath],{cwd:temporaryRoot,encoding:'utf8',timeout:10000});
-  assert(Number.isInteger(result.status)&&result.status>=0,'git apply must finish normally: '+(result.error?.message??result.signal));
-  return result;
- };
- const forward=apply('--check');
- if(forward.status===0){
-  const applied=apply();assert.equal(applied.status,0,'checked diff must apply unchanged to the isolated source copy: '+applied.stderr);
-  wiringMode='applied-to-copy';
- }else{
-  // dot's eventual integrated tree is the second supported state. Every hunk
-  // must reverse cleanly; a partial application or unrelated conflict is fatal.
-  // Check only: do not undo the integrated service that the tests will exercise.
-  const reverse=apply('--reverse','--check');
-  assert.equal(reverse.status,0,'source is neither fully unintegrated nor fully integrated; forward: '+forward.stderr+'; reverse: '+reverse.stderr);
-  wiringMode='already-integrated';
- }
+ // The recovery seam is integrated. Exercise today's exact bytes; historical
+ // patch applicability is not an authorization or behavioral oracle.
+ assert.equal(await readFile(join(temporaryRoot,'src/runtime/host-binding-service.mjs'),'utf8'),originalSource);
  modules=await Promise.all([
   'runtime/host-binding-service.mjs','runtime/browser-request-context.mjs',
   'b1/scope-repository.mjs','data/repository.mjs','data/free-evidence-repository.mjs','host/url-policy.mjs'
@@ -174,13 +150,9 @@ async function fixture(t,{profile=C2_PROFILE}={}){
  };
 }
 
-test('L integration accepts only the complete documented wiring states and leaves production source unchanged',async t=>{
+test('L integration executes the unchanged current production service',async()=>{
  assert.equal(await readFile(sourcePath,'utf8'),originalSource);
- const patched=await readFile(join(temporaryRoot,'src/runtime/host-binding-service.mjs'),'utf8');
- assert(['applied-to-copy','already-integrated'].includes(wiringMode));
- if(wiringMode==='applied-to-copy')assert.notEqual(patched,originalSource);
- else assert.equal(patched,originalSource,'already integrated source executes without applying or reversing any hunk');
- assert(patched.includes('contextRecovery.run(frame,'));t.diagnostic('wiring mode: '+wiringMode);
+ assert.equal(await readFile(join(temporaryRoot,'src/runtime/host-binding-service.mjs'),'utf8'),originalSource);
 });
 
 test('L no-receipt cold worker cannot read warm cached personal data; new native team evidence restores the correct scope',async t=>{

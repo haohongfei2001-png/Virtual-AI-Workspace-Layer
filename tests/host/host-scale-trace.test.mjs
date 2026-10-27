@@ -105,7 +105,7 @@ async function replicaHarness(instrumented,{failure=null,holdHeader=false,fast=f
  const source=await readFile(join(root,TRACE_PATHS[3]),'utf8'),out=instrumented?instrumentScaleSource(TRACE_PATHS[3],source):source;
  let time=0,resolveHeader,refreshes=0;const calls=[],error=Error('PRIVATE_FAILURE'),snapshot={scope:'PRIVATE_SCOPE',groups:[]},index={};
  const step=(name,ms,value)=>{calls.push(name);time+=ms;if(failure===name)throw error;return value;};
- const header={revision:1,workspaceRevision:2,evidenceRevision:3,viewRevision:4,viewSession:{H:30,T:1,Z:'UTC',policyRevision:0}};
+ const header={manifest:{projectVersions:{},refVersions:{}},revision:1,workspaceRevision:2,evidenceRevision:3,viewRevision:4,viewSession:{H:30,T:1,Z:'UTC',policyRevision:0}};
  const c=vm.createContext({TextEncoder,Date,performance:{now:()=>time},AbortController,setTimeout,clearTimeout,Intl,
   normalizedScope:()=>({key:'PRIVATE_SCOPE'}),instant:()=>1,
   createReadRecoveryBudget:()=>({begin(){},check(){},complete(){}}),withRequestDeadline:work=>work(),
@@ -130,7 +130,7 @@ test('compatible replica path leaves unused assemble/index stages null',async()=
  const h=await replicaHarness(true,{fast:true});await h.owner.refresh();await h.owner.refresh();const row=h.events()[1];assert.equal(row.ok,true);assert.equal(row.assembleMs,null);assert.equal(row.indexMs,null);assert.equal(row.snapshotMs,35);assert.equal(row.versionMs,95);assert.equal(h.events().length,2);h.owner.stop();
 });
 test('replica trace strong anchors reject missing or duplicate phase and fixed schema rejects unsafe phase values',async()=>{
- const source=await readFile(join(root,TRACE_PATHS[3]),'utf8'),anchor='   const header=reply.header,plan=planFreeReplica(replica,header);';
+ const source=await readFile(join(root,TRACE_PATHS[3]),'utf8'),anchor='   const header=reply.header;';
  for(const replacement of ['',anchor+anchor])assert.throws(()=>instrumentScaleSource(TRACE_PATHS[3],source.replace(anchor,replacement)),/anchor-mismatch/);
  const c=vm.createContext({TextEncoder,Date,performance});vm.runInContext(recorder+`;__scaleEmit('replica-terminal',{headerMs:null,pagesMs:2,assembleMs:Infinity,snapshotMs:-1,indexMs:'PRIVATE',versionMs:1e16,body:'PRIVATE',ok:false});`,c);const target={events:[],bytes:0,dropped:0};appendScaleTrace(target,c.__vaiwlScaleTrace.events[0]);assert.equal(target.events.length,1);assert.equal(target.events[0].headerMs,null);assert.equal(target.events[0].pagesMs,2);for(const key of ['assembleMs','snapshotMs','indexMs','versionMs','body'])assert.equal(target.events[0][key],undefined);for(const value of ['PRIVATE',Infinity,-1])appendScaleTrace(target,{kind:'replica-terminal',at:1,headerMs:value});assert.equal(target.dropped,3);
 });
@@ -193,7 +193,7 @@ test('classic trace rebuild follows instrumented source and rejects stale or for
 });
 
 test('publication cause anchors reject omission and duplication',async()=>{
- for(const [index,anchor]of [[2,'  requestScan(owned,true);'],[2,'  if(surfaceChanged)requestScan();else schedule();'],[2,"failedKey.delete('current-object');requestScan(true,true);return true;"],[2,'     if(!surfaceScanning){for(const cache'],[5,'   let result;'],[5,'   if(!result.ok)return result.reason']]){
+ for(const [index,anchor]of [[2,'  requestScan(owned,true,owned);'],[2,'  if(surfaceChanged)requestScan();else schedule();'],[2,"failedKey.delete('current-object');requestScan(true,true,true);return true;"],[2,'     if(!surfaceScanning){for(const cache'],[5,'   let result;'],[5,'   if(!result.ok)return result.reason']]){
   const source=await readFile(join(root,TRACE_PATHS[index]),'utf8');for(const replacement of ['',anchor+anchor])assert.throws(()=>instrumentScaleSource(TRACE_PATHS[index],source.replace(anchor,replacement)),/anchor-mismatch/);
  }
 });
@@ -206,7 +206,7 @@ test('actual page decision distinguishes equal facts from detached forced public
 });
 test('actual scan cause callsites preserve request count and argument',async()=>{
  const out=await actual(2);
- for(const [name,tail]of [['renewalCause','requestScan(true,true);return true;'],['toggleCause','requestScan(owned,true);'],['mutationCause','requestScan();'],['initialCause','requestScan(true);']]){
+ for(const [name,tail]of [['renewalCause','requestScan(true,true,true);return true;'],['toggleCause','requestScan(owned,true,owned);'],['mutationCause','requestScan();'],['initialCause','requestScan(true);']]){
   const re=new RegExp("__scaleEmit\\('scan-cause',\\{adapterOrdinal:__scaleAdapter,"+name+"[^;]+;"),emit=out.match(re)?.[0];assert(emit);assert(out.includes(emit+tail));
   let calls=0,arg;const c=vm.createContext({TextEncoder,Date,performance,__scaleAdapter:3,owned:true,requestScan:value=>{calls++;arg=value;}});vm.runInContext(recorder+'(()=>{'+emit+tail+'})()',c);assert.equal(calls,1);assert.equal(arg,name==='mutationCause'?undefined:true);assert.equal(c.__vaiwlScaleTrace.events[0][name],true);
  }

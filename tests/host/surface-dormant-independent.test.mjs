@@ -18,6 +18,16 @@ function fixture({onWake=()=>false}={}){
  const message=(role,type='VAIWL_UI_JOIN',extra={},overrides={})=>{const event={origin:'chrome-extension://ext',source:frames.find(x=>x.role===role).frame.contentWindow,data:{type,role,...(type==='VAIWL_UI_JOIN'?{nonce:'nonce_'+role}:{}),...extra},...overrides};for(const fn of events.get('message')??[])fn(event);};
  return {controller,adapter,surface,bridge,calls,slot,frames,doc,timers,message,layer(v){layer=v;},occupied(v){occupied=v;},mutate(){for(const fn of mutations)fn();},async ready(){await controller.start({});message('workspace');message('sidebar');await flush();controller.showNativeReading();},advance(ms){time+=ms;for(const [id,t]of [...timers])if(t.at<=time){timers.delete(id);t.fn();}}};
 }
+test('header-gap return proves the inserted button and removes it on rejected actual hit',async()=>{
+ const f=fixture(),inspection=f.adapter.inspect();let attached=null,proofs=0;
+ inspection.returnPlacement='header-gap';inspection.returnSlot={x:220,y:0,width:32,height:32};
+ f.doc.body.append=button=>f.slot.append(button);
+ f.adapter.setReturnControl=button=>{attached=button;};
+ f.adapter.isReturnSlotCurrent=()=>assert.fail('header gap must not repeat an independent boolean paint proof');
+ f.adapter.getReturnControlRect=()=>{proofs++;assert(attached&&f.slot.children.includes(attached),'must check the real inserted button');return null;};
+ await f.ready();assert(proofs>0);assert.equal(f.slot.children.length,0);assert.equal(attached,null);f.controller.stop();
+});
+
 for(const role of ['workspace','sidebar'])test('failed '+role+' idle dispatch withdraws only its required authority',async()=>{
  const f=fixture();await f.ready();let released=0;
  f.surface.retireRole=(_handle,role)=>{f.frames.find(x=>x.role===role).frame.isConnected=false;};

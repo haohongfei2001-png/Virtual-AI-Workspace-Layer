@@ -599,6 +599,14 @@ test('viewport topology changes invalidate continuity even with identical nodes'
  const f=viewportFixture();await f.start();const first=f.adapter.inspect();assert.equal(first.ok,true);f.viewport.children.push({});assert.equal(f.adapter.isSameNativeRegions(first),false);f.adapter.stop();
 });
 
+test('return rectangle performs one fresh identity and geometry proof, and rejects replacement',async t=>{
+ const f=layoutFixture();t.after(()=>f.adapter.stop());await f.start();const first=f.adapter.inspect();
+ let reads=0;const measure=f.slot.getBoundingClientRect.bind(f.slot);f.slot.getBoundingClientRect=()=>{reads++;return measure();};
+ assert.equal(f.adapter.isReturnSlotCurrent(first),true);const proofReads=reads;assert(proofReads>0);
+ reads=0;assert(f.adapter.getReturnControlRect(first));assert.equal(reads,proofReads,'rectangle must not repeat the same paint/geometry proof');
+ f.selectors.set(explicitLayout.composer,[{...f.composer}]);assert.equal(f.adapter.getReturnControlRect(first),null,'equal geometry cannot substitute a replaced native composer');
+});
+
 test('explicit slot moved over composer rejects inspection and dormant geometry without reviving adapter',async()=>{
  const f=layoutFixture();await f.start();const first=f.adapter.inspect();assert.equal(first.ok,true);assert.equal(f.adapter.isReturnSlotCurrent(first),true);
  f.slot.getBoundingClientRect=()=>({x:220,y:490,width:40,height:40});assert.equal(f.adapter.inspect().ok,true);assert.equal(f.adapter.inspect().roles.return.available,false);f.adapter.stop();assert.equal(f.adapter.isReturnSlotCurrent(first),false);

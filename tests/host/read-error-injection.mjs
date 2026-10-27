@@ -5,7 +5,7 @@ import {compileClassicWorker} from '../../extension/classic-worker-build.mjs';
 import {verifyHost} from '../../extension/package.mjs';
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const path='src/runtime/host-view-service.mjs';
-export const READ_ERROR_ANCHOR='return await entry.owner.refresh(...args);';
+export const READ_ERROR_ANCHOR='await entry.owner.refresh(...args)';
 const recorder=`
 // DIAGNOSTIC_ONLY: first three attempts per real view owner fail at the refresh boundary.
 const __readErrorOwners=new WeakMap();let __readErrorOwnerSequence=0;globalThis.__vaiwlReadErrorTrace=[];
@@ -13,7 +13,7 @@ const __readErrorRefresh=(owner,args)=>{if(args.length)return owner.refresh(...a
 `;
 export function instrumentReadErrorSource(source){
  if(typeof source!=='string'||source.includes('__readErrorRefresh')||source.split(READ_ERROR_ANCHOR).length!==2)throw Error('read-error-injection-anchor-mismatch');
- return recorder+source.replace(READ_ERROR_ANCHOR,'return await __readErrorRefresh(entry.owner,args);');
+ return recorder+source.replace(READ_ERROR_ANCHOR,'await __readErrorRefresh(entry.owner,args)');
 }
 export async function createReadErrorPackage(source,destination){
  if(verifyHost(source).status!=='OFFLINE_HOST_RECONSTRUCTION')throw Error('read-error-offline-package-required');

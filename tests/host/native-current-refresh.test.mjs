@@ -7,10 +7,10 @@ const C='33333333-3333-4333-8333-333333333333',source=await readFile(new URL('./
 async function nativeHarness(){
  const articles=[],requests=[],buttons=[];let respond=null;
  const reading={append(fragment){for(const node of fragment.nodes){articles.push(node);node.remove=()=>articles.splice(articles.indexOf(node),1);}},querySelectorAll:()=>[...articles]};
- const composer={value:'unsent native draft',before:button=>buttons.push(button)};
+ const composer={value:'unsent native draft'},header={append:button=>buttons.push(button)};
  const history={querySelectorAll:()=>[],addEventListener(){}};
  const makeNode=tag=>({tag,dataset:{},nodes:[],listeners:{},append(...nodes){this.nodes.push(...nodes);},addEventListener(name,fn){this.listeners[name]=fn;}});
- const document={querySelector:selector=>selector.startsWith('aside')?history:selector==='#reading'?reading:selector==='#composer'?composer:{},createElement:makeNode,createDocumentFragment:()=>makeNode('fragment')};
+ const document={querySelector:selector=>selector.startsWith('aside')?history:selector==='#reading'?reading:selector==='#composer'?composer:selector==='main > header'?header:{},createElement:makeNode,createDocumentFragment:()=>makeNode('fragment')};
  const payload={mapping:{message:{message:{id:'same-message',author:{role:'user',id:'user'},create_time:1700000000}}}};
  const fetch=async(url,options)=>{requests.push({url,options});if(url==='/native/preferences')return {json:async()=>({account_id:'team'})};return respond?respond():{ok:true,json:async()=>payload};};
  const AsyncFunction=Object.getPrototypeOf(async function(){}).constructor;
@@ -19,7 +19,7 @@ async function nativeHarness(){
 }
 test('explicit refresh transforms require exact native anchors and introduce no timer or authority channel',()=>{
  for(const bad of ['',source+source,source.replace('reading.append(fragment);','')])assert.throws(()=>withNativeCurrentRefresh(bad),/native-refresh-source-mismatch/);
- const transformed=withNativeCurrentRefresh(source);for(const forbidden of ['setInterval(','setTimeout(','chrome.runtime','indexedDB','HOST_'])assert(!transformed.includes(forbidden));
+ const transformed=withNativeCurrentRefresh(source);assert(transformed.includes("document.querySelector('main > header').append(refreshButton)"));assert(!transformed.includes(".before(refreshButton)"));for(const forbidden of ['setInterval(','setTimeout(','chrome.runtime','indexedDB','HOST_'])assert(!transformed.includes(forbidden));
 });
 test('one explicit native click produces one account-bound detail GET and replaces repeated snapshot',async()=>{
  const f=await nativeHarness();assert.equal(f.articles.length,1);const before=f.requests.length,originalComposer=f.composer;

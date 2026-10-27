@@ -29,8 +29,8 @@ test('one private composition traverses actual authority and parsers in 12 seria
  for(const value of ['SECRET','PRIVATE',p,c,d,'next-private-cursor','principal_','context_'])assert(!JSON.stringify(result).includes(value),value);
 });
 test('challenge stops on first GET, does not read body or switch transport',async()=>{
- let reads=0;const h=harness({fetch:async url=>({url,status:403,redirected:false,headers:new Headers({'content-type':'text/html','cf-mitigated':'challenge'}),get body(){reads++;return null;}})});
- const result=await h.run();assert.equal(result.requests,1);assert.equal(result.state,'BLOCKED');assert.equal(result.reason,'session-challenged');assert.equal(result.stages.ordinary.state,'NOT_RUN');assert.equal(reads,0);
+ let reads=0,cancelled=0;const h=harness({fetch:async url=>({url,status:403,redirected:false,headers:new Headers({'content-type':'text/html','cf-mitigated':'challenge'}),body:{async cancel(){cancelled++;},getReader(){reads++;throw Error('must-not-read');}}})});
+ const result=await h.run();assert.equal(result.requests,1);assert.equal(result.state,'BLOCKED');assert.equal(result.reason,'session-challenged');assert.equal(result.stages.ordinary.state,'NOT_RUN');assert.equal(reads,0);assert.equal(cancelled,1);
 });
 for(const [index,stage]of [[1,'identity'],[3,'ordinary'],[11,'finalIdentity']])test(`default/null roster retains fixed schema reason at ${stage} without manufacturing a context`,async()=>{
  const h=harness();h.values[index]={accounts:{default:{account:{account_id:null,structure:'personal',is_deactivated:false,name:'PRIVATE_NAME'},can_access_with_session:true}}};

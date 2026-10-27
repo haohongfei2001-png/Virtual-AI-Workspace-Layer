@@ -44,12 +44,12 @@ test('future observations cannot acquire last-known names or relationships',()=>
 });
 test('invalid admission, cross-scope and orphan generation cannot be rescued by last-known projection',()=>{
  const invalid=seed();delete invalid.sources.fixture_source.admission;assert.throws(()=>view(invalid,EXPIRY));
- const generation=seed();generation.refs.member.generation='other';assert.throws(()=>view(generation,EXPIRY),/orphan-native-witness/);
+ const generation=seed();generation.refs.member.generation='other';for(const witness of Object.values(generation.refs.member.fieldWitnesses))witness.generation='other';assert.throws(()=>view(generation,EXPIRY),/orphan-native-witness/);
  const other=normalizedScope({...scope,accountId:'other'});assert.throws(()=>freeProjection(seed(),{scope:other,now:EXPIRY}),/invalid-native-facts/);
 });
-for(const state of ['UNKNOWN','NONE','PROJECT'])test(`fresh explicit ${state} supersedes an old host membership`,()=>{
+for(const state of ['UNKNOWN','NONE','PROJECT'])test(`fresh ${state} follows positive-membership accumulation`,()=>{
  const facts=applyNativeObservations(seed(),batch({sourceRevision:2,observedAt:EXPIRY,validUntil:LATER,projects:[p('q')],refs:[r('member')],membership:[{id:'member',state,projectId:state==='PROJECT'?'q':null}],inventory:{projects:'partial',conversations:'partial',cursor:null}}),authority('host-dom',EXPIRY));
- const result=view(facts,EXPIRY),member=result.refs.find(x=>x.id==='member');assert.equal(member.membership,state);assert.equal(member.projectId,state==='PROJECT'?'q':null);assert.equal(member.freshness,'current');assert.equal(result.projects.find(x=>x.id==='p').members.length,0);
+ const result=view(facts,EXPIRY),member=result.refs.find(x=>x.id==='member');assert.equal(member.membership,state==='UNKNOWN'?'PROJECT':state);assert.equal(member.projectId,state==='UNKNOWN'?'p':state==='PROJECT'?'q':null);assert.equal(member.freshness,'current');assert.equal(result.projects.find(x=>x.id==='p').members.length,state==='UNKNOWN'?1:0);
 });
 
 for(const stalePart of ['project','ref','membership','all'])test(`paged replica cannot recertify complete membership with last-known ${stalePart}`,async()=>{
@@ -58,7 +58,7 @@ for(const stalePart of ['project','ref','membership','all'])test(`paged replica 
  const {createFreeViewSession}=await import('../../src/data/free-time-policy.mjs');
  const facts=seed();delete facts.projects.empty;for(const id of ['ordinary','unknown']){delete facts.refs[id];delete facts.membership[id];}
  facts.sources.fixture_source.validUntil=LATER;
- for(const [table,part]of [['projects','project'],['refs','ref'],['membership','membership']])for(const row of Object.values(facts[table]))if(stalePart!=='all'&&stalePart!==part)row.validUntil=LATER;
+ for(const [table,part]of [['projects','project'],['refs','ref'],['membership','membership']])for(const row of Object.values(facts[table]))if(stalePart!=='all'&&stalePart!==part){row.validUntil=LATER;for(const witness of Object.values(row.fieldWitnesses??{}))witness.validUntil=LATER;}
  validateNativeFacts(facts,scope);
  const projected=freeProjection(facts,{scope,now:EXPIRY});assert.equal(projected.projects[0].membershipComplete,false);assert.equal(projected.refs[0].membership,'PROJECT');
  const viewSession=createFreeViewSession({now:EXPIRY,timeZone:'UTC'}),active=projectFreeActivity(projected,{scopeKey:scope.key,events:{},hints:{},coverage:{},sources:{}},viewSession,EXPIRY);
@@ -77,6 +77,6 @@ test('future host source cannot mark old rows current through the legacy active 
  const result=view(facts,NOW);assert.deepEqual(result.projects,[]);assert(result.refs.every(row=>row.nativeTitle===null&&row.membership==='UNKNOWN'));
 });
 test('positive NONE membership expiry remains explicitly last-known when the title is fresh',()=>{
- const facts=seed();facts.sources.fixture_source.validUntil=LATER;facts.refs.ordinary.validUntil=LATER;
+ const facts=seed();facts.sources.fixture_source.validUntil=LATER;facts.refs.ordinary.validUntil=LATER;for(const witness of Object.values(facts.refs.ordinary.fieldWitnesses))witness.validUntil=LATER;
  const row=view(facts,EXPIRY).noProject[0];assert.equal(row.nativeTitle,'Native ordinary');assert.equal(row.freshness,'current');assert.equal(row.membershipFreshness,'last-known');assert.equal(row.membershipWitnessCurrent,false);
 });

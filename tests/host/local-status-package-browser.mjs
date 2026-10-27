@@ -20,14 +20,14 @@ try{
  context.on('serviceworker',()=>{if(report.timeline.length<16)report.timeline.push({event:'worker',elapsedMs:performance.now()-started});});
  const cdp=await context.browser().newBrowserCDPSession(),{id}=await cdp.send('Extensions.loadUnpacked',{path:built.unpacked});
  page=await context.newPage();await page.addInitScript(installStartupSurfaceObserver,{fixtureOrigin:server.origin,extensionOrigin:`chrome-extension://${id}`});report.observerHash=observerHash;
- page.on('pageerror',e=>{if(report.errors.length<16)report.errors.push(e.message.slice(0,1000));});report.stage='initial-surfaces';await page.goto(server.url);report.timeline.push({event:'page-loaded',elapsedMs:performance.now()-started});await page.waitForFunction(()=>document.querySelectorAll('[data-va-owned]:popover-open').length===2,{},{timeout:15000});
+ page.on('pageerror',e=>{if(report.errors.length<16)report.errors.push(e.message.slice(0,1000));});report.stage='initial-surfaces';await page.goto(server.url);report.timeline.push({event:'page-loaded',elapsedMs:performance.now()-started});await page.waitForFunction(()=>{const n=document.querySelector('[data-va-owned][id$="_workspace"]');if(!n||n.hasAttribute('popover'))return false;const box=n.getBoundingClientRect(),style=getComputedStyle(n);return style.display!=='none'&&style.visibility==='visible'&&box.width>=160&&box.height>=96&&!!n.querySelector('iframe');},{},{timeout:15000});
  report.startupTrace=await page.evaluate(()=>globalThis.__vaiwlOfflineStartup?.finish()??{status:'INCOMPLETE',issues:['not-installed']});
  await page.locator('textarea').fill('STATUS_UNSENT_DRAFT');
  report.stage='status';popup=await context.newPage();await popup.goto(`chrome-extension://${id}/status.html`);await page.bringToFront();
  // Same packaged popup origin and entry; query the current active fixture tab.
  const status=()=>popup.evaluate(async()=>{const {readActiveLocalStatus}=await import(chrome.runtime.getURL('src/host/local-status.mjs'));return readActiveLocalStatus({tabs:chrome.tabs});});
- report.results.reading=await status();assert.equal(report.results.reading,'reading');assert.equal(await page.locator('[data-va-owned][id$="_workspace"]:popover-open').count(),0);assert.equal(await page.locator('textarea').inputValue(),'STATUS_UNSENT_DRAFT');
- await page.getByRole('button',{name:'返回工作空间',exact:true}).click();await page.locator('[data-va-owned][id$="_workspace"]:popover-open').waitFor();report.results.ready=await status();assert.equal(report.results.ready,'ready');
+ report.results.reading=await status();assert.equal(report.results.reading,'reading');assert.equal(await page.locator('[data-va-owned][id$="_workspace"]:visible').count(),0);assert.equal(await page.locator('textarea').inputValue(),'STATUS_UNSENT_DRAFT');
+ await page.getByRole('button',{name:'返回工作空间',exact:true}).click();await page.locator('[data-va-owned][id$="_workspace"]:visible').waitFor();report.results.ready=await status();assert.equal(report.results.ready,'ready');
  await popup.evaluate(()=>import(chrome.runtime.getURL('extension/status.mjs')+'?ready'));assert.match(await popup.locator('#status').textContent(),/已连接/);assert.equal(await popup.locator('button').count(),0);
  report.results.draft=await page.locator('textarea').inputValue()==='STATUS_UNSENT_DRAFT';assert(report.results.draft);
  // Public frame documents cannot impersonate the private popup sender.

@@ -392,19 +392,19 @@ if(!p){
   const x=Math.max(0,v.x),y=Math.max(0,v.y,h.y+h.height),right=Math.min(width,v.x+v.width),bottom=Math.min(height,v.y+v.height,c.y);
   return {x,y,width:right-x,height:bottom-y};
  }
- function isReturnSlotCurrent(inspection){
+ function currentReturnGeometry(inspection){
   // Dormant presentation may recheck native geometry, but cannot revive binding.
-  if(!explicitLayout)return true;
-  if(projectLayout())return !!currentProjectSurface(inspection);
-  if(!inspection||document.location.href!==url||gapMode&&one(nativeLayout.returnHitRoot)!==inspection.returnHitRoot)return false;
+  if(projectLayout())return currentProjectSurface(inspection)?.returnSlot??null;
+  if(!inspection||document.location.href!==url||gapMode&&one(nativeLayout.returnHitRoot)!==inspection.returnHitRoot)return null;
   const history=one(nativeLayout.historyList??profile.regions.history),header=one(nativeLayout.header),reading=one(nativeLayout.reading),composer=one(nativeLayout.composer),slot=one(nativeLayout.navigationSlot);
-  if(header!==inspection.header||reading!==inspection.reading||composer!==inspection.composer||slot!==inspection.navigationSlot||!nativeTopologyOK(history,header,reading,composer,slot))return false;
+  if(header!==inspection.header||reading!==inspection.reading||composer!==inspection.composer||slot!==inspection.navigationSlot||!nativeTopologyOK(history,header,reading,composer,slot))return null;
   const viewport=nativeLayout.readingViewport?one(nativeLayout.readingViewport):null;
-  if(nativeLayout.readingViewport&&(viewport!==inspection.readingViewport||!viewportTopologyOK(viewport,history,header,reading,composer)))return false;
-  if(!sameHomeNodes(inspection,header,reading,composer))return false;
+  if(nativeLayout.readingViewport&&(viewport!==inspection.readingViewport||!viewportTopologyOK(viewport,history,header,reading,composer)))return null;
+  if(!sameHomeNodes(inspection,header,reading,composer))return null;
   const readingRect=viewport?viewportRect(viewport,header,composer):homeReadingRect(header,reading,composer);
-  return !!readingRect&&!!returnGeometry(history,header,readingRect,composer,slot);
+  return readingRect?returnGeometry(history,header,readingRect,composer,slot):null;
  }
+ function isReturnSlotCurrent(inspection){return !explicitLayout||!!currentReturnGeometry(inspection);}
  function isSameNativeRegions(inspection){
   if(!live()||document.location.href!==url||inspection?.regionEpoch!==regionEpoch)return false;
   if(projectLayout())return !!currentProjectSurface(inspection,false);
@@ -495,11 +495,10 @@ if(!p){
    roles:{workspace:{available:true,revision:regionEpoch},sidebar:{available:sidebarPresentationFits(sidebarRect),reason:sidebarPresentationFits(sidebarRect)?null:sidebarRect?'history-region-too-small':historyFailure??'history-unavailable'},return:{available:!!returnSlot,reason:returnSlot?null:returnGeometryStage??'return-unavailable'}}});
  }
  const api={setReturnControl(node){returnControl=node;},getReturnControlRect(inspection){
-  if(projectLayout())return currentProjectSurface(inspection)?.returnSlot??null;
-  if(!isReturnSlotCurrent(inspection))return null;
-  const {history,header,reading,composer,navigationSlot:slot,readingViewport:viewport}=inspection;
-  const readingRect=viewport?viewportRect(viewport,header,composer):homeReadingRect(header,reading,composer);
-  return readingRect?returnGeometry(history,header,readingRect,composer,slot):null;
+  // Identity and paint clearance are one fresh proof. Repeating the same
+  // bounded reading scan here spends the native-event budget twice and can
+  // reject a valid result solely because of the redundant second scan.
+  return currentReturnGeometry(inspection);
  },isReturnSlotCurrent,kind:'chatgpt',async start(options){
   stop();navigationPhase='not-scanned';delivery=emptyDelivery();cursorRestarts=0;const b=options?.binding,observing=options?.phase==='observation';if(options?.phase!==undefined&&!observing)throw Error('invalid-adapter-phase');if(!b||!observing&&typeof options.emit!=='function'||typeof b.documentToken!=='string'||typeof b.producerToken!=='string'||typeof b.browserDocumentId!=='string'||!Number.isSafeInteger(b.routeEpoch)||b.routeEpoch<0||b.origin!==new URL(document.location.href).origin||!Number.isFinite(Date.parse(b.expiresAt))||now()>=Date.parse(b.expiresAt))throw Error('invalid-host-binding');
   binding=Object.freeze({...b});observationOnly=observing;emit=observing?null:options.emit;ingestionPass=!observing&&typeof options.ingestionPass==='function'?options.ingestionPass:null;epoch=b.routeEpoch;seq=0;surfaceSnapshotEpoch=surfaceEpoch;url=document.location.href;stopped=false;

@@ -22,8 +22,8 @@ for(const [name,options,reason]of [
  ['redirect',{redirected:true},'invalid-session-response'],['target',{target:url+'?x'},'invalid-session-response'],
  ['size',{headers:{'content-length':'262145'}},'session-response-too-large']
 ])test('reject without reading '+name,async()=>{
- let reads=0;const r=response('{"id":"not-output"}',options);Object.defineProperty(r,'body',{get(){reads++;throw Error('must-not-read');}});
- const p=createNativeMeProbe({fetch:async()=>r});assert.equal((await p.run()).reason,reason);assert.equal(reads,0);
+ let reads=0,cancelled=0;const r=response('{"id":"not-output"}',options);Object.defineProperty(r,'body',{value:{async cancel(){cancelled++;},getReader(){reads++;throw Error('must-not-read');}}});
+ const p=createNativeMeProbe({fetch:async()=>r});assert.equal((await p.run()).reason,reason);assert.equal(reads,0);assert.equal(cancelled,1);
 });
 test('stream over limit is cancelled without exporting partial fields',async()=>{
  let cancelled=false;const r={url,status:200,redirected:false,headers:new Headers({'content-type':'application/json'}),body:new ReadableStream({pull(c){c.enqueue(new Uint8Array(262145));},cancel(){cancelled=true;}})};
