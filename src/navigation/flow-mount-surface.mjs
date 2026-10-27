@@ -25,7 +25,14 @@ export function createFlowMountSurface({document:doc,createFrameURL,hasNativeLay
   if(old?.project===p?.project&&old?.scrollPort===p?.scrollPort)return;
   m.unbindSidebar?.();m.management?.stop();m.sidebarBinding=p;
   const cancel=e=>{if(e.isTrusted)m.pendingScroll=undefined;};
-  const scrolled=()=>{if(sidebarIntact(m)&&open(m.roles[1])&&!nativeLayer())m.onSidebarScroll(Math.round(p.scrollPort.scrollTop));};
+  const scrolled=()=>{if(!sidebarIntact(m)||!open(m.roles[1])||nativeLayer())return;
+   // A short first VIEW can clamp the saved NAV position before member rows
+   // arrive. Do not persist that clamp as a new user choice. A different scroll
+   // (including input inside the iframe) cancels the pending restoration.
+   const current=Math.round(p.scrollPort.scrollTop);
+   if(Number.isSafeInteger(m.pendingScroll)&&current===Math.min(m.pendingScroll,Math.max(0,p.scrollPort.scrollHeight-p.scrollPort.clientHeight)))return;
+   m.pendingScroll=undefined;m.onSidebarScroll(current);
+  };
   for(const type of ['wheel','pointerdown','keydown'])p?.scrollPort.addEventListener(type,cancel,true);
   p?.scrollPort.addEventListener('scroll',scrolled,{passive:true});
   m.unbindSidebar=()=>{for(const type of ['wheel','pointerdown','keydown'])p?.scrollPort.removeEventListener(type,cancel,true);p?.scrollPort.removeEventListener('scroll',scrolled);};
@@ -34,7 +41,12 @@ export function createFlowMountSurface({document:doc,createFrameURL,hasNativeLay
  }
  function active(m){return intact(m,m.roles[0])&&validateActiveLayout(m.plan,{workspace:m.roles[0].node,style:m.style,styleText:m.css,exit:m.roles[0].exit,isOwnedSurface:owned});}
  function mark(m,node,name){const attr='data-va-flow-'+name,previous=node.getAttribute(attr);if(previous!==null)throw Error('flow-marker-conflict');m.markers.push({node,attr,previous});node.setAttribute(attr,m.handle.id);}
- function restorePendingScroll(m){const s=m.roles[1],p=m.inspection.sidebarPlacement?.scrollPort;if(m.pendingScroll===undefined||!sidebarIntact(m)||!open(s)||s.pendingHeight||nativeLayer())return;const value=m.pendingScroll;m.pendingScroll=undefined;if(value!==null)p.scrollTop=value;m.onSidebarScroll(Math.round(p.scrollTop));}
+ function restorePendingScroll(m){const s=m.roles[1],p=m.inspection.sidebarPlacement?.scrollPort;if(m.pendingScroll===undefined||!sidebarIntact(m)||!open(s)||s.pendingHeight||nativeLayer())return;const value=m.pendingScroll;if(value!==null)p.scrollTop=value;
+  // Keep only the presentation target while the natural content is shorter.
+  // Later intrinsic-size/geometry updates can finish it without new reads.
+  const actual=Math.round(p.scrollTop);if(value!==null&&actual!==value)return;
+  m.pendingScroll=undefined;m.onSidebarScroll(actual);
+ }
  function applySidebarSize(m){const s=m.roles[1];if(!s.pendingHeight||!sidebarIntact(m)||nativeLayer())return;const height=s.pendingHeight;s.pendingHeight=null;s.frame.style.height=height+'px';s.node.style.setProperty('--va-slot-height',(height+28)+'px');restorePendingScroll(m);}
  function geometry(m){
   if(!isSameNativeRegions(m.plan)){hide(m,'workspace','workspace-geometry');return false;}
@@ -125,7 +137,7 @@ export function createFlowMountSurface({document:doc,createFrameURL,hasNativeLay
    p.parent.insertBefore(s.node,p.before);s.button.after(frame);s.frame=frame;s.retired=false;bindSidebar(m);return {role,frame};
   },
   resizeSidebar(handle,height,{apply=true}={}){const m=lookup(handle),s=m.roles[1];if(!Number.isSafeInteger(height)||height<1||height>1000000||!sidebarIntact(m))return false;s.pendingHeight=height;if(apply)applySidebarSize(m);return true;},
-  revealSidebar(handle,{top,bottom}){const m=lookup(handle);if(!sidebarIntact(m)||!open(m.roles[1])||nativeLayer()||![top,bottom].every(Number.isFinite)||top<0||bottom<=top||bottom>m.roles[1].frame.getBoundingClientRect().height)return false;const p=m.inspection.sidebarPlacement.scrollPort,b=p.getBoundingClientRect(),f=m.roles[1].frame.getBoundingClientRect();if(f.y+top<b.y)p.scrollTop+=f.y+top-b.y;else if(f.y+bottom>b.bottom)p.scrollTop+=f.y+bottom-b.bottom;return true;},
+  revealSidebar(handle,{top,bottom}){const m=lookup(handle);if(!sidebarIntact(m)||!open(m.roles[1])||nativeLayer()||![top,bottom].every(Number.isFinite)||top<0||bottom<=top||bottom>m.roles[1].frame.getBoundingClientRect().height)return false;const p=m.inspection.sidebarPlacement.scrollPort,b=p.getBoundingClientRect(),f=m.roles[1].frame.getBoundingClientRect();m.pendingScroll=undefined;if(f.y+top<b.y)p.scrollTop+=f.y+top-b.y;else if(f.y+bottom>b.bottom)p.scrollTop+=f.y+bottom-b.bottom;return true;},
   restoreSidebar(handle,scroll,{apply=true}={}){const m=lookup(handle);if(!sidebarIntact(m)||scroll!==null&&(!Number.isSafeInteger(scroll)||scroll<0||scroll>100000000))return false;m.pendingScroll=scroll;if(apply)restorePendingScroll(m);return true;},
   isOwnedSurface:owned,
   isMasked(node){return [...mounts.values()].some(m=>node===m.plan.reading&&open(m.roles[0])&&isSameNativeRegions(m.plan));},

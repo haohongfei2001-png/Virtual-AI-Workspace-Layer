@@ -26,6 +26,20 @@ try{
   let inspection=adapter.inspect();surface=createFlowMountSurface({document,createFrameURL:({role})=>'chrome-extension://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/'+role+'.html'});
   const scrolls=[],handle=await surface.mount({binding},inspection,{onSidebarScroll:n=>scrolls.push(n)}),workspace=surface.frames(handle)[0].frame,sidebar=surface.frames(handle)[1].frame;
   surface.showWorkspace(handle);
+  // A restored member window can grow after the first VIEW. Browser clamping
+  // while those rows are absent is not a new saved scroll choice.
+  const port=inspection.sidebarPlacement.scrollPort;
+  surface.resizeSidebar(handle,128);const target=port.scrollHeight-port.clientHeight+700;
+  scrolls.length=0;surface.restoreSidebar(handle,target);
+  port.dispatchEvent(new Event('scroll'));
+  const pendingDidNotOverwrite=scrolls.length===0;
+  surface.resizeSidebar(handle,1600);
+  const restoredAfterGrowth=port.scrollTop===target&&scrolls.at(-1)===target;
+  // A distinct actual scroll takes precedence over a still-clamped restore.
+  if(port.scrollHeight-port.clientHeight<=0)throw Error('scroll-counterexample-needs-scrollable-content');
+  surface.restoreSidebar(handle,port.scrollHeight-port.clientHeight+700);
+  port.scrollTop=0;port.dispatchEvent(new Event('scroll'));surface.resizeSidebar(handle,2400);
+  const manualScrollPreserved=port.scrollTop===0&&scrolls.at(-1)===0;
   const recent=inspection.sidebarPlacement.recent,nextRecent=recent.cloneNode(true);recent.replaceWith(nextRecent);
   const fresh=adapter.inspectStructure(inspection),recentProof=fresh.history?.isConnected===true&&fresh.sidebarPlacement?.recent===nextRecent;
   surface.refreshGeometry(handle,fresh);surface.showWorkspace(handle,{roles:['sidebar']});
@@ -43,9 +57,9 @@ try{
   inspection.sidebarPlacement.parent.append(document.createElement('button'));const unknown=adapter.inspectStructure(inspection);
   surface.retireRole(handle,'sidebar');surface.refreshGeometry(handle,unknown);
   const unknownRejected=!unknown.sidebarPlacement&&unknown.preserveNativeSidebar&&surface.restoreRole(handle,'sidebar')===null&&surface.visibility(handle).workspace;
-  surface.dispose(handle);adapter.stop();return {recentProof,recentRecovered,parentRecovered,workspacePreserved,oldScrollDetached,newScrollBound,unknownRejected};
+  surface.dispose(handle);adapter.stop();return {pendingDidNotOverwrite,restoredAfterGrowth,manualScrollPreserved,recentProof,recentRecovered,parentRecovered,workspacePreserved,oldScrollDetached,newScrollBound,unknownRejected};
  });
- assert.deepEqual(recovery,{recentProof:true,recentRecovered:true,parentRecovered:true,workspacePreserved:true,oldScrollDetached:true,newScrollBound:true,unknownRejected:true});await replacement.close();
+ assert.deepEqual(recovery,{pendingDidNotOverwrite:true,restoredAfterGrowth:true,manualScrollPreserved:true,recentProof:true,recentRecovered:true,parentRecovered:true,workspacePreserved:true,oldScrollDetached:true,newScrollBound:true,unknownRejected:true});await replacement.close();
  for(const [kind,path,html]of [['home','/',observedHomeHTML(C)],['project','/g/'+P+'/project',observedProjectHTML(P,C)],['conversation','/c/'+C,longDesktopHTML(C)],['header-inside','/c/'+C,legacy]]){
   const page=await browser.newPage({viewport:{width:1400,height:900}}),url='https://chatgpt.com'+path;
   await page.route('**/*',r=>r.request().url()===url?r.fulfill({contentType:'text/html',body:html}):r.abort());await page.goto(url);await page.addScriptTag({content:outputFiles[0].text});
