@@ -1,4 +1,17 @@
 import assert from 'node:assert/strict';
+/** Scheme B private UI must be a visible document-flow member, not a popover. */
+export function nativeEntryWorkspaceReady(allowReturn=false){
+ const node=document.querySelector('[data-va-owned][id$="_workspace"]');
+ if(node&&!node.hasAttribute('popover')){
+  const box=node.getBoundingClientRect(),style=getComputedStyle(node);
+  if(style.display!=='none'&&style.visibility==='visible'&&box.width>=160&&box.height>=96&&node.querySelector('iframe'))return true;
+ }
+ if(!allowReturn)return false;
+ return [...document.querySelectorAll('button[aria-label="返回工作空间"]')].some(button=>{
+  const box=button.getBoundingClientRect(),style=getComputedStyle(button);
+  return style.display!=='none'&&style.visibility==='visible'&&box.width>0&&box.height>0;
+ });
+}
 export const exampleTargets=Object.freeze(['assistant','code','third-party'].flatMap((region,i)=>[
  {region,entity:'project',id:`g-p-${String(900+i).padStart(32,'0')}`},
  {region,entity:'conversation',id:`aaaaaaaa-aaaa-4aaa-8aaa-${String(900+i).padStart(12,'0')}`},

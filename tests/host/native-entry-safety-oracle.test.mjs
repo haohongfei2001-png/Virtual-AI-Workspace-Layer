@@ -1,5 +1,14 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {assertExamplesExcluded,assertCancelUnchanged,assertNativeScope,exampleTargets,restoreNativeEntrySurfaces} from './native-entry-safety-oracle.mjs';
+import {assertExamplesExcluded,assertCancelUnchanged,assertNativeScope,exampleTargets,restoreNativeEntrySurfaces,nativeEntryWorkspaceReady} from './native-entry-safety-oracle.mjs';
+import {runInNewContext} from 'node:vm';
+test('workspace readiness requires a painted flow owner; return is only a preparation signal',()=>{
+ const node=({popover=false,width=600,height=500,display='block',visibility='visible',frame=true}={})=>({hasAttribute:()=>popover,getBoundingClientRect:()=>({width,height}),style:{display,visibility},querySelector:()=>frame?{}:null});
+ const ready=(workspace,buttons=[],allowReturn=false)=>runInNewContext(`(${nativeEntryWorkspaceReady.toString()})(allowReturn)`,{allowReturn,document:{querySelector:()=>workspace,querySelectorAll:()=>buttons},getComputedStyle:n=>n.style});
+ assert.equal(ready(node()),true);
+ for(const patch of [{popover:true},{width:0},{height:0},{display:'none'},{visibility:'hidden'},{frame:false}])assert.equal(ready(node(patch)),false);
+ assert.equal(ready(null,[node()],true),true);assert.equal(ready(null,[node()],false),false);
+ assert.equal(ready(null,[node({height:0})],true),false);
+});
 const facts=()=>({revision:1,projects:{p:{}},refs:{c:{nativeTitle:'before'}}});
 const valid=()=>({before:facts(),after:{...facts(),revision:2,refs:{c:{nativeTitle:'observed'}}},witnessId:'c',witnessTitle:'observed'});
 test('negative inventory oracle requires real forward observation and all six excluded examples',()=>{assert.equal(exampleTargets.length,6);assertExamplesExcluded(valid());for(const row of exampleTargets){const v=valid();v.after[row.entity==='project'?'projects':'refs'][row.id]={};assert.throws(()=>assertExamplesExcluded(v));}for(const mode of ['no-progress','stale-native']){const v=valid();if(mode==='no-progress')v.after.revision=1;else v.after.refs.c.nativeTitle='before';assert.throws(()=>assertExamplesExcluded(v));}});

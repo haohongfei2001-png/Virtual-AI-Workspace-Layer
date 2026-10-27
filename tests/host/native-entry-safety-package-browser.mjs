@@ -8,7 +8,7 @@ import {chromium} from '../b1/tooling/node_modules/playwright/index.mjs';
 import {createHostFixtureServer} from './fixtures/server.mjs';import {legacyExpectedWorld as expected} from './expected/legacy.mjs';
 import {packageHost,verifyHost} from '../../extension/package.mjs';
 import {launchNativeVisibilityBrowser} from './native-visibility-browser.mjs';import {createHistoricalNetworkGuard} from './historical-network-guard.mjs';import {cleanupOwnedResources} from './isolated-browser-cleanup.mjs';
-import {exampleTargets,assertExamplesExcluded,assertCancelUnchanged,assertNativeScope,restoreNativeEntrySurfaces} from './native-entry-safety-oracle.mjs';
+import {exampleTargets,assertExamplesExcluded,assertCancelUnchanged,assertNativeScope,restoreNativeEntrySurfaces,nativeEntryWorkspaceReady} from './native-entry-safety-oracle.mjs';
 import {openNativeProjectEntry} from './native-entry-project-navigation.mjs';
 import {inspectColdNativeCache,readNativeEntryFacts} from './native-entry-facts-inspection.mjs';
 const output=process.argv[2];assert(output,'output-json-path-required');
@@ -21,9 +21,9 @@ const poll=async(fn)=>{const end=Date.now()+15000;do{const v=await fn();if(v)ret
 const nativePages=[];
 async function facts(){return readNativeEntryFacts({pages:nativePages,extensionId:id,fixtureOrigin:server.origin});}
 async function workspace(p=page){
- await p.waitForFunction(()=>[...document.querySelectorAll('[data-va-owned][id$="_workspace"]:popover-open')].some(n=>getComputedStyle(n).visibility==='visible')||[...document.querySelectorAll('button')].some(n=>n.getAttribute('aria-label')==='返回工作空间'),null,{timeout:15000});
+ await p.waitForFunction(nativeEntryWorkspaceReady,true,{timeout:15000});
  const back=p.getByRole('button',{name:'返回工作空间',exact:true});if(await back.isVisible())await back.click();
- await p.waitForFunction(()=>[...document.querySelectorAll('[data-va-owned][id$="_workspace"]:popover-open')].some(n=>getComputedStyle(n).visibility==='visible'),null,{timeout:15000});const frame=p.frames().find(f=>f.url()===`chrome-extension://${id}/workspace.html`);assert(frame);await frame.locator('.workspace').waitFor();return frame;
+ await p.waitForFunction(nativeEntryWorkspaceReady,false,{timeout:15000});const frame=p.frames().find(f=>f.url()===`chrome-extension://${id}/workspace.html`);assert(frame);await frame.locator('.workspace').waitFor();return frame;
 }
 async function native(p=page){await restoreNativeEntrySurfaces(p);}
 try{
