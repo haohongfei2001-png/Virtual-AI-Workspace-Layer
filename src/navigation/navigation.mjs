@@ -812,8 +812,10 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     const box=target.getBoundingClientRect(),bounds=viewport.getBoundingClientRect();
     const visible=doc.visibilityState!=='hidden'&&!viewport.hidden&&pane.n.style.visibility!=='hidden'&&pane.n.style.display!=='none'&&bounds.height>0&&box.height>0;
     if(!visible)return false;
-    if(visible&&nativeSidebar){onSidebarReveal(box);if(focus){if(doc.hasFocus?.()===false)return false;target.focus({preventScroll:true});}return true;}
-    if(visible){if(surface.role==='workspace')restoredScroll.delete(view);else restoredSidebarScroll.delete(view);if(box.top<bounds.top)viewport.scrollTop+=box.top-bounds.top;else if(box.bottom>bounds.bottom)viewport.scrollTop+=Math.min(box.top-bounds.top,box.bottom-bounds.bottom);if(surface.role==='sidebar')view.sidebarScroll=viewport.scrollTop;else view.scroll=viewport.scrollTop;if(focus){if(doc.hasFocus?.()===false)return false;target.focus({preventScroll:true});if(pane.shadow.activeElement!==target)return false;}emitView();}
+    // Native NAV owns only scrolling. It must not bypass member-page loading
+    // or acknowledge a focus transfer that the browser did not perform.
+    if(nativeSidebar){onSidebarReveal(box);if(focus){if(doc.hasFocus?.()===false)return false;target.focus({preventScroll:true});if(pane.shadow.activeElement!==target)return false;}}
+    else {if(surface.role==='workspace')restoredScroll.delete(view);else restoredSidebarScroll.delete(view);if(box.top<bounds.top)viewport.scrollTop+=box.top-bounds.top;else if(box.bottom>bounds.bottom)viewport.scrollTop+=Math.min(box.top-bounds.top,box.bottom-bounds.bottom);if(surface.role==='sidebar')view.sidebarScroll=viewport.scrollTop;else view.scroll=viewport.scrollTop;if(focus){if(doc.hasFocus?.()===false)return false;target.focus({preventScroll:true});if(pane.shadow.activeElement!==target)return false;}emitView();}
     if(surface.role==='sidebar'&&group.lists.current.total>0&&group.lists.current.items.length===0)requestFrame({groupId:projectId,list:'current',rowOffset:0,rowLimit:5});
     return true;
   }
