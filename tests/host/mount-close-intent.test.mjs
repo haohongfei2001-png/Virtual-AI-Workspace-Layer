@@ -15,7 +15,7 @@ async function fixture(onSurrender=()=>{}){
   showPopover(){if(this.open)return;this.emit('beforetoggle','closed','open');this.open=true;},
   hidePopover(){if(!this.open||this.closing)return;this.closing=true;try{this.emit('beforetoggle','open','closed');this.open=false;}finally{this.closing=false;}},
   remove(){this.isConnected=false;}});
- doc={defaultView:{getComputedStyle:()=>({visibility:'visible',display:'block'}),CSS:{supports:()=>true},HTMLElement:{prototype:{showPopover(){}}},crypto:{randomUUID:()=> 'unique'},MutationObserver:class{observe(){}disconnect(){}}},createElement:element,querySelector:()=>null,addEventListener:(k,f)=>listeners.set(k,f),removeEventListener:(k,f)=>{if(listeners.get(k)===f)listeners.delete(k);}};doc.head=element();doc.body=element();
+ doc={defaultView:{addEventListener(){},removeEventListener(){},getComputedStyle:()=>({visibility:'visible',display:'block'}),CSS:{supports:()=>true},HTMLElement:{prototype:{showPopover(){}}},crypto:{randomUUID:()=> 'unique'},MutationObserver:class{observe(){}disconnect(){}}},createElement:element,querySelector:()=>null,addEventListener:(k,f)=>listeners.set(k,f),removeEventListener:(k,f)=>{if(listeners.get(k)===f)listeners.delete(k);}};doc.head=element();doc.body=element();
  const reading=element(),history=element(),composer=element(),header=element();
  const surface=createMountSurface({document:doc,createFrameURL:()=> 'chrome-extension://extension/ui.html'});
  const handle=await surface.mount({binding:{documentToken:'doc'}},{ok:true,viewMask:'declarative-css',reading,historyMaskRoots:[history],composer,header,protectedRegions:[composer,header],regionEpoch:1,readingRect:{x:0,y:0,width:100,height:100},sidebarRect:{x:100,y:0,width:100,height:100}},{onSurrender});

@@ -8,7 +8,49 @@ const require=createRequire(new URL('../../extension/tooling/package.json',impor
 const {outputFiles}=await require('esbuild').build({stdin:{contents:"export {createChatGPTAdapter} from './src/host/chatgpt-adapter.mjs';export {CHATGPT_OBSERVED_PROFILE,waitForNativeLayout} from './src/host/chatgpt-observed-profile.mjs';export {createMountSurface} from './src/navigation/mount-surface.mjs';export {nativeHistoryPresentation,sidebarPresentationFits} from './src/host/native-history-list.mjs';export {createURLPolicy} from './src/host/url-policy.mjs';",resolveDir:process.cwd()},bundle:true,write:false,format:'iife',globalName:'observedModule'});
 const browser=await chromium.launch({headless:true,proxy:{server:'http://127.0.0.1:9',bypass:'127.0.0.1,localhost'}});
 try{
- if(process.argv.includes('--home-space-only')){
+ if(process.argv.includes('--home-dock-only')){
+  const page=await browser.newPage({viewport:{width:1000,height:700}}),url='https://chatgpt.com/';
+  await page.route('**/*',r=>r.request().url()===url?r.fulfill({contentType:'text/html',body:observedHomeHTML('33333333-3333-4333-8333-333333333333')}):r.abort());
+  await page.goto(url);await page.addScriptTag({content:outputFiles[0].text});
+  const checks=await page.evaluate(async()=>{
+   const {createChatGPTAdapter,CHATGPT_OBSERVED_PROFILE:profile,createMountSurface}=observedModule;
+   let surface;const adapter=createChatGPTAdapter({document,profile,isOwnedMask:n=>surface?.isMasked(n)===true,isOwnedSurface:n=>surface?.isOwnedSurface(n)===true});
+   const binding={documentToken:'fixture',producerToken:'fixture',browserDocumentId:'home',routeEpoch:1,origin:location.origin,expiresAt:new Date(Date.now()+20000).toISOString()};
+   await adapter.start({binding,emit:async p=>({state:'accepted',localSeq:p.localSeq,receiptId:'fixture'})});
+   const composer=document.querySelector('form'),input=composer.querySelector('textarea'),originalStyle=composer.getAttribute('style'),parent=composer.parentElement;
+   const state=adapter.inspect(),checks={proposal:!!state.homeDock};
+   surface=createMountSurface({document,createFrameURL:({role})=>'chrome-extension://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/'+role+'.html'});
+   const handle=await surface.mount({binding},state);
+   const enter=()=>{surface.refreshGeometry(handle,adapter.inspect());const settle=surface.prepareWorkspace(handle,{explicitEntry:false});const next=adapter.inspect();const ok=next.ok&&surface.refreshGeometry(handle,next)&&surface.showWorkspace(handle);settle?.(ok);return next;};
+   const expanded=enter();checks.canvas=expanded.ok&&expanded.readingRect.height===562&&composer.getBoundingClientRect().top===614;
+   checks.originalNode=composer.parentElement===parent&&document.querySelector('form')===composer&&input.value==='fixture draft'&&composer.getAttribute('style')===originalStyle;
+   const probe=surface.withNativeReading(handle,()=>adapter.inspect(),()=>true);checks.probe=probe?.ok===true&&composer.getBoundingClientRect().top===614;
+   surface.showReading(handle);checks.readingRestores=composer.getBoundingClientRect().top===302&&!composer.hasAttribute('data-va-home-dock');
+   surface.refreshGeometry(handle,adapter.inspect());const settle=surface.prepareWorkspace(handle);settle?.(false);checks.failedEntryRestores=composer.getBoundingClientRect().top===302;
+   const blocker=document.createElement('button');blocker.style.cssText='position:fixed;left:240px;top:640px;width:40px;height:20px';document.body.append(blocker);checks.destinationBlocked=!adapter.inspect().homeDock;blocker.remove();
+   enter();const workspace=document.querySelector('[id$="_workspace"]');workspace.hidePopover();checks.directCloseRestores=composer.getBoundingClientRect().top===302;
+   enter();surface.suspend(handle,'revoked');checks.revocationRestores=composer.getBoundingClientRect().top===302;
+   enter();surface.dispose(handle);checks.disableRestores=composer.getBoundingClientRect().top===302&&composer.getAttribute('style')===originalStyle&&input.value==='fixture draft'&&composer.parentElement===parent;
+   // Re-mount for a real pointer journey driven by the existing browser runner.
+   const next=adapter.inspect(),h=await surface.mount({binding},next);const settleNext=surface.prepareWorkspace(h);surface.refreshGeometry(h,adapter.inspect());surface.showWorkspace(h);settleNext?.(true);
+   window.homeDockJourney={surface,adapter,handle:h,composer,input,checks};const tool=composer.querySelector('button');tool.addEventListener('click',()=>{checks.nativeToolClick=true;});
+   return checks;
+  });
+  assert(Object.values(checks).every(Boolean),JSON.stringify(checks));
+  await page.getByRole('button',{name:'Native tools',exact:true}).click();
+  const interaction=await page.evaluate(async()=>{const {surface,adapter,handle,composer,input,checks}=homeDockJourney;await new Promise(r=>setTimeout(r,0));const result={nativeToolClick:checks.nativeToolClick===true,restoredAfterClick:composer.getBoundingClientRect().top===302,draftPreserved:input.value==='fixture draft',workspaceYielded:surface.visibility(handle).workspace===false};
+   composer.querySelector('button').blur();surface.refreshGeometry(handle,adapter.inspect());const finish=surface.prepareWorkspace(handle);surface.refreshGeometry(handle,adapter.inspect());surface.showWorkspace(handle);finish?.(true);
+   const lateControl=document.createElement('button');lateControl.style.cssText='position:fixed;left:240px;top:640px;width:40px;height:20px';document.body.append(lateControl);await new Promise(r=>setTimeout(r,0));
+   result.lateDestinationControlRestores=composer.getBoundingClientRect().top===302&&!surface.visibility(handle).workspace;lateControl.remove();
+   surface.refreshGeometry(handle,adapter.inspect());const redock=surface.prepareWorkspace(handle);surface.refreshGeometry(handle,adapter.inspect());surface.showWorkspace(handle);redock?.(true);
+   // Unexpected rule removal restores native layout and withdraws the canvas.
+   const ownStyle=[...document.head.querySelectorAll('style')].find(n=>n.textContent.includes('[data-va-home-dock='));ownStyle.remove();await new Promise(r=>setTimeout(r,0));result.ruleLossRestored=composer.getBoundingClientRect().top===302&&!surface.visibility(handle).workspace;
+   composer.querySelector('button').blur();surface.refreshGeometry(handle,adapter.inspect());const next=surface.prepareWorkspace(handle);surface.refreshGeometry(handle,adapter.inspect());surface.showWorkspace(handle);next?.(true);
+   const replacement=composer.cloneNode(true);replacement.removeAttribute('data-va-home-dock');composer.replaceWith(replacement);await new Promise(r=>setTimeout(r,0));
+   result.replacementRestores=!surface.visibility(handle).workspace&&!composer.hasAttribute('data-va-home-dock')&&replacement.getBoundingClientRect().top===302;
+   surface.dispose(handle);await adapter.stop();return result;});
+  assert(Object.values(interaction).every(Boolean),JSON.stringify(interaction));console.log(JSON.stringify({status:'PASS_WEB_MECHANISM_ONLY',checks,interaction}));await page.close();
+ }else if(process.argv.includes('--home-space-only')){
   const page=await browser.newPage({viewport:{width:1000,height:700}}),url='https://chatgpt.com/';
   await page.route('**/*',r=>r.request().url()===url?r.fulfill({contentType:'text/html',body:observedHomeHTML('33333333-3333-4333-8333-333333333333')}):r.abort());
   await page.goto(url);await page.addScriptTag({content:outputFiles[0].text});

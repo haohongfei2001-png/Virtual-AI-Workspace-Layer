@@ -34,7 +34,7 @@ const insideShellClip=(clip,r)=>{const right=clip.x+clip.width,bottom=clip.y+cli
 // Shared presentation proof for Project gutters and the home area above the
 // native composer. No content values are read and no native root is enlarged.
 // Return null on incomplete/unsupported paint, never a partially cleared area.
-function workspacePaint({document,hitRoot,reading,chain,main,composer,readingRect,wideRect,safeReturn=null,provenClipNodes=new Set(),wideClear=true,walkRoot=hitRoot,isOwnedSurface=()=>false,structuralAllowed=node=>plain(node)&&(node===main||!node.hasAttribute('role'))}){
+function workspacePaint({document,hitRoot,reading,chain,main,composer,readingRect,wideRect,safeReturn=null,provenClipNodes=new Set(),wideClear=true,walkRoot=hitRoot,isOwnedSurface=()=>false,structuralAllowed=node=>plain(node)&&(node===main||!node.hasAttribute('role')),relocatingComposer=false}){
  const win=document.defaultView,styles=new WeakMap(),style=node=>{let value=styles.get(node);if(!value){value=win.getComputedStyle(node);styles.set(node,value);}return value;};
  // Compare visible native paint, not an off-screen descendant's unclipped
  // layout box. A fixed descendant or an absolute containing block outside the
@@ -55,7 +55,7 @@ function workspacePaint({document,hitRoot,reading,chain,main,composer,readingRec
    path.push(n);
   }return out;
  };
- const ancestors=new Set(chain),walker=document.createTreeWalker(walkRoot,5,{acceptNode:node=>node.nodeType===1&&isOwnedSurface(node)?2:1});let node=walkRoot,count=0,rectangles=0;
+ const ancestors=new Set(chain),walker=document.createTreeWalker(walkRoot,5,{acceptNode:node=>node.nodeType===1&&(isOwnedSurface(node)||relocatingComposer&&node===composer)?2:1});let node=walkRoot,count=0,rectangles=0;
   do{
    if(++count>2048)return null;
    const inPanel=node===reading||reading.contains(node),structural=ancestors.has(node);
@@ -256,6 +256,26 @@ export function inspectNativeHomeSurface({document,hitRoot,header,reading,compos
    expanded.x+expanded.width<base.x+base.width||expanded.y+expanded.height<base.y+base.height||
    overlap(expanded,h)||overlap(expanded,c)||clips.some(clip=>!insideShellClip(clip,expanded)))return fallback;
   const paint=workspacePaint({document,hitRoot,reading,chain,main,composer,readingRect:base,wideRect:expanded,provenClipNodes,walkRoot:document.body,isOwnedSurface,structuralAllowed});
-  return paint?.wideClear?{readingRect:expanded,proofNodes:chain}:fallback;
+  if(!paint?.wideClear)return fallback;
+  const result={readingRect:expanded,proofNodes:chain,paintClear:true};
+  // A geometry proposal, never a scope grant. Reuse the complete native paint
+  // proof, excluding ONLY the already-identified composer subtree from its old
+  // position. Both its destination and the enlarged canvas must be clear.
+  // The mount applies this temporarily, then the adapter proves actual geometry
+  // again without this exclusion before any workspace pixels are displayed.
+  const dockBottom=Math.min(win.innerHeight,root.y+hitRoot.clientTop+hitRoot.clientHeight)-16;
+  const destination={...c,y:dockBottom-c.height},canvas={...expanded,height:destination.y-top};
+  const cs=style(composer);
+  if(composer.tagName==='FORM'&&chain.includes(composer.parentElement)&&
+   !composer.contains(document.activeElement)&&c.x>=left&&c.x+c.width<=right&&c.width>0&&c.height>0&&
+   destination.y>c.y+1&&destination.y>=base.y+base.height&&canvas.height>0&&
+   ['static','relative','absolute','fixed'].includes(cs.position)&&
+   clips.every(clip=>insideShellClip(clip,canvas)&&insideShellClip(clip,destination))){
+   const clear=wideRect=>workspacePaint({document,hitRoot,reading,chain,main,composer,readingRect:base,wideRect,provenClipNodes,walkRoot:document.body,isOwnedSurface,structuralAllowed,relocatingComposer:true})?.wideClear===true;
+   if(clear(canvas)&&clear(destination))result.homeDock={composer,root:hitRoot,reading,parent:composer.parentElement,
+    rect:destination,leftBound:left,rightInset:win.innerWidth-right,centerOffset:c.x+c.width/2-win.innerWidth/2,bottom:win.innerHeight-dockBottom,url:document.location.href,
+    destinationClear:()=>{const current=box(composer);return finite(current)&&current.width>0&&current.height>0&&current.x>=left&&current.x+current.width<=Math.min(win.innerWidth,right)&&current.y>=top&&current.y+current.height<=win.innerHeight&&clear(current);}};
+  }
+  return result;
  }catch{return fallback;}
 }

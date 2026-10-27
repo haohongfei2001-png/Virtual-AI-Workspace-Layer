@@ -79,3 +79,12 @@ test('dormant workspace intent survives a native layer during fresh authorizatio
  assert.equal(f.controller.presentationMode(),'workspace');assert.equal(f.surface.visibility().workspace,true);
  assert.equal(f.entries.length,0,'restored visibility must not fabricate another user entry');f.controller.stop();
 });
+
+// Geometry proposals cannot replace the final actual native paint proof.
+test('home docking rolls back before showing a paint-unproved canvas',async()=>{
+ const f=fixture();await f.ready();const base=f.adapter.inspect(),settled=[];let moved=false;
+ f.adapter.inspect=()=>({...base,homeDock:moved?null:{kind:'fixture-proposal'},homeCanvasProved:!moved});
+ f.surface.prepareWorkspace=()=>{moved=true;return accepted=>{settled.push(accepted);moved=false;};};
+ f.surface.refreshGeometry=(_h,inspection)=>{assert.equal(inspection.homeCanvasProved,true);return true;};
+ assert.equal(f.controller.showWorkspace(),true);assert.deepEqual(settled,[false]);assert.equal(moved,false);f.controller.stop();
+});

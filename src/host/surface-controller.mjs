@@ -179,13 +179,14 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
    let inspection=adapter.inspect();
    if(!fresh(inspection)||!inspection?.ok||inspection.regionEpoch!==handle.regionEpoch)return false;if(adapter.hasNativeLayer()){suspend('native-layer');return false;}
    if(!refreshGeometry(state,inspection)||!fresh(inspection))return false;
-   // Only explicit entry may align a proved Project scrollport. Renewal,
-   // geometry callbacks and automatic initial rendering never scroll it.
-   if(explicitEntry&&typeof surface.prepareWorkspace==='function'){
-    settleLayout=surface.prepareWorkspace(handle);
+   // Only explicit entry may align a proved Project scrollport. A separately
+   // proved home composer may dock whenever workspace presentation is desired;
+   // this never scrolls native content or changes account authorization.
+   if((explicitEntry||inspection.homeDock)&&typeof surface.prepareWorkspace==='function'){
+    settleLayout=surface.prepareWorkspace(handle,{explicitEntry});
     if(settleLayout){
      let aligned=adapter.inspect();
-     if(!fresh(aligned)||!aligned?.ok||aligned.regionEpoch!==handle.regionEpoch){settleLayout(false);settleLayout=null;aligned=adapter.inspect();}
+     if(!fresh(aligned)||!aligned?.ok||aligned.regionEpoch!==handle.regionEpoch||inspection.homeDock&&!aligned.homeCanvasProved){settleLayout(false);settleLayout=null;aligned=adapter.inspect();}
      if(!fresh(aligned)||!aligned?.ok||aligned.regionEpoch!==handle.regionEpoch||!refreshGeometry(state,aligned))return false;
      inspection=aligned;state.inspection=aligned;
     }

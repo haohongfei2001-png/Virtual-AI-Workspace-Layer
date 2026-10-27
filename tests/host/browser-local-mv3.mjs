@@ -33,7 +33,12 @@ try{
   page=await context.newPage();await page.setViewportSize({width:1400,height:900});
   // The real 2026-10-27 Project screenshot has a centered member column.
   // Replay only this geometric fact, with the existing formal renderer/data.
-  await page.addInitScript(()=>document.addEventListener('DOMContentLoaded',()=>{const content=document.querySelector('#project-content');if(content)content.style.cssText='max-width:660px;margin-inline:auto';const welcome=document.querySelector('.home-composer-anchor');if(welcome)welcome.style.cssText='position:absolute;left:100px;top:110px;width:400px;height:120px';},{once:true}));
+  await page.addInitScript(()=>document.addEventListener('DOMContentLoaded',()=>{const content=document.querySelector('#project-content');if(content)content.style.cssText='max-width:660px;margin-inline:auto';const welcome=document.querySelector('.home-composer-anchor');if(welcome){welcome.style.cssText='position:absolute;left:100px;top:110px;width:400px;height:120px';
+   // The anonymous host's old 780px constant overflowed the partitioned 260px
+   // sidebar at 1000px. Preserve the observed containment relation on resize;
+   // this is fixture geometry, not evidence of the live host's CSS declarations.
+   const root=document.querySelector('[data-app-shell-main-content-layout]');root.style.width='calc(100vw - 260px)';root.style.height='100vh';document.querySelector('form').style.width='100%';
+  }},{once:true}));
   await page.addInitScript({content:'if(window===window.top&&location.hostname==="127.0.0.1")document.addEventListener("DOMContentLoaded",()=>{('+materializePartitionedSidebar.toString()+')('+JSON.stringify(partitionDetails.sidebarStructure.rows)+');},{once:true});'});
   report.controlEvents=[];await page.exposeFunction('__recordControl',v=>{if(report.controlEvents.length<120)report.controlEvents.push(v);});
   await page.addInitScript(()=>addEventListener('message',e=>{const d=e.data;if(e.origin.startsWith('chrome-extension://')&&d&&['VAIWL_UI_SUSPEND','VAIWL_UI_REVEAL_FOCUS','VAIWL_UI_SIDEBAR_WHEEL','VAIWL_UI_BOOT'].includes(d.type))window.__recordControl({type:d.type,role:d.role,reason:d.reason,stage:d.stage});}));
@@ -247,7 +252,16 @@ try{
    if(scene==='home'){
     await page.waitForFunction(()=>document.querySelector('[id$="_workspace"]')?.matches(':popover-open'));
     assert(await page.evaluate(()=>{const surface=document.querySelector('[id$="_workspace"]').getBoundingClientRect(),welcome=document.querySelector('.home-composer-anchor').getBoundingClientRect(),composer=document.querySelector('form').getBoundingClientRect();return surface.width>welcome.width&&surface.top<welcome.top&&surface.bottom<=composer.top;}));
-    report.checks.homeCanvasIndependentOfWelcomeSize=true;await capture('partition-home-workspace');
+    report.checks.homeCanvasIndependentOfWelcomeSize=true;
+    assert(await page.evaluate(()=>{const surface=document.querySelector('[id$="_workspace"]').getBoundingClientRect(),composer=document.querySelector('form').getBoundingClientRect();return composer.bottom===innerHeight-16&&surface.height>innerHeight*.7&&document.querySelector('form').hasAttribute('data-va-home-dock');}),'formal owner must actually consume the proved home docking proposal');
+    report.checks.homeDockIntegrated=true;await capture('partition-home-workspace');
+    await page.setViewportSize({width:760,height:900});
+    await page.waitForFunction(()=>{const workspace=document.querySelector('[id$="_workspace"]'),c=document.querySelector('form').getBoundingClientRect();return workspace?.matches(':popover-open')&&workspace.getBoundingClientRect().right<=innerWidth&&c.right<=innerWidth&&c.bottom===innerHeight-16;});
+    await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+    report.homeDockNarrow=await page.evaluate(()=>{const c=document.querySelector('form'),r=c.getBoundingClientRect(),w=document.querySelector('[id$="_workspace"]').getBoundingClientRect();return {composer:r.toJSON(),canvas:w.toJSON(),hitInsideComposer:c.contains(document.elementFromPoint(r.x+20,r.y+10)),draft:c.querySelector('textarea').value==='fixture draft'};});
+    assert(report.homeDockNarrow.hitInsideComposer&&report.homeDockNarrow.draft);
+    await capture('partition-home-narrow-workspace');await page.setViewportSize({width:1000,height:900});
+    report.checks.homeDockResponsive=true;
    }
    await page.locator('textarea').focus();
    await page.waitForFunction(()=>document.querySelector('[id$="_sidebar"]')?.matches(':popover-open')&&!document.querySelector('[id$="_workspace"]')?.matches(':popover-open'));
