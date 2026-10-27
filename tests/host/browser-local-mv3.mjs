@@ -57,6 +57,17 @@ try{
   assert(await page.locator('[id$="_workspace"]').evaluate(n=>Math.abs(n.getBoundingClientRect().top-n.querySelector('iframe').getBoundingClientRect().top)<1));
   assert.equal(await sidebar.getByRole('button',{name:'退出工作空间增强',exact:true}).count(),0);
   report.checks.singleDeclarativeHostExit=true;
+  assert(await sidebar.locator('.sidebar-footer').evaluate(n=>n.parentElement.firstElementChild.classList.contains('themes')&&n.querySelectorAll('button').length===4));
+  const closeSidebar=await page.locator('[id$="_sidebar"]>button').boundingBox();
+  for(const button of await sidebar.locator('.sidebar-footer button').all()){const r=await button.boundingBox();assert(r&&closeSidebar);assert(!(r.x<closeSidebar.x+closeSidebar.width&&r.x+r.width>closeSidebar.x&&r.y<closeSidebar.y+closeSidebar.height&&r.y+r.height>closeSidebar.y),'lower bar must reserve the declarative native-list exit');}
+  report.checks.topicsLeadQuietExtensionTools=true;
+  await sidebar.getByRole('button',{name:'折叠主题导航',exact:true}).click();
+  await page.waitForFunction(()=>document.querySelector('[data-va-sidebar-slot]').getBoundingClientRect().height===128);
+  const foldedFooter=await sidebar.locator('.sidebar-footer').boundingBox(),foldedClose=await page.locator('[id$="_sidebar"]>button').boundingBox();
+  assert(foldedClose.y>=foldedFooter.y&&foldedClose.y+foldedClose.height<=foldedFooter.y+foldedFooter.height,'folded footer and host exit share the same reserved row');
+  await sidebar.getByRole('button',{name:'折叠主题导航',exact:true}).click();
+  await sidebar.getByRole('button',{name:'侧栏主题 Native Project',exact:true}).waitFor();
+  report.checks.foldedToolsStayAligned=true;
   // Reuse the actual empty auxiliary component. Temporarily expose its summary
   // only to measure slot placement; no candidate data or actions are invented.
   for(const [frame,role] of [[workspace,'workspace'],[sidebar,'sidebar']]){
@@ -83,6 +94,16 @@ try{
    }
   };
   await checkExitRail();
+  // The formal surfaces share their proved host canvas, including the native
+  // boundary caption. Do not recolor/move native input or enlarge the mask.
+  await page.evaluate(()=>{document.querySelector('main').style.backgroundColor='rgb(250, 250, 250)';partitionedFixture.root.style.backgroundColor='rgb(243, 243, 243)';});
+  for(const [frame,color] of [[workspace,'rgb(250, 250, 250)'],[sidebar,'rgb(243, 243, 243)']]){
+   await frame.locator('body').evaluate(async(n,color)=>{for(let i=0;i<100;i++){if(getComputedStyle(n).backgroundColor===color)return;await new Promise(r=>setTimeout(r,20));}throw Error('formal frame did not adopt host canvas');},color);
+  }
+  assert.equal(await workspace.locator('.workspace').evaluate(n=>getComputedStyle(n).backgroundColor),'rgb(250, 250, 250)');
+  assert.equal(await workspace.locator('.card').first().evaluate(n=>getComputedStyle(n).backgroundColor),'rgb(255, 255, 255)','native canvas must not flatten the approved card surface');
+  assert.equal(await page.locator('[data-va-native-boundary]').evaluate(n=>getComputedStyle(n).backgroundColor),'rgb(243, 243, 243)');
+  report.checks.provedRoleCanvasMatchesNativeWithoutNativeRestyling=true;
   await capture('partition-desktop-workspace');
 
   const before=await page.locator('[data-fixture-structure-row="1"]').evaluate(n=>n.outerHTML);
@@ -156,7 +177,7 @@ try{
   assert(Math.abs((await theme.boundingBox()).y-themeBeforeNativeScroll.y+140)<1,'clipped themes move with native scroll, without restarting at y=0');
   report.checks.clippedNativeScrollKeepsContentCoordinates=true;
   const closeOffset=await page.locator('[id$="_sidebar"]').evaluate(n=>n.querySelector('button').getBoundingClientRect().top-n.querySelector('iframe').getBoundingClientRect().top);
-  assert.equal(closeOffset,16,'declarative exit moves with its own toolbar');
+  assert.equal(closeOffset,sidebarCanvasHeight-32,'declarative exit moves with its lower toolbar');
   // Focusing a clipped owned control reveals its slot in the native scrollport.
   await page.locator('#draft').focus();
   await theme.focus();
@@ -173,7 +194,7 @@ try{
   assert.equal(await page.locator('[id$="_workspace"]').evaluate(n=>n.matches(':popover-open')),false);
   await page.getByRole('button',{name:'返回工作空间',exact:true}).click();
   await workspace.getByRole('link',{name:'Native B',exact:true}).first().waitFor();
-  assert((await page.locator('[data-va-sidebar-slot]').evaluate(n=>n.getBoundingClientRect().height))>=240);
+  assert((await page.locator('[data-va-sidebar-slot]').evaluate(n=>n.getBoundingClientRect().height))>=128,'flow slot follows its actual compact content, not the legacy replacement-list minimum');
   report.checks.explicitWorkspaceReturnRestoresComposition=true;
   const opened=context.waitForEvent('page');
   await workspace.getByRole('link',{name:'Native B',exact:true}).first().click();
@@ -228,7 +249,11 @@ try{
    report.checks[scene+'InputAndReturnKeepSidebar']=true;
    if(scene==='home')await capture('partition-home-return');
   }
-
+  await sidebar.getByRole('button',{name:'已保存片段',exact:true}).click();
+  const auxiliary=sidebar.locator('[data-vaiwl-frame-snippets]');await auxiliary.waitFor();
+  const auxiliaryBox=await auxiliary.boundingBox(),auxiliaryExit=await page.locator('[id$="_sidebar"]>button').boundingBox();
+  assert(auxiliaryBox&&auxiliaryExit&&auxiliaryBox.y+auxiliaryBox.height<=auxiliaryExit.y,'auxiliary scrollport stays entirely above the declarative exit lane');
+  report.checks.auxiliaryPanelReservesExitLane=true;
 
   assert.deepEqual(report.browserErrors,[]);
  }

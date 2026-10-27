@@ -18,6 +18,11 @@ main > div { min-width: 0; min-height: 0; box-sizing: border-box; }
 [data-vaiwl-frame-recovery], [data-vaiwl-frame-backup], [data-vaiwl-frame-snippets] {
   flex: 1 1 0; overflow: auto;
 }
+/* Auxiliary panes replace the navigation footer. Keep its host-exit lane
+   outside their scrollport, so no scrolling action passes under that button. */
+body[data-frame-role="sidebar"] main:has(> :is([data-vaiwl-frame-recovery], [data-vaiwl-frame-backup], [data-vaiwl-frame-snippets]))::after {
+  content: ""; display: block; flex: 0 0 40px; border-top: 1px solid var(--line);
+}
 :root {
   --vaiwl-card-menu-top: 100%;
   --ink: #202123; --surface: #fff; --bubble: #f4f4f4; --line: #e5e5e5;
@@ -27,7 +32,7 @@ main > div { min-width: 0; min-height: 0; box-sizing: border-box; }
   --ink: #ececec; --surface: #212121; --bubble: #2f2f2f; --line: #424242;
   --muted: #b4b4b4; --hover: #383838; --focus: #8ab4f8;
 }
-body { color: var(--ink); background: var(--surface); font: calc(14px * var(--vaiwl-font-scale, 1))/1.5 var(--vaiwl-font-family, system-ui); }
+body { color: var(--ink); background: var(--vaiwl-canvas,var(--surface)); font: calc(14px * var(--vaiwl-font-scale, 1))/1.5 var(--vaiwl-font-family, system-ui); }
 button, input, select, textarea { font: inherit; color: inherit; }
 
 /* Manual-asset panels use the same type scale and spacing as saved snippets.
@@ -67,7 +72,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 }
 
 /* Match the approved sidebar tone without recoloring native host nodes. */
-body[data-frame-role="sidebar"] { --surface:#f9f9f9; background:var(--surface); }
+body[data-frame-role="sidebar"] { --surface:#f9f9f9; background:var(--vaiwl-canvas,var(--surface)); }
 html[data-vaiwl-theme="dark"] body[data-frame-role="sidebar"] { --surface:#171717; }
 
 /* This is the existing temporary native-entry panel, slotted into the formal

@@ -1,4 +1,5 @@
 /** Mount geometry only. UI authorization and projection transport belong to the owner. */
+import {validateFrameAppearance} from '../host/frame-appearance.mjs';
 export function createMountSurface({document:doc,createFrameURL,hasNativeLayer=()=>false}){
  const mounts=new Map();
  const lookup=handle=>{const m=mounts.get(handle?.id);if(!m||m.handle!==handle)throw Error('stale-mount');return m;};
@@ -40,7 +41,7 @@ export function createMountSurface({document:doc,createFrameURL,hasNativeLayer=(
   // Clip only owned pixels. The surface still occupies the freshly proved
   // visible rectangle; the frame retains its full layout and scroll position.
   for(const [key,value]of Object.entries({position:'absolute',left:offsetX+'px',top:offsetY+'px',width:full.width+'px',height:Math.max(0,full.height-28)+'px',flex:'none'}))if(sidebar.frame.style[key]!==value)sidebar.frame.style[key]=value;
-  const closeTop=(offsetY+16)+'px',boundaryTop=(offsetY+full.height-28)+'px';
+  const closeTop=(offsetY+full.height-60)+'px',boundaryTop=(offsetY+full.height-28)+'px';
   if(sidebar.close&&sidebar.close.style.top!==closeTop)sidebar.close.style.top=closeTop;
   if(sidebar.boundary&&sidebar.boundary.style.top!==boundaryTop)sidebar.boundary.style.top=boundaryTop;
   m.slotProved=true;return true;
@@ -103,6 +104,13 @@ export function createMountSurface({document:doc,createFrameURL,hasNativeLayer=(
   return !!inspection?.ok&&inspection.viewMask==='declarative-css'&&inspection.regionEpoch===handle.regionEpoch&&['reading','header','composer','readingViewport'].every(key=>inspection[key]===prior[key])&&same(inspection.protectedRegions,prior.protectedRegions)&&m.surfaces.length===2&&m.style.isConnected&&m.style.ownerDocument===doc&&m.style.dataset.vaOwned===handle.id&&m.style.textContent===m.styleText&&m.surfaces.filter(s=>!s.retired).every(({node,frame})=>node.isConnected&&node.ownerDocument===doc&&node.dataset.vaOwned===handle.id&&!node.matches(':popover-open')&&frame.isConnected&&frame.ownerDocument===doc&&frame.parentElement===node)&&[inspection.reading,inspection.header,inspection.composer,...(inspection.readingViewport?[inspection.readingViewport]:[]),...inspection.protectedRegions].every(node=>node?.isConnected&&node.ownerDocument===doc)&&m.markers.filter(x=>x.attr==='data-va-mask-workspace').every(({root,attr,nativeClass,nativeStyle,nativeHidden,nativeAriaHidden})=>root.getAttribute(attr)===handle.id&&root.getAttribute('class')===nativeClass&&root.getAttribute('style')===nativeStyle&&root.getAttribute('hidden')===nativeHidden&&root.getAttribute('aria-hidden')===nativeAriaHidden);
  };
  return {
+  setAppearance(handle,role,value){
+   const appearance=validateFrameAppearance(value),s=lookup(handle).surfaces.find(s=>s.role===role&&!s.retired);if(!s)return false;
+   const canvas=appearance.canvas??(appearance.theme==='dark'?(role==='sidebar'?'#171717':'#212121'):(role==='sidebar'?'#f9f9f9':'#ffffff'));
+   if(s.node.style.getPropertyValue('--va-canvas')!==canvas)s.node.style.setProperty('--va-canvas',canvas);
+   if(s.node.style.colorScheme!==appearance.theme)s.node.style.colorScheme=appearance.theme;
+   return true;
+  },
   revealSidebar(handle,focus){return revealSidebar(lookup(handle),focus);},
   scrollSidebar(handle,input){return scrollSidebar(lookup(handle),input);},
   resizeSidebar(handle,height,{apply=true}={}){
@@ -141,7 +149,7 @@ export function createMountSurface({document:doc,createFrameURL,hasNativeLayer=(
    const allowed=`body:not(:has(${nativeOpen}))`;
    for(const [role,initialRect,maskRoots] of specifications){
     const rect=initialRect??{x:0,y:0,width:1,height:1};if(!['x','y','width','height'].every(k=>Number.isFinite(rect[k]))||rect.width<=0||rect.height<=0)throw Error('invalid-mount-rect');
-    const node=doc.createElement('section');node.id=id+'_'+role;node.dataset.vaOwned=id;node.setAttribute('popover','manual');node.style.cssText=`position:fixed;inset:auto;margin:0;box-sizing:border-box;left:${rect.x}px;top:${rect.y}px;width:${rect.width}px;height:${rect.height}px;padding:0;border:0;background:Canvas;color:CanvasText;`;
+    const node=doc.createElement('section');node.id=id+'_'+role;node.dataset.vaOwned=id;node.setAttribute('popover','manual');node.style.cssText=`position:fixed;inset:auto;margin:0;box-sizing:border-box;left:${rect.x}px;top:${rect.y}px;width:${rect.width}px;height:${rect.height}px;padding:0;border:0;background:var(--va-canvas,Canvas);color:CanvasText;`;
     const button=doc.createElement('button');button.type='button';button.setAttribute('popovertarget',node.id);button.setAttribute('popovertargetaction','hide');button.textContent='×';button.setAttribute('aria-label',role==='workspace'?'返回原生阅读':'显示原生列表');button.title=button.getAttribute('aria-label');
     const frame=doc.createElement('iframe');frame.src=urls.get(role);frame.title=role==='workspace'?'工作空间':'导航';frame.style.cssText='border:0;width:100%;min-height:0;flex:1;display:block';node.append(button,frame);surfaces.push({role,node,frame,close:button,url:urls.get(role)});
     // A label for the following native region, not a copied Project list or a
@@ -156,10 +164,10 @@ export function createMountSurface({document:doc,createFrameURL,hasNativeLayer=(
     style.textContent+=`#${node.id}:not(:popover-open){display:flex;flex-direction:column;visibility:hidden;interactivity:inert;}\n`;
     // The declarative exit belongs to this surface. Host-wide button typography
     // and padding must not consume the small native history rectangle.
-    style.textContent+=`#${node.id}:popover-open{display:flex;flex-direction:column}#${node.id}>button{position:absolute;top:${role==='sidebar'?16:6}px;right:4px;z-index:2;display:grid;place-items:center;box-sizing:border-box;width:24px;height:24px;margin:0;padding:0;border:0;border-radius:8px;font:12px/18px system-ui;color:inherit;background:transparent;cursor:pointer;overflow-wrap:anywhere}#${node.id}>button:hover{background:color-mix(in srgb,CanvasText 6%,Canvas)}#${node.id}>button:focus-visible{outline:2px solid currentColor;outline-offset:-2px}\n`;
+    style.textContent+=`#${node.id}:popover-open{display:flex;flex-direction:column}#${node.id}>button{position:absolute;${role==='sidebar'?'top:auto;bottom:8px':'top:6px'};right:4px;z-index:2;display:grid;place-items:center;box-sizing:border-box;width:24px;height:24px;margin:0;padding:0;border:0;border-radius:8px;font:12px/18px system-ui;color:inherit;background:transparent;cursor:pointer;overflow-wrap:anywhere}#${node.id}>button:hover{background:color-mix(in srgb,CanvasText 6%,Canvas)}#${node.id}>button:focus-visible{outline:2px solid currentColor;outline-offset:-2px}\n`;
     style.textContent+=`${allowed}:has(#${node.id}:popover-open) [data-va-mask-${role}="${id}"]{visibility:hidden;interactivity:inert;}body:has(${nativeOpen}) #${node.id}{visibility:hidden;interactivity:inert;}\n`;
    }
-   style.textContent+=`#${id}_sidebar[data-va-composed-sidebar]{overflow:hidden}#${id}_sidebar>[data-va-native-boundary]{display:none}#${id}_sidebar[data-va-composed-sidebar]>[data-va-native-boundary]{display:block;position:absolute;left:0;width:100%;box-sizing:border-box;height:28px;padding:5px 12px 4px;border-top:1px solid color-mix(in srgb,CanvasText 10%,Canvas);font:11px/18px system-ui;color:color-mix(in srgb,CanvasText 60%,Canvas);background:Canvas;pointer-events:none}`;
+   style.textContent+=`#${id}_sidebar[data-va-composed-sidebar]{overflow:hidden}#${id}_sidebar>[data-va-native-boundary]{display:none}#${id}_sidebar[data-va-composed-sidebar]>[data-va-native-boundary]{display:block;position:absolute;left:0;width:100%;box-sizing:border-box;height:28px;padding:5px 12px 4px;border-top:1px solid color-mix(in srgb,CanvasText 10%,Canvas);font:11px/18px system-ui;color:color-mix(in srgb,CanvasText 60%,Canvas);background:var(--va-canvas,Canvas);pointer-events:none}`;
    style.textContent+=`#${id}_slot{display:block;box-sizing:border-box;width:100%;height:0;min-height:0;flex:0 0 auto;margin:0;padding:0;border:0;overflow:hidden;pointer-events:none;} body:has(#${id}_sidebar:popover-open) #${id}_slot,#${id}_slot[data-va-slot-retained]{height:var(--va-slot-height);}`;
    const m={handle,surfaces,markers,style,styleText:style.textContent,onSurrender,inspection:{...inspection,preserveNativeSidebar:inspection.preserveNativeSidebar===true||!inspection.sidebarRect,historyMaskRoots:[...inspection.historyMaskRoots],protectedRegions:[...inspection.protectedRegions]}};mounts.set(id,m);syncSlot(m,inspection.sidebarPlacement);
    const workspace=surfaces.find(s=>s.role==='workspace')?.node;
@@ -171,7 +179,7 @@ export function createMountSurface({document:doc,createFrameURL,hasNativeLayer=(
    const workspaceClosing=e=>{if(ownWorkspace.closeReason||m.readingProbe?.ownClosing&&e.target===workspace&&e.oldState==='open'&&e.newState==='closed'||m.readingProbe?.ownOpening&&e.target===workspace&&e.oldState==='closed'&&e.newState==='open')return;if(m.readingProbe)m.readingProbe.cancelled=true;if(closing||e.target!==workspace||e.oldState!=='open'||e.newState!=='closed'||mounts.get(id)!==m||!workspace.isConnected||!workspace.matches(':popover-open'))return;closing=true;try{onSurrender({role:'workspace',reason:'native-reading',phase:'closing'});}catch{}finally{closing=false;}};
    const workspaceClosed=e=>{if(ownWorkspace.closeReason||e.target!==workspace||e.newState!=='closed'||mounts.get(id)!==m||!workspace.isConnected||workspace.matches(':popover-open'))return;try{onSurrender({role:'workspace',reason:'native-reading'});}catch{}};
    const ownSidebar=surfaces.find(s=>s.role==='sidebar'),sidebar=ownSidebar.node;
-   const revealExit=()=>revealSidebar(m,{top:16,bottom:40});ownSidebar.close.addEventListener('focus',revealExit);
+   const revealExit=()=>{const height=ownSidebar.frame.getBoundingClientRect().height;revealSidebar(m,{top:height-32,bottom:height-8});};ownSidebar.close.addEventListener('focus',revealExit);
    const sidebarClosing=e=>{if(!ownSidebar.closeReason&&e.target===sidebar&&e.newState==='closed')m.slot?.removeAttribute('data-va-slot-retained');if(ownSidebar.closeReason||m.readingProbe?.ownClosing||m.readingProbe?.ownOpening||e.target!==sidebar||e.oldState!=='open'||e.newState!=='closed'||mounts.get(id)!==m||!sidebar.isConnected)return;try{onSurrender({role:'sidebar',reason:'native-list',phase:'closing'});}catch{}};
    const sidebarClosed=e=>{if(ownSidebar.closeReason||e.target!==sidebar||e.newState!=='closed'||mounts.get(id)!==m||!sidebar.isConnected||sidebar.matches(':popover-open'))return;try{onSurrender({role:'sidebar',reason:'native-list'});}catch{}};
    sidebar.addEventListener('beforetoggle',sidebarClosing);sidebar.addEventListener('toggle',sidebarClosed);

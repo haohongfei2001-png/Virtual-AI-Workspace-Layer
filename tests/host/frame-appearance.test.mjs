@@ -39,3 +39,27 @@ test('clear never overwrites intervening changes, including equal value with ext
 test('reapply after external changes restores the new external baseline, invalid apply mutates nothing',()=>{
  const f=fixture(),owner=createFrameAppearance({document:f.document});owner.apply(dto);f.root.setAttribute('dir','rtl');owner.apply({...dto,theme:'dark'});assert.throws(()=>owner.apply({...dto,baseFontSize:NaN}));assert.equal(f.root.getAttribute('data-vaiwl-theme'),'dark');owner.clear();assert.equal(f.root.getAttribute('dir'),'rtl');
 });
+
+// Host canvas colors are presentation metadata, not arbitrary CSS or identity.
+test('proved region resolves its neutral opaque canvas through transparent ancestors',()=>{
+ const f=fixture(),parent={ownerDocument:f.document,isConnected:true,parentElement:f.document.documentElement},region={ownerDocument:f.document,isConnected:true,parentElement:parent};
+ const original=f.document.defaultView.getComputedStyle;
+ f.document.defaultView.getComputedStyle=n=>n===region?{backgroundColor:'rgba(0,0,0,0)',backgroundImage:'none',opacity:'1'}:n===parent?{backgroundColor:'rgb(246, 246, 246)',backgroundImage:'none',opacity:'1'}:original(n);
+ assert.equal(readFrameAppearance(f.document,{region}).canvas,'#f6f6f6');
+ region.ownerDocument={};assert.equal(readFrameAppearance(f.document,{region}).canvas,undefined);
+});
+test('canvas rejects images, translucent paint, chromatic colors and incompatible contrast',()=>{
+ for(const patch of [{backgroundImage:'url(private)'},{backgroundColor:'rgba(245,245,245,.5)'},{backgroundColor:'rgb(255,0,0)'},{backgroundColor:'rgb(20,20,20)'},{opacity:'.5'}]){
+  const f=fixture(),region={ownerDocument:f.document,isConnected:true,parentElement:f.root};const original=f.document.defaultView.getComputedStyle;
+  f.document.defaultView.getComputedStyle=n=>n===region?{backgroundColor:'rgb(246,246,246)',backgroundImage:'none',opacity:'1',...patch}:original(n);
+  assert.equal(readFrameAppearance(f.document,{region}).canvas,undefined);
+ }
+ for(const canvas of ['url(secret)','#ffffff;display:none','#ff0000','#111111','#e0e0e0',null])assert.throws(()=>validateFrameAppearance({...dto,canvas}));
+ assert.equal(validateFrameAppearance({...dto,theme:'dark',canvas:'#212121'}).canvas,'#212121');
+});
+test('canvas override is role-local and removed on fallback without overwriting external style',()=>{
+ const f=fixture(),owner=createFrameAppearance({document:f.document});f.root.style.setProperty('--vaiwl-canvas','#fafafa','important');
+ owner.apply({...dto,canvas:'#f6f6f6'});assert.equal(f.root.style.getPropertyValue('--vaiwl-canvas'),'#f6f6f6');
+ owner.apply(dto);assert.equal(f.root.style.getPropertyValue('--vaiwl-canvas'),'#fafafa');assert.equal(f.root.style.getPropertyPriority('--vaiwl-canvas'),'important');
+ owner.apply({...dto,canvas:'#eeeeee'});f.root.style.setProperty('--vaiwl-canvas','#ffffff');owner.clear();assert.equal(f.root.style.getPropertyValue('--vaiwl-canvas'),'#ffffff');
+});

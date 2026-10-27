@@ -80,7 +80,7 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
   sidebarSizeTimer=schedule(()=>{sidebarSizeTimer=null;
    if(closed||!grantCurrent()||Date.parse(grant?.expiresAt)<=now())return;
    const panel=navigation?.roots?.()?.sidebar?.shadow?.querySelector('section');if(!panel)return;
-   const extent=n=>{if(n.hidden)return 0;const style=doc.defaultView.getComputedStyle(n);return n.getBoundingClientRect().height+(parseFloat(style.marginTop)||0)+(parseFloat(style.marginBottom)||0);};
+   const extent=n=>{if(n.hidden)return 0;const style=doc.defaultView.getComputedStyle(n);return n.getBoundingClientRect().height+(n.classList.contains('sidebar-footer')?0:parseFloat(style.marginTop)||0)+(parseFloat(style.marginBottom)||0);};
    let height=28;
    for(const child of panel.children){
     if(child.classList.contains('themes')){if(!child.hidden)height+=Math.max(44,Math.min(560,[...child.children].reduce((n,c)=>n+extent(c),0)+7));}

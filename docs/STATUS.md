@@ -1,5 +1,21 @@
 # VAIWL实际状态：渐进积累工程已接线，真实来源逐项待准入
 
+## 正式画布与侧栏层级整合（2026-10-27，接续d2e43dd0；仍非产品交付）
+
+本批修改正式frame appearance/controller/mount、navigation/styles、frame client和home/Project paint proof，不操作或更新日常Chrome。直接对照批准`validation/final/v27-small.png`及现有真实截图：
+
+| 已确认差异 | 正式实现变化 |
+| --- | --- |
+| 自有白色浮层与原生中性背景割裂 | 每个角色沿已证区域祖先取得有界中性色，只写自有canvas；原生节点不改，卡片/菜单保留批准配色。原生容器替换后重绑外观监听，同值不写。 |
+| 主题前多一层插件标题、片段工具行占据导航 | framed sidebar主题直接承接上方原生入口；原有查找、折叠、工作集、片段移入40px底部工具栏。宿主声明式退出保留独立位置，折叠、滚动和辅助面板均不遮挡操作。 |
+| 紧凑侧栏时首页退回小welcome矩形 | 精确离线反例证明原生侧栏已裁掉的绝对定位菜单被当成中央遮挡。paint proof仅在已证XHTML block/flex/grid等overflow口取可见交集；fixed、外部containing block、inline假裁剪、根节点特殊overflow和top-layer均不借裁剪放行。遮罩仍仅welcome，不改原生控件。 |
+
+集中正式MV3通过Project→成员阅读→四格返回、同文档主题选择、裁剪滚动、首页/长聊天输入返回，以及新工具栏和辅助面板安全带；原生草稿不变、内部请求为零。已查看桌面、窄屏、阅读、返回和首页的实际正式renderer整屏图；均为匿名隔离宿主，**不是账户实机截图或最终设计验收**。相关Node回归、首页安全反例及只读独立复核通过；审查发现的inline假裁剪已加入反例并修复。
+
+审阅包 `/private/tmp/VAIWL-v27-Integrated-Layout-Review-20261027/extension`，zip SHA256 `51913883cba35e9fca0cb263f59d8c2628711925de970afe480a52fb6c080d40`。同目录review保留整屏图、MV3回执和source-closure；sourceHashes全部一致，正式/隔离包差异仅build-manifest及六项环境生成文件，verifyHost通过。它只保全本批代码，**不是邀请用户安装的最终候选**。
+
+**尚未消除的整体差异：** Project原生标题、composer及tablist在workspace上方，原生管理区仍保留独立布局。Pro C2.6要求原生输入转reading，C2.7禁止移动/复制原生输入及隐藏原生控件；批准原型overview隐藏的是模拟host，不能直接移植成生产授权。当前新增paint证明仅解决已被实际裁剪的菜单误判，不能据此扩大未知Project区域。整个v2.7仍NOT_ACCEPTED，真实Mac本批NOT_RUN，旧对象级私人恢复未证状态保留。不将剩余差异记成“仅待验收”，不请求Reload或第三次采集。原安装、数据库、草稿、备份及3份stash未改变。
+
 ## 侧栏操作连续性（2026-10-27，接续bf85ecea；非产品完成）
 
 正式MV3复现并修复了主题frame滚动到边缘后无法继续到原生Project/近期区的问题。仅真实垂直滚轮、有效文档/grant、当前可见自有frame命中且内部滚动已到边缘时，向已证明的原生scrollport转交有界增量；水平/缩放/合成输入、原生弹层、撤权均不转交，不改变原生节点、展开选择或遮罩。另修复普通折叠后VIEW刷新、持久折叠布局首次展开，以及新恢复目标尚未绘制时旧DOM回写，三条滚动位置归零路径。

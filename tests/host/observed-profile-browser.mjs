@@ -34,6 +34,14 @@ try{
    checks.nativeGutterControl=fallback()&&surface.refreshGeometry(handle,adapter.inspect())&&surface.visibility(handle).workspace&&document.elementFromPoint(245,70)===tool;tool.remove();
    tool.style.cssText='position:fixed;left:245px;top:70px;width:30px;height:24px';document.body.append(tool);
    checks.externalNativeControl=fallback()&&surface.refreshGeometry(handle,adapter.inspect())&&surface.visibility(handle).workspace&&document.elementFromPoint(250,75)===tool;tool.remove();
+   const port=document.createElement('div');port.style.cssText='position:fixed;left:0;top:52px;width:200px;height:240px;overflow:auto';document.body.append(port);
+   tool.style.cssText='position:absolute;left:240px;top:20px;width:30px;height:24px';port.append(tool);
+   checks.clippedNativeMenuDoesNotShrinkCanvas=adapter.inspect().readingRect.width===780;
+   tool.style.cssText='position:fixed;left:240px;top:70px;width:30px;height:24px';checks.fixedNativeMenuEscapeStillBlocks=fallback();
+   tool.style.position='absolute';port.style.position='static';checks.absoluteOutsideContainingBlockStillBlocks=fallback();
+   port.remove();
+   const inline=document.createElement('span');inline.style.cssText='display:inline;position:relative;overflow:hidden';document.body.append(inline);inline.append(tool);
+   checks.inlineOverflowIsNotAClip=fallback();inline.remove();
    const css=document.createElement('style');css.textContent='[data-app-shell-main-content-layout]::after{content:"";position:absolute;left:20px;top:60px;width:2px;height:2px}';document.head.append(css);checks.unknownPseudoFallsBack=fallback();css.textContent='html::after{content:"";position:fixed;left:245px;top:70px;width:30px;height:24px}';checks.htmlPseudoFallsBack=fallback();css.remove();
    root.style.clipPath='inset(0px 30px)';checks.clippedAddedAreaFallsBack=fallback();root.style.clipPath='';
    root.style.transform='translateX(0px)';checks.transformedAddedAreaFallsBack=fallback();root.style.transform='';

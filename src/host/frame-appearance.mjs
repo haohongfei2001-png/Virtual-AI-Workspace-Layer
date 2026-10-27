@@ -1,10 +1,16 @@
 import {exactHostRecord} from './contract.mjs';
 const fields=['theme','direction','fontFamily','baseFontSize'];
 const generics=['system-ui','serif','sans-serif','monospace'];
+const neutralCanvas=(value,theme)=>{
+ if(typeof value!=='string'||!/^#[0-9a-f]{6}$/.test(value))return false;
+ const channels=[1,3,5].map(i=>parseInt(value.slice(i,i+2),16));
+ return Math.max(...channels)-Math.min(...channels)<=12&&(theme==='dark'?Math.max(...channels)<=48:Math.min(...channels)>=225);
+};
 /** Presentation only: none of these page-derived values can authorize a read. */
 export function validateFrameAppearance(value){
- if(!exactHostRecord(value,fields)||Object.getPrototypeOf(value)!==Object.prototype||!['light','dark'].includes(value.theme)||!['ltr','rtl'].includes(value.direction)||!generics.includes(value.fontFamily)||!Number.isFinite(value.baseFontSize)||value.baseFontSize<12||value.baseFontSize>32)throw Error('invalid-frame-appearance');
- return Object.freeze({theme:value.theme,direction:value.direction,fontFamily:value.fontFamily,baseFontSize:value.baseFontSize});
+ const canvas=value!=null&&Object.hasOwn(value,'canvas');
+ if(!exactHostRecord(value,canvas?[...fields,'canvas']:fields)||Object.getPrototypeOf(value)!==Object.prototype||!['light','dark'].includes(value.theme)||!['ltr','rtl'].includes(value.direction)||!generics.includes(value.fontFamily)||!Number.isFinite(value.baseFontSize)||value.baseFontSize<12||value.baseFontSize>32||canvas&&!neutralCanvas(value.canvas,value.theme))throw Error('invalid-frame-appearance');
+ return Object.freeze({theme:value.theme,direction:value.direction,fontFamily:value.fontFamily,baseFontSize:value.baseFontSize,...(canvas?{canvas:value.canvas}:{})});
 }
 function rgb(value){
  if(typeof value!=='string'||value.length>128)return null;
@@ -32,7 +38,21 @@ function genericFont(value){
  }
  return 'system-ui';
 }
-export function readFrameAppearance(document){
+// Only the already-proved role's ancestor backgrounds are read. Do not sample
+// text, images, descendants or arbitrary CSS tokens. Unsupported paint retains
+// the approved palette; a fixed neutral hex cannot carry a URL or CSS rule.
+function regionCanvas(document,region,theme){
+ if(!region?.isConnected||region.ownerDocument!==document)return null;
+ for(let node=region,depth=0;node&&depth<32;node=node.parentElement,depth++){
+  const style=document.defaultView.getComputedStyle(node);
+  if(style.backgroundImage!=='none'||style.opacity!=='1')return null;
+  const color=rgb(style.backgroundColor);if(!color)return null;
+  if(color.alpha===0)continue;if(color.alpha!==1)return null;
+  const value='#'+color.channels.map(n=>Math.round(n).toString(16).padStart(2,'0')).join('');
+  return neutralCanvas(value,theme)?value:null;
+ }return null;
+}
+export function readFrameAppearance(document,{region=null}={}){
  const root=document?.documentElement,win=document?.defaultView;if(!root||typeof win?.getComputedStyle!=='function')throw Error('invalid-frame-appearance-document');
  const rootStyle=win.getComputedStyle(root),bodyStyle=document.body?win.getComputedStyle(document.body):rootStyle;
  const schemes=[rootStyle.colorScheme,bodyStyle.colorScheme].map(v=>typeof v==='string'?v.trim():null);
@@ -41,7 +61,8 @@ export function readFrameAppearance(document){
  theme??=backgroundTheme(bodyStyle.backgroundColor,rootStyle.backgroundColor);
  theme??=win.matchMedia?.('(prefers-color-scheme: dark)')?.matches?'dark':'light';
  const parsed=Number.parseFloat(bodyStyle.fontSize||rootStyle.fontSize),baseFontSize=Number.isFinite(parsed)?Math.min(32,Math.max(12,parsed)):16;
- return validateFrameAppearance({theme,direction:(bodyStyle.direction||rootStyle.direction)==='rtl'?'rtl':'ltr',fontFamily:genericFont(bodyStyle.fontFamily||rootStyle.fontFamily),baseFontSize});
+ const canvas=regionCanvas(document,region,theme);
+ return validateFrameAppearance({theme,direction:(bodyStyle.direction||rootStyle.direction)==='rtl'?'rtl':'ltr',fontFamily:genericFont(bodyStyle.fontFamily||rootStyle.fontFamily),baseFontSize,...(canvas?{canvas}:{})});
 }
 /** Own only these exact attributes/properties, restoring external values on clear. */
 export function createFrameAppearance({document}={}){
@@ -59,14 +80,19 @@ export function createFrameAppearance({document}={}){
   const appearance=validateFrameAppearance(value);
   write('attribute','data-vaiwl-theme',appearance.theme);write('attribute','dir',appearance.direction);
   write('style','color-scheme',appearance.theme);write('style','--vaiwl-font-family',appearance.fontFamily);write('style','--vaiwl-font-scale',String(appearance.baseFontSize/16));
+  if(appearance.canvas)write('style','--vaiwl-canvas',appearance.canvas);else release('style:--vaiwl-canvas');
   return appearance;
  }
- function clear(){
-  for(const {kind,key,previous,written}of owned.values())if(same(read(kind,key),written)){
+ function release(id){
+  const entry=owned.get(id);if(!entry)return;
+  const {kind,key,previous,written}=entry;
+  if(same(read(kind,key),written)){
    if(kind==='attribute'){if(previous.value===null)root.removeAttribute(key);else root.setAttribute(key,previous.value);}
    else if(previous.value==='')root.style.removeProperty(key);else root.style.setProperty(key,previous.value,previous.priority);
-  }
-  owned.clear();
+  }owned.delete(id);
+ }
+ function clear(){
+  for(const id of [...owned.keys()])release(id);
  }
  return Object.freeze({apply,clear});
 }

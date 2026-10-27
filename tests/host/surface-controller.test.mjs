@@ -202,6 +202,21 @@ test('appearance is allowlisted, sent after owned JOIN and deduplicated without 
  theme='dark';for(let i=0;i<100;i++)watcher.fn();f.tick(0);assert.equal(sent.length,4);assert(sent.slice(2).every(v=>v.data.appearance.theme==='dark'));assert.equal(f.calls.confirm.length,2);assert.equal(f.calls.show,1);
  watcher.fn();f.controller.stop();f.tick(0);watcher.fn();f.tick(0);assert.equal(sent.length,4);assert(watcher.disconnected);
 });
+test('sidebar ancestor replacement rebinds role canvas observation without remounting or scroll churn',async()=>{
+ const f=fixture(),sent=[],observers=[];let geometry,background='rgb(243,243,243)';
+ f.doc.documentElement={};const parent=()=>({ownerDocument:f.doc,isConnected:true,parentElement:f.doc.documentElement});let sidebar=parent();
+ const inspect=f.adapter.inspect;f.adapter.inspect=()=>({...inspect(),historyMaskRoots:[],protectedRegions:[],sidebarPlacement:{parent:sidebar,scrollPort:sidebar}});
+ f.surface.refreshGeometry=()=>true;
+ f.doc.defaultView.ResizeObserver=class{constructor(fn){geometry=fn;}observe(){}disconnect(){}};
+ f.doc.defaultView.MutationObserver=class{constructor(fn){this.fn=fn;this.nodes=new Set();this.disconnects=0;observers.push(this);}observe(node){this.nodes.add(node);}disconnect(){this.nodes.clear();this.disconnects++;}};
+ f.doc.defaultView.getComputedStyle=n=>({colorScheme:'light',direction:'ltr',fontFamily:'system-ui',fontSize:'16px',backgroundColor:n===sidebar?background:'rgb(255,255,255)',backgroundImage:'none',opacity:'1'});
+ for(const target of f.frames)target.frame.contentWindow.postMessage=data=>sent.push(data);
+ await f.controller.start({});await f.both();const watcher=observers.find(o=>o.nodes.has(sidebar));assert(watcher);assert.equal(sent.find(v=>v.role==='sidebar').appearance.canvas,'#f3f3f3');
+ sent.length=0;const old=sidebar;sidebar=parent();background='rgb(240,240,240)';geometry();
+ assert(watcher.nodes.has(sidebar));assert(!watcher.nodes.has(old));assert.equal(sent.length,1);assert.equal(sent[0].appearance.canvas,'#f0f0f0');assert.equal(f.calls.register,1);
+ const rebound=watcher.disconnects;for(let i=0;i<10;i++)geometry();assert.equal(watcher.disconnects,rebound);assert.equal(sent.length,1);
+ background='rgb(246,246,246)';watcher.fn();f.tick(0);assert.equal(sent.at(-1).appearance.canvas,'#f6f6f6');f.controller.stop();assert.equal(watcher.nodes.size,0);
+});
 test('appearance queued for replaced frame window or retired mount cannot reach it',async()=>{
  const f=fixture(),sent=[],observers=[];let theme='light';f.doc.documentElement={classList:{contains:()=>false}};
  f.doc.defaultView.getComputedStyle=()=>({colorScheme:theme,fontFamily:'system-ui',fontSize:'16px',direction:'ltr'});

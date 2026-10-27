@@ -98,14 +98,26 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
  // Public, allowlisted presentation only; never a source of UI authority.
  function publishAppearance(state,targetRole=null){
   if(!valid(state)||Date.parse(state.context.binding.expiresAt)<=now())return;
-  let appearance;try{appearance=readFrameAppearance(doc);}catch{return;}const key=JSON.stringify(appearance);
-  for(const target of state.frames){if(targetRole&&target.role!==targetRole||!state.grants.has(target.role)||Date.parse(state.grants.get(target.role).expiresAt)<=now()||target.frame.contentWindow!==target.window)continue;if(!targetRole&&state.appearanceKeys.get(target.role)===key)continue;
-   try{target.window.postMessage?.({type:'VAIWL_UI_APPEARANCE',role:target.role,appearance},trustedOrigin);state.appearanceKeys.set(target.role,key);}catch{/* Keep the current appearance; no network, replay or authorization change. */}
+  for(const target of state.frames){if(targetRole&&target.role!==targetRole||!state.grants.has(target.role)||Date.parse(state.grants.get(target.role).expiresAt)<=now()||target.frame.contentWindow!==target.window)continue;
+   try{const region=target.role==='workspace'?state.inspection.reading:state.inspection.sidebarPlacement?.parent??state.inspection.historySource;
+    const appearance=readFrameAppearance(doc,{region}),key=JSON.stringify(appearance);if(!targetRole&&state.appearanceKeys.get(target.role)===key)continue;
+    surface.setAppearance?.(state.handle,target.role,appearance);
+    target.window.postMessage?.({type:'VAIWL_UI_APPEARANCE',role:target.role,appearance},trustedOrigin);state.appearanceKeys.set(target.role,key);
+   }catch{/* Keep the current appearance; no network, replay or authorization change. */}
   }
+ }
+ function syncAppearanceRoots(state){
+  if(!state.appearanceObserver)return;
+  const nodes=new Set([doc.documentElement,doc.body].filter(Boolean));
+  for(const root of [state.inspection.reading,state.inspection.sidebarPlacement?.parent??state.inspection.historySource])for(let node=root,depth=0;node&&depth<32;node=node.parentElement,depth++)nodes.add(node);
+  if(state.appearanceRoots?.size===nodes.size&&[...nodes].every(node=>state.appearanceRoots.has(node)))return;
+  state.appearanceObserver.disconnect();state.appearanceRoots=nodes;
+  for(const node of nodes)state.appearanceObserver.observe(node,{attributes:true,attributeFilter:['class','style','dir']});
+  publishAppearance(state);
  }
  function watchAppearance(state){
   state.appearanceChanged=()=>{if(current!==state||state.dormant||state.appearanceTimer!==null)return;state.appearanceTimer=schedule(()=>{state.appearanceTimer=null;if(current===state)publishAppearance(state);},0);};
-  if(win.MutationObserver&&doc.documentElement){state.appearanceObserver=new win.MutationObserver(state.appearanceChanged);for(const node of [doc.documentElement,doc.body])if(node)state.appearanceObserver.observe(node,{attributes:true,attributeFilter:['class','style','dir']});}
+  if(win.MutationObserver&&doc.documentElement){state.appearanceObserver=new win.MutationObserver(state.appearanceChanged);syncAppearanceRoots(state);}
   state.media=win.matchMedia?.('(prefers-color-scheme: dark)');state.media?.addEventListener?.('change',state.appearanceChanged);win.addEventListener('resize',state.appearanceChanged);
  }
  function refreshGeometry(state,inspection=null){
@@ -130,7 +142,7 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
   // masks off; geometry callbacks must not hide its still-live target again.
   if(state.nativeDispatch)return true;
   if(!refreshGeometry(state,inspection))return false;
-  state.inspection=inspection;recoverSidebar(state,inspection);
+  state.inspection=inspection;syncAppearanceRoots(state);recoverSidebar(state,inspection);
   const resume=state.geometryPaused||state.mode==='suspended';state.geometryPaused=false;
   if(resume&&authorized(state)){
    if(state.desiredMode==='workspace'&&!hasProtectedFocus(state))showWorkspace();else{state.mode='reading';ensureReturn(state);}
@@ -456,7 +468,7 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
    if(!binding||binding.browserDocumentId!==previous.browserDocumentId||binding.origin!==previous.origin||binding.producerToken===previous.producerToken||!tokenOK(binding.producerToken)||!tokenOK(binding.documentToken)||!(Date.parse(binding.expiresAt)>now()))throw Error('fresh-binding-required');
    const inspection=adapter.inspect();if(!inspection?.ok||inspection.navigationSlot!==state.inspection.navigationSlot||!inspection.navigationSlot?.isConnected)throw Error('invalid-return-slot');
    const handle=surface.rebind(state.handle,context,inspection);
-   state.handle=handle;state.context=context;state.inspection=inspection;state.renewalCeiling=null;
+   state.handle=handle;state.context=context;state.inspection=inspection;syncAppearanceRoots(state);state.renewalCeiling=null;
    const ack=await withRequestDeadline(()=>bridge.registerMount({handle}),{now:elapsedNow,schedule,cancel});
    if(!intact()||ack?.ok!==true||surface.isRebindCurrent(state.handle,adapter.inspect())!==true)throw Error('mount-registration-denied');
    state.dormant=false;state.resuming=false;state.registered=true;state.mode='waiting';state.resumeMode=mode;state.surfaceKey=null;state.idleAcks.clear();removeReturn(state);

@@ -35,13 +35,33 @@ const insideShellClip=(clip,r)=>{const right=clip.x+clip.width,bottom=clip.y+cli
 // native composer. No content values are read and no native root is enlarged.
 // Return null on incomplete/unsupported paint, never a partially cleared area.
 function workspacePaint({document,hitRoot,reading,chain,main,composer,readingRect,wideRect,safeReturn=null,provenClipNodes=new Set(),wideClear=true,walkRoot=hitRoot,isOwnedSurface=()=>false,structuralAllowed=node=>plain(node)&&(node===main||!node.hasAttribute('role'))}){
-  const win=document.defaultView,style=node=>win.getComputedStyle(node);
+ const win=document.defaultView,styles=new WeakMap(),style=node=>{let value=styles.get(node);if(!value){value=win.getComputedStyle(node);styles.set(node,value);}return value;};
+ // Compare visible native paint, not an off-screen descendant's unclipped
+ // layout box. A fixed descendant or an absolute containing block outside the
+ // port can escape overflow: those branches deliberately retain their full box.
+ const visiblePaint=(node,r)=>{
+  let out={...r};const path=[];let element=node.nodeType===1?node:node.parentElement;
+  for(let n=element,depth=0;n&&depth<64;n=n.parentElement,depth++){
+   if(n!==element){
+    const s=style(n),axes=['auto','scroll','hidden','clip'];
+    const clipsX=axes.includes(s.overflowX),clipsY=axes.includes(s.overflowY);
+    if((clipsX||clipsY)&&n!==document.body&&n!==document.documentElement&&n.namespaceURI==='http://www.w3.org/1999/xhtml'&&['block','flow-root','flex','grid','inline-block'].includes(s.display)&&s.overflowClipMargin==='0px'&&
+      path.every(child=>{const position=style(child).position;return !child.matches(':popover-open,:modal')&&position!=='fixed'&&(position!=='absolute'||child.offsetParent&&(child.offsetParent===n||n.contains(child.offsetParent)));})){
+     const b=box(n),left=b.x+n.clientLeft,top=b.y+n.clientTop;
+     const right=clipsX?Math.min(out.x+out.width,left+n.clientWidth):out.x+out.width,bottom=clipsY?Math.min(out.y+out.height,top+n.clientHeight):out.y+out.height;
+     out={x:clipsX?Math.max(out.x,left):out.x,y:clipsY?Math.max(out.y,top):out.y,width:0,height:0};out.width=Math.max(0,right-out.x);out.height=Math.max(0,bottom-out.y);
+    }
+   }
+   path.push(n);
+  }return out;
+ };
  const ancestors=new Set(chain),walker=document.createTreeWalker(walkRoot,5,{acceptNode:node=>node.nodeType===1&&isOwnedSurface(node)?2:1});let node=walkRoot,count=0,rectangles=0;
   do{
    if(++count>2048)return null;
    const inPanel=node===reading||reading.contains(node),structural=ancestors.has(node);
    const clear=r=>{
     if(!finite(r))return false;
+    if(!inPanel&&!structural)r=visiblePaint(node,r);
     if(!inPanel&&!structural&&overlap(r,wideRect))wideClear=false;
     return (!safeReturn||!overlap(r,safeReturn))&&(inPanel||structural||!overlap(r,readingRect));
    };

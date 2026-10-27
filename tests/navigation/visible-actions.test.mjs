@@ -10,8 +10,8 @@ const visibleText=node=>[node.textContent,...node.children.map(visibleText)].joi
 for(const label of ['已保存片段','备份与导入','本地数据恢复','关闭设置'])test('workspace settings '+label+' has actual text, not only accessible name',t=>{
  const f=setup(t,'workspace',{onSnippetsRequest(){},onBackupRequest(){},onRecoveryRequest(){}});f.button('工作空间设置').click();const action=f.button(label);assert(action);assert.equal(visibleText(action),label);
 });
-test('sidebar saved snippets entry has actual text and one callback; stopped entry cannot dispatch',t=>{
- let calls=0;const f=setup(t,'sidebar',{onSnippetsRequest:()=>calls++}),action=f.button('已保存片段');assert(action);assert.equal(visibleText(action),'已保存片段');action.click();assert.equal(calls,1);f.nav.stop();action.click();assert.equal(calls,1);
+test('sidebar snippets has a visible approved icon and tooltip; stopped entry cannot dispatch',t=>{
+ let calls=0;const f=setup(t,'sidebar',{onSnippetsRequest:()=>calls++}),action=f.button('已保存片段');assert(action);assert.match(action.innerHTML,/<svg[^>]*aria-hidden="true"/);assert.equal(action.getAttribute('title'),'已保存片段');assert.equal(action.className,'square');assert.equal(action.parentNode.className,'toolbar sidebar-footer');action.click();assert.equal(calls,1);f.nav.stop();action.click();assert.equal(calls,1);
 });
 for(const [label,callback] of [['已保存片段','onSnippetsRequest'],['备份与导入','onBackupRequest'],['本地数据恢复','onRecoveryRequest']])test('settings '+label+' dispatches once and stale scope/closed controls are inert',t=>{
  let calls=0;const f=setup(t,'workspace',{[callback]:()=>calls++});f.button('工作空间设置').click();const original=f.button(label);original.click();assert.equal(calls,1);f.button('关闭设置').click();original.click();assert.equal(calls,1);
