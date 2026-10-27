@@ -7,7 +7,7 @@ test('dormant formal and mutant use identical instrumented frame prerequisite be
  const branch=source.slice(source.indexOf(' }else if(dormantRecovery){'),source.indexOf(' }else{\n // One user-triggered refresh'));
  assert(branch.includes('createWorkerPreparedDormancyProbe({framesIdle,workerIdle:'));
  assert(branch.indexOf('const framesIdle=')<branch.indexOf('const preparedProbe='));
- assert(branch.includes('framePendingWorkIsIdle'));assert(branch.includes('items[0]===sampledFrames[i]&&!items[0].isDetached()'));
+ assert(branch.includes('framePendingWorkIsIdle'));assert(branch.includes('sameFrameOwners(sampledFrames,pair)'));
  assert(!branch.includes('dormantMutant'));assert(branch.includes('assert.deepEqual(report.idlePrecondition,{prepared:true,entered:true})'));
  for(const forbidden of ['clearTimeout(','setTimeout(','flush','forceIdle'])assert(!branch.replace('Never flush them.','').includes(forbidden));
  assert(source.includes('const poll=fn=>j2Poll(fn,15000)'));

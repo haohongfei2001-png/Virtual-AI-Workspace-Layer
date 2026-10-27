@@ -2,6 +2,8 @@
 
 ## 2026-10-27 双 Pro 最终裁决：正式文档流 Host（方案 B）
 
+2026-10-28 续原 C2/C4/F3：恢复 runner 不再要求不受支持侧栏也必须挂载；采样实际角色并保持全部在途工作、身份与最终 CHECK/RELEASE 保护。严格 C2 两条恢复及安全变异以同源码隔离回归闭合；不以历史双 frame 前置超时归因于产品。真实启动及完整 v2.7 验收未因此关闭，详见 STATUS，日常安装未更新。
+
 用户正式采纳 [产品 F-01—F-08](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16#issuecomment-6437805652) 和 [Host 方案 B](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16#issuecomment-6437829589)。沿原 C1—C5、唯一分支/PR16 实施；不是新计划。
 
 本节替代下文历史 manual/fixed 私人双 surface、100vh 占位和滚走输入的承载合同：双 extension-origin iframe、正式 renderer、Worker、授权和原库保留；工作区/侧栏成为已证原生文档流布局成员。仅空的声明式退出开关可使用 Popover，不承载私人内容。原生节点不复制、移动或重绑；基线身份和增强态几何分别验证，关闭/失效/撤权/停用后条件 CSS 失效恢复。输入首手势完成前只保留几何，私人内容遇真实弹层立即让位；已关闭的退出开关不能被遗留手势重新激活。

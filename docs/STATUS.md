@@ -1,5 +1,11 @@
 # VAIWL实际状态：渐进积累工程已接线，真实来源逐项待准入
 
+## 2026-10-28 方案 B 恢复检查移除过期双角色前提（原安装不变）
+
+50a6a910 的原 CI 已通过正式文档流连续旅程和迟到503保护；另两条严格 C2 恢复检查却等待不存在的 sidebar，未进入正式关闭过程。现检查实际挂载角色：workspace 必须唯一，sidebar 可选；角色增删、重复、替换、脱离均使样本失效。所有实际 frame 的在途保存仍须排空，原 worker CHECK/RELEASE、授权和截止时间未改变。既有隔离 runner 的所有分支复用拒绝外网代理，不接日常 Profile。
+
+同源码隔离 Worker 停止→拒绝旧授权→新原生夹具证据恢复，以及租约过期→新 HELLO/REFRESH→新 VIEW 两条链通过；对应既有变异分别在真正的新证据恢复/新握手位置失败，未再因缺少 sidebar 提前超时。定向 Node 回归及独立只读复核通过。本轮是修复恢复检查的错误前提，未声称修好了尚未定位的真实启动问题，也不把严格 C2 夹具当作 Browser-Local 真实账户证据。报告保存在 `/private/tmp/vaiwl-flow-{dormant-recovery,dormant-mutant,transport-final,transport-mutant}.json`。原安装、旧库、草稿与 stash 不变；真实 Mac 本轮 NOT_RUN，产品仍 NOT_ACCEPTED。
+
 ## 2026-10-28 原生 NAV 主题定位补齐成员加载（未更新原安装）
 
 `revealNativeProject` 的方案 B 分支在委托原生 NAV 定位后提前返回，跳过已有 owner 的缺失成员预览请求，并将未实际完成的焦点转移误记为成功。两个离线反例在修复前失败；现保留原生 NAV 唯一滚动所有者，共用既有成员分页读取及回复保护，并核验实际焦点。回归同时确认 owner 回复中的成员实际绘制，不以发出请求代替完成。

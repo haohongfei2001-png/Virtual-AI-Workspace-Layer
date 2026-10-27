@@ -2,12 +2,23 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {fixture} from './free-frame-client.test.mjs';
-import {instrumentFramePendingWork,framePendingWorkIsIdle} from './frame-pending-work-probe.mjs';
+import {instrumentFramePendingWork,framePendingWorkIsIdle,mountedFrameOwners,sameFrameOwners} from './frame-pending-work-probe.mjs';
 const base=new URL('../../src/host/free-frame-client.mjs',import.meta.url),raw=await readFile(base,'utf8');
 const source=instrumentFramePendingWork(raw).replace(/from '(\.\.?\/[^']+)'/g,(_,path)=>`from '${new URL(path,base).href}'`);
 const {createFreeFrameClient}=await import('data:text/javascript;base64,'+Buffer.from(source).toString('base64'));
 const drain=async()=>{for(let i=0;i<60;i++)await Promise.resolve();};
 const layout={segment:0,oldOpen:[],sidebarOpen:[],capacities:[],scroll:312,sidebarScroll:22,sidebarVisible:true};
+test('dormancy samples actual roles without requiring an unsupported sidebar',()=>{
+ const origin='chrome-extension://fixture',make=(role,detached=false)=>({url:()=>`${origin}/${role}.html`,isDetached:()=>detached});
+ const workspace=make('workspace'),sidebar=make('sidebar'),first=mountedFrameOwners([workspace],origin);
+ assert.deepEqual(first,[{role:'workspace',frame:workspace}]);
+ assert(sameFrameOwners(first,mountedFrameOwners([workspace],origin)));
+ const both=mountedFrameOwners([sidebar,workspace],origin);assert.equal(both.length,2);
+ assert.equal(sameFrameOwners(first,both),false,'new sidebar work must be sampled');
+ assert.equal(sameFrameOwners(both,first),false,'role retirement invalidates the sample');
+ assert.equal(sameFrameOwners(first,mountedFrameOwners([make('workspace')],origin)),false);
+ for(const frames of [[],[sidebar],[workspace,make('workspace')],[workspace,sidebar,make('sidebar')],[make('workspace',true)],[workspace,make('sidebar',true)]])assert.equal(mountedFrameOwners(frames,origin),null);
+});
 test('actual frame timer, queue and in-flight save remain non-idle without mutating any work',async t=>{
  const f=fixture('workspace',createFreeFrameClient);t.after(()=>{f.client.stop();delete globalThis.__vaiwlFixtureFramePendingWork;});await f.client.start();await drain();
  const read=()=>globalThis.__vaiwlFixtureFramePendingWork();assert(framePendingWorkIsIdle(read(),'workspace'));
