@@ -1,5 +1,16 @@
 # VAIWL实际状态：渐进积累工程已接线，真实来源逐项待准入
 
+## 首页展示空间与原生输入连续性（2026-10-27，接续5465b05d；非最终交付）
+
+正式Host已将首页欢迎节点的遮罩范围和workspace展示范围分开：`inspectNativeHomeSurface()`在同一受支持main内证明header下方、原生composer上方的可用区域，`chatgpt-adapter`的inspect/return/区域身份比较一致消费它，controller观察相应布局祖先。仍只遮罩原welcome，不移动composer、不隐藏原生控件。扩大区域必须经过包含body外部兄弟分支、HTML伪元素、裁剪和布局效果的有界paint检查；失败只退回原welcome矩形。只有mount私有Map中的真实自有节点可跳过，伪造data属性无效。
+
+既有home结构回放验证窄welcome不再限定整个工作区，并核对原生浮动按钮、伪元素、裁剪、变换、祖先替换的安全退让。Project的既有输入测试还错误要求同时隐藏sidebar，现改为workspace让位且sidebar保持；定向阅读/输入/唯一返回旅程通过。最终正式隔离MV3同包完成Project→成员阅读→返回、主题展开与原生展开选择、裁剪滚动、首页及长聊天输入/返回，内部接口请求为零。105项相关controller/geometry检查通过；独立只读审查通过。另一次包含旧`observed-profile.test.mjs`的Node命令失败于其空DOM mock未建立history proof（该文件/生产helper本批未改），没有将该命令记为全通过；未扩跑无关矩阵。
+
+已实际查看整屏图片。**批准v2.7整体产品仍未完成**：Project标题/输入/tablist位于workspace上方的原生布局仍保留；原型overview隐藏的是模拟host，而当前真实证据没有证明移动/隐藏这些真实原生区域仍安全。首页本批只放开已证空域，无法保证未知宿主绘制也可扩大。原生管理区与主题区共存仍有视觉差距，不以正式renderer内部卡片正确冒充完整界面。
+
+保存本批审阅构建 `/private/tmp/VAIWL-v27-Home-Space-Review-20261027/extension`，zip SHA256 `aeae0b10b809c46788d7b73cc38913efca1a161db56524c63990f6040d90dc60`。review中保存桌面/阅读/返回/首页/窄屏隔离图片、正式MV3回执与source-closure；全部sourceHashes匹配，正式包与隔离包仅六项环境生成文件不同，verifyHost通过。它不是最终产品候选，日常Chrome、安装目录、旧库、草稿及3份stash均未改变；真实Mac本批NOT_RUN，不要求Reload或再次采集。
+
+
 ## 正式布局与滚动连续性（2026-10-27，接续46dc7a22；产品仍未完成）
 
 本批直接修改正式navigation/styles、mount-surface、native-sidebar-composition、surface-controller及free-frame-client，未操作或更新日常Chrome。工作空间将当前项、自然高度卡片、未知归属和候选入口放进同一内容列，时间导航使用独立窄列，保留批准的356px自然卡宽而不按少量数据填满卡片。分区侧栏在原生滚动裁剪时保持完整iframe坐标和内部现场，不再把裁剪后的短区域当新视口；稀疏自有内容可收缩至128px，不改变纯原生聊天列表的240px安全门槛。键盘焦点只揭示已授权且实际聚焦的自有控件，滚动范围限已证原生scrollport，不修改原生Project展开选择或控件。

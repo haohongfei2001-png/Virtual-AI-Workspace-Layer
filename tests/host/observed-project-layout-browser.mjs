@@ -32,6 +32,7 @@ try{
  }
  for(const mode of (baseline?['journey']:['journey','centered-panel','centered-gutter-control','shell-border-box','shell-border-box-corner','shell-border-box-percent','shell-zero-radius','shell-asymmetric','shell-layout-ancestor','shell-cut','shell-percent','shell-polygon','hidden-old-root','second-root','extra-native-widget','tiny-gap-control','composer-overflow','title-overflow','tab-overlap','pseudo-overflow','title-shadow','tab-outline','composer-shadow-changed','header-opaque','header-control','outer-clip','clip-path','css-mask','ancestor-transform','foreign-list-link','extra-panel','editable-panel','file-panel','replace-tabs','replace-title','replace-composer','replace-scroll','route-change','scroll','resize','keyboard','controller-journey','controller-scroll','controller-route','controller-replace','controller-resize','controller-popup','controller-expiry'])){
   if(process.argv.includes('--width-only')&&!mode.startsWith('centered-'))continue;
+  if(process.argv.includes('--continuity-only')&&!['journey','hidden-old-root','controller-journey'].includes(mode))continue;
   const caseStarted=performance.now(),page=await browser.newPage({viewport:{width:mode.startsWith('centered-')?1400:785,height:1193}});
   await page.route('**/*',r=>r.request().url()===url?r.fulfill({contentType:'text/html',body:observedProjectHTML(project,cid)}):r.abort());
   await page.goto(url);await page.addScriptTag({content:outputFiles[0].text});
@@ -105,7 +106,7 @@ try{
    if(mode==='resize'){globalThis.projectTest={adapter,surface,handle,inspection};return {mode,checks,forbiddenReads,passed:Object.values(checks).every(Boolean)};}
    if(['journey','hidden-old-root'].includes(mode)){
     surface.showReading(handle);checks.readingRestored=getComputedStyle(panel).visibility==='visible'&&surface.visibility(handle).sidebar;
-    surface.showWorkspace(handle);draft.dispatchEvent(new Event('focusin',{bubbles:true}));checks.inputSurrenders=!surface.visibility(handle).workspace&&!surface.visibility(handle).sidebar;
+    surface.showWorkspace(handle);draft.dispatchEvent(new Event('focusin',{bubbles:true}));checks.inputKeepsSidebar=!surface.visibility(handle).workspace&&surface.visibility(handle).sidebar;
     surface.showWorkspace(handle);const dialog=document.createElement('dialog');document.body.append(dialog);dialog.showModal();checks.nativeModalWins=getComputedStyle(panel).visibility==='visible'&&getComputedStyle(document.querySelector('[data-va-owned][id$="_workspace"]')).visibility==='hidden';dialog.close();dialog.remove();
    }
    surface.dispose(handle);adapter.stop();checks.draftPreserved=draft.value==='fixture draft';checks.clean=!document.querySelector('[data-va-owned]')&&!panel.hasAttribute('data-va-mask-workspace');
@@ -125,7 +126,7 @@ try{
    if(mode==='controller-journey'){
     await page.getByRole('button',{name:'返回原生阅读',exact:true}).click();await back.waitFor({timeout:10000});assert.equal(await back.count(),1);await back.click();
     await page.waitForFunction(()=>document.querySelectorAll('[data-va-owned]:popover-open').length===2);
-    await page.locator('#draft').focus();await page.waitForFunction(()=>document.querySelectorAll('[data-va-owned]:popover-open').length===0);await back.waitFor({timeout:10000});assert.equal(await back.count(),1);await back.click();
+    await page.locator('#draft').focus();await page.waitForFunction(()=>document.querySelectorAll('[data-va-owned]:popover-open').length===1);await back.waitFor({timeout:10000});assert.equal(await back.count(),1);await back.click();
     await page.waitForFunction(()=>document.querySelectorAll('[data-va-owned]:popover-open').length===2);result.uniqueReturnAndNativeInput=true;
    }
    if(mode==='controller-scroll')await page.evaluate(()=>{document.querySelector('#project-panel').style.minHeight='2000px';document.querySelector('#project-scroll').scrollTop=300;});

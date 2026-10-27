@@ -8,7 +8,45 @@ const require=createRequire(new URL('../../extension/tooling/package.json',impor
 const {outputFiles}=await require('esbuild').build({stdin:{contents:"export {createChatGPTAdapter} from './src/host/chatgpt-adapter.mjs';export {CHATGPT_OBSERVED_PROFILE,waitForNativeLayout} from './src/host/chatgpt-observed-profile.mjs';export {createMountSurface} from './src/navigation/mount-surface.mjs';export {nativeHistoryPresentation,sidebarPresentationFits} from './src/host/native-history-list.mjs';export {createURLPolicy} from './src/host/url-policy.mjs';",resolveDir:process.cwd()},bundle:true,write:false,format:'iife',globalName:'observedModule'});
 const browser=await chromium.launch({headless:true,proxy:{server:'http://127.0.0.1:9',bypass:'127.0.0.1,localhost'}});
 try{
- if(process.argv.includes('--sidebar-composition-only')){
+ if(process.argv.includes('--home-space-only')){
+  const page=await browser.newPage({viewport:{width:1000,height:700}}),url='https://chatgpt.com/';
+  await page.route('**/*',r=>r.request().url()===url?r.fulfill({contentType:'text/html',body:observedHomeHTML('33333333-3333-4333-8333-333333333333')}):r.abort());
+  await page.goto(url);await page.addScriptTag({content:outputFiles[0].text});
+  const checks=await page.evaluate(async()=>{
+   const {createChatGPTAdapter,CHATGPT_OBSERVED_PROFILE:profile,createMountSurface}=observedModule;
+   const reading=document.querySelector('.home-composer-anchor'),composer=document.querySelector('form'),root=document.querySelector('[data-app-shell-main-content-layout]');
+   // Geometry-only counterexample to a small/centered welcome node. This is
+   // NOT a new captured native tree; the approved existing selectors are reused.
+   reading.style.cssText='position:absolute;left:100px;top:110px;width:400px;height:120px';
+   let surface;const adapter=createChatGPTAdapter({document,profile,isOwnedMask:n=>surface?.isMasked(n)===true,isOwnedSurface:n=>surface?.isOwnedSurface(n)===true});
+   const binding={documentToken:'fixture',producerToken:'fixture',browserDocumentId:'home',routeEpoch:1,origin:location.origin,expiresAt:new Date(Date.now()+20000).toISOString()};
+   await adapter.start({binding,emit:async p=>({state:'accepted',localSeq:p.localSeq,receiptId:'fixture'})});
+   const state=adapter.inspect(),r=state.readingRect;
+   const checks={expandedAboveNativeComposer:state.ok&&r.x===220&&r.y===52&&r.width===780&&r.height===250};
+   surface=createMountSurface({document,createFrameURL:({role})=>'chrome-extension://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/'+role+'.html'});
+   const handle=await surface.mount({binding},state);surface.showWorkspace(handle);
+   const mounted=document.querySelector('[data-va-owned][id$="_workspace"]');
+   checks.actualCanvas=mounted.getBoundingClientRect().width===780&&mounted.getBoundingClientRect().height===250;
+   checks.originalMaskOnly=surface.isMasked(reading)&&!surface.isMasked(root)&&!surface.isMasked(reading.parentElement)&&!surface.isMasked(composer);
+   checks.renewalAndReturn=adapter.inspect().readingRect.width===780&&adapter.isSameNativeRegions(state)&&adapter.isReturnSlotCurrent(state);
+   const fallback=()=>{const next=adapter.inspect();return next.ok&&next.readingRect.x===320&&next.readingRect.y===110&&next.readingRect.width===400&&next.readingRect.height===120;};
+   const tool=document.createElement('button');tool.style.cssText='position:absolute;left:20px;top:60px;width:30px;height:24px';root.append(tool);
+   checks.nativeGutterControl=fallback()&&surface.refreshGeometry(handle,adapter.inspect())&&surface.visibility(handle).workspace&&document.elementFromPoint(245,70)===tool;tool.remove();
+   tool.style.cssText='position:fixed;left:245px;top:70px;width:30px;height:24px';document.body.append(tool);
+   checks.externalNativeControl=fallback()&&surface.refreshGeometry(handle,adapter.inspect())&&surface.visibility(handle).workspace&&document.elementFromPoint(250,75)===tool;tool.remove();
+   const css=document.createElement('style');css.textContent='[data-app-shell-main-content-layout]::after{content:"";position:absolute;left:20px;top:60px;width:2px;height:2px}';document.head.append(css);checks.unknownPseudoFallsBack=fallback();css.textContent='html::after{content:"";position:fixed;left:245px;top:70px;width:30px;height:24px}';checks.htmlPseudoFallsBack=fallback();css.remove();
+   root.style.clipPath='inset(0px 30px)';checks.clippedAddedAreaFallsBack=fallback();root.style.clipPath='';
+   root.style.transform='translateX(0px)';checks.transformedAddedAreaFallsBack=fallback();root.style.transform='';
+   const opaque=document.createElement('native-widget');root.append(opaque);checks.opaqueAddedAreaFallsBack=fallback();opaque.remove();
+   checks.freshProofRecovers=adapter.inspect().readingRect.width===780&&surface.refreshGeometry(handle,adapter.inspect())&&surface.visibility(handle).workspace;
+   surface.showReading(handle);checks.readingRestored=!surface.isMasked(reading)&&composer.querySelector('textarea').value==='fixture draft';surface.showWorkspace(handle);
+   const prior=adapter.inspect(),parent=reading.parentElement,wrapper=document.createElement('div');parent.append(wrapper);wrapper.append(reading,composer);
+   checks.ancestorReplacementNotBorrowed=!adapter.isSameNativeRegions(prior)&&!adapter.isReturnSlotCurrent(prior);
+   const current=adapter.inspect();checks.newProofIdentity=current.ok&&current.regionEpoch!==prior.regionEpoch&&current.homeLayoutNodes.includes(wrapper);
+   surface.dispose(handle);await adapter.stop();return checks;
+  });
+  assert(Object.values(checks).every(Boolean),JSON.stringify(checks));console.log(JSON.stringify({status:'PASS_WEB_MECHANISM_ONLY',checks}));await page.close();
+ }else if(process.argv.includes('--sidebar-composition-only')){
   const page=await browser.newPage({viewport:{width:1100,height:900}}),url='https://chatgpt.com/';
   await page.route('**/*',r=>r.request().url()===url?r.fulfill({contentType:'text/html',body:observedHomeHTML('33333333-3333-4333-8333-333333333333')}):r.abort());
   await page.goto(url);await page.evaluate(materializePartitionedSidebar,projectDetails.sidebarStructure.rows);await page.addScriptTag({content:outputFiles[0].text});
@@ -142,7 +180,7 @@ try{
  });assert.deepEqual(readiness,{hiddenWaited:true,ready:true});
  const checks=await page.evaluate(async focusableViewport=>{
   const {createChatGPTAdapter,CHATGPT_OBSERVED_PROFILE:profile,createMountSurface}=observedModule;let surface;const proposals=[];
-  const adapter=createChatGPTAdapter({document,profile,isOwnedMask:n=>surface?.isMasked(n)===true});
+  const adapter=createChatGPTAdapter({document,profile,isOwnedMask:n=>surface?.isMasked(n)===true,isOwnedSurface:n=>surface?.isOwnedSurface(n)===true});
   const binding={documentToken:'fixture',producerToken:'fixture',browserDocumentId:'parent',routeEpoch:1,origin:location.origin,expiresAt:new Date(Date.now()+20000).toISOString()};
   await adapter.start({binding,emit:async p=>{proposals.push(p);return {state:'accepted',localSeq:p.localSeq,receiptId:'fixture'};}});for(let i=0;i<40;i++)await Promise.resolve();
   const viewport=document.querySelector('[data-app-action-timeline-scroll]');const marker=document.createElement('div');marker.id='layout-marker';viewport.insertBefore(marker,viewport.lastElementChild);const role=viewport.getAttribute('role'),tabindex=viewport.getAttribute('tabindex');
@@ -194,7 +232,7 @@ try{
  await home.goto('https://chatgpt.com/');await home.addScriptTag({content:outputFiles[0].text});
  const homeChecks=await home.evaluate(async()=>{
   const {createChatGPTAdapter,CHATGPT_OBSERVED_PROFILE:profile,createMountSurface}=observedModule;
-  let surface;const adapter=createChatGPTAdapter({document,profile,isOwnedMask:n=>surface?.isMasked(n)===true});
+  let surface;const adapter=createChatGPTAdapter({document,profile,isOwnedMask:n=>surface?.isMasked(n)===true,isOwnedSurface:n=>surface?.isOwnedSurface(n)===true});
   const binding={documentToken:'fixture',producerToken:'fixture',browserDocumentId:'home',routeEpoch:1,origin:location.origin,expiresAt:new Date(Date.now()+20000).toISOString()};
   await adapter.start({binding,emit:async p=>({state:'accepted',localSeq:p.localSeq,receiptId:'fixture'})});
   const inspection=adapter.inspect();if(!inspection.ok)throw Error(inspection.reason);

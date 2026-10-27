@@ -33,7 +33,7 @@ try{
   page=await context.newPage();await page.setViewportSize({width:1400,height:900});
   // The real 2026-10-27 Project screenshot has a centered member column.
   // Replay only this geometric fact, with the existing formal renderer/data.
-  await page.addInitScript(()=>document.addEventListener('DOMContentLoaded',()=>{const content=document.querySelector('#project-content');if(content)content.style.cssText='max-width:660px;margin-inline:auto';},{once:true}));
+  await page.addInitScript(()=>document.addEventListener('DOMContentLoaded',()=>{const content=document.querySelector('#project-content');if(content)content.style.cssText='max-width:660px;margin-inline:auto';const welcome=document.querySelector('.home-composer-anchor');if(welcome)welcome.style.cssText='position:absolute;left:100px;top:110px;width:400px;height:120px';},{once:true}));
   await page.addInitScript({content:'if(window===window.top&&location.hostname==="127.0.0.1")document.addEventListener("DOMContentLoaded",()=>{('+materializePartitionedSidebar.toString()+')('+JSON.stringify(partitionDetails.sidebarStructure.rows)+');},{once:true});'});
   report.controlEvents=[];await page.exposeFunction('__recordControl',v=>{if(report.controlEvents.length<120)report.controlEvents.push(v);});
   await page.addInitScript(()=>addEventListener('message',e=>{const d=e.data;if(e.origin.startsWith('chrome-extension://')&&d&&['VAIWL_UI_SUSPEND','VAIWL_UI_REVEAL_FOCUS','VAIWL_UI_BOOT'].includes(d.type))window.__recordControl({type:d.type,role:d.role,reason:d.reason,stage:d.stage});}));
@@ -190,12 +190,18 @@ try{
    await page.goto(origin+path);
    await page.waitForFunction(()=>!!document.querySelector('[data-va-sidebar-slot]')&&document.querySelector('[id$="_sidebar"]')?.matches(':popover-open'),null,{timeout:15000});
    await sidebar.getByRole('button',{name:'查找已知项目与聊天',exact:true}).waitFor();
+   if(scene==='home'){
+    await page.waitForFunction(()=>document.querySelector('[id$="_workspace"]')?.matches(':popover-open'));
+    assert(await page.evaluate(()=>{const surface=document.querySelector('[id$="_workspace"]').getBoundingClientRect(),welcome=document.querySelector('.home-composer-anchor').getBoundingClientRect(),composer=document.querySelector('form').getBoundingClientRect();return surface.width>welcome.width&&surface.top<welcome.top&&surface.bottom<=composer.top;}));
+    report.checks.homeCanvasIndependentOfWelcomeSize=true;await capture('partition-home-workspace');
+   }
    await page.locator('textarea').focus();
    await page.waitForFunction(()=>document.querySelector('[id$="_sidebar"]')?.matches(':popover-open')&&!document.querySelector('[id$="_workspace"]')?.matches(':popover-open'));
    await capture('partition-'+scene+'-reading');
    await page.getByRole('button',{name:'返回工作空间',exact:true}).click();
    await page.waitForFunction(()=>document.querySelector('[id$="_workspace"]')?.matches(':popover-open'));
    report.checks[scene+'InputAndReturnKeepSidebar']=true;
+   if(scene==='home')await capture('partition-home-return');
   }
 
 

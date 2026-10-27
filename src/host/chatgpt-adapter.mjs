@@ -1,6 +1,6 @@
 import {profileElement} from './native-surface-boundary.mjs';
 import {nativeSidebarComposition} from './native-sidebar-composition.mjs';
-import {inspectNativeProjectSurface} from './native-project-surface.mjs';
+import {inspectNativeProjectSurface,inspectNativeHomeSurface} from './native-project-surface.mjs';
 import {nativeReturnGapRect,isEmptyViewportMarker} from './native-return-gap.mjs';
 import {sidebarPresentationFits,nativeHistoryPresentation,historyFailureReasons} from './native-history-list.mjs';
 import {nativeReturnSlotRect} from './native-return-slot.mjs';
@@ -401,7 +401,8 @@ if(!p){
   if(header!==inspection.header||reading!==inspection.reading||composer!==inspection.composer||slot!==inspection.navigationSlot||!nativeTopologyOK(history,header,reading,composer,slot))return false;
   const viewport=nativeLayout.readingViewport?one(nativeLayout.readingViewport):null;
   if(nativeLayout.readingViewport&&(viewport!==inspection.readingViewport||!viewportTopologyOK(viewport,history,header,reading,composer)))return false;
-  const readingRect=viewport?viewportRect(viewport,header,composer):rect(reading);
+  if(!sameHomeNodes(inspection,header,reading,composer))return false;
+  const readingRect=viewport?viewportRect(viewport,header,composer):homeReadingRect(header,reading,composer);
   return !!readingRect&&!!returnGeometry(history,header,readingRect,composer,slot);
  }
  function isSameNativeRegions(inspection){
@@ -409,8 +410,15 @@ if(!p){
   if(projectLayout())return !!currentProjectSurface(inspection,false);
   const nodes=[one(nativeLayout.header),one(nativeLayout.reading),one(nativeLayout.composer),nativeLayout.readingViewport?one(nativeLayout.readingViewport):null];
   const original=[inspection.header,inspection.reading,inspection.composer,inspection.readingViewport??null];
-  return nodes.every((node,i)=>node===original[i]&&(!node||node.isConnected&&node.ownerDocument===document))&&(!nativeLayout.readingViewport||viewportTopologyOK(nodes[3],null,nodes[0],nodes[1],nodes[2]));
+  return nodes.every((node,i)=>node===original[i]&&(!node||node.isConnected&&node.ownerDocument===document))&&sameHomeNodes(inspection,nodes[0],nodes[1],nodes[2])&&(!nativeLayout.readingViewport||viewportTopologyOK(nodes[3],null,nodes[0],nodes[1],nodes[2]));
  }
+ const homeSurface=(header,reading,composer)=>homeLayout?inspectNativeHomeSurface({document,hitRoot:one(nativeLayout.returnHitRoot),header,reading,composer,isOwnedSurface}):{readingRect:rect(reading),proofNodes:[]};
+ const homeReadingRect=(header,reading,composer)=>homeSurface(header,reading,composer).readingRect;
+ const sameHomeNodes=(inspection,header,reading,composer)=>{
+  if(!homeLayout)return true;
+  const current=homeSurface(header,reading,composer).proofNodes,prior=inspection.homeLayoutNodes??[];
+  return current.length===prior.length&&current.every((node,i)=>node===prior[i]);
+ };
  const projectProofs=new WeakMap();
  const projectLayout=()=>profile.nativeProjectLayout==='panel-after-composer'&&urlPolicy.parse(document.location.href).kind==='project';
  function projectSurface(geometry=true){
@@ -454,7 +462,8 @@ if(!p){
   const readingViewport=nativeLayout.readingViewport?one(nativeLayout.readingViewport):null;
   if(nativeLayout.readingViewport&&!viewportTopologyOK(readingViewport,null,header,reading,composer))return fail('unsafe-native-reading-viewport');
   const protectedRegions=[header,composer];if(protectedRegions.some(n=>reading.contains(n)))return fail('overlapping-native-boundary');
-  const readingRect=readingViewport?viewportRect(readingViewport,header,composer):rect(reading),protectedRects=protectedRegions.map(rect);
+  const home=homeSurface(header,reading,composer);
+  const readingRect=readingViewport?viewportRect(readingViewport,header,composer):home.readingRect,protectedRects=protectedRegions.map(rect);
   const finite=r=>r&&Object.values(r).every(Number.isFinite)&&r.width>0&&r.height>0;
   if(!finite(readingRect)||protectedRects.some(r=>overlaps(r,readingRect)))return fail('unsafe-native-geometry');
   let sidebarRect=historyPresentation?.rect??null;
@@ -462,16 +471,16 @@ if(!p){
   const slotStructure=navigationSlot&&nativeTopologyOK(history,header,reading,composer,navigationSlot)&&(gapMode||!([...navigationSlot.children].some(n=>!n.hasAttribute('data-va-owned')&&!n.hasAttribute('data-vaiwl-owned'))||[...(navigationSlot.childNodes??[])].some(n=>n.nodeType===3&&n.textContent.trim())));
   returnGeometryStage=null;
   const returnSlot=slotStructure?returnGeometry(history,header,readingRect,composer,navigationSlot):null;
-  const nodes=[header,reading,composer,readingViewport];
+  const nodes=[header,reading,composer,readingViewport,...home.proofNodes];
   if(nodes.length!==priorNodes.length||nodes.some((n,i)=>n!==priorNodes[i])){regionEpoch++;priorNodes=nodes;}
-  return sidebarVersion({ok:true,reason:null,profileId:profile.id,history,historySource,header,reading,navigationSlot,composer,protectedRegions,...(readingViewport?{readingViewport}:{}),historyMaskRoots:sidebarRect?historyPresentation.maskRoots:[],preserveNativeSidebar:!sidebarPresentationFits(sidebarRect),...(gapMode?{returnPlacement:'header-gap',returnHitRoot:one(nativeLayout.returnHitRoot)}:{}),returnSlot,readingRect,sidebarRect,viewMask:'declarative-css',regionEpoch,
+  return sidebarVersion({ok:true,reason:null,profileId:profile.id,history,historySource,header,reading,navigationSlot,composer,protectedRegions,...(homeLayout?{homeLayoutNodes:home.proofNodes}:{}),...(readingViewport?{readingViewport}:{}),historyMaskRoots:sidebarRect?historyPresentation.maskRoots:[],preserveNativeSidebar:!sidebarPresentationFits(sidebarRect),...(gapMode?{returnPlacement:'header-gap',returnHitRoot:one(nativeLayout.returnHitRoot)}:{}),returnSlot,readingRect,sidebarRect,viewMask:'declarative-css',regionEpoch,
    roles:{workspace:{available:true,revision:regionEpoch},sidebar:{available:sidebarPresentationFits(sidebarRect),reason:sidebarPresentationFits(sidebarRect)?null:sidebarRect?'history-region-too-small':historyFailure??'history-unavailable'},return:{available:!!returnSlot,reason:returnSlot?null:returnGeometryStage??'return-unavailable'}}});
  }
  const api={setReturnControl(node){returnControl=node;},getReturnControlRect(inspection){
   if(projectLayout())return currentProjectSurface(inspection)?.returnSlot??null;
   if(!isReturnSlotCurrent(inspection))return null;
   const {history,header,reading,composer,navigationSlot:slot,readingViewport:viewport}=inspection;
-  const readingRect=viewport?viewportRect(viewport,header,composer):rect(reading);
+  const readingRect=viewport?viewportRect(viewport,header,composer):homeReadingRect(header,reading,composer);
   return readingRect?returnGeometry(history,header,readingRect,composer,slot):null;
  },isReturnSlotCurrent,kind:'chatgpt',async start(options){
   stop();navigationPhase='not-scanned';delivery=emptyDelivery();cursorRestarts=0;const b=options?.binding,observing=options?.phase==='observation';if(options?.phase!==undefined&&!observing)throw Error('invalid-adapter-phase');if(!b||!observing&&typeof options.emit!=='function'||typeof b.documentToken!=='string'||typeof b.producerToken!=='string'||typeof b.browserDocumentId!=='string'||!Number.isSafeInteger(b.routeEpoch)||b.routeEpoch<0||b.origin!==new URL(document.location.href).origin||!Number.isFinite(Date.parse(b.expiresAt))||now()>=Date.parse(b.expiresAt))throw Error('invalid-host-binding');

@@ -31,6 +31,49 @@ const shellClipGeometry=(node,value)=>{
 // largest radius remains conservative for asymmetric or CSS-normalized radii.
 const insideShellClip=(clip,r)=>{const right=clip.x+clip.width,bottom=clip.y+clip.height,d=clip.radius;return finite(r)&&r.x>=clip.x&&r.y>=clip.y&&r.x+r.width<=right&&r.y+r.height<=bottom&&(r.x>=clip.x+d&&r.x+r.width<=right-d||r.y>=clip.y+d&&r.y+r.height<=bottom-d);};
 
+// Shared presentation proof for Project gutters and the home area above the
+// native composer. No content values are read and no native root is enlarged.
+// Return null on incomplete/unsupported paint, never a partially cleared area.
+function workspacePaint({document,hitRoot,reading,chain,main,composer,readingRect,wideRect,safeReturn=null,provenClipNodes=new Set(),wideClear=true,walkRoot=hitRoot,isOwnedSurface=()=>false,structuralAllowed=node=>plain(node)&&(node===main||!node.hasAttribute('role'))}){
+  const win=document.defaultView,style=node=>win.getComputedStyle(node);
+ const ancestors=new Set(chain),walker=document.createTreeWalker(walkRoot,5,{acceptNode:node=>node.nodeType===1&&isOwnedSurface(node)?2:1});let node=walkRoot,count=0,rectangles=0;
+  do{
+   if(++count>2048)return null;
+   const inPanel=node===reading||reading.contains(node),structural=ancestors.has(node);
+   const clear=r=>{
+    if(!finite(r))return false;
+    if(!inPanel&&!structural&&overlap(r,wideRect))wideClear=false;
+    return (!safeReturn||!overlap(r,safeReturn))&&(inPanel||structural||!overlap(r,readingRect));
+   };
+   if(node.nodeType===1){
+    const s=style(node);
+    if(node.shadowRoot||node.localName.includes('-')||['transform','translate','rotate','scale','filter','backdropFilter','offsetPath','maskImage'].some(k=>s[k]!=='none')||s.clipPath!=='none'&&!provenClipNodes.has(node)||s.zoom!=='1')return null;
+    const decoration=node.tagName==='DIV'&&composer.querySelectorAll('[data-composer-body]').length===1&&composer.querySelector('[data-composer-body]')===node;
+    if(s.boxShadow!=='none'&&!decoration||s.textShadow!=='none')return null;
+    if(!['none','hidden'].includes(s.outlineStyle)&&s.outlineWidth!=='0px'){
+     const n=box(node),outset=Math.max(0,px(s.outlineWidth)+px(s.outlineOffset));
+     if(structural||!Number.isFinite(outset)||!clear({x:n.x-outset,y:n.y-outset,width:n.width+2*outset,height:n.height+2*outset}))return null;
+    }
+    if(structural&&!structuralAllowed(node))return null;
+    if(s.display==='none')continue;
+    if(!structural&&!clear(box(node)))return null;
+    for(const pseudo of ['::before','::after']){
+     const ps=win.getComputedStyle(node,pseudo);if(['none','normal'].includes(ps.content))continue;
+     // Empty button decorations and a clipped native placeholder can be proven
+     // by their actual absolute box, including negative inline hit-area insets.
+     const placeholder=node.tagName==='P'&&composer.contains(node)&&node.closest('[contenteditable="true"][role="textbox"]')&&ps.overflowX==='hidden'&&ps.overflowY==='hidden';
+     if(structural||ps.content!=='""'&&!placeholder||s.position==='static'||ps.position!=='absolute'||ps.boxSizing!=='border-box'||['transform','translate','rotate','scale','boxShadow','textShadow','filter','backdropFilter','offsetPath','borderImageSource'].some(k=>ps[k]!=='none')||!['none','hidden'].includes(ps.outlineStyle)||ps.zoom!=='1'||['marginLeft','marginTop','marginRight','marginBottom'].some(k=>!Number.isFinite(px(ps[k]))))return null;
+     const n=box(node),r={x:n.x+px(s.borderLeftWidth)+px(ps.left)+px(ps.marginLeft),y:n.y+px(s.borderTopWidth)+px(ps.top)+px(ps.marginTop),width:px(ps.width),height:px(ps.height)};
+     if(!clear(r))return null;
+    }
+   }else{
+    const range=document.createRange();range.selectNodeContents(node);
+    for(const r of range.getClientRects()){if(++rectangles>2048||!clear({x:r.x,y:r.y,width:r.width,height:r.height}))return null;}
+   }
+  }while(node=walker.nextNode());
+ return {wideClear};
+}
+
 export function projectClipDiagnostic(value){
  if(value===''||value===undefined||value===null)return {projectClip:value===''?'empty':'unavailable'};
  if(['border-box','padding-box','content-box','margin-box','fill-box','stroke-box','view-box'].includes(value))return {projectClip:value};
@@ -127,46 +170,61 @@ export function inspectNativeProjectSurface({document,profile,urlPolicy,history,
   const returnSlot=nativeReturnGapRect({document,header,slot,hitRoot,button,headerLayout:'transparent-containers',excluded:[history,title,composer,tabs].filter(Boolean),excludedRects:[readingRect]});
   const safeReturn=returnSlot&&!clips.some(n=>!insideShellClip(n,returnSlot))?returnSlot:null;
   if(safeReturn&&overlap(safeReturn,wideRect))wideClear=false;
-  // Geometry-only bounded walk: never read draft, row preview or text content.
-  // Structural ancestors may surround the area, but must be layout containers.
-  // The identified composer body's box shadow is decorative and does not
-  // enlarge input/hit targets. Its value is not a page-layout identity.
   stage='paint';
-  const ancestors=new Set(chain),walker=document.createTreeWalker(hitRoot,5);let node=hitRoot,count=0,rectangles=0;
-  do{
-   if(++count>2048)return null;
-   const inPanel=node===reading||reading.contains(node),structural=ancestors.has(node);
-   const clear=r=>{
-    if(!finite(r))return false;
-    if(!inPanel&&!structural&&overlap(r,wideRect))wideClear=false;
-    return (!safeReturn||!overlap(r,safeReturn))&&(inPanel||structural||!overlap(r,readingRect));
-   };
-   if(node.nodeType===1){
-    const s=style(node);
-    if(node.shadowRoot||node.localName.includes('-')||['transform','translate','rotate','scale','filter','backdropFilter','offsetPath','maskImage'].some(k=>s[k]!=='none')||s.clipPath!=='none'&&!provenClipNodes.has(node)||s.zoom!=='1')return null;
-    const decoration=node.tagName==='DIV'&&composer.querySelectorAll('[data-composer-body]').length===1&&composer.querySelector('[data-composer-body]')===node;
-    if(s.boxShadow!=='none'&&!decoration||s.textShadow!=='none')return null;
-    if(!['none','hidden'].includes(s.outlineStyle)&&s.outlineWidth!=='0px'){
-     const n=box(node),outset=Math.max(0,px(s.outlineWidth)+px(s.outlineOffset));
-     if(structural||!Number.isFinite(outset)||!clear({x:n.x-outset,y:n.y-outset,width:n.width+2*outset,height:n.height+2*outset}))return null;
-    }
-    if(structural&&(!plain(node)||node!==main&&node.hasAttribute('role')))return null;
-    if(s.display==='none')continue;
-    if(!structural&&!clear(box(node)))return null;
-    for(const pseudo of ['::before','::after']){
-     const ps=win.getComputedStyle(node,pseudo);if(['none','normal'].includes(ps.content))continue;
-     // Empty button decorations and a clipped native placeholder can be proven
-     // by their actual absolute box, including negative inline hit-area insets.
-     const placeholder=node.tagName==='P'&&composer.contains(node)&&node.closest('[contenteditable="true"][role="textbox"]')&&ps.overflowX==='hidden'&&ps.overflowY==='hidden';
-     if(structural||ps.content!=='""'&&!placeholder||s.position==='static'||ps.position!=='absolute'||ps.boxSizing!=='border-box'||['transform','translate','rotate','scale','boxShadow','textShadow','filter','backdropFilter','offsetPath','borderImageSource'].some(k=>ps[k]!=='none')||!['none','hidden'].includes(ps.outlineStyle)||ps.zoom!=='1'||['marginLeft','marginTop','marginRight','marginBottom'].some(k=>!Number.isFinite(px(ps[k]))))return null;
-     const n=box(node),r={x:n.x+px(s.borderLeftWidth)+px(ps.left)+px(ps.marginLeft),y:n.y+px(s.borderTopWidth)+px(ps.top)+px(ps.marginTop),width:px(ps.width),height:px(ps.height)};
-     if(!clear(r))return null;
-    }
-   }else{
-    const range=document.createRange();range.selectNodeContents(node);
-    for(const r of range.getClientRects()){if(++rectangles>2048||!clear({x:r.x,y:r.y,width:r.width,height:r.height}))return null;}
-   }
-  }while(node=walker.nextNode());
+  const paint=workspacePaint({document,hitRoot,reading,chain,main,composer,readingRect,wideRect,safeReturn,provenClipNodes,wideClear});
+  if(!paint)return null;wideClear=paint.wideClear;
   passed=true;return {...regions,readingRect:wideClear?wideRect:readingRect,sidebarRect,returnSlot:safeReturn};
  }catch{return null;}finally{if(!passed)try{onFailure(stage,stage==='geometry-clip-shape'?clipShape:null);}catch{}}
+}
+
+// A welcome node is the ONLY home mask root. Its size need not constrain the
+// workspace: use the proved main interior above the unchanged native composer.
+// Unsupported added space falls back to the original welcome rectangle.
+export function inspectNativeHomeSurface({document,hitRoot,header,reading,composer,isOwnedSurface=()=>false}){
+ const base=box(reading),fallback={readingRect:base,proofNodes:[]};
+ try{
+  const win=document.defaultView,style=node=>win.getComputedStyle(node);
+  if(!hitRoot||!plain(hitRoot)||!hitRoot.contains(reading)||!hitRoot.contains(composer)||
+   ![hitRoot,header,reading,composer].every(n=>n.isConnected&&n.ownerDocument===document))return fallback;
+  const main=reading.closest('[role="main"]');
+  if(!main||!plain(main)||!hitRoot.contains(main)||!main.contains(composer))return fallback;
+  const chain=[];for(let n=reading.parentElement;n;n=n.parentElement){
+   if(chain.length>=64||!plain(n)||n!==main&&n.hasAttribute('role'))return fallback;
+   chain.push(n);if(n===hitRoot)break;
+  }
+  if(!chain.includes(hitRoot)||!chain.includes(main))return fallback;
+  // Expanded top-layer content can also cover ancestor siblings. Prove those
+  // branches too; a button outside hitRoot is not excused by a local root proof.
+  const structuralAllowed=node=>['DIV','MAIN','BODY'].includes(node.tagName)&&!node.shadowRoot&&!node.matches('[tabindex],[contenteditable],a,button,input,select,textarea')&&(node===main||!node.hasAttribute('role'));
+  for(let n=hitRoot.parentElement;n;n=n.parentElement){
+   if(chain.length>=64||!structuralAllowed(n))return fallback;
+   chain.push(n);if(n===document.body)break;
+  }
+  if(!chain.includes(document.body))return fallback;
+  fallback.proofNodes=chain;
+  const h=box(header),c=box(composer),root=box(hitRoot),visual=win.visualViewport;
+  if(![base,h,c,root].every(finite)||visual&&(visual.scale!==1||visual.offsetLeft!==0||visual.offsetTop!==0))return fallback;
+  let left=Math.max(0,root.x+hitRoot.clientLeft),right=Math.min(win.innerWidth,root.x+hitRoot.clientLeft+hitRoot.clientWidth);
+  let top=Math.max(0,h.y+h.height,root.y+hitRoot.clientTop),bottom=Math.min(win.innerHeight,c.y,root.y+hitRoot.clientTop+hitRoot.clientHeight);
+  const clips=[],provenClipNodes=new Set();let depth=0;
+  for(let n=reading.parentElement;n;n=n.parentElement){
+   if(++depth>64)return fallback;
+   const s=style(n),r=box(n);
+   // The body walk cannot see generated content on the HTML ancestor.
+   if(n===document.documentElement&&(n.shadowRoot||['::before','::after'].some(p=>!['none','normal'].includes(win.getComputedStyle(n,p).content))))return fallback;
+   if(n.hidden||n.inert||n.getAttribute('aria-hidden')==='true'||s.display==='none'||s.visibility!=='visible'||s.opacity!=='1'||
+    ['transform','translate','rotate','scale','filter','backdropFilter','offsetPath','maskImage'].some(k=>s[k]!=='none')||s.zoom!=='1')return fallback;
+   if(s.clipPath!=='none'){const clip=shellClipGeometry(n,s.clipPath);if(!clip)return fallback;clips.push(clip);provenClipNodes.add(n);}
+   if(s.display!=='contents'){
+    if(['auto','scroll','hidden','clip'].includes(s.overflowX)){left=Math.max(left,r.x+n.clientLeft);right=Math.min(right,r.x+n.clientLeft+n.clientWidth);}
+    if(['auto','scroll','hidden','clip'].includes(s.overflowY)){top=Math.max(top,r.y+n.clientTop);bottom=Math.min(bottom,r.y+n.clientTop+n.clientHeight);}
+   }
+  }
+  const expanded={x:left,y:top,width:right-left,height:bottom-top};
+  if(!finite(expanded)||expanded.width<=0||expanded.height<=0||expanded.x>base.x||expanded.y>base.y||
+   expanded.x+expanded.width<base.x+base.width||expanded.y+expanded.height<base.y+base.height||
+   overlap(expanded,h)||overlap(expanded,c)||clips.some(clip=>!insideShellClip(clip,expanded)))return fallback;
+  const paint=workspacePaint({document,hitRoot,reading,chain,main,composer,readingRect:base,wideRect:expanded,provenClipNodes,walkRoot:document.body,isOwnedSurface,structuralAllowed});
+  return paint?.wideClear?{readingRect:expanded,proofNodes:chain}:fallback;
+ }catch{return fallback;}
 }
