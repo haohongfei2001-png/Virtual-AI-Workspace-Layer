@@ -56,12 +56,16 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
  // Native NAV owns scrolling. The flow iframe has no internal scrollport;
  // trusted wheel events chain through Chromium rather than coordinate relays.
  let sidebarSizeTimer=null,lastSidebarSize=null,sidebarRestore=undefined;
- function revealSidebarRect(box){if(role==='sidebar'&&grantCurrent()&&!closed&&box?.height>0&&box.top>=0)doc.defaultView.parent.postMessage({type:'VAIWL_UI_REVEAL_ROW',role:'sidebar',top:Math.floor(box.top),bottom:Math.ceil(box.bottom)},parentOrigin);}
- function queueSidebarSize(){
-  if(role!=='sidebar'||sidebarSizeTimer!==null)return;
-  sidebarSizeTimer=schedule(()=>{sidebarSizeTimer=null;
-   if(closed||!grantCurrent()||Date.parse(grant?.expiresAt)<=now())return;
-   const panel=navigation?.roots?.()?.sidebar?.shadow?.querySelector('section');if(!panel)return;
+ function revealSidebarRect(box){
+  if(role!=='sidebar'||!grantCurrent()||closed||surfaceVisible===false||!box||![box.top,box.bottom,box.height].every(Number.isFinite)||box.height<=0||box.top<0||box.bottom<=box.top||box.bottom>1000000)return;
+  // The renderer may just have expanded a group. Its natural size must reach
+  // the parent before reveal coordinates, which the parent bounds by that size.
+  if(!publishSidebarSize())return;
+  doc.defaultView.parent.postMessage({type:'VAIWL_UI_REVEAL_ROW',role:'sidebar',top:Math.floor(box.top),bottom:Math.ceil(box.bottom)},parentOrigin);
+ }
+ function publishSidebarSize(){
+   if(closed||!grantCurrent()||Date.parse(grant?.expiresAt)<=now())return false;
+   const panel=navigation?.roots?.()?.sidebar?.shadow?.querySelector('section');if(!panel)return false;
    const extent=n=>{if(n.hidden)return 0;const style=doc.defaultView.getComputedStyle(n);return n.getBoundingClientRect().height+(n.classList.contains('sidebar-footer')?0:parseFloat(style.marginTop)||0)+(parseFloat(style.marginBottom)||0);};
    // Measure the natural-flow section, including assigned candidate slot
    // content. Summing only shadow children omitted the slotted native entries
@@ -69,10 +73,14 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
    let height=extent(panel);
    for(const child of privateRoot.children)if(child!==root)height+=extent(child);
    height=Math.max(128,Math.ceil(height));
-   if(!Number.isSafeInteger(height)||height>1000000)return;
+   if(!Number.isSafeInteger(height)||height>1000000)return false;
    if(height!==lastSidebarSize){lastSidebarSize=height;doc.defaultView.parent.postMessage({type:'VAIWL_UI_INTRINSIC_SIZE',role:'sidebar',height},parentOrigin);}
    if(sidebarRestore!==undefined){const scroll=sidebarRestore;sidebarRestore=undefined;doc.defaultView.parent.postMessage({type:'VAIWL_UI_SIDEBAR_RESTORE',role:'sidebar',scroll},parentOrigin);}
-  },0);
+   return true;
+ }
+ function queueSidebarSize(){
+  if(role!=='sidebar'||sidebarSizeTimer!==null)return;
+  sidebarSizeTimer=schedule(()=>{sidebarSizeTimer=null;publishSidebarSize();},0);
  }
  let currentDelivery=null,freshnessTimer=null;
  let navigation=null,root=null,plans=new Map(),projectPlans=new Map(),grant=null,grantCurrent=()=>false,serial=0,activeRead=null,activeLocation=null,query={segment:0,offset:0,limit:8},closed=true,splits=0,dirty=false,currentNativeURL='',presentationRevision=0,presentationIntent='',workspaceRevision=null,viewSession=null,projectionScope=null,projectionVersion=null,horizonPending=false;

@@ -99,6 +99,21 @@ try{
   await page.getByRole('button',{name:'返回工作空间',exact:true}).click();
   await workspace.getByText('Native Project',{exact:true}).first().waitFor({timeout:15000});
   report.checks.sameDocumentProjectMemberReadingReturn=true;
+  // A visible child locator alone does not prove the cross-origin frame has
+  // reached its final host layout. Inspect both surfaces before capturing it.
+  await page.locator('[id$="_workspace"]:visible').waitFor({timeout:15000});
+  const returnCard=workspace.locator('.card').first();
+  await returnCard.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+  report.checks.returnPaint=await returnCard.evaluate(n=>{
+   const b=n.getBoundingClientRect(),shadow=n.getRootNode(),hit=shadow.elementFromPoint(b.x+b.width/2,b.y+b.height/2);
+   return {box:b.toJSON(),viewport:[innerWidth,innerHeight],scroll:shadow.querySelector('.workspace').scrollTop,
+    visible:getComputedStyle(n).visibility==='visible',hit:!!hit&&n.contains(hit)};
+  });
+  const paint=report.checks.returnPaint;
+  assert(paint.visible&&paint.hit&&paint.box.width>0&&paint.box.height>0&&paint.box.x>=0&&paint.box.y>=0&&paint.box.right<=paint.viewport[0]&&paint.box.bottom<=paint.viewport[1],JSON.stringify(paint));
+  assert(await page.locator('iframe[src="chrome-extension://'+id+'/workspace.html"]').evaluate(n=>{
+   const b=n.getBoundingClientRect();return b.width>0&&b.height>0&&document.elementFromPoint(b.x+b.width/2,b.y+b.height/2)===n;
+  }),'returned workspace iframe must be exposed in the host');
   const returnImage=join(dir,'flow-journey-return.png');await page.screenshot({path:returnImage});report.images.push(returnImage);
   await page.setViewportSize({width:720,height:900});
   await page.locator('[id$="_workspace"]:visible').waitFor({timeout:15000});

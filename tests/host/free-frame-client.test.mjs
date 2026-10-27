@@ -784,3 +784,18 @@ test('sidebar reannounces its intrinsic size when the parent confirms visibility
  assert.equal(sizes().length,2,'stale receipt does not create a retry loop');
  f.disconnect();f.emit({type:'VAIWL_UI_SURFACE_STATE',revision:2,visible:true});await f.advance(0);assert.equal(sizes().length,2);
 });
+
+test('current row reveal publishes expanded flow height before its bounded coordinates',async()=>{
+ let height=200;const panel={hidden:false,classList:{contains:()=>false},getBoundingClientRect:()=>({height})};
+ const f=fixture('sidebar',options=>createFreeFrameClient({...options,
+  document:{...options.document,defaultView:{...options.document.defaultView,getComputedStyle:()=>({marginTop:'0',marginBottom:'0'})}},
+  navigationFactory:args=>({...options.navigationFactory(args),roots:()=>({sidebar:{shadow:{querySelector:()=>panel}}})})}));
+ await f.client.start();await drain();await f.advance(0);f.parentMessages.length=0;
+ height=900;f.nav.onSidebarLayout();f.nav.onSidebarReveal({top:800,bottom:834,height:34});
+ assert.deepEqual(f.parentMessages.map(p=>p.message),[
+  {type:'VAIWL_UI_INTRINSIC_SIZE',role:'sidebar',height:900},
+  {type:'VAIWL_UI_REVEAL_ROW',role:'sidebar',top:800,bottom:834}
+ ]);
+ await f.advance(0);assert.equal(f.parentMessages.length,2,'scheduled size update must not duplicate delivery');
+ f.disconnect();const retiredCount=f.parentMessages.length;f.nav.onSidebarReveal({top:800,bottom:834,height:34});assert.equal(f.parentMessages.length,retiredCount);
+});
