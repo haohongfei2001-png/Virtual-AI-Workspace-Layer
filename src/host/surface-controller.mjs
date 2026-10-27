@@ -167,18 +167,29 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
   const failed=()=>{if(current===state&&state.surfaceRevision===revision)state.surfaceKey=null;};
   try{Promise.resolve(bridge.surfaceState({mountId:state.handle.id,revision,...snapshot})).then(result=>{if(result?.ok!==true)failed();},failed);}catch{failed();}
  }
- function showWorkspace(){
+ function showWorkspace(explicitEntry=false){
   const state=current;if(!state||state.nativeDispatch)return false;
-  state.desiredMode='workspace';const handle=state.handle,intent=++state.intentEpoch;
+  state.desiredMode='workspace';const handle=state.handle,intent=++state.intentEpoch;let settleLayout=null,layoutAccepted=false;
   const same=()=>current===state&&state.handle===handle;
   const fresh=(inspection=null)=>same()&&state.intentEpoch===intent&&authorized(state,inspection)&&same()&&state.intentEpoch===intent;
   try{
    // Before presentation there is no native mutation or asynchronous boundary.
    // Use the same complete proof for authorization and mount geometry. A second
    // reading scan can exhaust its own budget and wrongly destroy a valid mount.
-   const inspection=adapter.inspect();
+   let inspection=adapter.inspect();
    if(!fresh(inspection)||!inspection?.ok||inspection.regionEpoch!==handle.regionEpoch)return false;if(adapter.hasNativeLayer()){suspend('native-layer');return false;}
    if(!refreshGeometry(state,inspection)||!fresh(inspection))return false;
+   // Only explicit entry may align a proved Project scrollport. Renewal,
+   // geometry callbacks and automatic initial rendering never scroll it.
+   if(explicitEntry&&typeof surface.prepareWorkspace==='function'){
+    settleLayout=surface.prepareWorkspace(handle);
+    if(settleLayout){
+     let aligned=adapter.inspect();
+     if(!fresh(aligned)||!aligned?.ok||aligned.regionEpoch!==handle.regionEpoch){settleLayout(false);settleLayout=null;aligned=adapter.inspect();}
+     if(!fresh(aligned)||!aligned?.ok||aligned.regionEpoch!==handle.regionEpoch||!refreshGeometry(state,aligned))return false;
+     inspection=aligned;state.inspection=aligned;
+    }
+   }
    state.presentation='showing';reportJoin(state);const shown=surface.showWorkspace(handle,{roles:[...state.grants.keys()].filter(role=>role!=='sidebar'||state.sidebarDesired!==false)});state.presentation=shown===false?'show-refused':'show-returned';reportJoin(state);
    if(!same())return false;
    // showPopover can synchronously surrender to native input or a native layer.
@@ -197,8 +208,8 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
     state.presentation='show-refused';surface.suspend(handle);
     if(same()){if(adapter.hasNativeLayer()){state.mode='suspended';removeReturn(state);}else{state.mode='reading';ensureReturn(state);}reportJoin(state);}return false;
    }
-   removeReturn(state);state.mode='workspace';return true;
-  }finally{publishSurface(state);}
+   removeReturn(state);state.mode='workspace';layoutAccepted=true;return true;
+  }finally{settleLayout?.(layoutAccepted);publishSurface(state);}
  }
  // Keyboard entry removes its focused return button. Transfer that explicit
  // intent into our frame; automatic presentation and pointer entry do not move focus.
@@ -213,7 +224,7 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
   const inspection=state.dormant?state.inspection:adapter.inspect(),slot=inspection.navigationSlot;
   if(Object.hasOwn(inspection??{},'returnSlot')&&!inspection.returnSlot||!slot?.isConnected||slot!==state.inspection.navigationSlot||adapter.isReturnSlotCurrent?.(inspection)===false){removeReturn(state);return false;}
   if(state.dormant&&slotOccupied(state,slot)){removeReturn(state);return false;}
-  if(!state.button){const button=doc.createElement('button');button.type='button';button.dataset.vaOwned=state.handle.id;button.setAttribute('aria-label','返回工作空间');button.title='返回工作空间';button.innerHTML=workspaceReturnIcon;button.style.cssText='width:34px;height:34px;flex:none;display:inline-grid;place-items:center;border:0;border-radius:9px;background:transparent;color:inherit;cursor:pointer';button.addEventListener('click',event=>{if(current!==state||event?.isTrusted!==true)return;const keyboardEntry=event.detail===0&&doc.activeElement===button;if(state.dormant){if(slotOccupied(state,slot)||adapter.isReturnSlotCurrent?.(state.inspection)===false){removeReturn(state);return;}if(state.waking||doc.location.href!==state.url||adapter.hasNativeLayer())return;state.waking=true;state.pendingWakeEntry=true;try{Promise.resolve(onWake()).catch(()=>{state.pendingWakeEntry=false;}).finally(()=>{state.waking=false;if(state.dormant)state.pendingWakeEntry=false;});}catch{state.waking=false;state.pendingWakeEntry=false;}return;}state.sidebarDesired=true;if(!showWorkspace())return;if(keyboardEntry)focusFrame('workspace');workspaceEntered(state);});if(inspection.returnPlacement==='header-gap'){const box=inspection.returnSlot;Object.assign(button.style,{boxSizing:'border-box',margin:'0',padding:'0',position:'fixed',left:box.x+'px',top:box.y+'px',width:box.width+'px',height:box.height+'px',zIndex:'30',pointerEvents:'auto'});doc.body.append(button);}else slot.append(button);state.button=button;adapter.setReturnControl?.(button);}
+  if(!state.button){const button=doc.createElement('button');button.type='button';button.dataset.vaOwned=state.handle.id;button.setAttribute('aria-label','返回工作空间');button.title='返回工作空间';button.innerHTML=workspaceReturnIcon;button.style.cssText='width:34px;height:34px;flex:none;display:inline-grid;place-items:center;border:0;border-radius:9px;background:transparent;color:inherit;cursor:pointer';button.addEventListener('click',event=>{if(current!==state||event?.isTrusted!==true)return;const keyboardEntry=event.detail===0&&doc.activeElement===button;if(state.dormant){if(slotOccupied(state,slot)||adapter.isReturnSlotCurrent?.(state.inspection)===false){removeReturn(state);return;}if(state.waking||doc.location.href!==state.url||adapter.hasNativeLayer())return;state.waking=true;state.pendingWakeEntry=true;try{Promise.resolve(onWake()).catch(()=>{state.pendingWakeEntry=false;}).finally(()=>{state.waking=false;if(state.dormant)state.pendingWakeEntry=false;});}catch{state.waking=false;state.pendingWakeEntry=false;}return;}state.sidebarDesired=true;if(!showWorkspace(true))return;if(keyboardEntry)focusFrame('workspace');workspaceEntered(state);});if(inspection.returnPlacement==='header-gap'){const box=inspection.returnSlot;Object.assign(button.style,{boxSizing:'border-box',margin:'0',padding:'0',position:'fixed',left:box.x+'px',top:box.y+'px',width:box.width+'px',height:box.height+'px',zIndex:'30',pointerEvents:'auto'});doc.body.append(button);}else slot.append(button);state.button=button;adapter.setReturnControl?.(button);}
   if(inspection.returnPlacement==='header-gap'){const box=adapter.getReturnControlRect?.(inspection);if(!box){removeReturn(state);return false;}Object.assign(state.button.style,{boxSizing:'border-box',margin:'0',padding:'0',position:'fixed',left:box.x+'px',top:box.y+'px',width:box.width+'px',height:box.height+'px',zIndex:'30',pointerEvents:'auto'});state.returnStyle=state.button.getAttribute('style');}
   return true;
  }
@@ -370,7 +381,7 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
     // Native input can precede listener installation or the second grant. Preserve
     // that intent without exposing a surface or return entry before authorization.
     const entered=state.pendingWakeEntry===true,entryEpoch=state.intentEpoch+1;state.pendingWakeEntry=false;
-    if(adapter.hasNativeLayer())suspend('native-layer');else if(state.pendingNativeInput||hasProtectedFocus(state))showNativeReading();else if((state.resumeMode??initialMode)==='reading')showReading();else if(showWorkspace()&&entered&&state.intentEpoch===entryEpoch&&!state.pendingNativeInput&&!adapter.hasNativeLayer()&&!hasProtectedFocus(state))workspaceEntered(state);
+    if(adapter.hasNativeLayer())suspend('native-layer');else if(state.pendingNativeInput||hasProtectedFocus(state))showNativeReading();else if((state.resumeMode??initialMode)==='reading')showReading();else if(showWorkspace(entered)&&entered&&state.intentEpoch===entryEpoch&&!state.pendingNativeInput&&!adapter.hasNativeLayer()&&!hasProtectedFocus(state))workspaceEntered(state);
    }
   }catch{state.presentation='join-exception';reportJoin(state);/* A failed public join never authorizes a surface. */}finally{state.pending.delete(data.role);reportJoin(state);}
  }
@@ -522,5 +533,5 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
   let visibility=null;try{visibility=surface.visibility?.(state.handle);}catch{}
   return {mode:state.mode,desiredMode:state.desiredMode,transitions:structuredClone(transitions),attempt:state.presentation??'not-attempted',registered:state.registered===true,frames:state.frames.filter(x=>x.frame.isConnected&&x.frame.contentWindow===x.window).length,grants:state.grants.size,workspace:typeof visibility?.workspace==='boolean'?visibility.workspace:null,sidebar:typeof visibility?.sidebar==='boolean'?visibility.sidebar:null,geometryPaused:state.geometryPaused===true,returnPresent:state.button?.isConnected===true};
  }
- return Object.freeze({presentationSnapshot,localStatus,withNativeReading,cancelDormantClose,renewDormantLease,idleReleaseBusy:()=>current?.releaseBusy===true&&dormantReady(),checkIdle,enterDormant,settleDormant,dormantReady,resumeDormant,start,presentationIntent:()=>current?.desiredMode==='workspace'?'workspace':'reading',presentationMode:()=>current?.mode==='workspace'?'workspace':'reading',showWorkspace(){if(current)current.sidebarDesired=true;return showWorkspace();},isWorkspacePresented,showReading,showNativeReading,beginNativeDispatch,focusFrame,isFrameTarget(role,node){return !!current&&authorized(current)&&current.frames.some(x=>x.role===role&&x.frame===node);},isReturnTarget:node=>!!current&&current.button===node&&authorized(current),intentGuard(){const state=current,revision=state?.intentEpoch;return ()=>!!state&&current===state&&state.intentEpoch===revision&&authorized(state)&&!adapter.hasNativeLayer();},readingGuard(){const state=current,revision=state?.intentEpoch;return ()=>!!state&&current===state&&state.intentEpoch===revision&&state.mode==='reading'&&authorized(state)&&!adapter.hasNativeLayer();},suspend,stop,revoke:()=>stop('ui-authority-revoked')});
+ return Object.freeze({presentationSnapshot,localStatus,withNativeReading,cancelDormantClose,renewDormantLease,idleReleaseBusy:()=>current?.releaseBusy===true&&dormantReady(),checkIdle,enterDormant,settleDormant,dormantReady,resumeDormant,start,presentationIntent:()=>current?.desiredMode==='workspace'?'workspace':'reading',presentationMode:()=>current?.mode==='workspace'?'workspace':'reading',showWorkspace(){if(current)current.sidebarDesired=true;return showWorkspace(true);},isWorkspacePresented,showReading,showNativeReading,beginNativeDispatch,focusFrame,isFrameTarget(role,node){return !!current&&authorized(current)&&current.frames.some(x=>x.role===role&&x.frame===node);},isReturnTarget:node=>!!current&&current.button===node&&authorized(current),intentGuard(){const state=current,revision=state?.intentEpoch;return ()=>!!state&&current===state&&state.intentEpoch===revision&&authorized(state)&&!adapter.hasNativeLayer();},readingGuard(){const state=current,revision=state?.intentEpoch;return ()=>!!state&&current===state&&state.intentEpoch===revision&&state.mode==='reading'&&authorized(state)&&!adapter.hasNativeLayer();},suspend,stop,revoke:()=>stop('ui-authority-revoked')});
 }

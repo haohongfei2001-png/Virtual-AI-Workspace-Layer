@@ -1,5 +1,15 @@
 # VAIWL实际状态：渐进积累工程已接线，真实来源逐项待准入
 
+## Project工作空间与原生滚动流整合（2026-10-27，接续23035b3d；产品仍未交付）
+
+正式Host修改`native-project-surface`、`mount-surface`和`surface-controller`：仅对已经证明的Project正常流，在用户明确进入工作空间时加入扩展自有空占位，并滚动原生视口，使成员区域对齐header下方；再次完成原生几何/绘制和授权核对后才展开原workspace。原生标题、composer、tabs、成员节点不移动、不复制、不改样式，遮罩仍只有原panel。卡片保持批准356px自然宽高，稀疏数据不填充。退出只恢复同文档、同节点且仍等于扩展写入值的scrollTop，用户后来滚动不回写；普通启动/续约/自动恢复不强制对齐。只读扫描期间保留占位，失败、撤权、节点替换及dispose均释放。
+
+独立只读复核发现并修正：永久免除“自有节点”变更会漏掉宿主删除占位。现只消费精确一次append/remove凭据，宿主再删除立即撤对应workspace而不关闭sidebar；可信dormant四格唤醒接通同一显式入口，程序性resume不制造进入意图。定向Project机制反例、关联controller/mount回归和最终正式MV3连续旅程通过。实际查看桌面、窄屏、原生阅读及四格返回正式renderer图片；宿主仍是匿名结构重建，原生灰块/默认控件不是ChatGPT实机视觉，不能冒充最终设计验收。
+
+统一审阅包 `/private/tmp/VAIWL-v27-Native-Flow-Review-20261027/extension`，zip SHA256 `882a83069d75f216739d7b649ba4180e60d4d69c3b293e2a9d848232f3ac3e67`；200项sourceHashes与源码一致，正式/测试包仅清单和六项环境生成文件不同，verifyHost通过。review含三段整屏图、窄屏/首页图、差异对照、构建闭包及原测试回执。未更新原安装，未操作真实Chrome或旧库，3份stash保留。
+
+**仍然是产品差额：** 首页现有基准的输入区绝对定位，不能用本批正常流占位安全推移；`inspectNativeHomeSurface`仍只证明输入框上方区域。原生Project管理区的未知展开/菜单语义不能由布局占位替代，真实同名导航的整体观感尚未消除。本批全视口Project布局只用于已支持正常流和显式进入，未知布局保留安全原区域，不能声称所有页面都已整屏统一。真实Mac本批NOT_RUN、完整v2.7 NOT_ACCEPTED、旧私人对象级恢复仍未验证；不要求用户Reload或再次采集，不将上述差额改称“仅待验收”。
+
 ## 正式画布与侧栏层级整合（2026-10-27，接续d2e43dd0；仍非产品交付）
 
 本批修改正式frame appearance/controller/mount、navigation/styles、frame client和home/Project paint proof，不操作或更新日常Chrome。直接对照批准`validation/final/v27-small.png`及现有真实截图：

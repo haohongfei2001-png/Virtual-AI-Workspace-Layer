@@ -193,7 +193,18 @@ export function inspectNativeProjectSurface({document,profile,urlPolicy,history,
   stage='paint';
   const paint=workspacePaint({document,hitRoot,reading,chain,main,composer,readingRect,wideRect,safeReturn,provenClipNodes,wideClear});
   if(!paint)return null;wideClear=paint.wideClear;
-  passed=true;return {...regions,readingRect:wideClear?wideRect:readingRect,sidebarRect,returnSlot:safeReturn};
+  // A Project overview can join its existing native scroll flow without
+  // moving the form or masking its controls. Admission is deliberately narrow;
+  // the mount must still re-prove the resulting geometry after allocating space.
+  let flow=style(viewport).scrollSnapType==='none'&&style(viewport).scrollBehavior==='auto';
+  for(let n=reading;n&&n!==viewport;n=n.parentElement){
+   const s=style(n);
+   if(!plain(n)&&n!==reading||!['static','relative'].includes(s.position)||s.float!=='none'||
+    !['block','flow-root','flex','contents'].includes(s.display)||s.display==='flex'&&(s.flexDirection!=='column'||s.flexWrap!=='nowrap')||
+    s.display!=='contents'&&(s.overflowY!=='visible'||s.overflowX!=='visible')||s.scrollSnapType!=='none')flow=false;
+  }
+  passed=true;return {...regions,readingRect:wideClear?wideRect:readingRect,sidebarRect,returnSlot:safeReturn,
+   workspaceFlow:flow?{viewport,panel:reading,top:Math.max(v.y+viewport.clientTop,h.y+h.height),height:bottom-Math.max(v.y+viewport.clientTop,h.y+h.height)}:null};
  }catch{return null;}finally{if(!passed)try{onFailure(stage,stage==='geometry-clip-shape'?clipShape:null);}catch{}}
 }
 

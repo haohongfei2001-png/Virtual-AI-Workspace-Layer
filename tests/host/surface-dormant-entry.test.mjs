@@ -33,14 +33,14 @@ async function dormant({notify='ok'}={}){
 }
 async function joins(f){f.message('workspace');await flush();f.message('sidebar');await flush();}
 test('trusted dormant return notifies once after mandatory workspace grant',async()=>{
- const f=await dormant();f.click();f.click();await flush();assert.equal(f.wakes(),1);assert.equal(f.entries.length,0);
+ const f=await dormant();let layouts=0;f.surface.prepareWorkspace=()=>{layouts++;return null;};f.click();f.click();await flush();assert.equal(f.wakes(),1);assert.equal(f.entries.length,0);assert.equal(layouts,0);
  f.message('workspace');await flush();assert.deepEqual(f.entries,[{mountId:'mount'}]);
  f.message('sidebar');await flush();assert.deepEqual(f.entries,[{mountId:'mount'}]);assert.equal(f.controller.presentationMode(),'workspace');
- f.message('sidebar');f.message('workspace');await flush();assert.equal(f.entries.length,1);f.controller.stop();
+ f.message('sidebar');f.message('workspace');await flush();assert.equal(f.entries.length,1);assert.equal(layouts,1);f.controller.stop();
 });
 test('untrusted click and programmatic resume do not manufacture workspace entry',async()=>{
- const f=await dormant();f.click(false);await flush();assert.equal(f.wakes(),0);assert.equal(f.entries.length,0);
- assert.ok(await f.controller.resumeDormant({binding:f.fresh}));await joins(f);assert.equal(f.controller.presentationMode(),'workspace');assert.equal(f.entries.length,0);f.controller.stop();
+ const f=await dormant();let layouts=0;f.surface.prepareWorkspace=()=>{layouts++;return null;};f.click(false);await flush();assert.equal(f.wakes(),0);assert.equal(f.entries.length,0);
+ assert.ok(await f.controller.resumeDormant({binding:f.fresh}));await joins(f);assert.equal(f.controller.presentationMode(),'workspace');assert.equal(f.entries.length,0);assert.equal(layouts,0);f.controller.stop();
 });
 for(const reason of ['native-input','native-layer','registration-failure','stop'])test('trusted dormant entry is suppressed by '+reason,async()=>{
  const f=await dormant();let release;f.bridge.registerMount=()=>new Promise(resolve=>release=resolve);f.click();await flush();assert.equal(f.entries.length,0);

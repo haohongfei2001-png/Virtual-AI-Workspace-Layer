@@ -104,6 +104,14 @@ try{
   assert.equal(await workspace.locator('.card').first().evaluate(n=>getComputedStyle(n).backgroundColor),'rgb(255, 255, 255)','native canvas must not flatten the approved card surface');
   assert.equal(await page.locator('[data-va-native-boundary]').evaluate(n=>getComputedStyle(n).backgroundColor),'rgb(243, 243, 243)');
   report.checks.provedRoleCanvasMatchesNativeWithoutNativeRestyling=true;
+  // Explicit overview entry composes with native Project scrolling. Automatic
+  // startup above did not reposition the form or require an extra native action.
+  assert.equal(await page.locator('#project-scroll').evaluate(n=>n.scrollTop),0);
+  await page.locator('[id$="_workspace"]>button').click();
+  await page.getByRole('button',{name:'返回工作空间',exact:true}).click();
+  await page.waitForFunction(()=>{const surface=document.querySelector('[id$="_workspace"]'),port=document.querySelector('#project-scroll');return surface?.matches(':popover-open')&&port.scrollTop>0&&surface.getBoundingClientRect().height>=port.clientHeight-1;});
+  assert.equal(await page.locator('#draft').inputValue(),'fixture draft');
+  report.checks.projectOverviewUsesNativeScrollFlow=true;
   await capture('partition-desktop-workspace');
 
   const before=await page.locator('[data-fixture-structure-row="1"]').evaluate(n=>n.outerHTML);

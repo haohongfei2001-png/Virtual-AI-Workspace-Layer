@@ -3,10 +3,22 @@ import {validateFrameAppearance} from '../host/frame-appearance.mjs';
 export function createMountSurface({document:doc,createFrameURL,hasNativeLayer=()=>false}){
  const mounts=new Map();
  const lookup=handle=>{const m=mounts.get(handle?.id);if(!m||m.handle!==handle)throw Error('stale-mount');return m;};
+ // Only extension-owned empty space participates in Project flow. Native
+ // nodes and styles remain untouched. Restore our scroll write only while it
+ // is still ours; a later user scroll must never be pulled back.
+ const releaseProjectFlow=m=>{
+  const flow=m.projectFlow;if(!flow)return;m.projectFlow=null;
+  const live=flow.viewport.isConnected&&flow.panel.isConnected&&flow.panel.parentElement===flow.parent&&flow.viewport.contains(flow.panel)&&doc.location.href===flow.url;
+  const restore=live&&Math.abs(flow.viewport.scrollTop-flow.written)<1;
+  flow.workspace.removeAttribute('data-va-layout-preparing');flow.workspace.removeAttribute('data-va-reading-probe');
+  const mutation=m.projectFlowMutations.get(flow.slot);if(mutation&&flow.slot.parentNode)mutation.removed=flow.slot.parentNode;
+  flow.slot.remove();
+  if(restore)flow.viewport.scrollTop=flow.before;
+ };
  // Programmatic withdrawal is not a user's request to leave the workspace.
  // beforetoggle is synchronous, toggle is queued: retain the close origin on
  // each role until a subsequent open, so neither edge changes display intent.
- const hide=(m,role=null,reason='suspended')=>{if(m.readingProbe&&(role===null||role==='workspace'))m.readingProbe.cancelled=true;for(const s of m.surfaces)if((role===null||s.role===role)&&s.node.matches(':popover-open')){if(s.role==='sidebar'&&m.slotProved&&m.slot&&!['role-retired','native-list','disposed'].includes(reason))m.slot.setAttribute('data-va-slot-retained','');s.closeReason=reason;s.node.hidePopover();}};
+ const hide=(m,role=null,reason='suspended')=>{if(role===null||role==='workspace')releaseProjectFlow(m);if(m.readingProbe&&(role===null||role==='workspace'))m.readingProbe.cancelled=true;for(const s of m.surfaces)if((role===null||s.role===role)&&s.node.matches(':popover-open')){if(s.role==='sidebar'&&m.slotProved&&m.slot&&!['role-retired','native-list','disposed'].includes(reason))m.slot.setAttribute('data-va-slot-retained','');s.closeReason=reason;s.node.hidePopover();}};
  const surrender=(m,role=null,reason='native-change')=>{const roles=m.surfaces.filter(s=>(role===null||s.role===role)&&s.node.matches(':popover-open')).map(s=>s.role);hide(m,role,reason);for(const role of roles)try{m.onSurrender({role,reason});}catch{/* Withdrawal remains effective when its consumer has stopped. */}};
  // The frame stays in its original top-layer surface. Only this empty owned
  // block joins native flow; closing the browser popover releases its space.
@@ -104,6 +116,25 @@ export function createMountSurface({document:doc,createFrameURL,hasNativeLayer=(
   return !!inspection?.ok&&inspection.viewMask==='declarative-css'&&inspection.regionEpoch===handle.regionEpoch&&['reading','header','composer','readingViewport'].every(key=>inspection[key]===prior[key])&&same(inspection.protectedRegions,prior.protectedRegions)&&m.surfaces.length===2&&m.style.isConnected&&m.style.ownerDocument===doc&&m.style.dataset.vaOwned===handle.id&&m.style.textContent===m.styleText&&m.surfaces.filter(s=>!s.retired).every(({node,frame})=>node.isConnected&&node.ownerDocument===doc&&node.dataset.vaOwned===handle.id&&!node.matches(':popover-open')&&frame.isConnected&&frame.ownerDocument===doc&&frame.parentElement===node)&&[inspection.reading,inspection.header,inspection.composer,...(inspection.readingViewport?[inspection.readingViewport]:[]),...inspection.protectedRegions].every(node=>node?.isConnected&&node.ownerDocument===doc)&&m.markers.filter(x=>x.attr==='data-va-mask-workspace').every(({root,attr,nativeClass,nativeStyle,nativeHidden,nativeAriaHidden})=>root.getAttribute(attr)===handle.id&&root.getAttribute('class')===nativeClass&&root.getAttribute('style')===nativeStyle&&root.getAttribute('hidden')===nativeHidden&&root.getAttribute('aria-hidden')===nativeAriaHidden);
  };
  return {
+  prepareWorkspace(handle){
+   const m=lookup(handle),proof=m.inspection.workspaceFlow,workspace=m.surfaces.find(s=>s.role==='workspace')?.node;
+   if(m.projectFlow||!proof||!workspace||hasNativeLayer()||doc.querySelector('dialog[open]:not([data-va-owned]),[popover]:popover-open:not([data-va-owned])'))return null;
+   const {viewport,panel,top,height}=proof;
+   if(panel!==m.inspection.reading||viewport!==m.inspection.readingViewport||!panel.isConnected||!viewport.isConnected||!viewport.contains(panel)||!Number.isFinite(height)||height<=0||height>doc.defaultView.innerHeight||!Number.isFinite(top))return null;
+   const before=viewport.scrollTop,delta=panel.getBoundingClientRect().top-top;
+   if(delta<=1)return null;
+   const slot=doc.createElement('div');slot.id=m.handle.id+'_project_flow';slot.dataset.vaOwned=m.handle.id;slot.setAttribute('aria-hidden','true');
+   slot.style.setProperty('--va-project-flow-height',Math.ceil(height)+'px');
+   const flow={slot,viewport,panel,parent:panel.parentElement,before,written:before,workspace,url:doc.location.href};
+   m.projectFlow=flow;m.projectFlowMutations.set(slot,{added:panel,removed:null});
+   try{
+    workspace.setAttribute('data-va-layout-preparing','');panel.append(slot);
+    viewport.scrollTop=before+delta;flow.written=viewport.scrollTop;
+    if(Math.abs(panel.getBoundingClientRect().top-top)>1)throw Error('project-flow-not-aligned');
+    let settled=false;
+    return accepted=>{if(settled)return;settled=true;if(m.projectFlow!==flow)return;if(!accepted||!workspace.matches(':popover-open'))releaseProjectFlow(m);else workspace.removeAttribute('data-va-layout-preparing');};
+   }catch{releaseProjectFlow(m);return null;}
+  },
   setAppearance(handle,role,value){
    const appearance=validateFrameAppearance(value),s=lookup(handle).surfaces.find(s=>s.role===role&&!s.retired);if(!s)return false;
    const canvas=appearance.canvas??(appearance.theme==='dark'?(role==='sidebar'?'#171717':'#212121'):(role==='sidebar'?'#f9f9f9':'#ffffff'));
@@ -169,14 +200,15 @@ export function createMountSurface({document:doc,createFrameURL,hasNativeLayer=(
    }
    style.textContent+=`#${id}_sidebar[data-va-composed-sidebar]{overflow:hidden}#${id}_sidebar>[data-va-native-boundary]{display:none}#${id}_sidebar[data-va-composed-sidebar]>[data-va-native-boundary]{display:block;position:absolute;left:0;width:100%;box-sizing:border-box;height:28px;padding:5px 12px 4px;border-top:1px solid color-mix(in srgb,CanvasText 10%,Canvas);font:11px/18px system-ui;color:color-mix(in srgb,CanvasText 60%,Canvas);background:var(--va-canvas,Canvas);pointer-events:none}`;
    style.textContent+=`#${id}_slot{display:block;box-sizing:border-box;width:100%;height:0;min-height:0;flex:0 0 auto;margin:0;padding:0;border:0;overflow:hidden;pointer-events:none;} body:has(#${id}_sidebar:popover-open) #${id}_slot,#${id}_slot[data-va-slot-retained]{height:var(--va-slot-height);}`;
-   const m={handle,surfaces,markers,style,styleText:style.textContent,onSurrender,inspection:{...inspection,preserveNativeSidebar:inspection.preserveNativeSidebar===true||!inspection.sidebarRect,historyMaskRoots:[...inspection.historyMaskRoots],protectedRegions:[...inspection.protectedRegions]}};mounts.set(id,m);syncSlot(m,inspection.sidebarPlacement);
+   style.textContent+=`#${id}_project_flow{display:block;box-sizing:border-box;height:0;min-height:0;flex:0 0 auto;margin:0;padding:0;border:0;overflow:hidden;pointer-events:none}body:has(#${id}_workspace:popover-open,#${id}_workspace[data-va-layout-preparing],#${id}_workspace[data-va-reading-probe]) #${id}_project_flow{height:var(--va-project-flow-height)}`;
+   const m={handle,surfaces,markers,style,styleText:style.textContent,onSurrender,projectFlowMutations:new WeakMap(),inspection:{...inspection,preserveNativeSidebar:inspection.preserveNativeSidebar===true||!inspection.sidebarRect,historyMaskRoots:[...inspection.historyMaskRoots],protectedRegions:[...inspection.protectedRegions]}};mounts.set(id,m);syncSlot(m,inspection.sidebarPlacement);
    const workspace=surfaces.find(s=>s.role==='workspace')?.node;
    // toggle is queued and can merge close/reopen into open→open. Invalidate
    // old presentation intent at the synchronous, non-cancellable close edge.
    // The owner must not hide/reopen surfaces from this notification.
    let closing=false;
    const ownWorkspace=surfaces.find(s=>s.role==='workspace');
-   const workspaceClosing=e=>{if(ownWorkspace.closeReason||m.readingProbe?.ownClosing&&e.target===workspace&&e.oldState==='open'&&e.newState==='closed'||m.readingProbe?.ownOpening&&e.target===workspace&&e.oldState==='closed'&&e.newState==='open')return;if(m.readingProbe)m.readingProbe.cancelled=true;if(closing||e.target!==workspace||e.oldState!=='open'||e.newState!=='closed'||mounts.get(id)!==m||!workspace.isConnected||!workspace.matches(':popover-open'))return;closing=true;try{onSurrender({role:'workspace',reason:'native-reading',phase:'closing'});}catch{}finally{closing=false;}};
+   const workspaceClosing=e=>{if(ownWorkspace.closeReason||m.readingProbe?.ownClosing&&e.target===workspace&&e.oldState==='open'&&e.newState==='closed'||m.readingProbe?.ownOpening&&e.target===workspace&&e.oldState==='closed'&&e.newState==='open')return;if(m.readingProbe)m.readingProbe.cancelled=true;if(closing||e.target!==workspace||e.oldState!=='open'||e.newState!=='closed'||mounts.get(id)!==m||!workspace.isConnected||!workspace.matches(':popover-open'))return;closing=true;releaseProjectFlow(m);try{onSurrender({role:'workspace',reason:'native-reading',phase:'closing'});}catch{}finally{closing=false;}};
    const workspaceClosed=e=>{if(ownWorkspace.closeReason||e.target!==workspace||e.newState!=='closed'||mounts.get(id)!==m||!workspace.isConnected||workspace.matches(':popover-open'))return;try{onSurrender({role:'workspace',reason:'native-reading'});}catch{}};
    const ownSidebar=surfaces.find(s=>s.role==='sidebar'),sidebar=ownSidebar.node;
    const revealExit=()=>{const height=ownSidebar.frame.getBoundingClientRect().height;revealSidebar(m,{top:height-32,bottom:height-8});};ownSidebar.close.addEventListener('focus',revealExit);
@@ -206,7 +238,16 @@ export function createMountSurface({document:doc,createFrameURL,hasNativeLayer=(
    if(!Array.isArray(records)||!records.length)return false;let changed=false;
    const contains=(parent,child)=>parent===child||parent?.contains?.(child)===true;
    for(const m of mounts.values()){
-    for(const role of ['workspace','sidebar']){const affected=m.markers.some(({root,attr})=>attr==='data-va-mask-'+role&&m.surfaces.some(s=>s.role===role&&s.node.matches(':popover-open'))&&records.some(record=>
+    // Consume only our exact single append/remove once. The same owned node
+    // being removed or reinserted later by the host is a native layout change.
+    const nativeRecords=records.filter(record=>{
+     if(record.type!=='childList')return true;
+     const added=[...(record.addedNodes??[])],removed=[...(record.removedNodes??[])];
+     const kind=added.length===1&&removed.length===0?'added':removed.length===1&&added.length===0?'removed':null;
+     if(!kind)return true;const token=m.projectFlowMutations.get(kind==='added'?added[0]:removed[0]);
+     if(token?.[kind]!==record.target)return true;token[kind]=null;return false;
+    });
+    for(const role of ['workspace','sidebar']){const affected=m.markers.some(({root,attr})=>attr==='data-va-mask-'+role&&m.surfaces.some(s=>s.role===role&&s.node.matches(':popover-open'))&&nativeRecords.some(record=>
      contains(root,record.target)||record.type==='attributes'&&contains(record.target,root)||record.type==='childList'&&[...(record.addedNodes??[]),...(record.removedNodes??[])].some(node=>contains(node,root))));
     if(affected){surrender(m,role);changed=true;}}
    }return changed;
@@ -255,6 +296,7 @@ export function createMountSurface({document:doc,createFrameURL,hasNativeLayer=(
    const intact=()=>mounts.get(handle.id)===m&&m.handle===handle&&m.style.isConnected&&m.style.textContent===m.styleText&&m.surfaces.every(({node,frame,role},i)=>role==='sidebar'||node.isConnected&&node.ownerDocument===doc&&node.dataset.vaOwned===handle.id&&frame.isConnected&&frame.parentElement===node)&&m.markers.filter(x=>x.attr==='data-va-mask-workspace').every(({root,attr,nativeClass,nativeStyle,nativeHidden,nativeAriaHidden})=>root.isConnected&&root.ownerDocument===doc&&root.getAttribute(attr)===handle.id&&root.getAttribute('class')===nativeClass&&root.getAttribute('style')===nativeStyle&&root.getAttribute('hidden')===nativeHidden&&root.getAttribute('aria-hidden')===nativeAriaHidden)&&!hasNativeLayer()&&!doc.querySelector('dialog[open]:not([data-va-owned]),[popover]:popover-open:not([data-va-owned])')&&guard();
    if(!intact())return null;
    const probe=m.readingProbe={cancelled:false,ownClosing:true};let value=null,ok=false;
+   if(m.projectFlow)workspace.setAttribute('data-va-reading-probe','');
    const changes=new doc.defaultView.MutationObserver(()=>{probe.cancelled=true;});
    changes.observe(doc.documentElement,{subtree:true,childList:true,attributes:true,characterData:true});
    try{
@@ -263,7 +305,7 @@ export function createMountSurface({document:doc,createFrameURL,hasNativeLayer=(
     value=read();if(value?.then||probe.cancelled||!intact())return null;
     probe.ownOpening=true;for(const [i,target] of m.surfaces.entries())if(states[i]&&!target.node.matches(':popover-open')){target.closeReason=null;target.node.showPopover();}probe.ownOpening=false;
     ok=!probe.cancelled&&intact()&&changes.takeRecords().length===0&&m.surfaces.every((s,i)=>s.node.matches(':popover-open')===states[i]);return ok?value:null;
-   }catch{return null;}finally{changes.disconnect();m.readingProbe=null;if(!ok)surrender(m);}
+   }catch{return null;}finally{changes.disconnect();workspace.removeAttribute('data-va-reading-probe');m.readingProbe=null;if(!ok)surrender(m);}
   },
   showReading(handle){hide(lookup(handle),'workspace','native-reading');},
   suspend(handle,reason='suspended',role=null){hide(lookup(handle),role,reason);},

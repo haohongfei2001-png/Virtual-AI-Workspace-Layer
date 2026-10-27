@@ -7,8 +7,52 @@ const require=createRequire(new URL('../../extension/tooling/package.json',impor
 const plugins=baseline?[{name:'saved-baseline',setup(build){build.onLoad({filter:/src\/(host\/(chatgpt-adapter|chatgpt-observed-profile)|navigation\/mount-surface)\.mjs$/},args=>({contents:execFileSync('git',['show',`${baseline}:${args.path.slice(process.cwd().length+1)}`],{encoding:'utf8'}),loader:'js'}));}}]:[];
 const {outputFiles}=await require('esbuild').build({stdin:{contents:"export {createChatGPTAdapter} from './src/host/chatgpt-adapter.mjs';export {createURLPolicy} from './src/host/url-policy.mjs';export {CHATGPT_OBSERVED_PROFILE,waitForNativeLayout} from './src/host/chatgpt-observed-profile.mjs';export {createSurfaceController} from './src/host/surface-controller.mjs';export {createMountSurface} from './src/navigation/mount-surface.mjs';",resolveDir:process.cwd()},plugins,bundle:true,write:false,format:'iife',globalName:'projectModule'});
 const project='g-p-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',cid='33333333-3333-4333-8333-333333333333',url=`https://chatgpt.com/g/${project}/project`;
-const started=performance.now(),browser=await chromium.launch({headless:true}),results=[];
+const started=performance.now(),browser=await chromium.launch({headless:true,proxy:{server:'http://127.0.0.1:9',bypass:'127.0.0.1,localhost'}}),results=[];
 try{
+ if(process.argv.includes('--project-flow-only')){
+  const page=await browser.newPage({viewport:{width:1440,height:900}});
+  await page.route('**/*',r=>r.request().url()===url?r.fulfill({contentType:'text/html',body:observedProjectHTML(project,cid)}):r.abort());
+  await page.goto(url);await page.addScriptTag({content:outputFiles[0].text});
+  const checks=await page.evaluate(async()=>{
+   const {createChatGPTAdapter,createURLPolicy,CHATGPT_OBSERVED_PROFILE:profile,createMountSurface}=projectModule;
+   let surface;const adapter=createChatGPTAdapter({document,profile,urlPolicy:createURLPolicy({profile:{projectId:({container})=>/^g-p-[a-f0-9]{32}$/.test(container)?container:null}}),isOwnedMask:n=>surface?.isMasked(n)===true,isOwnedSurface:n=>surface?.isOwnedSurface(n)===true});
+   const binding={documentToken:'fixture',producerToken:'fixture',browserDocumentId:'project',routeEpoch:1,origin:location.origin,expiresAt:new Date(Date.now()+30000).toISOString()};
+   await adapter.start({binding,emit:async p=>({state:'accepted',localSeq:p.localSeq,receiptId:'fixture'})});
+   const initial=adapter.inspect(),panel=document.querySelector('#project-panel'),port=document.querySelector('#project-scroll'),form=document.querySelector('form'),native=form.outerHTML;
+   surface=createMountSurface({document,createFrameURL:({role})=>'chrome-extension://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/'+role+'.html'});
+   if(!initial.ok)throw Error('initial-proof:'+initial.reason);
+   const handle=await surface.mount({binding},initial),frames=surface.frames(handle),before=port.scrollTop;
+   const mutations=new MutationObserver(()=>{});mutations.observe(panel,{childList:true});
+   const checks={flowAdmitted:!!initial.workspaceFlow};
+   const enter=()=>{const settle=surface.prepareWorkspace(handle);if(!settle)return false;const next=adapter.inspect();const ok=next.ok&&next.regionEpoch===initial.regionEpoch&&surface.refreshGeometry(handle,next)&&surface.showWorkspace(handle);settle(ok);return ok;};
+   checks.explicitOverview=enter();
+   checks.ownInsertionDoesNotWithdraw=surface.surrenderChanged(mutations.takeRecords())===false&&surface.visibility(handle).workspace;
+   const expanded=adapter.inspect(),written=port.scrollTop;
+   checks.completeNativeScrollViewport=expanded.ok&&expanded.readingRect.height>=port.clientHeight-1&&expanded.readingRect.y===port.getBoundingClientRect().top;
+   checks.framesAndNativeFormUnchanged=frames.every((f,i)=>f.frame===surface.frames(handle)[i].frame)&&native===form.outerHTML&&document.querySelector('#draft').value==='fixture draft';
+   checks.onlyOriginalPanelMasked=surface.isMasked(panel)&&!surface.isMasked(form)&&!surface.isMasked(port)&&panel.lastElementChild.matches('[data-va-owned]');
+   checks.nativeReadDoesNotCollapseFlow=surface.withNativeReading(handle,()=>port.scrollTop,()=>true)===written&&port.scrollTop===written;
+   checks.renewalDoesNotReposition=surface.refreshGeometry(handle,adapter.inspect())&&port.scrollTop===written;
+   surface.showReading(handle);
+   checks.ownRemovalDoesNotWithdraw=surface.surrenderChanged(mutations.takeRecords())===false;
+   checks.readingRestoresOriginalScroll=port.scrollTop===before&&!panel.querySelector('[data-va-owned]')&&native===form.outerHTML;
+   surface.refreshGeometry(handle,adapter.inspect());checks.secondEntry=enter();
+   // A later scroll is user-owned even when removing our space naturally clamps
+   // it. Observe writes rather than equating that browser clamp with restoration.
+   port.scrollTop=written-20;const descriptor=Object.getOwnPropertyDescriptor(Element.prototype,'scrollTop'),writes=[];
+   Object.defineProperty(port,'scrollTop',{configurable:true,get(){return descriptor.get.call(this);},set(v){writes.push(v);descriptor.set.call(this,v);}});
+   surface.showReading(handle);checks.userScrollNotOverwritten=writes.length===0;delete port.scrollTop;
+   port.style.scrollSnapType='y mandatory';checks.snapLayoutKeepsNative=adapter.inspect().workspaceFlow===null;port.style.scrollSnapType='';
+   surface.refreshGeometry(handle,adapter.inspect());checks.reentryAfterNativeLayout=enter();
+   surface.surrenderChanged(mutations.takeRecords());panel.querySelector('[data-va-owned]').remove();
+   checks.hostSlotRemovalWithdrawsWorkspaceOnly=surface.surrenderChanged(mutations.takeRecords())===true&&!surface.visibility(handle).workspace&&surface.visibility(handle).sidebar;
+   surface.refreshGeometry(handle,adapter.inspect());checks.reentryAfterSlotRemoval=enter();
+   const replacement=port.cloneNode(true);port.replaceWith(replacement);const detached=port.scrollTop;surface.showReading(handle);
+   checks.detachedViewportNotRestored=port.scrollTop===detached&&!panel.querySelector('[data-va-owned]');
+   mutations.disconnect();surface.dispose(handle);await adapter.stop();return checks;
+  });
+  assert(Object.values(checks).every(Boolean),JSON.stringify(checks));results.push({mode:'project-flow-layout',passed:true,checks});await page.close();
+ }else{
  if(!baseline){
   const page=await browser.newPage({viewport:{width:785,height:1193}});
   await page.route('**/*',r=>r.request().url()===url?r.fulfill({contentType:'text/html',body:observedProjectHTML(project,cid)}):r.abort());
@@ -151,6 +195,7 @@ try{
   }
   }catch(error){result.passed=false;result.driverError=String(error.message);}
   result.durationMs=performance.now()-caseStarted;results.push(result);await page.close();
+ }
  }
 }finally{await browser.close();}
 console.log(JSON.stringify({status:results.every(r=>r.passed)?'PASS_WEB_MECHANISM_ONLY':'FAIL',baseline:baseline??null,durationMs:performance.now()-started,authorization:'FIXTURE_NOT_LIVE_SCOPE',results}));
