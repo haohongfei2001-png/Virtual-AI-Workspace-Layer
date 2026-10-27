@@ -659,3 +659,21 @@ test('completed native input reproof repairs paused layout without waiting for r
  f.surface.hasNativeInputFocus=()=>false;f.slot.children[0].events.click({isTrusted:true});
  assert.equal(f.calls.show,2);assert.equal(f.calls.dispose,0);f.controller.stop();
 });
+
+test('closed flow re-entry refreshes CSS-only viewport changes without replacing grants',async()=>{
+ const f=fixture();await f.controller.start({});await f.both();f.controller.showReading();
+ let stale=true,reproofs=0;f.surface.backend='document-flow';f.surface.isSameNativeRegions=()=>true;
+ f.surface.needsNativeBaselineRefresh=()=>stale;f.adapter.inspectStructure=()=>f.adapter.inspect();
+ f.surface.refreshNativeBaseline=(_handle,inspect)=>{reproofs++;stale=false;return inspect();};
+ assert.equal(f.controller.showWorkspace(true),true);assert.equal(reproofs,1);
+ assert.equal(f.calls.register,1);assert.equal(f.calls.confirm.length,2);assert.equal(f.calls.dispose,0);
+ assert.equal(f.controller.showWorkspace(),true);assert.equal(reproofs,1);f.controller.stop();
+});
+
+test('failed responsive native proof cannot reopen workspace on stale coordinates',async()=>{
+ const f=fixture();await f.controller.start({});await f.both();f.controller.showReading();
+ const shown=f.calls.show;f.surface.backend='document-flow';f.surface.isSameNativeRegions=()=>true;
+ f.surface.needsNativeBaselineRefresh=()=>true;f.surface.refreshNativeBaseline=()=>null;
+ assert.equal(f.controller.showWorkspace(true),false);assert.equal(f.calls.show,shown);
+ assert.equal(f.calls.dispose,0);f.controller.stop();
+});

@@ -122,10 +122,12 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
  }
  function inspectPresentation(state){
   if(surface.backend!=='document-flow'||!state?.handle)return adapter.inspect();
-  if(surface.isSameNativeRegions(state.handle)!==true){
+  if(surface.isSameNativeRegions(state.handle)!==true||surface.needsNativeBaselineRefresh?.(state.handle)===true){
    // Native input can legitimately keep new focus/presentation classes.
    // Re-proof only after the original layout is restored; never bless a
    // visible mutated layout, stale lease, native dispatch or new identity.
+   // CSS-only responsive changes keep the same nodes and attributes, but the
+   // restored native page must supply fresh coordinates before re-entry too.
    if(!state.nativeDispatch&&authorized(state)&&!adapter.hasNativeLayer()){
     const refreshed=surface.refreshNativeBaseline?.(state.handle,()=>adapter.inspect());
     if(refreshed?.ok)return refreshed;

@@ -9,6 +9,7 @@ export function createFlowMountSurface({document:doc,createFrameURL,hasNativeLay
  const lookup=handle=>{const m=mounts.get(handle?.id);if(!m||m.handle!==handle)throw Error('stale-mount');return m;};
  const owned=node=>!!node&&[...mounts.values()].some(m=>m.roles.some(s=>s.node===node||s.exit===node));
  const open=s=>s.exit.matches(':popover-open');
+ const viewport=()=>`${win.innerWidth}:${win.innerHeight}`;
  const intact=(m,s)=>s.node.isConnected&&s.frame.isConnected&&s.frame.parentElement===s.node&&!s.frame.hasAttribute('srcdoc')&&s.frame.src===s.url&&s.node.ownerDocument===doc&&m.style.isConnected&&m.style.textContent===m.css;
  const nativeLayer=()=>hasNativeLayer()||!!doc.querySelector('dialog[open]:not([data-va-owned]),[aria-modal="true"]:not([data-va-owned]),[popover]:popover-open:not([data-va-owned])');
  function hide(m,role,reason='suspended'){
@@ -63,7 +64,7 @@ export function createFlowMountSurface({document:doc,createFrameURL,hasNativeLay
    if(!context?.binding?.documentToken)throw Error('invalid-mount-inspection');
    const plan=captureNativeBaseline({document:doc,inspection,isOwnedSurface:owned});if(!plan)throw Error('unsupported-native-flow-topology');
    const id='va_'+win.crypto.randomUUID().replaceAll('-',''),handle=Object.freeze({id,documentToken:context.binding.documentToken,regionEpoch:inspection.regionEpoch});
-   const m={handle,plan,inspection,roles:[],markers:[],style:doc.createElement('style'),css:'',onSurrender,onSidebarScroll,onManagementChanged,cleanup:()=>{}};mounts.set(id,m);
+   const m={handle,plan,inspection,nativeViewport:viewport(),roles:[],markers:[],style:doc.createElement('style'),css:'',onSurrender,onSidebarScroll,onManagementChanged,cleanup:()=>{}};mounts.set(id,m);
    try{
     for(const role of ['workspace','sidebar']){
      const url=new URL(createFrameURL({role,mountId:id}));if(url.protocol!=='chrome-extension:')throw Error('invalid-ui-frame-origin');
@@ -115,6 +116,7 @@ export function createFlowMountSurface({document:doc,createFrameURL,hasNativeLay
   readNativeManagement(handle){return lookup(handle).management?.read()??[];},
   validateActiveLayout(handle){return active(lookup(handle));},
   isSameNativeRegions(handle){return isSameNativeRegions(lookup(handle).plan);},
+  needsNativeBaselineRefresh(handle){const m=lookup(handle);return !open(m.roles[0])&&m.nativeViewport!==viewport();},
   refreshNativeBaseline(handle,inspect){
    const m=lookup(handle),workspace=m.roles[0],prior=m.plan;
    // Only remeasure the actual restored native page. An in-flight first
@@ -127,7 +129,7 @@ export function createFlowMountSurface({document:doc,createFrameURL,hasNativeLay
    if(prior.nativeControls.some(old=>!next.nativeControls.some(current=>current.node===old.node&&current.parent===old.parent)))return null;
    const options={id:handle.id,exitId:workspace.exit.id,workspaceId:workspace.node.id},oldRules=flowLayoutRules(prior,options);
    if(!m.css.startsWith(oldRules))return null;
-   m.css=flowLayoutRules(next,options)+m.css.slice(oldRules.length);m.plan=next;m.style.textContent=m.css;
+   m.css=flowLayoutRules(next,options)+m.css.slice(oldRules.length);m.plan=next;m.nativeViewport=viewport();m.style.textContent=m.css;
    return inspection;
   },
   hasNativeInputFocus(handle){const m=lookup(handle);return m.plan.composer.contains(doc.activeElement);},

@@ -13,6 +13,32 @@ const P='g-p-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',C='33333333-3333-4333-8333-333333
 const legacy=(await readFile(new URL('./fixtures/legacy.html',import.meta.url),'utf8')).replace('<link rel="stylesheet" href="/native.css">','<style>'+await readFile(new URL('./fixtures/native.css',import.meta.url),'utf8')+'</style>');
 const browser=await chromium.launch({headless:true,args:['--proxy-server=http://127.0.0.1:9','--proxy-bypass-list=<-loopback>']}),results=[];
 try{
+ // CSS-only breakpoint counterexample, not a newly observed ChatGPT topology.
+ // The native fixture is explicitly responsive and all its controls fit.
+ const responsive=await browser.newPage({viewport:{width:1440,height:1000}});
+ await responsive.route('**/*',r=>r.request().url()==='https://chatgpt.com/c/'+C?r.fulfill({contentType:'text/html',body:legacy.replace('</head>','<style>#composer input[type=file]{max-width:100%}@media(max-width:760px){aside{display:none}header{height:110px;flex-wrap:wrap;gap:4px}header h1{font-size:14px}}</style></head>')}):r.abort());
+ await responsive.goto('https://chatgpt.com/c/'+C);await responsive.addScriptTag({content:outputFiles[0].text});
+ const initial=await responsive.evaluate(async()=>{
+  const {createChatGPTAdapter,createURLPolicy,createFlowMountSurface}=flowModule;let surface;
+  const adapter=createChatGPTAdapter({document,urlPolicy:createURLPolicy(),isOwnedMask:n=>surface?.isMasked(n),isOwnedSurface:n=>surface?.isOwnedSurface(n)});
+  const binding={documentToken:'local-probe',producerToken:'local-probe',browserDocumentId:'local-probe',routeEpoch:1,origin:location.origin,expiresAt:new Date(Date.now()+20000).toISOString()};
+  await adapter.start({binding,emit:async p=>({state:'accepted',localSeq:p.localSeq,receiptId:'local-probe'})});const inspection=adapter.inspect();if(!inspection.ok)return {inspection};
+  surface=createFlowMountSurface({document,createFrameURL:({role})=>'chrome-extension://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/'+role+'.html'});const handle=await surface.mount({binding},inspection);globalThis.probe={surface,handle,adapter,inspection};return {shown:surface.showWorkspace(handle),active:surface.validateActiveLayout(handle)};
+ });
+ await responsive.evaluate(()=>probe.surface.showReading(probe.handle));
+ await responsive.setViewportSize({width:420,height:1000});
+ const narrow=await responsive.evaluate(()=>{
+  const {surface,handle,adapter,inspection}=probe;const rect=n=>{const r=n.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height};};
+  const same=surface.isSameNativeRegions(handle),needsRefresh=surface.needsNativeBaselineRefresh(handle),frames=surface.frames(handle).map(x=>x.frame);const refreshed=surface.refreshNativeBaseline(handle,()=>adapter.inspect());const shown=surface.showWorkspace(handle);const result={same,needsRefresh,framesKept:frames.every((frame,i)=>frame===surface.frames(handle)[i].frame),fresh:!surface.needsNativeBaselineRefresh(handle),refreshed:!!refreshed,shown,workspace:rect(surface.frames(handle)[0].frame.parentElement),active:surface.validateActiveLayout(handle)};surface.showReading(handle);return result;
+ });
+ assert.deepEqual(initial,{shown:true,active:true});
+ assert.equal(narrow.same,true);assert.equal(narrow.needsRefresh,true);assert.equal(narrow.refreshed,true);
+ assert.equal(narrow.shown,true);assert.equal(narrow.active,true);assert.equal(narrow.framesKept,true);assert.equal(narrow.fresh,true);
+ assert.equal(narrow.workspace.x,0);assert.equal(narrow.workspace.width,420);
+ await responsive.setViewportSize({width:1440,height:1000});
+ const wideAgain=await responsive.evaluate(()=>{const {surface,handle,adapter}=probe;const stale=surface.needsNativeBaselineRefresh(handle);const refreshed=!!surface.refreshNativeBaseline(handle,()=>adapter.inspect());const shown=surface.showWorkspace(handle),active=surface.validateActiveLayout(handle);surface.dispose(handle);adapter.stop();return {stale,refreshed,shown,active};});
+ assert.deepEqual(wideAgain,{stale:true,refreshed:true,shown:true,active:true});await responsive.close();
+
  // Reuse the actual anonymous partition shape; replacement is a lifecycle
  // counterexample, not a claim that a new native selector has been observed.
  const replacement=await browser.newPage({viewport:{width:1400,height:900}});

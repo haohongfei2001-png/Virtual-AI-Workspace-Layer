@@ -57,7 +57,9 @@ async function runProfile(profile,titleMode='all'){
    if(!sidebarFits)assert.equal(await page.locator('nav[aria-label="Chat history"]').evaluate(n=>getComputedStyle(n).visibility==='visible'),true);
    const frames=Object.fromEntries(['workspace','sidebar'].map(role=>[role,role==='sidebar'&&!sidebarFits?null:page.frames().find(f=>f.url()===`chrome-extension://${id}/${role}.html`)]));assert(frames.workspace);if(sidebarFits)assert(frames.sidebar);
    await frames.workspace.locator('.workspace').waitFor();if(frames.sidebar)await frames.sidebar.locator('.toolbar:not(.sidebar-footer)').waitFor();
-   await frames.workspace.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
+   // Hidden frames do not deliver animation frames; do not hang the matrix
+   // indefinitely while pretending the parent rectangle proves visibility.
+   await frames.workspace.waitForFunction(()=>document.visibilityState==='visible'&&innerWidth>0&&innerHeight>0,null,{timeout:6000});
    return frames;
   }
   await workspace(true);
