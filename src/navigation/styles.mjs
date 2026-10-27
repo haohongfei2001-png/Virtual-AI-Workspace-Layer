@@ -50,6 +50,10 @@ export const css=`
 .project-group-head:hover>.project-create,.project-group-head:focus-within>.project-create{opacity:1}
 @media(pointer:coarse){.working-set-add,.project-group-head>.project-create{opacity:1;min-width:34px;min-height:34px}}
 
+/* One host-owned declarative close occupies the reserved edge, not a blank
+   full-width row. The sidebar toolbar reserves its exact footprint. */
+:host([data-vaiwl-frame-role="sidebar"]) .toolbar:first-child{padding-right:34px}
+:host([data-vaiwl-frame-role="workspace"]) .arrows{top:38px}
 /* The host may retain its native rail at a narrow viewport. Reflow only our
    owned controls so required titles and actions still get usable inline space. */
 @media(max-width:240px){

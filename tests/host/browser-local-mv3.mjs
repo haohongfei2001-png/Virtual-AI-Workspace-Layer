@@ -42,7 +42,7 @@ try{
   await sidebar.getByRole('button',{name:'查找已知项目与聊天',exact:true}).waitFor();
   assert.equal(await page.locator('[data-va-mask-sidebar]').count(),0);
   report.checks.partitionSlotWithFormalProjectAndMembers=true;
-  await page.getByText('原生项目与资源',{exact:true}).waitFor();
+  await page.getByText('ChatGPT 项目管理与最近聊天',{exact:true}).waitFor();
   assert.equal(await workspace.locator('[data-vaiwl-candidate-root]:visible').count(),0,'no empty native-project disclosure');
   report.images=[];
   const capture=async name=>{const path=join(dir,name+'.png');await page.screenshot({path});report.images.push(path);};
@@ -50,6 +50,37 @@ try{
   report.checks.sparseSidebarFitsContent=true;
   assert(await page.evaluate(()=>{const panel=document.querySelector('#project-panel'),workspace=document.querySelector('[id$="_workspace"]');return workspace.getBoundingClientRect().width>panel.getBoundingClientRect().width+300;}));
   report.checks.centeredNativePanelDoesNotConstrainWorkspace=true;
+  // The host exit is retained declaratively, but no longer inserts a blank
+  // row above the formal UI. It occupies the renderer's reserved edge only.
+  assert(await page.locator('[id$="_workspace"]').evaluate(n=>Math.abs(n.getBoundingClientRect().top-n.querySelector('iframe').getBoundingClientRect().top)<1));
+  assert.equal(await sidebar.getByRole('button',{name:'退出工作空间增强',exact:true}).count(),0);
+  report.checks.singleDeclarativeHostExit=true;
+  // Reuse the actual empty auxiliary component. Temporarily expose its summary
+  // only to measure slot placement; no candidate data or actions are invented.
+  for(const [frame,role] of [[workspace,'workspace'],[sidebar,'sidebar']]){
+   assert(await frame.locator('[data-vaiwl-candidate-root]').evaluate((n,role)=>{
+    const slot=n.assignedSlot;if(!slot||slot.name!=='native-candidates')return false;
+    if(role==='sidebar')return slot.parentElement.tagName==='SECTION'&&slot.nextElementSibling?.classList.contains('sidebar-footer');
+    const area=slot.parentElement,cards=area.querySelector('.cards');if(!area.classList.contains('workspace')||!cards)return false;
+    const hidden=n.hidden;try{n.hidden=false;const r=n.getBoundingClientRect(),c=cards.getBoundingClientRect();return r.top>=c.bottom&&r.top-c.bottom<80;}finally{n.hidden=hidden;}
+   },role));
+  }
+  report.checks.nativeCandidatesInFormalContentFlow=true;
+  // Exercise the existing disclosure's actual toggle/size path. A blank
+  // owned test box supplies height, not native records or synthetic targets.
+  const slotHeight=await page.locator('[data-va-sidebar-slot]').evaluate(n=>n.getBoundingClientRect().height);
+  await sidebar.locator('[data-vaiwl-candidate-root]').evaluate(n=>{n.hidden=false;n.firstElementChild.nextElementSibling.style.minHeight='200px';n.open=true;});
+  await page.waitForFunction(h=>document.querySelector('[data-va-sidebar-slot]').getBoundingClientRect().height>h+100,slotHeight);
+  await sidebar.locator('[data-vaiwl-candidate-root]').evaluate(n=>{n.open=false;n.hidden=true;n.firstElementChild.nextElementSibling.style.removeProperty('min-height');});
+  await page.waitForFunction(h=>Math.abs(document.querySelector('[data-va-sidebar-slot]').getBoundingClientRect().height-h)<2,slotHeight);
+  report.checks.candidateDisclosureResizesWithoutRebuilding=true;
+  const checkExitRail=async()=>{
+   const close=await page.locator('[id$="_workspace"]>button').boundingBox();
+   for(const control of await workspace.locator('.arrows button').all()){
+    const r=await control.boundingBox();assert(r&&close);assert(!(r.x<close.x+close.width&&r.x+r.width>close.x&&r.y<close.y+close.height&&r.y+r.height>close.y),'host exit must not cover period/settings controls');
+   }
+  };
+  await checkExitRail();
   await capture('partition-desktop-workspace');
 
   const before=await page.locator('[data-fixture-structure-row="1"]').evaluate(n=>n.outerHTML);
@@ -78,7 +109,7 @@ try{
   await page.setViewportSize({width:760,height:900});
   await page.waitForTimeout(300);
   await workspace.getByRole('link',{name:'Native B',exact:true}).first().waitFor();
-  await capture('partition-narrow-workspace');
+  await checkExitRail();await capture('partition-narrow-workspace');
   await page.setViewportSize({width:1000,height:900});
   await page.waitForTimeout(300);
 
@@ -119,6 +150,7 @@ try{
   assert.equal(await theme.getAttribute('aria-expanded'),'false','same-document navigation preserves the explicit theme choice');
   await theme.click();
   await sidebar.locator('a[href="'+origin+'/c/'+B+'"]').first().waitFor();
+  await capture('partition-member-reading');
   await page.getByRole('button',{name:'返回工作空间',exact:true}).click();
   await workspace.getByRole('link',{name:'Native A',exact:true}).first().waitFor();
   await workspace.locator('a[href="'+origin+'/c/'+B+'"]').first().waitFor();

@@ -106,7 +106,7 @@ test('optional sidebar recovery keeps its native resource boundary after the fra
  f.surface.retireRole(f.handle,'sidebar');const restored=f.surface.restoreRole(f.handle,'sidebar');
  assert(restored);assert.equal(f.surface.frames(f.handle)[0].frame,workspace);
  assert.deepEqual(sidebar.children,[before[0],restored.frame,before[2]]);
- assert.equal(sidebar.children[2].textContent,'原生项目与资源');f.surface.dispose(f.handle);
+ assert.equal(sidebar.children[2].textContent,'ChatGPT 项目管理与最近聊天');f.surface.dispose(f.handle);
 });
 
 for(const field of ['historyMaskRoots','navigationSlot','sidebarRect'])test(`optional ${field} replacement does not veto workspace rebind`,async()=>{

@@ -54,3 +54,18 @@ test('invalid resume layouts reject before affecting renderer and copied input i
  const f=fixture();for(const bad of [{...layout(),scope:'forged'},{...layout(),scroll:-1},{...layout(),sidebarScroll:Infinity},{...layout(),oldOpen:['x','x']},{...layout(),capacities:[['x',0]]},{...layout(),segment:1000001}])assert.throws(()=>f.nav.restoreFrameView(bad),/invalid-frame-resume-state/);
  const original=layout();f.nav.restoreFrameView(original);original.oldOpen.length=0;original.capacities[0][1]=99;f.nav.updateFrameProjection(dto());assert(f.nav.view().oldOpen.has('home:P2'));assert.equal(f.nav.view().capacities.get('home:P2'),17);f.nav.stop();assert.equal(f.nav.restoreFrameView(layout()),false);
 });
+
+for(const role of ['workspace','sidebar'])test('native candidate panel shares formal '+role+' flow without replacing its component',()=>{
+ const f=fixture(role);f.nav.updateFrameProjection(dto(role));
+ const details=f.doc.createElement('details');details.setAttribute('data-vaiwl-candidate-root','');details.open=true;
+ assert.equal(f.nav.attachNativeCandidates(details),true);
+ const pane=f.nav.roots()[role];assert.equal(details.parentNode,pane.n);assert.equal(details.getAttribute('slot'),'native-candidates');
+ assert(f.pane().querySelector('slot'));
+ f.nav.updateFrameProjection(dto(role));assert.equal(details.parentNode,pane.n);assert.equal(details.open,true);
+ const append=pane.n.append;pane.n.append=()=>{throw Error('same-parent-move');};assert.equal(f.nav.attachNativeCandidates(details),true);pane.n.append=append;
+ f.nav.invalidate('asset-panel');f.nav.updateFrameProjection(dto(role));
+ assert.notEqual(f.nav.roots()[role].n,pane.n);assert.equal(f.nav.attachNativeCandidates(details),true);
+ assert.equal(details.parentNode,f.nav.roots()[role].n);assert.equal(details.open,true);
+ assert.equal(f.nav.attachNativeCandidates(f.doc.createElement('div')),false);
+ f.nav.stop();assert.equal(f.nav.attachNativeCandidates(details),false);
+});

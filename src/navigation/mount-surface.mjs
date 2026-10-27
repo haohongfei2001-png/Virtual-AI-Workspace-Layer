@@ -102,7 +102,7 @@ export function createMountSurface({document:doc,createFrameURL,hasNativeLayer=(
     // A label for the following native region, not a copied Project list or a
     // disclosure that pretends to control native descendants. Its layout stays
     // entirely inside our proven slot; native controls/order/state are untouched.
-    if(role==='sidebar'){const boundary=doc.createElement('div');boundary.dataset.vaNativeBoundary='';boundary.textContent='原生项目与资源';node.append(boundary);surfaces.at(-1).boundary=boundary;}
+    if(role==='sidebar'){const boundary=doc.createElement('div');boundary.dataset.vaNativeBoundary='';boundary.textContent='ChatGPT 项目管理与最近聊天';node.append(boundary);surfaces.at(-1).boundary=boundary;}
     for(const root of maskRoots){const attr='data-va-mask-'+role;markers.push({root,attr,previous:root.getAttribute(attr),nativeClass:root.getAttribute('class'),nativeStyle:root.getAttribute('style'),nativeHidden:root.getAttribute('hidden'),nativeAriaHidden:root.getAttribute('aria-hidden'),wasVisible:win.getComputedStyle?.(root).visibility==='visible'});root.setAttribute(attr,id);}
     // Keep the owned iframe's layout through native-input surrender. Removing
     // its layout on close can leave Chromium's cross-process hit target stale
@@ -111,7 +111,7 @@ export function createMountSurface({document:doc,createFrameURL,hasNativeLayer=(
     style.textContent+=`#${node.id}:not(:popover-open){display:flex;flex-direction:column;visibility:hidden;interactivity:inert;}\n`;
     // The declarative exit belongs to this surface. Host-wide button typography
     // and padding must not consume the small native history rectangle.
-    style.textContent+=`#${node.id}:popover-open{display:flex;flex-direction:column}#${node.id}>button{align-self:flex-end;flex:none;display:grid;place-items:center;box-sizing:border-box;width:24px;height:24px;margin:0;padding:0;border:0;border-radius:8px;font:12px/18px system-ui;color:inherit;background:transparent;cursor:pointer;overflow-wrap:anywhere}#${node.id}>button:hover{background:color-mix(in srgb,CanvasText 6%,Canvas)}#${node.id}>button:focus-visible{outline:2px solid currentColor;outline-offset:-2px}\n`;
+    style.textContent+=`#${node.id}:popover-open{display:flex;flex-direction:column}#${node.id}>button{position:absolute;top:${role==='sidebar'?16:6}px;right:4px;z-index:2;display:grid;place-items:center;box-sizing:border-box;width:24px;height:24px;margin:0;padding:0;border:0;border-radius:8px;font:12px/18px system-ui;color:inherit;background:transparent;cursor:pointer;overflow-wrap:anywhere}#${node.id}>button:hover{background:color-mix(in srgb,CanvasText 6%,Canvas)}#${node.id}>button:focus-visible{outline:2px solid currentColor;outline-offset:-2px}\n`;
     style.textContent+=`${allowed}:has(#${node.id}:popover-open) [data-va-mask-${role}="${id}"]{visibility:hidden;interactivity:inert;}body:has(${nativeOpen}) #${node.id}{visibility:hidden;interactivity:inert;}\n`;
    }
    style.textContent+=`#${id}_sidebar>[data-va-native-boundary]{display:none}#${id}_sidebar[data-va-composed-sidebar]>[data-va-native-boundary]{display:block;flex:none;box-sizing:border-box;height:28px;padding:5px 12px 4px;border-top:1px solid color-mix(in srgb,CanvasText 10%,Canvas);font:11px/18px system-ui;color:color-mix(in srgb,CanvasText 60%,Canvas);background:Canvas;pointer-events:none}`;

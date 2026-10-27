@@ -54,10 +54,10 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
    if(closed||!grantCurrent()||Date.parse(grant?.expiresAt)<=now())return;
    const panel=navigation?.roots?.()?.sidebar?.shadow?.querySelector('section');if(!panel)return;
    const extent=n=>{if(n.hidden)return 0;const style=doc.defaultView.getComputedStyle(n);return n.getBoundingClientRect().height+(parseFloat(style.marginTop)||0)+(parseFloat(style.marginBottom)||0);};
-   let height=52;
+   let height=28;
    for(const child of panel.children){
     if(child.classList.contains('themes')){if(!child.hidden)height+=Math.max(44,Math.min(560,[...child.children].reduce((n,c)=>n+extent(c),0)+7));}
-    else height+=extent(child);
+    else if(child.tagName!=='SLOT')height+=extent(child);
    }
    if(candidateRoot)height+=extent(candidateRoot);
    height=Math.max(240,Math.min(1024,Math.ceil(height)));
@@ -94,18 +94,19 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
  function state(value){try{onState(value);}catch{}}
  function clear(){cancel(sidebarSizeTimer);sidebarSizeTimer=null;lastSidebarSize=null;clearNavigationRefresh();cancel(freshnessTimer);freshnessTimer=null;currentDelivery=null;clearNativeInteraction();panelReturnCancel?.();readEpoch++;readTerminal=null;readErrorPanel?.stop();readErrorPanel=null;readErrorRoot?.remove();readErrorRoot=null;surfaceVisible=null;surfaceRevision=0;calibrationPending=null;dispatchPending=null;queuedDispatchView=null;dispatchEpoch++;migration.clear();candidateRestore=null;candidateMigrationId=null;candidateMigrationProject=null;locatedMigrations.clear();workspaceEntered=false;workspaceModePending=false;for(const type of ['pointerdown','keydown','wheel'])doc.removeEventListener?.(type,interruptMigration,true);migrationListening=false;candidateOffset=0;candidatePageTotal=null;candidateRun++;candidates?.stop();candidates=null;candidateRoot?.remove();candidateRoot=null;if(visibilityAttached)doc.removeEventListener?.('visibilitychange',foreground);visibilityAttached=false;wasHidden=false;bootstrapping=false;cancel(resumeTimer);resumeTimer=null;resumeQueued=null;resumeWriting=false;resumeLast=null;resumeDesired=null;resumeQuery=null;searchSnippetIds.clear();snippetLocatePending=false;snippets?.stop();snippets=null;snippetsRoot?.remove();snippetsRoot=null;currentRef=null;clearAutoNotice();backup?.stop();backup=null;backupRoot?.remove();backupRoot=null;recovery?.stop();recovery=null;recoveryRoot?.remove();recoveryRoot=null;workspaceRevision=null;viewSession=null;projectionScope=null;projectionVersion=null;horizonPending=false;presentationRevision=0;presentationIntent='';currentNativeURL='';closed=true;dirty=false;serial++;activeRead?.abort();activeRead=null;activeLocation=null;budget.reset();grant=null;query={segment:0,offset:0,limit:8};plans.clear();projectPlans.clear();navigation?.stop();navigation=null;root?.remove();root=null;}
  function ensureCandidates(){
-  if(!candidates){candidateRoot=doc.createElement('details');candidateRoot.setAttribute('data-vaiwl-candidate-root','');const summary=doc.createElement('summary');summary.textContent='其他原生项目';const content=doc.createElement('div');candidateRoot.append(summary,content);privateRoot.append(candidateRoot);candidates=createFreeFrameCandidates({document:doc,container:content,onPageRequest:next=>refreshCandidates(next),onActivate:async(renderKey,presentation)=>{
+  if(!candidates){candidateRoot=doc.createElement('details');candidateRoot.setAttribute('data-vaiwl-candidate-root','');const summary=doc.createElement('summary');summary.textContent='其他原生项目';const content=doc.createElement('div');candidateRoot.append(summary,content);privateRoot.append(candidateRoot);candidateRoot.addEventListener('toggle',queueSidebarSize);candidates=createFreeFrameCandidates({document:doc,container:content,onPageRequest:next=>refreshCandidates(next),onActivate:async(renderKey,presentation)=>{
     const active=grant;if(closed||!grantCurrent()||backup||recovery||snippets)return {ok:false};
     const actionId=doc.defaultView.crypto.randomUUID();if(!migration.beginActivation(actionId))migration.interrupt();
     candidateRun++;candidateRestore=null;candidateMigrationId=null;candidateMigrationProject=null;
     if(activeLocation){activeLocation.cancelled=true;activeRead?.abort();}
     return withRequestDeadline(()=>runtime.sendMessage({v:1,type:'HOST_UI_ACTIVATE_CANDIDATE',grantId:active.id,mountId:active.mountId,renderKey,presentation,actionId}),{now:elapsedNow,schedule,cancel});
    }});}
+  if(navigation?.attachNativeCandidates?.(candidateRoot)===false&&!candidateRoot.isConnected)privateRoot.append(candidateRoot);
  }
  function candidateReadFailed(offset){
   candidatePageTotal=null;
   migration.revoke();candidateRestore=null;candidateMigrationId=null;candidateMigrationProject=null;
-  ensureCandidates();candidateRoot.hidden=false;candidates.showError(offset);return {ok:false};
+  ensureCandidates();candidateRoot.hidden=false;candidates.showError(offset);queueSidebarSize();return {ok:false};
  }
  async function refreshCandidates(offset=candidateOffset){
   if(readTerminal||closed||backup||recovery||snippets||!grantCurrent())return;
@@ -133,7 +134,7 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
   void read(query,true,attempt);
  }
  function locationCurrent(attempt){const elapsed=elapsedNow()-attempt.started;return !attempt.cancelled&&Number.isFinite(elapsed)&&elapsed>=0&&elapsed<6000&&workspaceEntered&&!closed&&!backup&&!recovery&&!snippets&&!horizonPending&&navigation===attempt.renderer&&grant?.id===attempt.grantId&&grant?.mountId===attempt.mountId&&grant?.scopeGrantId===attempt.scopeGrantId&&grantCurrent()&&Date.parse(grant.expiresAt)>now()&&candidateMigrationId===attempt.id&&candidateMigrationProject===attempt.projectId&&migration.isPending(attempt.id)&&JSON.stringify(query)===attempt.query&&JSON.stringify(viewSession)===attempt.session&&!query.search&&!query.workingSet;}
- function clearCandidates(){candidateRun++;candidatePageTotal=null;candidates?.clear();}
+ function clearCandidates(){candidateRun++;candidatePageTotal=null;candidates?.clear();if(candidateRoot)candidateRoot.hidden=true;queueSidebarSize();}
  function stopRead(reason,retryToken){
   if(closed||!grantCurrent()||Date.parse(grant?.expiresAt)<=now())return;
   clearNavigationRefresh();readEpoch++;serial++;dispatchEpoch++;activeRead?.abort();activeRead=null;activeLocation=null;dirty=false;queuedDispatchView=null;budget.complete();
