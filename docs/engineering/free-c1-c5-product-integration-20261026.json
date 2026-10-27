@@ -1758,6 +1758,295 @@
     "nativeManagementBoundary": "Explicit trusted disclosure with unique aria-controls, actual visible duplicate IDs only. Existing real snapshot does not establish this interaction; preserve native controls where unknown.",
     "installation": "UNCHANGED",
     "libraryPatch": "NOT_ACQUIRED_NOT_RUN",
-    "independentReview": "Read-only flow_contract_review: no new blocking finding; not real acceptance"
+    "independentReview": "Read-only flow_contract_review: no new blocking finding; not real acceptance",
+    "integrationFollowup": {
+      "baseHead": "da07c20f8ce85b4c41ceea97daa69dce759dc3ac",
+      "formalModules": [
+        "src/host/document-flow-layout.mjs",
+        "src/navigation/flow-mount-surface.mjs",
+        "src/host/free-frame-client.mjs",
+        "src/host/surface-discovery.mjs"
+      ],
+      "changes": [
+        "native header inside root gets independent grid row; outside header retains identity and hit proof",
+        "late semantic controls guarded including role/tabindex/contenteditable",
+        "first trusted pointer gesture retains empty geometry only with intact owned CSS/frame and same native structure; nonrenewable 3000ms deadline; real revoke immediate",
+        "invalid action batch clears actions without rejecting valid VIEW",
+        "optional Project diagnostics cannot discard accepted navigation observation"
+      ],
+      "independentReview": "read-only flow_contract_review and flow_followup_review; deadline and intact guard findings fixed",
+      "package": "/private/tmp/VAIWL-v27-Document-Flow-Integrated-20261027/extension",
+      "archiveSha256": "e5328c519dc4b99c3ebe0916c1a7e73d89027e0d8f78c5f5015beb4e09af1a83",
+      "sourceCount": 202,
+      "sourceClosureMatchesFinalJourney": true,
+      "formalMV3": {
+        "status": "PASS",
+        "evidence": "ISOLATED_MV3_FORMAL_UI_LOCAL_SESSION_AND_PERSONAL",
+        "realChatGPT": "NOT_RUN",
+        "baseline": "chatgpt-desktop-observed-v6",
+        "package": {
+          "status": "OFFLINE_HOST_RECONSTRUCTION",
+          "releaseStatus": "NOT_RELEASE_READY",
+          "files": 201,
+          "unpacked": "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-xpJgnx/package/extension",
+          "archive": "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-xpJgnx/package/vaiwl-free-host-development.zip",
+          "archiveSha256": "52f499d7ce6a4c2d7f6f24d63600be2f8189d1ddda3bae7c57da7599cb37eee1"
+        },
+        "checks": {
+          "projectFooter": {
+            "y": 160,
+            "bottom": 200,
+            "height": 40,
+            "viewport": 200,
+            "panel": 200
+          },
+          "projectFormalFlowInputReturn": true,
+          "firstNativeToolGesture": true,
+          "homeFooter": {
+            "y": 61,
+            "bottom": 101,
+            "height": 40,
+            "viewport": 128,
+            "panel": 101
+          },
+          "homeFormalFlowInputReturn": true,
+          "conversationFooter": {
+            "y": 92,
+            "bottom": 132,
+            "height": 40,
+            "viewport": 132,
+            "panel": 132
+          },
+          "conversationFormalFlowInputReturn": true,
+          "afterUnlock": {
+            "ok": true,
+            "exists": true,
+            "mode": "personal"
+          },
+          "nativeNavScrollChain": true,
+          "localSidebarFailurePreservesWorkspace": true,
+          "beforeMember": {
+            "ok": true,
+            "exists": true,
+            "mode": "personal"
+          },
+          "afterMember": {
+            "ok": true,
+            "exists": true,
+            "mode": "personal"
+          },
+          "navigationTrace": [
+            {
+              "type": "history",
+              "documentId": "04FDBC43A2574E3EDCF3CC32A166888D"
+            }
+          ],
+          "sameDocumentProjectMemberReadingReturn": true,
+          "narrowFlowStructure": {
+            "workspaces": 1,
+            "headers": 1,
+            "composers": 1,
+            "roots": [
+              {
+                "x": 260,
+                "y": 0,
+                "width": 460,
+                "height": 900,
+                "top": 0,
+                "right": 720,
+                "bottom": 900,
+                "left": 260
+              }
+            ],
+            "height": 900
+          },
+          "persistedNativeNav": [
+            {
+              "segment": 0,
+              "oldOpen": [],
+              "sidebarOpen": [],
+              "capacities": [],
+              "scroll": 0,
+              "sidebarScroll": 0,
+              "sidebarVisible": true,
+              "inventoryChoices": [],
+              "sidebarChoices": [
+                [
+                  "g-p-11111111111111111111111111111111",
+                  false
+                ]
+              ],
+              "freeSession": {
+                "H": 30,
+                "T": 20753,
+                "Z": "Asia/Shanghai",
+                "policyRevision": 0
+              },
+              "sidebarViewport": {
+                "owner": "native-nav",
+                "scroll": 117
+              }
+            }
+          ],
+          "workerRecoveryKeepsPersonalAndUserExpansion": true,
+          "newDocumentLocksAndConfirmedPrivateObjectAndLayoutRestore": true,
+          "privateScopeRevokeClearsPriorProject": true,
+          "actualIsolatedUninstallRestoresNativeGeometryDraftAndInput": true,
+          "noInternalRequests": true
+        },
+        "requests": [
+          "/g/g-p-11111111111111111111111111111111/project",
+          "/",
+          "/c/44444444-4444-4444-8444-444444444444",
+          "/g/g-p-11111111111111111111111111111111/project",
+          "/c/44444444-4444-4444-8444-444444444444"
+        ],
+        "browserErrors": [],
+        "images": [
+          "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-xpJgnx/flow-project.png",
+          "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-xpJgnx/flow-home.png",
+          "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-xpJgnx/flow-conversation.png",
+          "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-xpJgnx/flow-journey-reading.png",
+          "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-xpJgnx/flow-journey-return.png",
+          "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-xpJgnx/flow-journey-narrow.png"
+        ]
+      },
+      "j4OracleCorrection": "test waited for nonexistent data-navigation-mounted; formal .workspace used; no production recovery change to manufacture pass",
+      "realChatGPT": "NOT_RUN",
+      "productAcceptance": "NOT_ACCEPTED",
+      "remaining": [
+        "real React/IME/attachment/tool behavior",
+        "actual native Project management action semantics",
+        "real private old record restore after person confirmation",
+        "whole-screen real v2.7 acceptance"
+      ],
+      "targetedValidation": {
+        "changedContracts": "PASS 783/783",
+        "frameReadIsolation": "PASS 255/255",
+        "geometryContracts": "PASS 41/41",
+        "documentFlowBrowser": "PASS",
+        "packagedC2": "PASS",
+        "firstSendOffline": "PASS",
+        "strictJ4": {
+          "status": "PARTIAL_J4_NOT_ACCEPTED",
+          "errors": [],
+          "steps": [
+            {
+              "name": "two-native-tabs-authenticated-C2-team-context-not-first-roster-entry",
+              "status": "PASS"
+            },
+            {
+              "name": "native-account-menu-switch-personal-A-retains-team-B-with-distinct-authenticated-contexts",
+              "status": "PASS"
+            },
+            {
+              "name": "real-backup-preview-and-explicit-import-human-assets-isolated-to-personal-scope",
+              "status": "PASS"
+            },
+            {
+              "name": "native-send-accepted-authenticated-detail-held-before-evidence",
+              "status": "PASS"
+            },
+            {
+              "name": "actual-disable-between-native-acceptance-and-evidence-preserves-native-document",
+              "status": "PASS"
+            },
+            {
+              "name": "new-grant-C4-original-send-recovers-pure-evidence-without-replaying-native-send",
+              "status": "PASS"
+            },
+            {
+              "name": "second-new-grant-authenticated-read-preserves-single-original-event-and-context-isolation",
+              "status": "PASS"
+            },
+            {
+              "name": "same-J4-native-send-renames-current-C-and-authenticated-ACK-commits-real-joint-pending",
+              "status": "PASS"
+            },
+            {
+              "name": "same-J4-real-worker-stop-recovers-native-title-and-one-original-ACK-without-send-replay",
+              "status": "PASS"
+            },
+            {
+              "name": "same-J4-joint-recovery-second-load-is-idempotent-and-peer-context-isolated",
+              "status": "PASS"
+            },
+            {
+              "name": "peer-real-native-navigation-establishes-new-C2-after-worker-memory-loss",
+              "status": "PASS"
+            },
+            {
+              "name": "same-J4-existing-evidence-checksum-fault-real-UI-repair-revokes-activity-and-preserves-draft-assets",
+              "status": "PASS"
+            },
+            {
+              "name": "same-J4-fresh-authenticated-current-body-history-restores-production-activity-only",
+              "status": "PASS"
+            },
+            {
+              "name": "same-J4-one-genuine-new-native-send-creates-successor-ACK-with-old-anchors-still-revoked",
+              "status": "PASS"
+            },
+            {
+              "name": "same-J4-real-rebind-authenticated-reread-preserves-witness-bytes-origin-budget-and-context-isolation",
+              "status": "PASS"
+            },
+            {
+              "name": "healthy-production-recovery-inspection-preserves-imported-Pro-assets",
+              "status": "PASS"
+            },
+            {
+              "name": "explicit-native-root-checksum-fault-and-real-UI-repair-preserve-assets-draft-and-revoke-source",
+              "status": "PASS"
+            },
+            {
+              "name": "recovered-UNKNOWN-route-retains-identity-and-hides-revoked-titles",
+              "status": "PASS"
+            },
+            {
+              "name": "actual-target-management-disable-clears-both-tabs-private-projection-and-keeps-original-native-editor",
+              "status": "PASS"
+            },
+            {
+              "name": "reenable-without-page-refresh-does-not-resurrect-old-private-projection-or-change-assets",
+              "status": "PASS"
+            },
+            {
+              "name": "reenabled-unrefreshed-peer-keeps-native-document-draft-and-no-private-projection",
+              "status": "PASS"
+            },
+            {
+              "name": "fresh-native-observation-after-repair-revalidates-current-ref-with-old-sources-still-revoked",
+              "status": "PASS"
+            },
+            {
+              "name": "fresh-primary-grant-does-not-resurrect-unrefreshed-peer",
+              "status": "PASS"
+            },
+            {
+              "name": "actual-uninstall-keeps-original-native-document-operable-without-private-projection",
+              "status": "PASS"
+            },
+            {
+              "name": "subsequent-native-navigation-model-and-editor-operate-after-uninstall",
+              "status": "PASS"
+            }
+          ]
+        },
+        "legacyFullSuite": "earlier run contained failures; not claimed green",
+        "legacyUI10": "stopped at bounded timeout; NOT_PASS"
+      },
+      "installation": {
+        "path": "/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/.git/vaiwl-artifacts/local-source-witness-20261022/extension",
+        "previousDa07FilesCopied": true,
+        "previousBackup": "/private/tmp/VAIWL-before-document-flow-20261027-193201/extension",
+        "followupCopied": false,
+        "reload": "NOT_RUN",
+        "runtimeBuild": "UNKNOWN",
+        "nativeEntry": "selected unrelated huifei recruiting window; no input sent",
+        "browserEntry": "Local browser use disabled in Work settings",
+        "dataChanged": false
+      }
+    }
   }
 }

@@ -82,7 +82,7 @@ if(process.env.HOST_SCALE_RUN!=='1'){
    addEventListener('message',event=>{try{
     if(event.origin!==`chrome-extension://${extensionId}`||!event.source)return;
     let directChild=false;for(let i=0;i<Math.min(window.length,16);i++)if(window[i]===event.source){directChild=true;break;}if(!directChild)return;
-    const data=event.data;if(!data||Object.keys(data).sort().join(',')!=='role,type'||!['workspace','sidebar'].includes(data.role)||!['VAIWL_UI_SUSPEND','VAIWL_UI_EXIT'].includes(data.type))return;
+    const data=event.data;if(!data||(!['role,type','reason,role,type'].includes(Object.keys(data).sort().join(','))||Object.hasOwn(data,'reason')&&(data.type!=='VAIWL_UI_SUSPEND'||!['read-budget-exhausted','ui-grant-expired','ui-renew-failed','ui-join-failed','ui-port-disconnected','ui-renderer-failed'].includes(data.reason)))||!['workspace','sidebar'].includes(data.role)||!['VAIWL_UI_SUSPEND','VAIWL_UI_EXIT'].includes(data.type))return;
     console.log('HOST_SCALE_LIFECYCLE '+JSON.stringify({role:`/${data.role}.html`,type:data.type,at:Date.now()}));
    }catch{}});
   },{extensionId:id,nativeOrigin:server.origin});

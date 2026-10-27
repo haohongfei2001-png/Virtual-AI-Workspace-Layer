@@ -33,6 +33,12 @@ test('read-only sampler checks geometry without claiming full UI acceptance',asy
  const {m,outer}=geometry();let reads=0;const result=await observeUi10Shell({evaluate:async()=>{reads++;return m;},frameElement:async()=>({evaluate:async()=>{reads++;return outer;}})});
  assert.equal(reads,2);assert.equal(result.evidence,'SHELL_GEOMETRY_ONLY');assert.equal(result.fullV27Acceptance,'NOT_ESTABLISHED');
 });
+test('document-flow exit may share the frame plane but cannot cover a renderer control',()=>{
+ const {m,outer}=geometry();Object.assign(outer,{backend:'document-flow',closeHit:true,closeCoversControl:false});
+ Object.assign(outer.surface,{top:0,left:0,right:420});Object.assign(outer.close,{top:4,bottom:28,left:392,right:416});outer.frame.top=0;
+ assertUi10ShellBounds(m,outer);
+ for(const change of [{closeHit:false},{closeCoversControl:true},{close:{...outer.close,right:423}}])assert.throws(()=>assertUi10ShellBounds(m,{...outer,...change}));
+});
 test('preparation never promotes past J3 zoom or deterministic results into new native evidence',()=>{
  const r=ui10PreparationReport();assert.equal(r.nativeMatrix,'NOT_RUN');assert.equal(r.fullV27Acceptance,'NOT_ESTABLISHED');assert.equal(r.baseline.generateFromCandidate,false);assert.equal(r.inheritedZoom.appliesToNewCells,false);assert.equal(r.cells.length,48);assert(r.cells.every(c=>c.nativeEvidence==='NOT_RUN'));assert.deepEqual(r.requiredViews,UI10_REQUIRED_VIEWS);assert.deepEqual(r.excludedAsPositive,['FAULT']);
  r.cells[0].nativeEvidence='PASS';r.requiredViews.pop();assert.equal(ui10PreparationReport().cells[0].nativeEvidence,'NOT_RUN');assert.equal(ui10PreparationReport().requiredViews.length,11);

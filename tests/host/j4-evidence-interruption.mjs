@@ -8,7 +8,7 @@ const poll=async read=>{const end=Date.now()+15000;while(Date.now()<end){const v
 // before requesting an explicit return from a still-native view.
 export async function ensureJ4Workspace(page,mounted){
  await poll(async()=>{
-  if(await page.locator('[data-va-owned]:popover-open').count()===2)return true;
+  if(await page.locator('[data-va-owned][id$="_workspace"]:not([popover])').isVisible())return true;
   const back=page.getByRole('button',{name:'返回工作空间',exact:true});
   if(await back.isVisible()){await back.click();return true;}
   return false;

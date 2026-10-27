@@ -10,7 +10,7 @@ function loadFixture(file,end,dependencyName,dependency){
  const prefix=source.slice(0,source.indexOf(end)).replace(/^import .*;\n/gm,'');
  return new Function('assert',dependencyName,prefix+'\nreturn fixture;')(assert,dependency);
 }
-const surfaceFixture=loadFixture('./surface-controller.test.mjs',"\ntest('owner registration and both UiGrant ACKs gate initial dual-surface show'",'createSurfaceController',createSurfaceController);
+const surfaceFixture=loadFixture('./surface-controller.test.mjs',"\ntest('owner registration and workspace UiGrant gate workspace; sidebar joins independently'",'createSurfaceController',createSurfaceController);
 const contentFixture=loadFixture('./content-renewal-context-recovery.test.mjs','\nasync function denied(','createHostContentSession',createHostContentSession);
 function passive(f,expected){
  const inspect=f.adapter.inspect,before=JSON.stringify(f.calls),timers=[...f.timers.keys()];let inspections=0;
@@ -21,7 +21,7 @@ async function mounted(t){const f=surfaceFixture();t.after(()=>f.controller.stop
 test('controller status moves through startup and each grant without inspecting or requesting',async t=>{
  const f=surfaceFixture();t.after(()=>f.controller.stop());passive(f,'surface-controller-absent');let release;
  f.bridge.registerMount=()=>new Promise(resolve=>{release=resolve;});const started=f.controller.start({});await drain();passive(f,'connecting');release({ok:true});await started;passive(f,'connecting');
- f.message();await drain();passive(f,'connecting');f.message('sidebar');await drain();passive(f,'ready');
+ f.message();await drain();passive(f,'ready');f.message('sidebar');await drain();passive(f,'ready');
 });
 for(const kind of ['revoke','stop','grant-expiry','binding-expiry','route','detached-frame','replacement-window','foreign-owner'])test('controller status refuses '+kind+' locally',async t=>{
  const f=await mounted(t);

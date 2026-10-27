@@ -158,7 +158,7 @@ for(const invalid of ['wrong-entity','wrong-url','unknown-project','both-ids','s
  if(invalid==='both-ids')item.refId=id;
  if(invalid==='same-tab')item.plan.disposition='same-tab';
  if(invalid==='duplicate')items.push(structuredClone(item));
- f.setView(async()=>({ok:true,state:'ready',page:{...f.page(),groups:{items:[{id,nativeUrl}]}},navigation:items}));await f.client.start();await drain();assert.equal(f.pages.length,0);assert.equal(f.states.at(-1).reason,'invalid-frame-navigation');
+ f.setView(async()=>({ok:true,state:'ready',page:{...f.page(),groups:{items:[{id,nativeUrl}]}},navigation:items}));await f.client.start();await drain();assert.equal(f.pages.length,1);assert.equal(f.states.at(-1).state,'ready');assert.equal(f.nav.adapter.projectNavigationPlan({id}),undefined);
 });
 
 for(const explicit of [true,false])test('oversize search refines its own page and preserves query, project and history: '+explicit,async()=>{
@@ -447,7 +447,7 @@ test('same-target current plan is issued with frame grant and dispatch uses only
 for(const bad of ['no-current','different-current-id','different-current-url','different-target-id','extra-plan','extra-target','bad-epoch','missing-proof','project'])test('same-target projection rejects '+bad,async()=>{
  const f=fixture(),plan=sameCurrentPlan(),current={nativeUrl:sameCurrentURL,refId:sameCurrentId,projectId:null},item={refId:sameCurrentId,plan,targetKey:'current-key'};
  if(bad==='different-current-id')current.refId='other';if(bad==='different-current-url')current.nativeUrl='https://chatgpt.com/c/44444444-4444-4444-8444-444444444444';if(bad==='different-target-id')plan.target.nativeId='other';if(bad==='extra-plan')plan.extra=true;if(bad==='extra-target')plan.target.extra=true;if(bad==='bad-epoch')plan.planRevision=0;if(bad==='missing-proof')delete plan.bodyProofId;if(bad==='project'){delete item.refId;item.projectId=sameCurrentId;}
- f.setView(async()=>({ok:true,state:'ready',page:{...f.page(),...(bad==='no-current'?{}:{current}),groups:{items:[{id:sameCurrentId}]}},navigation:[item]}));await f.client.start();await drain();assert.equal(f.pages.length,0);assert.equal(f.states.at(-1).reason,'invalid-frame-navigation');f.client.stop();
+ f.setView(async()=>({ok:true,state:'ready',page:{...f.page(),...(bad==='no-current'?{}:{current}),groups:{items:[{id:sameCurrentId}]}},navigation:[item]}));await f.client.start();await drain();assert.equal(f.pages.length,1);assert.equal(f.states.at(-1).state,'ready');assert.equal(f.nav.adapter.navigationPlan({id:sameCurrentId}),undefined);f.client.stop();
 });
 test('current dispatch rejects unissued tuple without sending an owner request',async()=>{
  const f=await currentDispatchFixture();const count=f.calls.length;
@@ -539,7 +539,7 @@ test('search-only project receives its own native plan outside the current card 
 for(const invalid of ['snippets','membership','duplicate','conflict','foreign-url','wrong-id'])test('search project rejects '+invalid,async()=>{
  const f=fixture(),{id,nativeUrl,item}=projectPlanFixture(),project={kind:'project',id,nativeName:'Known project',nativeUrl,available:true,freshness:'unknown'},groups=[];let items=[project];
  if(invalid==='snippets')project.snippetMatches=[{id:'secret',preview:'text'}];if(invalid==='membership')project.membership='NONE';if(invalid==='duplicate')items.push({...project});if(invalid==='conflict')groups.push({id,nativeName:'Other title',nativeUrl});if(invalid==='foreign-url'){project.nativeUrl='https://evil.test/g/'+id+'/project';item.plan.target.navigationURL=project.nativeUrl;}if(invalid==='wrong-id')item.plan.target.nativeId='other';
- f.setView(async()=>({ok:true,state:'ready',page:{...f.page(),groups:{items:groups},search:{items}},navigation:[item]}));await f.client.start();await drain();assert.equal(f.pages.length,0);assert.equal(f.stops,0);assert.equal(f.states.at(-1).state,'read-stopped');
+ f.setView(async()=>({ok:true,state:'ready',page:{...f.page(),groups:{items:groups},search:{items}},navigation:[item]}));await f.client.start();await drain();const actionOnly=['foreign-url','wrong-id'].includes(invalid);assert.equal(f.pages.length,actionOnly?1:0);assert.equal(f.stops,0);assert.equal(f.states.at(-1).state,actionOnly?'ready':'read-stopped');if(actionOnly)assert.equal(f.nav.adapter.projectNavigationPlan({id}),undefined);
 });
 
 for(const kind of ['backup','recovery','snippets'])test(kind+' return focuses only the fresh workspace unless user intent or lifetime intervenes',async()=>{

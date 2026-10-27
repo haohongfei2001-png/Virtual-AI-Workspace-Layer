@@ -41,7 +41,7 @@ test('cancelled busy close keeps original frames and fresh workspace JOIN restor
  assert.equal(wakes.length,2);assert(wakes.every(item=>item.data.requestId===idle));assert.deepEqual(f.frames.map(item=>item.frame),frames);
  assert.equal(f.controller.showWorkspace(),false);assert.equal(f.controller.focusFrame('workspace'),false);assert.equal(f.calls.confirmed,confirmed);assert.equal(ready,0);
  f.message('workspace');await flush();assert.equal(f.controller.presentationMode(),'reading');assert.equal(f.calls.confirmed,confirmed+1);assert.equal(ready,1);
- f.message('sidebar');await flush();assert.equal(f.calls.confirmed,confirmed+2);assert.equal(ready,1);assert.equal(f.calls.shown,shown,'dual JOIN resumes reading');assert.equal(f.controller.presentationMode(),'reading');assert.equal(f.controller.showWorkspace(),true);assert.equal(f.calls.disposed,0);
+ f.message('sidebar');await flush();assert.equal(f.calls.confirmed,confirmed+2);assert.equal(ready,1);assert.equal(f.calls.shown,shown+1,'sidebar JOIN resumes only the continuous sidebar');assert.equal(f.surface.visibility().workspace,false);assert.equal(f.controller.presentationMode(),'reading');assert.equal(f.controller.showWorkspace(),true);assert.equal(f.calls.disposed,0);
  assert.equal(f.controller.cancelDormantClose(),false,'consumed transition cannot resend WAKE');assert.equal(f.calls.messages.filter(item=>item.data.type==='VAIWL_UI_WAKE').length,2);
 });
 for(const reason of ['no-busy','not-renewed','renew-failed','expired','route','frame','stop'])test('cancel dormant close refuses '+reason,async t=>{

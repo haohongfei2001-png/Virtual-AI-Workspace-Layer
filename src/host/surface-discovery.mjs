@@ -140,12 +140,13 @@ export function createSurfaceDiscovery({document,binding,urlPolicy,profile=LEGAC
     // A canonical current Project needs route identity and the explicitly scoped
     // member surface; an IDless sidebar label never supplies that identity.
     const members=roots.get('members');
-    if(!candidateOnly&&members){
+    if(!candidateOnly&&members&&profile.projectListBoundary){
       // Only tag/count topology of the bounded navigation/title branches. No
       // text, attributes, IDs, URLs, input or message content enters diagnostics.
       const shape=root=>{if(!root)return [];const rows=[],pending=[[root,-1,0]];while(pending.length&&rows.length<20){const [node,parent,depth]=pending.shift(),index=rows.length;rows.push([parent,['A','BUTTON','DIV','SPAN','SECTION','OL','LI','H1','SVG','PATH'].indexOf(node.tagName.toUpperCase()),Math.min(256,node.children.length)]);if(depth<4)for(const child of [...node.children].slice(0,4))pending.push([child,index,depth+1]);}return rows;};
-      summary.memberShape=shape(members.querySelector('li > a[href]'));
-      summary.headingShape=shape(members.closest(profile.projectListBoundary)?.querySelector('h1 > button'));
+      // Diagnostics cannot veto the independently validated surface payload.
+      try{summary.memberShape=shape(members.querySelector('li > a[href]'));summary.headingShape=shape(members.closest(profile.projectListBoundary)?.querySelector('h1 > button'));}
+      catch{summary.memberShape=[];summary.headingShape=[];}
     }
     const panelAssociation=!candidateOnly&&members?observedProjectAssociation(document,profile,urlPolicy,members):null;
     if(!candidateOnly)summary.association=panelAssociation?1:0;

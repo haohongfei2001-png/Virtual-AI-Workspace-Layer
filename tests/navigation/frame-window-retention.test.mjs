@@ -77,7 +77,7 @@ for(const mode of ['search','workingSet'])for(const background of [false,true])t
  if(background)f.nav.updateFrameProjection(response({},'scopeA','background'));
  stamp='returned';const beforeReturn=calls.length;assert.equal(f.nav.workspaceEntered(),true);await tick();
  assert.equal(calls.length,beforeReturn,'four-square return must not reset the special-page query');
- const closeLabel=mode==='search'?'关闭派生查找':'返回主题视图';assert(f.button(closeLabel),'return retains the special-page exit');
+ const closeLabel=mode==='search'?'关闭已知查找':'返回主题视图';assert(f.button(closeLabel),'return retains the special-page exit');
  if(mode==='search')assert.equal(f.pane().querySelector('input').value,'specific title');
  if(background){
   const fresh=response(specialQuery,'scopeA','fresh-special');const items=[{...row('P2_current_0'),nativeTitle:'fresh returned result',displayTitle:'fresh returned result'}];
@@ -97,7 +97,7 @@ for(const change of ['scope','segment','session'])test(`special-page window memo
  if(change==='session')dto.viewSession={...dto.viewSession,T:dto.viewSession.T+1};
  f.nav.updateFrameProjection(dto);const before=calls.length;f.nav.workspaceEntered();await tick();
  assert.equal(calls.length,before);assert.equal(f.nav.view().capacities.size,0);
- if(change!=='scope'){f.button('关闭派生查找').click();await tick();assert(!(calls.at(-1).rowWindows??[]).some(w=>w.rowLimit===17));}
+ if(change!=='scope'){f.button('关闭已知查找').click();await tick();assert(!(calls.at(-1).rowWindows??[]).some(w=>w.rowLimit===17));}
  assert.equal(rows(f,'P2','current').length,5);
 });
 test('special-page return still accepts the existing byte-bounded five-row pagination fallback',async t=>{
@@ -106,7 +106,7 @@ test('special-page return still accepts the existing byte-bounded five-row pagin
   const effective=search?{...q,rowWindows:q.rowWindows?.map(w=>({...w,rowLimit:5,paged:true}))}:q;
   return response(effective);
  });t.after(()=>f.nav.stop());f.nav.updateFrameProjection(response());await expandRecent(f,'P2');f.nav.present({kind:'search-known'});await tick();f.nav.enterReading();f.nav.workspaceEntered();await tick();
- f.button('关闭派生查找').click();await tick();
+ f.button('关闭已知查找').click();await tick();
  assert.equal(rows(f,'P2','current').length,5);assert.equal(control(f,'P2','显示更多近期窗口').textContent,'下一页');
  control(f,'P2','展开旧窗口 P2').click();await tick();assert.equal(calls.at(-1).rowWindows[0].rowLimit,5);assert.equal(calls.at(-1).rowWindows[0].paged,true);
 });
@@ -115,9 +115,9 @@ test('current Project outside the page is expanded with members and explicit col
  const value=projection('sidebar'),selected=value.groups.items.shift();value.groups=page(value.groups.items,1,0,24);selected.segment=3;
  value.currentProject=selected;value.current={nativeUrl:'https://chatgpt.com/c/P2_0',refId:'P2_0',projectId:'P2'};
  const calls=[],f=fixture('sidebar',query=>{calls.push(query);return structuredClone(value);});t.after(()=>f.nav.stop());f.nav.updateFrameProjection(value);
- const toggle=f.button('侧栏主题 Original P2');assert.equal(toggle.getAttribute('aria-expanded'),'true');assert(f.pane().querySelectorAll('[data-ref-id]').some(n=>n.getAttribute('data-ref-id')==='P2_0'));
- toggle.click();assert.equal(f.button('侧栏主题 Original P2').getAttribute('aria-expanded'),'false');f.nav.updateFrameProjection(structuredClone(value));assert.equal(f.button('侧栏主题 Original P2').getAttribute('aria-expanded'),'false');
- f.button('侧栏主题 Original P2').click();await tick();assert.equal(calls.at(-1).groupId,'P2');assert.equal(f.button('侧栏主题 Original P2').getAttribute('aria-expanded'),'true');
+ const toggle=f.button('侧栏项目 Original P2');assert.equal(toggle.getAttribute('aria-expanded'),'true');assert(f.pane().querySelectorAll('[data-ref-id]').some(n=>n.getAttribute('data-ref-id')==='P2_0'));
+ toggle.click();assert.equal(f.button('侧栏项目 Original P2').getAttribute('aria-expanded'),'false');f.nav.updateFrameProjection(structuredClone(value));assert.equal(f.button('侧栏项目 Original P2').getAttribute('aria-expanded'),'false');
+ f.button('侧栏项目 Original P2').click();await tick();assert.equal(calls.at(-1).groupId,'P2');assert.equal(f.button('侧栏项目 Original P2').getAttribute('aria-expanded'),'true');
  const invalid=structuredClone(value);invalid.current.projectId='P1';assert.throws(()=>f.nav.updateFrameProjection(invalid),/invalid-frame-current-project/);
 });
 
@@ -130,8 +130,8 @@ test('current member outside row window stays inside its expanded owning theme',
  const group=f.pane().querySelectorAll('.group').find(n=>n.querySelectorAll('[data-ref-id]').some(r=>r.getAttribute('data-ref-id')==='current-away'));
  assert(group,'current row is in the owning expanded theme, not detached after all groups');
  assert.equal(f.pane().querySelectorAll('[data-ref-id]').filter(n=>n.getAttribute('data-ref-id')==='current-away').length,1);
- f.button('侧栏主题 '+selected.name).click();f.nav.updateFrameProjection(structuredClone(value));
- assert.equal(f.button('侧栏主题 '+selected.name).getAttribute('aria-expanded'),'false');
+ f.button('侧栏项目 '+selected.name).click();f.nav.updateFrameProjection(structuredClone(value));
+ assert.equal(f.button('侧栏项目 '+selected.name).getAttribute('aria-expanded'),'false');
  assert.equal(f.pane().querySelectorAll('[data-ref-id]').filter(n=>n.getAttribute('data-ref-id')==='current-away').length,1,'collapsed theme keeps current conversation reachable');
 });
 
@@ -139,12 +139,12 @@ test('current theme leads sidebar without reordering the owner page or overridin
  const value=projection('sidebar');value.current={nativeUrl:'https://chatgpt.com/c/P1_0',refId:'P1_0',projectId:'P1'};
  const f=fixture('sidebar',()=>structuredClone(value));t.after(()=>f.nav.stop());f.nav.updateFrameProjection(value);
  const heads=()=>f.pane().querySelectorAll('.theme-toggle');
- assert.deepEqual(heads().map(n=>n.getAttribute('aria-label')),['侧栏主题 Original P1','侧栏主题 Original P2']);
+ assert.deepEqual(heads().map(n=>n.getAttribute('aria-label')),['侧栏项目 Original P1','侧栏项目 Original P2']);
  assert.equal(heads()[0].getAttribute('data-current-project'),'true');assert.equal(heads()[1].getAttribute('data-current-project'),'false');
  assert.deepEqual(value.groups.items.map(g=>g.id),['P2','P1'],'projection is not mutated');
  heads()[0].click();f.nav.updateFrameProjection(structuredClone(value));assert.equal(heads()[0].getAttribute('aria-expanded'),'false');
  value.current={nativeUrl:'https://chatgpt.com/c/P2_0',refId:'P2_0',projectId:'P2'};f.nav.updateFrameProjection(value);
- assert.equal(heads()[0].getAttribute('aria-label'),'侧栏主题 Original P2');assert.equal(heads()[1].getAttribute('data-current-project'),'false');
+ assert.equal(heads()[0].getAttribute('aria-label'),'侧栏项目 Original P2');assert.equal(heads()[1].getAttribute('data-current-project'),'false');
 });
 
 for(const membership of ['UNKNOWN','NONE'])test(`standalone ${membership} current chat leads sidebar once, without changing membership or inventory`,async t=>{

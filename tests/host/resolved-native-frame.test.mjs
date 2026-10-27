@@ -53,14 +53,14 @@ for(const [name,mutate] of [
  ['live control masquerading as resolved',r=>r.plan.target.kind='live-control'],
  ['null handle',r=>r.plan.target.liveHandle=null],
 ])test('resolved native frame rejects '+name,async()=>{
- const f=await nativeFixture('conversation',mutate);assert.equal(f.pages.length,0);assert.equal(f.states.at(-1).reason,'invalid-frame-navigation');assert(!f.calls.some(m=>m.type==='HOST_UI_DISPATCH_NATIVE'));f.client.stop();
+ const f=await nativeFixture('conversation',mutate);assert.equal(f.pages.length,1,'valid data remains visible');assert.deepEqual(await f.nav.onDispatch(command()),{state:'blocked'},'invalid action receives no capability');assert(!f.calls.some(m=>m.type==='HOST_UI_DISPATCH_NATIVE'));f.client.stop();
 });
 for(const [name,mutate] of [
  ['missing group',(_r,p)=>p.groups.items=[]],
  ['different group URL',(_r,p)=>p.groups.items[0].nativeUrl='https://chatgpt.com/g/g-p-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb/project'],
  ['conversation row identity',r=>{r.refId=r.projectId;delete r.projectId;}],
 ])test('resolved project frame rejects '+name,async()=>{
- const f=await nativeFixture('project',mutate);assert.equal(f.pages.length,0);assert.equal(f.states.at(-1).reason,'invalid-frame-navigation');f.client.stop();
+ const f=await nativeFixture('project',mutate);assert.equal(f.pages.length,1,'valid data remains visible');assert.deepEqual(await f.nav.onDispatch(command()),{state:'blocked'},'invalid action receives no capability');f.client.stop();
 });
 test('resolved native dispatch rejects unissued authority tuple locally',async()=>{
  const f=await nativeFixture(),before=f.calls.length;
@@ -108,8 +108,18 @@ for(const change of ['same-query','changed-query','changed-back','stop','timeout
 test('timed-out old acknowledgement cannot unlock or settle the next dispatch',async()=>{
  const f=await nativeFixture(),old=deferred(),fresh=deferred(),send=f.runtime.sendMessage;let requests=0;
  f.runtime.sendMessage=m=>m.type==='HOST_UI_DISPATCH_NATIVE'?(++requests===1?old.promise:fresh.promise):send(m);
- const first=f.nav.onDispatch(command());await f.nav.onProjectionRequest({segment:1});await f.advance(6000);assert.notEqual((await first).state,'dispatched');await drain();
+ const first=f.nav.onDispatch(command());await drain();await f.nav.onProjectionRequest({segment:1});await f.advance(6000);assert.notEqual((await first).state,'dispatched');await drain();
  const next=f.nav.onDispatch({...command(),actionId:'next-action'});await drain();old.resolve({ok:true,state:'dispatched'});await drain();
  assert.deepEqual(await f.nav.onDispatch({...command(),actionId:'third-action'}),{state:'blocked'});assert.equal(requests,2);
  fresh.resolve({ok:true,state:'dispatched'});assert.deepEqual(await next,{state:'dispatched'});f.client.stop();
+});
+
+for(const invalid of [null,{},[{refId:conversation,targetKey:'native-key',plan:{mode:'foreign'}}]])test('invalid replacement action batch discards old capability while keeping VIEW '+JSON.stringify(invalid),async()=>{
+ const f=await nativeFixture();assert(f.nav.adapter.navigationPlan({id:conversation}));
+ f.setView(async()=>({ok:true,state:'ready',page:f.page(),navigation:invalid}));
+ f.emit({type:'VAIWL_UI_DATA_CHANGED'});await drain();
+ assert.equal(f.pages.length,2);assert.equal(f.states.at(-1).state,'ready');
+ assert.equal(f.nav.adapter.navigationPlan({id:conversation}),undefined);
+ assert.deepEqual(await f.nav.onDispatch(command()),{state:'blocked'});
+ assert(!f.calls.some(m=>m.type==='HOST_UI_DISPATCH_NATIVE'));f.client.stop();
 });

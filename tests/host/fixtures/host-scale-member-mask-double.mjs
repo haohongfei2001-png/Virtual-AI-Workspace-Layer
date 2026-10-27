@@ -14,12 +14,12 @@ const origin='https://chatgpt.com';
 const scope={verified:true,provider:'chatgpt',accountId:'a',organizationId:'b'};
 const rows=[...hostScaleRows({size:1000,distribution:'single-project'})];
 function fixture({maskedInitially=false,maskOnSurface=0,inherit=true,nativeHidden=null,nativeHiddenIndex=999}={}){
- let masked=maskedInitially,visits=0,surfacePackets=0,sourceRevision=0,observer,waitResolve;
- let ended=new Promise(r=>waitResolve=r);
+ let masked=maskedInitially,visits=0,surfacePackets=0,sourceRevision=0,observer,waitResolve,waitReject;
+ let ended=new Promise((resolve,reject)=>{waitResolve=resolve;waitReject=reject;});
  const listeners=new Map(),events=[],packets=[],issues=[],refs=new Set(),projects=new Set(),members=new Map();
  const binding={documentToken:'doc-'+randomUUID(),producerToken:'producer-'+randomUUID(),browserDocumentId:'browser-'+randomUUID(),routeEpoch:4,origin,expiresAt:new Date(20000).toISOString()};
  const doc={location:{href:origin+'/g/'+P+'/project'},documentElement:{dataset:{}},addEventListener:(t,f)=>listeners.set(t,f),removeEventListener:t=>listeners.delete(t),querySelectorAll:s=>selectors.get(s)??[],querySelector:()=>null};
- function node(tag='DIV',text='',attrs={},parent=null){const n={tagName:tag,textContent:text,attrs,parentNode:parent,parentElement:parent,ownerDocument:doc,isConnected:true,children:[],style:{display:'block'},getAttribute(k){return this.attrs[k]??null;},hasAttribute(k){return Object.hasOwn(this.attrs,k);},getClientRects(){return [{}];},getBoundingClientRect(){return {x:0,y:0,width:100,height:100};},contains(other){for(let p=other;p;p=p.parentElement)if(p===this)return true;return false;},querySelectorAll(){const all=[];const visit=n=>{for(const c of n.children){all.push(c);visit(c);}};visit(this);return all;},matches(selector){return selector==='a[href],button'?this.tagName==='BUTTON'||this.tagName==='A'&&this.getAttribute('href')!==null:selector==='a[href]'?this.tagName==='A'&&this.getAttribute('href')!==null:false;}};if(parent)parent.children.push(n);return n;}
+ function node(tag='DIV',text='',attrs={},parent=null){const n={tagName:tag,textContent:text,attrs,parentNode:parent,parentElement:parent,ownerDocument:doc,isConnected:true,children:[],style:{display:'block'},getAttribute(k){return this.attrs[k]??null;},hasAttribute(k){return Object.hasOwn(this.attrs,k);},getClientRects(){return [{}];},getBoundingClientRect(){return {x:0,y:0,width:100,height:100};},contains(other){for(let p=other;p;p=p.parentElement)if(p===this)return true;return false;},querySelectorAll(){const all=[];const visit=n=>{for(const c of n.children){all.push(c);visit(c);}};visit(this);return all;},closest(){return null;},querySelector(selector){return this.querySelectorAll().find(n=>n.matches(selector))??null;},matches(selector){return selector==='a[href],button'?this.tagName==='BUTTON'||this.tagName==='A'&&this.getAttribute('href')!==null:selector==='a[href]'?this.tagName==='A'&&this.getAttribute('href')!==null:false;}};if(parent)parent.children.push(n);return n;}
  const body=node('BODY'),aside=node('ASIDE','',{},body),main=node('MAIN','',{},body),header=node('HEADER','',{},main),h1=node('H1','Native project',{},header),reading=node('SECTION','',{},main),h2=node('H2','Native project',{},reading),memberRoot=node('NAV','',{'data-project-id':P},reading),projectRoot=node('SECTION','',{},aside),history=node('NAV','',{},aside);
  node('A','Native project',{href:'/g/'+P+'/project'},projectRoot);
  for(const row of rows){node('A',row.title,{href:'/c/'+row.id},memberRoot);node('A',row.title,{href:'/c/'+row.id},history);}
@@ -34,11 +34,11 @@ function fixture({maskedInitially=false,maskOnSurface=0,inherit=true,nativeHidde
  function admit(p){if(p.kind!=='surface-delta')return;const b=surfaceBatch(p,{scope,binding,profile,urlPolicy,sourceRevision:++sourceRevision,observedAt:'1970-01-01T00:00:00.000Z',validUntil:'1970-01-01T00:00:20.000Z',knownProjects:[...projects]});for(const x of b.projects)projects.add(x.id);for(const x of b.refs)refs.add(x.id);for(const x of b.membership)members.set(x.id,x);}
  const facts=()=>({renderedMembers:memberRoot.children.length,refs:refs.size,projects:projects.size,membership:members.size,unknown:refs.size-members.size,wrongMembership:[...members.values()].filter(x=>x.projectId!==P).length,surfacePackets,visits,issues:[...issues],masked,computed:{reading:computed(reading).visibility,members:computed(memberRoot).visibility,link:computed(memberRoot.children[0]).visibility},events:[...events]});
  return {doc,adapter,reading,memberRoot,history,packets,facts,toggle,
-  async start(){await adapter.start({binding,ingestionPass:async e=>{events.push(e.phase);if(e.phase==='end')waitResolve();return {ok:true};},emit:async p=>{packets.push(p);admit(p);if(p.kind==='surface-delta'){surfacePackets++;if(surfacePackets===maskOnSurface)toggle(true);}return {state:'accepted',localSeq:p.localSeq,receiptId:'L-ack'};}});},
+  async start(){await adapter.start({binding,ingestionPass:async e=>{events.push(e.phase);if(e.phase==='end')waitResolve();else if(e.phase==='cancel')waitReject(Error('fixture-ingestion-pass-cancelled'));return {ok:true};},emit:async p=>{packets.push(p);admit(p);if(p.kind==='surface-delta'){surfacePackets++;if(surfacePackets===maskOnSurface)toggle(true);}return {state:'accepted',localSeq:p.localSeq,receiptId:'L-ack'};}});},
   drain:()=>ended,
-  async rescan(value){ended=new Promise(r=>waitResolve=r);toggle(value);await ended;},
+  async rescan(value){ended=new Promise((resolve,reject)=>{waitResolve=resolve;waitReject=reject;});toggle(value);await ended;},
   admitted:()=>({refs:[...refs],projects:[...projects],membership:[...members.values()]}),
   stop:()=>adapter.stop(),
  };
 }
-export async function runMemberVisibilityProbe(options){const f=fixture(options);await f.start();await f.drain();return f;}
+export async function runMemberVisibilityProbe(options){const f=fixture(options);try{await f.start();await f.drain();return f;}catch(error){await f.stop();throw error;}}

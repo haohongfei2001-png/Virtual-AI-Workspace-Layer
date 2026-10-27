@@ -102,6 +102,11 @@ try{
   const returnImage=join(dir,'flow-journey-return.png');await page.screenshot({path:returnImage});report.images.push(returnImage);
   await page.setViewportSize({width:720,height:900});
   await page.locator('[id$="_workspace"]:visible').waitFor({timeout:15000});
+  await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+  report.checks.narrowFlowStructure=await page.evaluate(()=>({workspaces:[...document.querySelectorAll('[data-va-owned][id$="_workspace"]')].filter(n=>getComputedStyle(n).display!=='none').length,headers:document.querySelectorAll('header').length,composers:document.querySelectorAll('textarea').length,roots:[...document.querySelectorAll('[data-va-flow-root]')].map(n=>n.getBoundingClientRect().toJSON()),height:innerHeight}));
+  assert.equal(report.checks.narrowFlowStructure.workspaces,1);
+  assert.equal(report.checks.narrowFlowStructure.headers,1);
+  assert.equal(report.checks.narrowFlowStructure.composers,1);
   const layout=await page.locator('[id$="_workspace"]').evaluate(n=>{const b=n.getBoundingClientRect();return {right:b.right,width:b.width,height:b.height,viewport:innerWidth};});
   assert(layout.right<=layout.viewport+1&&layout.width>=160&&layout.height>=96,JSON.stringify(layout));
   const narrowImage=join(dir,'flow-journey-narrow.png');await page.screenshot({path:narrowImage});report.images.push(narrowImage);

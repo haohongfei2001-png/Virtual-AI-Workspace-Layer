@@ -65,11 +65,12 @@ test('MOCK_IDB same-identity document renewal permits both UI frames beyond orig
  for(const role of ['workspace','sidebar']){assert.equal((await renewUI(h,role)).ok,true);const view=await ready(h,role);assert.equal(view.state,'ready',JSON.stringify(view));assert.equal(view.page.entries.unknown.items[0].nativeTitle,'Native conversation');}
  h.setTime(start+30000);assert.equal((await renewUI(h)).ok,false,'a prior successful document renewal is still bounded');assert.equal((await h.view()).ok,false);
 });
-test('MOCK_IDB parent document expiry during native plan wait rejects a late ready reply',async t=>{
+test('MOCK_IDB parent document expiry rejects late action plans without blocking prior VIEW',async t=>{
  let entered=false,release;const wait=new Promise(resolve=>release=resolve);
  const h=await fixture(t,{prepareNavigation:async()=>{entered=true;await wait;return [];}});await h.bind();await h.observe();await h.mount();
  const start=Date.parse(NOW);h.setTime(start+10000);assert.equal((await renewUI(h)).ok,true);
- const pending=ready(h);for(let i=0;i<100&&!entered;i++)await drain();assert.equal(entered,true);
+ const visible=await ready(h);assert.equal(visible.state,'ready');assert.equal(entered,false,'data does not wait for actions');
+ const pending=h.service.handle({v:1,type:'HOST_UI_NAVIGATION_PLANS',grantId:h.grants.workspace.id,mountId:'mount',deliveryId:visible.deliveryId},h.children.workspace);for(let i=0;i<100&&!entered;i++)await drain();assert.equal(entered,true);
  h.setTime(start+20000);release();const result=await pending;assert.equal(result.ok,false);assert.equal(result.page,undefined);assert.equal(result.navigation,undefined);
 });
 

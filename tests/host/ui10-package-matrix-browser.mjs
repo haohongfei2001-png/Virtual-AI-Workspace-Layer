@@ -47,13 +47,14 @@ async function runProfile(profile,titleMode='all'){
   page=await context.newPage();page.on('pageerror',error=>result.errors.push(error.message));
   await page.goto(server.origin+ui10Entry(profile));
   async function workspace(allowReturn=false){
-   await page.waitForFunction(()=>document.querySelector('[data-va-owned][id$="_workspace"]:popover-open')||[...document.querySelectorAll('button')].some(n=>n.getAttribute('aria-label')==='返回工作空间'),null,{timeout:15000});
-   const back=page.getByRole('button',{name:'返回工作空间',exact:true});if(allowReturn&&await back.isVisible())await back.click();
-   await page.waitForFunction(()=>!!document.querySelector('[data-va-owned][id$="_workspace"]:popover-open'),null,{timeout:15000});
-   const nativeHistory=await page.locator('nav[aria-label="Chat history"]').evaluate(n=>{const r=n.getBoundingClientRect();return {width:r.width,height:r.height,visible:getComputedStyle(n).visibility==='visible'};});
-   const sidebarFits=profile==='LEGACY'||nativeHistory.width>=180&&nativeHistory.height>=240;
-   if(sidebarFits)await page.waitForFunction(()=>!!document.querySelector('[data-va-owned][id$="_sidebar"]:popover-open'),null,{timeout:15000});
-   else{await page.waitForFunction(()=>!document.querySelector('[data-va-owned][id$="_sidebar"]:popover-open')&&getComputedStyle(document.querySelector('nav[aria-label="Chat history"]')).visibility==='visible',null,{timeout:15000});}
+   const flowVisible=()=>{const n=document.querySelector('[data-va-owned][id$="_workspace"]:not([popover])');return !!n&&getComputedStyle(n).visibility==='visible'&&getComputedStyle(n).display!=='none'&&n.getBoundingClientRect().height>=96;};
+   await page.waitForFunction(()=>{const n=document.querySelector('[data-va-owned][id$="_workspace"]:not([popover])');return n&&getComputedStyle(n).display!=='none'&&n.getBoundingClientRect().height>=96||[...document.querySelectorAll('button')].some(n=>n.getAttribute('aria-label')==='返回工作空间');},null,{timeout:15000});
+   const back=page.getByRole('button',{name:'返回工作空间',exact:true});if(allowReturn&&!await page.evaluate(flowVisible)&&await back.isVisible())await back.click();
+   await page.waitForFunction(flowVisible,null,{timeout:15000});
+   // A flow sidebar requires a proven NAV layout slot, not merely a large
+   // history rectangle. Old fixtures lacking that contract retain native NAV.
+   const sidebarFits=await page.evaluate(()=>{const n=document.querySelector('[data-va-sidebar-slot]');return !!n&&n.parentElement!==document.body&&getComputedStyle(n).display!=='none'&&n.getBoundingClientRect().height>0;});
+   if(!sidebarFits)assert.equal(await page.locator('nav[aria-label="Chat history"]').evaluate(n=>getComputedStyle(n).visibility==='visible'),true);
    const frames=Object.fromEntries(['workspace','sidebar'].map(role=>[role,role==='sidebar'&&!sidebarFits?null:page.frames().find(f=>f.url()===`chrome-extension://${id}/${role}.html`)]));assert(frames.workspace);if(sidebarFits)assert(frames.sidebar);
    await frames.workspace.locator('.workspace').waitFor();if(frames.sidebar)await frames.sidebar.locator('.toolbar:not(.sidebar-footer)').waitFor();
    await frames.workspace.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));

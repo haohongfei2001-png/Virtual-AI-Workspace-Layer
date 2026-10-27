@@ -5,7 +5,7 @@ import {createSurfaceController} from '../../src/host/surface-controller.mjs';
 import {createScopeAuthority} from '../../src/runtime/scope-authority.mjs';
 const drain=async()=>{for(let i=0;i<100;i++)await Promise.resolve();};
 const source=readFileSync(new URL('./surface-controller.test.mjs',import.meta.url),'utf8');
-const boundary="\ntest('owner registration and both UiGrant ACKs gate initial dual-surface show'";
+const boundary="\ntest('owner registration and workspace UiGrant gate workspace; sidebar joins independently'";
 assert.equal(source.split(boundary).length,2,'fixture extraction has one exact boundary');
 const fixture=new Function('assert','createSurfaceController',source.slice(0,source.indexOf(boundary)).replace(/^import .*;\n/gm,'')+'\nreturn fixture;')(assert,createSurfaceController);
 // Real controller scheduling and ScopeAuthority provider admission, isolated DOM/IPC doubles.
@@ -31,11 +31,11 @@ test('successful unchanged absolute expiry cannot cause geometric provider retri
  assert.equal(f.renewals(),1,'no new renewal after success failed to advance the absolute expiry: '+JSON.stringify(f.timeline));
  assert.equal(f.reads(),2,'local timer scheduling must not amplify authenticated provider reads');
  assert.equal(f.controller.localStatus(),'ready');assert.equal(f.calls.dispose,0);
- await f.advance(21000-f.wall());assert.equal(f.controller.localStatus(),'unavailable');assert.equal(f.calls.dispose,1);assert.equal(f.calls.terminations.at(-1).reason,'ui-grant-expired');assert.equal(f.renewals(),1);
+ await f.advance(21000-f.wall());assert.equal(f.controller.localStatus(),'surface-controller-absent');assert.equal(f.calls.dispose,1);assert.equal(f.calls.terminations.at(-1).reason,'ui-grant-expired');assert.equal(f.renewals(),1);
 });
 test('unchanged expiry withdraws at the original deadline without waiting for another network request',async t=>{
  const f=await chain(t);await f.advance(10000);await f.advance(10000);
- assert.equal(f.wall(),21000);assert.equal(f.controller.localStatus(),'unavailable');assert.equal(f.calls.dispose,1);assert.equal(f.calls.terminations.at(-1).reason,'ui-grant-expired');assert.equal(f.renewals(),1);assert.equal(f.reads(),2);
+ assert.equal(f.wall(),21000);assert.equal(f.controller.localStatus(),'surface-controller-absent');assert.equal(f.calls.dispose,1);assert.equal(f.calls.terminations.at(-1).reason,'ui-grant-expired');assert.equal(f.renewals(),1);assert.equal(f.reads(),2);
 });
 test('genuinely extended expiry continues normal bounded renewal cadence',async t=>{
  const f=await chain(t,{extended:true});for(let i=1;i<=4;i++){
@@ -47,11 +47,11 @@ test('genuinely extended expiry continues normal bounded renewal cadence',async 
 test('successful shorter expiry withdraws at the new earlier deadline without additional renewal',async t=>{
  const f=await chain(t,{shortened:true});await f.advance(10000);assert.equal(f.timeline[0].expiry,16000);assert.equal(f.renewals(),1);
  await f.advance(2500);assert.equal(f.controller.localStatus(),'ready');assert.equal(f.renewals(),1);await f.advance(2499);assert.equal(f.controller.localStatus(),'ready');
- await f.advance(1);assert.equal(f.wall(),16000);assert.equal(f.controller.localStatus(),'unavailable');assert.equal(f.calls.terminations.at(-1).reason,'ui-grant-expired');assert.equal(f.calls.dispose,1);assert.equal(f.reads(),2);
+ await f.advance(1);assert.equal(f.wall(),16000);assert.equal(f.controller.localStatus(),'surface-controller-absent');assert.equal(f.calls.terminations.at(-1).reason,'ui-grant-expired');assert.equal(f.calls.dispose,1);assert.equal(f.reads(),2);
 });
 test('C2 receipt absolute 60-second cap does not amplify provider reads despite long-lived session',async t=>{
  const f=await chain(t,{c2:true});await f.advance(10000);assert.equal(f.timeline[0].expiry,61000);assert.equal(f.reads(),2);
  for(const ms of [5000,2500,1250,625,312.5,156.25])await f.advance(ms);
  assert.equal(f.renewals(),1);assert.equal(f.reads(),2);assert.equal(f.controller.localStatus(),'ready');
- await f.advance(61000-f.wall());assert.equal(f.controller.localStatus(),'unavailable');assert.equal(f.calls.dispose,1);assert.equal(f.calls.terminations.at(-1).reason,'ui-grant-expired');assert.equal(f.reads(),2);
+ await f.advance(61000-f.wall());assert.equal(f.controller.localStatus(),'surface-controller-absent');assert.equal(f.calls.dispose,1);assert.equal(f.calls.terminations.at(-1).reason,'ui-grant-expired');assert.equal(f.reads(),2);
 });

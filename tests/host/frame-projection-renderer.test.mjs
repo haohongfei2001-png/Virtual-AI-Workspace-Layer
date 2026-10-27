@@ -8,7 +8,7 @@ import {projectFreeFrame} from '../../src/runtime/free-frame-projection.mjs';
 function dom(){
  let doc;
  class Element{
-  constructor(tag){this.tagName=tag;this.ownerDocument=doc;this.children=[];this.attrs={};this.dataset={};this.style={};this.events={};this.isConnected=true;this.scrollTop=0;this.clientWidth=0;this.clientHeight=0;this.textContent='';}
+  constructor(tag){this.tagName=tag;this.ownerDocument=doc;this.children=[];this.attrs={};this.dataset={};this.style={};this.events={};this.isConnected=true;this.scrollTop=0;this.clientWidth=0;this.clientHeight=200;this.textContent='';}
   setAttribute(k,v){this.attrs[k]=String(v);if(k==='class')this.className=String(v);}
   getAttribute(k){return k==='data-focus-key'?this.dataset.focusKey??this.attrs[k]??null:this.attrs[k]??null;}
   hasAttribute(k){return k==='data-focus-key'?this.getAttribute(k)!==null:k in this.attrs;}
@@ -41,7 +41,7 @@ for(const role of ['workspace','sidebar'])test('reopening a folded list restores
  const scope='scopeA',refs=Array.from({length:30},(_,i)=>({...row('R'+i),scope,membership:'PROJECT',projectId:'P1',activityDecision:{segment:role==='workspace'?2:0}}));
  const world=stamp=>({snapshot:freeNavigationSnapshot({scope,viewMode:'free',revision:1,viewSession:{H:30,T:20000,Z:'UTC',policyRevision:0},refs:refs.map(r=>({...r,nativeTitle:stamp+r.id})),projects:[{id:'P1',scope,nativeName:'Project',members:refs.map(r=>r.id),activityDecision:{segment:0}}]})});
  let data=world('before-');const calls=[],f=fixture(role,q=>{calls.push(q);return projectFreeFrame(data,q);});
- const toggle=role==='workspace'?'展开旧窗口 Project':'侧栏主题 Project',more=role==='workspace'?'显示更多旧窗口 Project':'显示更多近期窗口';
+ const toggle=role==='workspace'?'展开旧窗口 Project':'侧栏项目 Project',more=role==='workspace'?'显示更多旧窗口 Project':'显示更多近期窗口';
  try{
   f.nav.updateFrameProjection(projectFreeFrame(data,{role}));f.button(toggle).click();await tick();f.button(more).click();await tick();
   assert.equal(f.pane().querySelectorAll('[data-ref-id]').length,17);
@@ -81,7 +81,7 @@ test('more/old/history issue bounded owner queries instead of treating preview a
 test('owner selected rows replace bounded page and accurate total keeps more reachable',async()=>{
  const f=fixture('workspace',q=>{const dto=projection();dto.selection={groupId:q.groupId,list:q.list,...page(Array.from({length:17},(_,i)=>row(`page_${i}`)),1000,0,17)};return dto;});f.nav.updateFrameProjection(projection());f.button('显示更多近期窗口').click();await tick();assert.equal(f.pane().querySelectorAll('[data-ref-id]').filter(n=>n.getAttribute('data-ref-id').startsWith('page_')).length,17);assert.ok(f.button('显示更多近期窗口'));assert.ok(f.button('显示更多项目'));
 });
-test('sidebar expansion requests bounded group page; shared presentation intent remains owner-directed',()=>{const calls=[],f=fixture('sidebar',q=>calls.push(q));f.nav.updateFrameProjection(projection('sidebar'));f.button('侧栏主题 Original P2').click();assert.equal(calls[0].groupId,'P2');assert.equal(calls[0].rowLimit,5);f.button('查找已知项目与聊天').click();assert.deepEqual(f.intents.at(-1),{kind:'search-known',themeId:null});assert.ok(f.button('显示更多项目'));});
+test('sidebar expansion requests bounded group page; shared presentation intent remains owner-directed',()=>{const calls=[],f=fixture('sidebar',q=>calls.push(q));f.nav.updateFrameProjection(projection('sidebar'));f.button('侧栏项目 Original P2').click();assert.equal(calls[0].groupId,'P2');assert.equal(calls[0].rowLimit,5);f.button('查找已知项目与聊天').click();assert.deepEqual(f.intents.at(-1),{kind:'search-known',themeId:null});assert.ok(f.button('显示更多项目'));});
 test('projection cannot enter unframed/full-snapshot path and wrong role is rejected',()=>{const f=fixture();assert.throws(()=>f.nav.updateFrameProjection({...projection(),completeSnapshot:true}),/invalid-frame-projection/);assert.throws(()=>f.nav.updateFrameProjection(projection('sidebar')),/invalid-frame-projection/);const doc=dom(),nav=createNavigation({document:doc,adapter:{status(){}}});assert.throws(()=>nav.updateFrameProjection(projection()),/invalid-frame-projection/);});
 test('late page after scope replacement is discarded',async()=>{let finish;const f=fixture('workspace',()=>new Promise(r=>finish=r));f.nav.updateFrameProjection(projection());f.button('显示更多项目').click();f.nav.updateFrameProjection({...projection(),scope:'scopeB'});finish(projection());await tick();assert.equal(f.nav.status().scope,'scopeB');});
 test('bounded DTO is rejected by ordinary snapshot update and unsolicited same-scope page fences pending replies',async()=>{let finish;const f=fixture('workspace',()=>new Promise(r=>finish=r));assert.throws(()=>f.nav.update(projection()),/frame-projection-requires-explicit-consumer/);f.nav.updateFrameProjection(projection());f.button('显示更多项目').click();const fresh=projection();fresh.groups.items[0].name='Fresh owner name';f.nav.updateFrameProjection(fresh);finish(projection());await tick();assert.ok(f.pane().querySelectorAll('.theme-name').some(n=>n.textContent==='Fresh owner name'));});
@@ -97,10 +97,10 @@ test('last-known information stays in accessible descriptions without repeated v
 });
 test('sidebar freshness description does not rename native projects and clears across scope',()=>{
  const f=fixture('sidebar'),dto=projection('sidebar');dto.groups.items[0].freshness='last-known';f.nav.updateFrameProjection(dto);
- const button=f.button('侧栏主题 Original P2');assert.ok(button);assert.equal(button.querySelector('.theme-name').textContent,'Original P2');assert.equal(button.getAttribute('data-freshness'),'last-known');assert(button.getAttribute('aria-description').includes('此前已知'));assert.equal(button.querySelector('.freshness-label'),null);
- f.nav.updateFrameProjection({...projection('sidebar'),scope:'scopeB'});assert.equal(f.pane().querySelectorAll('.freshness-label').length,0);assert.ok(f.button('侧栏主题 Original P2'));f.nav.stop();
+ const button=f.button('侧栏项目 Original P2');assert.ok(button);assert.equal(button.querySelector('.theme-name').textContent,'Original P2');assert.equal(button.getAttribute('data-freshness'),'last-known');assert(button.getAttribute('aria-description').includes('此前已知'));assert.equal(button.querySelector('.freshness-label'),null);
+ f.nav.updateFrameProjection({...projection('sidebar'),scope:'scopeB'});assert.equal(f.pane().querySelectorAll('.freshness-label').length,0);assert.ok(f.button('侧栏项目 Original P2'));f.nav.stop();
 });
-test('bounded current IDs select loaded group and row without a full index',()=>{const f=fixture('sidebar'),dto=projection('sidebar');dto.current={nativeUrl:'https://chatgpt.com/c/P1_0',refId:'P1_0',projectId:'P1'};f.nav.updateFrameProjection(dto);assert.equal(f.nav.currentRef().id,'P1_0');assert.equal(f.button('侧栏主题 Original P1').getAttribute('aria-expanded'),'true');assert.equal(f.pane().querySelectorAll('[aria-current]').find(n=>n.getAttribute('data-ref-id')==='P1_0').getAttribute('aria-current'),'page');assert.equal(f.nav.view().segment,0);});
+test('bounded current IDs select loaded group and row without a full index',()=>{const f=fixture('sidebar'),dto=projection('sidebar');dto.current={nativeUrl:'https://chatgpt.com/c/P1_0',refId:'P1_0',projectId:'P1'};f.nav.updateFrameProjection(dto);assert.equal(f.nav.currentRef().id,'P1_0');assert.equal(f.button('侧栏项目 Original P1').getAttribute('aria-expanded'),'true');assert.equal(f.pane().querySelectorAll('[aria-current]').find(n=>n.getAttribute('data-ref-id')==='P1_0').getAttribute('aria-current'),'page');assert.equal(f.nav.view().segment,0);});
 test('current can locate a loaded selection page, but absent refs are never invented',()=>{const f=fixture(),dto=projection();dto.current={nativeUrl:'https://chatgpt.com/c/selected',refId:'selected',projectId:'P1'};dto.selection={groupId:'P1',list:'current',...page([row('selected')],1000,5,5)};f.nav.updateFrameProjection(dto);assert.equal(f.nav.currentRef().id,'selected');f.nav.updateFrameProjection({...dto,current:{...dto.current,refId:'unloaded',projectId:'unloaded_project'}});assert.equal(f.nav.currentRef(),undefined);f.nav.updateFrameProjection(projection());assert.equal(f.nav.currentRef(),undefined);});
 test('malformed current metadata cannot enter framed renderer',()=>{const f=fixture();for(const current of [null,{nativeUrl:'',refId:null,projectId:null},{nativeUrl:'https://chatgpt.com/',refId:[],projectId:null},{nativeUrl:'https://chatgpt.com/',refId:null,projectId:null,scope:'B'}])assert.throws(()=>f.nav.updateFrameProjection({...projection(),current}),/invalid-frame-current/);});
 
@@ -115,7 +115,7 @@ test('search input bounds and late previous query never overwrite current result
  const calls=[],pending=[],f=fixture('workspace',q=>{calls.push(q);return new Promise(r=>pending.push(r));});f.nav.updateFrameProjection(projection());f.nav.present({kind:'search-known',themeId:'P1'});const input=f.pane().querySelector('input');input.value='x'.repeat(220);input.oninput();assert.equal(calls[1].search.query.length,200);assert.equal(calls[1].search.projectId,'P1');pending[1](searchReply(calls[1].search,[row('new')]));await tick();pending[0](searchReply(calls[0].search,[row('old')]));await tick();assert(f.pane().querySelector('[data-ref-id="new"]'));assert(!f.pane().querySelector('[data-ref-id="old"]'));
 });
 test('close clears owner search query and late/background search cannot reopen it',async()=>{
- const calls=[],pending=[],f=fixture('workspace',q=>{calls.push(q);return new Promise(r=>pending.push(r));});f.nav.updateFrameProjection(projection());f.nav.present({kind:'search-known'});f.button('关闭派生查找').click();assert.equal(calls[1].search,undefined);pending[0](searchReply(calls[0].search,[row('late')]));await tick();assert.equal(f.pane().querySelector('input'),null);f.nav.updateFrameProjection(searchReply(calls[0].search,[row('late')]));assert.equal(f.pane().querySelector('input'),null);assert(!f.pane().querySelector('[data-ref-id="late"]'));
+ const calls=[],pending=[],f=fixture('workspace',q=>{calls.push(q);return new Promise(r=>pending.push(r));});f.nav.updateFrameProjection(projection());f.nav.present({kind:'search-known'});f.button('关闭已知查找').click();assert.equal(calls[1].search,undefined);pending[0](searchReply(calls[0].search,[row('late')]));await tick();assert.equal(f.pane().querySelector('input'),null);f.nav.updateFrameProjection(searchReply(calls[0].search,[row('late')]));assert.equal(f.pane().querySelector('input'),null);assert(!f.pane().querySelector('[data-ref-id="late"]'));
 });
 test('scope replacement cancels old search and sidebar delegates without requesting inventory',async()=>{
  let finish;const f=fixture('workspace',()=>new Promise(r=>finish=r));f.nav.updateFrameProjection(projection());f.nav.present({kind:'search-known'});f.nav.updateFrameProjection({...projection(),scope:'B'});finish(searchReply({query:'',projectId:null,offset:0,limit:24},[row('A')]));await tick();assert.equal(f.nav.status().scope,'B');assert.equal(f.pane().querySelector('input'),null);
@@ -199,7 +199,7 @@ for(const key of ['Enter',' '])test('closing settings with '+JSON.stringify(key)
 const projectHref='https://chatgpt.com/g/g-p-0123456789abcdef0123456789abcdef/project';
 function projectPlan(group){return {plan:{mode:'href',disposition:'new-tab-preserve-current',target:{kind:'resolved',entity:'project',nativeId:group.id,navigationURL:group.nativeUrl}}};}
 for(const role of ['workspace','sidebar'])test(role+' project create fallback is a browser-only original project anchor with default keyboard/modifier semantics',()=>{let plans=0;const f=fixture(role,()=>assert.fail('click RPC'),null,null,{nativeHref:url=>url===projectHref?url:null,projectNavigationPlan:g=>{plans++;return projectPlan(g);}}),dto=projection(role);dto.groups.items[0].nativeUrl=projectHref;const draft=f.doc.createElement('textarea');draft.value='NATIVE DRAFT';f.doc.body.append(draft);f.nav.updateFrameProjection(dto);const a=f.pane().querySelector('[aria-label="打开项目以新建聊天 Original P2"]');assert(a);assert.equal(a.tagName,'a');assert.equal(a.href,projectHref);assert.equal(a.target,'_blank');assert.equal(a.rel,'noopener noreferrer');assert.equal(a.textContent,'+');assert.match(a.getAttribute('title'),/原生项目/);assert.equal(a.events.keydown,undefined);const count=plans,mode=f.nav.view().mode;let prevented=0;for(const event of [{button:0},{button:0,metaKey:true},{button:0,ctrlKey:true},{button:1}])for(const listener of a.events.click??[])listener({...event,preventDefault(){prevented++;}});assert.equal(prevented,0);a.click();assert.equal(plans,count);assert.equal(f.nav.view().mode,mode);assert.equal(draft.value,'NATIVE DRAFT');assert.equal(draft.isConnected,true);f.nav.stop();});
-for(const role of ['workspace','sidebar'])test(role+' project fallback rejects wrong entity ID URL disposition unsafe href and unavailable plans without C/P mixing',()=>{for(const change of [p=>null,p=>({...p,plan:{...p.plan,mode:'native-control'}}),p=>({...p,plan:{...p.plan,disposition:'same-tab'}}),p=>({...p,plan:{...p.plan,target:{...p.plan.target,entity:'conversation'}}}),p=>({...p,plan:{...p.plan,target:{...p.plan.target,nativeId:'other'}}}),p=>({...p,plan:{...p.plan,target:{...p.plan.target,navigationURL:projectHref+'?create=true'}}})]){const f=fixture(role,()=>null,null,null,{nativeHref:u=>u,projectNavigationPlan:g=>change(projectPlan(g)),navigationPlan:ref=>({plan:{mode:'href',disposition:'new-tab-preserve-current',target:{kind:'resolved',entity:'conversation',nativeId:ref.id,navigationURL:ref.nativeUrl}}})}),dto=projection(role);dto.groups.items[0].nativeUrl=projectHref;dto.groups.items[0].lists.current=page([row('P2')]);f.nav.updateFrameProjection(dto);assert.equal(f.pane().querySelector('[aria-label="打开项目以新建聊天 Original P2"]'),null);assert.notEqual(f.button('在项目中新建聊天 Original P2').disabled,true);assert.equal(f.button('在项目中新建聊天 Original P2').getAttribute('aria-disabled'),'true');if(role==='sidebar')f.button('侧栏主题 Original P2').click();assert(f.pane().querySelector('[data-ref-id="P2"]'));f.nav.stop();}for(const safe of [()=>null,()=>projectHref+'/']){const f=fixture(role,()=>null,null,null,{nativeHref:safe,projectNavigationPlan:projectPlan}),dto=projection(role);dto.groups.items[0].nativeUrl=projectHref;f.nav.updateFrameProjection(dto);assert.notEqual(f.button('在项目中新建聊天 Original P2').disabled,true);assert.equal(f.button('在项目中新建聊天 Original P2').getAttribute('aria-disabled'),'true');f.nav.stop();}});
+for(const role of ['workspace','sidebar'])test(role+' project fallback rejects wrong entity ID URL disposition unsafe href and unavailable plans without C/P mixing',()=>{for(const change of [p=>null,p=>({...p,plan:{...p.plan,mode:'native-control'}}),p=>({...p,plan:{...p.plan,disposition:'same-tab'}}),p=>({...p,plan:{...p.plan,target:{...p.plan.target,entity:'conversation'}}}),p=>({...p,plan:{...p.plan,target:{...p.plan.target,nativeId:'other'}}}),p=>({...p,plan:{...p.plan,target:{...p.plan.target,navigationURL:projectHref+'?create=true'}}})]){const f=fixture(role,()=>null,null,null,{nativeHref:u=>u,projectNavigationPlan:g=>change(projectPlan(g)),navigationPlan:ref=>({plan:{mode:'href',disposition:'new-tab-preserve-current',target:{kind:'resolved',entity:'conversation',nativeId:ref.id,navigationURL:ref.nativeUrl}}})}),dto=projection(role);dto.groups.items[0].nativeUrl=projectHref;dto.groups.items[0].lists.current=page([row('P2')]);f.nav.updateFrameProjection(dto);assert.equal(f.pane().querySelector('[aria-label="打开项目以新建聊天 Original P2"]'),null);assert.notEqual(f.button('在项目中新建聊天 Original P2').disabled,true);assert.equal(f.button('在项目中新建聊天 Original P2').getAttribute('aria-disabled'),'true');if(role==='sidebar')f.button('侧栏项目 Original P2').click();assert(f.pane().querySelector('[data-ref-id="P2"]'));f.nav.stop();}for(const safe of [()=>null,()=>projectHref+'/']){const f=fixture(role,()=>null,null,null,{nativeHref:safe,projectNavigationPlan:projectPlan}),dto=projection(role);dto.groups.items[0].nativeUrl=projectHref;f.nav.updateFrameProjection(dto);assert.notEqual(f.button('在项目中新建聊天 Original P2').disabled,true);assert.equal(f.button('在项目中新建聊天 Original P2').getAttribute('aria-disabled'),'true');f.nav.stop();}});
 for(const role of ['workspace','sidebar'])test(role+' project href is not synthesized without an independent project plan and disappears across scope invalidation',()=>{const f=fixture(role,()=>null,null,null,{nativeHref:u=>u,projectNavigationPlan:projectPlan}),dto=projection(role);dto.groups.items[0].nativeUrl=projectHref;f.nav.updateFrameProjection(dto);assert(f.pane().querySelector('[aria-label="打开项目以新建聊天 Original P2"]'));f.nav.invalidate();f.nav.updateFrameProjection({...projection(role),scope:'different'});assert.equal(f.pane().querySelector('[aria-label="打开项目以新建聊天 Original P2"]'),null);assert.notEqual(f.button('在项目中新建聊天 Original P2').disabled,true);assert.equal(f.button('在项目中新建聊天 Original P2').getAttribute('aria-disabled'),'true');f.nav.stop();});
 
 const historyProjection=segment=>({...projection(),segment,navigation:{hasNewer:segment>0,hasOlder:segment<8,maxSegment:8}});
@@ -267,10 +267,10 @@ test('sidebar resize does not locate current chat or disturb sidebar scroll',()=
 
 test('sidebar project create is a sibling of disclosure and does not toggle its member list',()=>{
  const calls=[],f=fixture('sidebar',q=>calls.push(q),null,null,{nativeHref:u=>u,projectNavigationPlan:projectPlan}),dto=projection('sidebar');dto.groups.items[0].nativeUrl=projectHref;f.nav.updateFrameProjection(dto);
- const toggle=f.button('侧栏主题 Original P2'),entry=f.pane().querySelector('[aria-label="打开项目以新建聊天 Original P2"]');
+ const toggle=f.button('侧栏项目 Original P2'),entry=f.pane().querySelector('[aria-label="打开项目以新建聊天 Original P2"]');
  assert(entry);assert.equal(entry.parentNode,toggle.parentNode);assert.notEqual(entry.parentNode,toggle);assert.equal(toggle.getAttribute('aria-expanded'),'false');
  const event=entry.click();assert.equal(event.defaultPrevented,false);assert.equal(toggle.getAttribute('aria-expanded'),'false');assert.equal(calls.length,0);
- toggle.click();assert.equal(f.button('侧栏主题 Original P2').getAttribute('aria-expanded'),'true');assert.equal(calls.length,1);assert.equal(calls[0].groupId,'P2');
+ toggle.click();assert.equal(f.button('侧栏项目 Original P2').getAttribute('aria-expanded'),'true');assert.equal(calls.length,1);assert.equal(calls[0].groupId,'P2');
  assert(f.pane().querySelector('[aria-label="打开项目以新建聊天 Original P2"]'));f.nav.stop();
 });
 
@@ -280,7 +280,7 @@ for(const kind of ['search','workingSet'])test(kind+' paging keeps keyboard posi
  f.nav.updateFrameProjection(projection());f.nav.present({kind:kind==='search'?'search-known':'show-working-set'});pending.shift()(reply(calls[0]));await tick();
  f.button(label).focus();f.button(label).click();assert.equal(calls.length,2);assert.equal(f.pane().activeElement?.getAttribute('aria-label'),label,'waiting keeps the pager focus');assert.equal(f.button(label).getAttribute('aria-disabled'),'true');f.button(label).click();assert.equal(calls.length,2,'waiting control cannot issue a second page read');
  pending.shift()(reply(calls[1]));await tick();assert.equal(f.pane().activeElement,f.button(label),'second page restores the same usable direction');assert.notEqual(f.button(label).getAttribute('aria-disabled'),'true');f.button(label).click();assert.equal(calls[2][kind].offset,48);
- const back=kind==='search'?'关闭派生查找':'返回主题视图';f.button(back).focus();pending.shift()(reply(calls[2]));await tick();assert.equal(f.pane().activeElement,f.button(back),'completion respects an intervening focus move');f.nav.stop();
+ const back=kind==='search'?'关闭已知查找':'返回主题视图';f.button(back).focus();pending.shift()(reply(calls[2]));await tick();assert.equal(f.pane().activeElement,f.button(back),'completion respects an intervening focus move');f.nav.stop();
 });
 function sidebarFixture(extra={}){let url='';const f=fixture('sidebar',()=>null,null,null,{currentURL:()=>url},extra);f.setRouteURL=value=>{url=value;};return f;}
 function sidebarRoute(f,id,scope='scopeA',ref=id+'_0'){
@@ -288,37 +288,37 @@ function sidebarRoute(f,id,scope='scopeA',ref=id+'_0'){
 }
 test('sidebar follows current project without accumulating automatic expansions',()=>{
  const f=sidebarFixture();sidebarRoute(f,'P1');sidebarRoute(f,'P2');
- assert.equal(f.button('侧栏主题 Original P1').getAttribute('aria-expanded'),'false');assert.equal(f.button('侧栏主题 Original P2').getAttribute('aria-expanded'),'true');
- sidebarRoute(f,null,'scopeA','unknown');assert.equal(f.button('侧栏主题 Original P2').getAttribute('aria-expanded'),'false');f.nav.stop();
+ assert.equal(f.button('侧栏项目 Original P1').getAttribute('aria-expanded'),'false');assert.equal(f.button('侧栏项目 Original P2').getAttribute('aria-expanded'),'true');
+ sidebarRoute(f,null,'scopeA','unknown');assert.equal(f.button('侧栏项目 Original P2').getAttribute('aria-expanded'),'false');f.nav.stop();
 });
 test('sidebar manual open and closed choices survive refresh, current changes and frame return',async()=>{
  let saved;const f=sidebarFixture({onViewChange:v=>{saved=v;}});sidebarRoute(f,'P1');
- f.button('侧栏主题 Original P2').click();await tick();sidebarRoute(f,'P2');assert.equal(f.button('侧栏主题 Original P1').getAttribute('aria-expanded'),'false');
- f.button('侧栏主题 Original P2').click();await tick();sidebarRoute(f,'P1');sidebarRoute(f,'P2','scopeA','P2_other');
- assert.equal(f.button('侧栏主题 Original P2').getAttribute('aria-expanded'),'false');
- const resumed=sidebarFixture();const {freeSession,...layout}=saved;resumed.nav.restoreFrameView(layout);sidebarRoute(resumed,'P2');assert.equal(resumed.button('侧栏主题 Original P2').getAttribute('aria-expanded'),'false');
- sidebarRoute(f,'P2','scopeB');assert.equal(f.button('侧栏主题 Original P2').getAttribute('aria-expanded'),'true','manual preference must not cross scopes');f.nav.stop();resumed.nav.stop();
+ f.button('侧栏项目 Original P2').click();await tick();sidebarRoute(f,'P2');assert.equal(f.button('侧栏项目 Original P1').getAttribute('aria-expanded'),'false');
+ f.button('侧栏项目 Original P2').click();await tick();sidebarRoute(f,'P1');sidebarRoute(f,'P2','scopeA','P2_other');
+ assert.equal(f.button('侧栏项目 Original P2').getAttribute('aria-expanded'),'false');
+ const resumed=sidebarFixture();const {freeSession,...layout}=saved;resumed.nav.restoreFrameView(layout);sidebarRoute(resumed,'P2');assert.equal(resumed.button('侧栏项目 Original P2').getAttribute('aria-expanded'),'false');
+ sidebarRoute(f,'P2','scopeB');assert.equal(f.button('侧栏项目 Original P2').getAttribute('aria-expanded'),'true','manual preference must not cross scopes');f.nav.stop();resumed.nav.stop();
 });
 test('sidebar explicitly open choice survives project changes, automatic open does not survive return to another project',async()=>{
  let saved;const f=sidebarFixture({onViewChange:v=>{saved=v;}});sidebarRoute(f,'P1');
  const automatic=saved;const returned=sidebarFixture();const {freeSession,...layout}=automatic;returned.nav.restoreFrameView(layout);sidebarRoute(returned,'P2');
- assert.equal(returned.button('侧栏主题 Original P1').getAttribute('aria-expanded'),'false');
- f.button('侧栏主题 Original P2').click();await tick();sidebarRoute(f,'P1','scopeA','anotherP1');
- assert.equal(f.button('侧栏主题 Original P2').getAttribute('aria-expanded'),'true');sidebarRoute(f,null,'scopeA','unknown');assert.equal(f.button('侧栏主题 Original P2').getAttribute('aria-expanded'),'true');
+ assert.equal(returned.button('侧栏项目 Original P1').getAttribute('aria-expanded'),'false');
+ f.button('侧栏项目 Original P2').click();await tick();sidebarRoute(f,'P1','scopeA','anotherP1');
+ assert.equal(f.button('侧栏项目 Original P2').getAttribute('aria-expanded'),'true');sidebarRoute(f,null,'scopeA','unknown');assert.equal(f.button('侧栏项目 Original P2').getAttribute('aria-expanded'),'true');
  f.nav.stop();returned.nav.stop();
 });
 test('full sidebar choice admission preserves the last valid saved layout and offers explicit reset',()=>{
  let saved;const f=sidebarFixture({onViewChange:v=>{saved=v;}}),layout={segment:0,oldOpen:[],sidebarOpen:[],sidebarChoices:Array.from({length:256},(_,i)=>['closed'+i,false]),capacities:[],scroll:0,sidebarScroll:0,sidebarVisible:true};
- f.nav.restoreFrameView(layout);sidebarRoute(f,'P1');f.button('侧栏主题 Original P1').click();
- assert.equal(f.button('侧栏主题 Original P1').getAttribute('aria-expanded'),'true','over-capacity choice is not silently applied');assert.deepEqual(saved.sidebarChoices,layout.sidebarChoices);assert.equal(saved.sidebarOpen.length,1);assert(f.button('重置本次侧栏开合'));
- f.button('重置本次侧栏开合').click();assert.deepEqual(saved.sidebarChoices,[]);assert.equal(f.button('重置本次侧栏开合'),undefined);f.button('侧栏主题 Original P1').click();assert.deepEqual(saved.sidebarChoices,[['P1',false]]);f.nav.stop();
+ f.nav.restoreFrameView(layout);sidebarRoute(f,'P1');f.button('侧栏项目 Original P1').click();
+ assert.equal(f.button('侧栏项目 Original P1').getAttribute('aria-expanded'),'true','over-capacity choice is not silently applied');assert.deepEqual(saved.sidebarChoices,layout.sidebarChoices);assert.equal(saved.sidebarOpen.length,1);assert(f.button('重置本次侧栏开合'));
+ f.button('重置本次侧栏开合').click();assert.deepEqual(saved.sidebarChoices,[]);assert.equal(f.button('重置本次侧栏开合'),undefined);f.button('侧栏项目 Original P1').click();assert.deepEqual(saved.sidebarChoices,[['P1',false]]);f.nav.stop();
 });
 test('legacy full and near-byte-limit sidebar layouts survive metadata migration without eviction or invalid SAVE',()=>{
  for(const length of [8,110]){let saved;const f=sidebarFixture({onViewChange:v=>{saved=v;}}),ids=Array.from({length:256},(_,i)=>'legacy'+i+'x'.repeat(length));const layout={segment:0,oldOpen:[],sidebarOpen:ids,capacities:[],scroll:0,sidebarScroll:0,sidebarVisible:true};
  f.nav.restoreFrameView(layout);sidebarRoute(f,'P1');assert.deepEqual(saved.sidebarOpen,ids);assert(f.button('重置本次侧栏开合'));const {freeSession,...returned}=saved;assert.equal(f.nav.restoreFrameView(returned),true,'emitted fallback is still valid');if(length===110)assert.equal(Object.hasOwn(saved,'sidebarChoices'),false);f.nav.stop();}
 });
 test('new-format byte overflow on scrolling never silently discards explicit closed choices',()=>{
- let saved;const f=sidebarFixture({onViewChange:v=>{saved=v;}}),layout={segment:0,oldOpen:[],sidebarOpen:[],sidebarChoices:[['P1',false]],capacities:[],scroll:0,sidebarScroll:0,sidebarVisible:true};
+ let saved;const f=sidebarFixture({onViewChange:v=>{saved=v;}}),layout={segment:0,oldOpen:[],sidebarOpen:[],sidebarChoices:[['P1',false]],inventoryChoices:[['side',false]],capacities:[],scroll:0,sidebarScroll:0,sidebarVisible:true};
  for(let i=0;i<64;i++)layout.oldOpen.push(String(i)+'x'.repeat(498));
  const spare=32766-new TextEncoder().encode(JSON.stringify(layout)).length;
  layout.oldOpen.push('y'.repeat(spare-3));
@@ -326,7 +326,7 @@ test('new-format byte overflow on scrolling never silently discards explicit clo
  assert.equal(f.nav.restoreFrameView(layout),true);sidebarRoute(f,'P1');const before=saved;
  const list=f.pane().querySelector('.themes');list.scrollTop=100000000;for(const listener of list.events.scroll??[])listener({});
  assert.equal(saved,before,'oversized new-format save must not replace the prior valid layout');assert.deepEqual(saved.sidebarChoices,[['P1',false]]);assert(f.button('重置本次侧栏开合'));
- const returned=sidebarFixture();const {freeSession,...restore}=saved;assert.equal(returned.nav.restoreFrameView(restore),true);sidebarRoute(returned,'P1');assert.equal(returned.button('侧栏主题 Original P1').getAttribute('aria-expanded'),'false');f.nav.stop();returned.nav.stop();
+ const returned=sidebarFixture();const {freeSession,...restore}=saved;assert.equal(returned.nav.restoreFrameView(restore),true);sidebarRoute(returned,'P1');assert.equal(returned.button('侧栏项目 Original P1').getAttribute('aria-expanded'),'false');f.nav.stop();returned.nav.stop();
 });
 test('search preserves IME preedit and queries only committed text once',()=>{
  const calls=[],f=fixture('workspace',q=>{calls.push(q);return null;});f.nav.updateFrameProjection(projection());f.nav.present({kind:'search-known'});
@@ -338,7 +338,7 @@ test('search preserves IME preedit and queries only committed text once',()=>{
 });
 test('detached search input cannot commit after closing search or switching scope',()=>{
  for(const action of ['close','scope','stop']){const calls=[],f=fixture('workspace',q=>{calls.push(q);return null;});f.nav.updateFrameProjection(projection());f.nav.present({kind:'search-known'});const old=f.pane().querySelector('input');old.oncompositionstart?.();
- if(action==='close')f.button('关闭派生查找').click();else if(action==='scope')f.nav.updateFrameProjection({...projection(),scope:'other'});else f.nav.stop();
+ if(action==='close')f.button('关闭已知查找').click();else if(action==='scope')f.nav.updateFrameProjection({...projection(),scope:'other'});else f.nav.stop();
  const count=calls.length;old.value='stale';old.oncompositionend?.();old.oninput({isComposing:false});assert.equal(calls.length,count,action);f.nav.stop();}
 });
 for(const kind of ['search','workingSet'])test(kind+' scrolling cannot overwrite main return layout and transient position survives refresh',()=>{
@@ -365,7 +365,7 @@ test('pending horizon retains focusable select but blocks native mutation and de
 
 for(const role of ['workspace','sidebar'])for(const boundary of ['same-scope-refresh','scope-replacement','invalidate','stop'])test(`retired project disclosure cannot mutate/save/query a replacement view: ${role} ${boundary}`,t=>{
  const calls=[],saves=[],f=fixture(role,q=>{calls.push(q);return null;},null,null,{}, {onViewChange:(value,scope)=>saves.push({value,scope})});t.after(()=>f.nav.stop());
- const label=id=>(role==='sidebar'?'侧栏主题 ':'展开旧窗口 ')+'Original '+id,key=id=>role==='sidebar'?id:'home:'+id,open=()=>role==='sidebar'?f.nav.view().sidebarOpen:f.nav.view().oldOpen;
+ const label=id=>(role==='sidebar'?'侧栏项目 ':'展开旧窗口 ')+'Original '+id,key=id=>role==='sidebar'?id:'home:'+id,open=()=>role==='sidebar'?f.nav.view().sidebarOpen:f.nav.view().oldOpen;
  const positive=id=>{const count=calls.length;f.button(label(id)).click();assert(open().has(key(id)));assert.equal(calls.length,count+1);assert.deepEqual(calls.at(-1),{role,segment:0,offset:0,limit:24,groupId:id,list:role==='sidebar'?'current':'old',rowOffset:0,rowLimit:5});f.button(label(id)).click();assert(!open().has(key(id)));assert.equal(calls.length,count+1);};
  f.nav.updateFrameProjection(projection(role));positive('P2');const retired=f.button(label('P2')),owner=f.nav.view();
  if(boundary==='invalidate'||boundary==='stop')f.nav[boundary]();else{const next=projection(role);next.groups=page(next.groups.items.filter(g=>g.id==='P1'),1,0,24);if(boundary==='scope-replacement')next.scope='scopeB';f.nav.updateFrameProjection(next);}
@@ -401,15 +401,15 @@ for(const label of ['工作空间设置','关闭设置'])test('retired settings 
  }finally{f.nav.stop();}
 });
 
-for(const label of ['折叠主题导航','当前工作集','查找已知项目与聊天','已保存片段'])test('retired sidebar toolbar cannot act on the next scope: '+label,()=>{
+for(const label of ['隐藏项目导航','当前工作集','查找已知项目与聊天','已保存片段'])test('retired sidebar toolbar cannot act on the next scope: '+label,()=>{
  let snippets=0,exits=0;const f=fixture('sidebar',()=>null,null,null,{}, {onSnippetsRequest:()=>snippets++,onExit:()=>exits++});try{
  f.nav.updateFrameProjection(projection('sidebar'));const retired=f.button(label);assert(retired);f.nav.updateFrameProjection({...projection('sidebar'),scope:'scopeB'});const fresh=f.button(label);assert.notEqual(fresh,retired);
  const before=JSON.stringify(f.nav.view()),intents=f.intents.length;retired.click();assert.equal(JSON.stringify(f.nav.view()),before);assert.equal(f.intents.length,intents);assert.equal(snippets,0);assert.equal(exits,0);assert(f.nav.roots());
- fresh.click();if(label==='折叠主题导航')assert.equal(f.nav.view().sidebarVisible,false);if(label==='当前工作集'||label==='查找已知项目与聊天')assert.equal(f.intents.length,intents+1);if(label==='已保存片段')assert.equal(snippets,1);
+ fresh.click();if(label==='隐藏项目导航')assert.equal(f.nav.view().sidebarVisible,false);if(label==='当前工作集'||label==='查找已知项目与聊天')assert.equal(f.intents.length,intents+1);if(label==='已保存片段')assert.equal(snippets,1);
  }finally{f.nav.stop();}
 });
 test('retired search close cannot replace a newer working-set view',()=>{
- const calls=[],f=fixture('workspace',q=>{calls.push(q);return null;});try{f.nav.updateFrameProjection(projection());f.nav.present({kind:'search-known'});const retired=f.button('关闭派生查找');assert(retired);
+ const calls=[],f=fixture('workspace',q=>{calls.push(q);return null;});try{f.nav.updateFrameProjection(projection());f.nav.present({kind:'search-known'});const retired=f.button('关闭已知查找');assert(retired);
  f.nav.present({kind:'show-working-set'});const before=calls.length;retired.click();assert.equal(f.nav.view().worksetOpen,true);assert.equal(calls.length,before);assert(f.button('返回主题视图'));
  f.button('返回主题视图').click();assert.equal(f.nav.view().worksetOpen,false);assert.equal(calls.length,before+1);
  }finally{f.nav.stop();}

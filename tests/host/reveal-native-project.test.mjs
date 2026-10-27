@@ -6,7 +6,7 @@ import {createNavigation} from '../../src/navigation/navigation.mjs';
 function dom(){
  let doc;
  class Element{
-  constructor(tag){this.tagName=tag;this.ownerDocument=doc;this.children=[];this.attrs={};this.dataset={};this.style={};this.events={};this.isConnected=true;this.scrollTop=0;this.clientWidth=0;this.clientHeight=0;this.textContent='';}
+  constructor(tag){this.tagName=tag;this.ownerDocument=doc;this.children=[];this.attrs={};this.dataset={};this.style={};this.events={};this.isConnected=true;this.scrollTop=0;this.clientWidth=0;this.clientHeight=200;this.textContent='';}
   setAttribute(k,v){this.attrs[k]=String(v);if(k==='class')this.className=String(v);}
   getAttribute(k){return k==='data-focus-key'?this.dataset.focusKey??this.attrs[k]??null:this.attrs[k]??null;}
   hasAttribute(k){return k==='data-focus-key'?this.getAttribute(k)!==null:k in this.attrs;}
@@ -43,7 +43,7 @@ test('same-name missing ID never matches and no pending target revives on later 
  const f=fixture(),d=projection();for(const g of d.groups.items)g.name='Same';f.nav.updateFrameProjection(d);assert.equal(f.nav.revealNativeProject({projectId:'missing',focus:true}),false);const next=structuredClone(d);next.groups.items[0].id='missing';f.nav.updateFrameProjection(next);assert.equal(f.nav.view().sidebarOpen.size,0);assert.equal(f.pane().activeElement,undefined);f.nav.stop();assert.equal(f.nav.revealNativeProject({projectId:'missing'}),false);
 });
 test('sidebar expands only exact group and retains unrelated expansion with preview requiring no request',()=>{
- const requests=[],f=fixture('sidebar',q=>requests.push(q));f.nav.updateFrameProjection(projection('sidebar'));f.button('侧栏主题 Original P2').click();requests.length=0;assert.equal(f.nav.revealNativeProject({projectId:'P1'}),true);assert.deepEqual([...f.nav.view().sidebarOpen],['P2','P1']);assert.equal(f.button('侧栏主题 Original P1').getAttribute('aria-expanded'),'true');assert.deepEqual(requests,[]);f.nav.stop();
+ const requests=[],f=fixture('sidebar',q=>requests.push(q));f.nav.updateFrameProjection(projection('sidebar'));f.button('侧栏项目 Original P2').click();requests.length=0;assert.equal(f.nav.revealNativeProject({projectId:'P1'}),true);assert.deepEqual([...f.nav.view().sidebarOpen],['P2','P1']);assert.equal(f.button('侧栏项目 Original P1').getAttribute('aria-expanded'),'true');assert.deepEqual(requests,[]);f.nav.stop();
 });
 test('missing sidebar preview requests only current member page with existing segment and group page',()=>{
  const requests=[],f=fixture('sidebar',q=>requests.push(q)),d=projection('sidebar');d.groups.items[1].lists.current=page([],4);f.nav.updateFrameProjection(d);assert.equal(f.nav.revealNativeProject({projectId:'P1'}),true);assert.deepEqual(requests,[{role:'sidebar',segment:0,offset:0,limit:24,groupId:'P1',list:'current',rowOffset:0,rowLimit:5}]);f.nav.stop();

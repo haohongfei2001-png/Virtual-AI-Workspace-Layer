@@ -65,6 +65,11 @@ jobs:
           npm ci --prefix tests/b1/tooling --ignore-scripts
           tests/b1/tooling/node_modules/.bin/playwright install --with-deps chromium
           node --input-type=module -e "import {chromium} from './tests/b1/tooling/node_modules/playwright/index.mjs'; console.log('FREE_CHROME_EXECUTABLE='+chromium.executablePath())" >> "$GITHUB_ENV"
+      - name: Document-flow native protection and continuous packaged product journey
+        if: ${{ !cancelled() && github.event_name == 'push' }}
+        run: |
+          node tests/host/document-flow-browser.mjs
+          node tests/host/browser-local-mv3.mjs --flow-only
       - name: Actual packaged C2 conversation slice
         if: ${{ !cancelled() && github.event_name == 'push' }}
         run: |

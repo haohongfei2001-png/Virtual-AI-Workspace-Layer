@@ -34,7 +34,12 @@ try{
  page=await context.newPage();
  if(forcedColdRecovery){report.acceptance='PARTIAL_S_NOT_FREE_ACCEPTED';report.controlledConversationResponses=[];page.on('response',response=>{const u=new URL(response.url());if(u.origin===server.origin&&/^\/backend-api\/conversation\/[0-9a-f-]+$/.test(u.pathname)&&report.controlledConversationResponses.length<16)report.controlledConversationResponses.push({path:u.pathname,status:response.status()});});}
  report.requestTimeline=[];page.on('request',r=>{const u=new URL(r.url());if(u.origin===server.origin&&u.pathname.startsWith('/backend-api/conversation/')&&report.requestTimeline.length<16)report.requestTimeline.push({at:Date.now(),event:'native-request',path:u.pathname});});page.on('pageerror',error=>report.errors.push(error.message));await page.goto(server.origin+(containerConversation?containerPath:'/c/'+C));
- const waitMounted=(timeout=20000)=>page.waitForFunction(()=>document.querySelector('[data-va-owned][id$="_workspace"]')?.matches(':popover-open')===true,null,{timeout});
+ const waitMounted=(timeout=20000)=>page.waitForFunction(()=>{
+  const surface=document.querySelector('[data-va-owned][id$="_workspace"]');
+  if(!surface||surface.hasAttribute('popover'))return false;
+  const box=surface.getBoundingClientRect(),style=getComputedStyle(surface);
+  return style.display!=='none'&&style.visibility==='visible'&&box.width>=160&&box.height>=96&&!!surface.querySelector('iframe');
+ },null,{timeout});
  if(process.argv[3]==='cold-recovery'||forcedColdRecovery){
   report.coldBoundary=await observeColdBoundary({waitMounted,snapshot:()=>page.evaluate(()=>({owned:document.querySelectorAll('[data-va-owned]').length,nativeReading:!!document.querySelector('#reading'),nativeComposer:!!document.querySelector('#prompt-textarea')}))});
   if(forcedColdRecovery){assert.equal(report.coldBoundary.initialProjection,'TIMEOUT');report.coldBoundary.controlledFault='INITIAL_CONVERSATION_503_NOT_HISTORICAL_RACE_REPRODUCTION';}

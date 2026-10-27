@@ -13,7 +13,7 @@ async function fixture(nested){
   addEventListener(k,v){this.events.set(k,v);},removeEventListener(k){this.events.delete(k);},
   getBoundingClientRect(){return {width:0,height:0};},matches(){return this.open;},showPopover(){this.open=true;},hidePopover(){this.open=false;}
  });
- doc={defaultView:{getComputedStyle:()=>({visibility:'visible',display:'block'}),CSS:{supports:()=>true},HTMLElement:{prototype:{showPopover(){}}},crypto:{randomUUID:()=> 'placement'},MutationObserver:class{observe(){}disconnect(){}}},createElement:element,querySelector:()=>null,addEventListener:(k,v)=>listeners.set(k,v),removeEventListener:k=>listeners.delete(k)};
+ doc={defaultView:{addEventListener(){},removeEventListener(){},getComputedStyle:()=>({visibility:'visible',display:'block'}),CSS:{supports:()=>true},HTMLElement:{prototype:{showPopover(){}}},crypto:{randomUUID:()=> 'placement'},MutationObserver:class{observe(){}disconnect(){}}},createElement:element,querySelector:()=>null,addEventListener:(k,v)=>listeners.set(k,v),removeEventListener:k=>listeners.delete(k)};
  doc.head=element('head');doc.body=element('body');const header=element('header'),history=element('aside'),reading=element('main'),composer=element('form'),editor=element('textarea'),tail=element('footer'),prefix=element('div');composer.append(editor);editor.value='UNSENT';editor.nativeHandler=()=>17;
  let anchor=composer;
  if(nested){anchor=element('div');const inner=element('section');inner.append(reading,composer);anchor.append(header,history,inner);doc.body.append(prefix,anchor,tail);}else doc.body.append(prefix,header,history,reading,composer,tail);

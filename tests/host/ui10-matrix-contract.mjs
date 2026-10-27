@@ -46,7 +46,12 @@ export function assertUi10ShellBounds(m,outer){
  assert(m.document.scrollWidth<=m.width+1,JSON.stringify(m));
  assert.equal(m.scrollX,0);assert.equal(m.scrollY,0);
  assert(m.main.height>0&&m.main.y>=-1&&m.main.y+m.main.height<=m.height+1,JSON.stringify(m));
- assert(outer.frame.top>=outer.close.bottom-1&&outer.frame.bottom<=outer.surface.bottom+1,JSON.stringify(outer));
+ if(outer.backend==='document-flow'){
+  assert(outer.frame.top>=outer.surface.top-1&&outer.frame.bottom<=outer.surface.bottom+1,JSON.stringify(outer));
+  assert.equal(outer.closeHit,true,'flow exit must remain hit-testable');
+  assert(outer.close.top>=outer.surface.top-1&&outer.close.bottom<=outer.surface.bottom+1&&outer.close.left>=outer.surface.left-1&&outer.close.right<=outer.surface.right+1,JSON.stringify(outer));
+  assert.equal(outer.closeCoversControl,false,'flow exit must not cover a renderer control');
+ }else assert(outer.frame.top>=outer.close.bottom-1&&outer.frame.bottom<=outer.surface.bottom+1,JSON.stringify(outer));
 }
 
 /** Read-only Playwright frame sampler. No generated DOM, styles, goldens or clicks. */
@@ -56,7 +61,8 @@ export async function observeUi10Shell(frame){
   return {width:innerWidth,height:innerHeight,document:{scrollWidth:root.scrollWidth,scrollHeight:root.scrollHeight},main:{y:r.y,height:r.height},scrollX,scrollY};
  });
  const element=await frame.frameElement();
- const outer=await element.evaluate(n=>({frame:n.getBoundingClientRect().toJSON(),surface:n.parentElement.getBoundingClientRect().toJSON(),close:n.previousElementSibling.getBoundingClientRect().toJSON()}));
+ const outer=await element.evaluate(n=>{const button=n.previousElementSibling,r=button.getBoundingClientRect();return {backend:n.parentElement.hasAttribute('popover')?'manual':'document-flow',frame:n.getBoundingClientRect().toJSON(),surface:n.parentElement.getBoundingClientRect().toJSON(),close:r.toJSON(),closeHit:document.elementFromPoint(r.x+r.width/2,r.y+r.height/2)===button};});
+ if(outer.backend==='document-flow')outer.closeCoversControl=await frame.evaluate(({frame:f,close:c})=>[...document.querySelectorAll('button,a,input,select,textarea,[tabindex]')].some(n=>{const r=n.getBoundingClientRect(),s=getComputedStyle(n);return r.width>0&&r.height>0&&s.visibility==='visible'&&s.display!=='none'&&r.right+f.x>c.left&&r.left+f.x<c.right&&r.bottom+f.y>c.top&&r.top+f.y<c.bottom;}),outer);
  assertUi10ShellBounds(measurement,outer);
  return {measurement,outer,evidence:'SHELL_GEOMETRY_ONLY',fullV27Acceptance:'NOT_ESTABLISHED'};
 }
