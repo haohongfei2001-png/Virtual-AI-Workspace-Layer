@@ -18,6 +18,20 @@ export function createFlowMountSurface({document:doc,createFrameURL,hasNativeLay
   const p=m.inspection.sidebarPlacement,s=m.roles[1];
   return !!p&&intact(m,s)&&p.parent.isConnected&&s.node.parentElement===p.parent&&s.node.nextElementSibling===p.before&&p.before.parentElement===p.parent&&p.recent.parentElement===p.parent&&p.scrollPort.contains(p.parent);
  }
+ // These observers belong to the proved native partition, not to the mount's
+ // lifetime. Replacing a Project or NAV must discard old management intent.
+ function bindSidebar(m){
+  const p=sidebarIntact(m)?m.inspection.sidebarPlacement:null,old=m.sidebarBinding;
+  if(old?.project===p?.project&&old?.scrollPort===p?.scrollPort)return;
+  m.unbindSidebar?.();m.management?.stop();m.sidebarBinding=p;
+  const cancel=e=>{if(e.isTrusted)m.pendingScroll=undefined;};
+  const scrolled=()=>{if(sidebarIntact(m)&&open(m.roles[1])&&!nativeLayer())m.onSidebarScroll(Math.round(p.scrollPort.scrollTop));};
+  for(const type of ['wheel','pointerdown','keydown'])p?.scrollPort.addEventListener(type,cancel,true);
+  p?.scrollPort.addEventListener('scroll',scrolled,{passive:true});
+  m.unbindSidebar=()=>{for(const type of ['wheel','pointerdown','keydown'])p?.scrollPort.removeEventListener(type,cancel,true);p?.scrollPort.removeEventListener('scroll',scrolled);};
+  m.management=observeNativeProjectManagement({document:doc,root:p?.project,isCurrent:()=>mounts.get(m.handle.id)===m&&m.sidebarBinding===p&&sidebarIntact(m),onChanged:m.onManagementChanged});
+  if(old)m.onManagementChanged();
+ }
  function active(m){return intact(m,m.roles[0])&&validateActiveLayout(m.plan,{workspace:m.roles[0].node,style:m.style,styleText:m.css,exit:m.roles[0].exit,isOwnedSurface:owned});}
  function mark(m,node,name){const attr='data-va-flow-'+name,previous=node.getAttribute(attr);if(previous!==null)throw Error('flow-marker-conflict');m.markers.push({node,attr,previous});node.setAttribute(attr,m.handle.id);}
  function restorePendingScroll(m){const s=m.roles[1],p=m.inspection.sidebarPlacement?.scrollPort;if(m.pendingScroll===undefined||!sidebarIntact(m)||!open(s)||s.pendingHeight||nativeLayer())return;const value=m.pendingScroll;m.pendingScroll=undefined;if(value!==null)p.scrollTop=value;m.onSidebarScroll(Math.round(p.scrollTop));}
@@ -35,7 +49,7 @@ export function createFlowMountSurface({document:doc,createFrameURL,hasNativeLay
    if(!context?.binding?.documentToken)throw Error('invalid-mount-inspection');
    const plan=captureNativeBaseline({document:doc,inspection,isOwnedSurface:owned});if(!plan)throw Error('unsupported-native-flow-topology');
    const id='va_'+win.crypto.randomUUID().replaceAll('-',''),handle=Object.freeze({id,documentToken:context.binding.documentToken,regionEpoch:inspection.regionEpoch});
-   const m={handle,plan,inspection,roles:[],markers:[],style:doc.createElement('style'),css:'',onSurrender,onSidebarScroll,cleanup:()=>{}};mounts.set(id,m);
+   const m={handle,plan,inspection,roles:[],markers:[],style:doc.createElement('style'),css:'',onSurrender,onSidebarScroll,onManagementChanged,cleanup:()=>{}};mounts.set(id,m);
    try{
     for(const role of ['workspace','sidebar']){
      const url=new URL(createFrameURL({role,mountId:id}));if(url.protocol!=='chrome-extension:')throw Error('invalid-ui-frame-origin');
@@ -77,10 +91,8 @@ export function createFlowMountSurface({document:doc,createFrameURL,hasNativeLay
     const leaveGesture=()=>{pointer=null;if(gestureDeadline!==null)win.clearTimeout(gestureDeadline);gestureDeadline=null;workspace.exit.removeAttribute('data-va-gesture');workspace.node.removeAttribute('data-va-input-handoff');if(['native-layer','workspace-geometry'].includes(workspace.reason)&&open(workspace))workspace.exit.hidePopover();};const visibility=()=>{if(doc.visibilityState==='hidden')leaveGesture();};win.addEventListener('blur',leaveGesture);win.addEventListener('pagehide',leaveGesture);doc.addEventListener('visibilitychange',visibility);
     const observe=()=>{if(!mounts.has(id))return;if(nativeLayer()){hide(m,null,'native-layer');onSurrender({reason:'native-layer'});return;}if(!geometry(m))onSurrender({role:'workspace',reason:'workspace-geometry'});};
     const observer=new win.MutationObserver(observe);observer.observe(doc.body,{subtree:true,childList:true,attributes:true,attributeFilter:['class','style','hidden','aria-hidden','role','tabindex','contenteditable','inert','open','aria-modal']});
-    const cancelScrollRestore=e=>{if(e.isTrusted)m.pendingScroll=undefined;};for(const type of ['wheel','pointerdown','keydown'])p?.scrollPort.addEventListener(type,cancelScrollRestore,true);
-    const scrolled=()=>{if(sidebarIntact(m)&&open(m.roles[1])&&!nativeLayer())onSidebarScroll(Math.round(m.inspection.sidebarPlacement.scrollPort.scrollTop));};p?.scrollPort.addEventListener('scroll',scrolled,{passive:true});
-    m.management=observeNativeProjectManagement({document:doc,root:p?.project,isCurrent:()=>mounts.get(id)===m&&sidebarIntact(m),onChanged:onManagementChanged});
-    m.cleanup=()=>{m.management.stop();leaveGesture();win.removeEventListener('blur',leaveGesture);win.removeEventListener('pagehide',leaveGesture);doc.removeEventListener('visibilitychange',visibility);if(inputTimer!==null)win.clearTimeout(inputTimer);doc.removeEventListener('pointerdown',down,true);doc.removeEventListener('pointerup',up,true);doc.removeEventListener('pointercancel',up,true);for(const type of ['focusin','click','keydown','beforeinput','compositionstart'])doc.removeEventListener(type,input,true);for(const type of ['wheel','pointerdown','keydown'])p?.scrollPort.removeEventListener(type,cancelScrollRestore,true);p?.scrollPort.removeEventListener('scroll',scrolled);observer.disconnect();for(const s of m.roles)s.cleanup();};return handle;
+    bindSidebar(m);
+    m.cleanup=()=>{m.unbindSidebar?.();m.management?.stop();leaveGesture();win.removeEventListener('blur',leaveGesture);win.removeEventListener('pagehide',leaveGesture);doc.removeEventListener('visibilitychange',visibility);if(inputTimer!==null)win.clearTimeout(inputTimer);doc.removeEventListener('pointerdown',down,true);doc.removeEventListener('pointerup',up,true);doc.removeEventListener('pointercancel',up,true);for(const type of ['focusin','click','keydown','beforeinput','compositionstart'])doc.removeEventListener(type,input,true);observer.disconnect();for(const s of m.roles)s.cleanup();};return handle;
    }catch(error){m.cleanup();for(const s of m.roles){s.node.remove();s.exit.remove();}m.style.remove();for(const {node,attr,previous} of m.markers)if(node.getAttribute(attr)===id){if(previous===null)node.removeAttribute(attr);else node.setAttribute(attr,previous);}mounts.delete(id);throw error;}
   },
   readNativeManagement(handle){return lookup(handle).management?.read()??[];},
@@ -88,7 +100,7 @@ export function createFlowMountSurface({document:doc,createFrameURL,hasNativeLay
   isSameNativeRegions(handle){return isSameNativeRegions(lookup(handle).plan);},
   hasNativeInputFocus(handle){const m=lookup(handle);return m.plan.composer.contains(doc.activeElement);},
   prepareWorkspace(){return null;},
-  refreshGeometry(handle,inspection){const m=lookup(handle);if(!inspection?.ok||inspection.regionEpoch!==handle.regionEpoch)return false;m.inspection=inspection;applySidebarSize(m);restorePendingScroll(m);return geometry(m);},
+  refreshGeometry(handle,inspection){const m=lookup(handle);if(!inspection?.ok||inspection.regionEpoch!==handle.regionEpoch)return false;m.inspection=inspection;bindSidebar(m);applySidebarSize(m);restorePendingScroll(m);return geometry(m);},
   setAppearance(handle,role,value){const appearance=validateFrameAppearance(value),s=lookup(handle).roles.find(s=>s.role===role);if(!s)return false;s.node.style.setProperty('--va-canvas',appearance.canvas??(appearance.theme==='dark'?'#212121':'#ffffff'));s.node.style.colorScheme=appearance.theme;return true;},
   showWorkspace(handle,{roles=['workspace','sidebar']}={}){
    const m=lookup(handle);if(nativeLayer()){hide(m,null);return false;}
@@ -99,9 +111,19 @@ export function createFlowMountSurface({document:doc,createFrameURL,hasNativeLay
   showReading(handle){hide(lookup(handle),'workspace','native-reading');},
   suspend(handle,reason='suspended',role=null){hide(lookup(handle),role,reason);},
   visibility(handle){const m=lookup(handle);if(!intact(m,m.roles[0]))return null;return Object.fromEntries(m.roles.map(s=>[s.role,!s.retired&&open(s)&&!s.node.hasAttribute('data-va-input-handoff')]));},
+  isRoleCurrent(handle,role){return role==='sidebar'?sidebarIntact(lookup(handle)):intact(lookup(handle),lookup(handle).roles[0]);},
   frames(handle){return lookup(handle).roles.filter(s=>!s.retired).map(({role,frame})=>({role,frame}));},
-  retireRole(handle,role){if(role!=='sidebar')throw Error('invalid-optional-role');const m=lookup(handle),s=m.roles[1];hide(m,role,'role-retired');s.retired=true;s.frame.remove();},
-  restoreRole(handle,role){if(role!=='sidebar')return null;const m=lookup(handle),s=m.roles[1];if(!s.retired||!m.inspection.sidebarPlacement||s.node.parentElement!==m.inspection.sidebarPlacement.parent)return null;const frame=doc.createElement('iframe');frame.src=s.url;frame.title=s.frame.title;frame.style.cssText=s.frame.style.cssText;s.button.after(frame);s.frame=frame;s.retired=false;return {role,frame};},
+  retireRole(handle,role){if(role!=='sidebar')throw Error('invalid-optional-role');const m=lookup(handle),s=m.roles[1];hide(m,role,'role-retired');s.retired=true;s.frame.remove();bindSidebar(m);},
+  restoreRole(handle,role){
+   if(role!=='sidebar')return null;const m=lookup(handle),s=m.roles[1],p=m.inspection.sidebarPlacement;
+   // Reinsert only our own empty slot at the newly proved anchor. Never move
+   // native siblings or retain the old iframe/document grant through a move.
+   if(!s.retired||!p||!p.parent.isConnected||!p.scrollPort.contains(p.parent)||p.before!==p.project||p.before.parentElement!==p.parent||p.recent.parentElement!==p.parent||!m.style.isConnected||m.style.textContent!==m.css)return null;
+   const children=[...p.parent.children].filter(n=>n!==s.node);
+   if(children.length!==2||children[0]!==p.project||children[1]!==p.recent)return null;
+   const frame=doc.createElement('iframe');frame.src=s.url;frame.title=s.frame.title;frame.style.cssText=s.frame.style.cssText;
+   p.parent.insertBefore(s.node,p.before);s.button.after(frame);s.frame=frame;s.retired=false;bindSidebar(m);return {role,frame};
+  },
   resizeSidebar(handle,height,{apply=true}={}){const m=lookup(handle),s=m.roles[1];if(!Number.isSafeInteger(height)||height<1||height>1000000||!sidebarIntact(m))return false;s.pendingHeight=height;if(apply)applySidebarSize(m);return true;},
   revealSidebar(handle,{top,bottom}){const m=lookup(handle);if(!sidebarIntact(m)||!open(m.roles[1])||nativeLayer()||![top,bottom].every(Number.isFinite)||top<0||bottom<=top||bottom>m.roles[1].frame.getBoundingClientRect().height)return false;const p=m.inspection.sidebarPlacement.scrollPort,b=p.getBoundingClientRect(),f=m.roles[1].frame.getBoundingClientRect();if(f.y+top<b.y)p.scrollTop+=f.y+top-b.y;else if(f.y+bottom>b.bottom)p.scrollTop+=f.y+bottom-b.bottom;return true;},
   restoreSidebar(handle,scroll,{apply=true}={}){const m=lookup(handle);if(!sidebarIntact(m)||scroll!==null&&(!Number.isSafeInteger(scroll)||scroll<0||scroll>100000000))return false;m.pendingScroll=scroll;if(apply)restorePendingScroll(m);return true;},

@@ -1,5 +1,16 @@
 # VAIWL实际状态：渐进积累工程已接线，真实来源逐项待准入
 
+
+## 2026-10-27 原生分区替换后的独立侧栏恢复（原安装保持不变）
+
+正式 adapter 在 `inspectStructure` 沿用旧 history/source，且新分区证明失败仍保留旧 placement；正式 flow 的恢复又要求旧 slot 已位于新 parent。结果是近期列表替换后侧栏长期隐藏，或父容器替换后永远不能恢复。既有匿名结构离线反例在修复前确认四项失败，主工作区仍健康，未将其误归因为数据丢失。
+
+现重新证明当前 history/source，未知结构清除旧准入；同位置近期列表替换保留有效 frame，分区失配只退休 sidebar。释放旧 role 成功后，将扩展自有空 slot 放入新证明位置，创建新 iframe，仍需新 JOIN/grant；不移动原生节点、不继承私人授权。随 Project/NAV 替换解除旧滚动监听和管理观察，重新绑定当前分区，旧展开意图不移用。workspace 的 frame、授权和内容保持。
+
+修复后正式结构回放（含旧/新 NAV 监听及未知拓扑拒绝）、261项相关合同、非作者只读审查和现有完整隔离 MV3 旅程通过。旅程证据：`/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-SnS2OT/report.json`；202项生产源码 hash 与测试包一致，阅读/返回/窄屏实际图片已查看。匿名宿主的灰块与默认输入不是实际 ChatGPT 外观，不能据此宣布真实设计验收通过。
+
+已继承用户本人 Reload 回报；原安装清单 SHA256 仍为 `cf76213d45313c8bbf843bfcd6c33500ea04f93bc2df2995a4101c3e515d0be2`，本批没有覆盖或操作日常 Chrome，没有要求再次 Reload。源码修复与已安装包分开；运行指纹 UNKNOWN，真实方案B Mac NOT_RUN，完整产品 NOT_ACCEPTED。旧库、草稿、备份及 stash 保留。
+
 ## 2026-10-27 键盘焦点跟随自然侧栏高度（未更新日常安装）
 
 正式 `free-frame-client` 的恢复焦点路径仍用旧 iframe viewport 高度过滤新展开成员，导致 `preventScroll` 恢复后的键盘焦点无法进入原生 NAV 可视区。现与当前项定位共用自然高度发布及有界坐标检查，先尺寸后定位；真实授权、文档焦点、可见性及父层实际高度验证不变。修复前反例失败，修复后291项关联合同通过，非作者只读复核通过。原扩展和私人数据未修改，用户已完成的Reload不要求重复。

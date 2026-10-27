@@ -499,6 +499,22 @@ test('sidebar release completion rechecks current geometry without waiting for u
  released.resolve({ok:true});await drain();assert.equal(restored,1);assert.equal(f.calls.dispose,0);assert.equal(f.calls.register,1);assert.equal(f.controller.isWorkspacePresented(),true);f.controller.stop();
 });
 
+test('connected sidebar with replaced flow membership releases its grant before fresh JOIN, keeping workspace',async()=>{
+ const f=publishingFixture(),released=deferred();let intact=true,restored=0,retired=0;const inspect=f.adapter.inspect;
+ f.adapter.inspect=()=>({...inspect(),sidebarRect:{x:0,y:0,width:240,height:400},sidebarRevision:2,preserveNativeSidebar:false});
+ f.surface.refreshGeometry=()=>true;f.surface.isRoleCurrent=()=>intact;
+ f.surface.retireRole=()=>{retired++;};f.surface.suspend=(_h,_reason,role)=>{if(role==='sidebar')f.actual({workspace:true,sidebar:false});};
+ f.surface.restoreRole=()=>{restored++;intact=true;return f.frames[1];};f.bridge.releaseRole=()=>released.promise;
+ await f.controller.start({});await f.both();const confirms=f.calls.confirm.length;
+ intact=false;f.change();await drain();assert.equal(retired,1);assert.equal(restored,0);assert.equal(f.calls.dispose,0);
+ assert.deepEqual(f.surface.visibility(),{workspace:true,sidebar:false});
+ f.message('sidebar');await drain();assert.equal(f.calls.confirm.length,confirms,'retired window cannot reacquire while release is pending');
+ released.resolve({ok:true});await drain();assert.equal(restored,1);
+ assert.deepEqual(f.surface.visibility(),{workspace:true,sidebar:false},'insertion cannot grant visibility');
+ f.message('sidebar');await drain();assert.deepEqual(f.surface.visibility(),{workspace:true,sidebar:true});
+ assert.equal(f.calls.register,1);f.controller.revoke();f.change();await drain();assert.equal(restored,1);
+});
+
 
 test('explicit sidebar user exit stops enhancement rather than automatically rejoining',async()=>{
  const f=fixture();await f.controller.start({});await f.both();f.message('sidebar',{data:{type:'VAIWL_UI_EXIT',role:'sidebar'}});await drain();assert.equal(f.calls.dispose,1);assert.equal(f.controller.isWorkspacePresented(),false);

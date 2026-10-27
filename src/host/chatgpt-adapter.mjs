@@ -435,11 +435,16 @@ if(!p){
  let sidebarRevision=0,sidebarProof=[];
  function sidebarVersion(value){
   const placement=profile.sidebarComposition==='partitioned-flow-v1'?nativeSidebarComposition({document,source:value.historySource,history:value.history,isOwnedSurface}):null;
+  if(profile.sidebarComposition==='partitioned-flow-v1'){
+   // A new inspection cannot inherit admission for a detached native subtree.
+   value.sidebarPlacement=null;value.sidebarRect=null;value.historyMaskRoots=[];value.preserveNativeSidebar=true;
+   if(value.roles)value.roles={...value.roles,sidebar:{available:false,reason:'composition-unavailable'}};
+  }
   if(placement){
    value.sidebarPlacement=placement;value.sidebarRect=placement.rect;value.historyMaskRoots=[];value.preserveNativeSidebar=!placement.rect;
    if(value.roles)value.roles.sidebar={available:!!placement.rect,reason:placement.rect?null:'composition-clipped'};
   }
-  const proof=[value.history,value.sidebarPlacement?.parent,value.sidebarPlacement?.before,value.sidebarRect?.x,value.sidebarRect?.y,value.sidebarRect?.width,value.sidebarRect?.height,value.preserveNativeSidebar,...(value.historyMaskRoots??[])];
+  const proof=[value.history,value.sidebarPlacement?.parent,value.sidebarPlacement?.before,value.sidebarPlacement?.recent,value.sidebarPlacement?.scrollPort,value.sidebarRect?.x,value.sidebarRect?.y,value.sidebarRect?.width,value.sidebarRect?.height,value.preserveNativeSidebar,...(value.historyMaskRoots??[])];
   if(proof.length!==sidebarProof.length||proof.some((v,i)=>v!==sidebarProof[i])){sidebarProof=proof;sidebarRevision++;}
   return Object.assign(value,{sidebarRevision});
  }
@@ -459,7 +464,7 @@ if(!p){
    const prior=[previous.header,previous.reading,previous.composer,previous.readingViewport??null];
    if(actual.some((node,i)=>node!==prior[i]||node&&(!node.isConnected||node.ownerDocument!==document)))return {ok:false,reason:'missing-or-ambiguous-native-boundary'};
   }
-  const next=sidebarVersion({...previous});if(proof)projectProofs.set(next,proof);return next;
+  const next=sidebarVersion({...previous,history:one(nativeLayout.historyList??profile.regions.history),historySource:one(profile.regions.history)});if(proof)projectProofs.set(next,proof);return next;
  }
  function inspect(){
   const fail=reason=>({ok:false,reason,profileId:profile.id,...(reason==='unsafe-native-history-list'&&historyFailure?{historyFailure}:{})});if(!active())return fail('stale-host-binding');try{syncRoute();}catch{return fail('host-rebind-required');}if(urlPolicy.parse(url).kind==='unsupported')return fail('unsupported-host-route');

@@ -89,6 +89,21 @@ try{
   await sidebar.getByRole('button',{name:'侧栏项目 Native Project',exact:true}).waitFor({timeout:15000});
   assert(await originalFrame.evaluate(n=>n.isConnected&&n.getBoundingClientRect().height>0));
   report.checks.localSidebarFailurePreservesWorkspace=true;
+  // Native partition replacement must not strand the owned role on detached
+  // nodes, nor replace the independent workspace/document authority.
+  const sidebarBeforeRecent=await page.locator('iframe[src="chrome-extension://'+id+'/sidebar.html"]').elementHandle();
+  await page.evaluate(()=>{const old=partitionedFixture.recent,next=old.cloneNode(true);old.replaceWith(next);partitionedFixture.recent=next;});
+  await sidebar.getByRole('button',{name:'侧栏项目 Native Project',exact:true}).waitFor({timeout:15000});
+  assert(await sidebarBeforeRecent.evaluate(n=>n.isConnected&&n.getBoundingClientRect().height>0));
+  await page.evaluate(()=>{
+   const old=partitionedFixture.root,next=old.cloneNode(true);next.querySelector('[data-va-sidebar-slot]')?.remove();old.replaceWith(next);
+   partitionedFixture.root=next;partitionedFixture.project=next.querySelector('[data-fixture-structure-row="1"]');partitionedFixture.recent=next.querySelector('[data-fixture-structure-row="92"]');partitionedFixture.control=next.querySelector('[data-fixture-structure-row="7"]');
+  });
+  await sidebar.getByRole('button',{name:'侧栏项目 Native Project',exact:true}).waitFor({timeout:15000});
+  assert(await originalFrame.evaluate(n=>n.isConnected&&n.getBoundingClientRect().height>0));
+  assert.equal(await sidebarBeforeRecent.evaluate(n=>n.isConnected),false,'replaced parent cannot retain old sidebar document');
+  assert(await page.locator('[data-va-sidebar-slot]').evaluate(n=>n.parentElement===partitionedFixture.root&&n.nextElementSibling===partitionedFixture.project));
+  report.checks.nativePartitionReplacementRejoinsSidebarOnly=true;
   report.checks.beforeMember=await localState();assert.equal(report.checks.beforeMember.mode,'personal');
   await page.getByRole('button',{name:'返回原生阅读',exact:true}).click();
   await page.locator('#project-panel a[href="/c/'+B+'"]').click();await page.waitForURL(origin+'/c/'+B);

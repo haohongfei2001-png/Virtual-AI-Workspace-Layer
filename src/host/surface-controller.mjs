@@ -147,7 +147,12 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
   // masks off; geometry callbacks must not hide its still-live target again.
   if(state.nativeDispatch)return true;
   if(!refreshGeometry(state,inspection))return false;
-  state.inspection=inspection;syncAppearanceRoots(state);recoverSidebar(state,inspection);
+  state.inspection=inspection;syncAppearanceRoots(state);
+  // A still-connected frame can lose its proved flow membership when native
+  // siblings are replaced. Retire only that role before moving any owned slot;
+  // release ACK and a fresh JOIN remain mandatory for its replacement frame.
+  if(surface.isRoleCurrent?.(state.handle,'sidebar')===false)retireSidebar(state,'sidebar-placement-replaced');
+  recoverSidebar(state,inspection);
   const resume=state.geometryPaused||state.mode==='suspended';state.geometryPaused=false;
   if(resume&&authorized(state)){
    if(state.desiredMode==='workspace'&&!hasProtectedFocus(state))showWorkspace();else{state.mode='reading';ensureReturn(state);}

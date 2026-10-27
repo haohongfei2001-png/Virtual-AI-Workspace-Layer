@@ -5,13 +5,47 @@ import {readFile} from 'node:fs/promises';
 import {createRequire} from 'node:module';
 import {chromium} from '../b1/tooling/node_modules/playwright/index.mjs';
 import {observedProjectHTML} from './fixtures/observed-project.mjs';
-import {observedHomeHTML,longDesktopHTML} from './fixtures/observed-host-replay.mjs';
+import {observedHomeHTML,longDesktopHTML,materializePartitionedSidebar} from './fixtures/observed-host-replay.mjs';
+import partitionDetails from './fixtures/observed-sidebar-project-details-20261026.json' with {type:'json'};
 const require=createRequire(new URL('../../extension/tooling/package.json',import.meta.url));
 const {outputFiles}=await require('esbuild').build({stdin:{contents:"export {captureNativeBaseline} from './src/host/document-flow-layout.mjs';export {createChatGPTAdapter} from './src/host/chatgpt-adapter.mjs';export {createURLPolicy} from './src/host/url-policy.mjs';export {CHATGPT_OBSERVED_PROFILE} from './src/host/chatgpt-observed-profile.mjs';export {createFlowMountSurface} from './src/navigation/flow-mount-surface.mjs';export {observeNativeProjectManagement} from './src/host/native-project-management.mjs';",resolveDir:process.cwd()},bundle:true,write:false,format:'iife',globalName:'flowModule'});
 const P='g-p-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',C='33333333-3333-4333-8333-333333333333';
 const legacy=(await readFile(new URL('./fixtures/legacy.html',import.meta.url),'utf8')).replace('<link rel="stylesheet" href="/native.css">','<style>'+await readFile(new URL('./fixtures/native.css',import.meta.url),'utf8')+'</style>');
 const browser=await chromium.launch({headless:true,args:['--proxy-server=http://127.0.0.1:9','--proxy-bypass-list=<-loopback>']}),results=[];
 try{
+ // Reuse the actual anonymous partition shape; replacement is a lifecycle
+ // counterexample, not a claim that a new native selector has been observed.
+ const replacement=await browser.newPage({viewport:{width:1400,height:900}});
+ await replacement.route('**/*',r=>r.request().url()==='https://chatgpt.com/'?r.fulfill({contentType:'text/html',body:observedHomeHTML(C)}):r.abort());
+ await replacement.goto('https://chatgpt.com/');await replacement.evaluate(materializePartitionedSidebar,partitionDetails.sidebarStructure.rows);await replacement.addScriptTag({content:outputFiles[0].text});
+ const recovery=await replacement.evaluate(async()=>{
+  const {createChatGPTAdapter,createURLPolicy,CHATGPT_OBSERVED_PROFILE:profile,createFlowMountSurface}=flowModule;
+  let surface;const adapter=createChatGPTAdapter({document,profile,urlPolicy:createURLPolicy(),isOwnedMask:n=>surface?.isMasked(n),isOwnedSurface:n=>surface?.isOwnedSurface(n)});
+  const binding={documentToken:'replacement',producerToken:'replacement',browserDocumentId:'replacement',routeEpoch:1,origin:location.origin,expiresAt:new Date(Date.now()+20000).toISOString()};
+  await adapter.start({binding,emit:async p=>({state:'accepted',localSeq:p.localSeq,receiptId:'replacement'})});
+  let inspection=adapter.inspect();surface=createFlowMountSurface({document,createFrameURL:({role})=>'chrome-extension://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/'+role+'.html'});
+  const scrolls=[],handle=await surface.mount({binding},inspection,{onSidebarScroll:n=>scrolls.push(n)}),workspace=surface.frames(handle)[0].frame,sidebar=surface.frames(handle)[1].frame;
+  surface.showWorkspace(handle);
+  const recent=inspection.sidebarPlacement.recent,nextRecent=recent.cloneNode(true);recent.replaceWith(nextRecent);
+  const fresh=adapter.inspectStructure(inspection),recentProof=fresh.history?.isConnected===true&&fresh.sidebarPlacement?.recent===nextRecent;
+  surface.refreshGeometry(handle,fresh);surface.showWorkspace(handle,{roles:['sidebar']});
+  const recentRecovered=surface.visibility(handle).sidebar&&surface.frames(handle)[1].frame===sidebar;
+  const parent=fresh.sidebarPlacement?.parent,copy=parent.cloneNode(true);copy.querySelector('[data-va-sidebar-slot]')?.remove();parent.replaceWith(copy);
+  inspection=adapter.inspectStructure(fresh);surface.retireRole(handle,'sidebar');surface.refreshGeometry(handle,inspection);
+  const restored=surface.restoreRole(handle,'sidebar');surface.showWorkspace(handle,{roles:['sidebar']});
+  const parentRecovered=!!restored&&restored.frame!==sidebar&&restored.frame.parentElement.parentElement===copy&&surface.visibility(handle).sidebar;
+  const workspacePreserved=surface.frames(handle)[0].frame===workspace&&surface.visibility(handle).workspace;
+  const oldPort=inspection.sidebarPlacement.scrollPort,newPort=oldPort.cloneNode(true);newPort.querySelector('[data-va-sidebar-slot]')?.remove();oldPort.replaceWith(newPort);
+  inspection=adapter.inspectStructure(inspection);surface.retireRole(handle,'sidebar');surface.refreshGeometry(handle,inspection);surface.restoreRole(handle,'sidebar');surface.showWorkspace(handle,{roles:['sidebar']});
+  scrolls.length=0;oldPort.dispatchEvent(new Event('scroll'));const oldScrollDetached=scrolls.length===0;
+  newPort.dispatchEvent(new Event('scroll'));const newScrollBound=scrolls.length===1;
+  // Unknown topology clears the old proof and cannot receive a moved frame.
+  inspection.sidebarPlacement.parent.append(document.createElement('button'));const unknown=adapter.inspectStructure(inspection);
+  surface.retireRole(handle,'sidebar');surface.refreshGeometry(handle,unknown);
+  const unknownRejected=!unknown.sidebarPlacement&&unknown.preserveNativeSidebar&&surface.restoreRole(handle,'sidebar')===null&&surface.visibility(handle).workspace;
+  surface.dispose(handle);adapter.stop();return {recentProof,recentRecovered,parentRecovered,workspacePreserved,oldScrollDetached,newScrollBound,unknownRejected};
+ });
+ assert.deepEqual(recovery,{recentProof:true,recentRecovered:true,parentRecovered:true,workspacePreserved:true,oldScrollDetached:true,newScrollBound:true,unknownRejected:true});await replacement.close();
  for(const [kind,path,html]of [['home','/',observedHomeHTML(C)],['project','/g/'+P+'/project',observedProjectHTML(P,C)],['conversation','/c/'+C,longDesktopHTML(C)],['header-inside','/c/'+C,legacy]]){
   const page=await browser.newPage({viewport:{width:1400,height:900}}),url='https://chatgpt.com'+path;
   await page.route('**/*',r=>r.request().url()===url?r.fulfill({contentType:'text/html',body:html}):r.abort());await page.goto(url);await page.addScriptTag({content:outputFiles[0].text});
