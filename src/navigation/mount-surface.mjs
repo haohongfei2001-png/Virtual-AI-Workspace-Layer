@@ -124,7 +124,6 @@ export function createMountSurface({document:doc,createFrameURL,hasNativeLayer=(
    const before=viewport.scrollTop,delta=panel.getBoundingClientRect().top-top;
    if(delta<=1)return null;
    const slot=doc.createElement('div');slot.id=m.handle.id+'_project_flow';slot.dataset.vaOwned=m.handle.id;slot.setAttribute('aria-hidden','true');
-   slot.style.setProperty('--va-project-flow-height',Math.ceil(height)+'px');
    const flow={slot,viewport,panel,parent:panel.parentElement,before,written:before,workspace,url:doc.location.href};
    m.projectFlow=flow;m.projectFlowMutations.set(slot,{added:panel,removed:null});
    try{
@@ -200,7 +199,11 @@ export function createMountSurface({document:doc,createFrameURL,hasNativeLayer=(
    }
    style.textContent+=`#${id}_sidebar[data-va-composed-sidebar]{overflow:hidden}#${id}_sidebar>[data-va-native-boundary]{display:none}#${id}_sidebar[data-va-composed-sidebar]>[data-va-native-boundary]{display:block;position:absolute;left:0;width:100%;box-sizing:border-box;height:28px;padding:5px 12px 4px;border-top:1px solid color-mix(in srgb,CanvasText 10%,Canvas);font:11px/18px system-ui;color:color-mix(in srgb,CanvasText 60%,Canvas);background:var(--va-canvas,Canvas);pointer-events:none}`;
    style.textContent+=`#${id}_slot{display:block;box-sizing:border-box;width:100%;height:0;min-height:0;flex:0 0 auto;margin:0;padding:0;border:0;overflow:hidden;pointer-events:none;} body:has(#${id}_sidebar:popover-open) #${id}_slot,#${id}_slot[data-va-slot-retained]{height:var(--va-slot-height);}`;
-   style.textContent+=`#${id}_project_flow{display:block;box-sizing:border-box;height:0;min-height:0;flex:0 0 auto;margin:0;padding:0;border:0;overflow:hidden;pointer-events:none}body:has(#${id}_workspace:popover-open,#${id}_workspace[data-va-layout-preparing],#${id}_workspace[data-va-reading-probe]) #${id}_project_flow{height:var(--va-project-flow-height)}`;
+   // The admitted native viewport fits inside the window. Reserve one live
+   // viewport of owned space, not its entry-time pixel height: resizing must
+   // not clamp native scrolling before geometry can be re-proved. This CSS
+   // changes no native styles and requires no compensating scroll writes.
+   style.textContent+=`#${id}_project_flow{display:block;box-sizing:border-box;height:0;min-height:0;flex:0 0 auto;margin:0;padding:0;border:0;overflow:hidden;pointer-events:none}body:has(#${id}_workspace:popover-open,#${id}_workspace[data-va-layout-preparing],#${id}_workspace[data-va-reading-probe]) #${id}_project_flow{height:100vh}`;
    const m={handle,surfaces,markers,style,styleText:style.textContent,onSurrender,projectFlowMutations:new WeakMap(),inspection:{...inspection,preserveNativeSidebar:inspection.preserveNativeSidebar===true||!inspection.sidebarRect,historyMaskRoots:[...inspection.historyMaskRoots],protectedRegions:[...inspection.protectedRegions]}};mounts.set(id,m);syncSlot(m,inspection.sidebarPlacement);
    const workspace=surfaces.find(s=>s.role==='workspace')?.node;
    // toggle is queued and can merge close/reopen into open→open. Invalidate

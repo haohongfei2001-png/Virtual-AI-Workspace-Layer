@@ -10,7 +10,8 @@ const project='g-p-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',cid='33333333-3333-4333-833
 const started=performance.now(),browser=await chromium.launch({headless:true,proxy:{server:'http://127.0.0.1:9',bypass:'127.0.0.1,localhost'}}),results=[];
 try{
  if(process.argv.includes('--project-flow-only')){
-  const page=await browser.newPage({viewport:{width:1440,height:900}});
+  const page=await browser.newPage({viewport:{width:1440,height:400}});
+  await page.exposeFunction('resizeFixtureViewport',height=>page.setViewportSize({width:1440,height}));
   await page.route('**/*',r=>r.request().url()===url?r.fulfill({contentType:'text/html',body:observedProjectHTML(project,cid)}):r.abort());
   await page.goto(url);await page.addScriptTag({content:outputFiles[0].text});
   const checks=await page.evaluate(async()=>{
@@ -33,6 +34,12 @@ try{
    checks.onlyOriginalPanelMasked=surface.isMasked(panel)&&!surface.isMasked(form)&&!surface.isMasked(port)&&panel.lastElementChild.matches('[data-va-owned]');
    checks.nativeReadDoesNotCollapseFlow=surface.withNativeReading(handle,()=>port.scrollTop,()=>true)===written&&port.scrollTop===written;
    checks.renewalDoesNotReposition=surface.refreshGeometry(handle,adapter.inspect())&&port.scrollTop===written;
+   await resizeFixtureViewport(1000);
+   const taller=adapter.inspect();
+   checks.tallerViewportKeepsOverview=taller.ok&&surface.refreshGeometry(handle,taller)&&port.scrollTop===written&&taller.readingRect.y===port.getBoundingClientRect().top&&taller.readingRect.height>=port.clientHeight-1;
+   await resizeFixtureViewport(600);
+   const shorter=adapter.inspect();
+   checks.shorterViewportKeepsOverview=shorter.ok&&surface.refreshGeometry(handle,shorter)&&port.scrollTop===written&&shorter.readingRect.height>=port.clientHeight-1;
    surface.showReading(handle);
    checks.ownRemovalDoesNotWithdraw=surface.surrenderChanged(mutations.takeRecords())===false;
    checks.readingRestoresOriginalScroll=port.scrollTop===before&&!panel.querySelector('[data-va-owned]')&&native===form.outerHTML;
