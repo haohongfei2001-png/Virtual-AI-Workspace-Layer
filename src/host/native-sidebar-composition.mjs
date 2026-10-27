@@ -1,4 +1,9 @@
-import {nativeHistoryListRect,historyRectangleClear,sidebarPresentationFits} from './native-history-list.mjs';
+import {nativeHistoryListRect,historyRectangleClear} from './native-history-list.mjs';
+
+// A flow member keeps its full content viewport while native scrolling clips
+// it. The 240px minimum for replacing a native list is not applicable here:
+// no native subtree is masked and no clipped fragment becomes a new viewport.
+const visibleSlot=rect=>rect&&Number.isFinite(rect.width)&&Number.isFinite(rect.height)&&rect.width>=180&&rect.height>0;
 
 // Layout membership, not a Project/member/control recognizer. Native children
 // remain where the host put them; only our own empty slot joins their flow.
@@ -50,13 +55,18 @@ export function nativeSidebarComposition({document,source,history,isOwnedSurface
   const top=available?Math.max(available.y,start.top):0;
   const proposed=available?{x:available.x,y:top,width:available.width,height:Math.max(0,Math.min(start.top+height,available.y+available.height)-top)}:null;
   const sameAnchor=()=>parent.isConnected&&before.parentElement===parent&&recent.parentElement===parent&&source.contains(parent)&&sectionIn(recent)===section;
-  return {parent,before,project,recent,scrollPort,slot,rect:sidebarPresentationFits(proposed)?proposed:null,height,maxHeight:Math.max(240,Math.min(560,scrollPort.clientHeight-160)),
+  return {parent,before,project,recent,scrollPort,slot,rect:visibleSlot(proposed)?proposed:null,height,minHeight:128,maxHeight:Math.max(240,Math.min(560,scrollPort.clientHeight-160)),
    measure(owned){
     if(currentScrollPort()!==scrollPort||!sameAnchor()||parent.children.length!==3||!owned?.isConnected||owned.parentElement!==parent||owned.nextElementSibling!==before||owned.previousElementSibling!==null||before.nextElementSibling!==recent||!isOwnedSurface(owned))return null;
     for(let n=owned,depth=0;n;n=n.parentElement){if(++depth>128||n.hidden||n.inert||n.getAttribute('aria-hidden')==='true'&&n!==owned)return null;const s=win.getComputedStyle(n);if(s.display==='none'||s.visibility!=='visible'||Number(s.opacity)===0)return null;}
     const rect=nativeHistoryListRect({document,source,root:owned});
-    if(!sidebarPresentationFits(rect)||!historyRectangleClear(source,[owned],rect,null))return null;
-    return rect;
+    if(!visibleSlot(rect)||!historyRectangleClear(source,[owned],rect,null))return null;
+    // The clipped window is not a new layout viewport. Keep the complete owned
+    // slot coordinates so native scrolling moves our content by the same amount
+    // as its neighbors, instead of resizing/restarting the iframe at the clip.
+    const full=owned.getBoundingClientRect();
+    const scrollRect=nativeHistoryListRect({document,source,root:scrollPort});if(!scrollRect)return null;
+    return {...rect,scrollRect,contentRect:{x:full.x,y:full.y,width:full.width,height:full.height}};
    }};
  }catch{return null;}
 }

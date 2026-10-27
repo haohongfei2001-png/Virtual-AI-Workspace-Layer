@@ -328,8 +328,12 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
    if(exactHostRecord(data,['type','role','requestId'])&&data.type==='VAIWL_UI_IDLE_ACK'&&data.requestId===state.idleRequestId){state.idleAcks.add(data.role);if(dormantReady())state.resolveIdle?.(true);}
    return;
   }
+  if(exactHostRecord(data,['type','role','top','bottom'])&&data.type==='VAIWL_UI_REVEAL_FOCUS'&&data.role==='sidebar'){
+   if(valid(state)&&authorized(state)&&Date.parse(state.grants.get('sidebar')?.expiresAt)>now()&&!state.nativeDispatch&&!adapter.hasNativeLayer()&&doc.activeElement===target.frame&&Number.isInteger(data.top)&&Number.isInteger(data.bottom)&&data.top>=0&&data.bottom>data.top&&data.bottom<=1024){try{surface.revealSidebar?.(state.handle,{top:data.top,bottom:data.bottom});}catch{}}
+   return;
+  }
   if(exactHostRecord(data,['type','role','height'])&&data.type==='VAIWL_UI_INTRINSIC_SIZE'&&data.role==='sidebar'){
-   if(valid(state)&&authorized(state)&&Date.parse(state.grants.get('sidebar')?.expiresAt)>now()&&Number.isInteger(data.height)&&data.height>=240&&data.height<=1024){try{surface.resizeSidebar?.(state.handle,data.height,{apply:!state.nativeDispatch&&!adapter.hasNativeLayer()});}catch{/* A size hint cannot retire another role. */}}
+   if(valid(state)&&authorized(state)&&Date.parse(state.grants.get('sidebar')?.expiresAt)>now()&&Number.isInteger(data.height)&&data.height>=128&&data.height<=1024){try{surface.resizeSidebar?.(state.handle,data.height,{apply:!state.nativeDispatch&&!adapter.hasNativeLayer()});}catch{/* A size hint cannot retire another role. */}}
    return;
   }
   // Correlated fixed failure metadata only; it can withdraw, never grant, UI access.

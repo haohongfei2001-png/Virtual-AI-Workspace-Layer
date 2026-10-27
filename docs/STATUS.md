@@ -1,5 +1,16 @@
 # VAIWL实际状态：渐进积累工程已接线，真实来源逐项待准入
 
+## 正式布局与滚动连续性（2026-10-27，接续46dc7a22；产品仍未完成）
+
+本批直接修改正式navigation/styles、mount-surface、native-sidebar-composition、surface-controller及free-frame-client，未操作或更新日常Chrome。工作空间将当前项、自然高度卡片、未知归属和候选入口放进同一内容列，时间导航使用独立窄列，保留批准的356px自然卡宽而不按少量数据填满卡片。分区侧栏在原生滚动裁剪时保持完整iframe坐标和内部现场，不再把裁剪后的短区域当新视口；稀疏自有内容可收缩至128px，不改变纯原生聊天列表的240px安全门槛。键盘焦点只揭示已授权且实际聚焦的自有控件，滚动范围限已证原生scrollport，不修改原生Project展开选择或控件。
+
+集中集成发现本批新布局的同文档重挂回归：非组合角色的几何刷新重复重写iframe.style，观察器回流使JOIN等待超过6秒，数据仍在而框架退出。已修复为仅切出组合时重置，以及所有自有几何同值不写；原有style-write回归扩大到子节点，未延长deadline。正式无插桩MV3重新完成Project→成员→阅读侧栏→四格返回，保留主题展开选择、原生草稿；原生滚动140px及键盘揭示通过。只读独立复核未发现该修改削弱授权、几何或遮罩边界。结果属于隔离匿名宿主，不是用户账户验收。
+
+实际查看桌面、窄视口、成员阅读和返回四张整屏图，并对照批准v27-small原图。**中央整页承载仍有确定差距，不能记录为仅待实机验收：** `chatgpt-observed-profile.nativeHomeLayout` 将首页reading绑定欢迎区，`chatgpt-adapter.inspect()`直接以其矩形挂载；`inspectNativeProjectSurface()`将Project输入、标题和tablist列为protectedRegions，只允许其下方panel/已证空gutter；`mount-surface.refreshGeometry()`拒绝与这些原生区域相交。原型则在overview隐藏模拟host。现有事实不能证明移动/遮盖真实composer、工具弹层和相关祖先仍安全；本批没有扩大遮罩、改原生布局或伪造这一证明。原生管理区与VAIWL导航整体视觉共存亦尚未达到用户批准的完整体验。新文档私人确认边界、旧对象级恢复未证状态保留。
+
+审阅构建 `/private/tmp/VAIWL-v27-Layout-Continuity-20261027/extension`，zip SHA256 `dc8442af3c8ea492c2d0160b60289b6147028f3e037b6e09a14ed081db84478b`；同目录review包含隔离全视口图片、旅程及源码闭包核对。它是保存本批工程的审阅包，**不是完整产品最终候选**。正式源码与隔离包产品模块一致，差异仅环境生成文件及其manifest；verifyHost通过。原加载目录的清单内文件均符合其旧hash、无缺失；另有2751项已有副本使严格全目录校验拒绝，未删除/覆盖任何副本。真实Mac本批NOT_RUN，完整产品NOT_ACCEPTED，不请求用户Reload或新采集。
+
+
 ## 产品结构纠偏（2026-10-27，接续a007501e；未交付）
 
 用户否决当前真实界面，完整v2.7产品验收继续 **NOT_ACCEPTED**。本批只修改正式mount/navigation/frame-client/styles，没有更新日常Chrome、采集DOM、读取私人库或新增界面。复核实际批准的v27-small原图与CORE_FLOW：主页静态h2、始终展开、356px自然高度稀疏卡片保留；不会为了填空白伪造Project或拉满卡片。

@@ -35,6 +35,8 @@ try{
   // Replay only this geometric fact, with the existing formal renderer/data.
   await page.addInitScript(()=>document.addEventListener('DOMContentLoaded',()=>{const content=document.querySelector('#project-content');if(content)content.style.cssText='max-width:660px;margin-inline:auto';},{once:true}));
   await page.addInitScript({content:'if(window===window.top&&location.hostname==="127.0.0.1")document.addEventListener("DOMContentLoaded",()=>{('+materializePartitionedSidebar.toString()+')('+JSON.stringify(partitionDetails.sidebarStructure.rows)+');},{once:true});'});
+  report.controlEvents=[];await page.exposeFunction('__recordControl',v=>{if(report.controlEvents.length<120)report.controlEvents.push(v);});
+  await page.addInitScript(()=>addEventListener('message',e=>{const d=e.data;if(e.origin.startsWith('chrome-extension://')&&d&&['VAIWL_UI_SUSPEND','VAIWL_UI_REVEAL_FOCUS','VAIWL_UI_BOOT'].includes(d.type))window.__recordControl({type:d.type,role:d.role,reason:d.reason,stage:d.stage});}));
   await page.goto(origin+'/g/'+P+'/project');
   const workspace=page.frameLocator('iframe[src="chrome-extension://'+id+'/workspace.html"]'),sidebar=page.frameLocator('iframe[src="chrome-extension://'+id+'/sidebar.html"]');
   await workspace.getByRole('link',{name:'Native B',exact:true}).first().waitFor({timeout:15000});
@@ -61,7 +63,7 @@ try{
    assert(await frame.locator('[data-vaiwl-candidate-root]').evaluate((n,role)=>{
     const slot=n.assignedSlot;if(!slot||slot.name!=='native-candidates')return false;
     if(role==='sidebar')return slot.parentElement.tagName==='SECTION'&&slot.nextElementSibling?.classList.contains('sidebar-footer');
-    const area=slot.parentElement,cards=area.querySelector('.cards');if(!area.classList.contains('workspace')||!cards)return false;
+    const area=slot.parentElement,cards=area.querySelector('.cards');if(!area.classList.contains('workspace-core')||!cards)return false;
     const hidden=n.hidden;try{n.hidden=false;const r=n.getBoundingClientRect(),c=cards.getBoundingClientRect();return r.top>=c.bottom&&r.top-c.bottom<80;}finally{n.hidden=hidden;}
    },role));
   }
@@ -113,16 +115,37 @@ try{
   await page.setViewportSize({width:1000,height:900});
   await page.waitForTimeout(300);
 
+  await page.evaluate(()=>{partitionedFixture.scroll.style.height='400px';});
+  await page.waitForTimeout(200);
+  const sidebarCanvasHeight=await page.locator('[id$="_sidebar"] iframe').evaluate(n=>n.getBoundingClientRect().height);
+  const themeBeforeNativeScroll=await theme.boundingBox();
   await page.evaluate(()=>{partitionedFixture.scroll.scrollTop=30;});
   await page.waitForFunction(()=>Math.abs(document.querySelector('[id$="_sidebar"]').getBoundingClientRect().y-document.querySelector('[data-va-sidebar-slot]').getBoundingClientRect().y)<1);
   report.checks.nativeScrollKeepsFrameAligned=true;
-  await page.evaluate(()=>{partitionedFixture.scroll.scrollTop=0;});
+  // The slot's leading edge now leaves the scrollport. The visible surface
+  // clips, but neither iframe layout nor the theme's native-flow position resets.
+  await page.evaluate(()=>{partitionedFixture.scroll.scrollTop=140;});
+  assert.equal(await page.evaluate(()=>partitionedFixture.scroll.scrollTop),140,'fixture must actually scroll');
+  await page.waitForFunction(()=>{const slot=document.querySelector('[data-va-sidebar-slot]'),surface=document.querySelector('[id$="_sidebar"]');return surface.matches(':popover-open')&&slot.getBoundingClientRect().top<surface.getBoundingClientRect().top&&Math.abs(surface.querySelector('iframe').getBoundingClientRect().top-slot.getBoundingClientRect().top)<1;});
+  assert.equal(await page.locator('[id$="_sidebar"] iframe').evaluate(n=>n.getBoundingClientRect().height),sidebarCanvasHeight);
+  assert(Math.abs((await theme.boundingBox()).y-themeBeforeNativeScroll.y+140)<1,'clipped themes move with native scroll, without restarting at y=0');
+  report.checks.clippedNativeScrollKeepsContentCoordinates=true;
+  const closeOffset=await page.locator('[id$="_sidebar"]').evaluate(n=>n.querySelector('button').getBoundingClientRect().top-n.querySelector('iframe').getBoundingClientRect().top);
+  assert.equal(closeOffset,16,'declarative exit moves with its own toolbar');
+  // Focusing a clipped owned control reveals its slot in the native scrollport.
+  await page.locator('#draft').focus();
+  await theme.focus();
+  await page.waitForFunction(()=>partitionedFixture.scroll.scrollTop<140);
+  const focusedBox=await theme.boundingBox(),visiblePort=await page.evaluate(()=>partitionedFixture.scroll.getBoundingClientRect().toJSON());
+  assert(focusedBox.y>=visiblePort.top&&focusedBox.y+focusedBox.height<=visiblePort.bottom,'focused control is visible without aligning the entire slot');
+  report.checks.clippedKeyboardFocusRevealed=true;
+  await page.evaluate(()=>{partitionedFixture.scroll.scrollTop=0;partitionedFixture.scroll.style.height='calc(100vh - 52px)';});
   await page.getByRole('button',{name:'显示原生列表',exact:true}).click();
   await page.waitForFunction(()=>document.querySelector('[data-va-sidebar-slot]').getBoundingClientRect().height===0);
   assert.equal(await page.locator('[data-fixture-structure-row="1"]').evaluate(n=>n.outerHTML),before);
   report.checks.nativeProjectUntouchedAndSpaceReversible=true;
-  // Explicit workspace return reopens both roles under the existing intent contract.
-  await page.getByRole('button',{name:'返回原生阅读',exact:true}).click();
+  // The focus check already entered native reading. Explicit return reopens both roles.
+  assert.equal(await page.locator('[id$="_workspace"]').evaluate(n=>n.matches(':popover-open')),false);
   await page.getByRole('button',{name:'返回工作空间',exact:true}).click();
   await workspace.getByRole('link',{name:'Native B',exact:true}).first().waitFor();
   assert((await page.locator('[data-va-sidebar-slot]').evaluate(n=>n.getBoundingClientRect().height))>=240);

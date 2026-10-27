@@ -53,12 +53,21 @@ export const css=`
 /* One host-owned declarative close occupies the reserved edge, not a blank
    full-width row. The sidebar toolbar reserves its exact footprint. */
 :host([data-vaiwl-frame-role="sidebar"]) .toolbar:first-child{padding-right:34px}
-:host([data-vaiwl-frame-role="workspace"]) .arrows{top:38px}
+.workspace{padding-right:24px}
+.workspace-layout{display:grid;grid-template-columns:minmax(0,1fr) 32px;gap:14px;align-items:start;width:100%;max-width:1192px}
+.workspace-core{min-width:0}
+.workspace-layout>.arrows{float:none;width:32px;margin:0;top:14px;justify-items:center}
+:host([data-vaiwl-frame-role="workspace"]) .workspace-layout>.arrows{margin-top:8px;top:32px}
+.workspace-core>.current-slot>.current-context{max-width:356px}
+@media(max-width:760px){.workspace{padding-right:9px}.workspace-layout{grid-template-columns:minmax(0,1fr) 30px;gap:7px}:host([data-vaiwl-frame-role="workspace"]) .workspace-layout>.arrows{margin-top:16px}}
 /* The host may retain its native rail at a narrow viewport. Reflow only our
    owned controls so required titles and actions still get usable inline space. */
 @media(max-width:240px){
  .workspace{padding:8px}
  .arrows{float:none;display:flex;position:sticky;flex-wrap:wrap;width:max-content;max-width:100%;margin:0 0 8px auto;gap:4px}
+ .workspace-layout{grid-template-columns:minmax(0,1fr);gap:8px}
+ .workspace-layout>.arrows{grid-row:1;width:auto;justify-self:end;display:flex;top:0}
+ :host([data-vaiwl-frame-role="workspace"]) .workspace-layout>.arrows{margin-top:24px}
  .card-head{flex-wrap:wrap;padding:8px;gap:6px}
  .card h2{flex:1 0 100%;width:100%;gap:6px}
  .card-actions{margin-left:auto;opacity:1}

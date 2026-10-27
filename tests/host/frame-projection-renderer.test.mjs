@@ -401,11 +401,11 @@ for(const label of ['工作空间设置','关闭设置'])test('retired settings 
  }finally{f.nav.stop();}
 });
 
-for(const label of ['折叠主题导航','当前工作集','查找已知项目与聊天','已保存片段','退出工作空间增强'])test('retired sidebar toolbar cannot act on the next scope: '+label,()=>{
+for(const label of ['折叠主题导航','当前工作集','查找已知项目与聊天','已保存片段'])test('retired sidebar toolbar cannot act on the next scope: '+label,()=>{
  let snippets=0,exits=0;const f=fixture('sidebar',()=>null,null,null,{}, {onSnippetsRequest:()=>snippets++,onExit:()=>exits++});try{
  f.nav.updateFrameProjection(projection('sidebar'));const retired=f.button(label);assert(retired);f.nav.updateFrameProjection({...projection('sidebar'),scope:'scopeB'});const fresh=f.button(label);assert.notEqual(fresh,retired);
  const before=JSON.stringify(f.nav.view()),intents=f.intents.length;retired.click();assert.equal(JSON.stringify(f.nav.view()),before);assert.equal(f.intents.length,intents);assert.equal(snippets,0);assert.equal(exits,0);assert(f.nav.roots());
- fresh.click();if(label==='折叠主题导航')assert.equal(f.nav.view().sidebarVisible,false);if(label==='当前工作集'||label==='查找已知项目与聊天')assert.equal(f.intents.length,intents+1);if(label==='已保存片段')assert.equal(snippets,1);if(label==='退出工作空间增强')assert.equal(exits,1);
+ fresh.click();if(label==='折叠主题导航')assert.equal(f.nav.view().sidebarVisible,false);if(label==='当前工作集'||label==='查找已知项目与聊天')assert.equal(f.intents.length,intents+1);if(label==='已保存片段')assert.equal(snippets,1);
  }finally{f.nav.stop();}
 });
 test('retired search close cannot replace a newer working-set view',()=>{

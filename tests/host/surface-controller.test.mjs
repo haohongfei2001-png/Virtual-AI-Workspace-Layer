@@ -565,7 +565,19 @@ test('intrinsic sidebar size is bounded, correlated and authorized without grant
  const send=(patch={},event={})=>f.message('sidebar',{data:{type:'VAIWL_UI_INTRINSIC_SIZE',role:'sidebar',height:300,...patch},...event});
  await f.controller.start({});send();await drain();assert.deepEqual(sizes,[]);
  await f.both();const shown=f.calls.show;
- send({}, {source:{}});send({}, {origin:'https://chatgpt.com'});send({height:239});send({height:1025});send({height:NaN});send({extra:true});send({role:'workspace'});await drain();assert.deepEqual(sizes,[]);
+ send({}, {source:{}});send({}, {origin:'https://chatgpt.com'});send({height:127});send({height:1025});send({height:NaN});send({extra:true});send({top:-1});send({bottom:1025});send({top:40});send({role:'workspace'});await drain();assert.deepEqual(sizes,[]);
  send();await drain();assert.deepEqual(sizes,[300]);assert.equal(f.calls.show,shown);
  f.controller.revoke();send();await drain();assert.deepEqual(sizes,[300]);
+});
+
+test('sidebar focus reveal needs the live focused frame and cannot grant presentation',async()=>{
+ const f=fixture(),reveals=[];f.surface.revealSidebar=handle=>reveals.push(handle);
+ const send=(data={},event={})=>f.message('sidebar',{data:{type:'VAIWL_UI_REVEAL_FOCUS',role:'sidebar',top:10,bottom:40,...data},...event});
+ await f.controller.start({});f.doc.activeElement=f.frames[1].frame;send();await drain();assert.equal(reveals.length,0);
+ await f.both();const shown=f.calls.show;
+ send({}, {source:{}});send({}, {origin:'https://chatgpt.com'});send({extra:true});send({top:-1});send({bottom:1025});send({top:40});send({role:'workspace'});await drain();assert.equal(reveals.length,0);
+ f.doc.activeElement=f.frames[0].frame;send();await drain();assert.equal(reveals.length,0);
+ f.doc.activeElement=f.frames[1].frame;f.layer(true);send();await drain();assert.equal(reveals.length,0);
+ f.layer(false);send();await drain();assert.equal(reveals.length,1);assert.equal(f.calls.show,shown);
+ f.controller.revoke();send();await drain();assert.equal(reveals.length,1);
 });

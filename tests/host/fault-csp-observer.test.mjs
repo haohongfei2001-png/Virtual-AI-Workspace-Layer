@@ -17,8 +17,8 @@ test('runner-side leak detector positive controls and empty markers',()=>{assert
 
 test('page-visible sidebar size hint admits only the bounded content-free protocol',()=>{
  const hint={type:'VAIWL_UI_INTRINSIC_SIZE',role:'sidebar',height:240};
- for(const height of [240,512,1024])assert(exactCspControlMessage({...hint,height}));
- for(const height of [239,1025,240.5,NaN,Infinity,'240',null])assert.equal(exactCspControlMessage({...hint,height}),false);
+ for(const height of [128,240,512,1024])assert(exactCspControlMessage({...hint,height}));
+ for(const height of [127,1025,240.5,NaN,Infinity,'240',null])assert.equal(exactCspControlMessage({...hint,height}),false);
  for(const value of [{...hint,role:'workspace'},{...hint,title:'private'},{...hint,grantId:'private'},{type:hint.type,role:hint.role}])assert.equal(exactCspControlMessage(value),false);
 });
 
@@ -72,3 +72,8 @@ test('already open surfaces need no simulated native return',async()=>{const pag
 test('missing native fallback or failed return never skips close gate',async()=>{await assert.rejects(()=>prepareCspNativeClose(nativeClosePage({native:false})));await assert.rejects(()=>prepareCspNativeClose(nativeClosePage({returnWorks:false})));});
 
 test('missing genuine return button fails instead of forcing popover',async()=>{const page=nativeClosePage({returnAvailable:false});await assert.rejects(()=>prepareCspNativeClose(page),/return-control-missing/);assert.deepEqual(page.clicks,[]);});
+
+test('focus reveal exposes only bounded owned geometry and no focused content',()=>{
+ assert(exactCspControlMessage({type:'VAIWL_UI_REVEAL_FOCUS',role:'sidebar',top:10,bottom:40}));
+ for(const value of [{type:'VAIWL_UI_REVEAL_FOCUS',role:'workspace'},{type:'VAIWL_UI_REVEAL_FOCUS',role:'sidebar',title:'private'}])assert.equal(exactCspControlMessage(value),false);
+});

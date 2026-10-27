@@ -11,7 +11,13 @@ export function createMountSurface({document:doc,createFrameURL,hasNativeLayer=(
  // block joins native flow; closing the browser popover releases its space.
  const syncSlot=(m,placement)=>{
   const sidebar=m.surfaces.find(s=>s.role==='sidebar');
+  const wasComposed=sidebar?.node.getAttribute('data-va-composed-sidebar')!==null;
   if(sidebar){if(placement)sidebar.node.setAttribute('data-va-composed-sidebar','');else sidebar.node.removeAttribute('data-va-composed-sidebar');}
+  if(sidebar&&wasComposed&&!placement){
+   for(const key of ['position','left','top','height','width','flex'])sidebar.frame.style.removeProperty(key);
+   sidebar.frame.style.cssText='border:0;width:100%;min-height:0;flex:1;display:block';
+   sidebar.boundary?.style.removeProperty('top');sidebar.close?.style.removeProperty('top');
+  }
   if(m.slot&&(m.slot.parentElement!==placement?.parent||m.slot.nextElementSibling!==placement?.before)){
    hide(m,'sidebar','sidebar-anchor');m.slot.remove();m.slot=null;m.slotProved=false;
   }
@@ -25,12 +31,31 @@ export function createMountSurface({document:doc,createFrameURL,hasNativeLayer=(
  const placeSidebar=(m,placement)=>{
   // Keep hidden flow stable. Apply a cached intrinsic size only when this
   // role is actually being presented, and recalculate its current viewport cap.
-  if(m.slot&&m.sidebarDesiredHeight){const height=Math.max(240,Math.min(placement.maxHeight??placement.height,m.sidebarDesiredHeight));if(m.slot.style.getPropertyValue('--va-slot-height')!==height+'px')m.slot.style.setProperty('--va-slot-height',height+'px');}
+  if(m.slot&&m.sidebarDesiredHeight){const height=Math.max(placement.minHeight??240,Math.min(placement.maxHeight??placement.height,m.sidebarDesiredHeight));if(m.slot.style.getPropertyValue('--va-slot-height')!==height+'px')m.slot.style.setProperty('--va-slot-height',height+'px');}
   const rect=placement?.measure(m.slot);if(!rect)return false;
   if([m.inspection.header,m.inspection.composer,...m.inspection.protectedRegions].some(n=>{const r=n.getBoundingClientRect();return r.width>0&&r.height>0&&rect.x<r.right&&rect.x+rect.width>r.left&&rect.y<r.bottom&&rect.y+rect.height>r.top;}))return false;
   const sidebar=m.surfaces.find(s=>s.role==='sidebar');
   for(const [key,value]of Object.entries({left:rect.x+'px',top:rect.y+'px',width:rect.width+'px',height:rect.height+'px'}))if(sidebar.node.style[key]!==value)sidebar.node.style[key]=value;
+  const full=rect.contentRect??rect,offsetX=full.x-rect.x,offsetY=full.y-rect.y;
+  // Clip only owned pixels. The surface still occupies the freshly proved
+  // visible rectangle; the frame retains its full layout and scroll position.
+  for(const [key,value]of Object.entries({position:'absolute',left:offsetX+'px',top:offsetY+'px',width:full.width+'px',height:Math.max(0,full.height-28)+'px',flex:'none'}))if(sidebar.frame.style[key]!==value)sidebar.frame.style[key]=value;
+  const closeTop=(offsetY+16)+'px',boundaryTop=(offsetY+full.height-28)+'px';
+  if(sidebar.close&&sidebar.close.style.top!==closeTop)sidebar.close.style.top=closeTop;
+  if(sidebar.boundary&&sidebar.boundary.style.top!==boundaryTop)sidebar.boundary.style.top=boundaryTop;
   m.slotProved=true;return true;
+ };
+ // Native scrolling must also reveal keyboard focus in our out-of-flow
+ // frame. Adjust only the proved scrollport to reveal our own existing slot;
+ // never activate a surface, move native nodes or inspect frame content.
+ const revealSidebar=(m,focus)=>{
+  const placement=m.inspection.sidebarPlacement,sidebar=m.surfaces.find(s=>s.role==='sidebar');
+  if(!placement||!m.slotProved||!sidebar?.node.matches(':popover-open')||hasNativeLayer()||![sidebar.frame,sidebar.close].includes(doc.activeElement)||!placement.measure(m.slot))return false;
+  const measured=placement.measure(m.slot),port=placement.scrollPort,slot=m.slot.getBoundingClientRect(),clip=measured?.scrollRect;
+  if(!clip||!focus||!Number.isFinite(focus.top)||!Number.isFinite(focus.bottom)||focus.top<0||focus.bottom<=focus.top||focus.bottom>slot.height)return false;
+  const top=slot.top+focus.top,bottom=slot.top+focus.bottom,end=clip.y+clip.height;
+  const delta=top<clip.y||bottom-top>clip.height?top-clip.y:bottom>end?bottom-end:0;
+  if(delta){port.scrollTop+=delta;return placeSidebar(m,placement);}return true;
  };
  const refreshGeometry=(m,inspection)=>{
   const prior=m.inspection;
@@ -60,9 +85,10 @@ export function createMountSurface({document:doc,createFrameURL,hasNativeLayer=(
   return !!inspection?.ok&&inspection.viewMask==='declarative-css'&&inspection.regionEpoch===handle.regionEpoch&&['reading','header','composer','readingViewport'].every(key=>inspection[key]===prior[key])&&same(inspection.protectedRegions,prior.protectedRegions)&&m.surfaces.length===2&&m.style.isConnected&&m.style.ownerDocument===doc&&m.style.dataset.vaOwned===handle.id&&m.style.textContent===m.styleText&&m.surfaces.filter(s=>!s.retired).every(({node,frame})=>node.isConnected&&node.ownerDocument===doc&&node.dataset.vaOwned===handle.id&&!node.matches(':popover-open')&&frame.isConnected&&frame.ownerDocument===doc&&frame.parentElement===node)&&[inspection.reading,inspection.header,inspection.composer,...(inspection.readingViewport?[inspection.readingViewport]:[]),...inspection.protectedRegions].every(node=>node?.isConnected&&node.ownerDocument===doc)&&m.markers.filter(x=>x.attr==='data-va-mask-workspace').every(({root,attr,nativeClass,nativeStyle,nativeHidden,nativeAriaHidden})=>root.getAttribute(attr)===handle.id&&root.getAttribute('class')===nativeClass&&root.getAttribute('style')===nativeStyle&&root.getAttribute('hidden')===nativeHidden&&root.getAttribute('aria-hidden')===nativeAriaHidden);
  };
  return {
+  revealSidebar(handle,focus){return revealSidebar(lookup(handle),focus);},
   resizeSidebar(handle,height,{apply=true}={}){
    const m=lookup(handle),placement=m.inspection.sidebarPlacement;
-   if(!placement||!Number.isInteger(height)||height<240||height>1024)return false;
+   if(!placement||!Number.isInteger(height)||height<(placement.minHeight??240)||height>1024)return false;
    m.sidebarDesiredHeight=height;
    const sidebar=m.surfaces.find(s=>s.role==='sidebar');
    if(apply&&!hasNativeLayer()&&m.slotProved&&sidebar?.node.matches(':popover-open')&&!placeSidebar(m,placement))hide(m,'sidebar','sidebar-obstructed');
@@ -98,7 +124,7 @@ export function createMountSurface({document:doc,createFrameURL,hasNativeLayer=(
     const rect=initialRect??{x:0,y:0,width:1,height:1};if(!['x','y','width','height'].every(k=>Number.isFinite(rect[k]))||rect.width<=0||rect.height<=0)throw Error('invalid-mount-rect');
     const node=doc.createElement('section');node.id=id+'_'+role;node.dataset.vaOwned=id;node.setAttribute('popover','manual');node.style.cssText=`position:fixed;inset:auto;margin:0;box-sizing:border-box;left:${rect.x}px;top:${rect.y}px;width:${rect.width}px;height:${rect.height}px;padding:0;border:0;background:Canvas;color:CanvasText;`;
     const button=doc.createElement('button');button.type='button';button.setAttribute('popovertarget',node.id);button.setAttribute('popovertargetaction','hide');button.textContent='×';button.setAttribute('aria-label',role==='workspace'?'返回原生阅读':'显示原生列表');button.title=button.getAttribute('aria-label');
-    const frame=doc.createElement('iframe');frame.src=urls.get(role);frame.title=role==='workspace'?'工作空间':'导航';frame.style.cssText='border:0;width:100%;min-height:0;flex:1;display:block';node.append(button,frame);surfaces.push({role,node,frame,url:urls.get(role)});
+    const frame=doc.createElement('iframe');frame.src=urls.get(role);frame.title=role==='workspace'?'工作空间':'导航';frame.style.cssText='border:0;width:100%;min-height:0;flex:1;display:block';node.append(button,frame);surfaces.push({role,node,frame,close:button,url:urls.get(role)});
     // A label for the following native region, not a copied Project list or a
     // disclosure that pretends to control native descendants. Its layout stays
     // entirely inside our proven slot; native controls/order/state are untouched.
@@ -114,7 +140,7 @@ export function createMountSurface({document:doc,createFrameURL,hasNativeLayer=(
     style.textContent+=`#${node.id}:popover-open{display:flex;flex-direction:column}#${node.id}>button{position:absolute;top:${role==='sidebar'?16:6}px;right:4px;z-index:2;display:grid;place-items:center;box-sizing:border-box;width:24px;height:24px;margin:0;padding:0;border:0;border-radius:8px;font:12px/18px system-ui;color:inherit;background:transparent;cursor:pointer;overflow-wrap:anywhere}#${node.id}>button:hover{background:color-mix(in srgb,CanvasText 6%,Canvas)}#${node.id}>button:focus-visible{outline:2px solid currentColor;outline-offset:-2px}\n`;
     style.textContent+=`${allowed}:has(#${node.id}:popover-open) [data-va-mask-${role}="${id}"]{visibility:hidden;interactivity:inert;}body:has(${nativeOpen}) #${node.id}{visibility:hidden;interactivity:inert;}\n`;
    }
-   style.textContent+=`#${id}_sidebar>[data-va-native-boundary]{display:none}#${id}_sidebar[data-va-composed-sidebar]>[data-va-native-boundary]{display:block;flex:none;box-sizing:border-box;height:28px;padding:5px 12px 4px;border-top:1px solid color-mix(in srgb,CanvasText 10%,Canvas);font:11px/18px system-ui;color:color-mix(in srgb,CanvasText 60%,Canvas);background:Canvas;pointer-events:none}`;
+   style.textContent+=`#${id}_sidebar[data-va-composed-sidebar]{overflow:hidden}#${id}_sidebar>[data-va-native-boundary]{display:none}#${id}_sidebar[data-va-composed-sidebar]>[data-va-native-boundary]{display:block;position:absolute;left:0;width:100%;box-sizing:border-box;height:28px;padding:5px 12px 4px;border-top:1px solid color-mix(in srgb,CanvasText 10%,Canvas);font:11px/18px system-ui;color:color-mix(in srgb,CanvasText 60%,Canvas);background:Canvas;pointer-events:none}`;
    style.textContent+=`#${id}_slot{display:block;box-sizing:border-box;width:100%;height:0;min-height:0;flex:0 0 auto;margin:0;padding:0;border:0;overflow:hidden;pointer-events:none;} body:has(#${id}_sidebar:popover-open) #${id}_slot,#${id}_slot[data-va-slot-retained]{height:var(--va-slot-height);}`;
    const m={handle,surfaces,markers,style,styleText:style.textContent,onSurrender,inspection:{...inspection,preserveNativeSidebar:inspection.preserveNativeSidebar===true||!inspection.sidebarRect,historyMaskRoots:[...inspection.historyMaskRoots],protectedRegions:[...inspection.protectedRegions]}};mounts.set(id,m);syncSlot(m,inspection.sidebarPlacement);
    const workspace=surfaces.find(s=>s.role==='workspace')?.node;
@@ -126,6 +152,7 @@ export function createMountSurface({document:doc,createFrameURL,hasNativeLayer=(
    const workspaceClosing=e=>{if(ownWorkspace.closeReason||m.readingProbe?.ownClosing&&e.target===workspace&&e.oldState==='open'&&e.newState==='closed'||m.readingProbe?.ownOpening&&e.target===workspace&&e.oldState==='closed'&&e.newState==='open')return;if(m.readingProbe)m.readingProbe.cancelled=true;if(closing||e.target!==workspace||e.oldState!=='open'||e.newState!=='closed'||mounts.get(id)!==m||!workspace.isConnected||!workspace.matches(':popover-open'))return;closing=true;try{onSurrender({role:'workspace',reason:'native-reading',phase:'closing'});}catch{}finally{closing=false;}};
    const workspaceClosed=e=>{if(ownWorkspace.closeReason||e.target!==workspace||e.newState!=='closed'||mounts.get(id)!==m||!workspace.isConnected||workspace.matches(':popover-open'))return;try{onSurrender({role:'workspace',reason:'native-reading'});}catch{}};
    const ownSidebar=surfaces.find(s=>s.role==='sidebar'),sidebar=ownSidebar.node;
+   const revealExit=()=>revealSidebar(m,{top:16,bottom:40});ownSidebar.close.addEventListener('focus',revealExit);
    const sidebarClosing=e=>{if(!ownSidebar.closeReason&&e.target===sidebar&&e.newState==='closed')m.slot?.removeAttribute('data-va-slot-retained');if(ownSidebar.closeReason||m.readingProbe?.ownClosing||m.readingProbe?.ownOpening||e.target!==sidebar||e.oldState!=='open'||e.newState!=='closed'||mounts.get(id)!==m||!sidebar.isConnected)return;try{onSurrender({role:'sidebar',reason:'native-list',phase:'closing'});}catch{}};
    const sidebarClosed=e=>{if(ownSidebar.closeReason||e.target!==sidebar||e.newState!=='closed'||mounts.get(id)!==m||!sidebar.isConnected||sidebar.matches(':popover-open'))return;try{onSurrender({role:'sidebar',reason:'native-list'});}catch{}};
    sidebar.addEventListener('beforetoggle',sidebarClosing);sidebar.addEventListener('toggle',sidebarClosed);
@@ -144,7 +171,7 @@ export function createMountSurface({document:doc,createFrameURL,hasNativeLayer=(
    // Both regions are outside the sidebar's verified rectangle. Keep that
    // independent surface; actual native layers still synchronously hide both.
    const nativeInput=e=>{if(protectedNodes.some(n=>n===e.target||n.contains(e.target))){const separate=[m.inspection.composer,m.inspection.header].some(n=>n===e.target||n.contains(e.target));hide(m,separate?'workspace':null,'native-input');try{onSurrender({reason:'native-input'});}catch{}}};doc.addEventListener('pointerdown',nativeInput,true);doc.addEventListener('focusin',nativeInput,true);
-   m.cleanup=()=>{sidebar.removeEventListener('beforetoggle',sidebarClosing);sidebar.removeEventListener('toggle',sidebarClosed);workspace?.removeEventListener('beforetoggle',workspaceClosing);workspace?.removeEventListener('toggle',workspaceClosed);observer.disconnect();doc.removeEventListener('beforetoggle',beforeToggle,true);doc.removeEventListener('pointerdown',nativeInput,true);doc.removeEventListener('focusin',nativeInput,true);};return handle;
+   m.cleanup=()=>{ownSidebar.close.removeEventListener('focus',revealExit);sidebar.removeEventListener('beforetoggle',sidebarClosing);sidebar.removeEventListener('toggle',sidebarClosed);workspace?.removeEventListener('beforetoggle',workspaceClosing);workspace?.removeEventListener('toggle',workspaceClosed);observer.disconnect();doc.removeEventListener('beforetoggle',beforeToggle,true);doc.removeEventListener('pointerdown',nativeInput,true);doc.removeEventListener('focusin',nativeInput,true);};return handle;
   },
   // Only directory-relevant records reach this method from the adapter. Release
   // an affected mask before discovery; never treat cached visibility as evidence.
