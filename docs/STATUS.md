@@ -1,5 +1,15 @@
 # VAIWL实际状态：渐进积累工程已接线，真实来源逐项待准入
 
+## 首页停靠与侧栏尺寸握手修复（2026-10-27，接续8545f5e4；实机根因未全部确定）
+
+本轮读取原Profile 4的VAIWL注册路径及磁盘清单：原加载目录仍为`.git/vaiwl-artifacts/local-source-witness-20261022/extension`，198项包文件与8545f5e4审阅包相同，build-manifest SHA256为`20713929553a945c6763beb82e8385d1b4e288ea9cb1fcbb5547af075b2fdea8`。已有安装回执的Reload为NOT_RUN，没有新的运行指纹回执，因此**Chrome实际运行构建UNKNOWN**；不能从截图或写入目录推断已激活。本轮未更新原安装、未操作日常Chrome、未读取私人库。
+
+已在正式代码修复两个可离线证明的缺陷：`inspectNativeHomeSurface`不再要求原生FORM直接落在welcome祖先链，允许经过严格证明的纯`display:contents`包装层；原生节点不移动，目的区/完整绘制证明和回退保留。集成反例进一步发现聚焦后绘制回退使包装节点从proofNodes丢失，控制器误判文档替换，四格返回失败；结构身份现与绘制就绪分离。包装层新增role/contenteditable、规则删除、节点替换及原生目的区遮挡立即撤回停靠，恢复同一原生输入。另一处是sidebar首条高度消息早于授权join被拒后，相同高度不再上报；现仅有效可见回执触发一次重新测量，组合区域以128px紧凑高度启动，不预占240–560px空白。
+
+Project问题没有伪造结论：`free-frame-projection`把已确认且时间未知的Project保留在默认segment 0，分页与当前主题例外已接线；原生可见Project入口不自动等于当前文档库中的Project记录。当前截图缺少同期运行指纹、库/VIEW数量与空间模式，尚不能在“观察未形成Project、当前文档即时库、旧私人库未恢复、实际过滤/渲染差异”之间唯一归因。未扩大提取、未推测成员、未改日期或跨文档授权。新文档空即时库与已确认私人恢复仍按原规则区分。
+
+已用现有反例和正式隔离MV3核验透明包装、输入→四格返回、Project→成员阅读→返回、紧凑侧栏/滚动、桌面及窄宽度，独立只读复核提出的contenteditable撤回遗漏已补齐。实际查看了正式renderer整屏图；匿名原生占位宿主只证明集成机制，**不证明真实ChatGPT整体视觉已达到v2.7**。统一审阅包`/private/tmp/VAIWL-v27-Home-Sidebar-Integrated-20261027/extension`，zip SHA256 `b8ed550d6c202d6b4650cc4951222c51168bd256116d7cfc544003d0e56b5fba`，200项源码闭包与最后隔离包一致。review保留整屏图、回归及闭包回执。真实Mac本批NOT_RUN、用户真实界面否决仍有效、完整产品NOT_ACCEPTED；不是新的最终验收邀请。原ID、数据库、草稿、备份及stash保留。
+
 ## 首页整屏工作空间与原生输入可逆停靠（2026-10-27，接续a9a37689；真实Mac NOT_RUN）
 
 用户新增布局授权后，原“首页composer必须停在中部”的停工前提已撤销。正式`native-project-surface`现在分别证明扩展画布和原生输入目的区；`chatgpt-adapter`传递几何提议，`surface-controller`在授权展示状态中应用并重新验证实际布局。`mount-surface`只用自有条件CSS调整同一个FORM，未复制/移动DOM/重绑事件或覆盖原inline style。输入保持原宽度上限并适配窄视口，工作区延伸到原生输入上沿；卡片继续批准的356px自然高度，不填充假主题。

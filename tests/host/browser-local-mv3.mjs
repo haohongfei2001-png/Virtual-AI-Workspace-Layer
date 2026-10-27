@@ -37,7 +37,10 @@ try{
    // The anonymous host's old 780px constant overflowed the partitioned 260px
    // sidebar at 1000px. Preserve the observed containment relation on resize;
    // this is fixture geometry, not evidence of the live host's CSS declarations.
-   const root=document.querySelector('[data-app-shell-main-content-layout]');root.style.width='calc(100vw - 260px)';root.style.height='100vh';document.querySelector('form').style.width='100%';
+   const root=document.querySelector('[data-app-shell-main-content-layout]');root.style.width='calc(100vw - 260px)';root.style.height='100vh';const composer=document.querySelector('form');composer.style.width='100%';
+   // Integrate the independently reproduced transparent-wrapper case into the
+   // formal MV3 owner journey, without claiming it is a newly captured host.
+   const wrapper=document.createElement('div');wrapper.style.display='contents';composer.before(wrapper);wrapper.append(composer);
   }},{once:true}));
   await page.addInitScript({content:'if(window===window.top&&location.hostname==="127.0.0.1")document.addEventListener("DOMContentLoaded",()=>{('+materializePartitionedSidebar.toString()+')('+JSON.stringify(partitionDetails.sidebarStructure.rows)+');},{once:true});'});
   report.controlEvents=[];await page.exposeFunction('__recordControl',v=>{if(report.controlEvents.length<120)report.controlEvents.push(v);});

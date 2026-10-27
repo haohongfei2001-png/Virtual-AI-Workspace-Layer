@@ -766,3 +766,21 @@ test('authority renewal cannot retire the one-second pressed-control hold before
  assert.equal(x.revisions,1);assert.equal(x.issued().plan.planRevision,1);
  release();await drain();assert.equal(x.revisions,2);assert.equal(f.views,1);f.client.stop();
 });
+
+test('sidebar reannounces its intrinsic size when the parent confirms visibility after grant join',async()=>{
+ const classes=names=>({contains:name=>names.includes(name)});
+ const row={hidden:false,classList:classes([]),getBoundingClientRect:()=>({height:40})};
+ const panel={children:[{hidden:false,classList:classes(['themes']),children:[row]}, {hidden:false,classList:classes(['sidebar-footer']),getBoundingClientRect:()=>({height:40})}]};
+ const f=fixture('sidebar',options=>createFreeFrameClient({...options,
+  document:{...options.document,defaultView:{...options.document.defaultView,getComputedStyle:()=>({marginTop:'0',marginBottom:'0'})}},
+  navigationFactory:args=>({...options.navigationFactory(args),roots:()=>({sidebar:{shadow:{querySelector:()=>panel}}})})}));
+ await f.client.start();await drain();await f.advance(0);
+ const sizes=()=>f.parentMessages.filter(p=>p.message.type==='VAIWL_UI_INTRINSIC_SIZE');
+ assert.equal(sizes().length,1);
+ // Parent may reject the first hint while confirmParent is still resolving.
+ f.emit({type:'VAIWL_UI_SURFACE_STATE',revision:1,visible:true});await drain();await f.advance(0);
+ assert.equal(sizes().length,2);assert.equal(sizes()[1].message.height,sizes()[0].message.height);
+ f.emit({type:'VAIWL_UI_SURFACE_STATE',revision:1,visible:true});await f.advance(0);
+ assert.equal(sizes().length,2,'stale receipt does not create a retry loop');
+ f.disconnect();f.emit({type:'VAIWL_UI_SURFACE_STATE',revision:2,visible:true});await f.advance(0);assert.equal(sizes().length,2);
+});

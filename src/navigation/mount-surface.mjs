@@ -1,5 +1,6 @@
 /** Mount geometry only. UI authorization and projection transport belong to the owner. */
 import {validateFrameAppearance} from '../host/frame-appearance.mjs';
+import {NATIVE_LAYOUT_ATTRIBUTES} from '../host/native-surface-boundary.mjs';
 export function createMountSurface({document:doc,createFrameURL,hasNativeLayer=()=>false}){
  const mounts=new Map();
  const lookup=handle=>{const m=mounts.get(handle?.id);if(!m||m.handle!==handle)throw Error('stale-mount');return m;};
@@ -147,7 +148,7 @@ export function createMountSurface({document:doc,createFrameURL,hasNativeLayer=(
      if(m.homeDock!==dock)return;
      if(!style.isConnected||style.textContent!==dock.css||!workspace.isConnected||!composer.isConnected||composer.parentElement!==parent||!root.contains(composer)||doc.location.href!==url||composer.getAttribute('data-va-home-dock')!==id||composer.getAttribute('style')!==dock.nativeStyle||composer.getAttribute('class')!==dock.nativeClass||dock.destinationClear?.()!==true)surrender(m,'workspace','home-layout-invalid');
     });
-    dock.observer.observe(doc.documentElement,{subtree:true,childList:true,attributes:true,attributeFilter:['data-va-home-dock','style','class'],characterData:true});
+    dock.observer.observe(doc.documentElement,{subtree:true,childList:true,attributes:true,attributeFilter:['data-va-home-dock','contenteditable',...NATIVE_LAYOUT_ATTRIBUTES],characterData:true});
     let settled=false;return accepted=>{if(settled)return;settled=true;if(m.homeDock!==dock)return;if(!accepted||!workspace.matches(':popover-open'))releaseHomeDock(m);else workspace.removeAttribute('data-va-layout-preparing');};
    }
    if(!explicitEntry||m.projectFlow||!proof)return null;

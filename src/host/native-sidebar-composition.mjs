@@ -50,7 +50,10 @@ export function nativeSidebarComposition({document,source,history,isOwnedSurface
   const start=(slot??before).getBoundingClientRect();
   // Keep structural admission separate from viewport admission. A temporarily
   // clipped slot must not be removed and clamp the native scroll position.
-  const height=slot?parseFloat(slot.style.getPropertyValue('--va-slot-height')):Math.max(240,Math.min(560,available.height-160));
+  // Bootstrap with a compact owned region. Only the granted frame's measured
+  // content may enlarge it; an empty/loading renderer must not push native
+  // Project management out of the viewport while its join is in flight.
+  const height=slot?parseFloat(slot.style.getPropertyValue('--va-slot-height')):128;
   if(!Number.isFinite(height)||height<=0)return null;
   const top=available?Math.max(available.y,start.top):0;
   const proposed=available?{x:available.x,y:top,width:available.width,height:Math.max(0,Math.min(start.top+height,available.y+available.height)-top)}:null;

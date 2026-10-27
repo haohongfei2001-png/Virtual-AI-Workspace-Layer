@@ -232,7 +232,26 @@ export function inspectNativeHomeSurface({document,hitRoot,header,reading,compos
    chain.push(n);if(n===document.body)break;
   }
   if(!chain.includes(document.body))return fallback;
-  fallback.proofNodes=chain;
+  // A transparent host wrapper does not establish a new containing block.
+  // Prove the entire short path instead of requiring a direct sibling FORM.
+  // Other wrapper layouts remain unsupported; no composer node is moved.
+  const composerPath=()=>{
+   const path=[];let n=composer.parentElement;
+   for(;n&&!chain.includes(n);n=n.parentElement){
+    if(path.length>=64||!plain(n)||n.hasAttribute('role')||n.hidden||n.inert||n.getAttribute('aria-hidden')==='true')return null;
+    const s=style(n);
+    if(s.display!=='contents'||s.visibility!=='visible'||s.opacity!=='1'||s.zoom!=='1'||s.clipPath!=='none'||
+     ['transform','translate','rotate','scale','filter','backdropFilter','offsetPath','maskImage','boxShadow','textShadow'].some(k=>s[k]!=='none')||
+     ['::before','::after'].some(p=>!['none','normal'].includes(win.getComputedStyle(n,p).content)))return null;
+    path.push(n);
+   }
+   return n?path:null;
+  };
+  const dockPath=composerPath();
+  // Node continuity must not depend on paint/focus readiness. A temporary
+  // native outline can restrict the canvas without replacing the document.
+  fallback.proofNodes=dockPath?[...chain,...dockPath]:chain;
+
   const h=box(header),c=box(composer),root=box(hitRoot),visual=win.visualViewport;
   if(![base,h,c,root].every(finite)||visual&&(visual.scale!==1||visual.offsetLeft!==0||visual.offsetTop!==0))return fallback;
   let left=Math.max(0,root.x+hitRoot.clientLeft),right=Math.min(win.innerWidth,root.x+hitRoot.clientLeft+hitRoot.clientWidth);
@@ -257,7 +276,7 @@ export function inspectNativeHomeSurface({document,hitRoot,header,reading,compos
    overlap(expanded,h)||overlap(expanded,c)||clips.some(clip=>!insideShellClip(clip,expanded)))return fallback;
   const paint=workspacePaint({document,hitRoot,reading,chain,main,composer,readingRect:base,wideRect:expanded,provenClipNodes,walkRoot:document.body,isOwnedSurface,structuralAllowed});
   if(!paint?.wideClear)return fallback;
-  const result={readingRect:expanded,proofNodes:chain,paintClear:true};
+  const result={readingRect:expanded,proofNodes:fallback.proofNodes,paintClear:true};
   // A geometry proposal, never a scope grant. Reuse the complete native paint
   // proof, excluding ONLY the already-identified composer subtree from its old
   // position. Both its destination and the enlarged canvas must be clear.
@@ -266,15 +285,15 @@ export function inspectNativeHomeSurface({document,hitRoot,header,reading,compos
   const dockBottom=Math.min(win.innerHeight,root.y+hitRoot.clientTop+hitRoot.clientHeight)-16;
   const destination={...c,y:dockBottom-c.height},canvas={...expanded,height:destination.y-top};
   const cs=style(composer);
-  if(composer.tagName==='FORM'&&chain.includes(composer.parentElement)&&
+  if(composer.tagName==='FORM'&&dockPath&&
    !composer.contains(document.activeElement)&&c.x>=left&&c.x+c.width<=right&&c.width>0&&c.height>0&&
    destination.y>c.y+1&&destination.y>=base.y+base.height&&canvas.height>0&&
    ['static','relative','absolute','fixed'].includes(cs.position)&&
    clips.every(clip=>insideShellClip(clip,canvas)&&insideShellClip(clip,destination))){
    const clear=wideRect=>workspacePaint({document,hitRoot,reading,chain,main,composer,readingRect:base,wideRect,provenClipNodes,walkRoot:document.body,isOwnedSurface,structuralAllowed,relocatingComposer:true})?.wideClear===true;
-   if(clear(canvas)&&clear(destination))result.homeDock={composer,root:hitRoot,reading,parent:composer.parentElement,
+   if(clear(canvas)&&clear(destination)){result.homeDock={composer,root:hitRoot,reading,parent:composer.parentElement,
     rect:destination,leftBound:left,rightInset:win.innerWidth-right,centerOffset:c.x+c.width/2-win.innerWidth/2,bottom:win.innerHeight-dockBottom,url:document.location.href,
-    destinationClear:()=>{const current=box(composer);return finite(current)&&current.width>0&&current.height>0&&current.x>=left&&current.x+current.width<=Math.min(win.innerWidth,right)&&current.y>=top&&current.y+current.height<=win.innerHeight&&clear(current);}};
+    destinationClear:()=>{const current=box(composer);return composerPath()!==null&&finite(current)&&current.width>0&&current.height>0&&current.x>=left&&current.x+current.width<=Math.min(win.innerWidth,right)&&current.y>=top&&current.y+current.height<=win.innerHeight&&clear(current);}};}
   }
   return result;
  }catch{return fallback;}

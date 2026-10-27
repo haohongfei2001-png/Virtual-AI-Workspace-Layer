@@ -17,8 +17,14 @@ try{
    let surface;const adapter=createChatGPTAdapter({document,profile,isOwnedMask:n=>surface?.isMasked(n)===true,isOwnedSurface:n=>surface?.isOwnedSurface(n)===true});
    const binding={documentToken:'fixture',producerToken:'fixture',browserDocumentId:'home',routeEpoch:1,origin:location.origin,expiresAt:new Date(Date.now()+20000).toISOString()};
    await adapter.start({binding,emit:async p=>({state:'accepted',localSeq:p.localSeq,receiptId:'fixture'})});
-   const composer=document.querySelector('form'),input=composer.querySelector('textarea'),originalStyle=composer.getAttribute('style'),parent=composer.parentElement;
-   const state=adapter.inspect(),checks={proposal:!!state.homeDock};
+   const composer=document.querySelector('form'),input=composer.querySelector('textarea'),originalStyle=composer.getAttribute('style');
+   // The composer node and its native controls are unchanged; only a transparent
+   // host wrapper differs. This is a counterexample, not a claimed live DOM capture.
+   const wrapper=document.createElement('div');wrapper.style.display='contents';composer.before(wrapper);wrapper.append(composer);
+   const wrapped=adapter.inspect(),parent=composer.parentElement;
+   wrapper.style.opacity='.5';const opacityRejected=!adapter.inspect().homeDock;wrapper.style.opacity='';
+   wrapper.setAttribute('role','group');const semanticWrapperRejected=!adapter.inspect().homeDock;wrapper.removeAttribute('role');
+   const state=adapter.inspect(),checks={proposal:!!state.homeDock,transparentComposerWrapper:!!wrapped.homeDock,opacityRejected,semanticWrapperRejected};
    surface=createMountSurface({document,createFrameURL:({role})=>'chrome-extension://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/'+role+'.html'});
    const handle=await surface.mount({binding},state);
    const enter=()=>{surface.refreshGeometry(handle,adapter.inspect());const settle=surface.prepareWorkspace(handle,{explicitEntry:false});const next=adapter.inspect();const ok=next.ok&&surface.refreshGeometry(handle,next)&&surface.showWorkspace(handle);settle?.(ok);return next;};
@@ -29,6 +35,8 @@ try{
    surface.refreshGeometry(handle,adapter.inspect());const settle=surface.prepareWorkspace(handle);settle?.(false);checks.failedEntryRestores=composer.getBoundingClientRect().top===302;
    const blocker=document.createElement('button');blocker.style.cssText='position:fixed;left:240px;top:640px;width:40px;height:20px';document.body.append(blocker);checks.destinationBlocked=!adapter.inspect().homeDock;blocker.remove();
    enter();const workspace=document.querySelector('[id$="_workspace"]');workspace.hidePopover();checks.directCloseRestores=composer.getBoundingClientRect().top===302;
+   enter();wrapper.setAttribute('role','group');await new Promise(r=>setTimeout(r,0));checks.semanticChangeRestores=composer.getBoundingClientRect().top===302&&!surface.visibility(handle).workspace;wrapper.removeAttribute('role');
+   enter();wrapper.setAttribute('contenteditable','true');await new Promise(r=>setTimeout(r,0));checks.editableChangeRestores=composer.getBoundingClientRect().top===302&&!surface.visibility(handle).workspace;wrapper.removeAttribute('contenteditable');
    enter();surface.suspend(handle,'revoked');checks.revocationRestores=composer.getBoundingClientRect().top===302;
    enter();surface.dispose(handle);checks.disableRestores=composer.getBoundingClientRect().top===302&&composer.getAttribute('style')===originalStyle&&input.value==='fixture draft'&&composer.parentElement===parent;
    // Re-mount for a real pointer journey driven by the existing browser runner.

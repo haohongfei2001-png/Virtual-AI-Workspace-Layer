@@ -344,6 +344,10 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
  function applySurfaceState(value){
   if(closed||!grantCurrent()||Date.parse(grant?.expiresAt)<=now()||!exactHostRecord(value,['revision','visible'])||!Number.isSafeInteger(value.revision)||value.revision<=surfaceRevision||!(value.visible===null||typeof value.visible==='boolean'))return;
   const wasClosed=surfaceVisible===false;surfaceRevision=value.revision;surfaceVisible=value.visible;if(value.visible===false)clearNativeInteraction();
+  // Initial hints can race the parent's grant join. An authenticated visible
+  // receipt is the bounded opportunity to remeasure after the frame is laid out.
+  // No timer retry and no stale/hidden receipt can keep extending the handshake.
+  if(value.visible===true){lastSidebarSize=null;queueSidebarSize();}
   // Reappearance refreshes data, never presentation, focus or send calibration.
   if(wasClosed&&backgroundRefreshAllowed()&&!backup)invalidate();
  }
