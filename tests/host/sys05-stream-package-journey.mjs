@@ -8,13 +8,14 @@ import {packageHost,verifyHost} from '../../extension/package.mjs';
 import {createSys05StreamServer} from './fixtures/sys05-stream-server.mjs';
 import {attachSys05Observer} from './sys05-stream-observer.mjs';
 import {createSys05StartupDeadline,waitForSys05Worker} from './sys05-startup-precondition.mjs';
+import {createHistoricalNetworkGuard,historicalNetworkGuardArgs} from './historical-network-guard.mjs';
 import {SYS05_LIMITS,counterDelta,assertTokenOnlyWork,assertStreamOutcome,assertBackpressureOutcome,assertDirectoryGapPrecondition,assertDirectoryGapOutcome,assertDirectoryPriorityOutcome,assertQueueOverflowOutcome} from './sys05-stream-oracle.mjs';
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'../..');
 const sha=v=>createHash('sha256').update(v).digest('hex'),sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const C='44444444-4444-4444-8444-444444444444',PEER='33333333-3333-4333-8333-333333333333';
 const scope=context=>({verified:true,provider:'chatgpt',accountId:'principal_'+sha(JSON.stringify(['chatgpt-principal-v1','user-host-fixture'])),organizationId:'context_'+sha(JSON.stringify(['chatgpt-context-v1','user-host-fixture',context]))});
 const scopeKey=s=>JSON.stringify([s.provider,s.accountId,s.organizationId]);
-const fixtureFiles=['sys05-stream-package-journey.mjs','sys05-startup-precondition.mjs','sys05-stream-oracle.mjs','sys05-stream-observer.mjs','fixtures/sys05-stream-server.mjs','fixtures/sys05-native-stream.mjs','fixtures/sys05-native-peer-rename.mjs','fixtures/sys05-native-directory.mjs','fixtures/variants-server.mjs','fixtures/variants-native.mjs','fixtures/j4-native-context.mjs','fixtures/j4-interruption.mjs','fixtures/ui10-conversation-title.mjs','fixtures/native.mjs','fixtures/native.css','fixtures/legacy.html','expected/modern.mjs'];
+const fixtureFiles=['sys05-stream-package-journey.mjs','sys05-startup-precondition.mjs','historical-network-guard.mjs','sys05-stream-oracle.mjs','sys05-stream-observer.mjs','fixtures/sys05-stream-server.mjs','fixtures/sys05-native-stream.mjs','fixtures/sys05-native-peer-rename.mjs','fixtures/sys05-native-directory.mjs','fixtures/variants-server.mjs','fixtures/variants-native.mjs','fixtures/j4-native-context.mjs','fixtures/j4-interruption.mjs','fixtures/ui10-conversation-title.mjs','fixtures/native.mjs','fixtures/native.css','fixtures/legacy.html','expected/modern.mjs'];
 async function poll(read,label,timeout=6000){const end=Date.now()+timeout;let result;while(Date.now()<end){result=await read();if(result&&Date.now()<end)return result;await sleep(50);}throw Error('sys05-timeout:'+label);}
 export async function runSys05(output,{execute=false,observeWork=false,backpressure=false,directoryGap=false,lostAck=false,directoryPriority=false,queueOverflow=false}={}){
  if(queueOverflow&&(backpressure||directoryGap||lostAck||directoryPriority))throw Error('sys05-overflow-isolated-scenario');
@@ -25,7 +26,7 @@ export async function runSys05(output,{execute=false,observeWork=false,backpress
  if(backpressure||directoryGap)observeWork=true;
  const report={status:'NOT_RUN',requirement:'VA-HOST/1.1 SYS-05 narrow candidate',S:'NOT_RUN',realChatGPT:'NOT_RUN',releaseStatus:'NOT_RELEASE_READY',fullSYS05:'NOT_ESTABLISHED',sourceCommit:process.env.FREE_SOURCE_COMMIT??null,workInstrumentation:observeWork,backpressureRequested:backpressure&&!directoryPriority,directoryGapRequested:directoryGap&&!directoryPriority&&!queueOverflow,queueOverflowRequested:queueOverflow,lostAckRequested:lostAck,directoryPriorityRequested:directoryPriority,limits:SYS05_LIMITS,steps:[],errors:[],uncovered:['Forced backpressure/gap and queue overflow','Full supported-profile matrix','Full admitted inventory and large-scale token storms','Uninstrumented latency/p95 and physical-device performance','Actual ChatGPT G/U and PAIA']};
  if(!execute){await writeFile(output,JSON.stringify(report,null,2)+'\n');return report;}
- let server,handle,activeObserver,peerObserver,built,manifest,activePage;
+ let server,guard,handle,activeObserver,peerObserver,built,manifest,activePage;
  const dir=await mkdtemp(join(tmpdir(),'vaiwl-sys05-'));
  report.fixtureHashes=Object.fromEntries(await Promise.all(fixtureFiles.map(async path=>['tests/host/'+path,sha(await readFile(new URL(path,import.meta.url)))])));
  try{
@@ -34,7 +35,8 @@ export async function runSys05(output,{execute=false,observeWork=false,backpress
   built=packageHost(join(dir,'package'),{offlineOrigin:server.origin,offlineContext:true,offlineExistingSend:true,offlineHistory:true});
   manifest=JSON.parse(await readFile(join(built.unpacked,'build-manifest.json')));report.sourceHashes=manifest.sourceHashes;report.packageSha256=built.archiveSha256;report.buildManifestHash=sha(await readFile(join(built.unpacked,'build-manifest.json')));
   const permissions=JSON.parse(await readFile(join(built.unpacked,'manifest.json')));assert.deepEqual(permissions.host_permissions,['http://127.0.0.1/*']);assert.deepEqual(permissions.permissions,['webNavigation','webRequest']);assert.equal(permissions.content_security_policy.extension_pages,`script-src 'self'; object-src 'none'; connect-src ${server.origin}`);report.workerNetworkPolicy='PACKAGED_EXACT_ORIGIN_CONNECT_SRC';
-  const context=await chromium.launchPersistentContext(join(dir,'profile'),{headless:process.env.FREE_CHROME_HEADED!=='1',viewport:{width:1440,height:1000},executablePath:process.env.FREE_CHROME_EXECUTABLE??'/usr/bin/chromium',ignoreDefaultArgs:['--disable-extensions'],args:['--enable-unsafe-extension-debugging']});
+  guard=await createHistoricalNetworkGuard({fixtureOrigin:server.origin});
+  const context=await chromium.launchPersistentContext(join(dir,'profile'),{headless:process.env.FREE_CHROME_HEADED!=='1',viewport:{width:1440,height:1000},executablePath:process.env.FREE_CHROME_EXECUTABLE??'/usr/bin/chromium',ignoreDefaultArgs:['--disable-extensions'],args:['--enable-unsafe-extension-debugging',...historicalNetworkGuardArgs(guard.config)]});
   context.setDefaultTimeout(15000);const browser=context.browser();handle={context,browser,close:()=>context.close()};report.browserPrecondition={transport:'PLAYWRIGHT_ISOLATED_PERSISTENT_CONTEXT',freshProfile:true};
   await context.route('**/*',route=>{const url=new URL(route.request().url());return url.origin===server.origin||url.protocol==='chrome-extension:'?route.continue():route.abort();});
   /* No MAIN/UI/runtime patch is installed in correctness mode. */
@@ -141,7 +143,7 @@ export async function runSys05(output,{execute=false,observeWork=false,backpress
   report.steps.push('original-durable-ACK-provisional-recent-projection');const durableAt=Date.now(),during=await a.evaluate(()=>sys05NativeStream.snapshot());assert(during.running);await poll(()=>a.evaluate(tokens=>sys05NativeStream.snapshot().mutations>tokens,during.jointToken),'tokens-after-durable');
   const tokensAtDurable=(await a.evaluate(()=>sys05NativeStream.snapshot())).mutations;
   const titleWaitAt=Date.now();await a.getByRole('button',{name:'返回工作空间',exact:true}).click();
-  const presented=()=>a.evaluate(()=>{const surface=document.querySelector('section[data-va-owned][id$="_workspace"]');return !!surface?.matches(':popover-open')&&getComputedStyle(surface).visibility==='visible';});
+  const presented=()=>a.evaluate(()=>{const surface=document.querySelector('section[data-va-owned][id$="_workspace"]');return !!surface&&getComputedStyle(surface).display!=='none'&&getComputedStyle(surface).visibility==='visible'&&surface.getBoundingClientRect().height>0;});
   await poll(async()=>{const f=frame(a);if(!f)return null;const more=f.getByRole('button',{name:'其他已知聊天',exact:true});if(await more.count()!==1)return null;if(await more.getAttribute('aria-expanded')==='false')await more.click();return true;},'open-known-chat-disclosure');
   const title=await poll(async()=>{if(!await presented())throw Error('sys05-workspace-closed-during-visible-title');const f=frame(a);if(!f)return null;const row=f.locator('[data-free-list="unknown"] a[data-ref-id="'+C+'"][aria-current="page"]');return await row.count()===1&&await row.isVisible()&&await row.locator('.window-title').textContent()===accepted.title?true:null;},'visible-ACK-promoted-current-row-and-original-title');
   await poll(()=>a.evaluate(tokens=>sys05NativeStream.snapshot().mutations>tokens,tokensAtDurable),'tokens-after-visible-title');
@@ -203,9 +205,9 @@ assert.deepEqual(report.errors,[]);report.S=observeWork?'NARROW_INSTRUMENTED_BRO
   await capture('final-passive-work-snapshot',async()=>{if(observeWork&&activeObserver&&peerObserver)report.work={active:await activeObserver.snapshot(),peer:await peerObserver.snapshot()};});
   if(directoryPriority&&activePage)await capture('native-setup-diagnostic',async()=>{report.nativeSetupDiagnostic=await activePage.evaluate(()=>({events:globalThis.__sys05NativeSetupTrace??[],dialogOpen:document.querySelector('#native-dialog')?.open===true,personalButtons:[...document.querySelectorAll('#native-dialog button')].filter(n=>n.textContent==='Switch to Personal').length}));});
   await capture('final-native-stream-state',async()=>{if(activePage&&!report.stream)report.stream=await activePage.evaluate(()=>globalThis.sys05NativeStream?.snapshot()??null);});
-  await capture('final-presentation-state',async()=>{if(activePage)report.finalPresentation=await activePage.evaluate(()=>Array.from(document.querySelectorAll('section[data-va-owned][popover]'),node=>({role:node.id.endsWith('_workspace')?'workspace':'sidebar',open:node.matches(':popover-open'),visibility:getComputedStyle(node).visibility})));});
+  await capture('final-presentation-state',async()=>{if(activePage)report.finalPresentation=await activePage.evaluate(()=>Array.from(document.querySelectorAll('section[data-va-owned]'),node=>({role:node.id.endsWith('_workspace')?'workspace':'sidebar',open:getComputedStyle(node).display!=='none'&&node.getBoundingClientRect().height>0,visibility:getComputedStyle(node).visibility})));});
   await capture('active-observer-close',()=>activeObserver?.close());await capture('peer-observer-close',()=>peerObserver?.close());
-  await capture('browser-close',()=>handle?.close());await capture('fixture-close',()=>server?.close());
+  await capture('browser-close',()=>handle?.close());await capture('fixture-close',()=>server?.close());await capture('network-guard-close',()=>guard?.close());if(guard)report.networkGuard=guard.snapshot();
   await capture('source-integrity',async()=>{if(manifest){report.sourceChangedDuringRun=(await Promise.all(Object.entries({...manifest.sourceHashes,...report.fixtureHashes}).map(async([path,hash])=>sha(await readFile(join(root,path)))!==hash))).some(Boolean);if(report.sourceChangedDuringRun)throw Error('source-changed-during-run');assert.equal(verifyHost(built.unpacked).status,'OFFLINE_HOST_RECONSTRUCTION');assert.equal(sha(await readFile(join(built.unpacked,'build-manifest.json'))),report.buildManifestHash);}});
   if(report.cleanupErrors?.length)report.status='FAIL_CLEANUP_OR_INTEGRITY';
   await writeFile(output,JSON.stringify(report,null,2)+'\n');

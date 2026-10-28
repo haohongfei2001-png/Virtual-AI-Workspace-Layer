@@ -1,7 +1,7 @@
 // Native fixture control; the server owns the title. No extension/DB access.
 if(location.pathname==='/c/33333333-3333-4333-8333-333333333333'){
  const button=document.createElement('button');button.type='button';button.id='sys05-peer-rename';button.textContent='Rename peer conversation';
- document.querySelector('#composer').before(button);
+ document.querySelector('#composer').append(button);
  button.onclick=async()=>{
   if(button.disabled)return;button.disabled=true;
   const response=await fetch('/native/sys05/rename-peer',{method:'POST'});

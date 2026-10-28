@@ -6,7 +6,7 @@ import {createURLPolicy} from './url-policy.mjs';
  */
 export function observeNativeProjectManagement({document:doc,root,isCurrent=()=>true,onChanged=()=>{}}){
  const policy=createURLPolicy({origin:doc.location.origin,profile:{projectId:({container})=>/^g-p-[0-9a-f]{32}$/.test(container)?container:null}});
- const armed=new Map();let pending=null,stopped=false,last='[]';
+ const armed=new Map();let pending=null,stopped=false,last='[]',scrollFrame=null;
  const visible=node=>{
   const box=node.getBoundingClientRect();let area={left:box.left,right:box.right,top:box.top,bottom:box.bottom};
   if(![area.left,area.right,area.top,area.bottom].every(Number.isFinite)||box.width<=0||box.height<=0)return false;
@@ -49,8 +49,12 @@ export function observeNativeProjectManagement({document:doc,root,isCurrent=()=>
   // establish the expansion. Ordinary member clicks cannot arm this mode.
   pending=null;if(button.getAttribute('aria-expanded')==='false')pending={...entry,at:doc.defaultView.performance.now()};else armed.delete(button);changed();
  };
+ // Inner native scrolling changes the visible duplicate set without a DOM
+ // mutation. Coalesce that presentation update; it cannot arm an expansion or
+ // cancel its intent. The outer NAV is outside this root and is not observed.
+ const scrolled=()=>{if(stopped||scrollFrame!==null)return;scrollFrame=doc.defaultView.requestAnimationFrame(()=>{scrollFrame=null;if(!stopped)changed();});};
  const cancelPending=e=>{if(e.isTrusted)pending=null;};
- root?.addEventListener('click',click,true);root?.addEventListener('pointerdown',cancelPending,true);
+ root?.addEventListener('click',click,true);root?.addEventListener('pointerdown',cancelPending,true);root?.addEventListener('scroll',scrolled,true);
  const observer=new doc.defaultView.MutationObserver(mutation);if(root)observer.observe(root,{subtree:true,childList:true,attributes:true,attributeFilter:['aria-expanded','aria-controls','hidden','aria-hidden','class','style','href','id']});
- return {read:snapshot,stop(){stopped=true;pending=null;armed.clear();observer.disconnect();root?.removeEventListener('click',click,true);root?.removeEventListener('pointerdown',cancelPending,true);}};
+ return {read:snapshot,stop(){stopped=true;pending=null;if(scrollFrame!==null)doc.defaultView.cancelAnimationFrame(scrollFrame);scrollFrame=null;armed.clear();observer.disconnect();root?.removeEventListener('click',click,true);root?.removeEventListener('pointerdown',cancelPending,true);root?.removeEventListener('scroll',scrolled,true);}};
 }

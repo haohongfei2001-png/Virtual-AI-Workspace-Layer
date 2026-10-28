@@ -3,7 +3,9 @@
 const reading=document.querySelector('#reading');
 const state={running:false,ticks:0,mutations:0,startedAt:null,finishedAt:null,jointAt:null,jointBatch:false,jointToken:null,records:0,maxGapMs:0};
 let leaf=null,lastAt=null,timer=null;
-const button=document.createElement('button');button.type='button';button.id='sys05-start';button.textContent='Start finite assistant stream';document.querySelector('#composer').before(button);
+// Test controls belong to the existing protected composer; an unknown sibling
+// between reading and composer correctly fails the formal flow baseline.
+const button=document.createElement('button');button.type='button';button.id='sys05-start';button.textContent='Start finite assistant stream';document.querySelector('#composer').append(button);
 function tick(){
  if(!state.running||!leaf?.isConnected)return;
  const at=performance.now();if(lastAt!==null)state.maxGapMs=Math.max(state.maxGapMs,at-lastAt);lastAt=at;

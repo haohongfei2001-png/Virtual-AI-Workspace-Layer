@@ -217,12 +217,24 @@ try{
  // A disclosure contract counterexample, not a newly observed ChatGPT selector.
  const management=await browser.newPage({viewport:{width:800,height:600}});
  await management.route('**/*',r=>r.request().url()==='https://chatgpt.com/'?r.fulfill({contentType:'text/html',body:`<nav style="height:80px;overflow:auto"><section id="native"><div><a href="/g/${P}/project">Project</a><button aria-controls="panel" aria-expanded="true">Manage</button><div id="panel"><a href="/c/${C}">Member</a></div></div><div style="height:900px"></div></section></nav>`}):r.abort());await management.goto('https://chatgpt.com/');await management.addScriptTag({content:outputFiles[0].text});
- await management.evaluate(()=>{window.m=flowModule.observeNativeProjectManagement({document,root:document.querySelector('#native')});document.querySelector('button').addEventListener('click',e=>{const b=e.currentTarget;b.setAttribute('aria-expanded',String(b.getAttribute('aria-expanded')!=='true'));});});
+ await management.evaluate(()=>{window.managementNotifications=[];window.m=flowModule.observeNativeProjectManagement({document,root:document.querySelector('#native'),onChanged:()=>managementNotifications.push(m.read())});document.querySelector('button').addEventListener('click',e=>{const b=e.currentTarget;b.setAttribute('aria-expanded',String(b.getAttribute('aria-expanded')!=='true'));});});
  assert.deepEqual(await management.evaluate(()=>m.read()),[],'initial native expansion is not management intent');
  await management.getByRole('button',{name:'Manage'}).click();await management.evaluate(()=>{document.querySelector('#panel').style.cssText='height:0;overflow:hidden';});await management.getByRole('button',{name:'Manage'}).click();assert.deepEqual(await management.evaluate(()=>m.read()),[],'clipped transition cannot remove owned members');
  await management.evaluate(()=>document.querySelector('#panel').style.cssText='');await management.waitForFunction(()=>m.read().length===1);assert.deepEqual(await management.evaluate(()=>m.read()),[{projectId:P,refIds:[C]}]);
  await management.evaluate(()=>document.querySelector('nav').scrollTop=500);assert.equal((await management.evaluate(()=>m.read()))[0].refIds.length,1,'NAV scrolling does not revoke management intent');
- await management.evaluate(()=>{document.querySelector('nav').scrollTop=0;document.querySelector('#panel').style.cssText='height:0;overflow:hidden';});assert.deepEqual(await management.evaluate(()=>m.read()),[]);
+ // F-01 deduplication is based on the visible members inside the explicitly
+ // expanded native management panel. Inner scrolling has no DOM mutation.
+ await management.evaluate(()=>{document.querySelector('nav').scrollTop=0;const panel=document.querySelector('#panel');panel.style.cssText='height:24px;overflow:auto';panel.innerHTML='<a style="display:block;height:24px" href="/c/33333333-3333-4333-8333-333333333333">A</a><a style="display:block;height:24px" href="/c/44444444-4444-4444-8444-444444444444">B</a>';});
+ await management.waitForFunction(()=>managementNotifications.at(-1)?.[0]?.refIds.join() === '33333333-3333-4333-8333-333333333333');
+ const innerScroll=await management.evaluate(async()=>{
+  const panel=document.querySelector('#panel'),before=managementNotifications.length;let eventSeen=false;
+  panel.addEventListener('scroll',()=>eventSeen=true,{once:true});panel.scrollTop=24;
+  for(let i=0;i<4;i++)await new Promise(requestAnimationFrame);
+  return {eventSeen,changed:managementNotifications.length>before,notified:managementNotifications.at(-1),actual:m.read()};
+ });
+ assert.equal(innerScroll.eventSeen,true);assert.deepEqual(innerScroll.actual,[{projectId:P,refIds:['44444444-4444-4444-8444-444444444444']}]);
+ assert.equal(innerScroll.changed,true,'inner native scroll must notify the formal sidebar, not just change manual readback');assert.deepEqual(innerScroll.notified,innerScroll.actual);
+ await management.evaluate(()=>{document.querySelector('#panel').style.cssText='height:0;overflow:hidden';});assert.deepEqual(await management.evaluate(()=>m.read()),[]);
  await management.evaluate(()=>m.stop());await management.close();
  console.log(JSON.stringify(results,null,2));assert(results.every(r=>r.shown&&r.structural&&r.active&&!r.privatePopover&&r.replacedHeaderRejected&&r.lateHeaderControlRejected&&r.interactiveShellRejected&&r.interactiveBaselineRejected&&r.input&&r.restored&&r.declarative&&r.nativeWins&&r.clean));
 }finally{await browser.close();}

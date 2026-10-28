@@ -1,7 +1,7 @@
 // Application-owned lazy directory. Only the native server creates these rows.
 if(location.pathname==='/c/44444444-4444-4444-8444-444444444444'){
  const button=document.createElement('button');button.type='button';button.id='sys05-load-directory';button.textContent='Load native directory';
- document.querySelector('#composer').before(button);
+ document.querySelector('#composer').append(button);
  button.onclick=async()=>{
   if(button.disabled)return;button.disabled=true;
   const response=await fetch('/native/sys05/load-directory',{method:'POST'});

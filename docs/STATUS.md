@@ -1,5 +1,12 @@
 # VAIWL实际状态：渐进积累工程已接线，真实来源逐项待准入
 
+## 2026-10-28 原生管理内部滚动与流式集成前提（原安装不变）
+
+已复现并修复F-01通知缺口：明确展开的原生Project管理面板内部滚动后，可见重复成员改变，但没有DOM变更，正式侧栏仍使用旧去重集合。现只在原管理root捕获内部scroll，按帧合并后通知实际集合变化；不建立展开意图、不监听外NAV、不改变私人授权，停止时取消待发通知。反例前后见 `/private/tmp/vaiwl-management-scroll-{before,after}.log`，正式renderer交互回归见 `/private/tmp/vaiwl-management-renderer.log`；独立只读复核通过。这是现有合同的离线反例，不声称已经观察到真实ChatGPT此种内部滚动。
+
+另确定原SYS05启动失败来自旧测试按钮作为reading/composer间的未知兄弟节点，正式flow拒绝正确。按钮归入原测试composer、可见性断言改为实际flow节点，并复用拒绝外网代理；生产保护未放宽。反例 `/private/tmp/vaiwl-sys05-flow-proof.json`；既有有限流式旅程 `/private/tmp/vaiwl-sys05-flow-journey.json` 通过，保留原token/title/ACK及跨scope断言，仅NARROW_INSTRUMENTED_BROWSER_OBSERVED，未运行的gap/overflow分支不提升为通过。合同回归 `/private/tmp/vaiwl-sys05-flow-contracts.log`。没有冻结新日常包或更新安装；真实运行构建UNKNOWN、本批Mac NOT_RUN、完整产品NOT_ACCEPTED。
+
+
 ## 2026-10-28 原生侧栏开合后的工作区宽度与返回恢复（原安装不变）
 
 既有隔离文档流反例确认：同一1440px视口收起260px原生侧栏后，展开中的主工作区仍被捕获时的左边界限制为1180px，虽然安全几何检查通过；阅读后返回也未重新证明同视口下已改变的原生坐标。正式flow现让static/relative根随原包含块宽度布局；fixed/absolute等根仍保留视口边界限制。关闭后的原生坐标或定位类型变化进入既有同节点、授权、控件完整性复核；活动态定位类型变化仍立即拒绝。未关闭活动CSS偷测旧几何，未替换frame、节点或授权。

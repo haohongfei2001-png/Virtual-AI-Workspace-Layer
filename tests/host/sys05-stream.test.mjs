@@ -101,9 +101,12 @@ test('fixture façade cannot select an arbitrary upstream host',()=>{
  for(const path of ['http://example.com/','//example.com/','/\\example.com/','/x\nHost: evil','relative'])assert.throws(()=>sys05UpstreamURL(path,'http://127.0.0.1:34567'));
  assert.throws(()=>sys05UpstreamURL('/native/route','https://example.com'));
 });
-test('modern runner retains packaged exact-origin policy without historical proxy or network overrides',async()=>{
+test('flow runner keeps exact-origin CSP and rejects external URL traffic in its disposable profile',async()=>{
  const source=await readFile(new URL('./sys05-stream-package-journey.mjs',import.meta.url),'utf8');
- for(const forbidden of ['createHistoricalNetworkGuard','historical-network-guard','launchNativeVisibilityBrowser','--proxy-server','--disable-quic','--force-webrtc','historicalNetworkGuard'])assert(!source.includes(forbidden),forbidden);
+ assert(source.includes('createHistoricalNetworkGuard({fixtureOrigin:server.origin})'));
+ assert(source.includes('...historicalNetworkGuardArgs(guard.config)'));
+ assert(source.includes("capture('network-guard-close',()=>guard?.close())"));
+ assert(!source.includes('launchNativeVisibilityBrowser'));
  assert(source.includes("assert.deepEqual(permissions.host_permissions,['http://127.0.0.1/*'])"));assert(source.includes("connect-src ${server.origin}"));assert(source.includes("url.origin===server.origin||url.protocol==='chrome-extension:'"));
 });
 
