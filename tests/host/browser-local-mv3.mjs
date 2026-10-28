@@ -167,6 +167,22 @@ try{
     await page.locator('#fixture-native-tool').evaluate(n=>n.remove());
     await page.locator('[id$="_workspace"]:visible').waitFor();
     await page.locator('[id$="_sidebar"]:visible').waitFor();
+    await page.locator('#project-tool').focus();
+    await page.locator('#project-tool').evaluate(n=>{
+     window.fixtureKeyEvents=[];const popup=document.createElement('div');popup.id='fixture-key-tool';popup.setAttribute('popover','manual');popup.style.cssText='position:fixed;inset:0 auto auto 0;margin:0;width:120px;height:60px';document.body.append(popup);
+     n.addEventListener('keydown',()=>popup.showPopover(),{once:true});
+     for(const type of ['keyup','click'])n.addEventListener(type,e=>window.fixtureKeyEvents.push({type:e.type,top:n.getBoundingClientRect().top}),{once:true});
+    });
+    const keyToolTop=await page.locator('#project-tool').evaluate(n=>n.getBoundingClientRect().top);
+    await page.keyboard.down('Space');
+    assert.equal(await page.locator('[id$="_workspace"]:visible').count(),0,'keyboard-opened layer conceals private workspace immediately');
+    assert.equal(await page.locator('#project-tool').evaluate(n=>n.getBoundingClientRect().top),keyToolTop);
+    await page.keyboard.up('Space');
+    assert.deepEqual(await page.evaluate(()=>window.fixtureKeyEvents),[{type:'keyup',top:keyToolTop},{type:'click',top:keyToolTop}]);
+    assert.equal(await page.evaluate(()=>window.fixtureToolClicks),2,'keyboard default action reaches the same original native handler');
+    await page.locator('#fixture-key-tool').evaluate(n=>n.remove());
+    await page.locator('[id$="_workspace"]:visible').waitFor();await page.locator('[id$="_sidebar"]:visible').waitFor();
+    report.checks.firstNativeKeyboardToolGesture=true;
     await page.locator('#model').evaluate(n=>n.addEventListener('click',()=>window.fixtureModelClicks=(window.fixtureModelClicks??0)+1));
     await page.locator('#model').click();assert.equal(await page.evaluate(()=>window.fixtureModelClicks),1,'first native tool gesture must reach original handler');
     await page.getByRole('button',{name:'返回工作空间',exact:true}).click();

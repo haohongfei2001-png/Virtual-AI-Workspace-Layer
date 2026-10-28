@@ -12,6 +12,8 @@
 
 首个反例 `/private/tmp/vaiwl-native-tool-pointer-red-20261029.log`、最终机制回归 `/private/tmp/vaiwl-native-gesture-flow-20261029.log` 与控制器回归 `/private/tmp/vaiwl-native-gesture-controller-20261029.log` 保留。正式隔离 MV3 报告 `/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-fWWmeE/report.json` 验证同节点原生点击、弹层后 workspace/sidebar 恢复、阅读/四格、私人确认后的布局恢复、撤权和隔离卸载；源码闭包核验 `/private/tmp/vaiwl-native-gesture-verification-20261029.json`。新增 Project 工具反例初版误将弹层放在按钮上方，导致 click=0；已纠正夹具位置，不将旧失败当作正式产品根因。已查看本批 Project、阅读、返回的正式 renderer 整图；匿名宿主不构成真实视觉验收。
 
+继续补齐同一 F-04 的键盘路径：确证原生工具在 Space 按下时打开弹层，旧实现令按钮在 keyup 前从841.45移到400；现 Enter/Space 原生激活沿用同一有限手势，普通文本/IME/修饰键不纳入，重复键或混合指针不续3秒截止，关闭清除旧keyup与尾任务。原反例 `/private/tmp/vaiwl-native-keyboard-red-20261029.log` 与修复后的现有机制回归、正式MV3工具/阅读/返回/恢复旅程通过，非作者只读复核无阻断；报告 `/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-YVfDhX/report.json`，源码闭包核验 `/private/tmp/vaiwl-native-keyboard-verification-20261029.json`。已查看正式返回renderer整图，匿名宿主不计真实视觉通过。另对现有布局保存和四格返回链作只读核查，未发现需要修改的具体差额，未重跑其独立矩阵。
+
 以上均为明确标注的本地兼容反例，**不是用户实际未知主区分支的取证**。没有足够证据宣称真实首页已经修好，不把这一批离线结果转为又一次人工试错要求；修复后 Mac NOT_RUN、完整产品 NOT_ACCEPTED。原 e889… 安装未改，旧库、草稿、三份 stash 和全部备份保持，不另发所谓最终产品候选。
 
 2026-10-29 集中修复激活准备：原分支及 PR16 已同步到 `ad6c3974`。完成关联代码复核后，将同一 `e8896cace4fb…` 包写入原注册目录；先逐文件验证完整2954文件备份，再仅更新 `content.js`、三份正式源文件及构建清单，202项包文件匹配、2752项额外文件保留，清单/权限不变。回执 `/private/tmp/vaiwl-native-flow-continuity-install-receipt-20261029.json`，备份 `.git/vaiwl-artifacts/install-backups/native-flow-continuity-20261029-030532/`。未控制浏览器或执行 Reload，最后可信运行回执仍是用户提供的 `b2b778… / native-flow-uncovered-branch`；新包真实激活 UNKNOWN、修复后实机 NOT_RUN、产品 NOT_ACCEPTED。旧库、草稿和 stash 未动。不重跑旧 UI10 矩阵：其已记录窄屏失败包含原生夹具自身控件越界，不能据此放宽正式保护。

@@ -114,10 +114,10 @@ export function createFlowMountSurface({document:doc,createFrameURL,hasNativeLay
     // Let the original control finish its first trusted gesture before
     // releasing geometry. Never move its target between pointer down and up,
     // dispatch replacement input, or blur/refocus the native composer.
-    let pointer=null,inputTimer=null,gestureDeadline=null,inputSequence=0,gestureInput=false;
+    let pointer=null,key=null,inputTimer=null,gestureDeadline=null,inputSequence=0,gestureInput=false;
     // Native layer observers can run between pointerup and click. The queued
     // release is still part of that same gesture, not a new presentation lease.
-    m.inputPointerActive=()=>(pointer!==null||inputTimer!==null)&&workspace.exit.getAttribute('data-va-gesture')===id;
+    m.inputPointerActive=()=>(pointer!==null||key!==null||inputTimer!==null)&&workspace.exit.getAttribute('data-va-gesture')===id;
     const inputTarget=e=>m.plan.composer.contains(e.target);
     const nativeTarget=e=>{
      if(inputTarget(e))return true;
@@ -129,10 +129,10 @@ export function createFlowMountSurface({document:doc,createFrameURL,hasNativeLay
      const style=win.getComputedStyle(node),box=node.getBoundingClientRect();
      return style.display!=='none'&&style.visibility==='visible'&&box.width>0&&box.height>0&&!node.closest('[inert],[hidden],[aria-hidden="true"]');
     };
-    const clearInput=()=>{inputSequence++;pointer=null;gestureInput=false;if(inputTimer!==null)win.clearTimeout(inputTimer);if(gestureDeadline!==null)win.clearTimeout(gestureDeadline);inputTimer=null;gestureDeadline=null;workspace.exit.removeAttribute('data-va-gesture');workspace.node.removeAttribute('data-va-input-handoff');};
+    const clearInput=()=>{inputSequence++;pointer=null;key=null;gestureInput=false;if(inputTimer!==null)win.clearTimeout(inputTimer);if(gestureDeadline!==null)win.clearTimeout(gestureDeadline);inputTimer=null;gestureDeadline=null;workspace.exit.removeAttribute('data-va-gesture');workspace.node.removeAttribute('data-va-input-handoff');};
     m.cancelInput=clearInput;
     const releaseInput=sequence=>{
-     if(sequence!==inputSequence||pointer!==null||mounts.get(id)!==m)return;
+     if(sequence!==inputSequence||pointer!==null||key!==null||mounts.get(id)!==m)return;
      const nativeOnly=!gestureInput&&workspace.exit.getAttribute('data-va-gesture')===id;clearInput();if(!open(workspace))return;
      // A proved titlebar/Project control can also open its layer on down.
      // Finish that native gesture, but do not turn it into a composer intent.
@@ -145,9 +145,19 @@ export function createFlowMountSurface({document:doc,createFrameURL,hasNativeLay
      hide(m,'workspace','native-input');onSurrender({role:'workspace',reason:'native-input'});
     };
     const queueInput=()=>{if(inputTimer!==null)return;const sequence=inputSequence;inputTimer=win.setTimeout(()=>releaseInput(sequence),0);};
-    const down=e=>{if(e.isTrusted&&nativeTarget(e)&&open(workspace)&&pointer===null){clearInput();gestureInput=inputTarget(e);pointer=e.pointerId;workspace.exit.setAttribute('data-va-gesture',id);const sequence=inputSequence;gestureDeadline=win.setTimeout(()=>{if(sequence!==inputSequence)return;pointer=null;releaseInput(sequence);},3000);}};
-    const up=e=>{if(e.isTrusted&&pointer===e.pointerId){pointer=null;queueInput();}};
-    const input=e=>{if(e.isTrusted&&inputTarget(e)&&pointer===null&&open(workspace))queueInput();};
+    const startGesture=e=>{clearInput();gestureInput=inputTarget(e);workspace.exit.setAttribute('data-va-gesture',id);const sequence=inputSequence;gestureDeadline=win.setTimeout(()=>{if(sequence!==inputSequence)return;pointer=null;key=null;releaseInput(sequence);},3000);};
+    const down=e=>{if(e.isTrusted&&nativeTarget(e)&&open(workspace)&&pointer===null){if(key===null)startGesture(e);else gestureInput||=inputTarget(e);pointer=e.pointerId;}};
+    const up=e=>{if(e.isTrusted&&pointer===e.pointerId){pointer=null;if(key===null)queueInput();}};
+    const keyDown=e=>{
+     if(!e.isTrusted||e.repeat||e.isComposing||e.altKey||e.ctrlKey||e.metaKey||e.shiftKey||!['Enter',' '].includes(e.key)||key!==null||!open(workspace))return;
+     // Hold only native activation keys on proved controls, never ordinary
+     // typing/IME or Space scrolling on a link. Focus and selection stay native.
+     const node=e.target?.closest?.('button,a[href],input,[role="button"],[role="tab"],[role="menuitem"],[role="checkbox"],[role="radio"],[role="switch"]');
+     if(!node||node.isContentEditable||node.tagName==='INPUT'&&!['button','submit','reset','checkbox','radio','file'].includes(node.type)||node.tagName==='A'&&e.key!=='Enter'||!nativeTarget({target:node}))return;
+     if(pointer===null)startGesture(e);else gestureInput||=inputTarget(e);key=e.code||e.key;
+    };
+    const keyUp=e=>{if(e.isTrusted&&key===(e.code||e.key)){key=null;if(pointer===null)queueInput();}};
+    const input=e=>{if(e.isTrusted&&inputTarget(e)&&pointer===null&&key===null&&open(workspace))queueInput();};
     const leaveGesture=()=>{clearInput();if(['native-layer','workspace-geometry'].includes(workspace.reason)&&open(workspace))workspace.exit.hidePopover();};const visibility=()=>{if(doc.visibilityState==='hidden')leaveGesture();};
     const observe=()=>{if(!mounts.has(id))return;if(nativeLayer()){hide(m,null,'native-layer');onSurrender({reason:'native-layer'});return;}if(!geometry(m))onSurrender({role:'workspace',reason:'workspace-geometry'});};
     // Keep the exact registration target: native document replacement can
@@ -161,8 +171,9 @@ export function createFlowMountSurface({document:doc,createFrameURL,hasNativeLay
     const memberToggle=()=>{if(memberFrame!==null)win.cancelAnimationFrame(memberFrame);memberFrame=plan.retainedMembers.length&&open(workspace)?win.requestAnimationFrame(memberGeometry):null;};
     if(plan.retainedMembers.length)workspace.exit.addEventListener('toggle',memberToggle);
     const stylesheetLoaded=e=>{if(e.target?.matches?.('link[rel~="stylesheet"]'))observe();};
-    m.cleanup=()=>{m.unbindSidebar?.();m.management?.stop();leaveGesture();win.removeEventListener('blur',leaveGesture);win.removeEventListener('pagehide',leaveGesture);doc.removeEventListener('visibilitychange',visibility);if(inputTimer!==null)win.clearTimeout(inputTimer);if(memberFrame!==null)win.cancelAnimationFrame(memberFrame);workspace.exit.removeEventListener('toggle',memberToggle);doc.removeEventListener('pointerdown',down,true);doc.removeEventListener('pointerup',up,true);doc.removeEventListener('pointercancel',up,true);for(const type of ['focusin','click','keydown','beforeinput','compositionstart'])doc.removeEventListener(type,input,true);observer?.disconnect();markerGeometry?.disconnect();nativeHead?.removeEventListener('load',stylesheetLoaded,true);for(const s of m.roles)s.cleanup();};
+    m.cleanup=()=>{m.unbindSidebar?.();m.management?.stop();leaveGesture();win.removeEventListener('blur',leaveGesture);win.removeEventListener('pagehide',leaveGesture);doc.removeEventListener('visibilitychange',visibility);if(inputTimer!==null)win.clearTimeout(inputTimer);if(memberFrame!==null)win.cancelAnimationFrame(memberFrame);workspace.exit.removeEventListener('toggle',memberToggle);doc.removeEventListener('pointerdown',down,true);doc.removeEventListener('pointerup',up,true);doc.removeEventListener('pointercancel',up,true);doc.removeEventListener('keydown',keyDown,true);doc.removeEventListener('keyup',keyUp,true);for(const type of ['focusin','click','keydown','beforeinput','compositionstart'])doc.removeEventListener(type,input,true);observer?.disconnect();markerGeometry?.disconnect();nativeHead?.removeEventListener('load',stylesheetLoaded,true);for(const s of m.roles)s.cleanup();};
     doc.addEventListener('pointerdown',down,true);doc.addEventListener('pointerup',up,true);doc.addEventListener('pointercancel',up,true);
+    doc.addEventListener('keydown',keyDown,true);doc.addEventListener('keyup',keyUp,true);
     for(const type of ['focusin','click','keydown','beforeinput','compositionstart'])doc.addEventListener(type,input,true);
     win.addEventListener('blur',leaveGesture);win.addEventListener('pagehide',leaveGesture);doc.addEventListener('visibilitychange',visibility);
     observer=new win.MutationObserver(observe);observer.observe(doc.body,{subtree:true,childList:true,attributes:true,attributeFilter:['class','style','hidden','aria-hidden','role','tabindex','contenteditable','inert','open','aria-modal']});

@@ -44,6 +44,37 @@ try{
  assert.deepEqual(retainedHome,{adapterReady:true,returnReady:true,shown:true,safe:true,nativeAfterComposer:true,retained:true});
  await members.getByRole('button',{name:'Native extra action',exact:true}).click();
  assert.equal(await members.evaluate(()=>nativeMemberProbe.clicks()),1);
+ // Keyboard activation is the same native gesture contract. A tool may
+ // open on Space down, before the browser's Space up/default click.
+ await members.getByRole('button',{name:'Native extra action',exact:true}).focus();
+ const keyTop=await members.evaluate(()=>nativeMemberProbe.button.getBoundingClientRect().top);
+ await members.evaluate(()=>{
+  const {button}=nativeMemberProbe,popup=document.createElement('div');popup.id='native-key-tool';popup.setAttribute('popover','manual');popup.style.cssText='position:fixed;inset:0 auto auto 0;width:100px;height:40px;margin:0';document.body.append(popup);
+  window.nativeKeyEvents=[];button.addEventListener('keydown',e=>{if(e.key===' ')popup.showPopover();},{once:true});
+  for(const type of ['keyup','click'])button.addEventListener(type,e=>nativeKeyEvents.push({type:e.type,top:button.getBoundingClientRect().top}),{once:true});
+ });
+ await members.keyboard.down('Space');
+ assert.equal(await members.evaluate(()=>getComputedStyle(nativeMemberProbe.workspace).display),'none','native keyboard layer conceals private workspace');
+ assert.equal(await members.evaluate(()=>nativeMemberProbe.button.getBoundingClientRect().top),keyTop,'native keyboard target keeps its position until keyup');
+ await members.keyboard.up('Space');
+ assert.deepEqual(await members.evaluate(()=>nativeKeyEvents),[{type:'keyup',top:keyTop},{type:'click',top:keyTop}],'original keyboard tool activation completes before geometry release');
+ assert.equal(await members.evaluate(()=>nativeMemberProbe.clicks()),2);
+ await members.evaluate(()=>document.querySelector('#native-key-tool').remove());
+ await members.clock.install();
+ await members.evaluate(()=>{
+  const {surface,handle,button}=nativeMemberProbe;surface.showWorkspace(handle);button.focus();
+  const popup=document.createElement('div');popup.id='native-held-key';popup.setAttribute('popover','manual');popup.style.cssText='position:fixed;inset:0 auto auto 0;width:100px;height:40px;margin:0';document.body.append(popup);
+  button.addEventListener('keydown',()=>popup.showPopover(),{once:true});
+ });
+ await members.keyboard.down('Space');await members.clock.fastForward(1500);
+ await members.keyboard.down('Space');await members.clock.fastForward(1501);
+ assert.equal(await members.evaluate(()=>document.getElementById(nativeMemberProbe.handle.id+'_workspace_exit').hasAttribute('data-va-gesture')),false,'key repeat must not renew the original gesture deadline');
+ assert.equal(await members.evaluate(()=>nativeMemberProbe.surface.visibility(nativeMemberProbe.handle).workspace),false);
+ await members.keyboard.up('Space');await members.evaluate(()=>{document.querySelector('#native-held-key').remove();nativeMemberProbe.surface.showWorkspace(nativeMemberProbe.handle);});
+ await members.keyboard.down('Space');
+ assert.equal(await members.evaluate(()=>{const {surface,handle}=nativeMemberProbe;surface.showReading(handle);const cleared=!document.getElementById(handle.id+'_workspace_exit').hasAttribute('data-va-gesture');return cleared&&surface.showWorkspace(handle);}),true,'explicit close cancels the held activation key');
+ await members.keyboard.up('Space');await members.clock.runFor(1);
+ assert.equal(await members.evaluate(()=>nativeMemberProbe.surface.visibility(nativeMemberProbe.handle).workspace),true,'old keyup cannot close a newly reopened workspace');
  const retainedGuards=await members.evaluate(async()=>{
   const p=nativeMemberProbe,{surface,handle,branch,button,icon,path,hidden,parent,editor}=p,tick=()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
   surface.showReading(handle);
