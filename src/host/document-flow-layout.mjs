@@ -202,7 +202,10 @@ export function isSameNativeRegions(plan,{allowPresentationChange=false}={}){
  * switch is open. Removing it/our stylesheet restores native presentation. */
 export function flowLayoutRules(plan,{id,exitId,workspaceId}) {
  const active=`body:has(#${exitId}:popover-open):not(:has(${NATIVE_LAYER_SELECTOR}))`;
- const geometry=`:is(${active},body:has(#${exitId}:popover-open[data-va-gesture="${id}"]):has([data-va-flow-composer="${id}"]:active,[data-va-flow-composer="${id}"] :active))`;
+ // :active ends before the native pointerup/click handlers. Keep only the
+ // proved geometry until the trusted gesture's deferred release, while the
+ // separate active selector still conceals private content for native layers.
+ const geometry=`:is(${active},body:has(#${exitId}:popover-open[data-va-gesture="${id}"]))`;
  const select=(name)=>`${geometry} [data-va-flow-${name}="${id}"]`;
  const workspaceRow=plan.flowOrder.indexOf(plan.reading)+1,composerRow=plan.flowOrder.indexOf(plan.composer)+1;
  const rows=plan.flowOrder.map(node=>node===plan.reading?'minmax(96px,1fr)':'auto').join(' ');

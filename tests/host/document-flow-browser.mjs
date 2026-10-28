@@ -485,7 +485,36 @@ try{
     return {oldProofRejected,reopened,framesPreserved:surface.frames(handle).every((x,i)=>x.frame===frames[i]),activeRejected,semanticRejected,hiddenActiveRejected,nativeHiddenReproved};
    });
    assert.deepEqual(reproof,{oldProofRejected:true,reopened:true,framesPreserved:true,activeRejected:true,semanticRejected:true,hiddenActiveRejected:true,nativeHiddenReproved:true});
+   // Native tools may open their layer on pointerdown. The original target
+   // must still receive the first pointerup/click at its enhanced position.
+   await page.evaluate(()=>{
+    window.toolGesture=[];const popup=document.createElement('div');popup.id='native-tool-popover';popup.setAttribute('popover','manual');popup.style.cssText='position:fixed;inset:60px 20px auto auto;margin:0;width:120px;height:60px';popup.textContent='Native tool';document.body.append(popup);
+    const record=e=>toolGesture.push({type:e.type,target:e.target===handoffButton,top:handoffButton.getBoundingClientRect().top});
+    handoffButton.addEventListener('pointerdown',()=>popup.showPopover(),{once:true});for(const type of ['pointerup','click'])document.addEventListener(type,record,{capture:true,once:true});
+   });
+   const popupBox=await page.evaluate(()=>handoffButton.getBoundingClientRect().toJSON());
+   await page.mouse.move(popupBox.x+popupBox.width/2,popupBox.y+popupBox.height/2);await page.mouse.down();
+   assert.equal(await page.evaluate(()=>getComputedStyle(document.querySelector('[data-va-flow-root] > [data-va-owned]')).display),'none','native tool layer conceals private workspace');
+   assert.equal(await page.evaluate(()=>handoffButton.getBoundingClientRect().top),popupBox.top,'pointerdown layer keeps original native target');
+   await page.mouse.up();
+   assert.deepEqual(await page.evaluate(()=>toolGesture),[{type:'pointerup',target:true,top:popupBox.top},{type:'click',target:true,top:popupBox.top}],'native first tool gesture completes before layout release');
+   assert.equal(await page.evaluate(()=>handoffClicks),2);
+   await page.waitForFunction(()=>!document.getElementById(gestureProbe.handle.id+'_workspace_exit').matches(':popover-open'));
+   await page.evaluate(()=>document.querySelector('#native-tool-popover').remove());
    await page.clock.install();
+   // Closing is synchronous. A tail task queued by the old gesture cannot
+   // later override a new workspace choice, even when close/reopen share a task.
+   await page.evaluate(()=>{
+    const {surface,handle,adapter}=gestureProbe;document.querySelector('form').classList.remove('native-focus-ring');surface.refreshNativeBaseline(handle,()=>adapter.inspect());surface.showWorkspace(handle);
+    document.addEventListener('pointerup',()=>{surface.showReading(handle);window.closedGestureCleared=!document.getElementById(handle.id+'_workspace_exit').hasAttribute('data-va-gesture');window.reopenedAfterGesture=surface.showWorkspace(handle);},{capture:true,once:true});
+   });
+   const closingBox=await page.evaluate(()=>handoffButton.getBoundingClientRect().toJSON());
+   await page.mouse.move(closingBox.x+closingBox.width/2,closingBox.y+closingBox.height/2);await page.mouse.down();
+   // Release outside the composer: the browser must not turn this canceled
+   // press into a fresh composer click that would legitimately yield again.
+   await page.mouse.move(10,10);
+   await page.mouse.up();await page.clock.runFor(1);
+   assert.equal(await page.evaluate(()=>closedGestureCleared&&reopenedAfterGesture&&gestureProbe.surface.visibility(gestureProbe.handle).workspace),true,'old input tail cannot close a new workspace choice');
    await page.evaluate(()=>{document.querySelector('form').classList.remove('native-focus-ring');gestureProbe.surface.showReading(gestureProbe.handle);gestureProbe.surface.refreshNativeBaseline(gestureProbe.handle,()=>gestureProbe.adapter.inspect());if(!gestureProbe.surface.showWorkspace(gestureProbe.handle))throw Error('gesture-probe-workspace-not-open');handoffButton.addEventListener('pointerdown',()=>document.querySelector('form').classList.add('native-focus-ring'),{once:true});});
    const expiryBox=await page.evaluate(()=>handoffButton.getBoundingClientRect().toJSON());
    await page.mouse.move(expiryBox.x+expiryBox.width/2,expiryBox.y+expiryBox.height/2);await page.mouse.down();

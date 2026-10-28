@@ -8,7 +8,11 @@
 
 原反例及最终文档流回归通过，非作者复核无剩余阻断。最终同源码正式隔离 MV3 报告 `/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-6WWdK7/report.json`，验证原生图标/按钮、首次输入、主题成员阅读/返回、布局保存恢复、撤权和隔离卸载；203项构建源码逐项一致、无浏览器异常。原 RED 与最终日志为 `/private/tmp/vaiwl-retained-icon-red-20261029.log`、`/private/tmp/vaiwl-retained-deadline-red-20261029.log`、`/private/tmp/vaiwl-retained-icon-final-20261029.log`。已查看受影响首页的正式 renderer 图，但原生宿主是匿名夹具，不作为真实整屏设计通过。
 
-该静态图标是明确标注的本地兼容反例，**不是用户实际未知主区分支的取证**。没有足够证据宣称真实首页已经修好，不把这一批离线结果转为又一次人工试错要求；修复后 Mac NOT_RUN、完整产品 NOT_ACCEPTED。旧库、草稿、三份 stash 和全部备份保持，不另发所谓最终产品候选。
+同批继续修复 F-04 首手势：原生工具在 pointerdown 打开弹层时，原 CSS 的 `:active` 几何保持会在 pointerup/click 前结束；现有本地反例记录原按钮纵坐标从827变323。现几何只在同一次可信手势和原3秒截止内保留，私人 frame 遇弹层仍立即隐藏；显式关闭同步取消旧尾任务，不能误关后来重新打开的工作区。已证明的具体 Project/title 控件沿当前节点/父节点/可见性快照使用同一交接，完成后经 controller 的当前授权及几何重新核对，保留原展示意图；不能借整个 header 放行未知后代。非作者只读复核通过。
+
+首个反例 `/private/tmp/vaiwl-native-tool-pointer-red-20261029.log`、最终机制回归 `/private/tmp/vaiwl-native-gesture-flow-20261029.log` 与控制器回归 `/private/tmp/vaiwl-native-gesture-controller-20261029.log` 保留。正式隔离 MV3 报告 `/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-fWWmeE/report.json` 验证同节点原生点击、弹层后 workspace/sidebar 恢复、阅读/四格、私人确认后的布局恢复、撤权和隔离卸载；源码闭包核验 `/private/tmp/vaiwl-native-gesture-verification-20261029.json`。新增 Project 工具反例初版误将弹层放在按钮上方，导致 click=0；已纠正夹具位置，不将旧失败当作正式产品根因。已查看本批 Project、阅读、返回的正式 renderer 整图；匿名宿主不构成真实视觉验收。
+
+以上均为明确标注的本地兼容反例，**不是用户实际未知主区分支的取证**。没有足够证据宣称真实首页已经修好，不把这一批离线结果转为又一次人工试错要求；修复后 Mac NOT_RUN、完整产品 NOT_ACCEPTED。原 e889… 安装未改，旧库、草稿、三份 stash 和全部备份保持，不另发所谓最终产品候选。
 
 2026-10-29 集中修复激活准备：原分支及 PR16 已同步到 `ad6c3974`。完成关联代码复核后，将同一 `e8896cace4fb…` 包写入原注册目录；先逐文件验证完整2954文件备份，再仅更新 `content.js`、三份正式源文件及构建清单，202项包文件匹配、2752项额外文件保留，清单/权限不变。回执 `/private/tmp/vaiwl-native-flow-continuity-install-receipt-20261029.json`，备份 `.git/vaiwl-artifacts/install-backups/native-flow-continuity-20261029-030532/`。未控制浏览器或执行 Reload，最后可信运行回执仍是用户提供的 `b2b778… / native-flow-uncovered-branch`；新包真实激活 UNKNOWN、修复后实机 NOT_RUN、产品 NOT_ACCEPTED。旧库、草稿和 stash 未动。不重跑旧 UI10 矩阵：其已记录窄屏失败包含原生夹具自身控件越界，不能据此放宽正式保护。
 

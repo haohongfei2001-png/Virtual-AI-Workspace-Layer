@@ -257,6 +257,11 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
  function nativeSurrender(state,event){
   if(current!==state)return;
   if(event?.role==='sidebar'){if(event.reason==='native-list')state.sidebarDesired=false;if(event.phase!=='closing')publishSurface(state);return;}
+  if(event?.reason==='native-gesture-complete'){
+   // A title/Project control is not an instruction to enter composer mode.
+   // Resume only through the current document, scope and geometry checks.
+   try{if(surface.backend==='document-flow'&&!state.dormant&&authorized(state))reconcileGeometry(state);}finally{publishSurface(state);}return;
+  }
   if(['native-change','workspace-geometry','native-layer'].includes(event?.reason)){state.geometryPaused=event.reason!=='native-layer';state.mode='suspended';removeReturn(state);publishSurface(state);return;}
   if(['native-reading','native-input'].includes(event?.reason))state.desiredMode='reading';
   // beforetoggle closes synchronously but still reports the old visibility.

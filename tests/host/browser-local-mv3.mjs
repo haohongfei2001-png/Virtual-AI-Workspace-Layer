@@ -153,8 +153,20 @@ try{
    assert(inputFrames.before.every(n=>n.connected)&&inputFrames.after.every(n=>n.retained),'native presentation recovery must retain the existing frames: '+JSON.stringify(inputFrames));
    report.checks[scene+'FormalFlowInputReturn']=true;
    if(scene==='project'){
-    await page.locator('#project-tool').evaluate(n=>{window.fixtureToolClicks=0;n.addEventListener('click',()=>window.fixtureToolClicks++);return n;});
+    await page.locator('#project-tool').evaluate(n=>{
+     window.fixtureToolClicks=0;window.fixtureToolEvents=[];
+     const popup=document.createElement('div');popup.id='fixture-native-tool';popup.setAttribute('popover','manual');popup.style.cssText='position:fixed;inset:0 auto auto 0;margin:0;width:120px;height:60px';popup.textContent='Native tool';document.body.append(popup);
+     n.addEventListener('pointerdown',()=>popup.showPopover(),{once:true});
+     for(const type of ['pointerup','click'])n.addEventListener(type,e=>window.fixtureToolEvents.push({type:e.type,top:n.getBoundingClientRect().top}),{once:true});
+     n.addEventListener('click',()=>window.fixtureToolClicks++);
+    });
+    const toolTop=await page.locator('#project-tool').evaluate(n=>n.getBoundingClientRect().top);
     await page.locator('#project-tool').click();assert.equal(await page.evaluate(()=>window.fixtureToolClicks),1);
+    assert.deepEqual(await page.evaluate(()=>window.fixtureToolEvents),[{type:'pointerup',top:toolTop},{type:'click',top:toolTop}],'native layer must not shift the original tool before click');
+    assert.equal(await page.locator('[id$="_workspace"]:visible').count(),0,'native layer immediately conceals private workspace');
+    await page.locator('#fixture-native-tool').evaluate(n=>n.remove());
+    await page.locator('[id$="_workspace"]:visible').waitFor();
+    await page.locator('[id$="_sidebar"]:visible').waitFor();
     await page.locator('#model').evaluate(n=>n.addEventListener('click',()=>window.fixtureModelClicks=(window.fixtureModelClicks??0)+1));
     await page.locator('#model').click();assert.equal(await page.evaluate(()=>window.fixtureModelClicks),1,'first native tool gesture must reach original handler');
     await page.getByRole('button',{name:'返回工作空间',exact:true}).click();

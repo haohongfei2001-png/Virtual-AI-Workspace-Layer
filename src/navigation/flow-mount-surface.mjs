@@ -95,7 +95,7 @@ export function createFlowMountSurface({document:doc,createFrameURL,hasNativeLay
      frame.src=url.href;frame.title=role==='workspace'?'工作空间':'导航';frame.style.cssText='display:block;min-width:0;width:100%;border:0;';node.append(button,frame);
      if(role==='sidebar'){node.dataset.vaSidebarSlot='';node.style.setProperty('--va-slot-height','128px');const label=doc.createElement('div');label.textContent='ChatGPT 项目管理与最近聊天';label.dataset.vaNativeBoundary='';node.append(label);}
      const s={role,node,exit,frame,url:url.href,button,reason:null,retired:false};m.roles.push(s);
-     const closing=e=>{if(e.target!==exit||e.newState!=='closed')return;if(role==='workspace')win.queueMicrotask(()=>restoreReading(m));if(!s.reason)onSurrender({role,reason:role==='workspace'?'native-reading':'native-list',phase:e.type==='beforetoggle'?'closing':undefined});};
+     const closing=e=>{if(e.target!==exit||e.newState!=='closed')return;if(role==='workspace'){if(e.type==='beforetoggle')m.cancelInput?.();win.queueMicrotask(()=>restoreReading(m));}if(!s.reason)onSurrender({role,reason:role==='workspace'?'native-reading':'native-list',phase:e.type==='beforetoggle'?'closing':undefined});};
      exit.addEventListener('beforetoggle',closing);exit.addEventListener('toggle',closing);s.cleanup=()=>{exit.removeEventListener('beforetoggle',closing);exit.removeEventListener('toggle',closing);};
      doc.body.append(exit);
     }
@@ -114,15 +114,41 @@ export function createFlowMountSurface({document:doc,createFrameURL,hasNativeLay
     // Let the original control finish its first trusted gesture before
     // releasing geometry. Never move its target between pointer down and up,
     // dispatch replacement input, or blur/refocus the native composer.
-    let pointer=null,inputTimer=null,gestureDeadline=null;
-    m.inputPointerActive=()=>pointer!==null;
-    const inputTarget=e=>plan.composer.contains(e.target);
-    const releaseInput=()=>{inputTimer=null;if(pointer!==null||!mounts.has(id))return;workspace.exit.removeAttribute('data-va-gesture');workspace.node.removeAttribute('data-va-input-handoff');hide(m,'workspace','native-input');onSurrender({role:'workspace',reason:'native-input'});};
-    const queueInput=()=>{if(inputTimer!==null)win.clearTimeout(inputTimer);inputTimer=win.setTimeout(releaseInput,0);};
-    const down=e=>{if(e.isTrusted&&inputTarget(e)&&open(workspace)&&pointer===null){pointer=e.pointerId;workspace.exit.setAttribute('data-va-gesture',id);gestureDeadline=win.setTimeout(()=>{gestureDeadline=null;pointer=null;releaseInput();},3000);}};
-    const up=e=>{if(e.isTrusted&&pointer===e.pointerId){pointer=null;if(gestureDeadline!==null)win.clearTimeout(gestureDeadline);gestureDeadline=null;queueInput();}};
+    let pointer=null,inputTimer=null,gestureDeadline=null,inputSequence=0,gestureInput=false;
+    // Native layer observers can run between pointerup and click. The queued
+    // release is still part of that same gesture, not a new presentation lease.
+    m.inputPointerActive=()=>(pointer!==null||inputTimer!==null)&&workspace.exit.getAttribute('data-va-gesture')===id;
+    const inputTarget=e=>m.plan.composer.contains(e.target);
+    const nativeTarget=e=>{
+     if(inputTarget(e))return true;
+     // A protected header is not permission for every future descendant.
+     // Match the nearest concrete control against the current native proof,
+     // including a control admitted by a later closed-layout reproof.
+     const node=e.target?.closest?.('button,a[href],input,textarea,select,[role="button"],[role="tab"],[role="menuitem"],[role="checkbox"],[role="radio"],[role="switch"],[role="combobox"],[role="textbox"]');
+     if(!node?.isConnected||node.ownerDocument!==doc||!m.plan.nativeControls.some(value=>value.node===node&&value.parent===node.parentElement&&value.visible))return false;
+     const style=win.getComputedStyle(node),box=node.getBoundingClientRect();
+     return style.display!=='none'&&style.visibility==='visible'&&box.width>0&&box.height>0&&!node.closest('[inert],[hidden],[aria-hidden="true"]');
+    };
+    const clearInput=()=>{inputSequence++;pointer=null;gestureInput=false;if(inputTimer!==null)win.clearTimeout(inputTimer);if(gestureDeadline!==null)win.clearTimeout(gestureDeadline);inputTimer=null;gestureDeadline=null;workspace.exit.removeAttribute('data-va-gesture');workspace.node.removeAttribute('data-va-input-handoff');};
+    m.cancelInput=clearInput;
+    const releaseInput=sequence=>{
+     if(sequence!==inputSequence||pointer!==null||mounts.get(id)!==m)return;
+     const nativeOnly=!gestureInput&&workspace.exit.getAttribute('data-va-gesture')===id;clearInput();if(!open(workspace))return;
+     // A proved titlebar/Project control can also open its layer on down.
+     // Finish that native gesture, but do not turn it into a composer intent.
+     if(nativeOnly){
+      if(nativeLayer())hide(m,null,'native-layer');else geometry(m);
+      // The layer may already have closed without a subsequent resize or
+      // mutation. Let the controller reconcile the existing intent/grants.
+      onSurrender({role:'workspace',reason:'native-gesture-complete'});return;
+     }
+     hide(m,'workspace','native-input');onSurrender({role:'workspace',reason:'native-input'});
+    };
+    const queueInput=()=>{if(inputTimer!==null)return;const sequence=inputSequence;inputTimer=win.setTimeout(()=>releaseInput(sequence),0);};
+    const down=e=>{if(e.isTrusted&&nativeTarget(e)&&open(workspace)&&pointer===null){clearInput();gestureInput=inputTarget(e);pointer=e.pointerId;workspace.exit.setAttribute('data-va-gesture',id);const sequence=inputSequence;gestureDeadline=win.setTimeout(()=>{if(sequence!==inputSequence)return;pointer=null;releaseInput(sequence);},3000);}};
+    const up=e=>{if(e.isTrusted&&pointer===e.pointerId){pointer=null;queueInput();}};
     const input=e=>{if(e.isTrusted&&inputTarget(e)&&pointer===null&&open(workspace))queueInput();};
-    const leaveGesture=()=>{pointer=null;if(gestureDeadline!==null)win.clearTimeout(gestureDeadline);gestureDeadline=null;workspace.exit.removeAttribute('data-va-gesture');workspace.node.removeAttribute('data-va-input-handoff');if(['native-layer','workspace-geometry'].includes(workspace.reason)&&open(workspace))workspace.exit.hidePopover();};const visibility=()=>{if(doc.visibilityState==='hidden')leaveGesture();};
+    const leaveGesture=()=>{clearInput();if(['native-layer','workspace-geometry'].includes(workspace.reason)&&open(workspace))workspace.exit.hidePopover();};const visibility=()=>{if(doc.visibilityState==='hidden')leaveGesture();};
     const observe=()=>{if(!mounts.has(id))return;if(nativeLayer()){hide(m,null,'native-layer');onSurrender({reason:'native-layer'});return;}if(!geometry(m))onSurrender({role:'workspace',reason:'workspace-geometry'});};
     // Keep the exact registration target: native document replacement can
     // detach HEAD, but must not prevent restoring the original body layout.

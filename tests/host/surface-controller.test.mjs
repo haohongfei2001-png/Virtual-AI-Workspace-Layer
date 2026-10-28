@@ -712,6 +712,21 @@ test('completed native input reproof repairs paused layout without waiting for r
  assert.equal(f.calls.show,2);assert.equal(f.calls.dispose,0);f.controller.stop();
 });
 
+test('completed native title gesture reconciles existing workspace intent after a transient layer',async()=>{
+ const f=fixture();f.surface.backend='document-flow';f.surface.isSameNativeRegions=()=>true;f.surface.hasNativeInputFocus=()=>false;f.adapter.inspectStructure=f.adapter.inspect;
+ await f.controller.start({});await f.both();
+ f.layer(true);f.change();const shown=f.calls.show;
+ f.surrender({role:'workspace',reason:'native-gesture-complete'});
+ assert.equal(f.calls.show,shown,'open native layer still owns presentation');
+ f.layer(false); // No resize/mutation after the gesture tail.
+ f.surrender({role:'workspace',reason:'native-gesture-complete'});
+ assert.equal(f.calls.show,shown+1);assert.equal(f.controller.isWorkspacePresented(),true);
+ assert.equal(f.calls.register,1);assert.equal(f.calls.confirm.length,2);assert.equal(f.calls.reading,0);
+ f.layer(true);f.change();f.layer(false);f.tick(22000);const expired=f.calls.show;
+ f.surrender({role:'workspace',reason:'native-gesture-complete'});
+ assert.equal(f.calls.show,expired,'gesture completion cannot renew an expired grant');f.controller.stop();
+});
+
 test('closed flow re-entry refreshes CSS-only viewport changes without replacing grants',async()=>{
  const f=fixture();await f.controller.start({});await f.both();f.controller.showReading();
  let stale=true,reproofs=0;f.surface.backend='document-flow';f.surface.isSameNativeRegions=()=>true;
