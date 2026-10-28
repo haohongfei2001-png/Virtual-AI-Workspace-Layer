@@ -1,5 +1,14 @@
 # VAIWL实际状态：渐进积累工程已接线，真实来源逐项待准入
 
+## 2026-10-28 原生侧栏开合后的工作区宽度与返回恢复（原安装不变）
+
+既有隔离文档流反例确认：同一1440px视口收起260px原生侧栏后，展开中的主工作区仍被捕获时的左边界限制为1180px，虽然安全几何检查通过；阅读后返回也未重新证明同视口下已改变的原生坐标。正式flow现让static/relative根随原包含块宽度布局；fixed/absolute等根仍保留视口边界限制。关闭后的原生坐标或定位类型变化进入既有同节点、授权、控件完整性复核；活动态定位类型变化仍立即拒绝。未关闭活动CSS偷测旧几何，未替换frame、节点或授权。
+
+修复前反例 `/private/tmp/vaiwl-{native-layout,active-flow}-before.log`，修复后 `/private/tmp/vaiwl-native-layout-final.log` 与关联控制合同 `/private/tmp/vaiwl-native-layout-contracts.log`。独立只读复核未发现阻断回归。同源码正式隔离MV3报告 `/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-cc0abZ/report.json`；归档SHA256 `39cfe220ef7fd57fa74f6d3c027bf5f192b3d0dc1d29e731137523ebabd3fca6`，三个改动的生产模块与包内字节一致。输入首手势、成员阅读返回、窄屏、Worker/私人布局恢复、撤权和卸载恢复通过；已查看首页、返回与窄屏实际renderer整屏图。原生区域是匿名结构重建，不能代替真实ChatGPT外观验收。
+
+原扩展安装、旧库、草稿和stash未动。本批实际Mac NOT_RUN、运行构建UNKNOWN、产品NOT_ACCEPTED保持；现有历史CI整体失败不被此次定向通过覆盖，未冻结或更新新的日常候选。
+
+
 ## 2026-10-28 响应式原生阅读返回重新证明布局（原安装不变）
 
 隔离反例确认一个实际控制流缺陷：1440px进入阅读后切到420px，原生节点与属性均未变，但CSS断点已移动主根；旧基线仍使用260px左偏移，工作区展开被正确几何保护拒绝。恢复原生状态后重新检查得到0px根位置，即可安全展开。正式flow现在保存布局证明时的viewport，仅工作区已关闭且viewport变化时，请controller沿现有授权/无派发/无弹层/同节点与原控件完整性检查重新证明；不关闭活动CSS来测旧几何，不替换frame或grant，不放宽控件保护。

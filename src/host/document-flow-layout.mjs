@@ -9,6 +9,21 @@ const attrs = node => ['class','style','hidden','aria-hidden','role','tabindex',
 const plain = node => ['DIV','MAIN','SECTION'].includes(node.tagName) && !node.shadowRoot && !node.matches('[tabindex],[contenteditable],[inert],[hidden],[aria-hidden="true"],a,button,input,textarea,select');
 const controls = 'a[href],button,input,textarea,select,[tabindex],[contenteditable]:not([contenteditable="false"]),[role]:not([role="none"]):not([role="presentation"])';
 
+// These native layout coordinates supply the conditional flow rules/baseline.
+// Read them only in the restored native layout, never by disabling live CSS.
+const layoutCoordinates = ({root,header,composer,headerInside}) => {
+ const box=rect(root),head=rect(header),form=rect(composer);
+ if(!positive(box)||!positive(head)||!positive(form))return null;
+ return {composerWidth:form.width,top:Math.max(0,headerInside?box.y:head.y+head.height,box.y),rootTop:box.y,rootLeft:box.x,rootPosition:root.ownerDocument.defaultView.getComputedStyle(root).position};
+};
+
+export function isSameNativeLayout(plan) {
+ try {
+  const next=layoutCoordinates(plan);
+  return !!next&&Object.keys(next).every(key=>next[key]===plan[key]);
+ }catch{return false;}
+}
+
 export function captureNativeBaseline({document:doc,inspection,isOwnedSurface=()=>false}={}) {
  try {
   if (!inspection?.ok) return null;
@@ -50,11 +65,11 @@ export function captureNativeBaseline({document:doc,inspection,isOwnedSurface=()
     if(style.display!=='none'&&style.visibility==='visible'&&positive(box))nativeControls.push({node,parent:node.parentElement});
    }
   }
-  const box=rect(root),head=rect(header),form=rect(composer);
-  if(!positive(box)||!positive(head)||!positive(form))return null;
+  const coordinates=layoutCoordinates({root,header,composer,headerInside});
+  if(!coordinates)return null;
   return Object.freeze({kind,root,reading,composer,header,leaves,protectedNodes,protectedRegions,shells,records,nativeChildren,nativeControls,
    headerInside,document:doc,url:doc.location.href,regionEpoch:inspection.regionEpoch,isOwnedSurface,
-   composerWidth:form.width,top:Math.max(0,headerInside?box.y:head.y+head.height,box.y),rootTop:box.y,rootLeft:box.x});
+   ...coordinates});
  }catch{return null;}
 }
 
@@ -75,7 +90,13 @@ export function flowLayoutRules(plan,{id,exitId,workspaceId}) {
  const select=(name)=>`${geometry} [data-va-flow-${name}="${id}"]`;
  const offset=Number(plan.headerInside),workspaceRow=(plan.kind==='project'?3:1)+offset,composerRow=workspaceRow+1;
  const rows=(plan.headerInside?'auto ':'')+(plan.kind==='project'?'auto auto minmax(96px,1fr) auto':'minmax(96px,1fr) auto');
- return `${select('root')}{display:grid!important;grid-template-columns:minmax(0,1fr)!important;grid-template-rows:${rows}!important;box-sizing:border-box!important;min-height:0!important;height:calc(100dvh - ${plan.rootTop}px)!important;max-height:none!important;width:100%!important;max-width:calc(100dvw - ${plan.rootLeft}px)!important;margin:0!important;padding:${Math.max(0,plan.top-plan.rootTop)}px 0 24px!important;gap:16px!important;overflow:auto!important;align-content:stretch!important;align-items:stretch!important}
+ // Follow the existing containing block horizontally, including native NAV
+ // collapse. A captured viewport-left cap can remain safely but visibly too
+ // narrow. Fixed/absolute roots do not get their percent width from that same
+ // flow parent; keep their viewport-left bound. Actual viewport/occlusion proof
+ // is still required for both, including positioning changes while open.
+ const maxWidth=['static','relative'].includes(plan.rootPosition)?'100%':`calc(100dvw - ${plan.rootLeft}px)`;
+ return `${select('root')}{display:grid!important;grid-template-columns:minmax(0,1fr)!important;grid-template-rows:${rows}!important;box-sizing:border-box!important;min-height:0!important;height:calc(100dvh - ${plan.rootTop}px)!important;max-height:none!important;width:100%!important;max-width:${maxWidth}!important;margin:0!important;padding:${Math.max(0,plan.top-plan.rootTop)}px 0 24px!important;gap:16px!important;overflow:auto!important;align-content:stretch!important;align-items:stretch!important}
 ${select('shell')}{display:contents!important}
 ${select('reading')}{grid-column:1!important;grid-row:${workspaceRow}!important;visibility:hidden!important;interactivity:inert!important;min-height:0!important;height:0!important;overflow:clip!important;margin:0!important;padding:0!important}
 ${select('composer')}{grid-column:1!important;grid-row:${composerRow}!important;position:relative!important;inset:auto!important;transform:none!important;align-self:end!important;justify-self:center!important;width:min(calc(100% - 48px),${plan.composerWidth}px)!important;max-width:100%!important;margin:0!important}
@@ -91,6 +112,7 @@ export function validateActiveLayout(plan,{workspace,style,styleText,exit,isOwne
  try {
   const doc=plan.document,win=doc.defaultView;
   if(!isSameNativeRegions(plan)||!style?.isConnected||style.textContent!==styleText||!exit?.matches(':popover-open')||!workspace?.isConnected||workspace.parentElement!==plan.root||!isOwnedSurface(workspace)||doc.querySelector('dialog[open]:not([data-va-owned]),[aria-modal="true"]:not([data-va-owned])'))return false;
+  if(win.getComputedStyle(plan.root).position!==plan.rootPosition)return false;
   const frame=workspace.querySelector('iframe'),board=rect(workspace),form=rect(plan.composer);
   if(!frame||!positive(board)||!positive(form)||board.width<160||board.height<96||board.y<0||board.x<0||board.x+board.width>win.innerWidth+1||board.y+board.height>win.innerHeight+1||form.y+form.height>win.innerHeight+1||overlaps(board,form))return false;
   // Re-enumerate current protected controls: native tools may arrive after

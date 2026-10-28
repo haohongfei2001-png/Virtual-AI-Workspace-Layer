@@ -25,6 +25,19 @@ try{
   await adapter.start({binding,emit:async p=>({state:'accepted',localSeq:p.localSeq,receiptId:'local-probe'})});const inspection=adapter.inspect();if(!inspection.ok)return {inspection};
   surface=createFlowMountSurface({document,createFrameURL:({role})=>'chrome-extension://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/'+role+'.html'});const handle=await surface.mount({binding},inspection);globalThis.probe={surface,handle,adapter,inspection};return {shown:surface.showWorkspace(handle),active:surface.validateActiveLayout(handle)};
  });
+ const activeSidebarToggle=await responsive.evaluate(()=>{
+  const {surface,handle}=probe,workspace=surface.frames(handle)[0].frame.parentElement,aside=document.querySelector('aside'),frame=workspace.querySelector('iframe'),out=[];
+  for(const display of ['none','flex']){
+   aside.style.display=display;
+   const box=workspace.getBoundingClientRect();
+   out.push({x:box.x,width:box.width,active:surface.validateActiveLayout(handle),sameFrame:surface.frames(handle)[0].frame===frame,refreshRequested:surface.needsNativeBaselineRefresh(handle)});
+  }
+  aside.style.removeProperty('display');return out;
+ });
+ assert.deepEqual(activeSidebarToggle,[
+  {x:0,width:1440,active:true,sameFrame:true,refreshRequested:false},
+  {x:260,width:1180,active:true,sameFrame:true,refreshRequested:false}
+ ]);
  await responsive.evaluate(()=>probe.surface.showReading(probe.handle));
  await responsive.setViewportSize({width:420,height:1000});
  const narrow=await responsive.evaluate(()=>{
@@ -36,8 +49,28 @@ try{
  assert.equal(narrow.shown,true);assert.equal(narrow.active,true);assert.equal(narrow.framesKept,true);assert.equal(narrow.fresh,true);
  assert.equal(narrow.workspace.x,0);assert.equal(narrow.workspace.width,420);
  await responsive.setViewportSize({width:1440,height:1000});
- const wideAgain=await responsive.evaluate(()=>{const {surface,handle,adapter}=probe;const stale=surface.needsNativeBaselineRefresh(handle);const refreshed=!!surface.refreshNativeBaseline(handle,()=>adapter.inspect());const shown=surface.showWorkspace(handle),active=surface.validateActiveLayout(handle);surface.dispose(handle);adapter.stop();return {stale,refreshed,shown,active};});
- assert.deepEqual(wideAgain,{stale:true,refreshed:true,shown:true,active:true});await responsive.close();
+ const wideAgain=await responsive.evaluate(()=>{const {surface,handle,adapter}=probe;const stale=surface.needsNativeBaselineRefresh(handle);const refreshed=!!surface.refreshNativeBaseline(handle,()=>adapter.inspect());const shown=surface.showWorkspace(handle),active=surface.validateActiveLayout(handle);surface.showReading(handle);return {stale,refreshed,shown,active};});
+ assert.deepEqual(wideAgain,{stale:true,refreshed:true,shown:true,active:true});
+ // The native sidebar can collapse without changing the viewport or any
+ // recorded main-region attribute. Reusing its old left offset clips the
+ // available workspace width even though the old active proof still passes.
+ const sidebarToggle=await responsive.evaluate(()=>{
+  const {surface,handle,adapter}=probe,frames=surface.frames(handle).map(x=>x.frame),aside=document.querySelector('aside');
+  const results=[];
+  for(const display of ['none','flex']){
+   aside.style.display=display;
+   const same=surface.isSameNativeRegions(handle),stale=surface.needsNativeBaselineRefresh(handle);
+   const refreshed=stale&&!!surface.refreshNativeBaseline(handle,()=>adapter.inspect());
+   const shown=surface.showWorkspace(handle),active=surface.validateActiveLayout(handle),box=frames[0].parentElement.getBoundingClientRect();
+   results.push({same,stale,refreshed,shown,active,x:box.x,width:box.width,framesKept:frames.every((frame,i)=>frame===surface.frames(handle)[i].frame)});
+   surface.showReading(handle);
+  }
+  surface.dispose(handle);adapter.stop();return results;
+ });
+ assert.deepEqual(sidebarToggle,[
+  {same:true,stale:true,refreshed:true,shown:true,active:true,x:0,width:1440,framesKept:true},
+  {same:true,stale:true,refreshed:true,shown:true,active:true,x:260,width:1180,framesKept:true}
+ ]);await responsive.close();
 
  // Reuse the actual anonymous partition shape; replacement is a lifecycle
  // counterexample, not a claim that a new native selector has been observed.
@@ -101,6 +134,15 @@ try{
    const shown=surface.showWorkspace(handle),workspace=surface.frames(handle)[0].frame.parentElement;
    const boxes={workspace:workspace.getBoundingClientRect().toJSON(),composer:before.composer.getBoundingClientRect().toJSON()};
    const structural=adapter.inspectStructure(before).ok,active=surface.validateActiveLayout(handle),privatePopover=workspace.hasAttribute('popover');
+   // CSS-only positioning changes must not retain a baseline for a different
+   // containing-block model, even when attributes and node identities match.
+   const changedPosition=document.createElement('style');
+   changedPosition.textContent=`[data-va-flow-root="${handle.id}"]{position:${getComputedStyle(workspace.parentElement).position==='relative'?'static':'relative'}!important}`;
+   document.head.append(changedPosition);
+   const positionChangeRejected=surface.isSameNativeRegions(handle)&&!surface.validateActiveLayout(handle);
+   surface.surrenderChanged();const positionNeedsReproof=surface.needsNativeBaselineRefresh(handle);
+   changedPosition.remove();surface.showWorkspace(handle);
+   if(!positionChangeRejected||!positionNeedsReproof)throw Error('positioning-change-must-reprove');
    const nextHeader=before.header.cloneNode(true);before.header.replaceWith(nextHeader);await new Promise(resolve=>setTimeout(resolve,0));
    const replacedHeaderRejected=surface.isSameNativeRegions(handle)===false&&surface.visibility(handle).workspace===false;
    nextHeader.replaceWith(before.header);surface.showWorkspace(handle);

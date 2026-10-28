@@ -1,4 +1,4 @@
-import {captureNativeBaseline,isSameNativeRegions,flowLayoutRules,validateActiveLayout} from '../host/document-flow-layout.mjs';
+import {captureNativeBaseline,isSameNativeRegions,isSameNativeLayout,flowLayoutRules,validateActiveLayout} from '../host/document-flow-layout.mjs';
 import {observeNativeProjectManagement} from '../host/native-project-management.mjs';
 import {validateFrameAppearance} from '../host/frame-appearance.mjs';
 
@@ -116,7 +116,7 @@ export function createFlowMountSurface({document:doc,createFrameURL,hasNativeLay
   readNativeManagement(handle){return lookup(handle).management?.read()??[];},
   validateActiveLayout(handle){return active(lookup(handle));},
   isSameNativeRegions(handle){return isSameNativeRegions(lookup(handle).plan);},
-  needsNativeBaselineRefresh(handle){const m=lookup(handle);return !open(m.roles[0])&&m.nativeViewport!==viewport();},
+  needsNativeBaselineRefresh(handle){const m=lookup(handle);return !open(m.roles[0])&&(m.nativeViewport!==viewport()||!isSameNativeLayout(m.plan));},
   refreshNativeBaseline(handle,inspect){
    const m=lookup(handle),workspace=m.roles[0],prior=m.plan;
    // Only remeasure the actual restored native page. An in-flight first
