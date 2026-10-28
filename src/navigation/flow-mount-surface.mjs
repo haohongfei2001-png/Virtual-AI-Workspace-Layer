@@ -105,6 +105,7 @@ export function createFlowMountSurface({document:doc,createFrameURL,hasNativeLay
     mark(m,plan.root,'root');mark(m,plan.reading,'reading');mark(m,plan.composer,'composer');
     for(const shell of plan.shells)if(shell!==plan.root)mark(m,shell,'shell');
     for(const node of plan.protectedNodes)if(node!==plan.composer)mark(m,node,node===plan.header?'header':node.getAttribute('role')==='tablist'?'tabs':'title');
+    for(const [i,node] of plan.flowOrder.entries())mark(m,node,'row-'+i);
     const enabled=s=>`body:has(#${s.exit.id}:popover-open):not(:has(${NATIVE_LAYER_SELECTOR})) #${s.node.id}`;
     m.css=flowLayoutRules(plan,{id,exitId:workspace.exit.id,workspaceId:workspace.node.id});
     for(const s of m.roles)m.css+=`${enabled(s)}{display:${s.role==='workspace'?'flex':'block'}!important;visibility:visible!important;background:var(--va-canvas,Canvas);color:CanvasText}#${s.node.id}>button{position:absolute;right:4px;top:4px;z-index:1;width:24px;height:24px;padding:0;margin:0;border:0;border-radius:8px;background:transparent;color:inherit;cursor:pointer}#${s.node.id}>iframe{flex:1;min-height:0;}\n`;
@@ -126,9 +127,15 @@ export function createFlowMountSurface({document:doc,createFrameURL,hasNativeLay
     // Keep the exact registration target: native document replacement can
     // detach HEAD, but must not prevent restoring the original body layout.
     const nativeHead=doc.head;
-    let observer=null,markerGeometry=null;
+    let observer=null,markerGeometry=null,memberFrame=null;
+    // A retained native branch can change its paint through CSSOM/hover with
+    // no DOM mutation or resize. Recheck its bounded paint only while the
+    // workspace is actually open; never poll the native reading page.
+    const memberGeometry=()=>{memberFrame=null;if(!mounts.has(id)||!open(workspace))return;observe();if(open(workspace))memberFrame=win.requestAnimationFrame(memberGeometry);};
+    const memberToggle=()=>{if(memberFrame!==null)win.cancelAnimationFrame(memberFrame);memberFrame=plan.retainedMembers.length&&open(workspace)?win.requestAnimationFrame(memberGeometry):null;};
+    if(plan.retainedMembers.length)workspace.exit.addEventListener('toggle',memberToggle);
     const stylesheetLoaded=e=>{if(e.target?.matches?.('link[rel~="stylesheet"]'))observe();};
-    m.cleanup=()=>{m.unbindSidebar?.();m.management?.stop();leaveGesture();win.removeEventListener('blur',leaveGesture);win.removeEventListener('pagehide',leaveGesture);doc.removeEventListener('visibilitychange',visibility);if(inputTimer!==null)win.clearTimeout(inputTimer);doc.removeEventListener('pointerdown',down,true);doc.removeEventListener('pointerup',up,true);doc.removeEventListener('pointercancel',up,true);for(const type of ['focusin','click','keydown','beforeinput','compositionstart'])doc.removeEventListener(type,input,true);observer?.disconnect();markerGeometry?.disconnect();nativeHead?.removeEventListener('load',stylesheetLoaded,true);for(const s of m.roles)s.cleanup();};
+    m.cleanup=()=>{m.unbindSidebar?.();m.management?.stop();leaveGesture();win.removeEventListener('blur',leaveGesture);win.removeEventListener('pagehide',leaveGesture);doc.removeEventListener('visibilitychange',visibility);if(inputTimer!==null)win.clearTimeout(inputTimer);if(memberFrame!==null)win.cancelAnimationFrame(memberFrame);workspace.exit.removeEventListener('toggle',memberToggle);doc.removeEventListener('pointerdown',down,true);doc.removeEventListener('pointerup',up,true);doc.removeEventListener('pointercancel',up,true);for(const type of ['focusin','click','keydown','beforeinput','compositionstart'])doc.removeEventListener(type,input,true);observer?.disconnect();markerGeometry?.disconnect();nativeHead?.removeEventListener('load',stylesheetLoaded,true);for(const s of m.roles)s.cleanup();};
     doc.addEventListener('pointerdown',down,true);doc.addEventListener('pointerup',up,true);doc.addEventListener('pointercancel',up,true);
     for(const type of ['focusin','click','keydown','beforeinput','compositionstart'])doc.addEventListener(type,input,true);
     win.addEventListener('blur',leaveGesture);win.addEventListener('pagehide',leaveGesture);doc.addEventListener('visibilitychange',visibility);
@@ -144,7 +151,7 @@ export function createFlowMountSurface({document:doc,createFrameURL,hasNativeLay
     // native CSS without a body mutation. Observe only invalidation signals;
     // never read stylesheet rules or change the marker. Workspace resizing
     // also covers CSSOM rule edits that have no MutationObserver record.
-    if(plan.inactiveMarkers.length){
+    if(plan.inactiveMarkers.length||plan.retainedMembers.length){
      observer.observe(nativeHead,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['media','disabled','href','rel']});
      observer.observe(doc.documentElement,{childList:true,attributes:true,attributeFilter:['class','style']});
      nativeHead.addEventListener('load',stylesheetLoaded,true);
@@ -167,7 +174,7 @@ export function createFlowMountSurface({document:doc,createFrameURL,hasNativeLay
    if(typeof inspect!=='function'||!ready())return null;
    const inspection=inspect();if(!ready()||!inspection?.ok||inspection.regionEpoch!==handle.regionEpoch)return null;
    const next=captureNativeBaseline({document:doc,inspection,isOwnedSurface:owned});
-   if(!next||['root','reading','composer','header','kind','headerInside'].some(k=>next[k]!==prior[k])||['leaves','shells','protectedNodes'].some(k=>next[k].length!==prior[k].length||next[k].some((node,i)=>node!==prior[k][i])))return null;
+   if(!next||['root','reading','composer','header','kind','headerInside'].some(k=>next[k]!==prior[k])||['leaves','shells','protectedNodes','flowOrder'].some(k=>next[k].length!==prior[k].length||next[k].some((node,i)=>node!==prior[k][i]))||next.retainedMembers.length!==prior.retainedMembers.length||next.retainedMembers.some((m,i)=>m.node!==prior.retainedMembers[i].node||m.hidden!==prior.retainedMembers[i].hidden))return null;
    if(prior.nativeControls.some(old=>!next.nativeControls.some(current=>current.node===old.node&&current.parent===old.parent)))return null;
    const options={id:handle.id,exitId:workspace.exit.id,workspaceId:workspace.node.id},oldRules=flowLayoutRules(prior,options);
    if(!m.css.startsWith(oldRules))return null;

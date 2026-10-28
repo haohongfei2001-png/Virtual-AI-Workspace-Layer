@@ -14,6 +14,66 @@ const P='g-p-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',C='33333333-3333-4333-8333-333333
 const legacy=(await readFile(new URL('./fixtures/legacy.html',import.meta.url),'utf8')).replace('<link rel="stylesheet" href="/native.css">','<style>'+await readFile(new URL('./fixtures/native.css',import.meta.url),'utf8')+'</style>');
 const browser=await chromium.launch({headless:true,args:['--proxy-server=http://127.0.0.1:9','--proxy-bypass-list=<-loopback>']}),results=[];
 try{
+ // The home adapter admits the welcome/composer landmarks without claiming
+ // that they exhaust their common parent. Replay an additional native flow
+ // member, not a purported capture of the user's unidentified extra branch.
+ const members=await browser.newPage({viewport:{width:1400,height:900}});
+ await members.route('**/*',r=>r.request().url()==='https://chatgpt.com/'?r.fulfill({contentType:'text/html',body:observedHomeHTML(C)}):r.abort());
+ await members.goto('https://chatgpt.com/');await members.addScriptTag({content:outputFiles[0].text});
+ const retainedHome=await members.evaluate(async()=>{
+  const {createChatGPTAdapter,createURLPolicy,CHATGPT_OBSERVED_PROFILE:profile,createFlowMountSurface,captureNativeBaseline}=flowModule;let surface;
+  const adapter=createChatGPTAdapter({document,profile,urlPolicy:createURLPolicy(),isOwnedMask:n=>surface?.isMasked(n),isOwnedSurface:n=>surface?.isOwnedSurface(n)});
+  const binding={documentToken:'home-members',producerToken:'home-members',browserDocumentId:'home-members',routeEpoch:1,origin:location.origin,expiresAt:new Date(Date.now()+20000).toISOString()};
+  await adapter.start({binding,emit:async p=>({state:'accepted',localSeq:p.localSeq,receiptId:'home-members'})});
+  const parent=document.querySelector('[role=main]'),editor=parent.querySelector('textarea'),branch=document.createElement('section'),button=document.createElement('button'),hidden=document.createElement('div');
+  parent.style.marginTop='52px';for(const node of [parent.querySelector('.home-composer-anchor'),parent.querySelector('form')]){node.style.position='relative';node.style.top='auto';}
+  branch.id='native-extra';branch.style.cssText='padding:12px;box-sizing:border-box';button.type='button';button.textContent='Native extra action';branch.append(button);parent.append(branch);hidden.hidden=true;parent.append(hidden);
+  let clicks=0;button.addEventListener('click',()=>clicks++);
+  const original=parent.outerHTML,inspection=adapter.inspect();
+  surface=createFlowMountSurface({document,createFrameURL:({role})=>'chrome-extension://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/'+role+'.html'});
+  let handle;try{handle=await surface.mount({binding},inspection);}catch(e){adapter.stop();return {adapterReady:inspection.ok,reason:e.message};}
+  const shown=surface.showWorkspace(handle),safe=surface.validateActiveLayout(handle),workspace=surface.frames(handle).find(f=>f.role==='workspace').frame.parentElement;
+  globalThis.nativeMemberProbe={adapter,surface,handle,parent,editor,branch,button,hidden,original,inspection,binding,captureNativeBaseline,clicks:()=>clicks,workspace};
+  return {adapterReady:inspection.ok,returnReady:inspection.roles.return.available,shown,safe,nativeAfterComposer:branch.getBoundingClientRect().top>=editor.closest('form').getBoundingClientRect().bottom,retained:branch.parentElement===parent&&button.parentElement===branch&&getComputedStyle(branch).display!=='contents'&&hidden.hidden};
+ });
+ assert.deepEqual(retainedHome,{adapterReady:true,returnReady:true,shown:true,safe:true,nativeAfterComposer:true,retained:true});
+ await members.getByRole('button',{name:'Native extra action',exact:true}).click();
+ assert.equal(await members.evaluate(()=>nativeMemberProbe.clicks()),1);
+ const retainedGuards=await members.evaluate(async()=>{
+  const p=nativeMemberProbe,{surface,handle,branch,button,hidden,parent,editor}=p,tick=()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+  surface.showReading(handle);
+  const capture=()=>p.captureNativeBaseline({document,inspection:p.inspection,isOwnedSurface:n=>surface.isOwnedSurface(n)});
+  const rule=document.createElement('style');document.head.append(rule);
+  rule.textContent='#native-extra{position:absolute}';const absoluteRejected=capture()===null;
+  rule.textContent='#native-extra button{position:fixed}';const escapeRejected=capture()===null;rule.remove();
+  const text=document.createTextNode('x'.repeat(1000));branch.append(text);const textOverflowRejected=capture()===null;text.remove();
+  const pseudo=document.createElement('style');pseudo.textContent='#native-extra::after{content:"native annotation"}';document.head.append(pseudo);const pseudoRejected=capture()===null;pseudo.remove();
+  const list=document.createElement('ul');list.innerHTML='<li>Native item</li>';branch.append(list);const markerRejected=capture()===null;list.remove();
+  rule.textContent='#native-extra button{-webkit-text-stroke:1000px black}';document.head.append(rule);const strokeRejected=capture()===null;rule.remove();
+  // Keep native element order while also refusing a conflict with the known
+  // welcome-before-composer contract. No silent reinterpretation of a member.
+  const reading=p.inspection.reading,composer=p.inspection.composer;
+  parent.prepend(composer);const conflict=document.createElement('div');conflict.style.cssText='height:20px';composer.after(conflict);const orderRejected=capture()===null;conflict.remove();reading.after(composer);
+  const resumed=surface.showWorkspace(handle)&&surface.validateActiveLayout(handle);
+  const css=document.createElement('style');document.head.append(css);await tick();
+  css.sheet.insertRule('#native-extra button{position:relative;left:1200px}');
+  await tick();const cssomSurrendered=!surface.visibility(handle).workspace;
+  css.remove();surface.showReading(handle);const returned=surface.showWorkspace(handle);
+  hidden.hidden=false;await tick();const hiddenChangeSurrendered=!surface.visibility(handle).workspace;hidden.hidden=true;
+  surface.showReading(handle);surface.showWorkspace(handle);
+  const replacement=branch.cloneNode(true);branch.replaceWith(replacement);await tick();const replacementRejected=!surface.isSameNativeRegions(handle)&&!surface.visibility(handle).workspace;replacement.replaceWith(branch);
+  surface.dispose(handle);p.adapter.stop();
+  return {absoluteRejected,escapeRejected,textOverflowRejected,pseudoRejected,markerRejected,strokeRejected,orderRejected,resumed,cssomSurrendered,returned,hiddenChangeSurrendered,replacementRejected,restored:parent.outerHTML===p.original&&editor===parent.querySelector('textarea')&&editor.value==='fixture draft'};
+ });
+ assert.deepEqual(retainedGuards,{absoluteRejected:true,escapeRejected:true,textOverflowRejected:true,pseudoRejected:true,markerRejected:true,strokeRejected:true,orderRejected:true,resumed:true,cssomSurrendered:true,returned:true,hiddenChangeSurrendered:true,replacementRejected:true,restored:true});
+ const overlapRejected=await members.evaluate(async()=>{
+  const p=nativeMemberProbe,branch=document.createElement('div');branch.style.cssText='height:40px;position:relative;top:-24px';p.parent.append(branch);
+  const surface=flowModule.createFlowMountSurface({document,createFrameURL:({role})=>'chrome-extension://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/'+role+'.html'});
+  const handle=await surface.mount({binding:p.binding},p.inspection),refused=!surface.showWorkspace(handle);surface.dispose(handle);branch.remove();
+  return refused&&p.parent.outerHTML===p.original;
+ });
+ assert.equal(overlapRejected,true);
+ console.log(JSON.stringify({retainedHome,retainedGuards,overlapRejected}));await members.close();
  // Reuse the package-selected native-scroll-region variant already covered
  // by the return-gap proof. The same region must remain a real, focusable box
  // in flow layout, never be flattened as an arbitrary layout wrapper.

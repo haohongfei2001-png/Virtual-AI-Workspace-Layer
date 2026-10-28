@@ -1,5 +1,15 @@
 # VAIWL实际状态：渐进积累工程已接线，真实来源逐项待准入
 
+## 2026-10-29 实机确认 b2b778… 挂载前拒绝；保留首页额外原生流成员
+
+用户当前文档回执确认 `b2b77888cb3d9e0fb6d3b31e5f078ff5c52d3126e82f92f01c5472c3a6b5df92` 已激活，固定拒绝为 `native-flow-uncovered-branch`。即时库 refs=10，presentation 尚未尝试挂载、frames/grants=0、VIEW/绘制回执为空。故障发生在 `captureNativeBaseline`，不是未 Reload、目录库存丢失、时间过滤或需要解锁。95行侧栏快照不包含触发拒绝的主区分支，不能据此推断它是隐藏标记、推荐内容或任何具体控件；真实页面仍 FAIL，唯一被拒分支的性质尚未得到证据。
+
+正式代码修复首页合同差额：adapter 已证明 welcome/composer，并不意味着二者穷尽共同父节点；flow 不再把可完整保留的额外原生流成员一概拒绝。只对已检查首页，以原节点/parent/顺序保留整块，执行共享128节点、256文字矩形、25ms的有界布局证明，不读取文字值、不推断语义、不将其变成标题或遮罩。活动态仍核对越界、绘制、控件命中及成员间遮挡；CSSOM/可见性/节点变化自动让位，旧身份和私人授权不变。原生根的外边距不再强制归零，避免抹掉已计入 rootTop 的位移后侵入页头。无法证明的绘制及不兼容顺序继续明确拒绝。
+
+原拒绝先在现有离线 runner 复现。新增合法普通流反例与绝对定位、越界文字、伪元素、列表标记、文字描边、顺序冲突、CSSOM移位、节点替换等拒绝回归通过；非作者只读复核通过。正式隔离 MV3 连续旅程报告 `/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-QRJIQj/report.json`，另有同文档不安全分支撤除后恢复 `/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-46vGWx/report.json`。输入首手势、原控件、主题/成员导航、四格、持久布局、撤权及实际隔离卸载均沿现有测试验证。早期新夹具自身遮住页头导致返回失败已保留日志；修正其原生几何并显式断言原返回空位，没有放宽生产保护。匿名宿主额外分支是机制反例，不是新采集的真实 DOM。
+
+统一**未安装**包 `/private/tmp/VAIWL-v27-Native-Flow-Members-20261029/extension`，运行指纹 `2dad780a65b2e0023f0f64edac57b527f948548bc48f5557be40d7ead9d04c96`，ZIP SHA256 `3c447c160f501a5104f3ea2db797285d70ed6358a6febbd59b846e6a8ce8481a`。203项源码与实际隔离测试包一致；正式清单/权限与原安装相同。已查看首页、原生阅读、返回及窄屏整图：正式 renderer 可见、连续状态成立，但原生区域是匿名占位，不能据这些图认定真实整屏 v2.7 已达标。本轮未更新原安装、操作日常 Chrome、重采 DOM、解锁或更改旧库/草稿/stash；新修复真实 Mac NOT_RUN，完整产品 NOT_ACCEPTED。不要求再消费一次结构观察，也不把该合同修复冒充实际未知分支已获验证。
+
 ## 2026-10-29 集中挂载修复已同ID准备，运行激活尚未确认
 
 本批生产修复保存在56f574ed、624c9441、031ac636，实际卸载回归在ff6f4d79。原Profile 4注册信息仍指向既有加载目录；先逐文件验证并完整备份2954个文件到 `.git/vaiwl-artifacts/install-backups/flow-reading-integrated-20261029-012559/`，再仅更新8个生产文件及构建清单，2752个额外文件保留。manifest/权限逐字节相同，未触碰Chrome Profile、IndexedDB、草稿或运行浏览器。回执 `/private/tmp/vaiwl-flow-reading-install-receipt-20261029.json`，与实际最终隔离测试包的闭包核验 `/private/tmp/vaiwl-flow-reading-final-integrity-20261029.json`。

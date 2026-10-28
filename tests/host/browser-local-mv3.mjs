@@ -36,14 +36,14 @@ try{
   // Full production owner -> adapter -> preflight -> JOIN -> VIEW -> renderer.
   // Temporary branch is a local lifecycle counterexample, not captured site DOM.
   page=await context.newPage();await page.setViewportSize({width:1400,height:900});
-  await page.addInitScript({content:'if(window===window.top)document.addEventListener("DOMContentLoaded",()=>{('+materializePartitionedSidebar.toString()+')('+JSON.stringify(partitionDetails.sidebarStructure.rows)+');const branch=document.createElement("div");branch.hidden=true;branch.dataset.fixturePreflight="";document.querySelector("[role=main]").append(branch);},{once:true});'});
+  await page.addInitScript({content:'if(window===window.top)document.addEventListener("DOMContentLoaded",()=>{('+materializePartitionedSidebar.toString()+')('+JSON.stringify(partitionDetails.sidebarStructure.rows)+');const branch=document.createElement("div");branch.style.cssText="position:absolute;width:8px;height:8px;bottom:0";branch.dataset.fixturePreflight="";document.querySelector("[role=main]").append(branch);},{once:true});'});
   await page.goto(origin+'/');
   await page.waitForFunction(()=>document.documentElement.dataset.vaiwlStartup==='surface-failed',{timeout:15000});
   const editor=await page.locator('textarea').elementHandle(),draft=await page.locator('textarea').inputValue();
   const control=await context.newPage();await control.goto('chrome-extension://'+id+'/status.html');
   const read=()=>control.evaluate(async origin=>{const [tab]=await chrome.tabs.query({url:origin+'/*'}),frame=await chrome.webNavigation.getFrame({tabId:tab.id,frameId:0});return {documentId:frame.documentId,status:await chrome.tabs.sendMessage(tab.id,{v:1,type:'HOST_LOCAL_STATUS'},{documentId:frame.documentId}),pipeline:await chrome.runtime.sendMessage({v:1,type:'HOST_LOCAL_SPACE',action:'pipeline'}),local:await chrome.runtime.sendMessage({v:1,type:'HOST_LOCAL_SPACE',action:'status'})};},origin);
   await page.bringToFront();const before=await read();
-  assert.equal(before.status.state,'surface-native-flow-uncovered-branch');
+  assert.equal(before.status.state,'surface-native-flow-branch-paint');
   assert.equal(before.pipeline.pipeline.storage,'session');assert(before.pipeline.pipeline.refs>0);
   assert.equal(before.pipeline.pipeline.lastWorkspaceDelivery,null);assert.equal(before.pipeline.pipeline.workspaceReceipt,null);
   assert.equal(await page.locator('iframe[src="chrome-extension://'+id+'/workspace.html"]').count(),0);
@@ -98,6 +98,19 @@ try{
  if(process.argv.includes('--flow-only')){
   page=await context.newPage();await page.setViewportSize({width:1400,height:900});
   await page.addInitScript({content:'if(window===window.top)document.addEventListener("DOMContentLoaded",()=>{('+materializePartitionedSidebar.toString()+')('+JSON.stringify(partitionDetails.sidebarStructure.rows)+');},{once:true});'});
+  // Local counterexample for an inspected home with additional native flow
+  // content. This is not a claim about the real unidentified rejected branch.
+  await page.addInitScript(()=>{if(window===window.top)document.addEventListener('DOMContentLoaded',()=>{
+   const parent=document.querySelector('[role=main]');if(!parent?.querySelector('.home-composer-anchor'))return;
+   // The older fixture positions both landmarks absolutely. A new ordinary
+   // sibling would then start at y=0 over the native header. Give this local
+   // counterexample a real native flow before the extension starts; do not
+   // relax the return-gap proof to accept a pre-existing header occluder.
+   parent.style.marginTop='52px';for(const node of [parent.querySelector('.home-composer-anchor'),parent.querySelector('form')]){node.style.position='relative';node.style.top='auto';}
+   const branch=document.createElement('section'),button=document.createElement('button'),hidden=document.createElement('div');
+   branch.style.cssText='padding:12px;box-sizing:border-box';button.type='button';button.textContent='Native auxiliary action';branch.append(button);hidden.hidden=true;parent.append(branch,hidden);
+   window.nativeFlowExtra={branch,button,hidden,parent,clicks:0};button.addEventListener('click',()=>window.nativeFlowExtra.clicks++);
+  },{once:true});});
   report.images=[];
   for(const [scene,path] of [['project','/g/'+P+'/project'],['home','/'],['conversation','/c/'+B]]){
    await page.goto(origin+path);
@@ -115,6 +128,11 @@ try{
     const original=await page.locator('[data-app-action-timeline-scroll]').elementHandle();
     assert(await original.evaluate(n=>n.getAttribute('role')==='region'&&n.getAttribute('tabindex')==='0'&&getComputedStyle(n).display==='grid'));
     report.checks.nativeScrollRegion={originalTabStop:true,flowRoot:true};
+   }
+   if(scene==='home'){
+    await page.getByRole('button',{name:'Native auxiliary action',exact:true}).click();
+    report.checks.retainedHomeMember=await page.evaluate(()=>{const p=window.nativeFlowExtra;return {sameParents:p.branch.parentElement===p.parent&&p.button.parentElement===p.branch&&p.hidden.parentElement===p.parent,nativeClick:p.clicks===1,hiddenUntouched:p.hidden.outerHTML==='<div hidden=""></div>',workspaceVisible:[...document.querySelectorAll('[id$="_workspace"][data-va-owned]')].some(n=>getComputedStyle(n).display!=='none')};});
+    assert.deepEqual(report.checks.retainedHomeMember,{sameParents:true,nativeClick:true,hiddenUntouched:true,workspaceVisible:true});
    }
    const image=join(dir,'flow-'+scene+'.png');await page.screenshot({path:image});report.images.push(image);
    const draft=await page.locator('textarea').inputValue();
