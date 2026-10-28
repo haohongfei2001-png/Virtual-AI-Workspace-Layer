@@ -1,3 +1,4 @@
+import {hasNativeLayer as documentHasNativeLayer,NATIVE_LAYER_SELECTOR} from '../host/native-layer.mjs';
 import {captureNativeBaseline,isSameNativeRegions,isSameNativeLayout,flowLayoutRules,validateActiveLayout} from '../host/document-flow-layout.mjs';
 import {observeNativeProjectManagement} from '../host/native-project-management.mjs';
 import {validateFrameAppearance} from '../host/frame-appearance.mjs';
@@ -11,7 +12,7 @@ export function createFlowMountSurface({document:doc,createFrameURL,hasNativeLay
  const open=s=>s.exit.matches(':popover-open');
  const viewport=()=>`${win.innerWidth}:${win.innerHeight}`;
  const intact=(m,s)=>s.node.isConnected&&s.frame.isConnected&&s.frame.parentElement===s.node&&!s.frame.hasAttribute('srcdoc')&&s.frame.src===s.url&&s.node.ownerDocument===doc&&m.style.isConnected&&m.style.textContent===m.css;
- const nativeLayer=()=>hasNativeLayer()||!!doc.querySelector('dialog[open]:not([data-va-owned]),[aria-modal="true"]:not([data-va-owned]),[popover]:popover-open:not([data-va-owned])');
+ const nativeLayer=()=>hasNativeLayer()||documentHasNativeLayer(doc);
  function hide(m,role,reason='suspended'){
   // Native observation sees owned attribute writes too. Rewriting the same
   // handoff marker would feed geometry back into itself and starve pointerup.
@@ -85,7 +86,7 @@ export function createFlowMountSurface({document:doc,createFrameURL,hasNativeLay
     mark(m,plan.root,'root');mark(m,plan.reading,'reading');mark(m,plan.composer,'composer');
     for(const shell of plan.shells)if(shell!==plan.root)mark(m,shell,'shell');
     for(const node of plan.protectedNodes)if(node!==plan.composer)mark(m,node,node===plan.header?'header':node.getAttribute('role')==='tablist'?'tabs':'title');
-    const enabled=s=>`body:has(#${s.exit.id}:popover-open):not(:has(dialog[open]:not([data-va-owned]),[aria-modal="true"]:not([data-va-owned]),[popover]:popover-open:not([data-va-owned]))) #${s.node.id}`;
+    const enabled=s=>`body:has(#${s.exit.id}:popover-open):not(:has(${NATIVE_LAYER_SELECTOR})) #${s.node.id}`;
     m.css=flowLayoutRules(plan,{id,exitId:workspace.exit.id,workspaceId:workspace.node.id});
     for(const s of m.roles)m.css+=`${enabled(s)}{display:${s.role==='workspace'?'flex':'block'}!important;visibility:visible!important;background:var(--va-canvas,Canvas);color:CanvasText}#${s.node.id}>button{position:absolute;right:4px;top:4px;z-index:1;width:24px;height:24px;padding:0;margin:0;border:0;border-radius:8px;background:transparent;color:inherit;cursor:pointer}#${s.node.id}>iframe{flex:1;min-height:0;}\n`;
     m.css+=`${enabled(workspace)}[data-va-input-handoff]{visibility:hidden!important;pointer-events:none!important}#${workspace.node.id}[data-va-input-handoff]>iframe{visibility:hidden!important}#${sidebar.node.id}{height:auto;flex:none}#${sidebar.node.id}>[data-va-native-boundary]{box-sizing:border-box;min-height:28px;padding:5px 12px;border-top:1px solid color-mix(in srgb,CanvasText 10%,Canvas);font:11px/18px system-ui;color:color-mix(in srgb,CanvasText 60%,Canvas)}#${sidebar.node.id}>button{top:auto;bottom:32px}#${workspace.node.id}>iframe{height:100%}`;

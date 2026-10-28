@@ -8,11 +8,43 @@ import {observedProjectHTML} from './fixtures/observed-project.mjs';
 import {observedHomeHTML,longDesktopHTML,materializePartitionedSidebar} from './fixtures/observed-host-replay.mjs';
 import partitionDetails from './fixtures/observed-sidebar-project-details-20261026.json' with {type:'json'};
 const require=createRequire(new URL('../../extension/tooling/package.json',import.meta.url));
-const {outputFiles}=await require('esbuild').build({stdin:{contents:"export {captureNativeBaseline} from './src/host/document-flow-layout.mjs';export {createChatGPTAdapter} from './src/host/chatgpt-adapter.mjs';export {createURLPolicy} from './src/host/url-policy.mjs';export {CHATGPT_OBSERVED_PROFILE} from './src/host/chatgpt-observed-profile.mjs';export {createFlowMountSurface} from './src/navigation/flow-mount-surface.mjs';export {observeNativeProjectManagement} from './src/host/native-project-management.mjs';",resolveDir:process.cwd()},bundle:true,write:false,format:'iife',globalName:'flowModule'});
+const {outputFiles}=await require('esbuild').build({stdin:{contents:"export {captureNativeBaseline} from './src/host/document-flow-layout.mjs';export {createSurfaceController} from './src/host/surface-controller.mjs';export {createChatGPTAdapter} from './src/host/chatgpt-adapter.mjs';export {createURLPolicy} from './src/host/url-policy.mjs';export {CHATGPT_OBSERVED_PROFILE} from './src/host/chatgpt-observed-profile.mjs';export {createFlowMountSurface} from './src/navigation/flow-mount-surface.mjs';export {observeNativeProjectManagement} from './src/host/native-project-management.mjs';",resolveDir:process.cwd()},bundle:true,write:false,format:'iife',globalName:'flowModule'});
 const P='g-p-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',C='33333333-3333-4333-8333-333333333333';
 const legacy=(await readFile(new URL('./fixtures/legacy.html',import.meta.url),'utf8')).replace('<link rel="stylesheet" href="/native.css">','<style>'+await readFile(new URL('./fixtures/native.css',import.meta.url),'utf8')+'</style>');
 const browser=await chromium.launch({headless:true,args:['--proxy-server=http://127.0.0.1:9','--proxy-bypass-list=<-loopback>']}),results=[];
 try{
+ // Native popovers have no required aria-modal attribute. The real adapter,
+ // controller and flow backend must agree while one is open and after close.
+ // Grants below are offline mechanism doubles, never account evidence.
+ const layers=await browser.newPage({viewport:{width:1400,height:900}});
+ await layers.route('**/*',r=>r.request().url()==='https://chatgpt.com/'?r.fulfill({contentType:'text/html',body:observedHomeHTML(C)}):r.abort());
+ await layers.goto('https://chatgpt.com/');await layers.evaluate(materializePartitionedSidebar,partitionDetails.sidebarStructure.rows);await layers.addScriptTag({content:outputFiles[0].text});
+ const layerRecovery=await layers.evaluate(async()=>{
+  const {createChatGPTAdapter,createURLPolicy,CHATGPT_OBSERVED_PROFILE:profile,createFlowMountSurface,createSurfaceController}=flowModule;
+  let surface,registrations=0,confirmations=0;
+  const adapter=createChatGPTAdapter({document,profile,urlPolicy:createURLPolicy(),isOwnedMask:n=>surface?.isMasked(n),isOwnedSurface:n=>surface?.isOwnedSurface(n)});
+  const binding={documentToken:'layers',producerToken:'layers',browserDocumentId:'layers',routeEpoch:1,origin:location.origin,expiresAt:new Date(Date.now()+20000).toISOString()};
+  const context=await adapter.start({binding,emit:async p=>({state:'accepted',localSeq:p.localSeq,receiptId:'layers'})});
+  const extensionOrigin='chrome-extension://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
+  surface=createFlowMountSurface({document,hasNativeLayer:()=>adapter.hasNativeLayer(),createFrameURL:({role})=>extensionOrigin+'/'+role+'.html'});
+  const bridge={registerMount:async()=>{registrations++;return {ok:true};},confirmParent:async({mountId,role})=>{confirmations++;return {ok:true,grant:{id:'grant_'+role,mountId,role,parentDocumentId:'layers',uiDocumentId:'ui_'+role,scopeGrantId:'scope',expiresAt:binding.expiresAt}};}};
+  const controller=createSurfaceController({document,adapter,surface,bridge,extensionOrigin}),handle=await controller.start({context});
+  if(!handle)throw Error('layer-fixture-mount');
+  const frames=surface.frames(handle).map(x=>x.frame),settle=async()=>{for(let i=0;i<4;i++)await new Promise(requestAnimationFrame);};
+  for(const {role,frame}of surface.frames(handle))window.dispatchEvent(new MessageEvent('message',{origin:extensionOrigin,source:frame.contentWindow,data:{type:'VAIWL_UI_JOIN',role,nonce:'nonce_'+role}}));
+  await settle();const initial=surface.visibility(handle),ownedExcluded=!adapter.hasNativeLayer();
+  const popover=document.createElement('div');popover.setAttribute('popover','manual');document.body.append(popover);await settle();
+  popover.showPopover();await settle();
+  const during={detected:adapter.hasNativeLayer(),visible:surface.visibility(handle),mode:controller.localStatus(),intent:controller.presentationIntent(),returnCount:document.querySelectorAll('[aria-label="返回工作空间"]').length};
+  popover.hidePopover();await settle();
+  const after={visible:surface.visibility(handle),intent:controller.presentationIntent(),sameFrames:frames.every((frame,i)=>surface.frames(handle)[i].frame===frame),registrations,confirmations};
+  popover.showPopover();await settle();controller.revoke();popover.hidePopover();await settle();
+  const revoked=frames.every(frame=>!frame.isConnected)&&!document.querySelector('[data-va-flow-root]')&&document.querySelectorAll('[aria-label="返回工作空间"]').length===0;
+  controller.stop();adapter.stop();popover.remove();return {initial,ownedExcluded,during,after,revoked};
+ });
+ assert.deepEqual(layerRecovery,{initial:{workspace:true,sidebar:true},ownedExcluded:true,during:{detected:true,visible:{workspace:false,sidebar:false},mode:'suspended',intent:'workspace',returnCount:0},after:{visible:{workspace:true,sidebar:true},intent:'workspace',sameFrames:true,registrations:1,confirmations:2},revoked:true});
+ console.log(JSON.stringify({nativeLayerRecovery:layerRecovery}));
+ await layers.close();
  // CSS-only breakpoint counterexample, not a newly observed ChatGPT topology.
  // The native fixture is explicitly responsive and all its controls fit.
  const responsive=await browser.newPage({viewport:{width:1440,height:1000}});

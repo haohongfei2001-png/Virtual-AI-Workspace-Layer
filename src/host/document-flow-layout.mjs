@@ -1,3 +1,4 @@
+import {hasNativeLayer,NATIVE_LAYER_SELECTOR} from './native-layer.mjs';
 /** Presentation-only document flow contract. Never supplies scope or data authority.
  * Native nodes stay in their original parent chain. Owned rules are reversible;
  * active proof measures the displayed layout, never a temporarily disabled one.
@@ -85,7 +86,7 @@ export function isSameNativeRegions(plan,{allowPresentationChange=false}={}){
 /** Owned attributes are tokens only. Rules exist only while the empty exit
  * switch is open. Removing it/our stylesheet restores native presentation. */
 export function flowLayoutRules(plan,{id,exitId,workspaceId}) {
- const active=`body:has(#${exitId}:popover-open):not(:has(dialog[open]:not([data-va-owned]),[aria-modal="true"]:not([data-va-owned]),[popover]:popover-open:not([data-va-owned])))`;
+ const active=`body:has(#${exitId}:popover-open):not(:has(${NATIVE_LAYER_SELECTOR}))`;
  const geometry=`:is(${active},body:has(#${exitId}:popover-open[data-va-gesture="${id}"]):has([data-va-flow-composer="${id}"]:active,[data-va-flow-composer="${id}"] :active))`;
  const select=(name)=>`${geometry} [data-va-flow-${name}="${id}"]`;
  const offset=Number(plan.headerInside),workspaceRow=(plan.kind==='project'?3:1)+offset,composerRow=workspaceRow+1;
@@ -111,7 +112,7 @@ ${active} #${workspaceId}{display:flex!important;visibility:visible!important;gr
 export function validateActiveLayout(plan,{workspace,style,styleText,exit,isOwnedSurface=plan?.isOwnedSurface}={}) {
  try {
   const doc=plan.document,win=doc.defaultView;
-  if(!isSameNativeRegions(plan)||!style?.isConnected||style.textContent!==styleText||!exit?.matches(':popover-open')||!workspace?.isConnected||workspace.parentElement!==plan.root||!isOwnedSurface(workspace)||doc.querySelector('dialog[open]:not([data-va-owned]),[aria-modal="true"]:not([data-va-owned])'))return false;
+  if(!isSameNativeRegions(plan)||!style?.isConnected||style.textContent!==styleText||!exit?.matches(':popover-open')||!workspace?.isConnected||workspace.parentElement!==plan.root||!isOwnedSurface(workspace)||hasNativeLayer(doc))return false;
   if(win.getComputedStyle(plan.root).position!==plan.rootPosition)return false;
   const frame=workspace.querySelector('iframe'),board=rect(workspace),form=rect(plan.composer);
   if(!frame||!positive(board)||!positive(form)||board.width<160||board.height<96||board.y<0||board.x<0||board.x+board.width>win.innerWidth+1||board.y+board.height>win.innerHeight+1||form.y+form.height>win.innerHeight+1||overlaps(board,form))return false;

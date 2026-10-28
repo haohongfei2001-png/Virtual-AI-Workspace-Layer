@@ -150,6 +150,20 @@ test('titlebar recovery observer requires unique visible boundaries before spend
  doc.visibilityState='hidden';mutated();await Promise.resolve();assert.equal(recoveries,1);remove();
 });
 
+test('closing a native popover resumes pending layout recovery without another DOM mutation',async()=>{
+ const win=new EventTarget(),handlers=new Map();let mutated,layer=true,recoveries=0,status='layout-ambiguous-header';
+ win.MutationObserver=class{constructor(fn){mutated=fn;}observe(){}disconnect(){}};
+ const node={isConnected:true,getBoundingClientRect:()=>({width:100,height:40}),closest:()=>null};
+ const doc={defaultView:win,location:{origin,href:origin+'/'},visibilityState:'visible',documentElement:{},addEventListener:(t,fn)=>handlers.set(t,fn),removeEventListener:t=>handlers.delete(t),querySelector:()=>layer?node:null,querySelectorAll:()=>[node]};
+ const runtime={getURL:()=> 'chrome-extension://ext/',onMessage:{addListener(){},removeListener(){}}};
+ const profile={nativeHomeLayout:Object.fromEntries(['header','reading','composer','navigationSlot','historyList','returnHitRoot'].map(k=>[k,k]))};
+ const remove=installBrowserLocalLifecycle({document:doc,runtime,profile,session:{localStatus:()=>status,recoverLayout:async()=>{recoveries++;status='connected';},stop(){}}});
+ mutated();await Promise.resolve();assert.equal(recoveries,0);
+ layer=false;const toggle=handlers.get('toggle');toggle?.();await Promise.resolve();assert.equal(recoveries,1);
+ toggle();mutated();await Promise.resolve();assert.equal(recoveries,1,'reuse the existing recovery gate');
+ status='layout-ambiguous-header';remove();assert.equal(handlers.has('toggle'),false);toggle();await Promise.resolve();assert.equal(recoveries,1);
+});
+
 for(const change of ['none','lock','document','legacy'])test('popup pipeline is counted from the current local store and fenced on '+change,async()=>{
  const f=controlFixture();await f.a.refresh(frame);
  const scope=f.a.scopeFor(frame),before=JSON.stringify([f.stored,f.sessionStored]);let reads=0;

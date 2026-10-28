@@ -1,5 +1,13 @@
 # VAIWL实际状态：渐进积累工程已接线，真实来源逐项待准入
 
+## 2026-10-28 原生 Popover 与工作空间恢复判定统一（原安装不变）
+
+正式 adapter 只判断 dialog/aria-modal，而 flow 的 CSS 与运行时还判断原生 Popover，导致打开无 aria-modal 的原生 Popover 后，controller 反复尝试恢复、挂载最终失效。现把原生层判定统一到同一生产模块，排除自有空退出开关；弹层期间暂停，关闭后恢复同一组 frame 和原展示意图。Browser-Local 初始布局恢复同时监听原生 toggle，关闭无需等待额外 DOM mutation；停止时移除监听，原授权、布局与撤权守卫不变。
+
+真实 DOM 离线反例先失败后通过，并覆盖弹层期间撤权后不复活；证据 `/private/tmp/vaiwl-native-layer-{before,final}.log`。初始恢复反例 `/private/tmp/vaiwl-layer-recovery-{before,after}.log`，关联合同与非作者只读复核通过。J1旧夹具不具备已证侧栏分区，改核主区分页/当前聊天及原生侧栏保留；J2游离测试按钮归回原测试composer并明确非提交类型，生产拓扑未放宽。两runner复用既有拒外网代理。J1 MODERN连续旅程完成、仍为PARTIAL_J1_NOT_ACCEPTED；J2 LEGACY有限旅程PASS_OFFLINE_J2_JOURNEY，报告 `/private/tmp/vaiwl-flow-j1.json`、`/private/tmp/vaiwl-flow-j2.json`，运行期间源码未变。历史CI整体及未运行范围不改PASS。
+
+原扩展目录、IDB、草稿、备份及stash未动，未冻结新日常候选。当前运行构建UNKNOWN、本批真实Mac NOT_RUN、完整产品NOT_ACCEPTED；这些离线反例不能证明用户当前页面故障已经排除。
+
 ## 2026-10-28 同文档重新绑定保留用户侧栏选择（原安装不变）
 
 已确认正式 content-session 只交接主区展示意图，丢失 controller 内的显式原生列表选择，导致普通同文档重新绑定后主题侧栏擅自展开。现仅在新 HELLO/REFRESH 再次核对相同 browser documentId 与 scope 后交接一个展示布尔值；新 controller 启动即消费，旧 frame/grant 不复用。连续路由准备阶段保留该值；撤权、scope/文档变化、显式重新启动不继承，四格新操作仍可重新展开。

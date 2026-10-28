@@ -35,9 +35,9 @@ test('J1 stopped propagation has no invented post-target outcome; click samples 
 });
 test('J1 finalization attempts every check and report despite close failure',async()=>{
  const code=source.slice(source.lastIndexOf('finally{')+8,source.lastIndexOf('}console.log'));
- const stages=[],report={error:'original failure',status:'FAIL',sourceHashes:{}},world={upgradeTrace:null,report,context:{async close(){stages.push('browser');throw Error('close failed');}},server:{async close(){stages.push('server');throw Error('server failed');}},process:{argv:[],exitCode:1},manifest:{sourceHashes:{}},fixtureSourceHashes:{},hash:v=>v,readFile:async p=>{stages.push(p);throw Error('check failed');},script:'script',scriptHash:'original',manifestPath:'manifest',join:(...v)=>v.join('/'),tmpdir:()=>'/tmp',writeFile:async(p,body)=>{stages.push('report');assert.equal(JSON.parse(body).error,'original failure');}};
+ const stages=[],report={error:'original failure',status:'FAIL',sourceHashes:{}},world={upgradeTrace:null,report,networkGuard:{async close(){stages.push('network');}},context:{async close(){stages.push('browser');throw Error('close failed');}},server:{async close(){stages.push('server');throw Error('server failed');}},process:{argv:[],exitCode:1},manifest:{sourceHashes:{}},fixtureSourceHashes:{},hash:v=>v,readFile:async p=>{stages.push(p);throw Error('check failed');},script:'script',scriptHash:'original',manifestPath:'manifest',join:(...v)=>v.join('/'),tmpdir:()=>'/tmp',writeFile:async(p,body)=>{stages.push('report');assert.equal(JSON.parse(body).error,'original failure');}};
  await vm.runInNewContext('(async()=>{'+code.replaceAll('import.meta.url',"'file:///fixture/'")+'})()',world);
- assert.deepEqual(stages,['browser','server','script','manifest','report']);assert.equal(report.error,'original failure');assert.equal(report.status,'FAIL_FINALIZATION');assert.equal(report.finalizationErrors.length,4);
+ assert.deepEqual(stages,['browser','server','network','script','manifest','report']);assert.equal(report.error,'original failure');assert.equal(report.status,'FAIL_FINALIZATION');assert.equal(report.finalizationErrors.length,4);
 });
 
 test('J1 port diagnostics preserve connection and callbacks and bound notification output',()=>{

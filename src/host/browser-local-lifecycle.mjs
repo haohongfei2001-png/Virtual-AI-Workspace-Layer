@@ -1,3 +1,4 @@
+import {hasNativeLayer} from './native-layer.mjs';
 import {nativeHistoryPresentation} from './native-history-list.mjs';
 import {profileElement,NATIVE_LAYOUT_ATTRIBUTES} from './native-surface-boundary.mjs';
 import {recoverableLayoutFailure} from './local-status.mjs';
@@ -57,7 +58,7 @@ export function installBrowserLocalLifecycle({document:doc,runtime,session,profi
     const route=createURLPolicy({origin:doc.location.origin}).parse(doc.location.href);
     const project=['project','project-candidate'].includes(route.kind)&&profile?.nativeProjectLayout==='panel-after-composer';
     const layout=route.kind==='home'?profile?.nativeHomeLayout:route.kind==='conversation'||project?profile?.nativeLayout:null;
-    if(!layout||doc.querySelector('dialog[open], [aria-modal="true"]'))return;
+    if(!layout||hasNativeLayer(doc))return;
     const keys=project?['header','navigationSlot','historyList']:['header','reading','composer','navigationSlot','historyList','returnHitRoot',...(layout.readingViewport?['readingViewport']:[])];
     if(!keys.every(key=>{const node=profileElement(doc,profile,layout[key],route);if(!node)return false;const rect=node.getBoundingClientRect();return node.isConnected&&rect.width>0&&rect.height>0&&!node.closest('[hidden],[inert],[aria-hidden="true"]');}))return;
     // A late history run must be completely safe before spending the existing
@@ -74,6 +75,9 @@ export function installBrowserLocalLifecycle({document:doc,runtime,session,profi
  const layoutObserver=doc.defaultView.MutationObserver?new doc.defaultView.MutationObserver(layoutChanged):null;
  layoutObserver?.observe(doc.documentElement,{subtree:true,childList:true,attributes:true,attributeFilter:NATIVE_LAYOUT_ATTRIBUTES});
  doc.defaultView.addEventListener('resize',layoutChanged);
+ // Popover open/close changes a pseudo-class, not a DOM attribute. Re-check
+ // the existing bounded recovery gate once the native layer has yielded.
+ doc.addEventListener('toggle',layoutChanged,true);
  const pagehide=()=>{clear();}; // BFCache also needs a new explicit confirmation.
  const message=(m,sender,reply)=>{
   if(stopped||sender?.id!==runtime.id||sender.tab!==undefined)return;
@@ -92,5 +96,5 @@ export function installBrowserLocalLifecycle({document:doc,runtime,session,profi
   if(m.type==='HOST_DOCUMENT_INVALIDATED'){if(waiting)void restart();else void session.contextReady?.().catch(()=>{});}
  };
  doc.defaultView.addEventListener('focus',focus);doc.defaultView.addEventListener('pagehide',pagehide);doc.addEventListener('pointerdown',pointer,true);doc.addEventListener('keydown',keyboard,true);doc.addEventListener('click',navigation,true);runtime.onMessage.addListener(message);
- return ()=>{stopped=true;layoutObserver?.disconnect();doc.defaultView.removeEventListener('resize',layoutChanged);clear();run++;session.stop();doc.defaultView.removeEventListener('focus',focus);doc.defaultView.removeEventListener('pagehide',pagehide);doc.removeEventListener('pointerdown',pointer,true);doc.removeEventListener('keydown',keyboard,true);doc.removeEventListener('click',navigation,true);runtime.onMessage.removeListener(message);};
+ return ()=>{stopped=true;layoutObserver?.disconnect();doc.defaultView.removeEventListener('resize',layoutChanged);doc.removeEventListener('toggle',layoutChanged,true);clear();run++;session.stop();doc.defaultView.removeEventListener('focus',focus);doc.defaultView.removeEventListener('pagehide',pagehide);doc.removeEventListener('pointerdown',pointer,true);doc.removeEventListener('keydown',keyboard,true);doc.removeEventListener('click',navigation,true);runtime.onMessage.removeListener(message);};
 }
