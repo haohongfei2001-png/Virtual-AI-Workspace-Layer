@@ -1,5 +1,11 @@
 # VAIWL实际状态：渐进积累工程已接线，真实来源逐项待准入
 
+## 2026-10-28 即时恢复修复同 ID 更新；运行激活未确认
+
+用户明确要求执行后，将原分支已同步的 `358ce5fa` 修复包写入原注册加载目录。先逐文件校验2954个原文件的完整备份，再只更新 `content.js`、`src/host/content-session.mjs`、`build-manifest.json`；202个包文件匹配固定包，2752个历史附加文件保留，清单/权限不变。备份及回执：`.git/vaiwl-artifacts/install-backups/flow-instant-recovery-20261028-231847/`，原扩展 ID `miendbcjdmecjggplepenghjnoejmaic`、IndexedDB、草稿及stash未动。磁盘指纹现为 `516561eb5bae4c8c0a1f86096a6c6f35d26c04f64bfaa18f3e574f01112b7d47`。
+
+一次原生工具核查：浏览器库存能识别原 hongfei hao 及已有首页/扩展页，但 `getApp('com.google.Chrome')` 返回 `Computer Use server error -10005: timeoutReached`。未向窗口输入，未附接标签、未使用CDP或其他通道，未执行Reload。修复包运行状态仍为未确认，不能以文件写入代替激活；用户此前的513279…回执只证明旧包当时已运行。修复后真实Mac仍NOT_RUN，完整产品NOT_ACCEPTED。剩余启用操作集中为原扩展Reload一次、新首页查看现有状态，不重新确认私人空间或执行已消费观察。
+
 ## 2026-10-28 新版已激活；修复即时空间恢复误判为授权失败
 
 用户补充的当前文档回执明确为 `5132792610296a14b4c2c5fc024725769dd325024ce432a807c8ab755d2032b1`，弹窗为“工作空间授权阶段未完成”。因此该文档已运行上一统一包，不能继续归因为未 Reload；`module-loaded` 只证明模块加载，不证明 Host 授权/挂载通过。旧六秒列表观察已消费，不重跑。现有回执没有记录失败前的 Worker 事件，不能将下述离线根因冒充已完整观测的实机因果。
