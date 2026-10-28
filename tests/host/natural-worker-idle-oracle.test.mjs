@@ -64,3 +64,21 @@ test('raw worker and real reentry evidence survive a failing recovery oracle',as
  const check=source.indexOf('report.recovery=assessIdleRecovery(');
  for(const field of ['report.recoveryReentry=','report.recoveryWorker=','report.nativeAfterRecovery='])assert(source.indexOf(field)>0&&source.indexOf(field)<check);
 });
+test('fixed workspace-only fixture preserves exact authority checks without claiming sidebar coverage',()=>{
+ const value=recovery();value.expectedRoles=['workspace'];value.initialFrames=value.initialFrames.slice(0,1);value.recoveredFrames=value.recoveredFrames.slice(0,1);value.native.open=1;value.native.originalFramesConnected=[false];
+ assert.equal(assessIdleRecovery(value).actualFreshViews,1);
+ for(const mutate of [v=>v.recoveredFrames[0].role='sidebar',v=>v.recoveredFrames[0].viewGrantDigest='c'.repeat(64),v=>v.native.open=0,v=>v.native.originalFramesConnected=[true],v=>v.expectedRoles=['sidebar']]){const bad=structuredClone(value);mutate(bad);assert.throws(()=>assessIdleRecovery(bad));}
+ const facts={...bootstrap(),open:1,returnCount:0,frames:bootstrap().frames.slice(0,1)};
+ assert.equal(idleBootstrapAction(facts,prefix,['workspace']),'READY');
+ assert.equal(idleBootstrapAction(facts,prefix),'WAIT','missing sidebar must not change the fixed expected role set');
+ assert.equal(idleBootstrapAction({...facts,frames:[{...facts.frames[0],src:prefix+'sidebar.html'}]},prefix,['workspace']),'WAIT');
+});
+
+const {idleBaselineUnobserved}=await import('./natural-worker-idle-oracle.mjs');
+test('only a still-rendered frame with missing baseline and successful renewal-only trace is unestablished',()=>{
+ const row={role:'workspace',lifecycle:'render-ready',rendererVisible:true,matchingViewObserved:false,observedRPCs:[{type:'HOST_UI_RENEW',ok:true,hasGrant:true}]};
+ assert.equal(idleBaselineUnobserved([row],['workspace']),true);
+ assert.equal(idleBaselineUnobserved([{...row,observedRPCs:[]}],['workspace']),true);
+ for(const patch of [{lifecycle:'ui-renew-failed'},{lifecycle:'ui-renderer-failed'},{rendererVisible:false},{matchingViewObserved:true},{role:'sidebar'},{observedRPCs:[{type:'HOST_UI_RENEW',ok:false,hasGrant:false}]},{observedRPCs:[{type:'HOST_UI_VIEW',ok:false}]},{observedRPCs:[{type:'HOST_UI_VIEW',ok:true}]}])assert.equal(idleBaselineUnobserved([{...row,...patch}],['workspace']),false);
+ assert.equal(idleBaselineUnobserved([row],['workspace','sidebar']),false);
+});

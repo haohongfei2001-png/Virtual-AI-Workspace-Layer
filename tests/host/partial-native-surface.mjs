@@ -2,10 +2,10 @@
  * surrenders workspace; the visible native-list control releases sidebar.
  * Never force a hidden native history target. */
 export async function enterPartialNativeHistory(page){
- await page.getByRole('button',{name:'返回原生阅读',exact:true}).click();
+ const reading=page.getByRole('button',{name:'返回原生阅读',exact:true});if(await reading.isVisible())await reading.click();
  await page.locator('#prompt-textarea').click();
  const nativeList=page.getByRole('button',{name:'显示原生列表',exact:true});if(await nativeList.isVisible())await nativeList.click();
- await page.waitForFunction(()=>document.querySelectorAll('[data-va-owned]:popover-open').length===0,null,{timeout:6000});
+ await page.waitForFunction(()=>[...document.querySelectorAll('[data-va-owned] iframe')].filter(n=>n.checkVisibility({checkOpacity:true,checkVisibilityCSS:true})&&n.getBoundingClientRect().width>0&&n.getBoundingClientRect().height>0).length===0,null,{timeout:6000});
  await page.locator('aside nav[aria-label="Chat history"]').waitFor({state:'visible',timeout:6000});
  return {kind:'GENUINE_NATIVE_READING_AND_LIST_RELEASE',openOwnedSurfaces:0,nativeHistoryVisible:true};
 }

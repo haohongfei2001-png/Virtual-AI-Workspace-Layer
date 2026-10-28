@@ -7,7 +7,7 @@ export function readIdleBootstrapFacts() {
   url:location.href,readyState:document.readyState,rootPresent:root!==null,
   visibility:document.visibilityState,focused:document.hasFocus(),
   state:root?.dataset.vaiwlState??null,reason:root?.dataset.vaiwlReason??null,
-  open:document.querySelectorAll('[data-va-owned]:popover-open').length,
+  open:[...document.querySelectorAll('[data-va-owned] iframe')].filter(f=>f.checkVisibility({checkOpacity:true,checkVisibilityCSS:true})&&f.getBoundingClientRect().width>0&&f.getBoundingClientRect().height>0).length,
   owned:document.querySelectorAll('[data-va-owned]').length,
   frames:[...document.querySelectorAll('[data-va-owned] iframe')].map(f=>({src:f.src,connected:f.isConnected})),
   editorCount:document.querySelectorAll('#prompt-textarea').length,

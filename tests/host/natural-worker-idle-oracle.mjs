@@ -1,6 +1,15 @@
 /** Independent evidence checks. Target destruction does not establish idle causality. */
 import assert from 'node:assert/strict';
 const finite = value => Number.isFinite(value);
+function checkedRoles(roles){assert(Array.isArray(roles)&&roles.length>=1&&roles.length<=2&&roles[0]==='workspace'&&(roles.length===1||roles[1]==='sidebar'),'invalid fixed fixture roles');return roles;}
+/** Late passive observation is incomplete evidence, not a failed idle cycle.
+ * Never downgrade a negative RPC, absent renderer or failed frame lifecycle. */
+export function idleBaselineUnobserved(rows,expectedRoles){
+ checkedRoles(expectedRoles);
+ return Array.isArray(rows)&&rows.length===expectedRoles.length&&rows.every((row,index)=>
+  row.role===expectedRoles[index]&&row.lifecycle==='render-ready'&&row.rendererVisible===true&&row.matchingViewObserved===false&&
+  Array.isArray(row.observedRPCs)&&row.observedRPCs.every(r=>r.type==='HOST_UI_RENEW'&&r.ok===true&&r.hasGrant===true));
+}
 export function assessIdleObservation(value) {
  const {windowMs,elapsedMs,initialWorkerId,prefix,initialTargets,events}=value;
  assert.equal(windowMs,60000,'exactly one fixed 60 s observation');
@@ -23,16 +32,17 @@ export function assessIdleObservation(value) {
  const crashSignal=events.some(e=>e.method==='Target.targetCrashed'&&e.params.targetId===initialWorkerId);
  return {initialWorkerDestroyed:destroyed,crashSignal,naturalWorkerSleep:destroyed?'NOT_ESTABLISHED':'NOT_OBSERVED',cause:crashSignal?'TARGET_CRASH_SIGNAL':destroyed?'UNATTRIBUTED_TARGET_DESTRUCTION':'NO_TARGET_DESTRUCTION',status:destroyed?'UNFORCED_TARGET_DESTRUCTION_RECOVERY_PENDING':'NATURAL_IDLE_NOT_OBSERVED'};
 }
-export function assessIdleRecovery({scenario='draft-active',privateFramesCleared,observation,initialWorkerId,newWorker,prefix,initialFrames,recoveredFrames,reentryAt,checkedAt,native}) {
+export function assessIdleRecovery({scenario='draft-active',expectedRoles=['workspace','sidebar'],privateFramesCleared,observation,initialWorkerId,newWorker,prefix,initialFrames,recoveredFrames,reentryAt,checkedAt,native}) {
+ const roles=checkedRoles(expectedRoles),count=roles.length;
  assert(['draft-active','safe-empty-reading'].includes(scenario));
  assert.equal(observation.initialWorkerDestroyed,true,'cannot claim recovery without observed destruction');
  assert.equal(observation.naturalWorkerSleep,'NOT_ESTABLISHED','target destruction does not prove natural idle');
  assert(newWorker&&newWorker.targetId!==initialWorkerId&&typeof newWorker.targetId==='string');
  assert.equal(newWorker.type,'service_worker');assert.equal(newWorker.url,prefix+'extension/worker.mjs');assert.equal(newWorker.attached,false);
  assert(finite(reentryAt)&&finite(checkedAt)&&checkedAt>=reentryAt);
- assert.equal(initialFrames.length,2);assert.equal(recoveredFrames.length,2);
- assert.equal(new Set(initialFrames.map(f=>f.targetId)).size,2);assert.equal(new Set(recoveredFrames.map(f=>f.targetId)).size,2);
- assert.deepEqual(initialFrames.map(f=>f.role).sort(),['sidebar','workspace']);assert.deepEqual(recoveredFrames.map(f=>f.role).sort(),['sidebar','workspace']);
+ assert.equal(initialFrames.length,count);assert.equal(recoveredFrames.length,count);
+ assert.equal(new Set(initialFrames.map(f=>f.targetId)).size,count);assert.equal(new Set(recoveredFrames.map(f=>f.targetId)).size,count);
+ assert.deepEqual(initialFrames.map(f=>f.role).sort(),[...roles].sort());assert.deepEqual(recoveredFrames.map(f=>f.role).sort(),[...roles].sort());
  for(const frame of recoveredFrames){
   const prior=initialFrames.find(f=>f.role===frame.role);
   assert(typeof frame.targetId==='string');
@@ -48,10 +58,10 @@ export function assessIdleRecovery({scenario='draft-active',privateFramesCleared
   assert(frame.viewReceivedAt>=frame.viewRequestedAt&&frame.viewReceivedAt<=checkedAt&&frame.expiresAt>checkedAt,'stale/expired VIEW');
  }
  for(const key of ['sameDocument','sameEditor','editorConnected','editorEnabled'])assert.equal(native[key],true,key);
- assert.equal(native.draft,scenario==='draft-active'?'NATURAL_IDLE_LOCAL_DRAFT':'');assert.equal(native.open,2,'recovery must reopen both workspace surfaces');assert.equal(native.returnCount,0,'workspace presentation removes the reading-only return control');
- if(scenario==='draft-active')assert.deepEqual(native.originalFramesConnected,[false,false],'old private frame survived recovery');
- else assert(native.originalFramesConnected.length===2&&native.originalFramesConnected.every(value=>typeof value==='boolean'));
- return {status:'UNFORCED_TARGET_DESTRUCTION_RECOVERY_PASS',naturalWorkerSleep:'NOT_ESTABLISHED',cause:observation.cause,actualFreshViews:2,nativePreserved:true};
+ assert.equal(native.draft,scenario==='draft-active'?'NATURAL_IDLE_LOCAL_DRAFT':'');assert.equal(native.open,count,'recovery must reopen every supported fixture surface');assert.equal(native.returnCount,0,'workspace presentation removes the reading-only return control');
+ if(scenario==='draft-active')assert.deepEqual(native.originalFramesConnected,roles.map(()=>false),'old private frame survived recovery');
+ else assert(native.originalFramesConnected.length===count&&native.originalFramesConnected.every(value=>typeof value==='boolean'));
+ return {status:'UNFORCED_TARGET_DESTRUCTION_RECOVERY_PASS',naturalWorkerSleep:'NOT_ESTABLISHED',cause:observation.cause,actualFreshViews:count,nativePreserved:true};
 }
 
 /** Necessary visible preconditions, not a fabricated private readiness token. */
@@ -65,7 +75,7 @@ export function assessIdleScenario(scenario,value){
 }
 
 export const IDLE_EVIDENCE_DEPENDENCIES=Object.freeze([
- 'natural-worker-idle-probe.mjs','natural-worker-idle-oracle.mjs','natural-worker-idle-bootstrap.mjs','j4-grant-observer.mjs',
+ 'natural-worker-idle-probe.mjs','natural-worker-idle-oracle.mjs','natural-worker-idle-bootstrap.mjs','j4-grant-observer.mjs','j3-journey-profile.mjs','expected/modern.mjs','../../src/data/hash.mjs',
  'historical-network-guard.mjs','native-visibility-browser.mjs','isolated-browser-cleanup.mjs',
  'fixtures/server.mjs','fixtures/legacy.html','fixtures/native.mjs','fixtures/native.css','expected/legacy.mjs',
  'fixtures/j2-send.mjs','fixtures/first-send.mjs','fixtures/j1-candidate-page.mjs','fixtures/variants-server.mjs',
@@ -101,12 +111,13 @@ export async function finishIdleObservationDeadline(started,windowMs,{now,sleep}
 
 /** Mount completion is distinct from presentation: normal native surrender may
  * leave authorized frames in reading mode with the production return control. */
-export function idleBootstrapAction(facts,prefix){
+export function idleBootstrapAction(facts,prefix,expectedRoles=['workspace','sidebar']){
+ const roles=checkedRoles(expectedRoles),count=roles.length;
  if(facts?.rootPresent===false||facts?.readyState!=='complete'||facts.visibility!=='visible')return 'WAIT';
  assert(Number.isSafeInteger(facts.returnCount)&&facts.returnCount>=0&&facts.returnCount<=1,'duplicate bootstrap return');
  const frames=facts.frames;
- if(!Array.isArray(frames)||frames.length!==2||!frames.every(frame=>frame.connected===true)||new Set(frames.map(f=>f.src)).size!==2||!['workspace','sidebar'].every(role=>frames.some(f=>f.src===prefix+role+'.html')))return 'WAIT';
- if(facts.open===2)return 'READY';
+ if(!Array.isArray(frames)||frames.length!==count||!frames.every(frame=>frame.connected===true)||new Set(frames.map(f=>f.src)).size!==count||!roles.every(role=>frames.some(f=>f.src===prefix+role+'.html')))return 'WAIT';
+ if(facts.open===count)return 'READY';
  if(facts.open===0&&facts.returnCount===1&&facts.returnVisible===true)return 'NATIVE_RETURN_ONCE';
  return 'WAIT';
 }

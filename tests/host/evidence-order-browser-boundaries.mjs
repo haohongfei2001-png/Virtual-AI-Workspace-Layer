@@ -21,9 +21,9 @@ export async function waitEvidenceWorkspace({sample,clickReturn,now=()=>performa
  async function bounded(work){const left=remaining();if(!left)throw failure('workspace-readiness-deadline');let timer;try{return await Promise.race([work(left),new Promise((_,reject)=>{timer=setTimeout(()=>reject(failure('workspace-readiness-deadline')),left);})]);}catch(error){error.readiness??={elapsedMs:now()-started,returnClicks,flags:lastFlags};throw error;}finally{clearTimeout(timer);}}
  while(remaining()>0){
   lastFlags=await bounded(()=>sample());
-  if(lastFlags.bothSurfacesOpen&&lastFlags.exactWorkspaceFrame&&lastFlags.workspaceUsable)return {elapsedMs:now()-started,returnClicks,flags:lastFlags};
+  if(lastFlags.workspaceVisible&&lastFlags.exactWorkspaceFrame&&lastFlags.workspaceUsable)return {elapsedMs:now()-started,returnClicks,flags:lastFlags};
   if(lastFlags.ambiguousVisibleReturn)throw failure('workspace-ambiguous-return');
-  if(!lastFlags.bothSurfacesOpen&&lastFlags.uniqueVisibleReturn&&returnClicks===0){returnClicks++;await bounded(left=>clickReturn(left));}
+  if(!lastFlags.workspaceVisible&&lastFlags.uniqueVisibleReturn&&returnClicks===0){returnClicks++;await bounded(left=>clickReturn(left));}
   if(remaining()>0)await bounded(left=>sleep(Math.min(75,left)));
  }
  throw failure('workspace-readiness-deadline');
@@ -35,7 +35,7 @@ export async function readEvidenceNativeMember({page,projectId,conversationId,ti
  await row.waitFor({state:'attached',timeout:25000});assert.equal(await row.count(),1,'native member source must be unique');
  const evidence=await row.evaluate((node,{projectId,conversationId,title})=>{
   const doc=node.ownerDocument,reading=doc.querySelector('#reading'),nav=node.closest('nav'),style=doc.defaultView.getComputedStyle(node);
-  return {connected:node.isConnected,insideNativeReading:!!reading?.contains(node),nativeProjectMatches:nav?.getAttribute('data-project-id')===projectId,nativeConversationMatches:node.getAttribute('href')==='/c/'+conversationId,titleMatches:node.textContent===title,bothSurfacesOpen:doc.querySelectorAll('[data-va-owned]:popover-open').length===2,readingHasWorkspaceMask:!!reading?.closest('[data-va-mask-workspace]'),sourceCssVisible:style.visibility==='visible'&&style.display!=='none',evidenceKind:'ATTACHED_NATIVE_SOURCE_IDENTITY_NOT_VISUAL_REACHABILITY'};
+  return {connected:node.isConnected,insideNativeReading:!!reading?.contains(node),nativeProjectMatches:nav?.getAttribute('data-project-id')===projectId,nativeConversationMatches:node.getAttribute('href')==='/c/'+conversationId,titleMatches:node.textContent===title,readingHasWorkspaceMask:!!reading?.closest('[data-va-mask-workspace]'),sourceCssVisible:style.visibility==='visible'&&style.display!=='none',evidenceKind:'ATTACHED_NATIVE_SOURCE_IDENTITY_NOT_VISUAL_REACHABILITY'};
  },{projectId,conversationId,title});
  for(const key of ['connected','insideNativeReading','nativeProjectMatches','nativeConversationMatches','titleMatches'])assert.equal(evidence[key],true,key);
  return evidence;

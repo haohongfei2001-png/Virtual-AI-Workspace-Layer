@@ -22,8 +22,15 @@ test('dormancy samples actual roles without requiring an unsupported sidebar',()
 test('actual frame timer, queue and in-flight save remain non-idle without mutating any work',async t=>{
  const f=fixture('workspace',createFreeFrameClient);t.after(()=>{f.client.stop();delete globalThis.__vaiwlFixtureFramePendingWork;});await f.client.start();await drain();
  const read=()=>globalThis.__vaiwlFixtureFramePendingWork();assert(framePendingWorkIsIdle(read(),'workspace'));
- let resolve;const pending=new Promise(r=>resolve=r),send=f.runtime.sendMessage;
+ let resolve,pending=new Promise(r=>resolve=r);const send=f.runtime.sendMessage;
  f.runtime.sendMessage=m=>m.type==='HOST_UI_SAVE_VIEW'?(f.calls.push(m),pending):send(m);
+ // First layout and explicit choices now write immediately. The read-only
+ // probe must still report that actual in-flight work, then the pure-scroll
+ // coalescing window after its acknowledged baseline.
+ f.nav.onViewChange({...layout,scroll:0});const firstCalls=f.calls.length;
+ for(let i=0;i<10;i++){const state=read();assert.equal(state.resumeTimer,false);assert.equal(state.resumeWriting,true);assert.equal(framePendingWorkIsIdle(state,'workspace'),false);}
+ assert.equal(f.calls.length,firstCalls);resolve({ok:true});await drain();assert(framePendingWorkIsIdle(read(),'workspace'));
+ pending=new Promise(r=>resolve=r);
  f.nav.onViewChange(layout);const calls=f.calls.length;
  for(let i=0;i<10;i++){const state=read();assert(state.resumeTimer&&state.resumeQueued);assert.equal(state.resumeWriting,false);assert.equal(framePendingWorkIsIdle(state,'workspace'),false);}
  assert.equal(f.calls.length,calls);await f.advance(99);assert.equal(f.calls.length,calls);

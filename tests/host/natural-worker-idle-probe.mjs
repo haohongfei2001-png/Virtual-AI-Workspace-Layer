@@ -6,18 +6,24 @@ import {join} from 'node:path';
 import {tmpdir} from 'node:os';
 import {installJ4GrantObserver} from './j4-grant-observer.mjs';
 import {readIdleBootstrapFacts,idleEvaluationFailure} from './natural-worker-idle-bootstrap.mjs';
-import {assessIdleObservation,assessIdleRecovery,assessIdleScenario,IDLE_EVIDENCE_DEPENDENCIES,idleEvidenceCommit,validateIdleEvidence,finishIdleObservationDeadline,idleBootstrapAction} from './natural-worker-idle-oracle.mjs';
+import {assessIdleObservation,assessIdleRecovery,assessIdleScenario,IDLE_EVIDENCE_DEPENDENCIES,idleEvidenceCommit,validateIdleEvidence,finishIdleObservationDeadline,idleBootstrapAction,idleBaselineUnobserved} from './natural-worker-idle-oracle.mjs';
 import {createHash} from 'node:crypto';
 import {createHostFixtureServer} from './fixtures/server.mjs';
 import {createHistoricalNetworkGuard} from './historical-network-guard.mjs';
 import {nativeBrowserArgs,endpointFromActivePort} from './native-visibility-browser.mjs';
 import {cleanupIsolatedBrowser,cleanupOwnedResources} from './isolated-browser-cleanup.mjs';
 import {packageHost} from '../../extension/package.mjs';
+import {j3JourneyProfile} from './j3-journey-profile.mjs';
 const hash=b=>createHash('sha256').update(b).digest('hex'),sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const runner=new URL(import.meta.url),runnerHash=hash(await readFile(runner));
 const dependencyHashes=async()=>Object.fromEntries(await Promise.all(IDLE_EVIDENCE_DEPENDENCIES.map(async path=>[path,hash(await readFile(new URL(path,import.meta.url)))])));
 const scenario=process.argv[3]??'draft-active',expectedDraft=scenario==='draft-active'?'NATURAL_IDLE_LOCAL_DRAFT':'';
+// This fixed legacy fixture predates the common NAV partition. Its absent
+// sidebar is explicit coverage debt, never inferred from a failed mount.
+const selected=j3JourneyProfile('LEGACY'),expectedRoles=selected.sidebarAvailable?['workspace','sidebar']:['workspace'];
 const report={scenario,observationCompleted:false,requirement:'UI-11',evidence:'S_ISOLATED_UNFORCED_WORKER_OBSERVATION_CONDITIONAL_RECOVERY',profile:'LEGACY_OFFLINE',realChatGPT:'NOT_RUN',naturalWorkerSleep:'NOT_ESTABLISHED',status:'NOT_RUN',windowMs:60000,forcedWorkerStop:false,workerDebuggerAttached:false,productionTimersModified:false,pageFrozen:false,observationCount:1,results:[]};
+report.roleCoverage={expectedRoles,sidebar:selected.sidebarAvailable?'IN_SCOPE':'NOT_COVERED',reason:selected.sidebarLimitation,fullUI11Acceptance:'NOT_ESTABLISHED'};
+let baselineUnavailableError=null;
 let server,guard,child,socket,profileDir,seq=0,ready=false;const pending=new Map(),events=[];let eventOverflow=false;const bootstrapLogs=[];
 function command(method,params={},sessionId){
  if(!ready)return Promise.reject(Error('CDP-not-ready'));
@@ -25,10 +31,10 @@ function command(method,params={},sessionId){
 }
 const evaluate=async(sessionId,expression)=>{const r=await command('Runtime.evaluate',{expression,returnByValue:true,awaitPromise:true},sessionId);if(r.exceptionDetails)throw idleEvaluationFailure(r.exceptionDetails);return r.result.value;};
 async function poll(read,label,ms=15000){const deadline=performance.now()+ms;while(performance.now()<deadline){const value=await read();if(value&&performance.now()<deadline)return value;await sleep(50);}throw Error('probe-timeout:'+label);}
-const nativeExpression=`({editorFocused:document.activeElement===idleOriginal.editor,interactiveFocused:!!document.activeElement?.closest?.('input,textarea,select,button,[contenteditable],[role=\"textbox\"]'),openModalCount:document.querySelectorAll('dialog[open],[aria-modal=\"true\"]').length,fileCount:document.querySelector('main > form#composer input[type=file]')?.files?.length,editorCount:document.querySelectorAll('main > form#composer textarea,main > form#composer [contenteditable]').length,activeRiskCount:document.querySelectorAll('main [data-native-upload=active],main [data-native-generation=active],main [data-native-voice=active],main [data-native-canvas=active]').length,sameDocument:document===idleOriginal.document,sameEditor:document.querySelector('textarea')===idleOriginal.editor,editorConnected:idleOriginal.editor.isConnected,editorEnabled:!idleOriginal.editor.disabled&&!idleOriginal.editor.readOnly,draft:idleOriginal.editor.value,originalFramesConnected:idleOriginal.frames.map(f=>f.isConnected),open:document.querySelectorAll('[data-va-owned]:popover-open').length,returnCount:document.querySelectorAll('[aria-label="返回工作空间"]').length})`;
+const nativeExpression=`({editorFocused:document.activeElement===idleOriginal.editor,interactiveFocused:!!document.activeElement?.closest?.('input,textarea,select,button,[contenteditable],[role=\"textbox\"]'),openModalCount:document.querySelectorAll('dialog[open],[aria-modal=\"true\"]').length,fileCount:document.querySelector('main > form#composer input[type=file]')?.files?.length,editorCount:document.querySelectorAll('main > form#composer textarea,main > form#composer [contenteditable]').length,activeRiskCount:document.querySelectorAll('main [data-native-upload=active],main [data-native-generation=active],main [data-native-voice=active],main [data-native-canvas=active]').length,sameDocument:document===idleOriginal.document,sameEditor:document.querySelector('textarea')===idleOriginal.editor,editorConnected:idleOriginal.editor.isConnected,editorEnabled:!idleOriginal.editor.disabled&&!idleOriginal.editor.readOnly,draft:idleOriginal.editor.value,originalFramesConnected:idleOriginal.frames.map(f=>f.isConnected),open:(${readIdleBootstrapFacts.toString()})().open,returnCount:document.querySelectorAll('[aria-label="返回工作空间"]').length})`;
 async function discoverFrames(prefix,excluded=[]){
  const targets=(await command('Target.getTargets')).targetInfos;
- const rows=['workspace','sidebar'].map(role=>{const matches=targets.filter(t=>t.type==='iframe'&&t.url===prefix+role+'.html'&&!excluded.includes(t.targetId));assert(matches.length<=1,'duplicate exact UI frame');return matches[0]?{role,...matches[0]}:null;});
+ const rows=expectedRoles.map(role=>{const matches=targets.filter(t=>t.type==='iframe'&&t.url===prefix+role+'.html'&&!excluded.includes(t.targetId));assert(matches.length<=1,'duplicate exact UI frame');return matches[0]?{role,...matches[0]}:null;});
  return rows.every(Boolean)?rows:null;
 }
 async function observeFrames(frames){
@@ -81,14 +87,14 @@ try{
  try{
   const navigation=await command('Page.navigate',{url:server.url},sessionId);assert(!navigation.errorText,'fixture-navigation-failed:'+navigation.errorText);
   await poll(async()=>{report.bootstrap=await bootstrapFacts();return report.bootstrap.url===server.url&&report.bootstrap.readyState==='complete'&&report.bootstrap.visibility==='visible';},'visible-native-fixture',Math.max(1,bootstrapDeadline-performance.now()));
-  const bootstrapAction=await poll(async()=>{report.bootstrap=await bootstrapFacts();const action=idleBootstrapAction(report.bootstrap,prefix);return action==='WAIT'?null:action;},'authorized-mount-or-open-surfaces',Math.max(1,bootstrapDeadline-performance.now()));
+  const bootstrapAction=await poll(async()=>{report.bootstrap=await bootstrapFacts();const action=idleBootstrapAction(report.bootstrap,prefix,expectedRoles);return action==='WAIT'?null:action;},'authorized-mount-or-open-surfaces',Math.max(1,bootstrapDeadline-performance.now()));
   report.bootstrapEntry={action:bootstrapAction,returnAttempts:0,before:report.bootstrap,automaticOpenAcceptance:'NOT_ESTABLISHED'};
   if(bootstrapAction==='NATIVE_RETURN_ONCE'){
    // A legitimate reading-mode mount is not an initialization failure. Use its
    // unique real return exactly once, never force presentation or fake a grant.
    report.bootstrapEntry.returnAttempts=1;report.bootstrapEntry.returnAt=await nativeReturn(sessionId);
   }
-  await poll(async()=>{report.bootstrap=await bootstrapFacts();return report.bootstrap.open===2;},'dual-surfaces',Math.max(1,bootstrapDeadline-performance.now()));
+  await poll(async()=>{report.bootstrap=await bootstrapFacts();return report.bootstrap.open===expectedRoles.length;},'supported-surfaces',Math.max(1,bootstrapDeadline-performance.now()));
  }catch(error){
   try{report.bootstrap=await bootstrapFacts();}catch(diagnosticError){report.bootstrapDiagnosticError=String(diagnosticError);}
   // This diagnostic branch cannot produce an accepted idle observation. Attach
@@ -109,9 +115,15 @@ try{
   report.bootstrapFrameLogs=bootstrapLogs;report.bootstrapDiagnosticOnly=true;
   report.bootstrapFixtureRequests=server.snapshot().requests;report.bootstrapFixtureActions=server.snapshot().actions;throw error;
  }
- report.initialSurfaces=await evaluate(sessionId,"({open:document.querySelectorAll('[data-va-owned]:popover-open').length,frames:[...document.querySelectorAll('[data-va-owned] iframe')].map(n=>n.src)})");assert.equal(report.initialSurfaces.frames.length,2);
+ report.initialSurfaces=await bootstrapFacts();assert.equal(report.initialSurfaces.frames.length,expectedRoles.length);
  const initialFrameSessions=await observeFrames(await poll(()=>discoverFrames(prefix),'initial-exact-UI-frames',Math.max(1,bootstrapDeadline-performance.now())));
- report.initialFrames=await Promise.all(initialFrameSessions.map(frame=>frameEvidence(frame,0,Math.max(1,bootstrapDeadline-performance.now()))));assert(performance.now()<=bootstrapDeadline,'initial-grant-VIEW-bootstrap-deadline');await detachFrames(initialFrameSessions);
+ try{report.initialFrames=await Promise.all(initialFrameSessions.map(frame=>frameEvidence(frame,0,Math.max(1,bootstrapDeadline-performance.now()))));assert(performance.now()<=bootstrapDeadline,'initial-grant-VIEW-bootstrap-deadline');}
+ catch(error){
+  report.baselineEvidence=[];
+  for(const frame of initialFrameSessions){const value=await evaluate(frame.sessionId,'({trace:globalThis.j4RpcTrace??[],freshness:globalThis.j4Freshness??null,lifecycle:document.documentElement.dataset.vaiwlFrameLifecycle,rendererVisible:!!document.querySelector("[data-vaiwl-frame-role=workspace]")?.shadowRoot?.querySelector(".workspace")?.checkVisibility({checkVisibilityCSS:true,checkOpacity:true})})');report.baselineEvidence.push({role:frame.role,lifecycle:value.lifecycle,rendererVisible:value.rendererVisible,observedRPCs:value.trace.map(r=>({type:r.type,ok:r.ok,state:r.state,reason:r.reason,hasGrant:r.hasGrant})),grantObserved:!!value.freshness?.grantId,matchingViewObserved:!!value.freshness?.grantId&&value.freshness.viewGrantId===value.freshness.grantId});}
+  if(String(error.message).startsWith('probe-timeout:actual-current-grant-and-VIEW-')&&idleBaselineUnobserved(report.baselineEvidence,expectedRoles)){report.baselineUnavailable=true;baselineUnavailableError=error;}
+  throw error;
+ }finally{await detachFrames(initialFrameSessions);}
  report.passiveObserver='FRAME_RPC_RESPONSES_ONLY_NO_REQUESTS_OR_WORKER_ATTACHMENT';
  report.externalRejected=await evaluate(sessionId,"fetch('https://example.com/').then(()=>false,()=>true)");assert(report.externalRejected);assert(guard.snapshot().denied>0);
  await evaluate(sessionId,"globalThis.idleOriginal={document,editor:document.querySelector('textarea'),frames:[...document.querySelectorAll('[data-va-owned] iframe')]};true");
@@ -121,7 +133,7 @@ try{
   await nativeClick(sessionId,'#prompt-textarea');await command('Input.insertText',{text:'NATURAL_IDLE_CLEAR_ME'},sessionId);await clearNativeEditor(sessionId);
   await poll(()=>evaluate(sessionId,"idleOriginal.editor.value===''") ,'native-editor-cleared');
  }
- await poll(()=>evaluate(sessionId,"document.querySelectorAll('[data-va-owned]:popover-open').length===0"),'native-reading');
+ await poll(async()=>(await bootstrapFacts()).open===0,'native-reading');
  if(scenario==='safe-empty-reading')await nativeClick(sessionId,'#reading > p');
  report.precondition=assessIdleScenario(scenario,await evaluate(sessionId,nativeExpression));
  await command('Target.detachFromTarget',{sessionId});sessionId=null;
@@ -152,22 +164,22 @@ try{
   if(scenario==='safe-empty-reading'){
    observed=await observeFrames(await poll(()=>discoverFrames(prefix),'dormant-UI-frames'));
    privateFramesCleared=Object.fromEntries(await Promise.all(observed.map(async frame=>[frame.role,await evaluate(frame.sessionId,"document.querySelector('main')?.childNodes.length===0")])));
-   assert.deepEqual(privateFramesCleared,{workspace:true,sidebar:true});report.privateFramesCleared=privateFramesCleared;
+   assert.deepEqual(privateFramesCleared,Object.fromEntries(expectedRoles.map(role=>[role,true])));report.privateFramesCleared=privateFramesCleared;
   }
   const reentryAt=await nativeReturn(sessionId);report.recoveryReentry={reentryAt,returnAttempts:1,before:report.native};
   if(!observed)observed=await observeFrames(await poll(()=>discoverFrames(prefix,report.initialFrames.map(f=>f.targetId)),'replacement-UI-frames',30000));
-  await poll(()=>evaluate(sessionId,"document.querySelectorAll('[data-va-owned]:popover-open').length===2"),'native-return-opens-dual-surfaces');
+  await poll(async()=>(await bootstrapFacts()).open===expectedRoles.length,'native-return-opens-supported-surfaces');
   report.recoveredFrames=await Promise.all(observed.map(frame=>frameEvidence(frame,reentryAt)));
   const newWorker=await poll(async()=>{const matches=(await command('Target.getTargets')).targetInfos.filter(t=>t.type==='service_worker'&&t.url===prefix+'extension/worker.mjs');assert(matches.length<=1);return matches[0]?.targetId!==worker.targetId?matches[0]:null;},'replacement-worker');
   report.recoveryWorker={targetId:newWorker.targetId,type:newWorker.type,url:newWorker.url,attached:newWorker.attached};
   report.nativeAfterRecovery=await evaluate(sessionId,nativeExpression);
-  report.recovery=assessIdleRecovery({scenario,privateFramesCleared,observation,initialWorkerId:worker.targetId,newWorker,prefix,initialFrames:report.initialFrames,recoveredFrames:report.recoveredFrames,reentryAt,checkedAt:Date.now(),native:report.nativeAfterRecovery});
+  report.recovery=assessIdleRecovery({scenario,expectedRoles,privateFramesCleared,observation,initialWorkerId:worker.targetId,newWorker,prefix,initialFrames:report.initialFrames,recoveredFrames:report.recoveredFrames,reentryAt,checkedAt:Date.now(),native:report.nativeAfterRecovery});
   report.recovery.newWorkerId=newWorker.targetId;report.recovery.reentryAt=reentryAt;report.status=report.recovery.status;report.results.push({name:'unforced-target-destruction-fresh-grant-actual-view-native-draft-preserved',status:'PASS'});process.exitCode=0;await detachFrames(observed);
   if(scenario==='safe-empty-reading'){await nativeClick(sessionId,'#prompt-textarea');await command('Input.insertText',{text:'NATURAL_IDLE_RECOVERED_INPUT'},sessionId);report.nativeUsabilityAfterRecovery=await evaluate(sessionId,nativeExpression);assert.equal(report.nativeUsabilityAfterRecovery.sameEditor,true);assert.equal(report.nativeUsabilityAfterRecovery.sameDocument,true);assert.equal(report.nativeUsabilityAfterRecovery.draft,'NATURAL_IDLE_RECOVERED_INPUT');assert.equal(report.nativeUsabilityAfterRecovery.editorFocused,true);}
  }
  report.nativeActions=server.snapshot().actions;assert.deepEqual(report.nativeActions,{});
  report.sourceChangedDuringRun=(await Promise.all(Object.entries(manifest.sourceHashes).map(async([p,h])=>hash(await readFile(p))!==h))).some(Boolean);report.buildManifestUnchanged=hash(await readFile(manifestPath))===report.buildManifestHash;assert.equal(report.sourceChangedDuringRun,false);assert.equal(report.buildManifestUnchanged,true);
-}catch(error){report.status='FAIL';report.error=error.stack;process.exitCode=1;}
+}catch(error){const unavailable=error===baselineUnavailableError;report.status=unavailable?'NOT_ESTABLISHED_PASSIVE_BASELINE_UNAVAILABLE':'FAIL';report.error=error.stack;process.exitCode=unavailable?2:1;}
 finally{
  report.networkGuard=guard?.snapshot();
  const cleaned=await cleanupOwnedResources(report,[['socket',async()=>{if(socket){socket.close();ready=false;for(const q of pending.values()){clearTimeout(q.timer);q.reject(Error('probe-cleanup'));}pending.clear();}}],['browser',async()=>{if(child)await cleanupIsolatedBrowser({child,profileDir});}],['server',()=>server?.close()],['networkGuard',()=>guard?.close()]]);

@@ -34,3 +34,10 @@ test('page evaluation failure retains bounded original details without retrying 
  const bounded=idleEvaluationFailure({text:'x'.repeat(1000),exception:{description:'y'.repeat(2000)}});
  assert(bounded.message.length<1100);
 });
+test('flow visibility counts the actual iframe, never its empty exit popover',()=>{
+ const page=fixture();let visible=false;
+ const frame={src:'chrome-extension://fixture/workspace.html',isConnected:true,checkVisibility:()=>visible,getBoundingClientRect:()=>({width:700,height:500})};
+ page.document.querySelectorAll=selector=>selector==='[data-va-owned] iframe'?[frame]:selector.includes(':popover-open')?[{}]:[];
+ assert.equal(read(page).open,0);visible=true;assert.equal(read(page).open,1);
+ frame.getBoundingClientRect=()=>({width:0,height:0});assert.equal(read(page).open,0);
+});
