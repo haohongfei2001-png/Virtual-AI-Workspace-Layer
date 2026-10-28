@@ -6,6 +6,13 @@ async function exerciseObserver(mode='stable'){
 test('actual capture observer moves only scroll to old separator/first row and retains 17 items',()=>exerciseObserver());
 for(const mode of ['five','duplicate','changed'])test('actual observer rejects '+mode+' old identities rather than retaining evidence',()=>assert.rejects(exerciseObserver(mode),/old-expanded-(before-identities-required|identities-changed-during-capture)/));
 test('old count/clipped key target cannot become valid retained evidence',async()=>{const base={region:{},oldRows:17,targets:[{present:true,visible:true,rect:{left:0,top:0,right:20,bottom:20,width:20,height:20}}],clip:{left:0,top:0,right:100,bottom:100}};for(const state of [{...base,oldRows:5},{...base,clip:{left:0,top:30,right:100,bottom:100}}])await assert.rejects(prepareUi10OldStart({evaluate:async()=>state,frameElement:async()=>assert.fail('must fail before outer capture')}));});
-test('runner preserves original tail screenshot and only retained old view gets extra reframing',()=>{const s=readFileSync(new URL('./ui10-populated-package-browser.mjs',import.meta.url),'utf8');assert(s.includes("const bytes=await page.screenshot({path,animations:'disabled'});screenshots.push(path)"));assert(s.includes("scene==='old-items-expanded'?await prepareUi10OldStart(f):null"));assert(s.includes('bytes:retainedBytes'));assert(s.includes("await countRows('.card .old-list .row',17)"));assert(s.includes("'tests/host/ui10-native-old-capture.mjs','tests/host/ui10-capture-preparation.mjs'"));});
-
-test('old retained capture is adjacent to verified 17 rows, before later NONE projection requests',()=>{const s=readFileSync(new URL('./ui10-populated-package-browser.mjs',import.meta.url),'utf8');const verified=s.indexOf("await countRows('.card .old-list .row',17)"),capture=s.indexOf("await capture('old-tail')"),none=s.indexOf("const none=f.locator"),tail=s.indexOf("await capture('tail')");assert(verified>0&&verified<capture&&capture<none&&none<tail);assert.equal(s.match(/await capture\('old-tail'\)/g).length,1);assert(s.includes('for(const count of [17,29])'));});
+test('all-opened journey never reframes or labels current local-use rows as historical evidence',()=>{
+ const s=readFileSync(new URL('./ui10-populated-package-browser.mjs',import.meta.url),'utf8');
+ assert(s.includes("historicalWindows:'NOT_COVERED_ALL_ROWS_OPENED_IN_THIS_JOURNEY'"));
+ assert(s.includes("report.status='PENDING_CURRENT_USE_VERIFICATION'"));
+ for(const obsolete of ['prepareUi10OldStart(',"capture('old-tail')","scene:'old-items-expanded'","scene:'empty-history-segment'"])assert(!s.includes(obsolete),obsolete);
+ assert(s.includes("assert.equal(await card.locator('.old-list .row').count(),0)"));
+ assert(s.includes("assert(await f.getByRole('button',{name:'较早的30日',exact:true}).isDisabled())"));
+ const project=s.indexOf('assert.deepEqual((await currentIds()).sort()'),none=s.indexOf('assert.deepEqual((await noneIds()).sort()'),tail=s.indexOf('await capture();');
+ assert(project>0&&project<none&&none<tail,'tail must follow exact Project and NONE membership checks');
+});
