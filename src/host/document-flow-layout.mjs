@@ -1,5 +1,5 @@
 import {hasNativeLayer,NATIVE_LAYER_SELECTOR} from './native-layer.mjs';
-import {isEmptyViewportMarker} from './native-return-gap.mjs';
+import {isEmptyViewportMarker,isNativeScrollRegion} from './native-return-gap.mjs';
 /** Presentation-only document flow contract. Never supplies scope or data authority.
  * Native nodes stay in their original parent chain. Owned rules are reversible;
  * active proof measures the displayed layout, never a temporarily disabled one.
@@ -64,7 +64,10 @@ export function captureNativeBaseline({document:doc,inspection,isOwnedSurface=()
   const leaves=[reading,...protectedNodes];
   let root=inspection.readingViewport??reading.parentElement;
   while(root && (!leaves.every(n=>root.contains(n))||!positive(rect(root))))root=root.parentElement;
-  if(!root||root===doc.body||root===doc.documentElement||!plain(root))return refuse('native-flow-root');
+  // Only the explicit viewport may retain this native tab stop. It remains
+  // the grid's real root box; nested focusable nodes are never flattened.
+  const focusViewport=root===inspection.readingViewport&&isNativeScrollRegion(root,inspection.viewportFocus,doc)?root:null;
+  if(!root||root===doc.body||root===doc.documentElement||!plain(root)&&!focusViewport)return refuse('native-flow-root');
   const headerInside=root.contains(header);
   if(headerInside){if(header.contains(reading)||header.contains(composer)||reading.contains(header)||composer.contains(header))return refuse('native-flow-header');protectedNodes.unshift(header);leaves.push(header);}
   const kind=protectedNodes.some(n=>n.getAttribute('role')==='tablist')?'project':inspection.homeLayoutNodes?'home':'conversation';
@@ -80,7 +83,7 @@ export function captureNativeBaseline({document:doc,inspection,isOwnedSurface=()
    if(isMarker(node)){inactiveMarkers.push(node);return true;}
    // Layout wrappers only. Unknown controls/text/branches cannot disappear
    // through display:contents, even if they happen to have no visible text.
-   if(!plain(node)||node.hasAttribute('role')&&node.getAttribute('role')!=='main')return reject('native-flow-wrapper-control');
+   if(node!==focusViewport&&(!plain(node)||node.hasAttribute('role')&&node.getAttribute('role')!=='main'))return reject('native-flow-wrapper-control');
    if([...node.childNodes].some(n=>n.nodeType===3&&n.textContent.trim()))return reject('native-flow-wrapper-text');
    const style=win.getComputedStyle(node);
    if(style.display==='none'||style.visibility!=='visible'||style.opacity!=='1'||style.zoom!=='1'||['transform','translate','rotate','scale','filter','backdropFilter','clipPath','maskImage'].some(k=>style[k]!=='none')||['::before','::after'].some(p=>!['none','normal'].includes(win.getComputedStyle(node,p).content)))return reject('native-flow-wrapper-paint');
@@ -97,7 +100,7 @@ export function captureNativeBaseline({document:doc,inspection,isOwnedSurface=()
   if(!nativeControls)return refuse('native-flow-protected-controls');
   const coordinates=layoutCoordinates({root,header,composer,headerInside});
   if(!coordinates)return refuse('native-flow-geometry');
-  return Object.freeze({kind,root,reading,composer,header,leaves,protectedNodes,protectedRegions,shells,records,nativeChildren,nativeControls,inactiveMarkers,markerViewport,
+  return Object.freeze({kind,root,reading,composer,header,leaves,protectedNodes,protectedRegions,shells,records,nativeChildren,nativeControls,inactiveMarkers,markerViewport,focusViewport,
    headerInside,document:doc,url:doc.location.href,regionEpoch:inspection.regionEpoch,isOwnedSurface,
    ...coordinates});
  }catch{return refuse('native-flow-check-failed');}
@@ -109,7 +112,8 @@ export function isSameNativeRegions(plan,{allowPresentationChange=false}={}){
   return plan.records.every(({node,parent,attrs:before})=>node.isConnected&&node.ownerDocument===plan.document&&node.parentElement===parent&&attrs(node).every((value,i)=>allowPresentationChange&&i<2||value===before[i]))&&
    [...plan.nativeChildren].every(([node,children])=>{const actual=[...node.children].filter(n=>!plan.isOwnedSurface(n));return actual.length===children.length&&actual.every((n,i)=>n===children[i]);})&&
    plan.nativeControls.every(({node,parent})=>node.isConnected&&node.parentElement===parent)&&
-   plan.inactiveMarkers.every(node=>inactiveMarker(node,plan.markerViewport,plan.document));
+   plan.inactiveMarkers.every(node=>inactiveMarker(node,plan.markerViewport,plan.document))&&
+   (!plan.focusViewport||isNativeScrollRegion(plan.focusViewport,'native-scroll-region',plan.document));
  }catch{return false;}
 }
 

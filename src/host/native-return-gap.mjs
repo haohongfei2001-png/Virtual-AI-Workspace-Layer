@@ -11,6 +11,12 @@ export function isEmptyViewportMarker(node,viewport,document){
   return ['::before','::after'].every(p=>['none','normal'].includes(win.getComputedStyle(node,p).content))&&['boxShadow','filter','backdropFilter','transform','translate','rotate','scale','offsetPath','borderImageSource'].every(k=>s[k]==='none')&&['none','hidden'].includes(s.outlineStyle)&&s.zoom==='1';
  }catch{return false;}
 }
+// A package-selected native scroll tab stop is a viewport, not a button or
+// editable wrapper. Reuse this exact semantic contract in flow and return
+// proofs; neither consumer may turn a generic focusable wrapper into layout.
+export function isNativeScrollRegion(node,policy,document){
+ try{return policy==='native-scroll-region'&&node?.isConnected&&node.ownerDocument===document&&node.tagName==='DIV'&&!node.shadowRoot&&node.getAttribute('role')==='region'&&node.getAttribute('tabindex')==='0'&&!node.matches('[contenteditable],[hidden],[inert],[aria-hidden="true"]')&&['auto','scroll'].includes(document.defaultView.getComputedStyle(node).overflowY);}catch{return false;}
+}
 // Explicit presentation variant for the observed pointer-transparent titlebar.
 // This proves an empty rectangle; it never supplies account or scope evidence.
 export function nativeReturnGapRect({document,header,slot,hitRoot,readingRoot=null,readingViewport=null,viewportFocus=null,viewportMarkers=null,headerLayout=null,gapPolicy=null,onReject=()=>{},isOwnedMask=()=>false,isOwnedSurface=()=>false,button=null,excluded=[],excludedRects=[]}){
@@ -58,7 +64,7 @@ export function nativeReturnGapRect({document,header,slot,hitRoot,readingRoot=nu
   if(readingViewport){
    // An explicit native scroll region keeps its own tab stop and keyboard
    // behavior. Only the reading child is masked; never the viewport itself.
-   const scrollRegion=viewportFocus==='native-scroll-region'&&readingViewport.getAttribute('role')==='region'&&readingViewport.getAttribute('tabindex')==='0'&&!readingViewport.hasAttribute('contenteditable')&&['auto','scroll'].includes(win.getComputedStyle(readingViewport).overflowY);
+   const scrollRegion=isNativeScrollRegion(readingViewport,viewportFocus,document);
    if(!readingRoot||readingViewport===hitRoot||readingRoot.parentElement!==readingViewport||!readingViewport.isConnected||readingViewport.ownerDocument!==document||!hitRoot.contains(readingViewport)||readingViewport.tagName!=='DIV'||!scrollRegion&&readingViewport.matches('[role],[tabindex],[contenteditable]')||readingViewport.shadowRoot||[...readingViewport.childNodes].some(n=>n.nodeType===3&&n.textContent.trim())||readingViewport.children.length>10||[...readingViewport.children].some(n=>n!==readingRoot&&!excluded.includes(n)&&!(isOwnedSurface(n)&&win.getComputedStyle(n).display==='none')&&!(viewportMarkers==='empty-div-v1'&&isEmptyViewportMarker(n,readingViewport,document))))return reject();
    for(const pseudo of ['::before','::after'])if(!['none','normal'].includes(win.getComputedStyle(readingViewport,pseudo).content))return reject();
    let n=readingViewport,depth=0;for(;n;n=n.parentElement){const style=win.getComputedStyle(n);if(++depth>128||n.hidden||n.inert||n.getAttribute('aria-hidden')==='true'||style.display==='none'||style.visibility!=='visible'||Number(style.opacity)===0)return reject();}

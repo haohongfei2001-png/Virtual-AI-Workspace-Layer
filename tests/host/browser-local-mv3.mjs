@@ -15,10 +15,13 @@ import {observedDesktopHTML} from './fixtures/observed-desktop.mjs';
 import {createHistoricalNetworkGuard,historicalNetworkGuardArgs} from './historical-network-guard.mjs';
 import {validLocalPipeline} from '../../src/host/local-status.mjs';
 const P='g-p-11111111111111111111111111111111',C='33333333-3333-4333-8333-333333333333',B='44444444-4444-4444-8444-444444444444',requests=[];
+// Existing explicit scroll-region contract, reconstructed in the same host.
+// Exercise it through the real package/owner path, not just the return proof.
+const conversationHTML=id=>process.argv.includes('--flow-only')?longDesktopHTML(id).replace('<div data-app-action-timeline-scroll>','<div data-app-action-timeline-scroll role="region" tabindex="0">'):longDesktopHTML(id);
 // The native search navigation reaches a home layout, not a conversation DOM
 // under a home URL. Use the observed home boundaries while retaining the same
 // document, sidebar, draft and unplanned browser-navigation event.
-const server=createServer((req,res)=>{requests.push(req.url);res.writeHead(200,{'Content-Type':'text/html','Cache-Control':'no-store'});res.end(req.url==='/g/'+P+'/project'?observedProjectHTML(P,C)+`<script>document.addEventListener('click',e=>{if(e.target.closest('button')?.textContent==='Native search'){document.querySelector('main').innerHTML=${JSON.stringify(homeMain)};history.pushState({},'','/');return;}const a=e.target.closest('a[href]');if(a&&a.getAttribute('href')==='/c/${B}'&&!e.defaultPrevented){e.preventDefault();const next=a.href;const html=new DOMParser().parseFromString(${JSON.stringify(longDesktopHTML(B))},'text/html');document.body.replaceChildren(...html.body.childNodes);for(const style of document.querySelectorAll('head style'))style.remove();document.head.append(...html.head.childNodes);history.pushState({},'',next);${process.argv.includes('--flow-only')?'('+materializePartitionedSidebar.toString()+')('+JSON.stringify(partitionDetails.sidebarStructure.rows)+');':''}}});</script>`:req.url==='/'?observedHomeHTML(B):longDesktopHTML(B));});
+const server=createServer((req,res)=>{requests.push(req.url);res.writeHead(200,{'Content-Type':'text/html','Cache-Control':'no-store'});res.end(req.url==='/g/'+P+'/project'?observedProjectHTML(P,C)+`<script>document.addEventListener('click',e=>{if(e.target.closest('button')?.textContent==='Native search'){document.querySelector('main').innerHTML=${JSON.stringify(homeMain)};history.pushState({},'','/');return;}const a=e.target.closest('a[href]');if(a&&a.getAttribute('href')==='/c/${B}'&&!e.defaultPrevented){e.preventDefault();const next=a.href;const html=new DOMParser().parseFromString(${JSON.stringify(conversationHTML(B))},'text/html');document.body.replaceChildren(...html.body.childNodes);for(const style of document.querySelectorAll('head style'))style.remove();document.head.append(...html.head.childNodes);history.pushState({},'',next);${process.argv.includes('--flow-only')?'('+materializePartitionedSidebar.toString()+')('+JSON.stringify(partitionDetails.sidebarStructure.rows)+');':''}}});</script>`:req.url==='/'?observedHomeHTML(B):conversationHTML(B));});
 await new Promise(r=>server.listen(0,'127.0.0.1',r));const origin='http://127.0.0.1:'+server.address().port,guard=await createHistoricalNetworkGuard({fixtureOrigin:origin});
 const dir=await mkdtemp(join(tmpdir(),'vaiwl-browser-local-mv3-')),built=packageHost(join(dir,'package'),{offlineOrigin:origin,browserLocal:true}),report={status:'RUNNING',evidence:'ISOLATED_MV3_FORMAL_UI_LOCAL_SESSION_AND_PERSONAL',realChatGPT:'NOT_RUN',baseline:HOST_BASELINE_VERSION,package:built,checks:{},requests};
 let context,page;
@@ -108,6 +111,11 @@ try{
    assert(await page.locator('[id$="_workspace"]').evaluate(n=>!n.hasAttribute('popover')&&getComputedStyle(n).position!=='fixed'));
    assert(await sidebar.locator('.themes').evaluate(n=>getComputedStyle(n).overflowY==='visible'));
    assert(await sidebar.locator('main').evaluate(n=>getComputedStyle(n).overflowY==='visible'));
+   if(scene==='conversation'){
+    const original=await page.locator('[data-app-action-timeline-scroll]').elementHandle();
+    assert(await original.evaluate(n=>n.getAttribute('role')==='region'&&n.getAttribute('tabindex')==='0'&&getComputedStyle(n).display==='grid'));
+    report.checks.nativeScrollRegion={originalTabStop:true,flowRoot:true};
+   }
    const image=join(dir,'flow-'+scene+'.png');await page.screenshot({path:image});report.images.push(image);
    const draft=await page.locator('textarea').inputValue();
    await page.locator('textarea').evaluate(n=>{

@@ -14,6 +14,39 @@ const P='g-p-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',C='33333333-3333-4333-8333-333333
 const legacy=(await readFile(new URL('./fixtures/legacy.html',import.meta.url),'utf8')).replace('<link rel="stylesheet" href="/native.css">','<style>'+await readFile(new URL('./fixtures/native.css',import.meta.url),'utf8')+'</style>');
 const browser=await chromium.launch({headless:true,args:['--proxy-server=http://127.0.0.1:9','--proxy-bypass-list=<-loopback>']}),results=[];
 try{
+ // Reuse the package-selected native-scroll-region variant already covered
+ // by the return-gap proof. The same region must remain a real, focusable box
+ // in flow layout, never be flattened as an arbitrary layout wrapper.
+ const region=await browser.newPage({viewport:{width:1400,height:900}});
+ await region.route('**/*',r=>r.request().url()==='https://chatgpt.com/c/'+C?r.fulfill({contentType:'text/html',body:longDesktopHTML(C)}):r.abort());
+ await region.goto('https://chatgpt.com/c/'+C);await region.addScriptTag({content:outputFiles[0].text});
+ const regionProof=await region.evaluate(async()=>{
+  const {createChatGPTAdapter,createURLPolicy,CHATGPT_OBSERVED_PROFILE:profile,createFlowMountSurface,captureNativeBaseline}=flowModule;let surface;
+  const viewport=document.querySelector('[data-app-action-timeline-scroll]');viewport.setAttribute('role','region');viewport.setAttribute('tabindex','0');
+  const original=viewport.outerHTML,parent=viewport.parentElement,editor=viewport.querySelector('textarea');
+  const adapter=createChatGPTAdapter({document,profile,urlPolicy:createURLPolicy(),isOwnedMask:n=>surface?.isMasked(n),isOwnedSurface:n=>surface?.isOwnedSurface(n)});
+  const binding={documentToken:'region',producerToken:'region',browserDocumentId:'region',routeEpoch:1,origin:location.origin,expiresAt:new Date(Date.now()+20000).toISOString()};
+  await adapter.start({binding,emit:async p=>({state:'accepted',localSeq:p.localSeq,receiptId:'region'})});
+  const inspection=adapter.inspect();let refusal=null;
+  const plan=captureNativeBaseline({document,inspection,onRefused:value=>refusal=value});
+  if(!plan){adapter.stop();return {adapterReady:inspection.ok,returnReady:!!inspection.returnSlot,policy:inspection.viewportFocus??null,flowReady:false,refusal};}
+  const rejects=()=>captureNativeBaseline({document,inspection})===null;
+  const unselectedRejected=captureNativeBaseline({document,inspection:{...inspection,viewportFocus:null}})===null;
+  viewport.setAttribute('role','button');const actionRejected=rejects();viewport.setAttribute('role','region');
+  viewport.setAttribute('tabindex','1');const tabOrderRejected=rejects();viewport.setAttribute('tabindex','0');
+  viewport.setAttribute('contenteditable','false');const editableRejected=rejects();viewport.removeAttribute('contenteditable');
+  viewport.style.overflow='visible';const nonScrollingRejected=rejects();viewport.removeAttribute('style');
+  surface=createFlowMountSurface({document,createFrameURL:({role})=>'chrome-extension://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/'+role+'.html'});
+  const handle=await surface.mount({binding},inspection),shown=surface.showWorkspace(handle),active=surface.validateActiveLayout(handle);
+  viewport.focus();const focusRetained=document.activeElement===viewport&&getComputedStyle(viewport).display==='grid'&&viewport.getAttribute('role')==='region'&&viewport.getAttribute('tabindex')==='0';
+  surface.showReading(handle);const readingRestored=getComputedStyle(viewport).display==='block'&&document.activeElement===viewport&&surface.showWorkspace(handle);
+  viewport.setAttribute('role','button');await new Promise(resolve=>setTimeout(resolve,0));
+  const changedRoleSurrendered=!surface.visibility(handle).workspace&&!surface.isSameNativeRegions(handle);viewport.setAttribute('role','region');
+  surface.dispose(handle);adapter.stop();
+  return {adapterReady:inspection.ok,returnReady:!!inspection.returnSlot,policy:inspection.viewportFocus,flowReady:true,unselectedRejected,actionRejected,tabOrderRejected,editableRejected,nonScrollingRejected,shown,active,focusRetained,readingRestored,changedRoleSurrendered,restored:viewport.outerHTML===original&&viewport.parentElement===parent&&viewport.querySelector('textarea')===editor};
+ });
+ assert.deepEqual(regionProof,{adapterReady:true,returnReady:true,policy:'native-scroll-region',flowReady:true,unselectedRejected:true,actionRejected:true,tabOrderRejected:true,editableRejected:true,nonScrollingRejected:true,shown:true,active:true,focusRetained:true,readingRestored:true,changedRoleSurrendered:true,restored:true});
+ console.log(JSON.stringify({nativeScrollRegion:regionProof}));await region.close();
  // Lifecycle counterexample on the existing host, not a newly collected real
  // topology: native layout can retain a temporary branch after adapter readiness.
  // Reject it intact, then recover only after the original page removes it.

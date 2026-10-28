@@ -3,7 +3,7 @@ import {createRequire} from 'node:module';
 import {chromium} from '../b1/tooling/node_modules/playwright/index.mjs';
 const require=createRequire(new URL('../../extension/tooling/package.json',import.meta.url));
 const {outputFiles}=await require('esbuild').build({stdin:{contents:"export {nativeReturnGapRect} from './src/host/native-return-gap.mjs';",resolveDir:process.cwd()},bundle:true,write:false,format:'iife',globalName:'gapModule'});
-const browser=await chromium.launch({headless:true});
+const browser=await chromium.launch({headless:true,args:['--proxy-server=http://127.0.0.1:9','--proxy-bypass-list=<-loopback>']});
 try{
  const page=await browser.newPage({viewport:{width:1000,height:700}});await page.route('**/*',r=>r.abort());
  await page.setContent(`<style>body{margin:0}#header{position:fixed;left:220px;top:0;width:780px;height:52px;pointer-events:none;z-index:30}#slot{width:780px;height:52px;pointer-events:none}#hit{position:fixed;left:220px;top:0;width:780px;height:700px}#reading{height:900px}#text{margin-left:100px;width:400px;padding-top:70px}</style><div id="hit"><div id="reading"><div id="text">Native content</div></div></div><header id="header"><div id="slot"></div></header>`);
@@ -64,9 +64,9 @@ try{
   const wrapper=document.createElement('div');wrapper.style.cssText='width:780px;height:52px;pointer-events:none';
   const breadcrumb=document.createElement('a');breadcrumb.href='#project';breadcrumb.textContent='Project';breadcrumb.style.cssText='position:absolute;left:8px;top:8px;width:140px;height:36px;pointer-events:auto';wrapper.append(breadcrumb);q('#slot').append(wrapper);
   out.nativeBreadcrumbRejectsFixedGap=!ok();args.headerLayout='transparent-containers';args.gapPolicy='first-empty-header-gap';
-  const shifted=gapModule.nativeReturnGapRect(args);out.breadcrumbGap=shifted?.x===376&&shifted?.width===36;
+  const shifted=gapModule.nativeReturnGapRect(args);out.breadcrumbGap=shifted?.x===376&&shifted?.width===32;
   const tiny=document.createElement('button');tiny.style.cssText='position:fixed;left:390px;top:14px;width:2px;height:2px;padding:0;border:0;pointer-events:none';root.append(tiny);out.shiftedGapAvoidsReading=gapModule.nativeReturnGapRect(args)?.x===400;
-  const returnButton=document.createElement('button');returnButton.style.cssText='position:fixed;left:400px;top:8px;width:36px;height:36px;padding:0;border:0;z-index:30';document.body.append(returnButton);args.button=returnButton;
+  const returnButton=document.createElement('button');returnButton.style.cssText='position:fixed;left:400px;top:8px;width:32px;height:32px;padding:0;border:0;z-index:30';document.body.append(returnButton);args.button=returnButton;
   out.relocatedButtonRevalidates=ok();returnButton.style.left='228px';out.oldButtonPositionRejected=!ok();delete args.button;returnButton.remove();
   tiny.style.width='700px';out.noGapAcrossReadingRejected=!ok();tiny.remove();
   wrapper.style.backgroundColor='rgb(250, 250, 250)';out.paintedContainerWithoutProfileRejected=!ok();args.headerLayout='plain-containers';out.plainNativeBackgroundAllowed=ok();wrapper.style.backgroundImage='linear-gradient(red,red)';out.backgroundImageStillRejected=!ok();wrapper.style.backgroundImage='none';wrapper.style.backgroundColor='transparent';

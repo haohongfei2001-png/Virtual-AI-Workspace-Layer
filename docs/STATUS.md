@@ -1,5 +1,13 @@
 # VAIWL实际状态：渐进积累工程已接线，真实来源逐项待准入
 
+## 2026-10-29 补齐原生滚动区域与正式文档流的合同接线（原安装不变）
+
+沿已选定的 `native-scroll-region` 合同复现确定差额：同一 `DIV role=region tabindex=0` 原生阅读视口通过 adapter 与四格空位检查，但 adapter 没有向 flow 传递 viewportFocus，flow 又将它作为普通可聚焦包装拒绝为 `native-flow-root`。正式代码现在共用精确语义判定；仅显式阅读视口且为实际布局根时保留原 tab stop 和真实 grid box，嵌套可聚焦包装、按钮、编辑区、非滚动区域仍拒绝。角色/节点/结构改变继续让位，原节点、parent、草稿与焦点不重建。此反例证明已声明变体的代码缺陷，不证明用户当前首页的唯一失败原因。
+
+先失败反例、关联 adapter/四格/flow 回归和非作者只读审查通过。现有正式 Browser-Local MV3 `--flow-only` 将此变体贯穿原生聊天、输入、成员导航、主题保持、四格返回、窄屏、Worker、明确确认后的私人对象及布局恢复、撤权和卸载；报告 `/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-ECcHtE/report.json`。已实际查看四张整屏正式 renderer 图，原生区域是匿名夹具，不能认定真实整屏 v2.7 通过。旧四格测试两处36px断言校正为已有正式32px，未改产品尺寸或放宽保护。
+
+统一未安装包 `/private/tmp/VAIWL-v27-Flow-Scroll-Integrated-20261029/extension`，包含此前首次挂载拒绝恢复、隐藏空 marker 与本次滚动区域接线；指纹 `ad53edeb0b66b664a0191035f16c0f6b2dfba427200799fda06182881c8b3b92`，ZIP SHA256 `126efdfb5ea8267158b5c434ab2c1554f9899403cc93cf9074360c7654af91f1`。203项源码与实际测试包一致、195项生产文件字节一致，6项正式/本地origin生成差异已核；核验 `/private/tmp/vaiwl-flow-scroll-build-verification-20261029.json`。原安装202项文件仍匹配516561…，清单/权限、IndexedDB、草稿和stash未动；本批Mac NOT_RUN、产品NOT_ACCEPTED。当前实机挂载的具体拒绝码仍缺运行证据，不重采已消费结构、不将修复包或隔离旅程称为完成交付。
+
 ## 2026-10-29 新版已运行；修复首次文档流拒绝后的永久停止
 
 用户当前文档回执已确认 `516561eb5bae…` 运行，失败已从授权推进至界面挂载；不能再解释为尚未 Reload。即时库 `nativeRevision=5 / refs=10 / projects=0`，`lastWorkspaceDelivery/workspaceReceipt/presentation` 均为空，生产者仍接收本页对象。故障位于正式 VIEW 之前；这不是整体数据库为空、日期过滤或私人库未解锁。旧通用 `surface-failed` 未保留具体 flow 拒绝原因，尚不能确定该真实首页唯一拒绝分支。95行侧栏快照及已消费列表观察不重采；IDless原生Project行不提升为已确认Project对象。
