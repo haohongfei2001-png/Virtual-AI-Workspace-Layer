@@ -1,5 +1,15 @@
 # VAIWL实际状态：渐进积累工程已接线，真实来源逐项待准入
 
+## 2026-10-28 侧栏候选完成原生 NAV 单滚动接线（原安装不变）
+
+发现候选 Shadow DOM 仍保留 `30vh / overflow:auto`，使展开的侧栏原生候选成为第二滚动区。正式组件现按绑定 role 区分：sidebar 自然高度、workspace 保留原分页滚动；侧栏内部异步结果及换行尺寸通过受当前代约束的 ResizeObserver 通知既有高度发布链。清理/撤权后旧回调失效，不把候选 scrollTop 当作原生 NAV 的持久滚动。真实 DOM 反例先失败后通过，候选/迁移/client关联回归及非作者只读复核通过；证据 `/private/tmp/vaiwl-candidate-scroll-{before,after,node,contracts}.log`。
+
+同一源码的正式隔离 MV3 连续旅程已检查首页/Project/阅读、输入首手势、主题保持与四格返回、NAV滚动、局部侧栏失败、窄屏、Worker恢复、确认后旧对象/布局恢复、撤权和卸载还原；报告 `/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-JThSl5/report.json`。已查看正式renderer的桌面、阅读与窄屏图；原生区域仍是匿名结构回放，不是真实ChatGPT视觉验收。自然高度卡片和稀疏布局保留，无虚构数据填充。
+
+统一审阅包 `/private/tmp/VAIWL-v27-Flow-Integrated-20261028-final/extension`（未写入原安装），启动指纹 `b57e962a92e76057d8db956c8c7451c9cbf4f89a5de8d76425ae29ded5a0be4b`，ZIP SHA256 `3d0a0ee769859b0ae5b46c7720c8b0cdcf9e6d4ab511f7f55d7a1f68b7dd24ca`。203项sourceHashes与源码一致；189个非环境配置的生产模块与实际旅程测试包逐字节相同，包内依赖/worker闭包核验通过。
+
+日常运行版本 UNKNOWN，原目录构建清单SHA256仍为 `cf76213d45313c8bbf843bfcd6c33500ea04f93bc2df2995a4101c3e515d0be2`；扩展ID、旧库、草稿、备份和stash保持。当前用户页面的启动故障尚无新运行回执，不能据这些离线修复认定已消除。本批真实Mac NOT_RUN、产品NOT_ACCEPTED，历史失败与未验范围不改PASS。
+
 ## 2026-10-28 原生 Popover 与工作空间恢复判定统一（原安装不变）
 
 正式 adapter 只判断 dialog/aria-modal，而 flow 的 CSS 与运行时还判断原生 Popover，导致打开无 aria-modal 的原生 Popover 后，controller 反复尝试恢复、挂载最终失效。现把原生层判定统一到同一生产模块，排除自有空退出开关；弹层期间暂停，关闭后恢复同一组 frame 和原展示意图。Browser-Local 初始布局恢复同时监听原生 toggle，关闭无需等待额外 DOM mutation；停止时移除监听，原授权、布局与撤权守卫不变。

@@ -4,8 +4,15 @@ const css=`:host{display:block;font:calc(14px * var(--vaiwl-font-scale,1))/1.5 v
 function validated(items){if(!Array.isArray(items)||items.length>32)throw Error('invalid-frame-candidates');const keys=new Set();return items.map(item=>{if(!exactHostRecord(item,['renderKey','nativeTitle','titleState','available','reason'])||typeof item.renderKey!=='string'||!item.renderKey.startsWith('candidate:')||!tokenOK(item.renderKey.slice(10))||keys.has(item.renderKey)||!['exact','unavailable','over-limit'].includes(item.titleState)||(item.titleState==='exact'?(typeof item.nativeTitle!=='string'||!item.nativeTitle.trim()||item.nativeTitle.length>200):item.nativeTitle!==null)||typeof item.available!=='boolean'||!(item.reason===null||typeof item.reason==='string'&&/^[a-z0-9-]{1,80}$/.test(item.reason)))throw Error('invalid-frame-candidates');keys.add(item.renderKey);return Object.freeze({...item});});}
 function validatedPage(page,count){if(!exactHostRecord(page,['offset','total','nextOffset'])||!Number.isSafeInteger(page.offset)||page.offset<0||page.offset%32!==0||!Number.isSafeInteger(page.total)||page.total<0||page.offset>(page.total? page.total-1:0)||count!==Math.min(32,page.total-page.offset)||page.nextOffset!==(page.offset+count<page.total?page.offset+count:null))throw Error('invalid-frame-candidate-page');return {...page};}
 /** Temporary native controls, never canonical projects or persistent IDs. */
-export function createFreeFrameCandidates({document:doc,container,onActivate,onPageRequest=()=>{}}={}){
- if(!doc?.createElement||!container?.append||typeof onActivate!=='function'||typeof onPageRequest!=='function')throw Error('invalid-frame-candidate-ui');let host=null,mounted=null,emptyPage=null,stopped=false,generation=0;
+export function createFreeFrameCandidates({document:doc,container,role='workspace',onActivate,onPageRequest=()=>{},onLayoutChange=()=>{}}={}){
+ if(!doc?.createElement||!container?.append||typeof onActivate!=='function'||typeof onPageRequest!=='function'||typeof onLayoutChange!=='function'||!['workspace','sidebar'].includes(role))throw Error('invalid-frame-candidate-ui');let host=null,mounted=null,emptyPage=null,stopped=false,generation=0,sizeObserver=null;
+ const styles=css+(role==='sidebar'?'ul{max-height:none;overflow:visible}':'');
+ // The sidebar is a natural-height flow member; only native NAV scrolls.
+ // Async action feedback and font/width changes also alter its intrinsic size.
+ function watchSize(section){
+  const Observer=doc.defaultView?.ResizeObserver;if(role!=='sidebar'||typeof Observer!=='function')return;
+  const run=generation;sizeObserver=new Observer(()=>{if(!stopped&&generation===run)onLayoutChange();});sizeObserver.observe(section);
+ }
  const scrollValue=value=>Number.isFinite(value)?Math.max(0,Math.min(1e7,value)):0;
  const hasLayout=list=>list?.getClientRects?.().length!==0;
  // Hidden owned panels report zero scroll even though the user's position is
@@ -20,7 +27,7 @@ export function createFreeFrameCandidates({document:doc,container,onActivate,onP
   if(typeof Observer==='function'){const observer=new Observer(()=>{if(entry.layoutObserver===observer)apply();});entry.layoutObserver=observer;observer.observe(entry.list);}
  }
  const node=(tag,text='')=>{const n=doc.createElement(tag);n.textContent=text;return n;};
- function clear(){generation++;mounted?.layoutObserver?.disconnect();host?.remove();host=null;mounted=null;emptyPage=null;}
+ function clear(){generation++;sizeObserver?.disconnect();sizeObserver=null;mounted?.layoutObserver?.disconnect();host?.remove();host=null;mounted=null;emptyPage=null;}
  // Only transfer focus still owned by this document and this exact panel.
  // Pending paging uses aria-disabled so the browser retains the focused node;
  // the existing singleflight guards prevent repeat activation.
@@ -50,10 +57,10 @@ export function createFreeFrameCandidates({document:doc,container,onActivate,onP
     if(!stopped&&generation===run){pending=false;retry.setAttribute('aria-disabled','false');status.textContent='加载未完成，请重试。';}
    }
   });
-  section.append(heading,status,retry);shadow.append(node('style',css),section);container.append(host);
-  mounted={offset,shadow,buttons:new Map(),controls:new Map([['retry',retry]])};if(focus)retry.focus?.({preventScroll:true});
+  section.append(heading,status,retry);shadow.append(node('style',styles),section);container.append(host);
+  mounted={offset,shadow,buttons:new Map(),controls:new Map([['retry',retry]])};watchSize(section);if(focus)retry.focus?.({preventScroll:true});
  }
- function update(input,page={offset:0,total:input?.length,nextOffset:null}){if(stopped)return;const items=validated(input),paging=validatedPage(page,items.length);const samePage=mounted?.offset===paging.offset,priorScroll=samePage?scrollValue(!mounted.layoutObserver&&hasLayout(mounted.list)?mounted.list?.scrollTop:mounted.savedScroll):0,priorFocus=samePage&&doc.hasFocus?.()!==false&&doc.activeElement===host?[...mounted.buttons].find(([,button])=>mounted.shadow.activeElement===button)?.[0]:null,priorControl=focusedControl();clear();if(!items.length){emptyPage=paging;return;}const run=generation;let pagePending=false,activationPending=0;host=node('div');host.setAttribute('data-vaiwl-candidates','');const shadow=host.attachShadow({mode:'open'}),section=node('section'),heading=node('h2','待识别的项目'),list=node('ul');section.setAttribute('aria-label','待识别的项目');section.append(heading,list);shadow.append(node('style',css),section);container.append(host);mounted={offset:paging.offset,list,shadow,savedScroll:priorScroll,layoutObserver:null,buttons:new Map(),controls:new Map()};heading.tabIndex=-1;
+ function update(input,page={offset:0,total:input?.length,nextOffset:null}){if(stopped)return;const items=validated(input),paging=validatedPage(page,items.length);const samePage=mounted?.offset===paging.offset,priorScroll=samePage?scrollValue(!mounted.layoutObserver&&hasLayout(mounted.list)?mounted.list?.scrollTop:mounted.savedScroll):0,priorFocus=samePage&&doc.hasFocus?.()!==false&&doc.activeElement===host?[...mounted.buttons].find(([,button])=>mounted.shadow.activeElement===button)?.[0]:null,priorControl=focusedControl();clear();if(!items.length){emptyPage=paging;return;}const run=generation;let pagePending=false,activationPending=0;host=node('div');host.setAttribute('data-vaiwl-candidates','');const shadow=host.attachShadow({mode:'open'}),section=node('section'),heading=node('h2','待识别的项目'),list=node('ul');section.setAttribute('aria-label','待识别的项目');section.append(heading,list);shadow.append(node('style',styles),section);container.append(host);mounted={offset:paging.offset,list,shadow,savedScroll:priorScroll,layoutObserver:null,buttons:new Map(),controls:new Map()};watchSize(section);heading.tabIndex=-1;
   for(const item of items){const row=node('li'),button=node('button',item.nativeTitle??'项目名称暂不可用'),status=node('p',item.available?'进入原生项目后确认项目身份。':'暂时无法打开；请先处理未发送内容，或使用原生入口继续。');button.type='button';button.disabled=!item.available;button.setAttribute('data-candidate-key',item.renderKey);status.setAttribute('role','status');status.setAttribute('aria-live','polite');let pending=false,used=false;
    button.addEventListener('click',async event=>{if(event.isTrusted!==true||stopped||generation!==run||!item.available||pending||used||pagePending)return;const presentation=Object.freeze({offset:paging.offset,scrollTop:scrollValue(list.scrollTop),focused:doc.hasFocus?.()!==false&&shadow.activeElement===button});pending=true;activationPending++;used=true;button.disabled=true;status.textContent='正在打开原生项目…';try{const result=await onActivate(item.renderKey,presentation);if(stopped||generation!==run)return;status.textContent=['dispatched','already-current'].includes(result?.state)?'已请求打开原生项目，请在原生页面继续。':'打开结果未确认，请使用原生入口继续。';}catch{if(!stopped&&generation===run)status.textContent='打开结果未确认，请使用原生入口继续。';}finally{pending=false;activationPending--;}});row.append(button,status);list.append(row);mounted.buttons.set(item.renderKey,button);
   }

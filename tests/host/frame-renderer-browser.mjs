@@ -5,6 +5,40 @@ import {readFile} from 'node:fs/promises';
 import {resolve} from 'node:path';
 import {tmpdir} from 'node:os';
 import {chromium} from '../b1/tooling/node_modules/playwright/index.mjs';
+import {createHistoricalNetworkGuard,historicalNetworkGuardArgs} from './historical-network-guard.mjs';
+
+test('candidate panels keep native NAV as the sidebar scroll owner',{timeout:30000},async t=>{
+ const root=resolve('.'),server=http.createServer(async(req,res)=>{try{
+  const path=new URL(req.url,'http://127.0.0.1').pathname;
+  if(path==='/frame'){res.setHeader('Content-Type','text/html');res.end('<meta charset="utf-8"><body style="margin:0"><main id="mount" style="width:220px"></main>');return;}
+  if(!/^\/src\/(host|b1)\/[a-z0-9-]+\.mjs$/.test(path))throw Error('path');
+  res.setHeader('Content-Type','text/javascript');res.end(await readFile(resolve(root,'.'+path)));
+ }catch{res.writeHead(404);res.end();}});
+ await new Promise(r=>server.listen(0,'127.0.0.1',r));const origin=`http://127.0.0.1:${server.address().port}`,guard=await createHistoricalNetworkGuard({fixtureOrigin:origin});let browser;
+ t.after(async()=>{await browser?.close();await guard.close();server.closeAllConnections();await new Promise(r=>server.close(r));});
+ browser=await chromium.launch({headless:true,executablePath:process.env.FREE_CHROME_EXECUTABLE??'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',args:historicalNetworkGuardArgs(guard.config)});
+ const context=await browser.newContext({viewport:{width:600,height:800}});await context.route('**/*',r=>new URL(r.request().url()).origin===origin?r.continue():r.abort());const page=await context.newPage();await page.goto(origin+'/frame');
+ for(const role of ['sidebar','workspace']){
+  await page.evaluate(async role=>{
+   const {createFreeFrameCandidates}=await import('/src/host/free-frame-candidates.mjs');const changes=[];
+   const ui=createFreeFrameCandidates({document,container:document.querySelector('#mount'),role,onLayoutChange:()=>changes.push(document.querySelector('[data-vaiwl-candidates]').getBoundingClientRect().height),onActivate:()=>new Promise(r=>window.finishCandidate=r)});
+   const items=Array.from({length:32},(_,i)=>({renderKey:'candidate:row'+i,nativeTitle:'原生候选项目 '+i,titleState:'exact',available:true,reason:null}));
+   ui.update(items);window.candidateCase={ui,items,changes,read(){const s=document.querySelector('[data-vaiwl-candidates]').shadowRoot,n=s.querySelector('ul');n.scrollTop=200;return {overflow:getComputedStyle(n).overflowY,scroll:n.scrollTop,height:n.clientHeight,extent:n.scrollHeight,changes:changes.length};}};
+  },role);
+  const state=await page.evaluate(()=>candidateCase.read());
+  if(role==='sidebar'){
+   assert.equal(state.overflow,'visible');assert.equal(state.scroll,0);assert.equal(state.height,state.extent);assert(state.height>800);
+   await page.waitForFunction(()=>candidateCase.changes.length>0);const before=await page.evaluate(()=>candidateCase.changes.length);
+   await page.getByRole('button',{name:'原生候选项目 0',exact:true}).click();await page.evaluate(()=>finishCandidate({state:'unconfirmed'}));
+   await page.waitForFunction(before=>candidateCase.changes.length>before,before);
+   // Text wrapping changes after the asynchronous native result. The parent
+   // must receive the new natural extent, including the last candidate row.
+   assert.equal(await page.evaluate(()=>candidateCase.changes.at(-1)===document.querySelector('[data-vaiwl-candidates]').getBoundingClientRect().height),true);
+   const last=page.getByRole('button',{name:'原生候选项目 31',exact:true});await last.focus();assert(await last.evaluate(n=>n.getBoundingClientRect().bottom<=innerHeight));
+  }else {assert.equal(state.overflow,'auto');assert(state.scroll>0);assert(state.height<state.extent);}
+  await page.evaluate(()=>candidateCase.ui.stop());
+ }
+});
 
 // Real DOM, empty frame document: no fabricated host.inspect() regions or host seed.
 test('single-role frame renderer reuses navigation without host DOM access',{timeout:30000},async t=>{

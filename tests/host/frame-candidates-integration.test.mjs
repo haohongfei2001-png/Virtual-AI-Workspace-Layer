@@ -173,3 +173,10 @@ for(const returnToOld of [false,true])test('new query revokes hint-cancelled mig
 });
 
 test('candidate promotion shrinking 33 to 32 converges to the owner validated last page',async()=>{const f=fixture();let ready=false;f.list(async m=>{const total=ready?32:33,offset=Math.min(m.offset??0,Math.floor((total-1)/32)*32);return {ok:true,items:Array.from({length:Math.min(32,total-offset)},(_,i)=>f.item('row'+(offset+i))),page:{offset,total,nextOffset:offset+32<total?offset+32:null},migration:migration({ready,focusAllowed:ready,presentation:{offset:32,scrollTop:13,focused:true}})};});await f.start();await f.buttons().find(n=>n.textContent==='下一页').handlers.click({isTrusted:true});await drain();assert.equal(f.revealed.length,0);ready=true;const before=f.calls.length;f.emit();await drain();assert.equal(f.revealed.length,1);assert(f.calls.slice(before).filter(m=>m.type==='HOST_UI_CANDIDATES').length<4);f.emit();await drain();assert.equal(f.revealed.length,1);f.client.stop();});
+
+
+for(const role of ['workspace','sidebar'])test('frame candidate scroll ownership follows its bound role '+role,async()=>{
+ const f=fixture(true,role);await f.start();const styles=f.root.all().filter(n=>n.tag==='style').map(n=>n.textContent).join('');
+ assert.equal(styles.includes('ul{max-height:none;overflow:visible}'),role==='sidebar');
+ f.client.stop();assert.equal(f.buttons().length,0);
+});
