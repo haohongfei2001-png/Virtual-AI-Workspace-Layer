@@ -27,7 +27,10 @@ export function createChatGPTAdapter({document,urlPolicy=createURLPolicy(),profi
  if(!document?.defaultView)throw Error('invalid-host-document');
  const layoutKeys=['header','reading','composer','navigationSlot'];
  const explicitLayout=Object.hasOwn(profile,'nativeLayout');
- const homeLayout=profile.nativeHomeLayout&&urlPolicy.parse(document.location.href).kind==='home'&&document.querySelector(profile.nativeHomeLayout.reading)?profile.nativeHomeLayout:null;
+ // Observation starts before native hydration. Select the package's route
+ // contract now; inspect() still requires the actual unique, visible nodes.
+ // Missing home landmarks must not freeze this adapter on the chat contract.
+ const homeLayout=profile.nativeHomeLayout&&urlPolicy.parse(document.location.href).kind==='home'?profile.nativeHomeLayout:null;
  const configuredLayout=homeLayout??(explicitLayout?profile.nativeLayout:{header:'main > header',reading:'main > section[aria-label="Conversation"]',composer:'main > form#composer',navigationSlot:'main > header > .navigation-slot'});
  for(const key of ['readingViewport','historyList','returnPlacement','returnHitRoot','viewportFocus','viewportMarkers','headerLayout','gapPolicy'])if(configuredLayout&&Object.hasOwn(configuredLayout,key))layoutKeys.push(key);
  if(!exactHostRecord(configuredLayout,layoutKeys)||!layoutKeys.every(k=>typeof configuredLayout[k]==='string'&&configuredLayout[k].trim().length>0&&configuredLayout[k].length<=256))throw Error('invalid-native-layout-profile');

@@ -14,6 +14,10 @@
 
 继续补齐同一 F-04 的键盘路径：确证原生工具在 Space 按下时打开弹层，旧实现令按钮在 keyup 前从841.45移到400；现 Enter/Space 原生激活沿用同一有限手势，普通文本/IME/修饰键不纳入，重复键或混合指针不续3秒截止，关闭清除旧keyup与尾任务。原反例 `/private/tmp/vaiwl-native-keyboard-red-20261029.log` 与修复后的现有机制回归、正式MV3工具/阅读/返回/恢复旅程通过，非作者只读复核无阻断；报告 `/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-YVfDhX/report.json`，源码闭包核验 `/private/tmp/vaiwl-native-keyboard-verification-20261029.json`。已查看正式返回renderer整图，匿名宿主不计真实视觉通过。另对现有布局保存和四格返回链作只读核查，未发现需要修改的具体差额，未重跑其独立矩阵。
 
+同批修复首页晚加载与正常 React 节点替换后的恢复死路：观察早于首页节点出现时，adapter 原来永久选中聊天合同；现按固定路由选择首页合同，再由 inspect 证明真实节点。原生工具节点替换仍立即废除旧活动证明，但关闭态可以重新取得完整控件快照；header 等主体节点替换则退役旧框架并重新 mount/JOIN，不能移用旧 grant。中间布局证明失败后恢复原节点时，也会重新证明，不再卡在已变化的 adapter epoch。所有重证仍要求同文档、有效授权、无原生手势/弹层、完整自有 frame/style；草稿和原生节点不重建。
+
+先失败反例保留于 `/private/tmp/vaiwl-native-hydration-red-20261029.log`、`/private/tmp/vaiwl-native-landmark-red-20261029.log`、`/private/tmp/vaiwl-native-restored-proof-red-20261029.log`；修复后既有 document-flow 和 controller/content-session 关联合同通过，非作者只读复核无阻断。正式隔离 MV3 报告 `/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-rvnhb6/report.json` 验证替换后新框架取得同文档真实 VIEW、双角色恢复、编辑器及草稿保留，并续完现有输入/成员阅读/返回/持久布局/撤权/卸载旅程。203项源码与实际测试包逐项一致，核验 `/private/tmp/vaiwl-native-startup-verification-20261029.json`；已查看首页正式 renderer，匿名宿主不计真实整屏验收。没有另发安装候选或更新原目录。
+
 以上均为明确标注的本地兼容反例，**不是用户实际未知主区分支的取证**。没有足够证据宣称真实首页已经修好，不把这一批离线结果转为又一次人工试错要求；修复后 Mac NOT_RUN、完整产品 NOT_ACCEPTED。原 e889… 安装未改，旧库、草稿、三份 stash 和全部备份保持，不另发所谓最终产品候选。
 
 2026-10-29 集中修复激活准备：原分支及 PR16 已同步到 `ad6c3974`。完成关联代码复核后，将同一 `e8896cace4fb…` 包写入原注册目录；先逐文件验证完整2954文件备份，再仅更新 `content.js`、三份正式源文件及构建清单，202项包文件匹配、2752项额外文件保留，清单/权限不变。回执 `/private/tmp/vaiwl-native-flow-continuity-install-receipt-20261029.json`，备份 `.git/vaiwl-artifacts/install-backups/native-flow-continuity-20261029-030532/`。未控制浏览器或执行 Reload，最后可信运行回执仍是用户提供的 `b2b778… / native-flow-uncovered-branch`；新包真实激活 UNKNOWN、修复后实机 NOT_RUN、产品 NOT_ACCEPTED。旧库、草稿和 stash 未动。不重跑旧 UI10 矩阵：其已记录窄屏失败包含原生夹具自身控件越界，不能据此放宽正式保护。

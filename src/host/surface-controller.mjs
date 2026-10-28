@@ -123,19 +123,17 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
  }
  function inspectPresentation(state){
   if(surface.backend!=='document-flow'||!state?.handle)return adapter.inspect();
-  if(surface.isSameNativeRegions(state.handle)!==true||surface.needsNativeBaselineRefresh?.(state.handle)===true){
-   // Native input can legitimately keep new focus/presentation classes.
-   // Re-proof only after the original layout is restored; never bless a
-   // visible mutated layout, stale lease, native dispatch or new identity.
-   // CSS-only responsive changes and native sidebar toggles can keep the same
-   // main nodes/attributes. Re-entry still needs their current coordinates.
-   if(!state.nativeDispatch&&authorized(state)&&!adapter.hasNativeLayer()){
-    const refreshed=surface.refreshNativeBaseline?.(state.handle,()=>adapter.inspect());
-    if(refreshed?.ok)return refreshed;
-   }
-   return {ok:false,reason:'native-region-changed'};
+  const previous=surface.isSameNativeRegions(state.handle)===true&&surface.needsNativeBaselineRefresh?.(state.handle)!==true?adapter.inspectStructure(state.inspection):{ok:false,reason:'native-region-changed'};
+  if(previous?.ok)return previous;
+  // A failed intermediate proof may advance the adapter epoch even if React
+  // later restores the original nodes. Re-prove that case too. The backend
+  // admits only a genuinely closed native layout; a new epoch retires the old
+  // mount below and cannot authorize its existing private frames.
+  if(!state.nativeDispatch&&authorized(state)&&!adapter.hasNativeLayer()){
+   const refreshed=surface.refreshNativeBaseline?.(state.handle,()=>adapter.inspect());
+   if(refreshed?.ok&&authorized(state)&&!state.nativeDispatch&&!adapter.hasNativeLayer())return refreshed;
   }
-  return adapter.inspectStructure(state.inspection);
+  return previous;
  }
  function refreshGeometry(state,inspection=null){
   if(typeof surface.refreshGeometry!=='function')return true;
@@ -613,5 +611,5 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
   let visibility=null;try{visibility=surface.visibility?.(state.handle);}catch{}
   return {mode:state.mode,desiredMode:state.desiredMode,transitions:structuredClone(transitions),attempt:state.presentation??'not-attempted',registered:state.registered===true,frames:state.frames.filter(x=>x.frame.isConnected&&x.frame.contentWindow===x.window).length,grants:state.grants.size,workspace:typeof visibility?.workspace==='boolean'?visibility.workspace:null,sidebar:typeof visibility?.sidebar==='boolean'?visibility.sidebar:null,geometryPaused:state.geometryPaused===true,returnPresent:state.button?.isConnected===true};
  }
- return Object.freeze({readNativeManagement(){const s=current;return s&&valid(s)&&authorized(s)&&s.handle?surface.readNativeManagement?.(s.handle)??[]:[];},isNativeStructureCurrent(){try{return !!current&&authorized(current)&&inspectPresentation(current)?.ok===true;}catch{return false;}},presentationSnapshot,localStatus,withNativeReading,cancelDormantClose,renewDormantLease,idleReleaseBusy:()=>current?.releaseBusy===true&&dormantReady(),checkIdle,enterDormant,settleDormant,dormantReady,resumeDormant,start,sidebarPresentationIntent:()=>current?.sidebarDesired??null,presentationIntent:()=>current?.desiredMode==='workspace'?'workspace':'reading',presentationMode:()=>current?.mode==='workspace'?'workspace':'reading',showWorkspace(){if(current)current.sidebarDesired=true;return showWorkspace(true);},isWorkspacePresented,showReading,showNativeReading,beginNativeDispatch,focusFrame,isFrameTarget(role,node){return !!current&&authorized(current)&&current.frames.some(x=>x.role===role&&x.frame===node);},isReturnTarget:node=>!!current&&current.button===node&&authorized(current),intentGuard(){const state=current,revision=state?.intentEpoch;return ()=>!!state&&current===state&&state.intentEpoch===revision&&authorized(state)&&!adapter.hasNativeLayer();},readingGuard(){const state=current,revision=state?.intentEpoch;return ()=>!!state&&current===state&&state.intentEpoch===revision&&state.mode==='reading'&&authorized(state)&&!adapter.hasNativeLayer();},suspend,stop,revoke:()=>stop('ui-authority-revoked')});
+ return Object.freeze({readNativeManagement(){const s=current;return s&&valid(s)&&authorized(s)&&s.handle?surface.readNativeManagement?.(s.handle)??[]:[];},isNativeStructureCurrent(){try{const state=current;if(!state||!authorized(state))return false;const inspection=inspectPresentation(state);return current===state&&inspection?.ok===true&&inspection.regionEpoch===state.handle.regionEpoch;}catch{return false;}},presentationSnapshot,localStatus,withNativeReading,cancelDormantClose,renewDormantLease,idleReleaseBusy:()=>current?.releaseBusy===true&&dormantReady(),checkIdle,enterDormant,settleDormant,dormantReady,resumeDormant,start,sidebarPresentationIntent:()=>current?.sidebarDesired??null,presentationIntent:()=>current?.desiredMode==='workspace'?'workspace':'reading',presentationMode:()=>current?.mode==='workspace'?'workspace':'reading',showWorkspace(){if(current)current.sidebarDesired=true;return showWorkspace(true);},isWorkspacePresented,showReading,showNativeReading,beginNativeDispatch,focusFrame,isFrameTarget(role,node){return !!current&&authorized(current)&&current.frames.some(x=>x.role===role&&x.frame===node);},isReturnTarget:node=>!!current&&current.button===node&&authorized(current),intentGuard(){const state=current,revision=state?.intentEpoch;return ()=>!!state&&current===state&&state.intentEpoch===revision&&authorized(state)&&!adapter.hasNativeLayer();},readingGuard(){const state=current,revision=state?.intentEpoch;return ()=>!!state&&current===state&&state.intentEpoch===revision&&state.mode==='reading'&&authorized(state)&&!adapter.hasNativeLayer();},suspend,stop,revoke:()=>stop('ui-authority-revoked')});
 }

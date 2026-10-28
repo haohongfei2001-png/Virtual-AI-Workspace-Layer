@@ -1,5 +1,5 @@
 import {hasNativeLayer as documentHasNativeLayer,NATIVE_LAYER_SELECTOR} from '../host/native-layer.mjs';
-import {captureNativeBaseline,NativeFlowPreflightError,isSameNativeRegions,isSameNativeLayout,flowLayoutRules,validateActiveLayout} from '../host/document-flow-layout.mjs';
+import {captureNativeBaseline,NativeFlowPreflightError,isSameNativeRegions,isSameNativeStructure,isSameNativeLayout,flowLayoutRules,validateActiveLayout} from '../host/document-flow-layout.mjs';
 import {observeNativeProjectManagement} from '../host/native-project-management.mjs';
 import {validateFrameAppearance} from '../host/frame-appearance.mjs';
 
@@ -207,12 +207,19 @@ export function createFlowMountSurface({document:doc,createFrameURL,hasNativeLay
    const m=lookup(handle),workspace=m.roles[0],prior=m.plan;
    // Only remeasure the actual restored native page. An in-flight first
    // gesture, visible workspace, layer or damaged owned frame cannot rebase.
-   const ready=()=>!open(workspace)&&!m.inputPointerActive?.()&&!nativeLayer()&&intact(m,workspace)&&isSameNativeRegions(prior,{allowPresentationChange:true});
+   const ready=()=>doc.location.href===prior.url&&!open(workspace)&&!m.inputPointerActive?.()&&!nativeLayer()&&intact(m,workspace);
    if(typeof inspect!=='function'||!ready())return null;
-   const inspection=inspect();if(!ready()||!inspection?.ok||inspection.regionEpoch!==handle.regionEpoch)return null;
+   const inspection=inspect();if(!ready()||!inspection?.ok)return null;
    const next=captureNativeBaseline({document:doc,inspection,isOwnedSurface:owned});
-   if(!next||['root','reading','composer','header','kind','headerInside'].some(k=>next[k]!==prior[k])||['leaves','shells','protectedNodes','flowOrder'].some(k=>next[k].length!==prior[k].length||next[k].some((node,i)=>node!==prior[k][i]))||next.retainedMembers.length!==prior.retainedMembers.length||next.retainedMembers.some((m,i)=>m.node!==prior.retainedMembers[i].node||m.hidden!==prior.retainedMembers[i].hidden))return null;
-   if(prior.nativeControls.some(old=>!next.nativeControls.some(current=>current.node===old.node&&current.parent===old.parent)))return null;
+   if(!ready()||!next)return null;
+   // A replaced landmark needs a new mount/JOIN, not a new interpretation of
+   // the old frame grants. Return its fully proved epoch without changing any
+   // old marker or baseline; the controller retires this mount before startup.
+   if(inspection.regionEpoch!==handle.regionEpoch)return inspection;
+   if(!isSameNativeStructure(prior,{allowPresentationChange:true})||['root','reading','composer','header','kind','headerInside'].some(k=>next[k]!==prior[k])||['leaves','shells','protectedNodes','flowOrder'].some(k=>next[k].length!==prior[k].length||next[k].some((node,i)=>node!==prior[k][i]))||next.retainedMembers.length!==prior.retainedMembers.length||next.retainedMembers.some((m,i)=>m.node!==prior.retainedMembers[i].node||m.hidden!==prior.retainedMembers[i].hidden))return null;
+   // React may replace controls inside an unchanged protected leaf. The old
+   // proof remains invalid; only this complete new native snapshot replaces
+   // it. No old control/handle is transferred to the replacement node.
    const options={id:handle.id,exitId:workspace.exit.id,workspaceId:workspace.node.id},oldRules=flowLayoutRules(prior,options);
    if(!m.css.startsWith(oldRules))return null;
    m.css=flowLayoutRules(next,options)+m.css.slice(oldRules.length);m.plan=next;m.nativeViewport=viewport();m.style.textContent=m.css;

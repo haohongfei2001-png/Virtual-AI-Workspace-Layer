@@ -186,16 +186,21 @@ export function captureNativeBaseline({document:doc,inspection,isOwnedSurface=()
  }catch{return refuse('native-flow-check-failed');}
 }
 
-export function isSameNativeRegions(plan,{allowPresentationChange=false}={}){
+// Structural guard for a new proof in the restored native layout. This alone
+// cannot authorize presentation: controls still need a fresh bounded snapshot.
+export function isSameNativeStructure(plan,{allowPresentationChange=false}={}){
  try {
   if(!plan||plan.document.location.href!==plan.url)return false;
   return plan.records.every(({node,parent,attrs:before})=>node.isConnected&&node.ownerDocument===plan.document&&node.parentElement===parent&&attrs(node).every((value,i)=>allowPresentationChange&&i<2||value===before[i]))&&
    [...plan.nativeChildren].every(([node,children])=>{const retained=plan.retainedMembers.some(m=>m.node===node||m.node.contains(node)),actual=[...(retained?node.childNodes:node.children)].filter(n=>!plan.isOwnedSurface(n));return actual.length===children.length&&actual.every((n,i)=>n===children[i]);})&&
-   plan.nativeControls.every(({node,parent})=>node.isConnected&&node.parentElement===parent)&&
    plan.inactiveMarkers.every(node=>inactiveMarker(node,plan.markerViewport,plan.document))&&
    plan.retainedMembers.every(m=>(plan.document.defaultView.getComputedStyle(m.node).display==='none')===m.hidden)&&
    (!plan.focusViewport||isNativeScrollRegion(plan.focusViewport,'native-scroll-region',plan.document));
  }catch{return false;}
+}
+
+export function isSameNativeRegions(plan,options){
+ return isSameNativeStructure(plan,options)&&plan.nativeControls.every(({node,parent})=>node.isConnected&&node.parentElement===parent);
 }
 
 /** Owned attributes are tokens only. Rules exist only while the empty exit

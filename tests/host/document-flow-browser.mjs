@@ -14,6 +14,74 @@ const P='g-p-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',C='33333333-3333-4333-8333-333333
 const legacy=(await readFile(new URL('./fixtures/legacy.html',import.meta.url),'utf8')).replace('<link rel="stylesheet" href="/native.css">','<style>'+await readFile(new URL('./fixtures/native.css',import.meta.url),'utf8')+'</style>');
 const browser=await chromium.launch({headless:true,args:['--proxy-server=http://127.0.0.1:9','--proxy-bypass-list=<-loopback>']}),results=[];
 try{
+ {
+ // The owner starts observation before native hydration. Choosing a layout
+ // contract must not depend on whether its first landmark already exists.
+ const hydration=await browser.newPage({viewport:{width:1400,height:900}});
+ await hydration.route('**/*',r=>r.request().url()==='https://chatgpt.com/'?r.fulfill({contentType:'text/html',body:observedHomeHTML(C)}):r.abort());
+ await hydration.goto('https://chatgpt.com/');await hydration.addScriptTag({content:outputFiles[0].text});
+ const lateHome=await hydration.evaluate(async()=>{
+  const {createChatGPTAdapter,CHATGPT_OBSERVED_PROFILE:profile,createFlowMountSurface,createSurfaceController}=flowModule;
+  const anchor=document.querySelector('.home-composer-anchor'),parent=anchor.parentElement,next=anchor.nextSibling;anchor.remove();
+  let surface,mount=null,registrations=0;
+  const adapter=createChatGPTAdapter({document,profile,isOwnedMask:n=>surface?.isMasked(n),isOwnedSurface:n=>surface?.isOwnedSurface(n)});
+  const binding={documentToken:'late-home',producerToken:'late-home',browserDocumentId:'late-home',routeEpoch:1,origin:location.origin,expiresAt:new Date(Date.now()+20000).toISOString()},context=await adapter.start({binding,emit:async p=>({state:'accepted',localSeq:p.localSeq,receiptId:'late-home'})});
+  const extensionOrigin='chrome-extension://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';surface=createFlowMountSurface({document,createFrameURL:({role})=>extensionOrigin+'/'+role+'.html'});
+  const bridge={registerMount:async({handle})=>{mount=handle;registrations++;return {ok:true};},confirmParent:async()=>({ok:false})};
+  const controller=createSurfaceController({document,adapter,surface,bridge,extensionOrigin});
+  const before=await controller.start({context}),waiting=!before&&controller.localStatus()==='surface-missing-or-ambiguous-native-boundary';
+  parent.insertBefore(anchor,next);for(let i=0;i<4;i++)await new Promise(requestAnimationFrame);
+  const inspection=adapter.inspect(),result={waiting,homeContract:inspection.ok&&inspection.reading===anchor&&Array.isArray(inspection.homeLayoutNodes),mounted:!!mount,registrations,privateHidden:!!mount&&surface.visibility(mount).workspace===false};
+  controller.stop();adapter.stop();return result;
+ });
+ await hydration.close();
+ // A native control may be replaced within the same protected composer. The
+ // old proof must fail, then the complete restored-native proof may recover.
+ const replacement=await browser.newPage({viewport:{width:1440,height:1000}});
+ await replacement.route('**/*',r=>r.request().url()==='https://chatgpt.com/c/'+C?r.fulfill({contentType:'text/html',body:legacy}):r.abort());
+ await replacement.goto('https://chatgpt.com/c/'+C);await replacement.addScriptTag({content:outputFiles[0].text});
+ const replacedControl=await replacement.evaluate(async()=>{
+  const {createChatGPTAdapter,createFlowMountSurface,createSurfaceController}=flowModule;let surface,registrations=0,currentHandle=null;
+  const adapter=createChatGPTAdapter({document,isOwnedMask:n=>surface?.isMasked(n),isOwnedSurface:n=>surface?.isOwnedSurface(n)});
+  const binding={documentToken:'control-replacement',producerToken:'control-replacement',browserDocumentId:'control-replacement',routeEpoch:1,origin:location.origin,expiresAt:new Date(Date.now()+20000).toISOString()},context=await adapter.start({binding,emit:async p=>({state:'accepted',localSeq:p.localSeq,receiptId:'control-replacement'})});
+  const extensionOrigin='chrome-extension://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';surface=createFlowMountSurface({document,createFrameURL:({role})=>extensionOrigin+'/'+role+'.html'});
+  const bridge={registerMount:async({handle})=>{currentHandle=handle;registrations++;return {ok:true};},confirmParent:async({mountId,role})=>({ok:true,grant:{id:'grant_'+role,mountId,role,parentDocumentId:binding.browserDocumentId,uiDocumentId:'ui_'+role,scopeGrantId:'scope',expiresAt:binding.expiresAt}})};
+  const controller=createSurfaceController({document,adapter,surface,bridge,extensionOrigin}),handle=await controller.start({context});
+  const settle=async()=>{for(let i=0;i<4;i++)await new Promise(requestAnimationFrame);};
+  for(const {role,frame}of surface.frames(handle))window.dispatchEvent(new MessageEvent('message',{origin:extensionOrigin,source:frame.contentWindow,data:{type:'VAIWL_UI_JOIN',role,nonce:'nonce_'+role}}));
+  await settle();const frames=surface.frames(handle).map(x=>x.frame),initial=surface.visibility(handle).workspace,input=document.querySelector('textarea');input.value='preserved draft';
+  const old=document.querySelector('#tools-button'),fresh=old.cloneNode(true);old.replaceWith(fresh);
+  const oldProofRejected=!surface.isSameNativeRegions(handle);await settle();
+  const result={initial,oldProofRejected,recovered:surface.visibility(handle).workspace,sameFrames:frames.every((f,i)=>surface.frames(handle)[i]?.frame===f),registrations,draft:input.value==='preserved draft',newProof:surface.isSameNativeRegions(handle)};
+  controller.showReading();const composer=document.querySelector('#composer');composer.setAttribute('role','group');
+  result.changedStructureRejected=surface.refreshNativeBaseline(handle,()=>adapter.inspect())===null;composer.removeAttribute('role');
+  controller.showWorkspace();await settle();
+  const header=document.querySelector('main > header'),nextHeader=header.cloneNode(true),oldWindows=frames.map(f=>f.contentWindow);
+  // Native replacement does not inherit extension-owned presentation markers.
+  for(const node of [nextHeader,...nextHeader.querySelectorAll('*')])for(const attr of [...node.attributes])if(attr.name.startsWith('data-va-'))node.removeAttribute(attr.name);
+  header.replaceWith(nextHeader);await settle();
+  const rejoined=currentHandle!==handle;let newFrames=surface.frames(currentHandle);
+  result.landmarkReplacement=rejoined&&registrations===2&&frames.every(f=>!f.isConnected)&&surface.visibility(currentHandle).workspace===false;
+  for(const source of oldWindows)window.dispatchEvent(new MessageEvent('message',{origin:extensionOrigin,source,data:{type:'VAIWL_UI_JOIN',role:'workspace',nonce:'retired'}}));
+  await settle();result.oldJoinRejected=surface.visibility(currentHandle).workspace===false;
+  for(const {role,frame}of newFrames)window.dispatchEvent(new MessageEvent('message',{origin:extensionOrigin,source:frame.contentWindow,data:{type:'VAIWL_UI_JOIN',role,nonce:'new_'+role}}));
+  await settle();result.freshGrantResumes=rejoined&&surface.visibility(currentHandle).workspace&&controller.presentationIntent()==='workspace'&&input.isConnected&&input.value==='preserved draft';
+  const provedHeader=document.querySelector('main > header'),temporary=provedHeader.cloneNode(true),main=document.querySelector('main'),beforeFailure=currentHandle;
+  for(const node of [temporary,...temporary.querySelectorAll('*')])for(const attr of [...node.attributes])if(attr.name.startsWith('data-va-'))node.removeAttribute(attr.name);
+  main.setAttribute('tabindex','0');provedHeader.replaceWith(temporary);await settle();
+  result.failedProofHidden=currentHandle===beforeFailure&&!surface.visibility(currentHandle).workspace&&!controller.isNativeStructureCurrent();
+  temporary.replaceWith(provedHeader);main.removeAttribute('tabindex');await settle();
+  result.restoredProofRejoins=currentHandle!==beforeFailure&&registrations===3&&!surface.visibility(currentHandle).workspace&&newFrames.every(({frame})=>!frame.isConnected);
+  newFrames=surface.frames(currentHandle);
+  for(const {role,frame}of newFrames)window.dispatchEvent(new MessageEvent('message',{origin:extensionOrigin,source:frame.contentWindow,data:{type:'VAIWL_UI_JOIN',role,nonce:'restored_'+role}}));
+  await settle();result.restoredProofResumes=currentHandle!==beforeFailure&&surface.visibility(currentHandle).workspace;
+  controller.revoke();await settle();result.revoked=!newFrames.some(({frame})=>frame.isConnected)&&!document.querySelector('[data-va-flow-root]');adapter.stop();return result;
+ });
+ await replacement.close();
+ console.log(JSON.stringify({lateHome,replacedControl}));
+ assert.deepEqual(lateHome,{waiting:true,homeContract:true,mounted:true,registrations:1,privateHidden:true});
+ assert.deepEqual(replacedControl,{initial:true,oldProofRejected:true,recovered:true,sameFrames:true,registrations:1,draft:true,newProof:true,changedStructureRejected:true,landmarkReplacement:true,oldJoinRejected:true,freshGrantResumes:true,failedProofHidden:true,restoredProofRejoins:true,restoredProofResumes:true,revoked:true});
+ }
  // The home adapter admits the welcome/composer landmarks without claiming
  // that they exhaust their common parent. Replay an additional native flow
  // member, not a purported capture of the user's unidentified extra branch.
@@ -329,7 +397,7 @@ try{
   const state=await editor.evaluate(()=>{const p=editorProbe;return {shown:p.surface.visibility(p.handle).workspace,mode:p.controller.localStatus(),sameFrames:p.frames.every((f,i)=>p.surface.frames(p.handle)[i]?.frame===f),drafts:p.plain.value==='plain draft'&&p.rich.textContent==='rich draft',nodes:p.plain.isConnected&&p.rich.isConnected,returnRemoved:!document.querySelector('[aria-label="返回工作空间"]')};});
   assert.deepEqual(state,{shown:true,mode:'ready',sameFrames:true,drafts:true,nodes:true,returnRemoved:true});
  }
- const inactiveIdentity=await editor.evaluate(()=>{const {controller,surface,handle,adapter,rich}=editorProbe;controller.showReading();rich.remove();return {same:surface.isSameNativeRegions(handle),refreshed:!!surface.refreshNativeBaseline(handle,()=>adapter.inspect())};});assert.deepEqual(inactiveIdentity,{same:false,refreshed:false});
+ const inactiveIdentity=await editor.evaluate(()=>{const {controller,surface,handle,adapter,rich}=editorProbe;controller.showReading();rich.remove();return {same:surface.isSameNativeRegions(handle),refreshed:!!surface.refreshNativeBaseline(handle,()=>adapter.inspect())};});assert.deepEqual(inactiveIdentity,{same:false,refreshed:true});
  await editor.evaluate(()=>{editorProbe.controller.stop();editorProbe.adapter.stop();});await editor.close();
  // CSS-only breakpoint counterexample, not a newly observed ChatGPT topology.
  // The native fixture is explicitly responsive and all its controls fit.
