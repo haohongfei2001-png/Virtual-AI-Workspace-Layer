@@ -27,22 +27,40 @@ try{
   await adapter.start({binding,emit:async p=>({state:'accepted',localSeq:p.localSeq,receiptId:'home-members'})});
   const parent=document.querySelector('[role=main]'),editor=parent.querySelector('textarea'),branch=document.createElement('section'),button=document.createElement('button'),hidden=document.createElement('div');
   parent.style.marginTop='52px';for(const node of [parent.querySelector('.home-composer-anchor'),parent.querySelector('form')]){node.style.position='relative';node.style.top='auto';}
-  branch.id='native-extra';branch.style.cssText='padding:12px;box-sizing:border-box';button.type='button';button.textContent='Native extra action';branch.append(button);parent.append(branch);hidden.hidden=true;parent.append(hidden);
+  branch.id='native-extra';branch.style.cssText='padding:12px;box-sizing:border-box';button.type='button';button.textContent='Native extra action';
+  // A retained native action can include a static clipped icon. This is a
+  // local contract counterexample, not the unidentified real-page branch.
+  const icon=document.createElementNS('http://www.w3.org/2000/svg','svg'),path=document.createElementNS(icon.namespaceURI,'path');
+  icon.id='native-extra-icon';icon.setAttribute('viewBox','0 0 16 16');icon.setAttribute('width','16');icon.setAttribute('height','16');icon.setAttribute('aria-hidden','true');icon.style.cssText='overflow:hidden;vertical-align:middle';path.setAttribute('d','M2 2H14V14H2Z');icon.append(path);button.prepend(icon);
+  branch.append(button);parent.append(branch);hidden.hidden=true;parent.append(hidden);
   let clicks=0;button.addEventListener('click',()=>clicks++);
   const original=parent.outerHTML,inspection=adapter.inspect();
   surface=createFlowMountSurface({document,createFrameURL:({role})=>'chrome-extension://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/'+role+'.html'});
   let handle;try{handle=await surface.mount({binding},inspection);}catch(e){adapter.stop();return {adapterReady:inspection.ok,reason:e.message};}
   const shown=surface.showWorkspace(handle),safe=surface.validateActiveLayout(handle),workspace=surface.frames(handle).find(f=>f.role==='workspace').frame.parentElement;
-  globalThis.nativeMemberProbe={adapter,surface,handle,parent,editor,branch,button,hidden,original,inspection,binding,captureNativeBaseline,clicks:()=>clicks,workspace};
+  globalThis.nativeMemberProbe={adapter,surface,handle,parent,editor,branch,button,icon,path,hidden,original,inspection,binding,captureNativeBaseline,clicks:()=>clicks,workspace};
   return {adapterReady:inspection.ok,returnReady:inspection.roles.return.available,shown,safe,nativeAfterComposer:branch.getBoundingClientRect().top>=editor.closest('form').getBoundingClientRect().bottom,retained:branch.parentElement===parent&&button.parentElement===branch&&getComputedStyle(branch).display!=='contents'&&hidden.hidden};
  });
  assert.deepEqual(retainedHome,{adapterReady:true,returnReady:true,shown:true,safe:true,nativeAfterComposer:true,retained:true});
  await members.getByRole('button',{name:'Native extra action',exact:true}).click();
  assert.equal(await members.evaluate(()=>nativeMemberProbe.clicks()),1);
  const retainedGuards=await members.evaluate(async()=>{
-  const p=nativeMemberProbe,{surface,handle,branch,button,hidden,parent,editor}=p,tick=()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+  const p=nativeMemberProbe,{surface,handle,branch,button,icon,path,hidden,parent,editor}=p,tick=()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
   surface.showReading(handle);
   const capture=()=>p.captureNativeBaseline({document,inspection:p.inspection,isOwnedSurface:n=>surface.isOwnedSurface(n)});
+  const iconStyle=icon.getAttribute('style'),pathData=path.getAttribute('d');
+  icon.style.overflow='visible';const unclippedIconRejected=capture()===null;
+  icon.style.overflow='clip';icon.style.overflowClipMargin='100px';const expandedClipRejected=capture()===null;icon.setAttribute('style',iconStyle);
+  const rejectedGraphics=[];
+  for(const tag of ['use','foreignObject','animate']){const node=document.createElementNS(icon.namespaceURI,tag);icon.append(node);rejectedGraphics.push(capture()===null);node.remove();}
+  path.setAttribute('d','M-100 -100H100V100H-100Z');const clippedOversizeAccepted=!!capture();path.setAttribute('d',pathData);
+  // The final retained member is a hidden empty leaf. Model an expensive last
+  // style read without sleeping or changing any native node: passing earlier
+  // budget checks must not authorize a result produced after the deadline.
+  const nativeStyle=window.getComputedStyle,ownNow=Object.getOwnPropertyDescriptor(performance,'now');let clock=0,hiddenReads=0,lateDeadlineRejected;
+  Object.defineProperty(performance,'now',{configurable:true,value:()=>clock});
+  window.getComputedStyle=(node,pseudo)=>{const result=nativeStyle.call(window,node,pseudo);if(node===hidden&&++hiddenReads===3)clock=26;return result;};
+  try{lateDeadlineRejected=capture()===null;}finally{window.getComputedStyle=nativeStyle;if(ownNow)Object.defineProperty(performance,'now',ownNow);else delete performance.now;}
   const rule=document.createElement('style');document.head.append(rule);
   rule.textContent='#native-extra{position:absolute}';const absoluteRejected=capture()===null;
   rule.textContent='#native-extra button{position:fixed}';const escapeRejected=capture()===null;rule.remove();
@@ -55,6 +73,8 @@ try{
   const reading=p.inspection.reading,composer=p.inspection.composer;
   parent.prepend(composer);const conflict=document.createElement('div');conflict.style.cssText='height:20px';composer.after(conflict);const orderRejected=capture()===null;conflict.remove();reading.after(composer);
   const resumed=surface.showWorkspace(handle)&&surface.validateActiveLayout(handle);
+  icon.style.overflow='visible';await tick();const clipChangeSurrendered=!surface.visibility(handle).workspace;
+  icon.setAttribute('style',iconStyle);surface.showReading(handle);const clipRestored=surface.showWorkspace(handle)&&surface.validateActiveLayout(handle);
   const css=document.createElement('style');document.head.append(css);await tick();
   css.sheet.insertRule('#native-extra button{position:relative;left:1200px}');
   await tick();const cssomSurrendered=!surface.visibility(handle).workspace;
@@ -63,9 +83,9 @@ try{
   surface.showReading(handle);surface.showWorkspace(handle);
   const replacement=branch.cloneNode(true);branch.replaceWith(replacement);await tick();const replacementRejected=!surface.isSameNativeRegions(handle)&&!surface.visibility(handle).workspace;replacement.replaceWith(branch);
   surface.dispose(handle);p.adapter.stop();
-  return {absoluteRejected,escapeRejected,textOverflowRejected,pseudoRejected,markerRejected,strokeRejected,orderRejected,resumed,cssomSurrendered,returned,hiddenChangeSurrendered,replacementRejected,restored:parent.outerHTML===p.original&&editor===parent.querySelector('textarea')&&editor.value==='fixture draft'};
+  return {unclippedIconRejected,expandedClipRejected,rejectedGraphics,clippedOversizeAccepted,lateDeadlineRejected,clipChangeSurrendered,clipRestored,absoluteRejected,escapeRejected,textOverflowRejected,pseudoRejected,markerRejected,strokeRejected,orderRejected,resumed,cssomSurrendered,returned,hiddenChangeSurrendered,replacementRejected,restored:parent.outerHTML===p.original&&editor===parent.querySelector('textarea')&&editor.value==='fixture draft'&&icon===button.querySelector('svg')&&path===icon.firstChild};
  });
- assert.deepEqual(retainedGuards,{absoluteRejected:true,escapeRejected:true,textOverflowRejected:true,pseudoRejected:true,markerRejected:true,strokeRejected:true,orderRejected:true,resumed:true,cssomSurrendered:true,returned:true,hiddenChangeSurrendered:true,replacementRejected:true,restored:true});
+ assert.deepEqual(retainedGuards,{unclippedIconRejected:true,expandedClipRejected:true,rejectedGraphics:[true,true,true],clippedOversizeAccepted:true,lateDeadlineRejected:true,clipChangeSurrendered:true,clipRestored:true,absoluteRejected:true,escapeRejected:true,textOverflowRejected:true,pseudoRejected:true,markerRejected:true,strokeRejected:true,orderRejected:true,resumed:true,cssomSurrendered:true,returned:true,hiddenChangeSurrendered:true,replacementRejected:true,restored:true});
  const overlapRejected=await members.evaluate(async()=>{
   const p=nativeMemberProbe,branch=document.createElement('div');branch.style.cssText='height:40px;position:relative;top:-24px';p.parent.append(branch);
   const surface=flowModule.createFlowMountSurface({document,createFrameURL:({role})=>'chrome-extension://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/'+role+'.html'});

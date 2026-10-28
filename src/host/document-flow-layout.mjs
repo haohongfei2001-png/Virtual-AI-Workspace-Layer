@@ -10,6 +10,11 @@ const overlaps = (a,b) => a.x < b.x+b.width && b.x < a.x+a.width && a.y < b.y+b.
 const attrs = node => ['class','style','hidden','aria-hidden','role','tabindex','contenteditable','inert'].map(key=>node.getAttribute(key));
 const plain = node => ['DIV','MAIN','SECTION'].includes(node.tagName) && !node.shadowRoot && !node.matches('[tabindex],[contenteditable],[inert],[hidden],[aria-hidden="true"],a,button,input,textarea,select');
 const controls = 'a[href],button,input,textarea,select,[tabindex],[contenteditable]:not([contenteditable="false"]),[role]:not([role="none"]):not([role="presentation"])';
+const htmlNamespace='http://www.w3.org/1999/xhtml',svgNamespace='http://www.w3.org/2000/svg';
+// Only directly embedded, static inline graphics. Referenced trees (<use>,
+// including local references), foreign content and animation are not covered
+// by childNodes or by the native member's identity proof.
+const inlineGraphics=new Set(['g','path','rect','circle','ellipse','line','polyline','polygon','title','desc']);
 // The observed viewport contract permits empty native markers. Only an
 // already display:none marker is inert to grid layout: a visible zero-size
 // element can create a new track/gap. Never style or relocate these nodes.
@@ -34,24 +39,36 @@ function retainedPaint(member,doc,{viewport=false,budget={started:doc.defaultVie
  const hidden=win.getComputedStyle(root).display==='none';
  if(hidden!==member.hidden||!hidden&&(!positive(box)||viewport&&(box.x<0||box.y<0||box.x+box.width>win.innerWidth+1||box.y+box.height>win.innerHeight+1)))return false;
  const range=doc.createRange();
- function walk(node,absent){
+ function walk(node,absent,graphic=null){
   if(++budget.nodes>128||win.performance.now()-budget.started>25)return false;
-  if(node.nodeType===3){if(absent)return true;range.selectNodeContents(node);for(const r of range.getClientRects())if(++budget.rectangles>256||win.performance.now()-budget.started>25||!inside({x:r.x,y:r.y,width:r.width,height:r.height}))return false;return true;}
+  if(node.nodeType===3){if(absent||graphic)return true;range.selectNodeContents(node);for(const r of range.getClientRects())if(++budget.rectangles>256||win.performance.now()-budget.started>25||!inside({x:r.x,y:r.y,width:r.width,height:r.height}))return false;return true;}
   if(node.nodeType!==1)return true;
-  if(node.shadowRoot||node.localName.includes('-')||node.namespaceURI!=='http://www.w3.org/1999/xhtml'||node.matches('iframe,object,embed,canvas,video,audio'))return false;
+  if(node.shadowRoot||node.localName.includes('-'))return false;
+  const svg=node.namespaceURI===svgNamespace;
+  if(svg){
+   if(graphic){if(!inlineGraphics.has(node.localName))return false;}
+   else {if(node===root||node.localName!=='svg'||node.parentElement?.namespaceURI!==htmlNamespace)return false;graphic=node;}
+  }else if(graphic||node.namespaceURI!==htmlNamespace||node.matches('iframe,object,embed,canvas,video,audio'))return false;
   const s=win.getComputedStyle(node);absent||=s.display==='none';
   if(!absent){
    if(!['static','relative'].includes(s.position)||s.cssFloat!=='none'||s.visibility!=='visible'||s.opacity!=='1'||s.zoom!=='1'||s.animationName!=='none'||s.display==='list-item'||s.webkitTextStrokeWidth!=='0px'||s.textDecorationLine!=='none'||node===root&&!['block','flow-root','flex','grid','inline-block'].includes(s.display)||['transform','translate','rotate','scale','filter','backdropFilter','clipPath','maskImage','offsetPath','boxShadow','textShadow','borderImageSource'].some(k=>s[k]!=='none'))return false;
    if(['::before','::after'].some(p=>!['none','normal'].includes(win.getComputedStyle(node,p).content)))return false;
-   const b=rect(node);if(!inside(b))return false;
+   if(svg&&(['markerStart','markerMid','markerEnd'].some(k=>s[k]!=='none')||[s.fill,s.stroke].some(value=>/url\(/i.test(value))))return false;
+   const b=!svg||node===graphic?rect(node):null;
+   // The real SVG viewport clips all allowed descendants, even oversized
+   // paths/strokes. `clip` is not equivalent: overflow-clip-margin can extend
+   // its paint. Root effects and outline still need the surrounding HTML proof.
+   if(node===graphic&&(s.display==='contents'||s.overflowX!=='hidden'||s.overflowY!=='hidden'||!positive(b)))return false;
+   if((!svg||node===graphic)&&!inside(b))return false;
    if(!['none','hidden'].includes(s.outlineStyle)&&s.outlineWidth!=='0px'){
+    if(svg&&node!==graphic)return false;
     const outset=Math.max(0,Number.parseFloat(s.outlineWidth)+Number.parseFloat(s.outlineOffset));
     if(!Number.isFinite(outset)||!inside({x:b.x-outset,y:b.y-outset,width:b.width+2*outset,height:b.height+2*outset}))return false;
    }
   }
-  return [...node.childNodes].every(child=>walk(child,absent));
+  return [...node.childNodes].every(child=>walk(child,absent,graphic));
  }
- return walk(root,hidden);
+ return walk(root,hidden)&&win.performance.now()-budget.started<=25;
 }
 
 // Keep the existing landmark order, and also preserve each retained member's

@@ -1,5 +1,15 @@
 # VAIWL实际状态：渐进积累工程已接线，真实来源逐项待准入
 
+## 2026-10-29 撤回逐次实机激活请求，补齐原生静态图标兼容
+
+用户明确拒绝继续充当逐次启动测试员；上一条 e889… 手动 Reload 请求撤回。本轮仅本地源码、只读独立复核及既有隔离 headless 回归，未操作日常 Chrome、更新原安装或请求采集。原注册目录仍是此前已备份的 e889…；最后可信运行证据仍为 b2b778…，不能以磁盘文件推定运行版本。
+
+现有额外原生流成员回归只覆盖文字和普通按钮，`retainedPaint` 又一律拒绝 SVG；加入静态裁剪图标后明确复现 `native-flow-branch-paint`。正式实现现仅接受 HTML 成员内直接嵌入、两轴 overflow:hidden 的静态 SVG，保留原节点/顺序/处理器；共享节点、文字矩形和25ms预算不变。引用树、foreignObject、动画、URL绘制、标记、越界及未知效果仍拒绝，裁剪失效沿原活动态证明让位。独立复核进一步发现最后叶节点读取可越过截止时间而仍被接受，已用可复现反例补齐最终截止检查，并去掉内部图形无必要的几何读取。
+
+原反例及最终文档流回归通过，非作者复核无剩余阻断。最终同源码正式隔离 MV3 报告 `/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-6WWdK7/report.json`，验证原生图标/按钮、首次输入、主题成员阅读/返回、布局保存恢复、撤权和隔离卸载；203项构建源码逐项一致、无浏览器异常。原 RED 与最终日志为 `/private/tmp/vaiwl-retained-icon-red-20261029.log`、`/private/tmp/vaiwl-retained-deadline-red-20261029.log`、`/private/tmp/vaiwl-retained-icon-final-20261029.log`。已查看受影响首页的正式 renderer 图，但原生宿主是匿名夹具，不作为真实整屏设计通过。
+
+该静态图标是明确标注的本地兼容反例，**不是用户实际未知主区分支的取证**。没有足够证据宣称真实首页已经修好，不把这一批离线结果转为又一次人工试错要求；修复后 Mac NOT_RUN、完整产品 NOT_ACCEPTED。旧库、草稿、三份 stash 和全部备份保持，不另发所谓最终产品候选。
+
 2026-10-29 集中修复激活准备：原分支及 PR16 已同步到 `ad6c3974`。完成关联代码复核后，将同一 `e8896cace4fb…` 包写入原注册目录；先逐文件验证完整2954文件备份，再仅更新 `content.js`、三份正式源文件及构建清单，202项包文件匹配、2752项额外文件保留，清单/权限不变。回执 `/private/tmp/vaiwl-native-flow-continuity-install-receipt-20261029.json`，备份 `.git/vaiwl-artifacts/install-backups/native-flow-continuity-20261029-030532/`。未控制浏览器或执行 Reload，最后可信运行回执仍是用户提供的 `b2b778… / native-flow-uncovered-branch`；新包真实激活 UNKNOWN、修复后实机 NOT_RUN、产品 NOT_ACCEPTED。旧库、草稿和 stash 未动。不重跑旧 UI10 矩阵：其已记录窄屏失败包含原生夹具自身控件越界，不能据此放宽正式保护。
 
 ## 2026-10-29 原生管理区可用性变化不再丢失正式成员入口

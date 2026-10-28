@@ -108,8 +108,11 @@ try{
    // relax the return-gap proof to accept a pre-existing header occluder.
    parent.style.marginTop='52px';for(const node of [parent.querySelector('.home-composer-anchor'),parent.querySelector('form')]){node.style.position='relative';node.style.top='auto';}
    const branch=document.createElement('section'),button=document.createElement('button'),hidden=document.createElement('div');
-   branch.style.cssText='padding:12px;box-sizing:border-box';button.type='button';button.textContent='Native auxiliary action';branch.append(button);hidden.hidden=true;parent.append(branch,hidden);
-   window.nativeFlowExtra={branch,button,hidden,parent,clicks:0};button.addEventListener('click',()=>window.nativeFlowExtra.clicks++);
+   branch.style.cssText='padding:12px;box-sizing:border-box';button.type='button';button.textContent='Native auxiliary action';
+   const icon=document.createElementNS('http://www.w3.org/2000/svg','svg'),path=document.createElementNS(icon.namespaceURI,'path');
+   icon.setAttribute('viewBox','0 0 16 16');icon.setAttribute('width','16');icon.setAttribute('height','16');icon.setAttribute('aria-hidden','true');icon.style.cssText='overflow:hidden;vertical-align:middle';path.setAttribute('d','M2 2H14V14H2Z');icon.append(path);button.prepend(icon);
+   branch.append(button);hidden.hidden=true;parent.append(branch,hidden);
+   window.nativeFlowExtra={branch,button,icon,hidden,parent,clicks:0};button.addEventListener('click',()=>window.nativeFlowExtra.clicks++);
   },{once:true});});
   report.images=[];
   for(const [scene,path] of [['project','/g/'+P+'/project'],['home','/'],['conversation','/c/'+B]]){
@@ -131,8 +134,8 @@ try{
    }
    if(scene==='home'){
     await page.getByRole('button',{name:'Native auxiliary action',exact:true}).click();
-    report.checks.retainedHomeMember=await page.evaluate(()=>{const p=window.nativeFlowExtra;return {sameParents:p.branch.parentElement===p.parent&&p.button.parentElement===p.branch&&p.hidden.parentElement===p.parent,nativeClick:p.clicks===1,hiddenUntouched:p.hidden.outerHTML==='<div hidden=""></div>',workspaceVisible:[...document.querySelectorAll('[id$="_workspace"][data-va-owned]')].some(n=>getComputedStyle(n).display!=='none')};});
-    assert.deepEqual(report.checks.retainedHomeMember,{sameParents:true,nativeClick:true,hiddenUntouched:true,workspaceVisible:true});
+    report.checks.retainedHomeMember=await page.evaluate(()=>{const p=window.nativeFlowExtra;return {sameParents:p.branch.parentElement===p.parent&&p.button.parentElement===p.branch&&p.icon.parentElement===p.button&&p.hidden.parentElement===p.parent,nativeClick:p.clicks===1,inlineGraphicRetained:p.button.querySelector('svg')===p.icon&&getComputedStyle(p.icon).overflowX==='hidden',hiddenUntouched:p.hidden.outerHTML==='<div hidden=""></div>',workspaceVisible:[...document.querySelectorAll('[id$="_workspace"][data-va-owned]')].some(n=>getComputedStyle(n).display!=='none')};});
+    assert.deepEqual(report.checks.retainedHomeMember,{sameParents:true,nativeClick:true,inlineGraphicRetained:true,hiddenUntouched:true,workspaceVisible:true});
    }
    const image=join(dir,'flow-'+scene+'.png');await page.screenshot({path:image});report.images.push(image);
    const draft=await page.locator('textarea').inputValue();
