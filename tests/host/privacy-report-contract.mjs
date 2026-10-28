@@ -22,9 +22,10 @@ export function assertPrivacyReport(report){
   const c=report.checks;assert.equal(c.authenticatedFailure.armed,false);assert.equal(c.authenticatedFailure.authenticatedFailures,1);
   assert.deepEqual(c.failureTerminal,{operation:'HOST_UI_CALIBRATION_ENTRY',started:1,finished:1,state:'unavailable'});
   assert.equal(c.nativeDraftRetained,true);assert.equal(c.nativeBodyPresent,true);database(c.rawIDB);
-  assert.equal(c.surfaces.length,2);c.surfaces.forEach(s=>assertCleanPrivacyScan(s,{nonempty:true}));
-  assert.deepEqual(c.uiMessageCoverage,['EXISTING_FRAME_OBSERVED','EXISTING_FRAME_OBSERVED']);
-  assert.equal(c.observers.length,4);for(const o of c.observers){assertCleanPrivacyScan(o.messages);assertCleanPrivacyScan(o.logs);}
+  const roles=c.mountedRoles;assert(Array.isArray(roles)&&roles.includes('workspace')&&roles.length<=2&&new Set(roles).size===roles.length&&roles.every(r=>['workspace','sidebar'].includes(r)),'invalid-mounted-ui-roles');
+  assert.equal(c.surfaces.length,roles.length);c.surfaces.forEach(s=>assertCleanPrivacyScan(s,{nonempty:true}));
+  assert.deepEqual(c.uiMessageCoverage,roles.map(()=>'EXISTING_FRAME_OBSERVED'));
+  assert.equal(c.observers.length,roles.length+2);for(const o of c.observers){assertCleanPrivacyScan(o.messages);assertCleanPrivacyScan(o.logs);}
   assertCleanPrivacyScan(c.nativeConsole);assert(c.war.allowedCount>2);assert.deepEqual(c.war.privateDenied,[true,true,true]);assertCleanPrivacyScan(c.war.scan,{nonempty:true});
   assert.equal(c.workerNetworkBoundary.blocked,true);assert.equal(c.workerNetworkBoundary.secondLoopbackHits,0);
  }else{

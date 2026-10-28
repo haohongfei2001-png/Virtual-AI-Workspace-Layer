@@ -1,5 +1,13 @@
 # VAIWL实际状态：渐进积累工程已接线，真实来源逐项待准入
 
+## 2026-10-28 当前项目跨主题分页保留成员窗口（原安装不变）
+
+正式 navigation 的页外当前项目例外未贯通成员窗口：切换其他项目页时，已展开17条或翻至第二页的当前项目被重置为首5条。两个反例先失败，现仅让 owner 确认的当前 sidebar 项目携带原有窗口描述符，回复仍重新读取真实数据；手动折叠不读取隐藏成员，当前项目改变后旧项目不再享有例外，workspace及scope/session清除规则不变。定向反例与关联投影/分页合同通过，非作者只读复核未发现回归。证据 `/private/tmp/vaiwl-pinned-window-{before,after}.log`、`/private/tmp/vaiwl-flow-retention-contracts.log`。正式renderer浏览器回归 `/private/tmp/vaiwl-pinned-window-renderer.log` 通过；已查看桌面/窄屏图，长标题、自然高度卡片及展开聊天未溢出，仍只证明自有renderer，非真实ChatGPT整屏验收。
+
+原隐私runner的双私人Popover前置已迁移为实际文档流角色，并要求采样期间每个frame身份稳定、全部观察器与数据sink完整。现有隔离认证失败旅程 `/private/tmp/vaiwl-privacy-flow-final.json` 通过，仅 `PARTIAL_MAIN_AUTH_METADATA_FAILURE`、`mountedRoles=[workspace]`，不证明sidebar或完整SYS07。UI10仅补齐既有拒外网代理；LEGACY 420px原生控件越界仍FAIL，未放宽生产保护。历史CI整体不改PASS。
+
+本批未操作日常Chrome、改安装或读取旧库；原扩展ID、草稿、备份和stash保持。运行构建UNKNOWN、真实Mac NOT_RUN、完整产品NOT_ACCEPTED；成员窗口修复不替代真实启动和产品体验证据。
+
 ## 2026-10-28 原生管理内部滚动与流式集成前提（原安装不变）
 
 已复现并修复F-01通知缺口：明确展开的原生Project管理面板内部滚动后，可见重复成员改变，但没有DOM变更，正式侧栏仍使用旧去重集合。现只在原管理root捕获内部scroll，按帧合并后通知实际集合变化；不建立展开意图、不监听外NAV、不改变私人授权，停止时取消待发通知。反例前后见 `/private/tmp/vaiwl-management-scroll-{before,after}.log`，正式renderer交互回归见 `/private/tmp/vaiwl-management-renderer.log`；独立只读复核通过。这是现有合同的离线反例，不声称已经观察到真实ChatGPT此种内部滚动。

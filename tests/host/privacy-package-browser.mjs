@@ -49,12 +49,23 @@ try{
  page.on('pageerror',error=>nativeLogs.scan({name:error.name,message:error.message,stack:error.stack}));
  await page.goto(server.origin+'/c/33333333-3333-4333-8333-333333333333');
  phase='initial-native-mount';
- await page.waitForFunction(()=>document.querySelectorAll('[data-va-owned]:popover-open').length===2,null,{timeout:20000});
+ // Private UI now lives in document flow. Empty exit switches are not proof
+ // that either private renderer is displayed or ready for the privacy scan.
+ await page.waitForFunction(()=>{
+  const node=document.querySelector('[data-va-owned][id$="_workspace"]:not([popover])');
+  return node&&getComputedStyle(node).display!=='none'&&getComputedStyle(node).visibility==='visible'&&node.getBoundingClientRect().height>=96;
+ },null,{timeout:20000});
  const workspace=page.frames().find(f=>f.url()===`chrome-extension://${id}/workspace.html`);assert(workspace);
  await workspace.getByText('Ordinary conversation',{exact:true}).waitFor({timeout:20000});
+ const mountedUI=()=>page.frames().filter(f=>f.url().startsWith(`chrome-extension://${id}/`)).sort((a,b)=>a.url().localeCompare(b.url()));
+ const initialFrames=mountedUI(),roles=initialFrames.map(f=>f.url().slice(`chrome-extension://${id}/`.length).replace(/\.html$/,''));
+ assert(roles.includes('workspace')&&roles.length<=2&&new Set(roles).size===roles.length&&roles.every(role=>['workspace','sidebar'].includes(role)),'invalid-mounted-ui-roles');
+ // A native region without a proven NAV slot has no sidebar frame. Scan every
+ // actual role and require the same frame instances throughout this sample.
+ report.checks.mountedRoles=roles;
  const worker=context.serviceWorkers().find(w=>w.url().startsWith(`chrome-extension://${id}/`));assert(worker);
  await worker.evaluate(installer);
- for(const frame of page.frames().filter(f=>f.url().startsWith(`chrome-extension://${id}/`)))await frame.evaluate(installer);
+ for(const frame of initialFrames)await frame.evaluate(installer);
  const session=await context.newCDPSession(page),worlds=[];session.on('Runtime.executionContextCreated',e=>worlds.push(e.context));await session.send('Runtime.enable');
  const contentWorld=worlds.find(w=>w.origin===`chrome-extension://${id}`);assert(contentWorld,'missing-content-observation-world');
  const installed=await session.send('Runtime.evaluate',{contextId:contentWorld.id,expression:installer});assert(!installed.exceptionDetails);
@@ -81,7 +92,8 @@ try{
  },{source:createPrivacyScanner.toString(),secrets:sentinels});
  assert.equal(scan.databases.length,1);assert.deepEqual(scan.databases[0].stores.sort(),['refs','operations','b23_states','b23_operations','b23_checkpoints','b23_views','native_states','native_operations'].sort());assert(Object.values(scan.databases[0].counts).reduce((a,b)=>a+b,0)>0);clean(scan.scan);report.checks.rawIDB=scan;
  phase='extension-surfaces-and-observer-scan';
- const frames=page.frames().filter(f=>f.url().startsWith(`chrome-extension://${id}/`));assert.equal(frames.length,2);
+ const frames=mountedUI();assert.equal(frames.length,initialFrames.length);
+ assert(frames.every((frame,i)=>frame===initialFrames[i]&&!frame.isDetached()),'mounted-ui-replaced-during-privacy-observation');
  report.checks.surfaces=[];
  for(const frame of frames){const surface=await evaluateRealm(frame,({source,secrets})=>{const scanner=(0,eval)(`(${source})`)(secrets);function walk(root){scanner.scan(root.textContent??'');for(const node of root.querySelectorAll('*')){for(const attr of node.attributes)scanner.scan(attr.value);if('value'in node)scanner.scan(node.value);if(node.shadowRoot)walk(node.shadowRoot);}}walk(document);return scanner.snapshot();},{source:createPrivacyScanner.toString(),secrets:sentinels});clean(surface);report.checks.surfaces.push(surface);}
  const observe=()=>globalThis.__privacyAudit?{counts:{...__privacyAudit.counts},messages:__privacyAudit.messages.snapshot(),logs:__privacyAudit.logs.snapshot()}:null;

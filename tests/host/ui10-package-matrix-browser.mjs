@@ -17,13 +17,14 @@ import {createVariantHostFixtureServer} from './fixtures/variants-server.mjs';
 import {packageHost,verifyHost} from '../../extension/package.mjs';
 import {UI10_PROFILES,UI10_LONG_CHINESE,configureUi10Environment,observeUi10Shell,ui10PreparationReport} from './ui10-matrix-contract.mjs';
 import {ui10PackageOptions,ui10Entry,ui10Sequence} from './ui10-package-sequence.mjs';
+import {createHistoricalNetworkGuard,historicalNetworkGuardArgs} from './historical-network-guard.mjs';
 
 const output=process.argv[2];assert(output,'output-json-path-required');
 const runInteractions=process.env.FREE_UI10_INTERACTIONS==='1';
 const profiles=process.argv[3]?[process.argv[3]]:[...UI10_PROFILES];
 assert(profiles.every(p=>UI10_PROFILES.includes(p)),'unsupported-ui10-profile');
 const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
-const testFiles=['ui10-capture-preparation.mjs','ui10-visual-png-log.mjs','ui10-horizon-commit.mjs','ui10-visible-title.mjs','ui10-interaction-matrix.mjs','ui10-dom-contract.mjs','ui10-interaction-readiness.mjs','ui10-package-matrix-browser.mjs','ui10-package-sequence.mjs','ui10-matrix-contract.mjs','fixtures/variants-server.mjs','fixtures/ui10-conversation-title.mjs'];
+const testFiles=['ui10-capture-preparation.mjs','ui10-visual-png-log.mjs','ui10-horizon-commit.mjs','ui10-visible-title.mjs','ui10-interaction-matrix.mjs','ui10-dom-contract.mjs','ui10-interaction-readiness.mjs','ui10-package-matrix-browser.mjs','ui10-package-sequence.mjs','ui10-matrix-contract.mjs','fixtures/variants-server.mjs','fixtures/ui10-conversation-title.mjs','historical-network-guard.mjs'];
 const testHashes=async()=>Object.fromEntries(await Promise.all(testFiles.map(async name=>[name,hash(await readFile(new URL(name,import.meta.url)))])));
 const report={...ui10PreparationReport(),kind:'PACKAGED_MV3_UI10_LAYOUT_SUBCONTRACT_CANDIDATE',status:'NOT_RUN',profiles:[],testHashesBefore:await testHashes()};
 
@@ -31,14 +32,15 @@ const visualCaptures=[];
 async function runProfile(profile,titleMode='all'){
  const result={profile,titleMode,status:'NOT_RUN',steps:[],errors:[],fullV27Acceptance:'NOT_ESTABLISHED',physicalKeyboard:'NOT_RUN',physicalIME:'NOT_RUN'};
  report.profiles.push(result);
- let server,context,page,built,info,manifestHash;
+ let server,context,page,built,info,manifestHash,guard;
  try{
   server=profile==='LEGACY'?await createHostFixtureServer({profile}):await createVariantHostFixtureServer({profile,ui10FullSidebar:true,ui10ConversationTitle:titleMode==='long-Chinese'?UI10_LONG_CHINESE:null});assert.equal(server.manifest.profile,profile);result.fixture=server.manifest;
   const dir=await mkdtemp(join(tmpdir(),'vaiwl-ui10-'));result.artifactDirectory=dir;
   built=packageHost(join(dir,'package'),ui10PackageOptions(profile,server.origin));result.package=built;
   const manifestBytes=await readFile(join(built.unpacked,'build-manifest.json'));manifestHash=hash(manifestBytes);info=JSON.parse(manifestBytes);result.sourceHashes=info.sourceHashes;
   assert.equal(verifyHost(built.unpacked).status,'OFFLINE_HOST_RECONSTRUCTION');
-  context=await chromium.launchPersistentContext(join(dir,'profile'),{headless:true,viewport:{width:1440,height:1000},executablePath:process.env.FREE_CHROME_EXECUTABLE??'/usr/bin/chromium',ignoreDefaultArgs:['--disable-extensions'],args:['--enable-unsafe-extension-debugging']});
+  guard=await createHistoricalNetworkGuard({fixtureOrigin:server.origin});
+  context=await chromium.launchPersistentContext(join(dir,'profile'),{headless:true,viewport:{width:1440,height:1000},executablePath:process.env.FREE_CHROME_EXECUTABLE??'/usr/bin/chromium',ignoreDefaultArgs:['--disable-extensions'],args:['--enable-unsafe-extension-debugging',...historicalNetworkGuardArgs(guard.config)]});
   await context.route('**/*',route=>route.request().url().startsWith(server.origin+'/')||route.request().url().startsWith('chrome-extension://')?route.continue():route.abort());
   const cdp=await context.browser().newBrowserCDPSession(),{id}=await cdp.send('Extensions.loadUnpacked',{path:built.unpacked});
   const worker=context.serviceWorkers().find(w=>w.url().startsWith(`chrome-extension://${id}/`))??await context.waitForEvent('serviceworker');
@@ -107,6 +109,7 @@ async function runProfile(profile,titleMode='all'){
  finally{
   try{if(info){result.sourceChangedDuringRun=(await Promise.all(Object.entries(info.sourceHashes).map(async([path,h])=>hash(await readFile(path))!==h))).some(Boolean);result.buildManifestUnchanged=hash(await readFile(join(built.unpacked,'build-manifest.json')))===manifestHash;if(result.sourceChangedDuringRun||!result.buildManifestUnchanged){result.status='FAIL';result.error=(result.error??'')+' source-or-package-changed';process.exitCode=1;}}}catch(error){result.status='FAIL';result.error=(result.error??'')+' '+error.stack;process.exitCode=1;}
   try{await context?.close();}catch(error){result.status='FAIL';result.cleanupError=error.message;process.exitCode=1;}
+  try{await guard?.close();}catch(error){result.status='FAIL';result.cleanupError=(result.cleanupError??'')+' '+error.message;process.exitCode=1;}
   try{await server?.close();}catch(error){result.status='FAIL';result.cleanupError=(result.cleanupError??'')+' '+error.message;process.exitCode=1;}
   if(result.status==='FAIL')for(const cell of report.cells)if(cell.profile===profile&&(titleMode==='all'||cell.title===titleMode)&&cell.nativeEvidence==='PASS_LAYOUT_SUBCONTRACT_ONLY')cell.nativeEvidence='OBSERVED_LAYOUT_NOT_ACCEPTED_PROFILE_FAILED';
  }

@@ -121,6 +121,38 @@ test('current Project outside the page is expanded with members and explicit col
  const invalid=structuredClone(value);invalid.current.projectId='P1';assert.throws(()=>f.nav.updateFrameProjection(invalid),/invalid-frame-current-project/);
 });
 
+for(const paged of [false,true])test(`pinned current Project retains its fresh member window across other Project pages (paged=${paged})`,async t=>{
+ const calls=[];let stamp='before',currentProjectId='P2';
+ const owner=q=>{
+  const effective=paged&&q.groupId==='P2'&&q.list==='current'&&q.rowLimit===17?{...q,rowLimit:5}:q;
+  const value=response(effective,'scopeA',stamp);value.role='sidebar';
+  if(paged&&value.selection?.groupId==='P2')value.selection.paged=true;
+  const all=value.groups.items,offset=q.offset??0;
+  value.groups={...value.groups,items:all.slice(offset,offset+1),offset,limit:1,total:2,hasMore:offset===0};
+  value.current={nativeUrl:'https://chatgpt.com/c/'+currentProjectId+'_current_0',refId:currentProjectId+'_current_0',projectId:currentProjectId};
+  if(!value.groups.items.some(g=>g.id===currentProjectId))value.currentProject=all.find(g=>g.id===currentProjectId);
+  return value;
+ };
+ const f=fixture('sidebar',q=>{calls.push(structuredClone(q));return owner(q);});t.after(()=>f.nav.stop());f.nav.updateFrameProjection(owner({}));
+ const memberRows=()=>f.pane().querySelectorAll('[data-ref-id]').filter(n=>n.getAttribute('data-ref-id').startsWith('P2_current_'));
+ f.button('显示更多近期窗口').click();await tick();
+ if(paged){assert.equal(f.button('显示更多近期窗口').textContent,'下一页');f.button('显示更多近期窗口').click();await tick();}
+ const limit=paged?5:17,offset=paged?5:0;
+ assert.equal(memberRows().length,limit);
+ stamp='next-project-page';f.button('显示更多项目').click();await tick();
+ assert.equal(memberRows().length,limit,'paging other Projects must not reset the pinned theme to its default preview');
+ assert.equal(memberRows()[0].getAttribute('data-ref-id'),'P2_current_'+offset);
+ assert(memberRows().every(n=>n.querySelector('.window-title').textContent.startsWith(stamp)),'rows come from the current owner response, never cached DTOs');
+ assert(calls.at(-1).rowWindows?.some(w=>w.groupId==='P2'&&w.rowLimit===limit&&w.rowOffset===offset));
+ stamp='previous-project-page';f.button('返回前页项目').click();await tick();assert.equal(memberRows().length,limit);assert.equal(memberRows()[0].getAttribute('data-ref-id'),'P2_current_'+offset);
+ f.button('侧栏项目 P2').click();f.button('显示更多项目').click();await tick();assert(!(calls.at(-1).rowWindows??[]).some(w=>w.groupId==='P2'),'manual collapse must not fetch hidden pinned rows');
+ f.button('侧栏项目 P2').click();await tick();assert.equal(memberRows().length,limit);assert.equal(memberRows()[0].getAttribute('data-ref-id'),'P2_current_'+offset);
+ // The exception follows only the owner's current theme, not any previously
+ // pinned theme. A stale window descriptor is not a source of route authority.
+ currentProjectId='P1';f.nav.updateFrameProjection(owner({offset:1}));f.button('返回前页项目').click();await tick();
+ assert(!(calls.at(-1).rowWindows??[]).some(w=>w.groupId==='P2'),'previous current Project no longer bypasses the ordinary page filter');
+});
+
 
 test('current member outside row window stays inside its expanded owning theme',async t=>{
  const value=projection('sidebar'),selected=value.groups.items[0];

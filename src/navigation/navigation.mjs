@@ -387,7 +387,11 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
   function graphic(b,kind){if(kind==='more'){b.innerHTML='<svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg>';return b;}b.innerHTML='<svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="'+symbols[kind]+'"/></svg>';return b;}
   const windowPrefix='frame-row:';
   function rememberedWindows(pageOffset){
-    const values=[];for(const [key,rowLimit]of view?.capacities??[]){if(!key.startsWith(windowPrefix))continue;try{const [groupId,list,rowOffset,paged,groupOffset]=JSON.parse(key.slice(windowPrefix.length));if(groupId!==null&&groupOffset!==pageOffset)continue;values.push(...validateFrameRowWindows([{groupId,list,rowOffset,rowLimit,...(paged?{paged:true}:{})}]));}catch{}}
+    // The owner keeps the current sidebar theme outside ordinary Project pages.
+    // Keep that theme's window too; only descriptors cross pages, never cached
+    // rows. Collapsed lists are still excluded by visibleWindows below.
+    const pinnedId=surface.role==='sidebar'?current().selected?.id:null;
+    const values=[];for(const [key,rowLimit]of view?.capacities??[]){if(!key.startsWith(windowPrefix))continue;try{const [groupId,list,rowOffset,paged,groupOffset]=JSON.parse(key.slice(windowPrefix.length));if(groupId!==null&&groupOffset!==pageOffset&&groupId!==pinnedId)continue;values.push(...validateFrameRowWindows([{groupId,list,rowOffset,rowLimit,...(paged?{paged:true}:{})}]));}catch{}}
     return values;
   }
   function reopenFrameWindow(groupId,list){
