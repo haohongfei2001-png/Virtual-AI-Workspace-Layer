@@ -17,7 +17,7 @@ import {validLocalPipeline} from '../../src/host/local-status.mjs';
 const P='g-p-11111111111111111111111111111111',C='33333333-3333-4333-8333-333333333333',B='44444444-4444-4444-8444-444444444444',requests=[];
 // Existing explicit scroll-region contract, reconstructed in the same host.
 // Exercise it through the real package/owner path, not just the return proof.
-const conversationHTML=id=>process.argv.includes('--flow-only')?longDesktopHTML(id).replace('<div data-app-action-timeline-scroll>','<div data-app-action-timeline-scroll role="region" tabindex="0">'):longDesktopHTML(id);
+const conversationHTML=id=>process.argv.includes('--flow-only')?longDesktopHTML(id).replace('<div data-app-action-timeline-scroll>','<div data-app-action-timeline-scroll role="region" tabindex="0">').replace('</style>','#reading{height:2600px}[data-thread-scroll-footer]{position:fixed;left:280px;top:602px;width:600px;height:98px}</style>'):longDesktopHTML(id);
 // The native search navigation reaches a home layout, not a conversation DOM
 // under a home URL. Use the observed home boundaries while retaining the same
 // document, sidebar, draft and unplanned browser-navigation event.
@@ -265,17 +265,27 @@ try{
   await page.bringToFront();
   await page.locator('button[aria-label="返回工作空间"]:visible,button[aria-label="返回原生阅读"]:visible').first().waitFor({timeout:15000});
   if(await page.getByRole('button',{name:'返回原生阅读',exact:true}).isVisible())await page.getByRole('button',{name:'返回原生阅读',exact:true}).click();
+  // Synthetic length and fixed composer reproduce a native scroll clamp.
+  // Actual extension removal must restore it, not just surface.dispose().
+  const nativeScroll=page.locator('[data-app-action-timeline-scroll]');
+  await nativeScroll.evaluate(n=>{n.scrollTop=600;});
+  await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+  assert.equal(await nativeScroll.evaluate(n=>n.scrollTop),600);
   const nativeBefore=await page.locator('[data-thread-scroll-footer]').evaluate(n=>({rect:n.getBoundingClientRect().toJSON(),style:n.getAttribute('style')}));
   const draftBefore=await page.locator('textarea').inputValue();
   await page.getByRole('button',{name:'返回工作空间',exact:true}).click();
+  await page.locator('[id$="_workspace"]:visible').waitFor({timeout:15000});
+  assert.equal(await nativeScroll.evaluate(n=>n.scrollTop),0,'prove the active flow clamped the original scroll before uninstall');
   await cdp.send('Extensions.uninstall',{id});
   await page.waitForFunction(()=>document.querySelectorAll('[data-va-owned]:popover-open').length===0,null,{timeout:10000});
   assert.deepEqual(await page.locator('[data-thread-scroll-footer]').evaluate(n=>({rect:n.getBoundingClientRect().toJSON(),style:n.getAttribute('style')})),nativeBefore);
   assert.equal(await page.locator('textarea').inputValue(),draftBefore);
   assert.equal(await page.locator('[id$="_workspace"]:visible').count(),0);
   assert.equal(await page.locator('[id$="_sidebar"]:visible').count(),0);
+  assert.equal(await nativeScroll.evaluate(n=>n.scrollTop),600,'actual uninstall must restore the native reading position');
   await page.locator('textarea').click();assert(await page.locator('textarea').evaluate(n=>document.activeElement===n));
   report.checks.actualIsolatedUninstallRestoresNativeGeometryDraftAndInput=true;
+  report.checks.actualIsolatedUninstallRestoresNativeReadingPosition=true;
   await popup.close();
  }
  if(process.argv.includes('--sidebar-composition-only')){

@@ -4,6 +4,8 @@
 
 在已有长聊天夹具复现原生滚动区 `600 → 工作空间展开钳至0 → 返回仍0`。正式 flow mount 现只在同文档RAM暂存原节点的展示位置，关闭/返回/正常销毁时恢复扩展引发的钳值；期间原生滚动曾离开钳值即取消该条恢复，即使后来又回0也不覆盖，换路由/节点/布局基线同样不回写。无隐藏marker的页面现在也观察自有样式移除或HEAD替换，及时退出并恢复；不改草稿、节点身份、输入交接或授权。
 
+既有正式MV3旅程已补核浏览器实际卸载而非仅调用清理函数：原生位置600、工作区实际可见且钳至0的前置成立后卸载，原位置回600、原composer几何/草稿/输入及双框架退出同时通过；非作者只读复核通过。报告 `/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-gH0Itg/report.json`。长内容和固定composer尺寸是明确的本地机制反例，不是新采集的真实ChatGPT结构；生产代码及统一包指纹未因此改变，不扩大到实机或整体产品PASS。
+
 原反例及既有document-flow runner通过，非作者只读复核已修正100→0遗漏。同源码正式隔离MV3连续旅程通过，证据 `/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-T105ej/report.json`；实际返回renderer图已查看，匿名宿主不代表真实v2.7视觉。统一未安装包 `/private/tmp/VAIWL-v27-Flow-Reading-Integrated-20261029/extension` 包含前述全部挂载修复，指纹 `b2b77888cb3d9e0fb6d3b31e5f078ff5c52d3126e82f92f01c5472c3a6b5df92`，ZIP SHA256 `828d76610843162ecd8ccd9e930c5bde8bdd2fa9e1a6647dae766671256422eb`。203项源码与实际测试一致、195项生产文件字节相同，其余6项仅已核正式/本地origin生成闭包；核验 `/private/tmp/vaiwl-flow-reading-build-verification-20261029.json`。原安装仍516561…且文件/权限未动，旧库、草稿、备份和stash保持。本批Mac NOT_RUN、产品NOT_ACCEPTED；用户实际首页挂载的唯一拒绝分支仍需新包既有固定状态码，不凭本次阅读反例认定。
 
 ## 2026-10-29 补齐原生滚动区域与正式文档流的合同接线（原安装不变）
