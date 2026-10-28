@@ -1,5 +1,11 @@
 # VAIWL实际状态：渐进积累工程已接线，真实来源逐项待准入
 
+## 2026-10-29 集中挂载修复已同ID准备，运行激活尚未确认
+
+本批生产修复保存在56f574ed、624c9441、031ac636，实际卸载回归在ff6f4d79。原Profile 4注册信息仍指向既有加载目录；先逐文件验证并完整备份2954个文件到 `.git/vaiwl-artifacts/install-backups/flow-reading-integrated-20261029-012559/`，再仅更新8个生产文件及构建清单，2752个额外文件保留。manifest/权限逐字节相同，未触碰Chrome Profile、IndexedDB、草稿或运行浏览器。回执 `/private/tmp/vaiwl-flow-reading-install-receipt-20261029.json`，与实际最终隔离测试包的闭包核验 `/private/tmp/vaiwl-flow-reading-final-integrity-20261029.json`。
+
+磁盘指纹现为 `b2b77888cb3d9e0fb6d3b31e5f078ff5c52d3126e82f92f01c5472c3a6b5df92`；最后可信运行回执仍为用户提供的516561…，未自动Reload，当前运行新版UNKNOWN。首页真实唯一拒绝仍待既有状态入口结果，不再采集DOM或解锁私人库。正常非强制推送再次返回 `Operation too slow. Less than 1 bytes/sec transferred the last 20 seconds`；本地提交保留。随后本地远端跟踪及push reflog已显示031ac636（01:19:35 update by push），故生产修复已获推送回执，ff6f4d79及后续记录的远端同步仍未确认；不把传输错误笼统当作所有提交均未收到，也不循环重试或修改网络设置。真实Mac未验、产品NOT_ACCEPTED。
+
 ## 2026-10-29 文档流返回恢复原生阅读位置（原安装不变）
 
 在已有长聊天夹具复现原生滚动区 `600 → 工作空间展开钳至0 → 返回仍0`。正式 flow mount 现只在同文档RAM暂存原节点的展示位置，关闭/返回/正常销毁时恢复扩展引发的钳值；期间原生滚动曾离开钳值即取消该条恢复，即使后来又回0也不覆盖，换路由/节点/布局基线同样不回写。无隐藏marker的页面现在也观察自有样式移除或HEAD替换，及时退出并恢复；不改草稿、节点身份、输入交接或授权。
