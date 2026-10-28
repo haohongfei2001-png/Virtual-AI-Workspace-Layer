@@ -31,7 +31,7 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
  const historyBoundary=inspection=>inspection?.reason==='unsafe-native-history-list'&&historyFailureReasons.includes(inspection.historyFailure)?'unsafe-native-history-list-'+inspection.historyFailure:null;
  const reportBoundary=inspection=>{const previous=lastBoundary;lastBoundary=historyBoundary(inspection)??(boundaryReasons.includes(inspection?.reason)?inspection.reason:inspection?.ok?'region-identity-changed':'native-region-changed');if(previous!==lastBoundary&&surfaceFailureStates.includes('surface-'+lastBoundary))try{onFailure('surface-'+lastBoundary);}catch{}if(doc.documentElement?.dataset)doc.documentElement.dataset.vaiwlBoundary=boundaryReasons.includes(inspection?.reason)?inspection.reason:inspection?.ok?'region-identity-changed':'unavailable';if(doc.documentElement?.dataset&&['roots','header-gap','button','hit-root','viewport','reading-root','reading-paint','protected-regions','header-paint','hit-test','header-layer','region-rect'].includes(inspection?.geometryStage))doc.documentElement.dataset.vaiwlGeometry=inspection.geometryStage;};
  function removeReturn(state){state.button?.remove();state.button=null;state.returnStyle=null;adapter.setReturnControl?.(null);}
- function dispose(state,reason,retainMount=false){if(!state)return;state.resolveIdle?.(false);cancel(state.nativeDispatch?.timer);state.nativeDispatch=null;cancel(state.timer);cancel(state.renewTimer);cancel(state.appearanceTimer);state.layoutObserver?.disconnect();state.frameObserver?.disconnect();state.geometryObserver?.disconnect();win.removeEventListener('resize',state.geometryChanged);win.removeEventListener('scroll',state.geometryChanged,true);win.visualViewport?.removeEventListener?.('resize',state.geometryChanged);win.visualViewport?.removeEventListener?.('scroll',state.geometryChanged);state.appearanceObserver?.disconnect();state.media?.removeEventListener?.('change',state.appearanceChanged);win.removeEventListener('resize',state.appearanceChanged);state.observer?.disconnect();win.removeEventListener('message',state.listener);doc.removeEventListener?.('securitypolicyviolation',state.policyViolation);win.removeEventListener('popstate',state.changed);win.removeEventListener('hashchange',state.changed);doc.removeEventListener?.('beforetoggle',state.nativeToggle,true);doc.removeEventListener?.('toggle',state.changed,true);win.removeEventListener('pagehide',state.pagehide);removeReturn(state);if(state.handle){try{surface.suspend(state.handle,reason);}catch{}try{surface.dispose(state.handle);}catch{}if(!retainMount)try{Promise.resolve(bridge.revokeMount?.({mountId:state.handle.id})).catch(()=>{});}catch{}}}
+ function dispose(state,reason,retainMount=false){if(!state)return;state.resolveIdle?.(false);cancel(state.nativeDispatch?.timer);state.nativeDispatch=null;cancel(state.timer);cancel(state.renewTimer);cancel(state.appearanceTimer);unwatchInitialLayout(state);state.frameObserver?.disconnect();state.geometryObserver?.disconnect();win.removeEventListener('resize',state.geometryChanged);win.removeEventListener('scroll',state.geometryChanged,true);win.visualViewport?.removeEventListener?.('resize',state.geometryChanged);win.visualViewport?.removeEventListener?.('scroll',state.geometryChanged);state.appearanceObserver?.disconnect();state.media?.removeEventListener?.('change',state.appearanceChanged);win.removeEventListener('resize',state.appearanceChanged);state.observer?.disconnect();win.removeEventListener('message',state.listener);doc.removeEventListener?.('securitypolicyviolation',state.policyViolation);win.removeEventListener('popstate',state.changed);win.removeEventListener('hashchange',state.changed);doc.removeEventListener?.('beforetoggle',state.nativeToggle,true);doc.removeEventListener?.('toggle',state.changed,true);win.removeEventListener('pagehide',state.pagehide);removeReturn(state);if(state.handle){try{surface.suspend(state.handle,reason);}catch{}try{surface.dispose(state.handle);}catch{}if(!retainMount)try{Promise.resolve(bridge.revokeMount?.({mountId:state.handle.id})).catch(()=>{});}catch{}}}
  function stop(reason='surface-stopped'){
   if(current&&['native-region-changed','native-geometry-changed','dormant-document-changed'].includes(reason))try{onFailure('surface-'+(reason==='native-region-changed'?(lastBoundary??reason):reason));}catch{}
   const started=elapsedNow();epoch++;const run=epoch,prior=current;if(prior)recordPresentation(prior,null,'authority');current=null;
@@ -327,11 +327,31 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
   }catch{if(current===state&&!state.dormant){if(renewalStage)try{onFailure('surface-session-renew-'+renewalStage);}catch{}stop('session-renew-failed');}}
   finally{state.renewing=false;if(current===state&&!state.dormant){arm(state);publishSurface(state);}}
  }
+ function unwatchInitialLayout(state){
+  state.layoutObserver?.disconnect();state.layoutObserver=null;
+  if(!state.layoutChanged)return;
+  win.removeEventListener('resize',state.layoutChanged);
+  win.visualViewport?.removeEventListener?.('resize',state.layoutChanged);
+  state.layoutChanged=null;
+ }
+ function watchInitialLayout(state){
+  if(state.layoutChanged)return;
+  // A CSS breakpoint can become safe without any native DOM mutation. Retry
+  // the complete proof on a layout event only, under the original binding.
+  state.layoutChanged=()=>{void mountState(state).catch(()=>{if(current===state)stop('surface-start-failed');});};
+  win.addEventListener('resize',state.layoutChanged);
+  win.visualViewport?.addEventListener?.('resize',state.layoutChanged);
+  if(win.MutationObserver){
+   state.layoutObserver=new win.MutationObserver(state.layoutChanged);
+   state.layoutObserver.observe(doc.body,{subtree:true,childList:true,attributes:true,attributeFilter:['class','style','hidden','aria-hidden']});
+  }
+ }
  async function start(options,sidebarDesired=true){
   stop('surface-restart');lastBoundary=null;const run=epoch,state={startedAt:elapsedNow(),epoch:run,intentEpoch:0,url:doc.location.href,registered:false,handle:null,grants:new Map(),earlyJoins:new Map(),pending:new Set(),button:null,timer:null,renewTimer:null,renewing:false,renewalCeiling:null,observer:null,appearanceObserver:null,appearanceTimer:null,appearanceKeys:new Map(),frames:[],surfaceKey:null,surfaceRevision:0,mode:'waiting',desiredMode:options?.mode??initialMode,resumeMode:options?.mode??initialMode,dormant:false,waking:false,geometryPaused:false,geometryRevision:0};current=state;
   // Only the internal same-document layout restart passes this presentation
   // choice. New starts default to visible and still require fresh frame grants.
   state.sidebarDesired=sidebarDesired!==false;
+  state.pagehide=()=>{if(current===state)stop('page-hidden');};win.addEventListener('pagehide',state.pagehide);
   try{
    state.context=options?.context??await adapter.start(options);if(current!==state)return null;
    return await mountState(state);
@@ -342,10 +362,10 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
   state.inspection=adapter.inspect();
   if(!state.inspection?.ok){
    reportBoundary(state.inspection);
-   if(!state.layoutObserver&&win.MutationObserver){state.layoutObserver=new win.MutationObserver(()=>{if(current===state&&!state.mounting&&!state.handle)void mountState(state);});state.layoutObserver.observe(doc.body,{subtree:true,childList:true,attributes:true,attributeFilter:['class','style','hidden','aria-hidden']});}
+   watchInitialLayout(state);
    arm(state);return null;
   }
-  state.layoutObserver?.disconnect();state.layoutObserver=null;state.mounting=true;
+  unwatchInitialLayout(state);state.mounting=true;
   try{
    state.policyViolation=event=>{if(current!==state||!['frame-src','child-src'].includes(event.effectiveDirective))return;let blocked;try{blocked=new URL(event.blockedURI);}catch{return;}if(blocked.protocol+'//'+blocked.host!==trustedOrigin)return;state.framePolicy=event.disposition==='enforce'?'frame-blocked':'frame-report-only';reportJoin(state);};doc.addEventListener?.('securitypolicyviolation',state.policyViolation);
    state.handle=await surface.mount(state.context,state.inspection,{onSurrender:event=>nativeSurrender(state,event),onManagementChanged:()=>{const g=state.grants.get('sidebar'),f=state.frames.find(f=>f.role==='sidebar');if(current===state&&valid(state)&&authorized(state)&&g&&Date.parse(g.expiresAt)>now()&&f)f.window.postMessage({type:'VAIWL_UI_MANAGEMENT_CHANGED',role:'sidebar',mountId:state.handle.id,grantId:g.id},trustedOrigin);},onSidebarScroll:scroll=>{const g=state.grants.get('sidebar'),frame=state.frames.find(f=>f.role==='sidebar');if(current===state&&valid(state)&&authorized(state)&&g&&Date.parse(g.expiresAt)>now()&&frame)frame.window.postMessage({type:'VAIWL_UI_SIDEBAR_VIEWPORT',role:'sidebar',mountId:state.handle.id,grantId:g.id,scroll},trustedOrigin);}});if(current!==state){dispose(state,'stale-mount');return null;}
@@ -360,7 +380,7 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
    if(!valid(state))throw Error('stale-mount-registration');
    state.nativeToggle=event=>{if(event.newState==='open'&&!event.target.closest?.('[data-va-owned]'))suspend('native-layer');};doc.addEventListener?.('beforetoggle',state.nativeToggle,true);
    state.changed=()=>{try{if(!reconcileGeometry(state))return;if(adapter.hasNativeLayer())suspend('native-layer');else if(state.mode==='reading'||state.mode==='suspended')ensureReturn(state);}finally{publishSurface(state);}};
-   state.pagehide=()=>{if(current===state)stop('page-hidden');};win.addEventListener('pagehide',state.pagehide);doc.addEventListener?.('toggle',state.changed,true);
+   doc.addEventListener?.('toggle',state.changed,true);
    win.addEventListener('popstate',state.changed);win.addEventListener('hashchange',state.changed);
    if(win.MutationObserver){const gap=state.inspection.returnPlacement==='header-gap';state.observer=new win.MutationObserver(records=>{if(gap&&records?.length&&records.every(r=>r.target===state.button&&r.attributeName==='style'&&state.button.getAttribute('style')===state.returnStyle))return;state.changed();});state.observer.observe(doc.body,{subtree:true,childList:true,attributes:true,attributeFilter:['open','class','aria-modal',...(gap?['style','hidden','inert','aria-hidden']:[])]});}
    watchGeometry(state);watchAppearance(state);arm(state);const queued=[...state.earlyJoins.values()];state.earlyJoins.clear();for(const event of queued)void receive(state,event);return state.handle;

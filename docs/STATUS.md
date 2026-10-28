@@ -1,5 +1,14 @@
 # VAIWL实际状态：渐进积累工程已接线，真实来源逐项待准入
 
+## 2026-10-28 首次布局拒绝后的响应式恢复（原安装不变）
+
+源码及现有 controller 反例确认：初次几何拒绝后只监听 DOM mutation，窗口变宽但节点/属性未变时无法重新挂载；等待期间 pagehide 也未注册，旧回调可能在页面离开后挂载。正式控制器现仅在初始等待阶段监听 window/visualViewport resize，沿原 binding、URL、有效期与单飞守卫重新执行完整 inspect；成功或停止时撤销监听。pagehide 从启动即生效，无计时重试、几何放宽或授权延长。
+
+三个反例先失败、修复后通过；controller及content-session关联回归通过，独立只读复核无新增问题。证据 `/private/tmp/vaiwl-initial-layout-{before,after,content}.log`。同源码正式隔离MV3旅程 `/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-HcEEY9/report.json` 通过，归档SHA256 `4e650fbbcbbc381af1eba4cdda9eba7c52d1bec215e7d7e4c2e814f82c77c6c0`；阅读返回、首手势、侧栏局部恢复、窄屏、Worker/私人布局恢复及撤权保护保留。已实际查看返回及窄屏图；原生灰块及输入为匿名宿主重建，不能作为真实ChatGPT整屏设计通过。
+
+本批不操作日常Chrome、不更新原目录或旧库。运行构建UNKNOWN、真实Mac NOT_RUN、完整产品NOT_ACCEPTED；该确定代码缺陷尚不能归因为用户实际启动故障。前一本地提交57cfa2f1的正常推送曾报 `Failed to connect to github.com port 443 after 75029 ms`，随后GitHub API仍确认远端a1596f1e；本地成果完整保存，不改网络安全设置、不强推。
+
+
 ## 2026-10-28 当前项目跨主题分页保留成员窗口（原安装不变）
 
 正式 navigation 的页外当前项目例外未贯通成员窗口：切换其他项目页时，已展开17条或翻至第二页的当前项目被重置为首5条。两个反例先失败，现仅让 owner 确认的当前 sidebar 项目携带原有窗口描述符，回复仍重新读取真实数据；手动折叠不读取隐藏成员，当前项目改变后旧项目不再享有例外，workspace及scope/session清除规则不变。定向反例与关联投影/分页合同通过，非作者只读复核未发现回归。证据 `/private/tmp/vaiwl-pinned-window-{before,after}.log`、`/private/tmp/vaiwl-flow-retention-contracts.log`。正式renderer浏览器回归 `/private/tmp/vaiwl-pinned-window-renderer.log` 通过；已查看桌面/窄屏图，长标题、自然高度卡片及展开聊天未溢出，仍只证明自有renderer，非真实ChatGPT整屏验收。
