@@ -46,7 +46,47 @@ try{
   return {adapterReady:inspection.ok,returnReady:!!inspection.returnSlot,policy:inspection.viewportFocus,flowReady:true,unselectedRejected,actionRejected,tabOrderRejected,editableRejected,nonScrollingRejected,shown,active,focusRetained,readingRestored,changedRoleSurrendered,restored:viewport.outerHTML===original&&viewport.parentElement===parent&&viewport.querySelector('textarea')===editor};
  });
  assert.deepEqual(regionProof,{adapterReady:true,returnReady:true,policy:'native-scroll-region',flowReady:true,unselectedRejected:true,actionRejected:true,tabOrderRejected:true,editableRejected:true,nonScrollingRejected:true,shown:true,active:true,focusRetained:true,readingRestored:true,changedRoleSurrendered:true,restored:true});
- console.log(JSON.stringify({nativeScrollRegion:regionProof}));await region.close();
+ console.log(JSON.stringify({nativeScrollRegion:regionProof}));
+ // Browser mechanism counterexample on the same reconstructed native region:
+ // a genuinely long reading flow with its original composer kept in view.
+ // No claim that these fixture dimensions are a newly observed ChatGPT page.
+ const readingScroll=await region.evaluate(async()=>{
+  const {createChatGPTAdapter,createURLPolicy,CHATGPT_OBSERVED_PROFILE:profile,createFlowMountSurface}=flowModule;let surface;
+  const viewport=document.querySelector('[data-app-action-timeline-scroll]'),editor=viewport.querySelector('textarea'),parent=viewport.parentElement;
+  document.querySelector('#reading').style.height='2600px';document.querySelector('footer').style.cssText='position:fixed;left:280px;top:602px;width:600px;height:98px';
+  const original=viewport.outerHTML,url=location.href;
+  const adapter=createChatGPTAdapter({document,profile,urlPolicy:createURLPolicy(),isOwnedMask:n=>surface?.isMasked(n),isOwnedSurface:n=>surface?.isOwnedSurface(n)});
+  const binding={documentToken:'reading-scroll',producerToken:'reading-scroll',browserDocumentId:'reading-scroll',routeEpoch:1,origin:location.origin,expiresAt:new Date(Date.now()+20000).toISOString()};
+  await adapter.start({binding,emit:async p=>({state:'accepted',localSeq:p.localSeq,receiptId:'reading-scroll'})});
+  const tick=()=>new Promise(resolve=>requestAnimationFrame(()=>resolve()));
+  const mount=async()=>{surface=createFlowMountSurface({document,createFrameURL:({role})=>'chrome-extension://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/'+role+'.html'});return surface.mount({binding},adapter.inspect());};
+  viewport.scrollTop=600;let handle=await mount();
+  const shown=surface.showWorkspace(handle)&&viewport.scrollTop===0;
+  surface.showWorkspace(handle);surface.showReading(handle);
+  const apiRestored=viewport.scrollTop===600;
+  viewport.scrollTop=150;await tick();const laterNativeScrollKept=viewport.scrollTop===150;
+  surface.showWorkspace(handle);document.getElementById(handle.id+'_workspace_exit').hidePopover();await tick();
+  const declarativeRestored=viewport.scrollTop===150;
+  surface.showWorkspace(handle);surface.dispose(handle);const disposeRestored=viewport.scrollTop===150;
+  viewport.scrollTop=600;handle=await mount();surface.showWorkspace(handle);
+  document.getElementById(handle.id+'_workspace').style.setProperty('min-height','1500px','important');viewport.scrollTop=100;
+  surface.showReading(handle);const changedScrollKept=viewport.scrollTop===100;surface.dispose(handle);
+  viewport.scrollTop=600;handle=await mount();surface.showWorkspace(handle);
+  document.getElementById(handle.id+'_workspace').style.setProperty('min-height','1500px','important');viewport.scrollTop=100;
+  // Replay delivery before another native update returns to the clamp value.
+  // Comparing only the final coordinate would incorrectly restore old 600.
+  viewport.dispatchEvent(new Event('scroll'));viewport.scrollTop=0;surface.showReading(handle);
+  const returnedScrollKept=viewport.scrollTop===0;surface.dispose(handle);
+  viewport.scrollTop=600;handle=await mount();surface.showWorkspace(handle);
+  history.pushState({},'','/c/55555555-5555-4555-8555-555555555555');surface.showReading(handle);
+  const changedRouteNotRestored=viewport.scrollTop===0;surface.dispose(handle);history.replaceState({},'',url);
+  viewport.scrollTop=600;handle=await mount();surface.showWorkspace(handle);
+  document.head.querySelector('style[data-va-owned]').remove();await tick();
+  const removedStyleRestored=viewport.scrollTop===600&&!surface.visibility(handle);surface.dispose(handle);adapter.stop();
+  return {shown,apiRestored,laterNativeScrollKept,declarativeRestored,disposeRestored,changedScrollKept,returnedScrollKept,changedRouteNotRestored,removedStyleRestored,nativeIntact:viewport.outerHTML===original&&viewport.parentElement===parent&&viewport.querySelector('textarea')===editor&&editor.value==='fixture draft'};
+ });
+ assert.deepEqual(readingScroll,{shown:true,apiRestored:true,laterNativeScrollKept:true,declarativeRestored:true,disposeRestored:true,changedScrollKept:true,returnedScrollKept:true,changedRouteNotRestored:true,removedStyleRestored:true,nativeIntact:true});
+ console.log(JSON.stringify({readingScroll}));await region.close();
  // Lifecycle counterexample on the existing host, not a newly collected real
  // topology: native layout can retain a temporary branch after adapter readiness.
  // Reject it intact, then recover only after the original page removes it.

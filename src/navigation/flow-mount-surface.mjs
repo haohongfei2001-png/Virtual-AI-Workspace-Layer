@@ -13,10 +13,25 @@ export function createFlowMountSurface({document:doc,createFrameURL,hasNativeLay
  const viewport=()=>`${win.innerWidth}:${win.innerHeight}`;
  const intact=(m,s)=>s.node.isConnected&&s.frame.isConnected&&s.frame.parentElement===s.node&&!s.frame.hasAttribute('srcdoc')&&s.frame.src===s.url&&s.node.ownerDocument===doc&&m.style.isConnected&&m.style.textContent===m.css;
  const nativeLayer=()=>hasNativeLayer()||documentHasNativeLayer(doc);
+ // Flow can clamp a native scrollport when its reading child becomes a zero
+ // height grid item. Keep only presentation coordinates in this document's
+ // RAM, and restore only our layout clamp, never a later native scroll/route.
+ function clearReading(m){const saved=m.readingScroll;m.readingScroll=null;for(const entry of saved?.entries??[])entry.node.removeEventListener('scroll',entry.onScroll);return saved;}
+ function rememberReading(m){
+  clearReading(m);
+  m.readingScroll={plan:m.plan,url:doc.location.href,entries:[...new Set([...m.plan.shells,m.plan.reading])].filter(node=>node.scrollHeight>node.clientHeight||node.scrollWidth>node.clientWidth).map(node=>({node,left:node.scrollLeft,top:node.scrollTop}))};
+ }
+ function recordReadingClamp(m){for(const entry of m.readingScroll?.entries??[]){entry.clampedLeft=entry.node.scrollLeft;entry.clampedTop=entry.node.scrollTop;entry.onScroll=()=>{if(entry.node.scrollLeft!==entry.clampedLeft||entry.node.scrollTop!==entry.clampedTop)entry.changed=true;};entry.node.addEventListener('scroll',entry.onScroll,{passive:true});}}
+ function restoreReading(m){
+  if(!m.readingScroll||open(m.roles[0]))return;const saved=clearReading(m);
+  if(saved.plan!==m.plan||saved.url!==doc.location.href||!isSameNativeRegions(m.plan))return;
+  for(const {node,left,top,clampedLeft,clampedTop,changed} of saved.entries)if(!changed&&node.isConnected&&node.ownerDocument===doc&&node.scrollLeft===clampedLeft&&node.scrollTop===clampedTop)node.scrollTo({left,top,behavior:'instant'});
+ }
  function hide(m,role,reason='suspended'){
   // Native observation sees owned attribute writes too. Rewriting the same
   // handoff marker would feed geometry back into itself and starve pointerup.
   for(const s of m.roles)if(!role||s.role===role){s.reason=reason;if(['native-layer','workspace-geometry'].includes(reason)&&s.role==='workspace'&&m.inputPointerActive?.()&&intact(m,s)&&isSameNativeRegions(m.plan,{allowPresentationChange:true})){if(!s.node.hasAttribute('data-va-input-handoff'))s.node.setAttribute('data-va-input-handoff','');continue;}if(open(s))s.exit.hidePopover();}
+  if(!role||role==='workspace')restoreReading(m);
  }
  function sidebarIntact(m){
   const p=m.inspection.sidebarPlacement,s=m.roles[1];
@@ -80,7 +95,7 @@ export function createFlowMountSurface({document:doc,createFrameURL,hasNativeLay
      frame.src=url.href;frame.title=role==='workspace'?'工作空间':'导航';frame.style.cssText='display:block;min-width:0;width:100%;border:0;';node.append(button,frame);
      if(role==='sidebar'){node.dataset.vaSidebarSlot='';node.style.setProperty('--va-slot-height','128px');const label=doc.createElement('div');label.textContent='ChatGPT 项目管理与最近聊天';label.dataset.vaNativeBoundary='';node.append(label);}
      const s={role,node,exit,frame,url:url.href,button,reason:null,retired:false};m.roles.push(s);
-     const closing=e=>{if(e.target!==exit||e.newState!=='closed'||s.reason)return;onSurrender({role,reason:role==='workspace'?'native-reading':'native-list',phase:e.type==='beforetoggle'?'closing':undefined});};
+     const closing=e=>{if(e.target!==exit||e.newState!=='closed')return;if(role==='workspace')win.queueMicrotask(()=>restoreReading(m));if(!s.reason)onSurrender({role,reason:role==='workspace'?'native-reading':'native-list',phase:e.type==='beforetoggle'?'closing':undefined});};
      exit.addEventListener('beforetoggle',closing);exit.addEventListener('toggle',closing);s.cleanup=()=>{exit.removeEventListener('beforetoggle',closing);exit.removeEventListener('toggle',closing);};
      doc.body.append(exit);
     }
@@ -121,13 +136,17 @@ export function createFlowMountSurface({document:doc,createFrameURL,hasNativeLay
     // The owned rules live in HEAD, outside the native body observer. Changes
     // there must surrender immediately too, including during input handoff.
     observer.observe(m.style,{subtree:true,childList:true,characterData:true});
+    // Removing the owned stylesheet or replacing HEAD must restore reading
+    // even on pages without inactive markers (there may be no body mutation).
+    observer.observe(nativeHead,{childList:true});
+    observer.observe(doc.documentElement,{childList:true});
     // An admitted display:none marker can become a grid participant through
     // native CSS without a body mutation. Observe only invalidation signals;
     // never read stylesheet rules or change the marker. Workspace resizing
     // also covers CSSOM rule edits that have no MutationObserver record.
     if(plan.inactiveMarkers.length){
      observer.observe(nativeHead,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['media','disabled','href','rel']});
-     observer.observe(doc.documentElement,{attributes:true,attributeFilter:['class','style']});
+     observer.observe(doc.documentElement,{childList:true,attributes:true,attributeFilter:['class','style']});
      nativeHead.addEventListener('load',stylesheetLoaded,true);
      if(win.ResizeObserver){markerGeometry=new win.ResizeObserver(observe);for(const node of [workspace.node,...plan.inactiveMarkers])markerGeometry.observe(node);}
     }
@@ -162,7 +181,7 @@ export function createFlowMountSurface({document:doc,createFrameURL,hasNativeLay
   showWorkspace(handle,{roles=['workspace','sidebar']}={}){
    const m=lookup(handle);if(nativeLayer()){hide(m,null);return false;}
    const workspaceCurrent=isSameNativeRegions(m.plan);if(!workspaceCurrent)hide(m,'workspace','workspace-geometry');
-   for(const s of m.roles){if(!roles.includes(s.role)||s.retired||!intact(m,s)||s.role==='workspace'&&!workspaceCurrent||s.role==='sidebar'&&!sidebarIntact(m))continue;s.reason=null;s.node.removeAttribute('data-va-input-handoff');if(!open(s))s.exit.showPopover();if(s.role==='workspace'&&!active(m))hide(m,'workspace','workspace-geometry');}
+   for(const s of m.roles){if(!roles.includes(s.role)||s.retired||!intact(m,s)||s.role==='workspace'&&!workspaceCurrent||s.role==='sidebar'&&!sidebarIntact(m))continue;s.reason=null;s.node.removeAttribute('data-va-input-handoff');if(!open(s)){if(s.role==='workspace')rememberReading(m);s.exit.showPopover();if(s.role==='workspace')recordReadingClamp(m);}if(s.role==='workspace'&&!active(m))hide(m,'workspace','workspace-geometry');}
    restorePendingScroll(m);return open(m.roles[0]);
   },
   showReading(handle){hide(lookup(handle),'workspace','native-reading');},
