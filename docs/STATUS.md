@@ -1,5 +1,15 @@
 # VAIWL实际状态：渐进积累工程已接线，真实来源逐项待准入
 
+## 2026-10-28 原生编辑器切换后四格返回修复（原安装不变）
+
+正式文档流证明将原生控件身份与当前可见性分开：原生 textarea/contenteditable 切换保留的隐藏节点仍受身份保护，但不再被要求强制可见；仅在工作区关闭、同一文档/原节点/布局骨架/授权均通过时更新可见性基线。四格按实际 node 登记为扩展自有控件，避免重新证明时把它捕获为原生控件、随后正常移除导致主区退出。未放宽活动态遮挡检查，伪造 owned 属性和删除隐藏原节点仍拒绝。既有 J3 编辑器反例先失败后通过，原草稿和两个编辑器身份保持，非作者只读复核通过。
+
+同源码完整 Browser-Local 隔离旅程见 `/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-VjRQQX/report.json`：首页/Project/阅读、首手势、成员返回、原NAV滚动、局部失败、窄屏、Worker及确认后的旧对象/布局恢复、撤权和卸载恢复通过。实际正式renderer图已查看；匿名宿主不能代替真实ChatGPT视觉验收。J3历史runner迁移为文档流、固定不支持侧栏的夹具不冒充完整双角色；LEGACY连续结果 `/private/tmp/vaiwl-flow-j3-legacy-integrated-20261028.json` 为 `PARTIAL_NOT_J3_ACCEPTED`，片段三项未覆盖，物理IME未测。键盘oracle保留逐事件隐藏frame焦点拒绝，延迟关闭不得丢失原按键/焦点证据；UNKNOWN旧聊天实际打开后允许本地最近使用更新，但原历史事件及未知归属不变。
+
+统一审阅包 `/private/tmp/VAIWL-v27-Flow-Editor-Integrated-20261028/extension` 未安装；指纹 `5132792610296a14b4c2c5fc024725769dd325024ce432a807c8ab755d2032b1`，ZIP SHA256 `f3c1f9c8de6acef7ebcc1e8cba9b445338420d1f91242c41a889a2cbda112bc6`。203项sourceHashes匹配源码，195项文件与实际集成旅程包逐字节一致，其余生成文件仅正式/本地origin及对应编译闭包不同，核验见 `/private/tmp/vaiwl-flow-editor-build-verification-20261028.json`。
+
+原安装清单SHA256仍为 `cf76213d45313c8bbf843bfcd6c33500ea04f93bc2df2995a4101c3e515d0be2`，旧库、草稿、备份与stash未动。运行构建UNKNOWN、本批Mac NOT_RUN、完整产品NOT_ACCEPTED；当前用户页面故障未取得新运行回执，不能归因为本次编辑器反例或声称已解决。历史CI整体及未覆盖能力不升级为通过，不请求再次Reload。
+
 ## 2026-10-28 侧栏候选完成原生 NAV 单滚动接线（原安装不变）
 
 发现候选 Shadow DOM 仍保留 `30vh / overflow:auto`，使展开的侧栏原生候选成为第二滚动区。正式组件现按绑定 role 区分：sidebar 自然高度、workspace 保留原分页滚动；侧栏内部异步结果及换行尺寸通过受当前代约束的 ResizeObserver 通知既有高度发布链。清理/撤权后旧回调失效，不把候选 scrollTop 当作原生 NAV 的持久滚动。真实 DOM 反例先失败后通过，候选/迁移/client关联回归及非作者只读复核通过；证据 `/private/tmp/vaiwl-candidate-scroll-{before,after,node,contracts}.log`。

@@ -8,7 +8,7 @@ import {validateFrameAppearance} from '../host/frame-appearance.mjs';
 export function createFlowMountSurface({document:doc,createFrameURL,hasNativeLayer=()=>false}) {
  const mounts=new Map(),win=doc.defaultView;
  const lookup=handle=>{const m=mounts.get(handle?.id);if(!m||m.handle!==handle)throw Error('stale-mount');return m;};
- const owned=node=>!!node&&[...mounts.values()].some(m=>m.roles.some(s=>s.node===node||s.exit===node));
+ const owned=node=>!!node&&[...mounts.values()].some(m=>m.returnControl===node||m.roles.some(s=>s.node===node||s.exit===node));
  const open=s=>s.exit.matches(':popover-open');
  const viewport=()=>`${win.innerWidth}:${win.innerHeight}`;
  const intact=(m,s)=>s.node.isConnected&&s.frame.isConnected&&s.frame.parentElement===s.node&&!s.frame.hasAttribute('srcdoc')&&s.frame.src===s.url&&s.node.ownerDocument===doc&&m.style.isConnected&&m.style.textContent===m.css;
@@ -115,6 +115,7 @@ export function createFlowMountSurface({document:doc,createFrameURL,hasNativeLay
    }catch(error){m.cleanup();for(const s of m.roles){s.node.remove();s.exit.remove();}m.style.remove();for(const {node,attr,previous} of m.markers)if(node.getAttribute(attr)===id){if(previous===null)node.removeAttribute(attr);else node.setAttribute(attr,previous);}mounts.delete(id);throw error;}
   },
   readNativeManagement(handle){return lookup(handle).management?.read()??[];},
+  setReturnControl(handle,node){lookup(handle).returnControl=node;},
   validateActiveLayout(handle){return active(lookup(handle));},
   isSameNativeRegions(handle){return isSameNativeRegions(lookup(handle).plan);},
   needsNativeBaselineRefresh(handle){const m=lookup(handle);return !open(m.roles[0])&&(m.nativeViewport!==viewport()||!isSameNativeLayout(m.plan));},

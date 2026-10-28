@@ -5,7 +5,7 @@ import {createSurfaceController} from '../../src/host/surface-controller.mjs';
 import {createScopeAuthority} from '../../src/runtime/scope-authority.mjs';
 const drain=async()=>{for(let i=0;i<100;i++)await Promise.resolve();};
 const source=readFileSync(new URL('./surface-controller.test.mjs',import.meta.url),'utf8');
-const boundary="\ntest('owner registration and workspace UiGrant gate workspace; sidebar joins independently'";
+const boundary="\nfor(const viewport of [false,true])test(";
 assert.equal(source.split(boundary).length,2,'fixture extraction has one exact boundary');
 const fixture=new Function('assert','createSurfaceController',source.slice(0,source.indexOf(boundary)).replace(/^import .*;\n/gm,'')+'\nreturn fixture;')(assert,createSurfaceController);
 // Real controller scheduling and ScopeAuthority provider admission, isolated DOM/IPC doubles.

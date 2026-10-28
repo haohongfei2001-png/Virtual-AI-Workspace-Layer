@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {runInNewContext} from 'node:vm';
-import {reduceUI06ParentAX,assertUI06AXPhase,reduceUI06Key,assertUI06Path,assertUI06Continuity,UI06_LIMITS,createUI06Deadline,seedUI06Settings,installUI06ParentProbe} from './ui06-keyboard-ax.mjs';
+import {reduceUI06ParentAX,assertUI06AXPhase,reduceUI06Key,extendUI06Key,assertUI06Path,assertUI06Continuity,UI06_LIMITS,createUI06Deadline,seedUI06Settings,installUI06ParentProbe} from './ui06-keyboard-ax.mjs';
 const backend={reading:11,history:12,historyOther:13,composer:14,workspace:15,sidebar:16};
 function tree(open=false){
  const roles={reading:'StaticText',history:'link',historyOther:'link',composer:'textbox',workspace:'Iframe',sidebar:'Iframe'};
@@ -56,6 +56,20 @@ test('silent CDP-shaped query is rejected without awaiting its completion',async
 test('phase operations share one absolute deadline rather than renew per key',async()=>{let t=0;const deadline=createUI06Deadline({now:()=>t,limit:10});await deadline.run(()=>{t=6;return true;});await assert.rejects(deadline.run(()=>{t=10;return true;}),/deadline/);});
 
 test('closed end state without actual protected-native focusin cannot prove surrender',()=>{const input=observation();input.documents[0].events=[];assert.throws(()=>reduceUI06Key(input),/surrender focus witness/);});
+test('transient closed-frame focus cannot disappear during deferred handoff sampling',()=>{
+ for(const target of ['workspace','sidebar','owned-control','owned-other']){
+  const raw=observation();raw.documents[0].events=[{target:'composer',open:2},{target:'composer',open:0,observation:'surface-snapshot'},{target,open:0},{target:'composer',open:0}];
+  assert.throws(()=>reduceUI06Key(raw),/closed owned/);
+ }
+ const raw=observation({after:1});raw.documents[0].events=[{target:'composer',open:1},{target:'workspace',open:1},{target:'composer',open:1}];
+ assert.throws(()=>reduceUI06Key({...raw,sidebarContinuous:true}),/closed workspace/);
+ raw.documents[0].events[1].target='sidebar';assert.equal(reduceUI06Key({...raw,sidebarContinuous:true}).after,1);
+});
+test('deferred native handoff needs the preceding same-target focusin in this key observation',()=>{
+ const raw=observation();raw.documents[0].events=[{target:'composer',open:2},{target:'composer',open:0,observation:'surface-snapshot'}];
+ const result=reduceUI06Key(raw);assert.equal(result.after,0);assertOpen(path([result]));
+ for(const change of [r=>r.documents[0].events.shift(),r=>r.documents[0].events[0].target='protected-native',r=>r.documents[0].events[0].observation='surface-snapshot',r=>r.documents[0].events.splice(1,0,{target:'history',open:2})]){const bad=structuredClone(raw);change(bad);assert.throws(()=>reduceUI06Key(bad));}
+});
 
 test('settings seed awaits actual expanded then collapsed renderer states under one deadline',async()=>{let state='false',pending=null;const log=[],settings={getAttribute:async()=>state,click:async()=>{assert.equal(pending,null);pending=state==='false'?'true':'false';log.push('click-'+pending);}},frame={getByRole:()=>settings,locator:selector=>({waitFor:async()=>{const expected=selector.includes('="true"]')?'true':'false';assert.equal(pending,expected);log.push('settled-'+expected);state=pending;pending=null;}})};await seedUI06Settings(frame,createUI06Deadline());assert.deepEqual(log,['click-true','settled-true','click-false','settled-false']);assert.equal(state,'false');});
 test('missing expanded renderer state cannot proceed to the second seed click',async()=>{let clicks=0;const frame={getByRole:()=>({getAttribute:async()=> 'false',click:async()=>{clicks++;}}),locator:()=>({waitFor:()=>new Promise(()=>{})})};await assert.rejects(seedUI06Settings(frame,createUI06Deadline({limit:5})),/deadline/);assert.equal(clicks,1);});
@@ -66,11 +80,11 @@ function parentProbeFixture(){
  let opened=0,doc;const listeners=new Map(),mountId='fixture-owned-mount';
  function node(tag='DIV',attrs={}){const n={tagName:tag,attrs:{...attrs},dataset:{},children:[],parentElement:null,ownerDocument:null,isConnected:true,type:attrs.type??'',style:{display:'block',visibility:'visible',opacity:'1'},getAttribute(k){return this.attrs[k]??null;},getBoundingClientRect(){return {width:40,height:20};},contains(v){return v===this||this.children.some(c=>c.contains(v));},append(...values){for(const v of values){v.parentElement=this;v.ownerDocument=doc;this.children.push(v);}},closest(selector){if(selector==='nav')return this.tagName==='NAV'?this:this.parentElement?.closest(selector)??null;if(selector==='[data-va-owned]')return this.dataset.vaOwned?this:this.parentElement?.closest(selector)??null;if(selector==='[inert]')return this.attrs.inert!==undefined?this:this.parentElement?.closest(selector)??null;if(selector==='#composer,main header')return this===composer||this===header?this:this.parentElement?.closest(selector)??null;return null;},querySelectorAll(){return this.children.filter(c=>c.tagName==='BUTTON'&&c.type==='button'&&c.getAttribute('aria-label')==='返回工作空间'&&c.dataset.vaOwned);},querySelector(selector){return selector==='.message-body'?message:null;}};return n;}
  const body=node('BODY'),reading=node(),historyRoot=node('NAV'),historyNode=node('A'),otherHistory=node('A'),composer=node('FORM'),header=node('HEADER'),slot=node(),plain=node('TEXTAREA'),rich=node(),fileInput=node('INPUT'),message=node();
- const surfaces=[node('SECTION'),node('SECTION')],frames=[node('IFRAME'),node('IFRAME')];for(const s of surfaces)s.dataset.vaOwned=mountId;surfaces.forEach((s,i)=>s.append(frames[i]));
+ const surfaces=[node('SECTION'),node('SECTION')],frames=[node('IFRAME'),node('IFRAME')];for(const s of surfaces)s.dataset.vaOwned=mountId;surfaces.forEach((s,i)=>{s.append(frames[i]);s.checkVisibility=()=>i<opened;s.matches=selector=>selector==='[data-va-owned]:not([popover])';});
  const returnButton=()=>{const n=node('BUTTON',{type:'button','aria-label':'返回工作空间'});n.dataset.vaOwned=mountId;n.ownerDocument=doc;return n;};let button=returnButton();
  reading.append(message);historyRoot.append(historyNode,otherHistory);header.append(slot);slot.append(button);composer.append(plain,rich,fileInput);body.append(historyRoot,header,reading,composer,...surfaces);
  const historySelector='fixture-history',queries=new Map([['#reading',reading],[historySelector,historyNode],['aside nav[aria-label="Chat history"] a[href="/c/44444444-4444-4444-8444-444444444444"]',otherHistory],['#composer',composer],['main header .navigation-slot',slot],...['workspace','sidebar'].map((role,i)=>[`[data-va-owned] iframe[src="chrome-extension://fixture/${role}.html"]`,frames[i]])]);
- doc={body,activeElement:rich,hasFocus:()=>true,querySelector:s=>queries.get(s)??null,querySelectorAll:s=>s==='[data-va-owned][popover]'?surfaces:s==='[data-va-owned]:popover-open'?surfaces.slice(0,opened):[],addEventListener:(type,fn)=>listeners.set(type,fn),removeEventListener:(type,fn)=>{if(listeners.get(type)===fn)listeners.delete(type);}};
+ doc={body,activeElement:rich,hasFocus:()=>true,querySelector:s=>queries.get(s)??null,querySelectorAll:s=>s==='[data-va-owned] iframe'?frames:s==='[data-va-owned][popover]'?surfaces:s==='[data-va-owned]:popover-open'?surfaces.slice(0,opened):[],addEventListener:(type,fn)=>listeners.set(type,fn),removeEventListener:(type,fn)=>{if(listeners.get(type)===fn)listeners.delete(type);}};
  const assign=n=>{n.ownerDocument=doc;for(const c of n.children)assign(c);};assign(body);
  const context={document:doc,location:{href:'http://fixture/'},history:{length:1},getComputedStyle:n=>n.style,j3OriginalPlain:plain,j3OriginalRich:rich,j3OriginalFileInput:fileInput,j3OriginalFile:{},j3OriginalDocument:doc};
  runInNewContext(`(${installUI06ParentProbe.toString()})({historySelector:'fixture-history',extensionId:'fixture'})`,context);
@@ -81,6 +95,13 @@ test('actual callback recognizes only the current visible closed parent return c
 for(const [name,change] of Object.entries({strippedOwner:f=>{delete f.button.dataset.vaOwned;},detached:f=>{f.button.isConnected=false;},replaced:f=>f.replace(),duplicate:f=>f.slot.append(f.returnButton()),iframe:f=>{f.button.tagName='IFRAME';},wrongMount:f=>{f.button.dataset.vaOwned='other';},wrongLabel:f=>{f.button.attrs['aria-label']='other';},wrongSlot:f=>{f.button.parentElement=f.doc.body;},hidden:f=>{f.button.style.visibility='hidden';},noLayout:f=>{f.button.getBoundingClientRect=()=>({width:0,height:0});},inert:f=>{f.button.attrs.inert='';}}))test('actual return classifier rejects '+name,()=>{const f=parentProbeFixture();change(f);assert.throws(()=>returnKey(f),/closed owned/);});
 test('an owned return cannot be classified while either surface is open',()=>{const f=parentProbeFixture();f.setOpen(2);f.doc.activeElement=f.button;assert.equal(f.probe.read().focus,'owned-other');});
 test('return identity refreshes only on observed native surrender, not arbitrary closed replacement',()=>{const f=parentProbeFixture();f.setOpen(2);f.probe.read();const next=f.replace();f.setOpen(0);f.event('focusin',f.rich);assert.equal(returnKey(f,next).target,'owned-return');const other=f.replace();assert.throws(()=>returnKey(f,other),/closed owned/);});
+test('native surrender can publish its return control after focusin, without accepting a later replacement',()=>{const f=parentProbeFixture();f.setOpen(2);f.probe.read();f.button.isConnected=false;f.slot.children=[];f.setOpen(0);f.event('focusin',f.rich);f.probe.read();const next=f.replace();f.probe.read();assert.equal(returnKey(f,next).target,'owned-return');assert.throws(()=>returnKey(f,f.replace()),/closed owned/);});
+test('deferred layout surrender preserves its original focus evidence and permits one return capture',()=>{const f=parentProbeFixture();f.setOpen(2);f.probe.read();f.probe.reset();f.button.isConnected=false;f.slot.children=[];f.event('focusin',f.rich);f.setOpen(0);f.probe.read();const next=f.replace();f.probe.read();assert.equal(f.probe.read().events.length,2);assert.equal(returnKey(f,next).target,'owned-return');assert.throws(()=>returnKey(f,f.replace()),/closed owned/);});
+test('listener reset cannot consume an unobserved native handoff before the next focus event',()=>{
+ const f=parentProbeFixture();f.setOpen(2);f.probe.read();f.probe.reset();f.event('focusin',f.rich);f.probe.read();
+ f.setOpen(0);const next=f.replace();f.probe.reset();f.event('focusin',f.rich);
+ assert.equal(returnKey(f,next).target,'owned-return');assert.throws(()=>returnKey(f,f.replace()),/closed owned/);
+});
 test('return enum never grants child or still-open parent an exception',()=>{for(const bad of [{source:'workspace',from:'owned-return',before:0,after:0},{source:'parent',from:'owned-return',before:2,after:2,target:'owned-return'},{source:'parent',from:'composer',before:2,after:2,target:'owned-return'}])assert.throws(()=>key(bad),/return/);});
 test('focus and keyup diagnostics remain bounded and cannot substitute for trusted keydown',()=>{const raw=observation();raw.documents.forEach(d=>{d.hasFocus=false;});const value=reduceUI06Key(raw);assert.deepEqual(value.diagnostic.hasFocus,[false,false,false]);assert(value.diagnostic.keyups.every(u=>u.count===0));raw.documents[0].ups=1;raw.documents[0].up={direction:'Tab',trusted:true,target:'composer',rawBody:'forbidden'};assert.throws(()=>reduceUI06Key(raw),/fields/);});
 test('backward and restored closed observations precede the unchanged forward case',()=>{const source=readFileSync(new URL('./ui06-keyboard-ax.mjs',import.meta.url),'utf8');assert(source.includes("for(const direction of ['Shift+Tab','Tab'])"));assert(source.includes("await walk('Shift+Tab','history',false);await walk('Tab','composer',false);await ax(false);}"));assert(source.indexOf("name:'显示原生列表'",source.indexOf("if(direction==='Shift+Tab')"))<source.indexOf("await walk('Shift+Tab','history',false)"));assert.deepEqual(UI06_LIMITS,{keys:64,deadlineMs:15000});assert(source.includes("await walk(direction,'composer',true,sidebarAvailable)"));});
@@ -118,20 +139,36 @@ test('a continuous sidebar cannot conceal keyboard delivery to the hidden worksp
 
 test('compact history remains AX-accessible beside an independently open workspace',()=>{
  const input=tree(true);for(const n of input.nodes){if(['history','historyOther'].includes(n.nodeId))n.ignored=false;if(n.nodeId==='sidebar')n.ignored=true;}
- const facts=reduceUI06ParentAX(input);assertUI06AXPhase(facts,true,false,false);
+ input.backend.sidebar=null;input.nodes=input.nodes.filter(n=>n.nodeId!=='sidebar');
+ const facts=reduceUI06ParentAX({...input,sidebarAvailable:false});assertUI06AXPhase(facts,true,false,false);
+ assert.throws(()=>reduceUI06ParentAX(input),/backend/);
+ for(const key of ['reading','history','historyOther','composer','workspace']){const bad=structuredClone(input);bad.backend[key]=null;assert.throws(()=>reduceUI06ParentAX({...bad,sidebarAvailable:false}),/backend/);}
  for(const patch of [{history:false},{historyOther:false},{sidebar:true},{reading:true},{readingSentinel:true},{composer:false}])assert.throws(()=>assertUI06AXPhase({...facts,...patch},true,false,false));
  assert.throws(()=>assertUI06AXPhase(facts,true,true,false),/unavailable/);
 });
 test('workspace-only keyboard traversal can pass native history but never masked reading or unavailable sidebar',()=>{
  const first=observation({before:1,after:1,target:'history-other'});first.documents[0].events=[{target:'history-other',open:1}];
+ const obsolete=structuredClone(first);first.documents.pop();
+ assert.throws(()=>reduceUI06Key({...obsolete,sidebarAvailable:false}),/document/);
  const history=reduceUI06Key({...first,sidebarAvailable:false});
- const last=reduceUI06Key({...observation({before:1,source:'parent',from:'history-other'}),sidebarAvailable:false});
+ const lastObservation=observation({before:1,source:'parent',from:'history-other'});lastObservation.documents.pop();
+ const last=reduceUI06Key({...lastObservation,sidebarAvailable:false});
  assertUI06Path(path([history,last],{startOpen:1}),{direction:'Tab',target:'composer',open:true,sidebarAvailable:false});
  for(const target of ['native-background','sidebar']){const bad=structuredClone(first);bad.documents[0].focus=target;bad.documents[0].events=[{target,open:1}];assert.throws(()=>reduceUI06Key({...bad,sidebarAvailable:false}));}
- assert.throws(()=>reduceUI06Key({...observation({before:1,source:'sidebar'}),sidebarAvailable:false}),/unavailable/);
- assert.throws(()=>reduceUI06Key({...first,sidebarAvailable:true}),/masked/);
+ assert.throws(()=>reduceUI06Key({...observation({before:1,source:'sidebar'}),sidebarAvailable:false}),/document/);
+ assert.throws(()=>reduceUI06Key({...first,sidebarAvailable:true}),/document/);
 });
 test('J3 sidebar expectation comes from fixed fixture profile, not observed product success',async()=>{
- const {j3JourneyProfile}=await import('./j3-journey-profile.mjs');assert.equal(j3JourneyProfile('LEGACY').sidebarAvailable,true);assert.equal(j3JourneyProfile('MODERN').sidebarAvailable,false);
+ const {j3JourneyProfile}=await import('./j3-journey-profile.mjs');assert.equal(j3JourneyProfile('LEGACY').sidebarAvailable,false);assert.equal(j3JourneyProfile('LEGACY').sidebarLimitation,'legacy-separated-roots-without-flow-partition');assert.equal(j3JourneyProfile('MODERN').sidebarAvailable,false);assert.equal(j3JourneyProfile('MODERN').sidebarLimitation,'compact-history-without-flow-partition');
  const source=readFileSync(new URL('./j3-package-journey.mjs',import.meta.url),'utf8');assert(source.includes('sidebarAvailable:selected.sidebarAvailable'));assert(source.includes("110,'MODERN independent compact-history fixture changed'"));
+});
+test('native surrender between two keys extends the preceding real key without losing its evidence',()=>{
+ const raw=observation({before:1,after:1,target:'protected-native'});raw.documents.pop();raw.documents[0].events=[{target:'protected-native',open:1}];
+ const previous=reduceUI06Key({...raw,sidebarAvailable:false}),later=structuredClone(raw.documents);later[0].open=0;later[0].events.push({target:'protected-native',open:0,observation:'surface-snapshot'});
+ const completed=extendUI06Key(previous,later,{sidebarAvailable:false});assert.equal(previous.after,1);assert.equal(completed.after,0);
+ const first=observation({before:0,after:0,source:'parent',from:'protected-native',target:'composer'});first.documents.pop();
+ assertUI06Path(path([completed,reduceUI06Key({...first,sidebarAvailable:false})],{startOpen:1}),{direction:'Tab',target:'composer',open:true,sidebarAvailable:false});
+ const lost=structuredClone(later);lost[0].events=[{target:'protected-native',open:0}];assert.throws(()=>extendUI06Key(previous,lost,{sidebarAvailable:false}),/evidence lost/);
+ const changed=structuredClone(later);changed[1].key.target='owned-other';assert.throws(()=>extendUI06Key(previous,changed,{sidebarAvailable:false}),/provenance/);
+ const leaked=structuredClone(later);leaked[0].events.push({target:'workspace',open:0},{target:'protected-native',open:0});assert.throws(()=>extendUI06Key(previous,leaked,{sidebarAvailable:false}),/closed owned/);
 });

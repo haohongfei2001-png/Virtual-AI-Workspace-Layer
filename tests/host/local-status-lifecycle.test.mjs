@@ -10,7 +10,7 @@ function loadFixture(file,end,dependencyName,dependency){
  const prefix=source.slice(0,source.indexOf(end)).replace(/^import .*;\n/gm,'');
  return new Function('assert',dependencyName,prefix+'\nreturn fixture;')(assert,dependency);
 }
-const surfaceFixture=loadFixture('./surface-controller.test.mjs',"\ntest('owner registration and workspace UiGrant gate workspace; sidebar joins independently'",'createSurfaceController',createSurfaceController);
+const surfaceFixture=loadFixture('./surface-controller.test.mjs',"\nfor(const viewport of [false,true])test(",'createSurfaceController',createSurfaceController);
 const contentFixture=loadFixture('./content-renewal-context-recovery.test.mjs','\nasync function denied(','createHostContentSession',createHostContentSession);
 function passive(f,expected){
  const inspect=f.adapter.inspect,before=JSON.stringify(f.calls),timers=[...f.timers.keys()];let inspections=0;

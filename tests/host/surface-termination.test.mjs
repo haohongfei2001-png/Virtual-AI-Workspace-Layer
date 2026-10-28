@@ -26,7 +26,7 @@ test('throwing callback cannot interrupt disposal or leave reading return behind
 test('adapter stop failure cannot strand owned surface or suppress termination notification',async()=>{const reasons=[],f=fixture(reason=>reasons.push(reason));await f.controller.start({});await f.both();f.adapter.stop=()=>{throw Error('adapter failure');};assert.doesNotThrow(()=>f.controller.stop('session-renew-failed'));assert.equal(f.calls.dispose,1);assert.equal(f.slot.children.length,0);assert.deepEqual(reasons,['session-renew-failed']);assert.equal(f.controller.showWorkspace(),false);});
 
 test('reading recovery needs only workspace authority and retains its native return',async()=>{const f=fixture(()=>{},'reading');await f.controller.start({});f.message();await drain();assert.equal(f.calls.reading,1);assert.equal(f.calls.show,0);f.message('sidebar');await drain();assert.equal(f.calls.reading,1);assert.equal(f.calls.show,0);assert.equal(f.slot.children.length,1);f.controller.stop();});
-test('termination reports detached presentation intent, including native surrender',async()=>{for(const reading of [false,true]){const events=[],f=fixture((reason,presentation)=>events.push(presentation));await f.controller.start({});await f.both();if(reading)f.surrender({reason:'native-input'});f.controller.stop('ui-frame-suspended');assert.deepEqual(events,[{mode:reading?'reading':'workspace'}]);assert(Object.isFrozen(events[0]));}});
+test('termination reports detached presentation intent, including native surrender',async()=>{for(const reading of [false,true]){const events=[],f=fixture((reason,presentation)=>events.push(presentation));await f.controller.start({});await f.both();if(reading)f.surrender({reason:'native-input'});f.controller.stop('ui-frame-suspended');assert.deepEqual(events,[{mode:reading?'reading':'workspace',sidebarDesired:true}]);assert(Object.isFrozen(events[0]));}});
 
 test('temporary native or geometry suspension preserves user intent across fresh mount recovery',async()=>{
  for(const mode of ['workspace','reading'])for(const reason of ['native-layer','workspace-geometry']){
@@ -36,7 +36,7 @@ test('temporary native or geometry suspension preserves user intent across fresh
   assert.equal(f.controller.presentationSnapshot().mode,'suspended');
   assert.equal(f.controller.presentationSnapshot().desiredMode,mode);
   f.controller.stop('ui-frame-suspended');
-  assert.deepEqual(events,[{cause:'ui-frame-suspended',presentation:{mode}}]);
+  assert.deepEqual(events,[{cause:'ui-frame-suspended',presentation:{mode,sidebarDesired:true}}]);
   assert.equal(f.calls.dispose,1);assert.equal(f.controller.showWorkspace(),false);
  }
 });

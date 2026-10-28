@@ -33,7 +33,7 @@ export function assertPrivacyReport(report){
   assert.deepEqual(report.cases.map(c=>c.mode),['success','malformed-accounts']);
   for(const c of report.cases){
    assert(c.workerAuthAborted>0&&c.isolatedSession>0&&c.isolatedAccounts>0);assert.equal(c.nativeDraftRetained,true);database(c.rawIDB);
-   const success=c.mode==='success';assert.equal(c.extensionDOM.length,success?2:0);c.extensionDOM.forEach(s=>assertCleanPrivacyScan(s,{nonempty:true}));
+   assert.equal(c.mountedFramesStable,true,'mounted-ui-changed-during-privacy-observation');const success=c.mode==='success',roles=c.mountedRoles;assert(Array.isArray(roles)&&new Set(roles).size===roles.length&&roles.every(r=>['workspace','sidebar'].includes(r)));if(success)assert(roles.includes('workspace')&&roles.length<=2);else assert.equal(roles.length,0);assert.equal(c.extensionDOM.length,roles.length);c.extensionDOM.forEach(s=>assertCleanPrivacyScan(s,{nonempty:true}));
    assertCleanPrivacyScan(c.pageConsole);assertCleanPrivacyScan(c.workerObserved.messages,{nonempty:true});assertCleanPrivacyScan(c.workerObserved.logs);
    assert.equal(c.workerObserved.counts.identityMalformedFailure,0);assert(c.delta.dispatchReplies>0);
    assert.equal(c.delta[success?'identitySuccess':'identityFailure'],1);assert.equal(c.delta[success?'identityFailure':'identitySuccess'],0);

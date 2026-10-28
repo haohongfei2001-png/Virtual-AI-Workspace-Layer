@@ -17,7 +17,7 @@ const built=packageHost(join(dir,'package'),{offlineOrigin:server.origin}),build
 const guard=await createHistoricalNetworkGuard({fixtureOrigin:server.origin});
 const secrets={...server.privacySentinels(),draft:'ISOLATED_PRIVACY_NATIVE_DRAFT_286'};
 const report={sourceCommit:process.env.GITHUB_SHA??null,fullSYS07:'NOT_ESTABLISHED',credentialUse:'Fixture token used only in restricted authentication RAM; fallback accounts verification may use an isolated-world short-lived closure, never MAIN or UI.',status:'NOT_RUN',evidence:'REAL_HEADLESS_PACKAGED_MV3_OFFLINE_ISOLATED_AUTH_PRIVACY',sourceHashes:build.sourceHashes,evidenceHashes,realAccount:'NOT_RUN',firstPartyServiceWorker:'NOT_VERIFIED',G:'NOT_VERIFIED',coverage:'Worker passive inbound runtime messages, outgoing tabs messages/replies and console from before either navigation; page console from before navigation; extension DOM and all raw IDB after terminal outcomes. Does not claim complete UI reply or content-world console history.',cases:[]};
-let handle,phase='launch',activeCase=null;
+let handle,page,phase='launch',activeCase=null;
 function install(factory,secrets){
  const messages=factory(secrets),logs=factory(secrets),counts={received:0,identitySuccess:0,identityFailure:0,identityMalformedFailure:0,dispatch:0,dispatchReplies:0,console:0,errors:0};
  globalThis.__isolatedPrivacy={messages,logs,counts};
@@ -47,12 +47,12 @@ try{
  await worker.evaluate(`(${install.toString()})((${createPrivacyScanner.toString()}),${JSON.stringify(secrets)})`);
  for(const mode of ['success','malformed-accounts']){
   phase=mode+'-navigation';activeCase={mode,workerAuthAborted:0,isolatedSession:0,isolatedAccounts:0,malformedResponses:0};report.cases.push(activeCase);
-  const before=await worker.evaluate(observe),page=await context.newPage(),logs=createPrivacyScanner(secrets),tasks=[];let logIncomplete=false;
+  page=await context.newPage();const before=await worker.evaluate(observe),logs=createPrivacyScanner(secrets),tasks=[];let logIncomplete=false;
   page.on('console',message=>{tasks.push(Promise.all(message.args().map(arg=>arg.jsonValue())).then(values=>logs.scan(values),()=>{logIncomplete=true;}));});page.on('pageerror',error=>logs.scan({name:error.name,message:error.message,stack:error.stack}));
   await page.goto(server.origin+'/c/33333333-3333-4333-8333-333333333333');
   phase=mode+'-terminal';
   if(mode==='success'){
-   await page.waitForFunction(()=>document.querySelectorAll('[data-va-owned]:popover-open').length===2,null,{timeout:20000});
+   await page.waitForFunction(()=>[...document.querySelectorAll('[data-va-owned][id$="_workspace"]')].some(n=>n.checkVisibility({checkOpacity:true,checkVisibilityCSS:true})&&n.getBoundingClientRect().width>0&&n.getBoundingClientRect().height>0),null,{timeout:20000});
    const workspace=page.frames().find(f=>f.url()===`chrome-extension://${id}/workspace.html`);assert(workspace);await workspace.getByText('Ordinary conversation',{exact:true}).waitFor({timeout:20000});
    await until(async()=>{const data=await worker.evaluate(observe);return data.counts.identitySuccess>before.counts.identitySuccess&&data.counts.dispatchReplies>before.counts.dispatchReplies;});
    activeCase.terminal='NATIVE_PROJECTION_WITH_REAL_ISOLATED_IDENTITY_RESULT';
@@ -67,16 +67,17 @@ try{
   assert.equal(await page.locator('textarea').evaluate((node,draft)=>node.value===draft,secrets.draft),true);activeCase.nativeDraftRetained=true;
   phase=mode+'-raw-scans';
   const data=await scanDatabase(worker);assert.equal(data.databases.length,1);assert.deepEqual(data.databases[0].stores.sort(),['refs','operations','b23_states','b23_operations','b23_checkpoints','b23_views','native_states','native_operations'].sort());assert(Object.values(data.databases[0].counts).reduce((sum,n)=>sum+n,0)>0);clean(data.scan,true);activeCase.rawIDB=data;
-  const frames=page.frames().filter(frame=>frame.url().startsWith(`chrome-extension://${id}/`));assert.equal(frames.length,mode==='success'?2:0);activeCase.extensionDOM=[];
+  const mountedUI=()=>page.frames().filter(frame=>frame.url().startsWith(`chrome-extension://${id}/`)).sort((a,b)=>a.url().localeCompare(b.url()));const frames=mountedUI();activeCase.mountedRoles=frames.map(frame=>frame.url().endsWith('/workspace.html')?'workspace':frame.url().endsWith('/sidebar.html')?'sidebar':'unexpected');if(mode==='success')assert(activeCase.mountedRoles.includes('workspace')&&frames.length<=2);else assert.equal(frames.length,0);activeCase.extensionDOM=[];
   for(const frame of frames){const scanned=await realm(frame,(secrets,factory)=>{const scanner=factory(secrets);function walk(root){scanner.scan(root.textContent??'');for(const node of root.querySelectorAll('*')){for(const attr of node.attributes)scanner.scan(attr.value);if('value'in node)scanner.scan(node.value);if(node.shadowRoot)walk(node.shadowRoot);}}walk(document);return scanner.snapshot();},secrets);clean(scanned,true);activeCase.extensionDOM.push(scanned);}
   await Promise.all(tasks);assert.equal(logIncomplete,false);activeCase.pageConsole=logs.snapshot();clean(activeCase.pageConsole);
   const after=await worker.evaluate(observe);clean(after.messages,true);clean(after.logs);assert.equal(after.counts.identityMalformedFailure,0);activeCase.workerObserved=after;activeCase.delta=Object.fromEntries(Object.entries(after.counts).map(([key,value])=>[key,value-before.counts[key]]));
   assert.equal(mode==='success'?activeCase.delta.identitySuccess:activeCase.delta.identityFailure,1);
   assert.equal(mode==='success'?activeCase.delta.identityFailure:activeCase.delta.identitySuccess,0);
+  const finalFrames=mountedUI();assert.equal(finalFrames.length,frames.length);assert(finalFrames.every((frame,i)=>frame===frames[i]&&!frame.isDetached()),'mounted-ui-replaced-during-privacy-observation');activeCase.mountedFramesStable=true;
   await page.close();activeCase=null;
  }
  assert.equal(verifyHost(built.unpacked).status,'OFFLINE_HOST_RECONSTRUCTION');report.status='PASS';
-}catch(error){report.status='FAIL';report.failedPhase=phase;report.errorClass=/^[A-Za-z]+Error$/.test(error?.name)?error.name:'Error';const line=/isolated-auth-privacy-browser\.mjs:(\d+):(\d+)/.exec(error?.stack??'');if(line)report.failureLocation={line:Number(line[1]),column:Number(line[2])};process.exitCode=1;}
+}catch(error){try{report.failureSurface=await page?.evaluate(()=>({state:document.documentElement.dataset.vaiwlState??null,reason:document.documentElement.dataset.vaiwlReason??null,exits:document.querySelectorAll('[data-va-owned]:popover-open').length,roles:['workspace','sidebar'].map(role=>{const n=document.querySelector(`[data-va-owned][id$="_${role}"]`),r=n?.getBoundingClientRect();return {role,present:!!n,visible:!!n?.checkVisibility({checkOpacity:true,checkVisibilityCSS:true}),width:r?.width??0,height:r?.height??0};})}));}catch{}report.status='FAIL';report.failedPhase=phase;report.errorClass=/^[A-Za-z]+Error$/.test(error?.name)?error.name:'Error';const line=/isolated-auth-privacy-browser\.mjs:(\d+):(\d+)/.exec(error?.stack??'');if(line)report.failureLocation={line:Number(line[1]),column:Number(line[2])};process.exitCode=1;}
 finally{
  report.cleanup=(await Promise.allSettled([handle?.close(),server.close(),guard.close()])).map(item=>item.status);
  report.sourceChangedDuringRun=(await Promise.all(Object.entries({...build.sourceHashes,...evidenceHashes}).map(async([path,digest])=>createHash('sha256').update(await readFile(path)).digest('hex')!==digest))).some(Boolean);

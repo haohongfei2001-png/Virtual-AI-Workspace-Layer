@@ -10,6 +10,21 @@ const attrs = node => ['class','style','hidden','aria-hidden','role','tabindex',
 const plain = node => ['DIV','MAIN','SECTION'].includes(node.tagName) && !node.shadowRoot && !node.matches('[tabindex],[contenteditable],[inert],[hidden],[aria-hidden="true"],a,button,input,textarea,select');
 const controls = 'a[href],button,input,textarea,select,[tabindex],[contenteditable]:not([contenteditable="false"]),[role]:not([role="none"]):not([role="presentation"])';
 
+// Identity and native visibility are separate. Native editor/tool transitions
+// may retain an inactive node; it is still protected against replacement, but
+// must not be forced visible by the extension. Only a closed-layout re-proof
+// may change this visibility baseline.
+function controlSnapshot({protectedRegions,document:doc,isOwnedSurface}) {
+ const result=[],seen=new Set();
+ for(const region of protectedRegions)for(const node of [region,...region.querySelectorAll(controls)]){
+  if(seen.has(node)||isOwnedSurface(node))continue;
+  seen.add(node);if(result.length>=128)return null;
+  const style=doc.defaultView.getComputedStyle(node);
+  result.push({node,parent:node.parentElement,visible:style.display!=='none'&&style.visibility==='visible'&&positive(rect(node))});
+ }
+ return result;
+}
+
 // These native layout coordinates supply the conditional flow rules/baseline.
 // Read them only in the restored native layout, never by disabling live CSS.
 const layoutCoordinates = ({root,header,composer,headerInside}) => {
@@ -21,7 +36,8 @@ const layoutCoordinates = ({root,header,composer,headerInside}) => {
 export function isSameNativeLayout(plan) {
  try {
   const next=layoutCoordinates(plan);
-  return !!next&&Object.keys(next).every(key=>next[key]===plan[key]);
+  const current=controlSnapshot(plan);
+  return !!next&&Object.keys(next).every(key=>next[key]===plan[key])&&!!current&&current.length===plan.nativeControls.length&&current.every((value,i)=>value.node===plan.nativeControls[i].node&&value.parent===plan.nativeControls[i].parent&&value.visible===plan.nativeControls[i].visible);
  }catch{return false;}
 }
 
@@ -57,15 +73,8 @@ export function captureNativeBaseline({document:doc,inspection,isOwnedSurface=()
   // of the native identity and occlusion proof. React may replace them alone.
   if(!headerInside)records.push({node:header,parent:header.parentElement,attrs:attrs(header)});
   const protectedRegions=[...new Set([header,...protectedNodes])];
-  const nativeControls=[];
-  for(const region of protectedRegions){
-   for(const node of [region,...region.querySelectorAll(controls)]){
-    if(nativeControls.some(x=>x.node===node))continue;
-    if(nativeControls.length>=128)return null;
-    const style=win.getComputedStyle(node),box=rect(node);
-    if(style.display!=='none'&&style.visibility==='visible'&&positive(box))nativeControls.push({node,parent:node.parentElement});
-   }
-  }
+  const nativeControls=controlSnapshot({protectedRegions,document:doc,isOwnedSurface});
+  if(!nativeControls)return null;
   const coordinates=layoutCoordinates({root,header,composer,headerInside});
   if(!coordinates)return null;
   return Object.freeze({kind,root,reading,composer,header,leaves,protectedNodes,protectedRegions,shells,records,nativeChildren,nativeControls,
@@ -118,9 +127,10 @@ export function validateActiveLayout(plan,{workspace,style,styleText,exit,isOwne
   if(!frame||!positive(board)||!positive(form)||board.width<160||board.height<96||board.y<0||board.x<0||board.x+board.width>win.innerWidth+1||board.y+board.height>win.innerHeight+1||form.y+form.height>win.innerHeight+1||overlaps(board,form))return false;
   // Re-enumerate current protected controls: native tools may arrive after
   // mount. The baseline identity check above remains mandatory for old nodes.
-  const current=new Set(plan.nativeControls.map(({node})=>node));
+  const current=new Set(plan.nativeControls.filter(({visible})=>visible).map(({node})=>node));
   let checked=0;
   for(const region of plan.protectedRegions)for(const node of [region,...region.querySelectorAll(controls)]){
+   if(isOwnedSurface(node))continue;
    if(++checked>128)return false;
    const s=win.getComputedStyle(node),r=rect(node);
    if(s.display!=='none'&&s.visibility==='visible'&&positive(r))current.add(node);

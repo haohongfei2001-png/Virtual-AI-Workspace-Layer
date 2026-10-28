@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {createRequire} from 'node:module';
 import {chromium} from '../b1/tooling/node_modules/playwright/index.mjs';
+import {j3ModernPage} from './fixtures/j3-modern.mjs';
 import {observedProjectHTML} from './fixtures/observed-project.mjs';
 import {observedHomeHTML,longDesktopHTML,materializePartitionedSidebar} from './fixtures/observed-host-replay.mjs';
 import partitionDetails from './fixtures/observed-sidebar-project-details-20261026.json' with {type:'json'};
@@ -45,6 +46,35 @@ try{
  assert.deepEqual(layerRecovery,{initial:{workspace:true,sidebar:true},ownedExcluded:true,during:{detected:true,visible:{workspace:false,sidebar:false},mode:'suspended',intent:'workspace',returnCount:0},after:{visible:{workspace:true,sidebar:true},intent:'workspace',sameFrames:true,registrations:1,confirmations:2},revoked:true});
  console.log(JSON.stringify({nativeLayerRecovery:layerRecovery}));
  await layers.close();
+ // Existing J3 native editor switch: both original nodes and drafts survive.
+ // Returning must re-prove visible controls in the restored native layout,
+ // and must not retain our temporary return button as a native identity.
+ const editor=await browser.newPage({viewport:{width:1440,height:1000}});
+ await editor.route('**/*',r=>r.request().url()==='https://chatgpt.com/c/'+C?r.fulfill({contentType:'text/html',body:j3ModernPage(legacy)}):r.abort());
+ await editor.goto('https://chatgpt.com/c/'+C);await editor.addScriptTag({content:outputFiles[0].text});
+ await editor.evaluate(async()=>{
+  const {createChatGPTAdapter,createURLPolicy,createFlowMountSurface,createSurfaceController}=flowModule;let surface;
+  const adapter=createChatGPTAdapter({document,urlPolicy:createURLPolicy(),isOwnedMask:n=>surface?.isMasked(n),isOwnedSurface:n=>surface?.isOwnedSurface(n)});
+  const binding={documentToken:'editors',producerToken:'editors',browserDocumentId:'editors',routeEpoch:1,origin:location.origin,expiresAt:new Date(Date.now()+20000).toISOString()},context=await adapter.start({binding,emit:async p=>({state:'accepted',localSeq:p.localSeq,receiptId:'editors'})});
+  const extensionOrigin='chrome-extension://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';surface=createFlowMountSurface({document,createFrameURL:({role})=>extensionOrigin+'/'+role+'.html'});
+  const bridge={registerMount:async()=>({ok:true}),confirmParent:async({mountId,role})=>({ok:true,grant:{id:'grant_'+role,mountId,role,parentDocumentId:'editors',uiDocumentId:'ui_'+role,scopeGrantId:'scope',expiresAt:binding.expiresAt}})};
+  const controller=createSurfaceController({document,adapter,surface,bridge,extensionOrigin}),handle=await controller.start({context});
+  if(!handle)throw Error('editor-fixture-mount');
+  const frames=surface.frames(handle).map(x=>x.frame),plain=document.querySelector('[data-j3-editor=plain]'),rich=document.querySelector('[data-j3-editor=rich]');plain.value='plain draft';rich.textContent='rich draft';
+  globalThis.editorProbe={controller,adapter,surface,handle,frames,plain,rich};
+  for(const {role,frame}of surface.frames(handle))window.dispatchEvent(new MessageEvent('message',{origin:extensionOrigin,source:frame.contentWindow,data:{type:'VAIWL_UI_JOIN',role,nonce:'nonce_'+role}}));
+ });
+ await editor.waitForFunction(()=>editorProbe.surface.visibility(editorProbe.handle).workspace);
+ await editor.evaluate(()=>{editorProbe.frames=editorProbe.surface.frames(editorProbe.handle).map(x=>x.frame);});
+ for(const toRich of [true,false]){
+  await editor.evaluate(toRich=>{const {controller,plain,rich}=editorProbe;controller.showReading();plain.hidden=toRich;rich.hidden=!toRich;plain.id=toRich?'j3-textarea':'prompt-textarea';rich.id=toRich?'prompt-textarea':'j3-contenteditable';},toRich);
+  await editor.getByRole('button',{name:'返回工作空间',exact:true}).click();
+  await editor.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+  const state=await editor.evaluate(()=>{const p=editorProbe;return {shown:p.surface.visibility(p.handle).workspace,mode:p.controller.localStatus(),sameFrames:p.frames.every((f,i)=>p.surface.frames(p.handle)[i]?.frame===f),drafts:p.plain.value==='plain draft'&&p.rich.textContent==='rich draft',nodes:p.plain.isConnected&&p.rich.isConnected,returnRemoved:!document.querySelector('[aria-label="返回工作空间"]')};});
+  assert.deepEqual(state,{shown:true,mode:'ready',sameFrames:true,drafts:true,nodes:true,returnRemoved:true});
+ }
+ const inactiveIdentity=await editor.evaluate(()=>{const {controller,surface,handle,adapter,rich}=editorProbe;controller.showReading();rich.remove();return {same:surface.isSameNativeRegions(handle),refreshed:!!surface.refreshNativeBaseline(handle,()=>adapter.inspect())};});assert.deepEqual(inactiveIdentity,{same:false,refreshed:false});
+ await editor.evaluate(()=>{editorProbe.controller.stop();editorProbe.adapter.stop();});await editor.close();
  // CSS-only breakpoint counterexample, not a newly observed ChatGPT topology.
  // The native fixture is explicitly responsive and all its controls fit.
  const responsive=await browser.newPage({viewport:{width:1440,height:1000}});
@@ -182,6 +212,7 @@ try{
    // titlebar shell. It must participate in the active occlusion proof.
    const extra=document.createElement('div');extra.setAttribute('role','menuitem');extra.tabIndex=0;
    extra.style.cssText=`position:fixed;pointer-events:auto;left:${boxes.workspace.x+10}px;top:${boxes.workspace.y+10}px;width:80px;height:30px`;
+   extra.dataset.vaOwned=handle.id; // A page-written marker is not an owned identity.
    before.header.append(extra);await new Promise(resolve=>setTimeout(resolve,0));
    const lateHeaderControlRejected=surface.visibility(handle).workspace===false;extra.remove();surface.showWorkspace(handle);
    const interactiveShellChecks=[];for(const [attribute,value] of [['tabindex','0'],['contenteditable','true'],['inert',''],['role','button']]){const root=workspace.parentElement;root.setAttribute(attribute,value);await new Promise(resolve=>setTimeout(resolve,0));interactiveShellChecks.push(surface.isSameNativeRegions(handle)===false&&surface.visibility(handle).workspace===false);root.removeAttribute(attribute);surface.showWorkspace(handle);}
@@ -222,12 +253,13 @@ try{
     surface.showReading(handle);form.setAttribute('tabindex','0');
     const semanticRejected=surface.refreshNativeBaseline?.(handle,()=>adapter.inspect())===null;
     form.removeAttribute('tabindex');
-    const tool=form.querySelector('button'),oldStyle=tool.getAttribute('style');tool.style.display='none';
-    const hiddenControlRejected=surface.refreshNativeBaseline?.(handle,()=>adapter.inspect())===null;
-    if(oldStyle===null)tool.removeAttribute('style');else tool.setAttribute('style',oldStyle);surface.showWorkspace(handle);
-    return {oldProofRejected,reopened,framesPreserved:surface.frames(handle).every((x,i)=>x.frame===frames[i]),activeRejected,semanticRejected,hiddenControlRejected};
+    surface.showWorkspace(handle);const tool=form.querySelector('button'),oldStyle=tool.getAttribute('style');tool.style.display='none';
+    const hiddenActiveRejected=!surface.validateActiveLayout(handle);surface.surrenderChanged();
+    const nativeHiddenReproved=!!surface.refreshNativeBaseline(handle,()=>adapter.inspect())&&surface.showWorkspace(handle)&&surface.validateActiveLayout(handle);
+    surface.showReading(handle);if(oldStyle===null)tool.removeAttribute('style');else tool.setAttribute('style',oldStyle);surface.refreshNativeBaseline(handle,()=>adapter.inspect());surface.showWorkspace(handle);
+    return {oldProofRejected,reopened,framesPreserved:surface.frames(handle).every((x,i)=>x.frame===frames[i]),activeRejected,semanticRejected,hiddenActiveRejected,nativeHiddenReproved};
    });
-   assert.deepEqual(reproof,{oldProofRejected:true,reopened:true,framesPreserved:true,activeRejected:true,semanticRejected:true,hiddenControlRejected:true});
+   assert.deepEqual(reproof,{oldProofRejected:true,reopened:true,framesPreserved:true,activeRejected:true,semanticRejected:true,hiddenActiveRejected:true,nativeHiddenReproved:true});
    await page.clock.install();
    await page.evaluate(()=>{document.querySelector('form').classList.remove('native-focus-ring');gestureProbe.surface.showReading(gestureProbe.handle);gestureProbe.surface.refreshNativeBaseline(gestureProbe.handle,()=>gestureProbe.adapter.inspect());if(!gestureProbe.surface.showWorkspace(gestureProbe.handle))throw Error('gesture-probe-workspace-not-open');handoffButton.addEventListener('pointerdown',()=>document.querySelector('form').classList.add('native-focus-ring'),{once:true});});
    const expiryBox=await page.evaluate(()=>handoffButton.getBoundingClientRect().toJSON());
