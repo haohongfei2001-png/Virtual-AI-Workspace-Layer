@@ -4,11 +4,11 @@ import {createHostContentSession} from '../../src/host/content-session.mjs';
 const drain=async()=>{for(let i=0;i<80;i++)await Promise.resolve();};
 // Controller/Chrome transport doubles, real content-session state machine.
 function fixture(){
- const calls=[],controllers=[],events=new Map(),listeners=new Set(),timers=new Map();let time=1000,seq=0,hello=0,reject=false,refreshDenied=false;
+ const calls=[],controllers=[],events=new Map(),listeners=new Set(),timers=new Map();let time=1000,seq=0,hello=0,reject=false,refreshDenied=false,scopeKey='scope-one',browserDocumentId='browser',heldHello=null;
  const doc={location:{origin:'https://chatgpt.com',href:'https://chatgpt.com/'},draft:'UNSENT',defaultView:{addEventListener:(k,f)=>events.set(k,f),removeEventListener:(k,f)=>{if(events.get(k)===f)events.delete(k);}}};
- const runtime={id:'extension',getURL:p=>'chrome-extension://extension/'+p,onMessage:{addListener:f=>listeners.add(f),removeListener:f=>listeners.delete(f)},async sendMessage(m){calls.push(m);if(m.type==='HOST_HELLO'){hello++;if(reject)return {ok:false};return {binding:{documentToken:'doc'+hello,producerToken:'producer'+hello,browserDocumentId:'browser',routeEpoch:hello,origin:doc.location.origin,expiresAt:new Date(time+20000).toISOString()}};}if(m.type==='HOST_DOCUMENT_RENEW')return {ok:true,binding:{documentToken:'doc'+hello,producerToken:'producer'+hello,browserDocumentId:'browser',routeEpoch:hello,origin:doc.location.origin,expiresAt:new Date(time+20000).toISOString()}};if(m.type==='HOST_REFRESH')return {state:refreshDenied?'unknown':'verified'};return {ok:true};}};
- const session=createHostContentSession({document:doc,runtime,makeId:()=> 'client',now:()=>time,elapsedNow:()=>time,schedule:(fn,ms)=>{const key=++seq;timers.set(key,{fn,at:time+ms});return key;},cancel:key=>timers.delete(key),adapterFactory:()=>({start:async()=>({}),inspect:()=>({ok:true}),stop(){}}),surfaceFactory:()=>({}),plansFactory:()=>({}),controllerFactory:options=>{let active=false;const controller={options,async start(context){controller.binding=context.binding;await options.bridge.registerMount({handle:{id:'mount'+hello,regionEpoch:1}});active=true;return {id:'mount'+hello};},stop(){if(!active)return;active=false;options.onTerminated?.('surface-stopped');},showWorkspace:()=>active,showReading:()=>active,terminate(reason,presentation){assert.equal(typeof options.onTerminated,'function','private controller termination callback must be wired');active=false;options.onTerminated(reason,presentation);}};controllers.push(controller);return controller;}});
- return {session,calls,controllers,doc,events,listeners,fail:()=>{reject=true;},denyRefresh:()=>{refreshDenied=true;},hellos:()=>calls.filter(m=>m.type==='HOST_HELLO'),async advance(ms){time+=ms;for(const[id,t]of [...timers])if(t.at<=time){timers.delete(id);t.fn();}await drain();}};
+ const runtime={id:'extension',getURL:p=>'chrome-extension://extension/'+p,onMessage:{addListener:f=>listeners.add(f),removeListener:f=>listeners.delete(f)},async sendMessage(m){calls.push(m);if(m.type==='HOST_HELLO'){hello++;if(heldHello){const gate=heldHello;heldHello=null;await gate;}if(reject)return {ok:false};return {binding:{documentToken:'doc'+hello,producerToken:'producer'+hello,browserDocumentId,routeEpoch:hello,origin:doc.location.origin,expiresAt:new Date(time+20000).toISOString()}};}if(m.type==='HOST_DOCUMENT_RENEW')return {ok:true,binding:{documentToken:'doc'+hello,producerToken:'producer'+hello,browserDocumentId,routeEpoch:hello,origin:doc.location.origin,expiresAt:new Date(time+20000).toISOString()}};if(m.type==='HOST_REFRESH')return {state:refreshDenied?'unknown':'verified',scopeKey};return {ok:true};}};
+ const session=createHostContentSession({document:doc,runtime,makeId:()=> 'client',now:()=>time,elapsedNow:()=>time,schedule:(fn,ms)=>{const key=++seq;timers.set(key,{fn,at:time+ms});return key;},cancel:key=>timers.delete(key),adapterFactory:()=>({start:async()=>({}),inspect:()=>({ok:true}),stop(){}}),surfaceFactory:()=>({}),plansFactory:()=>({}),controllerFactory:options=>{let active=false,sidebarDesired=true;const controller={options,async start(context,sidebar=true){sidebarDesired=sidebar;controller.sidebarDesired=sidebar;controller.binding=context.binding;await options.bridge.registerMount({handle:{id:'mount'+hello,regionEpoch:1}});active=true;return {id:'mount'+hello};},stop(){if(!active)return;active=false;options.onTerminated?.('surface-stopped');},showWorkspace:()=>active,showReading:()=>active,sidebarPresentationIntent:()=>active?sidebarDesired:null,hideSidebar(){sidebarDesired=false;controller.sidebarDesired=false;},terminate(reason,presentation){assert.equal(typeof options.onTerminated,'function','private controller termination callback must be wired');active=false;options.onTerminated(reason,presentation);}};controllers.push(controller);return controller;}});
+ return {session,calls,controllers,doc,events,listeners,holdHello(){let release;heldHello=new Promise(resolve=>{release=resolve;});return release;},setScope:value=>{scopeKey=value;},setDocument:value=>{browserDocumentId=value;},fail:()=>{reject=true;},denyRefresh:()=>{refreshDenied=true;},hellos:()=>calls.filter(m=>m.type==='HOST_HELLO'),async advance(ms){time+=ms;for(const[id,t]of [...timers])if(t.at<=time){timers.delete(id);t.fn();}await drain();}};
 }
 for(const reason of ['ui-frame-suspended','session-renew-failed','ui-grant-expired','stale-session-renewal'])test('one fresh handshake after '+reason+' without navigation or old authority',async()=>{
  const f=fixture();await f.session.start();f.controllers[0].terminate(reason);await drain();assert.equal(f.hellos().length,2);assert.equal(f.controllers.length,2);assert.equal(f.session.showWorkspace(),true);assert.equal(f.doc.draft,'UNSENT');
@@ -41,4 +41,50 @@ test('explicit user exit ends session and fences late recovery callbacks until a
  await f.session.start();assert.equal(f.hellos().length,2);assert.equal(f.session.showWorkspace(),true);
  old.options.onTerminated('ui-user-exit');assert.equal(f.session.showWorkspace(),true);
  f.controllers[1].terminate('ui-frame-suspended');await drain();assert.equal(f.hellos().length,3);f.session.stop();
+});
+
+for(const transition of ['expiry','spa'])test('same-document same-scope rebind retains an explicit native-list choice: '+transition,async()=>{
+ const f=fixture();await f.session.start();const prior=f.controllers[0];prior.hideSidebar();
+ if(transition==='spa'){f.doc.location.href+='c/member';prior.terminate('native-document-changed',{mode:'reading',sidebarDesired:false});}
+ else prior.terminate('ui-grant-expired',{mode:'reading',sidebarDesired:false});
+ await drain();assert.equal(f.controllers.length,2);assert.equal(f.controllers[1].sidebarDesired,false);
+ assert.notEqual(f.controllers[1].binding.documentToken,prior.binding.documentToken);
+ assert.notEqual(f.controllers[1].binding.producerToken,prior.binding.producerToken);
+ assert.equal(f.doc.draft,'UNSENT');f.session.stop();
+});
+test('live controller sidebar intent reaches a document invalidation rebind',async()=>{
+ const f=fixture();await f.session.start();f.controllers[0].hideSidebar();
+ [...f.listeners][0]({type:'HOST_DOCUMENT_INVALIDATED'},{id:'extension'});await drain();
+ assert.equal(f.controllers[1].sidebarDesired,false);f.session.stop();
+});
+for(const transition of ['scope','document','start','pagehide','unverified'])test('sidebar preference is not authority across '+transition,async()=>{
+ const f=fixture();await f.session.start();const prior=f.controllers[0];prior.hideSidebar();
+ if(transition==='scope')f.setScope('scope-two');
+ if(transition==='document')f.setDocument('other-document');
+ if(transition==='unverified')f.denyRefresh();
+ if(transition==='start'){f.session.stop();await f.session.start();}
+ else if(transition==='pagehide'){f.events.get('pagehide')({persisted:false});await f.session.start();}
+ else prior.terminate('ui-grant-expired',{mode:'reading',sidebarDesired:false});
+ await drain();
+ if(transition==='unverified'){assert.equal(f.controllers.length,1);assert.equal(f.session.showWorkspace(),false);}
+ else assert.equal(f.controllers[1].sidebarDesired,true);
+ f.session.stop();
+});
+
+test('replacement handshake bursts preserve only a pending same-scope sidebar bit',async()=>{
+ const f=fixture();await f.session.start();const prior=f.controllers[0];prior.hideSidebar();const release=f.holdHello();
+ [...f.listeners][0]({type:'HOST_DOCUMENT_INVALIDATED'},{id:'extension'});await drain();
+ assert.equal(f.controllers.length,1);f.doc.location.href+='c/final';
+ [...f.listeners][0]({type:'HOST_DOCUMENT_INVALIDATED'},{id:'extension'});await drain();
+ assert.equal(f.controllers.length,2);assert.equal(f.controllers[1].sidebarDesired,false);
+ release();await drain();assert.equal(f.controllers.length,2,'late handshake cannot restore old controller');
+ assert.equal(f.controllers[1].binding.documentToken,'doc3');f.session.stop();
+});
+test('a withdrawn controller cannot reuse an earlier rebind preference after explicit revocation',async()=>{
+ const f=fixture();await f.session.start();f.controllers[0].hideSidebar();
+ [...f.listeners][0]({type:'HOST_DOCUMENT_INVALIDATED'},{id:'extension'});await drain();
+ assert.equal(f.controllers[1].sidebarDesired,false);
+ f.controllers[1].terminate('ui-authority-revoked',{mode:'reading',sidebarDesired:false});
+ [...f.listeners][0]({type:'HOST_DOCUMENT_INVALIDATED'},{id:'extension'});await drain();
+ assert.equal(f.controllers[2].sidebarDesired,true);f.session.stop();
 });

@@ -1,5 +1,13 @@
 # VAIWL实际状态：渐进积累工程已接线，真实来源逐项待准入
 
+## 2026-10-28 同文档重新绑定保留用户侧栏选择（原安装不变）
+
+已确认正式 content-session 只交接主区展示意图，丢失 controller 内的显式原生列表选择，导致普通同文档重新绑定后主题侧栏擅自展开。现仅在新 HELLO/REFRESH 再次核对相同 browser documentId 与 scope 后交接一个展示布尔值；新 controller 启动即消费，旧 frame/grant 不复用。连续路由准备阶段保留该值；撤权、scope/文档变化、显式重新启动不继承，四格新操作仍可重新展开。
+
+最小反例先失败，修复与边界回归通过，非作者只读复核通过。证据 `/private/tmp/vaiwl-sidebar-rebind-{before,contracts,final}.log`；正式隔离 MV3 同一旅程包括收起→成员 SPA→新绑定仍收起→四格展开、私人 Worker/布局恢复、撤权及卸载恢复，报告 `/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-egnchC/report.json`。包内两个生产模块与源码字节一致，归档 SHA256 `7bcfb988d746b6298cb8d6ac728918d384ab7246dbfaa6b51db2cd8ccaff7eec`。已查看阅读及返回的实际 renderer 图；匿名原生宿主不是实际 ChatGPT 设计验收。
+
+原安装、IndexedDB、草稿、备份及三份 stash 保持。运行构建 UNKNOWN，本批真实 Mac NOT_RUN、完整产品 NOT_ACCEPTED；不据此判断用户实际启动故障已解决，不再更新日常扩展。
+
 ## 2026-10-28 首次布局拒绝后的响应式恢复（原安装不变）
 
 源码及现有 controller 反例确认：初次几何拒绝后只监听 DOM mutation，窗口变宽但节点/属性未变时无法重新挂载；等待期间 pagehide 也未注册，旧回调可能在页面离开后挂载。正式控制器现仅在初始等待阶段监听 window/visualViewport resize，沿原 binding、URL、有效期与单飞守卫重新执行完整 inspect；成功或停止时撤销监听。pagehide 从启动即生效，无计时重试、几何放宽或授权延长。

@@ -237,6 +237,14 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
  function reset(keepObservation=false){if(!keepObservation)stopObservation();epoch++;const s=current;current=null;dispose(s,keepObservation);}
  function stop(){nativeUseIntent=null;contextWaitSuspended=false;verificationWaitURL=null;contextResumeAllowed=false;contextResumeMode='workspace';contextResumeURL=null;clearLearned();clearRecent();clearUpgrade();for(const type of ['pointerdown','keydown'])doc.removeEventListener?.(type,interruptUpgrade,true);enabled=false;restoreArmed=false;rebindQueued=false;rebindRun++;reset();doc.defaultView.removeEventListener('pagehide',pagehide);doc.defaultView.removeEventListener('pageshow',pageshow);}
  function presentationIntent(state){return (state.controller?.presentationIntent?.()??state.controller?.presentationMode?.()??state.initialMode)==='workspace'?'workspace':'reading';}
+ function sidebarPreference(s){
+  if(s.recoveryDenied)return null;
+  const desired=s.controller?.sidebarPresentationIntent?.()??s.stoppedSidebarDesired;
+  if(typeof desired==='boolean'&&typeof s.scopeKey==='string'&&s.scopeKey&&tokenOK(s.binding?.browserDocumentId))return {desired,scopeKey:s.scopeKey,documentId:s.binding.browserDocumentId};
+  // A second native route can arrive while the replacement handshake is still
+  // pending. Carry the bit, not an old grant; the final fresh bind checks it.
+  return s.sidebarPreference??null;
+ }
  function pagehide(event){
   stopObservation();
   if(event?.persisted!==true){stop();return;}
@@ -258,18 +266,19 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
   if(!enabled||current!==s||rebindQueued||s.busyClose===true&&doc.location.href===s.url)return;
   if(initialMode===null)initialMode=presentationIntent(s);
   if(doc.location.href!==s.url){rememberDepartingRoute(s);upgrade.navigate({url:doc.location.href});initialMode='reading';}else if(!upgrade.isTarget({url:doc.location.href}))clearUpgrade();
+  const preference=sidebarPreference(s);
   rebindQueued=true;const run=++rebindRun;reset();doc.defaultView.addEventListener('pagehide',pagehide);
   // Collapse a burst into one replacement. Only external events can request a
   // subsequent attempt; failures never schedule their own recovery loop.
-  queueMicrotask(()=>{if(!enabled||run!==rebindRun)return;rebindQueued=false;void begin(true,initialMode,expectedScope);});
+  queueMicrotask(()=>{if(!enabled||run!==rebindRun)return;rebindQueued=false;void begin(true,initialMode,expectedScope,preference);});
  }
  async function start(){frameReplaced=false;startupFailure=null;contextWaitSuspended=false;verificationWaitURL=null;contextResumeMode='workspace';contextResumeURL=null;contextResumeAllowed=contextRecovery===true;clearLearned();clearRecent();clearUpgrade();recoveryRemaining=1;enabled=true;restoreArmed=false;rebindQueued=false;rebindRun++;doc.defaultView.addEventListener('pageshow',pageshow);return begin();}
  // Legacy entry points remain harmless: presentation recovery now belongs to
  // the live surface controller, never another document handshake.
  async function recoverLayout(){return null;}
  async function recoverRoute(){return null;}
- async function begin(rebinding=false,initialMode='workspace',expectedScope=null){
-  reset();const s={run:epoch,initialMode,url:doc.location.href,abort:new AbortController(),binding:null,controller:null,adapter:null,listener:()=>{},pagehide,plans:null,rebinding,ready:false,recoveryDenied:false,snippets:null,snippetRef:null,snippetScopeGrant:null,identityChallenges:new Map(),identityPending:false,identityAuthority:0};current=s;doc.defaultView.addEventListener('pagehide',s.pagehide);
+ async function begin(rebinding=false,initialMode='workspace',expectedScope=null,preference=null){
+  reset();const s={run:epoch,initialMode,sidebarPreference:preference,url:doc.location.href,abort:new AbortController(),binding:null,controller:null,adapter:null,listener:()=>{},pagehide,plans:null,rebinding,ready:false,recoveryDenied:false,snippets:null,snippetRef:null,snippetScopeGrant:null,identityChallenges:new Map(),identityPending:false,identityAuthority:0};current=s;doc.defaultView.addEventListener('pagehide',s.pagehide);
   let foregroundArmed=doc.visibilityState==='hidden',foregroundPending=false;
   s.blur=()=>{foregroundArmed=true;};
   s.focus=()=>{
@@ -399,6 +408,7 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
    await startObservation(s);
    startupPhase='authorization';reportStartup(startupPhase);
    const auth=await handshake(s,{v:1,type:'HOST_REFRESH',clientId,seq:++seq,...bindingFields(s.binding)});noteScopeStatus(s,auth);if(auth?.state!=='verified')throw Error('scope-not-verified');if(expectedScope!==null&&auth.scopeKey!==expectedScope)throw Error('recovery-scope-changed');s.contextReadyPending=false;s.scopeKey=auth.scopeKey;s.ackProjects=new Set();s.upgraded=null;
+   if(s.sidebarPreference?.scopeKey!==s.scopeKey||s.sidebarPreference?.documentId!==s.binding.browserDocumentId)s.sidebarPreference=null;
    startupPhase='initialization-preparation';reportStartup(startupPhase);
    if(learnedScope!==s.scopeKey||learnedDocument!==s.binding.browserDocumentId)clearLearned();learnedScope=s.scopeKey;learnedDocument=s.binding.browserDocumentId;
    recentId(s);
@@ -533,6 +543,10 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
    };
    startupPhase='initialization-controller';reportStartup(startupPhase);
    s.controller=controllerFactory({document:doc,adapter,surface,extensionOrigin:'chrome-extension://'+runtime.id,bridge,initialMode,onWake:()=>wake(s),onFailure:code=>{if(current===s&&surfaceFailureStates.includes(code)){s.surfaceFailure=code;startupFailure={url:s.url,state:code,shape:null};}},onTerminated:(reason,presentation)=>{
+    if(current===s){
+     s.stoppedSidebarDesired=['native-document-changed','dormant-document-changed','ui-frame-suspended','session-renew-failed','ui-grant-expired','stale-session-renewal'].includes(reason)&&typeof presentation?.sidebarDesired==='boolean'?presentation.sidebarDesired:null;
+     if(s.stoppedSidebarDesired===null)s.sidebarPreference=null;
+    }
     if(current===s&&!s.surfaceFailure&&surfaceFailureStates.includes('surface-'+reason)){s.surfaceFailure='surface-'+reason;startupFailure={url:s.url,state:s.surfaceFailure,shape:null};}
     const publicStops=['ui-frame-document-replaced','native-region-changed','native-geometry-changed','dormant-document-changed','mount-unavailable','ui-frame-suspended','ui-grant-expired','session-renew-failed','surface-stopped','ui-authority-revoked','ui-user-exit'];
     if(current===s&&doc.documentElement?.dataset)doc.documentElement.dataset.vaiwlSurfaceStop=publicStops.includes(reason)?reason:'other';
@@ -564,7 +578,13 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
    // dormant wake and failed scope checks never acquire this startup flag.
    startupPhase='surface';reportStartup(startupPhase);
    s.surface=surface;s.mountStarting=true;let handle;
-   try{const context=await s.adapter.start(adapterOptions(s,s.binding));if(!live(s))throw Error('stale-content-session');s.ready=true;handle=await s.controller.start({...adapterOptions(s,s.binding),context});}finally{s.mountStarting=false;}
+   try{
+    const context=await s.adapter.start(adapterOptions(s,s.binding));if(!live(s))throw Error('stale-content-session');
+    // The new controller owns the live choice from this point. A later user
+    // action or stop must never fall back to the originally handed-off value.
+    const sidebarDesired=s.sidebarPreference?.desired!==false;s.sidebarPreference=null;
+    s.ready=true;handle=await s.controller.start({...adapterOptions(s,s.binding),context},sidebarDesired);
+   }finally{s.mountStarting=false;}
    if(!live(s))throw Error('surface-start-failed');reportStartup(handle?'ready':'surface-failed');
    // A real foreground transition may arrive while mount is awaiting its reply.
    // Consume the armed transition through the existing live/single-flight gate.

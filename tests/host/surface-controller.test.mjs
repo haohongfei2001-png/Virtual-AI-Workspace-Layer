@@ -173,13 +173,13 @@ test('native surrender records reading for recovery even if authority expires be
  const f=fixture();await f.controller.start({});await f.both();assert.equal(f.controller.presentationMode(),'workspace');
  f.binding.expiresAt=new Date(0).toISOString();f.surrender({reason:'native-input'});
  assert.equal(f.controller.presentationMode(),'reading');assert.equal(f.slot.children.length,0,'expired grant cannot create a return control');
- f.controller.stop('ui-grant-expired');assert.deepEqual(f.calls.terminations.at(-1),{reason:'ui-grant-expired',presentation:{mode:'reading'}});
+ f.controller.stop('ui-grant-expired');assert.deepEqual(f.calls.terminations.at(-1),{reason:'ui-grant-expired',presentation:{mode:'reading',sidebarDesired:true}});
 });
 
 for(const role of ['workspace'])test('owned '+role+' EXIT fully disposes surfaces and the reading return',async()=>{
  const f=fixture(),released=[];f.bridge.revokeMount=value=>released.push(value);await f.controller.start({});await f.both();f.controller.showReading();assert.equal(f.slot.children.length,1);const stops=f.calls.stop;
  f.message(role,{data:{type:'VAIWL_UI_EXIT',role}});await drain();
- assert.equal(f.calls.dispose,1);assert.equal(f.calls.stop,stops);assert.equal(f.slot.children.length,0);assert.deepEqual(released,[{mountId:'mount'}]);assert.deepEqual(f.calls.terminations,[{reason:'ui-user-exit',presentation:{mode:'reading'}}]);assert.equal(f.controller.showWorkspace(),false);
+ assert.equal(f.calls.dispose,1);assert.equal(f.calls.stop,stops);assert.equal(f.slot.children.length,0);assert.deepEqual(released,[{mountId:'mount'}]);assert.deepEqual(f.calls.terminations,[{reason:'ui-user-exit',presentation:{mode:'reading',sidebarDesired:true}}]);assert.equal(f.controller.showWorkspace(),false);
  f.message(role,{data:{type:'VAIWL_UI_EXIT',role}});f.message();f.tick(60000);await drain();assert.equal(f.calls.dispose,1);assert.equal(f.calls.show,1);assert.equal(f.slot.children.length,0);
 });
 
@@ -305,7 +305,7 @@ for(const role of ['workspace'])test('registered owned '+role+' SUSPEND synchron
  f.bridge.registerMount=()=>{entered=true;return held.promise;};f.bridge.revokeMount=value=>released.push(value);
  const starting=f.controller.start({});await drain();assert.equal(entered,true);assert.equal(f.calls.dispose,0);
  f.message(role,{data:{type:'VAIWL_UI_SUSPEND',role}});
- assert.equal(f.calls.dispose,1);assert.equal(f.calls.suspend,1);assert.deepEqual(f.calls.terminations,[{reason:'ui-frame-suspended',presentation:{mode:'reading'}}]);assert.deepEqual(released,[{mountId:'mount'}]);assert.equal(f.controller.showWorkspace(),false);
+ assert.equal(f.calls.dispose,1);assert.equal(f.calls.suspend,1);assert.deepEqual(f.calls.terminations,[{reason:'ui-frame-suspended',presentation:{mode:'reading',sidebarDesired:true}}]);assert.deepEqual(released,[{mountId:'mount'}]);assert.equal(f.controller.showWorkspace(),false);
  held.resolve({ok:true});assert.equal(await starting,null);await drain();assert.equal(f.calls.dispose,1);assert.equal(f.calls.terminations.length,1);assert.equal(f.calls.show,0);assert.equal(f.calls.confirm.length,0);
 });
 for(const patch of [{origin:'https://chatgpt.com'},{source:{}}])test('foreign '+Object.keys(patch)[0]+' SUSPEND cannot terminate pending registration',async()=>{
@@ -695,4 +695,15 @@ test('failed responsive native proof cannot reopen workspace on stale coordinate
  f.surface.needsNativeBaselineRefresh=()=>true;f.surface.refreshNativeBaseline=()=>null;
  assert.equal(f.controller.showWorkspace(true),false);assert.equal(f.calls.show,shown);
  assert.equal(f.calls.dispose,0);f.controller.stop();
+});
+
+test('native-list intent is handed off separately from transient sidebar visibility',async()=>{
+ const f=publishingFixture({initialMode:'reading'});await f.controller.start({});await f.both();
+ f.layer(true);f.change();assert.equal(f.controller.sidebarPresentationIntent?.(),true,'modal yield is not an explicit fold');
+ f.layer(false);f.change();f.surrender({role:'sidebar',reason:'native-list'});f.actual({workspace:false,sidebar:false});
+ assert.equal(f.controller.sidebarPresentationIntent?.(),false);f.controller.stop('ui-grant-expired');
+ assert.deepEqual(f.calls.terminations.at(-1),{reason:'ui-grant-expired',presentation:{mode:'reading',sidebarDesired:false}});
+ assert.equal(f.controller.sidebarPresentationIntent?.(),null,'destroyed controller has no live choice');
+ await f.controller.start({},false);await f.both();assert.deepEqual(f.surface.visibility(),{workspace:false,sidebar:false});
+ f.controller.showWorkspace();assert.deepEqual(f.surface.visibility(),{workspace:true,sidebar:true});f.controller.stop();
 });

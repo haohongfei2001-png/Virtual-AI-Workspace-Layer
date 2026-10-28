@@ -113,10 +113,16 @@ try{
   report.checks.nativePartitionReplacementRejoinsSidebarOnly=true;
   report.checks.beforeMember=await localState();assert.equal(report.checks.beforeMember.mode,'personal');
   await page.getByRole('button',{name:'返回原生阅读',exact:true}).click();
+  await page.getByRole('button',{name:'显示原生列表',exact:true}).click();
+  await page.locator('[id$="_sidebar"]:visible').waitFor({state:'hidden'});
   await page.locator('#project-panel a[href="/c/'+B+'"]').click();await page.waitForURL(origin+'/c/'+B);
   report.checks.afterMember=await localState();report.checks.navigationTrace=await flowWorker.evaluate(()=>globalThis.flowNavigationTrace);
-  await sidebar.getByRole('button',{name:'侧栏项目 Native Project',exact:true}).waitFor({timeout:15000});
   await page.getByRole('button',{name:'返回工作空间',exact:true}).waitFor({timeout:15000});
+  assert.equal(await page.locator('[id$="_sidebar"]:visible').count(),0,'fresh same-document owner must retain explicit native-list choice');
+  await page.getByRole('button',{name:'返回工作空间',exact:true}).click();
+  await sidebar.getByRole('button',{name:'侧栏项目 Native Project',exact:true}).waitFor({timeout:15000});
+  report.checks.nativeListChoiceAcrossFreshDocumentBinding=true;
+  await page.getByRole('button',{name:'返回原生阅读',exact:true}).click();
   const readingImage=join(dir,'flow-journey-reading.png');await page.screenshot({path:readingImage});report.images.push(readingImage);
   await page.getByRole('button',{name:'返回工作空间',exact:true}).click();
   await workspace.getByText('Native Project',{exact:true}).first().waitFor({timeout:15000});
