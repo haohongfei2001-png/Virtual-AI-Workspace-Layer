@@ -492,20 +492,20 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
  function saveResumeView(value){if(readTerminal)return;
   if(closed||bootstrapping||!grantCurrent()||!resumeQuery||JSON.stringify(resumeQuery)!==JSON.stringify(query))return;
   try{const {freeSession,...layout}=value,view=validateFrameResumeView(layout),expectedQuery=validateResumeQuery(resumeQuery),key=JSON.stringify([expectedQuery,view]);if(key===resumeDesired?.key)return;
-   // A workspace action cannot flush another frame's debounce. Commit explicit
-   // sidebar choices promptly; only scrolling is coalesced. Otherwise clicking
-   // a member immediately after a fold loses that choice on SPA remount.
-   const structure=v=>v&&JSON.stringify([v.sidebarVisible,v.sidebarChoices,v.sidebarOpen,v.oldOpen,v.inventoryChoices,v.capacities]);
-   const urgent=role==='sidebar'&&structure(view)!==structure(resumeDesired?.view);
+   // Either frame can be replaced by native navigation or landmark changes.
+   // Send explicit layout choices promptly; only scrolling is coalesced. A
+   // later scroll must not delay a choice queued behind an in-flight save.
+   const structure=v=>v&&JSON.stringify([v.segment,v.sidebarVisible,v.sidebarChoices,v.sidebarOpen,v.oldOpen,v.inventoryChoices,v.capacities]);
+   const urgent=structure(view)!==structure(resumeDesired?.view)||resumeQueued?.urgent===true;
    resumeDesired={view,key,expectedQuery,urgent};if(key===resumeLast&&!resumeWriting){cancel(resumeTimer);resumeTimer=null;resumeQueued=null;return;}resumeQueued=resumeDesired;
    if(!resumeWriting){if(urgent){cancel(resumeTimer);resumeTimer=null;void flushResume();}else if(resumeTimer===null)resumeTimer=schedule(flushResume,100);}
   }catch{}
  }
  function flushResume(){
-  resumeTimer=null;if(!resumeQueued||closed||!grantCurrent())return;
+  resumeTimer=null;if(resumeWriting)return resumeWriting.done;if(!resumeQueued||closed||!grantCurrent())return;
   const item=resumeQueued;resumeQueued=null;if(JSON.stringify(item.expectedQuery)!==JSON.stringify(query))return;const current=grant,renderer=navigation,attempt={};resumeWriting=attempt;resumeLast=null;
   attempt.done=(async()=>{try{const result=await withRequestDeadline(()=>runtime.sendMessage({v:1,type:'HOST_UI_SAVE_VIEW',grantId:current.id,mountId:current.mountId,expectedQuery:item.expectedQuery,view:item.view}),{now:elapsedNow,schedule,cancel});if(!closed&&grant?.id===current.id&&navigation===renderer&&JSON.stringify(query)===JSON.stringify(item.expectedQuery)&&result?.ok===true){resumeLast=item.key;return true;}return false;}catch{return false;}
-  finally{if(resumeWriting===attempt){resumeWriting=false;if(!closed&&navigation===renderer&&resumeQueued&&resumeTimer===null)resumeTimer=schedule(flushResume,resumeQueued.urgent?0:100);}}})();return attempt.done;
+  finally{if(resumeWriting===attempt){resumeWriting=false;if(!closed&&navigation===renderer&&resumeQueued&&resumeTimer===null){if(resumeQueued.urgent)void flushResume();else resumeTimer=schedule(flushResume,100);}}}})();return attempt.done;
  }
  async function bootstrapResume(){
   const attempt={};bootstrapping=attempt;const current=grant,renderer=navigation,ticket=serial;
@@ -555,8 +555,10 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
    if(!valid()||!saving)return;
    // A completed failed background save must not disappear from the navigation
    // barrier. Only this explicit action retries the latest bounded layout.
-   if(!resumeQueued&&resumeDesired&&resumeDesired.key!==resumeLast&&JSON.stringify(resumeDesired.expectedQuery)===dispatchQuery)resumeQueued=resumeDesired;
-   for(let pass=0;pass<2&&resumeQueued;pass++){if(!valid()||!saving)return;cancel(resumeTimer);resumeTimer=null;await flushResume();}
+   if(!resumeWriting&&!resumeQueued&&resumeDesired&&resumeDesired.key!==resumeLast&&JSON.stringify(resumeDesired.expectedQuery)===dispatchQuery)resumeQueued=resumeDesired;
+   // Completing one save may immediately start a queued explicit choice.
+   // Follow that single flight instead of duplicating it during navigation.
+   for(let pass=0;pass<2&&(resumeWriting||resumeQueued);pass++){if(!valid()||!saving)return;cancel(resumeTimer);resumeTimer=null;await flushResume();}
    },{timeoutMs:500,now:elapsedNow,schedule,cancel});}catch{}finally{saving=false;}
    if(!valid())return {ok:false};
    return runtime.sendMessage({v:1,type:issued.plan.mode==='native-control'?'HOST_UI_DISPATCH_NATIVE':'HOST_UI_DISPATCH_CURRENT',grantId:current.id,mountId:current.mountId,actionId:command.actionId,planRevision:command.planRevision,targetKey:command.targetKey});},{now:elapsedNow,schedule,cancel});

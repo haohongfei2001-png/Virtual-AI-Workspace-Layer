@@ -136,6 +136,9 @@ try{
     await page.getByRole('button',{name:'Native auxiliary action',exact:true}).click();
     report.checks.retainedHomeMember=await page.evaluate(()=>{const p=window.nativeFlowExtra;return {sameParents:p.branch.parentElement===p.parent&&p.button.parentElement===p.branch&&p.icon.parentElement===p.button&&p.hidden.parentElement===p.parent,nativeClick:p.clicks===1,inlineGraphicRetained:p.button.querySelector('svg')===p.icon&&getComputedStyle(p.icon).overflowX==='hidden',hiddenUntouched:p.hidden.outerHTML==='<div hidden=""></div>',workspaceVisible:[...document.querySelectorAll('[id$="_workspace"][data-va-owned]')].some(n=>getComputedStyle(n).display!=='none')};});
     assert.deepEqual(report.checks.retainedHomeMember,{sameParents:true,nativeClick:true,inlineGraphicRetained:true,hiddenUntouched:true,workspaceVisible:true});
+    const inventory=workspace.getByRole('button',{name:'其他已知聊天',exact:true});
+    assert.equal(await inventory.getAttribute('aria-expanded'),'true');
+    await inventory.evaluate(n=>n.click());
     const content=await workspace.locator('.workspace').innerText(),beforeDraft=await page.locator('textarea').inputValue();
     await page.evaluate(()=>{
      window.preReplacementFrames=[...document.querySelectorAll('iframe[src^="chrome-extension://"]')];window.preReplacementEditor=document.querySelector('textarea');
@@ -146,8 +149,10 @@ try{
     await page.waitForFunction(()=>window.preReplacementFrames.every(n=>!n.isConnected));
     await workspace.locator('.workspace').waitFor();await page.locator('[id$="_workspace"]:visible').waitFor();await page.locator('[id$="_sidebar"]:visible').waitFor();
     assert.equal(await workspace.locator('.workspace').innerText(),content,'fresh frame JOIN/VIEW must retain the same current-document content');
+    assert.equal(await inventory.getAttribute('aria-expanded'),'false','fresh JOIN must restore the just-saved explicit inventory choice');
     assert.equal(await page.locator('textarea').inputValue(),beforeDraft);assert(await page.evaluate(()=>window.preReplacementEditor===document.querySelector('textarea')));
-    report.checks.sameDocumentHeaderReplacement={newFrames:true,freshView:true,workspaceAndSidebarRestored:true,originalEditorAndDraft:true};
+    report.checks.sameDocumentHeaderReplacement={newFrames:true,freshView:true,workspaceAndSidebarRestored:true,explicitLayoutRestored:true,originalEditorAndDraft:true};
+    await inventory.click();
    }
    const image=join(dir,'flow-'+scene+'.png');await page.screenshot({path:image});report.images.push(image);
    const draft=await page.locator('textarea').inputValue();

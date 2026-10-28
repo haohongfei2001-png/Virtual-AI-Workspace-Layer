@@ -1,5 +1,13 @@
 # VAIWL实际状态：渐进积累工程已接线，真实来源逐项待准入
 
+## 2026-10-29 主区现场保存不再等待滚动合并窗口
+
+原 C4 的同文档现场恢复继续沿现有 owner RAM / `b23_views`，没有新建恢复机制。确认主区展开、显示更多等离散选择此前与滚动一起延迟100ms，原生框架重建可能丢失刚作出的选择；现主区与侧栏均立即交付这些变化，后续滚动不能把已排队的选择降为延迟保存。纯滚动仍合并，旧授权的迟到数据仍拒绝。独立复核又发现立即接续保存与原导航屏障可能并发重复写入，已复现并修成同一在途保存的连续等待，保留500ms/6秒原截止。
+
+既有 frame client / owner 恢复关联合同通过；RED、复核反例和最终日志分别为 `/private/tmp/vaiwl-layout-handoff-red-20261029.log`、`/private/tmp/vaiwl-layout-handoff-review-red-20261029.log`、`/private/tmp/vaiwl-layout-handoff-final-20261029.log`。同源码正式隔离 MV3 `/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-6u8xBK/report.json` 验证刚改变主区展开后原生页头替换、新 frame JOIN/VIEW 恢复选择、原编辑器/草稿不变，并续完现有旅程；只读独立复核无剩余阻断。源码/测试包逐项核验 `/private/tmp/vaiwl-layout-handoff-verification-20261029.json`，已查看正式返回图，匿名宿主不计真实设计通过。
+
+未更新日常安装或要求用户操作，e889…激活请求继续撤回。真实首页未知主区拒绝没有新增证据；Mac NOT_RUN、产品 NOT_ACCEPTED，不把本批局部恢复修复宣称为完整交付。
+
 ## 2026-10-29 撤回逐次实机激活请求，补齐原生静态图标兼容
 
 用户明确拒绝继续充当逐次启动测试员；上一条 e889… 手动 Reload 请求撤回。本轮仅本地源码、只读独立复核及既有隔离 headless 回归，未操作日常 Chrome、更新原安装或请求采集。原注册目录仍是此前已备份的 e889…；最后可信运行证据仍为 b2b778…，不能以磁盘文件推定运行版本。

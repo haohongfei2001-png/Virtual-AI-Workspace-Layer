@@ -321,9 +321,37 @@ for(const change of ['query','stop','disconnect','scope','deadline'])test('searc
  held.resolve({ok:true});assert.equal((await pending).ok,false);f.client.stop();
 });
 const resumeLayout=()=>({segment:7,oldOpen:['p:7'],sidebarOpen:['p'],capacities:[['p:7',17]],scroll:312,sidebarScroll:22,sidebarVisible:true});
+test('workspace expansion reaches the owner before a same-document frame recreation',async()=>{
+ const f=fixture(),send=f.runtime.sendMessage,initial={...resumeLayout(),segment:0,oldOpen:[],capacities:[]};let saved=null;
+ f.runtime.sendMessage=m=>m.type==='HOST_UI_SAVE_VIEW'?(saved={query:structuredClone(m.expectedQuery),view:structuredClone(m.view)},Promise.resolve({ok:true})):m.type==='HOST_UI_RESUME'?Promise.resolve({ok:true,resume:saved}):send(m);
+ await f.client.start();await drain();f.nav.onViewChange(initial);await f.advance(100);
+ const expanded={...initial,oldOpen:['home:project'],capacities:[['frame-row:["project","old",0,0,0]',17]],inventoryChoices:[['home',true]]};
+ f.nav.onViewChange(expanded);await drain();
+ assert.deepEqual(saved.view,expanded,'the discrete choice must not wait for the scroll debounce');
+ f.client.stop();await f.client.start();await drain();
+ assert.deepEqual(f.restoredViews.at(-1),expanded);f.client.stop();
+});
+test('scroll after a queued expansion cannot delay that choice behind the prior save',async()=>{
+ const f=fixture(),send=f.runtime.sendMessage,saves=[],held=deferred(),initial={...resumeLayout(),segment:0,oldOpen:[],capacities:[]};
+ f.runtime.sendMessage=m=>m.type==='HOST_UI_SAVE_VIEW'?(saves.push(m),saves.length===2?held.promise:Promise.resolve({ok:true})):send(m);
+ await f.client.start();await drain();f.nav.onViewChange(initial);await f.advance(100);
+ f.nav.onViewChange({...initial,scroll:400});await f.advance(100);assert.equal(saves.length,2);
+ const expanded={...initial,oldOpen:['home:project'],scroll:400};
+ f.nav.onViewChange(expanded);f.nav.onViewChange({...expanded,scroll:420});held.resolve({ok:true});await drain();
+ assert.equal(saves.length,3,'a later scroll must not downgrade a waiting explicit choice');
+ assert.deepEqual(saves[2].view,{...expanded,scroll:420});f.client.stop();
+});
 test('resume GET precedes initial VIEW and restores bounded query and layout',async()=>{const f=fixture(),send=f.runtime.sendMessage,order=[],view=resumeLayout(),query={segment:7,offset:8,limit:8};f.runtime.sendMessage=m=>{order.push(m.type);return m.type==='HOST_UI_RESUME'?Promise.resolve({ok:true,resume:{query,view}}):send(m);};await f.client.start();await drain();assert(order.indexOf('HOST_UI_RESUME')<order.indexOf('HOST_UI_VIEW'));assert.deepEqual(f.restoredViews,[view]);assert.deepEqual(f.calls.find(m=>m.type==='HOST_UI_VIEW').query,query);f.client.stop();});
 test('resume late GET after account clear or stop cannot restore private layout or publish',async()=>{for(const mode of ['scope','stop']){const f=fixture(),held=deferred(),send=f.runtime.sendMessage;f.runtime.sendMessage=m=>m.type==='HOST_UI_JOIN'?Promise.resolve({ok:true,grant:{...f.grant(),expiresAt:new Date(5000).toISOString()}}):m.type==='HOST_UI_RESUME'?held.promise:m.type==='HOST_UI_RENEW'&&mode==='scope'?Promise.resolve({ok:true,grant:{...f.grant(),scopeGrantId:'other'}}):send(m);await f.client.start();await drain();if(mode==='stop')f.client.stop();else await f.advance(2000);held.resolve({ok:true,resume:{query:{segment:7},view:resumeLayout()}});await drain();assert.equal(f.restoredViews.length,0);assert.equal(f.pages.length,0);assert.equal(f.privateRoot.children.length,0);f.client.stop();}});
-test('layout save strips freeSession, coalesces 100ms and does not repeat acknowledged state',async()=>{const f=fixture(),send=f.runtime.sendMessage,saves=[];f.runtime.sendMessage=m=>m.type==='HOST_UI_SAVE_VIEW'?(saves.push(m),Promise.resolve({ok:true})):send(m);await f.client.start();await drain();for(let i=0;i<20;i++)f.nav.onViewChange({...resumeLayout(),scroll:i,freeSession:{H:30,T:1,Z:'UTC',policyRevision:0}});await f.advance(99);assert.equal(saves.length,0);await f.advance(1);assert.equal(saves.length,1);assert.equal(saves[0].view.scroll,19);assert.deepEqual(Object.keys(saves[0].view).sort(),['capacities','oldOpen','scroll','segment','sidebarOpen','sidebarScroll','sidebarVisible']);f.nav.onViewChange({...resumeLayout(),scroll:19});await f.advance(100);assert.equal(saves.length,1);f.client.stop();});
+test('layout save strips freeSession, coalesces scroll only and does not repeat acknowledged state',async()=>{
+ const f=fixture(),send=f.runtime.sendMessage,saves=[],layout={...resumeLayout(),segment:0};
+ f.runtime.sendMessage=m=>m.type==='HOST_UI_SAVE_VIEW'?(saves.push(m),Promise.resolve({ok:true})):send(m);
+ await f.client.start();await drain();f.nav.onViewChange(layout);await drain();assert.equal(saves.length,1);
+ for(let i=0;i<20;i++)f.nav.onViewChange({...layout,scroll:i,freeSession:{H:30,T:1,Z:'UTC',policyRevision:0}});
+ await f.advance(99);assert.equal(saves.length,1);await f.advance(1);assert.equal(saves.length,2);assert.equal(saves[1].view.scroll,19);
+ assert.deepEqual(Object.keys(saves[1].view).sort(),['capacities','oldOpen','scroll','segment','sidebarOpen','sidebarScroll','sidebarVisible']);
+ f.nav.onViewChange({...layout,scroll:19});await f.advance(100);assert.equal(saves.length,2);f.client.stop();
+});
 test('sidebar folds reach SAVE immediately while scroll-only changes stay coalesced',async()=>{
  const f=fixture('sidebar'),send=f.runtime.sendMessage,saves=[];
  f.runtime.sendMessage=m=>m.type==='HOST_UI_SAVE_VIEW'?(saves.push(m),Promise.resolve({ok:true})):send(m);
@@ -338,7 +366,15 @@ test('sidebar folds reach SAVE immediately while scroll-only changes stay coales
 test('old SAVE reply cannot mark a replacement grant layout already saved',async()=>{const f=fixture(),send=f.runtime.sendMessage,held=deferred(),saves=[];f.runtime.sendMessage=m=>m.type==='HOST_UI_SAVE_VIEW'?(saves.push(m),saves.length===1?held.promise:Promise.resolve({ok:true})):send(m);await f.client.start();await drain();f.nav.onViewChange(resumeLayout());await f.advance(100);f.client.stop();await f.client.start();await drain();held.resolve({ok:true});await drain();f.nav.onViewChange(resumeLayout());await f.advance(100);assert.equal(saves.length,2);assert.equal(f.restoredViews.length,0);f.client.stop();});
 test('invalid resume query or layout falls back atomically without exposing extra fields',async()=>{for(const patch of [{query:{scope:'secret'}},{view:{...resumeLayout(),title:'secret'}},{query:{search:{query:'x',body:'secret'}}}]){const f=fixture(),send=f.runtime.sendMessage;f.runtime.sendMessage=m=>m.type==='HOST_UI_RESUME'?Promise.resolve({ok:true,resume:{query:{segment:7},view:resumeLayout(),...patch}}):send(m);await f.client.start();await drain();assert.equal(f.restoredViews.length,0);assert.deepEqual(f.calls.find(m=>m.type==='HOST_UI_VIEW').query,{segment:0,offset:0,limit:8});assert(!JSON.stringify(f.states).includes('secret'));f.client.stop();}});
 test('same layout after query change saves again with exact expectedQuery',async()=>{const f=fixture(),send=f.runtime.sendMessage,saves=[];f.runtime.sendMessage=m=>m.type==='HOST_UI_SAVE_VIEW'?(saves.push(m),Promise.resolve({ok:true})):send(m);await f.client.start();await drain();const layout={...resumeLayout(),segment:0};f.nav.onViewChange(layout);await f.advance(100);const next={segment:0,offset:0,limit:8,search:{query:'new',projectId:null,offset:0,limit:24}};await f.nav.onProjectionRequest(next);f.nav.onViewChange(layout);await f.advance(100);assert.equal(saves.length,2);assert.deepEqual(saves[0].expectedQuery,{segment:0,offset:0,limit:8});assert.deepEqual(saves[1].expectedQuery,next);f.client.stop();});
-test('queued old layout and interim old renderer cannot attach to pending new query',async()=>{const f=fixture(),send=f.runtime.sendMessage,saves=[],held=deferred();f.runtime.sendMessage=m=>m.type==='HOST_UI_SAVE_VIEW'?(saves.push(m),Promise.resolve({ok:true})):send(m);await f.client.start();await drain();f.nav.onViewChange(resumeLayout());f.setView(()=>held.promise);const requested=f.nav.onProjectionRequest({segment:7,offset:8,limit:8});f.nav.onViewChange(resumeLayout());await f.advance(100);assert.equal(saves.length,0);held.resolve({ok:true,state:'ready',page:f.page(),navigation:[]});await requested;f.nav.onViewChange(resumeLayout());await f.advance(100);assert.equal(saves.length,1);assert.deepEqual(saves[0].expectedQuery,{segment:7,offset:8,limit:8});f.client.stop();});
+test('queued old layout and interim old renderer cannot attach to pending new query',async()=>{
+ const f=fixture(),send=f.runtime.sendMessage,saves=[],held=deferred(),layout={...resumeLayout(),segment:0};
+ f.runtime.sendMessage=m=>m.type==='HOST_UI_SAVE_VIEW'?(saves.push(m),Promise.resolve({ok:true})):send(m);
+ await f.client.start();await drain();f.nav.onViewChange(layout);await drain();assert.equal(saves.length,1);
+ f.nav.onViewChange({...layout,scroll:400});f.setView(()=>held.promise);
+ const requested=f.nav.onProjectionRequest({segment:7,offset:8,limit:8});f.nav.onViewChange(layout);await f.advance(100);assert.equal(saves.length,1);
+ held.resolve({ok:true,state:'ready',page:f.page(),navigation:[]});await requested;f.nav.onViewChange(resumeLayout());await drain();
+ assert.equal(saves.length,2);assert.deepEqual(saves[1].expectedQuery,{segment:7,offset:8,limit:8});f.client.stop();
+});
 
 for(const role of ['workspace','sidebar'])test(`explicit ${role} renderer exit clears lifecycle and emits one exact EXIT instead of SUSPEND`,async()=>{
  const f=fixture(role);await f.client.start();await drain();
@@ -431,11 +467,12 @@ for(const outcome of ['saved','rejected','timeout','revoked','inflight'])test(`n
  const success=['saved','inflight','rejected','timeout'].includes(outcome);assert.equal(result.state,success?'already-current':'blocked');
  assert.equal(packets.filter(m=>m.type==='HOST_UI_DISPATCH_CURRENT').length,success?1:0);f.client.stop();
 });
-test('layout changes during the first save must be acknowledged before native dispatch',async()=>{
+test('queued expansion and scroll during the first save stay single-flight before native dispatch',async()=>{
  const f=await currentDispatchFixture(),send=f.runtime.sendMessage,held=[deferred(),deferred()],packets=[];let saves=0;
  f.runtime.sendMessage=m=>{if(m.type==='HOST_UI_SAVE_VIEW'){packets.push(m);return held[saves++].promise;}if(m.type==='HOST_UI_DISPATCH_CURRENT'){packets.push(m);return Promise.resolve({ok:true,state:'already-current'});}return send(m);};
  f.nav.onViewChange({...resumeLayout(),segment:0,scroll:10});const pending=f.nav.onDispatch(sameCurrentCommand());await drain();
- f.nav.onViewChange({...resumeLayout(),segment:0,scroll:20});held[0].resolve({ok:true});await drain();
+ f.nav.onViewChange({...resumeLayout(),segment:0,oldOpen:['home:next'],scroll:10});
+ f.nav.onViewChange({...resumeLayout(),segment:0,oldOpen:['home:next'],scroll:20});held[0].resolve({ok:true});await drain();
  assert.deepEqual(packets.map(m=>m.type),['HOST_UI_SAVE_VIEW','HOST_UI_SAVE_VIEW']);assert.equal(packets[1].view.scroll,20);
  held[1].resolve({ok:true});assert.equal((await pending).state,'already-current');assert.equal(packets.at(-1).type,'HOST_UI_DISPATCH_CURRENT');f.client.stop();
 });
