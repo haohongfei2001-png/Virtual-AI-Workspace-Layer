@@ -10,6 +10,8 @@
 
 原安装清单SHA256仍为 `cf76213d45313c8bbf843bfcd6c33500ea04f93bc2df2995a4101c3e515d0be2`，旧库、草稿、备份与stash未动。运行构建UNKNOWN、本批Mac NOT_RUN、完整产品NOT_ACCEPTED；当前用户页面故障未取得新运行回执，不能归因为本次编辑器反例或声称已解决。历史CI整体及未覆盖能力不升级为通过，不请求再次Reload。
 
+同源码后续收口：J3源断言跟随已迁移的实际角色检查；既有pending-repair runner也移除私人Popover可见前提，仍只点击一次返回，并要求真实flow节点和对应frame同时存在。既有持久恢复隔离流程完整通过其限定范围（`/private/tmp/vaiwl-flow-pending-repair-current-20261028.json`，不是完整SYS02/J4）；SYS05原回压、目录丢片恢复及尾项查找流程通过（`/private/tmp/vaiwl-flow-sys05-current-20261028.json`），未复现远端open-search超时，没有为此修改生产代码或延长预算。UI10 MODERN 420px失败图确认原生夹具附件控件越出视口，工作区正常撤回；未放宽保护或改为PASS。58项关联runner合同通过。只读本地连接清单未确认原Profile 4，原生Chrome窗口读取返回`timeoutReached`后停止，无激活、接管、Reload或数据修改；实际运行版本及真实产品状态保持未知/未验收。
+
 ## 2026-10-28 侧栏候选完成原生 NAV 单滚动接线（原安装不变）
 
 发现候选 Shadow DOM 仍保留 `30vh / overflow:auto`，使展开的侧栏原生候选成为第二滚动区。正式组件现按绑定 role 区分：sidebar 自然高度、workspace 保留原分页滚动；侧栏内部异步结果及换行尺寸通过受当前代约束的 ResizeObserver 通知既有高度发布链。清理/撤权后旧回调失效，不把候选 scrollTop 当作原生 NAV 的持久滚动。真实 DOM 反例先失败后通过，候选/迁移/client关联回归及非作者只读复核通过；证据 `/private/tmp/vaiwl-candidate-scroll-{before,after,node,contracts}.log`。
