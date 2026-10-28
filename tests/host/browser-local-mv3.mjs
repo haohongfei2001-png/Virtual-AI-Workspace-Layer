@@ -29,6 +29,39 @@ try{
  return result;};
  context=await launch();report.browserErrors=[];context.on('page',p=>p.on('pageerror',e=>report.browserErrors.push(e.stack||e.message)));
  const cdp=await context.browser().newBrowserCDPSession(),{id}=await cdp.send('Extensions.loadUnpacked',{path:built.unpacked});
+ if(process.argv.includes('--instant-recovery-only')){
+  // The instant RAM scope deliberately changes when its worker is lost. This
+  // is not a personal unlock or a continuation of the previous RAM inventory.
+  page=await context.newPage();await page.setViewportSize({width:1400,height:900});
+  await page.addInitScript({content:'if(window===window.top)document.addEventListener("DOMContentLoaded",()=>{('+materializePartitionedSidebar.toString()+')('+JSON.stringify(partitionDetails.sidebarStructure.rows)+');},{once:true});'});
+  await page.goto(origin+'/');
+  const workspace=page.frameLocator('iframe[src="chrome-extension://'+id+'/workspace.html"]'),sidebar=page.frameLocator('iframe[src="chrome-extension://'+id+'/sidebar.html"]');
+  await workspace.getByRole('link',{name:'Native A',exact:true}).first().waitFor({timeout:15000});
+  await sidebar.locator('.sidebar-footer').waitFor({timeout:15000});
+  const oldFrame=await page.locator('iframe[src="chrome-extension://'+id+'/workspace.html"]').elementHandle(),draft=await page.locator('textarea').inputValue(),editor=await page.locator('textarea').elementHandle();
+  const lifecycle=await context.newCDPSession(page),versions=[];lifecycle.on('ServiceWorker.workerVersionUpdated',e=>versions.push(...e.versions));await lifecycle.send('ServiceWorker.enable');
+  const waitUntil=async(read,test,label)=>{const until=Date.now()+10000;while(Date.now()<until){const value=await read();if(test(value))return value;await new Promise(r=>setTimeout(r,50));}throw Error(label+': '+JSON.stringify(await read()));};
+  const workerURL='chrome-extension://'+id+'/extension/worker.mjs';
+  const running=await waitUntil(async()=>versions,v=>v.some(x=>x.scriptURL===workerURL&&x.runningStatus==='running'),'instant-worker-not-running');
+  const liveVersion=running.find(x=>x.scriptURL===workerURL&&x.runningStatus==='running');
+  const control=await context.newPage();await control.goto('chrome-extension://'+id+'/status.html');
+  const offset=versions.length;await lifecycle.send('ServiceWorker.stopWorker',{versionId:liveVersion.versionId});
+  await waitUntil(async()=>versions.slice(offset),v=>v.some(x=>x.versionId===liveVersion.versionId&&x.runningStatus==='stopped'),'instant-worker-not-stopped');
+  await page.bringToFront();
+  await page.waitForFunction(n=>!n.isConnected,oldFrame,{timeout:15000});
+  await workspace.getByRole('link',{name:'Native A',exact:true}).first().waitFor({timeout:15000});
+  await page.locator('[id$="_workspace"]:visible').waitFor({timeout:15000});
+  await sidebar.locator('.sidebar-footer').waitFor({timeout:15000});
+  const current=await control.evaluate(async()=>{const [tab]=await chrome.tabs.query({active:true,currentWindow:true}),frame=await chrome.webNavigation.getFrame({tabId:tab.id,frameId:0});return {status:await chrome.tabs.sendMessage(tab.id,{v:1,type:'HOST_LOCAL_STATUS'},{documentId:frame.documentId}),local:await chrome.runtime.sendMessage({v:1,type:'HOST_LOCAL_SPACE',action:'status'}),pipeline:await chrome.runtime.sendMessage({v:1,type:'HOST_LOCAL_SPACE',action:'pipeline'})};});
+  assert.equal(current.status.state,'ready');assert.equal(current.local.mode,'locked');assert.equal(current.local.exists,false);
+  assert.equal(current.pipeline.pipeline.storage,'session');assert.equal(current.pipeline.pipeline.refs,1);assert.equal(current.pipeline.pipeline.workspaceReceipt.phase,'rendered');assert.equal(current.pipeline.pipeline.workspaceReceipt.rows,1);
+  assert(await editor.evaluate(n=>n.isConnected&&n===document.querySelector('textarea')));
+  assert.equal(await page.locator('textarea').inputValue(),draft);
+  assert.deepEqual(await context.serviceWorkers().find(w=>w.url()===workerURL).evaluate(()=>indexedDB.databases()),[]);
+  report.checks.instantWorkerRecovery={status:current.status.state,privateMode:current.local.mode,storage:current.pipeline.pipeline.storage,knownChatRendered:true,workspaceVisible:true,sidebarVisible:true,originalEditorAndDraft:true,privateDatabases:0};
+  const image=join(dir,'instant-worker-recovered.png');await page.screenshot({path:image});report.images=[image];
+  await control.close();
+ }
  if(process.argv.includes('--flow-only')){
   page=await context.newPage();await page.setViewportSize({width:1400,height:900});
   await page.addInitScript({content:'if(window===window.top)document.addEventListener("DOMContentLoaded",()=>{('+materializePartitionedSidebar.toString()+')('+JSON.stringify(partitionDetails.sidebarStructure.rows)+');},{once:true});'});
@@ -749,7 +782,7 @@ try{
   report.checks.historyDiagnosticNoPrivateDatabaseOrDraftChange=true;
   await control.close();await page.close();
  }
- if(!process.argv.includes('--flow-only')&&!process.argv.includes('--sidebar-composition-only')&&!process.argv.includes('--sidebar-capture-only')&&!process.argv.includes('--entry-receipt-only')&&!process.argv.includes('--progressive-only')&&!process.argv.includes('--history-ready-only')&&!process.argv.includes('--history-diagnostic-only')&&!process.argv.includes('--mixed-history-only')&&!process.argv.includes('--product-states-only')){
+ if(!process.argv.includes('--instant-recovery-only')&&!process.argv.includes('--flow-only')&&!process.argv.includes('--sidebar-composition-only')&&!process.argv.includes('--sidebar-capture-only')&&!process.argv.includes('--entry-receipt-only')&&!process.argv.includes('--progressive-only')&&!process.argv.includes('--history-ready-only')&&!process.argv.includes('--history-diagnostic-only')&&!process.argv.includes('--mixed-history-only')&&!process.argv.includes('--product-states-only')){
  // Row reorder reproves only the sidebar mask; workspace identity survives.
  const reordered=await context.newPage();await reordered.addInitScript({content:'if(window===window.top)document.addEventListener("DOMContentLoaded",'+prepareHistoryRun.toString()+',{once:true});'});
  await reordered.goto(origin+'/c/'+B);

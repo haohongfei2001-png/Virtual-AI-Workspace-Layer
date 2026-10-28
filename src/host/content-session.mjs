@@ -218,6 +218,12 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
  // A document-local display hint, never an authority or retry signal.
  function noteScopeStatus(s,result){if(live(s))verificationWaitURL=exactHostRecord(result,['ok','v','type','state','reason'])&&result.ok===true&&result.v===1&&result.type==='HOST_SCOPE_STATUS'&&result.state==='unverified'&&result.reason==='host-verification-required'?s.url:null;}
  function bindingOK(b,prior){return exactHostRecord(b,['documentToken','producerToken','browserDocumentId','routeEpoch','origin','expiresAt'])&&['documentToken','producerToken','browserDocumentId'].every(k=>tokenOK(b[k]))&&Number.isSafeInteger(b.routeEpoch)&&b.routeEpoch>=0&&b.origin===origin&&Date.parse(b.expiresAt)>now()&&Date.parse(b.expiresAt)<=now()+20000&&(!prior||['documentToken','producerToken','browserDocumentId','routeEpoch','origin'].every(k=>b[k]===prior[k]));}
+ // Classify only a freshly authorized worker scope, never a page-supplied
+ // identity. An instant scope cannot authorize an old personal database.
+ function instantScope(key){
+  if(typeof key!=='string'||key.length>256)return false;
+  try{const parts=JSON.parse(key);return Array.isArray(parts)&&parts.length===4&&parts[0]==='vaiwl-local-v1'&&parts[1]==='browser-local'&&parts[2]==='session'&&tokenOK(parts[3])&&JSON.stringify(parts)===key;}catch{return false;}
+ }
  // Classify only transport rejection. Binding/scope validation remains outside
  // this wrapper, and a dormant handshake keeps its original elapsed budget.
  function handshake(s,message,timeoutMs=6000){return rpc(s,message,timeoutMs).catch(()=>{throw Error('context-handshake-transport-unavailable');});}
@@ -262,22 +268,23 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
   doc.defaultView.addEventListener('pagehide',pagehide);
  }
  function pageshow(event){if(event?.persisted===true&&contextWaitSuspended){contextWaitSuspended=false;return;}if(event?.persisted!==true||!enabled||!restoreArmed)return;restoreArmed=false;void begin(false,contextResumeMode);}
- function rebind(s,initialMode=null,expectedScope=null){
+ function rebind(s,initialMode=null,expectedScope=null,freshInstant=false){
   if(!enabled||current!==s||rebindQueued||s.busyClose===true&&doc.location.href===s.url)return;
   if(initialMode===null)initialMode=presentationIntent(s);
   if(doc.location.href!==s.url){rememberDepartingRoute(s);upgrade.navigate({url:doc.location.href});initialMode='reading';}else if(!upgrade.isTarget({url:doc.location.href}))clearUpgrade();
   const preference=sidebarPreference(s);
+  const recovery=expectedScope===null?null:{scopeKey:expectedScope,documentId:s.binding?.browserDocumentId,freshInstant:freshInstant===true&&instantScope(expectedScope)};
   rebindQueued=true;const run=++rebindRun;reset();doc.defaultView.addEventListener('pagehide',pagehide);
   // Collapse a burst into one replacement. Only external events can request a
   // subsequent attempt; failures never schedule their own recovery loop.
-  queueMicrotask(()=>{if(!enabled||run!==rebindRun)return;rebindQueued=false;void begin(true,initialMode,expectedScope,preference);});
+  queueMicrotask(()=>{if(!enabled||run!==rebindRun)return;rebindQueued=false;void begin(true,initialMode,recovery,preference);});
  }
  async function start(){frameReplaced=false;startupFailure=null;contextWaitSuspended=false;verificationWaitURL=null;contextResumeMode='workspace';contextResumeURL=null;contextResumeAllowed=contextRecovery===true;clearLearned();clearRecent();clearUpgrade();recoveryRemaining=1;enabled=true;restoreArmed=false;rebindQueued=false;rebindRun++;doc.defaultView.addEventListener('pageshow',pageshow);return begin();}
  // Legacy entry points remain harmless: presentation recovery now belongs to
  // the live surface controller, never another document handshake.
  async function recoverLayout(){return null;}
  async function recoverRoute(){return null;}
- async function begin(rebinding=false,initialMode='workspace',expectedScope=null,preference=null){
+ async function begin(rebinding=false,initialMode='workspace',recovery=null,preference=null){
   reset();const s={run:epoch,initialMode,sidebarPreference:preference,url:doc.location.href,abort:new AbortController(),binding:null,controller:null,adapter:null,listener:()=>{},pagehide,plans:null,rebinding,ready:false,recoveryDenied:false,snippets:null,snippetRef:null,snippetScopeGrant:null,identityChallenges:new Map(),identityPending:false,identityAuthority:0};current=s;doc.defaultView.addEventListener('pagehide',s.pagehide);
   let foregroundArmed=doc.visibilityState==='hidden',foregroundPending=false;
   s.blur=()=>{foregroundArmed=true;};
@@ -286,7 +293,7 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
    if(foregroundPending)return;foregroundArmed=false;foregroundPending=true;let foregroundFailure='foreground-failed';
    const recoverTransport=()=>{
     if(!enabled||!live(s)||typeof s.scopeKey!=='string'||!s.scopeKey||s.recoveryDenied||s.busyClose===true||recoveryRemaining<1)return false;
-    recoveryRemaining--;rebind(s,null,s.scopeKey);return true;
+    recoveryRemaining--;rebind(s,null,s.scopeKey,true);return true;
    };
    void track(()=>rpc(s,{v:1,type:'HOST_FOCUS',clientId,seq:++seq,...bindingFields(s.binding)}).then(result=>{
     noteScopeStatus(s,result);
@@ -298,7 +305,7 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
     }
    },()=>{
     // A lost port is not an identity decision. Discard the old session and use
-    // the existing one-shot HELLO + fresh same-scope authorization path. No
+    // the existing one-shot HELLO + fresh worker authorization path. No
     // stored receipt, old grant or extra retry budget is made authoritative.
     if(!recoverTransport()){foregroundFailure='foreground-transport-unavailable';throw Error('foreground-transport-unavailable');}
    }).catch(()=>{if(live(s)){startupFailure={url:s.url,state:foregroundFailure,shape:null};s.recoveryDenied=true;contextPending();}}).finally(()=>{foregroundPending=false;s.focus();})).catch(()=>{});
@@ -407,7 +414,18 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
     },onNativeDispatch:event=>{if(event.plan.target.kind!=='live-control'||!s.scopeKey)return;const identity=s.adapter.captureCandidateIdentity?.(event.plan.control);if(!identity)return;clearUpgrade();upgradeIdentity=identity;upgradeDisplay=s.candidates?.displayFor(event.command)??null;for(const type of ['pointerdown','keydown'])doc.addEventListener?.(type,interruptUpgrade,true);for(const type of ['popstate','hashchange'])doc.defaultView.addEventListener(type,upgradeRoute);upgrade.propose({actionId:event.actionId,identity,scopeKey:s.scopeKey,documentId:s.binding.browserDocumentId,originalURL:s.url,expiresAt:now()+6000});upgradeTimer=schedule(clearUpgrade,6000);},onNativeDispatchCancelled:event=>{if(upgrade.cancel(event.actionId))clearUpgrade();},onRebindNeeded:()=>{if(observation?.adapter===s.adapter)stopObservation();rebind(s);}});
    await startObservation(s);
    startupPhase='authorization';reportStartup(startupPhase);
-   const auth=await handshake(s,{v:1,type:'HOST_REFRESH',clientId,seq:++seq,...bindingFields(s.binding)});noteScopeStatus(s,auth);if(auth?.state!=='verified')throw Error('scope-not-verified');if(expectedScope!==null&&auth.scopeKey!==expectedScope)throw Error('recovery-scope-changed');s.contextReadyPending=false;s.scopeKey=auth.scopeKey;s.ackProjects=new Set();s.upgraded=null;
+   const auth=await handshake(s,{v:1,type:'HOST_REFRESH',clientId,seq:++seq,...bindingFields(s.binding)});noteScopeStatus(s,auth);if(auth?.state!=='verified')throw Error('scope-not-verified');
+   if(recovery!==null){
+    if(!tokenOK(recovery.documentId)||s.binding.browserDocumentId!==recovery.documentId)throw Error('recovery-document-changed');
+    if(auth.scopeKey!==recovery.scopeKey){
+     // A lost worker has no former RAM namespace. Start a clean instant view
+     // in this same browser document instead of treating the new random key
+     // as an account switch. Neither personal nor strict scopes qualify.
+     if(!recovery.freshInstant||!exactHostRecord(auth,['ok','v','type','state','scopeKey'])||auth.ok!==true||auth.v!==1||auth.type!=='HOST_SCOPE_STATUS'||!instantScope(auth.scopeKey))throw Error('recovery-scope-changed');
+     clearLearned();clearRecent();clearUpgrade();s.sidebarPreference=null;
+    }
+   }
+   s.contextReadyPending=false;s.scopeKey=auth.scopeKey;s.ackProjects=new Set();s.upgraded=null;
    if(s.sidebarPreference?.scopeKey!==s.scopeKey||s.sidebarPreference?.documentId!==s.binding.browserDocumentId)s.sidebarPreference=null;
    startupPhase='initialization-preparation';reportStartup(startupPhase);
    if(learnedScope!==s.scopeKey||learnedDocument!==s.binding.browserDocumentId)clearLearned();learnedScope=s.scopeKey;learnedDocument=s.binding.browserDocumentId;

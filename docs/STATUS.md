@@ -1,5 +1,15 @@
 # VAIWL实际状态：渐进积累工程已接线，真实来源逐项待准入
 
+## 2026-10-28 新版已激活；修复即时空间恢复误判为授权失败
+
+用户补充的当前文档回执明确为 `5132792610296a14b4c2c5fc024725769dd325024ce432a807c8ab755d2032b1`，弹窗为“工作空间授权阶段未完成”。因此该文档已运行上一统一包，不能继续归因为未 Reload；`module-loaded` 只证明模块加载，不证明 Host 授权/挂载通过。旧六秒列表观察已消费，不重跑。现有回执没有记录失败前的 Worker 事件，不能将下述离线根因冒充已完整观测的实机因果。
+
+正式 `content-session` 已复现同状态的确定缺陷：Worker 丢失后，Browser-Local 即时 RAM scope 会重新分配；foreground 的新 HELLO/REFRESH 却要求它等于旧随机 scope，从而永久停止为 `authorization-failed`。修复仅允许既有一次 foreground 恢复内、同一 browser documentId、Worker 新鲜验证的即时→即时空间重建；丢弃旧学习记录、本地使用、候选升级和展示偏好，再扫描本页。私人/严格 scope 改变、文档替换、停止和旧授权继续拒绝，不解锁旧库、不扩充恢复次数。
+
+最小反例先失败后通过；关联内容会话/本地绑定回归及非作者只读复核通过。实际隔离 MV3 停止 Worker 后，正式双角色重建、本页已知聊天重新进入 VIEW 并绘制，原生编辑器及草稿保持，私人数据库数量为0；证据 `/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-BQlo9V/report.json`。已查看该实际 renderer 图，仅为无账户匿名宿主，非完整 v2.7 或真实账户验收。
+
+统一未安装包 `/private/tmp/VAIWL-v27-Flow-Instant-Recovery-20261028/extension`；启动指纹 `516561eb5bae4c8c0a1f86096a6c6f35d26c04f64bfaa18f3e574f01112b7d47`，ZIP SHA256 `652b69cf8ed4181f054d770b10b952ae16f933f6be79dbcf0a2938f3ffc6420a`。203项源码哈希与当前代码/实际测试包相同，195项生产文件逐字节一致，仅本地/正式origin生成闭包不同；清单和权限与原安装相同。核验 `/private/tmp/vaiwl-instant-recovery-build-verification-20261028.json`。本轮未更新原安装、未接管/刷新用户标签，旧库、草稿、备份和三份stash保持。修复后真实Mac仍NOT_RUN，完整产品NOT_ACCEPTED，不要求重复解锁或采集。
+
 ## 2026-10-28 用户回执确认旧构建，统一包同 ID 写入（尚未 Reload）
 
 用户提供的当前文档启动及侧栏快照指纹为 `b5b7e6a70bed14b6cc62ae7cb6e04c24bc4fc1eeae37fe6fc6d056b70ea11032`；原加载目录202项sourceHashes与40d1cd1a完全一致，确认该回执来自旧构建，不再记为运行版本UNKNOWN，也不推定其他标签版本。当前即时库明确有13条聊天、0个已确认Project，nativeRevision=5；无workspace delivery/receipt，presentation=null。该证据不能给出具体挂载拒绝分支，不能归因于日期过滤或服务器目录。6秒已消费列表观察中16行位置不变、稳定标记不连续，继承已有处理，不重跑、不扩大采集。
