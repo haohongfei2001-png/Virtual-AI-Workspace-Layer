@@ -1,4 +1,4 @@
-import {UI10_CURRENT_MEMBER_ROWS,assertUi10CurrentMemberIds} from './ui10-native-member-rows.mjs';
+import {UI10_CURRENT_MEMBER_ROWS,assertUi10CurrentMemberIds,assertUi10LocalUses} from './ui10-native-member-rows.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createNavigation} from '../../src/navigation/navigation.mjs';
@@ -47,3 +47,14 @@ for(const wrapped of [false,true])test(`real renderer ${wrapped?'MV3-workset-wra
 });
 test('current selector permits exactly bare/direct-wrapper paths and forbids descendant broadening',()=>{assert.equal(UI10_CURRENT_MEMBER_ROWS,'.card .members > .row, .card .members > .working-set-row > .row');});
 test('row count, uniqueness and current ID membership remain mandatory',()=>{const allowed=Array.from({length:17},(_,i)=>'current_'+i);assert(assertUi10CurrentMemberIds(allowed,17,allowed));for(const ids of [allowed.slice(1),[...allowed,'extra'],[...allowed.slice(0,16),allowed[0]],[...allowed.slice(0,16),'old_0']])assert.throws(()=>assertUi10CurrentMemberIds(ids,17,allowed));});
+
+test('opened historical rows require admitted current local-use facts without changing their send dates',()=>{
+ const rows=[{id:'old-project',project:'P',daysAgo:75},{id:'old-independent',project:null,daysAgo:75}],at='2026-10-29T01:00:01Z',scopeKey='local-test-scope';
+ const source={id:'local',channel:'host-evidence',codecVersion:3,profileId:'vaiwl-local-use',generation:2,sourceRevision:3,observedAt:at};
+ const evidence={scopeKey,sources:{local:source},events:{original:{sentAt:'2026-08-15T00:00:00Z'}},hints:Object.fromEntries(rows.map(r=>[r.id,{conversationId:r.id,hintType:'local-recent-use',sourceId:'local',generation:2,sourceRevision:2,usedAt:at,observedAt:at,validUntil:at}]))};
+ const options={scopeKey,startedAt:Date.parse(at)-1000,now:Date.parse(at)+120000},before=structuredClone(evidence);
+ assert.deepEqual(assertUi10LocalUses(evidence,rows,options),{project:['old-project'],noProject:['old-independent']});assert.deepEqual(evidence,before);
+ for(const mutate of [e=>delete e.hints['old-project'],e=>e.scopeKey='other',e=>e.sources.local.revoked=true,e=>e.hints['old-project'].generation=1,e=>e.hints['old-project'].usedAt='2026-08-15T00:00:00Z',e=>e.hints['old-project'].sentAt=at]){
+  const changed=structuredClone(evidence);mutate(changed);assert.throws(()=>assertUi10LocalUses(changed,rows,options));
+ }
+});

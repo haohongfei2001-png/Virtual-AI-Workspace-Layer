@@ -8,6 +8,7 @@ import {createHash} from 'node:crypto';
 import {chromium} from '../b1/tooling/node_modules/playwright/index.mjs';
 import {createHostFixtureServer} from './fixtures/server.mjs';
 import {createHistoricalNetworkGuard,historicalNetworkGuardArgs} from './historical-network-guard.mjs';
+import {cleanupOwnedResources} from './isolated-browser-cleanup.mjs';
 import {packageHost,verifyHost} from '../../extension/package.mjs';
 const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
 const upstream=await createHostFixtureServer();let sessionReads=0,accountsReads=0,release,blocked=true,context,guard;
@@ -61,14 +62,22 @@ try{
  // Fresh document + successful first-party fixture response uses the existing
  // authorization path and full UI; no preauth candidates are promoted.
  blocked=false;await page.reload();
- const workspace=await wait(async()=>{const frame=page.frames().find(f=>f.url()===`chrome-extension://${id}/workspace.html`);return frame&&await page.locator('iframe[src^="chrome-extension://"]').count()===2?frame:null;},15000);
+ // The legacy fixture has no proved shared NAV partition. Its authorized
+ // workspace does not depend on mounting a second, unsupported sidebar role.
+ const workspace=await wait(async()=>{
+  const owner=page.locator('[data-va-owned][id$="_workspace"]:not([popover])');
+  if(await owner.count()!==1)return null;
+  const elements=await owner.locator('iframe').elementHandles();
+  try{if(elements.length!==1)return null;const frame=await elements[0].contentFrame();return frame?.url()===`chrome-extension://${id}/workspace.html`?frame:null;}
+  finally{await Promise.all(elements.map(element=>element.dispose()));}
+ },15000);
  const back=page.getByRole('button',{name:'返回工作空间',exact:true});if(await back.isVisible())await back.click();
  await workspace.getByRole('link',{name:'Ordinary conversation',exact:true}).first().waitFor({timeout:15000});
  assert.equal((await status()).bytes,0);assert(accountsReads>=1);
- report.stages.push({name:'fresh-authorized-document-enters-existing-free-ui',elapsedMs:performance.now()-started});
+ report.stages.push({name:'fresh-authorized-document-enters-existing-free-ui',elapsedMs:performance.now()-started,backend:'document-flow',sidebar:'NOT_COVERED_BY_LEGACY_FIXTURE'});
  for(const [path,expected]of Object.entries(info.files))assert.equal(hash(await readFile(join(built.unpacked,path))),path==='extension/content-entry.mjs'?hash(instrumented):expected);
  for(const [path,expected]of Object.entries(info.sourceHashes))assert.equal(hash(await readFile(path)),expected);
  assert.equal(hash(await readFile(new URL(import.meta.url))),scriptHash);
  report.status='PASS';report.sourceChangedDuringRun=false;
 }catch(error){report.status='FAIL';report.error=error.stack;process.exitCode=1;}
-finally{release();report.elapsedMs=performance.now()-started;report.requestCounts={sessionReads,accountsReads};await context?.close();await guard?.close();report.networkGuard=guard?.snapshot();await new Promise(resolve=>{server.close(resolve);server.closeAllConnections();});await upstream.close();await writeFile(process.argv[2]??join(dir,'report.json'),JSON.stringify(report,null,2));console.log(JSON.stringify({status:report.status,stages:report.stages,error:report.error,dir}));}
+finally{release();report.elapsedMs=performance.now()-started;report.requestCounts={sessionReads,accountsReads};if(!await cleanupOwnedResources(report,[['browser',()=>context?.close()],['proxy',async()=>{await guard?.close();report.networkGuard=guard?.snapshot();}],['fixture',()=>new Promise(resolve=>{server.close(resolve);server.closeAllConnections();})],['upstream',()=>upstream.close()]]))process.exitCode=1;await writeFile(process.argv[2]??join(dir,'report.json'),JSON.stringify(report,null,2));console.log(JSON.stringify({status:report.status,stages:report.stages,error:report.error,dir}));}

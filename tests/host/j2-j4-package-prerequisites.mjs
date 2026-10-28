@@ -1,4 +1,6 @@
 import {launchNativeVisibilityBrowser} from './native-visibility-browser.mjs';
+import {createHistoricalNetworkGuard} from './historical-network-guard.mjs';
+import {cleanupOwnedResources} from './isolated-browser-cleanup.mjs';
 /** Partial J2/J4 prerequisites only. Run with Node; output defaults to OS tmpdir.
  * No writes to repositories, fake grants, ACKs, clock acceleration or custom worker.
  * Exit 2 is intentional when tested prerequisites pass but full journeys remain open.
@@ -54,11 +56,16 @@ export async function runPrerequisites({output=join(tmpdir(),'free-j2-j4-prerequ
   scriptHash,visibilityDependencies:await Promise.all(['isolated-browser-cleanup.mjs','historical-network-guard.mjs'].map(async name=>[name,hash(await readFile(new URL(name,import.meta.url)))])),visibilityLauncherHash:hash(await readFile(new URL('./native-visibility-browser.mjs',import.meta.url))),sourceHashes:manifest.sourceHashes,buildManifestHash:hash(manifestBytes),fixture:server.manifest,os:platform(),
   networkPolicy:'page allowlist plus unchanged package worker CSP; external worker fetch checked',
   steps:[],errors:[],limitations:requiredGaps.map(([journey,name,reason])=>({journey,name,status:'NOT_RUN',reason}))};
- let context,worker,id,inspectionFrame,browserHandle;const observedPages=[];
+ let context,worker,id,inspectionFrame,browserHandle,networkGuard;const observedPages=[];
  const record=(journey,name,details={})=>report.steps.push({journey,name,status:'PASS',...details});
  async function mounted(page){
-  await page.waitForFunction(()=>[...document.querySelectorAll('[data-va-owned][id$="_workspace"]:popover-open')].some(n=>getComputedStyle(n).visibility==='visible'),null,{timeout:15000});
-  const frame=page.frames().find(f=>f.url()===`chrome-extension://${id}/workspace.html`);assert(frame);
+  await page.waitForFunction(()=>{
+   const nodes=[...document.querySelectorAll('[data-va-owned][id$="_workspace"]:not([popover])')];
+   return nodes.length===1&&nodes[0].checkVisibility()&&nodes[0].getBoundingClientRect().height>=96;
+  },null,{timeout:15000});
+  const elements=await page.locator('[data-va-owned][id$="_workspace"]:not([popover]) > iframe').elementHandles();let frame;
+  try{assert.equal(elements.length,1);frame=await elements[0].contentFrame();assert.equal(frame?.url(),`chrome-extension://${id}/workspace.html`);}
+  finally{await Promise.all(elements.map(element=>element.dispose()));}
   await frame.locator('.workspace').waitFor({timeout:15000});
   const known=frame.getByRole('button',{name:'其他已知聊天',exact:true});
   if(await known.getAttribute('aria-expanded')==='false')await known.click();
@@ -98,7 +105,9 @@ export async function runPrerequisites({output=join(tmpdir(),'free-j2-j4-prerequ
   });
  }
  try{
-  browserHandle=await launchNativeVisibilityBrowser({chromium,profileDir:join(dir,'profile'),headed,executablePath:process.env.FREE_CHROME_EXECUTABLE??(platform()==='darwin'?'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome':'/usr/bin/chromium')});context=browserHandle.context;report.browserPrecondition=browserHandle.diagnostic;
+  networkGuard=await createHistoricalNetworkGuard({fixtureOrigin:server.origin});
+  browserHandle=await launchNativeVisibilityBrowser({chromium,profileDir:join(dir,'profile'),headed,historicalNetworkGuard:networkGuard.config,executablePath:process.env.FREE_CHROME_EXECUTABLE??(platform()==='darwin'?'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome':'/usr/bin/chromium')});context=browserHandle.context;report.browserPrecondition=browserHandle.diagnostic;
+  report.presentation={backend:'document-flow',sidebar:'NOT_COVERED_BY_LEGACY_FIXTURE'};
   await context.route('**/*',r=>r.request().url().startsWith(server.origin+'/')||r.request().url().startsWith('chrome-extension://')?r.continue():r.abort());
   const cdp=await context.browser().newBrowserCDPSession();({id}=await cdp.send('Extensions.loadUnpacked',{path:built.unpacked}));
   worker=context.serviceWorkers().find(w=>w.url().startsWith(`chrome-extension://${id}/`))??await context.waitForEvent('serviceworker');
@@ -141,10 +150,10 @@ export async function runPrerequisites({output=join(tmpdir(),'free-j2-j4-prerequ
   assert.deepEqual(report.errors,[]);assert.equal(verifyHost(built.unpacked).status,'OFFLINE_HOST_RECONSTRUCTION');report.browserVersion=context.browser().version();
  }catch(error){report.failureObservations=await Promise.all(observedPages.map(async page=>{try{return await page.evaluate(()=>({url:location.href,owned:document.querySelectorAll('[data-va-owned]').length,state:document.documentElement.dataset.vaiwlState,reason:document.documentElement.dataset.vaiwlReason,loss:globalThis.j4ScopeLoss}));}catch{return {unavailable:true};}}));report.nativeRequests=server.snapshot().requests;report.steps.push({journey:'prerequisites',name:'execution',status:context?'FAIL':'NOT_RUN',error:error.stack});}
  finally{
-  await browserHandle?.close();await server.close();
+  await cleanupOwnedResources(report,[['browser',()=>browserHandle?.close()],['fixture',()=>server.close()],['proxy',async()=>{await networkGuard?.close();if(networkGuard)report.networkGuard=networkGuard.snapshot();}]]);
   report.sourceChangedDuringRun=(await Promise.all(Object.entries(manifest.sourceHashes).map(async([p,h])=>hash(await readFile(p))!==h))).some(Boolean);
   report.scriptChangedDuringRun=hash(await readFile(script))!==scriptHash||hash(await readFile(new URL('./native-visibility-browser.mjs',import.meta.url)))!==report.visibilityLauncherHash;for(const [name,before] of report.visibilityDependencies)if(hash(await readFile(new URL(name,import.meta.url)))!==before)report.scriptChangedDuringRun=true;report.buildManifestUnchanged=hash(await readFile(manifestPath))===report.buildManifestHash;
-  report.status=resultStatus(report.steps,{sourceChanged:report.sourceChangedDuringRun||report.scriptChangedDuringRun||!report.buildManifestUnchanged});
+  if(!report.cleanupErrors?.length)report.status=resultStatus(report.steps,{sourceChanged:report.sourceChangedDuringRun||report.scriptChangedDuringRun||!report.buildManifestUnchanged});
   await writeFile(output,JSON.stringify(report,null,2)+'\n');
  }
  return report;

@@ -30,6 +30,10 @@ export function finalizeUi10NativeVisualEvidence({report,captures,emit,timedOut=
   catch(e){report.initialVisualLogStatus='FAILED';report.initialVisualLogError=String(e);report.status='FAIL_VISUAL_LOG';}
  }else report.initialVisualLogStatus='NOT_EMITTED_INCOMPLETE_OR_UNSTABLE';
  if(timedOut)report.status='FAIL_OVERALL_DEADLINE';
+ else if(report.status==='PENDING_CURRENT_USE_VERIFICATION'){
+  const expected=UI10_NATIVE_CAPTURE_IDS.filter(id=>id.endsWith('-initial')||id.endsWith('-long-list-end'));
+  report.status=report.initialVisualLogStatus==='EMITTED_NOT_VISUALLY_REVIEWED'&&captures.length===expected.length&&expected.every(id=>captures.some(c=>c.id===id))?'PARTIAL_UI10_HISTORY_NOT_COVERED':'FAIL_VISUAL_LOG';
+ }
  else if(report.status==='PENDING_FINAL_VERIFICATION')report.status=report.initialVisualLogStatus==='EMITTED_NOT_VISUALLY_REVIEWED'&&captures.length===UI10_NATIVE_CAPTURE_IDS.length&&UI10_NATIVE_CAPTURE_IDS.every(id=>captures.some(c=>c.id===id))?'PASS_PACKAGED_POPULATED_SUBCONTRACT_ONLY':'FAIL_VISUAL_LOG';
  return report.status==='PASS_PACKAGED_POPULATED_SUBCONTRACT_ONLY';
 }

@@ -5,7 +5,7 @@ test('report exists before browser startup and records only safe phase/counters'
 test('overall timeout is below CI limit and persists last phase before callback',t=>{const f=fixture(t);assert.equal(f.delay(),22*60000);assert(f.delay()+15000<25*60000);f.monitor.checkpoint('evidence-admission',{index:31});f.expire();assert.equal(f.expired(),1);assert.equal(f.read().status,'FAIL_OVERALL_DEADLINE');assert.equal(f.read().progress.timedOut,true);assert.equal(f.read().progress.index,31);assert.equal(f.monitor.timedOut,true);});
 test('finished runs cancel deadline and cannot later become timeout',t=>{const f=fixture(t);f.report.status='PASS';f.monitor.finish();assert(f.cancelled());f.expire();assert.equal(f.read().status,'PASS');assert.equal(f.expired(),0);});
 test('checkpoint journal bounded while full exact visit list remains intact',t=>{const f=fixture(t);f.report.visits=Array.from({length:64},(_,index)=>({index}));for(let i=0;i<520;i++)f.monitor.checkpoint('visit-complete',{index:i});assert.equal(f.read().checkpoints.length,512);assert.equal(f.read().visits.length,64);});
-test('runner preserves full visits and budget, binds helper and persists before cleanup',async()=>{const {readFile}=await import('node:fs/promises');const s=await readFile(new URL('./ui10-populated-package-browser.mjs',import.meta.url),'utf8');assert(s.includes("'tests/host/ui10-native-progress.mjs'"));assert(s.includes('for(const row of server.ui10History.rows)'));assert(s.includes('assert.equal(events.length,64)'));assert(s.includes('await paceNativeRead();await native();'));assert(s.includes('progress.persist();await context?.close();'));assert(s.includes('finally{process.exit(1);}},15000)'));assert(s.includes("progress.checkpoint('evidence-admission'"));assert(s.includes("progress.checkpoint('none-membership'"));});
+test('runner preserves full visits and budget, binds helper and persists before cleanup',async()=>{const {readFile}=await import('node:fs/promises');const s=await readFile(new URL('./ui10-populated-package-browser.mjs',import.meta.url),'utf8');assert(s.includes("'tests/host/ui10-native-progress.mjs'"));assert(s.includes('for(const row of server.ui10History.rows)'));assert(s.includes('assert.equal(events.length,64)'));assert(s.includes('await paceNativeRead();await native();'));assert(s.includes('report.cleanupOK=await cleanupOwnedResources'));assert(s.includes("catch(error){report.status='FAIL_SOURCE_VERIFICATION'"));assert(s.includes("if(!report.cleanupOK){process.exitCode=1;report.initialVisualLogStatus='NOT_EMITTED_CLEANUP_FAILED';}"));assert(s.includes('finally{process.exit(1);}},15000)'));assert(s.includes("progress.checkpoint('evidence-admission'"));assert(s.includes("progress.checkpoint('none-membership'"));});
 
 test('late success cannot overwrite watchdog failure on finish',t=>{const f=fixture(t);f.expire();f.report.status='PASS';f.monitor.finish();assert.equal(f.read().status,'FAIL_OVERALL_DEADLINE');assert.equal(f.read().finalized,true);});
 
@@ -16,3 +16,15 @@ test('native deadline rejects unbounded or over-cap values before file/timer eff
 
 test('stable partial native images survive an already failed run without promotion',()=>{const report={status:'FAIL_OR_BLOCKED',fixtureStable:true,productSourceStable:true};let emitted;assert.equal(finalizeUi10NativeVisualEvidence({report,captures:[{id:UI10_NATIVE_CAPTURE_IDS[0]}],emit:c=>emitted=c}),false);assert.equal(emitted.length,1);assert.equal(report.initialVisualLogStatus,'EMITTED_NOT_VISUALLY_REVIEWED');assert.equal(report.status,'FAIL_OR_BLOCKED');});
 test('partial native images cannot promote pending success and unstable images cannot emit',()=>{for(const stable of [true,false]){const report={status:'PENDING_FINAL_VERIFICATION',fixtureStable:stable,productSourceStable:true};let calls=0;assert.equal(finalizeUi10NativeVisualEvidence({report,captures:[{id:UI10_NATIVE_CAPTURE_IDS[0]}],emit:()=>calls++}),false);assert.equal(calls,stable?1:0);assert.equal(report.status,'FAIL_VISUAL_LOG');}});
+
+
+test('current local-use capture set stays partial and cannot claim historical-window acceptance',()=>{
+ const ids=UI10_NATIVE_CAPTURE_IDS.filter(id=>id.endsWith('-initial')||id.endsWith('-long-list-end'));
+ assert.equal(ids.length,4);
+ for(const incomplete of [false,true]){
+  const report={status:'PENDING_CURRENT_USE_VERIFICATION',fixtureStable:true,productSourceStable:true};
+  const captures=(incomplete?ids.slice(1):ids).map(id=>({id}));
+  assert.equal(finalizeUi10NativeVisualEvidence({report,captures,emit:()=>{}}),false);
+  assert.equal(report.status,incomplete?'FAIL_VISUAL_LOG':'PARTIAL_UI10_HISTORY_NOT_COVERED');
+ }
+});

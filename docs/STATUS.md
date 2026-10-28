@@ -12,6 +12,10 @@
 
 已再次查看同一生产源码的 Project 和返回整屏 renderer 图；匿名宿主只支持集成核查，不能代替真实 v2.7 视觉结论。最新正式产品源码仍为 `2d68d06c`，本批 runner 校正不生成新安装候选，也不触发又一次用户试装。实际 `native-flow-uncovered-branch` 的主区分支仍未被现有侧栏快照说明，不能将本地兼容反例当作已确定实机根因。
 
+同批历史同 ID 升级、预授权及 J2/J4 前置旅程已迁移到当前唯一自有 flow workspace；缺少共同 NAV 的历史夹具不再强求第二角色，侧栏明确未覆盖。实际旧包→新包→旧 owner 拒绝→新包恢复保全原八个 store 和人工资产；预授权过期仍清除 RAM；限定自然撤权及真实前后台复核通过已执行范围，J2/J4 仍为 PARTIAL。分别保留 `/private/tmp/vaiwl-historical-flow-upgrade-20261029.json`、`/private/tmp/vaiwl-preauthorization-flow-20261029.json`、`/private/tmp/vaiwl-revocation-flow-20261029.json`。随后只补齐即时 frame 句柄及资源清理并做合同复核，未声称最后细节再次运行了完整浏览器旅程。
+
+UI10 实际完成64条夹具聊天导航及原发送/成员证据准入后，失败于旧 oracle 把已打开的聊天仍按75天前发送日期限定在旧窗口。原失败 `/private/tmp/vaiwl-populated-frame-continuity-20261029.json` 保留为 FAIL；实际 frame 已 render-ready，不能将其误判为界面超时。现额外独立校验本批已接受的 local-recent-use，保留原64条发送时间/归属断言，并按 Project 5→17→29→34、NONE 5→17→29→30 检查无遗漏分页。历史窗口明确未覆盖，只能产出 PARTIAL；修正后的长旅程未重跑。相关 oracle、证据汇总及清理合同通过只读独立复核，日志 `/private/tmp/vaiwl-ui10-use-contract-final-20261029.log`。本段只校正现有验证与错误归因，不作为新产品能力、真实首页修复或视觉完成的证据；原安装继续不动。
+
 ## 2026-10-29 主区现场保存不再等待滚动合并窗口
 
 原 C4 的同文档现场恢复继续沿现有 owner RAM / `b23_views`，没有新建恢复机制。确认主区展开、显示更多等离散选择此前与滚动一起延迟100ms，原生框架重建可能丢失刚作出的选择；现主区与侧栏均立即交付这些变化，后续滚动不能把已排队的选择降为延迟保存。纯滚动仍合并，旧授权的迟到数据仍拒绝。独立复核又发现立即接续保存与原导航屏障可能并发重复写入，已复现并修成同一在途保存的连续等待，保留500ms/6秒原截止。
