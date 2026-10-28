@@ -181,7 +181,15 @@ export async function runSys05(output,{execute=false,observeWork=false,backpress
    await phase.run(()=>frame(a).getByRole('button',{name:'查找已知项目与聊天',exact:true}).click({timeout:phase.remaining('open-search')}),'open-search');
    await phase.run(()=>frame(a).getByRole('searchbox',{name:'已知聊天查找输入',exact:true}).fill('SYS05 directory 300',{timeout:phase.remaining('tail-search')}),'tail-search');
    const last=gap.expected.at(-1),row=frame(a).locator('.search-results a[data-ref-id="'+last.id+'"]');
-   gap.tail=await phase.poll(async()=>await presented()&&await row.count()===1&&await row.isVisible()?{topLevelOpen:true,id:last.id,title:await row.locator('.window-title').textContent(),href:await row.getAttribute('href')}:null,'tail-search-visible');
+   // C3 renders known data before its independent action plan. Keep the same
+   // return deadline, but do not mistake that interim row for an openable one.
+   gap.tail=await phase.poll(async()=>{
+    if(!await presented()||await row.count()!==1||!await row.isVisible())return null;
+    const href=await row.getAttribute('href');
+    gap.tailNavigation={hrefPresent:typeof href==='string',targetMatches:href===server.origin+'/c/'+last.id,reason:await row.getAttribute('data-navigation-reason'),disabled:await row.getAttribute('aria-disabled')==='true'};
+    if(!gap.tailNavigation.targetMatches||gap.tailNavigation.disabled)return null;
+    return {topLevelOpen:true,id:last.id,title:await row.locator('.window-title').textContent(),href};
+   },'tail-search-visible-and-planned');
    gap.elapsedMs=phase.elapsedMs();report.directoryGap=gap;
    report.steps.push(lostAck?'native-directory-real-commit-lost-reply-tail-gap-return-rescan-tail-search':'native-directory-first-commit-designated-unsent-fragment-real-gap-return-rescan-tail-search');
   }

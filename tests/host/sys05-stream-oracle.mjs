@@ -91,7 +91,7 @@ export function assertDirectoryGapOutcome(value){
  assert.deepEqual(g.after.hints,g.before.hints,'original-ACK-identity-or-time-changed');
  assert.deepEqual(g.after.projectIds,g.before.projectIds);assert(g.peer.refIds.every(id=>!set.has(id)),'directory-cross-scope');
  assert.equal(g.actions['sys05-load-directory'],1);assert.equal(g.actions['send-intent'],1);assert.equal(g.draftPreserved,true);assert.equal(g.uniqueReturn,true);
- const tail=g.expected.at(-1);assert.equal(g.tail.topLevelOpen,true,'tail-search-parent-must-be-open');assert.equal(g.tail.id,tail.id);assert.equal(g.tail.title,tail.title);assert.equal(new URL(g.tail.href).pathname,'/c/'+tail.id);
+ const tail=g.expected.at(-1);assert.equal(g.tail.topLevelOpen,true,'tail-search-parent-must-be-open');assert.equal(g.tail.id,tail.id);assert.equal(g.tail.title,tail.title);assert.equal(typeof g.tail.href,'string','tail-search-navigation-plan-required');assert.equal(new URL(g.tail.href).pathname,'/c/'+tail.id);
  return {gapRecovery:value.lostAckRequested?'PASS_NARROW_COMMITTED_LOST_ACK_RETURN_RESCAN':'PASS_NARROW_UNDELIVERED_FRAGMENT_RETURN_RESCAN',queueOverflow:'NOT_RUN',fullSYS05:'NOT_ESTABLISHED'};
 }
 export function assertStreamOutcome(value){
