@@ -73,6 +73,13 @@ test('history surface failure reports actual personal binding without asking to 
  assert.deepEqual(f.calls.filter(c=>c[0]==='control'),[['control',{v:1,type:'HOST_LOCAL_SPACE',action:'status'}],['control',{v:1,type:'HOST_LOCAL_SPACE',action:'pipeline'}]]);
 });
 
+for(const reason of ['native-flow-uncovered-branch','native-flow-check-failed'])test('flow preflight has a fixed local reason without requesting another unlock: '+reason,async()=>{
+ const f=await render({v:1,state:'surface-'+reason},true,{ok:true,mode:'locked',exists:true});
+ assert(f.node.textContent.includes('（'+reason+'）'));
+ assert.match(f.elements.filter(e=>e.tag==='p').at(-1).textContent,/旧私人数据已锁定/);
+ assert(!f.calls.some(c=>c[0]==='control'&&c[1].action==='unlock'));
+});
+
 test('engineering diagnostics are closed and separate from local confirmation controls',async()=>{
  const f=await render({v:1,state:'reading'},true,{ok:true,mode:'locked',exists:true});
  const detail=f.elements.find(e=>e.id==='diagnostic-details');assert(detail);assert.notEqual(detail.open,true);assert.equal(detail.children[0].textContent,'诊断详情');

@@ -1,4 +1,5 @@
 import {hasNativeLayer,NATIVE_LAYER_SELECTOR} from './native-layer.mjs';
+import {isEmptyViewportMarker} from './native-return-gap.mjs';
 /** Presentation-only document flow contract. Never supplies scope or data authority.
  * Native nodes stay in their original parent chain. Owned rules are reversible;
  * active proof measures the displayed layout, never a temporarily disabled one.
@@ -9,6 +10,18 @@ const overlaps = (a,b) => a.x < b.x+b.width && b.x < a.x+a.width && a.y < b.y+b.
 const attrs = node => ['class','style','hidden','aria-hidden','role','tabindex','contenteditable','inert'].map(key=>node.getAttribute(key));
 const plain = node => ['DIV','MAIN','SECTION'].includes(node.tagName) && !node.shadowRoot && !node.matches('[tabindex],[contenteditable],[inert],[hidden],[aria-hidden="true"],a,button,input,textarea,select');
 const controls = 'a[href],button,input,textarea,select,[tabindex],[contenteditable]:not([contenteditable="false"]),[role]:not([role="none"]):not([role="presentation"])';
+// The observed viewport contract permits empty native markers. Only an
+// already display:none marker is inert to grid layout: a visible zero-size
+// element can create a new track/gap. Never style or relocate these nodes.
+const inactiveMarker=(node,viewport,doc)=>isEmptyViewportMarker(node,viewport,doc)&&doc.defaultView.getComputedStyle(node).display==='none';
+
+// Fixed refusal classes from the existing proof, never native values or text.
+// Only this pre-mutation error may keep the initial layout watcher alive;
+// arbitrary mount errors (including marker collisions) remain terminal.
+export const nativeFlowFailureReasons=Object.freeze(['inspection','regions','root','header','capacity','wrapper-control','wrapper-text','wrapper-paint','uncovered-branch','protected-controls','geometry','check-failed'].map(reason=>'native-flow-'+reason));
+export class NativeFlowPreflightError extends Error {
+ constructor(reason){super(nativeFlowFailureReasons.includes(reason)?reason:'native-flow-check-failed');this.name='NativeFlowPreflightError';}
+}
 
 // Identity and native visibility are separate. Native editor/tool transitions
 // may retain an inactive node; it is still protected against replacement, but
@@ -41,46 +54,53 @@ export function isSameNativeLayout(plan) {
  }catch{return false;}
 }
 
-export function captureNativeBaseline({document:doc,inspection,isOwnedSurface=()=>false}={}) {
+export function captureNativeBaseline({document:doc,inspection,isOwnedSurface=()=>false,onRefused=()=>{}}={}) {
+ const refuse=reason=>{try{onRefused(reason);}catch{}return null;};
  try {
-  if (!inspection?.ok) return null;
+  if (!inspection?.ok) return refuse('native-flow-inspection');
   const {reading,composer,header}=inspection,win=doc.defaultView;
-  if (![reading,composer,header].every(n=>n?.isConnected&&n.ownerDocument===doc) || reading.contains(composer) || composer.contains(reading)) return null;
+  if (![reading,composer,header].every(n=>n?.isConnected&&n.ownerDocument===doc) || reading.contains(composer) || composer.contains(reading)) return refuse('native-flow-regions');
   const protectedNodes=[...new Set([composer,...inspection.protectedRegions.filter(n=>n!==header).map(n=>n.tagName==='H1'&&plain(n.parentElement)&&!n.parentElement.contains(composer)&&!n.parentElement.contains(reading)?n.parentElement:n)])];
   const leaves=[reading,...protectedNodes];
   let root=inspection.readingViewport??reading.parentElement;
   while(root && (!leaves.every(n=>root.contains(n))||!positive(rect(root))))root=root.parentElement;
-  if(!root||root===doc.body||root===doc.documentElement||!plain(root))return null;
+  if(!root||root===doc.body||root===doc.documentElement||!plain(root))return refuse('native-flow-root');
   const headerInside=root.contains(header);
-  if(headerInside){if(header.contains(reading)||header.contains(composer)||reading.contains(header)||composer.contains(header))return null;protectedNodes.unshift(header);leaves.push(header);}
+  if(headerInside){if(header.contains(reading)||header.contains(composer)||reading.contains(header)||composer.contains(header))return refuse('native-flow-header');protectedNodes.unshift(header);leaves.push(header);}
   const kind=protectedNodes.some(n=>n.getAttribute('role')==='tablist')?'project':inspection.homeLayoutNodes?'home':'conversation';
-  const leafSet=new Set(leaves),shells=[],records=[],nativeChildren=new Map();let count=0;
+  const leafSet=new Set(leaves),shells=[],records=[],nativeChildren=new Map(),inactiveMarkers=[];let count=0,failure=null;
+  const markerViewport=inspection.viewportMarkers==='empty-div-v1'?inspection.readingViewport:null;
+  const isMarker=node=>!!markerViewport&&inactiveMarker(node,markerViewport,doc);
+  const reject=reason=>{failure??=reason;return false;};
   function walk(node){
-   if(++count>128||!node.isConnected||node.ownerDocument!==doc)return false;
+   if(++count>128)return reject('native-flow-capacity');
+   if(!node.isConnected||node.ownerDocument!==doc)return reject('native-flow-regions');
    records.push({node,parent:node.parentElement,attrs:attrs(node)});
    if(leafSet.has(node))return true;
+   if(isMarker(node)){inactiveMarkers.push(node);return true;}
    // Layout wrappers only. Unknown controls/text/branches cannot disappear
    // through display:contents, even if they happen to have no visible text.
-   if(!plain(node)||node.hasAttribute('role')&&node.getAttribute('role')!=='main'||[...node.childNodes].some(n=>n.nodeType===3&&n.textContent.trim()))return false;
+   if(!plain(node)||node.hasAttribute('role')&&node.getAttribute('role')!=='main')return reject('native-flow-wrapper-control');
+   if([...node.childNodes].some(n=>n.nodeType===3&&n.textContent.trim()))return reject('native-flow-wrapper-text');
    const style=win.getComputedStyle(node);
-   if(style.display==='none'||style.visibility!=='visible'||style.opacity!=='1'||style.zoom!=='1'||['transform','translate','rotate','scale','filter','backdropFilter','clipPath','maskImage'].some(k=>style[k]!=='none')||['::before','::after'].some(p=>!['none','normal'].includes(win.getComputedStyle(node,p).content)))return false;
+   if(style.display==='none'||style.visibility!=='visible'||style.opacity!=='1'||style.zoom!=='1'||['transform','translate','rotate','scale','filter','backdropFilter','clipPath','maskImage'].some(k=>style[k]!=='none')||['::before','::after'].some(p=>!['none','normal'].includes(win.getComputedStyle(node,p).content)))return reject('native-flow-wrapper-paint');
    const children=[...node.children].filter(n=>!isOwnedSurface(n));
-   if(!children.length||children.some(n=>!leaves.some(leaf=>n===leaf||n.contains(leaf))))return false;
+   if(!children.length||children.some(n=>!leaves.some(leaf=>n===leaf||n.contains(leaf))&&!isMarker(n)))return reject('native-flow-uncovered-branch');
    nativeChildren.set(node,children);shells.push(node);return children.every(walk);
   }
-  if(!walk(root)||!leaves.every(n=>records.some(r=>r.node===n)))return null;
+  if(!walk(root)||!leaves.every(n=>records.some(r=>r.node===n)))return refuse(failure??'native-flow-uncovered-branch');
   // Headers outside the flow root are never laid out by us, but remain part
   // of the native identity and occlusion proof. React may replace them alone.
   if(!headerInside)records.push({node:header,parent:header.parentElement,attrs:attrs(header)});
   const protectedRegions=[...new Set([header,...protectedNodes])];
   const nativeControls=controlSnapshot({protectedRegions,document:doc,isOwnedSurface});
-  if(!nativeControls)return null;
+  if(!nativeControls)return refuse('native-flow-protected-controls');
   const coordinates=layoutCoordinates({root,header,composer,headerInside});
-  if(!coordinates)return null;
-  return Object.freeze({kind,root,reading,composer,header,leaves,protectedNodes,protectedRegions,shells,records,nativeChildren,nativeControls,
+  if(!coordinates)return refuse('native-flow-geometry');
+  return Object.freeze({kind,root,reading,composer,header,leaves,protectedNodes,protectedRegions,shells,records,nativeChildren,nativeControls,inactiveMarkers,markerViewport,
    headerInside,document:doc,url:doc.location.href,regionEpoch:inspection.regionEpoch,isOwnedSurface,
    ...coordinates});
- }catch{return null;}
+ }catch{return refuse('native-flow-check-failed');}
 }
 
 export function isSameNativeRegions(plan,{allowPresentationChange=false}={}){
@@ -88,7 +108,8 @@ export function isSameNativeRegions(plan,{allowPresentationChange=false}={}){
   if(!plan||plan.document.location.href!==plan.url)return false;
   return plan.records.every(({node,parent,attrs:before})=>node.isConnected&&node.ownerDocument===plan.document&&node.parentElement===parent&&attrs(node).every((value,i)=>allowPresentationChange&&i<2||value===before[i]))&&
    [...plan.nativeChildren].every(([node,children])=>{const actual=[...node.children].filter(n=>!plan.isOwnedSurface(n));return actual.length===children.length&&actual.every((n,i)=>n===children[i]);})&&
-   plan.nativeControls.every(({node,parent})=>node.isConnected&&node.parentElement===parent);
+   plan.nativeControls.every(({node,parent})=>node.isConnected&&node.parentElement===parent)&&
+   plan.inactiveMarkers.every(node=>inactiveMarker(node,plan.markerViewport,plan.document));
  }catch{return false;}
 }
 

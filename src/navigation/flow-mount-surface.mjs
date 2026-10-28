@@ -1,5 +1,5 @@
 import {hasNativeLayer as documentHasNativeLayer,NATIVE_LAYER_SELECTOR} from '../host/native-layer.mjs';
-import {captureNativeBaseline,isSameNativeRegions,isSameNativeLayout,flowLayoutRules,validateActiveLayout} from '../host/document-flow-layout.mjs';
+import {captureNativeBaseline,NativeFlowPreflightError,isSameNativeRegions,isSameNativeLayout,flowLayoutRules,validateActiveLayout} from '../host/document-flow-layout.mjs';
 import {observeNativeProjectManagement} from '../host/native-project-management.mjs';
 import {validateFrameAppearance} from '../host/frame-appearance.mjs';
 
@@ -63,7 +63,11 @@ export function createFlowMountSurface({document:doc,createFrameURL,hasNativeLay
   async mount(context,inspection,{onSurrender=()=>{},onSidebarScroll=()=>{},onManagementChanged=()=>{}}={}){
    if(!win.CSS?.supports('interactivity','inert')||!win.CSS?.supports('selector(:has(*))')||!win.HTMLElement.prototype.showPopover)throw Error('unsupported-mount-surface');
    if(!context?.binding?.documentToken)throw Error('invalid-mount-inspection');
-   const plan=captureNativeBaseline({document:doc,inspection,isOwnedSurface:owned});if(!plan)throw Error('unsupported-native-flow-topology');
+   let refusal='native-flow-check-failed';
+   const plan=captureNativeBaseline({document:doc,inspection,isOwnedSurface:owned,onRefused:reason=>{refusal=reason;}});
+   // No owned node, marker, listener or grant exists before this proof. The
+   // controller may recheck it after a native layout event under the same lease.
+   if(!plan)throw new NativeFlowPreflightError(refusal);
    const id='va_'+win.crypto.randomUUID().replaceAll('-',''),handle=Object.freeze({id,documentToken:context.binding.documentToken,regionEpoch:inspection.regionEpoch});
    const m={handle,plan,inspection,nativeViewport:viewport(),roles:[],markers:[],style:doc.createElement('style'),css:'',onSurrender,onSidebarScroll,onManagementChanged,cleanup:()=>{}};mounts.set(id,m);
    try{
@@ -102,16 +106,33 @@ export function createFlowMountSurface({document:doc,createFrameURL,hasNativeLay
     const down=e=>{if(e.isTrusted&&inputTarget(e)&&open(workspace)&&pointer===null){pointer=e.pointerId;workspace.exit.setAttribute('data-va-gesture',id);gestureDeadline=win.setTimeout(()=>{gestureDeadline=null;pointer=null;releaseInput();},3000);}};
     const up=e=>{if(e.isTrusted&&pointer===e.pointerId){pointer=null;if(gestureDeadline!==null)win.clearTimeout(gestureDeadline);gestureDeadline=null;queueInput();}};
     const input=e=>{if(e.isTrusted&&inputTarget(e)&&pointer===null&&open(workspace))queueInput();};
+    const leaveGesture=()=>{pointer=null;if(gestureDeadline!==null)win.clearTimeout(gestureDeadline);gestureDeadline=null;workspace.exit.removeAttribute('data-va-gesture');workspace.node.removeAttribute('data-va-input-handoff');if(['native-layer','workspace-geometry'].includes(workspace.reason)&&open(workspace))workspace.exit.hidePopover();};const visibility=()=>{if(doc.visibilityState==='hidden')leaveGesture();};
+    const observe=()=>{if(!mounts.has(id))return;if(nativeLayer()){hide(m,null,'native-layer');onSurrender({reason:'native-layer'});return;}if(!geometry(m))onSurrender({role:'workspace',reason:'workspace-geometry'});};
+    // Keep the exact registration target: native document replacement can
+    // detach HEAD, but must not prevent restoring the original body layout.
+    const nativeHead=doc.head;
+    let observer=null,markerGeometry=null;
+    const stylesheetLoaded=e=>{if(e.target?.matches?.('link[rel~="stylesheet"]'))observe();};
+    m.cleanup=()=>{m.unbindSidebar?.();m.management?.stop();leaveGesture();win.removeEventListener('blur',leaveGesture);win.removeEventListener('pagehide',leaveGesture);doc.removeEventListener('visibilitychange',visibility);if(inputTimer!==null)win.clearTimeout(inputTimer);doc.removeEventListener('pointerdown',down,true);doc.removeEventListener('pointerup',up,true);doc.removeEventListener('pointercancel',up,true);for(const type of ['focusin','click','keydown','beforeinput','compositionstart'])doc.removeEventListener(type,input,true);observer?.disconnect();markerGeometry?.disconnect();nativeHead?.removeEventListener('load',stylesheetLoaded,true);for(const s of m.roles)s.cleanup();};
     doc.addEventListener('pointerdown',down,true);doc.addEventListener('pointerup',up,true);doc.addEventListener('pointercancel',up,true);
     for(const type of ['focusin','click','keydown','beforeinput','compositionstart'])doc.addEventListener(type,input,true);
-    const leaveGesture=()=>{pointer=null;if(gestureDeadline!==null)win.clearTimeout(gestureDeadline);gestureDeadline=null;workspace.exit.removeAttribute('data-va-gesture');workspace.node.removeAttribute('data-va-input-handoff');if(['native-layer','workspace-geometry'].includes(workspace.reason)&&open(workspace))workspace.exit.hidePopover();};const visibility=()=>{if(doc.visibilityState==='hidden')leaveGesture();};win.addEventListener('blur',leaveGesture);win.addEventListener('pagehide',leaveGesture);doc.addEventListener('visibilitychange',visibility);
-    const observe=()=>{if(!mounts.has(id))return;if(nativeLayer()){hide(m,null,'native-layer');onSurrender({reason:'native-layer'});return;}if(!geometry(m))onSurrender({role:'workspace',reason:'workspace-geometry'});};
-    const observer=new win.MutationObserver(observe);observer.observe(doc.body,{subtree:true,childList:true,attributes:true,attributeFilter:['class','style','hidden','aria-hidden','role','tabindex','contenteditable','inert','open','aria-modal']});
+    win.addEventListener('blur',leaveGesture);win.addEventListener('pagehide',leaveGesture);doc.addEventListener('visibilitychange',visibility);
+    observer=new win.MutationObserver(observe);observer.observe(doc.body,{subtree:true,childList:true,attributes:true,attributeFilter:['class','style','hidden','aria-hidden','role','tabindex','contenteditable','inert','open','aria-modal']});
     // The owned rules live in HEAD, outside the native body observer. Changes
     // there must surrender immediately too, including during input handoff.
     observer.observe(m.style,{subtree:true,childList:true,characterData:true});
+    // An admitted display:none marker can become a grid participant through
+    // native CSS without a body mutation. Observe only invalidation signals;
+    // never read stylesheet rules or change the marker. Workspace resizing
+    // also covers CSSOM rule edits that have no MutationObserver record.
+    if(plan.inactiveMarkers.length){
+     observer.observe(nativeHead,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['media','disabled','href','rel']});
+     observer.observe(doc.documentElement,{attributes:true,attributeFilter:['class','style']});
+     nativeHead.addEventListener('load',stylesheetLoaded,true);
+     if(win.ResizeObserver){markerGeometry=new win.ResizeObserver(observe);for(const node of [workspace.node,...plan.inactiveMarkers])markerGeometry.observe(node);}
+    }
     bindSidebar(m);
-    m.cleanup=()=>{m.unbindSidebar?.();m.management?.stop();leaveGesture();win.removeEventListener('blur',leaveGesture);win.removeEventListener('pagehide',leaveGesture);doc.removeEventListener('visibilitychange',visibility);if(inputTimer!==null)win.clearTimeout(inputTimer);doc.removeEventListener('pointerdown',down,true);doc.removeEventListener('pointerup',up,true);doc.removeEventListener('pointercancel',up,true);for(const type of ['focusin','click','keydown','beforeinput','compositionstart'])doc.removeEventListener(type,input,true);observer.disconnect();for(const s of m.roles)s.cleanup();};return handle;
+    return handle;
    }catch(error){m.cleanup();for(const s of m.roles){s.node.remove();s.exit.remove();}m.style.remove();for(const {node,attr,previous} of m.markers)if(node.getAttribute(attr)===id){if(previous===null)node.removeAttribute(attr);else node.setAttribute(attr,previous);}mounts.delete(id);throw error;}
   },
   readNativeManagement(handle){return lookup(handle).management?.read()??[];},

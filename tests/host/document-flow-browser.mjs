@@ -14,6 +14,78 @@ const P='g-p-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',C='33333333-3333-4333-8333-333333
 const legacy=(await readFile(new URL('./fixtures/legacy.html',import.meta.url),'utf8')).replace('<link rel="stylesheet" href="/native.css">','<style>'+await readFile(new URL('./fixtures/native.css',import.meta.url),'utf8')+'</style>');
 const browser=await chromium.launch({headless:true,args:['--proxy-server=http://127.0.0.1:9','--proxy-bypass-list=<-loopback>']}),results=[];
 try{
+ // Lifecycle counterexample on the existing host, not a newly collected real
+ // topology: native layout can retain a temporary branch after adapter readiness.
+ // Reject it intact, then recover only after the original page removes it.
+ const preflight=await browser.newPage({viewport:{width:1440,height:1000}});
+ await preflight.route('**/*',r=>r.request().url()==='https://chatgpt.com/c/'+C?r.fulfill({contentType:'text/html',body:legacy}):r.abort());
+ await preflight.goto('https://chatgpt.com/c/'+C);await preflight.addScriptTag({content:outputFiles[0].text});
+ const refused=await preflight.evaluate(async()=>{
+  const {createChatGPTAdapter,createURLPolicy,createFlowMountSurface,createSurfaceController}=flowModule;let surface,registrations=0,attempts=0;
+  const adapter=createChatGPTAdapter({document,urlPolicy:createURLPolicy(),isOwnedMask:n=>surface?.isMasked(n),isOwnedSurface:n=>surface?.isOwnedSurface(n)});
+  const binding={documentToken:'preflight',producerToken:'preflight',browserDocumentId:'preflight',routeEpoch:1,origin:location.origin,expiresAt:new Date(Date.now()+20000).toISOString()};
+  const context=await adapter.start({binding,emit:async p=>({state:'accepted',localSeq:p.localSeq,receiptId:'preflight'})});
+  const original=document.querySelector('#prompt-textarea');original.value='existing draft';
+  const branch=document.createElement('div');branch.hidden=true;document.querySelector('main').append(branch);
+  const extensionOrigin='chrome-extension://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
+  const implementation=createFlowMountSurface({document,createFrameURL:({role})=>extensionOrigin+'/'+role+'.html'});
+  surface={...implementation,mount:async(...args)=>{attempts++;return implementation.mount(...args);}};
+  const bridge={registerMount:async()=>{registrations++;return {ok:true};},confirmParent:async({mountId,role})=>({ok:true,grant:{id:'grant_'+role,mountId,role,parentDocumentId:'preflight',uiDocumentId:'ui_'+role,scopeGrantId:'scope',expiresAt:binding.expiresAt}})};
+  const controller=createSurfaceController({document,adapter,surface,bridge,extensionOrigin}),adapterReady=adapter.inspect().ok;
+  const handle=await controller.start({context});
+  globalThis.preflightProbe={controller,surface,adapter,branch,original,extensionOrigin,registrations:()=>registrations,attempts:()=>attempts};
+  return {adapterReady,handle:!!handle,status:controller.localStatus(),mode:controller.presentationSnapshot()?.mode,attempts,registrations,owned:document.querySelectorAll('[data-va-owned],[data-va-flow-root]').length,draft:original.value};
+ });
+ assert.deepEqual(refused,{adapterReady:true,handle:false,status:'surface-native-flow-uncovered-branch',mode:'waiting',attempts:1,registrations:0,owned:0,draft:'existing draft'});
+ await preflight.evaluate(()=>preflightProbe.branch.remove());
+ await preflight.waitForFunction(()=>preflightProbe.controller.presentationSnapshot()?.registered===true);
+ await preflight.evaluate(()=>{const p=preflightProbe;for(const frame of document.querySelectorAll('iframe')){const role=frame.title==='工作空间'?'workspace':'sidebar';window.dispatchEvent(new MessageEvent('message',{origin:p.extensionOrigin,source:frame.contentWindow,data:{type:'VAIWL_UI_JOIN',role,nonce:'nonce_'+role}}));}});
+ await preflight.waitForFunction(()=>preflightProbe.controller.localStatus()==='ready');
+ const recovered=await preflight.evaluate(()=>{const p=preflightProbe,result={status:p.controller.localStatus(),visible:p.controller.isWorkspacePresented(),attempts:p.attempts(),registrations:p.registrations(),sameEditor:document.querySelector('#prompt-textarea')===p.original,draft:p.original.value};p.controller.revoke();p.adapter.stop();return {...result,restored:!document.querySelector('[data-va-owned],[data-va-flow-root]')&&document.querySelector('#prompt-textarea')===p.original};});
+ assert.deepEqual(recovered,{status:'ready',visible:true,attempts:2,registrations:1,sameEditor:true,draft:'existing draft',restored:true});
+ console.log(JSON.stringify({nativeFlowPreflight:{refused,recovered}}));await preflight.close();
+ // Reuse the observed viewport's existing empty-div-v1 contract. This is a
+ // compatibility counterexample, not evidence of the user's home topology.
+ const markers=await browser.newPage({viewport:{width:1400,height:900}});
+ await markers.route('**/*',r=>r.request().url()==='https://chatgpt.com/c/'+C?r.fulfill({contentType:'text/html',body:longDesktopHTML(C)}):r.abort());
+ await markers.goto('https://chatgpt.com/c/'+C);await markers.addScriptTag({content:outputFiles[0].text});
+ const markerProof=await markers.evaluate(async()=>{
+  const {createChatGPTAdapter,createURLPolicy,CHATGPT_OBSERVED_PROFILE:profile,createFlowMountSurface,captureNativeBaseline}=flowModule;let surface;
+  const adapter=createChatGPTAdapter({document,profile,urlPolicy:createURLPolicy(),isOwnedMask:n=>surface?.isMasked(n),isOwnedSurface:n=>surface?.isOwnedSurface(n)});
+  const binding={documentToken:'markers',producerToken:'markers',browserDocumentId:'markers',routeEpoch:1,origin:location.origin,expiresAt:new Date(Date.now()+20000).toISOString()};
+  await adapter.start({binding,emit:async p=>({state:'accepted',localSeq:p.localSeq,receiptId:'markers'})});
+  const viewport=document.querySelector('[data-app-action-timeline-scroll]'),marker=document.createElement('div');marker.id='fixture-native-marker';
+  const css=document.createElement('style');css.textContent='#fixture-native-marker{display:none}';document.head.append(css);viewport.append(marker);
+  const inspection=adapter.inspect(),before=marker.outerHTML,nativeChildren=[...viewport.children];
+  const unselectedRejected=captureNativeBaseline({document,inspection:{...inspection,viewportMarkers:null}})===null;
+  surface=createFlowMountSurface({document,createFrameURL:({role})=>'chrome-extension://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/'+role+'.html'});
+  const handle=await surface.mount({binding},inspection),shown=surface.showWorkspace(handle),active=surface.validateActiveLayout(handle);
+  const untouched=marker.outerHTML===before&&marker.parentElement===viewport&&nativeChildren.every((n,i)=>[...viewport.children].filter(n=>!surface.isOwnedSurface(n))[i]===n);
+  const settle=()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>setTimeout(resolve,0))));
+  // Flush mount mutations first: they must not accidentally trigger the check
+  // for a later HEAD-only change. Read visibility without invoking any proof.
+  await settle();const stableBeforeChange=surface.visibility(handle).workspace;
+  // A media-rule change need not mutate the node. A formerly absent marker
+  // must never silently become an implicit grid track, even at zero height.
+  css.textContent='#fixture-native-marker{display:block;height:0}';
+  await settle();const automaticallyHidden=!surface.visibility(handle).workspace;
+  const cssChangeRejected=!surface.isSameNativeRegions(handle)&&!surface.validateActiveLayout(handle);
+  surface.showReading(handle);
+  const visibleZeroRejected=captureNativeBaseline({document,inspection:adapter.inspect(),isOwnedSurface:n=>surface.isOwnedSurface(n)})===null;
+  css.textContent='#fixture-native-marker{display:none}';marker.append(document.createElement('button'));
+  const childRejected=!surface.isSameNativeRegions(handle);marker.replaceChildren();marker.setAttribute('tabindex','0');
+  const focusRejected=!surface.isSameNativeRegions(handle);marker.removeAttribute('tabindex');
+  const recovered=surface.isSameNativeRegions(handle)&&surface.showWorkspace(handle)&&surface.validateActiveLayout(handle);
+  await settle();
+  css.sheet.insertRule('#fixture-native-marker{display:block;height:0}',css.sheet.cssRules.length);
+  await settle();const cssomAutomaticallyHidden=!surface.visibility(handle).workspace;
+  const nativeHead=document.head;nativeHead.remove();let cleanupComplete=true;
+  try{surface.dispose(handle);}catch{cleanupComplete=false;}finally{document.documentElement.prepend(nativeHead);adapter.stop();}
+  cleanupComplete=cleanupComplete&&!document.querySelector('[data-va-owned],[data-va-flow-root]');
+  return {adapterReady:inspection.ok,policy:inspection.viewportMarkers,unselectedRejected,shown,active,untouched,stableBeforeChange,automaticallyHidden,cssChangeRejected,visibleZeroRejected,childRejected,focusRejected,recovered,cssomAutomaticallyHidden,cleanupComplete,restored:marker.outerHTML===before&&nativeChildren.every((n,i)=>viewport.children[i]===n)};
+ });
+ assert.deepEqual(markerProof,{adapterReady:true,policy:'empty-div-v1',unselectedRejected:true,shown:true,active:true,untouched:true,stableBeforeChange:true,automaticallyHidden:true,cssChangeRejected:true,visibleZeroRejected:true,childRejected:true,focusRejected:true,recovered:true,cssomAutomaticallyHidden:true,cleanupComplete:true,restored:true});
+ console.log(JSON.stringify({inactiveViewportMarker:markerProof}));await markers.close();
  // Native popovers have no required aria-modal attribute. The real adapter,
  // controller and flow backend must agree while one is open and after close.
  // Grants below are offline mechanism doubles, never account evidence.

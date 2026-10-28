@@ -5,6 +5,7 @@ import {readFrameAppearance} from './frame-appearance.mjs';
 import {withRequestDeadline} from '../data/request-deadline.mjs';
 import {tokenOK} from '../b1/identity.mjs';
 import {exactHostRecord} from './contract.mjs';
+import {NativeFlowPreflightError} from './document-flow-layout.mjs';
 /** Isolated content composition. Public window messages only correlate an owned
  * frame. Grants and mount registration travel exclusively over the trusted bridge. */
 export function createSurfaceController({document:doc,adapter,surface,bridge,extensionOrigin,onTerminated=()=>{},onFailure=()=>{},onWake=null,initialMode='workspace',now=Date.now,elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout}={}){
@@ -331,6 +332,7 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
   state.layoutObserver?.disconnect();state.layoutObserver=null;
   if(!state.layoutChanged)return;
   win.removeEventListener('resize',state.layoutChanged);
+  for(const type of ['transitionend','animationend'])win.removeEventListener(type,state.layoutChanged,true);
   win.visualViewport?.removeEventListener?.('resize',state.layoutChanged);
   state.layoutChanged=null;
  }
@@ -340,10 +342,13 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
   // the complete proof on a layout event only, under the original binding.
   state.layoutChanged=()=>{void mountState(state).catch(()=>{if(current===state)stop('surface-start-failed');});};
   win.addEventListener('resize',state.layoutChanged);
+  // Native CSS can finish without another class/style mutation. This is an
+  // event-driven fresh proof, not a longer timeout or a polling retry.
+  for(const type of ['transitionend','animationend'])win.addEventListener(type,state.layoutChanged,true);
   win.visualViewport?.addEventListener?.('resize',state.layoutChanged);
   if(win.MutationObserver){
    state.layoutObserver=new win.MutationObserver(state.layoutChanged);
-   state.layoutObserver.observe(doc.body,{subtree:true,childList:true,attributes:true,attributeFilter:['class','style','hidden','aria-hidden']});
+   state.layoutObserver.observe(doc.body,{subtree:true,childList:true,attributes:true,attributeFilter:['class','style','hidden','aria-hidden','role','tabindex','contenteditable','inert']});
   }
  }
  async function start(options,sidebarDesired=true){
@@ -362,6 +367,7 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
   state.inspection=adapter.inspect();
   if(!state.inspection?.ok){
    reportBoundary(state.inspection);
+   state.layoutFailure=surfaceFailureStates.includes('surface-'+lastBoundary)?'surface-'+lastBoundary:null;
    watchInitialLayout(state);
    arm(state);return null;
   }
@@ -369,6 +375,7 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
   try{
    state.policyViolation=event=>{if(current!==state||!['frame-src','child-src'].includes(event.effectiveDirective))return;let blocked;try{blocked=new URL(event.blockedURI);}catch{return;}if(blocked.protocol+'//'+blocked.host!==trustedOrigin)return;state.framePolicy=event.disposition==='enforce'?'frame-blocked':'frame-report-only';reportJoin(state);};doc.addEventListener?.('securitypolicyviolation',state.policyViolation);
    state.handle=await surface.mount(state.context,state.inspection,{onSurrender:event=>nativeSurrender(state,event),onManagementChanged:()=>{const g=state.grants.get('sidebar'),f=state.frames.find(f=>f.role==='sidebar');if(current===state&&valid(state)&&authorized(state)&&g&&Date.parse(g.expiresAt)>now()&&f)f.window.postMessage({type:'VAIWL_UI_MANAGEMENT_CHANGED',role:'sidebar',mountId:state.handle.id,grantId:g.id},trustedOrigin);},onSidebarScroll:scroll=>{const g=state.grants.get('sidebar'),frame=state.frames.find(f=>f.role==='sidebar');if(current===state&&valid(state)&&authorized(state)&&g&&Date.parse(g.expiresAt)>now()&&frame)frame.window.postMessage({type:'VAIWL_UI_SIDEBAR_VIEWPORT',role:'sidebar',mountId:state.handle.id,grantId:g.id,scroll},trustedOrigin);}});if(current!==state){dispose(state,'stale-mount');return null;}
+   state.layoutFailure=null;lastBoundary=null;
    state.loadedRoles=new Set();state.joinedRoles=new Set();state.moduleRoles=new Set();
    state.frames=surface.frames(state.handle).map(value=>({...value,window:value.frame.contentWindow}));if(!state.frames.some(x=>x.role==='workspace')||new Set(state.frames.map(x=>x.role)).size!==state.frames.length||state.frames.some(x=>!['workspace','sidebar'].includes(x.role)))throw Error('incomplete-dual-surface');
    for(const target of state.frames)target.frame.addEventListener?.('load',()=>{if(current===state){state.loadedRoles.add(target.role);reportJoin(state);frameDocumentsIntact(state);}},{once:true});
@@ -384,7 +391,17 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
    win.addEventListener('popstate',state.changed);win.addEventListener('hashchange',state.changed);
    if(win.MutationObserver){const gap=state.inspection.returnPlacement==='header-gap';state.observer=new win.MutationObserver(records=>{if(gap&&records?.length&&records.every(r=>r.target===state.button&&r.attributeName==='style'&&state.button.getAttribute('style')===state.returnStyle))return;state.changed();});state.observer.observe(doc.body,{subtree:true,childList:true,attributes:true,attributeFilter:['open','class','aria-modal',...(gap?['style','hidden','inert','aria-hidden']:[])]});}
    watchGeometry(state);watchAppearance(state);arm(state);const queued=[...state.earlyJoins.values()];state.earlyJoins.clear();for(const event of queued)void receive(state,event);return state.handle;
-  }catch(error){if(current===state){const code='surface-'+(historyBoundary(state.inspection)??(state.inspection?.reason==='missing-or-ambiguous-native-boundary'&&['history','header','reading','composer','navigationSlot'].includes(state.inspection.boundaryKey)?'missing-'+state.inspection.boundaryKey:state.inspection?.ok===false&&boundaryReasons.includes(state.inspection.reason)?state.inspection.reason:error?.message));try{if(surfaceFailureStates.includes(code))onFailure(code);}catch{}stop('mount-unavailable');}return null;}finally{state.mounting=false;}
+  }catch(error){if(current===state){
+   const code='surface-'+(historyBoundary(state.inspection)??(state.inspection?.reason==='missing-or-ambiguous-native-boundary'&&['history','header','reading','composer','navigationSlot'].includes(state.inspection.boundaryKey)?'missing-'+state.inspection.boundaryKey:state.inspection?.ok===false&&boundaryReasons.includes(state.inspection.reason)?state.inspection.reason:error?.message));
+   try{if(surfaceFailureStates.includes(code)&&state.layoutFailure!==code)onFailure(code);}catch{}
+   if(surface.backend==='document-flow'&&!state.handle&&error instanceof NativeFlowPreflightError&&error.message!=='native-flow-check-failed'){
+    // A topology refusal happens before mount has side effects. Preserve only
+    // this document's waiting controller; fresh grants are still mandatory.
+    // Do not retry arbitrary exceptions, partial mounts or registration denial.
+    doc.removeEventListener?.('securitypolicyviolation',state.policyViolation);state.policyViolation=null;
+    state.layoutFailure=code;watchInitialLayout(state);arm(state);
+   }else stop('mount-unavailable');
+  }return null;}finally{state.mounting=false;}
  }
  async function receive(state,event){
   if(current!==state||!frameDocumentsIntact(state))return;
@@ -558,6 +575,7 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
  function localStatus(){
   const state=current;if(!state)return 'surface-controller-absent';if(state.epoch!==epoch||doc.location.href!==state.url)return 'surface-document-stale';
   if(state.dormant)return dormantReady()?'dormant':'unavailable';
+  if(!state.handle&&state.layoutFailure)return state.layoutFailure;
   if(!state.registered||state.mode==='waiting'){
    // A stalled owned-frame handshake is not indefinitely 'connecting'. This
    // reads fixed controller state only; it neither probes DOM nor retries JOIN.

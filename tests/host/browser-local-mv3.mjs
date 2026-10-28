@@ -29,6 +29,36 @@ try{
  return result;};
  context=await launch();report.browserErrors=[];context.on('page',p=>p.on('pageerror',e=>report.browserErrors.push(e.stack||e.message)));
  const cdp=await context.browser().newBrowserCDPSession(),{id}=await cdp.send('Extensions.loadUnpacked',{path:built.unpacked});
+ if(process.argv.includes('--mount-recovery-only')){
+  // Full production owner -> adapter -> preflight -> JOIN -> VIEW -> renderer.
+  // Temporary branch is a local lifecycle counterexample, not captured site DOM.
+  page=await context.newPage();await page.setViewportSize({width:1400,height:900});
+  await page.addInitScript({content:'if(window===window.top)document.addEventListener("DOMContentLoaded",()=>{('+materializePartitionedSidebar.toString()+')('+JSON.stringify(partitionDetails.sidebarStructure.rows)+');const branch=document.createElement("div");branch.hidden=true;branch.dataset.fixturePreflight="";document.querySelector("[role=main]").append(branch);},{once:true});'});
+  await page.goto(origin+'/');
+  await page.waitForFunction(()=>document.documentElement.dataset.vaiwlStartup==='surface-failed',{timeout:15000});
+  const editor=await page.locator('textarea').elementHandle(),draft=await page.locator('textarea').inputValue();
+  const control=await context.newPage();await control.goto('chrome-extension://'+id+'/status.html');
+  const read=()=>control.evaluate(async origin=>{const [tab]=await chrome.tabs.query({url:origin+'/*'}),frame=await chrome.webNavigation.getFrame({tabId:tab.id,frameId:0});return {documentId:frame.documentId,status:await chrome.tabs.sendMessage(tab.id,{v:1,type:'HOST_LOCAL_STATUS'},{documentId:frame.documentId}),pipeline:await chrome.runtime.sendMessage({v:1,type:'HOST_LOCAL_SPACE',action:'pipeline'}),local:await chrome.runtime.sendMessage({v:1,type:'HOST_LOCAL_SPACE',action:'status'})};},origin);
+  await page.bringToFront();const before=await read();
+  assert.equal(before.status.state,'surface-native-flow-uncovered-branch');
+  assert.equal(before.pipeline.pipeline.storage,'session');assert(before.pipeline.pipeline.refs>0);
+  assert.equal(before.pipeline.pipeline.lastWorkspaceDelivery,null);assert.equal(before.pipeline.pipeline.workspaceReceipt,null);
+  assert.equal(await page.locator('iframe[src="chrome-extension://'+id+'/workspace.html"]').count(),0);
+  // Only the native fixture removes its temporary branch; no Reload, new
+  // handshake, personal confirmation or fabricated private records.
+  await page.locator('[data-fixture-preflight]').evaluate(n=>n.remove());
+  const workspace=page.frameLocator('iframe[src="chrome-extension://'+id+'/workspace.html"]'),sidebar=page.frameLocator('iframe[src="chrome-extension://'+id+'/sidebar.html"]');
+  await workspace.getByRole('link',{name:'Native A',exact:true}).first().waitFor({timeout:15000});
+  await page.locator('[id$="_workspace"]:visible').waitFor({timeout:15000});
+  await sidebar.locator('.sidebar-footer').waitFor({timeout:15000});
+  const after=await read();assert.equal(after.documentId,before.documentId);assert.equal(after.status.state,'ready');
+  assert.equal(after.pipeline.pipeline.refs,before.pipeline.pipeline.refs);assert.equal(after.pipeline.pipeline.workspaceReceipt.phase,'rendered');assert.equal(after.pipeline.pipeline.workspaceReceipt.rows,1);
+  assert.equal(after.local.mode,'locked');assert.equal(after.local.exists,false);
+  assert(await editor.evaluate(n=>n.isConnected&&n===document.querySelector('textarea')));assert.equal(await page.locator('textarea').inputValue(),draft);
+  const databases=await context.serviceWorkers().find(w=>w.url()==='chrome-extension://'+id+'/extension/worker.mjs').evaluate(()=>indexedDB.databases());assert.deepEqual(databases,[]);
+  report.checks.nativePreflightRecovery={initialStatus:before.status.state,inventoryRetained:true,viewInitiallyAbsent:true,sameDocument:true,status:after.status.state,viewRendered:true,workspaceVisible:true,sidebarVisible:true,originalEditorAndDraft:true,privateMode:after.local.mode,privateDatabases:0};
+  const image=join(dir,'mount-recovered.png');await page.screenshot({path:image});report.images=[image];await control.close();
+ }
  if(process.argv.includes('--instant-recovery-only')){
   // The instant RAM scope deliberately changes when its worker is lost. This
   // is not a personal unlock or a continuation of the previous RAM inventory.
@@ -782,7 +812,7 @@ try{
   report.checks.historyDiagnosticNoPrivateDatabaseOrDraftChange=true;
   await control.close();await page.close();
  }
- if(!process.argv.includes('--instant-recovery-only')&&!process.argv.includes('--flow-only')&&!process.argv.includes('--sidebar-composition-only')&&!process.argv.includes('--sidebar-capture-only')&&!process.argv.includes('--entry-receipt-only')&&!process.argv.includes('--progressive-only')&&!process.argv.includes('--history-ready-only')&&!process.argv.includes('--history-diagnostic-only')&&!process.argv.includes('--mixed-history-only')&&!process.argv.includes('--product-states-only')){
+ if(!process.argv.includes('--mount-recovery-only')&&!process.argv.includes('--instant-recovery-only')&&!process.argv.includes('--flow-only')&&!process.argv.includes('--sidebar-composition-only')&&!process.argv.includes('--sidebar-capture-only')&&!process.argv.includes('--entry-receipt-only')&&!process.argv.includes('--progressive-only')&&!process.argv.includes('--history-ready-only')&&!process.argv.includes('--history-diagnostic-only')&&!process.argv.includes('--mixed-history-only')&&!process.argv.includes('--product-states-only')){
  // Row reorder reproves only the sidebar mask; workspace identity survives.
  const reordered=await context.newPage();await reordered.addInitScript({content:'if(window===window.top)document.addEventListener("DOMContentLoaded",'+prepareHistoryRun.toString()+',{once:true});'});
  await reordered.goto(origin+'/c/'+B);

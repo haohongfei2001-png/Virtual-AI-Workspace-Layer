@@ -1,5 +1,15 @@
 # VAIWL实际状态：渐进积累工程已接线，真实来源逐项待准入
 
+## 2026-10-29 新版已运行；修复首次文档流拒绝后的永久停止
+
+用户当前文档回执已确认 `516561eb5bae…` 运行，失败已从授权推进至界面挂载；不能再解释为尚未 Reload。即时库 `nativeRevision=5 / refs=10 / projects=0`，`lastWorkspaceDelivery/workspaceReceipt/presentation` 均为空，生产者仍接收本页对象。故障位于正式 VIEW 之前；这不是整体数据库为空、日期过滤或私人库未解锁。旧通用 `surface-failed` 未保留具体 flow 拒绝原因，尚不能确定该真实首页唯一拒绝分支。95行侧栏快照及已消费列表观察不重采；IDless原生Project行不提升为已确认Project对象。
+
+已修复两处可复现的正式代码缺陷：初次 flow 几何/结构证明拒绝被 controller 当作永久停止，原生布局就绪也不能恢复；adapter 已选择的隐藏空 viewport marker 合同未传至 flow。现在仅对无任何挂载副作用的固定 preflight 拒绝保留同文档事件驱动重证，仍需原 binding、完整布局证明、注册及 UiGrant；异常、标记冲突、部分挂载和注册拒绝不自动重试。marker 仅允许既有包内策略下原已 `display:none` 的空直接子节点，保留原节点/顺序；CSS变化使它参与布局时自动让位。HEAD被移除后的清理反例已修复，初始化中途失败也能清理监听。既有状态入口显示固定拒绝码，不新增采集或授权。
+
+关联回归、真实DOM离线反例及非作者只读复核通过。正式隔离MV3实际完成“即时库存已接收/无VIEW → 原生布局就绪 → 同文档正式VIEW及双角色绘制”，保留原编辑器/草稿，私人库仍锁定、无IDB、无内部请求。报告 `/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-NGtlmb/report.json`；自动让位及异常恢复证据 `/private/tmp/vaiwl-flow-head-cleanup-{before,after}.log`。已查看正式renderer实际图；匿名宿主与生命周期反例不证明真实首页原因或完整v2.7视觉验收。
+
+统一未安装包 `/private/tmp/VAIWL-v27-Flow-Mount-Recovery-20261029-reviewed/extension`；指纹 `7217ac388ca794d2658e5bd9f8db86e4927319f00bcd19fdec1a1d227906656b`，ZIP SHA256 `979a42307b1e9eea8fa40d8db799291c3114eb243812b22921dc6ca134a65252`。203项源码与实际MV3测试包相同、195项生产文件字节一致，其余6项是已核验的正式/本地origin生成闭包；清单/权限不变，核验 `/private/tmp/vaiwl-flow-mount-reviewed-build-verification-20261029.json`。原目录仍为516561…，本轮不更新安装、不操作Chrome、不解锁或改旧库/草稿，三份stash保留。修复后Mac NOT_RUN、完整产品NOT_ACCEPTED；下一次必要激活沿现有状态入口辨明实际拒绝，不能把这批离线修复冒充实机已解决。
+
 ## 2026-10-28 即时恢复修复同 ID 更新；运行激活未确认
 
 用户明确要求执行后，将原分支已同步的 `358ce5fa` 修复包写入原注册加载目录。先逐文件校验2954个原文件的完整备份，再只更新 `content.js`、`src/host/content-session.mjs`、`build-manifest.json`；202个包文件匹配固定包，2752个历史附加文件保留，清单/权限不变。备份及回执：`.git/vaiwl-artifacts/install-backups/flow-instant-recovery-20261028-231847/`，原扩展 ID `miendbcjdmecjggplepenghjnoejmaic`、IndexedDB、草稿及stash未动。磁盘指纹现为 `516561eb5bae4c8c0a1f86096a6c6f35d26c04f64bfaa18f3e574f01112b7d47`。

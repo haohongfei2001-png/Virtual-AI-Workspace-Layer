@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createSurfaceController} from '../../src/host/surface-controller.mjs';
+import {NativeFlowPreflightError} from '../../src/host/document-flow-layout.mjs';
 const drain=async()=>{for(let i=0;i<20;i++)await Promise.resolve();};
 const deferred=()=>{let resolve;const promise=new Promise(r=>{resolve=r;});return {promise,resolve};};
 // Isolated DOM/lifecycle mocks: these contracts do not certify actual Chrome masks.
@@ -20,7 +21,7 @@ function fixture(options={}){
  const controller=createSurfaceController({onWake:()=>false,...options,document:doc,adapter,surface,bridge,extensionOrigin:'chrome-extension://extension',onTerminated:(reason,presentation)=>calls.terminations.push({reason,presentation}),now:()=>time,elapsedNow:()=>time,schedule:(fn,ms)=>{const id=++n;timers.set(id,{fn,at:time+ms});return id;},cancel:id=>timers.delete(id)});
  const message=(role='workspace',patch={})=>{const event={source:frames.find(x=>x.role===role).frame.contentWindow,origin:'chrome-extension://extension',data:{type:'VAIWL_UI_JOIN',role,nonce:`nonce_${role}`},...patch};for(const fn of listeners.get('message')??[])fn(event);};
  const both=async()=>{message();message('sidebar');await drain();};
- return {timers,resize:(viewport=false)=>{for(const fn of (viewport?viewportListeners:listeners).get('resize')??[])fn();},resizeListeners:()=>[listeners.get('resize')?.size??0,viewportListeners.get('resize')?.size??0],renewAck:()=>({ok:true,binding:{...binding,expiresAt:new Date(time+20000).toISOString()},grants:['workspace','sidebar'].map(role=>({id:`grant_${role}`,mountId:'mount',role,parentDocumentId:'parent',uiDocumentId:`ui_${role}`,scopeGrantId:'scope',expiresAt:new Date(time+20000).toISOString()}))}),surrender:(event={reason:'native-input'})=>surrender?.(event),pagehide:()=>{for(const fn of listeners.get('pagehide')??[])fn();},controller,bridge,adapter,surface,doc,slot,frames,binding,calls,message,both,change:()=>observer?.(),layer:value=>{layer=value;},region:()=>{region++;},tick:ms=>{time+=ms;for(const [id,t]of [...timers])if(t.at<=time){timers.delete(id);t.fn();}}};
+ return {timers,layoutEvent:type=>{for(const fn of listeners.get(type)??[])fn();},layoutListeners:()=>['transitionend','animationend'].map(type=>listeners.get(type)?.size??0),resize:(viewport=false)=>{for(const fn of (viewport?viewportListeners:listeners).get('resize')??[])fn();},resizeListeners:()=>[listeners.get('resize')?.size??0,viewportListeners.get('resize')?.size??0],renewAck:()=>({ok:true,binding:{...binding,expiresAt:new Date(time+20000).toISOString()},grants:['workspace','sidebar'].map(role=>({id:`grant_${role}`,mountId:'mount',role,parentDocumentId:'parent',uiDocumentId:`ui_${role}`,scopeGrantId:'scope',expiresAt:new Date(time+20000).toISOString()}))}),surrender:(event={reason:'native-input'})=>surrender?.(event),pagehide:()=>{for(const fn of listeners.get('pagehide')??[])fn();},controller,bridge,adapter,surface,doc,slot,frames,binding,calls,message,both,change:()=>observer?.(),layer:value=>{layer=value;},region:()=>{region++;},tick:ms=>{time+=ms;for(const [id,t]of [...timers])if(t.at<=time){timers.delete(id);t.fn();}}};
 }
 for(const viewport of [false,true])test(`initial unsafe layout recovers on ${viewport?'visual viewport':'window'} resize without a DOM mutation`,async()=>{
  const f=fixture(),inspect=f.adapter.inspect,held=deferred();let safe=false;
@@ -39,6 +40,38 @@ test('waiting layout cannot mount after route change, expiry, revoke or pagehide
   await f.controller.start({});invalidate(f);f.adapter.inspect=inspect;f.resize();f.resize(true);f.change();await drain();
   assert.equal(f.calls.register,0);assert.equal(f.calls.show,0);f.controller.stop();assert.deepEqual(f.resizeListeners(),[0,0]);
  }
+});
+test('flow preflight refusal waits for a native change, then re-proves and registers once',async()=>{
+ const failures=[],f=fixture({onFailure:code=>failures.push(code)}),mount=f.surface.mount;let safe=false,attempts=0;
+ f.surface.backend='document-flow';f.surface.hasNativeInputFocus=()=>false;f.surface.isSameNativeRegions=()=>true;f.adapter.inspectStructure=f.adapter.inspect;f.surface.mount=async(...args)=>{attempts++;if(!safe)throw new NativeFlowPreflightError('native-flow-wrapper-paint');return mount(...args);};
+ assert.equal(await f.controller.start({}),null);
+ assert.equal(f.controller.localStatus(),'surface-native-flow-wrapper-paint');
+ assert.equal(f.controller.presentationSnapshot().mode,'waiting');assert.equal(f.calls.terminations.length,0);
+ f.tick(1000);await drain();assert.equal(attempts,1,'no polling or timer retry');
+ f.change();await drain();assert.equal(attempts,2);assert.equal(f.calls.register,0);
+ assert.deepEqual(failures,['surface-native-flow-wrapper-paint'],'unchanged refusal is not republished');
+ safe=true;f.layoutEvent('transitionend');f.resize();f.change();await drain();
+ assert.equal(f.calls.register,1);assert.equal(f.calls.show,0,'a recovered layout does not grant UI access');
+ await f.both();assert.equal(f.calls.show,1,JSON.stringify({snapshot:f.controller.presentationSnapshot(),status:f.controller.localStatus(),calls:f.calls}));assert.equal(f.controller.localStatus(),'ready');
+ assert.deepEqual(f.layoutListeners(),[0,0]);f.controller.stop();assert.deepEqual(f.resizeListeners(),[0,0]);
+});
+test('flow preflight cannot revive after document change, binding expiry, revoke or pagehide',async()=>{
+ for(const invalidate of [f=>{f.doc.location.href+='c/other';},f=>f.tick(60000),f=>f.controller.revoke(),f=>f.pagehide()]){
+  const f=fixture(),mount=f.surface.mount;let safe=false;
+  f.surface.backend='document-flow';f.surface.mount=(...args)=>{if(!safe)throw new NativeFlowPreflightError('native-flow-uncovered-branch');return mount(...args);};
+  await f.controller.start({});invalidate(f);safe=true;f.resize();f.change();f.layoutEvent('animationend');await drain();
+  assert.equal(f.calls.register,0);assert.equal(f.calls.show,0);f.controller.stop();assert.deepEqual(f.layoutListeners(),[0,0]);
+ }
+});
+test('partial mount errors, marker conflicts and registration denial remain terminal',async()=>{
+ for(const error of [Error('native-flow-wrapper-paint'),Error('flow-marker-conflict'),Error('invalid-ui-frame-origin'),new NativeFlowPreflightError('native-flow-check-failed')]){
+  const f=fixture(),mount=f.surface.mount;let attempts=0;
+  f.surface.backend='document-flow';f.surface.mount=()=>{attempts++;throw error;};
+  await f.controller.start({});f.surface.mount=(...args)=>{attempts++;return mount(...args);};f.resize();f.change();await drain();
+  assert.equal(attempts,1);assert.equal(f.controller.presentationSnapshot(),null);assert.equal(f.calls.register,0);
+ }
+ const f=fixture();f.surface.backend='document-flow';f.bridge.registerMount=async()=>({ok:false});await f.controller.start({});
+ f.resize();f.change();await drain();assert.equal(f.calls.dispose,1);assert.equal(f.controller.presentationSnapshot(),null);
 });
 test('owner registration and workspace UiGrant gate workspace; sidebar joins independently',async()=>{const f=fixture(),held=deferred();f.bridge.registerMount=()=>held.promise;const start=f.controller.start({});await drain();f.message();assert.equal(f.calls.confirm.length,0);assert.equal(f.controller.showWorkspace(),false);held.resolve({ok:true});await start;f.message();await drain();assert.equal(f.calls.show,1);f.message('sidebar');await drain();assert.equal(f.calls.show,1);assert.deepEqual(Object.keys(f.calls.confirm[0]).sort(),['documentToken','mountId','nonce','regionEpoch','role']);});
 test('origin, original contentWindow, connectedness and public join shape are mandatory',async()=>{for(const mutate of [f=>f.message('workspace',{origin:'https://chatgpt.com'}),f=>f.message('workspace',{source:{}}),f=>{f.frames[0].frame.isConnected=false;f.message();},f=>f.message('workspace',{data:{type:'VAIWL_UI_JOIN',role:'workspace',nonce:'n',scope:'forged'}})]){const f=fixture();await f.controller.start({});mutate(f);await drain();assert.equal(f.calls.confirm.length,0);assert.equal(f.calls.show,0);}});
