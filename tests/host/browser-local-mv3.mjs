@@ -156,6 +156,31 @@ try{
     await page.locator('#model').click();assert.equal(await page.evaluate(()=>window.fixtureModelClicks),1,'first native tool gesture must reach original handler');
     await page.getByRole('button',{name:'返回工作空间',exact:true}).click();
     report.checks.firstNativeToolGesture=true;
+    // An explicit disclosure contract in the existing isolated native
+    // partition. It is a behavior counterexample, not captured ChatGPT markup.
+    // Exercise the real content -> Worker -> sidebar renderer notification.
+    const originalWorkspace=await page.locator('iframe[src="chrome-extension://'+id+'/workspace.html"]').elementHandle();
+    await page.evaluate(({P,C,B})=>{
+     const owner=partitionedFixture.project,block=document.createElement('div');window.managementOwnerHeight=owner.style.height;owner.style.height='260px';
+     block.id='fixture-native-management';block.style.cssText='position:absolute;left:6px;top:151px;width:228px';
+     block.innerHTML='<a href="/g/'+P+'/project">Native manager</a><button type="button" aria-controls="fixture-native-members" aria-expanded="false">Manage fixture project</button><div id="fixture-native-members" hidden style="height:max(24px, calc(100vh - 876px));overflow:auto"><a style="display:block;height:24px" href="/c/'+C+'">Native A</a><a style="display:block;height:24px" href="/c/'+B+'">Native B</a></div>';
+     const control=block.querySelector('button'),panel=block.querySelector('#fixture-native-members');control.addEventListener('click',()=>{const expanded=control.getAttribute('aria-expanded')!=='true';control.setAttribute('aria-expanded',String(expanded));panel.hidden=!expanded;});
+     // Keep the replay's single native section wrapper. Adding a second
+     // sibling to that wrapper would deliberately invalidate the independent
+     // partition anchor, testing role retirement rather than management.
+     owner.querySelector('[data-app-action-sidebar-section]').append(block);
+    },{P,C,B});
+    const group=sidebar.locator('.native-management-context'),nativePanel=page.locator('#fixture-native-members'),memberA=sidebar.locator('a[data-ref-id="'+C+'"]'),memberB=sidebar.locator('a[data-ref-id="'+B+'"]');
+    await page.getByRole('button',{name:'Manage fixture project',exact:true}).click();await group.waitFor({timeout:6000});
+    await memberA.waitFor({state:'detached'});await memberB.waitFor();
+    await nativePanel.evaluate(n=>{n.inert=true;});await group.waitFor({state:'detached'});await memberA.waitFor();
+    await nativePanel.evaluate(n=>{n.inert=false;});await group.waitFor();await memberA.waitFor({state:'detached'});
+    await page.setViewportSize({width:1400,height:924});await memberB.waitFor({state:'detached'});
+    await page.setViewportSize({width:1400,height:900});await memberB.waitFor();
+    await page.getByRole('button',{name:'Manage fixture project',exact:true}).click();await group.waitFor({state:'detached'});await memberA.waitFor();
+    assert(await originalWorkspace.evaluate(n=>n.isConnected&&n.getBoundingClientRect().height>0));assert.equal(await page.locator('textarea').inputValue(),draft+'x');
+    await page.evaluate(()=>{document.querySelector('#fixture-native-management').remove();partitionedFixture.project.style.height=window.managementOwnerHeight;partitionedFixture.scroll.scrollTop=0;});
+    report.checks.nativeManagementAvailabilityKeepsFormalNavigation={trustedExpansion:true,inertRestoresRows:true,unblockedKeepsIntent:true,responsiveClippingRestoresRows:true,nativeCollapseRestoresChoice:true,workspaceAndDraftUnchanged:true};
    }
   }
   // One continuous formal journey, using the existing local confirmation and

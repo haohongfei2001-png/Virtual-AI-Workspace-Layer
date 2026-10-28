@@ -486,7 +486,7 @@ try{
  // A disclosure contract counterexample, not a newly observed ChatGPT selector.
  const management=await browser.newPage({viewport:{width:800,height:600}});
  await management.route('**/*',r=>r.request().url()==='https://chatgpt.com/'?r.fulfill({contentType:'text/html',body:`<nav style="height:80px;overflow:auto"><section id="native"><div><a href="/g/${P}/project">Project</a><button aria-controls="panel" aria-expanded="true">Manage</button><div id="panel"><a href="/c/${C}">Member</a></div></div><div style="height:900px"></div></section></nav>`}):r.abort());await management.goto('https://chatgpt.com/');await management.addScriptTag({content:outputFiles[0].text});
- await management.evaluate(()=>{window.managementNotifications=[];window.m=flowModule.observeNativeProjectManagement({document,root:document.querySelector('#native'),onChanged:()=>managementNotifications.push(m.read())});document.querySelector('button').addEventListener('click',e=>{const b=e.currentTarget;b.setAttribute('aria-expanded',String(b.getAttribute('aria-expanded')!=='true'));});});
+ await management.evaluate(()=>{window.managementCurrent=true;window.managementNotifications=[];window.m=flowModule.observeNativeProjectManagement({document,root:document.querySelector('#native'),isCurrent:()=>managementCurrent,onChanged:()=>managementNotifications.push(m.read())});document.querySelector('button').addEventListener('click',e=>{const b=e.currentTarget;b.setAttribute('aria-expanded',String(b.getAttribute('aria-expanded')!=='true'));});});
  assert.deepEqual(await management.evaluate(()=>m.read()),[],'initial native expansion is not management intent');
  await management.getByRole('button',{name:'Manage'}).click();await management.evaluate(()=>{document.querySelector('#panel').style.cssText='height:0;overflow:hidden';});await management.getByRole('button',{name:'Manage'}).click();assert.deepEqual(await management.evaluate(()=>m.read()),[],'clipped transition cannot remove owned members');
  await management.evaluate(()=>document.querySelector('#panel').style.cssText='');await management.waitForFunction(()=>m.read().length===1);assert.deepEqual(await management.evaluate(()=>m.read()),[{projectId:P,refIds:[C]}]);
@@ -503,7 +503,51 @@ try{
  });
  assert.equal(innerScroll.eventSeen,true);assert.deepEqual(innerScroll.actual,[{projectId:P,refIds:['44444444-4444-4444-8444-444444444444']}]);
  assert.equal(innerScroll.changed,true,'inner native scroll must notify the formal sidebar, not just change manual readback');assert.deepEqual(innerScroll.notified,innerScroll.actual);
- await management.evaluate(()=>{document.querySelector('#panel').style.cssText='height:0;overflow:hidden';});assert.deepEqual(await management.evaluate(()=>m.read()),[]);
- await management.evaluate(()=>m.stop());await management.close();
+ // Accessibility and responsive geometry changes can revoke a native row's
+ // availability without changing its URL or expanded state. The downstream
+ // renderer must learn that before it continues suppressing its own row.
+ const inertChange=await management.evaluate(async()=>{
+  const before=managementNotifications.length;document.querySelector('#panel').inert=true;
+  for(let i=0;i<3;i++)await new Promise(requestAnimationFrame);
+  return {changed:managementNotifications.length>before,notified:managementNotifications.at(-1)};
+ });
+ assert.equal(inertChange.changed,true,'inert native panel must release duplicate suppression');assert.deepEqual(inertChange.notified,[]);
+ await management.evaluate(()=>{const panel=document.querySelector('#panel');panel.inert=false;panel.style.height='max(24px, calc(100vh - 576px))';panel.scrollTop=0;});
+ await management.waitForFunction(()=>managementNotifications.at(-1)?.[0]?.refIds.join()==='33333333-3333-4333-8333-333333333333');
+ await management.setViewportSize({width:800,height:624});
+ const widerPanel=await management.evaluate(async()=>{for(let i=0;i<4;i++)await new Promise(requestAnimationFrame);return {height:document.querySelector('#panel').clientHeight,notified:managementNotifications.at(-1)};});
+ assert.equal(widerPanel.height,48);assert.deepEqual(widerPanel.notified,[{projectId:P,refIds:['33333333-3333-4333-8333-333333333333','44444444-4444-4444-8444-444444444444']}],'responsive native panel must update duplicate rows without a DOM mutation');
+ await management.setViewportSize({width:800,height:600});
+ const smallerPanel=await management.evaluate(async()=>{for(let i=0;i<4;i++)await new Promise(requestAnimationFrame);return {height:document.querySelector('#panel').clientHeight,notified:managementNotifications.at(-1)};});
+ assert.equal(smallerPanel.height,24);assert.deepEqual(smallerPanel.notified,[{projectId:P,refIds:['33333333-3333-4333-8333-333333333333']}],'newly clipped native row must become available again in VAIWL');
+ await management.evaluate(()=>{document.querySelector('#panel').style.cssText='height:0;overflow:hidden';});
+ await management.waitForFunction(()=>managementNotifications.at(-1)?.length===0);
+ await management.evaluate(()=>{document.querySelector('#panel').style.cssText='height:24px;overflow:auto';});
+ await management.waitForFunction(()=>managementNotifications.at(-1)?.[0]?.refIds.join()==='33333333-3333-4333-8333-333333333333');
+ // Actual collapse retires intent; untrusted re-expansion cannot revive it.
+ await management.evaluate(()=>{document.querySelector('button').setAttribute('aria-expanded','false');});
+ await management.waitForFunction(()=>managementNotifications.at(-1)?.length===0);
+ await management.evaluate(()=>document.querySelector('button').setAttribute('aria-expanded','true'));
+ await management.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));assert.deepEqual(await management.evaluate(()=>m.read()),[],'untrusted re-expansion cannot reuse retired intent');
+ await management.getByRole('button',{name:'Manage'}).click();await management.getByRole('button',{name:'Manage'}).click();
+ await management.waitForFunction(()=>managementNotifications.at(-1)?.length===1);
+ assert.deepEqual(await management.evaluate(()=>{managementCurrent=false;return m.read();}),[]);
+ assert.deepEqual(await management.evaluate(()=>{managementCurrent=true;return m.read();}),[],'lost document binding cannot reuse old management intent');
+ await management.getByRole('button',{name:'Manage'}).click();
+ await management.evaluate(()=>{document.querySelector('#panel').style.height='max(0px, calc(100vh - 600px))';});
+ await management.getByRole('button',{name:'Manage'}).click();
+ assert.deepEqual(await management.evaluate(()=>m.read()),[],'new expansion waits for a usable panel');
+ await management.setViewportSize({width:800,height:624});
+ const delayedPanel=await management.evaluate(async()=>{for(let i=0;i<4;i++)await new Promise(requestAnimationFrame);return managementNotifications.at(-1);});
+ assert.deepEqual(delayedPanel,[{projectId:P,refIds:['33333333-3333-4333-8333-333333333333']}],'trusted pending expansion must finish on geometry within its original deadline');
+ await management.getByRole('button',{name:'Manage'}).click();await management.setViewportSize({width:800,height:600});
+ await management.getByRole('button',{name:'Manage'}).click();assert.deepEqual(await management.evaluate(()=>m.read()),[]);
+ await management.evaluate(()=>document.querySelector('button').setAttribute('aria-expanded','false'));
+ await management.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+ await management.evaluate(()=>document.querySelector('button').setAttribute('aria-expanded','true'));
+ await management.setViewportSize({width:800,height:624});
+ await management.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));assert.deepEqual(await management.evaluate(()=>m.read()),[],'pending intent cannot revive after an observed native collapse');
+ const stoppedNotifications=await management.evaluate(()=>{m.stop();return managementNotifications.length;});await management.setViewportSize({width:800,height:600});
+ await management.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));assert.equal(await management.evaluate(()=>managementNotifications.length),stoppedNotifications,'stopped geometry callbacks are retired');await management.close();
  console.log(JSON.stringify(results,null,2));assert(results.every(r=>r.shown&&r.structural&&r.active&&!r.privatePopover&&r.replacedHeaderRejected&&r.lateHeaderControlRejected&&r.interactiveShellRejected&&r.interactiveBaselineRejected&&r.input&&r.restored&&r.declarative&&r.nativeWins&&r.clean));
 }finally{await browser.close();}

@@ -1,5 +1,13 @@
 # VAIWL实际状态：渐进积累工程已接线，真实来源逐项待准入
 
+## 2026-10-29 原生管理区可用性变化不再丢失正式成员入口
+
+继续原 C5/F-01，修复正式管理去重的通知与意图生命周期：原生面板 `inert`、内部裁剪和响应式尺寸变化此前可能让 VAIWL 继续隐藏不可用的重复行；临时不可见又会永久丢弃用户已作出的展开选择。现在只观察可信 pending/armed 面板已经检查的几何，变化后重新计算实际可用的同 ID 行；不可用时恢复正式入口，恢复可用时沿用同文档的真实展开意图。延迟展开仍受原6秒截止约束，真实收起、节点/Project 替换、文档失效与停止清除意图和观察器。未隐藏或改写原生控件，不改变成员事实或私人授权。
+
+反例先失败后通过，非作者只读复核通过。现有正式 MV3 连续旅程 `/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-L6OmQz/report.json` 实际验证内容脚本→Worker→正式侧栏自动更新、原 workspace 节点与草稿保留，以及原生输入/成员阅读/四格/布局恢复/撤权/隔离卸载。第一版新增测试误在原生 section 包装外追加节点，触发分区拒绝；已修正夹具，未放宽生产准入。该披露按钮是明确的本地行为反例，不冒充已观察的真实 ChatGPT 菜单。
+
+统一未安装包 `/private/tmp/VAIWL-v27-Native-Flow-Continuity-20261029/extension` 包含此前首页原生成员修复，指纹 `e8896cace4fb4cf65e5b9ef39729ce074b1d182d1737523e857e1c9018a11839`，ZIP SHA256 `c205f65ac3fed8a3f6535f8683ddfbcc7eed596c252776305e40bd793ec3f6e7`。203项源码与实际测试包一致，清单/权限与原安装相同，核验 `/private/tmp/vaiwl-native-flow-continuity-verification-20261029.json`。已查看正式阅读、返回、窄屏整图，匿名宿主不能证明真实整体设计通过。原安装与 b2b778… 运行回执仍分开保留，旧库/草稿/stash未动。首页实际被拒分支仍未知，真实修复验收 NOT_RUN、产品 NOT_ACCEPTED；本轮不更新日常 Chrome、不要求重复采集或解锁。
+
 ## 2026-10-29 实机确认 b2b778… 挂载前拒绝；保留首页额外原生流成员
 
 用户当前文档回执确认 `b2b77888cb3d9e0fb6d3b31e5f078ff5c52d3126e82f92f01c5472c3a6b5df92` 已激活，固定拒绝为 `native-flow-uncovered-branch`。即时库 refs=10，presentation 尚未尝试挂载、frames/grants=0、VIEW/绘制回执为空。故障发生在 `captureNativeBaseline`，不是未 Reload、目录库存丢失、时间过滤或需要解锁。95行侧栏快照不包含触发拒绝的主区分支，不能据此推断它是隐藏标记、推荐内容或任何具体控件；真实页面仍 FAIL，唯一被拒分支的性质尚未得到证据。
