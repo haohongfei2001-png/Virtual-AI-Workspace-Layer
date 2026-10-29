@@ -358,10 +358,13 @@ try{
   // Native NAV coordinates and the user's project expansion are persisted by
   // the existing b23_views CAS path, not a test-injected record.
   await sidebar.getByRole('button',{name:'侧栏项目 Native Project',exact:true}).click();
-  await page.locator('nav').evaluate(n=>{n.style.height='340px';n.scrollTop=100;});
+  const expectedNativeScroll=await page.locator('nav').evaluate(n=>{n.style.height='340px';n.scrollTop=100;return Math.round(n.scrollTop);});
+  assert(expectedNativeScroll>0,'the native scroll gesture must move the viewport');
   const readViews=()=>context.serviceWorkers().find(w=>w.url().startsWith('chrome-extension://'+id+'/')).evaluate(async()=>{const db=await new Promise((resolve,reject)=>{const q=indexedDB.open('vaiwl-b1-v1');q.onsuccess=()=>resolve(q.result);q.onerror=()=>reject(q.error);});try{return await new Promise((resolve,reject)=>{const tx=db.transaction('b23_views'),q=tx.objectStore('b23_views').getAll();tx.oncomplete=()=>resolve(q.result.map(r=>r.payload?.value).filter(Boolean));tx.onabort=()=>reject(tx.error);});}finally{db.close();}});
   const waitUntil=async(read,test,label)=>{const until=Date.now()+10000;while(Date.now()<until){const value=await read();if(test(value))return value;await new Promise(r=>setTimeout(r,50));}throw Error(label+': '+JSON.stringify(await read()));};
-  report.checks.persistedNativeNav=await waitUntil(readViews,rows=>rows.some(r=>r.sidebarViewport?.owner==='native-nav'&&r.sidebarViewport.scroll>0),'native-nav-view-not-persisted');
+  // SAVE_VIEW coalesces scroll-only updates for 100ms. A positive position
+  // from the preceding journey is not a receipt for this scroll gesture.
+  report.checks.persistedNativeNav=await waitUntil(readViews,rows=>rows.some(r=>r.sidebarViewport?.owner==='native-nav'&&r.sidebarViewport.scroll===expectedNativeScroll&&r.sidebarChoices?.some(([id,open])=>id===P&&open===false)),'native-nav-view-not-persisted');
   assert.equal(report.checks.persistedNativeNav.find(r=>r.sidebarViewport)?.sidebarViewport.scroll,await page.locator('nav').evaluate(n=>Math.round(n.scrollTop)));
   const lifecycle=await context.newCDPSession(page),versions=[];lifecycle.on('ServiceWorker.workerVersionUpdated',e=>versions.push(...e.versions));await lifecycle.send('ServiceWorker.enable');
   const running=await waitUntil(async()=>versions,v=>v.some(x=>x.scriptURL==='chrome-extension://'+id+'/extension/worker.mjs'&&x.runningStatus==='running'),'worker-not-running');

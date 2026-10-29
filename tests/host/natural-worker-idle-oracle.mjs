@@ -6,9 +6,18 @@ function checkedRoles(roles){assert(Array.isArray(roles)&&roles.length>=1&&roles
  * Never downgrade a negative RPC, absent renderer or failed frame lifecycle. */
 export function idleBaselineUnobserved(rows,expectedRoles){
  checkedRoles(expectedRoles);
- return Array.isArray(rows)&&rows.length===expectedRoles.length&&rows.every((row,index)=>
-  row.role===expectedRoles[index]&&row.lifecycle==='render-ready'&&row.rendererVisible===true&&row.matchingViewObserved===false&&
-  Array.isArray(row.observedRPCs)&&row.observedRPCs.every(r=>r.type==='HOST_UI_RENEW'&&r.ok===true&&r.hasGrant===true));
+ return Array.isArray(rows)&&rows.length===expectedRoles.length&&rows.every((row,index)=>{
+  if(row.role!==expectedRoles[index]||row.lifecycle!=='render-ready'||row.rendererVisible!==true||row.matchingViewObserved!==false||!Array.isArray(row.observedRPCs))return false;
+  const trace=row.observedRPCs,renew=r=>r.type==='HOST_UI_RENEW'&&r.ok===true&&r.hasGrant===true&&r.reason==null;
+  if(trace.every(renew))return true;
+  // Passive attachment can miss JOIN and see VIEW before any grant. A later
+  // same-grant renewal does not cause another VIEW. Keep this explicit lack
+  // of baseline out of product failures, without accepting an idle cycle.
+  const firstRenew=trace.findIndex(renew),views=trace.filter(r=>r.type==='HOST_UI_VIEW');
+  if(row.grantObserved!==true||firstRenew<1||views.length===0||trace.slice(firstRenew).some(r=>r.type==='HOST_UI_VIEW'))return false;
+  const auxiliary=new Set(['HOST_UI_VIEW_RECEIPT','HOST_UI_SAVE_VIEW','HOST_UI_CANDIDATES','HOST_UI_NAVIGATION_PLANS','HOST_UI_SURFACE_STATE_GET']);
+  return trace.every(r=>r.ok===true&&r.reason==null&&(renew(r)||r.hasGrant===false&&(r.type==='HOST_UI_VIEW'?r.state==='ready':auxiliary.has(r.type)&&r.state==null)));
+ });
 }
 export function assessIdleObservation(value) {
  const {windowMs,elapsedMs,initialWorkerId,prefix,initialTargets,events}=value;

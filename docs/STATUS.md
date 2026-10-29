@@ -1,5 +1,13 @@
 # VAIWL实际状态：渐进积累工程已接线，真实来源逐项待准入
 
+## 2026-10-29 修复 VIEW 时效跨越竞态，保留现有主区取证包
+
+离线反例确认两项独立产品缺陷：Host 在投影回复途中跨过来源期限时会丢弃刷新期限；frame 收到刚过期的合法 VIEW 则会清空既有投影并永久停止自动读取。现 Host 按快照评估时间保留原期限，frame 不绘制过期回复，在同一读取/定位预算内重新准备；不续来源证明、不重置预算、不派发原生动作。非法期限、真正撤权、关闭/换页取消和超时仍按原安全边界处理。这不是用户实机 `native-flow-branch-paint` 的已证根因。
+
+非作者复核及关联回归通过。同源码隔离正式 MV3 完成成员阅读、四格返回、原生首手势、侧栏局部故障、实际 NAV 滚动保存、Worker 恢复、新文档锁定/确认与撤权/卸载还原；源码204项与测试包一致。首次旅程发现观察器把旧的正滚动值误作当前 SAVE 回执，已改为原截止内等待本次精确位置及折叠选择，未延长等待。四格旧测试改为明确检查可选入口拒绝且主区保留；自然空闲观察漏采 JOIN 的固定成功序列只标缺基线，不升级为空闲通过。原失败报告保留。
+
+证据索引 `/private/tmp/vaiwl-view-freshness-verification-20261029.json`，正式隔离报告 `/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-p5MMPi/report.json`。已查看阅读、返回、窄屏图；匿名宿主不是实际 ChatGPT 整屏设计验收。原安装203个诊断包文件与已批准 f8a68fa9b5b1… 包逐项未变，未再次构建试装包/更新/控制 Chrome，旧库及草稿不动。已安排的一次主区报告尚未取得，不追加 Reload 或采集请求；真实挂载故障仍未关闭，Mac NOT_RUN、产品 NOT_ACCEPTED。
+
 ## 2026-10-29 已获一次主区取证授权，原目录已备份更新；尚未激活
 
 用户新回执明确确认原 `e8896cace4fb…` 已在真实首页运行，拒绝码为 `native-flow-branch-paint`。附件显示即时库 `nativeRevision:3 / refs:8 / projects:0`，但 `frames:0 / registered:false / lastWorkspaceDelivery:null / workspaceReceipt:null`，因此此次失败在正式框架及 VIEW 之前；已有95行侧栏快照不能解释主区哪一分支绘制被拒绝。不得继续把 e889 激活写为未知，也不得凭此假定具体 CSS 或原生节点。

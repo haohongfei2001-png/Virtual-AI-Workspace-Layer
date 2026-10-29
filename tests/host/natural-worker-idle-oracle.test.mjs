@@ -75,6 +75,15 @@ test('fixed workspace-only fixture preserves exact authority checks without clai
 });
 
 const {idleBaselineUnobserved}=await import('./natural-worker-idle-oracle.mjs');
+test('late passive VIEW before the first observed renewal is missing baseline evidence, never an idle pass',()=>{
+ const success=type=>({type,ok:true,state:null,reason:null,hasGrant:false});
+ const trace=[{...success('HOST_UI_VIEW'),state:'ready'},success('HOST_UI_VIEW_RECEIPT'),success('HOST_UI_SAVE_VIEW'),success('HOST_UI_CANDIDATES'),success('HOST_UI_NAVIGATION_PLANS'),{...success('HOST_UI_RENEW'),hasGrant:true},success('HOST_UI_SURFACE_STATE_GET')];
+ const row={role:'workspace',lifecycle:'render-ready',rendererVisible:true,grantObserved:true,matchingViewObserved:false,observedRPCs:trace};
+ assert.equal(idleBaselineUnobserved([row],['workspace']),true);
+ for(const change of [v=>v.grantObserved=false,v=>v.observedRPCs.reverse(),v=>v.observedRPCs.push(success('HOST_UI_JOIN')),v=>v.observedRPCs[0].ok=false,v=>v.observedRPCs[0].state='failed',v=>v.observedRPCs[2].reason='scope-revoked',v=>v.observedRPCs[2].type='unknown']){
+  const bad=structuredClone(row);change(bad);assert.equal(idleBaselineUnobserved([bad],['workspace']),false);
+ }
+});
 test('only a still-rendered frame with missing baseline and successful renewal-only trace is unestablished',()=>{
  const row={role:'workspace',lifecycle:'render-ready',rendererVisible:true,matchingViewObserved:false,observedRPCs:[{type:'HOST_UI_RENEW',ok:true,hasGrant:true}]};
  assert.equal(idleBaselineUnobserved([row],['workspace']),true);

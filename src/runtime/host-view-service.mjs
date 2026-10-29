@@ -234,7 +234,10 @@ export function createHostViewService({ui,readService,workspaceRepository=null,p
    registerCurrentNavigation?.({context,grantId:message.grantId,mountId:message.mountId,navigation:[]});
    if(!Number.isSafeInteger(deliverySequence+1))throw Error('view-receipt-capacity');
    result.deliveryId=++deliverySequence;
-   const deadlines=[...(value.calibrationDeadlines??[]),...(value.activityFreshness?.deadlines??[])].map(Date.parse).filter(t=>Number.isFinite(t)&&t>Date.parse(clock()));
+   // The deadline belongs to the evaluated snapshot. If it crosses while
+   // projecting/delivering this reply, retain it so the frame can reprepare.
+   // Filtering against the send clock would silently erase that obligation.
+   const deadlines=[...(value.calibrationDeadlines??[]),...(value.activityFreshness?.deadlines??[])].map(Date.parse).filter(t=>Number.isFinite(t)&&t>evaluated);
    result.refreshAt=deadlines.length?new Date(Math.min(...deadlines)).toISOString():null;
    if(new TextEncoder().encode(JSON.stringify(result)).length>65536)throw Error('free-frame-page-too-large');
    entry.deliveries??=new Map();entry.deliveries.set(context.role,{id:result.deliveryId,grantId:message.grantId,scopeGrantId:context.scopeGrantId,route:context.parentFrame.actualURL,generation:entry.prepareGeneration,requestToken,published:false,page:structuredClone(page)});

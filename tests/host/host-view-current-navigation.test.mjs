@@ -14,14 +14,14 @@ const drain=()=>new Promise(resolve=>setImmediate(resolve));
 const currentPlan=()=>({refId:id,targetKey:'current_target',plan:{mode:'same-target',planRevision:1,bodyProofId:'body_proof',target:{kind:'resolved',entity:'conversation',nativeId:id,navigationURL:url,liveHandle:null}}});
 // Synthetic repository facts and an explicit UI-authority double. Real read owner,
 // projection and host-view validation; this is not live account or MV3 evidence.
-async function fixture(t){
- const base=new ScopeRepository({indexedDB:new MockIDBFactory(),databaseName:'current-view-'+crypto.randomUUID()}),clock=()=>NOW;
+async function fixture(t,{clock=()=>NOW,onRegister=()=>{}}={}){
+ const base=new ScopeRepository({indexedDB:new MockIDBFactory(),databaseName:'current-view-'+crypto.randomUUID()});
  const workspaces=new WorkspaceRepository({baseRepository:base,clock}),native=new NativeRepository({baseRepository:base,clock,observationGate:()=>({channel:'synthetic',sourceId:'fixture',generation:'one'})}),evidence=new FreeEvidenceRepository({baseRepository:base,clock});
  assert.equal((await native.apply(SCOPE,{operationId:'seed',expectedRevision:0,batch:{scopeKey:SCOPE.key,sourceRevision:1,observedAt:NOW,validUntil:'2026-10-15T12:00:00.000Z',projects:[],refs:[id,other].map(id=>({id,nativeTitle:'Conversation',nativeUrl:'https://chatgpt.com/c/'+id,availability:'available'})),membership:[id,other].map(id=>({id,state:'UNKNOWN',projectId:null})),inventory:{projects:'complete',conversations:'complete',cursor:null}}})).ok,true);
  const readService=createFreeReadService({repository:base,workspaces,native,evidence,clock});
  let live=true,prepare=async()=>[currentPlan()];const registrations=[];
  const context={scope:SCOPE,scopeGrantId:'scope_grant',role:'workspace',binding:{documentToken:'document',producerToken:'producer',routeEpoch:1},parentFrame:{tabId:1,frameId:0,documentId:'parent',actualURL:url},isCurrent:()=>live};
- const service=createHostViewService({ui:{withScope:async(_args,fn)=>fn(context)},readService,clock,prepareNavigation:args=>prepare(args),registerCurrentNavigation:args=>registrations.push(args)});
+ const service=createHostViewService({ui:{withScope:async(_args,fn)=>fn(context)},readService,clock,prepareNavigation:args=>prepare(args),registerCurrentNavigation:args=>{registrations.push(args);onRegister(args);}});
  t.after(()=>{service.stop();base.close();});
  const view=()=>service.handle({v:1,type:'HOST_UI_VIEW',grantId:'ui_grant',mountId:'mount',query:{}},{});
  async function ready(){for(let i=0;i<100;i++){const r=await view();if(r.state!=='preparing')return r;await drain();}assert.fail('bounded view preparation');}
@@ -39,4 +39,15 @@ for(const mode of ['other-current','project','foreign-url','body-proof','extra-p
 });
 test('MOCK_IDB revoked context after native preparation cannot publish or register same-target',async t=>{
  const f=await fixture(t);f.prepare(async()=>{f.revoke();return [currentPlan()];});const view=await f.ready();assert.equal(view.state,'ready');const r=await f.plans(view);assert.equal(r.ok,false);assert(f.registrations.every(x=>x.navigation.length===0));
+});
+test('MOCK_IDB freshness crossing during VIEW delivery retains the original reevaluation deadline',async t=>{
+ let time=Date.parse(NOW),crossTo=null;
+ const f=await fixture(t,{clock:()=>new Date(time).toISOString(),onRegister:()=>{if(crossTo!==null){time=crossTo;crossTo=null;}}});
+ const first=await f.ready(),deadline=Date.parse(first.refreshAt);assert(Number.isFinite(deadline)&&deadline>time);
+ time=deadline-1;crossTo=deadline+1;
+ const delayed=await f.ready();assert.equal(delayed.state,'ready');assert.equal(delayed.refreshAt,first.refreshAt,'do not discard a deadline that crossed after snapshot evaluation');
+ assert(Date.parse(delayed.refreshAt)<time,'the client can now discard and reprepare this elapsed response');
+ const next=await f.ready();assert.equal(next.state,'ready');assert.equal(next.refreshAt,null);assert.equal(next.page.entries.unknown.items.length,2);
+ // This legacy synthetic source has no Host admission for last-known metadata.
+ assert(next.page.entries.unknown.items.every(row=>row.freshness==='unknown'),'expired synthetic facts must not become current or gain Host admission');
 });
