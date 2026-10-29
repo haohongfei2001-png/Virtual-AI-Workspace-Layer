@@ -4,9 +4,10 @@ import {readFileSync} from 'node:fs';
 import {createHostContentSession} from '../../src/host/content-session.mjs';
 import {installLocalStatus,readActiveLocalStatus} from '../../src/host/local-status.mjs';
 const source=readFileSync(new URL('./content-session.test.mjs',import.meta.url),'utf8');
-const boundary="\ntest('production composition sequences HELLO REFRESH and mount with no page bridge; restart seq is monotonic'";
-assert.equal(source.split(boundary).length,2);
-const fixture=new Function('assert','createHostContentSession',source.slice(0,source.indexOf(boundary)).replace(/^import .*;\n/gm,'')+'\nreturn fixture;')(assert,createHostContentSession);
+// Reuse only the existing setup, independent of which regression runs first.
+const boundary=source.indexOf('\ntest(');
+assert(boundary>source.indexOf('\nfunction fixture(')&&source.indexOf('\nfunction fixture(')>=0);
+const fixture=new Function('assert','createHostContentSession',source.slice(0,boundary).replace(/^import .*;\n/gm,'')+'\nreturn fixture;')(assert,createHostContentSession);
 const challenge=()=>({ok:true,v:1,type:'HOST_SCOPE_STATUS',state:'unverified',reason:'host-verification-required'});
 function setup(reply=challenge()){
  const f=fixture({contextRecovery:true});

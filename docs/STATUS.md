@@ -1,5 +1,13 @@
 # VAIWL实际状态：渐进积累工程已接线，真实来源逐项待准入
 
+## 2026-10-29 已获一次主区取证授权，原目录已备份更新；尚未激活
+
+用户新回执明确确认原 `e8896cace4fb…` 已在真实首页运行，拒绝码为 `native-flow-branch-paint`。附件显示即时库 `nativeRevision:3 / refs:8 / projects:0`，但 `frames:0 / registered:false / lastWorkspaceDelivery:null / workspaceReceipt:null`，因此此次失败在正式框架及 VIEW 之前；已有95行侧栏快照不能解释主区哪一分支绘制被拒绝。不得继续把 e889 激活写为未知，也不得凭此假定具体 CSS 或原生节点。
+
+按用户“批准”的单次主区诊断范围，已核对准备包与正式源码、既有隔离 MV3 来源一致，完整备份原目录2954个文件后原位更新203个包文件；2752个带编号历史副本逐文件保持。备份及安装回执为 `.git/vaiwl-artifacts/main-mount-diagnostic-upgrade-20261029T071937Z/INSTALLATION.json`，备份在同级 `extension/`。原 ID、加载路径、权限、数据库和草稿未改，没有控制 Chrome。磁盘现为 `f8a68fa9b5b1a588bf416c95f67932b1eb87212ae5c81b67f5940eabfad7041a`；新运行激活和真实诊断均 NOT_RUN。只待一次原扩展 Reload→新首页→原弹窗诊断详情导出 `vaiwl-main-mount-check.json`；不解锁、不重跑侧栏/近期观察。取得一次首个拒绝路径后沿原实现修复，不用该取证包宣称产品可用。
+
+同时修复本次 CI 的确定测试装载错误：`challenge-local-status.test.mjs` 以某个旧用例名称截取共享 fixture，新用例插入前方后被误执行导致 `ReferenceError: test is not defined`。现只截取首个用例前的既有 setup，不复制 fixture、不改变产品代码；本地先复现失败，关联132项通过，证据 `/private/tmp/vaiwl-challenge-fixture-boundary-20261029.log`。此修复不改变已核验诊断包指纹，其他 CI 缺口不据此注销。完整产品仍 NOT_ACCEPTED。
+
 ## 2026-10-29 主区挂载拒绝诊断已离线准备，原安装未动
 
 按用户最新要求，只补原 `captureNativeBaseline → content-session → 状态弹窗` 的首次检查回执。固定原因码现在附带检查阶段、首个拒绝节点的匿名祖先路径及既有 reading/composer/header 地标，不扫描整棵主区、不增加观察器、不改变准入判断。异常无法归因时明确 `rejected:null / partial`；顺序、控件总表和几何失败只标整个根区域，不伪称已经找到了具体子控件。`complete` 仅表示本次所选路径完整，不能解释为整页结构或产品通过。
