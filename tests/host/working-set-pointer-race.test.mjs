@@ -11,6 +11,7 @@ function dom(){
   getAttribute(k){return this.attrs[k]??null;}
   hasAttribute(k){return k in this.attrs;}
   append(...nodes){for(const n of nodes){n.parentNode=this;this.children.push(n);}}
+  prepend(...nodes){for(const n of nodes)n.parentNode=this;this.children.unshift(...nodes);}
   replaceChildren(...nodes){this.children=[];this.append(...nodes);}
   remove(){if(this.parentNode)this.parentNode.children=this.parentNode.children.filter(n=>n!==this);this.isConnected=false;}
   attachShadow(){return this.shadowRoot=new Element('shadow');}

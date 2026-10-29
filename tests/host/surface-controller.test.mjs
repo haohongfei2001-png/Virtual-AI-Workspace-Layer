@@ -718,6 +718,49 @@ test('native dispatch holds sidebar masks off across geometry and releases only 
  }
 });
 
+test('trusted Return interrupts the held native intent before one proved presentation and owner notification',async()=>{
+ for(const keyboard of [false,true]){
+  const f=publishingFixture(),entered=[],trace=[];await f.controller.start({});await f.both();
+  const priorTimers=new Set(f.timers.keys()),release=f.controller.beginNativeDispatch(),heldTimers=[...f.timers.keys()].filter(id=>!priorTimers.has(id));
+  assert.equal(typeof release,'function');assert.equal(heldTimers.length,1);assert.equal(f.controller.showNativeReading(),true);
+  const oldIntent=f.controller.intentGuard(),button=f.slot.children[0],show=f.surface.showWorkspace,inspect=f.adapter.inspect;assert.equal(oldIntent(),true);
+  f.adapter.inspect=()=>{trace.push('proof');return inspect();};
+  f.surface.showWorkspace=(handle,options)=>{assert.equal(oldIntent(),false,'old authorization must be invalid before either surface is presented');trace.push('presentation');assert.deepEqual(options.roles,['workspace','sidebar']);return show(handle,options);};
+  f.frames[0].frame.focus=options=>{assert.deepEqual(options,{preventScroll:true});assert.equal(oldIntent(),false);trace.push('focus');f.doc.activeElement=f.frames[0].frame;};
+  f.bridge.workspaceEntered=value=>{assert.equal(oldIntent(),false);assert.equal(f.controller.presentationMode(),'workspace');assert.equal(f.slot.children.length,0);assert.deepEqual(f.surface.visibility(),{workspace:true,sidebar:true});trace.push('entered');entered.push(value);};
+  if(keyboard)f.doc.activeElement=button;button.events.click({isTrusted:true,detail:keyboard?0:1});
+  assert.equal(oldIntent(),false);assert.deepEqual(entered,[{mountId:'mount'}]);assert.equal(trace.filter(value=>value==='presentation').length,1,'interrupt must not automatically re-present a sidebar before the complete Return proof');assert(trace.indexOf('proof')<trace.indexOf('presentation'));assert.equal(trace.at(-1),'entered');assert.equal(trace.includes('focus'),keyboard);assert(heldTimers.every(id=>!f.timers.has(id)));
+  // A late finally from the cancelled RPC must not release a newer action.
+  const nextRelease=f.controller.beginNativeDispatch();assert.equal(typeof nextRelease,'function');assert.equal(f.controller.showNativeReading(),true);const nextIntent=f.controller.intentGuard();
+  release();release();assert.equal(f.controller.showWorkspace(),false);assert.equal(nextIntent(),true);assert.equal(entered.length,1);
+  f.surface.showWorkspace=show;nextRelease();assert.equal(oldIntent(),false);f.controller.stop();
+ }
+});
+
+test('untrusted Return and ordinary workspace requests cannot interrupt a native hold',async()=>{
+ const f=publishingFixture(),entered=[];f.bridge.workspaceEntered=value=>entered.push(value);await f.controller.start({});await f.both();
+ const release=f.controller.beginNativeDispatch();assert.equal(f.controller.showNativeReading(),true);const intent=f.controller.intentGuard(),button=f.slot.children[0],shown=f.calls.show;
+ for(const event of [undefined,{}, {isTrusted:false,detail:1}]){button.events.click(event);assert.equal(intent(),true);assert.equal(f.controller.showWorkspace(),false);assert.equal(intent(),true);assert.equal(f.controller.beginNativeDispatch(),null);}
+ f.change();await drain();assert.equal(f.calls.show,shown);assert.deepEqual(entered,[]);assert.deepEqual(f.surface.visibility(),{workspace:false,sidebar:false});
+ release();assert.equal(intent(),true,'ordinary release preserves the captured reading intent');assert.deepEqual(f.surface.visibility(),{workspace:false,sidebar:true});f.controller.stop();
+});
+
+test('trusted Return cancels its old hold without reviving revoked, changed-route, native-layer or refused geometry',async()=>{
+ for(const boundary of ['revoke','route','layer','geometry']){
+  const f=publishingFixture(),entered=[];f.bridge.workspaceEntered=value=>entered.push(value);await f.controller.start({});await f.both();
+  const release=f.controller.beginNativeDispatch();assert.equal(f.controller.showNativeReading(),true);const intent=f.controller.intentGuard(),button=f.slot.children[0],url=f.doc.location.href,inspect=f.adapter.inspect,shown=f.calls.show;
+  let presentations=0;const show=f.surface.showWorkspace;f.surface.showWorkspace=(...args)=>{presentations++;return show(...args);};
+  if(boundary==='revoke')f.controller.revoke();
+  if(boundary==='route')f.doc.location.href+='c/changed';
+  if(boundary==='layer')f.layer(true);
+  if(boundary==='geometry')f.adapter.inspect=()=>({ok:false,reason:'unsafe-native-geometry'});
+  button.events.click({isTrusted:true,detail:1});assert.equal(f.calls.show,shown);assert.equal(presentations,0);assert.deepEqual(entered,[]);assert.equal(intent(),false);
+  // Removing a temporary obstacle does not revive authorization captured by
+  // the cancelled operation, and its delayed release must remain inert.
+  f.doc.location.href=url;f.layer(false);f.adapter.inspect=inspect;release();release();assert.equal(intent(),false);assert.equal(presentations,0);assert.deepEqual(entered,[]);f.controller.stop();
+ }
+});
+
 test('intrinsic sidebar size is bounded, correlated and authorized without granting presentation',async()=>{
  const f=fixture(),sizes=[];f.surface.resizeSidebar=(_h,size)=>sizes.push(size);
  const send=(patch={},event={})=>f.message('sidebar',{data:{type:'VAIWL_UI_INTRINSIC_SIZE',role:'sidebar',height:300,...patch},...event});

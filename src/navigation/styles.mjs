@@ -64,6 +64,17 @@ export const css=`
 .workspace-layout>.arrows{float:none;width:32px;margin:0;top:14px;justify-items:center}
 :host([data-vaiwl-frame-role="workspace"]) .workspace-layout>.arrows{margin-top:8px;top:32px}
 .workspace-core>.current-slot>.current-context{max-width:356px}
+.workspace-settings-layer{position:sticky;top:0;width:100%;max-width:1192px;height:0;z-index:3;pointer-events:none}
+.workspace-settings-panel{position:absolute;top:8px;right:48px;width:min(420px,calc(100% - 48px));max-height:calc(100dvh - 56px);overflow:auto;overscroll-behavior:contain;flex-wrap:wrap;margin:0;padding:14px;gap:10px;background:var(--surface,#fff);border:1px solid var(--line,#e8e8e8);border-radius:12px;box-shadow:0 8px 24px #0002;pointer-events:auto}
+.workspace-settings-inline .workspace-settings-panel{top:44px;right:0;width:min(420px,100%);max-height:calc(100dvh - 92px)}
+.workspace-settings-panel>strong{flex-basis:100%}
+@media(max-height:240px){
+ /* Cancel the top inset without changing the following content's position. */
+ .workspace-settings-layer{height:24px;margin-top:-24px}
+ .workspace-settings-panel,.workspace-settings-inline .workspace-settings-panel{top:0;max-height:calc(100dvh - 16px);padding:6px 10px}
+ .workspace-settings-inline .workspace-settings-panel{width:min(420px,calc(100% - 48px))}
+}
+@media(max-height:160px){.workspace-settings-panel>strong{display:none}}
 @media(max-width:760px){.workspace{padding-right:9px}.workspace-layout{grid-template-columns:minmax(0,1fr) 30px;gap:7px}:host([data-vaiwl-frame-role="workspace"]) .workspace-layout>.arrows{margin-top:16px}}
 /* The host may retain its native rail at a narrow viewport. Reflow only our
    owned controls so required titles and actions still get usable inline space. */

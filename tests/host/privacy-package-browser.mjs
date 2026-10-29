@@ -20,7 +20,30 @@ const build=JSON.parse(await readFile(join(built.unpacked,'build-manifest.json')
 const sentinels={...server.privacySentinels(),draft:'PRIVACY_NATIVE_DRAFT_63892'};
 const report={sourceCommit:process.env.GITHUB_SHA??null,fullSYS07:'NOT_ESTABLISHED',credentialUse:'Fixture token used only in restricted authentication RAM; fallback accounts verification may use an isolated-world short-lived closure, never MAIN or UI.',evidence:'REAL_HEADLESS_PRODUCTION_PACKAGE_OFFLINE_PRIVACY',status:'NOT_RUN',realAccount:'NOT_RUN',fallbackAuth:'NOT_EXERCISED_BY_THIS_JOURNEY',sys07:'PARTIAL_MAIN_AUTH_METADATA_FAILURE',sourceHashes:build.sourceHashes,evidenceHashes,observationScope:'Post-initial-mount authenticated metadata failure; continuous content world, worker and existing UI frames only',checks:{}};
 const guard=await createHistoricalNetworkGuard({fixtureOrigin:server.origin});
-let handle,phase='launch',probeHits=0;
+let handle,phase='launch',launchStage='browser-startup',probeHits=0;
+// Preserve a finite startup diagnosis without serializing launcher messages,
+// stderr, paths, URLs, credentials, or a CDP call log into privacy evidence.
+function launchFailureDiagnostic(error,stage){
+ const stages=['browser-startup','install-network-route','open-browser-cdp','load-extension','create-native-page','load-native-fixture'];
+ const diagnostic={stage:stages.includes(stage)?stage:'unknown',code:'UNCLASSIFIED_LAUNCH_FAILURE'};
+ let cause=error;
+ if(error?.message==='isolated-browser-startup-and-cleanup-failed'&&Array.isArray(error.errors)){
+  diagnostic.cleanupFailed=true;cause=error.errors[0];
+ }
+ if(stage==='browser-startup'){
+  const message=typeof cause?.message==='string'?cause.message:'',exit=/^isolated-chrome-exited:(-?\d{1,10}):/.exec(message);
+  if(message==='invalid-isolated-debug-endpoint')diagnostic.code='INVALID_DEBUG_ENDPOINT';
+  else if(message.startsWith('isolated-chrome-debug-startup-timeout:'))diagnostic.code='DEBUG_STARTUP_DEADLINE';
+  else if(message==='missing-isolated-default-context')diagnostic.code='MISSING_DEFAULT_CONTEXT';
+  else if(/^(?:browserType|chromium)\.connectOverCDP:/.test(message))diagnostic.code='CDP_CONNECT_FAILED';
+  else if(exit){diagnostic.code='CHROME_EXITED';const value=Number(exit[1]);if(Number.isSafeInteger(value)&&value>=-2147483648&&value<=2147483647)diagnostic.exitCode=value;}
+ }
+ const code=cause?.code;
+ if(['ENOENT','EEXIST','EACCES','EPERM','ENOSPC','EMFILE','ENFILE','ECONNREFUSED','ECONNRESET','ETIMEDOUT'].includes(code)){
+  diagnostic.systemCode=code;if(diagnostic.code==='UNCLASSIFIED_LAUNCH_FAILURE')diagnostic.code='SYSTEM_STARTUP_FAILURE';
+ }
+ return diagnostic;
+}
 const probe=createServer((_req,res)=>{probeHits++;res.end('loopback-probe');});
 await new Promise(r=>probe.listen(0,'127.0.0.1',r));
 const probeOrigin=`http://127.0.0.1:${probe.address().port}`;
@@ -40,14 +63,17 @@ const clean=result=>{assert(result&&result.values>0);assert.equal(result.unsuppo
 try{
  handle=await launchNativeVisibilityBrowser({chromium,executablePath:process.env.FREE_CHROME_EXECUTABLE??(platform()==='darwin'?'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome':'/usr/bin/chromium'),profileDir:join(dir,'profile'),headed:false,historicalNetworkGuard:guard.config});
  const {context,browser}=handle;
+ launchStage='install-network-route';
  await context.route('**/*',route=>route.request().url().startsWith(server.origin+'/')||route.request().url().startsWith('chrome-extension://')?route.continue():route.abort());
  // Only extension frames, never the native page, are message/log sinks.
  // Observer installed only into extension realms below; no secrets in native MAIN.
- const cdp=await browser.newBrowserCDPSession(),{id}=await cdp.send('Extensions.loadUnpacked',{path:built.unpacked});
+ launchStage='open-browser-cdp';const cdp=await browser.newBrowserCDPSession();
+ launchStage='load-extension';const {id}=await cdp.send('Extensions.loadUnpacked',{path:built.unpacked});
+ launchStage='create-native-page';
  const page=await context.newPage(),nativeLogs=createPrivacyScanner(sentinels),logTasks=[];let consoleIncomplete=false;
  page.on('console',message=>{logTasks.push(Promise.all(message.args().map(arg=>arg.jsonValue())).then(values=>nativeLogs.scan(values),()=>{consoleIncomplete=true;}));});
  page.on('pageerror',error=>nativeLogs.scan({name:error.name,message:error.message,stack:error.stack}));
- await page.goto(server.origin+'/c/33333333-3333-4333-8333-333333333333');
+ launchStage='load-native-fixture';await page.goto(server.origin+'/c/33333333-3333-4333-8333-333333333333');
  phase='initial-native-mount';
  // Private UI now lives in document flow. Empty exit switches are not proof
  // that either private renderer is displayed or ready for the privacy scan.
@@ -116,7 +142,7 @@ try{
  const probeBlocked=await worker.evaluate(async origin=>{try{await fetch(origin+'/privacy-probe');return false;}catch{return true;}},probeOrigin);
  assert.equal(probeBlocked,true);assert.equal(probeHits,0);report.checks.workerNetworkBoundary={blocked:true,secondLoopbackHits:probeHits,attribution:'ISOLATION_BOUNDARY_NOT_INDEPENDENT_CSP_PROOF'};
  assert.equal(verifyHost(built.unpacked).status,'OFFLINE_HOST_RECONSTRUCTION');report.status='PASS';
-}catch(error){report.status='FAIL';report.failedPhase=phase;report.errorClass=/^[A-Za-z]+Error$/.test(error?.name)?error.name:'Error';const line=/privacy-package-browser\.mjs:(\d+):(\d+)/.exec(error?.stack??'');if(line)report.failureLocation={line:Number(line[1]),column:Number(line[2])};process.exitCode=1;}
+}catch(error){report.status='FAIL';report.failedPhase=phase;if(phase==='launch')report.launchDiagnostic=launchFailureDiagnostic(error,launchStage);report.errorClass=/^[A-Za-z]+Error$/.test(error?.name)?error.name:'Error';const line=/privacy-package-browser\.mjs:(\d+):(\d+)/.exec(error?.stack??'');if(line)report.failureLocation={line:Number(line[1]),column:Number(line[2])};process.exitCode=1;}
 finally{
  const cleanup=await Promise.allSettled([handle?.close(),server.close(),guard.close(),new Promise(r=>probe.close(r))]);report.cleanup=cleanup.map(item=>item.status);if(cleanup.some(item=>item.status==='rejected')){report.status='FAIL';report.failedPhase='cleanup';process.exitCode=1;}
  report.sourceChangedDuringRun=(await Promise.all(Object.entries({...build.sourceHashes,...evidenceHashes}).map(async([path,digest])=>createHash('sha256').update(await readFile(path)).digest('hex')!==digest))).some(Boolean);

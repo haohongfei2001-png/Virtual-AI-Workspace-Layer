@@ -71,6 +71,8 @@ jobs:
           node tests/host/document-flow-browser.mjs
           node tests/host/document-flow-boundary-browser.mjs "$RUNNER_TEMP/flow-boundary.json"
           node --test tests/host/frame-navigation-hydration-browser.mjs
+          FREE_FLOW_READING_REPORT="$RUNNER_TEMP/flow-reading-probe.json" node tests/host/flow-reading-probe-browser.mjs
+          FREE_SETTINGS_ARTIFACT_DIR="$RUNNER_TEMP/workspace-settings" node --test tests/host/workspace-settings-browser.mjs
           node tests/host/document-flow-boundary-mv3.mjs "$RUNNER_TEMP/flow-boundary-mv3.json"
           VAIWL_PROBE_OUTPUT="$RUNNER_TEMP/terminal-delivery.json" node tests/host/terminal-delivery-mv3.mjs all
           node tests/host/browser-local-mv3.mjs --flow-only
@@ -513,7 +515,16 @@ jobs:
             fault-*) node tests/host/fault-package-matrix-browser.mjs "$report" "${SELECTED_GATE#fault-}" ;;
             privacy-main) node tests/host/privacy-package-browser.mjs "$report" ;;
             privacy-isolated) node tests/host/isolated-auth-privacy-browser.mjs "$report" ;;
-            populated-native) node tests/host/ui10-populated-package-browser.mjs "$report" ;;
+            populated-native)
+              set +e
+              node tests/host/ui10-populated-package-browser.mjs "$report" 2>&1 | tee "$RUNNER_TEMP/populated-native.log"
+              vaiwl_results=("${PIPESTATUS[@]}")
+              set -e
+              test "${vaiwl_results[0]}" -eq 2
+              test "${vaiwl_results[1]}" -eq 0
+              vaiwl_source_package="$(node -e "process.stdout.write(require(process.argv[1]).artifactDirectory+'/package/extension')" "$report")"
+              node tests/host/ui10-current-use-acceptance.mjs --report "$report" --png-log "$RUNNER_TEMP/populated-native.log" --source-package "$vaiwl_source_package" --expected-sha "$GITHUB_SHA" --output "$RUNNER_TEMP/populated-current-use.json"
+              ;;
             visual-components) node tests/host/ui10-visual-paired-browser.mjs "$report" ;;
             existing-source-repair) FREE_CHROME_HEADED=1 xvfb-run -a node tests/host/existing-source-pending-repair-journey.mjs "$report" --execute-browser ;;
             native-entry-safety) node tests/host/native-entry-safety-package-browser.mjs "$report" ;;
@@ -564,5 +575,6 @@ jobs:
         if: ${{ always() }}
         run: |
           test ! -f "$RUNNER_TEMP/supplementary.json" || cat "$RUNNER_TEMP/supplementary.json"
+          test ! -f "$RUNNER_TEMP/populated-current-use.json" || cat "$RUNNER_TEMP/populated-current-use.json"
           test ! -f "$RUNNER_TEMP/fault-unknown-trace.json" || cat "$RUNNER_TEMP/fault-unknown-trace.json"
           test ! -f "$RUNNER_TEMP/ui10-admission-trace.json" || cat "$RUNNER_TEMP/ui10-admission-trace.json"

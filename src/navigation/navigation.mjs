@@ -58,7 +58,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     if(navigationFeedback.href){const link=node(doc,'a',{},'保留当前内容，在新标签打开');link.href=navigationFeedback.href;link.target='_blank';link.rel='noopener noreferrer';notice.append(link);}
     if(navigationFeedback.nativeReturn){const feedback=navigationFeedback,source=frameProjection,control=node(doc,'button',{type:'button','aria-label':'返回原生页面'},'返回原生页面');control.dataset.focusKey='navigation-native-return';control.addEventListener('click',()=>{if(!stopped&&frameProjection===source&&navigationFeedback===feedback&&snapshot?.scope===feedback.scope&&adapter.currentURL()===feedback.url){enterReading(false);onPresentationRequest({kind:'show-native-page'});}});notice.append(control);}parent.append(notice);
   }
-  let settingsOpen=false,timePolicyNotice=null,timePolicyNoticeTimer=null,lastTimePolicyNotice=null;
+  let settingsOpen=false,settingsFocus=null,withdrawnSettings=null,timePolicyNotice=null,timePolicyNoticeTimer=null,lastTimePolicyNotice=null;
   let index=null,sidebarDirty=true,sidebarKey=null,frameProjection=null,frameRowPaging=null,frameWindowsSuspended=false,projectionRequest=0,horizonPending=null,horizonError=null,compactPending=null,compactError=null,workingSetPending=null,workingSetError=null,snippetLocatePending=null,resumeLayout=null;
   // Keep the original event target alive until its click, drop, or composition
   // completes. Coalesce updates instead of extending a debounce on each change.
@@ -73,7 +73,21 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
   const owned=e=>e.composedPath().some(n=>n?.getAttribute?.('data-vaiwl-owned')===token);
   const interacting=()=>nativeInteraction!==null||pointers.size>0||keys.size>0||composing||dragging;
   const clearUpdateTimer=()=>{if(updateTimer!==null){win.clearTimeout(updateTimer);updateTimer=null;}};
-  let renderRevision=0;
+  let renderRevision=0,pendingOwnedFocus=null,hiddenLayoutFrame=null;
+  function cancelHiddenLayout(){if(hiddenLayoutFrame!==null)win.cancelAnimationFrame?.(hiddenLayoutFrame);hiddenLayoutFrame=null;}
+  function restoreHiddenLayout(page,ownerView){
+    cancelHiddenLayout();if(!win.requestAnimationFrame)return;
+    hiddenLayoutFrame=win.requestAnimationFrame(()=>{hiddenLayoutFrame=null;if(!stopped&&view===ownerView&&roots?.workspace?.scroller===page){layoutCards();resumeOwnedFocus();}});
+  }
+  const focusNow=()=>win.performance?.now?.()??Date.now();
+  function cancelOwnedFocus(){const pending=pendingOwnedFocus;pendingOwnedFocus=null;if(pending?.raf!=null)win.cancelAnimationFrame?.(pending.raf);}
+  function ownedFocusCurrent(p){return !!p&&!stopped&&snapshot?.scope===p.scope&&view===p.view&&view?.mode===p.mode&&view?.segment===p.segment&&presentationGeneration===p.generation&&JSON.stringify(frameProjection?.viewSession)===p.session&&searchQuery===p.query&&searchTheme===p.theme&&view?.worksetOpen===p.workset&&roots?.[surface?.role]===p.focus.root&&p.focus.root.n.isConnected===true&&doc.hasFocus?.()===true&&doc.visibilityState!=='hidden'&&focusNow()<=p.expires;}
+  function resumeOwnedFocus(){
+    const pending=pendingOwnedFocus;if(!pending)return;
+    if(!ownedFocusCurrent(pending)||pending.focus.root.shadow.activeElement){cancelOwnedFocus();return;}
+    const box=pending.focus.root.n.getBoundingClientRect();if(!(box.width>0&&box.height>0))return;
+    if(applyOwnedFocus(pending.focus))cancelOwnedFocus();
+  }
   function flushUpdate(){
     clearUpdateTimer();if(interacting()||stopped)return;
     const paintedBefore=renderRevision;
@@ -115,24 +129,26 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
   function finishInteraction(){if(!interacting()&&(pendingUpdate||pendingRender||pendingPresentation)&&updateTimer===null)updateTimer=win.setTimeout(flushUpdate,0);}
   function resetInteraction(discard=false){endNativeInteraction();pointers.clear();keys.clear();composing=false;dragging=false;if(discard){pendingUpdate=null;pendingRender=false;pendingPresentation=null;clearUpdateTimer();}else finishInteraction();}
   const interactionHandlers={
-    pointerdown:e=>{if(owned(e)){releaseRestoredScroll();pointers.add(e.pointerId);}},
-    wheel:e=>{if(owned(e))releaseRestoredScroll();},
+    pointerdown:e=>{cancelOwnedFocus();if(owned(e)){releaseRestoredScroll();pointers.add(e.pointerId);}},
+    wheel:e=>{cancelOwnedFocus();if(owned(e))releaseRestoredScroll();},
     pointerup:e=>{pointers.delete(e.pointerId);finishInteraction();},
     pointercancel:e=>{pointers.delete(e.pointerId);if(nativeInteraction?.pointerId===e.pointerId)endNativeInteraction();finishInteraction();},
     lostpointercapture:e=>{pointers.delete(e.pointerId);finishInteraction();},
-    keydown:e=>{if(owned(e)){releaseRestoredScroll();if([' ','Enter'].includes(e.key))keys.add(e.key);}},
+    keydown:e=>{cancelOwnedFocus();if(owned(e)){releaseRestoredScroll();if([' ','Enter'].includes(e.key))keys.add(e.key);}},
+    beforeinput:cancelOwnedFocus,
+    focusin:cancelOwnedFocus,
     keyup:e=>{keys.delete(e.key);finishInteraction();},
-    compositionstart:e=>{if(owned(e))composing=true;},
+    compositionstart:e=>{cancelOwnedFocus();if(owned(e))composing=true;},
     compositionend:()=>{composing=false;finishInteraction();},
     dragstart:e=>{if(owned(e))dragging=true;},
     dragend:()=>{dragging=false;pointers.clear();finishInteraction();},
     drop:()=>{dragging=false;pointers.clear();finishInteraction();},
-    visibilitychange:()=>{if(doc.visibilityState==='hidden')resetInteraction(true);}
+    visibilitychange:()=>{if(doc.visibilityState==='hidden'){cancelOwnedFocus();resetInteraction(true);}}
   };
   for(const [type,handler]of Object.entries(interactionHandlers))doc.addEventListener(type,handler,true);
-  const windowBlur=()=>resetInteraction();win.addEventListener?.('blur',windowBlur);
+  const windowBlur=()=>{cancelOwnedFocus();resetInteraction();};win.addEventListener?.('blur',windowBlur);
   let surfaceResize=null;
-  const windowResize=()=>{if(!stopped&&framed){if(surface.role==='workspace')layoutCards();else{applyRestoredSidebarScroll(roots?.sidebar?.shadow.querySelector('.themes'));try{onSidebarLayout();}catch{}}}};win.addEventListener?.('resize',windowResize);
+  const windowResize=()=>{if(!stopped&&framed){if(surface.role==='workspace')layoutCards();else{applyRestoredSidebarScroll(roots?.sidebar?.shadow.querySelector('.themes'));try{onSidebarLayout();}catch{}}resumeOwnedFocus();}};win.addEventListener?.('resize',windowResize);
   const free=()=>snapshot?.viewMode==='free';
   const entryName=()=>free()?'聊天':'窗口';
   const span=()=>snapshot?.policy?.h??snapshot?.viewSession?.H??30;
@@ -157,7 +173,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
   function own(tag='div'){const n=node(doc,tag,{'data-vaiwl-owned':token});const shadow=n.attachShadow({mode:'open'});shadow.append(node(doc,'style',{},css));return {n,shadow};}
   function restoreMask(){if(!mask)return;for(const[name,prior,expected]of mask.attrs){if(mask.node.getAttribute(name)===expected){if(prior===null)mask.node.removeAttribute(name);else mask.node.setAttribute(name,prior);}}mask=null;}
   function setMask(n,enabled){if(!enabled){restoreMask();return;}if(mask?.node===n)return;restoreMask();const attrs=[['data-vaiwl-mask',n.getAttribute('data-vaiwl-mask'),token],['inert',n.getAttribute('inert'),'']];for(const[k,,v]of attrs)n.setAttribute(k,v);mask={node:n,attrs};}
-  function detach(){surfaceResize?.disconnect();surfaceResize=null;sidebarDirty=true;sidebarKey=null;closeMenu(false);restoreMask();if(roots){roots.sidebar?.n.remove();roots.workspace?.n.remove();roots.back?.remove();roots.maskStyle?.remove();roots=null;}}
+  function detach(){cancelHiddenLayout();cancelOwnedFocus();surfaceResize?.disconnect();surfaceResize=null;sidebarDirty=true;sidebarKey=null;closeMenu(false);restoreMask();if(roots){roots.sidebar?.n.remove();roots.workspace?.n.remove();roots.back?.remove();roots.maskStyle?.remove();roots=null;}}
   function layout(){
     if(stopped||!snapshot)return;
     if(framed){
@@ -207,18 +223,21 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
   // own column only. Native layout and nodes are untouched.
   function layoutCards(){
     const container=roots?.workspace?.scroller?.querySelector('.cards'),cards=container?[...container.querySelectorAll(':scope > .card')]:[];
-    if(!cards.length||container.clientWidth<100){applyRestoredScroll(roots?.workspace?.scroller);return;}
+    if(!cards.length||container.clientWidth<100){finishWorkspaceLayout(roots?.workspace?.scroller);return;}
     const scroller=roots.workspace.scroller,scroll=scroller.scrollTop;
     const gap=18,columns=Math.max(1,Math.min(3,cards.length,Math.floor((container.clientWidth+gap)/346))),width=(Math.min(container.clientWidth,columns*356+(columns-1)*gap)-gap*(columns-1))/columns;
     for(const card of cards){card.style.position='absolute';card.style.width=width+'px';}
     const heights=cards.map(card=>card.getBoundingClientRect().height),tops=Array(columns).fill(0);
     cards.forEach((card,i)=>{const column=i%columns;card.style.left=column*(width+gap)+'px';card.style.top=tops[column]+'px';tops[column]+=heights[i]+gap;});
-    container.style.position='relative';container.style.display='block';container.style.height=Math.max(...tops)+'px';scroller.scrollTop=scroll;applyRestoredScroll(scroller);
+    container.style.position='relative';container.style.display='block';container.style.height=Math.max(...tops)+'px';scroller.scrollTop=scroll;finishWorkspaceLayout(scroller);
   }
   function emitView(){const metadata=framed&&view?sidebarChoiceMetadata():{};if(metadata===null){const notify=!sidebarLimited.has(view);sidebarLimited.add(view);if(notify)render();return;}if(view&&snapshot)onViewChange({segment:view.segment,oldOpen:[...view.oldOpen],sidebarOpen:[...view.sidebarOpen],...metadata,inventoryChoices:[...(view.inventoryChoices??[])],capacities:[...view.capacities],scroll:view.scroll,sidebarScroll:view.sidebarScroll??0,sidebarVisible:view.sidebarVisible,...(nativeSidebar&&view.sidebarViewport?{sidebarViewport:view.sidebarViewport}:{}),...(free()&&snapshot.viewSession?{freeSession:snapshot.viewSession}:{})},snapshot.scope,...(framed?[{role:surface.role}]:[]));}
   // Main-list return layout must not be overwritten by a short search/workset.
   // Special scrolling is bounded to one transient presentation per scoped view.
   const workspacePages=new WeakMap(),specialScroll=new WeakMap();
+  // Flow hiding keeps a rect entry while its frame has zero width/height.
+  // That is still browser clamping, not a real scroll position or user choice.
+  const workspaceBoxAbsent=page=>page?.getClientRects?.().length===0||page?.clientWidth===0||page?.clientHeight===0;
   // A restored document can initially have a taller frame, then settle after
   // native layout arrives. Its browser-clamped scroll is not a new user choice.
   function applyRestoredScroll(page){
@@ -226,6 +245,10 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     const special=state.specialKey!==null,held=special?specialScroll.get(view):restoredScroll.get(view);
     if(!held||special&&(held.key!==state.specialKey||!held.pending))return;
     page.scrollTop=special?held.scroll:held.target;held.applied=page.scrollTop;
+  }
+  function finishWorkspaceLayout(page){
+    applyRestoredScroll(page);const state=page&&workspacePages.get(page);
+    if(state?.layoutPending&&!workspaceBoxAbsent(page)){state.layoutPending=false;page.style.visibility='';}
   }
   function releaseRestoredScroll(){
     if(!nativeSidebar&&view&&restoredSidebarScroll.has(view)){
@@ -235,7 +258,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
       if(list&&!list.hidden&&list.clientHeight>0){view.sidebarScroll=list.scrollTop;restoredSidebarScroll.delete(view);}
     }
     if(!view)return;
-    const page=roots?.workspace?.scroller;if(page?.getClientRects?.().length===0)return;
+    const page=roots?.workspace?.scroller;if(workspaceBoxAbsent(page))return;
     const state=page&&workspacePages.get(page);
     if(state&&state.specialKey!==null){
       const held=specialScroll.get(view);
@@ -249,7 +272,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
   function rememberWorkspaceScroll(page){
     // An owner-hidden frame has no scrollbox. Its zero is browser clamping,
     // not a new user position, even if presentation arrived before visibility.
-    if(page?.getClientRects?.().length===0)return;
+    if(workspaceBoxAbsent(page))return;
     const state=workspacePages.get(page);if(state&&state.view!==view)return;
     const held=view&&restoredScroll.get(view);
     if(held&&state?.specialKey===null){const clamped=Math.min(held.target,Math.max(0,page.scrollHeight-page.clientHeight));if(page.scrollTop===held.applied||page.scrollTop===clamped)return;restoredScroll.delete(view);}
@@ -590,10 +613,10 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
       if(n&&menu?.n.contains(n))return {root,key:menu.trigger.dataset.focusKey};
       if(n?.dataset.focusKey)return {root,key:n.dataset.focusKey,start:n.selectionStart,end:n.selectionEnd};
     }
-    return null;
+    return ownedFocusCurrent(pendingOwnedFocus)&&!pendingOwnedFocus.focus.root.shadow.activeElement?{...pendingOwnedFocus.focus,restoration:pendingOwnedFocus}:null;
   }
-  function restoreOwnedFocus(f){
-    if(!f||framed&&doc.hasFocus?.()===false)return;
+  function applyOwnedFocus(f){
+    if(!f||framed&&doc.hasFocus?.()===false)return false;
     const key=f.key==='关闭设置'&&!settingsOpen?'workspace-settings':f.key,shadow=f.root.shadow;
     const n=[...shadow.querySelectorAll('[data-focus-key]')].find(n=>n.dataset.focusKey===key);
     // A retained key (or the history fallback) may now be disabled. Browser
@@ -604,10 +627,26 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
       if(!target||target.disabled)continue;
       target.focus({preventScroll:true});if(shadow.activeElement!==target)continue;
       if(target===n&&n.setSelectionRange&&typeof f.start==='number')n.setSelectionRange(f.start,f.end);
-      return;
+      return true;
     }
+    return false;
   }
-  function render(){if(!roots||!view)return;renderRevision++;const focused=focusState();rememberSidebarScroll(roots.sidebar?.shadow.querySelector('.themes'));closeMenu(false);
+  function restoreOwnedFocus(f){
+    const inherited=f?.restoration;
+    // Rendering may cross the deadline or cancel the intent after capture.
+    // A borrowed focus state must never become a fresh restoration request.
+    if(inherited&&(pendingOwnedFocus!==inherited||!ownedFocusCurrent(inherited))){if(pendingOwnedFocus===inherited)cancelOwnedFocus();return;}
+    const expires=inherited?inherited.expires:focusNow()+1000;cancelOwnedFocus();
+    if(applyOwnedFocus(f)||!f||!framed||doc.hasFocus?.()!==true||!win.requestAnimationFrame)return;
+    // A synchronous parent reading probe can retain this iframe's focus while
+    // giving it zero size. A concurrent VIEW then replaces the focused node,
+    // and focus() is refused until the frame is visible again. Keep only this
+    // existing intent for one second; input, blur, context changes and detach
+    // retire it. Paint/resize resumes it without focusing the parent iframe.
+    const pending={focus:{root:f.root,key:f.key,start:f.start,end:f.end},scope:snapshot?.scope,view,mode:view?.mode,segment:view?.segment,generation:presentationGeneration,session:JSON.stringify(frameProjection?.viewSession),query:searchQuery,theme:searchTheme,workset:view?.worksetOpen,expires,raf:null};pendingOwnedFocus=pending;
+    pending.raf=win.requestAnimationFrame(()=>{pending.raf=null;if(pendingOwnedFocus===pending)resumeOwnedFocus();});
+  }
+  function render(){if(!roots||!view)return;cancelHiddenLayout();renderRevision++;const focused=focusState();rememberSidebarScroll(roots.sidebar?.shadow.querySelector('.themes'));closeMenu(false);
     const selected=current().selected;
     if(framed)applySidebarChoices(choices());
     if(selected&&lastSelected!==adapter.currentURL()){if(lastSelected!==null)restoredSidebarScroll.delete(view);if(!framed)view.sidebarOpen.add(selected.id);lastSelected=adapter.currentURL();selectionPending=true;}
@@ -651,12 +690,17 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
       const settingsScope=frameProjection.scope,settingsView=view,settingsLive=()=>!stopped&&frameProjection?.scope===settingsScope;
       // Reject retired controls before they can advance the navigation intent.
       const settingsButton=(label,fn,text='',cls='square')=>{const control=button(label,fn,text,cls,()=>settingsLive()&&roots?.workspace?.scroller===page&&currentProjectControl(control,settingsView,'workspace'));return control;};
-      const trigger=graphic(settingsButton('工作空间设置',()=>{if(!settingsLive())return;settingsOpen=!settingsOpen;requestRender();}),'more');trigger.setAttribute('aria-expanded',String(settingsOpen));trigger.dataset.focusKey='workspace-settings';trigger.setAttribute('class','square workspace-settings-trigger');
+      const focusSettings=key=>{settingsFocus={scope:settingsScope,view:settingsView,key};};
+      const closeSettings=()=>{if(!settingsLive()||roots?.workspace?.scroller!==page||view!==settingsView)return;settingsOpen=false;focusSettings('workspace-settings');requestRender();};
+      const trigger=graphic(settingsButton('工作空间设置',()=>{if(!settingsLive())return;settingsOpen=!settingsOpen;focusSettings(settingsOpen?'查找已知项目与聊天':'workspace-settings');requestRender();}),'more');trigger.setAttribute('aria-expanded',String(settingsOpen));trigger.dataset.focusKey='workspace-settings';trigger.setAttribute('class','square workspace-settings-trigger');
       // Keep the original control in the existing reserved pager rail on home.
       // Other views have no pager, so retain their inline settings entry.
       if(searchQuery===null&&!view.worksetOpen)workspaceSettingsTrigger=trigger;else page.append(trigger);
       if(settingsOpen){
-        const settings=node(doc,'section',{'aria-label':'工作空间设置',class:'toolbar'});settings.append(node(doc,'strong',{},'工作空间设置'));
+        // The settings trigger stays visible while the list scrolls. Keep its
+        // panel in the same viewport without displacing cards or main scroll.
+        const settingsLayer=node(doc,'div',{class:'workspace-settings-layer'+(workspaceSettingsTrigger?'':' workspace-settings-inline')}),settings=node(doc,'section',{'aria-label':'工作空间设置',class:'toolbar workspace-settings-panel'});settings.append(node(doc,'strong',{},'工作空间设置'));
+        settings.addEventListener('keydown',event=>{if(event.key==='Escape'&&!event.defaultPrevented&&event.target?.tagName!=='SELECT'){event.preventDefault();event.stopPropagation();closeSettings();}});
         settings.append(settingsButton('查找已知项目与聊天',()=>{settingsOpen=false;findKnown();},'查找已知项目与聊天','more'),settingsButton('当前工作集',()=>{settingsOpen=false;showWorkingSet();},'当前工作集','more'));
         if(typeof onHorizonRequest==='function'){
           const label=node(doc,'label',{},'时间范围 '),select=node(doc,'select',{'aria-label':'工作空间时间范围','data-focus-key':'free-horizon'}),policy=frameProjection.timePolicy;
@@ -679,7 +723,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
         if(typeof onBackupRequest==='function')settings.append(settingsButton('备份与导入',()=>{if(settingsLive()&&settingsOpen)onBackupRequest();},'备份与导入','more'));
         if(typeof onRecoveryRequest==='function')settings.append(settingsButton('本地数据恢复',()=>{if(settingsLive()&&settingsOpen)onRecoveryRequest();},'本地数据恢复','more'));
         settings.append(settingsButton('退出工作空间增强',()=>{stop();onExit();},'退出增强','more'));
-        settings.append(settingsButton('关闭设置',()=>{if(!settingsLive())return;settingsOpen=false;requestRender();},'关闭设置','more'));page.append(settings);
+        settings.append(settingsButton('关闭设置',closeSettings,'关闭设置','more'));settingsLayer.append(settings);page.prepend(settingsLayer);
       }
     }
     if(timePolicyNotice&&Date.now()<timePolicyNotice.expires&&view.mode==='workspace'){const notice=timePolicyNotice,section=node(doc,'div',{class:'toolbar',role:'status','aria-label':'自动时间范围调整'});section.append(node(doc,'span',{},notice.error?'撤销结果未确认，可在设置中手动选择范围。':'已根据已核验项目调整时间范围。'));if(!notice.error){const undo=button('撤销自动时间范围调整',()=>void undoTimePolicy(notice),'撤销');undo.disabled=notice.busy;undo.dataset.focusKey='undo-time-policy';section.append(undo);}page.append(section);}
@@ -760,16 +804,26 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     // VIEW updates continue while native reading hides the workspace frame.
     // Retain each page's position until the owner's resize creates a scrollbox.
     // Search/workset targets remain transient and never replace durable main scroll.
-    if(page.getClientRects?.().length===0){
+    const hiddenPage=workspaceBoxAbsent(page);
+    if(hiddenPage){
+      // Publish a new owned page only after its layout and scroll are coherent.
+      // A parent probe may reopen before this frame's first layout callback.
+      if(framed){workspacePages.get(page).layoutPending=true;page.style.visibility='hidden';}
       if(specialKey===null&&!restoredScroll.has(view))restoredScroll.set(view,{target:view.scroll,applied:null});
       else if(specialKey!==null){const held=specialScroll.get(view);if(held?.key===specialKey){held.pending=true;held.applied=null;}}
     }
-    layoutCards();page.scrollTop=specialKey===null?view.scroll:specialScroll.get(view)?.key===specialKey?specialScroll.get(view).scroll:0;applyRestoredScroll(page);restoreOwnedFocus(focused);emitView();
+    layoutCards();page.scrollTop=specialKey===null?view.scroll:specialScroll.get(view)?.key===specialKey?specialScroll.get(view).scroll:0;applyRestoredScroll(page);
+    // A close/reopen within one parent task may leave the observed size
+    // unchanged, so ResizeObserver alone cannot restore this new scrollbox.
+    if(hiddenPage&&framed)restoreHiddenLayout(page,view);
+    const requestedSettingsFocus=settingsFocus;settingsFocus=null;
+    restoreOwnedFocus(requestedSettingsFocus?.scope===frameProjection?.scope&&requestedSettingsFocus?.view===view?{root:roots.workspace,key:requestedSettingsFocus.key}:focused);emitView();
   }
   function applyUpdate(value,now,timeZone,preparedIndex=null,alreadyPrepared=false){
     if(stopped)return;
+    withdrawnSettings=null;
     if(snapshot?.scope===value.scope&&(interacting()||updateTimer!==null)){pendingUpdate=[value,now,timeZone,preparedIndex,alreadyPrepared];return;}
-    if(snapshot?.scope!==value.scope)settingsOpen=false;frameProjection=null;frameRowPaging=null;frameWindowsSuspended=false;projectionRequest++;resetInteraction(true);sidebarDirty=true;remember();const priorSession=snapshot?.scope===value.scope?snapshot?.viewSession:null;if(value.viewMode==='free'&&!alreadyPrepared)value=freeNavigationSnapshot(value);snapshot=value;
+    if(snapshot?.scope!==value.scope){settingsOpen=false;settingsFocus=null;}frameProjection=null;frameRowPaging=null;frameWindowsSuspended=false;projectionRequest++;resetInteraction(true);sidebarDirty=true;remember();const priorSession=snapshot?.scope===value.scope?snapshot?.viewSession:null;if(value.viewMode==='free'&&!alreadyPrepared)value=freeNavigationSnapshot(value);snapshot=value;
     if(!views.has(value.scope)){
       const initial=initialView(),v=value.view;
       if(v)Object.assign(initial,{segment:v.segment,oldOpen:new Set(v.oldOpen),sidebarOpen:new Set(v.sidebarOpen),capacities:new Map(v.capacities),scroll:v.scroll,sidebarVisible:v.sidebarVisible});
@@ -809,7 +863,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     const scopeChanged=snapshot?.scope!==dto.scope;if(snapshot&&scopeChanged)nativeManagement=new Map();const copy=structuredClone(dto);if(scopeChanged||navigationFeedback?.url!==adapter.currentURL())clearNavigationFeedback();resetInteraction(true);sidebarDirty=true;remember();
     if(snapshot?.scope!==copy.scope){horizonPending=null;horizonError=null;detach();searchQuery=null;searchTheme=null;projectionRequest++;}
     if(copy.segment!==0||copy.search||copy.workingSet)clearTimePolicyNotice(false);
-    if(scopeChanged){lastSelected=null;selectionPending=false;clearTimePolicyNotice(false);lastTimePolicyNotice=null;settingsOpen=false;compactPending=null;compactError=null;workingSetPending=null;workingSetError=null;}projectionRequest++;frameProjection=copy;if(copy.search)frameSearchWaiting=false;if(copy.workingSet)frameWorkingSetWaiting=false;
+    if(scopeChanged){lastSelected=null;selectionPending=false;clearTimePolicyNotice(false);lastTimePolicyNotice=null;settingsOpen=withdrawnSettings?.scope===copy.scope&&withdrawnSettings.view===views.get(copy.scope)&&focusNow()<=withdrawnSettings.expires;settingsFocus=null;compactPending=null;compactError=null;workingSetPending=null;workingSetError=null;}withdrawnSettings=null;projectionRequest++;frameProjection=copy;if(copy.search)frameSearchWaiting=false;if(copy.workingSet)frameWorkingSetWaiting=false;
     // Presentation-only metadata. This intentionally has no complete refs/index
     // and never enters the prepared Free snapshot or full-snapshot update path.
     snapshot={scope:copy.scope,viewMode:'free',viewSession:copy.viewSession,preferences:{compactRows:{value:copy.compactRows!==false}}};
@@ -839,7 +893,13 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
   }
   function update(value,now,timeZone,preparedIndex=null){if(value?.protocol==='vaiwl-free-frame/1')throw Error('frame-projection-requires-explicit-consumer');return applyUpdate(value,now,timeZone,preparedIndex);}
   function updatePreparedFree(value,now,timeZone,preparedIndex=null){assertPreparedFreeSnapshot(value);return applyUpdate(value,now,timeZone,preparedIndex,true);}
-  function invalidate(reason='binding-invalidated'){advanceNavigationIntent();clearTimePolicyNotice(false);lastTimePolicyNotice=null;settingsOpen=false;compactPending=null;compactError=null;workingSetPending=null;workingSetError=null;horizonPending=null;horizonError=null;resetInteraction(true);remember();snapshot=null;index=null;frameProjection=null;frameRowPaging=null;frameWindowsSuspended=false;projectionRequest++;detach();status={state:'WAITING',reason};adapter.status(status);}
+  function invalidate(reason='binding-invalidated'){
+    // Withdrawal still removes every old row, control, capability and focus.
+    // Keep only this non-sensitive open intent for a fresh same-scope VIEW
+    // within the existing read window; binding loss and stop always discard it.
+    withdrawnSettings=reason==='source-revoked'&&frameProjection&&settingsOpen?{scope:frameProjection.scope,view,expires:focusNow()+6000}:null;
+    advanceNavigationIntent();clearTimePolicyNotice(false);lastTimePolicyNotice=null;settingsOpen=false;settingsFocus=null;compactPending=null;compactError=null;workingSetPending=null;workingSetError=null;horizonPending=null;horizonError=null;resetInteraction(true);remember();snapshot=null;index=null;frameProjection=null;frameRowPaging=null;frameWindowsSuspended=false;projectionRequest++;detach();status={state:'WAITING',reason};adapter.status(status);
+  }
   function stop(){if(stopped)return;stopped=true;invalidate('controlled-exit');doc.removeEventListener('focusin',trackFocus);for(const[type,handler]of Object.entries(interactionHandlers))doc.removeEventListener(type,handler,true);win.removeEventListener?.('blur',windowBlur);win.removeEventListener?.('resize',windowResize);if(!framed)restoreFocus();status={state:'STOPPED'};adapter.status(status);}
   function focusSurface(){
     const pane=roots?.[surface?.role],target=surface?.role==='workspace'?pane?.scroller:pane?.shadow.querySelector('[data-focus-key="已保存片段"]')??pane?.shadow.querySelector('button');

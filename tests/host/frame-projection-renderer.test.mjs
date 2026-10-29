@@ -9,11 +9,12 @@ function dom(){
  let doc;
  class Element{
   constructor(tag){this.tagName=tag;this.ownerDocument=doc;this.children=[];this.attrs={};this.dataset={};this.style={};this.events={};this.isConnected=true;this.scrollTop=0;this.clientWidth=0;this.clientHeight=200;this.textContent='';}
-  setAttribute(k,v){this.attrs[k]=String(v);if(k==='class')this.className=String(v);}
+  setAttribute(k,v){this.attrs[k]=String(v);if(k==='class'){this.className=String(v);if(this.className.split(' ').includes('workspace')){this.clientWidth=1000;this.clientHeight=200;}}}
   getAttribute(k){return k==='data-focus-key'?this.dataset.focusKey??this.attrs[k]??null:this.attrs[k]??null;}
   removeAttribute(k){delete this.attrs[k];}
   hasAttribute(k){return k==='data-focus-key'?this.getAttribute(k)!==null:k in this.attrs;}
   append(...nodes){for(const n of nodes){n.parentNode=this;this.children.push(n);}}
+  prepend(...nodes){for(const n of nodes)n.parentNode=this;this.children.unshift(...nodes);}
   replaceChildren(...nodes){this.children=[];this.append(...nodes);}
   remove(){if(this.parentNode)this.parentNode.children=this.parentNode.children.filter(n=>n!==this);this.isConnected=false;}
   attachShadow(){return this.shadowRoot=new Element('shadow');}
@@ -484,4 +485,42 @@ test('omitted known inventory is not presented as a first empty workspace',()=>{
    assert.equal(f.pane().querySelectorAll('[data-ref-id]').length,0);
   }finally{f.nav.stop();}
  }
+});
+
+// Independent renderer counterexample; this does not identify the cause of
+// the earlier intermittent MV3 settings-click disappearance.
+test('source revocation restores only the settings-open intent after a fresh same-scope view',t=>{
+ const calls=[],f=fixture('workspace',()=>null,null,null,{}, {onBackupRequest:()=>calls.push('backup')});t.after(()=>f.nav.stop());
+ f.doc.hasFocus=()=>true;f.nav.updateFrameProjection(projection());f.button('工作空间设置').click();
+ const retiredRoot=f.nav.roots().workspace,ownerView=f.nav.view(),retiredPanel=f.pane().querySelector('[aria-label="工作空间设置"]');
+ const retired=[f.button('工作空间设置'),f.button('关闭设置'),f.button('备份与导入')];retired[2].focus();assert.equal(retiredRoot.shadow.activeElement,retired[2]);assert(retiredPanel);
+ f.nav.invalidate('source-revoked');assert.equal(f.nav.roots(),null);assert.equal(retiredRoot.n.isConnected,false);assert(!f.doc.body.children.includes(retiredRoot.n));
+ for(const control of retired)control.click();assert.deepEqual(calls,[],'source loss must immediately retire the old controls');
+ const fresh=projection();fresh.groups.items[0].name='Fresh owner P2';fresh.groups.items[0].nativeName='Fresh owner P2';f.nav.updateFrameProjection(fresh);
+ assert.equal(f.nav.view(),ownerView);assert.notEqual(f.nav.roots().workspace,retiredRoot);assert(f.pane().querySelectorAll('.theme-name').some(n=>n.textContent==='Fresh owner P2'),'fresh data, not the retired projection, must render');
+ assert.equal(f.button('工作空间设置').getAttribute('aria-expanded'),'true','same-scope source reproof must keep the explicitly opened settings panel');
+ assert(f.button('关闭设置'));assert.notEqual(f.pane().querySelector('[aria-label="工作空间设置"]'),retiredPanel);assert.equal(f.pane().activeElement??null,null,'restoring open intent must not restore the retired focus');
+ for(const control of retired)control.click();assert.deepEqual(calls,[]);assert(f.button('关闭设置'),'retired close/toggle must not alter the fresh panel');
+ const backup=f.button('备份与导入');assert(!retired.includes(backup));backup.click();assert.deepEqual(calls,['backup']);
+});
+
+for(const boundary of ['different-scope','binding-invalidated','stop'])test('source-revoked settings intent cannot survive '+boundary,t=>{
+ const calls=[],f=fixture('workspace',()=>null,null,null,{}, {onBackupRequest:()=>calls.push('backup')});t.after(()=>f.nav.stop());
+ f.doc.hasFocus=()=>true;f.nav.updateFrameProjection(projection());f.button('工作空间设置').click();const retired=f.button('备份与导入');retired.focus();
+ f.nav.invalidate('source-revoked');assert.equal(f.nav.roots(),null);
+ if(boundary==='binding-invalidated')f.nav.invalidate('binding-invalidated');if(boundary==='stop')f.nav.stop();
+ const fresh=projection();if(boundary==='different-scope')fresh.scope='scopeB';f.nav.updateFrameProjection(fresh);retired.click();assert.deepEqual(calls,[]);
+ if(boundary==='stop'){assert.equal(f.nav.roots(),null);assert.equal(f.nav.status().state,'STOPPED');return;}
+ assert.equal(f.button('工作空间设置').getAttribute('aria-expanded'),'false');assert.equal(f.button('关闭设置'),undefined);assert.equal(f.button('备份与导入'),undefined);assert.equal(f.pane().activeElement??null,null);
+ f.button('工作空间设置').click();const backup=f.button('备份与导入');assert.notEqual(backup,retired);backup.click();assert.deepEqual(calls,['backup'],'a new explicit action remains usable after a fresh view');
+});
+
+test('source-revoked settings intent expires after six seconds without restoring focus',t=>{
+ let now=100;const calls=[],f=fixture('workspace',()=>null,null,null,{}, {onBackupRequest:()=>calls.push('backup')});t.after(()=>f.nav.stop());
+ f.doc.defaultView.performance={now:()=>now};f.doc.hasFocus=()=>true;f.nav.updateFrameProjection(projection());f.button('工作空间设置').click();
+ const retired=f.button('备份与导入');retired.focus();f.nav.invalidate('source-revoked');assert.equal(f.nav.roots(),null);
+ now+=6001;const fresh=projection();fresh.groups.items[0].name='Fresh after expiry';f.nav.updateFrameProjection(fresh);
+ assert(f.pane().querySelectorAll('.theme-name').some(n=>n.textContent==='Fresh after expiry'),'the fresh view must still be accepted');
+ assert.equal(f.button('工作空间设置').getAttribute('aria-expanded'),'false');assert.equal(f.button('关闭设置'),undefined);assert.equal(f.button('备份与导入'),undefined);assert.equal(f.pane().activeElement??null,null);
+ retired.click();assert.deepEqual(calls,[]);f.button('工作空间设置').click();f.button('备份与导入').click();assert.deepEqual(calls,['backup'],'expiry does not block a new explicit settings intent');
 });

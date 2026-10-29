@@ -90,6 +90,15 @@ try{
   const result=await page.evaluate(async mode=>{
    const {createChatGPTAdapter,createURLPolicy,CHATGPT_OBSERVED_PROFILE:profile,createMountSurface,createSurfaceController}=projectModule;let surface,forbiddenReads=0;
    const panel=document.querySelector('#project-panel'),draft=document.querySelector('#draft'),tabs=document.querySelector('#project-tabs');
+   // This legacy manual-mask fixture has no declared sidebar composition seam.
+   // Main-region proof is independent; its native navigation must stay usable.
+   const nativeNavigationRetained=()=>{
+    const nav=document.querySelector('nav'),controls=[...nav.querySelectorAll('a,button')];
+    return controls.length>=3&&!surface.isMasked(nav)&&controls.every(n=>{
+     const r=n.getBoundingClientRect(),s=getComputedStyle(n),hit=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);
+     return r.width>0&&r.height>0&&s.visibility==='visible'&&s.display!=='none'&&!n.closest('[inert],[hidden]')&&(hit===n||n.contains(hit));
+    })&&!document.querySelector('[data-va-owned][id$="_sidebar"]:popover-open');
+   };
    // 2026-10-27 real screenshot counterexample: the native member column is
    // centered and narrow; geometry only, no account titles/IDs/body are stored.
    if(mode.startsWith('centered-'))document.querySelector('#project-content').style.cssText='max-width:660px;margin-inline:auto';
@@ -136,8 +145,8 @@ try{
     if(!handle)return {mode,passed:false,reason:'controller-start-failed'};
     for(const {role,frame}of surface.frames(handle))dispatchEvent(new MessageEvent('message',{origin:'chrome-extension://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',source:frame.contentWindow,data:{type:'VAIWL_UI_JOIN',role,nonce:'fixture_nonce_'+role}}));
     for(let i=0;i<40;i++)await Promise.resolve();
-    globalThis.projectTest={adapter,surface,controller,handle,inspection:adapter.inspect(),forbidden:()=>forbiddenReads};
-    return {mode,passed:surface.visibility(handle).workspace&&surface.visibility(handle).sidebar&&forbiddenReads===0,authorization:'SYNTHETIC_CONTROLLER_BRIDGE_NOT_MV3',fullHeight:initialFullHeight};
+    globalThis.projectTest={adapter,surface,controller,handle,inspection:adapter.inspect(),forbidden:()=>forbiddenReads,nativeNavigationRetained};
+    return {mode,passed:surface.visibility(handle).workspace&&!surface.visibility(handle).sidebar&&nativeNavigationRetained()&&forbiddenReads===0,sidebar:'NATIVE_RETAINED',authorization:'SYNTHETIC_CONTROLLER_BRIDGE_NOT_MV3',fullHeight:initialFullHeight};
    }
    const inspection=adapter.inspect();if(!inspection.ok){adapter.stop();return {mode,passed:false,reason:inspection.reason};}
    surface=createMountSurface({document,createFrameURL:({role})=>`chrome-extension://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/${role}.html`});
@@ -156,8 +165,8 @@ try{
    if(mode==='keyboard'){globalThis.projectTest={adapter,surface,handle,inspection};return {mode,checks,forbiddenReads,passed:Object.values(checks).every(Boolean)};}
    if(mode==='resize'){globalThis.projectTest={adapter,surface,handle,inspection};return {mode,checks,forbiddenReads,passed:Object.values(checks).every(Boolean)};}
    if(['journey','hidden-old-root'].includes(mode)){
-    surface.showReading(handle);checks.readingRestored=getComputedStyle(panel).visibility==='visible'&&surface.visibility(handle).sidebar;
-    surface.showWorkspace(handle);draft.dispatchEvent(new Event('focusin',{bubbles:true}));checks.inputKeepsSidebar=!surface.visibility(handle).workspace&&surface.visibility(handle).sidebar;
+    surface.showReading(handle);checks.readingRestored=getComputedStyle(panel).visibility==='visible'&&!surface.visibility(handle).sidebar&&nativeNavigationRetained();
+    surface.showWorkspace(handle);draft.dispatchEvent(new Event('focusin',{bubbles:true}));checks.inputKeepsNativeNavigation=!surface.visibility(handle).workspace&&!surface.visibility(handle).sidebar&&nativeNavigationRetained();
     surface.showWorkspace(handle);const dialog=document.createElement('dialog');document.body.append(dialog);dialog.showModal();checks.nativeModalWins=getComputedStyle(panel).visibility==='visible'&&getComputedStyle(document.querySelector('[data-va-owned][id$="_workspace"]')).visibility==='hidden';dialog.close();dialog.remove();
    }
    surface.dispose(handle);adapter.stop();checks.draftPreserved=draft.value==='fixture draft';checks.clean=!document.querySelector('[data-va-owned]')&&!panel.hasAttribute('data-va-mask-workspace');
@@ -176,9 +185,9 @@ try{
    const back=page.getByRole('button',{name:'返回工作空间',exact:true});
    if(mode==='controller-journey'){
     await page.getByRole('button',{name:'返回原生阅读',exact:true}).click();await back.waitFor({timeout:10000});assert.equal(await back.count(),1);await back.click();
-    await page.waitForFunction(()=>document.querySelectorAll('[data-va-owned]:popover-open').length===2);
-    await page.locator('#draft').focus();await page.waitForFunction(()=>document.querySelectorAll('[data-va-owned]:popover-open').length===1);await back.waitFor({timeout:10000});assert.equal(await back.count(),1);await back.click();
-    await page.waitForFunction(()=>document.querySelectorAll('[data-va-owned]:popover-open').length===2);result.uniqueReturnAndNativeInput=true;
+    await page.waitForFunction(()=>document.querySelectorAll('[data-va-owned]:popover-open').length===1&&document.querySelector('[data-va-owned][id$="_workspace"]:popover-open')&&projectTest.nativeNavigationRetained());
+    await page.locator('#draft').focus();await page.waitForFunction(()=>document.querySelectorAll('[data-va-owned]:popover-open').length===0&&projectTest.nativeNavigationRetained());await back.waitFor({timeout:10000});assert.equal(await back.count(),1);await back.click();
+    await page.waitForFunction(()=>document.querySelectorAll('[data-va-owned]:popover-open').length===1&&document.querySelector('[data-va-owned][id$="_workspace"]:popover-open')&&projectTest.nativeNavigationRetained());result.uniqueReturnAndNativeInput=true;
    }
    if(mode==='controller-scroll')await page.evaluate(()=>{document.querySelector('#project-panel').style.minHeight='2000px';document.querySelector('#project-scroll').scrollTop=300;});
    if(mode==='controller-route')await page.evaluate(()=>{history.pushState({},'','/c/44444444-4444-4444-8444-444444444444');dispatchEvent(new PopStateEvent('popstate'));});
@@ -188,7 +197,7 @@ try{
     await page.waitForFunction(()=>document.querySelectorAll('[data-va-owned]:popover-open').length===0);
     result.automaticSurrender=await page.locator('#project-panel').evaluate(n=>getComputedStyle(n).visibility==='visible');assert.equal(await back.count(),0);
     await page.evaluate(()=>{document.querySelector('#project-scroll').scrollTop=0;});await page.waitForFunction(()=>document.querySelector('[data-va-owned][id$="_workspace"]')?.matches(':popover-open'));
-    await page.waitForFunction(()=>document.querySelectorAll('[data-va-owned]:popover-open').length===2);result.originalWorkspaceIntentRestored=true;result.passed&&=result.automaticSurrender;
+    await page.waitForFunction(()=>document.querySelectorAll('[data-va-owned]:popover-open').length===1&&document.querySelector('[data-va-owned][id$="_workspace"]:popover-open')&&projectTest.nativeNavigationRetained());result.originalWorkspaceIntentRestored=true;result.passed&&=result.automaticSurrender;
    }
    if(mode==='controller-expiry'){await page.waitForFunction(()=>!document.querySelector('[data-va-owned]'),null,{timeout:10000});result.expiredClean=await page.locator('#project-panel').evaluate(n=>getComputedStyle(n).visibility==='visible');assert.equal(await back.count(),0);result.passed&&=result.expiredClean;}
    if(mode==='controller-resize'){await page.setViewportSize({width:785,height:600});await page.waitForFunction(()=>{const n=document.querySelector('[data-va-owned][id$="_workspace"]');return n?.getBoundingClientRect().height<400;});result.automaticResize=true;}

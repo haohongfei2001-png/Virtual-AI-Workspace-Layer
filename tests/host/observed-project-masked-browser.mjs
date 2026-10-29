@@ -33,7 +33,23 @@ try{
    if(mode==='project-reading-return'||mode==='return-corner-occluded'){
     const returned=controller.showReading(),button=document.querySelector('button[aria-label="返回工作空间"]');
     let passed=returned&&!!button&&button.querySelector('svg')!==null;
-    if(mode==='return-corner-occluded'&&button){const r=button.getBoundingClientRect(),occluder=document.createElement('button');occluder.style.cssText=`position:fixed;left:${r.x+1}px;top:${r.y+1}px;width:2px;height:2px;border:0;padding:0;z-index:31`;document.body.append(occluder);passed&&=controller.showWorkspace()===false;occluder.remove();}else passed&&=controller.showWorkspace()===true;controller.stop();discovery.stop();return {passed,returned,buttonPresent:!!button};
+    if(mode==='return-corner-occluded'&&button){
+     const prior=adapter.inspect(),r=button.getBoundingClientRect(),occluder=document.createElement('button');
+     occluder.style.cssText=`position:fixed;left:${r.x+1}px;top:${r.y+1}px;width:2px;height:2px;border:0;padding:0;z-index:31`;
+     const originalStyle=occluder.getAttribute('style');let nativeClicks=0,trustedClicks=0;
+     occluder.addEventListener('click',event=>{nativeClicks++;if(event.isTrusted)trustedClicks++;});document.body.append(occluder);
+     const inspect=adapter.inspect(),corner={x:r.x+2,y:r.y+2};
+     const checks={mainQualified:inspect.ok,returnRejected:inspect.returnSlot===null&&!adapter.isReturnSlotCurrent(prior),sampleHitsNative:document.elementFromPoint(r.x+1,r.y+1)===occluder};
+     // Observe automatic withdrawal before making any workspace request. A
+     // direct showWorkspace call has independent authority and would itself
+     // remove the entry, concealing a broken return-slot watcher.
+     await Promise.resolve();await new Promise(requestAnimationFrame);
+     Object.assign(checks,{returnRemoved:!button.isConnected&&!document.querySelector('button[aria-label="返回工作空间"]'),readingRetained:controller.presentationMode()==='reading',workspaceHidden:surface.visibility(handle).workspace===false,
+      nativeCornerStillHit:document.elementFromPoint(corner.x,corner.y)===occluder,nativeUnchanged:occluder.parentElement===document.body&&occluder.getAttribute('style')===originalStyle&&occluder.getBoundingClientRect().width===2&&occluder.getBoundingClientRect().height===2});
+     globalThis.maskedReturnCorner={adapter,controller,discovery,surface,handle,draft,button,occluder,corner,nativeClicks:()=>nativeClicks,trustedClicks:()=>trustedClicks,reads:()=>reads};
+     return {passed:passed&&Object.values(checks).every(value=>value===true),returned,buttonPresent:!!button,checks,corner};
+    }
+    passed&&=controller.showWorkspace()===true;controller.stop();discovery.stop();return {passed,returned,buttonPresent:!!button};
    }
    const initial=discovery.scan(),row=initial.candidates.find(c=>c.target.nativeId===B),alias=initial.candidates.filter(c=>c.target.nativeId===C);assertExists(row);
    const envelope={protocol:'vaiwl-host-observation/1',...binding,localSeq:1,profileId:profile.id,profileVersion:profile.revision,bodyProofId:null,kind:'surface-delta'};
@@ -51,6 +67,18 @@ try{
    return {passed:canonical&&parts.length===1&&nativeHandleSafe&&hiddenSafe&&sameDraft&&reads===0,canonical,nativeHandleSafe,hiddenSafe,reads,remaining};
    function assertExists(value){if(!value)throw Error('missing-fixture-handle-or-row');}
   },{mode,C,B}).catch(e=>({passed:false,error:e.message}));
+  if(mode==='return-corner-occluded'&&result.corner)try{
+   await page.mouse.click(result.corner.x,result.corner.y);
+   result.nativeAction=await page.evaluate(()=>{const p=maskedReturnCorner;return {clicks:p.nativeClicks(),trustedClicks:p.trustedClicks(),readingRetained:p.controller.presentationMode()==='reading',workspaceHidden:p.surface.visibility(p.handle).workspace===false,returnAbsent:!document.querySelector('button[aria-label="返回工作空间"]')};});
+   result.passed&&=result.nativeAction.clicks===1&&result.nativeAction.trustedClicks===1&&result.nativeAction.readingRetained&&result.nativeAction.workspaceHidden&&result.nativeAction.returnAbsent;
+   result.independentWorkspace=await page.evaluate(()=>{const p=maskedReturnCorner,shown=p.controller.showWorkspace();return {shown,visible:p.surface.visibility(p.handle).workspace,nativeCornerStillHit:document.elementFromPoint(p.corner.x,p.corner.y)===p.occluder,returnAbsent:!document.querySelector('button[aria-label="返回工作空间"]')};});
+   result.passed&&=Object.values(result.independentWorkspace).every(value=>value===true);
+   result.restored=await page.evaluate(async()=>{const p=maskedReturnCorner;p.occluder.remove();await Promise.resolve();const returned=p.controller.showReading(),button=document.querySelector('button[aria-label="返回工作空间"]'),inspect=p.adapter.inspect(),r=button?.getBoundingClientRect();p.restoredButton=button;return {returned,newButton:!!button&&button!==p.button,oldDisconnected:!p.button.isConnected,mainQualified:inspect.ok,returnCurrent:p.adapter.isReturnSlotCurrent(inspect),center:r?{x:r.x+r.width/2,y:r.y+r.height/2}:null};});
+   result.passed&&=result.restored.returned&&result.restored.newButton&&result.restored.oldDisconnected&&result.restored.mainQualified&&result.restored.returnCurrent&&!!result.restored.center;
+   if(result.restored.center)await page.mouse.click(result.restored.center.x,result.restored.center.y);
+   result.restoredAction=await page.evaluate(()=>{const p=maskedReturnCorner;return {workspaceVisible:p.surface.visibility(p.handle).workspace,returnRemoved:!!p.restoredButton&&!p.restoredButton.isConnected,draftPreserved:document.querySelector('#draft')===p.draft&&p.draft.value==='fixture draft',forbiddenReads:p.reads()};});
+   result.passed&&=result.restoredAction.workspaceVisible&&result.restoredAction.returnRemoved&&result.restoredAction.draftPreserved&&result.restoredAction.forbiddenReads===0;
+  }catch(e){result.passed=false;result.error=e.message;}finally{await page.evaluate(()=>{globalThis.maskedReturnCorner?.controller.stop();globalThis.maskedReturnCorner?.discovery.stop();});}
   if(result.passed&&mode==='stable-drain')try{await page.waitForFunction(()=>!!maskedCase.adapter.prepareIdle(),null,{timeout:1500});const before=await page.evaluate(()=>({emissions:maskedCase.emissions(),probes:maskedCase.probes()}));await page.waitForTimeout(250);const after=await page.evaluate(()=>({emissions:maskedCase.emissions(),probes:maskedCase.probes()}));result.stable=JSON.stringify(before)===JSON.stringify(after);result.passed&&=result.stable;await page.evaluate(()=>{maskedCase.controller.stop();maskedCase.discovery.stop();});}catch(e){result.passed=false;result.error=e.message;}
   results.push({mode,...result});await page.close();
  }

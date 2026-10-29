@@ -28,6 +28,9 @@ export function createFlowMountSurface({document:doc,createFrameURL,hasNativeLay
   for(const {node,parent,left,top,clampedLeft,clampedTop,changed} of saved.entries)if(!changed&&node.isConnected&&node.ownerDocument===doc&&node.parentElement===parent&&node.scrollLeft===clampedLeft&&node.scrollTop===clampedTop)node.scrollTo({left,top,behavior:'instant'});
  }
  function hide(m,role,reason='suspended'){
+  // An explicit close during a probe still cancels it when the empty switch
+  // is already temporarily closed and therefore emits no beforetoggle event.
+  if(m.readingProbe&&(!role||role==='workspace'))m.readingProbe.cancelled=true;
   // Native observation sees owned attribute writes too. Rewriting the same
   // handoff marker would feed geometry back into itself and starve pointerup.
   for(const s of m.roles)if(!role||s.role===role){s.reason=reason;if(['native-layer','workspace-geometry'].includes(reason)&&s.role==='workspace'&&m.inputPointerActive?.()&&intact(m,s)&&isSameNativeRegions(m.plan,{allowPresentationChange:true})){if(!s.node.hasAttribute('data-va-input-handoff'))s.node.setAttribute('data-va-input-handoff','');continue;}if(open(s))s.exit.hidePopover();}
@@ -100,7 +103,13 @@ export function createFlowMountSurface({document:doc,createFrameURL,hasNativeLay
      // before this target receives the old closed notification. That delayed
      // event is not a new user exit. beforetoggle still records a real close
      // synchronously, before any subsequent recovery can change its intent.
-     const closing=e=>{if(e.target!==exit||e.newState!=='closed'||e.type==='toggle'&&open(s))return;if(role==='workspace'){if(e.type==='beforetoggle')m.cancelInput?.();win.queueMicrotask(()=>restoreReading(m));}if(!s.reason)onSurrender({role,reason:role==='workspace'?'native-reading':'native-list',phase:e.type==='beforetoggle'?'closing':undefined});};
+     const closing=e=>{if(e.target!==exit)return;
+      const probe=m.readingProbe;
+      if(probe&&e.type==='beforetoggle'){
+       if(role==='workspace'&&(e.newState==='closed'&&probe.ownClosing||e.newState==='open'&&probe.ownOpening))return;
+       probe.cancelled=true;
+      }
+      if(e.newState!=='closed'||e.type==='toggle'&&open(s))return;if(role==='workspace'){if(e.type==='beforetoggle')m.cancelInput?.();win.queueMicrotask(()=>restoreReading(m));}if(!s.reason)onSurrender({role,reason:role==='workspace'?'native-reading':'native-list',phase:e.type==='beforetoggle'?'closing':undefined});};
      exit.addEventListener('beforetoggle',closing);exit.addEventListener('toggle',closing);s.cleanup=()=>{exit.removeEventListener('beforetoggle',closing);exit.removeEventListener('toggle',closing);};
      doc.body.append(exit);
     }
@@ -296,7 +305,40 @@ export function createFlowMountSurface({document:doc,createFrameURL,hasNativeLay
   // The adapter can discover a change before the layout observer. A closed
   // switch must revoke controller presentation too, so reproof can recover.
   surrenderChanged(){let changed=false;for(const m of mounts.values())if(!geometry(m)){changed=true;m.onSurrender({role:'workspace',reason:'workspace-geometry'});}return changed;},
-  withNativeReading(handle,read,guard){const m=lookup(handle);if(open(m.roles[0])||!guard()||!isNativeReadingCurrent(m.plan))return null;const result=read();return guard()&&isNativeReadingCurrent(m.plan)&&!result?.then?result:null;},
+  withNativeReading(handle,read,guard){
+   const m=lookup(handle),workspace=m.roles[0],plan=m.plan;
+   if(m.readingProbe||typeof read!=='function'||typeof guard!=='function')return null;
+   const states=m.roles.map(open),frame=workspace.frame,window=frame.contentWindow;
+   const current=()=>mounts.get(handle.id)===m&&m.handle===handle&&m.plan===plan&&workspace.frame===frame&&frame.contentWindow===window&&
+    m.roles.filter(s=>!s.retired).every(s=>intact(m,s))&&!nativeLayer()&&!m.inputPointerActive?.()&&guard()&&isSameNativeRegions(plan);
+   try{if(!current())return null;}catch{return null;}
+   // A bounded synchronous probe restores actual native visibility, then reads
+   // through the existing fresh source callback. It never reads hidden content
+   // or changes controller intent, frame focus, or the saved reading position.
+   const probe=m.readingProbe={cancelled:false,ownClosing:false,ownOpening:false};
+   const changes=new win.MutationObserver(()=>{probe.cancelled=true;});
+   changes.observe(doc.documentElement,{subtree:true,childList:true,attributes:true,characterData:true});
+   const nativeEvent=e=>{if(e.isTrusted)probe.cancelled=true;};
+   const events=['pointerdown','keydown','beforeinput','compositionstart','focusin'];
+   for(const type of events)doc.addEventListener(type,nativeEvent,true);
+   let ok=false,value=null;
+   try{
+    if(states[0]){probe.ownClosing=true;workspace.exit.hidePopover();probe.ownClosing=false;}
+    const readingCurrent=()=>!probe.cancelled&&current()&&!open(workspace)&&m.roles.every((s,i)=>i===0||open(s)===states[i])&&isNativeReadingCurrent(plan);
+    if(!readingCurrent())return null;
+    value=read();
+    if(value?.then||!readingCurrent()||changes.takeRecords().length)return null;
+    if(states[0]){probe.ownOpening=true;workspace.exit.showPopover();probe.ownOpening=false;}
+    // Reopening can run native beforetoggle hooks. Never return a proof if a
+    // hook changed source nodes, authority, frame identity, or native controls.
+    ok=!probe.cancelled&&current()&&m.roles.every((s,i)=>open(s)===states[i])&&changes.takeRecords().length===0&&
+     (!states[0]||active(m));
+    return ok?value:null;
+   }catch{return null;}finally{
+    changes.disconnect();for(const type of events)doc.removeEventListener(type,nativeEvent,true);m.readingProbe=null;
+    if(!ok&&mounts.get(handle.id)===m){hide(m,'workspace','workspace-geometry');m.onSurrender({role:'workspace',reason:'workspace-geometry'});}
+   }
+  },
   isRebindCurrent(handle,inspection){try{const m=lookup(handle);return !m.roles.some(open)&&inspection?.regionEpoch===handle.regionEpoch&&isSameNativeRegions(m.plan)&&m.roles.filter(s=>!s.retired).every(s=>intact(m,s));}catch{return false;}},
   rebind(handle,context,inspection){const m=lookup(handle);if(m.roles.some(open)||!isSameNativeRegions(m.plan)||!context?.binding?.documentToken||inspection?.regionEpoch!==handle.regionEpoch)throw Error('invalid-flow-rebind');m.handle=Object.freeze({...handle,documentToken:context.binding.documentToken});return m.handle;},
   dispose(handle){const m=lookup(handle);m.cleanup();hide(m,null,'disposed');for(const s of m.roles){s.node.remove();s.exit.remove();}m.style.remove();for(const {node,attr,previous} of m.markers)if(node.getAttribute(attr)===handle.id){if(previous===null)node.removeAttribute(attr);else node.setAttribute(attr,previous);}mounts.delete(handle.id);}

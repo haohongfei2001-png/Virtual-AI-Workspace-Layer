@@ -7,10 +7,11 @@ function dom(){
  let doc;
  class Element{
   constructor(tag){this.tagName=tag;this.ownerDocument=doc;this.children=[];this.attrs={};this.dataset={};this.style={};this.events={};this.isConnected=true;this.scrollTop=0;this.clientWidth=0;this.clientHeight=0;this.textContent='';}
-  setAttribute(k,v){this.attrs[k]=String(v);if(k==='class')this.className=String(v);}
+  setAttribute(k,v){this.attrs[k]=String(v);if(k==='class'){this.className=String(v);if(this.className.split(' ').includes('workspace')){this.clientWidth=1000;this.clientHeight=200;}}}
   getAttribute(k){return k==='data-focus-key'?this.dataset.focusKey??this.attrs[k]??null:this.attrs[k]??null;}
   hasAttribute(k){return k==='data-focus-key'?this.getAttribute(k)!==null:k in this.attrs;}
   append(...nodes){for(const n of nodes){n.parentNode=this;this.children.push(n);}}
+  prepend(...nodes){for(const n of nodes)n.parentNode=this;this.children.unshift(...nodes);}
   replaceChildren(...nodes){this.children=[];this.append(...nodes);}
   remove(){if(this.parentNode)this.parentNode.children=this.parentNode.children.filter(n=>n!==this);this.isConnected=false;}
   attachShadow(){return this.shadowRoot=new Element('shadow');}

@@ -2,7 +2,7 @@ import test from 'node:test';
 import {runInNewContext} from 'node:vm';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
-import {waitHostScaleSurfaces,hostScaleFailureFacts} from './fixtures/host-scale-surfaces.mjs';
+import {waitHostScaleSurfaces,hostScaleFailureFacts,observeHostFlowSurfaces} from './fixtures/host-scale-surfaces.mjs';
 const frame=(role,visible=async()=>true)=>({detached:false,url(){return `chrome-extension://fixture/${role}.html`;},isDetached(){return this.detached;},locator(selector){assert.equal(selector,'.workspace');return {isVisible:visible};}});
 function setup(){let clock=0;const state={frames:[frame('workspace'),frame('sidebar')],open:2,closed:false};const page={frames:()=>state.frames,isClosed:()=>state.closed,locator(){return {count:async()=>state.open};},url:()=> 'http://127.0.0.1:1234/'};return {state,page,options:{extensionId:'fixture',timeout:100,now:()=>clock,pause:async ms=>{clock+=ms;}},time:()=>clock,setTime:value=>{clock=value;}};}
 test('a detached observation is replaced by the unique current frame without any action replay',async()=>{
@@ -30,6 +30,31 @@ test('unrelated read error and closed parent are not swallowed as remounts',asyn
 });
 test('hung readonly query is bounded by original total budget',async()=>{
  const {page}=setup();page.locator=()=>({count:()=>new Promise(()=>{})});await assert.rejects(waitHostScaleSurfaces(page,{extensionId:'fixture',timeout:10}),/surfaces-deadline/);
+});
+function flowSetup(){
+ const f=setup();f.state.frames=[frame('workspace')];
+ f.state.flow={workspace:{count:1,flow:true,visible:true,hit:true},sidebar:{count:0,flow:false,visible:false,hit:false},nativeSidebar:{present:true,visible:true,hit:true,historyInside:true,history:{visible:true,hit:true},collapsed:false,toggle:{visible:false,hit:false}}};
+ f.page.evaluate=async(fn,input)=>{assert.equal(fn,observeHostFlowSurfaces);assert.deepEqual(input,{extensionId:'fixture'});return structuredClone(f.state.flow);};
+ f.page.locator=()=>assert.fail('flow readiness must not infer UI from exit-popover count');
+ Object.assign(f.options,{backend:'document-flow',sidebarMode:'NATIVE_RETAINED'});return f;
+}
+test('flow workspace requires its exact renderer and a separately visible native sidebar',async()=>{
+ const f=flowSetup(),rows=await waitHostScaleSurfaces(f.page,f.options);assert.equal(rows[0],f.state.frames[0]);assert.equal(rows[1],null);
+});
+for(const kind of ['missing-workspace','not-flow','occluded-workspace','hidden-workspace','unexpected-sidebar-frame','missing-native-sidebar','hidden-native-sidebar','occluded-native-history','unrelated-history'])test('flow rejects '+kind,async()=>{
+ const f=flowSetup(),v=f.state.flow;
+ if(kind==='missing-workspace')v.workspace.count=0;if(kind==='not-flow')v.workspace.flow=false;if(kind==='occluded-workspace')v.workspace.hit=false;if(kind==='hidden-workspace')v.workspace.visible=false;if(kind==='unexpected-sidebar-frame')v.sidebar.count=1;if(kind==='missing-native-sidebar')v.nativeSidebar.present=false;if(kind==='hidden-native-sidebar')v.nativeSidebar.visible=false;if(kind==='occluded-native-history')v.nativeSidebar.history.hit=false;if(kind==='unrelated-history')v.nativeSidebar.historyInside=false;
+ await assert.rejects(waitHostScaleSurfaces(f.page,f.options),/surfaces-deadline/);
+});
+test('flow parent geometry alone cannot accept an absent or hidden formal renderer',async()=>{
+ for(const hidden of [false,true]){const f=flowSetup();if(hidden)f.state.frames[0]=frame('workspace',async()=>false);else f.state.frames=[];await assert.rejects(waitHostScaleSurfaces(f.page,f.options),/surfaces-deadline/);}
+});
+test('flow rechecks the parent hit target before accepting a current frame',async()=>{
+ const f=flowSetup();let reads=0;f.page.evaluate=async()=>{const v=structuredClone(f.state.flow);if(++reads>1)v.workspace.hit=false;return v;};await assert.rejects(waitHostScaleSurfaces(f.page,f.options),/surfaces-deadline/);assert(reads>1);
+});
+test('responsive collapse requires a formally retained zero-sized sidebar and native drawer entry',async()=>{
+ const f=flowSetup();f.options.sidebarMode='FORMAL_RESPONSIVE_COLLAPSED';f.state.frames.push(frame('sidebar'));Object.assign(f.state.flow.sidebar,{count:1,flow:true,withinNativeSidebar:true,zeroRect:true});Object.assign(f.state.flow.nativeSidebar,{visible:false,hit:false,collapsed:true,toggle:{visible:true,hit:true}});
+ assert.equal((await waitHostScaleSurfaces(f.page,f.options))[0],f.state.frames[0]);f.state.flow.nativeSidebar.toggle.hit=false;await assert.rejects(waitHostScaleSurfaces(f.page,f.options),/surfaces-deadline/);
 });
 test('failure facts are bounded and text-free, including absent/closed parents',async()=>{
  assert.deepEqual(await hostScaleFailureFacts(null),{closed:true});const {page}=setup();page.evaluate=async()=>({openSurfaces:0,iframeCount:0});const facts=await hostScaleFailureFacts(page);assert.equal(facts.nativeDOM.openSurfaces,0);assert.equal(facts.frames.length,2);assert(!JSON.stringify(facts).includes('inputValue'));
