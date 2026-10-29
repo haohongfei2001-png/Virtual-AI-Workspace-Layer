@@ -8,6 +8,8 @@
 
 统一未安装包 `/private/tmp/VAIWL-v27-Main-and-Sidebar-20261029/extension`，构建 `a879a57bc82ad0e3c23e9aa4ac8da1fdefafb9d9491c87a7ed7b47d711707827`，204项源码闭包与测试包一致；包含下述主区误拒修复。证据 `/private/tmp/vaiwl-sidebar-panel-verification-20261029.json`，隔离旅程 `/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-hJZKwU/report.json`。原 f8 诊断安装202项包文件逐项未变，未控制/更新/Reload日常Chrome。真实修复 **NOT_RUN**、完整产品 **NOT_ACCEPTED**；既有CI未闭合项不由本次定向结果注销。不追加用户操作或采集请求。
 
+该提交的现有 CI 随后发现 `free-frame-surface-refresh` 轻量夹具缺少新版 main 尺寸接口，八处可见性/续约用例因此在尺寸通知中抛错；已用原失败本地复现并只补夹具几何接口，关联客户端检查及独立只读复核通过。动态尺寸仍由独立用例与上述浏览器反例验证，不更改正式包或生产保护。证据 `/private/tmp/vaiwl-surface-fixture-red-20261029.log`、`/private/tmp/vaiwl-surface-fixture-final-20261029.log`；其他 CI 失败保留，不宣称全绿或实机恢复。
+
 ## 2026-10-29 已取得真实主区报告，修复零高度分支的挂载误拒
 
 用户现有弹窗回执确认 `f8a68fa9b5b1…` 已在当前真实文档运行。首次主区报告明确为 `native-flow-branch-paint / retained-paint / retained-box`，拒绝路径完整、无预算截断；拒绝的 DIV 几何记录为 `[333,377,808,0]`。即时库已有12条引用，框架/授权注册仍为0，VIEW尚未派送。源码 `retainedPaint` 在递归检查后代前强制根盒具有正高度，因而这一首门槛会拒绝合法的零高度原生流成员。报告不含该分支的后代、CSS或用途，不能推断它为空、属于composer或其他后续检查必定通过。

@@ -8,6 +8,9 @@ function fixture(role='workspace'){
  const nativePending=[];let time=1000,id=0,navOptions,views=0;const timers=new Map(),listeners=new Set(),messageListeners=new Set(),historicalMessages=[],parentMessages=[],calls=[],pages=[],states=[],presented=[],restoredViews=[];let factories=0,stops=0,invalidations=0,recoveryOptions,recoveryOpens=0,recoveryStops=0,recoveryInvalidations=0,backupOptions,backupOpens=0,backupStops=0,backupInvalidations=0,snippetOptions,snippetOpens=0,snippetStops=0,snippetInvalidations=0;
  const element=()=>({children:[],setAttribute(){},append(n){n.parent=this;this.children.push(n);},replaceChildren(){this.children=[];},remove(){if(this.parent)this.parent.children=this.parent.children.filter(n=>n!==this);}});
  const body=element(),privateRoot=element();body.append(privateRoot);
+ // These cases model surface visibility and scheduling, not browser layout.
+ // The formal sidebar measures its persistent main, including auxiliary panels.
+ privateRoot.getBoundingClientRect=()=>({height:128});
  const events=new EventTarget();const document={visibilityState:'visible',addEventListener:events.addEventListener.bind(events),removeEventListener:events.removeEventListener.bind(events),body,createElement:element,defaultView:{parent:{postMessage(message,origin){parentMessages.push({message,origin});}}}};
  let grantId='grant',mountId='mount';let surfaceGet=async()=>({ok:true,surface:null});
  const grant=()=>({id:grantId,mountId,parentDocumentId:'parent',uiDocumentId:'ui',scopeGrantId:'scope',role,expiresAt:new Date(time+20000).toISOString()});
