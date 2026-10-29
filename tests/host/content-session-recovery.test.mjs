@@ -66,7 +66,7 @@ for(const transition of ['scope','document','start','pagehide','unverified'])tes
  else if(transition==='pagehide'){f.events.get('pagehide')({persisted:false});await f.session.start();}
  else prior.terminate('ui-grant-expired',{mode:'reading',sidebarDesired:false});
  await drain();
- if(transition==='unverified'){assert.equal(f.controllers.length,1);assert.equal(f.session.showWorkspace(),false);}
+ if(['unverified','scope','document'].includes(transition)){assert.equal(f.controllers.length,1);assert.equal(f.session.showWorkspace(),false);}
  else assert.equal(f.controllers[1].sidebarDesired,true);
  f.session.stop();
 });

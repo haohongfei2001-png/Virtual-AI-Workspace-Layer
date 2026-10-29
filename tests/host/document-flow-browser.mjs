@@ -1,5 +1,7 @@
 /** Existing anonymous host fixtures; no account, network responses or credentials.
- * Browser mechanism regression only; the formal MV3 journey is separate. */
+ * Browser mechanism regression only; the formal MV3 journey is separate.
+ * Opaque-island v2: property-only paint bans are superseded by explicit seams,
+ * real native-control geometry and independent reading/rollback guards. */
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {createRequire} from 'node:module';
@@ -29,29 +31,29 @@ try{
   const plan=captureNativeBaseline({document,inspection,onDiagnostic:r=>report=r});
   if(!plan){adapter.stop();return {admitted:false,reason:report?.reason,detail:report?.detail,box:[box.x,box.y,box.width,box.height]};}
   const capture=()=>captureNativeBaseline({document,inspection});
-  const escaped=document.createElement('div');escaped.style.cssText='height:.2px;width:10px';branch.append(escaped);const subpixelRejected=capture()===null;escaped.remove();
+  const escaped=document.createElement('div');escaped.style.cssText='height:.2px;width:10px';branch.append(escaped);const blankSubpixelAccepted=!!capture();escaped.remove();
   const text=document.createTextNode('native overflow');branch.append(text);const textRejected=capture()===null;text.remove();
   const zeroWidth=document.createTextNode('\u200b');branch.append(zeroWidth);const range=document.createRange();range.selectNodeContents(zeroWidth);const textBox=range.getBoundingClientRect();
   const zeroWidthTextRejected=textBox.width===0&&textBox.height>0&&capture()===null;zeroWidth.remove();
-  const child=document.createElement('button');child.textContent='Native action';child.style.cssText='position:fixed;left:400px;top:200px';branch.append(child);const controlRejected=capture()===null;child.remove();
+  const child=document.createElement('button');child.textContent='Native action';child.style.cssText='position:fixed;left:400px;top:200px';branch.append(child);const fixedControlPlan=!!capture();const fixedSurface=createFlowMountSurface({document,createFrameURL:({role})=>'chrome-extension://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/'+role+'.html'}),fixedHandle=await fixedSurface.mount({binding},inspection);const controlOverlapRejected=!fixedSurface.showWorkspace(fixedHandle);fixedSurface.dispose(fixedHandle);child.remove();
   const slider=document.createElement('input');slider.type='range';slider.style.cssText='width:100px;height:0;border:0;padding:0';branch.append(slider);const nativeZeroHeightControlRejected=slider.getBoundingClientRect().height===0&&capture()===null;slider.remove();
   const rule=document.createElement('style');rule.textContent='#fixture-flat-native-member::before{content:"";display:block;height:1px}';document.head.append(rule);const pseudoRejected=capture()===null;rule.remove();
-  const prior=branch.style.cssText;branch.style.outline='1px solid black';branch.style.outlineOffset='-2px';const outlineRejected=capture()===null;branch.style.cssText=prior;
-  branch.style.boxShadow='0 0 2px black';const shadowRejected=capture()===null;branch.style.cssText=prior;
+  const prior=branch.style.cssText;branch.style.outline='1px solid black';branch.style.outlineOffset='-2px';const inwardOutlineAccepted=!!capture();branch.style.cssText=prior;
+  branch.style.boxShadow='0 0 2px black';const smallShadowAccepted=!!capture();branch.style.cssText=prior;
   const surface=createFlowMountSurface({document,createFrameURL:({role})=>'chrome-extension://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/'+role+'.html'}),handle=await surface.mount({binding},inspection);
   const editor=document.querySelector('textarea'),draft=editor.value,shown=surface.showWorkspace(handle),safe=surface.validateActiveLayout(handle);
   const tick=async()=>{for(let i=0;i<3;i++)await new Promise(requestAnimationFrame);};
-  branch.append(escaped);await tick();const liveOverflowSurrendered=!surface.visibility(handle).workspace;escaped.remove();surface.showReading(handle);
+  branch.append(escaped);await tick();const blankSubpixelStaysPresented=surface.visibility(handle).workspace;escaped.remove();surface.showReading(handle);
   const recovered=surface.showWorkspace(handle)&&surface.validateActiveLayout(handle);
   const stylesheet=document.createElement('style');document.head.append(stylesheet);stylesheet.sheet.insertRule('#fixture-flat-native-leaf { height:.2px!important }');await tick();
-  const cssomOverflowSurrendered=!surface.visibility(handle).workspace;stylesheet.remove();surface.showReading(handle);const cssomRecovered=surface.showWorkspace(handle)&&surface.validateActiveLayout(handle);
+  const cssomBlankSubpixelStaysPresented=surface.visibility(handle).workspace;stylesheet.remove();surface.showReading(handle);const cssomRecovered=surface.showWorkspace(handle)&&surface.validateActiveLayout(handle);
   surface.showReading(handle);surface.dispose(handle);adapter.stop();
-  return {admitted:true,box:[box.x,box.y,box.width,box.height],subpixelRejected,textRejected,zeroWidthTextRejected,controlRejected,nativeZeroHeightControlRejected,pseudoRejected,outlineRejected,shadowRejected,shown,safe,liveOverflowSurrendered,recovered,cssomOverflowSurrendered,cssomRecovered,originalNodeAndDraft:editor.isConnected&&editor===document.querySelector('textarea')&&editor.value===draft,restored:branch.outerHTML===original};
+  return {admitted:true,box:[box.x,box.y,box.width,box.height],blankSubpixelAccepted,textRejected,zeroWidthTextRejected,fixedControlPlan,controlOverlapRejected,nativeZeroHeightControlRejected,pseudoRejected,inwardOutlineAccepted,smallShadowAccepted,shown,safe,blankSubpixelStaysPresented,recovered,cssomBlankSubpixelStaysPresented,cssomRecovered,originalNodeAndDraft:editor.isConnected&&editor===document.querySelector('textarea')&&editor.value===draft,restored:branch.outerHTML===original};
  },mainMountReceipt.mainMountCheck);
  // The report rounds geometry and does not capture CSS. Reconstruct its
  // decisive width/zero-height condition, not an invented pixel-exact subtree.
  assert.deepEqual(decision.box.slice(2),mainMountReceipt.mainMountCheck.rows[3][5].slice(2));
- assert.deepEqual({...decision,box:undefined},{admitted:true,box:undefined,subpixelRejected:true,textRejected:true,zeroWidthTextRejected:true,controlRejected:true,nativeZeroHeightControlRejected:true,pseudoRejected:true,outlineRejected:true,shadowRejected:true,shown:true,safe:true,liveOverflowSurrendered:true,recovered:true,cssomOverflowSurrendered:true,cssomRecovered:true,originalNodeAndDraft:true,restored:true});
+ assert.deepEqual({...decision,box:undefined},{admitted:true,box:undefined,blankSubpixelAccepted:true,textRejected:true,zeroWidthTextRejected:true,fixedControlPlan:true,controlOverlapRejected:true,nativeZeroHeightControlRejected:true,pseudoRejected:true,inwardOutlineAccepted:true,smallShadowAccepted:true,shown:true,safe:true,blankSubpixelStaysPresented:true,recovered:true,cssomBlankSubpixelStaysPresented:true,cssomRecovered:true,originalNodeAndDraft:true,restored:true});
  console.log(JSON.stringify({observedFlatHomeBranch:decision}));await flat.close();
  }
  {
@@ -76,13 +78,13 @@ try{
   };
   const wrap=inspection=>{const n=document.createElement('div');inspection.reading.before(n);n.append(inspection.reading);return n;};
   check('accepted','none','accepted');
-  check('uncovered','native-flow-uncovered-branch','branch-without-landmark',i=>{const n=document.createElement('div');n.setAttribute('data-private-id','PRIVATE_ID');n.title='PRIVATE_TITLE';n.textContent='PRIVATE_BODY';i.composer.after(n);return n;});
+  check('opaque-branch','none','accepted',i=>{const n=document.createElement('div');n.setAttribute('data-private-id','PRIVATE_ID');n.title='PRIVATE_TITLE';n.textContent='PRIVATE_BODY';i.composer.after(n);});
   check('wrapper-control','native-flow-wrapper-control','wrapper-control',i=>{const n=wrap(i);n.tabIndex=0;return n;});
   check('wrapper-text','native-flow-wrapper-text','wrapper-text',i=>{const n=wrap(i);n.prepend('PRIVATE_TEXT');return n;});
-  check('wrapper-effect','native-flow-wrapper-paint','wrapper-effect',i=>{const n=wrap(i);n.style.transform='translateX(1px)';return n;});
-  check('wrapper-visibility','native-flow-wrapper-paint','wrapper-visibility',i=>{const n=wrap(i);n.style.visibility='hidden';return n;});
-  check('retained-style','native-flow-branch-paint','retained-style',i=>{i.homeLayoutNodes=[];const n=document.createElement('div'),child=document.createElement('button');n.style.cssText='height:40px;position:relative';child.textContent='PRIVATE_BUTTON';child.style.position='absolute';n.append(child);i.composer.after(n);return child;});
-  check('retained-svg-reference','native-flow-branch-paint','retained-svg',i=>{i.homeLayoutNodes=[];const n=document.createElement('div');n.style.height='40px';n.innerHTML='<svg width="20" height="20" style="overflow:hidden"><use href="#PRIVATE_ID"/></svg>';i.composer.after(n);return n.querySelector('use');});
+  check('unknown-wrapper-effect','native-flow-wrapper-paint','wrapper-seam',i=>{const n=wrap(i);n.style.transform='translateX(1px)';return n;});
+  check('unknown-wrapper-visibility','native-flow-wrapper-paint','wrapper-seam',i=>{const n=wrap(i);n.style.visibility='hidden';return n;});
+  check('nonflow-native-root','native-flow-branch-paint','retained-box',i=>{const n=document.createElement('div');n.style.cssText='height:40px;width:40px;position:fixed';n.textContent='PRIVATE_BUTTON';i.composer.after(n);return n;});
+  check('native-svg-property-is-not-authority','none','accepted',i=>{const n=document.createElement('div');n.style.height='40px';n.innerHTML='<svg width="20" height="20" style="overflow:hidden"><use href="#PRIVATE_ID"/></svg>';i.composer.after(n);});
   root.innerHTML=initial;const inspection=adapter.inspect(),nativeGet=window.getComputedStyle;let thrown;
   window.getComputedStyle=()=>{throw Error('PRIVATE_NATIVE_ERROR');};
   try{captureNativeBaseline({document,inspection,onDiagnostic:r=>thrown=r});}finally{window.getComputedStyle=nativeGet;}
@@ -115,7 +117,7 @@ try{
  });
  await hydration.close();
  // A native control may be replaced within the same protected composer. The
- // old proof must fail, then the complete restored-native proof may recover.
+ // current concrete control is remeasured without replacing the layout lease.
  const replacement=await browser.newPage({viewport:{width:1440,height:1000}});
  await replacement.route('**/*',r=>r.request().url()==='https://chatgpt.com/c/'+C?r.fulfill({contentType:'text/html',body:legacy}):r.abort());
  await replacement.goto('https://chatgpt.com/c/'+C);await replacement.addScriptTag({content:outputFiles[0].text});
@@ -130,8 +132,8 @@ try{
   for(const {role,frame}of surface.frames(handle))window.dispatchEvent(new MessageEvent('message',{origin:extensionOrigin,source:frame.contentWindow,data:{type:'VAIWL_UI_JOIN',role,nonce:'nonce_'+role}}));
   await settle();const frames=surface.frames(handle).map(x=>x.frame),initial=surface.visibility(handle).workspace,input=document.querySelector('textarea');input.value='preserved draft';
   const old=document.querySelector('#tools-button'),fresh=old.cloneNode(true);old.replaceWith(fresh);
-  const oldProofRejected=!surface.isSameNativeRegions(handle);await settle();
-  const result={initial,oldProofRejected,recovered:surface.visibility(handle).workspace,sameFrames:frames.every((f,i)=>surface.frames(handle)[i]?.frame===f),registrations,draft:input.value==='preserved draft',newProof:surface.isSameNativeRegions(handle)};
+  const layoutContinuous=surface.isSameNativeRegions(handle);await settle();
+  const result={initial,layoutContinuous,recovered:surface.visibility(handle).workspace,sameFrames:frames.every((f,i)=>surface.frames(handle)[i]?.frame===f),registrations,draft:input.value==='preserved draft',newProof:surface.isSameNativeRegions(handle)};
   controller.showReading();const composer=document.querySelector('#composer');composer.setAttribute('role','group');
   result.changedStructureRejected=surface.refreshNativeBaseline(handle,()=>adapter.inspect())===null;composer.removeAttribute('role');
   controller.showWorkspace();await settle();
@@ -159,7 +161,7 @@ try{
  await replacement.close();
  console.log(JSON.stringify({lateHome,replacedControl}));
  assert.deepEqual(lateHome,{waiting:true,homeContract:true,mounted:true,registrations:1,privateHidden:true});
- assert.deepEqual(replacedControl,{initial:true,oldProofRejected:true,recovered:true,sameFrames:true,registrations:1,draft:true,newProof:true,changedStructureRejected:true,landmarkReplacement:true,oldJoinRejected:true,freshGrantResumes:true,failedProofHidden:true,restoredProofRejoins:true,restoredProofResumes:true,revoked:true});
+ assert.deepEqual(replacedControl,{initial:true,layoutContinuous:true,recovered:true,sameFrames:true,registrations:1,draft:true,newProof:true,changedStructureRejected:true,landmarkReplacement:true,oldJoinRejected:true,freshGrantResumes:true,failedProofHidden:true,restoredProofRejoins:true,restoredProofResumes:true,revoked:true});
  }
  // The home adapter admits the welcome/composer landmarks without claiming
  // that they exhaust their common parent. Replay an additional native flow
@@ -227,43 +229,34 @@ try{
   surface.showReading(handle);
   const capture=()=>p.captureNativeBaseline({document,inspection:p.inspection,isOwnedSurface:n=>surface.isOwnedSurface(n)});
   const iconStyle=icon.getAttribute('style'),pathData=path.getAttribute('d');
-  icon.style.overflow='visible';const unclippedIconRejected=capture()===null;
-  icon.style.overflow='clip';icon.style.overflowClipMargin='100px';const expandedClipRejected=capture()===null;icon.setAttribute('style',iconStyle);
-  const rejectedGraphics=[];
-  for(const tag of ['use','foreignObject','animate']){const node=document.createElementNS(icon.namespaceURI,tag);icon.append(node);rejectedGraphics.push(capture()===null);node.remove();}
+  // An unchanged small native icon does not become unsafe merely because its
+  // overflow declaration changes. Actual controls and member extents decide.
+  icon.style.overflow='visible';const unchangedIconAccepted=!!capture();icon.setAttribute('style',iconStyle);
   path.setAttribute('d','M-100 -100H100V100H-100Z');const clippedOversizeAccepted=!!capture();path.setAttribute('d',pathData);
-  // The final retained member is a hidden empty leaf. Model an expensive last
-  // style read without sleeping or changing any native node: passing earlier
-  // budget checks must not authorize a result produced after the deadline.
-  const nativeStyle=window.getComputedStyle,ownNow=Object.getOwnPropertyDescriptor(performance,'now');let clock=0,hiddenReads=0,lateDeadlineRejected;
-  Object.defineProperty(performance,'now',{configurable:true,value:()=>clock});
-  window.getComputedStyle=(node,pseudo)=>{const result=nativeStyle.call(window,node,pseudo);if(node===hidden&&++hiddenReads===3)clock=26;return result;};
-  try{lateDeadlineRejected=capture()===null;}finally{window.getComputedStyle=nativeStyle;if(ownNow)Object.defineProperty(performance,'now',ownNow);else delete performance.now;}
+  const passive=document.createElement('span');for(let i=0;i<300;i++)passive.append(document.createElement('span'));branch.append(passive);const opaqueDescendantsAccepted=!!capture();passive.remove();
   const rule=document.createElement('style');document.head.append(rule);
-  rule.textContent='#native-extra{position:absolute}';const absoluteRejected=capture()===null;
-  rule.textContent='#native-extra button{position:fixed}';const escapeRejected=capture()===null;rule.remove();
+  rule.textContent='#native-extra{position:absolute}';const absoluteRejected=capture()===null;rule.remove();
   const text=document.createTextNode('x'.repeat(1000));branch.append(text);const textOverflowRejected=capture()===null;text.remove();
-  const pseudo=document.createElement('style');pseudo.textContent='#native-extra::after{content:"native annotation"}';document.head.append(pseudo);const pseudoRejected=capture()===null;pseudo.remove();
-  const list=document.createElement('ul');list.innerHTML='<li>Native item</li>';branch.append(list);const markerRejected=capture()===null;list.remove();
-  rule.textContent='#native-extra button{-webkit-text-stroke:1000px black}';document.head.append(rule);const strokeRejected=capture()===null;rule.remove();
+  const pseudo=document.createElement('style');pseudo.textContent='#native-extra::after{content:"native annotation"}';document.head.append(pseudo);const nativeAnnotationAccepted=!!capture();pseudo.remove();
+  const list=document.createElement('ul');list.innerHTML='<li>Native item</li>';branch.append(list);const nativeListAccepted=!!capture();list.remove();
   // Keep native element order while also refusing a conflict with the known
   // welcome-before-composer contract. No silent reinterpretation of a member.
   const reading=p.inspection.reading,composer=p.inspection.composer;
   parent.prepend(composer);const conflict=document.createElement('div');conflict.style.cssText='height:20px';composer.after(conflict);const orderRejected=capture()===null;conflict.remove();reading.after(composer);
   const resumed=surface.showWorkspace(handle)&&surface.validateActiveLayout(handle);
-  icon.style.overflow='visible';await tick();const clipChangeSurrendered=!surface.visibility(handle).workspace;
+  icon.style.overflow='visible';await tick();const unchangedIconStaysPresented=surface.visibility(handle).workspace;
   icon.setAttribute('style',iconStyle);surface.showReading(handle);const clipRestored=surface.showWorkspace(handle)&&surface.validateActiveLayout(handle);
   const css=document.createElement('style');document.head.append(css);await tick();
   css.sheet.insertRule('#native-extra button{position:relative;left:1200px}');
   await tick();const cssomSurrendered=!surface.visibility(handle).workspace;
   css.remove();surface.showReading(handle);const returned=surface.showWorkspace(handle);
-  hidden.hidden=false;await tick();const hiddenChangeSurrendered=!surface.visibility(handle).workspace;hidden.hidden=true;
-  surface.showReading(handle);surface.showWorkspace(handle);
+  hidden.hidden=false;await tick();const hiddenChangeSurrendered=!surface.visibility(handle).workspace;surface.showReading(handle);const hiddenChangeReproved=!!surface.refreshNativeBaseline(handle,()=>p.adapter.inspect())&&surface.showWorkspace(handle);hidden.hidden=true;
+  surface.showReading(handle);surface.refreshNativeBaseline(handle,()=>p.adapter.inspect());surface.showWorkspace(handle);
   const replacement=branch.cloneNode(true);branch.replaceWith(replacement);await tick();const replacementRejected=!surface.isSameNativeRegions(handle)&&!surface.visibility(handle).workspace;replacement.replaceWith(branch);
   surface.dispose(handle);p.adapter.stop();
-  return {unclippedIconRejected,expandedClipRejected,rejectedGraphics,clippedOversizeAccepted,lateDeadlineRejected,clipChangeSurrendered,clipRestored,absoluteRejected,escapeRejected,textOverflowRejected,pseudoRejected,markerRejected,strokeRejected,orderRejected,resumed,cssomSurrendered,returned,hiddenChangeSurrendered,replacementRejected,restored:parent.outerHTML===p.original&&editor===parent.querySelector('textarea')&&editor.value==='fixture draft'&&icon===button.querySelector('svg')&&path===icon.firstChild};
+  return {unchangedIconAccepted,clippedOversizeAccepted,opaqueDescendantsAccepted,unchangedIconStaysPresented,clipRestored,absoluteRejected,textOverflowRejected,nativeAnnotationAccepted,nativeListAccepted,orderRejected,resumed,cssomSurrendered,returned,hiddenChangeSurrendered,hiddenChangeReproved,replacementRejected,restored:parent.outerHTML===p.original&&editor===parent.querySelector('textarea')&&editor.value==='fixture draft'&&icon===button.querySelector('svg')&&path===icon.firstChild};
  });
- assert.deepEqual(retainedGuards,{unclippedIconRejected:true,expandedClipRejected:true,rejectedGraphics:[true,true,true],clippedOversizeAccepted:true,lateDeadlineRejected:true,clipChangeSurrendered:true,clipRestored:true,absoluteRejected:true,escapeRejected:true,textOverflowRejected:true,pseudoRejected:true,markerRejected:true,strokeRejected:true,orderRejected:true,resumed:true,cssomSurrendered:true,returned:true,hiddenChangeSurrendered:true,replacementRejected:true,restored:true});
+ assert.deepEqual(retainedGuards,{unchangedIconAccepted:true,clippedOversizeAccepted:true,opaqueDescendantsAccepted:true,unchangedIconStaysPresented:true,clipRestored:true,absoluteRejected:true,textOverflowRejected:true,nativeAnnotationAccepted:true,nativeListAccepted:true,orderRejected:true,resumed:true,cssomSurrendered:true,returned:true,hiddenChangeSurrendered:true,hiddenChangeReproved:true,replacementRejected:true,restored:true});
  const overlapRejected=await members.evaluate(async()=>{
   const p=nativeMemberProbe,branch=document.createElement('div');branch.style.cssText='height:40px;position:relative;top:-24px';p.parent.append(branch);
   const surface=flowModule.createFlowMountSurface({document,createFrameURL:({role})=>'chrome-extension://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/'+role+'.html'});
@@ -298,7 +291,7 @@ try{
   const handle=await surface.mount({binding},inspection),shown=surface.showWorkspace(handle),active=surface.validateActiveLayout(handle);
   viewport.focus();const focusRetained=document.activeElement===viewport&&getComputedStyle(viewport).display==='grid'&&viewport.getAttribute('role')==='region'&&viewport.getAttribute('tabindex')==='0';
   surface.showReading(handle);const readingRestored=getComputedStyle(viewport).display==='block'&&document.activeElement===viewport&&surface.showWorkspace(handle);
-  viewport.setAttribute('role','button');await new Promise(resolve=>setTimeout(resolve,0));
+  viewport.setAttribute('role','button');await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
   const changedRoleSurrendered=!surface.visibility(handle).workspace&&!surface.isSameNativeRegions(handle);viewport.setAttribute('role','region');
   surface.dispose(handle);adapter.stop();
   return {adapterReady:inspection.ok,returnReady:!!inspection.returnSlot,policy:inspection.viewportFocus,flowReady:true,unselectedRejected,actionRejected,tabOrderRejected,editableRejected,nonScrollingRejected,shown,active,focusRetained,readingRestored,changedRoleSurrendered,restored:viewport.outerHTML===original&&viewport.parentElement===parent&&viewport.querySelector('textarea')===editor};
@@ -357,7 +350,7 @@ try{
   const binding={documentToken:'preflight',producerToken:'preflight',browserDocumentId:'preflight',routeEpoch:1,origin:location.origin,expiresAt:new Date(Date.now()+20000).toISOString()};
   const context=await adapter.start({binding,emit:async p=>({state:'accepted',localSeq:p.localSeq,receiptId:'preflight'})});
   const original=document.querySelector('#prompt-textarea');original.value='existing draft';
-  const branch=document.createElement('div');branch.hidden=true;document.querySelector('main').append(branch);
+  const branch=document.createElement('div');branch.style.cssText='position:fixed;left:320px;top:150px;width:160px;height:60px';const nativeButton=document.createElement('button');nativeButton.textContent='Native action';branch.append(nativeButton);document.querySelector('main').append(branch);
   const extensionOrigin='chrome-extension://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
   const implementation=createFlowMountSurface({document,createFrameURL:({role})=>extensionOrigin+'/'+role+'.html'});
   surface={...implementation,mount:async(...args)=>{attempts++;return implementation.mount(...args);}};
@@ -367,7 +360,7 @@ try{
   globalThis.preflightProbe={controller,surface,adapter,branch,original,extensionOrigin,registrations:()=>registrations,attempts:()=>attempts};
   return {adapterReady,handle:!!handle,status:controller.localStatus(),mode:controller.presentationSnapshot()?.mode,attempts,registrations,owned:document.querySelectorAll('[data-va-owned],[data-va-flow-root]').length,draft:original.value};
  });
- assert.deepEqual(refused,{adapterReady:true,handle:false,status:'surface-native-flow-uncovered-branch',mode:'waiting',attempts:1,registrations:0,owned:0,draft:'existing draft'});
+ assert.deepEqual(refused,{adapterReady:true,handle:false,status:'surface-native-flow-branch-paint',mode:'waiting',attempts:1,registrations:0,owned:0,draft:'existing draft'});
  await preflight.evaluate(()=>preflightProbe.branch.remove());
  await preflight.waitForFunction(()=>preflightProbe.controller.presentationSnapshot()?.registered===true);
  await preflight.evaluate(()=>{const p=preflightProbe;for(const frame of document.querySelectorAll('iframe')){const role=frame.title==='工作空间'?'workspace':'sidebar';window.dispatchEvent(new MessageEvent('message',{origin:p.extensionOrigin,source:frame.contentWindow,data:{type:'VAIWL_UI_JOIN',role,nonce:'nonce_'+role}}));}});
@@ -388,7 +381,8 @@ try{
   const viewport=document.querySelector('[data-app-action-timeline-scroll]'),marker=document.createElement('div');marker.id='fixture-native-marker';
   const css=document.createElement('style');css.textContent='#fixture-native-marker{display:none}';document.head.append(css);viewport.append(marker);
   const inspection=adapter.inspect(),before=marker.outerHTML,nativeChildren=[...viewport.children];
-  const unselectedRejected=captureNativeBaseline({document,inspection:{...inspection,viewportMarkers:null}})===null;
+  const ordinaryPlan=captureNativeBaseline({document,inspection:{...inspection,viewportMarkers:null}});
+  const unselectedRetained=!!ordinaryPlan&&ordinaryPlan.retainedMembers.some(member=>member.node===marker);
   surface=createFlowMountSurface({document,createFrameURL:({role})=>'chrome-extension://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/'+role+'.html'});
   const handle=await surface.mount({binding},inspection),shown=surface.showWorkspace(handle),active=surface.validateActiveLayout(handle);
   const untouched=marker.outerHTML===before&&marker.parentElement===viewport&&nativeChildren.every((n,i)=>[...viewport.children].filter(n=>!surface.isOwnedSurface(n))[i]===n);
@@ -402,7 +396,8 @@ try{
   await settle();const automaticallyHidden=!surface.visibility(handle).workspace;
   const cssChangeRejected=!surface.isSameNativeRegions(handle)&&!surface.validateActiveLayout(handle);
   surface.showReading(handle);
-  const visibleZeroRejected=captureNativeBaseline({document,inspection:adapter.inspect(),isOwnedSurface:n=>surface.isOwnedSurface(n)})===null;
+  const visiblePlan=captureNativeBaseline({document,inspection:adapter.inspect(),isOwnedSurface:n=>surface.isOwnedSurface(n)});
+  const visibleZeroReproved=!!visiblePlan&&visiblePlan.retainedMembers.some(member=>member.node===marker)&&visiblePlan.flowOrder.includes(marker);
   css.textContent='#fixture-native-marker{display:none}';marker.append(document.createElement('button'));
   const childRejected=!surface.isSameNativeRegions(handle);marker.replaceChildren();marker.setAttribute('tabindex','0');
   const focusRejected=!surface.isSameNativeRegions(handle);marker.removeAttribute('tabindex');
@@ -413,9 +408,9 @@ try{
   const nativeHead=document.head;nativeHead.remove();let cleanupComplete=true;
   try{surface.dispose(handle);}catch{cleanupComplete=false;}finally{document.documentElement.prepend(nativeHead);adapter.stop();}
   cleanupComplete=cleanupComplete&&!document.querySelector('[data-va-owned],[data-va-flow-root]');
-  return {adapterReady:inspection.ok,policy:inspection.viewportMarkers,unselectedRejected,shown,active,untouched,stableBeforeChange,automaticallyHidden,cssChangeRejected,visibleZeroRejected,childRejected,focusRejected,recovered,cssomAutomaticallyHidden,cleanupComplete,restored:marker.outerHTML===before&&nativeChildren.every((n,i)=>viewport.children[i]===n)};
+  return {adapterReady:inspection.ok,policy:inspection.viewportMarkers,unselectedRetained,shown,active,untouched,stableBeforeChange,automaticallyHidden,cssChangeRejected,visibleZeroReproved,childRejected,focusRejected,recovered,cssomAutomaticallyHidden,cleanupComplete,restored:marker.outerHTML===before&&nativeChildren.every((n,i)=>viewport.children[i]===n)};
  });
- assert.deepEqual(markerProof,{adapterReady:true,policy:'empty-div-v1',unselectedRejected:true,shown:true,active:true,untouched:true,stableBeforeChange:true,automaticallyHidden:true,cssChangeRejected:true,visibleZeroRejected:true,childRejected:true,focusRejected:true,recovered:true,cssomAutomaticallyHidden:true,cleanupComplete:true,restored:true});
+ assert.deepEqual(markerProof,{adapterReady:true,policy:'empty-div-v1',unselectedRetained:true,shown:true,active:true,untouched:true,stableBeforeChange:true,automaticallyHidden:true,cssChangeRejected:true,visibleZeroReproved:true,childRejected:true,focusRejected:true,recovered:true,cssomAutomaticallyHidden:true,cleanupComplete:true,restored:true});
  console.log(JSON.stringify({inactiveViewportMarker:markerProof}));await markers.close();
  // Native popovers have no required aria-modal attribute. The real adapter,
  // controller and flow backend must agree while one is open and after close.
@@ -476,7 +471,7 @@ try{
   const state=await editor.evaluate(()=>{const p=editorProbe;return {shown:p.surface.visibility(p.handle).workspace,mode:p.controller.localStatus(),sameFrames:p.frames.every((f,i)=>p.surface.frames(p.handle)[i]?.frame===f),drafts:p.plain.value==='plain draft'&&p.rich.textContent==='rich draft',nodes:p.plain.isConnected&&p.rich.isConnected,returnRemoved:!document.querySelector('[aria-label="返回工作空间"]')};});
   assert.deepEqual(state,{shown:true,mode:'ready',sameFrames:true,drafts:true,nodes:true,returnRemoved:true});
  }
- const inactiveIdentity=await editor.evaluate(()=>{const {controller,surface,handle,adapter,rich}=editorProbe;controller.showReading();rich.remove();return {same:surface.isSameNativeRegions(handle),refreshed:!!surface.refreshNativeBaseline(handle,()=>adapter.inspect())};});assert.deepEqual(inactiveIdentity,{same:false,refreshed:true});
+ const inactiveControlRemoval=await editor.evaluate(()=>{const {controller,surface,handle,adapter,rich}=editorProbe;controller.showReading();rich.remove();return {same:surface.isSameNativeRegions(handle),refreshed:!!surface.refreshNativeBaseline(handle,()=>adapter.inspect())};});assert.deepEqual(inactiveControlRemoval,{same:true,refreshed:true});
  await editor.evaluate(()=>{editorProbe.controller.stop();editorProbe.adapter.stop();});await editor.close();
  // CSS-only breakpoint counterexample, not a newly observed ChatGPT topology.
  // The native fixture is explicitly responsive and all its controls fit.
@@ -616,7 +611,8 @@ try{
    surface.surrenderChanged();const positionNeedsReproof=surface.needsNativeBaselineRefresh(handle);
    changedPosition.remove();surface.showWorkspace(handle);
    if(!positionChangeRejected||!positionNeedsReproof)throw Error('positioning-change-must-reprove');
-   const nextHeader=before.header.cloneNode(true);before.header.replaceWith(nextHeader);await new Promise(resolve=>setTimeout(resolve,0));
+   const settle=()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+   const nextHeader=before.header.cloneNode(true);before.header.replaceWith(nextHeader);await settle();
    const replacedHeaderRejected=surface.isSameNativeRegions(handle)===false&&surface.visibility(handle).workspace===false;
    nextHeader.replaceWith(before.header);surface.showWorkspace(handle);
    // A newly inserted native accessible control may overflow a transparent
@@ -624,9 +620,9 @@ try{
    const extra=document.createElement('div');extra.setAttribute('role','menuitem');extra.tabIndex=0;
    extra.style.cssText=`position:fixed;pointer-events:auto;left:${boxes.workspace.x+10}px;top:${boxes.workspace.y+10}px;width:80px;height:30px`;
    extra.dataset.vaOwned=handle.id; // A page-written marker is not an owned identity.
-   before.header.append(extra);await new Promise(resolve=>setTimeout(resolve,0));
+   before.header.append(extra);await settle();
    const lateHeaderControlRejected=surface.visibility(handle).workspace===false;extra.remove();surface.showWorkspace(handle);
-   const interactiveShellChecks=[];for(const [attribute,value] of [['tabindex','0'],['contenteditable','true'],['inert',''],['role','button']]){const root=workspace.parentElement;root.setAttribute(attribute,value);await new Promise(resolve=>setTimeout(resolve,0));interactiveShellChecks.push(surface.isSameNativeRegions(handle)===false&&surface.visibility(handle).workspace===false);root.removeAttribute(attribute);surface.showWorkspace(handle);}
+   const interactiveShellChecks=[];for(const [attribute,value] of [['tabindex','0'],['contenteditable','true'],['inert',''],['role','button']]){const root=workspace.parentElement;root.setAttribute(attribute,value);await settle();interactiveShellChecks.push(surface.isSameNativeRegions(handle)===false&&surface.visibility(handle).workspace===false);root.removeAttribute(attribute);surface.showWorkspace(handle);}
    const interactiveShellRejected=interactiveShellChecks.every(Boolean);surface.showReading(handle);const root=workspace.parentElement,priorRole=root.getAttribute('role');root.setAttribute('role','button');const interactiveBaselineRejected=flowModule.captureNativeBaseline({document,inspection:before,isOwnedSurface:n=>surface.isOwnedSurface(n)})===null;if(priorRole===null)root.removeAttribute('role');else root.setAttribute('role',priorRole);surface.showWorkspace(handle);
    draft.focus();draft.setSelectionRange(2,4);draft.dispatchEvent(new InputEvent('input',{bubbles:true,inputType:'insertText',data:null}));
    const input=surface.visibility(handle).workspace&&document.activeElement===draft&&draft.parentElement===parent&&draft.value===value&&draft.selectionStart===2;
@@ -648,6 +644,7 @@ try{
    await page.evaluate(()=>{const {surface,handle}=gestureProbe;surface.showWorkspace(handle);const form=document.querySelector('form'),button=form.querySelector('button');window.handoffButton=button;window.handoffClicks=0;button.addEventListener('pointerdown',()=>form.classList.add('native-focus-ring'),{once:true});button.addEventListener('click',()=>window.handoffClicks++);});
    const handoffBox=await page.evaluate(()=>handoffButton.getBoundingClientRect().toJSON());
    await page.mouse.move(handoffBox.x+handoffBox.width/2,handoffBox.y+handoffBox.height/2);await page.mouse.down();
+   await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
    assert.deepEqual(await page.evaluate(()=>handoffButton.getBoundingClientRect().toJSON()),handoffBox,'native focus styling cannot shift first click');
    assert.equal(await page.evaluate(()=>getComputedStyle(document.querySelector('[data-va-input-handoff]')).visibility),'hidden');
    await page.mouse.up();await page.waitForFunction(()=>handoffClicks===1);
@@ -665,12 +662,12 @@ try{
     const semanticRejected=surface.refreshNativeBaseline?.(handle,()=>adapter.inspect())===null;
     form.removeAttribute('tabindex');
     surface.showWorkspace(handle);const tool=form.querySelector('button'),oldStyle=tool.getAttribute('style');tool.style.display='none';
-    const hiddenActiveRejected=!surface.validateActiveLayout(handle);surface.surrenderChanged();
+    const hiddenActiveAccepted=surface.validateActiveLayout(handle)&&surface.visibility(handle).workspace&&getComputedStyle(tool).display==='none';surface.showReading(handle);
     const nativeHiddenReproved=!!surface.refreshNativeBaseline(handle,()=>adapter.inspect())&&surface.showWorkspace(handle)&&surface.validateActiveLayout(handle);
     surface.showReading(handle);if(oldStyle===null)tool.removeAttribute('style');else tool.setAttribute('style',oldStyle);surface.refreshNativeBaseline(handle,()=>adapter.inspect());surface.showWorkspace(handle);
-    return {oldProofRejected,reopened,framesPreserved:surface.frames(handle).every((x,i)=>x.frame===frames[i]),activeRejected,semanticRejected,hiddenActiveRejected,nativeHiddenReproved};
+    return {oldProofRejected,reopened,framesPreserved:surface.frames(handle).every((x,i)=>x.frame===frames[i]),activeRejected,semanticRejected,hiddenActiveAccepted,nativeHiddenReproved};
    });
-   assert.deepEqual(reproof,{oldProofRejected:true,reopened:true,framesPreserved:true,activeRejected:true,semanticRejected:true,hiddenActiveRejected:true,nativeHiddenReproved:true});
+   assert.deepEqual(reproof,{oldProofRejected:true,reopened:true,framesPreserved:true,activeRejected:true,semanticRejected:true,hiddenActiveAccepted:true,nativeHiddenReproved:true});
    // Native tools may open their layer on pointerdown. The original target
    // must still receive the first pointerup/click at its enhanced position.
    await page.evaluate(()=>{

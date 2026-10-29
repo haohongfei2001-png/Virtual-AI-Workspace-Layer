@@ -5,12 +5,27 @@ import {CHATGPT_SELECTION_CURRENT_BODY} from './current-body-discovery.mjs';
 import {nativeReturnGapRect} from './native-return-gap.mjs';
 import {createURLPolicy} from './url-policy.mjs';
 import {LEGACY_SURFACE_PROFILE} from './surface-discovery.mjs';
+// Package-owned layout seams, not permission selectors. Only these observed
+// semantic corridors may lose their own layout box. Native display:contents
+// corridors need no override. Unknown wrappers retain their layout ownership.
+const projectFlowContent='[data-chatgpt-project-conversation-drop-target] > div > div:has(> div > h1 > button):has(> div form[data-chatgpt-composer]):has(> div > [role="tabpanel"])';
+const nativeFlowSeam=Object.freeze({version:'native-flow-seam-v1',rootSelectors:Object.freeze([
+ 'main [data-app-shell-main-content-layout]',
+ 'main [data-app-shell-main-content-layout] > [role="main"]',
+]),homeComposerBand:'direct-grid-under-native-contents-v1',shellSelectors:Object.freeze([
+ 'main [data-app-shell-main-content-layout] > [role="main"]',
+ projectFlowContent,
+ projectFlowContent+' > div:has(> [role="tabpanel"]):has(> div > [role="tablist"])',
+ projectFlowContent+' > div > div:has(> form[data-chatgpt-composer])',
+ projectFlowContent+' > div > div:has(> [role="tablist"])',
+])});
 // The observed Chinese desktop surface is a candidate, not an authority profile.
 // Unsupported membership/send/risk grammars stay absent; no synthetic NONE/ACK.
 export const CHATGPT_OBSERVED_PROFILE=Object.freeze({
- id:'chatgpt-zh-desktop-observed-20261018',revision:9,reconstruction:false,liveVerified:false,
+ id:'chatgpt-zh-desktop-observed-20261018',revision:10,reconstruction:false,liveVerified:false,
  memberAssociation:'route-linked-project-panel-v1',
  nativeProjectLayout:'panel-after-composer',
+ nativeFlowSeam,
  visibleLayoutBoundary:true,
  sidebarComposition:'partitioned-flow-v1',
  sidebarBoundary:CHATGPT_SIDEBAR_SELECTOR,

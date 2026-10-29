@@ -76,3 +76,30 @@ for(const kind of ['enter-reading','show-native-page'])test('queued '+kind+' als
  f.nav.setNativeManagement([{projectId:g.id,refIds:[ref.id]}]);assert.equal(f.nav.present({kind}),true);assert.equal(f.pane().querySelector('[data-ref-id="'+ref.id+'"]'),target);
  f.doc.handlers.get('pointerup')(event);await new Promise(resolve=>setTimeout(resolve,5));assert.equal(f.nav.view().mode,'reading');assert(f.pane().querySelector('.native-management-context'));assert.equal(f.pane().querySelectorAll('a').some(n=>n.dataset?.refId===ref.id),false);
 });
+
+function memberState(role='workspace'){
+ const dto=projection(role),group={...dto.groups.items[0],memberCount:0,lists:{current:page(),old:page(),unknown:page()}};
+ dto.groups=page([group],1,0,24);dto.entries={noProject:{...page(),inventoryTotal:0},unknown:{...page(),inventoryTotal:0}};return {dto,group};
+}
+test('a project with no known displayable members explains discovery without claiming the native project is empty',t=>{
+ const f=fixture();t.after(()=>f.nav.stop());const {dto,group}=memberState();f.nav.updateFrameProjection(dto);
+ const card=f.pane().querySelector('.card'),note=card.querySelector('.members-empty');assert(note);assert.equal(visibleText(note),'尚未发现可显示的成员');assert.equal(note.tagName.toLowerCase(),'p');assert.equal(note.hasAttribute('tabindex'),false);
+ const known={...row('discovered'),membership:'PROJECT',projectId:group.id};group.memberCount=1;group.lists.unknown=page([known]);f.nav.updateFrameProjection(dto);
+ assert.equal(f.pane().querySelector('.members-empty'),null);assert(f.pane().querySelector('[data-ref-id="discovered"]'),'a later confirmed member replaces the note');
+});
+for(const kind of ['current','old','unknown'])test('known '+kind+' members never become a discovery-empty message after pagination or collapse',t=>{
+ const f=fixture();t.after(()=>f.nav.stop());const {dto,group}=memberState();group.memberCount=7;group.lists[kind]=page([],7,7,5);f.nav.updateFrameProjection(dto);
+ assert.equal(f.pane().querySelector('.members-empty'),null);if(kind==='old')assert(f.button('展开旧窗口 '+group.name),'collapsed old members remain known');else assert(f.button('返回前页 '+group.name),'an exhausted page retains its previous-page action');
+});
+test('a known count with filtered rows, an unknown count or an out-of-page current member does not claim no members were found',t=>{
+ const f=fixture();t.after(()=>f.nav.stop());const {dto,group}=memberState();
+ group.memberCount=2;f.nav.updateFrameProjection(dto);assert.equal(f.pane().querySelector('.members-empty'),null,'empty presentation lists cannot erase a positive inventory');
+ delete group.memberCount;f.nav.updateFrameProjection(dto);assert.equal(f.pane().querySelector('.members-empty'),null,'an absent inventory count is not zero');
+ group.memberCount=0;dto.current={nativeUrl:'https://chatgpt.com/c/outside',projectId:group.id,refId:'outside'};f.nav.updateFrameProjection(dto);assert.equal(f.pane().querySelector('.members-empty'),null,'the current member is positive evidence even outside its list window');
+ delete dto.current;group.lists.current=page([],0,5,5);f.nav.updateFrameProjection(dto);assert.equal(f.pane().querySelector('.members-empty'),null,'an offset beyond an emptied page is not a fresh discovery result');
+});
+test('an effective selected member page and native management suppression cannot create the discovery-empty message',t=>{
+ const main=fixture(),side=fixture('sidebar',()=>null,null,null,{}, {nativeSidebar:true});t.after(()=>{main.nav.stop();side.nav.stop();});
+ const {dto,group}=memberState(),known={...row('known'),membership:'PROJECT',projectId:group.id};dto.selection={groupId:group.id,list:'current',...page([known])};main.nav.updateFrameProjection(dto);assert.equal(main.pane().querySelector('.members-empty'),null);assert(main.pane().querySelector('[data-ref-id="known"]'));
+ const sidebar=memberState('sidebar');sidebar.group.memberCount=1;sidebar.group.lists.current=page([known]);side.nav.updateFrameProjection(sidebar.dto);side.nav.setNativeManagement([{projectId:sidebar.group.id,refIds:[known.id]}]);assert(side.pane().querySelector('.native-management-context'));assert.equal(side.pane().querySelector('.members-empty'),null);assert.equal(side.pane().querySelectorAll('a').some(n=>n.dataset?.refId===known.id),false,'the known duplicate is owned by native management');
+});

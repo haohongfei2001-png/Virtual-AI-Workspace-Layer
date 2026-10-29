@@ -438,6 +438,28 @@ if(!p){
  }
  let sidebarRevision=0,sidebarProof=[];
  function sidebarVersion(value){
+  // A finite package-declared seam is independent of data authority. Resolve
+  // nodes from the document (not Element.matches(:scope)); capture validates
+  // that each actual layout corridor belongs to this explicit set.
+  const seam=profile.nativeFlowSeam;
+  if(seam?.version==='native-flow-seam-v1'&&Array.isArray(seam.shellSelectors)&&seam.shellSelectors.length<=16){
+   const shells=new Set();for(const selector of seam.shellSelectors){if(typeof selector!=='string'||selector.length>512)continue;for(const node of document.querySelectorAll(selector)){if(shells.size>=128)break;shells.add(node);}}
+   const roots=new Set();for(const selector of (seam.rootSelectors??[]).slice(0,8)){if(typeof selector!=='string'||selector.length>256)continue;for(const node of document.querySelectorAll(selector)){if(roots.size>=16)break;roots.add(node);}}
+   // Explicit candidate home band: a direct native grid below the existing
+   // contents corridor shared with the already proved welcome anchor. Its
+   // grid allocation is owned by this profile; unknown nested bands are not.
+   const band=value.composer?.parentElement,corridor=value.reading?.parentElement;
+   if(homeLayout&&seam.homeComposerBand==='direct-grid-under-native-contents-v1'&&band?.parentElement===corridor&&band.tagName==='DIV'&&document.defaultView.getComputedStyle(corridor).display==='contents'&&document.defaultView.getComputedStyle(band).display==='grid')shells.add(band);
+   value.flowSeam=Object.freeze({version:seam.version,roots:Object.freeze([...roots]),shells:Object.freeze([...shells])});
+  }else{
+   // The package's legacy reconstruction contract has direct MAIN children;
+   // an extra arbitrary common ancestor is not a new implicit layout root.
+   const root=value.reading?.parentElement,direct=!explicitLayout&&root?.tagName==='MAIN'&&value.composer?.parentElement===root&&value.header?.parentElement===root;
+   value.flowSeam=Object.freeze({version:'native-flow-seam-v1',roots:Object.freeze(direct?[root]:[]),shells:Object.freeze([])});
+  }
+  // Native reads keep their own fresh route/source/landmark identity proof.
+  // They never inherit the more permissive opaque-island layout continuity.
+  value.nativeReadingCurrent=()=>isSameNativeRegions(value);
   const placement=profile.sidebarComposition==='partitioned-flow-v1'?nativeSidebarComposition({document,source:value.historySource,history:value.history,isOwnedSurface}):null;
   if(profile.sidebarComposition==='partitioned-flow-v1'){
    // A new inspection cannot inherit admission for a detached native subtree.

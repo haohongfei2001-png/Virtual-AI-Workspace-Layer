@@ -31,7 +31,7 @@ async function fixture(t,{nativeAfterRestart=true,clocked=false,contentClock=fal
  const makeBootstrap=()=>bootstrap=createHostBrowserBootstrap({chrome,origin,scopeProfile});
  const startWorker=()=>worker=createHostWorkerRuntime({chrome,indexedDB,origin,scopeProfile,browserBootstrap:bootstrap,...(browserLocal?{}:{provider:provider()})});
  const runtime={id:'ext',getURL:chrome.runtime.getURL,onMessage:contentEvents,sendMessage:async m=>{const response=await (browserLocal?new Promise(resolve=>e.onMessage.emit(m,sender,resolve)):worker.service.handle(m,sender));calls.push({type:m.type,response});if(m.type==='HOST_FOCUS'&&holdFocus){await holdFocus;}if(m.type==='HOST_HELLO'&&holdHello){await holdHello;}if(m.type==='HOST_REFRESH'&&holdRefresh){await holdRefresh;}if(m.type==='HOST_FOCUS'&&afterFocus)afterFocus();return response;}};
- const session=createHostContentSession({document,runtime,contextRecovery:true,...contentTiming,adapterFactory:()=>({start:async()=>({}),inspect:()=>({ok:true}),stop(){},hasNativeLayer:()=>false,snippetReady:()=>snippetReady,restoreSnippet:()=>{restoreCalls++;return {ok:true};}}),surfaceFactory:()=>({}),plansFactory:()=>({}),controllerFactory:options=>{let active=false;const c={options,start:async context=>{c.binding=context.binding;const r=await options.bridge.registerMount({handle:{id:'mount_'+controllers.length,regionEpoch:1}});assert.equal(r.ok,true,JSON.stringify(r));active=true;return {id:'mount_'+controllers.length};},stop(){active=false;},presentationMode:()=>options.initialMode,showWorkspace:()=>active,showReading:()=>active};controllers.push(c);return c;}});
+ const session=createHostContentSession({document,runtime,contextRecovery:true,...contentTiming,adapterFactory:()=>({start:async()=>({}),inspect:()=>({ok:true}),stop(){},hasNativeLayer:()=>false,snippetReady:()=>snippetReady,restoreSnippet:()=>{restoreCalls++;return {ok:true};}}),surfaceFactory:()=>({}),plansFactory:()=>({}),controllerFactory:options=>{let active=false;const c={options,start:async context=>{c.binding=context.binding;const r=await options.bridge.registerMount({handle:{id:'mount_'+controllers.length,regionEpoch:1}});assert.equal(r.ok,true,JSON.stringify(r));active=true;options.bridge.workspaceEstablished({binding:context.binding,mountId:'mount_'+controllers.length});return {id:'mount_'+controllers.length};},stop(){active=false;},presentationMode:()=>options.initialMode,showWorkspace:()=>active,showReading:()=>active};controllers.push(c);return c;}});
  t.after(()=>{session.stop();worker?.stop();bootstrap?.stop();});
  makeBootstrap();if(!browserLocal)await nativeGET();startWorker();if(initialPersonal)await worker.service.authority.bindPersonal(localFrame(),initialPersonal);assert(await session.start());assert.equal(session.showWorkspace(),true);const initialScope=worker.service.authority.scopeFor({tabId:7,frameId:0,documentId:'doc',actualURL:url,documentLifecycle:'active',incognito:false});assert(initialScope);
  return {databaseOpens:()=>databaseOpens,setAfterFocus:f=>afterFocus=f,session,document,calls,sent,fetches,controllers,initialScope,windowEvents,nativeGET,contentEvents,restoreCalls:()=>restoreCalls,setSnippetReady:v=>snippetReady=v,scope:()=>worker.service.authority.scopeFor({tabId:7,frameId:0,documentId:'doc',actualURL:url,documentLifecycle:'active',incognito:false}),setPrincipal:v=>principal=v,setNativeContext:v=>nativeContext=v,setCompletion:v=>completionPatch=v,holdFocus:p=>holdFocus=p,holdHello:p=>holdHello=p,holdRefresh:p=>holdRefresh=p,advance:ms=>{wall+=ms;for(const[id,timer]of [...timers])if(timer.at<=wall){timers.delete(id);timer.fn();}},setActual:v=>actual=v,async restart({personal=null}={}){worker.stop();makeBootstrap();if(nativeAfterRestart&&!browserLocal)await nativeGET();const n=sent.length;startWorker();if(personal)await worker.service.authority.bindPersonal(localFrame(),personal);assert.equal(sent.length,n,'bootstrap attach must not replay old READY');},async foreground(){windowEvents.get('blur')?.();windowEvents.get('focus')?.();await settle();},hellos:()=>calls.filter(c=>c.type==='HOST_HELLO').length};
@@ -42,7 +42,7 @@ test('same-document Browser-Local worker recovery remounts a fresh instant scope
  assert.equal(f.session.showWorkspace(),true,'fresh verified instant scope must not permanently stop as '+f.session.localStatus());
  assert.equal(f.controllers.length,2);assert.deepEqual(f.fetches,[]);assert.equal(f.databaseOpens(),0);assert.equal(f.document.draft,'UNSENT');
  await assert.rejects(f.controllers[0].options.bridge.registerMount({handle:{id:'old-mount',regionEpoch:1}}),/stale-content-session/);
- await f.restart();await f.foreground();assert.equal(f.hellos(),2,'instant recovery does not acquire another attempt');assert.equal(f.session.showWorkspace(),false);
+ await f.restart();await f.foreground();assert.equal(f.hellos(),3,'a newly established session starts a distinct recovery episode');assert.equal(f.session.showWorkspace(),true);
 });
 for(const [initialPersonal,personal]of [[null,'new-personal'],['old-personal',null],['old-personal','other-personal']])test('Browser-Local transport recovery cannot carry state across a personal scope boundary '+JSON.stringify([initialPersonal,personal]),async t=>{
  const f=await fixture(t,{browserLocal:true,initialPersonal});await f.restart({personal});await f.foreground();
@@ -83,8 +83,8 @@ test('replacement browser document cannot recover old content or UI',async t=>{
 test('a different newly authenticated principal cannot remount old presentation',async t=>{
  const f=await fixture(t);await f.restart();f.setPrincipal('other_self');await f.foreground();assert.equal(f.hellos(),2);assert.equal(f.session.showWorkspace(),false);assert.equal(f.controllers.length,1);
 });
-test('second worker loss cannot exceed original one-shot recovery budget',async t=>{
- const f=await fixture(t);await f.restart();await f.foreground();assert.equal(f.hellos(),2);assert.equal(f.session.showWorkspace(),true);await f.restart();await f.foreground();assert.equal(f.hellos(),2);assert.equal(f.session.showWorkspace(),false);
+test('second independent worker loss recovers after the replacement workspace is established',async t=>{
+ const f=await fixture(t);await f.restart();await f.foreground();assert.equal(f.hellos(),2);assert.equal(f.session.showWorkspace(),true);await f.restart();await f.foreground();assert.equal(f.hellos(),3);assert.equal(f.session.showWorkspace(),true);
 });
 for(const mode of ['stop','pagehide','user-exit'])test(''+mode+' while old foreground result waits cannot revive',async t=>{
  const f=await fixture(t);await f.restart();let finish;f.holdFocus(new Promise(r=>finish=r));await f.foreground();if(mode==='stop')f.session.stop();else if(mode==='pagehide')f.windowEvents.get('pagehide')?.({persisted:false});else f.controllers[0].options.onTerminated('ui-user-exit');finish();await settle();assert.equal(f.hellos(),1);assert.equal(f.session.showWorkspace(),false);
@@ -139,7 +139,7 @@ for(const turns of [6,7])test('settled old foreground reply cannot spend replace
  assert.equal(f.hellos(),2,'only initial and explicit replacement HELLO have run');assert.equal(f.session.showWorkspace(),true);assert.equal(f.scope().key,f.initialScope.key);
  await f.restart();await f.foreground();
  assert.equal(f.hellos(),3,'the old reply must not spend the explicit replacement session recovery budget');assert.equal(f.session.showWorkspace(),true);assert.equal(f.scope().key,f.initialScope.key);
- await f.restart();await f.foreground();assert.equal(f.hellos(),3,'replacement still owns only one automatic recovery');assert.equal(f.session.showWorkspace(),false);
+ await f.restart();await f.foreground();assert.equal(f.hellos(),4,'another established producer permits one new independent recovery');assert.equal(f.session.showWorkspace(),true);
 });
 
 for(const mode of ['fresh-context','no-context','changed-principal'])test('foreground transport rejection performs only a fresh same-scope check: '+mode,async t=>{
@@ -147,7 +147,8 @@ for(const mode of ['fresh-context','no-context','changed-principal'])test('foreg
  let reject;f.holdFocus(new Promise((_,r)=>reject=r));await f.foreground();reject(Error('extension-port-closed'));await settle();
  assert.equal(f.hellos(),2);assert.equal(f.session.showWorkspace(),mode==='fresh-context');assert.equal(f.document.draft,'UNSENT');
  if(mode==='fresh-context')assert.equal(f.scope().key,f.initialScope.key);
- for(let i=0;i<3;i++)await f.foreground();assert.equal(f.hellos(),2,'transport failure cannot acquire another recovery attempt');
+ await settle();assert.equal(f.hellos(),2,'a settled failure cannot schedule its own retry');
+ for(let i=0;i<3;i++)await f.foreground();assert.equal(f.hellos(),mode==='fresh-context'?4:2,'new external foreground events still obey the document-wide transport window');
 });
 test('foreground transport timeout uses original deadline then one fresh handshake without accepting late result',async t=>{
  const f=await fixture(t,{clocked:true,contentClock:true});await f.restart();let finish;f.holdFocus(new Promise(r=>finish=r));await f.foreground();

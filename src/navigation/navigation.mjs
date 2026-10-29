@@ -482,6 +482,12 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
 
   function frameMembers(group,parent,side){
     const key=(side?'side:':'home:')+group.id;
+    // The owner's total describes known members, independently of the current
+    // page, time projection, collapsed old rows or native-management deduping.
+    const emptyPage=page=>page?.total===0&&page.offset===0&&page.items.length===0&&!page.hasMore;
+    if(!side&&group.memberCount===0&&['current','old','unknown'].every(kind=>emptyPage(group.lists[kind])&&emptyPage(frameRows(group.id,kind)))&&!(frameProjection.current?.projectId===group.id&&frameProjection.current.refId)){
+      parent.append(node(doc,'p',{class:'members-empty'},'尚未发现可显示的成员'));
+    }
     // Native names are presentation, never focus identity: two projects may
     // have the same name, and each list can expose the same paging action.
     const focusKey=(kind,action)=>JSON.stringify(['free-member',frameProjection.scope,side?'sidebar':'workspace',group.id,kind,action]);

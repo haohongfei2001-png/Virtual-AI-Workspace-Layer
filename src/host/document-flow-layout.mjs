@@ -12,11 +12,6 @@ const overlaps = (a,b) => a.x < b.x+b.width && b.x < a.x+a.width && a.y < b.y+b.
 const attrs = node => ['class','style','hidden','aria-hidden','role','tabindex','contenteditable','inert'].map(key=>node.getAttribute(key));
 const plain = node => ['DIV','MAIN','SECTION'].includes(node.tagName) && !node.shadowRoot && !node.matches('[tabindex],[contenteditable],[inert],[hidden],[aria-hidden="true"],a,button,input,textarea,select');
 const controls = 'a[href],button,input,textarea,select,[tabindex],[contenteditable]:not([contenteditable="false"]),[role]:not([role="none"]):not([role="presentation"])';
-const htmlNamespace='http://www.w3.org/1999/xhtml',svgNamespace='http://www.w3.org/2000/svg';
-// Only directly embedded, static inline graphics. Referenced trees (<use>,
-// including local references), foreign content and animation are not covered
-// by childNodes or by the native member's identity proof.
-const inlineGraphics=new Set(['g','path','rect','circle','ellipse','line','polyline','polygon','title','desc']);
 // The observed viewport contract permits empty native markers. Only an
 // already display:none marker is inert to grid layout: a visible zero-size
 // element can create a new track/gap. Never style or relocate these nodes.
@@ -29,59 +24,22 @@ export class NativeFlowPreflightError extends Error {
  constructor(reason){super(nativeFlowFailureReasons.includes(reason)?reason:'native-flow-check-failed');this.name='NativeFlowPreflightError';}
 }
 
-// A home landmark proof is not an assertion that welcome + composer exhaust
-// their parent. Keep additional native content as an opaque flow member. No
-// text values, action semantics or data authority are inferred from this scan.
-// Every painted box must remain inside that member; unsupported painting is
-// refused instead of being hidden or treated as another title/reading region.
-function retainedPaint(member,doc,{viewport=false,budget={started:doc.defaultView.performance.now(),nodes:0,rectangles:0},onRefused=null}={}){
- const win=doc.defaultView,root=member.node,box=rect(root);
- const refuse=(detail,node)=>{onRefused?.(detail,node);return false;};
- const finiteBox=r=>Object.values(r).every(Number.isFinite)&&r.width>=0&&r.height>=0;
- // A native flow member may currently have no height. That is not evidence
- // that its subtree is empty: run the same bounded paint/style/identity proof.
- // In this case every visible box AND text range must have exactly zero
- // height. Neither the positive-box shortcut nor its subpixel containment
- // tolerance can prove that overflowing text or a thin child paints nothing.
- const flat=box.height===0;
- const inside=r=>finiteBox(r)&&(flat?r.height===0:!positive(r)||r.x>=box.x-0.5&&r.y>=box.y-0.5&&r.x+r.width<=box.x+box.width+0.5&&r.y+r.height<=box.y+box.height+0.5);
- const hidden=win.getComputedStyle(root).display==='none';
- if(hidden!==member.hidden||!hidden&&(!finiteBox(box)||box.width<=0||viewport&&(box.x<0||box.y<0||box.x+box.width>win.innerWidth+1||box.y+box.height>win.innerHeight+1)))return refuse('retained-box',root);
- const range=doc.createRange();
- function walk(node,absent,graphic=null){
-  if(++budget.nodes>128||win.performance.now()-budget.started>25)return refuse('retained-budget',node);
-  if(node.nodeType===3){if(absent||graphic)return true;range.selectNodeContents(node);for(const r of range.getClientRects()){if(++budget.rectangles>256||win.performance.now()-budget.started>25)return refuse('retained-budget',node);if(!inside({x:r.x,y:r.y,width:r.width,height:r.height}))return refuse('retained-text-overflow',node);}return true;}
-  if(node.nodeType!==1)return true;
-  if(node.shadowRoot||node.localName.includes('-'))return refuse('retained-opaque',node);
-  const svg=node.namespaceURI===svgNamespace;
-  if(svg){
-   if(graphic){if(!inlineGraphics.has(node.localName))return refuse('retained-svg',node);}
-   else {if(node===root||node.localName!=='svg'||node.parentElement?.namespaceURI!==htmlNamespace)return refuse('retained-svg',node);graphic=node;}
-  }else if(graphic||node.namespaceURI!==htmlNamespace||node.matches('iframe,object,embed,canvas,video,audio'))return refuse('retained-opaque',node);
-  const s=win.getComputedStyle(node);absent||=s.display==='none';
-  if(!absent){
-   if(!['static','relative'].includes(s.position)||s.cssFloat!=='none'||s.visibility!=='visible'||s.opacity!=='1'||s.zoom!=='1'||s.animationName!=='none'||s.display==='list-item'||s.webkitTextStrokeWidth!=='0px'||s.textDecorationLine!=='none'||node===root&&!['block','flow-root','flex','grid','inline-block'].includes(s.display)||['transform','translate','rotate','scale','filter','backdropFilter','clipPath','maskImage','offsetPath','boxShadow','textShadow','borderImageSource'].some(k=>s[k]!=='none'))return refuse('retained-style',node);
-   // UA/replaced painting (for example a range input's thumb) is not covered
-   // by childNodes or its zero-height border box. Keep it outside this proof.
-   if(flat&&!svg&&(node.matches(controls+',img,picture,meter,progress,hr,details,summary')||!['none','auto'].includes(s.appearance)))return refuse('retained-opaque',node);
-   if(['::before','::after'].some(p=>!['none','normal'].includes(win.getComputedStyle(node,p).content)))return refuse('retained-pseudo',node);
-   if(svg&&(['markerStart','markerMid','markerEnd'].some(k=>s[k]!=='none')||[s.fill,s.stroke].some(value=>/url\(/i.test(value))))return refuse('retained-svg-paint',node);
-   const b=!svg||node===graphic?rect(node):null;
-   // The real SVG viewport clips all allowed descendants, even oversized
-   // paths/strokes. `clip` is not equivalent: overflow-clip-margin can extend
-   // its paint. Root effects and outline still need the surrounding HTML proof.
-   if(node===graphic&&(s.display==='contents'||s.overflowX!=='hidden'||s.overflowY!=='hidden'||!positive(b)))return refuse('retained-svg-viewport',node);
-   if((!svg||node===graphic)&&!inside(b))return refuse('retained-box-overflow',node);
-   if(!['none','hidden'].includes(s.outlineStyle)&&s.outlineWidth!=='0px'){
-    // Even an inward/negative-offset outline can paint around a flat box.
-    if(flat||svg&&node!==graphic)return refuse('retained-outline',node);
-    const outset=Math.max(0,Number.parseFloat(s.outlineWidth)+Number.parseFloat(s.outlineOffset));
-    if(!Number.isFinite(outset)||!inside({x:b.x-outset,y:b.y-outset,width:b.width+2*outset,height:b.height+2*outset}))return refuse('retained-outline',node);
-   }
-  }
-  return [...node.childNodes].every(child=>walk(child,absent,graphic));
- }
- return walk(root,hidden)&&(win.performance.now()-budget.started<=25||refuse('retained-final-budget',root));
+// Unknown native branches remain opaque. VAIWL owns only their placement as
+// existing flow members, never their descendant identities, paint or controls.
+// Actual controls are measured from the current DOM at layout/gesture time.
+function retainedBoundary(member,doc,{viewport=false}={}){
+ const node=member.node,win=doc.defaultView,s=win.getComputedStyle(node),box=rect(node);
+ if(!node.isConnected||node.ownerDocument!==doc||(s.display==='none')!==member.hidden)return false;
+ if(member.hidden)return true;
+ // Browser-maintained scroll extents expose actual overflowing text/content
+ // without inspecting its nodes or imposing new clipping on the native tree.
+ // Shadows do not change these extents. Existing native overflow clips remain
+ // native-owned and may contain larger scrollable content.
+ const tolerance=box.height===0?0:1;
+ if(s.overflowX==='visible'&&node.scrollWidth>node.clientWidth+1||s.overflowY==='visible'&&node.scrollHeight>node.clientHeight+tolerance)return false;
+ return Object.values(box).every(Number.isFinite)&&box.width>0&&box.height>=0&&
+  ['static','relative'].includes(s.position)&&s.cssFloat==='none'&&s.visibility==='visible'&&
+  (!viewport||box.x>=0&&box.y>=0&&box.x+box.width<=win.innerWidth+1&&box.y+box.height<=win.innerHeight+1);
 }
 
 // Keep the existing landmark order, and also preserve each retained member's
@@ -98,10 +56,8 @@ function orderedFlowMembers(base,members){
  return order;
 }
 
-// Identity and native visibility are separate. Native editor/tool transitions
-// may retain an inactive node; it is still protected against replacement, but
-// must not be forced visible by the extension. Only a closed-layout re-proof
-// may change this visibility baseline.
+// A closed-layout geometry snapshot, not an active native-control identity
+// lock. Controls are freshly enumerated before presentation and native gestures.
 function controlSnapshot({protectedRegions,document:doc,isOwnedSurface}) {
  const result=[],seen=new Set();
  for(const region of protectedRegions)for(const node of [region,...region.querySelectorAll(controls)]){
@@ -148,44 +104,41 @@ export function captureNativeBaseline({document:doc,inspection,isOwnedSurface=()
   const focusViewport=root===inspection.readingViewport&&isNativeScrollRegion(root,inspection.viewportFocus,doc)?root:null;
   evidence.root=root;evidence.node=root;
   if(!root||root===doc.body||root===doc.documentElement||!plain(root)&&!focusViewport)return refuse('native-flow-root',root?'root-unsupported':'root-unavailable',root);
+  if(root!==inspection.readingViewport&&!(inspection.flowSeam?.version==='native-flow-seam-v1'&&inspection.flowSeam.roots?.includes(root)))return refuse('native-flow-root','wrapper-seam',root);
   evidence.phase='header';
   const headerInside=root.contains(header);
   if(headerInside){if(header.contains(reading)||header.contains(composer)||reading.contains(header)||composer.contains(header))return refuse('native-flow-header','header-overlap',header);protectedNodes.unshift(header);leaves.push(header);}
   const kind=protectedNodes.some(n=>n.getAttribute('role')==='tablist')?'project':inspection.homeLayoutNodes?'home':'conversation';evidence.kind=kind;evidence.phase='walk';
-  const leafSet=new Set(leaves),shells=[],records=[],nativeChildren=new Map(),inactiveMarkers=[],retainedMembers=[];let count=0,failure=null,retainedBudget=null;
+  const leafSet=new Set(leaves),shells=[],patchedShells=[],nativeContents=[],records=[],nativeChildren=new Map(),inactiveMarkers=[],retainedMembers=[];let count=0,failure=null;
+  const declaredShells=new Set(inspection.flowSeam?.version==='native-flow-seam-v1'?inspection.flowSeam.shells:[]);
   const markerViewport=inspection.viewportMarkers==='empty-div-v1'?inspection.readingViewport:null;
   const isMarker=node=>!!markerViewport&&inactiveMarker(node,markerViewport,doc);
   const reject=(reason,detail,node,phase='walk')=>{if(!failure){failure=reason;Object.assign(evidence,{phase,detail,node});}return false;};
   function retain(node){
-   const member={node,hidden:win.getComputedStyle(node).display==='none'};
-   retainedBudget??={started:win.performance.now(),nodes:0,rectangles:0};
-   let detail='retained-box',rejected=node;
-   if(!retainedPaint(member,doc,{budget:retainedBudget,onRefused:(d,n)=>{detail=d;rejected=n;}}))return reject('native-flow-branch-paint',detail,rejected,'retained-paint');
-   // Exact nodes/order, including text nodes but never their values. A later
-   // native replacement needs a new proof; it cannot inherit these markers.
-   function record(branch,first=false){
-    if(!first){if(++count>128)return reject('native-flow-capacity','node-capacity',branch,'retained-identity');if(branch.nodeType===1)records.push({node:branch,parent:branch.parentElement,attrs:attrs(branch)});}
-    if(branch.nodeType!==1)return true;
-    nativeChildren.set(branch,[...branch.childNodes]);return [...branch.childNodes].every(child=>record(child));
-   }
-   if(!record(node,true))return false;retainedMembers.push(member);return true;
+   const member={node,parent:node.parentElement,hidden:win.getComputedStyle(node).display==='none'};
+   if(!retainedBoundary(member,doc))return reject('native-flow-branch-paint','retained-box',node,'retained-paint');
+   retainedMembers.push(member);return true;
   }
   function walk(node){
    if(++count>128)return reject('native-flow-capacity','node-capacity',node);
    if(!node.isConnected||node.ownerDocument!==doc)return reject('native-flow-regions','detached',node);
-   records.push({node,parent:node.parentElement,attrs:attrs(node)});
-   if(leafSet.has(node))return true;
-   if(isMarker(node)){inactiveMarkers.push(node);return true;}
-   // Scope this addition to the already inspected home layout. Conversation
-   // reading/viewport policies and Project controls retain their own contracts.
-   if(!leaves.some(leaf=>node.contains(leaf)))return kind==='home'?retain(node):reject('native-flow-uncovered-branch','branch-without-landmark',node);
+   if(leafSet.has(node)){records.push({node,parent:node.parentElement,attrs:attrs(node)});return true;}
+   if(isMarker(node)){records.push({node,parent:node.parentElement,attrs:attrs(node)});inactiveMarkers.push(node);return true;}
+   // A branch outside the landmark corridors owns its internal native layout.
+   if(!leaves.some(leaf=>node.contains(leaf)))return retain(node);
    // Layout wrappers only. Unknown controls/text/branches cannot disappear
    // through display:contents, even if they happen to have no visible text.
    if(node!==focusViewport&&(!plain(node)||node.hasAttribute('role')&&node.getAttribute('role')!=='main'))return reject('native-flow-wrapper-control','wrapper-control',node);
    if([...node.childNodes].some(n=>n.nodeType===3&&n.textContent.trim()))return reject('native-flow-wrapper-text','wrapper-text',node);
    const style=win.getComputedStyle(node);
+   // A tag name alone is not a licence to remove a native layout box. Root
+   // ownership is explicit; intermediate overrides require the package seam.
+   if(node!==root&&style.display!=='contents'&&!declaredShells.has(node))return reject('native-flow-wrapper-paint','wrapper-seam',node);
+   if(node!==root&&style.display==='contents')nativeContents.push(node);
+   else if(node!==root)patchedShells.push(node);
+   records.push({node,parent:node.parentElement,attrs:attrs(node)});
    if(style.display==='none'||style.visibility!=='visible'||style.opacity!=='1'||style.zoom!=='1')return reject('native-flow-wrapper-paint','wrapper-visibility',node);
-   if(['transform','translate','rotate','scale','filter','backdropFilter','clipPath','maskImage'].some(k=>style[k]!=='none'))return reject('native-flow-wrapper-paint','wrapper-effect',node);
+   if(['transform','translate','rotate','scale','filter','backdropFilter','clipPath','maskImage'].some(k=>style[k]!=='none')||node!==root&&(style.contain!=='none'||style.scrollSnapType!=='none'||['auto','scroll'].includes(style.overflowX)||['auto','scroll'].includes(style.overflowY)))return reject('native-flow-wrapper-paint','wrapper-effect',node);
    if(['::before','::after'].some(p=>!['none','normal'].includes(win.getComputedStyle(node,p).content)))return reject('native-flow-wrapper-paint','wrapper-pseudo',node);
    const children=[...node.children].filter(n=>!isOwnedSurface(n));
    if(!children.length)return reject('native-flow-uncovered-branch','empty-wrapper',node);
@@ -204,8 +157,9 @@ export function captureNativeBaseline({document:doc,inspection,isOwnedSurface=()
   evidence.phase='controls';if(!nativeControls)return refuse('native-flow-protected-controls','protected-controls',root);
   const coordinates=layoutCoordinates({root,header,composer,headerInside});
   evidence.phase='geometry';if(!coordinates)return refuse('native-flow-geometry','geometry',root);
+  const readingChain=[];for(let node=reading;node&&node!==doc.documentElement;node=node.parentElement){if(readingChain.length>=64)return refuse('native-flow-regions','reading-chain',node);readingChain.push({node,parent:node.parentElement});}
   evidence.phase='complete';evidence.detail='accepted';evidence.node=null;diagnose('none');
-  return Object.freeze({kind,root,reading,composer,header,leaves,protectedNodes,protectedRegions,shells,records,nativeChildren,nativeControls,inactiveMarkers,retainedMembers,flowOrder,markerViewport,focusViewport,
+  return Object.freeze({kind,root,reading,composer,header,leaves,protectedNodes,protectedRegions,shells,patchedShells,nativeContents,records,nativeChildren,nativeControls,inactiveMarkers,retainedMembers,flowOrder,markerViewport,focusViewport,readingChain,nativeReadingCurrent:inspection.nativeReadingCurrent,
    headerInside,document:doc,url:doc.location.href,regionEpoch:inspection.regionEpoch,isOwnedSurface,
    ...coordinates});
  }catch{evidence.phase='exception';return refuse('native-flow-check-failed','exception',null);}
@@ -213,19 +167,50 @@ export function captureNativeBaseline({document:doc,inspection,isOwnedSurface=()
 
 // Structural guard for a new proof in the restored native layout. This alone
 // cannot authorize presentation: controls still need a fresh bounded snapshot.
-export function isSameNativeStructure(plan,{allowPresentationChange=false}={}){
+export function isSameNativeStructure(plan,{allowPresentationChange=false,anchorsOnly=false}={}){
  try {
   if(!plan||plan.document.location.href!==plan.url)return false;
-  return plan.records.every(({node,parent,attrs:before})=>node.isConnected&&node.ownerDocument===plan.document&&node.parentElement===parent&&attrs(node).every((value,i)=>allowPresentationChange&&i<2||value===before[i]))&&
-   [...plan.nativeChildren].every(([node,children])=>{const retained=plan.retainedMembers.some(m=>m.node===node||m.node.contains(node)),actual=[...(retained?node.childNodes:node.children)].filter(n=>!plan.isOwnedSurface(n));return actual.length===children.length&&actual.every((n,i)=>n===children[i]);})&&
-   plan.inactiveMarkers.every(node=>inactiveMarker(node,plan.markerViewport,plan.document))&&
-   plan.retainedMembers.every(m=>(plan.document.defaultView.getComputedStyle(m.node).display==='none')===m.hidden)&&
+  const anchors=plan.records.every(({node,parent,attrs:before})=>node.isConnected&&node.ownerDocument===plan.document&&node.parentElement===parent&&attrs(node).every((value,i)=>allowPresentationChange&&i<2||value===before[i]))&&
+   plan.nativeContents.every(node=>plan.document.defaultView.getComputedStyle(node).display==='contents')&&
    (!plan.focusViewport||isNativeScrollRegion(plan.focusViewport,'native-scroll-region',plan.document));
+  if(!anchors||anchorsOnly)return anchors;
+  return [...plan.nativeChildren].every(([node,children])=>{const actual=[...node.children].filter(n=>!plan.isOwnedSurface(n));return actual.length===children.length&&actual.every((n,i)=>n===children[i]);})&&
+   plan.inactiveMarkers.every(node=>inactiveMarker(node,plan.markerViewport,plan.document))&&
+   plan.retainedMembers.every(m=>m.node.isConnected&&m.node.ownerDocument===plan.document&&m.node.parentElement===m.parent&&(plan.document.defaultView.getComputedStyle(m.node).display==='none')===m.hidden);
  }catch{return false;}
 }
 
 export function isSameNativeRegions(plan,options){
- return isSameNativeStructure(plan,options)&&plan.nativeControls.every(({node,parent})=>node.isConnected&&node.parentElement===parent);
+ return isSameNativeStructure(plan,options);
+}
+
+// Presentation rollback can restore only the original nodes/route. It neither
+// reads new native content nor needs a still-live data grant during revocation.
+export function isNativeReadingIdentityCurrent(plan){
+ try{return plan.document.location.href===plan.url&&plan.readingChain.every(({node,parent})=>node.isConnected&&node.ownerDocument===plan.document&&node.parentElement===parent);}catch{return false;}
+}
+
+// Native reading additionally requires a fresh adapter source proof and actual
+// visibility. Opaque island mutations cannot authorize a different source.
+export function isNativeReadingCurrent(plan){
+ try{
+  const doc=plan.document;
+  if(!isNativeReadingIdentityCurrent(plan)||hasNativeLayer(doc)||!isSameNativeStructure(plan,{allowPresentationChange:true})||
+    typeof plan.nativeReadingCurrent!=='function'||plan.nativeReadingCurrent()!==true)return false;
+  for(const {node} of plan.readingChain){const s=doc.defaultView.getComputedStyle(node);if(node.hidden||node.inert||node.getAttribute('aria-hidden')==='true'||s.display==='none'||s.visibility!=='visible')return false;}
+  return true;
+ }catch{return false;}
+}
+
+// A native gesture can be admitted only for this currently connected concrete
+// target in a protected region. This creates no native-action handle or grant.
+export function isNativeControlCurrent(plan,node){
+ try{
+  const doc=plan.document;if(!node?.isConnected||node.ownerDocument!==doc||plan.isOwnedSurface(node)||!plan.protectedRegions.some(region=>region===node||region.contains(node))||!node.matches(controls))return false;
+  if(node.closest('[inert],[hidden],[aria-hidden="true"]'))return false;
+  const s=doc.defaultView.getComputedStyle(node),r=rect(node);if(s.display==='none'||s.visibility!=='visible'||!positive(r))return false;
+  const hit=doc.elementFromPoint(r.x+r.width/2,r.y+r.height/2);return !!hit&&(hit===node||node.contains(hit));
+ }catch{return false;}
 }
 
 /** Owned attributes are tokens only. Rules exist only while the empty exit
@@ -259,41 +244,48 @@ ${active} #${workspaceId}{display:flex!important;visibility:visible!important;gr
 `;
 }
 
-export function validateActiveLayout(plan,{workspace,style,styleText,exit,isOwnedSurface=plan?.isOwnedSurface}={}) {
- try {
+// Finite geometry/hit checks for already enumerated native controls. No DOM
+// descendant walk, text ranges, paint/style whitelist or elapsed-time budget.
+// A CSSOM rule can move an existing control without Mutation/Resize events.
+export function validateCriticalLayout(plan,{workspace,nativeControls=[]}={}){
+ try{
   const doc=plan.document,win=doc.defaultView;
-  if(!isSameNativeRegions(plan)||!style?.isConnected||style.textContent!==styleText||!exit?.matches(':popover-open')||!workspace?.isConnected||workspace.parentElement!==plan.root||!isOwnedSurface(workspace)||hasNativeLayer(doc))return false;
+  if(!workspace?.isConnected||workspace.parentElement!==plan.root||!plan.composer.isConnected||!plan.header.isConnected||nativeControls.length>128)return false;
   if(win.getComputedStyle(plan.root).position!==plan.rootPosition)return false;
-  const frame=workspace.querySelector('iframe'),board=rect(workspace),form=rect(plan.composer);
-  if(!frame||!positive(board)||!positive(form)||board.width<160||board.height<96||board.y<0||board.x<0||board.x+board.width>win.innerWidth+1||board.y+board.height>win.innerHeight+1||form.y+form.height>win.innerHeight+1||overlaps(board,form))return false;
-  const retainedBudget={started:win.performance.now(),nodes:0,rectangles:0};
+  const board=rect(workspace),form=rect(plan.composer);
+  if(!positive(board)||!positive(form)||board.width<160||board.height<96||board.y<0||board.x<0||board.x+board.width>win.innerWidth+1||board.y+board.height>win.innerHeight+1||form.y+form.height>win.innerHeight+1||overlaps(board,form))return false;
   for(const member of plan.retainedMembers){
-   if(!retainedPaint(member,doc,{viewport:true,budget:retainedBudget}))return false;
+   if(!retainedBoundary(member,doc,{viewport:true}))return false;
    if(member.hidden)continue;
    const b=rect(member.node);
    if(overlaps(board,b)||plan.protectedRegions.some(other=>other!==member.node&&!other.contains(member.node)&&!member.node.contains(other)&&win.getComputedStyle(other).visibility==='visible'&&overlaps(b,rect(other))))return false;
   }
-  // Re-enumerate current protected controls: native tools may arrive after
-  // mount. The baseline identity check above remains mandatory for old nodes.
-  const current=new Set(plan.nativeControls.filter(({visible})=>visible).map(({node})=>node));
-  let checked=0;
-  for(const region of plan.protectedRegions)for(const node of [region,...region.querySelectorAll(controls)]){
-   if(isOwnedSurface(node))continue;
-   if(++checked>128)return false;
-   const s=win.getComputedStyle(node),r=rect(node);
-   if(s.display!=='none'&&s.visibility==='visible'&&positive(r))current.add(node);
-  }
-  for(const node of current){
+  for(const node of nativeControls){
+   // A detached old button is not a reason to revoke the workspace. Mutation
+   // reconciliation supplies the replacement set; old action handles stay old.
+   if(!node.isConnected||node.ownerDocument!==doc||!plan.protectedRegions.some(region=>region===node||region.contains(node)))continue;
    const r=rect(node),s=win.getComputedStyle(node);
-   if(!positive(r)||s.visibility!=='visible'||s.display==='none'||node.hidden||node.inert||overlaps(board,r))return false;
-   // Observed titlebar shells can intentionally pass pointers through. Their
-   // bounds still cannot overlap the workspace; actual controls below retain
-   // individual hit checks, including controls arriving after mount.
+   if(s.display==='none'||s.visibility!=='visible'||!positive(r))continue;
+   if(node.hidden||node.inert||overlaps(board,r))return false;
    if(node===plan.header&&s.pointerEvents==='none'&&!node.matches(controls))continue;
    if(r.x<0||r.y<0||r.x+r.width>win.innerWidth+1||r.y+r.height>win.innerHeight+1)return false;
    const hit=doc.elementFromPoint(r.x+r.width/2,r.y+r.height/2);
    if(!hit||!(node===hit||node.contains(hit)))return false;
   }
+  const exitButton=workspace.querySelector(':scope > button');
+  if(exitButton&&win.getComputedStyle(workspace).visibility==='visible'){const r=rect(exitButton),hit=doc.elementFromPoint(r.x+r.width/2,r.y+r.height/2);if(!positive(r)||!(hit===exitButton||exitButton.contains(hit)))return false;}
   return true;
+ }catch{return false;}
+}
+
+export function validateActiveLayout(plan,{workspace,style,styleText,exit,isOwnedSurface=plan?.isOwnedSurface,onControls=()=>{}}={}) {
+ try {
+  const doc=plan.document;
+  if(!isSameNativeRegions(plan)||!style?.isConnected||style.textContent!==styleText||!exit?.matches(':popover-open')||!workspace?.isConnected||workspace.parentElement!==plan.root||!isOwnedSurface(workspace)||hasNativeLayer(doc)||!workspace.querySelector('iframe'))return false;
+  // Only a layout event or explicit presentation request enumerates controls.
+  // The activity watch uses this bounded set; it does not scan native subtrees.
+  const snapshot=controlSnapshot(plan);if(!snapshot)return false;
+  const nativeControls=snapshot.map(({node})=>node);onControls(nativeControls);
+  return validateCriticalLayout(plan,{workspace,nativeControls});
  }catch{return false;}
 }

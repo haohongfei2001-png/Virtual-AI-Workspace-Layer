@@ -253,3 +253,12 @@ test('anonymous presentation and frame receipt validators reject content and inv
  assert(validLocalPipeline({...p,workspaceReceipt:{deliveryId:3,phase:'rendered',cards:0,rows:5}}));
  assert(!validLocalPipeline({...p,workspaceReceipt:{deliveryId:3,phase:'rendered',cards:0,rows:5,title:'private'}}));
 });
+
+
+test('bounded transport recovery reports only fixed diagnostics through the existing status schema',async()=>{
+ for(const state of ['surface-recovery-rate-limited','surface-recovery-clock-invalid']){
+  const f=listenerFixture(()=>state);assert.deepEqual(f.dispatch(),[{v:1,state}]);f.dispose();
+  assert.equal(await popupFixture({send:async()=>({v:1,state})}).run(),state);
+ }
+ const f=listenerFixture(()=> 'surface-recovery-rate-limited:PRIVATE');assert.deepEqual(f.dispatch(),[{v:1,state:'unavailable'}]);f.dispose();
+});

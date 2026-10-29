@@ -1,5 +1,5 @@
 import {hasNativeLayer as documentHasNativeLayer,NATIVE_LAYER_SELECTOR} from '../host/native-layer.mjs';
-import {captureNativeBaseline,NativeFlowPreflightError,isSameNativeRegions,isSameNativeStructure,isSameNativeLayout,flowLayoutRules,validateActiveLayout} from '../host/document-flow-layout.mjs';
+import {captureNativeBaseline,NativeFlowPreflightError,isSameNativeRegions,isSameNativeStructure,isSameNativeLayout,isNativeReadingIdentityCurrent,isNativeReadingCurrent,isNativeControlCurrent,flowLayoutRules,validateActiveLayout,validateCriticalLayout} from '../host/document-flow-layout.mjs';
 import {observeNativeProjectManagement} from '../host/native-project-management.mjs';
 import {validateFrameAppearance} from '../host/frame-appearance.mjs';
 
@@ -19,13 +19,13 @@ export function createFlowMountSurface({document:doc,createFrameURL,hasNativeLay
  function clearReading(m){const saved=m.readingScroll;m.readingScroll=null;for(const entry of saved?.entries??[])entry.node.removeEventListener('scroll',entry.onScroll);return saved;}
  function rememberReading(m){
   clearReading(m);
-  m.readingScroll={plan:m.plan,url:doc.location.href,entries:[...new Set([...m.plan.shells,m.plan.reading])].filter(node=>node.scrollHeight>node.clientHeight||node.scrollWidth>node.clientWidth).map(node=>({node,left:node.scrollLeft,top:node.scrollTop}))};
+  m.readingScroll={plan:m.plan,url:doc.location.href,entries:[...new Set([...m.plan.shells,m.plan.reading])].filter(node=>node.scrollHeight>node.clientHeight||node.scrollWidth>node.clientWidth).map(node=>({node,parent:node.parentElement,left:node.scrollLeft,top:node.scrollTop}))};
  }
  function recordReadingClamp(m){for(const entry of m.readingScroll?.entries??[]){entry.clampedLeft=entry.node.scrollLeft;entry.clampedTop=entry.node.scrollTop;entry.onScroll=()=>{if(entry.node.scrollLeft!==entry.clampedLeft||entry.node.scrollTop!==entry.clampedTop)entry.changed=true;};entry.node.addEventListener('scroll',entry.onScroll,{passive:true});}}
  function restoreReading(m){
   if(!m.readingScroll||open(m.roles[0]))return;const saved=clearReading(m);
-  if(saved.plan!==m.plan||saved.url!==doc.location.href||!isSameNativeRegions(m.plan))return;
-  for(const {node,left,top,clampedLeft,clampedTop,changed} of saved.entries)if(!changed&&node.isConnected&&node.ownerDocument===doc&&node.scrollLeft===clampedLeft&&node.scrollTop===clampedTop)node.scrollTo({left,top,behavior:'instant'});
+  if(saved.plan!==m.plan||saved.url!==doc.location.href||!isNativeReadingIdentityCurrent(m.plan))return;
+  for(const {node,parent,left,top,clampedLeft,clampedTop,changed} of saved.entries)if(!changed&&node.isConnected&&node.ownerDocument===doc&&node.parentElement===parent&&node.scrollLeft===clampedLeft&&node.scrollTop===clampedTop)node.scrollTo({left,top,behavior:'instant'});
  }
  function hide(m,role,reason='suspended'){
   // Native observation sees owned attribute writes too. Rewriting the same
@@ -58,7 +58,7 @@ export function createFlowMountSurface({document:doc,createFrameURL,hasNativeLay
   m.management=observeNativeProjectManagement({document:doc,root:p?.project,isCurrent:()=>mounts.get(m.handle.id)===m&&m.sidebarBinding===p&&sidebarIntact(m),onChanged:m.onManagementChanged});
   if(old)m.onManagementChanged();
  }
- function active(m){return intact(m,m.roles[0])&&validateActiveLayout(m.plan,{workspace:m.roles[0].node,style:m.style,styleText:m.css,exit:m.roles[0].exit,isOwnedSurface:owned});}
+ function active(m){return intact(m,m.roles[0])&&validateActiveLayout(m.plan,{workspace:m.roles[0].node,style:m.style,styleText:m.css,exit:m.roles[0].exit,isOwnedSurface:owned,onControls:nodes=>{m.criticalControls=nodes;}});}
  function mark(m,node,name){const attr='data-va-flow-'+name,previous=node.getAttribute(attr);if(previous!==null)throw Error('flow-marker-conflict');m.markers.push({node,attr,previous});node.setAttribute(attr,m.handle.id);}
  function restorePendingScroll(m){const s=m.roles[1],p=m.inspection.sidebarPlacement?.scrollPort;if(m.pendingScroll===undefined||!sidebarIntact(m)||!open(s)||s.pendingHeight||nativeLayer())return;const value=m.pendingScroll;if(value!==null)p.scrollTop=value;
   // Keep only the presentation target while the natural content is shorter.
@@ -96,7 +96,11 @@ export function createFlowMountSurface({document:doc,createFrameURL,hasNativeLay
      frame.src=url.href;frame.title=role==='workspace'?'工作空间':'导航';frame.style.cssText='display:block;min-width:0;width:100%;border:0;';node.append(button,frame);
      if(role==='sidebar'){node.dataset.vaSidebarSlot='';node.style.setProperty('--va-slot-height','128px');const label=doc.createElement('div');label.textContent='ChatGPT 项目管理与最近聊天';label.dataset.vaNativeBoundary='';node.append(label);}
      const s={role,node,exit,frame,url:url.href,button,reason:null,retired:false};m.roles.push(s);
-     const closing=e=>{if(e.target!==exit||e.newState!=='closed')return;if(role==='workspace'){if(e.type==='beforetoggle')m.cancelInput?.();win.queueMicrotask(()=>restoreReading(m));}if(!s.reason)onSurrender({role,reason:role==='workspace'?'native-reading':'native-list',phase:e.type==='beforetoggle'?'closing':undefined});};
+     // A document-capture toggle handler may re-prove and reopen the surface
+     // before this target receives the old closed notification. That delayed
+     // event is not a new user exit. beforetoggle still records a real close
+     // synchronously, before any subsequent recovery can change its intent.
+     const closing=e=>{if(e.target!==exit||e.newState!=='closed'||e.type==='toggle'&&open(s))return;if(role==='workspace'){if(e.type==='beforetoggle')m.cancelInput?.();win.queueMicrotask(()=>restoreReading(m));}if(!s.reason)onSurrender({role,reason:role==='workspace'?'native-reading':'native-list',phase:e.type==='beforetoggle'?'closing':undefined});};
      exit.addEventListener('beforetoggle',closing);exit.addEventListener('toggle',closing);s.cleanup=()=>{exit.removeEventListener('beforetoggle',closing);exit.removeEventListener('toggle',closing);};
      doc.body.append(exit);
     }
@@ -111,7 +115,7 @@ export function createFlowMountSurface({document:doc,createFrameURL,hasNativeLay
      sidebar.retired=true;sidebar.frame.remove();
     }
     mark(m,plan.root,'root');mark(m,plan.reading,'reading');mark(m,plan.composer,'composer');
-    for(const shell of plan.shells)if(shell!==plan.root)mark(m,shell,'shell');
+    for(const shell of plan.patchedShells)mark(m,shell,'shell');
     for(const node of plan.protectedNodes)if(node!==plan.composer)mark(m,node,node===plan.header?'header':node.getAttribute('role')==='tablist'?'tabs':'title');
     for(const [i,node] of plan.flowOrder.entries())mark(m,node,'row-'+i);
     const enabled=s=>`body:has(#${s.exit.id}:popover-open):not(:has(${NATIVE_LAYER_SELECTOR})) #${s.node.id}`;
@@ -133,7 +137,7 @@ export function createFlowMountSurface({document:doc,createFrameURL,hasNativeLay
      // Match the nearest concrete control against the current native proof,
      // including a control admitted by a later closed-layout reproof.
      const node=e.target?.closest?.('button,a[href],input,textarea,select,[role="button"],[role="tab"],[role="menuitem"],[role="checkbox"],[role="radio"],[role="switch"],[role="combobox"],[role="textbox"]');
-     if(!node?.isConnected||node.ownerDocument!==doc||!m.plan.nativeControls.some(value=>value.node===node&&value.parent===node.parentElement&&value.visible))return false;
+     if(!isNativeControlCurrent(m.plan,node))return false;
      const style=win.getComputedStyle(node),box=node.getBoundingClientRect();
      return style.display!=='none'&&style.visibility==='visible'&&box.width>0&&box.height>0&&!node.closest('[inert],[hidden],[aria-hidden="true"]');
     };
@@ -171,20 +175,34 @@ export function createFlowMountSurface({document:doc,createFrameURL,hasNativeLay
     // Keep the exact registration target: native document replacement can
     // detach HEAD, but must not prevent restoring the original body layout.
     const nativeHead=doc.head;
-    let observer=null,markerGeometry=null,memberFrame=null;
-    // A retained native branch can change its paint through CSSOM/hover with
-    // no DOM mutation or resize. Recheck its bounded paint only while the
-    // workspace is actually open; never poll the native reading page.
-    const memberGeometry=()=>{memberFrame=null;if(!mounts.has(id)||!open(workspace))return;observe();if(open(workspace))memberFrame=win.requestAnimationFrame(memberGeometry);};
-    const memberToggle=()=>{if(memberFrame!==null)win.cancelAnimationFrame(memberFrame);memberFrame=plan.retainedMembers.length&&open(workspace)?win.requestAnimationFrame(memberGeometry):null;};
-    if(plan.retainedMembers.length)workspace.exit.addEventListener('toggle',memberToggle);
-    const stylesheetLoaded=e=>{if(e.target?.matches?.('link[rel~="stylesheet"]'))observe();};
-    m.cleanup=()=>{m.unbindSidebar?.();m.management?.stop();leaveGesture();win.removeEventListener('blur',leaveGesture);win.removeEventListener('pagehide',leaveGesture);doc.removeEventListener('visibilitychange',visibility);if(inputTimer!==null)win.clearTimeout(inputTimer);if(memberFrame!==null)win.cancelAnimationFrame(memberFrame);workspace.exit.removeEventListener('toggle',memberToggle);doc.removeEventListener('pointerdown',down,true);doc.removeEventListener('pointerup',up,true);doc.removeEventListener('pointercancel',up,true);doc.removeEventListener('keydown',keyDown,true);doc.removeEventListener('keyup',keyUp,true);for(const type of ['focusin','click','keydown','beforeinput','compositionstart'])doc.removeEventListener(type,input,true);observer?.disconnect();markerGeometry?.disconnect();nativeHead?.removeEventListener('load',stylesheetLoaded,true);for(const s of m.roles)s.cleanup();};
+    let observer=null,markerGeometry=null,layoutFrame=null,criticalFrame=null;
+    // Coalesce native mutations into one finite boundary/control measurement.
+    // Unknown island descendants are never scanned for paint on every frame.
+    const scheduleObservation=()=>{
+     if(!mounts.has(id))return;
+     if(nativeLayer()||!intact(m,workspace)){observe();return;}
+     if(layoutFrame===null)layoutFrame=win.requestAnimationFrame(()=>{layoutFrame=null;observe();});
+    };
+    // Keep the original activity watch only for a finite current control set
+    // and layout anchors. This catches CSSOM-only movement (no MO/RO event)
+    // without scanning unknown native descendants or reinstating paint bans.
+    const checkCritical=()=>{
+     criticalFrame=null;if(!mounts.has(id)||!open(workspace))return;
+     if(nativeLayer()){hide(m,null,'native-layer');onSurrender({reason:'native-layer'});}
+     else if(!validateCriticalLayout(m.plan,{workspace:workspace.node,nativeControls:m.criticalControls??[]})){hide(m,'workspace','workspace-geometry');onSurrender({role:'workspace',reason:'workspace-geometry'});}
+     if(open(workspace))criticalFrame=win.requestAnimationFrame(checkCritical);
+    };
+    const criticalToggle=()=>{if(criticalFrame!==null)win.cancelAnimationFrame(criticalFrame);criticalFrame=open(workspace)?win.requestAnimationFrame(checkCritical):null;};
+    workspace.exit.addEventListener('toggle',criticalToggle);
+    const nativeSignals=['pointerover','focusin','transitionrun','transitionend','animationstart','animationiteration','animationend'];
+    const stylesheetLoaded=e=>{if(e.target?.matches?.('link[rel~="stylesheet"]'))scheduleObservation();};
+    m.cleanup=()=>{m.unbindSidebar?.();m.management?.stop();leaveGesture();win.removeEventListener('blur',leaveGesture);win.removeEventListener('pagehide',leaveGesture);win.removeEventListener('resize',scheduleObservation);doc.removeEventListener('visibilitychange',visibility);if(inputTimer!==null)win.clearTimeout(inputTimer);if(layoutFrame!==null)win.cancelAnimationFrame(layoutFrame);if(criticalFrame!==null)win.cancelAnimationFrame(criticalFrame);workspace.exit.removeEventListener('toggle',criticalToggle);doc.removeEventListener('pointerdown',down,true);doc.removeEventListener('pointerup',up,true);doc.removeEventListener('pointercancel',up,true);doc.removeEventListener('keydown',keyDown,true);doc.removeEventListener('keyup',keyUp,true);for(const type of ['focusin','click','keydown','beforeinput','compositionstart'])doc.removeEventListener(type,input,true);for(const type of nativeSignals)doc.removeEventListener(type,scheduleObservation,true);observer?.disconnect();markerGeometry?.disconnect();nativeHead?.removeEventListener('load',stylesheetLoaded,true);for(const s of m.roles)s.cleanup();};
     doc.addEventListener('pointerdown',down,true);doc.addEventListener('pointerup',up,true);doc.addEventListener('pointercancel',up,true);
     doc.addEventListener('keydown',keyDown,true);doc.addEventListener('keyup',keyUp,true);
     for(const type of ['focusin','click','keydown','beforeinput','compositionstart'])doc.addEventListener(type,input,true);
     win.addEventListener('blur',leaveGesture);win.addEventListener('pagehide',leaveGesture);doc.addEventListener('visibilitychange',visibility);
-    observer=new win.MutationObserver(observe);observer.observe(doc.body,{subtree:true,childList:true,attributes:true,attributeFilter:['class','style','hidden','aria-hidden','role','tabindex','contenteditable','inert','open','aria-modal']});
+    for(const type of nativeSignals)doc.addEventListener(type,scheduleObservation,true);win.addEventListener('resize',scheduleObservation);
+    observer=new win.MutationObserver(scheduleObservation);observer.observe(doc.body,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['class','style','hidden','aria-hidden','role','tabindex','contenteditable','inert','open','aria-modal','src','srcdoc']});
     // The owned rules live in HEAD, outside the native body observer. Changes
     // there must surrender immediately too, including during input handoff.
     observer.observe(m.style,{subtree:true,childList:true,characterData:true});
@@ -196,11 +214,15 @@ export function createFlowMountSurface({document:doc,createFrameURL,hasNativeLay
     // native CSS without a body mutation. Observe only invalidation signals;
     // never read stylesheet rules or change the marker. Workspace resizing
     // also covers CSSOM rule edits that have no MutationObserver record.
-    if(plan.inactiveMarkers.length||plan.retainedMembers.length){
+    {
      observer.observe(nativeHead,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['media','disabled','href','rel']});
      observer.observe(doc.documentElement,{childList:true,attributes:true,attributeFilter:['class','style']});
      nativeHead.addEventListener('load',stylesheetLoaded,true);
-     if(win.ResizeObserver){markerGeometry=new win.ResizeObserver(observe);for(const node of [workspace.node,...plan.inactiveMarkers])markerGeometry.observe(node);}
+     if(win.ResizeObserver){
+      markerGeometry=new win.ResizeObserver(scheduleObservation);
+      m.observeLayoutTargets=()=>{markerGeometry.disconnect();const current=m.plan;for(const node of new Set([workspace.node,current.root,current.header,current.composer,...current.inactiveMarkers,...current.retainedMembers.map(member=>member.node)]))markerGeometry.observe(node);};
+      m.observeLayoutTargets();
+     }
     }
     bindSidebar(m);
     return handle;
@@ -224,13 +246,20 @@ export function createFlowMountSurface({document:doc,createFrameURL,hasNativeLay
    // the old frame grants. Return its fully proved epoch without changing any
    // old marker or baseline; the controller retires this mount before startup.
    if(inspection.regionEpoch!==handle.regionEpoch)return inspection;
-   if(!isSameNativeStructure(prior,{allowPresentationChange:true})||['root','reading','composer','header','kind','headerInside'].some(k=>next[k]!==prior[k])||['leaves','shells','protectedNodes','flowOrder'].some(k=>next[k].length!==prior[k].length||next[k].some((node,i)=>node!==prior[k][i]))||next.retainedMembers.length!==prior.retainedMembers.length||next.retainedMembers.some((m,i)=>m.node!==prior.retainedMembers[i].node||m.hidden!==prior.retainedMembers[i].hidden))return null;
-   // React may replace controls inside an unchanged protected leaf. The old
-   // proof remains invalid; only this complete new native snapshot replaces
-   // it. No old control/handle is transferred to the replacement node.
+   if(!isSameNativeStructure(prior,{allowPresentationChange:true,anchorsOnly:true})||['root','reading','composer','header','kind','headerInside'].some(k=>next[k]!==prior[k])||['leaves','shells','patchedShells','nativeContents','protectedNodes'].some(k=>next[k].length!==prior[k].length||next[k].some((node,i)=>node!==prior[k][i])))return null;
+   // Island root/visibility changes are layout changes, not new frame/data
+   // authority. Re-prove the closed native layout with the exact same native
+   // anchors and patch targets. Replace only this mount's owned row markers.
    const options={id:handle.id,exitId:workspace.exit.id,workspaceId:workspace.node.id},oldRules=flowLayoutRules(prior,options);
    if(!m.css.startsWith(oldRules))return null;
-   m.css=flowLayoutRules(next,options)+m.css.slice(oldRules.length);m.plan=next;m.nativeViewport=viewport();m.style.textContent=m.css;
+   const oldRows=m.markers.filter(entry=>entry.attr.startsWith('data-va-flow-row-'));
+   const newRows=next.flowOrder.map((node,i)=>({node,attr:'data-va-flow-row-'+i}));
+   if(oldRows.some(({node,attr})=>node.hasAttribute(attr)&&node.getAttribute(attr)!==handle.id)||newRows.some(({node,attr})=>node.hasAttribute(attr)&&!oldRows.some(old=>old.node===node&&old.attr===attr&&node.getAttribute(attr)===handle.id)))return null;
+   const css=flowLayoutRules(next,options)+m.css.slice(oldRules.length);
+   for(const {node,attr} of oldRows)if(node.getAttribute(attr)===handle.id)node.removeAttribute(attr);
+   m.markers=m.markers.filter(entry=>!entry.attr.startsWith('data-va-flow-row-'));
+   for(const [i,node] of next.flowOrder.entries())mark(m,node,'row-'+i);
+   clearReading(m);m.css=css;m.plan=next;m.nativeViewport=viewport();m.criticalControls=next.nativeControls.map(({node})=>node);m.style.textContent=css;m.observeLayoutTargets?.();
    return inspection;
   },
   hasNativeInputFocus(handle){const m=lookup(handle);return m.plan.composer.contains(doc.activeElement);},
@@ -265,7 +294,7 @@ export function createFlowMountSurface({document:doc,createFrameURL,hasNativeLay
   isOwnedSurface:owned,
   isMasked(node){return [...mounts.values()].some(m=>node===m.plan.reading&&open(m.roles[0])&&isSameNativeRegions(m.plan));},
   surrenderChanged(){for(const m of mounts.values())geometry(m);return false;},
-  withNativeReading(handle,read,guard){const m=lookup(handle);if(open(m.roles[0])||!guard()||!isSameNativeRegions(m.plan))return null;const result=read();return guard()&&!result?.then?result:null;},
+  withNativeReading(handle,read,guard){const m=lookup(handle);if(open(m.roles[0])||!guard()||!isNativeReadingCurrent(m.plan))return null;const result=read();return guard()&&isNativeReadingCurrent(m.plan)&&!result?.then?result:null;},
   isRebindCurrent(handle,inspection){try{const m=lookup(handle);return !m.roles.some(open)&&inspection?.regionEpoch===handle.regionEpoch&&isSameNativeRegions(m.plan)&&m.roles.filter(s=>!s.retired).every(s=>intact(m,s));}catch{return false;}},
   rebind(handle,context,inspection){const m=lookup(handle);if(m.roles.some(open)||!isSameNativeRegions(m.plan)||!context?.binding?.documentToken||inspection?.regionEpoch!==handle.regionEpoch)throw Error('invalid-flow-rebind');m.handle=Object.freeze({...handle,documentToken:context.binding.documentToken});return m.handle;},
   dispose(handle){const m=lookup(handle);m.cleanup();hide(m,null,'disposed');for(const s of m.roles){s.node.remove();s.exit.remove();}m.style.remove();for(const {node,attr,previous} of m.markers)if(node.getAttribute(attr)===handle.id){if(previous===null)node.removeAttribute(attr);else node.setAttribute(attr,previous);}mounts.delete(handle.id);}

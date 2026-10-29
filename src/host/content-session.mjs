@@ -94,6 +94,36 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
  let activeWork=0,rawIPC=0,workRevision=0,observation=null;
  // Private, document-local presentation failure; never inferred from page data.
  let frameReplaced=false,startupFailure=null;
+ let establishedProducer=null,recoveryTimes=[],recoveryClock=null,recoveryBlocked=null,recoveryResume=null;
+ const transportFrameFailures=new Set(['ui-port-disconnected','ui-grant-expired','ui-renew-failed']);
+ // A successful JOIN establishes a new producer, not stable product use. Bound
+ // repeated post-JOIN transport faults across producers in this document RAM.
+ // This is a rate limit only: it neither extends a lease nor schedules a retry.
+ function recoveryWindow(consume=false){
+  if(recoveryBlocked==='surface-recovery-clock-invalid')return false;
+  let at;try{at=elapsedNow();}catch{at=NaN;}
+  if(!Number.isFinite(at)||at<0||recoveryClock!==null&&at<recoveryClock){recoveryBlocked='surface-recovery-clock-invalid';return false;}
+  recoveryClock=at;recoveryTimes=recoveryTimes.filter(time=>at-time<60000);
+  if(recoveryTimes.length>=3){recoveryBlocked='surface-recovery-rate-limited';return false;}
+  if(consume)recoveryTimes.push(at);return true;
+ }
+ function pauseRecovery(s,mode=null){
+  const code=recoveryBlocked,url=s.url;
+  const resume={url,mode:mode==='workspace'?'workspace':mode==='reading'?'reading':presentationIntent(s),recovery:{scopeKey:s.scopeKey,documentId:s.binding?.browserDocumentId,freshInstant:instantScope(s.scopeKey)},preference:sidebarPreference(s)};
+  // Reuse the existing wait: retire all old capabilities, then accept only a
+  // later genuine context notification or explicit start. No timer owns wake.
+  contextPending();recoveryBlocked=code;recoveryResume=contextResumeAllowed?resume:null;
+  startupFailure={url,state:code,shape:null};
+ }
+ // One automatic attempt per established producer, not per page lifetime.
+ // A failed replacement has no private workspace JOIN and cannot re-arm this.
+ // Renderer/read failures retain the separate original one-shot ceiling.
+ function takeRecovery(s,transport=false,mode=null){
+  if(!(transport&&s.transportRecoveryAvailable===true)&&recoveryRemaining<1)return false;
+  if(transport&&!recoveryWindow(true)){pauseRecovery(s,mode);return false;}
+  if(transport&&s.transportRecoveryAvailable===true){s.transportRecoveryAvailable=false;recoveryRemaining=0;return true;}
+  recoveryRemaining--;s.transportRecoveryAvailable=false;return true;
+ }
  function stopObservation(){const prior=observation;observation=null;if(!prior)return;cancel(prior.timer);runtime.onMessage.removeListener(prior.invalidate);prior.adapter.stop();}
  async function startObservation(s){
   const adapter=s.adapter,entry={adapter,owner:s,timer:null,invalidate:null};observation=entry;
@@ -244,7 +274,7 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
  function retainMigration(s,handle){const m=liveMigration(s);if(!m)return false;try{if(typeof s.adapter?.retainLoadedHandles==='function'&&s.adapter.retainLoadedHandles(m.leaseOwner,[handle],m.elapsedDeadline)!==true){clearMigration(s);return false;}}catch{clearMigration(s);return false;}m.handle=handle;return true;}
  function dispose(s,keepObservation=false){if(!s)return;clearMigration(s);doc.removeEventListener?.('visibilitychange',s.visibility);doc.defaultView.removeEventListener('focus',s.focus);doc.defaultView.removeEventListener('blur',s.blur);s.restorePending?.();s.capturePending?.cancel();s.snippets?.stop();s.candidates?.stop();try{s.controller?.stop();}catch{}s.abort.abort();try{runtime.onMessage.removeListener(s.listener);}catch{}doc.defaultView.removeEventListener('pagehide',s.pagehide);try{if(!keepObservation||observation?.adapter!==s.adapter)s.adapter?.stop();}catch{}}
  function reset(keepObservation=false){if(!keepObservation)stopObservation();epoch++;const s=current;current=null;dispose(s,keepObservation);}
- function stop(){nativeUseIntent=null;contextWaitSuspended=false;verificationWaitURL=null;contextResumeAllowed=false;contextResumeMode='workspace';contextResumeURL=null;clearLearned();clearRecent();clearUpgrade();for(const type of ['pointerdown','keydown'])doc.removeEventListener?.(type,interruptUpgrade,true);enabled=false;restoreArmed=false;rebindQueued=false;rebindRun++;reset();doc.defaultView.removeEventListener('pagehide',pagehide);doc.defaultView.removeEventListener('pageshow',pageshow);}
+ function stop(){recoveryResume=null;recoveryBlocked=null;nativeUseIntent=null;contextWaitSuspended=false;verificationWaitURL=null;contextResumeAllowed=false;contextResumeMode='workspace';contextResumeURL=null;clearLearned();clearRecent();clearUpgrade();for(const type of ['pointerdown','keydown'])doc.removeEventListener?.(type,interruptUpgrade,true);enabled=false;restoreArmed=false;rebindQueued=false;rebindRun++;reset();doc.defaultView.removeEventListener('pagehide',pagehide);doc.defaultView.removeEventListener('pageshow',pageshow);}
  function presentationIntent(state){return (state.controller?.presentationIntent?.()??state.controller?.presentationMode?.()??state.initialMode)==='workspace'?'workspace':'reading';}
  function sidebarPreference(s){
   if(s.recoveryDenied)return null;
@@ -282,7 +312,7 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
   // subsequent attempt; failures never schedule their own recovery loop.
   queueMicrotask(()=>{if(!enabled||run!==rebindRun)return;rebindQueued=false;void begin(true,initialMode,recovery,preference);});
  }
- async function start(){frameReplaced=false;startupFailure=null;contextWaitSuspended=false;verificationWaitURL=null;contextResumeMode='workspace';contextResumeURL=null;contextResumeAllowed=contextRecovery===true;clearLearned();clearRecent();clearUpgrade();recoveryRemaining=1;enabled=true;restoreArmed=false;rebindQueued=false;rebindRun++;doc.defaultView.addEventListener('pageshow',pageshow);return begin();}
+ async function start(){frameReplaced=false;startupFailure=null;establishedProducer=null;recoveryTimes=[];recoveryClock=null;recoveryBlocked=null;recoveryResume=null;contextWaitSuspended=false;verificationWaitURL=null;contextResumeMode='workspace';contextResumeURL=null;contextResumeAllowed=contextRecovery===true;clearLearned();clearRecent();clearUpgrade();recoveryRemaining=1;enabled=true;restoreArmed=false;rebindQueued=false;rebindRun++;doc.defaultView.addEventListener('pageshow',pageshow);return begin();}
  // Legacy entry points remain harmless: presentation recovery now belongs to
  // the live surface controller, never another document handshake.
  async function recoverLayout(){return null;}
@@ -295,8 +325,8 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
    if(doc.visibilityState!=='visible'||!foregroundArmed||!s.ready||!live(s))return;
    if(foregroundPending)return;foregroundArmed=false;foregroundPending=true;let foregroundFailure='foreground-failed';
    const recoverTransport=()=>{
-    if(!enabled||!live(s)||typeof s.scopeKey!=='string'||!s.scopeKey||s.recoveryDenied||s.busyClose===true||recoveryRemaining<1)return false;
-    recoveryRemaining--;rebind(s,null,s.scopeKey,true);return true;
+    if(!enabled||!live(s)||typeof s.scopeKey!=='string'||!s.scopeKey||s.recoveryDenied||s.busyClose===true||!takeRecovery(s,true))return false;
+    rebind(s,null,s.scopeKey,true);return true;
    };
    void track(()=>rpc(s,{v:1,type:'HOST_FOCUS',clientId,seq:++seq,...bindingFields(s.binding)}).then(result=>{
     noteScopeStatus(s,result);
@@ -495,9 +525,15 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
    startupPhase='initialization-surface';reportStartup(startupPhase);
    surface=surfaceFactory({document:doc,createFrameURL:({role})=>runtime.getURL(role+'.html'),hasNativeLayer:()=>adapter.hasNativeLayer(),takeMountDiagnostic:()=>mountDiagnostic.take(()=>live(s))});
    const bridge={
+    workspaceEstablished:({binding,mountId})=>{
+     if(!enabled||!live(s)||!s.ready||s.recoveryDenied||!bindingOK(binding,s.binding)||!tokenOK(mountId)||typeof s.scopeKey!=='string'||!s.scopeKey)return false;
+     const producer=JSON.stringify([binding.browserDocumentId,binding.documentToken,binding.producerToken,binding.routeEpoch]);
+     if(producer===establishedProducer)return false;
+     establishedProducer=producer;s.transportRecoveryAvailable=true;return true;
+    },
     cancelledCloseReady:()=>{if(enabled&&live(s)&&s.ready&&!s.recoveryDenied)s.busyClose=false;},
     releaseCancelledClose:async({handle,binding,isCurrent,timeoutMs=6000})=>{
-     const quiet=()=>enabled&&live(s)&&s.ready&&s.busyClose===true&&!s.recoveryDenied&&!s.cancelReleaseAttempted&&recoveryRemaining>0&&!s.closing&&!s.wakePending&&!activeWork&&!rawIPC&&!s.identityPending&&!s.capturePending&&!s.restorePending&&!rebindQueued&&!restoreArmed&&upgradeTimer===null&&upgradeIdentity===null;
+     const quiet=()=>enabled&&live(s)&&s.ready&&s.busyClose===true&&!s.recoveryDenied&&!s.cancelReleaseAttempted&&(recoveryRemaining>0||s.transportRecoveryAvailable===true)&&!s.closing&&!s.wakePending&&!activeWork&&!rawIPC&&!s.identityPending&&!s.capturePending&&!s.restorePending&&!rebindQueued&&!restoreArmed&&upgradeTimer===null&&upgradeIdentity===null;
      if(!Number.isFinite(timeoutMs)||timeoutMs<=0||timeoutMs>6000||!quiet()||typeof isCurrent!=='function'||!isCurrent()||!bindingOK(binding,s.binding)||typeof s.scopeKey!=='string'||!s.scopeKey)return false;
      s.cancelReleaseAttempted=true;const prior=s.binding,scope=s.scopeKey,closing={interfered:false};s.closing=closing;
      const intact=()=>enabled&&live(s)&&s.ready&&s.busyClose===true&&!s.recoveryDenied&&s.binding===prior&&s.closing===closing&&!closing.interfered&&bindingOK(prior)&&isCurrent();
@@ -505,8 +541,8 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
       // Only the worker's atomic guarded release permits replacing a producer
       // that previously reported busy. CHECK/transport failure never suffice.
       const result=await rpc(s,{v:1,type:'HOST_UI_IDLE_RELEASE',...bindingFields(prior),mountId:handle.id},timeoutMs,closing);
-      if(!exactHostRecord(result,['ok'])||result.ok!==true||!intact()||activeWork||rawIPC||recoveryRemaining<1)return false;
-      s.busyClose=false;recoveryRemaining--;rebind(s,'reading',scope);return true;
+      if(!exactHostRecord(result,['ok'])||result.ok!==true||!intact()||activeWork||rawIPC||!takeRecovery(s,true))return false;
+      s.busyClose=false;rebind(s,'reading',scope);return true;
      }catch{return false;}finally{if(s.closing===closing)s.closing=null;}
     },
     renewDormantBinding:({binding,timeoutMs})=>track(async()=>{
@@ -589,10 +625,12 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
     // The controller has withdrawn the old mount. Do not leave ready=true
     // swallowing future C2 READY signals; wait without retrying denied scope.
     if(current===s&&reason==='session-renew-failed'&&s.recoveryDenied){contextPending();return;}
-    // One fresh authorization attempt per explicit content start. A failed
-    // replacement never schedules another loop or revives an old grant.
-    if(!enabled||(!s.ready&&!s.mountStarting)||!live(s)||s.busyClose===true||s.recoveryDenied||recoveryRemaining<1||!['ui-frame-suspended','session-renew-failed','ui-grant-expired','stale-session-renewal'].includes(reason))return;
-    recoveryRemaining--;rebind(s,presentation?.mode==='workspace'?'workspace':'reading');
+    // Transport lifecycles may repeat during one long-lived document. Only a
+    // new private workspace JOIN establishes another recovery episode. Read
+    // and renderer failures never earn repeated attempts merely by rejoining.
+    const transport=['session-renew-failed','ui-grant-expired','stale-session-renewal'].includes(reason)||reason==='ui-frame-suspended'&&transportFrameFailures.has(presentation?.frameFailureReason);
+    if(!enabled||(!s.ready&&!s.mountStarting)||!live(s)||s.busyClose===true||s.recoveryDenied||!['ui-frame-suspended','session-renew-failed','ui-grant-expired','stale-session-renewal'].includes(reason)||!takeRecovery(s,transport,presentation?.mode))return;
+    rebind(s,presentation?.mode==='workspace'?'workspace':'reading',transport?s.scopeKey:null,transport);
    },now,elapsedNow,schedule,cancel});
    // Owned frames may suspend while mount registration is still awaiting its
    // reply. Permit the same one-shot fresh handshake in that narrow interval;
@@ -627,6 +665,9 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
   }
  }
  function contextPending(preserveObservation=false){
+  // A real new invalidation/revocation discards any paused presentation hint.
+  // The document-wide failure window remains until time advances or start().
+  recoveryResume=null;
   // A late invalidation may arrive after an active document entered BFCache.
   // Preserve suspension when converting its scheduled restoration to a wait.
   if(restoreArmed)contextWaitSuspended=true;
@@ -653,13 +694,16 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
  }
  function contextReady(){
   if(contextRecovery!==true||!contextResumeAllowed||contextWaitSuspended)return Promise.resolve(null);
+  if(recoveryBlocked){if(!recoveryWindow(true))return Promise.resolve(null);recoveryBlocked=null;}
   if(enabled){if(current&&(current.renewContextPending===true||!current.ready&&(!current.scopeKey||current.wakePending)))current.contextReadyPending=true;return Promise.resolve(null);}
+  const resume=recoveryResume?.url===doc.location.href?recoveryResume:null;recoveryResume=null;
+  if(resume)contextResumeMode=resume.mode;
   if(contextResumeURL!==null&&doc.location.href!==contextResumeURL){contextResumeMode='reading';if(!upgrade.navigate({url:doc.location.href}))clearUpgrade();}
   contextResumeURL=doc.location.href;
   enabled=true;restoreArmed=false;rebindQueued=false;rebindRun++;
   doc.defaultView.addEventListener('pageshow',pageshow);
-  return begin(true,contextResumeMode);
+  return begin(true,contextResumeMode,resume?.recovery??null,resume?.preference??null);
  }
- function localStatus(){if(frameReplaced)return 'frame-blocked';if(!enabled&&!contextResumeAllowed&&!observation&&startupFailure?.url===doc.location.href)return startupFailure.state;if(!enabled)return contextResumeAllowed||observation?(verificationWaitURL===doc.location.href?'verification-required':'waiting'):'unavailable';if(!current||!live(current))return 'unavailable';if(!current.ready)return 'connecting';const state=current.controller?.localStatus?.()??'unavailable';return ['unavailable','surface-controller-absent'].includes(state)&&startupFailure?.url===doc.location.href?startupFailure.state:state;}
+ function localStatus(){if(frameReplaced)return 'frame-blocked';if(recoveryBlocked&&startupFailure?.url===doc.location.href)return recoveryBlocked;if(!enabled&&!contextResumeAllowed&&!observation&&startupFailure?.url===doc.location.href)return startupFailure.state;if(!enabled)return contextResumeAllowed||observation?(verificationWaitURL===doc.location.href?'verification-required':'waiting'):'unavailable';if(!current||!live(current))return 'unavailable';if(!current.ready)return 'connecting';const state=current.controller?.localStatus?.()??'unavailable';return ['unavailable','surface-controller-absent'].includes(state)&&startupFailure?.url===doc.location.href?startupFailure.state:state;}
  return Object.freeze({localStatus,recoverLayout,recoverRoute,localLayoutStatus:()=>{const layout=startupFailure?.url===doc.location.href&&localStatus().startsWith('layout-')?startupFailure.shape:current&&live(current)&&current.adapter?.navigationSummary?{navigation:current.adapter.navigationSummary(),...(current.adapter.deliverySummary?{delivery:current.adapter.deliverySummary()}:{} ),presentation:current.controller?.presentationSnapshot?.()??null}:null;const mainMountCheck=mountDiagnostic.read();return mainMountCheck?{...(layout??{}),mainMountCheck}:layout;},start,stop,contextPending,contextReady,prepareIdle,enterDormant,isOwnedMask:node=>!!current&&live(current)&&current.surface?.isMasked?.(node)===true,showWorkspace:()=>sync(()=>current?.controller?.showWorkspace()??false),showReading:()=>sync(()=>current?.controller?.showReading()??false)});
 }

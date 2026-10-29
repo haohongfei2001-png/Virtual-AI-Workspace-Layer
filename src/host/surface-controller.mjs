@@ -44,7 +44,7 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
   // A temporary native layer or geometry yield is visibility, not a user exit.
   // The document owner may start a fresh authorized mount; carry only intent,
   // never the old mount/grant or its transient suspended presentation.
-  if(prior)try{onTerminated(reason,Object.freeze({mode:prior.desiredMode==='workspace'?'workspace':'reading',sidebarDesired:prior.sidebarDesired!==false}));}catch{/* Recovery notification cannot undo cleanup. */}
+  if(prior)try{onTerminated(reason,Object.freeze({mode:prior.desiredMode==='workspace'?'workspace':'reading',sidebarDesired:prior.sidebarDesired!==false,...(frameFailureReasons.includes(prior.frameFailureReason)?{frameFailureReason:prior.frameFailureReason}:{})}));}catch{/* Recovery notification cannot undo cleanup. */}
   if(handoff){
    // Destroy both frames before offering release; a partly rejoined frame may
    // already hold a grant. Never pretend that the old idle ACKs still apply.
@@ -86,6 +86,17 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
   if(current===state&&doc.location.href!==state.url&&!state.frames.some(x=>x.frame.hasAttribute?.('srcdoc'))){stop('native-document-changed');return false;}
   for(const target of [...(state.frames??[])])if(target.frame.hasAttribute?.('srcdoc')||!target.frame.isConnected||target.frame.contentWindow!==target.window){
    if(target.role==='sidebar'){retireSidebar(state,'ui-frame-document-replaced');continue;}
+   if(current===state&&!state.dormant&&surface.backend==='document-flow'&&!target.frame.hasAttribute?.('srcdoc')&&target.frame.ownerDocument===doc&&!target.frame.isConnected){
+    // A native same-route subtree replacement destroys the owned frame too.
+    // Retire that frame and every old UI capability immediately, but preserve
+    // the independent document producer. A replacement is possible only after
+    // a new complete native region proof, never by re-inserting into the old
+    // parent or treating a detached frame/window as still authorized.
+    const context=state.context,mode=state.desiredMode,sidebarDesired=state.sidebarDesired,retiredRegionEpoch=state.handle.regionEpoch;
+    stop('native-region-changed');const run=epoch;
+    queueMicrotask(()=>{if(current!==null||epoch!==run||doc.location.href!==state.url||Date.parse(context.binding.expiresAt)<=now())return;void start({context,mode,retiredRegionEpoch},sidebarDesired);});
+    return false;
+   }
    reportJoin(state);if(current===state)stop(state.dormant&&!target.frame.hasAttribute?.('srcdoc')?'dormant-document-changed':'ui-frame-document-replaced');return false;
   }
   return true;
@@ -144,7 +155,7 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
  function reconcileGeometry(state){
   if(current!==state)return false;
   if(state.dormant){if(!frameDocumentsIntact(state))return false;ensureReturn(state);return false;}
-  if(!valid(state)){stop('native-document-changed');return false;}
+  if(!valid(state)){if(current===state)stop('native-document-changed');return false;}
   if(adapter.hasNativeLayer()){suspend('native-layer');return false;}
   const inspection=inspectPresentation(state);
   if(inspection?.ok&&inspection.regionEpoch!==state.handle.regionEpoch){
@@ -369,6 +380,7 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
   // Layout restarts and the document owner may carry a same-scope display
   // choice. This is not authority: every new mount still needs fresh grants.
   state.sidebarDesired=sidebarDesired!==false;
+  state.retiredRegionEpoch=Number.isSafeInteger(options?.retiredRegionEpoch)?options.retiredRegionEpoch:null;
   state.pagehide=()=>{if(current===state)stop('page-hidden');};win.addEventListener('pagehide',state.pagehide);
   try{
    state.context=options?.context??await adapter.start(options);if(current!==state)return null;
@@ -384,6 +396,10 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
    watchInitialLayout(state);
    arm(state);return null;
   }
+  // A detached owned sibling alone is not a new native topology. Waiting for
+  // a newer region epoch bounds repeated removal and never creates a grant.
+  if(state.retiredRegionEpoch!==null&&state.inspection.regionEpoch<=state.retiredRegionEpoch){watchInitialLayout(state);arm(state);return null;}
+  state.retiredRegionEpoch=null;
   unwatchInitialLayout(state);state.mounting=true;
   try{
    state.policyViolation=event=>{if(current!==state||!['frame-src','child-src'].includes(event.effectiveDirective))return;let blocked;try{blocked=new URL(event.blockedURI);}catch{return;}if(blocked.protocol+'//'+blocked.host!==trustedOrigin)return;state.framePolicy=event.disposition==='enforce'?'frame-blocked':'frame-report-only';reportJoin(state);};doc.addEventListener?.('securitypolicyviolation',state.policyViolation);
@@ -456,7 +472,7 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
    return;
   }
   // Correlated fixed failure metadata only; it can withdraw, never grant, UI access.
-  if(exactHostRecord(data,['role','type','reason'])&&data.type==='VAIWL_UI_SUSPEND'&&frameFailureReasons.includes(data.reason)){try{onFailure('surface-frame-'+data.reason);}catch{}if(data.role==='sidebar')retireSidebar(state,'ui-frame-suspended');else stop('ui-frame-suspended');return;}
+  if(exactHostRecord(data,['role','type','reason'])&&data.type==='VAIWL_UI_SUSPEND'&&frameFailureReasons.includes(data.reason)){try{onFailure('surface-frame-'+data.reason);}catch{}if(data.role==='sidebar')retireSidebar(state,'ui-frame-suspended');else{state.frameFailureReason=data.reason;stop('ui-frame-suspended');}return;}
   if(exactHostRecord(data,['role','type'])&&['VAIWL_UI_SUSPEND','VAIWL_UI_EXIT'].includes(data.type)){if(data.role==='sidebar'&&data.type==='VAIWL_UI_SUSPEND')retireSidebar(state,'sidebar-suspended');else stop(data.type==='VAIWL_UI_EXIT'?'ui-user-exit':'ui-frame-suspended');return;}
   if(data.type==='VAIWL_UI_JOIN'){state.joinedRoles?.add(data.role);reportJoin(state);}
   if(!valid(state,false)||Object.keys(data).sort().join(',')!=='nonce,role,type'||data.type!=='VAIWL_UI_JOIN'||!tokenOK(data.nonce)||state.pending.has(data.role)||state.grants.has(data.role))return;
@@ -467,6 +483,9 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
    if(!valid(state)||!state.frames.includes(target)||event.source!==target.window||target.frame.contentWindow!==target.window)return;
    const grant=ack?.grant;if(ack?.ok!==true||!tokenOK(grant?.id)||grant.mountId!==state.handle.id||grant.role!==data.role||grant.parentDocumentId!==state.context.binding.browserDocumentId||!tokenOK(grant.uiDocumentId)||!tokenOK(grant.scopeGrantId)||!Number.isFinite(Date.parse(grant.expiresAt))||Date.parse(grant.expiresAt)<=now())return;
    state.grants.set(data.role,Object.freeze({...grant}));reportJoin(state);publishAppearance(state,data.role);arm(state);
+   // Private bridge callback after the authenticated two-channel JOIN only.
+   // Public BOOT/geometry/VIEW receipts never establish a recovery generation.
+   if(data.role==='workspace'&&authorized(state))bridge.workspaceEstablished?.({binding:state.context.binding,mountId:state.handle.id});
    if(data.role==='sidebar'&&['workspace','reading'].includes(state.mode)&&authorized(state))reconcileGeometry(state);
    if(state.cancelCloseJoining&&authorized(state)){state.cancelCloseJoining=false;bridge.cancelledCloseReady?.();}
    if(state.mode==='waiting'&&authorized(state)){
