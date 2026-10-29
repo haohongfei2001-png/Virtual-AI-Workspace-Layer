@@ -88,15 +88,49 @@ function assertJ2Checkpoints(steps){
   assert.equal(step.anchor.messageId,step.messageId);assert(!Object.hasOwn(step.anchor,'sentAt'),'ACK is not an original-time event');
  }
 }
+// Independent admission for the fixed historical J3 fixtures. Their missing
+// common NAV slot is explicit coverage debt, not a missing workspace or a
+// license to accept arbitrary skipped steps from a different product failure.
+export const j3RequiredCheckpoints=Object.freeze([
+ 'workspace-open-with-native-history-preserved',
+ 'native-model-and-file-input',
+ 'native-fixture-permission-allow',
+ 'native-fixture-permission-deny',
+ 'native-editor-switch-independent-drafts-original-two-nodes',
+ 'UI06-parent-AX-trusted-keyboard-and-continuity',
+ 'native-SPA-Back-Forward-same-document-draft-and-file',
+ 'actual-chrome-tabs-200-percent-zoom',
+ 'older-interval-navigation',
+ 'old-window-safe-new-tab',
+ 'old-window-reopen',
+ 'unknown-membership-conversation-remains-reachable',
+ 'native-rendered-message-Range-explicit-save',
+ 'saved-snippet-search-native-conversation-title',
+ 'saved-snippet-locate-native-reading-after-zoom-and-history',
+ 'native-search-after-all-prior-steps'
+]);
+const j3SidebarLimitations=Object.freeze({LEGACY:'legacy-separated-roots-without-flow-partition',MODERN:'compact-history-without-flow-partition'});
+function assertJ3Checkpoints(profile,steps){
+ assert(Object.hasOwn(j3SidebarLimitations,profile),'unsupported partial J3 fixture');
+ assert(Array.isArray(steps));
+ assert.deepEqual(steps.map(step=>step?.name),j3RequiredCheckpoints,'missing, duplicate, unexpected or reordered J3 checkpoint');
+ for(const [index,step] of steps.entries()){
+  assert.equal(step.order,index+1,'J3 order must reflect the continuous journey');
+  assert.equal(step.status,index>=12&&index<=14?'NOT_COVERED':'PASS');
+  if(index>=12&&index<=14){assert.equal(step.reason,j3SidebarLimitations[profile]);assert.equal(step.productionSnippetProfile,'DISABLED_NOT_CERTIFIED');}
+ }
+ assert.equal(steps[0].sidebarAvailable,false);
+ assert.equal(steps[0].sidebarLimitation,j3SidebarLimitations[profile]);
+}
 export function admitMatrixReport(scenario,report,exitCode){
- const partial=['J1','J4'].includes(scenario.journey);
+ const partial=['J1','J3','J4'].includes(scenario.journey);
  assert.equal(exitCode,partial?2:0,'child must finish with its explicit expected exit');
- assert.equal(report.status,partial?`PARTIAL_${scenario.journey}_NOT_ACCEPTED`:scenario.journey==='J2'?'PASS_OFFLINE_J2_JOURNEY':'PASS');
+ assert.equal(report.status,scenario.journey==='J3'?'PARTIAL_NOT_J3_ACCEPTED':partial?`PARTIAL_${scenario.journey}_NOT_ACCEPTED`:scenario.journey==='J2'?'PASS_OFFLINE_J2_JOURNEY':'PASS');
  if(scenario.profile!==null)assert.equal(report.profile,scenario.profile);assert.equal(report.realChatGPT,'NOT_RUN');
  assert.deepEqual(report.errors,[]);assert.equal(report.sourceChangedDuringRun,false);if(scenario.journey!=='J2')assert.equal(report.buildManifestUnchanged,true);
  assert(!report.cleanupErrors?.length&&!report.finalizationErrors?.length,'cleanup failure');
  assert(report.sourceHashes&&Object.keys(report.sourceHashes).length>0,'missing exact product hashes');
- const steps=scenario.journey==='PARTIAL'?report.results:report.steps;if(scenario.journey==='J2')assertJ2Checkpoints(steps);else assert(steps?.length>0&&steps.every(step=>step.status==='PASS'),'missing continuous steps');
+ const steps=scenario.journey==='PARTIAL'?report.results:report.steps;if(scenario.journey==='J2')assertJ2Checkpoints(steps);else if(scenario.journey==='J3')assertJ3Checkpoints(scenario.profile,steps);else assert(steps?.length>0&&steps.every(step=>step.status==='PASS'),'missing continuous steps');
  if(scenario.journey==='J1'){
   assert.equal(report.evidence,'SINGLE_CONTINUOUS_REAL_HEADLESS_PACKAGED_MV3_OFFLINE_JOURNEY');assert.equal(report.steps.length,9);
   assert.equal(report.scriptChangedDuringRun,false);assert.equal(report.fixtureChangedDuringRun,false);
@@ -104,6 +138,7 @@ export function admitMatrixReport(scenario,report,exitCode){
   assert.equal(report.evidence,'OFFLINE_PACKAGED_MV3_REAL_WALL_CLOCK');assert.equal(report.steps.length,8);assert(!report.diagnosticErrors?.length);assert.equal(report.releaseStatus,'NOT_RELEASE_READY');
  }else if(scenario.journey==='J3'){
   assert.equal(report.evidence,'SINGLE_CONTINUOUS_REAL_HEADLESS_PACKAGED_MV3_OFFLINE_JOURNEY');assert.equal(report.steps.length,16);assert.equal(report.fixtureChangedDuringRun,false);assert.equal(report.scriptChangedDuringRun,false);assert.equal(report.ui06HelperChangedDuringRun,false);assert.equal(report.physicalIME,'NOT_RUN');
+  assert.equal(report.fullV27Acceptance,'NOT_ESTABLISHED');assert.equal(report.productionSnippetProfile,'DISABLED_NOT_CERTIFIED');assert.equal(report.workerExternalNetworkBlocked,true);
  }else if(scenario.journey==='PARTIAL'){
   assert.equal(report.evidence,'REAL_HEADLESS_PACKAGED_MV3_PARTIAL_RECONSTRUCTION');assert.deepEqual(report.results.map(r=>r.name),partialCheckpoints);assertPartialPaging(report.paging);assert.equal(report.workerExternalNetwork,'BLOCKED');assert.equal(report.fixtureChangedDuringRun,false);assert.equal(report.scriptChangedDuringRun,false);assert.equal(report.release,'NOT_RELEASE_READY');
  }else{
@@ -111,7 +146,7 @@ export function admitMatrixReport(scenario,report,exitCode){
   assert.equal(report.jointInterruptionBoundary,scenario.boundary);assert.equal(report.codecScenario,scenario.codec);assertJ4Checkpoints(scenario,report.steps);
   if(scenario.repeat){assert.equal(report.repeatedReenable?.length,2);assert.deepEqual(report.repeatedReenable.map(value=>value.cycle),[1,2]);assert.equal(report.steps.filter(step=>step.name==='repeated-actual-disable-reenable-preserves-two-unrefreshed-native-documents').length,2);}
  }
- return {id:scenario.id,status:'PASS_SCOPED_CONTINUOUS_CASE',steps:steps.length,sourceHashes:report.sourceHashes};
+ return {id:scenario.id,status:'PASS_SCOPED_CONTINUOUS_CASE',steps:steps.length,sourceHashes:report.sourceHashes,...(scenario.journey==='J3'?{childStatus:report.status,fullJ3:'NOT_ESTABLISHED',sidebar:'NOT_COVERED_NO_COMMON_NATIVE_NAV',uncovered:steps.filter(step=>step.status==='NOT_COVERED').map(({name,reason})=>({name,reason}))}:{})};
 }
 export function summarizeJourneyMatrix(rows,{selected=journeyMatrixCases.map(c=>c.id)}={}){
  assert.equal(new Set(selected).size,selected.length);assert(selected.every(id=>journeyMatrixCases.some(c=>c.id===id)));
