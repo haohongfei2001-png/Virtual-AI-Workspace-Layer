@@ -243,13 +243,18 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
  function ensureReturn(state){
   if((!state.dormant&&!authorized(state))||adapter.hasNativeLayer()){removeReturn(state);return false;}
   const inspection=state.dormant?state.inspection:adapter.inspect(),slot=inspection.navigationSlot;
-  const headerGap=inspection.returnPlacement==='header-gap';
-  // Header-gap identity and geometry are proved together after insertion,
-  // including the real button hit target; no separate pre-insertion scan.
-  if(Object.hasOwn(inspection??{},'returnSlot')&&!inspection.returnSlot||!slot?.isConnected||slot!==state.inspection.navigationSlot||(!headerGap&&adapter.isReturnSlotCurrent?.(inspection)===false)){removeReturn(state);return false;}
+  const headerGap=inspection.returnPlacement==='header-gap',alreadyPresent=!!state.button;
+  if(!inspection.ok||!state.dormant&&inspection.regionEpoch!==state.handle.regionEpoch||Object.hasOwn(inspection,'returnSlot')&&!inspection.returnSlot||!slot?.isConnected||slot!==state.inspection.navigationSlot||(!headerGap&&adapter.isReturnSlotCurrent?.(inspection)===false)){removeReturn(state);return false;}
   if(state.dormant&&slotOccupied(state,slot)){removeReturn(state);return false;}
   if(!state.button){const button=doc.createElement('button');button.type='button';button.dataset.vaOwned=state.handle.id;button.setAttribute('aria-label','返回工作空间');button.title='返回工作空间';button.innerHTML=workspaceReturnIcon;button.style.cssText='width:32px;height:32px;flex:none;display:inline-grid;place-items:center;border:0;border-radius:9px;background:transparent;color:inherit;cursor:pointer';button.addEventListener('click',event=>{if(current!==state||event?.isTrusted!==true)return;const keyboardEntry=event.detail===0&&doc.activeElement===button;if(state.dormant){if(slotOccupied(state,slot)||adapter.isReturnSlotCurrent?.(state.inspection)===false){removeReturn(state);return;}if(state.waking||doc.location.href!==state.url||adapter.hasNativeLayer())return;state.waking=true;state.pendingWakeEntry=true;try{Promise.resolve(onWake()).catch(()=>{state.pendingWakeEntry=false;}).finally(()=>{state.waking=false;if(state.dormant)state.pendingWakeEntry=false;});}catch{state.waking=false;state.pendingWakeEntry=false;}return;}state.sidebarDesired=true;if(!showWorkspace(true))return;if(keyboardEntry)focusFrame('workspace');workspaceEntered(state);});if(headerGap){const box=inspection.returnSlot;Object.assign(button.style,{boxSizing:'border-box',margin:'0',padding:'0',position:'fixed',left:box.x+'px',top:box.y+'px',width:box.width+'px',height:box.height+'px',zIndex:'30',pointerEvents:'auto'});doc.body.append(button);}else slot.append(button);state.button=button;surface.setReturnControl?.(state.handle,button);adapter.setReturnControl?.(button);}
-  if(headerGap){const box=adapter.getReturnControlRect?.(inspection);if(!box){removeReturn(state);return false;}Object.assign(state.button.style,{boxSizing:'border-box',margin:'0',padding:'0',position:'fixed',left:box.x+'px',top:box.y+'px',width:box.width+'px',height:box.height+'px',zIndex:'30',pointerEvents:'auto'});state.returnStyle=state.button.getAttribute('style');}
+  if(headerGap){
+   // A fresh inspect already proved an installed button, including full native
+   // paint and actual hit targets. Reuse that same-task result, not a prior
+   // event's geometry. New insertion can change :has()/layout and still needs
+   // a complete post-insertion proof; dormant inspection is also only identity.
+   const box=alreadyPresent&&!state.dormant?inspection.returnSlot:adapter.getReturnControlRect?.(inspection);
+   if(!box){removeReturn(state);return false;}Object.assign(state.button.style,{boxSizing:'border-box',margin:'0',padding:'0',position:'fixed',left:box.x+'px',top:box.y+'px',width:box.width+'px',height:box.height+'px',zIndex:'30',pointerEvents:'auto'});state.returnStyle=state.button.getAttribute('style');
+  }
   return true;
  }
  function nativeSurrender(state,event){
@@ -328,6 +333,11 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
    // Do not halve the remaining interval repeatedly when no lease time was gained.
    // Keep the absolute expiry timer: this never extends authority or retries a denial.
    state.renewalCeiling=leaseUntil(state)<=priorUntil?priorUntil:null;
+   // A transient paint-budget refusal can leave a static reading page without
+   // an entry and without another DOM event. The ordinary successful renewal
+   // is a fresh authority boundary: re-prove a missing entry once, preserving
+   // reading intent, focus and sidebar. No extra retry timer or cached proof.
+   if(state.mode==='reading'&&!state.button&&!state.geometryPaused&&!state.nativeDispatch)try{ensureReturn(state);}catch{removeReturn(state);}
   }catch{if(current===state&&!state.dormant){if(renewalStage)try{onFailure('surface-session-renew-'+renewalStage);}catch{}stop('session-renew-failed');}}
   finally{state.renewing=false;if(current===state&&!state.dormant){arm(state);publishSurface(state);}}
  }

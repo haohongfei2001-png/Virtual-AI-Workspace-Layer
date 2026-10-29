@@ -76,6 +76,53 @@ test('partial mount errors, marker conflicts and registration denial remain term
 test('owner registration and workspace UiGrant gate workspace; sidebar joins independently',async()=>{const f=fixture(),held=deferred();f.bridge.registerMount=()=>held.promise;const start=f.controller.start({});await drain();f.message();assert.equal(f.calls.confirm.length,0);assert.equal(f.controller.showWorkspace(),false);held.resolve({ok:true});await start;f.message();await drain();assert.equal(f.calls.show,1);f.message('sidebar');await drain();assert.equal(f.calls.show,1);assert.deepEqual(Object.keys(f.calls.confirm[0]).sort(),['documentToken','mountId','nonce','regionEpoch','role']);});
 test('origin, original contentWindow, connectedness and public join shape are mandatory',async()=>{for(const mutate of [f=>f.message('workspace',{origin:'https://chatgpt.com'}),f=>f.message('workspace',{source:{}}),f=>{f.frames[0].frame.isConnected=false;f.message();},f=>f.message('workspace',{data:{type:'VAIWL_UI_JOIN',role:'workspace',nonce:'n',scope:'forged'}})]){const f=fixture();await f.controller.start({});mutate(f);await drain();assert.equal(f.calls.confirm.length,0);assert.equal(f.calls.show,0);}});
 test('exactly one four-grid return exists only in reading and opens workspace',async()=>{const f=fixture();await f.controller.start({});await f.both();assert.equal(f.slot.children.length,0);f.controller.showReading();f.controller.showReading();assert.equal(f.slot.children.length,1);assert.equal((f.slot.children[0].innerHTML.match(/<rect /g)??[]).length,4);assert.equal(f.slot.children[0]['aria-label'],'返回工作空间');f.slot.children[0].events.click({isTrusted:true});assert.equal(f.slot.children.length,0);assert.equal(f.calls.show,2);});
+function headerGapFixture(){
+ const f=fixture(),inspect=f.adapter.inspect,create=f.doc.createElement,box={x:300,y:8,width:32,height:32};
+ let blocked=false,postBlocked=false,inspections=0,postChecks=0;
+ f.doc.body={...f.slot,children:[]};f.doc.createElement=()=>{const node=create();node.getAttribute=key=>key==='style'?JSON.stringify(node.style):node[key];return node;};
+ f.adapter.inspect=()=>{inspections++;return {...inspect(),returnPlacement:'header-gap',returnSlot:blocked?null:box,roles:{return:{available:!blocked,reason:blocked?'reading-paint-budget':null}}};};
+ f.adapter.getReturnControlRect=()=>{postChecks++;assert.equal(f.doc.body.children.length,1,'insertion is proved with the actual button present');return postBlocked?null:box;};
+ return {...f,blocked:value=>{blocked=value;},postBlocked:value=>{postBlocked=value;},proofCounts:()=>({inspections,postChecks})};
+}
+test('an existing header return uses the fresh full inspection once and still withdraws on a later refusal',async()=>{
+ const f=headerGapFixture();await f.controller.start({});await f.both();f.controller.showNativeReading();
+ const button=f.doc.body.children[0],before=f.proofCounts();assert.ok(button);assert.equal(before.postChecks,1);
+ // A redundant second scan would now exhaust its budget. The first inspection
+ // already proves this installed button, including the actual hit target.
+ f.postBlocked(true);f.surrender({reason:'native-reading'});
+ assert.equal(f.doc.body.children[0],button);assert.deepEqual(f.proofCounts(),{inspections:before.inspections+1,postChecks:before.postChecks});
+ f.blocked(true);f.surrender({reason:'native-reading'});assert.equal(f.doc.body.children.length,0);f.controller.stop();
+});
+test('a newly inserted header return still requires the post-insertion full paint proof',async()=>{
+ const f=headerGapFixture();await f.controller.start({});await f.both();f.postBlocked(true);f.controller.showNativeReading();
+ assert.equal(f.proofCounts().postChecks,1);assert.equal(f.doc.body.children.length,0);f.controller.stop();
+});
+test('successful ordinary renewal re-proves a missing reading return without reopening workspace',async()=>{
+ const f=headerGapFixture();f.bridge.renewSession=async()=>f.renewAck();await f.controller.start({});await f.both();
+ f.blocked(true);f.controller.showNativeReading();assert.equal(f.doc.body.children.length,0);
+ f.blocked(false);const before=f.proofCounts(),shown=f.calls.show;f.tick(10000);await drain();
+ assert.equal(f.doc.body.children.length,1);assert.ok(f.proofCounts().inspections>before.inspections);assert.equal(f.proofCounts().postChecks,1);
+ assert.equal(f.calls.show,shown);assert.equal(f.controller.presentationMode(),'reading');assert.equal(f.calls.dispose,0);f.controller.stop();
+});
+test('renewal cannot restore a return through a native layer, refused proof, revoke or changed document',async()=>{
+ for(const invalidate of [f=>f.layer(true),f=>f.blocked(true),f=>f.controller.revoke(),f=>{f.doc.location.href+='c/other';}]){
+  const f=headerGapFixture();f.bridge.renewSession=async()=>f.renewAck();await f.controller.start({});await f.both();
+  f.blocked(true);f.controller.showNativeReading();f.blocked(false);invalidate(f);f.tick(10000);await drain();
+  assert.equal(f.doc.body.children.length,0);assert.equal(f.calls.show,1);f.controller.stop();
+ }
+});
+test('return-only proof failure cannot turn a successful renewal into a global shutdown',async()=>{
+ const f=headerGapFixture();f.bridge.renewSession=async()=>f.renewAck();await f.controller.start({});await f.both();
+ f.blocked(true);f.controller.showNativeReading();f.blocked(false);f.adapter.getReturnControlRect=()=>{throw Error('native-layout-unavailable');};
+ f.tick(10000);await drain();assert.equal(f.doc.body.children.length,0);assert.equal(f.calls.dispose,0);
+ assert.equal(f.calls.updates.length,1);assert.equal(f.controller.presentationMode(),'reading');f.controller.stop();
+});
+test('dormant header entry rechecks current geometry instead of trusting its stored inspection',async()=>{
+ const f=headerGapFixture();for(const {frame} of f.frames)frame.contentWindow.postMessage=()=>{};
+ await f.controller.start({});await f.both();f.controller.showNativeReading();assert.equal(f.doc.body.children.length,1);
+ const before=f.proofCounts();f.postBlocked(true);assert.equal(f.controller.enterDormant(),true);
+ assert.equal(f.proofCounts().postChecks,before.postChecks+1);assert.equal(f.doc.body.children.length,0);f.controller.stop();
+});
 test('native portal surrenders both surfaces without automatically taking focus back',async()=>{const f=fixture();await f.controller.start({});await f.both();f.controller.showReading();f.layer(true);f.change();assert.equal(f.slot.children.length,0);assert.ok(f.calls.suspend>0);assert.equal(f.controller.isWorkspacePresented(),false);f.layer(false);f.change();assert.equal(f.calls.show,1);});
 test('route or region replacement disposes owned UI and stops adapter',async()=>{for(const change of [f=>{f.doc.location.href+='c/new';},f=>f.region()]){const f=fixture();await f.controller.start({});await f.both();change(f);f.change();assert.equal(f.calls.dispose,1);assert.equal(f.controller.showWorkspace(),false);}});
 test('grant expiry and explicit revoke remove return and dispose both surfaces',async()=>{for(const change of [f=>f.tick(20000),f=>f.controller.revoke()]){const f=fixture();await f.controller.start({});await f.both();f.controller.showReading();change(f);assert.equal(f.slot.children.length,0);assert.equal(f.calls.dispose,1);assert.equal(f.controller.showWorkspace(),false);}});
