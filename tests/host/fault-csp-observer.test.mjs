@@ -1,5 +1,5 @@
 import test from 'node:test';import assert from 'node:assert/strict';import vm from 'node:vm';
-import {installCspObservation,cspObservationScript,installCspMountObservation,copyCspMessage,exactBlockedCandidatesReply,scanCspPage,prepareCspNativeClose,cspDomStrings,cspLeaks,exactCspControlMessage} from './fault-csp-observer.mjs';
+import {installCspObservation,cspObservationScript,installCspMountObservation,copyCspMessage,exactBlockedCandidatesReply,readCspGrantContinuity,scanCspPage,prepareCspNativeClose,cspDomStrings,cspLeaks,exactCspControlMessage} from './fault-csp-observer.mjs';
 test('extension observer preserves original Promise, request and reply without authority fabrication',async()=>{
  const replies=[],events=[],calls=[];const sandbox={location:{protocol:'chrome-extension:',pathname:'/workspace.html'},chrome:{runtime:{sendMessage(...args){calls.push(args);return replies.shift();}}},__faultCspRecord:event=>{events.push(event);return Promise.resolve();}};
  vm.runInNewContext('('+installCspObservation.toString()+')()',sandbox);
@@ -29,6 +29,19 @@ test('recursive lossless capture rejects unsupported nested values instead of si
 test('foreign candidate rejection is exactly blocked, never extra private fields',()=>{
  assert(exactBlockedCandidatesReply({ok:false,state:'blocked'}));
  for(const value of [{ok:false},{ok:false,state:'blocked',items:['private']},{ok:false,state:'blocked',page:{}},{ok:false,state:'other'}])assert.equal(exactBlockedCandidatesReply(value),false);
+});
+test('continuity checks actual owner authority independently of native candidate geometry',async()=>{
+ const grant={id:'actual-grant',mountId:'actual-mount',expiresAt:new Date(Date.now()+60000).toISOString()},calls=[];
+ for(const surface of [null,{revision:2,visible:true},{revision:3,visible:false},{revision:4,visible:null}]){
+  const sandbox={__faultCspRuntime:{grant,joins:1},grant,chrome:{runtime:{async sendMessage(message){calls.push(message);return {ok:true,surface};}}}};
+  const state=await vm.runInNewContext('('+readCspGrantContinuity.toString()+')(grant)',sandbox);
+  assert.equal(state.sameGrant,true);assert.equal(state.grantUnexpired,true);assert.equal(state.ownRead,true);assert.equal(state.grantReadType,'HOST_UI_SURFACE_STATE_GET');
+ }
+ assert(calls.every(m=>m.type==='HOST_UI_SURFACE_STATE_GET'&&m.grantId===grant.id&&m.mountId===grant.mountId&&Object.keys(m).sort().join(',')==='grantId,mountId,type,v'));
+ for(const reply of [{ok:false,reason:'ui-authorization-unavailable'},{ok:true},{ok:true,surface:{revision:0,visible:true}},{ok:true,surface:{revision:1,visible:'yes'}},{ok:true,surface:null,private:'unexpected'}]){
+  const state=await vm.runInNewContext('('+readCspGrantContinuity.toString()+')(grant)',{__faultCspRuntime:{grant,joins:1},grant,chrome:{runtime:{async sendMessage(){return reply;}}}});assert.equal(state.ownRead,false);
+ }
+ const state=await vm.runInNewContext('('+readCspGrantContinuity.toString()+')(grant)',{__faultCspRuntime:{grant:{...grant,id:'replacement',expiresAt:'2000-01-01T00:00:00Z'},joins:2},grant,chrome:{runtime:{async sendMessage(){return {ok:true,surface:null};}}}});assert.equal(state.sameGrant,false);assert.equal(state.grantUnexpired,false);assert.equal(state.joins,2);
 });
 function pageSandbox(){const listeners={},observers=[];const sandbox={location:{protocol:'http:'},TextEncoder,Element:function(){},addEventListener:(name,fn)=>listeners[name]=fn,MutationObserver:class{constructor(fn){observers.push(fn);}observe(){}},document:{childNodes:[]}};sandbox.Element.prototype.attachShadow=function(){return {childNodes:[]};};vm.createContext(sandbox);vm.runInContext(cspObservationScript(),sandbox);return {sandbox,listeners,observers};}
 test('actual MAIN listener flags Map and ArrayBuffer; preserves allowed control messages',()=>{
@@ -82,3 +95,5 @@ test('page-visible sidebar wheel carries only bounded geometry, no content or au
  const hint={type:'VAIWL_UI_SIDEBAR_WHEEL',role:'sidebar',x:40,y:50,delta:-80};assert(exactCspControlMessage(hint));
  for(const patch of [{role:'workspace'},{x:-1},{y:1025},{delta:0},{delta:1025},{delta:NaN},{title:'private'},{grantId:'private'}])assert.equal(exactCspControlMessage({...hint,...patch}),false);
 });
+
+test('workspace-only native close preparation never waits for an unavailable sidebar control',async()=>{const page=nativeClosePage({open:true}),get=page.getByRole;page.getByRole=(...args)=>{assert.notEqual(args[1].name,'显示原生列表');return get(...args);};const r=await prepareCspNativeClose(page,{roles:['workspace']});assert.deepEqual(r.closeRolesVisible,['workspace']);assert.equal(r.bothCloseControlsVisible,false);});

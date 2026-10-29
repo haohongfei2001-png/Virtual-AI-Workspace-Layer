@@ -469,8 +469,16 @@ try{
   const binding={documentToken:'replacement',producerToken:'replacement',browserDocumentId:'replacement',routeEpoch:1,origin:location.origin,expiresAt:new Date(Date.now()+20000).toISOString()};
   await adapter.start({binding,emit:async p=>({state:'accepted',localSeq:p.localSeq,receiptId:'replacement'})});
   let inspection=adapter.inspect();surface=createFlowMountSurface({document,createFrameURL:({role})=>'chrome-extension://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/'+role+'.html'});
-  const scrolls=[],handle=await surface.mount({binding},inspection,{onSidebarScroll:n=>scrolls.push(n)}),workspace=surface.frames(handle)[0].frame,sidebar=surface.frames(handle)[1].frame;
+  // Start with an unsupported partition, then let the real adapter prove the
+  // original native topology. An absent sidebar must not load in the body.
+  const extra=document.createElement('button');inspection.sidebarPlacement.parent.append(extra);inspection=adapter.inspectStructure(inspection);
+  const scrolls=[],handle=await surface.mount({binding},inspection,{onSidebarScroll:n=>scrolls.push(n)}),workspace=surface.frames(handle)[0].frame;
   surface.showWorkspace(handle);
+  const initiallyAbsent=!inspection.sidebarPlacement&&surface.frames(handle).length===1&&document.querySelectorAll('iframe').length===1&&surface.restoreRole(handle,'sidebar')===null&&surface.visibility(handle).workspace;
+  extra.remove();inspection=adapter.inspectStructure(inspection);surface.refreshGeometry(handle,inspection);
+  const late=surface.restoreRole(handle,'sidebar'),sidebar=late?.frame;
+  const lateHidden=!!sidebar&&sidebar.isConnected&&!surface.visibility(handle).sidebar;
+  surface.showWorkspace(handle,{roles:['sidebar']});const lateRecovered=surface.visibility(handle).sidebar&&surface.frames(handle)[0].frame===workspace&&surface.visibility(handle).workspace;
   // A restored member window can grow after the first VIEW. Browser clamping
   // while those rows are absent is not a new saved scroll choice.
   const port=inspection.sidebarPlacement.scrollPort;
@@ -502,9 +510,9 @@ try{
   inspection.sidebarPlacement.parent.append(document.createElement('button'));const unknown=adapter.inspectStructure(inspection);
   surface.retireRole(handle,'sidebar');surface.refreshGeometry(handle,unknown);
   const unknownRejected=!unknown.sidebarPlacement&&unknown.preserveNativeSidebar&&surface.restoreRole(handle,'sidebar')===null&&surface.visibility(handle).workspace;
-  surface.dispose(handle);adapter.stop();return {pendingDidNotOverwrite,restoredAfterGrowth,manualScrollPreserved,recentProof,recentRecovered,parentRecovered,workspacePreserved,oldScrollDetached,newScrollBound,unknownRejected};
+  surface.dispose(handle);adapter.stop();return {initiallyAbsent,lateHidden,lateRecovered,pendingDidNotOverwrite,restoredAfterGrowth,manualScrollPreserved,recentProof,recentRecovered,parentRecovered,workspacePreserved,oldScrollDetached,newScrollBound,unknownRejected};
  });
- assert.deepEqual(recovery,{pendingDidNotOverwrite:true,restoredAfterGrowth:true,manualScrollPreserved:true,recentProof:true,recentRecovered:true,parentRecovered:true,workspacePreserved:true,oldScrollDetached:true,newScrollBound:true,unknownRejected:true});await replacement.close();
+ assert.deepEqual(recovery,{initiallyAbsent:true,lateHidden:true,lateRecovered:true,pendingDidNotOverwrite:true,restoredAfterGrowth:true,manualScrollPreserved:true,recentProof:true,recentRecovered:true,parentRecovered:true,workspacePreserved:true,oldScrollDetached:true,newScrollBound:true,unknownRejected:true});await replacement.close();
  for(const [kind,path,html]of [['home','/',observedHomeHTML(C)],['project','/g/'+P+'/project',observedProjectHTML(P,C)],['conversation','/c/'+C,longDesktopHTML(C)],['header-inside','/c/'+C,legacy]]){
   const page=await browser.newPage({viewport:{width:1400,height:900}}),url='https://chatgpt.com'+path;
   await page.route('**/*',r=>r.request().url()===url?r.fulfill({contentType:'text/html',body:html}):r.abort());await page.goto(url);await page.addScriptTag({content:outputFiles[0].text});

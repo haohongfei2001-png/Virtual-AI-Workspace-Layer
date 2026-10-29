@@ -101,7 +101,14 @@ export function createFlowMountSurface({document:doc,createFrameURL,hasNativeLay
     }
     const [workspace,sidebar]=m.roles;
     plan.root.insertBefore(workspace.node,plan.root.firstChild);
-    const p=inspection.sidebarPlacement;if(p)p.parent.insertBefore(sidebar.node,p.before);else doc.body.append(sidebar.node);
+    const p=inspection.sidebarPlacement;
+    if(p)p.parent.insertBefore(sidebar.node,p.before);
+    else{
+     // An absent native partition is not a temporary place to load private UI.
+     // Keep only the detached empty slot; a later proved placement creates a
+     // fresh frame, with the same independent JOIN/authority checks as recovery.
+     sidebar.retired=true;sidebar.frame.remove();
+    }
     mark(m,plan.root,'root');mark(m,plan.reading,'reading');mark(m,plan.composer,'composer');
     for(const shell of plan.shells)if(shell!==plan.root)mark(m,shell,'shell');
     for(const node of plan.protectedNodes)if(node!==plan.composer)mark(m,node,node===plan.header?'header':node.getAttribute('role')==='tablist'?'tabs':'title');

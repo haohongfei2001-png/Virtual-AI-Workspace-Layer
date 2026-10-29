@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import {disableStatesProfile} from './disable-states-profile.mjs';
+import {expectedCspRoles} from './fault-csp-contract.mjs';
 /** Serializable pre-navigation observers. No authority is created or modified. */
 export function copyCspMessage(value){
  const seen=new Set();let nodes=0;
@@ -52,6 +53,14 @@ export function installCspMountObservation({extensionId}){
  addEventListener('securitypolicyviolation',e=>{if(e.effectiveDirective==='frame-src'&&targets.has(e.blockedURI))data.violations++;});visit(document);
 }
 export function exactBlockedCandidatesReply(value){return !!value&&value.ok===false&&value.state==='blocked'&&Object.keys(value).sort().join(',')==='ok,state';}
+/** Grant continuity uses the owner, not a geometry-dependent candidate listing. */
+export async function readCspGrantContinuity(grant){
+ const reply=await chrome.runtime.sendMessage({v:1,type:'HOST_UI_SURFACE_STATE_GET',grantId:grant.id,mountId:grant.mountId});
+ const surface=reply?.surface;
+ const ownRead=reply?.ok===true&&Object.keys(reply).sort().join(',')==='ok,surface'&&(surface===null||(surface&&Object.keys(surface).sort().join(',')==='revision,visible'&&Number.isSafeInteger(surface.revision)&&surface.revision>0&&(surface.visible===null||typeof surface.visible==='boolean')));
+ const current=__faultCspRuntime;
+ return {sameGrant:current.grant?.id===grant.id,grantUnexpired:Date.parse(current.grant?.expiresAt)>Date.now(),joins:current.joins,grantReadType:'HOST_UI_SURFACE_STATE_GET',ownRead:ownRead===true};
+}
 export async function scanCspPage({page,extensionId,privateMarkers=[]}){
  const expected=disableStatesProfile('LEGACY'),shell=await page.evaluate(cspDomStrings,true),full=await page.evaluate(cspDomStrings,false),capture=await page.evaluate(()=>structuredClone(__faultCspPage));
  const markers=[expected.scopeKey,...privateMarkers,'"scopeGrantId":','"viewSession":','"grantId":'];
@@ -74,9 +83,10 @@ export function exactCspControlMessage(value){
  const expected={VAIWL_UI_JOIN:['type','role','nonce'],VAIWL_UI_IDLE_ACK:['type','role','requestId'],VAIWL_UI_EXIT:['type','role'],VAIWL_UI_SUSPEND:Object.hasOwn(value??{},'reason')?['type','role','reason']:['type','role'],VAIWL_UI_BOOT:['type','role','stage']}[value?.type];
  return !!expected&&typeof value==='object'&&!Array.isArray(value)&&Object.keys(value).sort().join(',')===[...expected].sort().join(',')&&['workspace','sidebar'].includes(value.role)&&(!expected.includes('stage')||['entry-ready','dom-ready','entry-resource-failed','script-error','promise-rejected','module-ready'].includes(value.stage))&&(!expected.includes('reason')||['ui-grant-expired','ui-renew-failed','ui-join-failed','ui-port-disconnected','ui-renderer-failed','read-budget-exhausted','frame-preparation-limit','free-frame-page-too-large','frame-view-unavailable','invalid-preparation-response','invalid-frame-view','invalid-search-snippets','invalid-frame-current','invalid-frame-current-ref','invalid-frame-navigation','invalid-frame-presentation','request-timeout'].includes(value.reason))&&(!expected.includes('nonce')||typeof value.nonce==='string'&&value.nonce.length>0)&&(!expected.includes('requestId')||typeof value.requestId==='string'&&value.requestId.length>0);
 }
-export async function observeAuthenticatedCsp({page,context,worker,extensionId,until}){
+export async function observeAuthenticatedCsp({page,context,worker,extensionId,until,expectedRoles,sidebarCoverage}){
+ const roles=expectedCspRoles({expectedRoles,sidebarCoverage});
  const expected=disableStatesProfile('LEGACY'),raw=[],frames=[],actualFrames=[];
- for(const role of ['workspace','sidebar']){
+ for(const role of roles){
   let frame;
   await until(async()=>{frame=page.frames().find(f=>f.url()===`chrome-extension://${extensionId}/${role}.html`);try{return !!frame&&await frame.evaluate(()=>!!__faultCspRuntime?.grant&&__faultCspRuntime.joins>0&&__faultCspRuntime.views>0);}catch{return false;}});
   actualFrames.push(frame);const value=await frame.evaluate(()=>structuredClone(__faultCspRuntime));assert(value.grant);for(const key of ['id','mountId','parentDocumentId','uiDocumentId','scopeGrantId','role','expiresAt'])assert.equal(typeof value.grant[key],'string');raw.push(value);
@@ -95,13 +105,21 @@ export async function observeAuthenticatedCsp({page,context,worker,extensionId,u
 
  const privateMarkers=raw.flatMap(v=>[v.grant.id,v.grant.scopeGrantId,v.scope]);
  const rescan=()=>scanCspPage({page,extensionId,privateMarkers});
- const proof={foreignProbePreservedNativeFocus:focusBefore===true&&focusAfter===true,branch:'ISOLATED_AUTHENTICATED',status:'PASS_NARROW_CSP_ISOLATED_AUTHENTICATED_SURFACES',frames,distinctRoleGrants:raw[0].grant.id!==raw[1].grant.id,distinctUIDocuments:raw[0].grant.uiDocumentId!==raw[1].grant.uiDocumentId,sameActualParent:raw[0].grant.parentDocumentId===raw[1].grant.parentDocumentId,sameMount:raw[0].grant.mountId===raw[1].grant.mountId,foreignSenderDenied:exactBlockedCandidatesReply(foreign),foreignSenderReturnedPrivateFields:!exactBlockedCandidatesReply(foreign),...await rescan()};
- const recheck=async()=>{for(let i=0;i<actualFrames.length;i++){if(actualFrames[i].isDetached())return false;const valid=await actualFrames[i].evaluate(async grant=>__faultCspRuntime.grant?.id===grant.id&&(await chrome.runtime.sendMessage({v:1,type:'HOST_UI_CANDIDATES',grantId:grant.id,mountId:grant.mountId,offset:0}))?.ok===true,raw[i].grant);if(!valid)return false;}return true;};
+ const pair=raw.length===2?{distinctRoleGrants:raw[0].grant.id!==raw[1].grant.id,distinctUIDocuments:raw[0].grant.uiDocumentId!==raw[1].grant.uiDocumentId,sameActualParent:raw[0].grant.parentDocumentId===raw[1].grant.parentDocumentId,sameMount:raw[0].grant.mountId===raw[1].grant.mountId}:Object.fromEntries(['distinctRoleGrants','distinctUIDocuments','sameActualParent','sameMount'].map(k=>[k,'NOT_APPLICABLE_SINGLE_ROLE']));
+ const proof={expectedRoles:roles,...(sidebarCoverage?{sidebarCoverage}:{}),foreignProbePreservedNativeFocus:focusBefore===true&&focusAfter===true,branch:'ISOLATED_AUTHENTICATED',status:'PASS_NARROW_CSP_ISOLATED_AUTHENTICATED_SURFACES',frames,...pair,foreignSenderDenied:exactBlockedCandidatesReply(foreign),foreignSenderReturnedPrivateFields:!exactBlockedCandidatesReply(foreign),...await rescan()};
+ const recheck=async()=>{
+  proof.grantsBeforeClose=[];
+  for(let i=0;i<actualFrames.length;i++){
+   if(actualFrames[i].isDetached()){proof.grantsBeforeClose.push({role:roles[i],detached:true});return false;}
+   const state=await actualFrames[i].evaluate(readCspGrantContinuity,raw[i].grant);
+   proof.grantsBeforeClose.push({role:roles[i],...state});if(!state.sameGrant||!state.grantUnexpired||state.joins!==raw[i].joins||!state.ownRead)return false;
+  }return true;
+ };
  return {proof,rescan,recheck};
 }
 
 /** Native input deliberately surrenders overlays. Re-enter only through the real user control. */
-export async function prepareCspNativeClose(page){
+export async function prepareCspNativeClose(page,{roles=['workspace','sidebar']}={}){
  const close=page.getByRole('button',{name:'返回原生阅读',exact:true});
  const before={workspaceCloseVisible:await close.isVisible(),nativeReadingVisible:await page.locator('#reading').isVisible(),nativeComposerVisible:await page.locator('textarea').isVisible()};
  let returnedThroughNativeControl=false;
@@ -109,6 +127,6 @@ export async function prepareCspNativeClose(page){
   assert.equal(before.nativeReadingVisible,true,'closed workspace must already preserve native reading');assert.equal(before.nativeComposerVisible,true);
   const back=page.getByRole('button',{name:'返回工作空间',exact:true});await back.waitFor({state:'visible'});await back.click();returnedThroughNativeControl=true;
  }
- await close.waitFor({state:'visible'});await page.getByRole('button',{name:'显示原生列表',exact:true}).waitFor({state:'visible'});
- return {before,returnedThroughNativeControl,bothCloseControlsVisible:true};
+ await close.waitFor({state:'visible'});if(roles.includes('sidebar'))await page.getByRole('button',{name:'显示原生列表',exact:true}).waitFor({state:'visible'});
+ return {before,returnedThroughNativeControl,closeRolesVisible:roles,bothCloseControlsVisible:roles.includes('sidebar')};
 }

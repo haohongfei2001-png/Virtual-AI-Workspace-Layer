@@ -598,6 +598,34 @@ test('sidebar release completion rechecks current geometry without waiting for u
  released.resolve({ok:true});await drain();assert.equal(restored,1);assert.equal(f.calls.dispose,0);assert.equal(f.calls.register,1);assert.equal(f.controller.isWorkspacePresented(),true);f.controller.stop();
 });
 
+test('initially absent sidebar waits for a proved placement and its own fresh grant without remounting workspace',async()=>{
+ const f=publishingFixture(),inspect=f.adapter.inspect;let placed=false,restored=0;
+ f.surface.frames=()=>[f.frames[0]];
+ f.adapter.inspect=()=>({...inspect(),sidebarRect:placed?{x:0,y:0,width:240,height:400}:null,sidebarRevision:placed?2:1,preserveNativeSidebar:!placed});
+ f.surface.refreshGeometry=()=>true;f.surface.isRoleCurrent=()=>placed&&restored>0;
+ f.surface.restoreRole=()=>{restored++;return f.frames[1];};
+ f.bridge.releaseRole=()=>{throw Error('never-mounted sidebar has no old grant to release');};
+ await f.controller.start({});f.message();await drain();
+ assert.deepEqual(f.surface.visibility(),{workspace:true,sidebar:false});
+ f.message('sidebar');f.change();await drain();assert.equal(restored,0);assert.equal(f.calls.confirm.length,1);
+ placed=true;f.change();await drain();assert.equal(restored,1);
+ assert.deepEqual(f.surface.visibility(),{workspace:true,sidebar:false},'a proved slot does not supply a frame grant');
+ f.message('sidebar');await drain();assert.deepEqual(f.surface.visibility(),{workspace:true,sidebar:true});
+ f.change();await drain();assert.equal(restored,1);assert.equal(f.calls.register,1);assert.equal(f.calls.dispose,0);
+ f.controller.revoke();placed=false;f.change();placed=true;f.change();await drain();assert.equal(restored,1);
+});
+
+test('sidebar lost during registration still waits for release ACK before recovering',async()=>{
+ const f=fixture(),registered=deferred(),released=deferred(),inspect=f.adapter.inspect;let restored=0,retired=0;
+ f.adapter.inspect=()=>({...inspect(),sidebarRect:{x:0,y:0,width:240,height:400},sidebarRevision:2,preserveNativeSidebar:false});
+ f.surface.refreshGeometry=()=>true;f.surface.retireRole=()=>{retired++;};f.surface.suspend=()=>{};
+ f.surface.restoreRole=()=>{restored++;f.frames[1].frame.isConnected=true;return f.frames[1];};
+ f.bridge.registerMount=()=>registered.promise;f.bridge.releaseRole=()=>released.promise;
+ const started=f.controller.start({});await drain();f.frames[1].frame.isConnected=false;registered.resolve({ok:true});await started;
+ f.message();f.change();await drain();assert.equal(retired,1);assert.equal(restored,0);assert.equal(f.controller.isWorkspacePresented(),true);
+ released.resolve({ok:true});await drain();assert.equal(restored,1);assert.equal(f.calls.dispose,0);f.controller.stop();
+});
+
 test('connected sidebar with replaced flow membership releases its grant before fresh JOIN, keeping workspace',async()=>{
  const f=publishingFixture(),released=deferred();let intact=true,restored=0,retired=0;const inspect=f.adapter.inspect;
  f.adapter.inspect=()=>({...inspect(),sidebarRect:{x:0,y:0,width:240,height:400},sidebarRevision:2,preserveNativeSidebar:false});

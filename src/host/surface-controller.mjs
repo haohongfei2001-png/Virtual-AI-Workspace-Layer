@@ -391,6 +391,7 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
    state.layoutFailure=null;lastBoundary=null;
    state.loadedRoles=new Set();state.joinedRoles=new Set();state.moduleRoles=new Set();
    state.frames=surface.frames(state.handle).map(value=>({...value,window:value.frame.contentWindow}));if(!state.frames.some(x=>x.role==='workspace')||new Set(state.frames.map(x=>x.role)).size!==state.frames.length||state.frames.some(x=>!['workspace','sidebar'].includes(x.role)))throw Error('incomplete-dual-surface');
+   const initiallyWithoutSidebar=!state.frames.some(target=>target.role==='sidebar');
    for(const target of state.frames)target.frame.addEventListener?.('load',()=>{if(current===state){state.loadedRoles.add(target.role);reportJoin(state);frameDocumentsIntact(state);}},{once:true});
    reportJoin(state);
    if(!frameDocumentsIntact(state))return null;
@@ -398,6 +399,10 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
    state.listener=event=>{void receive(state,event);};win.addEventListener('message',state.listener);
    const ack=await bridge.registerMount({handle:state.handle});if(current!==state)return null;if(ack?.ok!==true)throw Error('mount-registration-denied');state.registered=true;reportJoin(state);
    if(!valid(state))throw Error('stale-mount-registration');
+   // A sidebar omitted at first mount has no prior frame/grant to release.
+   // A later proved native slot may create it, but never inherit workspace's
+   // grant or skip the new frame's own JOIN and parent confirmation.
+   if(initiallyWithoutSidebar)state.sidebarRecoveryReady=true;
    state.nativeToggle=event=>{if(event.newState==='open'&&!event.target.closest?.('[data-va-owned]'))suspend('native-layer');};doc.addEventListener?.('beforetoggle',state.nativeToggle,true);
    state.changed=()=>{try{if(!reconcileGeometry(state))return;if(adapter.hasNativeLayer())suspend('native-layer');else if(state.mode==='reading'||state.mode==='suspended')ensureReturn(state);}finally{publishSurface(state);}};
    doc.addEventListener?.('toggle',state.changed,true);
