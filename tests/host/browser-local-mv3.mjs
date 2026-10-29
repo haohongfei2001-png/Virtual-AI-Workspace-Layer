@@ -1,7 +1,7 @@
 import partitionDetails from './fixtures/observed-sidebar-project-details-20261026.json' with {type:'json'};
 import historyStructure from './fixtures/observed-history-structure.json' with {type:'json'};
 import projectSidebarSnapshot from './fixtures/observed-sidebar-project-20261026.json' with {type:'json'};
-import {HOST_BASELINE_VERSION,materializePartitionedSidebar,materializeHistoryStructure,progressiveOrders,homeMain,longDesktopHTML,observedHomeHTML,prepareHistoryRun,reorderHistory,addPendingChat,promotePendingChat,enterStableChat,setNativeModal,insertHistoryGap,clearHistoryGap} from './fixtures/observed-host-replay.mjs';
+import {HOST_BASELINE_VERSION,materializePartitionedSidebar,materializeFlatHomeBranch,materializeHistoryStructure,progressiveOrders,homeMain,longDesktopHTML,observedHomeHTML,prepareHistoryRun,reorderHistory,addPendingChat,promotePendingChat,enterStableChat,setNativeModal,insertHistoryGap,clearHistoryGap} from './fixtures/observed-host-replay.mjs';
 /** Actual formal MV3 UI with an empty local memory session; offline host only. */
 import assert from 'node:assert/strict';
 import {createServer} from 'node:http';
@@ -129,16 +129,14 @@ try{
  }
  if(process.argv.includes('--flow-only')){
   page=await context.newPage();await page.setViewportSize({width:1400,height:900});
-  await page.addInitScript({content:'if(window===window.top)document.addEventListener("DOMContentLoaded",()=>{('+materializePartitionedSidebar.toString()+')('+JSON.stringify(partitionDetails.sidebarStructure.rows)+');},{once:true});'});
+  await page.addInitScript({content:'if(window===window.top)document.addEventListener("DOMContentLoaded",()=>{('+materializePartitionedSidebar.toString()+')('+JSON.stringify(partitionDetails.sidebarStructure.rows)+');if(document.querySelector("[data-app-shell-main-content-layout] .home-composer-anchor"))('+materializeFlatHomeBranch.toString()+')();},{once:true});'});
   // Local counterexample for an inspected home with additional native flow
   // content. This is not a claim about the real unidentified rejected branch.
   await page.addInitScript(()=>{if(window===window.top)document.addEventListener('DOMContentLoaded',()=>{
    const parent=document.querySelector('[role=main]');if(!parent?.querySelector('.home-composer-anchor'))return;
-   // The older fixture positions both landmarks absolutely. A new ordinary
-   // sibling would then start at y=0 over the native header. Give this local
-   // counterexample a real native flow before the extension starts; do not
-   // relax the return-gap proof to accept a pre-existing header occluder.
-   parent.style.marginTop='52px';for(const node of [parent.querySelector('.home-composer-anchor'),parent.querySelector('form')]){node.style.position='relative';node.style.top='auto';}
+   // The real rejected-path geometry is replayed by materializeFlatHomeBranch
+   // above. Keep this distinct, previously supported native action alongside
+   // it; neither fixture subtree claims to be the unidentified real content.
    const branch=document.createElement('section'),button=document.createElement('button'),hidden=document.createElement('div');
    branch.style.cssText='padding:12px;box-sizing:border-box';button.type='button';button.textContent='Native auxiliary action';
    const icon=document.createElementNS('http://www.w3.org/2000/svg','svg'),path=document.createElementNS(icon.namespaceURI,'path');
@@ -165,6 +163,8 @@ try{
     report.checks.nativeScrollRegion={originalTabStop:true,flowRoot:true};
    }
    if(scene==='home'){
+    report.checks.flatHomeMember=await page.locator('#fixture-flat-native-member').evaluate(n=>({sameNativeParent:n.parentElement.tagName==='DIV'&&!n.parentElement.hasAttribute('data-va-owned'),height:n.getBoundingClientRect().height,explicitFlowRow:[...n.attributes].some(a=>a.name.startsWith('data-va-flow-row-'))}));
+    assert.deepEqual(report.checks.flatHomeMember,{sameNativeParent:true,height:0,explicitFlowRow:true});
     await page.getByRole('button',{name:'Native auxiliary action',exact:true}).click();
     report.checks.retainedHomeMember=await page.evaluate(()=>{const p=window.nativeFlowExtra;return {sameParents:p.branch.parentElement===p.parent&&p.button.parentElement===p.branch&&p.icon.parentElement===p.button&&p.hidden.parentElement===p.parent,nativeClick:p.clicks===1,inlineGraphicRetained:p.button.querySelector('svg')===p.icon&&getComputedStyle(p.icon).overflowX==='hidden',hiddenUntouched:p.hidden.outerHTML==='<div hidden=""></div>',workspaceVisible:[...document.querySelectorAll('[id$="_workspace"][data-va-owned]')].some(n=>getComputedStyle(n).display!=='none')};});
     assert.deepEqual(report.checks.retainedHomeMember,{sameParents:true,nativeClick:true,inlineGraphicRetained:true,hiddenUntouched:true,workspaceVisible:true});

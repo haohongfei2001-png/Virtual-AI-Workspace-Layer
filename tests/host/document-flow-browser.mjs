@@ -6,7 +6,8 @@ import {createRequire} from 'node:module';
 import {chromium} from '../b1/tooling/node_modules/playwright/index.mjs';
 import {j3ModernPage} from './fixtures/j3-modern.mjs';
 import {observedProjectHTML} from './fixtures/observed-project.mjs';
-import {observedHomeHTML,longDesktopHTML,materializePartitionedSidebar} from './fixtures/observed-host-replay.mjs';
+import {observedHomeHTML,longDesktopHTML,materializePartitionedSidebar,materializeFlatHomeBranch} from './fixtures/observed-host-replay.mjs';
+import mainMountReceipt from './fixtures/observed-main-mount-20261029.json' with {type:'json'};
 import partitionDetails from './fixtures/observed-sidebar-project-details-20261026.json' with {type:'json'};
 const require=createRequire(new URL('../../extension/tooling/package.json',import.meta.url));
 const {outputFiles}=await require('esbuild').build({stdin:{contents:"export {captureNativeBaseline} from './src/host/document-flow-layout.mjs';export {validMainMountCheck} from './src/host/native-flow-diagnostic.mjs';export {createSurfaceController} from './src/host/surface-controller.mjs';export {createChatGPTAdapter} from './src/host/chatgpt-adapter.mjs';export {createURLPolicy} from './src/host/url-policy.mjs';export {CHATGPT_OBSERVED_PROFILE} from './src/host/chatgpt-observed-profile.mjs';export {createFlowMountSurface} from './src/navigation/flow-mount-surface.mjs';export {observeNativeProjectManagement} from './src/host/native-project-management.mjs';",resolveDir:process.cwd()},bundle:true,write:false,format:'iife',globalName:'flowModule'});
@@ -14,6 +15,45 @@ const P='g-p-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',C='33333333-3333-4333-8333-333333
 const legacy=(await readFile(new URL('./fixtures/legacy.html',import.meta.url),'utf8')).replace('<link rel="stylesheet" href="/native.css">','<style>'+await readFile(new URL('./fixtures/native.css',import.meta.url),'utf8')+'</style>');
 const browser=await chromium.launch({headless:true,...(process.env.FREE_CHROME_EXECUTABLE?{executablePath:process.env.FREE_CHROME_EXECUTABLE}:{}),args:['--proxy-server=http://127.0.0.1:9','--proxy-bypass-list=<-loopback>']}),results=[];
 try{
+ {
+ const flat=await browser.newPage({viewport:{width:1234,height:897}});
+ await flat.route('**/*',r=>r.request().url()==='https://chatgpt.com/'?r.fulfill({contentType:'text/html',body:observedHomeHTML(C)}):r.abort());
+ await flat.goto('https://chatgpt.com/');await flat.evaluate(materializeFlatHomeBranch);await flat.addScriptTag({content:outputFiles[0].text});
+ const decision=await flat.evaluate(async receipt=>{
+  const {createChatGPTAdapter,CHATGPT_OBSERVED_PROFILE:profile,captureNativeBaseline,validMainMountCheck,createFlowMountSurface}=flowModule;
+  if(!validMainMountCheck(receipt))throw Error('invalid real receipt');
+  const adapter=createChatGPTAdapter({document,profile});
+  const binding={documentToken:'flat-home',producerToken:'flat-home',browserDocumentId:'flat-home',routeEpoch:1,origin:location.origin,expiresAt:new Date(Date.now()+20000).toISOString()};
+  await adapter.start({binding,emit:async p=>({state:'accepted',localSeq:p.localSeq,receiptId:'flat-home'})});
+  const inspection=adapter.inspect(),branch=document.querySelector('#fixture-flat-native-member'),original=branch.outerHTML,box=branch.getBoundingClientRect();let report;
+  const plan=captureNativeBaseline({document,inspection,onDiagnostic:r=>report=r});
+  if(!plan){adapter.stop();return {admitted:false,reason:report?.reason,detail:report?.detail,box:[box.x,box.y,box.width,box.height]};}
+  const capture=()=>captureNativeBaseline({document,inspection});
+  const escaped=document.createElement('div');escaped.style.cssText='height:.2px;width:10px';branch.append(escaped);const subpixelRejected=capture()===null;escaped.remove();
+  const text=document.createTextNode('native overflow');branch.append(text);const textRejected=capture()===null;text.remove();
+  const zeroWidth=document.createTextNode('\u200b');branch.append(zeroWidth);const range=document.createRange();range.selectNodeContents(zeroWidth);const textBox=range.getBoundingClientRect();
+  const zeroWidthTextRejected=textBox.width===0&&textBox.height>0&&capture()===null;zeroWidth.remove();
+  const child=document.createElement('button');child.textContent='Native action';child.style.cssText='position:fixed;left:400px;top:200px';branch.append(child);const controlRejected=capture()===null;child.remove();
+  const slider=document.createElement('input');slider.type='range';slider.style.cssText='width:100px;height:0;border:0;padding:0';branch.append(slider);const nativeZeroHeightControlRejected=slider.getBoundingClientRect().height===0&&capture()===null;slider.remove();
+  const rule=document.createElement('style');rule.textContent='#fixture-flat-native-member::before{content:"";display:block;height:1px}';document.head.append(rule);const pseudoRejected=capture()===null;rule.remove();
+  const prior=branch.style.cssText;branch.style.outline='1px solid black';branch.style.outlineOffset='-2px';const outlineRejected=capture()===null;branch.style.cssText=prior;
+  branch.style.boxShadow='0 0 2px black';const shadowRejected=capture()===null;branch.style.cssText=prior;
+  const surface=createFlowMountSurface({document,createFrameURL:({role})=>'chrome-extension://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/'+role+'.html'}),handle=await surface.mount({binding},inspection);
+  const editor=document.querySelector('textarea'),draft=editor.value,shown=surface.showWorkspace(handle),safe=surface.validateActiveLayout(handle);
+  const tick=async()=>{for(let i=0;i<3;i++)await new Promise(requestAnimationFrame);};
+  branch.append(escaped);await tick();const liveOverflowSurrendered=!surface.visibility(handle).workspace;escaped.remove();surface.showReading(handle);
+  const recovered=surface.showWorkspace(handle)&&surface.validateActiveLayout(handle);
+  const stylesheet=document.createElement('style');document.head.append(stylesheet);stylesheet.sheet.insertRule('#fixture-flat-native-leaf { height:.2px!important }');await tick();
+  const cssomOverflowSurrendered=!surface.visibility(handle).workspace;stylesheet.remove();surface.showReading(handle);const cssomRecovered=surface.showWorkspace(handle)&&surface.validateActiveLayout(handle);
+  surface.showReading(handle);surface.dispose(handle);adapter.stop();
+  return {admitted:true,box:[box.x,box.y,box.width,box.height],subpixelRejected,textRejected,zeroWidthTextRejected,controlRejected,nativeZeroHeightControlRejected,pseudoRejected,outlineRejected,shadowRejected,shown,safe,liveOverflowSurrendered,recovered,cssomOverflowSurrendered,cssomRecovered,originalNodeAndDraft:editor.isConnected&&editor===document.querySelector('textarea')&&editor.value===draft,restored:branch.outerHTML===original};
+ },mainMountReceipt.mainMountCheck);
+ // The report rounds geometry and does not capture CSS. Reconstruct its
+ // decisive width/zero-height condition, not an invented pixel-exact subtree.
+ assert.deepEqual(decision.box.slice(2),mainMountReceipt.mainMountCheck.rows[3][5].slice(2));
+ assert.deepEqual({...decision,box:undefined},{admitted:true,box:undefined,subpixelRejected:true,textRejected:true,zeroWidthTextRejected:true,controlRejected:true,nativeZeroHeightControlRejected:true,pseudoRejected:true,outlineRejected:true,shadowRejected:true,shown:true,safe:true,liveOverflowSurrendered:true,recovered:true,cssomOverflowSurrendered:true,cssomRecovered:true,originalNodeAndDraft:true,restored:true});
+ console.log(JSON.stringify({observedFlatHomeBranch:decision}));await flat.close();
+ }
  {
  const probe=await browser.newPage({viewport:{width:1440,height:1000}});
  await probe.route('**/*',r=>r.request().url()==='https://chatgpt.com/c/'+C?r.fulfill({contentType:'text/html',body:legacy}):r.abort());

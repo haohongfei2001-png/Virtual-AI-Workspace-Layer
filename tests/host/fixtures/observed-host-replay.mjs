@@ -7,6 +7,26 @@ export const visibilityWakeAttributes=Object.freeze(baseline.replays.visibilityW
 export const progressiveOrders=Object.freeze(baseline.replays.progressiveOrders);
 export const homeMain='<div data-app-shell-main-content-layout><div role="main"><div class="home-composer-anchor" style="position:absolute;top:52px;width:780px;height:250px"><h1>Welcome</h1></div><form data-chatgpt-composer data-composer-placement="home" style="position:absolute;top:302px;width:780px;height:70px"><textarea>fixture draft</textarea><button type="button">Native tools</button></form></div></div>';
 export const observedHomeHTML=id=>observedDesktopHTML(id).replace(/<main>[\s\S]*<\/main>/,'<main>'+homeMain+'</main>');
+// Reconstruct the reported zero-height retained branch in the existing home
+// fixture. Only the path/rectangles came from the real receipt; these styles
+// and the empty descendants are test inputs, not a captured native subtree.
+// Negative cases fill it with overflowing content in the existing runner.
+export function materializeFlatHomeBranch(){
+ const outer=document.querySelector('[data-app-shell-main-content-layout]'),root=outer.querySelector('[role=main]'),reading=root.querySelector('.home-composer-anchor'),composer=root.querySelector('form');
+ // Preserve the fixture's separate titlebar hit background; the reported
+ // flow root starts below it. Moving that background to y=52 would invent a
+ // native return-gap failure unrelated to this retained-member report.
+ outer.style.cssText='position:fixed;left:241px;top:0;width:calc(100vw - 240px);height:100vh;box-sizing:border-box;padding-top:52px';
+ root.style.cssText='position:relative;width:100%;height:calc(100% - 16px)';
+ const header=document.querySelector('header[data-app-shell-titlebar]');header.style.cssText='left:241px;width:calc(100vw - 241px)';header.firstElementChild.style.width='100%';
+ const shell=document.createElement('div'),band=document.createElement('div'),branch=document.createElement('div');
+ shell.style.display='contents';band.style.cssText='display:grid;grid-template-columns:1fr;grid-template-rows:1fr;align-items:start;height:504px';
+ reading.style.cssText='position:relative;display:flow-root;width:100%;height:325px';
+ composer.style.cssText='position:relative;grid-area:1/1;justify-self:center;width:min(768px,calc(100% - 48px));height:52px;margin:0';
+ branch.id='fixture-flat-native-member';branch.style.cssText='grid-area:1/1;justify-self:center;width:min(808px,100%);height:0';
+ const leaf=document.createElement('div');leaf.id='fixture-flat-native-leaf';leaf.style.cssText='width:10px;height:0';branch.append(leaf);
+ band.append(composer,branch);shell.append(reading,band);root.append(shell);
+}
 export const longDesktopHTML=id=>observedDesktopHTML(id).replace('Fixture text','Fixture text'+'<span>x</span>'.repeat(3000));
 // Browser-side operations are fixture-only functions, passed to existing
 // Playwright runners. Assertions and grant/owner actions remain in the runners.

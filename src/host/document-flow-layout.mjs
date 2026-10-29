@@ -37,9 +37,16 @@ export class NativeFlowPreflightError extends Error {
 function retainedPaint(member,doc,{viewport=false,budget={started:doc.defaultView.performance.now(),nodes:0,rectangles:0},onRefused=null}={}){
  const win=doc.defaultView,root=member.node,box=rect(root);
  const refuse=(detail,node)=>{onRefused?.(detail,node);return false;};
- const inside=r=>Object.values(r).every(Number.isFinite)&&(!positive(r)||r.x>=box.x-0.5&&r.y>=box.y-0.5&&r.x+r.width<=box.x+box.width+0.5&&r.y+r.height<=box.y+box.height+0.5);
+ const finiteBox=r=>Object.values(r).every(Number.isFinite)&&r.width>=0&&r.height>=0;
+ // A native flow member may currently have no height. That is not evidence
+ // that its subtree is empty: run the same bounded paint/style/identity proof.
+ // In this case every visible box AND text range must have exactly zero
+ // height. Neither the positive-box shortcut nor its subpixel containment
+ // tolerance can prove that overflowing text or a thin child paints nothing.
+ const flat=box.height===0;
+ const inside=r=>finiteBox(r)&&(flat?r.height===0:!positive(r)||r.x>=box.x-0.5&&r.y>=box.y-0.5&&r.x+r.width<=box.x+box.width+0.5&&r.y+r.height<=box.y+box.height+0.5);
  const hidden=win.getComputedStyle(root).display==='none';
- if(hidden!==member.hidden||!hidden&&(!positive(box)||viewport&&(box.x<0||box.y<0||box.x+box.width>win.innerWidth+1||box.y+box.height>win.innerHeight+1)))return refuse('retained-box',root);
+ if(hidden!==member.hidden||!hidden&&(!finiteBox(box)||box.width<=0||viewport&&(box.x<0||box.y<0||box.x+box.width>win.innerWidth+1||box.y+box.height>win.innerHeight+1)))return refuse('retained-box',root);
  const range=doc.createRange();
  function walk(node,absent,graphic=null){
   if(++budget.nodes>128||win.performance.now()-budget.started>25)return refuse('retained-budget',node);
@@ -54,6 +61,9 @@ function retainedPaint(member,doc,{viewport=false,budget={started:doc.defaultVie
   const s=win.getComputedStyle(node);absent||=s.display==='none';
   if(!absent){
    if(!['static','relative'].includes(s.position)||s.cssFloat!=='none'||s.visibility!=='visible'||s.opacity!=='1'||s.zoom!=='1'||s.animationName!=='none'||s.display==='list-item'||s.webkitTextStrokeWidth!=='0px'||s.textDecorationLine!=='none'||node===root&&!['block','flow-root','flex','grid','inline-block'].includes(s.display)||['transform','translate','rotate','scale','filter','backdropFilter','clipPath','maskImage','offsetPath','boxShadow','textShadow','borderImageSource'].some(k=>s[k]!=='none'))return refuse('retained-style',node);
+   // UA/replaced painting (for example a range input's thumb) is not covered
+   // by childNodes or its zero-height border box. Keep it outside this proof.
+   if(flat&&!svg&&(node.matches(controls+',img,picture,meter,progress,hr,details,summary')||!['none','auto'].includes(s.appearance)))return refuse('retained-opaque',node);
    if(['::before','::after'].some(p=>!['none','normal'].includes(win.getComputedStyle(node,p).content)))return refuse('retained-pseudo',node);
    if(svg&&(['markerStart','markerMid','markerEnd'].some(k=>s[k]!=='none')||[s.fill,s.stroke].some(value=>/url\(/i.test(value))))return refuse('retained-svg-paint',node);
    const b=!svg||node===graphic?rect(node):null;
@@ -63,7 +73,8 @@ function retainedPaint(member,doc,{viewport=false,budget={started:doc.defaultVie
    if(node===graphic&&(s.display==='contents'||s.overflowX!=='hidden'||s.overflowY!=='hidden'||!positive(b)))return refuse('retained-svg-viewport',node);
    if((!svg||node===graphic)&&!inside(b))return refuse('retained-box-overflow',node);
    if(!['none','hidden'].includes(s.outlineStyle)&&s.outlineWidth!=='0px'){
-    if(svg&&node!==graphic)return refuse('retained-outline',node);
+    // Even an inward/negative-offset outline can paint around a flat box.
+    if(flat||svg&&node!==graphic)return refuse('retained-outline',node);
     const outset=Math.max(0,Number.parseFloat(s.outlineWidth)+Number.parseFloat(s.outlineOffset));
     if(!Number.isFinite(outset)||!inside({x:b.x-outset,y:b.y-outset,width:b.width+2*outset,height:b.height+2*outset}))return refuse('retained-outline',node);
    }
