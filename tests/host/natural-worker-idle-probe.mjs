@@ -5,7 +5,7 @@ import {mkdtemp,mkdir,readFile,writeFile,access} from 'node:fs/promises';
 import {join} from 'node:path';
 import {tmpdir} from 'node:os';
 import {installJ4GrantObserver} from './j4-grant-observer.mjs';
-import {readIdleBootstrapFacts,idleEvaluationFailure} from './natural-worker-idle-bootstrap.mjs';
+import {readIdleBootstrapFacts,idleEvaluationFailure,createIdleFrameBootstrap} from './natural-worker-idle-bootstrap.mjs';
 import {assessIdleObservation,assessIdleRecovery,assessIdleScenario,IDLE_EVIDENCE_DEPENDENCIES,idleEvidenceCommit,validateIdleEvidence,finishIdleObservationDeadline,idleBootstrapAction,idleBaselineUnobserved} from './natural-worker-idle-oracle.mjs';
 import {createHash} from 'node:crypto';
 import {createHostFixtureServer} from './fixtures/server.mjs';
@@ -24,7 +24,7 @@ const selected=j3JourneyProfile('LEGACY'),expectedRoles=selected.sidebarAvailabl
 const report={scenario,observationCompleted:false,requirement:'UI-11',evidence:'S_ISOLATED_UNFORCED_WORKER_OBSERVATION_CONDITIONAL_RECOVERY',profile:'LEGACY_OFFLINE',realChatGPT:'NOT_RUN',naturalWorkerSleep:'NOT_ESTABLISHED',status:'NOT_RUN',windowMs:60000,forcedWorkerStop:false,workerDebuggerAttached:false,productionTimersModified:false,pageFrozen:false,observationCount:1,results:[]};
 report.roleCoverage={expectedRoles,sidebar:selected.sidebarAvailable?'IN_SCOPE':'NOT_COVERED',reason:selected.sidebarLimitation,fullUI11Acceptance:'NOT_ESTABLISHED'};
 let baselineUnavailableError=null;
-let server,guard,child,socket,profileDir,seq=0,ready=false;const pending=new Map(),events=[];let eventOverflow=false;const bootstrapLogs=[];
+let server,guard,child,socket,profileDir,frameBootstrap,seq=0,ready=false;const pending=new Map(),events=[];let eventOverflow=false;const bootstrapLogs=[];
 function command(method,params={},sessionId){
  if(!ready)return Promise.reject(Error('CDP-not-ready'));
  const id=++seq;return new Promise((resolve,reject)=>{const timer=setTimeout(()=>{pending.delete(id);reject(Error('CDP-command-deadline:'+method));},6000);pending.set(id,{resolve,reject,timer});socket.send(JSON.stringify({id,method,params,...sessionId?{sessionId}:{}}));});
@@ -37,11 +37,11 @@ async function discoverFrames(prefix,excluded=[]){
  const rows=expectedRoles.map(role=>{const matches=targets.filter(t=>t.type==='iframe'&&t.url===prefix+role+'.html'&&!excluded.includes(t.targetId));assert(matches.length<=1,'duplicate exact UI frame');return matches[0]?{role,...matches[0]}:null;});
  return rows.every(Boolean)?rows:null;
 }
-async function observeFrames(frames){
+async function observeFrames(frames,timeoutMs=15000){
  return Promise.all(frames.map(async frame=>{
   assert.equal(frame.type,'iframe','passive observer never attaches a worker');
-  const {sessionId}=await command('Target.attachToTarget',{targetId:frame.targetId,flatten:true});
-  await evaluate(sessionId,`if(!globalThis.idleObserverInstalled){(${installJ4GrantObserver.toString()})();globalThis.idleObserverInstalled=true;}true`);
+  const observed=await poll(()=>frameBootstrap.frame(frame.targetId),'pre-module-observer-'+frame.role,timeoutMs);
+  const {sessionId}=observed;
   return {...frame,sessionId};
  }));
 }
@@ -52,7 +52,6 @@ async function frameEvidence(frame,after=0,timeoutMs=30000){
   return {role:frame.role,targetId:frame.targetId,grantDigest:hash(f.grantId),viewGrantDigest:hash(f.viewGrantId),grantRequestedAt:f.grantRequestedAt,grantReceivedAt:f.grantReceivedAt,viewRequestedAt:f.viewRequestedAt,viewReceivedAt:f.viewReceivedAt,expiresAt:f.expiresAt,scope:raw.scope,currentRef:raw.currentRef??null};
  },'actual-current-grant-and-VIEW-'+frame.role,timeoutMs);
 }
-async function detachFrames(frames){for(const frame of frames)await command('Target.detachFromTarget',{sessionId:frame.sessionId});}
 async function nativeClick(sessionId,selector){
  const point=await evaluate(sessionId,`(()=>{const all=[...document.querySelectorAll(${JSON.stringify(selector)})];if(all.length!==1)return null;const node=all[0],r=node.getBoundingClientRect();if(r.width<=0||r.height<=0)return null;const x=r.x+r.width/2,y=r.y+r.height/2,hit=document.elementFromPoint(x,y);return hit&&(hit===node||node.contains(hit))?{x,y}:null;})()`);
  assert(point,'one visible native target must receive genuine browser input');
@@ -61,7 +60,9 @@ async function nativeClick(sessionId,selector){
 const nativeReturn=sessionId=>nativeClick(sessionId,'[aria-label="返回工作空间"]');
 async function clearNativeEditor(sessionId){
  const modifiers=process.platform==='darwin'?4:2;
- await command('Input.dispatchKeyEvent',{type:'keyDown',key:'a',code:'KeyA',windowsVirtualKeyCode:65,modifiers},sessionId);
+ // Raw CDP needs the macOS editing command that normal Cmd+A dispatch carries.
+ // Keep native selection/deletion; never assign the fixture editor's value.
+ await command('Input.dispatchKeyEvent',{type:'keyDown',key:'a',code:'KeyA',windowsVirtualKeyCode:65,modifiers,...process.platform==='darwin'?{commands:['selectAll']}:{}},sessionId);
  await command('Input.dispatchKeyEvent',{type:'keyUp',key:'a',code:'KeyA',windowsVirtualKeyCode:65,modifiers},sessionId);
  for(const type of ['keyDown','keyUp'])await command('Input.dispatchKeyEvent',{type,key:'Backspace',code:'Backspace',windowsVirtualKeyCode:8},sessionId);
 }
@@ -73,7 +74,7 @@ try{
  const built=packageHost(join(dir,'package'),{offlineOrigin:server.origin}),manifestPath=join(built.unpacked,'build-manifest.json'),manifestBytes=await readFile(manifestPath),manifest=JSON.parse(manifestBytes);report.sourceHashes=manifest.sourceHashes;report.buildManifestHash=hash(manifestBytes);report.runnerHash=runnerHash;report.package=built;report.fixture=server.manifest;
  child=spawn(process.env.FREE_CHROME_EXECUTABLE??(process.platform==='darwin'?'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome':'/usr/bin/chromium'),nativeBrowserArgs(profileDir,{headed:false,historicalNetworkGuard:guard.config}),{stdio:['ignore','ignore','pipe']});let launchError,launchStderr='';child.on('error',e=>{launchError=e;});child.stderr.on('data',value=>{launchStderr=(launchStderr+value.toString()).slice(-4000);report.browserLaunchStderr=launchStderr;});
  const endpoint=await poll(async()=>{if(launchError)throw launchError;if(child.exitCode!==null)throw Error('chrome-exited:'+child.exitCode+':'+launchStderr);try{return endpointFromActivePort(await readFile(join(profileDir,'DevToolsActivePort'),'utf8'));}catch(e){if(e.code!=='ENOENT')throw e;return null;}},'browser');
- socket=new WebSocket(endpoint);socket.addEventListener('message',e=>{const m=JSON.parse(e.data);if(m.id){const q=pending.get(m.id);if(q){pending.delete(m.id);clearTimeout(q.timer);if(m.error)q.reject(Error(m.error.message));else q.resolve(m.result);}}else if(m.method==='Log.entryAdded'||m.method==='Runtime.exceptionThrown'){if(bootstrapLogs.length<16)bootstrapLogs.push({sessionId:m.sessionId,method:m.method,level:m.params?.entry?.level??null,text:String(m.params?.entry?.text??m.params?.exceptionDetails?.text??'').slice(0,400),exception:String(m.params?.exceptionDetails?.exception?.description??'').slice(0,800),url:String(m.params?.entry?.url??m.params?.exceptionDetails?.url??'').slice(0,240)});}else if(m.method?.startsWith('Target.')){if(events.length<512)events.push({at:performance.now(),method:m.method,params:m.params});else eventOverflow=true;}});
+ socket=new WebSocket(endpoint);socket.addEventListener('message',e=>{const m=JSON.parse(e.data);frameBootstrap?.handle(m);if(m.id){const q=pending.get(m.id);if(q){pending.delete(m.id);clearTimeout(q.timer);if(m.error)q.reject(Error(m.error.message));else q.resolve(m.result);}}else if(m.method==='Log.entryAdded'||m.method==='Runtime.exceptionThrown'){if(bootstrapLogs.length<16)bootstrapLogs.push({sessionId:m.sessionId,method:m.method,level:m.params?.entry?.level??null,text:String(m.params?.entry?.text??m.params?.exceptionDetails?.text??'').slice(0,400),exception:String(m.params?.exceptionDetails?.exception?.description??'').slice(0,800),url:String(m.params?.entry?.url??m.params?.exceptionDetails?.url??'').slice(0,240)});}else if(m.method?.startsWith('Target.')){if(events.length<512)events.push({at:performance.now(),method:m.method,params:m.params});else eventOverflow=true;}});
  socket.addEventListener('close',()=>{ready=false;for(const q of pending.values()){clearTimeout(q.timer);q.reject(Error('CDP-closed'));}pending.clear();});
  await new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(Error('CDP-connect-deadline')),6000);socket.addEventListener('open',()=>{clearTimeout(timer);ready=true;resolve();},{once:true});socket.addEventListener('error',()=>{clearTimeout(timer);reject(Error('CDP-connect-error'));},{once:true});});
  report.browser=await command('Browser.getVersion');await command('Target.setDiscoverTargets',{discover:true});const {id}=await command('Extensions.loadUnpacked',{path:built.unpacked}),prefix='chrome-extension://'+id+'/';report.extensionId=id;
@@ -82,8 +83,10 @@ try{
  // does not itself make a headless target visible; hidden discovery is deferred.
  const {targetId}=await command('Target.createTarget',{url:'about:blank',background:false});let {sessionId}=await command('Target.attachToTarget',{targetId,flatten:true});
  await command('Target.activateTarget',{targetId});await command('Page.bringToFront',{},sessionId);
- const bootstrapFacts=()=>evaluate(sessionId,`(${readIdleBootstrapFacts.toString()})()`);
+ frameBootstrap=createIdleFrameBootstrap({command,prefix,roles:expectedRoles,installObserver:installJ4GrantObserver});
  const bootstrapDeadline=performance.now()+15000;
+ await frameBootstrap.arm(sessionId);
+ const bootstrapFacts=()=>evaluate(sessionId,`(${readIdleBootstrapFacts.toString()})()`);
  try{
   const navigation=await command('Page.navigate',{url:server.url},sessionId);assert(!navigation.errorText,'fixture-navigation-failed:'+navigation.errorText);
   await poll(async()=>{report.bootstrap=await bootstrapFacts();return report.bootstrap.url===server.url&&report.bootstrap.readyState==='complete'&&report.bootstrap.visibility==='visible';},'visible-native-fixture',Math.max(1,bootstrapDeadline-performance.now()));
@@ -96,6 +99,7 @@ try{
   }
   await poll(async()=>{report.bootstrap=await bootstrapFacts();return report.bootstrap.open===expectedRoles.length;},'supported-surfaces',Math.max(1,bootstrapDeadline-performance.now()));
  }catch(error){
+  try{await frameBootstrap.stop();}catch(stopError){report.bootstrapObserverStopError=String(stopError);}
   try{report.bootstrap=await bootstrapFacts();}catch(diagnosticError){report.bootstrapDiagnosticError=String(diagnosticError);}
   // This diagnostic branch cannot produce an accepted idle observation. Attach
   // exact UI iframe targets only after bootstrap failure; never attach a worker.
@@ -116,14 +120,15 @@ try{
   report.bootstrapFixtureRequests=server.snapshot().requests;report.bootstrapFixtureActions=server.snapshot().actions;throw error;
  }
  report.initialSurfaces=await bootstrapFacts();assert.equal(report.initialSurfaces.frames.length,expectedRoles.length);
- const initialFrameSessions=await observeFrames(await poll(()=>discoverFrames(prefix),'initial-exact-UI-frames',Math.max(1,bootstrapDeadline-performance.now())));
+ const initialFrameSessions=await observeFrames(await poll(()=>discoverFrames(prefix),'initial-exact-UI-frames',Math.max(1,bootstrapDeadline-performance.now())),Math.max(1,bootstrapDeadline-performance.now()));
  try{report.initialFrames=await Promise.all(initialFrameSessions.map(frame=>frameEvidence(frame,0,Math.max(1,bootstrapDeadline-performance.now()))));assert(performance.now()<=bootstrapDeadline,'initial-grant-VIEW-bootstrap-deadline');}
  catch(error){
   report.baselineEvidence=[];
-  for(const frame of initialFrameSessions){const value=await evaluate(frame.sessionId,'({trace:globalThis.j4RpcTrace??[],freshness:globalThis.j4Freshness??null,lifecycle:document.documentElement.dataset.vaiwlFrameLifecycle,rendererVisible:!!document.querySelector("[data-vaiwl-frame-role=workspace]")?.shadowRoot?.querySelector(".workspace")?.checkVisibility({checkVisibilityCSS:true,checkOpacity:true})})');report.baselineEvidence.push({role:frame.role,lifecycle:value.lifecycle,rendererVisible:value.rendererVisible,observedRPCs:value.trace.map(r=>({type:r.type,ok:r.ok,state:r.state,reason:r.reason,hasGrant:r.hasGrant})),grantObserved:!!value.freshness?.grantId,matchingViewObserved:!!value.freshness?.grantId&&value.freshness.viewGrantId===value.freshness.grantId});}
+   for(const frame of initialFrameSessions){const value=await evaluate(frame.sessionId,'({observerInstalled:globalThis.idleObserverInstalled===true,trace:globalThis.j4RpcTrace??[],freshness:globalThis.j4Freshness??null,lifecycle:document.documentElement.dataset.vaiwlFrameLifecycle,rendererVisible:!!document.querySelector("[data-vaiwl-frame-role=workspace]")?.shadowRoot?.querySelector(".workspace")?.checkVisibility({checkVisibilityCSS:true,checkOpacity:true})})');report.baselineEvidence.push({role:frame.role,observerInstalled:value.observerInstalled,lifecycle:value.lifecycle,rendererVisible:value.rendererVisible,observedRPCs:value.trace.map(r=>({type:r.type,ok:r.ok,state:r.state,reason:r.reason,hasGrant:r.hasGrant})),grantObserved:!!value.freshness?.grantId,matchingViewObserved:!!value.freshness?.grantId&&value.freshness.viewGrantId===value.freshness.grantId});}
   if(String(error.message).startsWith('probe-timeout:actual-current-grant-and-VIEW-')&&idleBaselineUnobserved(report.baselineEvidence,expectedRoles)){report.baselineUnavailable=true;baselineUnavailableError=error;}
   throw error;
- }finally{await detachFrames(initialFrameSessions);}
+ }finally{await frameBootstrap.stop();}
+ report.initialFrameObserver=frameBootstrap.snapshot();assert.equal(report.initialFrameObserver.armed,false);assert.equal(report.initialFrameObserver.pending,0);
  report.passiveObserver='FRAME_RPC_RESPONSES_ONLY_NO_REQUESTS_OR_WORKER_ATTACHMENT';
  report.externalRejected=await evaluate(sessionId,"fetch('https://example.com/').then(()=>false,()=>true)");assert(report.externalRejected);assert(guard.snapshot().denied>0);
  await evaluate(sessionId,"globalThis.idleOriginal={document,editor:document.querySelector('textarea'),frames:[...document.querySelectorAll('[data-va-owned] iframe')]};true");
@@ -161,6 +166,7 @@ try{
   // Only real lifecycle recovery and browser input: no synthetic runtime request,
   // no worker debugger, forced stop, reloading, timer suppression or retry window.
   let observed,privateFramesCleared;
+  await frameBootstrap.arm(sessionId);
   if(scenario==='safe-empty-reading'){
    observed=await observeFrames(await poll(()=>discoverFrames(prefix),'dormant-UI-frames'));
    privateFramesCleared=Object.fromEntries(await Promise.all(observed.map(async frame=>[frame.role,await evaluate(frame.sessionId,"document.querySelector('main')?.childNodes.length===0")])));
@@ -174,7 +180,7 @@ try{
   report.recoveryWorker={targetId:newWorker.targetId,type:newWorker.type,url:newWorker.url,attached:newWorker.attached};
   report.nativeAfterRecovery=await evaluate(sessionId,nativeExpression);
   report.recovery=assessIdleRecovery({scenario,expectedRoles,privateFramesCleared,observation,initialWorkerId:worker.targetId,newWorker,prefix,initialFrames:report.initialFrames,recoveredFrames:report.recoveredFrames,reentryAt,checkedAt:Date.now(),native:report.nativeAfterRecovery});
-  report.recovery.newWorkerId=newWorker.targetId;report.recovery.reentryAt=reentryAt;report.status=report.recovery.status;report.results.push({name:'unforced-target-destruction-fresh-grant-actual-view-native-draft-preserved',status:'PASS'});process.exitCode=0;await detachFrames(observed);
+  report.recovery.newWorkerId=newWorker.targetId;report.recovery.reentryAt=reentryAt;report.status=report.recovery.status;report.results.push({name:'unforced-target-destruction-fresh-grant-actual-view-native-draft-preserved',status:'PASS'});process.exitCode=0;await frameBootstrap.stop();
   if(scenario==='safe-empty-reading'){await nativeClick(sessionId,'#prompt-textarea');await command('Input.insertText',{text:'NATURAL_IDLE_RECOVERED_INPUT'},sessionId);report.nativeUsabilityAfterRecovery=await evaluate(sessionId,nativeExpression);assert.equal(report.nativeUsabilityAfterRecovery.sameEditor,true);assert.equal(report.nativeUsabilityAfterRecovery.sameDocument,true);assert.equal(report.nativeUsabilityAfterRecovery.draft,'NATURAL_IDLE_RECOVERED_INPUT');assert.equal(report.nativeUsabilityAfterRecovery.editorFocused,true);}
  }
  report.nativeActions=server.snapshot().actions;assert.deepEqual(report.nativeActions,{});
@@ -182,7 +188,7 @@ try{
 }catch(error){const unavailable=error===baselineUnavailableError;report.status=unavailable?'NOT_ESTABLISHED_PASSIVE_BASELINE_UNAVAILABLE':'FAIL';report.error=error.stack;process.exitCode=unavailable?2:1;}
 finally{
  report.networkGuard=guard?.snapshot();
- const cleaned=await cleanupOwnedResources(report,[['socket',async()=>{if(socket){socket.close();ready=false;for(const q of pending.values()){clearTimeout(q.timer);q.reject(Error('probe-cleanup'));}pending.clear();}}],['browser',async()=>{if(child)await cleanupIsolatedBrowser({child,profileDir});}],['server',()=>server?.close()],['networkGuard',()=>guard?.close()]]);
+ const cleaned=await cleanupOwnedResources(report,[['frame-observer',async()=>{await frameBootstrap?.stop();report.finalFrameObserver=frameBootstrap?.snapshot();}],['socket',async()=>{if(socket){socket.close();ready=false;for(const q of pending.values()){clearTimeout(q.timer);q.reject(Error('probe-cleanup'));}pending.clear();}}],['browser',async()=>{if(child)await cleanupIsolatedBrowser({child,profileDir});}],['server',()=>server?.close()],['networkGuard',()=>guard?.close()]]);
  if(cleaned===false)process.exitCode=1;
  try{
   report.evidenceDependencyHashesAfter=await dependencyHashes();

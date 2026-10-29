@@ -10,6 +10,8 @@
 
 该提交的现有 CI 随后发现 `free-frame-surface-refresh` 轻量夹具缺少新版 main 尺寸接口，八处可见性/续约用例因此在尺寸通知中抛错；已用原失败本地复现并只补夹具几何接口，关联客户端检查及独立只读复核通过。动态尺寸仍由独立用例与上述浏览器反例验证，不更改正式包或生产保护。证据 `/private/tmp/vaiwl-surface-fixture-red-20261029.log`、`/private/tmp/vaiwl-surface-fixture-final-20261029.log`；其他 CI 失败保留，不宣称全绿或实机恢复。
 
+现有自然 Worker 检查的首次授权监听晚于 frame 启动，导致已正常绘制却无匹配 JOIN/VIEW 基线。现仅在本机隔离 iframe 模块运行前布置原响应观察器：启用其 Page 域、精确角色过滤、先记录后恢复，绝不附接 Worker 或补发产品请求；原60秒窗口前禁用自动附加并核实所有扩展目标已分离。另补齐该 runner 在 Mac 上原生 Cmd+A 的编辑命令，仍以原生 Backspace 清空夹具。早期无 Page 域的漏采和 Mac 清空失败原报告保留。最终既有 safe-empty 检查完成一次60秒无附加观察，观察到非强制目标销毁，并经原生四格取得新授权/真实 VIEW，原文档及编辑器保持；原因仍 `UNATTRIBUTED_TARGET_DESTRUCTION`，不冒称自然休眠、完整UI-11或实际ChatGPT通过。关联合同和只读独立复核通过；证据 `/private/tmp/vaiwl-idle-pre-module-final-20261029.json`、`/private/tmp/vaiwl-idle-pre-module-unit-final-20261029.log`。本次仅修正已有测试接线，统一产品包204项源码未变，不重建候选、不更新日常安装、不追加用户操作。
+
 ## 2026-10-29 已取得真实主区报告，修复零高度分支的挂载误拒
 
 用户现有弹窗回执确认 `f8a68fa9b5b1…` 已在当前真实文档运行。首次主区报告明确为 `native-flow-branch-paint / retained-paint / retained-box`，拒绝路径完整、无预算截断；拒绝的 DIV 几何记录为 `[333,377,808,0]`。即时库已有12条引用，框架/授权注册仍为0，VIEW尚未派送。源码 `retainedPaint` 在递归检查后代前强制根盒具有正高度，因而这一首门槛会拒绝合法的零高度原生流成员。报告不含该分支的后代、CSS或用途，不能推断它为空、属于composer或其他后续检查必定通过。
