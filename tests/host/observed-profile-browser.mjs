@@ -19,7 +19,7 @@ try{
   await page.goto(url);await page.evaluate(materializePartitionedSidebar,projectDetails.sidebarStructure.rows);await page.evaluate(retainHiddenTitlebar);await page.addScriptTag({content:outputFiles[0].text});
   await page.evaluate(async focusableViewport=>{
    const {createChatGPTAdapter,CHATGPT_OBSERVED_PROFILE:profile,createFlowMountSurface}=observedModule;
-   let surface;const proposals=[],adapter=createChatGPTAdapter({document,profile,isOwnedMask:n=>surface?.isMasked(n)===true,isOwnedSurface:n=>surface?.isOwnedSurface(n)===true});
+   let surface;const proposals=[],adapter=createChatGPTAdapter({document,profile,isOwnedMask:n=>surface?.isMasked(n)===true,isOwnedSurface:n=>surface?.isOwnedSurface(n)===true,isReadingProbeSurface:n=>surface?.isReadingProbeSurface?.(n)===true});
    const binding={documentToken:'flow-profile',producerToken:'flow-producer',browserDocumentId:'flow-parent',routeEpoch:1,origin:location.origin,expiresAt:new Date(Date.now()+60000).toISOString()};
    await adapter.start({binding,emit:async p=>{proposals.push(p);return {state:'accepted',localSeq:p.localSeq,receiptId:'flow-fixture'};}});
    for(let i=0;i<40;i++)await Promise.resolve();

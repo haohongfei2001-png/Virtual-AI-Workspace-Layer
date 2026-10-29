@@ -13,6 +13,16 @@ export function createFlowMountSurface({document:doc,createFrameURL,hasNativeLay
  const viewport=()=>`${win.innerWidth}:${win.innerHeight}`;
  const intact=(m,s)=>s.node.isConnected&&s.frame.isConnected&&s.frame.parentElement===s.node&&!s.frame.hasAttribute('srcdoc')&&s.frame.src===s.url&&s.node.ownerDocument===doc&&m.style.isConnected&&m.style.textContent===m.css;
  const nativeLayer=()=>hasNativeLayer()||documentHasNativeLayer(doc);
+ const bindReadingRule=m=>{m.readingRules=[...m.style.sheet.cssRules];m.readingRuleTexts=m.readingRules.map(rule=>rule.cssText);m.readingRule=m.readingRules.at(-1);m.readingRuleText=m.readingRule.cssText;};
+ const readingRuleCurrent=(m,probeText=m.readingRuleText)=>{const rules=m.style.sheet?.cssRules;return !!rules&&rules.length===m.readingRules.length&&[...rules].every((rule,i)=>rule===m.readingRules[i]&&rule.cssText===(i===rules.length-1?probeText:m.readingRuleTexts[i]));};
+ // Only this synchronous probe may retain an offscreen private frame. An
+ // arbitrary owned node or an attribute copied onto native DOM proves nothing.
+ const readingProbeSurface=node=>{try{
+  const m=[...mounts.values()].find(m=>m.roles[0]?.node===node),s=m?.roles[0],p=m?.readingProbe;
+  if(!p?.viewport||p.cancelled||open(s)||!intact(m,s)||nativeLayer()||node.parentElement!==m.plan.root||s.frame.contentWindow!==p.window||!readingRuleCurrent(m,p.ruleText))return false;
+  const style=win.getComputedStyle(node),r=node.getBoundingClientRect(),f=s.frame.getBoundingClientRect(),same=(a,b)=>Number.isFinite(a)&&Math.abs(a-b)<1;
+  return style.position==='fixed'&&style.pointerEvents==='none'&&style.visibility==='visible'&&style.display==='flex'&&style.clipPath==='inset(0px)'&&r.right<=-1&&f.right<=-1&&same(r.y,0)&&same(f.y,0)&&same(r.width,p.viewport.width)&&same(r.height,p.viewport.height)&&same(f.width,p.viewport.width)&&same(f.height,p.viewport.height);
+ }catch{return false;}};
  // Flow can clamp a native scrollport when its reading child becomes a zero
  // height grid item. Keep only presentation coordinates in this document's
  // RAM, and restore only our layout clamp, never a later native scroll/route.
@@ -131,7 +141,12 @@ export function createFlowMountSurface({document:doc,createFrameURL,hasNativeLay
     m.css=flowLayoutRules(plan,{id,exitId:workspace.exit.id,workspaceId:workspace.node.id});
     for(const s of m.roles)m.css+=`${enabled(s)}{display:${s.role==='workspace'?'flex':'block'}!important;visibility:visible!important;background:var(--va-canvas,Canvas);color:CanvasText}#${s.node.id}>button{position:absolute;right:4px;top:4px;z-index:1;width:24px;height:24px;padding:0;margin:0;border:0;border-radius:8px;background:transparent;color:inherit;cursor:pointer}#${s.node.id}>iframe{flex:1;min-height:0;}\n`;
     m.css+=`${enabled(workspace)}[data-va-input-handoff]{visibility:hidden!important;pointer-events:none!important}#${workspace.node.id}[data-va-input-handoff]>iframe{visibility:hidden!important}#${sidebar.node.id}{height:auto;flex:none}#${sidebar.node.id}>[data-va-native-boundary]{box-sizing:border-box;min-height:28px;padding:5px 12px;border-top:1px solid color-mix(in srgb,CanvasText 10%,Canvas);font:11px/18px system-ui;color:color-mix(in srgb,CanvasText 60%,Canvas)}#${sidebar.node.id}>button{top:auto;bottom:32px}#${workspace.node.id}>iframe{height:100%}`;
-    m.style.dataset.vaOwned=id;m.style.textContent=m.css;doc.head.append(m.style);
+    // Closing the empty switch must unmask native reading, but must not zero
+    // the OOPIF viewport and discard input already routed to its focused field.
+    // This private, nonpainting slot exists only until the synchronous read ends.
+    // CSSOM toggling emits no DOM mutations into the native Project observer.
+    m.css+=`@media not all{body:not(:has(#${workspace.exit.id}:popover-open)) #${workspace.node.id}{display:flex!important;visibility:visible!important;position:fixed!important;left:-2px!important;top:0!important;right:auto!important;bottom:auto!important;width:0px!important;height:0px!important;min-height:0!important;max-height:none!important;pointer-events:none!important;overflow:hidden!important;clip-path:inset(0px)!important}}`;
+    m.style.dataset.vaOwned=id;m.style.textContent=m.css;doc.head.append(m.style);bindReadingRule(m);
     // Let the original control finish its first trusted gesture before
     // releasing geometry. Never move its target between pointer down and up,
     // dispatch replacement input, or blur/refocus the native composer.
@@ -268,7 +283,7 @@ export function createFlowMountSurface({document:doc,createFrameURL,hasNativeLay
    for(const {node,attr} of oldRows)if(node.getAttribute(attr)===handle.id)node.removeAttribute(attr);
    m.markers=m.markers.filter(entry=>!entry.attr.startsWith('data-va-flow-row-'));
    for(const [i,node] of next.flowOrder.entries())mark(m,node,'row-'+i);
-   clearReading(m);m.css=css;m.plan=next;m.nativeViewport=viewport();m.criticalControls=next.nativeControls.map(({node})=>node);m.criticalShadowCandidates=next.nativeShadowCandidates;m.style.textContent=css;m.observeLayoutTargets?.();
+   clearReading(m);m.css=css;m.plan=next;m.nativeViewport=viewport();m.criticalControls=next.nativeControls.map(({node})=>node);m.criticalShadowCandidates=next.nativeShadowCandidates;m.style.textContent=css;bindReadingRule(m);m.observeLayoutTargets?.();
    return inspection;
   },
   hasNativeInputFocus(handle){const m=lookup(handle);return m.plan.composer.contains(doc.activeElement);},
@@ -301,6 +316,7 @@ export function createFlowMountSurface({document:doc,createFrameURL,hasNativeLay
   revealSidebar(handle,{top,bottom}){const m=lookup(handle);if(!sidebarIntact(m)||!open(m.roles[1])||nativeLayer()||![top,bottom].every(Number.isFinite)||top<0||bottom<=top||bottom>m.roles[1].frame.getBoundingClientRect().height)return false;const p=m.inspection.sidebarPlacement.scrollPort,b=p.getBoundingClientRect(),f=m.roles[1].frame.getBoundingClientRect();m.pendingScroll=undefined;if(f.y+top<b.y)p.scrollTop+=f.y+top-b.y;else if(f.y+bottom>b.bottom)p.scrollTop+=f.y+bottom-b.bottom;return true;},
   restoreSidebar(handle,scroll,{apply=true}={}){const m=lookup(handle);if(!sidebarIntact(m)||scroll!==null&&(!Number.isSafeInteger(scroll)||scroll<0||scroll>100000000))return false;m.pendingScroll=scroll;if(apply)restorePendingScroll(m);return true;},
   isOwnedSurface:owned,
+  isReadingProbeSurface:readingProbeSurface,
   isMasked(node){return [...mounts.values()].some(m=>node===m.plan.reading&&open(m.roles[0])&&isSameNativeRegions(m.plan));},
   // The adapter can discover a change before the layout observer. A closed
   // switch must revoke controller presentation too, so reproof can recover.
@@ -315,7 +331,12 @@ export function createFlowMountSurface({document:doc,createFrameURL,hasNativeLay
    // A bounded synchronous probe restores actual native visibility, then reads
    // through the existing fresh source callback. It never reads hidden content
    // or changes controller intent, frame focus, or the saved reading position.
-   const probe=m.readingProbe={cancelled:false,ownClosing:false,ownOpening:false};
+   const box=frame.getBoundingClientRect(),rule=m.readingRule;
+   if(!readingRuleCurrent(m)||rule.media.mediaText!=='not all'){m.style.textContent=m.css;bindReadingRule(m);hide(m,'workspace','workspace-geometry');m.onSurrender({role:'workspace',reason:'workspace-geometry'});return null;}
+   if(states[0]&&(![box.width,box.height].every(n=>Number.isFinite(n)&&n>0)||box.width>win.innerWidth+1||box.height>win.innerHeight+1))return null;
+   const ruleStyle=rule.cssRules[0].style,originalRuleStyle=ruleStyle.cssText;
+   const probe=m.readingProbe={cancelled:false,ownClosing:false,ownOpening:false,window,viewport:states[0]?{width:box.width,height:box.height}:null};
+   if(probe.viewport){ruleStyle.setProperty('width',box.width+'px','important');ruleStyle.setProperty('height',box.height+'px','important');ruleStyle.setProperty('left',(-box.width-2)+'px','important');rule.media.mediaText='all';}probe.ruleText=rule.cssText;
    const changes=new win.MutationObserver(()=>{probe.cancelled=true;});
    changes.observe(doc.documentElement,{subtree:true,childList:true,attributes:true,characterData:true});
    const nativeEvent=e=>{if(e.isTrusted)probe.cancelled=true;};
@@ -324,18 +345,22 @@ export function createFlowMountSurface({document:doc,createFrameURL,hasNativeLay
    let ok=false,value=null;
    try{
     if(states[0]){probe.ownClosing=true;workspace.exit.hidePopover();probe.ownClosing=false;}
-    const readingCurrent=()=>!probe.cancelled&&current()&&!open(workspace)&&m.roles.every((s,i)=>i===0||open(s)===states[i])&&isNativeReadingCurrent(plan);
+    const readingCurrent=()=>!probe.cancelled&&current()&&!open(workspace)&&readingRuleCurrent(m,probe.ruleText)&&(!probe.viewport||readingProbeSurface(workspace.node))&&m.roles.every((s,i)=>i===0||open(s)===states[i])&&isNativeReadingCurrent(plan);
     if(!readingCurrent())return null;
     value=read();
     if(value?.then||!readingCurrent()||changes.takeRecords().length)return null;
     if(states[0]){probe.ownOpening=true;workspace.exit.showPopover();probe.ownOpening=false;}
     // Reopening can run native beforetoggle hooks. Never return a proof if a
     // hook changed source nodes, authority, frame identity, or native controls.
-    ok=!probe.cancelled&&current()&&m.roles.every((s,i)=>open(s)===states[i])&&changes.takeRecords().length===0&&
+    ok=!probe.cancelled&&current()&&readingRuleCurrent(m,probe.ruleText)&&m.roles.every((s,i)=>open(s)===states[i])&&changes.takeRecords().length===0&&
      (!states[0]||active(m));
     return ok?value:null;
    }catch{return null;}finally{
     changes.disconnect();for(const type of events)doc.removeEventListener(type,nativeEvent,true);m.readingProbe=null;
+    if(probe.viewport){rule.media.mediaText='not all';ruleStyle.cssText=originalRuleStyle;}
+    // A CSSOM replacement can detach the captured rule while leaving an active
+    // copy in our sheet. Restore only our canonical sheet before surrendering.
+    if(mounts.get(handle.id)===m&&m.style.isConnected&&!readingRuleCurrent(m)){ok=false;m.style.textContent=m.css;bindReadingRule(m);}
     if(!ok&&mounts.get(handle.id)===m){hide(m,'workspace','workspace-geometry');m.onSurrender({role:'workspace',reason:'workspace-geometry'});}
    }
   },

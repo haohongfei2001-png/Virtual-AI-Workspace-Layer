@@ -32,7 +32,10 @@ try{
   out.containedLongTranscriptLocal=ok()&&ranges===0;Range.prototype.getClientRects=oldRects;
   const escaped=document.createElement('div');escaped.setAttribute('popover','manual');escaped.style.cssText='position:fixed;inset:0;margin:0;width:1000px;height:700px';q('#text').append(escaped);escaped.showPopover();
   out.containedTopLayerNotSkipped=!ok();escaped.hidePopover();escaped.remove();q('#text').style.cssText=original;
-  out.longTranscriptAllowed=ok();
+  let firstReject=null;args.onReject=stage=>{firstReject=stage;};
+  const firstProofStarted=performance.now();out.longTranscriptAllowed=ok();const firstProofElapsed=performance.now()-firstProofStarted;delete args.onReject;
+  // Observe this existing call once; the later injected-clock check stays separate.
+  globalThis.longTranscriptFirstProof={allowed:out.longTranscriptAllowed,reason:firstReject,elapsedMs:firstProofElapsed,measurement:'nativeReturnGapRect-total'};
   root.append(obstacle);out.lateLongTranscriptObstacleRejected=!ok();obstacle.remove();
   root.append(custom);out.lateOpaqueDescendantRejected=!ok();custom.remove();
   let ticks=0,reason=null;
@@ -88,5 +91,6 @@ try{
  await page.evaluate(()=>{const root=document.querySelector('#reading'),v=document.createElement('div');v.id='keyboard-viewport';v.setAttribute('role','region');v.tabIndex=0;v.style.cssText='height:300px;overflow:auto';root.replaceWith(v);v.append(root);v.focus();});
  await page.keyboard.press('ArrowDown');await page.waitForFunction(()=>document.querySelector('#keyboard-viewport').scrollTop>0,null,{timeout:1000});
  checks.nativeKeyboardScroll=await page.evaluate(()=>document.activeElement===document.querySelector('#keyboard-viewport'));
+ console.log(JSON.stringify({longTranscriptFirstProof:await page.evaluate(()=>globalThis.longTranscriptFirstProof)}));
  assert(Object.values(checks).every(Boolean),JSON.stringify(checks));console.log(JSON.stringify({status:'PASS_WEB_MECHANISM_ONLY',checks}));
 }finally{await browser.close();}

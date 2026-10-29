@@ -113,6 +113,17 @@ else{
    let timer;try{return await Promise.race([workspace.evaluate(()=>globalThis.vaiwlMainReturnPaint.finish()),new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('main-return-paint-window-deadline')),Math.max(1,deadline-performance.now()));})]);}finally{clearTimeout(timer);}
   }
   async function waitRows(selector,count){try{await workspace.waitForFunction(({selector,count})=>{const roots=[document];for(let i=0;i<roots.length;i++)for(const n of roots[i].querySelectorAll('*'))if(n.shadowRoot)roots.push(n.shadowRoot);const list=roots.map(r=>r.querySelector(selector)).find(Boolean);return list?.querySelectorAll('a[data-ref-id]').length===count;},{selector,count},{timeout:6000});}catch(error){report.rowFailure={phase:report.phase,selector,expected:count,actual:await workspace.locator(selector+' a[data-ref-id]').count()};throw error;}}
+  const searchControlRemaining=deadline=>{const remaining=deadline-performance.now();assert(remaining>0,'search control must become usable in its original six-second window');return remaining;};
+  async function firstEnabledSearchControl(locator,deadline){
+   const observation={phase:report.phase,budgetMs:6000,samples:0,first:null,last:null,firstEnabled:null};(report.searchControlReadiness??=[]).push(observation);
+   while(performance.now()<deadline){
+    const sample=await locator.evaluateAll(nodes=>{if(nodes.length!==1)return {count:nodes.length};const n=nodes[0],rect=n.getBoundingClientRect(),style=getComputedStyle(n);return {count:1,observedAt:performance.timeOrigin+performance.now(),ownerDocument:n.ownerDocument===document,connected:n.isConnected,visible:rect.width>0&&rect.height>0&&style.display!=='none'&&style.visibility==='visible',href:n.getAttribute('href'),target:n.getAttribute('target'),delegated:n.hasAttribute('data-native-plan-control'),planControl:n.getAttribute('data-native-plan-control'),ariaDisabled:n.getAttribute('aria-disabled'),reason:n.getAttribute('data-navigation-reason')};});
+    observation.samples++;observation.first??=sample;observation.last=sample;assert(sample.count<=1,'exact search result must not be duplicated');
+    if(sample.count===1&&sample.ownerDocument&&sample.connected&&sample.visible&&sample.ariaDisabled!=='true'){observation.firstEnabled=sample;searchControlRemaining(deadline);return sample;}
+    await new Promise(resolve=>setTimeout(resolve,Math.min(10,searchControlRemaining(deadline))));
+   }
+   throw Error('search-control-original-six-second-window');
+  }
   report.projectRowsBeforeClick??=[];report.projectRowsBeforeClick.push({phase:report.phase,count:await projectList.locator('a[data-ref-id]').count()});
   await projectList.getByRole('button',{name:'显示更多已知聊天',exact:true}).click();await waitRows(`.card[data-theme-id="${project}"] .members`,17);const first=await ids(projectList);
   report.phase='expand-unknown';await unknown.getByRole('button',{name:'其他已知聊天',exact:true}).click();await unknown.getByRole('button',{name:'显示更多其他已知聊天',exact:true}).click();await waitRows('section[data-free-list="unknown"]',17);assert.deepEqual(await ids(projectList),first);const second=await ids(unknown);
@@ -141,16 +152,19 @@ else{
   const scrollProbe=await workspace.evaluate(observeWindowScroll);report.scrollProbe=scrollProbe;const mainScroll=scrollProbe.after?.top;assert(scrollProbe.after?.connected&&mainScroll>0,'actual main workspace must be scrollable');assert.equal(mainScroll,scrollProbe.assigned.top,'current viewport must preserve the single scroll gesture');report.mainScrollBeforeSearch=mainScroll;
   const searchEntry=async()=>{await workspace.getByRole('button',{name:'工作空间设置',exact:true}).click();await workspace.getByRole('button',{name:'查找已知项目与聊天',exact:true}).click();};
   await searchEntry();
-  await workspace.getByRole('searchbox',{name:'已知聊天查找输入',exact:true}).fill(title);
-  const result=workspace.locator(`.search-results a[data-ref-id="${first[0]}"]`);activeResult=result;await result.waitFor();report.searchControlBeforeCancellation=await result.evaluate(n=>({href:n.getAttribute('href'),target:n.getAttribute('target'),delegated:n.hasAttribute('data-native-plan-control'),planControl:n.getAttribute('data-native-plan-control'),disabled:n.getAttribute('aria-disabled'),connected:n.isConnected}));
+  let searchControlDeadline=performance.now()+6000;
+  await workspace.getByRole('searchbox',{name:'已知聊天查找输入',exact:true}).fill(title,{timeout:searchControlRemaining(searchControlDeadline)});
+  const result=workspace.locator(`.search-results a[data-ref-id="${first[0]}"]`);activeResult=result;await result.waitFor({timeout:searchControlRemaining(searchControlDeadline)});report.searchControlBeforeCancellation=await result.evaluate(n=>({href:n.getAttribute('href'),target:n.getAttribute('target'),delegated:n.hasAttribute('data-native-plan-control'),planControl:n.getAttribute('data-native-plan-control'),disabled:n.getAttribute('aria-disabled'),connected:n.isConnected}));
   if(process.env.FREE_NAVIGATION_CANCEL_RUN==='1'||process.env.FREE_PANEL_CANCEL_RUN==='1'){
    report.cancellation=await probeNavigationCancellation({context,page,workspace,result,extensionId,trace:report.trace,title,intent:process.env.FREE_PANEL_CANCEL_RUN==='1'?'panel':'query',diagnostics:report.cancellationDiagnostics={}});
-   await workspace.getByRole('searchbox',{name:'已知聊天查找输入',exact:true}).fill(title);await result.waitFor();
+   searchControlDeadline=performance.now()+6000;
+   await workspace.getByRole('searchbox',{name:'已知聊天查找输入',exact:true}).fill(title,{timeout:searchControlRemaining(searchControlDeadline)});
   }
-  const target=await result.getAttribute('href');assert.equal(target,page.url());const pageCount=context.pages().length;
-  // Same URL alone does not establish a same-target plan. Record the issued
-  // control without waiting for a different plan or repeating the gesture.
-  report.searchClick={pageCount,control:await result.evaluate(node=>({delegated:node.hasAttribute('data-native-plan-control'),planControl:node.getAttribute('data-native-plan-control'),ariaDisabled:node.getAttribute('aria-disabled'),target:node.getAttribute('target')}))};
+  // VIEW can render a disabled row before its separate NAVIGATION_PLANS reply.
+  // Take the first enabled control, even if wrong: never wait for a preferred
+  // href or delegation mode, and never repeat the query or navigation gesture.
+  const control=await firstEnabledSearchControl(result,searchControlDeadline),target=control.href,pageCount=context.pages().length;
+  report.searchClick={pageCount,control};assert.equal(target,page.url());assert.equal(control.delegated,true,'same-target navigation requires an issued delegated control');
   await result.click();
   await page.getByRole('button',{name:'返回工作空间',exact:true}).waitFor();
   assert.equal(await page.getByRole('button',{name:'返回工作空间',exact:true}).count(),1);
@@ -183,16 +197,19 @@ else{
   await waitRows('section[data-free-list="unknown"]',17);await verifyExpandedMembers([first[0]]);
   const otherTitle=await projectList.locator(`a[data-ref-id="${first[1]}"] .window-title`).innerText();
   await searchEntry();
-  await workspace.getByRole('searchbox',{name:'已知聊天查找输入',exact:true}).fill(otherTitle);
-  const otherResult=workspace.locator(`.search-results a[data-ref-id="${first[1]}"]`);activeResult=otherResult;await otherResult.waitFor();
+  let otherControlDeadline=performance.now()+6000;
+  await workspace.getByRole('searchbox',{name:'已知聊天查找输入',exact:true}).fill(otherTitle,{timeout:searchControlRemaining(otherControlDeadline)});
+  const otherResult=workspace.locator(`.search-results a[data-ref-id="${first[1]}"]`);activeResult=otherResult;await otherResult.waitFor({timeout:searchControlRemaining(otherControlDeadline)});
   if(process.env.FREE_NAVIGATION_CANCEL_RUN==='1'||process.env.FREE_PANEL_CANCEL_RUN==='1'){
    const beforeCancelNavigate=server.snapshot().actions.navigate??0;
    report.returnCancellation=await probeNavigationCancellation({context,page,workspace,result:otherResult,extensionId,trace:report.trace,title:otherTitle,intent:'return',draft:'',dispatchType:'HOST_UI_DISPATCH_NATIVE',diagnostics:report.returnCancellationDiagnostics={}});
    assert.equal(server.snapshot().actions.navigate??0,beforeCancelNavigate,'return cancellation must prevent the original native click');
    await searchEntry();
-   await workspace.getByRole('searchbox',{name:'已知聊天查找输入',exact:true}).fill(otherTitle);await otherResult.waitFor();
+   otherControlDeadline=performance.now()+6000;
+   await workspace.getByRole('searchbox',{name:'已知聊天查找输入',exact:true}).fill(otherTitle,{timeout:searchControlRemaining(otherControlDeadline)});
   }
-  const otherTarget=await otherResult.getAttribute('href');assert(otherTarget);assert.notEqual(otherTarget,page.url());
+  const otherControl=await firstEnabledSearchControl(otherResult,otherControlDeadline),otherTarget=otherControl.href;report.differentTargetControl=otherControl;
+  assert.equal(otherTarget,server.origin+'/c/'+first[1]);assert.notEqual(otherTarget,page.url());assert.equal(otherControl.delegated,true,'different-target native navigation requires an issued delegated control');
   const nativeBefore=server.snapshot().actions.navigate??0,pagesBefore=context.pages().length,previousFrame=workspace;
   await otherResult.click();await page.waitForURL(otherTarget);
   await page.getByRole('button',{name:'返回工作空间',exact:true}).waitFor();assert.equal(await page.getByRole('button',{name:'返回工作空间',exact:true}).count(),1);

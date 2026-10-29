@@ -32,7 +32,7 @@ async function pageFor(kind='home'){
    sheet=document.createElement('style');sheet.textContent='#boundary-native-button{position:relative}';document.head.append(sheet);
   }
   const binding={documentToken:'boundary-document',producerToken:'boundary-producer',browserDocumentId:'boundary-browser-document',routeEpoch:1,origin:location.origin,expiresAt:new Date(Date.now()+60000).toISOString()};
-  let surface;const adapter=createChatGPTAdapter({document,profile,isOwnedMask:node=>surface?.isMasked(node),isOwnedSurface:node=>surface?.isOwnedSurface(node)});
+  let surface;const adapter=createChatGPTAdapter({document,profile,isOwnedMask:node=>surface?.isMasked(node),isOwnedSurface:node=>surface?.isOwnedSurface(node),isReadingProbeSurface:node=>surface?.isReadingProbeSurface?.(node)===true});
   await adapter.start({binding,emit:async p=>({state:'accepted',localSeq:p.localSeq,receiptId:'boundary-fixture'})});
   const inspection=adapter.inspect(),plan=captureNativeBaseline({document,inspection});
   if(!plan)throw Error('boundary-fixture-preflight');
