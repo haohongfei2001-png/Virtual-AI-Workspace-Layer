@@ -70,6 +70,7 @@ jobs:
         run: |
           node tests/host/document-flow-browser.mjs
           node tests/host/document-flow-boundary-browser.mjs "$RUNNER_TEMP/flow-boundary.json"
+          node --test tests/host/frame-navigation-hydration-browser.mjs
           node tests/host/document-flow-boundary-mv3.mjs "$RUNNER_TEMP/flow-boundary-mv3.json"
           VAIWL_PROBE_OUTPUT="$RUNNER_TEMP/terminal-delivery.json" node tests/host/terminal-delivery-mv3.mjs all
           node tests/host/browser-local-mv3.mjs --flow-only

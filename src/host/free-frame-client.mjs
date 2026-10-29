@@ -604,9 +604,9 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
  function refreshNavigationIfDue(){
   const record=navigationRefresh;
   if(!record?.due||!navigationDeliveryCurrent(record)||navigationPreparation||activeRead||dispatchPending||horizonPending||!backgroundRefreshAllowed())return;
-  record.due=false;void preparePageNavigation(record.response,record.current,record.ticket,true);
+  record.due=false;void preparePageNavigation(record.response,record.current,record.ticket);
  }
- async function preparePageNavigation(response,current,ticket,refresh=false){
+ async function preparePageNavigation(response,current,ticket){
   if(!Number.isSafeInteger(response.deliveryId))return;
   clearNavigationRefresh();
   const record={response,current,ticket,timer:null,due:false,started:elapsedNow()};navigationRefresh=record;
@@ -621,9 +621,8 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
    // Pending preparation disables delegation. Data changes retire this record;
    // no late reply may replace a newer delivery or an active native dispatch.
    if(nativeInteractionActive()||dispatchPending||activeRead||horizonPending){dirty=true;return;}
-   const sameEntries=plans.size===next.nextPlans.size&&projectPlans.size===next.nextProjectPlans.size&&[...plans.keys()].every(id=>next.nextPlans.has(id))&&[...projectPlans.keys()].every(id=>next.nextProjectPlans.has(id));
    plans=next.nextPlans;projectPlans=next.nextProjectPlans;
-   if(!refresh||!sameEntries||navigation?.refreshNavigationPlans?.()!==true)navigation?.updateFrameProjection(response.page);
+   if(navigation?.refreshNavigationPlans?.()!==true)navigation?.updateFrameProjection(response.page);
    if([...plans.values(),...projectPlans.values()].some(item=>['same-target','native-control'].includes(item.plan.mode))){
     record.timer=schedule(()=>{record.timer=null;record.due=true;refreshNavigationIfDue();},Math.max(0,20000-(elapsedNow()-record.started)));
    }
@@ -632,7 +631,7 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
     // No retry loop, no stale enabled delegated buttons, no loss of data or
     // independently verified hrefs. A later fresh VIEW can re-establish plans.
     for(const map of [plans,projectPlans])for(const [id,item]of map)if(['same-target','native-control'].includes(item.plan.mode))map.delete(id);
-    navigation?.updateFrameProjection(response.page);
+    if(navigation?.refreshNavigationPlans?.()!==true)navigation?.updateFrameProjection(response.page);
    }
   }finally{
    if(navigationPreparation===record){navigationPreparation=null;navigation?.setNativeNavigationPending?.(!!activeRead||!!dispatchPending||!!readTerminal);}

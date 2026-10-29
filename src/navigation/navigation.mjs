@@ -40,8 +40,8 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
   const token='vaiwl-'+Math.random().toString(36).slice(2), views=new Map();let snapshot=null,view=null,groups=[],roots=null,stopped=false,mask=null,searchQuery=null,searchTheme=null,searchCapacity=24,frameSearchOffset=0,frameSearchWaiting=false,frameWorkingSetOffset=0,frameWorkingSetWaiting=false,lastSelected=null,menu=null,selectionPending=false,pendingAnchor=null,anchorFeedback=null;
   let navigationIntent=0,presentationGeneration=0,navigationFeedback=null,nativeNavigationPending=false;
   const plannedLinks=new WeakMap();
-  // An unchanged capability gets a new certificate without replacing DOM,
-  // closing menus, resetting focus, or publishing another layout snapshot.
+  // Capabilities arrive independently from the data. Update the existing links
+  // without replacing rows, closing menus or publishing another layout snapshot.
   const planAppearance=plan=>JSON.stringify(plan?{...plan,planRevision:0,bodyProofId:null,control:null,...(plan.target?{target:{...plan.target,liveHandle:null}}:{})}:null);
   function refreshNavigationPlans(){
     if(stopped||!frameProjection||interacting()||updateTimer!==null)return false;
@@ -297,31 +297,52 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     });
   }
   // Frame plans are supplied synchronously before activation. Never fetch a plan in a click handler.
-  function bindPlannedLink(a,ref,entity='conversation'){
+  function bindPlannedLink(a,ref,entity='conversation',projectCreate=false){
     const ownerView=view;
     let issued;try{issued=structuredClone(entity==='project'?adapter.projectNavigationPlan?.(ref):adapter.navigationPlan?.(ref));}catch{}
-    let plan=issued?.plan;
+    let plan,safeHref,resolvedOK,delegation,valid,notice=null,keyboardBound=false;
+    function keyboardActivate(event){if((!valid||!safeHref)&&(event.key==='Enter'||event.key===' ')){event.preventDefault();a.click();}}
+    const baseAttributes=new Map(['href','target','rel','role','tabindex','aria-disabled','aria-description','title','data-native-plan-control','data-navigation-reason'].map(name=>[name,a.getAttribute(name)]));
+    const unavailableMessage=ref.anchor?'该片段暂不能直接定位，请返回原生页面使用搜索。':(entity==='project'?'当前无法确认项目入口，请返回原生页面继续。':'当前无法确认聊天入口，请返回原生页面继续。');
+    const applyPlan=(next,initial=false)=>{
+      const repaint=initial||planAppearance(next?.plan)!==planAppearance(plan);
+      issued=next;plan=next?.plan;
+      safeHref=plan?.target?.kind==='resolved'?adapter.nativeHref?.(plan.target.navigationURL):null;
+      resolvedOK=plan?.target?.kind==='resolved'&&plan.target.entity===entity&&plan.target.nativeId===ref.id&&safeHref;
+      delegation=['native-control','same-target'].includes(plan?.mode)&&typeof onDispatch==='function'&&['targetKey','uiGrantId','mountId'].every(key=>typeof issued?.[key]==='string'&&issued[key])&&Number.isSafeInteger(plan.planRevision);
+      valid=ref.available!==false&&!ref.anchor&&((plan?.mode==='href'&&resolvedOK&&['same-tab','new-tab-preserve-current'].includes(plan.disposition))||(delegation&&(resolvedOK||plan.target?.kind==='live-control')));
+      if(projectCreate)valid=valid&&typeof ref.nativeUrl==='string'&&!!ref.nativeUrl&&(isResolvedControlNavigationPlan(plan)||plan?.mode==='href'&&plan.disposition==='new-tab-preserve-current')&&plan.target?.kind==='resolved'&&plan.target.navigationURL===ref.nativeUrl&&typeof safeHref==='string'&&safeHref===ref.nativeUrl;
+      const keyboard=!valid||!safeHref;if(keyboard!==keyboardBound){a[keyboard?'addEventListener':'removeEventListener']('keydown',keyboardActivate);keyboardBound=keyboard;}
+      if(!repaint)return;
+      // Keep the focused anchor focusable throughout a capability transition:
+      // install its href before removing button tabindex, or vice versa.
+      if(valid&&safeHref)a.href=safeHref;else a.tabIndex=0;
+      if(!initial)for(const [name,value]of baseAttributes){if(name==='tabindex'||name==='href'&&valid&&safeHref)continue;if(value===null)a.removeAttribute(name);else a.setAttribute(name,value);}
+      notice?.remove();notice=null;
+      if(projectCreate)a.setAttribute('aria-label',(valid?'打开项目以新建聊天 ':'在项目中新建聊天 ')+ref.name);
+      if(!valid){
+        a.dataset.navigationReason=projectCreate?'native-create-plan-unavailable':ref.anchor?'snippet-frame-controller-unavailable':'native-plan-unavailable';
+        a.setAttribute('aria-disabled','true');a.setAttribute('role','button');a.tabIndex=0;
+        a.setAttribute('aria-description',[baseAttributes.get('aria-description'),unavailableMessage].filter(Boolean).join(' '));
+        if(!a.getAttribute('title'))a.setAttribute('title',unavailableMessage);return;
+      }
+      if(plan.mode==='href'&&plan.disposition==='new-tab-preserve-current'){
+        const description='保留当前页面，在新标签打开';notice=node(doc,'span',{class:'new-tab-notice','aria-hidden':'true'});
+        notice.innerHTML='<svg aria-hidden="true" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14 3h7v7M21 3 10 14M10 3H3v18h18v-7"/></svg>';
+        if(!a.getAttribute('class')?.split(/\s+/).includes('square'))a.append(notice);a.setAttribute('aria-description',description);a.setAttribute('title',[a.getAttribute('title'),description].filter(Boolean).join(' · '));
+      }
+      if(delegation){a.setAttribute('data-native-plan-control','');if(nativeNavigationPending)a.setAttribute('aria-disabled','true');}
+      if(safeHref){a.href=safeHref;a.target=plan.mode==='href'&&plan.disposition==='same-tab'?'_top':'_blank';a.rel='noopener noreferrer';if(!initial){const value=baseAttributes.get('tabindex');if(value===null)a.removeAttribute('tabindex');else a.setAttribute('tabindex',value);}}
+      else{a.setAttribute('role','button');a.tabIndex=0;}
+    };
+    applyPlan(issued,true);
     plannedLinks.set(a,()=>{
       let next;try{next=structuredClone(entity==='project'?adapter.projectNavigationPlan?.(ref):adapter.navigationPlan?.(ref));}catch{return null;}
-      if(planAppearance(next?.plan)!==planAppearance(plan))return null;
-      return ()=>{issued=next;plan=next?.plan;};
+      return ()=>applyPlan(next);
     });
-    const safeHref=plan?.target?.kind==='resolved'?adapter.nativeHref?.(plan.target.navigationURL):null;
-    const resolvedOK=plan?.target?.kind==='resolved'&&plan.target.entity===entity&&plan.target.nativeId===ref.id&&safeHref;
-    const delegation=['native-control','same-target'].includes(plan?.mode)&&typeof onDispatch==='function'&&['targetKey','uiGrantId','mountId'].every(key=>typeof issued?.[key]==='string'&&issued[key])&&Number.isSafeInteger(plan.planRevision);
-    const valid=ref.available!==false&&!ref.anchor&&((plan?.mode==='href'&&resolvedOK&&['same-tab','new-tab-preserve-current'].includes(plan.disposition))||(delegation&&(resolvedOK||plan.target?.kind==='live-control')));
-    if(!valid){a.dataset.navigationReason=ref.anchor?'snippet-frame-controller-unavailable':'native-plan-unavailable';explainUnavailable(a,ref.anchor?'该片段暂不能直接定位，请返回原生页面使用搜索。':(entity==='project'?'当前无法确认项目入口，请返回原生页面继续。':'当前无法确认聊天入口，请返回原生页面继续。'),{label:true});return;}
-    if(plan.mode==='href'&&plan.disposition==='new-tab-preserve-current'){
-      const description='保留当前页面，在新标签打开',notice=node(doc,'span',{class:'new-tab-notice','aria-hidden':'true'});
-      notice.innerHTML='<svg aria-hidden="true" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14 3h7v7M21 3 10 14M10 3H3v18h18v-7"/></svg>';
-      if(!a.getAttribute('class')?.split(/\s+/).includes('square'))a.append(notice);a.setAttribute('aria-description',description);a.setAttribute('title',[a.getAttribute('title'),description].filter(Boolean).join(' · '));
-    }
-    if(delegation){a.setAttribute('data-native-plan-control','');if(nativeNavigationPending)a.setAttribute('aria-disabled','true');}
-    if(safeHref){a.href=safeHref;a.target=plan.mode==='href'&&plan.disposition==='same-tab'?'_top':'_blank';a.rel='noopener noreferrer';}
-    else{a.setAttribute('role','button');a.tabIndex=0;}
     const currentLink=()=>!stopped&&!!snapshot&&view===ownerView&&a.isConnected!==false&&[roots?.workspace,roots?.sidebar].some(pane=>[...(pane?.shadow.querySelectorAll('a')??[])].includes(a));
-    if(delegation&&typeof onNativeInteractionStart==='function')a.addEventListener('pointerdown',event=>{
-      if(nativeInteraction||nativeNavigationPending||!currentLink()||event.isTrusted!==true||event.isPrimary!==true||event.button!==0||event.metaKey||event.ctrlKey||event.shiftKey||event.altKey)return;
+    if(typeof onNativeInteractionStart==='function')a.addEventListener('pointerdown',event=>{
+      if(!valid||!delegation||nativeInteraction||nativeNavigationPending||!currentLink()||event.isTrusted!==true||event.isPrimary!==true||event.button!==0||event.metaKey||event.ctrlKey||event.shiftKey||event.altKey)return;
       const release=onNativeInteractionStart();if(typeof release==='function'){
         const held={control:a,pointerId:event.pointerId,release,timer:null};nativeInteraction=held;
         // pointerup and implicit lost-capture may precede click by a task.
@@ -332,28 +353,24 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     a.addEventListener('click',event=>{try{
       // Detached callbacks must not dispatch or cancel a newer navigation intent.
       if(!currentLink()){event.preventDefault();return;}
+      if(!valid){event.preventDefault();const intent=advanceNavigationIntent();navigationFeedback={scope:snapshot.scope,url:adapter.currentURL(),intent,message:unavailableMessage,nativeReturn:true,href:null};sidebarDirty=true;requestRender();return;}
       // A pending native RPC blocks only delegation, not the browser's
       // verified-href modifier behavior. Retired plans were rejected above.
       if(event.metaKey||event.ctrlKey||event.shiftKey||event.altKey||event.button!==0){if(!resolvedOK)event.preventDefault();return;}
       if(delegation&&nativeNavigationPending){event.preventDefault();return;}
-      const dispatchIntent=advanceNavigationIntent(),dispatchProjection=frameProjection,dispatchScope=snapshot?.scope,dispatchURL=adapter.currentURL();
+      const dispatchIntent=advanceNavigationIntent(),dispatchProjection=frameProjection,dispatchScope=snapshot?.scope,dispatchURL=adapter.currentURL(),dispatchMode=plan.mode,dispatchHref=safeHref;
       if(plan.mode==='href')return; // Browser default only; no duplicate RPC or fallback.
       event.preventDefault();
       const dto={actionId:'ui_'+win.crypto.randomUUID().replaceAll('-',''),uiGrantId:issued.uiGrantId,mountId:issued.mountId,planRevision:plan.planRevision,targetKey:issued.targetKey};
       const showResult=result=>{if(stopped||navigationIntent!==dispatchIntent||snapshot?.scope!==dispatchScope||frameProjection!==dispatchProjection||adapter.currentURL()!==dispatchURL)return;
-        if(plan.mode==='same-target'&&result?.state==='already-current'||plan.mode==='native-control'&&result?.state==='dispatched'){enterReading(false);return;}
-        navigationFeedback={scope:dispatchScope,url:dispatchURL,intent:dispatchIntent,state:result?.state==='blocked'?'blocked':'unconfirmed',href:safeHref??null};sidebarDirty=true;requestRender();
+        if(dispatchMode==='same-target'&&result?.state==='already-current'||dispatchMode==='native-control'&&result?.state==='dispatched'){enterReading(false);return;}
+        navigationFeedback={scope:dispatchScope,url:dispatchURL,intent:dispatchIntent,state:result?.state==='blocked'?'blocked':'unconfirmed',href:dispatchHref??null};sidebarDirty=true;requestRender();
       };
       try{Promise.resolve(onDispatch(dto)).then(showResult,()=>showResult({state:'unconfirmed'}));}catch{showResult({state:'unconfirmed'});} // Only an explicit later link click navigates; never retry here.
     }finally{if(nativeInteraction?.control===a)endNativeInteraction();}});
-    if(!safeHref)a.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();a.click();}});
   }
   function projectCreateEntry(group){
-    let issued,plan,href;try{issued=structuredClone(adapter.projectNavigationPlan?.(group));plan=issued?.plan;if(plan?.target?.kind==='resolved')href=adapter.nativeHref?.(plan.target.navigationURL);}catch{}
-    if(group.available!==false&&typeof group.nativeUrl==='string'&&group.nativeUrl&&(isResolvedControlNavigationPlan(plan)&&typeof onDispatch==='function'&&['targetKey','uiGrantId','mountId'].every(k=>typeof issued?.[k]==='string'&&issued[k])||plan?.mode==='href'&&plan.disposition==='new-tab-preserve-current')&&plan.target?.kind==='resolved'&&plan.target.entity==='project'&&plan.target.nativeId===group.id&&plan.target.navigationURL===group.nativeUrl&&typeof href==='string'&&href===group.nativeUrl){
-      const a=node(doc,'a',{class:'square project-create','aria-label':'打开项目以新建聊天 '+group.name,title:'打开原生项目后，继续使用原生控件新建聊天'},'+');bindPlannedLink(a,{...group,displayTitle:group.name},'project');a.dataset.focusKey='project-create:'+group.id;return a;
-    }
-    const unavailable=node(doc,'button',{type:'button',class:'square project-create','aria-label':'在项目中新建聊天 '+group.name,title:'当前无法确认项目入口，请返回原生页面继续。'},'+');unavailable.dataset.focusKey='project-create:'+group.id;unavailable.dataset.navigationReason='native-create-plan-unavailable';explainUnavailable(unavailable,'当前无法确认项目入口，请返回原生页面继续。');return unavailable;
+    const a=node(doc,'a',{class:'square project-create','aria-label':'打开项目以新建聊天 '+group.name,title:'打开原生项目后，继续使用原生控件新建聊天'},'+');bindPlannedLink(a,{...group,displayTitle:group.name},'project',true);a.dataset.focusKey='project-create:'+group.id;return a;
   }
   const windowGlyph=node(doc,'span',{class:'window-glyph','aria-hidden':'true'});windowGlyph.innerHTML='<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.65"><path d="M4 5h16v12H9l-5 4z"/></svg>';
   function appendFreshness(parent,value){if(value.freshness==='last-known'||value.membershipFreshness==='last-known'){parent.setAttribute('data-freshness','last-known');parent.setAttribute('aria-description','此前已知的信息，将随正常使用更新。');parent.setAttribute('title',[(parent.getAttribute('title')??''),'此前已知的信息，将随正常使用更新。'].filter(Boolean).join(' — '));}}

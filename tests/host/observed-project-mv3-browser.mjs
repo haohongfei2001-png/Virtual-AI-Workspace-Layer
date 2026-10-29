@@ -33,14 +33,24 @@ const server=createServer((req,res)=>{
 await new Promise(r=>server.listen(0,'127.0.0.1',r));const origin='http://127.0.0.1:'+server.address().port,guard=await createHistoricalNetworkGuard({fixtureOrigin:origin});
 const dir=await mkdtemp(join(tmpdir(),'vaiwl-observed-project-mv3-')),built=packageHost(join(dir,'package'),{offlineOrigin:origin,offlineContext:true,offlineProjectContext:true,offlineObservedProjectLayout:true});
 const manifestPath=join(built.unpacked,'build-manifest.json'),manifestBytes=await readFile(manifestPath),info=JSON.parse(manifestBytes),start=performance.now();
-const report={status:'RUNNING',evidence:'ISOLATED_PACKAGED_MV3_OFFLINE_PROJECT_LAYOUT',realChatGPT:'NOT_RUN',projectIdentity:'SYNTHETIC_LOOPBACK_ASSOCIATION_ONLY',membership:'ROUTE_LINKED_PANEL_OFFLINE_ONLY',release:'NOT_RELEASE_READY',sourceHashes:info.sourceHashes,testHashes,buildManifestHash:hash(manifestBytes),checks:{},requests,package:built};
+const report={status:'RUNNING',evidence:'ISOLATED_PACKAGED_MV3_OFFLINE_PROJECT_LAYOUT',realChatGPT:'NOT_RUN',projectIdentity:'SYNTHETIC_LOOPBACK_ASSOCIATION_ONLY',membership:'ROUTE_LINKED_PANEL_OFFLINE_ONLY',release:'NOT_RELEASE_READY',backend:'document-flow',sourceHashes:info.sourceHashes,testHashes,buildManifestHash:hash(manifestBytes),checks:{},requests,package:built};
 let context,page,worker,id,statusPage;
 const projectRequest=(p,account='account-host-team')=>p.evaluate(async({P,account})=>{await fetch('/backend-api/projects/'+P,{headers:{'ChatGPT-Account-Id':account}});},{P,account});
 const until=async(fn,timeout=10000)=>{const end=performance.now()+timeout;while(performance.now()<end){if(await fn())return;await new Promise(r=>setTimeout(r,25));}throw Error('project-observation-deadline');};
 const localState=()=>statusPage.evaluate(async()=>{const {readActiveLocalStatus}=await import(chrome.runtime.getURL('src/host/local-status.mjs'));return readActiveLocalStatus({tabs:chrome.tabs});});
 const noFrames=async p=>assert.equal(await p.locator('iframe[src^="chrome-extension:"]').count(),0);
-const opened=async()=>page.waitForFunction(()=>document.querySelectorAll('[data-va-owned]:popover-open').length===2,null,{timeout:15000});
+const workspaceVisible=()=>{const n=document.querySelector('[data-va-owned][id$="_workspace"]:not([popover])');if(!n)return false;const r=n.getBoundingClientRect(),style=getComputedStyle(n);return style.visibility==='visible'&&style.display!=='none'&&r.width>=180&&r.height>=96;};
+const opened=async()=>{
+ await page.waitForFunction(workspaceVisible,null,{timeout:15000});
+ const frame=page.frames().find(f=>f.url()==='chrome-extension://'+id+'/workspace.html');assert(frame,'formal workspace frame');await frame.locator('.workspace').waitFor({state:'visible',timeout:10000});
+ const host=await frame.frameElement();assert.equal(await host.evaluate(n=>{const r=n.getBoundingClientRect();return document.elementFromPoint(r.x+Math.min(40,r.width/2),r.y+Math.min(60,r.height/2))===n;}),true,'formal workspace hit target');
+};
+const reading=async()=>{await page.waitForFunction(()=>{const n=document.querySelector('[data-va-owned][id$="_workspace"]:not([popover])');return !n||getComputedStyle(n).display==='none'||getComputedStyle(n).visibility!=='visible';},null,{timeout:10000});};
 const draft=async()=>assert.deepEqual(await page.evaluate(()=>({same:document.querySelector('#draft')===globalThis.originalDraft,text:document.querySelector('#draft').value})),{same:true,text:'fixture draft'});
+const returnRecoveryDiagnostic=async()=>({
+  local:await statusPage.evaluate(async url=>{const rows=(await chrome.tabs.query({})).filter(t=>t.url===url);if(rows.length!==1)return {targetCount:rows.length};const [status,layout]=await Promise.all(['HOST_LOCAL_STATUS','HOST_LOCAL_LAYOUT'].map(type=>chrome.tabs.sendMessage(rows[0].id,{v:1,type},{frameId:0})));return {targetCount:1,status,layout};},page.url()),
+  geometry:await page.evaluate(()=>{const selectors=['main[data-app-shell-main-surface]','[data-app-shell-main-content-layout]','#project','#project-scroll','#project-content','#project-panel','#project-title','#project-tabs','[data-app-shell-main-titlebar]','[data-app-shell-page-header]','form[data-chatgpt-composer]','#draft','[data-va-owned][id$="_workspace"]','button[aria-label="返回工作空间"]'];return {viewport:{width:innerWidth,height:innerHeight},documentScroll:{x:scrollX,y:scrollY},ownedExits:[...document.querySelectorAll('[data-va-owned][popover]')].slice(0,8).map(n=>({id:n.id,open:n.matches(':popover-open'),hidden:n.hidden,connected:n.isConnected,parentIsBody:n.parentElement===document.body,popover:n.getAttribute('popover'),className:n.getAttribute('class'),inlineStyle:n.getAttribute('style')?.slice(0,1024),gesture:n.hasAttribute('data-va-gesture')})),nodes:selectors.map(selector=>{const n=document.querySelector(selector);if(!n)return {selector,present:false};const r=n.getBoundingClientRect(),s=getComputedStyle(n);return {selector,present:true,rect:{x:r.x,y:r.y,width:r.width,height:r.height},display:s.display,visibility:s.visibility,overflowX:s.overflowX,overflowY:s.overflowY,scrollTop:n.scrollTop,scrollLeft:n.scrollLeft,scrollHeight:n.scrollHeight,clientHeight:n.clientHeight};})};})
+});
 try{
  context=await chromium.launchPersistentContext(join(dir,'profile'),{headless:true,viewport:{width:785,height:1193},executablePath:process.env.FREE_CHROME_EXECUTABLE??(platform()==='darwin'?'/Users/hhf/Library/Caches/ms-playwright/chromium-1248/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing':'/usr/bin/chromium'),ignoreDefaultArgs:['--disable-extensions'],args:['--enable-unsafe-extension-debugging',...historicalNetworkGuardArgs(guard.config)]});
  await context.route('**/*',r=>r.request().url().startsWith(origin+'/')||r.request().url().startsWith('chrome-extension://')?r.continue():r.abort());
@@ -64,7 +74,12 @@ try{
  await page.bringToFront();await until(async()=>(await localState())==='waiting');await noFrames(page);report.checks.noScopeFromProjectRouteOrFixtureAttribute=true;
  const rosterBefore=requests.filter(r=>r.path==='/backend-api/accounts/check/v4-2023-04-27').length;await projectRequest(page,'account-not-in-roster');await until(()=>requests.filter(r=>r.path==='/backend-api/accounts/check/v4-2023-04-27').length>rosterBefore);await until(async()=>(await localState())==='waiting');await noFrames(page);report.checks.unlistedAccountCannotMount=true;
  await projectRequest(page);await opened();
- const workspace=page.frameLocator('iframe[src="chrome-extension://'+id+'/workspace.html"]'),sidebar=page.frameLocator('iframe[src="chrome-extension://'+id+'/sidebar.html"]');
+ const workspace=page.frameLocator('iframe[src="chrome-extension://'+id+'/workspace.html"]');
+ // This original sidebar has no partitioned native slot. Keep it readable;
+ // formal sidebar coverage is not inferred from two empty exit popovers.
+ assert.equal(await page.locator('iframe[src="chrome-extension://'+id+'/sidebar.html"]').count(),0);
+ report.sidebarMode='NATIVE_RETAINED';report.formalSidebar='NOT_RUN_NATIVE_SIDEBAR_RETAINED';
+ assert.equal(await page.locator('aside nav').evaluate(n=>getComputedStyle(n).visibility==='visible'&&n.getBoundingClientRect().height>0&&!n.hasAttribute('data-va-mask-sidebar')),true);
  await workspace.getByRole('link',{name:'Native B',exact:true}).first().waitFor({timeout:10000});
  const frame=page.frames().find(f=>f.url()==='chrome-extension://'+id+'/workspace.html');assert(frame);
  const facts=await frame.evaluate(async()=>{const {ScopeRepository}=await import(chrome.runtime.getURL('src/b1/scope-repository.mjs')),{NativeRepository}=await import(chrome.runtime.getURL('src/data/native-repository.mjs')),base=new ScopeRepository({indexedDB});try{const db=await base.open(),keys=await new Promise((resolve,reject)=>{const tx=db.transaction('native_states'),q=tx.objectStore('native_states').getAll();tx.oncomplete=()=>resolve(q.result.filter(r=>r.key===r.payload?.scopeKey).map(r=>r.key));tx.onabort=()=>reject(tx.error);});const rows=[];for(const key of keys){const [provider,accountId,organizationId]=JSON.parse(key),s=await new NativeRepository({baseRepository:base}).read({verified:true,provider,accountId,organizationId});rows.push({key,projects:s.projects,refs:s.refs,membership:s.membership});}return rows;}finally{base.close();}});
@@ -74,16 +89,27 @@ try{
  assert.equal(facts[0].refs[B].nativeTitle,'Native B');assert.equal(facts[0].refs[C].nativeTitle,'Native A');report.checks.correctScopeAndPositivePanelMembership=true;
  assert.equal(await page.locator('#project-panel').evaluate(n=>getComputedStyle(n).visibility),'hidden');
  for(const selector of ['#project-title','#draft','#model','#project-tabs'])assert(await page.locator(selector).isVisible());await draft();report.checks.nativeRegionsProtected=true;
- await sidebar.getByRole('button',{name:'查找已知项目与聊天',exact:true}).click();await workspace.getByRole('searchbox',{name:'已知聊天查找输入'}).fill('Native B');
+ await workspace.getByRole('button',{name:'工作空间设置',exact:true}).click();await workspace.getByRole('button',{name:'查找已知项目与聊天',exact:true}).click();await workspace.getByRole('searchbox',{name:'已知聊天查找输入'}).fill('Native B');
  const link=workspace.getByRole('link',{name:'Native B',exact:true});await link.waitFor();
  const newPage=context.waitForEvent('page');await link.click();const chat=await newPage;await chat.waitForURL(origin+'/c/'+B);assert.equal(await chat.evaluate(()=>opener),null);await chat.close();await draft();report.checks.searchAndSafeNativeOpen=true;
  const back=page.getByRole('button',{name:'返回工作空间',exact:true});
  if(await back.isVisible())await back.click();await opened();
  await page.getByRole('button',{name:'返回原生阅读',exact:true}).click();await back.waitFor();assert.equal(await back.count(),1);assert.equal(await page.locator('#project-panel').evaluate(n=>getComputedStyle(n).visibility),'visible');await back.click();await opened();
- await page.locator('#draft').focus();await page.waitForFunction(()=>document.querySelectorAll('[data-va-owned]:popover-open').length===0);await back.waitFor();assert.equal(await back.count(),1);await draft();await back.click();await opened();report.checks.nativeReadingInputAndUniqueReturn=true;
- await page.evaluate(()=>{document.querySelector('#project-panel').style.minHeight='2000px';document.querySelector('#project-scroll').scrollTop=300;});
- await page.waitForFunction(()=>document.querySelectorAll('[data-va-owned]:popover-open').length===0);assert.equal(await back.count(),0);assert.equal(await page.locator('#project-panel').evaluate(n=>getComputedStyle(n).visibility),'visible');
- await page.evaluate(()=>{document.querySelector('#project-scroll').scrollTop=0;});await back.waitFor();assert.equal(await page.locator('[data-va-owned]:popover-open').count(),0);await back.click();await opened();await draft();report.checks.scrollSuspendsAndExplicitReturnRecovers=true;
+ await page.locator('#draft').focus();await reading();await back.waitFor();assert.equal(await back.count(),1);await draft();await back.click();await opened();report.checks.nativeReadingInputAndUniqueReturn=true;
+ // A native style change must surrender the old proof and restore the desired
+ // workspace only after reproof. Then explicitly enter native reading before
+ // testing its scroll; writing into the clamped reading region is not scrolling.
+ await page.evaluate(()=>{globalThis.projectLayoutSurrenders=0;document.querySelector('[popover][id$="_workspace_exit"]').addEventListener('beforetoggle',e=>{if(e.newState==='closed')globalThis.projectLayoutSurrenders++;});document.querySelector('#project-panel').style.minHeight='2000px';});
+ await page.waitForFunction(()=>globalThis.projectLayoutSurrenders>0);await opened();
+ await page.getByRole('button',{name:'返回原生阅读',exact:true}).click();await reading();await back.waitFor();
+ await page.evaluate(()=>{document.querySelector('#project-scroll').scrollTop=300;});
+ await page.waitForFunction(()=>document.querySelector('#project-scroll').scrollTop===300&&!document.querySelector('button[aria-label="返回工作空间"]'));assert.equal(await page.locator('#project-panel').evaluate(n=>getComputedStyle(n).visibility),'visible');await draft();
+ await page.evaluate(()=>{document.querySelector('#project-scroll').scrollTop=0;});
+ // Read only bounded synthetic geometry and the existing private diagnostics.
+ // Bind the popup probe to this exact fixture URL, never the active tab.
+ report.returnRecoveryDiagnostic=await returnRecoveryDiagnostic();
+ console.log(JSON.stringify({returnRecoveryDiagnostic:report.returnRecoveryDiagnostic}));
+ try{await back.waitFor({timeout:process.env.FREE_PROJECT_DIAGNOSTIC==='1'?5000:30000});}catch(error){report.returnRecoveryFailureDiagnostic=await returnRecoveryDiagnostic();console.log(JSON.stringify({returnRecoveryFailureDiagnostic:report.returnRecoveryFailureDiagnostic}));throw error;}await reading();await back.click();await opened();await draft();report.checks.nativeScrollWithholdsReturnAndExplicitReturnRecovers=true;
  // A real worker loss revokes the old frame authority. No fresh native GET is
  // supplied: C2-only must wait safely instead of reusing the old receipt.
  const oldFrames=page.frames().filter(f=>f.url().startsWith('chrome-extension://'+id+'/')),versions=[],lifecycle=await context.newCDPSession(page);
@@ -95,7 +121,7 @@ try{
  assert.equal(requests.filter(r=>r.path.startsWith('/backend-api/conversation')).length,0);report.checks.noAutomaticConversationBodyRead=true;report.status='PASS';
 }catch(error){report.status='FAIL';report.error=String(error.stack);process.exitCode=1;try{report.page=await page?.evaluate(()=>({path:location.pathname,owned:document.querySelectorAll('[data-va-owned]').length,open:document.querySelectorAll('[data-va-owned]:popover-open').length}));report.trace=await worker?.evaluate(()=>globalThis.projectMessageTrace);report.ui=await Promise.all(page.frames().filter(f=>f.url().startsWith('chrome-extension:')).map(async f=>({url:f.url(),text:await f.locator('body').innerText(),shadow:await f.evaluate(()=>[...document.querySelectorAll('*')].filter(n=>n.shadowRoot).map(n=>[...n.shadowRoot.children].filter(c=>c.tagName!=='STYLE').map(c=>c.textContent).join('\n')))})));}catch{}}
 finally{
- report.browserVersion=context?.browser().version();await context?.close();await guard.close();server.closeAllConnections();await new Promise(r=>server.close(r));report.networkGuard=guard.snapshot();report.durationMs=performance.now()-start;
+ report.browserVersion=context?.browser().version();report.viewports=page?[page.viewportSize()]:[];await context?.close();await guard.close();server.closeAllConnections();await new Promise(r=>server.close(r));report.networkGuard=guard.snapshot();report.durationMs=performance.now()-start;
  report.sourceChangedDuringRun=(await Promise.all(Object.entries(info.sourceHashes).map(async([p,h])=>hash(await readFile(p))!==h))).some(Boolean);report.testChangedDuringRun=(await Promise.all(Object.entries(testHashes).map(async([p,h])=>hash(await readFile(p))!==h))).some(Boolean);report.buildManifestUnchanged=hash(await readFile(manifestPath))===report.buildManifestHash;
  if(report.sourceChangedDuringRun||report.testChangedDuringRun||!report.buildManifestUnchanged){report.status='SOURCE_CHANGED';process.exitCode=1;}
  report.packageVerification=verifyHost(built.unpacked);await writeFile(process.argv[2]??join(dir,'result.json'),JSON.stringify(report,null,2)+'\n');console.log(JSON.stringify({status:report.status,checks:report.checks,durationMs:report.durationMs,error:report.error}));

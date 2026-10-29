@@ -293,7 +293,9 @@ export function createFlowMountSurface({document:doc,createFrameURL,hasNativeLay
   restoreSidebar(handle,scroll,{apply=true}={}){const m=lookup(handle);if(!sidebarIntact(m)||scroll!==null&&(!Number.isSafeInteger(scroll)||scroll<0||scroll>100000000))return false;m.pendingScroll=scroll;if(apply)restorePendingScroll(m);return true;},
   isOwnedSurface:owned,
   isMasked(node){return [...mounts.values()].some(m=>node===m.plan.reading&&open(m.roles[0])&&isSameNativeRegions(m.plan));},
-  surrenderChanged(){for(const m of mounts.values())geometry(m);return false;},
+  // The adapter can discover a change before the layout observer. A closed
+  // switch must revoke controller presentation too, so reproof can recover.
+  surrenderChanged(){let changed=false;for(const m of mounts.values())if(!geometry(m)){changed=true;m.onSurrender({role:'workspace',reason:'workspace-geometry'});}return changed;},
   withNativeReading(handle,read,guard){const m=lookup(handle);if(open(m.roles[0])||!guard()||!isNativeReadingCurrent(m.plan))return null;const result=read();return guard()&&isNativeReadingCurrent(m.plan)&&!result?.then?result:null;},
   isRebindCurrent(handle,inspection){try{const m=lookup(handle);return !m.roles.some(open)&&inspection?.regionEpoch===handle.regionEpoch&&isSameNativeRegions(m.plan)&&m.roles.filter(s=>!s.retired).every(s=>intact(m,s));}catch{return false;}},
   rebind(handle,context,inspection){const m=lookup(handle);if(m.roles.some(open)||!isSameNativeRegions(m.plan)||!context?.binding?.documentToken||inspection?.regionEpoch!==handle.regionEpoch)throw Error('invalid-flow-rebind');m.handle=Object.freeze({...handle,documentToken:context.binding.documentToken});return m.handle;},

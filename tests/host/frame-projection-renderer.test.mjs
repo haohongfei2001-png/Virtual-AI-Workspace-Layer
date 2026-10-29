@@ -11,6 +11,7 @@ function dom(){
   constructor(tag){this.tagName=tag;this.ownerDocument=doc;this.children=[];this.attrs={};this.dataset={};this.style={};this.events={};this.isConnected=true;this.scrollTop=0;this.clientWidth=0;this.clientHeight=200;this.textContent='';}
   setAttribute(k,v){this.attrs[k]=String(v);if(k==='class')this.className=String(v);}
   getAttribute(k){return k==='data-focus-key'?this.dataset.focusKey??this.attrs[k]??null:this.attrs[k]??null;}
+  removeAttribute(k){delete this.attrs[k];}
   hasAttribute(k){return k==='data-focus-key'?this.getAttribute(k)!==null:k in this.attrs;}
   append(...nodes){for(const n of nodes){n.parentNode=this;this.children.push(n);}}
   replaceChildren(...nodes){this.children=[];this.append(...nodes);}
@@ -18,7 +19,7 @@ function dom(){
   attachShadow(){return this.shadowRoot=new Element('shadow');}
   cloneNode(){const n=new Element(this.tagName);n.attrs={...this.attrs};return n;}
   addEventListener(k,fn){(this.events[k]??=[]).push(fn);}
-  removeEventListener(){}
+  removeEventListener(k,fn){this.events[k]=(this.events[k]??[]).filter(value=>value!==fn);}
   click(){const event={button:0,defaultPrevented:false,preventDefault(){this.defaultPrevented=true;},composedPath:()=>[this]};for(const fn of this.events.click??[])fn(event);return event;}
   focus(){let root=this;while(root.parentNode)root=root.parentNode;root.activeElement=this;}
   getBoundingClientRect(){return {height:0,width:0};}
@@ -34,7 +35,7 @@ function projection(role='workspace'){
  const group=id=>({id,name:`Original ${id}`,nativeName:`Original ${id}`,segment:0,nativeUrl:null,lists:{current:page([row(`${id}_0`)],1000),old:page([row(`${id}_old`)],30),unknown:page()}});
  return {protocol:'vaiwl-free-frame/1',role,scope:'scopeA',completeSnapshot:false,segment:0,viewSession:{H:30,T:20000,Z:'UTC',policyRevision:0},navigation:{hasNewer:false,hasOlder:true,maxSegment:8},groups:page([group('P2'),group('P1')],100,0,24),entries:{noProject:{...page(),inventoryTotal:10},unknown:{...page([row('unknown')]),inventoryTotal:1}},selection:null};
 }
-function fixture(role='workspace',callback=()=>null,onHorizonRequest=null,onWorkingSetRequest=null,adapterOverride={},extra={}){const doc=dom(),intents=[];const nav=createNavigation({document:doc,surface:{role,root:doc.body},adapter:{currentURL:()=>'',isCurrent:()=>false,status(){},...adapterOverride},onHorizonRequest,onWorkingSetRequest,...extra,onProjectionRequest:callback,onPresentationRequest:v=>intents.push(v)});const pane=()=>nav.roots()[role].shadow;return {doc,nav,pane,intents,button:label=>pane().querySelectorAll('button').find(n=>n.getAttribute('aria-label')===label)};}
+function fixture(role='workspace',callback=()=>null,onHorizonRequest=null,onWorkingSetRequest=null,adapterOverride={},extra={}){const doc=dom(),intents=[];const nav=createNavigation({document:doc,surface:{role,root:doc.body},adapter:{currentURL:()=>'',isCurrent:()=>false,status(){},...adapterOverride},onHorizonRequest,onWorkingSetRequest,...extra,onProjectionRequest:callback,onPresentationRequest:v=>intents.push(v)});const pane=()=>nav.roots()[role].shadow;return {doc,nav,pane,intents,button:label=>[...pane().querySelectorAll('button'),...pane().querySelectorAll('[role="button"]')].find(n=>n.getAttribute('aria-label')===label)};}
 const tick=async()=>{for(let i=0;i<15;i++)await Promise.resolve();};
 
 for(const role of ['workspace','sidebar'])test('reopening a folded list restores its requested window from fresh projection: '+role,async()=>{

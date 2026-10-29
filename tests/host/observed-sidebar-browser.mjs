@@ -4,7 +4,7 @@ import {createRequire} from 'node:module';
 import {chromium} from '../b1/tooling/node_modules/playwright/index.mjs';
 const require=createRequire(new URL('../../extension/tooling/package.json',import.meta.url));
 const {outputFiles}=await require('esbuild').build({stdin:{contents:"export {createChatGPTAdapter} from './src/host/chatgpt-adapter.mjs';export {createSurfaceDiscovery} from './src/host/surface-discovery.mjs';export {createURLPolicy} from './src/host/url-policy.mjs';export {CHATGPT_OBSERVED_PROFILE} from './src/host/chatgpt-observed-profile.mjs';",resolveDir:process.cwd()},bundle:true,write:false,format:'iife',globalName:'observedModule'});
-const browser=await chromium.launch({headless:true});
+const browser=await chromium.launch({headless:true,...(process.env.FREE_CHROME_EXECUTABLE?{executablePath:process.env.FREE_CHROME_EXECUTABLE}:{}),proxy:{server:'http://127.0.0.1:9',bypass:'127.0.0.1,localhost'}});
 const results=[];
 try{
  for(const mode of ['baseline','body-nav','hidden-backup','hidden-details-backup','body-only','hidden-sidebar','two-visible-sidebars','two-navs','replace-sidebar','mobile-sidebar']){
@@ -41,9 +41,9 @@ try{
    const observation=adapter.observationStatus();await adapter.stop();
    await adapter.start({binding,emit:async p=>({state:'accepted',localSeq:p.localSeq,receiptId:'fixture'})});for(let i=0;i<30;i++)await Promise.resolve();
    const inspection=adapter.inspect();await adapter.stop();discovery.stop();
-   return {mode,expected,unrelatedBodyDoesNotInvalidate,rowCount:rows.length,correctTitles:rows.every(c=>c.nativeTitle==='Native A'),noOutsideTitleReads:forbiddenReads===0,noMembershipPromotion:first.membershipClaims.every(c=>c.asserted==='UNKNOWN'),oldHandleValid:handleValid,expectedOldHandleValid:['baseline','body-nav','hidden-backup','hidden-details-backup'].includes(mode),preauthorizationCandidates:observation.candidates,preauthorizationNoEmission:emissions===0,inspectionOK:inspection.ok,inspectionReason:inspection.reason,draftIntact:document.querySelector('textarea').value==='fixture draft'};
+   return {mode,expected,unrelatedBodyDoesNotInvalidate,rowCount:rows.length,correctTitles:rows.every(c=>c.nativeTitle==='Native A'),noOutsideTitleReads:forbiddenReads===0,noMembershipPromotion:first.membershipClaims.every(c=>c.asserted==='UNKNOWN'),oldHandleValid:handleValid,expectedOldHandleValid:['baseline','body-nav','hidden-backup','hidden-details-backup'].includes(mode),preauthorizationCandidates:observation.candidates,preauthorizationNoEmission:emissions===0,inspectionOK:inspection.ok,inspectionReason:inspection.reason,sidebarMode:inspection.sidebarPlacement?'FORMAL':'NATIVE_RETAINED',nativeSidebarPreserved:inspection.preserveNativeSidebar===true&&inspection.sidebarPlacement===null&&inspection.roles?.sidebar?.available===false&&inspection.historyMaskRoots.length===0,draftIntact:document.querySelector('textarea').value==='fixture draft'};
   },mode).catch(error=>({mode,error:error.message}));
-  checks.passed=!!(checks.rowCount===checks.expected&&checks.unrelatedBodyDoesNotInvalidate&&checks.correctTitles&&checks.noOutsideTitleReads&&checks.noMembershipPromotion&&checks.oldHandleValid===checks.expectedOldHandleValid&&checks.preauthorizationCandidates===checks.expected&&checks.preauthorizationNoEmission&&checks.inspectionOK===(checks.expected===1)&&checks.draftIntact);
+  checks.passed=!!(checks.rowCount===checks.expected&&checks.unrelatedBodyDoesNotInvalidate&&checks.correctTitles&&checks.noOutsideTitleReads&&checks.noMembershipPromotion&&checks.oldHandleValid===checks.expectedOldHandleValid&&checks.preauthorizationCandidates===checks.expected&&checks.preauthorizationNoEmission&&checks.inspectionOK===true&&checks.sidebarMode==='NATIVE_RETAINED'&&checks.nativeSidebarPreserved&&checks.draftIntact);
   results.push(checks);await page.close();
  }
  {
@@ -59,5 +59,5 @@ try{
   await page.evaluate(async()=>{await resizeAdapter.stop();delete globalThis.resizeAdapter;});
   results.push({mode:'real-css-viewport-hide-restore',passed:true});await page.close();
  }
- console.log(JSON.stringify({status:results.every(r=>r.passed)?'PASS_WEB_MECHANISM_ONLY':'FAIL',evidence:'ISOLATED_REAL_BROWSER_BOUNDARY_NOT_LIVE_OR_MV3',results}));assert(results.every(r=>r.passed));
+ console.log(JSON.stringify({status:results.every(r=>r.passed)?'PASS_WEB_MECHANISM_ONLY':'FAIL',evidence:'ISOLATED_REAL_BROWSER_BOUNDARY_NOT_LIVE_OR_MV3',backend:'document-flow-inspection',formalSidebar:'NOT_RUN_NATIVE_SIDEBAR_RETAINED',browserVersion:browser.version(),results}));assert(results.every(r=>r.passed));
 }finally{await browser.close();}
