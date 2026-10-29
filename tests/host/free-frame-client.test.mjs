@@ -7,7 +7,7 @@ const drain=async()=>{for(let i=0;i<60;i++)await Promise.resolve();};
 const deferred=()=>{let resolve;const promise=new Promise(r=>{resolve=r;});return {promise,resolve};};
 export function fixture(role='workspace',createClient=createFreeFrameClient){
  const nativePending=[];let time=1000,id=0,navOptions,views=0;const timers=new Map(),listeners=new Set(),messageListeners=new Set(),historicalMessages=[],parentMessages=[],calls=[],pages=[],states=[],presented=[],restoredViews=[];let factories=0,stops=0,invalidations=0,recoveryOptions,recoveryOpens=0,recoveryStops=0,backupOptions,backupOpens=0,backupStops=0,backupInvalidations=0,snippetOptions,snippetOpens=0,snippetStops=0,snippetInvalidations=0;
- const element=()=>({children:[],setAttribute(){},append(n){n.parent=this;this.children.push(n);},replaceChildren(){this.children=[];},remove(){if(this.parent)this.parent.children=this.parent.children.filter(n=>n!==this);}});
+ const element=()=>({children:[],getBoundingClientRect:()=>({height:0}),setAttribute(){},append(n){n.parent=this;this.children.push(n);},replaceChildren(){this.children=[];},remove(){if(this.parent)this.parent.children=this.parent.children.filter(n=>n!==this);}});
  const body=element(),privateRoot=element();body.append(privateRoot);
  const focusEvents=new EventTarget();let panelFocuses=0;const document={addEventListener:focusEvents.addEventListener.bind(focusEvents),removeEventListener:focusEvents.removeEventListener.bind(focusEvents),body,createElement:element,defaultView:{parent:{postMessage(message,origin){parentMessages.push({message,origin});}}}};
  const grant=()=>({id:'grant',mountId:'mount',parentDocumentId:'parent',uiDocumentId:'ui',scopeGrantId:'scope',role,expiresAt:new Date(time+20000).toISOString()});
@@ -844,9 +844,9 @@ test('sidebar reannounces its intrinsic size when the parent confirms visibility
  const classes=names=>({contains:name=>names.includes(name)});
  const row={hidden:false,classList:classes([]),getBoundingClientRect:()=>({height:40})};
  const panel={hidden:false,classList:classes([]),getBoundingClientRect:()=>({height:200}),children:[{hidden:false,classList:classes(['themes']),children:[row]}, {hidden:false,classList:classes(['sidebar-footer']),getBoundingClientRect:()=>({height:40})}]};
- const f=fixture('sidebar',options=>createFreeFrameClient({...options,
+ const f=fixture('sidebar',options=>{options.privateRoot.getBoundingClientRect=()=>panel.getBoundingClientRect();return createFreeFrameClient({...options,
   document:{...options.document,defaultView:{...options.document.defaultView,getComputedStyle:()=>({marginTop:'0',marginBottom:'0'})}},
-  navigationFactory:args=>({...options.navigationFactory(args),roots:()=>({sidebar:{shadow:{querySelector:()=>panel}}})})}));
+  navigationFactory:args=>({...options.navigationFactory(args),roots:()=>({sidebar:{shadow:{querySelector:()=>panel}}})})});});
  await f.client.start();await drain();await f.advance(0);
  const sizes=()=>f.parentMessages.filter(p=>p.message.type==='VAIWL_UI_INTRINSIC_SIZE');
  assert.equal(sizes().length,1);
@@ -860,9 +860,9 @@ test('sidebar reannounces its intrinsic size when the parent confirms visibility
 
 test('current row reveal publishes expanded flow height before its bounded coordinates',async()=>{
  let height=200;const panel={hidden:false,classList:{contains:()=>false},getBoundingClientRect:()=>({height})};
- const f=fixture('sidebar',options=>createFreeFrameClient({...options,
+ const f=fixture('sidebar',options=>{options.privateRoot.getBoundingClientRect=()=>panel.getBoundingClientRect();return createFreeFrameClient({...options,
   document:{...options.document,defaultView:{...options.document.defaultView,getComputedStyle:()=>({marginTop:'0',marginBottom:'0'})}},
-  navigationFactory:args=>({...options.navigationFactory(args),roots:()=>({sidebar:{shadow:{querySelector:()=>panel}}})})}));
+  navigationFactory:args=>({...options.navigationFactory(args),roots:()=>({sidebar:{shadow:{querySelector:()=>panel}}})})});});
  await f.client.start();await drain();await f.advance(0);f.parentMessages.length=0;
  height=900;f.nav.onSidebarLayout();f.nav.onSidebarReveal({top:800,bottom:834,height:34});
  assert.deepEqual(f.parentMessages.map(p=>p.message),[
@@ -873,11 +873,35 @@ test('current row reveal publishes expanded flow height before its bounded coord
  f.disconnect();const retiredCount=f.parentMessages.length;f.nav.onSidebarReveal({top:800,bottom:834,height:34});assert.equal(f.parentMessages.length,retiredCount);
 });
 
+test('only a live sidebar observes auxiliary content and retires pending size callbacks',async()=>{
+ for(const role of ['sidebar','workspace']){
+  let height=200,callback=null,observed=null,disconnected=0;
+  const f=fixture(role,options=>{
+   options.privateRoot.getBoundingClientRect=()=>({height});
+   return createFreeFrameClient({...options,document:{...options.document,defaultView:{...options.document.defaultView,ResizeObserver:class{
+    constructor(fn){callback=fn;}observe(node){observed=node;}disconnect(){disconnected++;}
+   }}}});
+  });
+  await f.client.start();await drain();await f.advance(0);
+  if(role==='workspace'){assert.equal(callback,null);f.client.stop();continue;}
+  assert.equal(observed,f.privateRoot);
+  const sizes=()=>f.parentMessages.filter(p=>p.message.type==='VAIWL_UI_INTRINSIC_SIZE').map(p=>p.message.height);
+  assert.deepEqual(sizes(),[200]);
+  f.nav.onSnippetsRequest();assert.equal(f.invalidations,1);assert.equal(f.snippetOpens,1);
+  height=920;callback();await f.advance(0);assert.deepEqual(sizes(),[200,920]);
+  callback();await f.advance(0);assert.deepEqual(sizes(),[200,920],'unchanged layout is not re-announced');
+  height=300;callback();await f.advance(0);assert.equal(sizes().at(-1),300);
+  for(const value of [NaN,-1,1000001,Infinity]){height=value;callback();await f.advance(0);assert.deepEqual(sizes(),[200,920,300]);}
+  height=600;f.jump(20001);callback();await f.advance(0);assert.deepEqual(sizes(),[200,920,300],'expired authority cannot resize');
+  f.client.stop();assert.equal(disconnected,1);callback();await f.advance(0);assert.deepEqual(sizes(),[200,920,300]);
+ }
+});
+
 test('restored keyboard focus sizes an expanded native-NAV frame before reveal',async()=>{
  let height=200,focused=true;const panel={hidden:false,classList:{contains:()=>false},getBoundingClientRect:()=>({height})};
- const f=fixture('sidebar',options=>createFreeFrameClient({...options,
+ const f=fixture('sidebar',options=>{options.privateRoot.getBoundingClientRect=()=>panel.getBoundingClientRect();return createFreeFrameClient({...options,
   document:{...options.document,hasFocus:()=>focused,defaultView:{...options.document.defaultView,innerHeight:200,getComputedStyle:()=>({marginTop:'0',marginBottom:'0'})}},
-  navigationFactory:args=>({...options.navigationFactory(args),roots:()=>({sidebar:{shadow:{querySelector:()=>panel}}})})}));
+  navigationFactory:args=>({...options.navigationFactory(args),roots:()=>({sidebar:{shadow:{querySelector:()=>panel}}})})});});
  const focus=box=>{const event=new Event('focusin');event.composedPath=()=>[{getBoundingClientRect:()=>box}];f.focusEvents.dispatchEvent(event);};
  await f.client.start();await drain();await f.advance(0);f.parentMessages.length=0;
  height=900;f.nav.onSidebarLayout();focus({top:800,bottom:834,height:34});

@@ -58,7 +58,7 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
  }
  // Native NAV owns scrolling. The flow iframe has no internal scrollport;
  // trusted wheel events chain through Chromium rather than coordinate relays.
- let sidebarSizeTimer=null,lastSidebarSize=null,sidebarRestore=undefined;
+ let sidebarSizeTimer=null,sidebarResize=null,lastSidebarSize=null,sidebarRestore=undefined;
  const validSidebarRect=box=>!!box&&[box.top,box.bottom,box.height].every(Number.isFinite)&&box.height>0&&box.top>=0&&box.bottom>box.top&&box.bottom<=1000000;
  function revealSidebarRect(box){
   if(role!=='sidebar'||!grantCurrent()||closed||surfaceVisible===false||!validSidebarRect(box))return;
@@ -68,22 +68,22 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
   doc.defaultView.parent.postMessage({type:'VAIWL_UI_REVEAL_ROW',role:'sidebar',top:Math.floor(box.top),bottom:Math.ceil(box.bottom)},parentOrigin);
  }
  function publishSidebarSize(){
-   if(closed||!grantCurrent()||Date.parse(grant?.expiresAt)<=now())return false;
-   const panel=navigation?.roots?.()?.sidebar?.shadow?.querySelector('section');if(!panel)return false;
-   const extent=n=>{if(n.hidden)return 0;const style=doc.defaultView.getComputedStyle(n);return n.getBoundingClientRect().height+(n.classList.contains('sidebar-footer')?0:parseFloat(style.marginTop)||0)+(parseFloat(style.marginBottom)||0);};
-   // Measure the natural-flow section, including assigned candidate slot
-   // content. Summing only shadow children omitted the slotted native entries
-   // and clipped the footer by exactly that omitted block's height.
-   let height=extent(panel);
-   for(const child of privateRoot.children)if(child!==root)height+=extent(child);
-   height=Math.max(128,Math.ceil(height));
+   if(role!=='sidebar'||closed||!grantCurrent()||Date.parse(grant?.expiresAt)<=now())return false;
+   // Sidebar main has height:auto in the formal shell. It remains present
+   // when navigation detaches for a local panel or read error, and includes
+   // slotted candidates and the panel exit lane exactly once. Never measure
+   // the iframe viewport/scrollHeight: its assigned height would feed back
+   // into the next hint and prevent shorter content from shrinking again.
+   const extent=privateRoot.getBoundingClientRect().height;
+   if(!Number.isFinite(extent)||extent<0)return false;
+   const height=Math.max(128,Math.ceil(extent));
    if(!Number.isSafeInteger(height)||height>1000000)return false;
    if(height!==lastSidebarSize){lastSidebarSize=height;doc.defaultView.parent.postMessage({type:'VAIWL_UI_INTRINSIC_SIZE',role:'sidebar',height},parentOrigin);}
    if(sidebarRestore!==undefined){const scroll=sidebarRestore;sidebarRestore=undefined;doc.defaultView.parent.postMessage({type:'VAIWL_UI_SIDEBAR_RESTORE',role:'sidebar',scroll},parentOrigin);}
    return height;
  }
  function queueSidebarSize(){
-  if(role!=='sidebar'||sidebarSizeTimer!==null)return;
+  if(role!=='sidebar'||closed||sidebarSizeTimer!==null)return;
   sidebarSizeTimer=schedule(()=>{sidebarSizeTimer=null;publishSidebarSize();},0);
  }
  let currentDelivery=null,freshnessTimer=null;
@@ -113,7 +113,7 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
  const recoverable=reason=>isFreeRecoveryReason(reason)||['corrupt-record','invalid-partition-manifest','invalid-partition-piece'].includes(reason);
  const budget=createReadRecoveryBudget({now:elapsedNow,schedule,cancel,onExpire:()=>fail('read-budget-exhausted')});
  function state(value){try{onState(value);}catch{}}
- function clear(){doc.removeEventListener?.('focusin',revealSidebarFocus);doc.removeEventListener?.('keydown',revealSidebarFocus);cancel(sidebarSizeTimer);sidebarSizeTimer=null;lastSidebarSize=null;sidebarRestore=undefined;clearNavigationRefresh();cancel(freshnessTimer);freshnessTimer=null;currentDelivery=null;clearNativeInteraction();panelReturnCancel?.();readEpoch++;readTerminal=null;readErrorPanel?.stop();readErrorPanel=null;readErrorRoot?.remove();readErrorRoot=null;surfaceVisible=null;surfaceRevision=0;calibrationPending=null;dispatchPending=null;queuedDispatchView=null;dispatchEpoch++;migration.clear();candidateRestore=null;candidateMigrationId=null;candidateMigrationProject=null;locatedMigrations.clear();workspaceEntered=false;workspaceModePending=false;for(const type of ['pointerdown','keydown','wheel'])doc.removeEventListener?.(type,interruptMigration,true);migrationListening=false;candidateOffset=0;candidatePageTotal=null;candidateRun++;candidates?.stop();candidates=null;candidateRoot?.remove();candidateRoot=null;if(visibilityAttached)doc.removeEventListener?.('visibilitychange',foreground);visibilityAttached=false;wasHidden=false;bootstrapping=false;cancel(resumeTimer);resumeTimer=null;resumeQueued=null;resumeWriting=false;resumeLast=null;resumeDesired=null;resumeQuery=null;searchSnippetIds.clear();snippetLocatePending=false;snippets?.stop();snippets=null;snippetsRoot?.remove();snippetsRoot=null;currentRef=null;clearAutoNotice();backup?.stop();backup=null;backupRoot?.remove();backupRoot=null;recovery?.stop();recovery=null;recoveryRoot?.remove();recoveryRoot=null;workspaceRevision=null;viewSession=null;projectionScope=null;projectionVersion=null;horizonPending=false;presentationRevision=0;presentationIntent='';currentNativeURL='';closed=true;dirty=false;serial++;activeRead?.abort();activeRead=null;activeLocation=null;budget.reset();grant=null;query={segment:0,offset:0,limit:8};plans.clear();projectPlans.clear();navigation?.stop();navigation=null;root?.remove();root=null;}
+ function clear(){sidebarResize?.disconnect();sidebarResize=null;doc.removeEventListener?.('focusin',revealSidebarFocus);doc.removeEventListener?.('keydown',revealSidebarFocus);cancel(sidebarSizeTimer);sidebarSizeTimer=null;lastSidebarSize=null;sidebarRestore=undefined;clearNavigationRefresh();cancel(freshnessTimer);freshnessTimer=null;currentDelivery=null;clearNativeInteraction();panelReturnCancel?.();readEpoch++;readTerminal=null;readErrorPanel?.stop();readErrorPanel=null;readErrorRoot?.remove();readErrorRoot=null;surfaceVisible=null;surfaceRevision=0;calibrationPending=null;dispatchPending=null;queuedDispatchView=null;dispatchEpoch++;migration.clear();candidateRestore=null;candidateMigrationId=null;candidateMigrationProject=null;locatedMigrations.clear();workspaceEntered=false;workspaceModePending=false;for(const type of ['pointerdown','keydown','wheel'])doc.removeEventListener?.(type,interruptMigration,true);migrationListening=false;candidateOffset=0;candidatePageTotal=null;candidateRun++;candidates?.stop();candidates=null;candidateRoot?.remove();candidateRoot=null;if(visibilityAttached)doc.removeEventListener?.('visibilitychange',foreground);visibilityAttached=false;wasHidden=false;bootstrapping=false;cancel(resumeTimer);resumeTimer=null;resumeQueued=null;resumeWriting=false;resumeLast=null;resumeDesired=null;resumeQuery=null;searchSnippetIds.clear();snippetLocatePending=false;snippets?.stop();snippets=null;snippetsRoot?.remove();snippetsRoot=null;currentRef=null;clearAutoNotice();backup?.stop();backup=null;backupRoot?.remove();backupRoot=null;recovery?.stop();recovery=null;recoveryRoot?.remove();recoveryRoot=null;workspaceRevision=null;viewSession=null;projectionScope=null;projectionVersion=null;horizonPending=false;presentationRevision=0;presentationIntent='';currentNativeURL='';closed=true;dirty=false;serial++;activeRead?.abort();activeRead=null;activeLocation=null;budget.reset();grant=null;query={segment:0,offset:0,limit:8};plans.clear();projectPlans.clear();navigation?.stop();navigation=null;root?.remove();root=null;}
  function ensureCandidates(){
   if(!candidates){candidateRoot=doc.createElement('details');candidateRoot.setAttribute('data-vaiwl-candidate-root','');const summary=doc.createElement('summary');summary.textContent='其他原生项目';const content=doc.createElement('div');candidateRoot.append(summary,content);privateRoot.append(candidateRoot);candidateRoot.addEventListener('toggle',queueSidebarSize);candidates=createFreeFrameCandidates({document:doc,container:content,role,onLayoutChange:queueSidebarSize,onPageRequest:next=>refreshCandidates(next),onActivate:async(renderKey,presentation)=>{
     const active=grant;if(closed||!grantCurrent()||backup||recovery||snippets)return {ok:false};
@@ -649,7 +649,7 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
  }
  function onGrant(value,{isCurrent}){
   closed=false;grant=value;grantCurrent=isCurrent;void refreshSurfaceState();
-  if(!navigation){if(role==='sidebar'){doc.addEventListener?.('focusin',revealSidebarFocus);doc.addEventListener?.('keydown',revealSidebarFocus);}wasHidden=doc.visibilityState==='hidden';doc.addEventListener?.('visibilitychange',foreground);visibilityAttached=true;root=doc.createElement('div');root.setAttribute('data-vaiwl-frame-root','');privateRoot.append(root);
+  if(!navigation){if(role==='sidebar'){doc.addEventListener?.('focusin',revealSidebarFocus);doc.addEventListener?.('keydown',revealSidebarFocus);if(typeof doc.defaultView.ResizeObserver==='function'){sidebarResize=new doc.defaultView.ResizeObserver(queueSidebarSize);sidebarResize.observe(privateRoot);}}wasHidden=doc.visibilityState==='hidden';doc.addEventListener?.('visibilitychange',foreground);visibilityAttached=true;root=doc.createElement('div');root.setAttribute('data-vaiwl-frame-root','');privateRoot.append(root);
    navigation=navigationFactory({document:doc,surface:{role,root,...(role==='sidebar'?{scrollOwner:'native-nav'}:{})},adapter:{currentURL:()=>currentNativeURL,isCurrent:value=>!!currentNativeURL&&policy.sameTarget(value,currentNativeURL),nativeHref:input=>policy.nativeHref(input),navigationPlan:ref=>plans.get(ref.id),projectNavigationPlan:group=>projectPlans.get(group.id),status(){}},onExit:()=>lifecycle.exit(),onDispatch:dispatchCurrent,onNativeInteractionStart:beginNativeInteraction,onViewChange:saveResumeView,onSidebarLayout:queueSidebarSize,onSidebarReveal:revealSidebarRect,onSidebarRestore:scroll=>{sidebarRestore=scroll;queueSidebarSize();},onFrameRendered:(page,counts)=>{receipt(page,'rendered',counts);queueSidebarSize();},onProjectionRequest:next=>read(next,false),onPresentationRequest:presentIntent,onCurrentWorkspaceEntry:enterCurrent,onCalibrationEntry:calibrateEntry,onUndoTimePolicyRequest:undoAutoHorizon,onHorizonRequest:setHorizon,onCompactRowsRequest:setCompactRows,onWorkingSetRequest:changeWorkingSet,onRecoveryRequest:openRecovery,onBackupRequest:openBackup,onLocalDataRequest:async()=>{if(role!=='sidebar'||!grantCurrent())return {ok:false};return withRequestDeadline(()=>runtime.sendMessage({v:1,type:'HOST_UI_LOCAL_DATA',grantId:grant.id,mountId:grant.mountId}),{timeoutMs:1000,now:elapsedNow,schedule,cancel}).catch(()=>({ok:false}));},onSnippetsRequest:openSnippets,onSnippetLocateRequest:locateSearchSnippet});
    void bootstrapResume();void refreshManagement();return;
   }

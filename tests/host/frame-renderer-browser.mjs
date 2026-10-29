@@ -7,6 +7,55 @@ import {tmpdir} from 'node:os';
 import {chromium} from '../b1/tooling/node_modules/playwright/index.mjs';
 import {createHistoricalNetworkGuard,historicalNetworkGuardArgs} from './historical-network-guard.mjs';
 
+// The actual frame client and owned panels share one content-sized iframe.
+// The outer scrollport/runtime are explicit fixtures, not MV3 authorization.
+test('sidebar auxiliary panels resize after navigation detaches without a second scroll owner',{timeout:30000},async t=>{
+ const root=resolve('.'),server=http.createServer(async(req,res)=>{try{
+  const path=new URL(req.url,'http://127.0.0.1').pathname;
+  if(path==='/host'){res.setHeader('Content-Type','text/html');res.end('<!doctype html><nav style="width:240px;height:360px;overflow:auto"><iframe id="frame" src="/frame" style="border:0;width:100%;height:128px;display:block" scrolling="no"></iframe><button id="native-account">Native account</button></nav><script>window.sizes=[];addEventListener("message",e=>{if(e.origin!==location.origin||e.source!==frame.contentWindow||e.data?.type!=="VAIWL_UI_INTRINSIC_SIZE")return;sizes.push(e.data.height);frame.style.height=e.data.height+"px";});</script>');return;}
+  if(path==='/frame'){res.setHeader('Content-Type','text/html');res.end('<!doctype html><meta charset="utf-8"><link rel="stylesheet" href="/extension/frame-shell.css"><body data-frame-role="sidebar"><main></main>');return;}
+  if(!/^\/src\/[a-z0-9/-]+\.mjs$/.test(path)&&path!=='/extension/frame-shell.css')throw Error('path');
+  res.setHeader('Content-Type',path.endsWith('.css')?'text/css':'text/javascript');res.end(await readFile(resolve(root,'.'+path)));
+ }catch{res.writeHead(404);res.end();}});
+ await new Promise(r=>server.listen(0,'127.0.0.1',r));const origin=`http://127.0.0.1:${server.address().port}`,guard=await createHistoricalNetworkGuard({fixtureOrigin:origin});let browser;
+ t.after(async()=>{await browser?.close();await guard.close();server.closeAllConnections();await new Promise(r=>server.close(r));});
+ browser=await chromium.launch({headless:true,executablePath:process.env.FREE_CHROME_EXECUTABLE??'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',args:historicalNetworkGuardArgs(guard.config)});
+ const context=await browser.newContext(),page=await context.newPage(),errors=[];
+ await context.route('**/*',r=>new URL(r.request().url()).origin===origin?r.continue():r.abort());page.on('pageerror',e=>errors.push(e.message));await page.goto(origin+'/host');
+ const frame=page.frames().find(f=>f.url()===origin+'/frame');assert(frame);
+ await frame.evaluate(async()=>{
+  const {createFreeFrameClient}=await import('/src/host/free-frame-client.mjs');const messages=new Set(),empty=()=>({items:[],total:0,offset:0,limit:5,hasMore:false});
+  const grant=()=>({id:'grant',mountId:'mount',parentDocumentId:'parent',uiDocumentId:'ui',scopeGrantId:'scope',role:'sidebar',expiresAt:new Date(Date.now()+20000).toISOString()});
+  const dto={protocol:'vaiwl-free-frame/1',role:'sidebar',scope:'fixture',completeSnapshot:false,segment:0,viewSession:{H:30,T:20000,Z:'UTC',policyRevision:0},navigation:{hasNewer:false,hasOlder:false,maxSegment:0},groups:{...empty(),limit:8},entries:{noProject:empty(),unknown:empty()},selection:null};
+  globalThis.panelFixture={messages,invalid:false,release:null};const f=panelFixture;
+  const runtime={connect:()=>({onMessage:{addListener:fn=>messages.add(fn),removeListener:fn=>messages.delete(fn)},onDisconnect:{addListener(){},removeListener(){}},disconnect(){}}),async sendMessage(m){
+   if(m.type==='HOST_UI_JOIN'||m.type==='HOST_UI_RENEW')return {ok:true,grant:grant()};
+   if(m.type==='HOST_UI_VIEW')return {ok:true,state:'ready',page:f.invalid?null:dto,navigation:[]};
+   if(m.type==='HOST_UI_SNIPPET_LIST')return new Promise(resolve=>{f.release=()=>resolve({ok:true,workspaceRevision:1,snippets:{total:8,offset:0,limit:12,items:Array.from({length:8},(_,i)=>({id:'saved'+i,refId:'11111111-1111-4111-8111-111111111111',preview:'Local explicitly saved fixture text '.repeat(3),title:'Saved fixture '+i,nativeUrl:location.origin+'/c/11111111-1111-4111-8111-111111111111'}))}});});
+   return {ok:true};
+  }};
+  f.client=createFreeFrameClient({document,runtime,role:'sidebar',parentOrigin:location.origin,privateRoot:document.querySelector('main')});await f.client.start();
+ });
+ await frame.getByRole('button',{name:'已保存片段',exact:true}).waitFor();
+ const settled=()=>frame.waitForFunction(()=>Math.abs(innerHeight-Math.max(128,Math.ceil(document.querySelector('main').getBoundingClientRect().height)))<1,{},{timeout:2000});
+ await settled();await frame.getByRole('button',{name:'已保存片段',exact:true}).click();
+ await frame.waitForFunction(()=>typeof panelFixture.release==='function');await frame.evaluate(()=>panelFixture.release());
+ await frame.getByText('共 8 个片段',{exact:true}).waitFor();await settled();
+ const height=await frame.evaluate(()=>innerHeight);assert(height>1000,'the asynchronously loaded panel must enlarge the old navigation frame');
+ const last=frame.getByRole('button',{name:'返回工作空间',exact:true});await last.focus();
+ assert(await page.locator('nav').evaluate(n=>n.scrollTop>0));
+ assert.deepEqual(await frame.evaluate(()=>({window:scrollY,panel:document.querySelector('[data-vaiwl-frame-snippets]').scrollTop,overflow:getComputedStyle(document.querySelector('main')).overflowY})),{window:0,panel:0,overflow:'visible'});
+ await page.locator('nav').evaluate(n=>n.style.width='180px');await settled();assert(await frame.evaluate(()=>innerHeight)>height,'narrow wrapping must republish the owned extent');
+ await last.click();await frame.getByRole('button',{name:'已保存片段',exact:true}).waitFor();await settled();assert(await frame.evaluate(()=>innerHeight)<height);
+ // An invalid fresh VIEW removes navigation but must leave the local error
+ // and retry controls sized and reachable. It supplies no new authority.
+ await frame.evaluate(()=>{panelFixture.invalid=true;for(const fn of panelFixture.messages)fn({type:'VAIWL_UI_DATA_CHANGED'});});
+ await frame.locator('[data-vaiwl-read-error-container]').waitFor();await settled();
+ await frame.evaluate(()=>panelFixture.client.stop());const retired=await page.evaluate(()=>sizes.length);
+ await frame.evaluate(()=>{document.querySelector('main').style.height='5000px';});await page.waitForTimeout(60);
+ assert.equal(await page.evaluate(()=>sizes.length),retired,'revoked/retired frames cannot publish new layout');assert.deepEqual(errors,[]);
+});
+
 test('candidate panels keep native NAV as the sidebar scroll owner',{timeout:30000},async t=>{
  const root=resolve('.'),server=http.createServer(async(req,res)=>{try{
   const path=new URL(req.url,'http://127.0.0.1').pathname;
