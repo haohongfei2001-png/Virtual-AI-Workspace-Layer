@@ -10,6 +10,8 @@
 
 统一未安装包 `/private/tmp/VAIWL-v27-Flat-Branch-20261029/extension`，构建 `7f4231ca8261396cdd5cc28572ab01ea80da468c761a0e2a600957e5fe0ccfbd`；包、当前源码及隔离测试的204项源码闭包一致，常规Browser-Local构建未启用诊断采集。证据索引 `/private/tmp/vaiwl-flat-branch-verification-20261029.json`，正式隔离报告 `/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-LOsmfq/report.json`。原加载目录与已激活f8诊断包逐文件未变，未控制/Reload日常Chrome，不动旧库、草稿、备份和stash。本次已解决可证明的首门槛代码缺陷；修复后的真实挂载仍 **NOT_RUN**，完整产品 **NOT_ACCEPTED**，不追加用户试装或采集请求。
 
+后续正常推送已确认远端为 `5b68bb43`。该提交 Actions `40848008076` 的正式文档流连续旅程通过；整体 CI 仍失败。读取既有日志定位到 `history-list-browser` 仍把所有侧栏异常断言为主区失败，现校正为未知控件拒绝接管、零遮罩、workspace 保持及原生搜索/草稿保留，并用同一列表移入不可接管新来源验证旧证明不复用。现有 headless 用例及只读独立复核通过，仅 `WEB_MECHANISM_ONLY`；证据 `/private/tmp/vaiwl-history-role-current-20261029.log`。窄屏夹具与片段 runner 的旧双 Popover 前置等远端失败保留，不据此修改产品安全边界或宣称全 CI 通过。本次产品源码、固定包和日常安装均未改变。
+
 ## 2026-10-29 修复 VIEW 时效跨越竞态，保留现有主区取证包
 
 离线反例确认两项独立产品缺陷：Host 在投影回复途中跨过来源期限时会丢弃刷新期限；frame 收到刚过期的合法 VIEW 则会清空既有投影并永久停止自动读取。现 Host 按快照评估时间保留原期限，frame 不绘制过期回复，在同一读取/定位预算内重新准备；不续来源证明、不重置预算、不派发原生动作。非法期限、真正撤权、关闭/换页取消和超时仍按原安全边界处理。这不是用户实机 `native-flow-branch-paint` 的已证根因。

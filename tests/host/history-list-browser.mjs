@@ -134,7 +134,7 @@ try{
   surface=createMountSurface({document,createFrameURL:({role})=>'chrome-extension://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/'+role+'.html'});const handle=await surface.mount({binding},first);surface.showWorkspace(handle);
   const initial={separateSource:first.historySource===source&&first.history===list&&first.historyMaskRoots[0]===list,sidebarStartsBelowHeading:first.sidebarRect.y===152,onlyListMasked:getComputedStyle(list).visibility==='hidden'&&getComputedStyle(document.querySelector('#heading')).visibility==='visible',inspectOwnMask:adapter.inspect().ok,discoveryTitle:emitted.some(p=>p.payload?.candidates?.some(c=>c.nativeTitle==='Native A')),onlyUnknownMembership:emitted.every(p=>(p.payload?.membershipClaims??[]).every(c=>c.asserted==='UNKNOWN'&&c.projectId===null))};
   surface.suspend(handle);const variants={};
-  const mutate=(name,apply)=>{const undo=apply();variants[name]=!adapter.inspect().ok;undo();};
+  const mutate=(name,apply)=>{const undo=apply();const current=adapter.inspect();variants[name]=current.ok&&current.roles.workspace.available&&current.roles.sidebar.available===false&&current.preserveNativeSidebar===true&&current.historyMaskRoots.length===0;undo();};
   mutate('searchInsideList',()=>{const n=document.createElement('button');n.textContent='Search';list.append(n);return()=>n.remove();});
   mutate('searchInsideRow',()=>{const n=document.createElement('button');n.setAttribute('aria-label','Search');row.append(n);return()=>n.remove();});
   mutate('unknownNativeInput',()=>{const n=document.createElement('input');row.append(n);return()=>n.remove();});
@@ -150,10 +150,14 @@ try{
   mutate('sourceInert',()=>{source.inert=true;return()=>{source.inert=false;};});
   mutate('sourceHidden',()=>{source.setAttribute('aria-hidden','true');return()=>source.removeAttribute('aria-hidden');});
   mutate('ambiguousList',()=>{const n=list.cloneNode(true);source.append(n);return()=>n.remove();});
-  const sourceClone=source.cloneNode(false);source.replaceWith(sourceClone);sourceClone.append(list);const sourceIdentityRejected=!adapter.isSameNativeRegions(first);sourceClone.replaceWith(source);source.append(list);
-  surface.showWorkspace(handle);const injected=document.createElement('button');injected.textContent='Native new control';list.append(injected);const changed=adapter.inspect(),surrendered=surface.refreshGeometry(handle,changed)===false;
-  const closed={invalid:!changed.ok,surrendered,listVisible:getComputedStyle(list).visibility==='visible',searchVisible:getComputedStyle(document.querySelector('#search')).visibility==='visible',draftPreserved:document.querySelector('textarea').value==='fixture draft'};
-  surface.dispose(handle);adapter.stop();return {initial,variants,sourceIdentityRejected,closed};
+  // Replacing a native sidebar source invalidates that role's old proof, not
+  // the independent reading/composer identity or workspace authority.
+  const beforeReplacement=adapter.inspect(),sourceClone=source.cloneNode(false);sourceClone.setAttribute('aria-hidden','true');source.replaceWith(sourceClone);sourceClone.append(list);const replaced=adapter.inspect();
+  const sourceReplacement={validBeforeReplacement:beforeReplacement.roles.sidebar.available&&beforeReplacement.historySource===source,workspaceIdentityRetained:adapter.isSameNativeRegions(beforeReplacement),oldSourceNotReused:replaced.historySource===sourceClone&&replaced.historySource!==beforeReplacement.historySource,replacementReproved:replaced.ok&&replaced.roles.sidebar.available===false&&replaced.preserveNativeSidebar&&replaced.historyMaskRoots.length===0};sourceClone.replaceWith(source);source.append(list);
+  surface.showWorkspace(handle);const injected=document.createElement('button');injected.textContent='Native new control';list.append(injected);const changed=adapter.inspect(),refreshed=surface.refreshGeometry(handle,changed);
+  const visibility=surface.visibility(handle);
+  const closed={workspaceAccepted:changed.ok&&changed.roles.workspace.available,sidebarRejected:changed.roles.sidebar.available===false&&changed.historyMaskRoots.length===0,workspaceRefreshed:refreshed===true,workspaceOpen:visibility.workspace===true,sidebarClosed:visibility.sidebar===false,listVisible:getComputedStyle(list).visibility==='visible',injectedControlVisible:injected.checkVisibility({checkOpacity:true,checkVisibilityCSS:true}),searchVisible:getComputedStyle(document.querySelector('#search')).visibility==='visible',draftPreserved:document.querySelector('textarea').value==='fixture draft'};
+  surface.dispose(handle);adapter.stop();return {initial,variants,sourceReplacement,closed};
  });
  for(const [group,values]of Object.entries(result))if(typeof values==='object')for(const [key,value]of Object.entries(values))assert.equal(value,true,group+'.'+key);else assert.equal(values,true,group);
  console.log(JSON.stringify({result:'PASS_WEB_MECHANISM_ONLY',checks:result}));
