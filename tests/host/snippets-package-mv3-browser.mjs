@@ -9,15 +9,15 @@ const report={evidence:'REAL_HEADLESS_PACKAGED_MV3_OFFLINE_SNIPPETS',fixture:'Sy
 let context,page,server,built;const integrityChecks=[];
 const outcome=await runSnippetsLifecycle({report,output,integrityChecks,execute:async({own})=>{
  const paths=snippetsRunnerPaths({output});
- server=await createHostFixtureServer();own('fixture-server',()=>server.close());
+ server=await createHostFixtureServer({partitionedSidebar:true});own('fixture-server',()=>server.close());
  const networkGuard=await createHistoricalNetworkGuard({fixtureOrigin:server.origin});own('network-guard',async()=>{await networkGuard.close();report.networkGuard=networkGuard.snapshot();});
  report.networkGuard=networkGuard.snapshot();
  const dir=await mkdtemp(paths.tempPrefix);
  built=packageHost(join(dir,'package'),{offlineOrigin:server.origin,offlineSnippets:true});report.package=built;
  const manifestPath=join(built.unpacked,'build-manifest.json'),manifestBytes=await readFile(manifestPath),info=JSON.parse(manifestBytes);
- report.sourceHashes=info.sourceHashes;report.buildManifestHash=hash(manifestBytes);
+ report.fixture=server.manifest;report.sourceHashes=info.sourceHashes;report.buildManifestHash=hash(manifestBytes);
  integrityChecks.push(['package-integrity',async()=>{report.buildManifestUnchanged=hash(await readFile(manifestPath))===report.buildManifestHash;if(!report.buildManifestUnchanged)throw Error('source-or-package-changed-during-run');}]);
- const runnerFiles=[script,'tests/host/cold-context-trace.mjs','tests/host/j2-runner-bounds.mjs','tests/host/snippets-presentation-probe.mjs','tests/host/snippets-runner-lifecycle.mjs','tests/host/isolated-browser-cleanup.mjs','tests/host/historical-network-guard.mjs'];
+ const runnerFiles=[script,'tests/host/cold-context-trace.mjs','tests/host/j2-runner-bounds.mjs','tests/host/snippets-presentation-probe.mjs','tests/host/snippets-runner-lifecycle.mjs','tests/host/isolated-browser-cleanup.mjs','tests/host/historical-network-guard.mjs','tests/host/fixtures/server.mjs','tests/host/fixtures/legacy.html','tests/host/fixtures/native.css','tests/host/fixtures/native.mjs'];
  report.runnerSourceHashes=Object.fromEntries(await Promise.all(runnerFiles.map(async p=>[p,hash(await readFile(p))])));report.scriptHash=report.runnerSourceHashes[script];
  integrityChecks.push(['source-integrity',async()=>{report.sourceChangedDuringRun=(await Promise.all(Object.entries({...info.sourceHashes,...report.runnerSourceHashes}).map(async([p,h])=>hash(await readFile(p))!==h))).some(Boolean);if(report.sourceChangedDuringRun)throw Error('source-or-package-changed-during-run');}]);
  const trace=process.argv[3]==='startup-trace'?await createColdTracePackage(built.unpacked,join(dir,'startup-trace')):null;
@@ -26,8 +26,13 @@ const outcome=await runSnippetsLifecycle({report,output,integrityChecks,execute:
  context=await chromium.launchPersistentContext(join(dir,'profile'),{headless:true,executablePath:paths.executablePath,ignoreDefaultArgs:['--disable-extensions'],args:['--enable-unsafe-extension-debugging',...historicalNetworkGuardArgs(networkGuard.config)]});own('browser-context',()=>context.close());
  await context.route('**/*',r=>r.request().url().startsWith(server.origin)||r.request().url().startsWith('chrome-extension://')?r.continue():r.abort());const cdp=await context.browser().newBrowserCDPSession(),{id}=await cdp.send('Extensions.loadUnpacked',{path:trace?.unpacked??built.unpacked});
  if(trace)own('startup-trace-snapshot',async()=>{const worker=context.serviceWorkers().find(w=>w.url().startsWith(`chrome-extension://${id}/`));try{report.startupTrace=worker?await j2Within('snippet-startup-trace',()=>worker.evaluate(()=>({events:globalThis.__vaiwlColdTrace??[],dropped:globalThis.__vaiwlColdTraceDropped??0})),1500):{unavailable:true};}catch{report.startupTrace={unavailable:true,reason:'bounded-read-failed'};}});
+ report.browserVersion=context.browser().version();
  page=await context.newPage();page.on('pageerror',e=>report.errors.push(e.message));page.on('console',m=>{if(m.text().startsWith('SNIPPET_PUBLIC_TRACE '))try{report.transport.push(JSON.parse(m.text().slice('SNIPPET_PUBLIC_TRACE '.length)));}catch{}});
- const C='33333333-3333-4333-8333-333333333333';await page.goto(server.origin+'/c/'+C);await page.waitForFunction(()=>document.querySelectorAll('[data-va-owned]:popover-open').length===2,{},{timeout:15000});const workspace=page.frames().find(f=>f.url()===`chrome-extension://${id}/workspace.html`),sidebar=page.frames().find(f=>f.url()===`chrome-extension://${id}/sidebar.html`);assert(workspace&&sidebar);
+ const C='33333333-3333-4333-8333-333333333333';report.viewport=page.viewportSize();report.viewports=[report.viewport];await page.goto(server.origin+'/c/'+C);
+ await page.waitForFunction(()=>['workspace','sidebar'].every(role=>{const n=document.querySelector('[data-va-owned][id$="_'+role+'"]:not([popover])');return n&&getComputedStyle(n).visibility==='visible'&&getComputedStyle(n).display!=='none'&&n.getBoundingClientRect().width>=180&&n.getBoundingClientRect().height>=96;}),null,{timeout:15000});
+ const workspace=page.frames().find(f=>f.url()===`chrome-extension://${id}/workspace.html`),sidebar=page.frames().find(f=>f.url()===`chrome-extension://${id}/sidebar.html`);assert(workspace&&sidebar);
+ await workspace.locator('.workspace').waitFor({state:'visible',timeout:10000});await sidebar.locator('.sidebar-footer').waitFor({state:'visible',timeout:10000});
+ report.flowSidebar=await page.evaluate(()=>{const slot=document.querySelector('[data-va-sidebar-slot]'),native=document.querySelector('#fixture-native-sections');return {present:!!slot&&slot.parentElement===native&&slot.nextElementSibling?.matches('section[aria-label="Projects"]')===true,nativeProjectVisible:getComputedStyle(native.querySelector('[aria-label="Projects"]')).visibility==='visible',nativeNAVUnmasked:!document.querySelector('[data-va-mask-sidebar]')};});assert(Object.values(report.flowSidebar).every(Boolean));
  for(const frame of [workspace,sidebar])await frame.evaluate(()=>{const send=chrome.runtime.sendMessage.bind(chrome.runtime);chrome.runtime.sendMessage=async message=>{const result=await send(message);console.log('SNIPPET_PUBLIC_TRACE '+JSON.stringify({type:message.type,action:message.action,ok:result?.ok,state:result?.state,reason:result?.reason}));return result;};});
  await page.locator('textarea').fill('UNSENT_SNIPPET_NATIVE_DRAFT');await page.evaluate(()=>{globalThis.snippetOriginalInput=document.querySelector('textarea');const root=document.querySelector('main > #reading');if(!root)throw Error('missing-native-reading');const message=document.createElement('article');message.dataset.messageId='fixture-snippet-message';message.dataset.branchId='fixture-branch';const body=document.createElement('div');body.className='message-body';body.textContent='Offline prefix uniquely selected fixture words suffix.';message.append(body);root.append(message);});
  // Native composer focus legitimately surrendered both extension surfaces.
@@ -70,7 +75,7 @@ const outcome=await runSnippetsLifecycle({report,output,integrityChecks,execute:
  await search.waitFor({state:'visible',timeout:10000});
  assert.equal(await search.inputValue(),'uniquely selected fixture words');
  await match.getByText('uniquely selected fixture words',{exact:true}).waitFor({timeout:10000});
- await workspace.getByRole('button',{name:'关闭派生查找',exact:true}).click();
+ await workspace.getByRole('button',{name:'关闭已知查找',exact:true}).click();
  await workspace.locator(`a[data-ref-id="${C}"]`).first().waitFor({state:'visible',timeout:10000});
  assert.equal(await search.count(),0);await draft();
  await page.getByRole('button',{name:'返回原生阅读',exact:true}).click();

@@ -171,13 +171,13 @@ test('single-role frame renderer reuses navigation without host DOM access',{tim
    const complete=()=>{const q=calls.at(-1)[kind],items=Array.from({length:Math.min(24,50-q.offset)},(_,i)=>({id:'ref'+(q.offset+i),nativeTitle:'Item '+(q.offset+i),displayTitle:'Item '+(q.offset+i),nativeUrl:'https://chatgpt.com/c/ref'+(q.offset+i),membership:'NONE',projectId:null,segment:0}));pending.shift()({...dto,[kind]:{...q,items,total:50,hasMore:q.offset+items.length<50,...(kind==='workingSet'?{currentRefId:null}:{})}});};
    nav.updateFrameProjection(dto);nav.present({kind:kind==='search'?'search-known':'show-working-set'});window.pagerCase={nav,complete,calls};complete();
   },kind);
-  const label=kind==='search'?'显示更多查找结果':'显示更多工作集窗口',pager=page.getByRole('button',{name:label,exact:true});
+  const label=kind==='search'?'显示更多查找结果':'显示更多工作集聊天',pager=page.getByRole('button',{name:label,exact:true});
   await pager.waitFor();await pager.focus();await page.keyboard.press('Enter');
   assert.equal(await pager.getAttribute('aria-disabled'),'true');assert.equal(await pager.evaluate(n=>n.getRootNode().activeElement===n),true);
   await page.keyboard.press('Enter');await page.keyboard.press('Space');assert.equal(await page.evaluate(()=>pagerCase.calls.length),2);
   await page.evaluate(()=>pagerCase.complete());await page.waitForFunction(label=>{const s=pagerCase.nav.roots().workspace.shadow,n=s.querySelector('[aria-label="'+label+'"]');return n&&n.getAttribute('aria-disabled')!=='true'&&s.activeElement===n;},label);
   await page.keyboard.press('Enter');assert.equal(await page.evaluate(kind=>pagerCase.calls.at(-1)[kind].offset,kind),48);
-  const back=kind==='search'?'关闭已知查找':'返回主题视图';await page.getByRole('button',{name:back,exact:true}).focus();await page.evaluate(()=>pagerCase.complete());
+  const back=kind==='search'?'关闭已知查找':'返回工作空间';await page.getByRole('button',{name:back,exact:true}).focus();await page.evaluate(()=>pagerCase.complete());
   await page.waitForFunction(()=>pagerCase.nav.roots().workspace.shadow.querySelector('[data-ref-id="ref48"]'));
   assert.equal(await page.getByRole('button',{name:back,exact:true}).evaluate(n=>n.getRootNode().activeElement===n),true);await page.evaluate(()=>pagerCase.nav.stop());
  }
@@ -383,7 +383,7 @@ test('approved v2.7 sparse workspace, unknown inventory and native actions',{tim
  assert.equal(await page.getByRole('button',{name:'较近的30日',exact:true}).count(),0);assert.equal(await page.getByRole('link',{name:'旧窗口',exact:true}).count(),0);
  assert.equal(await page.getByRole('button',{name:'其他已知聊天',exact:true}).getAttribute('aria-expanded'),'true');await page.getByRole('link',{name:'已入列的新聊天',exact:true}).waitFor();assert.equal(await page.getByRole('link',{name:'已入列的新聊天',exact:true}).getAttribute('href'),'https://chatgpt.com/c/U0');
  await page.getByRole('button',{name:'显示更多其他已知聊天',exact:true}).click();await page.waitForFunction(()=>productCase.nav.roots().workspace.shadow.querySelectorAll('[data-free-list="unknown"] [data-ref-id]').length===17);
- await page.getByRole('button',{name:'展开旧窗口 一个已知项目：原生标题很长时也应完整呈现',exact:true}).click();await page.getByRole('link',{name:'旧窗口',exact:true}).waitFor();
+ await page.getByRole('button',{name:'展开旧聊天 一个已知项目：原生标题很长时也应完整呈现',exact:true}).click();await page.getByRole('link',{name:'旧窗口',exact:true}).waitFor();
  assert.equal(await page.evaluate(()=>productCase.nav.roots().workspace.shadow.querySelectorAll('[data-free-list="unknown"] [data-ref-id]').length),17);
  await page.screenshot({path:resolve(tmpdir(),'vaiwl-v27-formal-desktop.png')});
  await page.setViewportSize({width:360,height:800});await page.waitForTimeout(50);state=await page.evaluate(()=>productCase.read());assert(state.width<=state.viewport);assert(state.scroll<=state.viewport+1);await page.screenshot({path:resolve(tmpdir(),'vaiwl-v27-formal-narrow.png')});
@@ -391,5 +391,5 @@ test('approved v2.7 sparse workspace, unknown inventory and native actions',{tim
  // when the native sidebar cannot safely be replaced.
  await page.evaluate(()=>productCase.nav.updateFrameProjection(productCase.dto));assert.equal(await page.getByRole('button',{name:'其他已知聊天',exact:true}).getAttribute('aria-expanded'),'true');
  await page.getByRole('button',{name:'工作空间设置',exact:true}).click();assert.equal(await page.getByRole('button',{name:'查找已知项目与聊天',exact:true}).count(),1);assert.equal(await page.getByRole('button',{name:'当前工作集',exact:true}).count(),1);
- await page.evaluate(()=>{const c=productCase;c.nav.invalidate();const empty={items:[],total:0,offset:0,limit:5,hasMore:false};c.nav.updateFrameProjection({...c.dto,current:undefined,groups:{...empty,limit:24},entries:{noProject:{...empty,inventoryTotal:0},unknown:{...empty,inventoryTotal:0}}});});await page.getByText('这个区间还没有活跃主题',{exact:true}).waitFor();await page.evaluate(()=>productCase.nav.stop());
+ await page.evaluate(()=>{const c=productCase;c.nav.invalidate();const empty={items:[],total:0,offset:0,limit:5,hasMore:false};c.nav.updateFrameProjection({...c.dto,current:undefined,groups:{...empty,limit:24},entries:{noProject:{...empty,inventoryTotal:0},unknown:{...empty,inventoryTotal:0}}});});await page.getByText('这个区间还没有活跃项目',{exact:true}).waitFor();await page.evaluate(()=>productCase.nav.stop());
 });

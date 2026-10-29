@@ -58,7 +58,7 @@ export function createFlowMountSurface({document:doc,createFrameURL,hasNativeLay
   m.management=observeNativeProjectManagement({document:doc,root:p?.project,isCurrent:()=>mounts.get(m.handle.id)===m&&m.sidebarBinding===p&&sidebarIntact(m),onChanged:m.onManagementChanged});
   if(old)m.onManagementChanged();
  }
- function active(m){return intact(m,m.roles[0])&&validateActiveLayout(m.plan,{workspace:m.roles[0].node,style:m.style,styleText:m.css,exit:m.roles[0].exit,isOwnedSurface:owned,onControls:nodes=>{m.criticalControls=nodes;}});}
+ function active(m){return intact(m,m.roles[0])&&validateActiveLayout(m.plan,{workspace:m.roles[0].node,style:m.style,styleText:m.css,exit:m.roles[0].exit,isOwnedSurface:owned,onControls:(nodes,shadowCandidates)=>{m.criticalControls=nodes;m.criticalShadowCandidates=shadowCandidates;}});}
  function mark(m,node,name){const attr='data-va-flow-'+name,previous=node.getAttribute(attr);if(previous!==null)throw Error('flow-marker-conflict');m.markers.push({node,attr,previous});node.setAttribute(attr,m.handle.id);}
  function restorePendingScroll(m){const s=m.roles[1],p=m.inspection.sidebarPlacement?.scrollPort;if(m.pendingScroll===undefined||!sidebarIntact(m)||!open(s)||s.pendingHeight||nativeLayer())return;const value=m.pendingScroll;if(value!==null)p.scrollTop=value;
   // Keep only the presentation target while the natural content is shorter.
@@ -189,7 +189,7 @@ export function createFlowMountSurface({document:doc,createFrameURL,hasNativeLay
     const checkCritical=()=>{
      criticalFrame=null;if(!mounts.has(id)||!open(workspace))return;
      if(nativeLayer()){hide(m,null,'native-layer');onSurrender({reason:'native-layer'});}
-     else if(!validateCriticalLayout(m.plan,{workspace:workspace.node,nativeControls:m.criticalControls??[]})){hide(m,'workspace','workspace-geometry');onSurrender({role:'workspace',reason:'workspace-geometry'});}
+     else if(!validateCriticalLayout(m.plan,{workspace:workspace.node,nativeControls:m.criticalControls??[],nativeShadowCandidates:m.criticalShadowCandidates??m.plan.nativeShadowCandidates})){hide(m,'workspace','workspace-geometry');onSurrender({role:'workspace',reason:'workspace-geometry'});}
      if(open(workspace))criticalFrame=win.requestAnimationFrame(checkCritical);
     };
     const criticalToggle=()=>{if(criticalFrame!==null)win.cancelAnimationFrame(criticalFrame);criticalFrame=open(workspace)?win.requestAnimationFrame(checkCritical):null;};
@@ -259,7 +259,7 @@ export function createFlowMountSurface({document:doc,createFrameURL,hasNativeLay
    for(const {node,attr} of oldRows)if(node.getAttribute(attr)===handle.id)node.removeAttribute(attr);
    m.markers=m.markers.filter(entry=>!entry.attr.startsWith('data-va-flow-row-'));
    for(const [i,node] of next.flowOrder.entries())mark(m,node,'row-'+i);
-   clearReading(m);m.css=css;m.plan=next;m.nativeViewport=viewport();m.criticalControls=next.nativeControls.map(({node})=>node);m.style.textContent=css;m.observeLayoutTargets?.();
+   clearReading(m);m.css=css;m.plan=next;m.nativeViewport=viewport();m.criticalControls=next.nativeControls.map(({node})=>node);m.criticalShadowCandidates=next.nativeShadowCandidates;m.style.textContent=css;m.observeLayoutTargets?.();
    return inspection;
   },
   hasNativeInputFocus(handle){const m=lookup(handle);return m.plan.composer.contains(doc.activeElement);},

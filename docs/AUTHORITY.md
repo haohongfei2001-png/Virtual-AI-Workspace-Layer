@@ -1,5 +1,16 @@
 # VAIWL：权威、权限与文档职责
 
+## 2026-10-30 终局接管与集中限定授权
+
+用户正式采纳 [终局技术裁决及唯一交接](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16#issuecomment-6503154092)，由新会话在原目录、原分支和 PR16 接任唯一集成 writer。继承候选 `7275d88223a69f4c4675c71c20062a0fc7df59ce` 的方案 B 修正：有限版本化 seam、原生区域内部变化与布局拥有权分离、同 URL root 重建重新授权、多次 Worker 恢复受跨代预算限制。其具体合同替代历史全子树 paint/identity 冻结和整页一次恢复；权限、数据与原生保护不放宽。沿原 A–G 执行，不另立计划，完成全部可执行内部质量门后才进行集中实机验收。
+
+用户本会话明确批准两项限定增量：
+
+- 仅本人主动点击“保存当前选区”时，读取当前选中文字与必要定位元数据，存入已确认的本地空间。不后台正文扫描、不调用内部 API、不上传；现有 scope、reading proof、selection epoch、hash、截止与取消边界继续成立。授权不等于当前真实来源合同已获验证。
+- 候选通过内部关键质量门后，允许一次集中 Mac 终验：核实原 Profile/ID，完整备份后同 ID 更新与激活；无正文宿主结构、已有页面导航/模型工具、未发送合成输入、刷新锁定与旧本地资产恢复、一次可逆停用/启用。需要本人确认/物理操作的部分集中列明。不发送、不切账户、不删除、不上传文件，不卸载原 Profile。
+
+普通实现、测试、非强制同步持续自主执行。真实静默服务器身份仍需可靠且获准的来源，不由本地 UUID 认证；merge、部署、收费和公开发布继续需要独立许可。
+
 ## 2026-10-27 双 Pro 最终裁决：正式文档流 Host（方案 B）
 
 用户正式采纳 [产品 F-01—F-08](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16#issuecomment-6437805652) 和 [Host 方案 B](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16#issuecomment-6437829589)。沿原 C1—C5、唯一分支/PR16 实施；不是新计划。

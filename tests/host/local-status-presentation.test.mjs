@@ -12,10 +12,14 @@ async function render(initial,browserLocal=false,localState={ok:true},boot=null)
  let current=initial;const calls=[],node={textContent:''};
  const chrome={tabs:{query:async args=>{calls.push(['query',args]);return [{id:7,get title(){throw Error('PRIVATE_TITLE');},get url(){throw Error('PRIVATE_URL');}}];},sendMessage:async(...args)=>{calls.push(['send',...args]);return args[1]?.type==='HOST_LOCAL_LAYOUT'?{v:1,shape:null}:current;}}};
  const elements=[];
- const document={getElementById:id=>{assert.equal(id,'status');return node;},body:{append:e=>elements.push(e)},createElement:tag=>({tag,textContent:'',children:[],append(...nodes){this.children.push(...nodes);},listeners:{},setAttribute(){},addEventListener(type,fn){this.listeners[type]=fn;}})};
+ const make=tag=>({tag,textContent:'',children:[],append(...nodes){this.children.push(...nodes);},listeners:{},setAttribute(){},addEventListener(type,fn){this.listeners[type]=fn;}});
+ const details=make('details'),summary=make('summary'),buildKind=make('p');details.id='diagnostic-details';summary.textContent='诊断详情';buildKind.id='build-kind';buildKind.textContent='构建类别未标定，请先验证安装包。';details.append(summary,buildKind);elements.push(details);
+ const find=(nodes,id)=>nodes.flatMap(e=>[e,...e.children.flatMap(c=>[c,...c.children??[]])]).find(e=>e.id===id);
+ const byId=id=>id==='status'?node:find(elements,id);
+ const document={getElementById:byId,body:{append:e=>{const old=elements.indexOf(e);if(old>=0)elements.splice(old,1);elements.push(e);}},createElement:make};
  chrome.runtime={sendMessage:async message=>{calls.push(['control',message]);return localState;}};
  await new AsyncFunction('HOST_CONFIG','readActiveLocalStatus','readActiveLocalLayout','readLocalBoot','validLocalPipeline','chrome','document',source.slice(importLine.length))({browserLocal},readActiveLocalStatus,readActiveLocalLayout,async()=>boot,validLocalPipeline,chrome,document);
- return {calls,node,elements,change:value=>{current=value;}};
+ return {calls,node,elements,byId,change:value=>{current=value;}};
 }
 const drain=async()=>{for(let i=0;i<30;i++)await Promise.resolve();};
 function assertSnapshotMeaning(text){
@@ -42,8 +46,8 @@ test('blocked Browser-Local popup explains frame failure and keeps locking avail
  assert.equal(unlock.disabled,true);assert.equal(lock.disabled,false);
 });
 
-for(const reason of projectSurfaceFailureReasons)test('Project preparation stage is visible without page values: '+reason,async()=>{
- const f=await render({v:1,state:'layout-project-'+reason});assert.match(f.node.textContent,/Project 页面布局尚未就绪/);assert(f.node.textContent.includes('（'+reason+'）'));assert(!f.node.textContent.includes('状态不可用'));
+for(const reason of projectSurfaceFailureReasons)test('Project preparation stays understandable and its fixed code is in diagnostics: '+reason,async()=>{
+ const f=await render({v:1,state:'layout-project-'+reason});assert.match(f.node.textContent,/项目页面布局尚未就绪/);assert(!f.node.textContent.includes(reason));assert(f.byId('status-code').textContent.includes('layout-project-'+reason));assert(!f.node.textContent.includes('状态不可用'));
 });
 
 for(const [mode,exists,expected] of [['personal',true,/已解锁.*无需重复确认/],['locked',true,/旧私人数据已锁定.*本人确认/],['locked',false,/即时视图.*确认后才绑定/]])test('actual Browser-Local popup separates surface readiness from '+mode+' binding with descriptor '+exists,async()=>{
@@ -75,7 +79,7 @@ test('history surface failure reports actual personal binding without asking to 
 
 for(const reason of ['native-flow-uncovered-branch','native-flow-check-failed'])test('flow preflight has a fixed local reason without requesting another unlock: '+reason,async()=>{
  const f=await render({v:1,state:'surface-'+reason},true,{ok:true,mode:'locked',exists:true});
- assert(f.node.textContent.includes('（'+reason+'）'));
+ assert(!f.node.textContent.includes(reason));assert(f.byId('status-code').textContent.includes('surface-'+reason));
  assert.match(f.elements.filter(e=>e.tag==='p').at(-1).textContent,/旧私人数据已锁定/);
  assert(!f.calls.some(c=>c[0]==='control'&&c[1].action==='unlock'));
 });
@@ -83,6 +87,8 @@ for(const reason of ['native-flow-uncovered-branch','native-flow-check-failed'])
 test('engineering diagnostics are closed and separate from local confirmation controls',async()=>{
  const f=await render({v:1,state:'reading'},true,{ok:true,mode:'locked',exists:true});
  const detail=f.elements.find(e=>e.id==='diagnostic-details');assert(detail);assert.notEqual(detail.open,true);assert.equal(detail.children[0].textContent,'诊断详情');
+ assert(detail.children.includes(f.byId('runtime-build')));assert(detail.children.includes(f.byId('build-kind')));assert.match(html,/<details id="diagnostic-details"><summary>诊断详情<\/summary><p id="build-kind"/);
+ assert(!f.node.textContent.includes('构建'));assert(!f.elements.some(e=>e.id==='runtime-build'||e.id==='build-kind'));
  assert(f.elements.some(e=>e.tag==='button'&&e.textContent.includes('确认当前账号')));assert(!detail.children.some(e=>e.tag==='button'&&e.textContent.includes('确认当前账号')));
 });
 
@@ -90,19 +96,19 @@ for(const state of initializationFailureStates)test('post-authorization initiali
  const f=await render({v:1,state});
  assert.match(f.node.textContent,/已通过本次工作空间授权检查/);
  assert.match(f.node.textContent,/无需重复确认或重装扩展/);
- assert(f.node.textContent.includes(state));
+ assert(!f.node.textContent.includes(state));assert(f.byId('status-code').textContent.includes(state));
  assert.doesNotMatch(f.node.textContent,/旧私人数据保持锁定|已解锁/);
  assert.equal(f.calls.length,2);
 });
-test('existing current-document build receipt is visible without expanding diagnostics or new requests',async()=>{
+test('existing current-document build receipt stays in closed diagnostics without new requests',async()=>{
  const boot={v:1,stage:'module-loaded',build:'a'.repeat(64)};
  const f=await render({v:1,state:'authorization-failed'},false,{},boot);await drain();
- const note=f.elements.find(e=>e.id==='runtime-build');
+ const note=f.byId('runtime-build');assert(f.byId('diagnostic-details').children.includes(note));assert.notEqual(f.byId('diagnostic-details').open,true);assert(!f.elements.includes(note));
  assert.equal(note.tag,'p');assert(note.textContent.includes(boot.build));assert(note.textContent.includes(boot.stage));
  assert.match(note.textContent,/不代表产品验收通过/);assert.equal(f.calls.length,2);
 });
 test('missing runtime receipt does not infer activated build from disk or user Reload',async()=>{
  const f=await render({v:1,state:'authorization-failed'});await drain();
- assert.match(f.elements.find(e=>e.id==='runtime-build').textContent,/未核实.*不能用磁盘文件推定运行版本/);
+ assert.match(f.byId('runtime-build').textContent,/未核实.*不能用磁盘文件推定运行版本/);
  assert.equal(f.calls.length,2);
 });

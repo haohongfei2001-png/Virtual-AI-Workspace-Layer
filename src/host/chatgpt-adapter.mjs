@@ -43,7 +43,17 @@ export function createChatGPTAdapter({document,urlPolicy=createURLPolicy(),profi
  if(nativeLayout.gapPolicy!==undefined&&(nativeLayout.gapPolicy!=='first-empty-header-gap'||nativeLayout.returnPlacement!=='header-gap'||!['transparent-containers','plain-containers'].includes(nativeLayout.headerLayout)))throw Error('invalid-native-layout-profile');
  let returnControl=null,returnGeometryStage=null;
  const gapMode=nativeLayout.returnPlacement==='header-gap';
- const returnGeometry=(history,header,readingRect,composer,slot)=>gapMode?nativeReturnGapRect({document,header,slot,hitRoot:one(nativeLayout.returnHitRoot),headerLayout:nativeLayout.headerLayout??null,gapPolicy:nativeLayout.gapPolicy??null,onReject:stage=>{returnGeometryStage=stage;},...(nativeLayout.readingViewport?{readingRoot:one(nativeLayout.reading),readingViewport:one(nativeLayout.readingViewport),viewportFocus:nativeLayout.viewportFocus??null,viewportMarkers:nativeLayout.viewportMarkers??null,isOwnedMask,isOwnedSurface}:{}),button:returnControl,excluded:[history,composer].filter(Boolean),excludedRects:[readingRect]}):nativeReturnSlotRect({document,header,slot,excluded:[history,composer].filter(Boolean),excludedRects:[readingRect]});
+ function returnExclusions(history,composer){
+  // A native responsive drawer can remove optional history from layout. Prove
+  // display:none on its ancestor chain; a zero box or visibility:hidden alone
+  // does not prove that descendants cannot cover the return control.
+  if(history?.isConnected&&history.ownerDocument===document){
+   let node=history,depth=0;
+   for(;node&&depth++<128;node=node.parentElement)if(document.defaultView.getComputedStyle(node).display==='none')return [composer];
+  }
+  return [history,composer].filter(Boolean);
+ }
+ const returnGeometry=(history,header,readingRect,composer,slot)=>gapMode?nativeReturnGapRect({document,header,slot,hitRoot:one(nativeLayout.returnHitRoot),headerLayout:nativeLayout.headerLayout??null,gapPolicy:nativeLayout.gapPolicy??null,onReject:stage=>{returnGeometryStage=stage;},...(nativeLayout.readingViewport?{readingRoot:one(nativeLayout.reading),readingViewport:one(nativeLayout.readingViewport),viewportFocus:nativeLayout.viewportFocus??null,viewportMarkers:nativeLayout.viewportMarkers??null,isOwnedMask,isOwnedSurface}:{}),button:returnControl,excluded:returnExclusions(history,composer),excludedRects:[readingRect]}):nativeReturnSlotRect({document,header,slot,excluded:returnExclusions(history,composer),excludedRects:[readingRect]});
 
  inputRisk=inputRisk??createNativeInputRisk({document,profile});
  let binding=null,emit=null,discovery=null,bodyDiscovery=null,actions=null,observer=null,stopped=true,epoch=0,seq=0,url='',busy=false,dirty=false,queued=false,generation=0,last=new Map(),regionEpoch=0,priorNodes=[],failedKey=new Map(),retryTimer=null,pausedSurface=null,sendObserver=null,acceptedBody=null,snippets=null,snippetReady=()=>false,intents=[],sendGap=null,sendGapBlocked=false,surfaceParts=[],surfaceKey=null,surfaceSequence=null,surfaceWanted=true,surfaceScanning=false,surfaceCursor=null,surfacePage=0,surfacePageKey=null,surfaceEpoch=0,surfaceSnapshotEpoch=0,surfaceRetryWanted=false;const surfaceAccepted=new Map(),surfaceFailed=new Map();

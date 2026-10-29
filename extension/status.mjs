@@ -5,14 +5,15 @@ const messages={'foreground-failed':'本次检查：前台会话复核未通过�
 let localFailure=null,localTarget=null,bootTarget=null;const state=await readActiveLocalStatus({tabs:chrome.tabs,webNavigation:chrome.webNavigation,onTarget:t=>{localTarget=t;},onProbeTarget:t=>{bootTarget=t;},onFailure:code=>{localFailure=code;}});
 const layoutRegionNames={header:'原生标题栏',reading:'独立阅读区',composer:'原生输入区',navigationSlot:'返回入口区域',historyList:'原生历史列表',returnHitRoot:'页面内容容器',readingViewport:'阅读滚动区域'};
 const missing=/^layout-(missing|ambiguous)-(header|reading|composer|navigationSlot|historyList|returnHitRoot|readingViewport)$/.exec(state);
-const layoutMessage=missing?'本次检查：布局未就绪，'+layoutRegionNames[missing[2]]+(missing[1]==='missing'?'尚未找到。':'存在多个候选。')+'原生页面保持可用；本地空间状态见下方。':state.startsWith('layout-project-')?'本次检查：Project 页面布局尚未就绪（'+state.slice('layout-project-'.length)+'），增强界面未挂载；原生页面和草稿保持不变。':state.startsWith('layout-history-')?'本次检查：原生近期列表尚未就绪（'+state.slice(15)+'），原生页面保持可用。':state.startsWith('layout-sidebar-')?'本次检查：历史边界未就绪（'+state.slice(15)+'），原生页面保持可用。':state.startsWith('layout-geometry-')?'本次检查：布局安全检查未通过（'+state.slice('layout-geometry-'.length)+'），增强界面未挂载；原生页面保持可用。':state==='layout-check-failed'?'本次检查：布局准备未完成；原生页面保持可用。':null;
+const layoutMessage=missing?'本次检查：布局未就绪，'+layoutRegionNames[missing[2]]+(missing[1]==='missing'?'尚未找到。':'存在多个候选。')+'原生页面保持可用；本地空间状态见下方。':state.startsWith('layout-project-')?'本次检查：项目页面布局尚未就绪，增强界面未挂载；原生页面和草稿保持不变。':state.startsWith('layout-history-')?'本次检查：原生近期列表尚未就绪，原生页面保持可用。':state.startsWith('layout-sidebar-')?'本次检查：历史列表布局尚未就绪，原生页面保持可用。':state.startsWith('layout-geometry-')?'本次检查：布局安全检查未通过，增强界面未挂载；原生页面保持可用。':state==='layout-check-failed'?'本次检查：布局准备未完成；原生页面保持可用。':null;
 const initializationLabels={preparation:'会话初始化',candidates:'导航候选初始化',snippets:'片段初始化',navigation:'原生导航初始化',surface:'界面承载初始化',controller:'界面控制器初始化'};
 const initialization=/^initialization-(preparation|candidates|snippets|navigation|surface|controller)-failed$/.exec(state);
-const initializationMessage=initialization?'本次检查：已通过本次工作空间授权检查，但'+initializationLabels[initialization[1]]+'未完成（'+state+'）。这不是账号确认提示；无需重复确认或重装扩展。原生页面保持可用。':null;
-document.getElementById('status').textContent=messages[state]??initializationMessage??layoutMessage??(state.startsWith('foreground-')?'本次检查：前台连续性检查未通过（'+state.slice(11)+'），私人界面已撤回，原生页面保持可用。':null)??(state.startsWith('hello-')?'本次检查：初始文档连接未完成（'+state.slice(6)+'）。旧数据保持锁定；未启动界面或读取内部接口。':null)??(state.startsWith('surface-')?'本次检查：挂载检查未通过（'+state.slice(8)+'），原生页面保持可用；本地空间状态见下方。':'本次检查：状态不可用。');
+const initializationMessage=initialization?'本次检查：已通过本次工作空间授权检查，但'+initializationLabels[initialization[1]]+'未完成。这不是账号确认提示；无需重复确认或重装扩展。原生页面保持可用。':null;
+document.getElementById('status').textContent=messages[state]??initializationMessage??layoutMessage??(state.startsWith('foreground-')?'本次检查：前台连续性检查未通过，私人界面已撤回，原生页面保持可用。':null)??(state.startsWith('hello-')?'本次检查：初始文档连接未完成。旧数据保持锁定；原生页面保持可用。':null)??(state.startsWith('surface-')?'本次检查：增强界面暂不可用，原生页面保持可用；本地空间状态见下方。':'本次检查：状态不可用。');
 if(state==='unavailable')document.getElementById('status').textContent+=' 本地检查：'+({timeout:'查询超时。','tab-unavailable':'当前标签不可用。','invalid-reply':'未取得有效本地回复。','transport-error':'内容脚本通信不可用。','tab-query-failed':'当前标签查询失败。','document-query-failed':'当前文档查询失败。','document-unavailable':'当前文档尚未激活。','document-changed':'检查期间文档发生变化；未将旧回复用于新页面。','receiver-unavailable':'本次发送时内容脚本接收端不存在。','receiver-disconnected':'接收端在回复前断开。','tab-closed':'本次发送时标签已关闭。'}[localFailure]??'内容脚本已响应，但会话不可用。');
-const diagnostics=document.createElement('details'),diagnosticHeading=document.createElement('summary');diagnostics.id='diagnostic-details';diagnosticHeading.textContent='诊断详情';diagnostics.append(diagnosticHeading);document.body.append(diagnostics);
-const runtimeBuild=document.createElement('p');runtimeBuild.id='runtime-build';runtimeBuild.className='note';runtimeBuild.textContent='运行构建：正在核对当前文档回执…';document.body.append(runtimeBuild);
+const diagnostics=document.getElementById('diagnostic-details');
+const statusCode=document.createElement('p');statusCode.id='status-code';statusCode.className='note';statusCode.textContent='本次状态码：'+state+(localFailure?'；本地检查：'+localFailure:'');diagnostics.append(statusCode);
+const runtimeBuild=document.createElement('p');runtimeBuild.id='runtime-build';runtimeBuild.className='note';runtimeBuild.textContent='运行构建：正在核对当前文档回执…';diagnostics.append(runtimeBuild);
 const bootReceipt=readLocalBoot({tabs:chrome.tabs,webNavigation:chrome.webNavigation,target:bootTarget});
 void bootReceipt.then(boot=>{
  runtimeBuild.textContent=boot?'当前文档运行构建：'+boot.build+'；启动阶段：'+boot.stage+'。此回执不代表产品验收通过。':'运行构建：未核实。未取得与当前文档一致的有效启动回执；不能用磁盘文件推定运行版本。';
@@ -45,10 +46,10 @@ if(HOST_CONFIG.browserLocal){
   result.textContent='正在检查当前文档的本地空间状态…';
   let timer;try{
    const r=await Promise.race([chrome.runtime.sendMessage({v:1,type:'HOST_LOCAL_SPACE',action:'status'}),new Promise(resolve=>{timer=setTimeout(()=>resolve(null),1000);})]);
-   result.textContent=r?.ok===true&&typeof r.exists==='boolean'&&r.mode==='personal'?'当前文档的本地空间已解锁；本次无需重复确认。':r?.ok===true&&typeof r.exists==='boolean'&&r.mode==='locked'?(r.exists?'旧私人数据已锁定；当前仅显示即时视图。恢复旧资料需要本人确认当前账号与 Workspace。':'当前仅显示即时视图；本人确认后才绑定并保存本地个人空间。'):'当前文档的本地绑定状态未能确认；不会据此解锁旧数据。';
+   result.textContent=r?.ok===true&&typeof r.exists==='boolean'&&r.mode==='personal'?'当前文档的本地空间已解锁；本次无需重复确认。':r?.ok===true&&typeof r.exists==='boolean'&&r.mode==='locked'?(r.exists?'旧私人数据已锁定；当前仅显示即时视图。恢复旧资料需要本人确认当前账号与工作空间。':'当前仅显示即时视图；本人确认后才绑定并保存本地个人空间。'):'当前文档的本地绑定状态未能确认；不会据此解锁旧数据。';
   }catch{result.textContent='当前文档的本地绑定状态未能确认；不会据此解锁旧数据。';}finally{clearTimeout(timer);}
  }
- const unlock=document.createElement('button');unlock.textContent='确认当前账号与 Workspace，解锁本地空间';unlock.disabled=state==='frame-blocked';document.body.append(unlock);
+ const unlock=document.createElement('button');unlock.textContent='确认当前账号与工作空间，解锁本地空间';unlock.disabled=state==='frame-blocked';document.body.append(unlock);
  const lock=document.createElement('button');lock.textContent='锁定本地空间';document.body.append(lock);
  const perform=async action=>{pipelineCurrent=false;unlock.disabled=true;lock.disabled=true;try{const r=await chrome.runtime.sendMessage({v:1,type:'HOST_LOCAL_SPACE',action});result.textContent=r?.ok?(action==='unlock'?'本地空间已绑定到当前文档。':'旧数据已锁定；关闭面板后可继续即时查看。'):'未能绑定；原生页面与旧数据保持不变。';}catch{result.textContent='连接不可用，未解锁旧数据。';}finally{unlock.disabled=state==='frame-blocked';lock.disabled=false;}};
  unlock.addEventListener('click',()=>void perform('unlock'));lock.addEventListener('click',()=>void perform('lock'));

@@ -19,7 +19,13 @@ try{
   slot.style.top='510px';const movedRejected=returnRejected(adapter.inspect());slot.style.top='8px';slot.style.visibility='hidden';const hiddenRejected=returnRejected(adapter.inspect());slot.style.visibility='visible';
   const obstacle=document.createElement('button');obstacle.style.cssText='position:absolute;left:14px;top:14px;width:2px;height:2px;padding:0;border:0';header.append(obstacle);
   const r=slot.getBoundingClientRect(),sampleHitsClear=[[1,1],[35,1],[1,35],[35,35],[18,18]].every(([x,y])=>document.elementFromPoint(r.x+x,r.y+y)===slot),smallSiblingRejected=returnRejected(adapter.inspect());obstacle.remove();
-  const restored=returnAvailable(adapter.inspect());adapter.stop();return {initial:returnAvailable(first),movedRejected,hiddenRejected,sampleHitsClear,smallSiblingRejected,restored,dormantGeometryOnly:adapter.isReturnSlotCurrent(first)&&!adapter.inspect().ok,draftPreserved:document.querySelector('textarea').value==='fixture draft'};
+  const restored=returnAvailable(adapter.inspect());
+  const history=document.querySelector('#history'),drawer=document.createElement('aside');history.before(drawer);drawer.append(history);drawer.style.display='none';
+  const collapsedHistoryReturn=returnAvailable(adapter.inspect());
+  const cover=document.createElement('button');cover.style.cssText='position:fixed;left:228px;top:8px;width:36px;height:36px;z-index:100';document.body.append(cover);
+  const collapsedHistoryStillRejectsCover=returnRejected(adapter.inspect());cover.remove();drawer.style.display='block';
+  const expandedHistoryReturn=returnAvailable(adapter.inspect());
+  adapter.stop();return {collapsedHistoryReturn,collapsedHistoryStillRejectsCover,expandedHistoryReturn,initial:returnAvailable(first),movedRejected,hiddenRejected,sampleHitsClear,smallSiblingRejected,restored,dormantGeometryOnly:adapter.isReturnSlotCurrent(first)&&!adapter.inspect().ok,draftPreserved:document.querySelector('textarea').value==='fixture draft'};
  });
  assert(Object.values(result).every(v=>v===true),JSON.stringify(result));console.log(JSON.stringify({result:'PASS_WEB_MECHANISM_ONLY',checks:result}));
 }finally{await browser.close();}

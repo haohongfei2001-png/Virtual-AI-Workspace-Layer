@@ -19,19 +19,19 @@ const card=(f,id)=>f.pane().querySelectorAll('[data-theme-id]').find(n=>n.getAtt
 const control=(f,id,label)=>card(f,id).querySelectorAll('button').find(n=>n.getAttribute('aria-label')===label);
 const rows=(f,id,kind)=>card(f,id).querySelectorAll('[data-ref-id]').filter(n=>n.getAttribute('data-ref-id').startsWith(id+'_'+kind+'_'));
 function setup(t){const calls=[];let hold=null,stamp='initial';const f=fixture('workspace',q=>{calls.push(structuredClone(q));return hold?hold(q):response(q,'scopeA',stamp);});t.after(()=>f.nav.stop());f.nav.updateFrameProjection(response());return {f,calls,setStamp:v=>{stamp=v;},setHold:v=>{hold=v;}};}
-async function expandRecent(f,id){control(f,id,'显示更多近期窗口').click();await tick();assert.equal(rows(f,id,'current').length,17);}
+async function expandRecent(f,id){control(f,id,'显示更多近期聊天').click();await tick();assert.equal(rows(f,id,'current').length,17);}
 test('opening old five retains all seventeen recent rows from the same fresh response',async t=>{
- const {f,calls,setStamp}=setup(t);await expandRecent(f,'P2');setStamp('after-old');control(f,'P2','展开旧窗口 P2').click();await tick();assert.equal(rows(f,'P2','old').length,5);assert.equal(rows(f,'P2','current').length,17);
+ const {f,calls,setStamp}=setup(t);await expandRecent(f,'P2');setStamp('after-old');control(f,'P2','展开旧聊天 P2').click();await tick();assert.equal(rows(f,'P2','old').length,5);assert.equal(rows(f,'P2','current').length,17);
  assert(rows(f,'P2','current').every(n=>n.querySelector('.window-title').textContent.startsWith('after-old')),'retained capacity must be freshly materialized, not cached rows');assert(calls.at(-1).rowWindows.some(w=>w.groupId==='P2'&&w.list==='current'&&w.rowLimit===17));
 });
 test('another Project expansion and reading return preserve both earlier visible windows',async t=>{
- const {f,setStamp}=setup(t);await expandRecent(f,'P2');control(f,'P2','展开旧窗口 P2').click();await tick();setStamp('after-other');await expandRecent(f,'P1');assert.equal(rows(f,'P2','current').length,17);assert.equal(rows(f,'P2','old').length,5);assert(rows(f,'P2','current').every(n=>n.querySelector('.window-title').textContent.startsWith('after-other')));
+ const {f,setStamp}=setup(t);await expandRecent(f,'P2');control(f,'P2','展开旧聊天 P2').click();await tick();setStamp('after-other');await expandRecent(f,'P1');assert.equal(rows(f,'P2','current').length,17);assert.equal(rows(f,'P2','old').length,5);assert(rows(f,'P2','current').every(n=>n.querySelector('.window-title').textContent.startsWith('after-other')));
  f.nav.enterReading();f.nav.showWorkspace();await tick();assert.equal(rows(f,'P2','current').length,17);assert.equal(rows(f,'P2','old').length,5);assert.equal(rows(f,'P1','current').length,17);
 });
 test('scope replacement rejects delayed old windows without mixing old rows or carrying their capacity',async t=>{
- const {f,calls,setHold}=setup(t);await expandRecent(f,'P2');let release;setHold(q=>new Promise(resolve=>{release=()=>resolve(response(q,'scopeA','late-A'));}));control(f,'P2','展开旧窗口 P2').click();await tick();
+ const {f,calls,setHold}=setup(t);await expandRecent(f,'P2');let release;setHold(q=>new Promise(resolve=>{release=()=>resolve(response(q,'scopeA','late-A'));}));control(f,'P2','展开旧聊天 P2').click();await tick();
  f.nav.updateFrameProjection(response({},'scopeB','new-B'));release();await tick();assert.equal(rows(f,'P2','current').length,5);assert.equal(rows(f,'P2','old').length,0);assert(rows(f,'P2','current').every(n=>n.querySelector('.window-title').textContent.startsWith('new-B')));
- setHold(()=>null);control(f,'P1','显示更多近期窗口').click();await tick();assert(!(calls.at(-1).rowWindows??[]).some(w=>w.groupId==='P2'&&w.list==='current'&&w.rowLimit===17));
+ setHold(()=>null);control(f,'P1','显示更多近期聊天').click();await tick();assert(!(calls.at(-1).rowWindows??[]).some(w=>w.groupId==='P2'&&w.list==='current'&&w.rowLimit===17));
 });
 
 
@@ -52,10 +52,10 @@ test('successful paged five fallback survives another list then preserves next a
   if(value.selection&&q.groupId==='P2'&&q.list==='current'&&(fallback||q.rowWindows?.some(w=>w.groupId==='P2'&&w.list==='current'&&w.paged)))value.selection.paged=true;
   return value;
  });t.after(()=>f.nav.stop());f.nav.updateFrameProjection(response());
- control(f,'P2','显示更多近期窗口').click();await tick();assert.equal(rows(f,'P2','current').length,5);assert.equal(control(f,'P2','显示更多近期窗口').textContent,'下一页');
- control(f,'P2','展开旧窗口 P2').click();await tick();assert.equal(control(f,'P2','显示更多近期窗口').textContent,'下一页');assert(calls.at(-1).rowWindows.some(w=>w.groupId==='P2'&&w.list==='current'&&w.paged===true&&w.rowLimit===5));
- control(f,'P2','显示更多近期窗口').click();await tick();assert.equal(calls.at(-1).rowOffset,5);assert.equal(calls.at(-1).rowLimit,5);assert.equal(rows(f,'P2','current')[0].getAttribute('data-ref-id'),'P2_current_5');
- control(f,'P2','返回前页 P2').click();await tick();assert.equal(calls.at(-1).rowOffset,0);assert.equal(calls.at(-1).rowLimit,5);assert.equal(control(f,'P2','显示更多近期窗口').textContent,'下一页');assert.equal(rows(f,'P2','current')[0].getAttribute('data-ref-id'),'P2_current_0');
+ control(f,'P2','显示更多近期聊天').click();await tick();assert.equal(rows(f,'P2','current').length,5);assert.equal(control(f,'P2','显示更多近期聊天').textContent,'下一页');
+ control(f,'P2','展开旧聊天 P2').click();await tick();assert.equal(control(f,'P2','显示更多近期聊天').textContent,'下一页');assert(calls.at(-1).rowWindows.some(w=>w.groupId==='P2'&&w.list==='current'&&w.paged===true&&w.rowLimit===5));
+ control(f,'P2','显示更多近期聊天').click();await tick();assert.equal(calls.at(-1).rowOffset,5);assert.equal(calls.at(-1).rowLimit,5);assert.equal(rows(f,'P2','current')[0].getAttribute('data-ref-id'),'P2_current_5');
+ control(f,'P2','返回前页 P2').click();await tick();assert.equal(calls.at(-1).rowOffset,0);assert.equal(calls.at(-1).rowLimit,5);assert.equal(control(f,'P2','显示更多近期聊天').textContent,'下一页');assert.equal(rows(f,'P2','current')[0].getAttribute('data-ref-id'),'P2_current_0');
 });
 
 // Search/workset pages deliberately omit unrelated expanded rows. Reading may
@@ -77,7 +77,7 @@ for(const mode of ['search','workingSet'])for(const background of [false,true])t
  if(background)f.nav.updateFrameProjection(response({},'scopeA','background'));
  stamp='returned';const beforeReturn=calls.length;assert.equal(f.nav.workspaceEntered(),true);await tick();
  assert.equal(calls.length,beforeReturn,'four-square return must not reset the special-page query');
- const closeLabel=mode==='search'?'关闭已知查找':'返回主题视图';assert(f.button(closeLabel),'return retains the special-page exit');
+ const closeLabel=mode==='search'?'关闭已知查找':'返回工作空间';assert(f.button(closeLabel),'return retains the special-page exit');
  if(mode==='search')assert.equal(f.pane().querySelector('input').value,'specific title');
  if(background){
   const fresh=response(specialQuery,'scopeA','fresh-special');const items=[{...row('P2_current_0'),nativeTitle:'fresh returned result',displayTitle:'fresh returned result'}];
@@ -107,8 +107,8 @@ test('special-page return still accepts the existing byte-bounded five-row pagin
   return response(effective);
  });t.after(()=>f.nav.stop());f.nav.updateFrameProjection(response());await expandRecent(f,'P2');f.nav.present({kind:'search-known'});await tick();f.nav.enterReading();f.nav.workspaceEntered();await tick();
  f.button('关闭已知查找').click();await tick();
- assert.equal(rows(f,'P2','current').length,5);assert.equal(control(f,'P2','显示更多近期窗口').textContent,'下一页');
- control(f,'P2','展开旧窗口 P2').click();await tick();assert.equal(calls.at(-1).rowWindows[0].rowLimit,5);assert.equal(calls.at(-1).rowWindows[0].paged,true);
+ assert.equal(rows(f,'P2','current').length,5);assert.equal(control(f,'P2','显示更多近期聊天').textContent,'下一页');
+ control(f,'P2','展开旧聊天 P2').click();await tick();assert.equal(calls.at(-1).rowWindows[0].rowLimit,5);assert.equal(calls.at(-1).rowWindows[0].paged,true);
 });
 
 test('current Project outside the page is expanded with members and explicit collapse survives fresh DTOs',async t=>{
@@ -135,8 +135,8 @@ for(const paged of [false,true])test(`pinned current Project retains its fresh m
  };
  const f=fixture('sidebar',q=>{calls.push(structuredClone(q));return owner(q);});t.after(()=>f.nav.stop());f.nav.updateFrameProjection(owner({}));
  const memberRows=()=>f.pane().querySelectorAll('[data-ref-id]').filter(n=>n.getAttribute('data-ref-id').startsWith('P2_current_'));
- f.button('显示更多近期窗口').click();await tick();
- if(paged){assert.equal(f.button('显示更多近期窗口').textContent,'下一页');f.button('显示更多近期窗口').click();await tick();}
+ f.button('显示更多近期聊天').click();await tick();
+ if(paged){assert.equal(f.button('显示更多近期聊天').textContent,'下一页');f.button('显示更多近期聊天').click();await tick();}
  const limit=paged?5:17,offset=paged?5:0;
  assert.equal(memberRows().length,limit);
  stamp='next-project-page';f.button('显示更多项目').click();await tick();

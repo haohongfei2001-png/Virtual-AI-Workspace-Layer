@@ -89,7 +89,7 @@ test('a project with no known displayable members explains discovery without cla
 });
 for(const kind of ['current','old','unknown'])test('known '+kind+' members never become a discovery-empty message after pagination or collapse',t=>{
  const f=fixture();t.after(()=>f.nav.stop());const {dto,group}=memberState();group.memberCount=7;group.lists[kind]=page([],7,7,5);f.nav.updateFrameProjection(dto);
- assert.equal(f.pane().querySelector('.members-empty'),null);if(kind==='old')assert(f.button('展开旧窗口 '+group.name),'collapsed old members remain known');else assert(f.button('返回前页 '+group.name),'an exhausted page retains its previous-page action');
+ assert.equal(f.pane().querySelector('.members-empty'),null);if(kind==='old')assert(f.button('展开旧聊天 '+group.name),'collapsed old members remain known');else assert(f.button('返回前页 '+group.name),'an exhausted page retains its previous-page action');
 });
 test('a known count with filtered rows, an unknown count or an out-of-page current member does not claim no members were found',t=>{
  const f=fixture();t.after(()=>f.nav.stop());const {dto,group}=memberState();

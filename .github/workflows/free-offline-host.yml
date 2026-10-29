@@ -69,7 +69,16 @@ jobs:
         if: ${{ !cancelled() && github.event_name == 'push' }}
         run: |
           node tests/host/document-flow-browser.mjs
+          node tests/host/document-flow-boundary-browser.mjs "$RUNNER_TEMP/flow-boundary.json"
+          node tests/host/document-flow-boundary-mv3.mjs "$RUNNER_TEMP/flow-boundary-mv3.json"
+          node tests/host/terminal-delivery-mv3.mjs "$RUNNER_TEMP/terminal-delivery.json" all
           node tests/host/browser-local-mv3.mjs --flow-only
+      - name: Preserve current flow boundary and recovery results
+        if: ${{ always() && github.event_name == 'push' }}
+        run: |
+          for name in flow-boundary flow-boundary-mv3 terminal-delivery; do
+            test ! -f "$RUNNER_TEMP/$name.json" || cat "$RUNNER_TEMP/$name.json"
+          done
       - name: Actual packaged C2 conversation slice
         if: ${{ !cancelled() && github.event_name == 'push' }}
         run: |

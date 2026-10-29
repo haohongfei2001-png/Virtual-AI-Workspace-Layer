@@ -4,11 +4,57 @@ import {observedDesktopHTML} from './fixtures/observed-desktop.mjs';
 import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';
 import {chromium} from '../b1/tooling/node_modules/playwright/index.mjs';
+const modes=['--flow-only','--home-dock-only','--home-space-only','--sidebar-composition-only','--sidebar-region-only','--history-ready-only','--legacy-manual'];
+assert(process.argv.length===2||process.argv.length===3&&modes.includes(process.argv[2]),'unsupported-observed-profile-mode');
 const require=createRequire(new URL('../../extension/tooling/package.json',import.meta.url));
-const {outputFiles}=await require('esbuild').build({stdin:{contents:"export {createChatGPTAdapter} from './src/host/chatgpt-adapter.mjs';export {CHATGPT_OBSERVED_PROFILE,waitForNativeLayout} from './src/host/chatgpt-observed-profile.mjs';export {createMountSurface} from './src/navigation/mount-surface.mjs';export {nativeHistoryPresentation,sidebarPresentationFits} from './src/host/native-history-list.mjs';export {createURLPolicy} from './src/host/url-policy.mjs';",resolveDir:process.cwd()},bundle:true,write:false,format:'iife',globalName:'observedModule'});
-const browser=await chromium.launch({headless:true,proxy:{server:'http://127.0.0.1:9',bypass:'127.0.0.1,localhost'}});
+const {outputFiles}=await require('esbuild').build({stdin:{contents:"export {createChatGPTAdapter} from './src/host/chatgpt-adapter.mjs';export {CHATGPT_OBSERVED_PROFILE,waitForNativeLayout} from './src/host/chatgpt-observed-profile.mjs';export {createMountSurface} from './src/navigation/mount-surface.mjs';export {createFlowMountSurface} from './src/navigation/flow-mount-surface.mjs';export {nativeHistoryPresentation,sidebarPresentationFits} from './src/host/native-history-list.mjs';export {createURLPolicy} from './src/host/url-policy.mjs';",resolveDir:process.cwd()},bundle:true,write:false,format:'iife',globalName:'observedModule'});
+const browser=await chromium.launch({headless:true,...(process.env.FREE_CHROME_EXECUTABLE?{executablePath:process.env.FREE_CHROME_EXECUTABLE}:{}),proxy:{server:'http://127.0.0.1:9',bypass:'127.0.0.1,localhost'}});
 try{
- if(process.argv.includes('--home-dock-only')){
+ // The default CI entry verifies the current B backend. Explicit legacy flags
+ // below retain the historical manual/fixed experiments and their old evidence.
+ if(process.argv.length===2||process.argv.includes('--flow-only')){
+  const results=[];for(const focusableViewport of [false,true]){
+  const page=await browser.newPage({viewport:{width:1200,height:900}}),url='https://chatgpt.com/c/33333333-3333-4333-8333-333333333333';
+  await page.route('**/*',r=>r.request().url()===url?r.fulfill({contentType:'text/html',body:focusableViewport?observedDesktopHTML('33333333-3333-4333-8333-333333333333').replace('<div data-app-action-timeline-scroll>','<div data-app-action-timeline-scroll role="region" tabindex="0">'):observedDesktopHTML('33333333-3333-4333-8333-333333333333')}):r.abort());
+  await page.goto(url);await page.evaluate(materializePartitionedSidebar,projectDetails.sidebarStructure.rows);await page.evaluate(retainHiddenTitlebar);await page.addScriptTag({content:outputFiles[0].text});
+  await page.evaluate(async focusableViewport=>{
+   const {createChatGPTAdapter,CHATGPT_OBSERVED_PROFILE:profile,createFlowMountSurface}=observedModule;
+   let surface;const proposals=[],adapter=createChatGPTAdapter({document,profile,isOwnedMask:n=>surface?.isMasked(n)===true,isOwnedSurface:n=>surface?.isOwnedSurface(n)===true});
+   const binding={documentToken:'flow-profile',producerToken:'flow-producer',browserDocumentId:'flow-parent',routeEpoch:1,origin:location.origin,expiresAt:new Date(Date.now()+60000).toISOString()};
+   await adapter.start({binding,emit:async p=>{proposals.push(p);return {state:'accepted',localSeq:p.localSeq,receiptId:'flow-fixture'};}});
+   for(let i=0;i<40;i++)await Promise.resolve();
+   const cached=document.querySelector('#cached-native-titlebar'),hiddenDuplicateAccepted=adapter.inspect().ok;
+   cached.hidden=false;const visibleDuplicateRejected=!adapter.inspect().ok;cached.hidden=true;
+   const viewport=document.querySelector('[data-app-action-timeline-scroll]'),viewportShape=viewport.getAttribute('role')===(focusableViewport?'region':null)&&viewport.getAttribute('tabindex')===(focusableViewport?'0':null);
+   const inspection=adapter.inspect();if(!inspection.ok)throw Error(inspection.reason);
+   const input=document.querySelector('textarea'),reading=document.querySelector('#reading'),list=document.querySelector('#list'),project=partitionedFixture.project;
+   const before={input,reading,list,project,listHTML:list.outerHTML,projectHTML:project.outerHTML,inputParent:input.parentElement,draft:input.value};
+   surface=createFlowMountSurface({document,createFrameURL:({role})=>'chrome-extension://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/'+role+'.html'});
+   const handle=await surface.mount({binding},inspection);if(!surface.showWorkspace(handle))throw Error('flow-presentation-refused');
+   const checks={hiddenDuplicateAccepted,visibleDuplicateRejected,viewportShape,bodyObservationPresent:proposals.some(p=>p.kind==='current-object'||p.kind==='current-observation'),bodyConfigured:profile.currentBody.conversationIdSource==='message-elements',nativeTitle:proposals.some(p=>p.payload?.candidates?.some(c=>c.nativeTitle==='Native A')),profileSelected:inspection.profileId===profile.id,finiteSeam:inspection.flowSeam?.version==='native-flow-seam-v1',noFabricatedMembership:proposals.every(p=>(p.payload?.membershipClaims??[]).every(c=>c.asserted==='UNKNOWN')),flowHasBothRoles:surface.frames(handle).length===2,readingMasked:surface.isMasked(reading),nativeHistoryPreserved:!surface.isMasked(list)&&list.outerHTML===before.listHTML,nativeProjectPreserved:project.outerHTML===before.projectHTML,noWholeNAVMask:!document.querySelector('[data-va-mask-sidebar]'),privateSurfaceNotPopover:[...document.querySelectorAll('[data-va-owned][id$="_workspace"],[data-va-owned][id$="_sidebar"]')].every(n=>!n.hasAttribute('popover')),readingProbeWhileWorkspaceRejected:surface.withNativeReading(handle,()=>true,()=>true)===null};
+   let searchClicks=0;document.querySelector('#heading button').addEventListener('click',()=>searchClicks++);
+   globalThis.flowObserved={adapter,surface,handle,inspection,before,checks,searchClicks:()=>searchClicks};
+  },focusableViewport);
+  await page.locator('#heading button').first().click();await page.locator('textarea').click();
+  const checks=await page.evaluate(async()=>{
+   const {adapter,surface,handle,before,checks,searchClicks}=flowObserved;await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
+   checks.actualNativeSearchClick=searchClicks()===1;checks.originalInputFocus=document.activeElement===before.input;checks.inputSurrendersWorkspace=!surface.visibility(handle).workspace;checks.nativeDraftPreserved=before.input.value===before.draft;
+   before.input.blur();surface.showReading(handle);
+   checks.nativeReadingUsesCurrentSource=surface.withNativeReading(handle,()=>before.reading===document.querySelector('#reading'),()=>true)===true;
+   checks.deniedReadRejected=surface.withNativeReading(handle,()=>true,()=>false)===null;
+   checks.asyncReadRejected=surface.withNativeReading(handle,()=>Promise.resolve(true),()=>true)===null;
+   let permitted=true;checks.authorityLossRejected=surface.withNativeReading(handle,()=>{permitted=false;return true;},()=>permitted)===null;
+   surface.refreshGeometry(handle,adapter.inspect());surface.showWorkspace(handle);surface.showReading(handle);
+   checks.independentSidebarAfterReading=surface.visibility(handle).sidebar;
+   const replacement=before.reading.cloneNode(true);before.reading.replaceWith(replacement);
+   checks.replacedReadingProofRejected=surface.withNativeReading(handle,()=>true,()=>true)===null;replacement.replaceWith(before.reading);
+   surface.dispose(handle);await adapter.stop();
+   checks.cleanupRestoresNative=before.input===document.querySelector('textarea')&&before.input.parentElement===before.inputParent&&before.input.value===before.draft&&!document.querySelector('[data-va-flow-root],[data-va-sidebar-slot]')&&before.list.outerHTML===before.listHTML&&before.project.outerHTML===before.projectHTML;
+   return checks;
+  });
+  assert(Object.values(checks).every(v=>v===true),JSON.stringify(checks));results.push({focusableViewport,checks});await page.close();
+  }console.log(JSON.stringify({status:'PASS_WEB_MECHANISM_ONLY',backend:'document-flow',results,actualMV3:'NOT_RUN_BY_THIS_MECHANISM_PROBE',realChatGPT:'NOT_RUN'}));
+ }else if(process.argv.includes('--home-dock-only')){
   const page=await browser.newPage({viewport:{width:1000,height:700}}),url='https://chatgpt.com/';
   await page.route('**/*',r=>r.request().url()===url?r.fulfill({contentType:'text/html',body:observedHomeHTML('33333333-3333-4333-8333-333333333333')}):r.abort());
   await page.goto(url);await page.addScriptTag({content:outputFiles[0].text});
@@ -211,7 +257,7 @@ try{
    try{return await observedModule.waitForNativeLayout({document,profile:observedModule.CHATGPT_OBSERVED_PROFILE,timeoutMs:400});}finally{clearTimeout(expireProof);performance.now=now;window.getComputedStyle=computed;}
   });assert.equal(expiredDuringProof,false,'a synchronous final proof crossing the deadline cannot be admitted');
   console.log(JSON.stringify({status:'PASS_WEB_MECHANISM_ONLY',checks:{historyWaitsForFullProof:true,orderedRowsStable:true,unsafeHistoryDeadlinePreserved:true,unstableRowsClassifiedForBoundedRecovery:true,deadlineCheckedAfterSynchronousProof:true}}));await page.close();
- }else{
+ }else if(process.argv.includes('--legacy-manual')){
  for(const focusableViewport of [false,true]){
  const page=await browser.newPage({viewport:{width:1000,height:700}}),id='33333333-3333-4333-8333-333333333333',url='https://chatgpt.com/c/'+id;
  await page.route('**/*',r=>r.request().url()===url?r.fulfill({contentType:'text/html',body:focusableViewport?observedDesktopHTML(id).replace('<div data-app-action-timeline-scroll>', '<div data-app-action-timeline-scroll role="region" tabindex="0">'):observedDesktopHTML(id)}):r.abort());
@@ -251,7 +297,7 @@ try{
   cached.hidden=false;const visibleDuplicateRejected=!adapter.inspect().ok;cached.hidden=true;
   const inspection=adapter.inspect();if(!inspection.ok)throw Error(inspection.reason);
   surface=createMountSurface({document,createFrameURL:({role})=>'chrome-extension://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/'+role+'.html'});const handle=await surface.mount({binding},inspection);surface.showWorkspace(handle);for(let i=0;i<40;i++)await Promise.resolve();
-  const result={hiddenDuplicateAccepted,visibleDuplicateRejected,viewportShape:role===(focusableViewport?'region':null)&&tabindex===(focusableViewport?'0':null),bodyObservationPresent:proposals.some(p=>p.kind==='current-object'||p.kind==='current-observation'),noMaskedBodyInvalidation:proposals.filter(p=>p.kind==='current-object'||p.kind==='current-observation').every(p=>(p.kind==='current-observation'?p.payload.body:p.payload).association==='explicit-body-id'),profileSelected:inspection.profileId===profile.id,bodyConfigured:profile.currentBody.conversationIdSource==='message-elements',nativeTitle:proposals.some(p=>p.payload?.candidates?.some(c=>c.nativeTitle==='Native A')),noFabricatedMembership:proposals.every(p=>(p.payload?.membershipClaims??[]).every(c=>c.asserted==='UNKNOWN')),readingMasked:surface.isMasked(document.querySelector('#reading')),historyMasked:surface.isMasked(document.querySelector('#list')),searchVisible:getComputedStyle(document.querySelector('#heading')).visibility==='visible',composerVisible:getComputedStyle(document.querySelector('textarea')).visibility==='visible',geometryStillValid:adapter.inspect().ok};
+  const result={hiddenDuplicateAccepted,visibleDuplicateRejected,viewportShape:role===(focusableViewport?'region':null)&&tabindex===(focusableViewport?'0':null),bodyObservationPresent:proposals.some(p=>p.kind==='current-object'||p.kind==='current-observation'),noMaskedBodyInvalidation:proposals.filter(p=>p.kind==='current-object'||p.kind==='current-observation').every(p=>(p.kind==='current-observation'?p.payload.body:p.payload).association==='explicit-body-id'),profileSelected:inspection.profileId===profile.id,bodyConfigured:profile.currentBody.conversationIdSource==='message-elements',nativeTitle:proposals.some(p=>p.payload?.candidates?.some(c=>c.nativeTitle==='Native A')),noFabricatedMembership:proposals.every(p=>(p.payload?.membershipClaims??[]).every(c=>c.asserted==='UNKNOWN')),readingMasked:surface.isMasked(document.querySelector('#reading')),nativeHistoryPreserved:!surface.isMasked(document.querySelector('#list')),searchVisible:getComputedStyle(document.querySelector('#heading')).visibility==='visible',composerVisible:getComputedStyle(document.querySelector('textarea')).visibility==='visible',geometryStillValid:adapter.inspect().ok};
   let scans=0;
   result.synchronousReadingProbe=surface.withNativeReading(handle,()=>{scans++;return getComputedStyle(document.querySelector('#reading')).visibility==='visible'&&[...document.querySelectorAll('[data-va-mask-sidebar]')].every(n=>getComputedStyle(n).visibility==='visible');},()=>true)===true&&scans===1&&surface.visibility(handle).workspace;
   surface.showReading(handle);surface.showWorkspace(handle);

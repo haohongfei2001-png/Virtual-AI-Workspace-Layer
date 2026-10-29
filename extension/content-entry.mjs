@@ -19,7 +19,7 @@ if(window===window.top&&location.origin===HOST_CONFIG.origin&&HOST_CONFIG.tempor
 }else if(window===window.top&&location.origin===HOST_CONFIG.origin){
  const offlineSnippets=HOST_CONFIG.offlineSnippets===true&&location.protocol==='http:'&&location.hostname==='127.0.0.1';
  const selectedProfile=selectHostSurfaceProfile(HOST_CONFIG.surfaceProfile),configuredProfile=HOST_CONFIG.browserLocal?{...selectedProfile,currentBody:null,visibleNavigationOnly:true}:selectedProfile;
- const initialProfile=offlineSnippets?{...LEGACY_SURFACE_PROFILE,snippets:{enabled:true,rootSelector:'main > #reading',conversationIdAttribute:'data-conversation-id',messageSelector:'[data-message-id]',messageIdAttribute:'data-message-id',bodySelector:'.message-body',branchIdAttribute:'data-branch-id'}}:configuredProfile;
+ const initialProfile=offlineSnippets?{...LEGACY_SURFACE_PROFILE,sidebarComposition:'partitioned-flow-v1',nativeFlowSeam:{version:'native-flow-seam-v1',rootSelectors:['main'],shellSelectors:[]},nativeLayout:{header:'main > header',reading:'main > section[aria-label="Conversation"]',composer:'main > form#composer',navigationSlot:'main > header > .navigation-slot',historyList:'#fixture-native-history'},snippets:{enabled:true,rootSelector:'main > #reading',conversationIdAttribute:'data-conversation-id',messageSelector:'[data-message-id]',messageIdAttribute:'data-message-id',bodySelector:'.message-body',branchIdAttribute:'data-branch-id'}}:configuredProfile;
  const baseProfile=HOST_CONFIG.offlineFirstSend===true?{...initialProfile,firstSend:createLoopbackFirstSendProfile(HOST_CONFIG.origin)}:initialProfile;
  // This risk grammar is explicit only for the packaged loopback reconstruction.
  const offline=location.protocol==='http:'&&location.hostname==='127.0.0.1';

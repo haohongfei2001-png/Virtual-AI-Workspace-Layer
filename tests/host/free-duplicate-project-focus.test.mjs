@@ -15,15 +15,15 @@ function owner(n){while(n){if(n.hasAttribute?.('data-theme-id'))return n.getAttr
 function assertNativeNames(f){assert.deepEqual(f.pane().querySelectorAll('.theme-name').map(n=>n.textContent),[nativeName,nativeName]);}
 function setup(t){const requests=[],f=fixture('workspace',query=>{requests.push(query);return null;});t.after(()=>f.nav.stop());f.nav.updateFrameProjection(dto());assertNativeNames(f);return {f,requests};}
 test('second same-name native project keeps focus on its old disclosure after expansion',async t=>{
- const {f,requests}=setup(t),label='展开旧窗口 '+nativeName,target=button(f,'P1',label);assert(target);target.focus();target.click();await tick();
+ const {f,requests}=setup(t),label='展开旧聊天 '+nativeName,target=button(f,'P1',label);assert(target);target.focus();target.click();await tick();
  assert.equal(requests.at(-1).groupId,'P1');assert.equal(requests.at(-1).list,'old');assert.equal(button(f,'P1',label).getAttribute('aria-expanded'),'true');assertNativeNames(f);
  assert.equal(owner(f.pane().activeElement),'P1','focus must remain on the second native Project, not the first same-name Project');assert.equal(f.pane().activeElement,button(f,'P1',label));
 });
 for(const kind of ['current','old','unknown'])for(const direction of ['more','previous'])test(`second same-name project ${kind} ${direction} paging keeps focus after projection repaint`,async t=>{
- const {f,requests}=setup(t);if(kind==='old'){button(f,'P2','展开旧窗口 '+nativeName).click();button(f,'P1','展开旧窗口 '+nativeName).click();await tick();}
+ const {f,requests}=setup(t);if(kind==='old'){button(f,'P2','展开旧聊天 '+nativeName).click();button(f,'P1','展开旧聊天 '+nativeName).click();await tick();}
  const value=dto();if(direction==='previous')for(const group of value.groups.items)group.lists[kind]=page([row(group.id+'_'+kind)],30,5,5);
  f.nav.updateFrameProjection(value);
- const label=direction==='previous'?'返回前页 '+nativeName:kind==='old'?'显示更多旧窗口 '+nativeName:kind==='unknown'?'显示更多已知窗口':'显示更多近期窗口';
+ const label=direction==='previous'?'返回前页 '+nativeName:kind==='old'?'显示更多旧聊天 '+nativeName:kind==='unknown'?'显示更多已知聊天':'显示更多近期聊天';
  const target=button(f,'P1',label);assert(target);target.focus();target.click();await tick();assert.equal(requests.at(-1).groupId,'P1');assert.equal(requests.at(-1).list,kind);
  // A valid subsequent projection preserves the requested control. The oracle
  // checks DOM Project identity, not the implementation's chosen focus key.
@@ -37,7 +37,7 @@ test('sidebar same-name projects preserve old disclosure and each simultaneous l
  f.nav.updateFrameProjection(value);
  const block=id=>f.pane().querySelectorAll('.group').find(n=>n.querySelectorAll('button').some(b=>b.dataset.focusKey==='theme:'+id));
  for(const id of ['P2','P1'])block(id).querySelectorAll('button').find(b=>b.dataset.focusKey==='theme:'+id).click();await tick();
- const old=id=>block(id).querySelectorAll('button').find(b=>b.getAttribute('aria-label')==='展开旧窗口 '+nativeName);
+ const old=id=>block(id).querySelectorAll('button').find(b=>b.getAttribute('aria-label')==='展开旧聊天 '+nativeName);
  old('P2').click();const second=old('P1');second.focus();second.click();await tick();assert.equal(f.pane().activeElement,old('P1'));assert.equal(old('P1').getAttribute('aria-expanded'),'true');
  // Visual list order is current, old, unknown; no production focus-key decoding.
  const previous=()=>block('P1').querySelectorAll('button').filter(b=>b.getAttribute('aria-label')==='返回前页 '+nativeName);
@@ -49,7 +49,7 @@ test('sidebar same-name projects preserve old disclosure and each simultaneous l
 });
 
 test('scope switch does not transfer old member focus to same native Project ID in another scope',async t=>{
- const {f}=setup(t),label='显示更多近期窗口',oldPane=f.pane(),oldTarget=button(f,'P1',label);oldTarget.focus();assert.equal(oldPane.activeElement,oldTarget);
+ const {f}=setup(t),label='显示更多近期聊天',oldPane=f.pane(),oldTarget=button(f,'P1',label);oldTarget.focus();assert.equal(oldPane.activeElement,oldTarget);
  const next=dto();next.scope='scopeB';f.nav.updateFrameProjection(next);
  assert.notEqual(f.pane(),oldPane);assert(!f.pane().querySelectorAll('button').includes(oldTarget));assert.notEqual(f.pane().activeElement,button(f,'P1',label),'new scope does not inherit member focus');
  const target=button(f,'P1',label);target.focus();f.nav.updateFrameProjection(next);assert.equal(f.pane().activeElement,button(f,'P1',label));assert.equal(owner(f.pane().activeElement),'P1');assertNativeNames(f);

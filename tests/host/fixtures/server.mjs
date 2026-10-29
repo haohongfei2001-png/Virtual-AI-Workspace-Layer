@@ -22,8 +22,9 @@ const clone = (value) => structuredClone(value);
  * Authentication and expected results never come from page-supplied verified flags.
  * LEGACY keeps its original behavior; other profiles use their own reconstruction.
  */
-export async function createHostFixtureServer({profile = 'LEGACY', principalId = 'user-host-fixture', accounts = null, now = () => Date.now(), variant = 'positive', fault, journey = null, j3Layout = 'direct', originalHistoryAvailable = true, evidenceScenario = null, presentation = null} = {}) {
+export async function createHostFixtureServer({profile = 'LEGACY', principalId = 'user-host-fixture', accounts = null, now = () => Date.now(), variant = 'positive', fault, journey = null, j3Layout = 'direct', originalHistoryAvailable = true, evidenceScenario = null, presentation = null, partitionedSidebar = false} = {}) {
   validateEvidenceScenario(evidenceScenario,profile,journey);
+  if(typeof partitionedSidebar!=='boolean'||partitionedSidebar&&(profile!=='LEGACY'||journey!==null||presentation!==null||evidenceScenario!==null))throw Error('invalid-partitioned-snippet-fixture');
   if(presentation!==null&&(presentation!=='approved-workspace'||profile!=='LEGACY'||journey!==null||evidenceScenario!==null))throw Error('invalid-fixture-presentation');
   const mixedRole=evidenceScenario==='mixed-role'||evidenceScenario==='mixed-role-alt',evidenceNow=mixedRole?now():null;
   if(typeof originalHistoryAvailable!=='boolean'||!originalHistoryAvailable&&(profile!=='LEGACY'||journey!=='J3'))throw Error('invalid-fixture-original-history-availability');
@@ -36,6 +37,13 @@ export async function createHostFixtureServer({profile = 'LEGACY', principalId =
     ['/native.css', 'native.css', 'text/css; charset=utf-8'],
   ].map(async ([url, file, mime]) => [url, {body: await readFile(new URL(file, import.meta.url)), mime}])));
   if(presentation){files['/'].body=Buffer.from(approvedWorkspaceHost(files['/'].body.toString()));files['/native.mjs'].body=Buffer.from(files['/native.mjs'].body.toString().replace("$('.project-entry').onclick","(document.querySelector('.project-entry')??document.createElement('button')).onclick"));files['/simulator-host.css']={body:await readFile(new URL('../../../simulator/host.css',import.meta.url)),mime:'text/css; charset=utf-8'};}
+  if(partitionedSidebar){
+    const html=files['/'].body.toString(),project=html.match(/<section aria-label="Projects">[\s\S]*?<\/section>/)?.[0],history=html.match(/<nav aria-label="Chat history">([\s\S]*?)<\/nav>/)?.[1];
+    if(!project||!history)throw Error('partitioned-snippet-fixture-anchor');
+    const native=`<nav aria-label="Chat history"><div id="fixture-native-sections">${project.replace('<section ','<section data-app-action-sidebar-section ')}<section data-app-action-sidebar-section><div id="fixture-native-history">${history}</div></section></div></nav>`;
+    files['/'].body=Buffer.from(html.replace(project,'').replace(/<nav aria-label="Chat history">[\s\S]*?<\/nav>/,native));
+    files['/native.css'].body=Buffer.concat([files['/native.css'].body,Buffer.from('\naside nav[aria-label="Chat history"]{display:block;min-height:0;overflow:auto}#fixture-native-sections{display:block}#fixture-native-history{display:flex;flex-direction:column}\n')]);
+  }
   if(mixedRole)files['/native.mjs'].body=Buffer.from(mixedRoleNative(files['/native.mjs'].body.toString(),evidenceScenario));
   if(journey==='J2')files['/native.mjs'].body=Buffer.from(j2Native(files['/native.mjs'].body.toString()));
   if(journey==='FIRST_SEND')files['/native.mjs'].body=Buffer.from(firstSendNative(files['/native.mjs'].body.toString()));
@@ -171,7 +179,7 @@ export async function createHostFixtureServer({profile = 'LEGACY', principalId =
   const origin = `http://127.0.0.1:${server.address().port}`;
   return {
     origin,url:`${origin}/`,
-    manifest: Object.freeze({fixtureId:'chatgpt-host-legacy-reconstruction-v1',profile,j3Layout,...(presentation?{presentation}:{}),...(evidenceScenario?{evidenceScenario}:{}),...(journey?{journey,journeyEvidence:journey==='J3'?'S_RECONSTRUCTION_NOT_REAL_PERMISSION':'S_RECONSTRUCTION_NATIVE_PENDING_CONTROLS'}:{}),reconstruction:true,source:'VA-HOST/1.1 structure reconstruction; not a real DOM snapshot',sourceCommit:null,sourceBlob:null,fixtureHash:createHash('sha256').update(sourceBytes).update(Buffer.concat(Object.values(files).map((f) => f.body))).update(presentation?JSON.stringify({approvedWorkspaceProjects,approvedWorkspaceConversations}):'').digest('hex'),expectedWorldFile:evidenceScenario?'tests/host/evidence-order-oracle.mjs':'tests/host/expected/legacy.mjs',oracleHash:createHash('sha256').update(oracleBytes).digest('hex'),supportedCapabilities:['principal','personal-context-candidate','project-identity','idless-native-control','conversation-identity','native-move-menu','native-navigation','native-search','native-create','independent-regions','draft-preservation']}),
+    manifest: Object.freeze({fixtureId:'chatgpt-host-legacy-reconstruction-v1',profile,j3Layout,...(partitionedSidebar?{partitionedSidebar:true}:{}),...(presentation?{presentation}:{}),...(evidenceScenario?{evidenceScenario}:{}),...(journey?{journey,journeyEvidence:journey==='J3'?'S_RECONSTRUCTION_NOT_REAL_PERMISSION':'S_RECONSTRUCTION_NATIVE_PENDING_CONTROLS'}:{}),reconstruction:true,source:'VA-HOST/1.1 structure reconstruction; not a real DOM snapshot',sourceCommit:null,sourceBlob:null,fixtureHash:createHash('sha256').update(sourceBytes).update(Buffer.concat(Object.values(files).map((f) => f.body))).update(presentation?JSON.stringify({approvedWorkspaceProjects,approvedWorkspaceConversations}):'').digest('hex'),expectedWorldFile:evidenceScenario?'tests/host/evidence-order-oracle.mjs':'tests/host/expected/legacy.mjs',oracleHash:createHash('sha256').update(oracleBytes).digest('hex'),supportedCapabilities:['principal','personal-context-candidate','project-identity','idless-native-control','conversation-identity','native-move-menu','native-navigation','native-search','native-create','independent-regions','draft-preservation']}),
     snapshot: () => clone({actions:counts,requests,fixedGetTrace,...(j2?{j2:j2.snapshot(),j2DetailResponses}:{}),...(firstSend?{firstSends:firstSend.snapshot()}:{}),projectCount:projects.size,conversationCount:conversations.size}),
     // Test-process controls only; not HTTP endpoints, not page-visible authority.
     confirmFirstSendMembership: (projectId) => { if(evidenceScenario!=='membership-after-message'||!projects.has(projectId))throw Error('invalid-evidence-membership-control');return firstSend.assignProject(projectId); },

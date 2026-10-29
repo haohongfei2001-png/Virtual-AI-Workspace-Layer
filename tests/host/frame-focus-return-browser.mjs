@@ -37,7 +37,7 @@ try{
  });
  for(const {H,mode,key} of [{H:30,mode:'search-known',key:'Enter'},{H:30,mode:'search-known',key:'Space'},{H:30,mode:'show-working-set',key:'Enter'},{H:14,mode:'search-known',key:'Enter'}]){
   await frame.evaluate(options=>{setup(options);nav.present({kind:options.mode});},{H,mode});
-  const close=frame.getByRole('button',{name:mode==='search-known'?'关闭已知查找':'返回主题视图',exact:true});await close.focus();await close.press(key);
+  const close=frame.getByRole('button',{name:mode==='search-known'?'关闭已知查找':'返回工作空间',exact:true});await close.focus();await close.press(key);
   const result=await frame.evaluate(()=>focusResult());
   await frame.evaluate(()=>nav.updateFrameProjection(dto));const afterRefresh=await frame.evaluate(()=>focusResult());
   report.checks.push({H,mode,key,...result,afterRefresh});

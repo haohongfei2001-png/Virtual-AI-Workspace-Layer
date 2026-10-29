@@ -40,7 +40,7 @@ test('superseded response cannot apply or install a page cap after interaction d
  const pending=[],calls=[];
  const f=fixture('workspace',query=>{calls.push(query);return new Promise(resolve=>pending.push(resolve));});
  t.after(()=>f.nav.stop());f.nav.updateFrameProjection(projection());
- const owner=f.nav.roots().workspace.n,more=f.button('显示更多近期窗口');
+ const owner=f.nav.roots().workspace.n,more=f.button('显示更多近期聊天');
  f.doc.handlers.get('pointerdown')({pointerId:71,composedPath:()=>[more,owner]});more.click();
  assert.equal(calls[0].rowLimit,17);
  const stale=projection();stale.groups.items[0].name='STALE RESPONSE';
@@ -53,7 +53,7 @@ test('superseded response cannot apply or install a page cap after interaction d
  assert(!f.pane().querySelectorAll('.theme-name').some(node=>node.textContent==='STALE RESPONSE'));
  const fresh=projection();fresh.groups.items[0].name='Fresh current response';pending[1](fresh);await tick();
  assert(f.pane().querySelectorAll('.theme-name').some(node=>node.textContent==='Fresh current response'));
- f.button('显示更多近期窗口').click();assert.equal(calls.length,3);
+ f.button('显示更多近期聊天').click();assert.equal(calls.length,3);
  assert.equal(calls[2].rowOffset,0,'discarded narrow response must not install a pagination cap');assert.equal(calls[2].rowLimit,17);
  pending[2](null);await tick();
 });

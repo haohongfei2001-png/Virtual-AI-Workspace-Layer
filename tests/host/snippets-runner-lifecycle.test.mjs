@@ -59,11 +59,17 @@ test('six-case browser journey retains original assertions plus explicit return 
  // Preserve the historical checksum of the whole journey. Permit exactly the
  // reviewed return-search transition, requiring retained query/result followed
  // by explicit close, visible-member and draft assertions verbatim.
- const correctedReturn=" // The sole return retains the originating search; explicit close restores\n // the main list before continuing the independent saved-panel journey.\n await search.waitFor({state:'visible',timeout:10000});\n assert.equal(await search.inputValue(),'uniquely selected fixture words');\n await match.getByText('uniquely selected fixture words',{exact:true}).waitFor({timeout:10000});\n await workspace.getByRole('button',{name:'关闭派生查找',exact:true}).click();\n await workspace.locator(`a[data-ref-id=\"${C}\"]`).first().waitFor({state:'visible',timeout:10000});\n assert.equal(await search.count(),0);await draft();";
+ const correctedReturn=" // The sole return retains the originating search; explicit close restores\n // the main list before continuing the independent saved-panel journey.\n await search.waitFor({state:'visible',timeout:10000});\n assert.equal(await search.inputValue(),'uniquely selected fixture words');\n await match.getByText('uniquely selected fixture words',{exact:true}).waitFor({timeout:10000});\n await workspace.getByRole('button',{name:'关闭已知查找',exact:true}).click();\n await workspace.locator(`a[data-ref-id=\"${C}\"]`).first().waitFor({state:'visible',timeout:10000});\n assert.equal(await search.count(),0);await draft();";
  assert.equal(runner.split(correctedReturn).length,2);
  const core=runner.slice(runner.indexOf(' page=await context.newPage()'),runner.indexOf('},inspectFailure:')).replace(probeStart,'').replace(probeEnd,'');
  const focusChecks=["assert.equal(await panel.getByRole('heading',{name:'已保存片段',exact:true}).evaluate(n=>n.getRootNode().activeElement===n),true);","await sidebar.getByRole('button',{name:'已保存片段',exact:true}).waitFor();assert.equal(await sidebar.getByRole('button',{name:'已保存片段',exact:true}).evaluate(n=>n.getRootNode().activeElement===n),true);"];
- let historical=core.replace(correctedReturn," await workspace.getByRole('button',{name:'关闭派生查找',exact:true}).click();");
+ // Only the obsolete startup precondition changes: the current backend has
+ // document-flow surfaces and keeps native project/history sections reachable.
+ const currentStartup=core.slice(core.indexOf(' const C='),core.indexOf(' for(const frame of [workspace,sidebar])'));
+ for(const evidence of ["['workspace','sidebar'].every",':not([popover])',"workspace.locator('.workspace')","sidebar.locator('.sidebar-footer')",'nativeProjectVisible','nativeNAVUnmasked','assert(Object.values(report.flowSidebar).every(Boolean))'])assert(currentStartup.includes(evidence),evidence);
+ assert(!currentStartup.includes("popover-open').length===2"));
+ const historicalStartup=" const C='33333333-3333-4333-8333-333333333333';await page.goto(server.origin+'/c/'+C);await page.waitForFunction(()=>document.querySelectorAll('[data-va-owned]:popover-open').length===2,{},{timeout:15000});const workspace=page.frames().find(f=>f.url()===`chrome-extension://${id}/workspace.html`),sidebar=page.frames().find(f=>f.url()===`chrome-extension://${id}/sidebar.html`);assert(workspace&&sidebar);\n";
+ let historical=core.replace(currentStartup,historicalStartup).replace(correctedReturn," await workspace.getByRole('button',{name:'关闭派生查找',exact:true}).click();");
  // Require both additive focus assertions exactly once, then compare all of
  // the original journey to its unchanged historical checksum.
  for(const addition of focusChecks){assert.equal(core.split(addition).length,2);historical=historical.replace(addition,'');}

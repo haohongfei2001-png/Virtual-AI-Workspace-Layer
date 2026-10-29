@@ -8,6 +8,7 @@ import {createServer} from 'node:http';
 import {mkdtemp,writeFile,readFile} from 'node:fs/promises';
 import {tmpdir,platform} from 'node:os';
 import {join} from 'node:path';
+import {createHash} from 'node:crypto';
 import {chromium} from '../b1/tooling/node_modules/playwright/index.mjs';
 import {packageHost,verifyHost} from '../../extension/package.mjs';
 import {observedProjectHTML} from './fixtures/observed-project.mjs';
@@ -24,16 +25,27 @@ const conversationHTML=id=>process.argv.includes('--flow-only')?longDesktopHTML(
 const server=createServer((req,res)=>{requests.push(req.url);res.writeHead(200,{'Content-Type':'text/html','Cache-Control':'no-store'});res.end(req.url==='/g/'+P+'/project'?observedProjectHTML(P,C)+`<script>document.addEventListener('click',e=>{if(e.target.closest('button')?.textContent==='Native search'){document.querySelector('main').innerHTML=${JSON.stringify(homeMain)};history.pushState({},'','/');return;}const a=e.target.closest('a[href]');if(a&&a.getAttribute('href')==='/c/${B}'&&!e.defaultPrevented){e.preventDefault();const next=a.href;const html=new DOMParser().parseFromString(${JSON.stringify(conversationHTML(B))},'text/html');document.body.replaceChildren(...html.body.childNodes);for(const style of document.querySelectorAll('head style'))style.remove();document.head.append(...html.head.childNodes);history.pushState({},'',next);${process.argv.includes('--flow-only')?'('+materializePartitionedSidebar.toString()+')('+JSON.stringify(partitionDetails.sidebarStructure.rows)+');':''}}});</script>`:req.url==='/'?observedHomeHTML(B):conversationHTML(B));});
 await new Promise(r=>server.listen(0,'127.0.0.1',r));const origin='http://127.0.0.1:'+server.address().port,guard=await createHistoricalNetworkGuard({fixtureOrigin:origin});
 const dir=await mkdtemp(join(tmpdir(),'vaiwl-browser-local-mv3-')),built=packageHost(join(dir,'package'),{offlineOrigin:origin,browserLocal:true,...(process.argv.includes('--mount-diagnostic-only')?{mainMountDiagnostic:true}:{})}),report={status:'RUNNING',evidence:'ISOLATED_MV3_FORMAL_UI_LOCAL_SESSION_AND_PERSONAL',realChatGPT:'NOT_RUN',baseline:HOST_BASELINE_VERSION,package:built,checks:{},requests};
+report.sourceHashes=JSON.parse(await readFile(join(built.unpacked,'build-manifest.json'),'utf8')).sourceHashes;
+const fixturePaths=['fixtures/observed-sidebar-project-details-20261026.json','fixtures/observed-history-structure.json','fixtures/observed-sidebar-project-20261026.json','fixtures/observed-host-replay.mjs','fixtures/observed-host-baseline.json','fixtures/observed-project.mjs','fixtures/observed-desktop.mjs'];
+report.fixtureHashes=Object.fromEntries(await Promise.all(fixturePaths.map(async path=>['tests/host/'+path,createHash('sha256').update(await readFile(new URL(path,import.meta.url))).digest('hex')])));
+report.browserVersion=null;report.viewports=[];
+async function recordViewport(target){
+ if(!target)return;
+ const size=await target.evaluate(()=>({width:innerWidth,height:innerHeight})),last=report.viewports.at(-1);
+ if(!last||last.width!==size.width||last.height!==size.height)report.viewports.push(size);
+}
+async function setViewport(target,size){await target.setViewportSize(size);await recordViewport(target);}
 let context,page;
 try{
  const launch=async()=>{
  const result=await chromium.launchPersistentContext(join(dir,'profile'),{headless:true,viewport:{width:1000,height:900},executablePath:process.env.FREE_CHROME_EXECUTABLE??(platform()==='darwin'?'/Users/hhf/Library/Caches/ms-playwright/chromium-1248/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing':'/usr/bin/chromium'),ignoreDefaultArgs:['--disable-extensions'],args:['--enable-unsafe-extension-debugging',...historicalNetworkGuardArgs(guard.config)]});
  await result.route('**/*',r=>r.request().url().startsWith(origin+'/')||r.request().url().startsWith('chrome-extension://')?r.continue():r.abort());
+ report.browserVersion=result.browser().version();await recordViewport(result.pages()[0]);
  return result;};
  context=await launch();report.browserErrors=[];context.on('page',p=>p.on('pageerror',e=>report.browserErrors.push(e.stack||e.message)));
  const cdp=await context.browser().newBrowserCDPSession(),{id}=await cdp.send('Extensions.loadUnpacked',{path:built.unpacked});
  if(process.argv.includes('--mount-diagnostic-only')){
-  page=await context.newPage();await page.setViewportSize({width:1400,height:900});
+  page=await context.newPage();await setViewport(page,{width:1400,height:900});
   await page.addInitScript({content:'if(window===window.top)document.addEventListener("DOMContentLoaded",()=>{('+materializePartitionedSidebar.toString()+')('+JSON.stringify(partitionDetails.sidebarStructure.rows)+');const branch=document.createElement("div");branch.style.cssText="position:absolute;width:8px;height:8px;bottom:0";branch.dataset.fixturePreflight="";branch.title="PRIVATE_SENTINEL";document.querySelector("[role=main]").append(branch);},{once:true});'});
   await page.goto(origin+'/');await page.waitForFunction(()=>document.documentElement.dataset.vaiwlStartup==='surface-failed',null,{timeout:15000});
   const editor=await page.locator('textarea').elementHandle(),draft=await page.locator('textarea').inputValue();
@@ -67,7 +79,7 @@ try{
  if(process.argv.includes('--mount-recovery-only')){
   // Full production owner -> adapter -> preflight -> JOIN -> VIEW -> renderer.
   // Temporary branch is a local lifecycle counterexample, not captured site DOM.
-  page=await context.newPage();await page.setViewportSize({width:1400,height:900});
+  page=await context.newPage();await setViewport(page,{width:1400,height:900});
   await page.addInitScript({content:'if(window===window.top)document.addEventListener("DOMContentLoaded",()=>{('+materializePartitionedSidebar.toString()+')('+JSON.stringify(partitionDetails.sidebarStructure.rows)+');const branch=document.createElement("div");branch.style.cssText="position:absolute;width:8px;height:8px;bottom:0";branch.dataset.fixturePreflight="";document.querySelector("[role=main]").append(branch);},{once:true});'});
   await page.goto(origin+'/');
   await page.waitForFunction(()=>document.documentElement.dataset.vaiwlStartup==='surface-failed',{timeout:15000});
@@ -97,7 +109,7 @@ try{
  if(process.argv.includes('--instant-recovery-only')){
   // The instant RAM scope deliberately changes when its worker is lost. This
   // is not a personal unlock or a continuation of the previous RAM inventory.
-  page=await context.newPage();await page.setViewportSize({width:1400,height:900});
+  page=await context.newPage();await setViewport(page,{width:1400,height:900});
   await page.addInitScript({content:'if(window===window.top)document.addEventListener("DOMContentLoaded",()=>{('+materializePartitionedSidebar.toString()+')('+JSON.stringify(partitionDetails.sidebarStructure.rows)+');},{once:true});'});
   await page.goto(origin+'/');
   const workspace=page.frameLocator('iframe[src="chrome-extension://'+id+'/workspace.html"]'),sidebar=page.frameLocator('iframe[src="chrome-extension://'+id+'/sidebar.html"]');
@@ -128,7 +140,7 @@ try{
   await control.close();
  }
  if(process.argv.includes('--flow-only')){
-  page=await context.newPage();await page.setViewportSize({width:1400,height:900});
+  page=await context.newPage();await setViewport(page,{width:1400,height:900});
   await page.addInitScript({content:'if(window===window.top)document.addEventListener("DOMContentLoaded",()=>{('+materializePartitionedSidebar.toString()+')('+JSON.stringify(partitionDetails.sidebarStructure.rows)+');if(document.querySelector("[data-app-shell-main-content-layout] .home-composer-anchor"))('+materializeFlatHomeBranch.toString()+')();},{once:true});'});
   // Local counterexample for an inspected home with additional native flow
   // content. This is not a claim about the real unidentified rejected branch.
@@ -255,8 +267,8 @@ try{
     await memberA.waitFor({state:'detached'});await memberB.waitFor();
     await nativePanel.evaluate(n=>{n.inert=true;});await group.waitFor({state:'detached'});await memberA.waitFor();
     await nativePanel.evaluate(n=>{n.inert=false;});await group.waitFor();await memberA.waitFor({state:'detached'});
-    await page.setViewportSize({width:1400,height:924});await memberB.waitFor({state:'detached'});
-    await page.setViewportSize({width:1400,height:900});await memberB.waitFor();
+    await setViewport(page,{width:1400,height:924});await memberB.waitFor({state:'detached'});
+    await setViewport(page,{width:1400,height:900});await memberB.waitFor();
     await page.getByRole('button',{name:'Manage fixture project',exact:true}).click();await group.waitFor({state:'detached'});await memberA.waitFor();
     assert(await originalWorkspace.evaluate(n=>n.isConnected&&n.getBoundingClientRect().height>0));assert.equal(await page.locator('textarea').inputValue(),draft+'x');
     await page.evaluate(()=>{document.querySelector('#fixture-native-management').remove();partitionedFixture.project.style.height=window.managementOwnerHeight;partitionedFixture.scroll.scrollTop=0;});
@@ -337,7 +349,7 @@ try{
    const b=n.getBoundingClientRect();return b.width>0&&b.height>0&&document.elementFromPoint(b.x+b.width/2,b.y+b.height/2)===n;
   }),'returned workspace iframe must be exposed in the host');
   const returnImage=join(dir,'flow-journey-return.png');await page.screenshot({path:returnImage});report.images.push(returnImage);
-  await page.setViewportSize({width:720,height:900});
+  await setViewport(page,{width:720,height:900});
   await page.locator('[id$="_workspace"]:visible').waitFor({timeout:15000});
   await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
   report.checks.narrowFlowStructure=await page.evaluate(()=>({workspaces:[...document.querySelectorAll('[data-va-owned][id$="_workspace"]')].filter(n=>getComputedStyle(n).display!=='none').length,headers:document.querySelectorAll('header').length,composers:document.querySelectorAll('textarea').length,roots:[...document.querySelectorAll('[data-va-flow-root]')].map(n=>n.getBoundingClientRect().toJSON()),height:innerHeight}));
@@ -347,7 +359,7 @@ try{
   const layout=await page.locator('[id$="_workspace"]').evaluate(n=>{const b=n.getBoundingClientRect();return {right:b.right,width:b.width,height:b.height,viewport:innerWidth};});
   assert(layout.right<=layout.viewport+1&&layout.width>=160&&layout.height>=96,JSON.stringify(layout));
   const narrowImage=join(dir,'flow-journey-narrow.png');await page.screenshot({path:narrowImage});report.images.push(narrowImage);
-  await page.setViewportSize({width:1400,height:900});
+  await setViewport(page,{width:1400,height:900});
   await page.getByRole('button',{name:'返回原生阅读',exact:true}).click();
   await page.evaluate(setNativeModal,true);
   assert.equal(await page.locator('[id$="_workspace"]:visible').count(),0);
@@ -415,7 +427,7 @@ try{
   await popup.close();
  }
  if(process.argv.includes('--sidebar-composition-only')){
-  page=await context.newPage();await page.setViewportSize({width:1400,height:900});
+  page=await context.newPage();await setViewport(page,{width:1400,height:900});
   // The real 2026-10-27 Project screenshot has a centered member column.
   // Replay only this geometric fact, with the existing formal renderer/data.
   await page.addInitScript(()=>document.addEventListener('DOMContentLoaded',()=>{const content=document.querySelector('#project-content');if(content)content.style.cssText='max-width:660px;margin-inline:auto';const welcome=document.querySelector('.home-composer-anchor');if(welcome){welcome.style.cssText='position:absolute;left:100px;top:110px;width:400px;height:120px';
@@ -530,11 +542,11 @@ try{
   await capture('partition-native-collapsed');
   await page.evaluate(()=>{const n=partitionedFixture.project;n.setAttribute('style',n.dataset.savedStyle);delete n.dataset.savedStyle;if(partitionedFixture.savedDisclosure===null)partitionedFixture.control.removeAttribute('aria-expanded');else partitionedFixture.control.setAttribute('aria-expanded',partitionedFixture.savedDisclosure);});
   report.checks.nativeDisclosureDoesNotRebuildSidebar=true;
-  await page.setViewportSize({width:760,height:900});
+  await setViewport(page,{width:760,height:900});
   await page.waitForTimeout(300);
   await workspace.getByRole('link',{name:'Native B',exact:true}).first().waitFor();
   await checkExitRail();await capture('partition-narrow-workspace');
-  await page.setViewportSize({width:1000,height:900});
+  await setViewport(page,{width:1000,height:900});
   await page.waitForTimeout(300);
 
   await page.evaluate(()=>{partitionedFixture.scroll.style.height='400px';});
@@ -643,12 +655,12 @@ try{
     report.checks.homeCanvasIndependentOfWelcomeSize=true;
     assert(await page.evaluate(()=>{const surface=document.querySelector('[id$="_workspace"]').getBoundingClientRect(),composer=document.querySelector('form').getBoundingClientRect();return composer.bottom===innerHeight-16&&surface.height>innerHeight*.7&&document.querySelector('form').hasAttribute('data-va-home-dock');}),'formal owner must actually consume the proved home docking proposal');
     report.checks.homeDockIntegrated=true;await capture('partition-home-workspace');
-    await page.setViewportSize({width:760,height:900});
+    await setViewport(page,{width:760,height:900});
     await page.waitForFunction(()=>{const workspace=document.querySelector('[id$="_workspace"]'),c=document.querySelector('form').getBoundingClientRect();return workspace?.matches(':popover-open')&&workspace.getBoundingClientRect().right<=innerWidth&&c.right<=innerWidth&&c.bottom===innerHeight-16;});
     await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
     report.homeDockNarrow=await page.evaluate(()=>{const c=document.querySelector('form'),r=c.getBoundingClientRect(),w=document.querySelector('[id$="_workspace"]').getBoundingClientRect();return {composer:r.toJSON(),canvas:w.toJSON(),hitInsideComposer:c.contains(document.elementFromPoint(r.x+20,r.y+10)),draft:c.querySelector('textarea').value==='fixture draft'};});
     assert(report.homeDockNarrow.hitInsideComposer&&report.homeDockNarrow.draft);
-    await capture('partition-home-narrow-workspace');await page.setViewportSize({width:1000,height:900});
+    await capture('partition-home-narrow-workspace');await setViewport(page,{width:1000,height:900});
     report.checks.homeDockResponsive=true;
    }
    await page.locator('textarea').focus();
@@ -738,7 +750,7 @@ try{
  if(process.argv.includes('--product-states-only')){
   report.productStates=[];
   for(const scene of ['empty','ordinary','project','project-narrow']){
-   page=await context.newPage();await page.setViewportSize({width:scene==='project-narrow'?785:1440,height:1000});
+   page=await context.newPage();await setViewport(page,{width:scene==='project-narrow'?785:1440,height:1000});
    await page.addInitScript(({scene,materialize})=>{
     if(window!==window.top)return;
     document.addEventListener('DOMContentLoaded',()=>{

@@ -134,6 +134,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
   let surfaceResize=null;
   const windowResize=()=>{if(!stopped&&framed){if(surface.role==='workspace')layoutCards();else{applyRestoredSidebarScroll(roots?.sidebar?.shadow.querySelector('.themes'));try{onSidebarLayout();}catch{}}}};win.addEventListener?.('resize',windowResize);
   const free=()=>snapshot?.viewMode==='free';
+  const entryName=()=>free()?'聊天':'窗口';
   const span=()=>snapshot?.policy?.h??snapshot?.viewSession?.H??30;
   const current=()=>{
     if(!frameProjection)return index?.at(adapter.currentURL())??{};
@@ -461,7 +462,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
   // browser dropping keyboard focus as it does for a disabled/removed button.
   function frameListPager(parent,kind,found,waiting=false){
     if(!found)return;
-    const search=kind==='search',label=search?'查找结果':'工作集窗口';
+    const search=kind==='search',label=search?'查找结果':'工作集'+entryName();
     const add=(previous)=>{const control=button((previous?'返回前页':'显示更多')+label,()=>{
       if(waiting||(search?frameSearchWaiting:frameWorkingSetWaiting))return;
       const offset=previous?Math.max(0,found.offset-found.limit):found.offset+found.limit;
@@ -494,11 +495,11 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     for(const kind of ['current','old','unknown']){
       const page=frameRows(group.id,kind);if(!page||page.total===0)continue;let list=parent;
       if(kind==='old'){
-        const ownerView=view,open=view.oldOpen.has(key),toggle=button('展开旧窗口 '+group.name,()=>{view.oldOpen.has(key)?view.oldOpen.delete(key):view.oldOpen.add(key);render();if(view.oldOpen.has(key))reopenFrameWindow(group.id,'old');},'','square old',()=>currentProjectControl(toggle,ownerView,side?'sidebar':'workspace'));toggle.innerHTML=chevron;toggle.dataset.focusKey=focusKey(kind,'toggle');toggle.setAttribute('aria-expanded',String(open));parent.append(toggle);if(!open)continue;list=node(doc,'div',{class:'old-list'});parent.append(list);
+        const ownerView=view,open=view.oldOpen.has(key),toggle=button('展开旧'+entryName()+' '+group.name,()=>{view.oldOpen.has(key)?view.oldOpen.delete(key):view.oldOpen.add(key);render();if(view.oldOpen.has(key))reopenFrameWindow(group.id,'old');},'','square old',()=>currentProjectControl(toggle,ownerView,side?'sidebar':'workspace'));toggle.innerHTML=chevron;toggle.dataset.focusKey=focusKey(kind,'toggle');toggle.setAttribute('aria-expanded',String(open));parent.append(toggle);if(!open)continue;list=node(doc,'div',{class:'old-list'});parent.append(list);
       }
-      if(kind==='unknown'){const undated=node(doc,'div',{class:'undated-members','aria-label':'活动时间未确定的窗口',title:'项目归属已知，活动时间尚未确定。'});list.append(undated);list=undated;}
+      if(kind==='unknown'){const undated=node(doc,'div',{class:'undated-members','aria-label':'活动时间未确定的'+entryName(),title:'项目归属已知，活动时间尚未确定。'});list.append(undated);list=undated;}
       for(const ref of page.items)if(!side||!managedMember(group.id,ref.id))list.append(row(ref,key));
-      if(page.hasMore){const more=button(kind==='old'?'显示更多旧窗口 '+group.name:kind==='unknown'?'显示更多已知窗口':'显示更多近期窗口',()=>moreFrame(page,group.id,kind),frameIsPaged(page,group.id,kind)?'下一页':'显示更多','more');more.dataset.focusKey=focusKey(kind,'more');list.append(more);}
+      if(page.hasMore){const more=button(kind==='old'?'显示更多旧'+entryName()+' '+group.name:kind==='unknown'?'显示更多已知'+entryName():'显示更多近期'+entryName(),()=>moreFrame(page,group.id,kind),frameIsPaged(page,group.id,kind)?'下一页':'显示更多','more');more.dataset.focusKey=focusKey(kind,'more');list.append(more);}
       if(page.offset>0){const previous=button('返回前页 '+group.name,()=>requestFrame({groupId:group.id,list:kind,rowOffset:Math.max(0,page.offset-page.limit),rowLimit:page.limit}),'上一页','more');previous.dataset.focusKey=focusKey(kind,'previous');list.append(previous);}
     }
   }
@@ -506,15 +507,15 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     if(frameProjection){frameMembers(group,parent,side);const active=side&&current().ref;if(active&&frameProjection.current?.projectId===group.id&&!Array.from(parent.querySelectorAll('[data-ref-id]')).some(n=>n.getAttribute('data-ref-id')===active.id)){const context=node(doc,'div',{class:'current-context','aria-label':'正在查看'});context.append(row(active,(side?'side:':'home:')+group.id));if(!managedMember(group.id,active.id))parent.append(context);}return;}
     const key=(side?'side:':'home:')+group.id,cap=view.capacities.get(key)??5;
     for(const r of group.current.slice(0,cap))parent.append(row(r,key));
-    if(cap<group.current.length){const more=button('显示更多近期窗口',()=>{remember();view.capacities.set(key,cap+12);render();},'显示更多','more');more.dataset.focusKey='more:'+key;parent.append(more);}
+    if(cap<group.current.length){const more=button('显示更多近期'+entryName(),()=>{remember();view.capacities.set(key,cap+12);render();},'显示更多','more');more.dataset.focusKey='more:'+key;parent.append(more);}
     if(group.old.length){
-      const b=button('展开旧窗口 '+group.name,()=>{remember();view.oldOpen.has(key)?view.oldOpen.delete(key):view.oldOpen.add(key);render();},'','square old');b.innerHTML=chevron;b.setAttribute('aria-expanded',String(view.oldOpen.has(key)));b.dataset.focusKey='old:'+key;b.setAttribute('aria-controls',token+'-'+key.replace(':','-')+'-old');parent.append(b);
+      const b=button('展开旧'+entryName()+' '+group.name,()=>{remember();view.oldOpen.has(key)?view.oldOpen.delete(key):view.oldOpen.add(key);render();},'','square old');b.innerHTML=chevron;b.setAttribute('aria-expanded',String(view.oldOpen.has(key)));b.dataset.focusKey='old:'+key;b.setAttribute('aria-controls',token+'-'+key.replace(':','-')+'-old');parent.append(b);
       if(view.oldOpen.has(key)){const list=node(doc,'div',{class:'old-list',id:b.getAttribute('aria-controls')}),oldCap=view.capacities.get('old:'+key)??12;
         for(const r of group.old.slice(0,oldCap))list.append(row(r,key));
-        if(oldCap<group.old.length)list.append(button('显示更多旧窗口 '+group.name,()=>{remember();view.capacities.set('old:'+key,oldCap+12);render();},'显示更多','more'));parent.append(list);
+        if(oldCap<group.old.length)list.append(button('显示更多旧'+entryName()+' '+group.name,()=>{remember();view.capacities.set('old:'+key,oldCap+12);render();},'显示更多','more'));parent.append(list);
       }else parent.append(node(doc,'div',{class:'old-list',hidden:'',id:b.getAttribute('aria-controls')}));
     }
-    if(free()&&group.unknown.length){const keyUnknown='unknown:'+key,limit=view.capacities.get(keyUnknown)??5;for(const r of group.unknown.slice(0,limit))parent.append(row(r,keyUnknown));if(group.unknown.length>limit)parent.append(button('显示更多已知窗口',()=>{view.capacities.set(keyUnknown,limit+12);render();},'显示更多','more'));}
+    if(free()&&group.unknown.length){const keyUnknown='unknown:'+key,limit=view.capacities.get(keyUnknown)??5;for(const r of group.unknown.slice(0,limit))parent.append(row(r,keyUnknown));if(group.unknown.length>limit)parent.append(button('显示更多已知'+entryName(),()=>{view.capacities.set(keyUnknown,limit+12);render();},'显示更多','more'));}
     if(side){const active=current().inGroup?.(group);if(active&&!parent.querySelector('[data-ref-id="'+active.id+'"]')){const context=node(doc,'div',{class:'current-context'});context.append(row(active,key));parent.append(context);}}
   }
   function appendFreeList(parent,kind,segment,side=false){
@@ -598,7 +599,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     const nextSidebarKey=JSON.stringify([snapshot.scope,adapter.currentURL(),view.sidebarVisible,sidebarLimited.has(view),[...view.sidebarOpen],[...view.oldOpen].filter(k=>k.startsWith('side:')),[...view.capacities].filter(([k])=>k.startsWith('side:')||k.includes(':side:'))]);
     const side=roots.sidebar?.shadow;
     if(side&&(sidebarDirty||sidebarKey!==nextSidebarKey||!side.querySelector('section'))){
-    side.querySelector('section')?.remove();const panel=node(doc,'section');const tools=node(doc,'div',{class:'toolbar'});tools.append(node(doc,'strong',{},free()?'项目导航':'主题导航'),graphic(button(free()?'查找已知项目与聊天':'查找主题与派生名称',()=>findKnown()),'search'));if(!framed)tools.append(graphic(button('折叠主题导航',()=>{remember();view.sidebarVisible=!view.sidebarVisible;render();}),view.sidebarVisible?'minus':'plus'));if(!framed)tools.append(graphic(button('退出测试增强',()=>{stop();onExit();}),'close'));if(onManage)tools.append(graphic(button('管理工作空间',()=>onManage()),'more'));const footer=node(doc,'div',{class:'toolbar sidebar-footer',...(framed?{'aria-label':'VAIWL 工作空间工具'}:{})});
+    side.querySelector('section')?.remove();const panel=node(doc,'section');const tools=node(doc,'div',{class:'toolbar'});tools.append(node(doc,'strong',{},free()?'项目导航':'主题导航'),graphic(button(free()?'查找已知项目与聊天':'查找主题与派生名称',()=>findKnown()),'search'));if(!framed)tools.append(graphic(button(free()?'折叠项目导航':'折叠主题导航',()=>{remember();view.sidebarVisible=!view.sidebarVisible;render();}),view.sidebarVisible?'minus':'plus'));if(!framed)tools.append(graphic(button('退出测试增强',()=>{stop();onExit();}),'close'));if(onManage)tools.append(graphic(button('管理工作空间',()=>onManage()),'more'));const footer=node(doc,'div',{class:'toolbar sidebar-footer',...(framed?{'aria-label':'VAIWL 工作空间工具'}:{})});
     // The approved sidebar puts topics first and extension tools in a quiet
     // lower bar. Keep the same actions; do not add another plugin heading.
     if(framed){footer.append(node(doc,'span',{class:'extension-label'},'VAIWL'));footer.append(...[...tools.children].filter(n=>n.tagName!=='STRONG'));}else panel.append(tools);
@@ -639,7 +640,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
       if(searchQuery===null&&!view.worksetOpen)workspaceSettingsTrigger=trigger;else page.append(trigger);
       if(settingsOpen){
         const settings=node(doc,'section',{'aria-label':'工作空间设置',class:'toolbar'});settings.append(node(doc,'strong',{},'工作空间设置'));
-        settings.append(settingsButton('查找已知项目与聊天',()=>{settingsOpen=false;findKnown();},'查找已知聊天','more'),settingsButton('当前工作集',()=>{settingsOpen=false;showWorkingSet();},'当前工作集','more'));
+        settings.append(settingsButton('查找已知项目与聊天',()=>{settingsOpen=false;findKnown();},'查找已知项目与聊天','more'),settingsButton('当前工作集',()=>{settingsOpen=false;showWorkingSet();},'当前工作集','more'));
         if(typeof onHorizonRequest==='function'){
           const label=node(doc,'label',{},'时间范围 '),select=node(doc,'select',{'aria-label':'工作空间时间范围','data-focus-key':'free-horizon'}),policy=frameProjection.timePolicy;
           select.append(node(doc,'option',{value:'auto'},'自动'));
@@ -653,7 +654,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
           if(horizonPending||horizonError)settings.append(node(doc,'span',{role:'status'},horizonPending?'正在更新时间范围…':horizonError));
         }
         if(typeof onCompactRowsRequest==='function'){
-          const compact=settingsButton('紧凑窗口',()=>{if(settingsLive()&&settingsOpen&&!compactPending)void requestCompactRows();},'紧凑窗口：'+(frameProjection.compactRows===false?'关':'开'),'more');
+          const compact=settingsButton('紧凑聊天',()=>{if(settingsLive()&&settingsOpen&&!compactPending)void requestCompactRows();},'紧凑聊天：'+(frameProjection.compactRows===false?'关':'开'),'more');
           compact.dataset.focusKey='compact-rows';compact.setAttribute('aria-pressed',String(frameProjection.compactRows!==false));compact.setAttribute('aria-disabled',String(!!compactPending));settings.append(compact);
           if(compactPending||compactError)settings.append(node(doc,'span',{role:'status'},compactPending?'正在保存显示设置…':compactError));
         }
@@ -701,14 +702,14 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
       input.oncompositionstart=()=>{inputComposing=true;};
       input.oncompositionend=()=>{inputComposing=false;commitSearch();};
       input.oninput=event=>{if(inputComposing||event?.isComposing||composing)return;commitSearch();};
-      section.append(input,node(doc,'p',{},'查找已知项目、聊天与已保存片段。原生搜索独立保留。'),results);display();page.append(section);
+      section.append(input,node(doc,'p',{},'仅查找已知项目、聊天与已保存片段。更多记录请使用 ChatGPT 搜索聊天。'),results);display();page.append(section);
     }else if(frameProjection&&view.worksetOpen){
       const section=node(doc,'section',{class:'search working-set','aria-label':'当前工作集'}),found=frameProjection.workingSet;
-      section.append(node(doc,'strong',{},'当前工作集'),button('返回主题视图',closeFrameWorkingSet,'返回主题','more'),node(doc,'p',{},'按已保存的人工顺序显示窗口引用。草稿由原生页面保留。'));
+      section.append(node(doc,'strong',{},'当前工作集'),button('返回工作空间',closeFrameWorkingSet,'返回工作空间','more'),node(doc,'p',{},'按已保存的人工顺序显示聊天引用。草稿由原生页面保留。'));
       if(frameWorkingSetWaiting||!found||found.offset!==frameWorkingSetOffset){section.append(node(doc,'p',{role:'status'},'正在读取当前工作集…'));frameListPager(section,'workingSet',found,true);}
       else{
         for(const ref of found.items){const link=row(ref,'workset');if(ref.id===found.currentRefId)(link.querySelector('a')??link).setAttribute('data-working-set-current','true');section.append(link);}
-        if(!found.total)section.append(node(doc,'p',{role:'status'},'当前工作集尚未保存窗口。'));
+        if(!found.total)section.append(node(doc,'p',{role:'status'},'当前工作集尚未保存聊天。'));
         frameListPager(section,'workingSet',found);
       }page.append(section);
     }else if(searchQuery!==null){
@@ -723,10 +724,10 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
         if(found.length>searchCapacity)results.append(button('显示更多查找结果',()=>{searchCapacity+=24;update();},'显示更多','more'));
       };input.oninput=()=>{searchCapacity=24;update();};update();search.append(results);page.append(search);
     }else if(view.worksetOpen){
-      const workset=node(doc,'section',{class:'search working-set','aria-label':'当前工作集'}),top=node(doc,'div',{class:'search-top'});top.append(node(doc,'strong',{},'当前工作集'),button('返回主题视图',()=>{view.worksetOpen=false;render();},'返回主题','more'));workset.append(top,node(doc,'p',{},'只保存窗口引用与人工顺序，点击后打开。草稿与任务运行状态由原生页面保留。'));const saved=snapshot.preferences?.workingSet?.value??{refs:[],current:null};for(const id of saved.refs){const ref=index.byId(id);if(ref)workset.append(row(ref,'workset'));else workset.append(node(doc,'p',{class:'failed-ref'},'暂时无法打开的引用 '+id));}if(!saved.refs.length)workset.append(node(doc,'p',{},'还没有窗口。可在工作空间管理中加入窗口。'));if(onManage)workset.append(button('编辑当前工作集',()=>onManage(), '整理工作集','more'));page.append(workset);
+      const workset=node(doc,'section',{class:'search working-set','aria-label':'当前工作集'}),top=node(doc,'div',{class:'search-top'});top.append(node(doc,'strong',{},'当前工作集'),button(free()?'返回工作空间':'返回主题视图',()=>{view.worksetOpen=false;render();},free()?'返回工作空间':'返回主题','more'));workset.append(top,node(doc,'p',{},'只保存'+entryName()+'引用与人工顺序，点击后打开。草稿与任务运行状态由原生页面保留。'));const saved=snapshot.preferences?.workingSet?.value??{refs:[],current:null};for(const id of saved.refs){const ref=index.byId(id);if(ref)workset.append(row(ref,'workset'));else workset.append(node(doc,'p',{class:'failed-ref'},'暂时无法打开的引用 '+id));}if(!saved.refs.length)workset.append(node(doc,'p',{},'还没有'+entryName()+'。可在工作空间管理中加入'+entryName()+'。'));if(onManage)workset.append(button('编辑当前工作集',()=>onManage(), '整理工作集','more'));page.append(workset);
     }else{
       const board=node(doc,'div',{class:'workspace-layout'}),core=node(doc,'div',{class:'workspace-core'});
-      const arrows=node(doc,'div',{class:'arrows','aria-label':'主题区间导航'});
+      const arrows=node(doc,'div',{class:'arrows','aria-label':free()?'工作空间区间导航':'主题区间导航'});
       if(view.segment>0)arrows.append(graphic(button('较近的'+span()+'日',()=>{if(frameProjection){requestFrame({segment:view.segment-1,offset:0},view.segment===1,true);return;}view.segment--;view.scroll=0;render();if(view.segment===0)onCurrentWorkspaceEntry();calibrationEntry();}),'up'));
       const down=graphic(button('较早的'+span()+'日',()=>{if(frameProjection){requestFrame({segment:view.segment+1,offset:0},false,true);return;}view.segment++;view.scroll=0;render();calibrationEntry();}),'down');down.disabled=frameProjection?!frameProjection.navigation.hasOlder:view.segment>=Math.max(groups.reduce((max,g)=>Math.max(max,g.segment??0),0),free()?snapshot.refs.reduce((max,r)=>Math.max(max,(r.activityDecision??r.activity)?.segment??0),0):0);arrows.append(down);if(workspaceSettingsTrigger)arrows.append(workspaceSettingsTrigger);board.append(core,arrows);page.append(board);if(currentSlot)core.append(currentSlot);
       const cards=node(doc,'div',{class:'cards'});
@@ -734,7 +735,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
         const card=node(doc,'section',{class:'card','data-theme-id':g.id,...(frameProjection?{tabindex:'-1','data-focus-key':'project:'+g.id}:{})}),head=node(doc,'div',{class:'card-head'}),title=node(doc,'h2'),list=node(doc,'div',{class:'members'});
         title.append(themeGlyph(g),node(doc,'span',{class:'theme-name',title:g.name},g.name));appendFreshness(title,g);head.append(title);if(framed&&free())head.append(projectCreateEntry(g));if(!framed&&free()&&adapter.projectCreateHref?.(g)){const a=node(doc,'a',{href:adapter.projectCreateHref(g),class:'square project-create','aria-label':'在项目中新建聊天 '+g.name,title:'在项目中新建聊天 '+g.name},'+');a.addEventListener('click',e=>{if(!e.ctrlKey&&!e.metaKey&&!e.shiftKey&&!e.altKey){clearTimePolicyNotice();view.mode='reading';layout();adapter.openNative(a.href,e);}});head.append(a);}themeActions(g,head);card.append(head);members(g,list);card.append(list);cards.append(card);
       }
-      if(!cards.children.length&&(frameProjection?!['noProject','unknown'].some(kind=>frameRows(null,kind).total>0):!free()||!freeListRows(snapshot,'noProject',view.segment).length&&!freeListRows(snapshot,'unknown',view.segment).length)){const empty=node(doc,'div',{class:'empty'});empty.innerHTML=gridIcon;const inventory=frameProjection?.inventory,zero=inventory?.projects===0&&inventory?.refs===0,omitted=zero&&[inventory?.omittedProjects,inventory?.omittedRefs].some(n=>Number.isSafeInteger(n)&&n>0),noKnown=zero&&!omitted;empty.append(node(doc,'strong',{},noKnown?'从一次聊天开始':omitted?'当前没有可显示的已知记录':'这个区间还没有活跃主题'),node(doc,'p',{},noKnown?'使用原生聊天与项目，已知窗口会逐渐出现在这里。':omitted?'可查找已知窗口，或继续使用原生聊天与项目。':'可切换区间，或查找已有窗口。'));if(!noKnown)empty.append(button('查找已知主题与窗口',()=>findKnown(),'查找窗口','more'));cards.append(empty);}core.append(cards);if(frameProjection){if(frameProjection.groups.offset>0)core.append(button('返回前页项目',()=>requestFrame({offset:Math.max(0,frameProjection.groups.offset-frameProjection.groups.limit)}),'上一页项目','more'));if(frameProjection.groups.hasMore)core.append(button('显示更多项目',()=>requestFrame({offset:frameProjection.groups.offset+frameProjection.groups.limit}),'显示更多项目','more'));}if(free()){appendFreeList(core,'noProject',view.segment);appendFreeList(core,'unknown',view.segment);}
+      if(!cards.children.length&&(frameProjection?!['noProject','unknown'].some(kind=>frameRows(null,kind).total>0):!free()||!freeListRows(snapshot,'noProject',view.segment).length&&!freeListRows(snapshot,'unknown',view.segment).length)){const empty=node(doc,'div',{class:'empty'});empty.innerHTML=gridIcon;const inventory=frameProjection?.inventory,zero=inventory?.projects===0&&inventory?.refs===0,omitted=zero&&[inventory?.omittedProjects,inventory?.omittedRefs].some(n=>Number.isSafeInteger(n)&&n>0),noKnown=zero&&!omitted;empty.append(node(doc,'strong',{},noKnown?'从一次聊天开始':omitted?'当前没有可显示的已知记录':(free()?'这个区间还没有活跃项目':'这个区间还没有活跃主题')),node(doc,'p',{},noKnown?'使用原生聊天与项目，已知聊天会逐渐出现在这里。':omitted?'可查找已知聊天，或继续使用原生聊天与项目。':'可切换区间，或查找已有'+entryName()+'。'));if(!noKnown)empty.append(button(free()?'查找已知项目与聊天':'查找已知主题与窗口',()=>findKnown(),free()?'查找已知项目与聊天':'查找窗口','more'));cards.append(empty);}core.append(cards);if(frameProjection){if(frameProjection.groups.offset>0)core.append(button('返回前页项目',()=>requestFrame({offset:Math.max(0,frameProjection.groups.offset-frameProjection.groups.limit)}),'上一页项目','more'));if(frameProjection.groups.hasMore)core.append(button('显示更多项目',()=>requestFrame({offset:frameProjection.groups.offset+frameProjection.groups.limit}),'显示更多项目','more'));}if(free()){appendFreeList(core,'noProject',view.segment);appendFreeList(core,'unknown',view.segment);}
     }
     if(currentSlot){const ref=current().ref;if(ref&&!Array.from(page.querySelectorAll('[data-ref-id]')).some(n=>n.getAttribute('data-ref-id')===ref.id))appendCurrentContext(currentSlot);else currentSlot.remove();}
     if(framed&&searchQuery===null&&!view.worksetOpen)(page.querySelector('.workspace-core')??page).append(node(doc,'slot',{name:'native-candidates'}));

@@ -21,7 +21,7 @@ async function pageFor(kind='home'){
  const url=kind==='home'?'https://chatgpt.com/':'https://chatgpt.com/c/'+C;
  const html=kind==='home'?observedHomeHTML(C):longDesktopHTML(C).replace('</style>','#reading{height:2600px}[data-thread-scroll-footer]{position:fixed;left:280px;top:602px;width:600px;height:98px}</style>');
  await page.route('**/*',route=>route.request().url()===url?route.fulfill({contentType:'text/html',body:html}):route.abort());
- await page.goto(url);if(kind==='home')await page.evaluate(materializeFlatHomeBranch);
+ await page.goto(url);report.viewport=await page.evaluate(()=>({width:innerWidth,height:innerHeight}));if(kind==='home')await page.evaluate(materializeFlatHomeBranch);
  await page.addScriptTag({content:outputFiles[0].text});
  await page.evaluate(async kind=>{
   const {createChatGPTAdapter,CHATGPT_OBSERVED_PROFILE:profile,createFlowMountSurface,captureNativeBaseline}=boundaryModule;
@@ -133,6 +133,20 @@ try{
   return {ok:inspection.ok&&next===null&&reason==='native-flow-root',inspection:inspection.ok,reason};
  }));
  await page.evaluate(()=>{boundaryProbe.surface.dispose(boundaryProbe.handle);boundaryProbe.adapter.stop();});await page.close();
+ for(const nested of [false,true]){
+  const shadowPage=await pageFor();
+  check((nested?'nested':'root')+' open shadow boundary surrenders without a light-tree mutation',await shadowPage.evaluate(async nested=>{
+   const p=boundaryProbe,host=nested?document.createElement('div'):p.island;
+   if(nested){host.style.display='contents';p.island.append(host);await p.tick(6);}
+   const before=p.surface.visibility(p.handle).workspace;let mutations=0;
+   const observer=new MutationObserver(records=>mutations+=records.length);observer.observe(p.island,{subtree:true,childList:true,attributes:true});
+   const shadow=host.attachShadow({mode:'open'}),button=document.createElement('button');button.textContent='Native shadow action';button.style.cssText='position:fixed;left:400px;top:200px;width:160px;height:40px;z-index:80';shadow.append(button);
+   await p.tick(6);observer.disconnect();const hidden=p.surface.visibility(p.handle).workspace!==true;
+   const refused=p.surface.refreshNativeBaseline(p.handle,()=>p.adapter.inspect())===null;
+   return {ok:before&&mutations===0&&hidden&&refused,before,mutations,hidden,refused};
+  },nested));
+  await shadowPage.evaluate(()=>{boundaryProbe.surface.dispose(boundaryProbe.handle);boundaryProbe.adapter.stop();});await shadowPage.close();
+ }
  for(const damage of ['style','srcdoc']){
   const damaged=await pageFor();
   check('owned '+damage+' integrity remains mandatory',await damaged.evaluate(async damage=>{

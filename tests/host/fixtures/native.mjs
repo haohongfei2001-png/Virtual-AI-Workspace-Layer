@@ -1,5 +1,9 @@
 // Application behavior reconstruction; no adapter, expected world, or test seed APIs.
 const $ = (s) => document.querySelector(s);
+const setSidebar = open => { $('aside').toggleAttribute('data-native-sidebar-open',open);$('#sidebar-toggle')?.setAttribute('aria-expanded',String(open)); };
+if($('#sidebar-toggle'))$('#sidebar-toggle').onclick=()=>setSidebar(true);
+if($('#sidebar-close'))$('#sidebar-close').onclick=()=>{setSidebar(false);$('#sidebar-toggle').focus();};
+document.addEventListener('keydown',event=>{if(event.key==='Escape')setSidebar(false);});
 let current = null;
 async function action(kind, extra = {}) {
   const response = await fetch('/native/action', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({kind,...extra}) });
@@ -13,6 +17,7 @@ async function navigate(path, {pop = false} = {}) {
   if (!response.ok) return;
   const view = await response.json(); current = view;
   if (!pop) history.pushState(null, '', path);
+  setSidebar(false);
   $('h1').textContent = view.title;
   const reading = $('#reading'); reading.replaceChildren();
   // Reconstruction's own rendered object association, from the route response.

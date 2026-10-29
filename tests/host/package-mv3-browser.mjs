@@ -50,13 +50,13 @@ try{
  const closeSettings=workspace.getByRole('button',{name:'关闭设置',exact:true});await closeSettings.focus();await closeSettings.press('Enter');await horizon.waitFor({state:'detached',timeout:10000});assert.equal(await horizon.count(),0);assert.equal(await workspace.getByRole('button',{name:'工作空间设置',exact:true}).evaluate(node=>node.getRootNode().activeElement===node),true);await workspace.getByRole('button',{name:'较早的7日',exact:true}).waitFor();report.results.push({name:'explicit-settings-auto-persists-human-preference-keeps-current-H-T-Z-and-native-draft',status:'PASS',adaptiveEvaluation:'NOT_TESTED'});
  report.results.push({name:'manual-horizon-14-then-7-owner-command-updates-workspace-keeps-sidebar-and-native-draft',status:'PASS',horizonDOMObservation:'workspace select and navigation labels; sidebar has no exposed horizon label'});
  await sidebar.getByRole('button',{name:'当前工作集',exact:true}).click();
- await workspace.getByText('当前工作集尚未保存窗口。',{exact:true}).waitFor({timeout:10000});
+ await workspace.getByText('当前工作集尚未保存聊天。',{exact:true}).waitFor({timeout:10000});
  assert.equal(await workspace.getByText('正在读取当前工作集…',{exact:true}).count(),0);
  assert.equal(await workspace.getByRole('button',{name:'编辑当前工作集',exact:true}).count(),0);
  assert.equal(await page.evaluate(()=>document.querySelector('textarea')===testOriginalInput&&testOriginalInput.value==='DRAFT_SURVIVES_SPA'),true);
- await workspace.getByRole('button',{name:'返回主题视图',exact:true}).click();
+ await workspace.getByRole('button',{name:'返回工作空间',exact:true}).click();
  await workspace.getByText('Membership not loaded',{exact:true}).waitFor({timeout:10000});
- assert.equal(await workspace.getByText('当前工作集尚未保存窗口。',{exact:true}).count(),0);
+ assert.equal(await workspace.getByText('当前工作集尚未保存聊天。',{exact:true}).count(),0);
  await sidebar.getByRole('button',{name:'查找已知项目与聊天',exact:true}).click();
  const searchAfterWorkset=workspace.getByRole('searchbox',{name:'已知聊天查找输入'});await searchAfterWorkset.waitFor({timeout:10000});await searchAfterWorkset.fill('Ordinary');
  await workspace.getByRole('link',{name:'Ordinary conversation',exact:true}).waitFor({timeout:10000});assert.equal(await searchAfterWorkset.inputValue(),'Ordinary');

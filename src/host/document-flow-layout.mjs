@@ -12,6 +12,7 @@ const overlaps = (a,b) => a.x < b.x+b.width && b.x < a.x+a.width && a.y < b.y+b.
 const attrs = node => ['class','style','hidden','aria-hidden','role','tabindex','contenteditable','inert'].map(key=>node.getAttribute(key));
 const plain = node => ['DIV','MAIN','SECTION'].includes(node.tagName) && !node.shadowRoot && !node.matches('[tabindex],[contenteditable],[inert],[hidden],[aria-hidden="true"],a,button,input,textarea,select');
 const controls = 'a[href],button,input,textarea,select,[tabindex],[contenteditable]:not([contenteditable="false"]),[role]:not([role="none"]):not([role="presentation"])';
+const shadowHostTags=new Set(['ARTICLE','ASIDE','BLOCKQUOTE','DIV','FOOTER','H1','H2','H3','H4','H5','H6','HEADER','MAIN','NAV','P','SECTION','SPAN']);
 // The observed viewport contract permits empty native markers. Only an
 // already display:none marker is inert to grid layout: a visible zero-size
 // element can create a new track/gap. Never style or relocate these nodes.
@@ -59,14 +60,27 @@ function orderedFlowMembers(base,members){
 // A closed-layout geometry snapshot, not an active native-control identity
 // lock. Controls are freshly enumerated before presentation and native gestures.
 function controlSnapshot({protectedRegions,document:doc,isOwnedSurface}) {
- const result=[],seen=new Set();
+ const result=[],seen=new Set(),shadowCandidates=[],structuralSeen=new Set();
+ // Light-tree structure only, once per layout proof. A previously ordinary
+ // DIV can gain an open shadow root without a Mutation/Resize notification.
+ // Cache potential hosts so the activity check only reads bounded references;
+ // it never walks descendants or reads their text/paint on animation frames.
+ const pending=[...protectedRegions];
+ while(pending.length){
+  const node=pending.pop();if(structuralSeen.has(node)||isOwnedSurface(node))continue;
+  structuralSeen.add(node);if(structuralSeen.size>4096)return null;
+  if(node.shadowRoot||node.localName?.includes('-'))return null;
+  if(shadowHostTags.has(node.tagName))shadowCandidates.push(node);
+  if(node.children.length+pending.length>4096)return null;
+  for(const child of node.children)pending.push(child);
+ }
  for(const region of protectedRegions)for(const node of [region,...region.querySelectorAll(controls)]){
   if(seen.has(node)||isOwnedSurface(node))continue;
   seen.add(node);if(result.length>=128)return null;
   const style=doc.defaultView.getComputedStyle(node);
   result.push({node,parent:node.parentElement,visible:style.display!=='none'&&style.visibility==='visible'&&positive(rect(node))});
  }
- return result;
+ result.shadowCandidates=shadowCandidates;return result;
 }
 
 // These native layout coordinates supply the conditional flow rules/baseline.
@@ -159,7 +173,7 @@ export function captureNativeBaseline({document:doc,inspection,isOwnedSurface=()
   evidence.phase='geometry';if(!coordinates)return refuse('native-flow-geometry','geometry',root);
   const readingChain=[];for(let node=reading;node&&node!==doc.documentElement;node=node.parentElement){if(readingChain.length>=64)return refuse('native-flow-regions','reading-chain',node);readingChain.push({node,parent:node.parentElement});}
   evidence.phase='complete';evidence.detail='accepted';evidence.node=null;diagnose('none');
-  return Object.freeze({kind,root,reading,composer,header,leaves,protectedNodes,protectedRegions,shells,patchedShells,nativeContents,records,nativeChildren,nativeControls,inactiveMarkers,retainedMembers,flowOrder,markerViewport,focusViewport,readingChain,nativeReadingCurrent:inspection.nativeReadingCurrent,
+  return Object.freeze({kind,root,reading,composer,header,leaves,protectedNodes,protectedRegions,shells,patchedShells,nativeContents,records,nativeChildren,nativeControls,nativeShadowCandidates:nativeControls.shadowCandidates,inactiveMarkers,retainedMembers,flowOrder,markerViewport,focusViewport,readingChain,nativeReadingCurrent:inspection.nativeReadingCurrent,
    headerInside,document:doc,url:doc.location.href,regionEpoch:inspection.regionEpoch,isOwnedSurface,
    ...coordinates});
  }catch{evidence.phase='exception';return refuse('native-flow-check-failed','exception',null);}
@@ -247,10 +261,11 @@ ${active} #${workspaceId}{display:flex!important;visibility:visible!important;gr
 // Finite geometry/hit checks for already enumerated native controls. No DOM
 // descendant walk, text ranges, paint/style whitelist or elapsed-time budget.
 // A CSSOM rule can move an existing control without Mutation/Resize events.
-export function validateCriticalLayout(plan,{workspace,nativeControls=[]}={}){
+export function validateCriticalLayout(plan,{workspace,nativeControls=[],nativeShadowCandidates=plan?.nativeShadowCandidates??[]}={}){
  try{
   const doc=plan.document,win=doc.defaultView;
   if(!workspace?.isConnected||workspace.parentElement!==plan.root||!plan.composer.isConnected||!plan.header.isConnected||nativeControls.length>128)return false;
+  if(nativeShadowCandidates.length>4096||nativeShadowCandidates.some(node=>node.isConnected&&node.shadowRoot))return false;
   if(win.getComputedStyle(plan.root).position!==plan.rootPosition)return false;
   const board=rect(workspace),form=rect(plan.composer);
   if(!positive(board)||!positive(form)||board.width<160||board.height<96||board.y<0||board.x<0||board.x+board.width>win.innerWidth+1||board.y+board.height>win.innerHeight+1||form.y+form.height>win.innerHeight+1||overlaps(board,form))return false;
@@ -285,7 +300,7 @@ export function validateActiveLayout(plan,{workspace,style,styleText,exit,isOwne
   // Only a layout event or explicit presentation request enumerates controls.
   // The activity watch uses this bounded set; it does not scan native subtrees.
   const snapshot=controlSnapshot(plan);if(!snapshot)return false;
-  const nativeControls=snapshot.map(({node})=>node);onControls(nativeControls);
-  return validateCriticalLayout(plan,{workspace,nativeControls});
+  const nativeControls=snapshot.map(({node})=>node),nativeShadowCandidates=snapshot.shadowCandidates;onControls(nativeControls,nativeShadowCandidates);
+  return validateCriticalLayout(plan,{workspace,nativeControls,nativeShadowCandidates});
  }catch{return false;}
 }

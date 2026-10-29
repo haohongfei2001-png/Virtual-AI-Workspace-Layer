@@ -5,7 +5,7 @@ import {deflateSync} from 'node:zlib';
 import {readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {adaptApprovedDaily,approvedDailyProjection,APPROVED_V27_SHA256} from './ui10-visual-adapter.mjs';
-import {inspectSyntheticPng,syntheticPngLogRecords,PNG_LIMITS,VISUAL_PNG_IDS,UI10_NATIVE_CAPTURE_IDS,UI10_CONTROL_CAPTURE_IDS,UI10_CAPTURE_VIEWS,ui10CaptureSize,ui10ControlCaptureId,emitSyntheticPngs,finalizeUi10ControlVisualEvidence} from './ui10-visual-png-log.mjs';
+import {inspectSyntheticPng,syntheticPngLogRecords,PNG_LIMITS,VISUAL_PNG_IDS,UI10_NATIVE_CAPTURE_IDS,UI10_CONTROL_CAPTURE_IDS,UI10_CAPTURE_VIEWS,ui10CaptureSize,ui10ControlCaptureId,ui10ControlCapturePlan,emitSyntheticPngs,finalizeUi10ControlVisualEvidence} from './ui10-visual-png-log.mjs';
 function crc32(bytes){let c=0xffffffff;for(const b of bytes){c^=b;for(let i=0;i<8;i++)c=(c>>>1)^((c&1)?0xedb88320:0);}return (c^0xffffffff)>>>0;}
 function png(width=2,height=2,noise=false){const head=Buffer.alloc(13);head.writeUInt32BE(width);head.writeUInt32BE(height,4);head[8]=8;head[9]=6;const chunk=(type,data)=>{const b=Buffer.alloc(12+data.length);b.writeUInt32BE(data.length);b.write(type,4);data.copy(b,8);b.writeUInt32BE(crc32(b.subarray(4,8+data.length)),8+data.length);return b;};const pixels=Buffer.alloc((width*4+1)*height);if(noise){let x=123456789;for(let i=0;i<pixels.length;i++){x^=x<<13;x^=x>>>17;x^=x<<5;pixels[i]=i%(width*4+1)===0?0:x&255;}}return Buffer.concat([Buffer.from([137,80,78,71,13,10,26,10]),chunk('IHDR',head),chunk('IDAT',deflateSync(pixels)),chunk('IEND',Buffer.alloc(0))]);}
 const capture=(id='approved-desktop-initial',bytes=png())=>({id,bytes,metadata:{synthetic:true,lane:id.startsWith('mv3-')?'ACTUAL_MV3_OFFLINE':'WEB_MECHANISM_ONLY',viewport:{width:2,height:2}}});
@@ -46,3 +46,22 @@ test('canonical eleven-view requirement is retained while current-use journey ex
 
 test('default multi-profile control run remains supported without pretending PNG coverage',()=>{let calls=0;const report={status:'PASS_LAYOUT_SUBCONTRACT_ONLY',testSourcesStable:true};assert.equal(finalizeUi10ControlVisualEvidence({report,ownedCaptures:[],expected:48,singleProfile:false,emit:()=>calls++}),true);assert.equal(calls,0);assert.equal(report.visualLog.status,'NOT_EMITTED_MULTI_PROFILE');assert.equal(report.visualLog.complete,false);assert.equal(report.visualLog.expected,48);const failed={status:'FAIL',testSourcesStable:true};assert.equal(finalizeUi10ControlVisualEvidence({report:failed,ownedCaptures:[],expected:48,singleProfile:false,emit:()=>calls++}),false);assert.equal(calls,0);});
 test('multi-profile mode cannot silently discard captures to hide a retention error',()=>{const report={status:'PASS_LAYOUT_SUBCONTRACT_ONLY',testSourcesStable:true};assert.equal(finalizeUi10ControlVisualEvidence({report,ownedCaptures:[{}],expected:48,singleProfile:false,emit:()=>assert.fail('must not emit')}),false);assert.equal(report.visualLog.status,'FAILED_UNEXPECTED_MULTI_PROFILE_CAPTURES');});
+
+const actualControlSteps=(desktop,narrow)=>[{profile:'LEGACY',steps:[{id:'LEGACY/1440/light/ordinary/1000',phase:'before',interactions:{sidebarMode:desktop}},{id:'LEGACY/420/dark/ordinary/1000',phase:'before',interactions:{sidebarMode:narrow}}]}];
+test('native-retained captures name the exact unrun formal views without dropping any workspace view',()=>{
+ for(const [desktop,narrow,count,unrun]of [['FORMAL','FORMAL',16,0],['FORMAL','NATIVE_RETAINED',14,2],['NATIVE_RETAINED','NATIVE_RETAINED',12,4]]){
+  const plan=ui10ControlCapturePlan(actualControlSteps(desktop,narrow));assert.equal(plan.expectedIds.length,count);assert.equal(plan.notRun.length,unrun);assert.equal(plan.fullV27Acceptance,'NOT_ESTABLISHED');
+  assert(plan.notRun.every(x=>x.status==='NOT_RUN_NATIVE_SIDEBAR_RETAINED'&&/sidebar-(open|closed)$/.test(x.id)));
+  assert.deepEqual([...plan.expectedIds,...plan.notRun.map(x=>x.id)].sort(),UI10_CONTROL_CAPTURE_IDS.slice(0,16).toSorted());
+ }
+});
+test('missing, ambiguous and unknown sidebar observations cannot reduce expected captures',()=>{
+ for(const mutate of [rows=>rows[0].steps.pop(),rows=>rows[0].steps.push(rows[0].steps[0]),rows=>rows[0].steps[0].interactions.sidebarMode='UNKNOWN']){const rows=actualControlSteps('FORMAL','FORMAL');mutate(rows);assert.throws(()=>ui10ControlCapturePlan(rows),/unestablished-visual-sidebar-mode/);}
+});
+test('native-retained finalization requires the exact applicable IDs, not just twelve arbitrary screenshots',()=>{
+ const plan=ui10ControlCapturePlan(actualControlSteps('NATIVE_RETAINED','NATIVE_RETAINED'));
+ for(const wrong of [false,true]){const report={status:'PASS_LAYOUT_SUBCONTRACT_ONLY',testSourcesStable:true,visualApplicability:plan},ids=[...plan.expectedIds];if(wrong)ids[0]=plan.notRun[0].id;
+  const ownedCaptures=ids.map(id=>({capture:capture(id),owner:{sourceChangedDuringRun:false,buildManifestUnchanged:true}}));
+  assert.equal(finalizeUi10ControlVisualEvidence({report,ownedCaptures,expected:12,expectedIds:plan.expectedIds,emit:()=>{}}),!wrong);assert.equal(report.visualApplicability.notRun.length,4);assert.equal(report.visualLog.visualVerdict,'NOT_REVIEWED');
+ }
+});

@@ -9,6 +9,23 @@ export const VISUAL_PNG_IDS=Object.freeze(['approved-desktop-initial','renderer-
 export const PNG_LIMITS=Object.freeze({perImage:192*1024,total:1536*1024,chunk:4096,records:16,maxWidth:1440,maxHeight:1000});
 export function ui10CaptureSize({width,height,colorScheme}){return height===1000&&width===1440&&colorScheme==='light'?'desktop':height===1000&&width===420&&colorScheme==='dark'?'narrow-dark':null;}
 export function ui10ControlCaptureId({profile,title,phase,viewport,colorScheme,view}){const size=ui10CaptureSize({...viewport,colorScheme});if(title!=='ordinary'||phase==='restored'||!size)return null;const id=`mv3-control-${profile.toLowerCase()}-${size}-${view}`;if(!UI10_CONTROL_CAPTURE_IDS.includes(id))throw Error('unallowlisted-control-capture');return id;}
+/** Applicability is established by the actual control journey, never by the
+ * number of PNGs that happened to be produced. Native-retained navigation is
+ * not a formal-sidebar screenshot and leaves those exact views NOT_RUN. */
+export function ui10ControlCapturePlan(profileResults){
+ const names=[...new Set(profileResults.map(p=>p.profile))],expectedIds=[],notRun=[];
+ if(!names.length||names.some(p=>!['LEGACY','MODERN','PARTIAL'].includes(p)))throw Error('invalid-visual-profile-set');
+ for(const profile of names)for(const [width,colorScheme]of [[1440,'light'],[420,'dark']]){
+  const id=`${profile}/${width}/${colorScheme}/ordinary/1000`,matches=profileResults.filter(p=>p.profile===profile).flatMap(p=>p.steps).filter(step=>step.id===id&&step.phase==='before');
+  if(matches.length!==1||!['FORMAL','NATIVE_RETAINED'].includes(matches[0].interactions?.sidebarMode))throw Error('unestablished-visual-sidebar-mode:'+id);
+  const sidebarMode=matches[0].interactions.sidebarMode;
+  for(const view of UI10_CAPTURE_VIEWS){
+   const captureId=ui10ControlCaptureId({profile,title:'ordinary',phase:'before',viewport:{width,height:1000},colorScheme,view});
+   if(sidebarMode==='NATIVE_RETAINED'&&view.startsWith('sidebar-'))notRun.push({id:captureId,status:'NOT_RUN_NATIVE_SIDEBAR_RETAINED',sidebarMode});else expectedIds.push(captureId);
+  }
+ }
+ return {status:'ACTUAL_SIDEBAR_MODE_APPLICABILITY',expectedIds,notRun,fullV27Acceptance:'NOT_ESTABLISHED'};
+}
 const signature=Buffer.from([137,80,78,71,13,10,26,10]);
 export function inspectSyntheticPng(bytes){
  if(!Buffer.isBuffer(bytes)||bytes.length>PNG_LIMITS.perImage)throw Error('CAPTURE_TOO_LARGE_OR_NOT_BUFFER');
@@ -26,11 +43,11 @@ export function syntheticPngLogRecords(captures){
 let emissionStarted=false;
 export function emitSyntheticPngs(captures,write=line=>process.stdout.write(line+'\n')){if(emissionStarted)throw Error('png-job-already-emitted');const lines=syntheticPngLogRecords(captures);emissionStarted=true;for(const line of lines)write(line);}
 /** Partial completed views remain reviewable, but cannot turn a failed run green. */
-export function finalizeUi10ControlVisualEvidence({report,ownedCaptures,expected,emit=emitSyntheticPngs,singleProfile=true}){
+export function finalizeUi10ControlVisualEvidence({report,ownedCaptures,expected,expectedIds=null,emit=emitSyntheticPngs,singleProfile=true}){
  if(!singleProfile){report.visualLog={status:'NOT_EMITTED_MULTI_PROFILE',visualVerdict:'NOT_REVIEWED',expected,available:0,complete:false,reason:'PNG retention is bounded to one explicit profile per job; default multi-profile control testing remains supported.'};if(ownedCaptures.length){report.status='FAIL';report.visualLog.status='FAILED_UNEXPECTED_MULTI_PROFILE_CAPTURES';}return report.status!=='FAIL';}
  const trusted=report.testSourcesStable?ownedCaptures.filter(x=>x.owner.sourceChangedDuringRun===false&&x.owner.buildManifestUnchanged===true).map(x=>x.capture):[];
  report.visualLog={status:'NOT_EMITTED',visualVerdict:'NOT_REVIEWED',expected,available:trusted.length};
- try{if(trusted.length){emit(trusted);report.visualLog.status='EMITTED_NOT_REVIEWED';}if(report.status!=='FAIL'&&trusted.length!==expected)throw Error('incomplete-ui10-visual-capture-set');}
+ try{if(trusted.length){emit(trusted);report.visualLog.status='EMITTED_NOT_REVIEWED';}if(expectedIds!==null&&(!Array.isArray(expectedIds)||expectedIds.length!==expected||new Set(expectedIds).size!==expectedIds.length||expectedIds.some(id=>!UI10_CONTROL_CAPTURE_IDS.includes(id))))throw Error('invalid-expected-control-capture-set');if(report.status!=='FAIL'&&(trusted.length!==expected||expectedIds!==null&&JSON.stringify(trusted.map(c=>c.id).sort())!==JSON.stringify([...expectedIds].sort())))throw Error('incomplete-ui10-visual-capture-set');}
  catch(error){report.visualLog.status='FAILED';report.visualLog.error=String(error);report.status='FAIL';report.nativeMatrix='FAIL_LAYOUT_SUBCONTRACT_NOT_UI10_ACCEPTANCE';}
  return report.status!=='FAIL';
 }

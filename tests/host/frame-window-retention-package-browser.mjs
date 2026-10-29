@@ -52,7 +52,7 @@ else{
   let projectList=workspace.locator(`.card[data-theme-id="${project}"] .members`),unknown=workspace.locator('section[data-free-list="unknown"]');
   const ids=loc=>loc.locator('a[data-ref-id]').evaluateAll(ns=>ns.map(n=>n.getAttribute('data-ref-id')));
   async function waitRows(selector,count){await workspace.waitForFunction(({selector,count})=>{const roots=[document];for(let i=0;i<roots.length;i++)for(const n of roots[i].querySelectorAll('*'))if(n.shadowRoot)roots.push(n.shadowRoot);const list=roots.map(r=>r.querySelector(selector)).find(Boolean);return list?.querySelectorAll('a[data-ref-id]').length===count;},{selector,count},{timeout:6000});}
-  await projectList.getByRole('button',{name:'显示更多已知窗口',exact:true}).click();await waitRows(`.card[data-theme-id="${project}"] .members`,17);const first=await ids(projectList);
+  await projectList.getByRole('button',{name:'显示更多已知聊天',exact:true}).click();await waitRows(`.card[data-theme-id="${project}"] .members`,17);const first=await ids(projectList);
   report.phase='expand-unknown';await unknown.getByRole('button',{name:'其他已知聊天',exact:true}).click();await unknown.getByRole('button',{name:'显示更多其他已知聊天',exact:true}).click();await waitRows('section[data-free-list="unknown"]',17);assert.deepEqual(await ids(projectList),first);const second=await ids(unknown);
   assert.equal(new Set(first).size,17);assert.equal(new Set(second).size,17);assert(!first.some(id=>second.includes(id)));
   report.phase='reading-return';await page.getByRole('button',{name:'返回原生阅读',exact:true}).click();await page.getByRole('button',{name:'返回工作空间',exact:true}).waitFor();
@@ -70,7 +70,7 @@ else{
   await page.goto(server.origin+'/c/'+first[0]);[workspace]=await waitHostScaleSurfaces(page,{extensionId});
   await page.evaluate(()=>{globalThis.paginationEditor=document.querySelector('textarea');globalThis.paginationDocument=document;paginationEditor.value='preserved search draft';});
   projectList=workspace.locator(`.card[data-theme-id="${project}"] .members`);unknown=workspace.locator('section[data-free-list="unknown"]');
-  await projectList.getByRole('button',{name:'显示更多已知窗口',exact:true}).click();await waitRows(`.card[data-theme-id="${project}"] .members`,17);
+  await projectList.getByRole('button',{name:'显示更多已知聊天',exact:true}).click();await waitRows(`.card[data-theme-id="${project}"] .members`,17);
   await unknown.getByRole('button',{name:'显示更多其他已知聊天',exact:true}).click();await waitRows('section[data-free-list="unknown"]',17);
   const title=await projectList.locator('a[data-ref-id]').first().locator('.window-title').innerText();
   const scrollProbe=await workspace.evaluate(observeWindowScroll);report.scrollProbe=scrollProbe;const mainScroll=scrollProbe.after?.top;assert(scrollProbe.after?.connected&&mainScroll>0,'actual main workspace must be scrollable');assert.equal(mainScroll,scrollProbe.assigned.top,'current viewport must preserve the single scroll gesture');report.mainScrollBeforeSearch=mainScroll;
@@ -110,7 +110,7 @@ else{
   await page.evaluate(()=>{globalThis.paginationEditor=document.querySelector('textarea');globalThis.paginationDocument=document;});
   assert.equal(await page.locator('textarea').inputValue(),'');
   projectList=workspace.locator(`.card[data-theme-id="${project}"] .members`);unknown=workspace.locator('section[data-free-list="unknown"]');
-  await projectList.getByRole('button',{name:'显示更多已知窗口',exact:true}).click();await waitRows(`.card[data-theme-id="${project}"] .members`,17);
+  await projectList.getByRole('button',{name:'显示更多已知聊天',exact:true}).click();await waitRows(`.card[data-theme-id="${project}"] .members`,17);
   await unknown.getByRole('button',{name:'显示更多其他已知聊天',exact:true}).click();await waitRows('section[data-free-list="unknown"]',17);
   const otherTitle=await projectList.locator(`a[data-ref-id="${first[1]}"] .window-title`).innerText();
   const otherSidebar=page.frames().find(f=>f.url()===`chrome-extension://${extensionId}/sidebar.html`);assert(otherSidebar);

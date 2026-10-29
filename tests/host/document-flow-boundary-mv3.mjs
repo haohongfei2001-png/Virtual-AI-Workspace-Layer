@@ -33,6 +33,7 @@ try{
   },{once:true});
  });
  await page.goto(origin+'/');
+ report.viewport=await page.evaluate(()=>({width:innerWidth,height:innerHeight}));
  const visible=()=>{const n=document.querySelector('[data-va-owned][id$="_workspace"]');return !!n&&getComputedStyle(n).display!=='none'&&getComputedStyle(n).visibility==='visible'&&n.getBoundingClientRect().height>=96;};
  await page.frameLocator('iframe[src="chrome-extension://'+id+'/workspace.html"]').locator('.workspace').waitFor({timeout:15000});await page.waitForFunction(visible,null,{timeout:15000});
  const original=await page.locator('iframe[src="chrome-extension://'+id+'/workspace.html"]').elementHandle(),joins=await page.evaluate(()=>boundaryJoins),draft=await page.locator('textarea').inputValue();

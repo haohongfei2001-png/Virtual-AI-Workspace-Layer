@@ -21,7 +21,7 @@ const selected=process.argv[2]??'all';
 const cases=selected==='all'?['native-root-replacement','worker-twice','cosmetic-native-island','native-island-evolution','extension-disable']:selected.split(',');
 assert(cases.length>0&&cases.every(name=>['native-root-replacement','worker-twice','cosmetic-native-island','native-island-evolution','extension-disable','exit-hit'].includes(name)),'unsupported-terminal-case');
 const output=resolve(process.env.VAIWL_PROBE_OUTPUT??join(tmpdir(),'vaiwl-terminal-delivery-mv3.json'));
-const report={source,startedAt:new Date().toISOString(),browser:'NOT_RUN',realChatGPT:'NOT_RUN',evidence:'PACKAGED_MV3_SYNTHETIC_HOST',cases:[]};
+const report={source,startedAt:new Date().toISOString(),browser:'NOT_RUN',viewports:[],realChatGPT:'NOT_RUN',evidence:'PACKAGED_MV3_SYNTHETIC_HOST',cases:[]};
 // One immutable package and one loopback origin for the complete suite. Each
 // case gets a fresh profile; no case inherits private or worker state.
 const suiteDir=await mkdtemp(join(tmpdir(),'vaiwl-terminal-suite-'));
@@ -49,6 +49,7 @@ for(const name of cases){
   await page.addInitScript({content:'if(window===window.top)document.addEventListener("DOMContentLoaded",()=>{('+materializePartitionedSidebar.toString()+')('+JSON.stringify(partition.sidebarStructure.rows)+');if(document.querySelector(".home-composer-anchor"))('+materializeFlatHomeBranch.toString()+')();},{once:true});'});
   if(['cosmetic-native-island','native-island-evolution'].includes(name))await page.addInitScript(()=>{if(window!==window.top)return;document.addEventListener('DOMContentLoaded',()=>{const n=document.createElement('section');n.id='cosmetic-native-island';n.style.cssText='height:24px;width:100%;background:rgb(248,248,248)';document.querySelector('[role=main]').append(n);},{once:true});});
   await page.goto(origin+(name==='worker-twice'?'/g/'+P+'/project':'/'));
+  r.viewport=await page.evaluate(()=>({width:innerWidth,height:innerHeight}));report.viewports.push(r.viewport);
   const workspace=()=>page.frameLocator('iframe[src="chrome-extension://'+id+'/workspace.html"]');
   const visible=()=>{const n=document.querySelector('[data-va-owned][id$="_workspace"]');return !!n&&getComputedStyle(n).display!=='none'&&getComputedStyle(n).visibility==='visible'&&n.getBoundingClientRect().height>=96;};
   await workspace().locator('.workspace').waitFor({timeout:15000});await page.waitForFunction(visible,null,{timeout:15000});
@@ -125,6 +126,7 @@ for(const name of cases){
    r.hitChecks=[];
    for(const width of [1400,1000,720,600,420]){
     await page.setViewportSize({width,height:900});await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+    report.viewports.push(await page.evaluate(()=>({width:innerWidth,height:innerHeight})));
     r.hitChecks.push(await page.locator('button[aria-label="返回原生阅读"]').evaluateAll(ns=>ns.map(n=>{const b=n.getBoundingClientRect(),hit=document.elementFromPoint(b.x+b.width/2,b.y+b.height/2),p=n.parentElement;return {width:innerWidth,button:b.toJSON(),parent:p.getBoundingClientRect().toJSON(),display:getComputedStyle(p).display,hit:hit===n,hitTag:hit?.tagName};})));
    }
    r.status=r.hitChecks.every(xs=>xs.length===1&&xs[0].hit)?'PASS':'FAIL_PRODUCT_OR_UNSUPPORTED_GEOMETRY';
