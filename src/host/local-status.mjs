@@ -1,6 +1,7 @@
 import {projectSurfaceFailureReasons,projectClipDiagnostic} from './native-project-surface.mjs';
 import {historyFailureReasons} from './native-history-list.mjs';
 import {nativeFlowFailureReasons} from './document-flow-layout.mjs';
+import {validMainMountCheck} from './native-flow-diagnostic.mjs';
 import {validHistoryStructureReport,validSidebarStructure,sidebarStructureCoverage} from './history-structure-diagnostic.mjs';
 // Shared fixed frame failures; arbitrary renderer/transport error text stays private.
 export const frameFailureReasons=Object.freeze(['ui-grant-expired','ui-renew-failed','ui-join-failed','ui-port-disconnected','ui-renderer-failed','read-budget-exhausted','frame-preparation-limit','free-frame-page-too-large','frame-view-unavailable','invalid-preparation-response','invalid-frame-view','invalid-search-snippets','invalid-frame-current','invalid-frame-current-ref','invalid-frame-navigation','invalid-frame-presentation','request-timeout']);
@@ -17,6 +18,11 @@ const exact=(value,keys)=>value!==null&&typeof value==='object'&&!Array.isArray(
 // Bounded layout categories or numeric computed inset geometry only; never
 // native text, IDs, URLs, arbitrary CSS, attribute values or credential material.
 export function validLayoutShape(value){
+ if(value&&Object.hasOwn(value,'mainMountCheck')){
+  if(!Object.hasOwn(Object.getOwnPropertyDescriptor(value,'mainMountCheck')??{},'value'))return false;
+  const {mainMountCheck,...rest}=value;
+  return exact(value,[...Object.keys(rest),'mainMountCheck'])&&validMainMountCheck(mainMountCheck)&&(Object.keys(rest).length===0||validLayoutShape(rest));
+ }
  if(value&&Object.hasOwn(value,'sidebarStructure')){
   const {sidebarStructure,...rest}=value;
   // Passive structural evidence does not require a successful UI mount or
@@ -150,5 +156,18 @@ export async function createSidebarSnapshot({webNavigation,target,boot,shape,sch
   const path=new URL(target.url).pathname;
   const route=path==='/'?'home':/^\/g\/[^/]+\/project\/?$/.test(path)?'project':/\/c\/[^/]+\/?$/.test(path)?'conversation':'other';
   return {schema:'vaiwl-sidebar-snapshot-v1',build:boot.build,documentBinding:'verified-at-capture-not-account-identity',route,coverage:sidebarStructureCoverage(shape.sidebarStructure),sidebarStructure:structuredClone(shape.sidebarStructure)};
+ }catch{return null;}finally{cancel(timer);}
+}
+
+/** Existing popup transport and runtime fingerprint, with no new page scan.
+ * Complete refers only to the selected refused path, not the whole main DOM. */
+export async function createMainMountSnapshot({webNavigation,target,boot,shape,schedule=setTimeout,cancel=clearTimeout}){
+ if(!target||!webNavigation||!exact(boot,['v','stage','build'])||boot.v!==1||boot.stage!=='module-loaded'||typeof boot.build!=='string'||!/^[a-f0-9]{64}$/.test(boot.build)||!validMainMountCheck(shape?.mainMountCheck))return null;
+ let timer;
+ try{
+  const url=new URL(target.url);if(url.pathname!=='/'||url.search||url.hash)return null;
+  const frame=await Promise.race([webNavigation.getFrame({tabId:target.tabId,frameId:0}),new Promise(resolve=>{timer=schedule(()=>resolve(null),1000);})]);
+  if(frame?.documentId!==target.documentId||frame?.url!==target.url||frame?.documentLifecycle!=='active')return null;
+  return {schema:'vaiwl-main-mount-snapshot-v1',build:boot.build,documentBinding:'verified-at-capture-not-account-identity',route:'home',scope:'first-preflight-path-and-landmarks-only',mainMountCheck:structuredClone(shape.mainMountCheck)};
  }catch{return null;}finally{cancel(timer);}
 }

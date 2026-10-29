@@ -1,5 +1,7 @@
 import {hasNativeLayer,NATIVE_LAYER_SELECTOR} from './native-layer.mjs';
 import {isEmptyViewportMarker,isNativeScrollRegion} from './native-return-gap.mjs';
+import {nativeFlowFailureReasons,snapshotMainMountCheck} from './native-flow-diagnostic.mjs';
+export {nativeFlowFailureReasons} from './native-flow-diagnostic.mjs';
 /** Presentation-only document flow contract. Never supplies scope or data authority.
  * Native nodes stay in their original parent chain. Owned rules are reversible;
  * active proof measures the displayed layout, never a temporarily disabled one.
@@ -23,7 +25,6 @@ const inactiveMarker=(node,viewport,doc)=>isEmptyViewportMarker(node,viewport,do
 // Fixed refusal classes from the existing proof, never native values or text.
 // Only this pre-mutation error may keep the initial layout watcher alive;
 // arbitrary mount errors (including marker collisions) remain terminal.
-export const nativeFlowFailureReasons=Object.freeze(['inspection','regions','root','header','capacity','wrapper-control','wrapper-text','wrapper-paint','uncovered-branch','branch-paint','branch-order','protected-controls','geometry','check-failed'].map(reason=>'native-flow-'+reason));
 export class NativeFlowPreflightError extends Error {
  constructor(reason){super(nativeFlowFailureReasons.includes(reason)?reason:'native-flow-check-failed');this.name='NativeFlowPreflightError';}
 }
@@ -33,42 +34,43 @@ export class NativeFlowPreflightError extends Error {
 // text values, action semantics or data authority are inferred from this scan.
 // Every painted box must remain inside that member; unsupported painting is
 // refused instead of being hidden or treated as another title/reading region.
-function retainedPaint(member,doc,{viewport=false,budget={started:doc.defaultView.performance.now(),nodes:0,rectangles:0}}={}){
+function retainedPaint(member,doc,{viewport=false,budget={started:doc.defaultView.performance.now(),nodes:0,rectangles:0},onRefused=null}={}){
  const win=doc.defaultView,root=member.node,box=rect(root);
+ const refuse=(detail,node)=>{onRefused?.(detail,node);return false;};
  const inside=r=>Object.values(r).every(Number.isFinite)&&(!positive(r)||r.x>=box.x-0.5&&r.y>=box.y-0.5&&r.x+r.width<=box.x+box.width+0.5&&r.y+r.height<=box.y+box.height+0.5);
  const hidden=win.getComputedStyle(root).display==='none';
- if(hidden!==member.hidden||!hidden&&(!positive(box)||viewport&&(box.x<0||box.y<0||box.x+box.width>win.innerWidth+1||box.y+box.height>win.innerHeight+1)))return false;
+ if(hidden!==member.hidden||!hidden&&(!positive(box)||viewport&&(box.x<0||box.y<0||box.x+box.width>win.innerWidth+1||box.y+box.height>win.innerHeight+1)))return refuse('retained-box',root);
  const range=doc.createRange();
  function walk(node,absent,graphic=null){
-  if(++budget.nodes>128||win.performance.now()-budget.started>25)return false;
-  if(node.nodeType===3){if(absent||graphic)return true;range.selectNodeContents(node);for(const r of range.getClientRects())if(++budget.rectangles>256||win.performance.now()-budget.started>25||!inside({x:r.x,y:r.y,width:r.width,height:r.height}))return false;return true;}
+  if(++budget.nodes>128||win.performance.now()-budget.started>25)return refuse('retained-budget',node);
+  if(node.nodeType===3){if(absent||graphic)return true;range.selectNodeContents(node);for(const r of range.getClientRects()){if(++budget.rectangles>256||win.performance.now()-budget.started>25)return refuse('retained-budget',node);if(!inside({x:r.x,y:r.y,width:r.width,height:r.height}))return refuse('retained-text-overflow',node);}return true;}
   if(node.nodeType!==1)return true;
-  if(node.shadowRoot||node.localName.includes('-'))return false;
+  if(node.shadowRoot||node.localName.includes('-'))return refuse('retained-opaque',node);
   const svg=node.namespaceURI===svgNamespace;
   if(svg){
-   if(graphic){if(!inlineGraphics.has(node.localName))return false;}
-   else {if(node===root||node.localName!=='svg'||node.parentElement?.namespaceURI!==htmlNamespace)return false;graphic=node;}
-  }else if(graphic||node.namespaceURI!==htmlNamespace||node.matches('iframe,object,embed,canvas,video,audio'))return false;
+   if(graphic){if(!inlineGraphics.has(node.localName))return refuse('retained-svg',node);}
+   else {if(node===root||node.localName!=='svg'||node.parentElement?.namespaceURI!==htmlNamespace)return refuse('retained-svg',node);graphic=node;}
+  }else if(graphic||node.namespaceURI!==htmlNamespace||node.matches('iframe,object,embed,canvas,video,audio'))return refuse('retained-opaque',node);
   const s=win.getComputedStyle(node);absent||=s.display==='none';
   if(!absent){
-   if(!['static','relative'].includes(s.position)||s.cssFloat!=='none'||s.visibility!=='visible'||s.opacity!=='1'||s.zoom!=='1'||s.animationName!=='none'||s.display==='list-item'||s.webkitTextStrokeWidth!=='0px'||s.textDecorationLine!=='none'||node===root&&!['block','flow-root','flex','grid','inline-block'].includes(s.display)||['transform','translate','rotate','scale','filter','backdropFilter','clipPath','maskImage','offsetPath','boxShadow','textShadow','borderImageSource'].some(k=>s[k]!=='none'))return false;
-   if(['::before','::after'].some(p=>!['none','normal'].includes(win.getComputedStyle(node,p).content)))return false;
-   if(svg&&(['markerStart','markerMid','markerEnd'].some(k=>s[k]!=='none')||[s.fill,s.stroke].some(value=>/url\(/i.test(value))))return false;
+   if(!['static','relative'].includes(s.position)||s.cssFloat!=='none'||s.visibility!=='visible'||s.opacity!=='1'||s.zoom!=='1'||s.animationName!=='none'||s.display==='list-item'||s.webkitTextStrokeWidth!=='0px'||s.textDecorationLine!=='none'||node===root&&!['block','flow-root','flex','grid','inline-block'].includes(s.display)||['transform','translate','rotate','scale','filter','backdropFilter','clipPath','maskImage','offsetPath','boxShadow','textShadow','borderImageSource'].some(k=>s[k]!=='none'))return refuse('retained-style',node);
+   if(['::before','::after'].some(p=>!['none','normal'].includes(win.getComputedStyle(node,p).content)))return refuse('retained-pseudo',node);
+   if(svg&&(['markerStart','markerMid','markerEnd'].some(k=>s[k]!=='none')||[s.fill,s.stroke].some(value=>/url\(/i.test(value))))return refuse('retained-svg-paint',node);
    const b=!svg||node===graphic?rect(node):null;
    // The real SVG viewport clips all allowed descendants, even oversized
    // paths/strokes. `clip` is not equivalent: overflow-clip-margin can extend
    // its paint. Root effects and outline still need the surrounding HTML proof.
-   if(node===graphic&&(s.display==='contents'||s.overflowX!=='hidden'||s.overflowY!=='hidden'||!positive(b)))return false;
-   if((!svg||node===graphic)&&!inside(b))return false;
+   if(node===graphic&&(s.display==='contents'||s.overflowX!=='hidden'||s.overflowY!=='hidden'||!positive(b)))return refuse('retained-svg-viewport',node);
+   if((!svg||node===graphic)&&!inside(b))return refuse('retained-box-overflow',node);
    if(!['none','hidden'].includes(s.outlineStyle)&&s.outlineWidth!=='0px'){
-    if(svg&&node!==graphic)return false;
+    if(svg&&node!==graphic)return refuse('retained-outline',node);
     const outset=Math.max(0,Number.parseFloat(s.outlineWidth)+Number.parseFloat(s.outlineOffset));
-    if(!Number.isFinite(outset)||!inside({x:b.x-outset,y:b.y-outset,width:b.width+2*outset,height:b.height+2*outset}))return false;
+    if(!Number.isFinite(outset)||!inside({x:b.x-outset,y:b.y-outset,width:b.width+2*outset,height:b.height+2*outset}))return refuse('retained-outline',node);
    }
   }
   return [...node.childNodes].every(child=>walk(child,absent,graphic));
  }
- return walk(root,hidden)&&win.performance.now()-budget.started<=25;
+ return walk(root,hidden)&&(win.performance.now()-budget.started<=25||refuse('retained-final-budget',root));
 }
 
 // Keep the existing landmark order, and also preserve each retained member's
@@ -116,74 +118,86 @@ export function isSameNativeLayout(plan) {
  }catch{return false;}
 }
 
-export function captureNativeBaseline({document:doc,inspection,isOwnedSurface=()=>false,onRefused=()=>{}}={}) {
- const refuse=reason=>{try{onRefused(reason);}catch{}return null;};
+export function captureNativeBaseline({document:doc,inspection,isOwnedSurface=()=>false,onRefused=()=>{},onDiagnostic=null}={}) {
+ const evidence={kind:'unknown',phase:'inspection',detail:'inspection',node:null,root:null,visited:0};
+ const diagnose=reason=>{if(typeof onDiagnostic==='function')try{onDiagnostic(snapshotMainMountCheck({document:doc,inspection,reason,...evidence}));}catch{}};
+ const refuse=(reason,detail=evidence.detail,node=evidence.node)=>{evidence.detail=detail;evidence.node=node;try{onRefused(reason);}catch{}diagnose(reason);return null;};
  try {
   if (!inspection?.ok) return refuse('native-flow-inspection');
+  evidence.phase='regions';
   const {reading,composer,header}=inspection,win=doc.defaultView;
-  if (![reading,composer,header].every(n=>n?.isConnected&&n.ownerDocument===doc) || reading.contains(composer) || composer.contains(reading)) return refuse('native-flow-regions');
+  if (![reading,composer,header].every(n=>n?.isConnected&&n.ownerDocument===doc) || reading.contains(composer) || composer.contains(reading)) return refuse('native-flow-regions','invalid-regions');
   const protectedNodes=[...new Set([composer,...inspection.protectedRegions.filter(n=>n!==header).map(n=>n.tagName==='H1'&&plain(n.parentElement)&&!n.parentElement.contains(composer)&&!n.parentElement.contains(reading)?n.parentElement:n)])];
   const leaves=[reading,...protectedNodes];
+  evidence.kind=protectedNodes.some(n=>n.getAttribute('role')==='tablist')?'project':inspection.homeLayoutNodes?'home':'conversation';evidence.phase='root';
   let root=inspection.readingViewport??reading.parentElement;
   while(root && (!leaves.every(n=>root.contains(n))||!positive(rect(root))))root=root.parentElement;
   // Only the explicit viewport may retain this native tab stop. It remains
   // the grid's real root box; nested focusable nodes are never flattened.
   const focusViewport=root===inspection.readingViewport&&isNativeScrollRegion(root,inspection.viewportFocus,doc)?root:null;
-  if(!root||root===doc.body||root===doc.documentElement||!plain(root)&&!focusViewport)return refuse('native-flow-root');
+  evidence.root=root;evidence.node=root;
+  if(!root||root===doc.body||root===doc.documentElement||!plain(root)&&!focusViewport)return refuse('native-flow-root',root?'root-unsupported':'root-unavailable',root);
+  evidence.phase='header';
   const headerInside=root.contains(header);
-  if(headerInside){if(header.contains(reading)||header.contains(composer)||reading.contains(header)||composer.contains(header))return refuse('native-flow-header');protectedNodes.unshift(header);leaves.push(header);}
-  const kind=protectedNodes.some(n=>n.getAttribute('role')==='tablist')?'project':inspection.homeLayoutNodes?'home':'conversation';
+  if(headerInside){if(header.contains(reading)||header.contains(composer)||reading.contains(header)||composer.contains(header))return refuse('native-flow-header','header-overlap',header);protectedNodes.unshift(header);leaves.push(header);}
+  const kind=protectedNodes.some(n=>n.getAttribute('role')==='tablist')?'project':inspection.homeLayoutNodes?'home':'conversation';evidence.kind=kind;evidence.phase='walk';
   const leafSet=new Set(leaves),shells=[],records=[],nativeChildren=new Map(),inactiveMarkers=[],retainedMembers=[];let count=0,failure=null,retainedBudget=null;
   const markerViewport=inspection.viewportMarkers==='empty-div-v1'?inspection.readingViewport:null;
   const isMarker=node=>!!markerViewport&&inactiveMarker(node,markerViewport,doc);
-  const reject=reason=>{failure??=reason;return false;};
+  const reject=(reason,detail,node,phase='walk')=>{if(!failure){failure=reason;Object.assign(evidence,{phase,detail,node});}return false;};
   function retain(node){
    const member={node,hidden:win.getComputedStyle(node).display==='none'};
    retainedBudget??={started:win.performance.now(),nodes:0,rectangles:0};
-   if(!retainedPaint(member,doc,{budget:retainedBudget}))return reject('native-flow-branch-paint');
+   let detail='retained-box',rejected=node;
+   if(!retainedPaint(member,doc,{budget:retainedBudget,onRefused:(d,n)=>{detail=d;rejected=n;}}))return reject('native-flow-branch-paint',detail,rejected,'retained-paint');
    // Exact nodes/order, including text nodes but never their values. A later
    // native replacement needs a new proof; it cannot inherit these markers.
    function record(branch,first=false){
-    if(!first){if(++count>128)return reject('native-flow-capacity');if(branch.nodeType===1)records.push({node:branch,parent:branch.parentElement,attrs:attrs(branch)});}
+    if(!first){if(++count>128)return reject('native-flow-capacity','node-capacity',branch,'retained-identity');if(branch.nodeType===1)records.push({node:branch,parent:branch.parentElement,attrs:attrs(branch)});}
     if(branch.nodeType!==1)return true;
     nativeChildren.set(branch,[...branch.childNodes]);return [...branch.childNodes].every(child=>record(child));
    }
    if(!record(node,true))return false;retainedMembers.push(member);return true;
   }
   function walk(node){
-   if(++count>128)return reject('native-flow-capacity');
-   if(!node.isConnected||node.ownerDocument!==doc)return reject('native-flow-regions');
+   if(++count>128)return reject('native-flow-capacity','node-capacity',node);
+   if(!node.isConnected||node.ownerDocument!==doc)return reject('native-flow-regions','detached',node);
    records.push({node,parent:node.parentElement,attrs:attrs(node)});
    if(leafSet.has(node))return true;
    if(isMarker(node)){inactiveMarkers.push(node);return true;}
    // Scope this addition to the already inspected home layout. Conversation
    // reading/viewport policies and Project controls retain their own contracts.
-   if(!leaves.some(leaf=>node.contains(leaf)))return kind==='home'?retain(node):reject('native-flow-uncovered-branch');
+   if(!leaves.some(leaf=>node.contains(leaf)))return kind==='home'?retain(node):reject('native-flow-uncovered-branch','branch-without-landmark',node);
    // Layout wrappers only. Unknown controls/text/branches cannot disappear
    // through display:contents, even if they happen to have no visible text.
-   if(node!==focusViewport&&(!plain(node)||node.hasAttribute('role')&&node.getAttribute('role')!=='main'))return reject('native-flow-wrapper-control');
-   if([...node.childNodes].some(n=>n.nodeType===3&&n.textContent.trim()))return reject('native-flow-wrapper-text');
+   if(node!==focusViewport&&(!plain(node)||node.hasAttribute('role')&&node.getAttribute('role')!=='main'))return reject('native-flow-wrapper-control','wrapper-control',node);
+   if([...node.childNodes].some(n=>n.nodeType===3&&n.textContent.trim()))return reject('native-flow-wrapper-text','wrapper-text',node);
    const style=win.getComputedStyle(node);
-   if(style.display==='none'||style.visibility!=='visible'||style.opacity!=='1'||style.zoom!=='1'||['transform','translate','rotate','scale','filter','backdropFilter','clipPath','maskImage'].some(k=>style[k]!=='none')||['::before','::after'].some(p=>!['none','normal'].includes(win.getComputedStyle(node,p).content)))return reject('native-flow-wrapper-paint');
+   if(style.display==='none'||style.visibility!=='visible'||style.opacity!=='1'||style.zoom!=='1')return reject('native-flow-wrapper-paint','wrapper-visibility',node);
+   if(['transform','translate','rotate','scale','filter','backdropFilter','clipPath','maskImage'].some(k=>style[k]!=='none'))return reject('native-flow-wrapper-paint','wrapper-effect',node);
+   if(['::before','::after'].some(p=>!['none','normal'].includes(win.getComputedStyle(node,p).content)))return reject('native-flow-wrapper-paint','wrapper-pseudo',node);
    const children=[...node.children].filter(n=>!isOwnedSurface(n));
-   if(!children.length)return reject('native-flow-uncovered-branch');
+   if(!children.length)return reject('native-flow-uncovered-branch','empty-wrapper',node);
    nativeChildren.set(node,children);shells.push(node);return children.every(walk);
   }
-  if(!walk(root)||!leaves.every(n=>records.some(r=>r.node===n)))return refuse(failure??'native-flow-uncovered-branch');
+  const walked=walk(root);evidence.visited=count;
+  if(!walked)return refuse(failure??'native-flow-uncovered-branch');
+  const missing=leaves.find(n=>!records.some(r=>r.node===n));if(missing)return refuse('native-flow-uncovered-branch','leaf-uncovered',missing);
   // Headers outside the flow root are never laid out by us, but remain part
   // of the native identity and occlusion proof. React may replace them alone.
   if(!headerInside)records.push({node:header,parent:header.parentElement,attrs:attrs(header)});
   const flowOrder=orderedFlowMembers([...(headerInside?[header]:[]),...protectedNodes.filter(n=>n!==header&&n!==composer),reading,composer],retainedMembers);
-  if(!flowOrder)return refuse('native-flow-branch-order');
+  evidence.phase='order';if(!flowOrder)return refuse('native-flow-branch-order','order',root);
   const protectedRegions=[...new Set([header,...protectedNodes,...retainedMembers.map(m=>m.node)])];
   const nativeControls=controlSnapshot({protectedRegions,document:doc,isOwnedSurface});
-  if(!nativeControls)return refuse('native-flow-protected-controls');
+  evidence.phase='controls';if(!nativeControls)return refuse('native-flow-protected-controls','protected-controls',root);
   const coordinates=layoutCoordinates({root,header,composer,headerInside});
-  if(!coordinates)return refuse('native-flow-geometry');
+  evidence.phase='geometry';if(!coordinates)return refuse('native-flow-geometry','geometry',root);
+  evidence.phase='complete';evidence.detail='accepted';evidence.node=null;diagnose('none');
   return Object.freeze({kind,root,reading,composer,header,leaves,protectedNodes,protectedRegions,shells,records,nativeChildren,nativeControls,inactiveMarkers,retainedMembers,flowOrder,markerViewport,focusViewport,
    headerInside,document:doc,url:doc.location.href,regionEpoch:inspection.regionEpoch,isOwnedSurface,
    ...coordinates});
- }catch{return refuse('native-flow-check-failed');}
+ }catch{evidence.phase='exception';return refuse('native-flow-check-failed','exception',null);}
 }
 
 // Structural guard for a new proof in the restored native layout. This alone

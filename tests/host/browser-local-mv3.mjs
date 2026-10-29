@@ -9,7 +9,7 @@ import {mkdtemp,writeFile,readFile} from 'node:fs/promises';
 import {tmpdir,platform} from 'node:os';
 import {join} from 'node:path';
 import {chromium} from '../b1/tooling/node_modules/playwright/index.mjs';
-import {packageHost} from '../../extension/package.mjs';
+import {packageHost,verifyHost} from '../../extension/package.mjs';
 import {observedProjectHTML} from './fixtures/observed-project.mjs';
 import {observedDesktopHTML} from './fixtures/observed-desktop.mjs';
 import {createHistoricalNetworkGuard,historicalNetworkGuardArgs} from './historical-network-guard.mjs';
@@ -23,7 +23,7 @@ const conversationHTML=id=>process.argv.includes('--flow-only')?longDesktopHTML(
 // document, sidebar, draft and unplanned browser-navigation event.
 const server=createServer((req,res)=>{requests.push(req.url);res.writeHead(200,{'Content-Type':'text/html','Cache-Control':'no-store'});res.end(req.url==='/g/'+P+'/project'?observedProjectHTML(P,C)+`<script>document.addEventListener('click',e=>{if(e.target.closest('button')?.textContent==='Native search'){document.querySelector('main').innerHTML=${JSON.stringify(homeMain)};history.pushState({},'','/');return;}const a=e.target.closest('a[href]');if(a&&a.getAttribute('href')==='/c/${B}'&&!e.defaultPrevented){e.preventDefault();const next=a.href;const html=new DOMParser().parseFromString(${JSON.stringify(conversationHTML(B))},'text/html');document.body.replaceChildren(...html.body.childNodes);for(const style of document.querySelectorAll('head style'))style.remove();document.head.append(...html.head.childNodes);history.pushState({},'',next);${process.argv.includes('--flow-only')?'('+materializePartitionedSidebar.toString()+')('+JSON.stringify(partitionDetails.sidebarStructure.rows)+');':''}}});</script>`:req.url==='/'?observedHomeHTML(B):conversationHTML(B));});
 await new Promise(r=>server.listen(0,'127.0.0.1',r));const origin='http://127.0.0.1:'+server.address().port,guard=await createHistoricalNetworkGuard({fixtureOrigin:origin});
-const dir=await mkdtemp(join(tmpdir(),'vaiwl-browser-local-mv3-')),built=packageHost(join(dir,'package'),{offlineOrigin:origin,browserLocal:true}),report={status:'RUNNING',evidence:'ISOLATED_MV3_FORMAL_UI_LOCAL_SESSION_AND_PERSONAL',realChatGPT:'NOT_RUN',baseline:HOST_BASELINE_VERSION,package:built,checks:{},requests};
+const dir=await mkdtemp(join(tmpdir(),'vaiwl-browser-local-mv3-')),built=packageHost(join(dir,'package'),{offlineOrigin:origin,browserLocal:true,...(process.argv.includes('--mount-diagnostic-only')?{mainMountDiagnostic:true}:{})}),report={status:'RUNNING',evidence:'ISOLATED_MV3_FORMAL_UI_LOCAL_SESSION_AND_PERSONAL',realChatGPT:'NOT_RUN',baseline:HOST_BASELINE_VERSION,package:built,checks:{},requests};
 let context,page;
 try{
  const launch=async()=>{
@@ -32,6 +32,38 @@ try{
  return result;};
  context=await launch();report.browserErrors=[];context.on('page',p=>p.on('pageerror',e=>report.browserErrors.push(e.stack||e.message)));
  const cdp=await context.browser().newBrowserCDPSession(),{id}=await cdp.send('Extensions.loadUnpacked',{path:built.unpacked});
+ if(process.argv.includes('--mount-diagnostic-only')){
+  page=await context.newPage();await page.setViewportSize({width:1400,height:900});
+  await page.addInitScript({content:'if(window===window.top)document.addEventListener("DOMContentLoaded",()=>{('+materializePartitionedSidebar.toString()+')('+JSON.stringify(partitionDetails.sidebarStructure.rows)+');const branch=document.createElement("div");branch.style.cssText="position:absolute;width:8px;height:8px;bottom:0";branch.dataset.fixturePreflight="";branch.title="PRIVATE_SENTINEL";document.querySelector("[role=main]").append(branch);},{once:true});'});
+  await page.goto(origin+'/');await page.waitForFunction(()=>document.documentElement.dataset.vaiwlStartup==='surface-failed',null,{timeout:15000});
+  const editor=await page.locator('textarea').elementHandle(),draft=await page.locator('textarea').inputValue();
+  const control=await context.newPage();await control.goto('chrome-extension://'+id+'/status.html');await page.bringToFront();
+  const read=()=>control.evaluate(async()=>{const [tab]=await chrome.tabs.query({active:true,currentWindow:true}),frame=await chrome.webNavigation.getFrame({tabId:tab.id,frameId:0});return chrome.tabs.sendMessage(tab.id,{v:1,type:'HOST_LOCAL_LAYOUT'},{documentId:frame.documentId});});
+  const first=await read(),check=first.shape.mainMountCheck;
+  assert.equal(check.reason,'native-flow-branch-paint');assert.equal(check.detail,'retained-style');assert.equal(check.phase,'retained-paint');assert.equal(check.coverage,'complete');assert.equal(check.kind,'home');
+  assert.equal(first.shape.sidebarStructure,undefined,'diagnostic popup does not trigger a sidebar scan');
+  assert.deepEqual((await read()).shape.mainMountCheck,check,'status read does not rerun preflight');
+  await control.evaluate(()=>import(chrome.runtime.getURL('extension/status.mjs')+'?mount-diagnostic'));
+  await control.locator('#save-main-mount-snapshot').waitFor({state:'attached'});await control.locator('details#diagnostic-details').last().locator('summary').first().click();assert.equal(await control.locator('#save-sidebar-snapshot').count(),0);assert.equal(await control.locator('#history-structure-report').count(),0);
+  const downloadPromise=control.waitForEvent('download');await control.locator('#save-main-mount-snapshot').click();const download=await downloadPromise;
+  assert.equal(download.suggestedFilename(),'vaiwl-main-mount-check.json');const exported=JSON.parse(await readFile(await download.path(),'utf8'));
+  assert.deepEqual(exported.mainMountCheck,check);assert.equal(exported.route,'home');assert.equal(exported.documentBinding,'verified-at-capture-not-account-identity');assert(!JSON.stringify(exported).includes('PRIVATE_SENTINEL'));
+  const bootstrap=await readFile(join(built.unpacked,'content.js'),'utf8');assert(bootstrap.includes(exported.build));
+  const worker=context.serviceWorkers().find(w=>w.url()==='chrome-extension://'+id+'/extension/worker.mjs');
+  const saved=await worker.evaluate(()=>chrome.storage.local.get('vaiwl-main-mount-check-20261029-v1'));assert.deepEqual(saved,{'vaiwl-main-mount-check-20261029-v1':{spent:true}});
+  await page.bringToFront();await page.locator('[data-fixture-preflight]').evaluate(n=>n.remove());
+  await page.frameLocator('iframe[src="chrome-extension://'+id+'/workspace.html"]').getByRole('link',{name:'Native A',exact:true}).first().waitFor({timeout:15000});
+  assert.deepEqual((await read()).shape.mainMountCheck,check,'ordinary recovery retains the first historical decision without recollection');
+  assert(await editor.evaluate(n=>n.isConnected&&n===document.querySelector('textarea')));assert.equal(await page.locator('textarea').inputValue(),draft);
+  const second=await context.newPage();await second.goto(origin+'/');await second.frameLocator('iframe[src="chrome-extension://'+id+'/workspace.html"]').getByRole('link',{name:'Native A',exact:true}).first().waitFor({timeout:15000});
+  await second.bringToFront();assert.equal((await read()).shape.mainMountCheck,undefined,'second home cannot reuse consumed diagnostic budget');
+  await second.reload();await second.frameLocator('iframe[src="chrome-extension://'+id+'/workspace.html"]').getByRole('link',{name:'Native A',exact:true}).first().waitFor({timeout:15000});assert.equal((await read()).shape.mainMountCheck,undefined,'Reload cannot reuse consumed diagnostic budget');
+  await page.bringToFront();await page.evaluate(()=>history.pushState({},'','/c/44444444-4444-4444-8444-444444444444'));
+  assert.equal((await read()).shape?.mainMountCheck,undefined,'old report is not delivered as current after route change');
+  assert.deepEqual(await worker.evaluate(()=>indexedDB.databases()),[]);
+  report.checks.mountDiagnostic={reason:check.reason,detail:check.detail,coverage:check.coverage,buildBound:true,exportedFromExistingPopup:true,rawValuesAbsent:true,noExtraSidebarScan:true,onceAcrossTabs:true,noCrossRouteReport:true,normalRecoveryUnaffected:true,originalEditorAndDraft:true,privateDatabases:0};
+  report.diagnostic=exported;verifyHost(built.unpacked);await control.close();await second.close();
+ }
  if(process.argv.includes('--mount-recovery-only')){
   // Full production owner -> adapter -> preflight -> JOIN -> VIEW -> renderer.
   // Temporary branch is a local lifecycle counterexample, not captured site DOM.
@@ -921,7 +953,7 @@ try{
   report.checks.historyDiagnosticNoPrivateDatabaseOrDraftChange=true;
   await control.close();await page.close();
  }
- if(!process.argv.includes('--mount-recovery-only')&&!process.argv.includes('--instant-recovery-only')&&!process.argv.includes('--flow-only')&&!process.argv.includes('--sidebar-composition-only')&&!process.argv.includes('--sidebar-capture-only')&&!process.argv.includes('--entry-receipt-only')&&!process.argv.includes('--progressive-only')&&!process.argv.includes('--history-ready-only')&&!process.argv.includes('--history-diagnostic-only')&&!process.argv.includes('--mixed-history-only')&&!process.argv.includes('--product-states-only')){
+ if(!process.argv.includes('--mount-diagnostic-only')&&!process.argv.includes('--mount-recovery-only')&&!process.argv.includes('--instant-recovery-only')&&!process.argv.includes('--flow-only')&&!process.argv.includes('--sidebar-composition-only')&&!process.argv.includes('--sidebar-capture-only')&&!process.argv.includes('--entry-receipt-only')&&!process.argv.includes('--progressive-only')&&!process.argv.includes('--history-ready-only')&&!process.argv.includes('--history-diagnostic-only')&&!process.argv.includes('--mixed-history-only')&&!process.argv.includes('--product-states-only')){
  // Row reorder reproves only the sidebar mask; workspace identity survives.
  const reordered=await context.newPage();await reordered.addInitScript({content:'if(window===window.top)document.addEventListener("DOMContentLoaded",'+prepareHistoryRun.toString()+',{once:true});'});
  await reordered.goto(origin+'/c/'+B);

@@ -9,11 +9,50 @@ import {observedProjectHTML} from './fixtures/observed-project.mjs';
 import {observedHomeHTML,longDesktopHTML,materializePartitionedSidebar} from './fixtures/observed-host-replay.mjs';
 import partitionDetails from './fixtures/observed-sidebar-project-details-20261026.json' with {type:'json'};
 const require=createRequire(new URL('../../extension/tooling/package.json',import.meta.url));
-const {outputFiles}=await require('esbuild').build({stdin:{contents:"export {captureNativeBaseline} from './src/host/document-flow-layout.mjs';export {createSurfaceController} from './src/host/surface-controller.mjs';export {createChatGPTAdapter} from './src/host/chatgpt-adapter.mjs';export {createURLPolicy} from './src/host/url-policy.mjs';export {CHATGPT_OBSERVED_PROFILE} from './src/host/chatgpt-observed-profile.mjs';export {createFlowMountSurface} from './src/navigation/flow-mount-surface.mjs';export {observeNativeProjectManagement} from './src/host/native-project-management.mjs';",resolveDir:process.cwd()},bundle:true,write:false,format:'iife',globalName:'flowModule'});
+const {outputFiles}=await require('esbuild').build({stdin:{contents:"export {captureNativeBaseline} from './src/host/document-flow-layout.mjs';export {validMainMountCheck} from './src/host/native-flow-diagnostic.mjs';export {createSurfaceController} from './src/host/surface-controller.mjs';export {createChatGPTAdapter} from './src/host/chatgpt-adapter.mjs';export {createURLPolicy} from './src/host/url-policy.mjs';export {CHATGPT_OBSERVED_PROFILE} from './src/host/chatgpt-observed-profile.mjs';export {createFlowMountSurface} from './src/navigation/flow-mount-surface.mjs';export {observeNativeProjectManagement} from './src/host/native-project-management.mjs';",resolveDir:process.cwd()},bundle:true,write:false,format:'iife',globalName:'flowModule'});
 const P='g-p-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',C='33333333-3333-4333-8333-333333333333';
 const legacy=(await readFile(new URL('./fixtures/legacy.html',import.meta.url),'utf8')).replace('<link rel="stylesheet" href="/native.css">','<style>'+await readFile(new URL('./fixtures/native.css',import.meta.url),'utf8')+'</style>');
-const browser=await chromium.launch({headless:true,args:['--proxy-server=http://127.0.0.1:9','--proxy-bypass-list=<-loopback>']}),results=[];
+const browser=await chromium.launch({headless:true,...(process.env.FREE_CHROME_EXECUTABLE?{executablePath:process.env.FREE_CHROME_EXECUTABLE}:{}),args:['--proxy-server=http://127.0.0.1:9','--proxy-bypass-list=<-loopback>']}),results=[];
 try{
+ {
+ const probe=await browser.newPage({viewport:{width:1440,height:1000}});
+ await probe.route('**/*',r=>r.request().url()==='https://chatgpt.com/c/'+C?r.fulfill({contentType:'text/html',body:legacy}):r.abort());
+ await probe.goto('https://chatgpt.com/c/'+C);await probe.addScriptTag({content:outputFiles[0].text});
+ const decisions=await probe.evaluate(async()=>{
+  const {captureNativeBaseline,createChatGPTAdapter,validMainMountCheck}=flowModule;
+  const adapter=createChatGPTAdapter({document});await adapter.start({binding:{documentToken:'diag',producerToken:'diag',browserDocumentId:'diag',routeEpoch:1,origin:location.origin,expiresAt:new Date(Date.now()+20000).toISOString()},emit:async p=>({state:'accepted',localSeq:p.localSeq,receiptId:'diag'})});const base=adapter.inspect();if(!base.ok)throw Error('diagnostic fixture inspection');
+  const root=base.reading.parentElement,initial=root.innerHTML,results=[];
+  const check=(kind,expected,detail,mutate)=>{
+   root.innerHTML=initial;const inspection=adapter.inspect();if(!inspection.ok)throw Error('reset inspection');
+   const selected=mutate?.(inspection);let report,reason;
+   const before=document.documentElement.outerHTML;
+   const plan=captureNativeBaseline({document,inspection,onRefused:r=>reason=r,onDiagnostic:r=>report=r});
+   if(!validMainMountCheck(report)||report.reason!==expected||report.detail!==detail)throw Error('wrong refusal '+kind+' '+JSON.stringify(report));
+   const repeated=captureNativeBaseline({document,inspection,onDiagnostic:()=>{throw Error('diagnostic observer failed');}});
+   if(!!plan!==!!repeated||document.documentElement.outerHTML!==before)throw Error('diagnostic changed admission or DOM');
+   if(selected){const row=report.rows[report.rejected],rect=selected.nodeType===1?selected.getBoundingClientRect():null;if(!row||!(row[4]&64)||rect&&JSON.stringify(row[5])!==JSON.stringify([rect.x,rect.y,rect.width,rect.height].map(Math.round)))throw Error('wrong rejected node '+kind);}
+   if(JSON.stringify(report).includes('PRIVATE'))throw Error('diagnostic leaked content');
+   results.push({kind,reason:report.reason,detail:report.detail,coverage:report.coverage});
+  };
+  const wrap=inspection=>{const n=document.createElement('div');inspection.reading.before(n);n.append(inspection.reading);return n;};
+  check('accepted','none','accepted');
+  check('uncovered','native-flow-uncovered-branch','branch-without-landmark',i=>{const n=document.createElement('div');n.setAttribute('data-private-id','PRIVATE_ID');n.title='PRIVATE_TITLE';n.textContent='PRIVATE_BODY';i.composer.after(n);return n;});
+  check('wrapper-control','native-flow-wrapper-control','wrapper-control',i=>{const n=wrap(i);n.tabIndex=0;return n;});
+  check('wrapper-text','native-flow-wrapper-text','wrapper-text',i=>{const n=wrap(i);n.prepend('PRIVATE_TEXT');return n;});
+  check('wrapper-effect','native-flow-wrapper-paint','wrapper-effect',i=>{const n=wrap(i);n.style.transform='translateX(1px)';return n;});
+  check('wrapper-visibility','native-flow-wrapper-paint','wrapper-visibility',i=>{const n=wrap(i);n.style.visibility='hidden';return n;});
+  check('retained-style','native-flow-branch-paint','retained-style',i=>{i.homeLayoutNodes=[];const n=document.createElement('div'),child=document.createElement('button');n.style.cssText='height:40px;position:relative';child.textContent='PRIVATE_BUTTON';child.style.position='absolute';n.append(child);i.composer.after(n);return child;});
+  check('retained-svg-reference','native-flow-branch-paint','retained-svg',i=>{i.homeLayoutNodes=[];const n=document.createElement('div');n.style.height='40px';n.innerHTML='<svg width="20" height="20" style="overflow:hidden"><use href="#PRIVATE_ID"/></svg>';i.composer.after(n);return n.querySelector('use');});
+  root.innerHTML=initial;const inspection=adapter.inspect(),nativeGet=window.getComputedStyle;let thrown;
+  window.getComputedStyle=()=>{throw Error('PRIVATE_NATIVE_ERROR');};
+  try{captureNativeBaseline({document,inspection,onDiagnostic:r=>thrown=r});}finally{window.getComputedStyle=nativeGet;}
+  if(!validMainMountCheck(thrown)||thrown.reason!=='native-flow-check-failed'||thrown.rejected!==null||thrown.coverage!=='partial')throw Error('unknown exception fabricated node');
+  results.push({kind:'unknown-exception',reason:thrown.reason,detail:thrown.detail,coverage:thrown.coverage});
+  root.innerHTML=initial;adapter.stop();return results;
+ });
+ assert.equal(decisions.length,9);assert(decisions.slice(0,8).every(r=>r.coverage==='complete'));assert.equal(decisions[8].coverage,'partial');
+ console.log(JSON.stringify({mainMountDiagnostic:decisions}));await probe.close();
+ }
  {
  // The owner starts observation before native hydration. Choosing a layout
  // contract must not depend on whether its first landmark already exists.

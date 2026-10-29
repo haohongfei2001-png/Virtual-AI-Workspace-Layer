@@ -35,6 +35,22 @@ test('formal development build defaults to unverified context without simulator 
  assert(Object.keys(info.files).every(path=>!path.startsWith('simulator/')&&!path.startsWith('tests/')));assert(!Object.keys(info.files).some(path=>/seed|fixture/i.test(path)));
  assert.equal(verifyHost(out).status,info.status);assert.match(readFileSync(join(out,'README.txt'),'utf8'),/NOT_RELEASE_READY/);
 });
+test('one-shot main mount diagnostics require an explicit Browser-Local package without additional permissions',async t=>{
+ const dir=root(t),plain=join(dir,'plain'),diagnostic=join(dir,'diagnostic');
+ const ordinary=buildHost(plain,{browserLocal:true}),enabled=buildHost(diagnostic,{browserLocal:true,mainMountDiagnostic:true});
+ assert.equal(ordinary.mainMountDiagnostic,undefined);assert.equal(enabled.mainMountDiagnostic,true);
+ assert.equal((await import(pathToFileURL(join(plain,'extension/config.mjs')))).HOST_CONFIG.mainMountDiagnostic,undefined);
+ assert.equal((await import(pathToFileURL(join(diagnostic,'extension/config.mjs')))).HOST_CONFIG.mainMountDiagnostic,true);
+ assert.deepEqual(json(join(plain,'manifest.json')),json(join(diagnostic,'manifest.json')));
+ assert.equal(verifyHost(diagnostic).status,'HOST_IMPLEMENTATION_UNVERIFIED');
+ assert.throws(()=>buildHost(join(dir,'unbound'),{mainMountDiagnostic:true}),/main-mount-diagnostic-browser-local-only/);
+ assert.throws(()=>buildHost(join(dir,'mistyped'),{browserLocal:true,mainMountDiagnostic:'true'}),/main-mount-diagnostic-browser-local-only/);
+ const manifest=join(diagnostic,'build-manifest.json');writeFileSync(manifest,JSON.stringify({...enabled,mainMountDiagnostic:false}));
+ assert.throws(()=>verifyHost(diagnostic),/invalid-main-mount-diagnostic-package/);
+ writeFileSync(manifest,JSON.stringify(enabled));
+ rewriteHashed(diagnostic,'extension/config.mjs',readFileSync(join(plain,'extension/config.mjs'),'utf8'));
+ assert.throws(()=>verifyHost(diagnostic),/invalid-host-package-context/);
+});
 test('offline build accepts only exact IPv4 loopback origin and limits manifest to loopback',async t=>{
  const dir=root(t),origin='http://127.0.0.1:43210',out=join(dir,'offline'),info=buildHost(out,{offlineOrigin:origin}),manifest=json(join(out,'manifest.json'));
  assert.equal(info.status,'OFFLINE_HOST_RECONSTRUCTION');assert.equal(info.contextSelection,'EXPLICIT_OFFLINE_C3');

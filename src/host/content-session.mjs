@@ -12,13 +12,16 @@ import {createFrameNativePlans} from './frame-native-plans.mjs';
 import {exactHostRecord} from './contract.mjs';
 import {tokenOK} from '../b1/identity.mjs';
 import {withRequestDeadline} from '../data/request-deadline.mjs';
+import {createMainMountDiagnosticSlot} from './native-flow-diagnostic.mjs';
 
 /** Isolated content composition. The entry must restrict supported hosts; this
  * module never exposes its runtime bridge or authority on the page window. */
-export function createHostContentSession({document:doc,runtime,origin=doc?.location?.origin,adapterFactory=createChatGPTAdapter,prepareDocument=null,identityReader=null,contextRecovery=false,automaticDormancy=false,surfaceFactory=createFlowMountSurface,controllerFactory=createSurfaceController,plansFactory=createFrameNativePlans,now=Date.now,elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout,makeId=()=>crypto.randomUUID()}={}){
+export function createHostContentSession({document:doc,runtime,origin=doc?.location?.origin,adapterFactory=createChatGPTAdapter,prepareDocument=null,identityReader=null,contextRecovery=false,automaticDormancy=false,mainMountDiagnostic=false,surfaceFactory=createFlowMountSurface,controllerFactory=createSurfaceController,plansFactory=createFrameNativePlans,now=Date.now,elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout,makeId=()=>crypto.randomUUID()}={}){
  if(prepareDocument!==null&&typeof prepareDocument!=='function')throw Error('invalid-document-readiness');
  if(typeof automaticDormancy!=='boolean')throw Error('invalid-automatic-dormancy');
+ if(typeof mainMountDiagnostic!=='boolean')throw Error('invalid-mount-diagnostic');
  if(!doc?.defaultView||new URL(origin).origin!==origin||doc.location.origin!==origin||!['http:','https:'].includes(new URL(origin).protocol)||!tokenOK(runtime?.id)||typeof runtime.sendMessage!=='function'||typeof runtime.getURL!=='function'||!runtime.onMessage?.addListener)throw Error('invalid-content-session');
+ const mountDiagnostic=createMainMountDiagnosticSlot({document:doc,enabled:mainMountDiagnostic});
  const isolatedReader=identityReader??createIsolatedSessionReader({origin,now,elapsedNow});if(typeof isolatedReader?.read!=='function')throw Error('invalid-identity-reader');
  const upgrade=createCandidateUpgrade({now});let upgradeIdentity=null,upgradeDisplay=null,upgradeTimer=null;
  // Learned identities are document-local facts, never reusable handles or grants.
@@ -490,7 +493,7 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
    startupPhase='initialization-navigation';reportStartup(startupPhase);
    s.plans=plansFactory({adapter,showNativeReading:()=>s.adapter?.hasNativeLayer?.()!==true&&s.controller?.showNativeReading?.()===true,captureIntent:()=>s.controller?.intentGuard?.()??(()=>false),showReading:()=>s.adapter?.hasNativeLayer?.()!==true&&s.controller?.showReading()===true,now,elapsedNow,schedule,cancel,bindingCurrent:()=>live(s)&&Date.parse(s.binding.expiresAt)>now()&&(s.controller?.isNativeStructureCurrent?.()??adapter.inspect().ok)?s.binding.documentToken+':'+s.binding.producerToken+':'+s.binding.routeEpoch:false});
    startupPhase='initialization-surface';reportStartup(startupPhase);
-   surface=surfaceFactory({document:doc,createFrameURL:({role})=>runtime.getURL(role+'.html'),hasNativeLayer:()=>adapter.hasNativeLayer()});
+   surface=surfaceFactory({document:doc,createFrameURL:({role})=>runtime.getURL(role+'.html'),hasNativeLayer:()=>adapter.hasNativeLayer(),takeMountDiagnostic:()=>mountDiagnostic.take(()=>live(s))});
    const bridge={
     cancelledCloseReady:()=>{if(enabled&&live(s)&&s.ready&&!s.recoveryDenied)s.busyClose=false;},
     releaseCancelledClose:async({handle,binding,isCurrent,timeoutMs=6000})=>{
@@ -658,5 +661,5 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
   return begin(true,contextResumeMode);
  }
  function localStatus(){if(frameReplaced)return 'frame-blocked';if(!enabled&&!contextResumeAllowed&&!observation&&startupFailure?.url===doc.location.href)return startupFailure.state;if(!enabled)return contextResumeAllowed||observation?(verificationWaitURL===doc.location.href?'verification-required':'waiting'):'unavailable';if(!current||!live(current))return 'unavailable';if(!current.ready)return 'connecting';const state=current.controller?.localStatus?.()??'unavailable';return ['unavailable','surface-controller-absent'].includes(state)&&startupFailure?.url===doc.location.href?startupFailure.state:state;}
- return Object.freeze({localStatus,recoverLayout,recoverRoute,localLayoutStatus:()=>startupFailure?.url===doc.location.href&&localStatus().startsWith('layout-')?startupFailure.shape:current&&live(current)&&current.adapter?.navigationSummary?{navigation:current.adapter.navigationSummary(),...(current.adapter.deliverySummary?{delivery:current.adapter.deliverySummary()}:{} ),presentation:current.controller?.presentationSnapshot?.()??null}:null,start,stop,contextPending,contextReady,prepareIdle,enterDormant,isOwnedMask:node=>!!current&&live(current)&&current.surface?.isMasked?.(node)===true,showWorkspace:()=>sync(()=>current?.controller?.showWorkspace()??false),showReading:()=>sync(()=>current?.controller?.showReading()??false)});
+ return Object.freeze({localStatus,recoverLayout,recoverRoute,localLayoutStatus:()=>{const layout=startupFailure?.url===doc.location.href&&localStatus().startsWith('layout-')?startupFailure.shape:current&&live(current)&&current.adapter?.navigationSummary?{navigation:current.adapter.navigationSummary(),...(current.adapter.deliverySummary?{delivery:current.adapter.deliverySummary()}:{} ),presentation:current.controller?.presentationSnapshot?.()??null}:null;const mainMountCheck=mountDiagnostic.read();return mainMountCheck?{...(layout??{}),mainMountCheck}:layout;},start,stop,contextPending,contextReady,prepareIdle,enterDormant,isOwnedMask:node=>!!current&&live(current)&&current.surface?.isMasked?.(node)===true,showWorkspace:()=>sync(()=>current?.controller?.showWorkspace()??false),showReading:()=>sync(()=>current?.controller?.showReading()??false)});
 }

@@ -1,5 +1,15 @@
 # VAIWL实际状态：渐进积累工程已接线，真实来源逐项待准入
 
+## 2026-10-29 主区挂载拒绝诊断已离线准备，原安装未动
+
+按用户最新要求，只补原 `captureNativeBaseline → content-session → 状态弹窗` 的首次检查回执。固定原因码现在附带检查阶段、首个拒绝节点的匿名祖先路径及既有 reading/composer/header 地标，不扫描整棵主区、不增加观察器、不改变准入判断。异常无法归因时明确 `rejected:null / partial`；顺序、控件总表和几何失败只标整个根区域，不伪称已经找到了具体子控件。`complete` 仅表示本次所选路径完整，不能解释为整页结构或产品通过。
+
+诊断默认关闭，仅显式 Browser-Local 诊断包可启用。严格限定首页 `/`，一个固定批次仅一次原预检：Web Lock 与单独的已消费位在采集前完成预占，跨标签/Reload 不补跑；报告仅在原文档当前 Host 代 RAM 中，状态读取不再扫描，同文档路由或授权代失效后不导出旧报告。最多24行、路径16层、兄弟序号搜索128项，额外快照预算8ms；超限明确 PARTIAL。仅固定类别、角色、关系、几何和拒绝码，不记录标题、ID、URL、class/style值、正文或凭据；只持久化消费位，不读写私人库。专用诊断包关闭旧侧栏快照及近期列表观察入口，不叠加历史采集。
+
+在现有匿名夹具中验证未覆盖分支、wrapper控件/文字/绘制、保留分支绘制/SVG及实际检查抛错，报告与独立已知的拒绝节点对应，诊断故障不改变通过/拒绝结果或原 DOM。现有正式隔离 MV3 验证首次回执→实际状态弹窗→文件下载→构建及文档复核、跨标签及Reload不重复、SPA后不泄露旧报告、故障消失后正常UI恢复及原编辑器/草稿保全；无内部接口请求、私人IDB数为0。非作者只读复核指出的异常错误定位已修复并补实际异常反例。证据：`/private/tmp/vaiwl-main-check-flow-browser.log`、`/private/tmp/vaiwl-main-check-unit.log`、`/private/tmp/vaiwl-main-check-package.log`，MV3 `/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-sfAa2l/report.json`。
+
+仅暂存诊断包 `/private/tmp/VAIWL-v27-Main-Mount-Diagnostic-20261029/extension`，指纹 `f8a68fa9b5b1a588bf416c95f67932b1eb87212ae5c81b67f5940eabfad7041a`，ZIP SHA256 `84b10a43e4a842f8fa75033c28a3309e410093dcf5c804a1e3fd35f24fe8e136`。204项源码与正式MV3测试包及当前源码一致，权限不新增，核验在同目录父级 `PREPARATION.json`。未写入原加载目录、未控制真实Chrome、未执行真实取证；原 e889… 磁盘包逐文件未变，其激活仍 UNKNOWN，最后可信实时回执仍为 b2b778… 的 `native-flow-uncovered-branch`。真实拒绝分支的性质仍未知，Mac NOT_RUN、产品 NOT_ACCEPTED。下一步仅待一次明确的主区匿名取证范围授权，不能把本地反例宣称为真实首页已修复。
+
 ## 2026-10-29 现有 CI 回执与局部故障合同核对
 
 复用 `1a4422f9` 的 Actions `40824641745`，未重跑原长旅程。J3 父汇总现只接受原 runner 明示的两种固定夹具及16步顺序，其中仅片段三项可按准确原因保留 NOT_COVERED；任意失败、缺步、越权或伪造全通过仍拒绝。旧四格回归改为要求被遮挡入口确实消失、正常 workspace 仍有效，实际隔离浏览器验证了移动、隐藏及五点命中会漏掉的2×2遮挡，未放宽保护。关联合同与非作者只读复核通过，证据为 `/private/tmp/vaiwl-ci-j3-admission-replay-20261029.json`、`/private/tmp/vaiwl-ci-j3-contract-20261029.log`、`/private/tmp/vaiwl-return-slot-role-20261029.log`。这些是验证合同修正，不是新的产品修复或J3完整通过。

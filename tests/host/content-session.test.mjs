@@ -12,6 +12,13 @@ function fixture(overrides={}){
  const client=createHostContentSession({...options,...overrides});
  return {presentations,get adapterOptions(){return adapterOptions;},client,options,runtime,document,binding,calls,listeners,events,setResponse:f=>{respond=f;},get bridge(){return bridge;},get context(){return context;},get stops(){return stops;},get planned(){return planned;},async advance(ms){time+=ms;for(const [key,t]of [...timers])if(t.at<=time){timers.delete(key);t.fn();}await drain();}};
 }
+test('main preflight receipt is optional, single-use and removed from status after a generation change',async()=>{
+ const report={schema:'main-mount-check-v1',outcome:'accepted',reason:'none',kind:'home',phase:'complete',detail:'accepted',visited:3,coverage:'complete',limit:'none',elapsedMs:0,root:null,rejected:null,landmarks:[null,null,null],rows:[]};
+ let take,write;const f=fixture({mainMountDiagnostic:true,surfaceFactory:o=>{take=o.takeMountDiagnostic;write=take();return {};}});
+ await f.client.start();assert.equal(typeof write,'function');write(report);assert.deepEqual(f.client.localLayoutStatus().mainMountCheck,report);assert.equal(take(),null);
+ const old=write;f.document.location.href+='c/next';assert.equal(f.client.localLayoutStatus(),null);f.adapterOptions.onRebindNeeded();await drain();old(report);assert.equal(write,null);assert.equal(f.client.localLayoutStatus(),null);f.client.stop();
+ let disabled;const normal=fixture({surfaceFactory:o=>{disabled=o.takeMountDiagnostic();return {};}});await normal.client.start();assert.equal(disabled,null);normal.client.stop();
+});
 test('production composition sequences HELLO REFRESH and mount with no page bridge; restart seq is monotonic',async()=>{
  const f=fixture();assert.deepEqual(await f.client.start(),{id:'mount'});assert.deepEqual(f.calls.slice(0,3).map(m=>m.type),['HOST_HELLO','HOST_REFRESH','HOST_UI_MOUNT']);assert.equal(f.client.showReading(),true);assert.equal(f.client.showWorkspace(),true);assert.equal(f.context.binding.documentToken,'doc');assert.equal(f.document.defaultView.client,undefined);
  f.client.stop();assert.equal(f.listeners.size,0);assert.equal(f.events.size,0);assert.equal(f.client.showWorkspace(),false);await f.client.start();assert.deepEqual(f.calls.filter(m=>m.seq).map(m=>m.seq),[1,2,3,4]);f.client.stop();

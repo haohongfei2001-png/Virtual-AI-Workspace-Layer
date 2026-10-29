@@ -5,7 +5,7 @@ import {validateFrameAppearance} from '../host/frame-appearance.mjs';
 
 /** Dual extension-origin frames, actual native flow membership. Only the empty
  * exit switches enter the top layer; no private payload is placed there. */
-export function createFlowMountSurface({document:doc,createFrameURL,hasNativeLayer=()=>false}) {
+export function createFlowMountSurface({document:doc,createFrameURL,hasNativeLayer=()=>false,takeMountDiagnostic=()=>null}) {
  const mounts=new Map(),win=doc.defaultView;
  const lookup=handle=>{const m=mounts.get(handle?.id);if(!m||m.handle!==handle)throw Error('stale-mount');return m;};
  const owned=node=>!!node&&[...mounts.values()].some(m=>m.returnControl===node||m.roles.some(s=>s.node===node||s.exit===node));
@@ -79,7 +79,8 @@ export function createFlowMountSurface({document:doc,createFrameURL,hasNativeLay
    if(!win.CSS?.supports('interactivity','inert')||!win.CSS?.supports('selector(:has(*))')||!win.HTMLElement.prototype.showPopover)throw Error('unsupported-mount-surface');
    if(!context?.binding?.documentToken)throw Error('invalid-mount-inspection');
    let refusal='native-flow-check-failed';
-   const plan=captureNativeBaseline({document:doc,inspection,isOwnedSurface:owned,onRefused:reason=>{refusal=reason;}});
+   let diagnostic=null;try{diagnostic=takeMountDiagnostic();}catch{}
+   const plan=captureNativeBaseline({document:doc,inspection,isOwnedSurface:owned,onRefused:reason=>{refusal=reason;},onDiagnostic:diagnostic});
    // No owned node, marker, listener or grant exists before this proof. The
    // controller may recheck it after a native layout event under the same lease.
    if(!plan)throw new NativeFlowPreflightError(refusal);
