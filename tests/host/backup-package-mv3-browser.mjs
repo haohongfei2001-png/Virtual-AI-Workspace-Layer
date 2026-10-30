@@ -38,7 +38,7 @@ async function store(change){return probe.evaluate(async({scope,change,ref})=>{
    const result=await repository.command(scope,{operationId:'fixture_backup_title_'+change,expectedRevision:state.revision,command:{type:'SET_TITLE',refId:ref,title:change==='seed'?'SYNTHETIC_PRO_OLD':'SYNTHETIC_PRO_NEWER'}});if(!result.ok)throw Error('synthetic-title-command-failed');
   }
   const state=(await repository.read(scope)).state,stores=await new Promise((resolve,reject)=>{const names=[...db.objectStoreNames],tx=db.transaction(names),out={};for(const name of names){const q=tx.objectStore(name).getAll();q.onsuccess=()=>out[name]=Object.fromEntries(q.result.map(r=>[r.key,digest(r)]));}tx.oncomplete=()=>resolve(out);tx.onabort=()=>reject(tx.error);});
-  return {stores,identities:state.identities,manual:digest({identities:state.identities,workspaces:state.workspaces,placements:state.placements,workingSet:state.preferences.workingSet??null,savedSnippets:state.preferences.savedSnippets??null,refs:state.refs}),counts:{identities:Object.keys(state.identities).length,workspaces:Object.keys(state.workspaces).length,placements:Object.keys(state.placements).length,workingSet:state.preferences.workingSet?.value?.refs?.length??0,snippets:state.preferences.savedSnippets?.value?.length??0,humanRefs:state.refs[ref]?1:0},title:state.identities[ref]?.title??null};
+  return {stores,identities:state.identities,manualWithoutSnippets:digest({identities:state.identities,workspaces:state.workspaces,placements:state.placements,workingSet:state.preferences.workingSet??null,refs:state.refs}),manual:digest({identities:state.identities,workspaces:state.workspaces,placements:state.placements,workingSet:state.preferences.workingSet??null,savedSnippets:state.preferences.savedSnippets??null,refs:state.refs}),counts:{identities:Object.keys(state.identities).length,workspaces:Object.keys(state.workspaces).length,placements:Object.keys(state.placements).length,workingSet:state.preferences.workingSet?.value?.refs?.length??0,snippets:state.preferences.savedSnippets?.value?.length??0,humanRefs:state.refs[ref]?1:0},title:state.identities[ref]?.title??null};
  }finally{base.close();}
 },{scope,change,ref:J4_REF});}
 async function openBackup(){const settings=workspace.getByRole('button',{name:'工作空间设置',exact:true});if(await settings.getAttribute('aria-expanded')!=='true')await settings.click();await workspace.getByRole('button',{name:'备份与导入',exact:true}).click();await workspace.getByLabel('选择备份 JSON 文件',{exact:true}).waitFor();}
@@ -62,10 +62,10 @@ try{
  workspace=await ready();probe=await context.newPage();await probe.goto('chrome-extension://'+id+'/status.html');await page.bringToFront();
  if(local){
   await workspace.getByRole('button',{name:'工作空间设置',exact:true}).click();
-  for(const name of ['备份与导入','本地数据恢复'])assert.equal(await workspace.getByRole('button',{name,exact:true}).isDisabled(),true);
-  await workspace.getByText('请在浏览器工具栏打开 VAIWL，确认本地空间后再使用备份或恢复。',{exact:true}).waitFor();
+  for(const name of ['已保存片段','备份与导入','本地数据恢复'])assert.equal(await workspace.getByRole('button',{name,exact:true}).isDisabled(),true);
+  await workspace.getByText('请在浏览器工具栏打开 VAIWL，确认本地空间后再管理片段、备份或恢复。',{exact:true}).waitFor();
   assert.equal(await workspace.getByLabel('选择备份 JSON 文件',{exact:true}).count(),0);assert.deepEqual(await probe.evaluate(()=>indexedDB.databases()),[]);await screenshot('unconfirmed-local-asset-guidance');
-  report.unconfirmedLocalSpace={disabledAssetControls:2,persistentDatabases:0,backupInputAbsent:true};
+  report.unconfirmedLocalSpace={disabledAssetControls:3,persistentDatabases:0,backupInputAbsent:true};
   await workspace.getByRole('button',{name:'关闭设置',exact:true}).click();
   const unlock=await probe.evaluate(()=>chrome.runtime.sendMessage({v:1,type:'HOST_LOCAL_SPACE',action:'unlock'}));assert.equal(unlock.ok,true);assert.equal((await probe.evaluate(()=>chrome.runtime.sendMessage({v:1,type:'HOST_LOCAL_SPACE',action:'status'}))).mode,'personal');workspace=await ready();
  }
@@ -91,6 +91,24 @@ try{
   const unchanged=await store('read');await workspace.getByLabel('选择备份 JSON 文件',{exact:true}).setInputFiles({name:kind+'.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(bad))});await workspace.getByRole('alert').waitFor();assert.deepEqual((await store('read')).stores,unchanged.stores);await draft();await screenshot('backup-'+kind+'-rejected');report.results.push({name:kind+'-backup-rejected-without-any-IDB-write',status:'PASS'});
  }
  assert.equal(server.snapshot().actions['send-intent']??0,0);assert.equal(server.snapshot().actions['create-project']??0,0);if(local)assert.equal(requests.filter(p=>p.startsWith('/backend-api/')||p.startsWith('/api/')).length,0);
+ if(local){
+  await workspace.getByRole('button',{name:'返回工作空间',exact:true}).click();await workspace.getByRole('button',{name:'工作空间设置',exact:true}).waitFor();
+  const beforeList=await store('read');
+  await workspace.evaluate(()=>{const send=chrome.runtime.sendMessage.bind(chrome.runtime);chrome.runtime.sendMessage=async message=>{const result=await send(message);if(message.type==='HOST_UI_SNIPPET_LIST')globalThis.testLastLocalSnippetList={packet:structuredClone(message),workspaceRevision:result.workspaceRevision,nativeSelectionAvailable:result.nativeSelectionAvailable};return result;};});
+  await workspace.getByRole('button',{name:'工作空间设置',exact:true}).click();await workspace.getByRole('button',{name:'已保存片段',exact:true}).click();
+  await workspace.getByText('J4 retained human snippet',{exact:true}).waitFor();await workspace.getByText('可查看与管理已保存片段。当前页面暂不支持新建或定位片段。',{exact:true}).waitFor();
+  for(const name of ['保存当前选区','定位片段'])assert.equal(await workspace.getByRole('button',{name,exact:true}).isDisabled(),true);
+  const listed=await store('read');assert.equal(listed.manual,beforeList.manual);await draft();await screenshot('existing-local-snippet');
+  const rejectedActions=await workspace.evaluate(async ref=>{
+   const {packet,workspaceRevision,nativeSelectionAvailable}=testLastLocalSnippetList;if(nativeSelectionAvailable!==false)throw Error('native-source-not-restricted');const results=[];
+   for(const action of ['save','locate']){const result=await chrome.runtime.sendMessage({v:1,type:'HOST_UI_SNIPPET',grantId:packet.grantId,mountId:packet.mountId,operationId:'fixture_rejected_'+action,expectedRevision:workspaceRevision,action,id:action==='save'?ref:'j4_snippet'});results.push({action,ok:result.ok});}
+   return results;
+  },J4_REF);assert.deepEqual(rejectedActions,[{action:'save',ok:false},{action:'locate',ok:false}]);assert.deepEqual((await store('read')).stores,listed.stores);
+  await workspace.getByRole('button',{name:'删除片段',exact:true}).click();await workspace.getByText('暂无已保存片段。',{exact:true}).waitFor();
+  const removed=await store('read');assert.equal(removed.counts.snippets,0);assert.equal(removed.manualWithoutSnippets,listed.manualWithoutSnippets);await draft();await screenshot('existing-local-snippet-removed');
+  report.existingLocalSnippets={status:'PASS',scopeTupleLength:4,previewReadOnly:true,nativeSelectionAvailable:false,nativeActionsRejected:rejectedActions,explicitRemoveOnly:true,otherManualAssetsUnchanged:true,nativeDraftAndSelectionUnchanged:true};
+  await workspace.getByRole('button',{name:'返回工作空间',exact:true}).click();await workspace.getByRole('button',{name:'工作空间设置',exact:true}).waitFor();
+ }
  const stale=await workspace.evaluate(()=>globalThis.testLastBackupRead);assert(stale);await page.close();const settled=await store('read');const rejected=await probe.evaluate(packet=>chrome.runtime.sendMessage(packet),stale);assert.equal(rejected.ok,false);assert.equal(rejected.data,undefined);assert.deepEqual((await store('read')).stores,settled.stores);report.results.push({name:'late-backup-packet-from-another-document-cannot-read-retired-transfer',status:'PASS',parentCloseCausality:'NOT_ESTABLISHED'});
  report.retirementBoundary=await verifyBackupRetirement(probe);
  assert.equal(report.results.length,6);assert.deepEqual(report.errors,[]);assert.equal(verifyHost(built.unpacked).status,'OFFLINE_HOST_RECONSTRUCTION');report.status='PASS';

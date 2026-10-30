@@ -2,6 +2,10 @@
 
 ## 2026-10-30 终局候选整合与同源产品门
 
+`ee1860120fe4e889dcd98d3b1d7459f3e705ce06` 完成 Node 11916/11916 及前 9 个冻结 runner。随后完整性审查确认另一个可自主关闭的接线缺口，因此在自然 checkpoint 停止该次冻结，余 10 个记 NOT_RUN；该中间 commit 只创建了远端 Git 对象，未移动正式远端 ref、未触发额外 CI。原始回执保持，不冒充全套通过。
+
+本批让 BrowserLocal 已有片段的 LIST/remove 独立于尚不可用的原生选区来源：仅个人空间、当前 view 与原 human CAS 可读写旧资产；无 bridge 的 save/locate 在准备 view 前拒绝，不读取原生正文、不改 anchor/hash。限制型 DTO 只能携带 `nativeSelectionAvailable:false`；界面禁用新建/定位并解释，未确认空间的三个资产入口也禁用。生产包 WIP 的备份六业务及已有片段只读预览、显式删除、其余人工资产/草稿/Range 保全通过；已有原生片段旅程继续单独核验，不能以本地列表通过关闭新捕获来源阻塞。片段 owner 的真实 scope 工作与独立异步 release 纳入 idle 判定，六秒 RPC 返回后不提前归零；真实 binding 的 idle-check/release 在清理 resolve/reject 前拒绝、settle 后恢复。定向与独立代码审查通过，当前源码再做唯一完整冻结和一次远端 CI。
+
 `0fe8dc6b2b1616ca8eb0a4e49508f77709c72b95` 的 17 个本机冻结 runner、Node 11907/11907 和三 profile 限定个人像素门通过；云端 run `41002531228` 为 40/41，MODERN 与 unknown-protocol 均通过。剩余失败是 document-flow 原生滚动区的首次 reading-paint-budget 拒绝，整个 inspect 为 59.2ms；同 shell 后续八项未执行，不能计通过。50ms 生产护栏保持。本批只补该正例的一次字体就绪、两个不同帧且几何稳定的前置回执，再做原唯一首次证明；WIP 11.3ms 通过不倒推原失败原因，也不替换云端旧 FAIL。
 
 F3 完整业务补验发现真实 BrowserLocal 接线遗漏：个人空间虽有备份/恢复入口，服务仍被 `!browserLocal` 禁用；损坏诊断又无法从函数路由代理取得私有 `.base`。现仅经原 UI owner 确认当前 local personal scope 后接通既有服务，在分配上传/恢复计划前拒绝 RAM；Native/Evidence repository 的薄恢复方法复用原 oracle 并由现成 scope 路由调用，不暴露私有 base、不重建引擎。界面显示有限的确认状态，未确认时禁用两入口并给出工具栏指引；它不承担授权。

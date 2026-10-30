@@ -661,7 +661,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     if(framed){footer.append(node(doc,'span',{class:'extension-label'},'VAIWL'));footer.append(...[...tools.children].filter(n=>n.tagName!=='STRONG'));}else panel.append(tools);
     if(framed){const settings=node(doc,'details',{class:'sidebar-settings'}),summary=node(doc,'summary',{'aria-label':'项目导航设置',title:'项目导航设置',class:'square'});summary.innerHTML=svgIcon('more');settings.append(summary,button(view.sidebarVisible?'隐藏项目导航':'显示项目导航',()=>{remember();view.sidebarVisible=!view.sidebarVisible;sidebarDirty=true;render();},view.sidebarVisible?'隐藏项目导航':'显示项目导航','more'));if(typeof onLocalDataRequest==='function'){const local=button('本地资料',async()=>{if(local.disabled)return;local.disabled=true;try{const result=await onLocalDataRequest();if(result?.ok!==true&&local.isConnected){const note=node(doc,'p',{role:'status'},'请点击浏览器工具栏中的 VAIWL，管理本地资料。');settings.querySelector('[role="status"]')?.remove();settings.append(note);onSidebarLayout();}}finally{local.disabled=false;}},'查看本地资料状态与恢复入口','more');settings.append(local);}settings.addEventListener('toggle',()=>onSidebarLayout());footer.append(settings);}
     const workset=button('当前工作集',()=>showWorkingSet(),'','square');workset.innerHTML=svgIcon('collection');footer.append(workset);
-    if(frameProjection&&typeof onSnippetsRequest==='function'){const snippets=button('已保存片段',()=>{if(!stopped&&frameProjection)onSnippetsRequest();},'','square');snippets.innerHTML=svgIcon('book');footer.append(snippets);}renderNavigationFeedback(panel);if(framed&&sidebarLimited.has(view)){panel.append(node(doc,'p',{role:'status'},'侧栏开合记录已达本次布局容量，现有选择已保留。'),button('重置本次侧栏开合',()=>{if(applySidebarChoices(new Map()))sidebarLimited.delete(view);render();},'仅清除本次侧栏开合选择，不修改项目或聊天','more'));}
+    if(frameProjection&&typeof onSnippetsRequest==='function'){const snippets=button('已保存片段',()=>{if(!stopped&&frameProjection&&frameProjection.localAssetAccess!=='confirmation-required')onSnippetsRequest();},'','square');if(frameProjection.localAssetAccess==='confirmation-required'){snippets.disabled=true;snippets.setAttribute('title','确认本地空间后可查看片段');}snippets.innerHTML=svgIcon('book');footer.append(snippets);}renderNavigationFeedback(panel);if(framed&&sidebarLimited.has(view)){panel.append(node(doc,'p',{role:'status'},'侧栏开合记录已达本次布局容量，现有选择已保留。'),button('重置本次侧栏开合',()=>{if(applySidebarChoices(new Map()))sidebarLimited.delete(view);render();},'仅清除本次侧栏开合选择，不修改项目或聊天','more'));}
     const list=node(doc,'nav',{class:'themes','aria-label':free()?'VAIWL 项目导航':'VAIWL 主题导航',tabindex:'-1','data-focus-key':'sidebar-navigation'});list.hidden=!view.sidebarVisible;
     if(frameProjection&&!selected)appendCurrentContext(list);
     const eligibleGroups=frameProjection?groups:groups.filter(g=>g.segment===0||(free()&&g.segment===null)||g===selected);
@@ -719,13 +719,12 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
           compact.dataset.focusKey='compact-rows';compact.setAttribute('aria-pressed',String(frameProjection.compactRows!==false));compact.setAttribute('aria-disabled',String(!!compactPending));settings.append(compact);
           if(compactPending||compactError)settings.append(node(doc,'span',{role:'status'},compactPending?'正在保存显示设置…':compactError));
         }
-        if(typeof onSnippetsRequest==='function')settings.append(settingsButton('已保存片段',()=>{if(settingsLive()&&settingsOpen)onSnippetsRequest();},'已保存片段','more'));
         const localAssetsLocked=frameProjection.localAssetAccess==='confirmation-required';
-        for(const [label,action]of [['备份与导入',onBackupRequest],['本地数据恢复',onRecoveryRequest]])if(typeof action==='function'){
+        for(const [label,action]of [['已保存片段',onSnippetsRequest],['备份与导入',onBackupRequest],['本地数据恢复',onRecoveryRequest]])if(typeof action==='function'){
           const control=settingsButton(label,()=>{if(settingsLive()&&settingsOpen&&!localAssetsLocked)action();},label,'more');
           if(localAssetsLocked){control.disabled=true;control.setAttribute('aria-describedby','vaiwl-local-assets-note');}settings.append(control);
         }
-        if(localAssetsLocked)settings.append(node(doc,'p',{id:'vaiwl-local-assets-note'},'请在浏览器工具栏打开 VAIWL，确认本地空间后再使用备份或恢复。'));
+        if(localAssetsLocked)settings.append(node(doc,'p',{id:'vaiwl-local-assets-note'},'请在浏览器工具栏打开 VAIWL，确认本地空间后再管理片段、备份或恢复。'));
         settings.append(settingsButton('退出工作空间增强',()=>{stop();onExit();},'退出增强','more'));
         settings.append(settingsButton('关闭设置',closeSettings,'关闭设置','more'));settingsLayer.append(settings);page.prepend(settingsLayer);
       }

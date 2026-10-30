@@ -86,6 +86,10 @@ export function interpretProductEvidence(journey,report,receipt={}){
   const backup=journey==='local-backup-business',rows=report.results;
   return report.status==='PASS'&&report.evidence===('REAL_HEADLESS_PACKAGED_MV3_OFFLINE_'+(backup?'BACKUP':'RECOVERY'))&&report.authorityMode==='BROWSER_LOCAL'&&report.scopeTupleLength===4&&Array.isArray(rows)&&rows.length===(backup?6:7)&&rows.every(row=>typeof row.name==='string'&&row.name.length>0&&row.status==='PASS')&&new Set(rows.map(row=>row.name)).size===rows.length&&report.workerNetworkBlocked===true&&report.cleanupOK===true&&report.guardClosed===true&&report.sourceChangedDuringRun===false&&report.buildManifestUnchanged===true&&report.runnerChangedDuringRun===false?passed():absent('LOCAL_ASSET_BUSINESS_INCOMPLETE');
  }
+ if(journey==='local-existing-snippet-business'){
+  const local=report.existingLocalSnippets;
+  return interpretProductEvidence('local-backup-business',report,receipt).outcome==='PASS'&&local?.status==='PASS'&&local.scopeTupleLength===4&&local.previewReadOnly===true&&local.nativeSelectionAvailable===false&&JSON.stringify(local.nativeActionsRejected)===JSON.stringify([{action:'save',ok:false},{action:'locate',ok:false}])&&local.explicitRemoveOnly===true&&local.otherManualAssetsUnchanged===true&&local.nativeDraftAndSelectionUnchanged===true?passed():absent('LOCAL_EXISTING_SNIPPET_BUSINESS_INCOMPLETE');
+ }
  if(journey==='historical-upgrade-assets')return report.status==='PASS_ACTUAL_OLD_HOST_SCHEMA3_UPGRADE_ASSETS_AND_OLD_OWNER_FENCE'&&report.evidence==='S_REAL_OLD_HOST_TO_CURRENT_HOST_SAME_EXTENSION_ID'&&report.compatibility==='ACTUAL_OLD_HOST_SCHEMA_3_TO_CURRENT_NOT_SCHEMA_2'&&report.sourceUnchanged===true&&Array.isArray(report.steps)&&report.steps.length>=5&&report.steps.every(row=>row.status==='PASS')?passed():absent('HISTORICAL_SCHEMA3_ASSET_JOURNEY_INCOMPLETE');
  if(knownCases.get(journey)==='L3'){
   if(report.schema!=='vaiwl-live-product-case-v1'||report.journey!==journey||report.evidence!=='LIVE_AUTHORIZED_CHATGPT'||report.realChatGPT!=='LIVE_VERIFIED')return absent('LIVE_EVIDENCE_NOT_EXECUTED');
@@ -117,7 +121,7 @@ function expectedRunner(journey){
  if(journey==='continuous-browser-local')return 'tests/host/browser-local-mv3.mjs';
  if(journey.startsWith('UI10-'))return 'tests/host/ui10-package-matrix-browser.mjs';
  if(journey==='existing-snippet-business')return 'tests/host/snippets-package-mv3-browser.mjs';
- if(journey==='local-backup-business')return 'tests/host/backup-package-mv3-browser.mjs';
+ if(['local-backup-business','local-existing-snippet-business'].includes(journey))return 'tests/host/backup-package-mv3-browser.mjs';
  if(journey==='local-recovery-business')return 'tests/host/recovery-package-mv3-browser.mjs';
  if(journey==='historical-upgrade-assets')return 'tests/host/historical-host-upgrade.mjs';
  return null;

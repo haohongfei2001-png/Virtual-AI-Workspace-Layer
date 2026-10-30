@@ -72,6 +72,12 @@ test('a receipt cannot be created without actual before/after snapshots and comm
 for(const [journey,kind,count]of [['local-backup-business','BACKUP',6],['local-recovery-business','RECOVERY',7]])test(journey+' requires the current personal MV3 business report, not a legacy or incomplete run',()=>{
  const raw={status:'PASS',evidence:'REAL_HEADLESS_PACKAGED_MV3_OFFLINE_'+kind,authorityMode:'BROWSER_LOCAL',scopeTupleLength:4,results:Array.from({length:count},(_,i)=>({name:'case_'+i,status:'PASS'})),workerNetworkBlocked:true,cleanupOK:true,guardClosed:true,sourceChangedDuringRun:false,buildManifestUnchanged:true,runnerChangedDuringRun:false};
  assert.equal(interpretProductEvidence(journey,raw).outcome,'PASS');
+ if(kind==='BACKUP'){
+  assert.equal(interpretProductEvidence('local-existing-snippet-business',raw).outcome,'NOT_RUN');
+  const local={...raw,existingLocalSnippets:{status:'PASS',scopeTupleLength:4,previewReadOnly:true,nativeSelectionAvailable:false,nativeActionsRejected:[{action:'save',ok:false},{action:'locate',ok:false}],explicitRemoveOnly:true,otherManualAssetsUnchanged:true,nativeDraftAndSelectionUnchanged:true}};
+  assert.equal(interpretProductEvidence('local-existing-snippet-business',local).outcome,'PASS');
+  for(const patch of [{nativeSelectionAvailable:true},{nativeActionsRejected:[]},{explicitRemoveOnly:false},{otherManualAssetsUnchanged:false},{nativeDraftAndSelectionUnchanged:false}])assert.notEqual(interpretProductEvidence('local-existing-snippet-business',{...local,existingLocalSnippets:{...local.existingLocalSnippets,...patch}}).outcome,'PASS');
+ }
  for(const patch of [{authorityMode:'EXPLICIT_OFFLINE_C3'},{scopeTupleLength:3},{evidence:'BROWSER_MECHANISM_ONLY'},{results:raw.results.slice(1)},{results:raw.results.map(()=>raw.results[0])},{workerNetworkBlocked:false},{cleanupOK:false},{runnerChangedDuringRun:true}])assert.notEqual(interpretProductEvidence(journey,{...raw,...patch}).outcome,'PASS');
 });
 

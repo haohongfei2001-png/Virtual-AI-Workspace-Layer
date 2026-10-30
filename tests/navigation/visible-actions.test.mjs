@@ -13,19 +13,22 @@ for(const label of ['已保存片段','备份与导入','本地数据恢复','�
 test('sidebar snippets has a visible approved icon and tooltip; stopped entry cannot dispatch',t=>{
  let calls=0;const f=setup(t,'sidebar',{onSnippetsRequest:()=>calls++}),action=f.button('已保存片段');assert(action);assert.match(action.innerHTML,/<svg[^>]*aria-hidden="true"/);assert.equal(action.getAttribute('title'),'已保存片段');assert.equal(action.className,'square');assert.equal(action.parentNode.className,'toolbar sidebar-footer');action.click();assert.equal(calls,1);f.nav.stop();action.click();assert.equal(calls,1);
 });
+test('unconfirmed local sidebar cannot open private snippet assets and explains the prerequisite',t=>{
+ let calls=0;const f=setup(t,'sidebar',{onSnippetsRequest:()=>calls++});f.nav.updateFrameProjection({...projection('sidebar'),localAssetAccess:'confirmation-required'});const action=f.button('已保存片段');assert.equal(action.disabled,true);assert.equal(action.getAttribute('title'),'确认本地空间后可查看片段');action.click();assert.equal(calls,0);
+});
 for(const [label,callback] of [['已保存片段','onSnippetsRequest'],['备份与导入','onBackupRequest'],['本地数据恢复','onRecoveryRequest']])test('settings '+label+' dispatches once and stale scope/closed controls are inert',t=>{
  let calls=0;const f=setup(t,'workspace',{[callback]:()=>calls++});f.button('工作空间设置').click();const original=f.button(label);original.click();assert.equal(calls,1);f.button('关闭设置').click();original.click();assert.equal(calls,1);
  f.button('工作空间设置').click();const prior=f.button(label);const next=projection();next.scope='scopeB';f.nav.updateFrameProjection(next);prior.click();assert.equal(calls,1);assert.equal(f.button(label),undefined);
 });
 function searchDTO(){const value=projection(),ref=row('current_chat');ref.snippetMatches=[{id:'selected_snippet',preview:'Saved text'}];value.current={refId:ref.id,projectId:null,nativeUrl:ref.nativeUrl};value.search={...page([ref],1,0,24),query:'Saved',projectId:null};return value;}
 test('unconfirmed local asset settings explain the prerequisite and cannot dispatch; a fresh personal page enables them',t=>{
- let calls=0;const f=setup(t,'workspace',{onBackupRequest:()=>calls++,onRecoveryRequest:()=>calls++});
+ let calls=0;const f=setup(t,'workspace',{onSnippetsRequest:()=>calls++,onBackupRequest:()=>calls++,onRecoveryRequest:()=>calls++});
  f.nav.updateFrameProjection({...projection(),localAssetAccess:'confirmation-required'});f.button('工作空间设置').click();
- const previous=[];for(const label of ['备份与导入','本地数据恢复']){const action=f.button(label);previous.push(action);assert.equal(action.disabled,true);assert.equal(action.getAttribute('aria-describedby'),'vaiwl-local-assets-note');action.click();}assert.equal(calls,0);
- assert.match(visibleText(f.pane()),/确认本地空间后再使用备份或恢复/);
+ const previous=[];for(const label of ['已保存片段','备份与导入','本地数据恢复']){const action=f.button(label);previous.push(action);assert.equal(action.disabled,true);assert.equal(action.getAttribute('aria-describedby'),'vaiwl-local-assets-note');action.click();}assert.equal(calls,0);
+ assert.match(visibleText(f.pane()),/确认本地空间后再管理片段、备份或恢复/);
  const next={...projection(),scope:'confirmed-personal',localAssetAccess:'available'};f.nav.updateFrameProjection(next);f.button('工作空间设置').click();
  for(const action of previous)action.click();assert.equal(calls,0,'retired session controls remain inert');
- for(const label of ['备份与导入','本地数据恢复']){const action=f.button(label);assert.notEqual(action.disabled,true);action.click();}assert.equal(calls,2);
+ for(const label of ['已保存片段','备份与导入','本地数据恢复']){const action=f.button(label);assert.notEqual(action.disabled,true);action.click();}assert.equal(calls,3);
  assert.throws(()=>f.nav.updateFrameProjection({...next,localAssetAccess:'trust-me'}),/invalid-frame-local-assets/);
 });
 test('search snippet locate displays text and dispatches exact selected ID with pending and stop guards',async t=>{

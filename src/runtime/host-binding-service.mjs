@@ -105,7 +105,6 @@ export function createHostBindingService({extensionId,getFrame,getContexts=null,
  if(localMemory)localMemory.setGates({native:observations.gate,activity:(scope,request)=>localUse?.gate(scope,request)});
  const views=ui&&readService?createHostViewService({ui,readService,workspaceRepository,nativeWritePending:scopeKey=>observations?.isNativeWritePending(scopeKey)===true,prepareNavigation,readNativeManagement,openLocalData,registerCurrentNavigation:currentNavigation?input=>currentNavigation.register(input):null,nativeCandidatesEnabled:!!candidateBridge,presentSurface,clock:()=>new Date(now()).toISOString(),elapsedNow,schedule,cancel}):null;
  const candidates=ui&&candidateBridge?createHostCandidateService({ui,bridge:candidateBridge,elapsedNow,schedule,cancel,makeId}):null;
- const snippets=ui&&views&&selectionBridge?createHostSnippetService({ui,workspaceRepository,resolveView:views.resolveSnippetView,selectionBridge,onChanged:scopeKey=>{views.refreshScope(scopeKey);ui.notifyScope?.(scopeKey);},elapsedNow,schedule,cancel,makeId}):null;
  // The existing UI owner still supplies document/scope authority. BrowserLocal
  // durable assets additionally require an explicitly confirmed personal space,
  // before either service can allocate an upload or a recovery comparison.
@@ -113,6 +112,7 @@ export function createHostBindingService({extensionId,getFrame,getContexts=null,
   if(context.scope?.kind!=='browser-local'||context.scope.storage!=='personal'||context.isCurrent()!==true)throw Error('local-personal-space-required');
   return work(context);
  })}:ui;
+ const snippets=assetUi&&views&&(selectionBridge||browserLocal)?createHostSnippetService({ui:assetUi,workspaceRepository,resolveView:views.resolveSnippetView,selectionBridge,onChanged:scopeKey=>{views.refreshScope(scopeKey);ui.notifyScope?.(scopeKey);},elapsedNow,schedule,cancel,makeId}):null;
  recovery=assetUi&&readService&&['read','recoveryStatus','recover'].every(name=>typeof workspaceRepository?.[name]==='function')?createHostRecoveryService({ui:assetUi,readService,workspaceRepository,onRecovered:scopeKey=>{views?.refreshScope(scopeKey);ui.notifyScope?.(scopeKey);},elapsedNow,schedule,cancel}):null;
  backup=assetUi&&['exportBackup','previewRestore','restoreBackup'].every(name=>typeof workspaceRepository?.[name]==='function')?createHostBackupService({ui:assetUi,workspaceRepository,onRestored:scopeKey=>{views?.refreshScope(scopeKey);ui.notifyScope?.(scopeKey);},elapsedNow,schedule,cancel,makeId}):null;
  const commands={};if(readService)for(const name of ['snapshot','command','undo','history','saveView','exportBackup','previewRestore','restoreBackup','recoveryStatus','recover'])if(typeof workspaceRepository[name]==='function')commands[name]=workspaceRepository[name].bind(workspaceRepository);
@@ -296,7 +296,7 @@ export function createHostBindingService({extensionId,getFrame,getContexts=null,
   return quiet()&&ownersIdle(true)&&quiet();
  }
  function ownersIdle(excludeUi=false){
-  return [authority,contextRecovery,...(typeof contextObserver?.isIdle==='function'?[contextObserver]:[]),continuations,nativeActivity,localUse,...(excludeUi?[]:[ui]),observations,ingestionPasses,currentMetadata,sendCandidates,firstSend,oldSendTerminal,backup,recovery,views].every(owner=>owner===null||owner.isIdle?.()===true);
+  return [authority,contextRecovery,...(typeof contextObserver?.isIdle==='function'?[contextObserver]:[]),continuations,nativeActivity,localUse,...(excludeUi?[]:[ui]),observations,ingestionPasses,currentMetadata,sendCandidates,firstSend,oldSendTerminal,backup,recovery,snippets,views].every(owner=>owner===null||owner.isIdle?.()===true);
  }
  return Object.freeze({isIdle,consumeNativeActivity,activityAdmission:(scope,request)=>nativeActivity?.gate(scope,request)??localUse?.gate(scope,request)??null,oldSendTerminal,firstSend,ackAdmission:(scope,request)=>ackOwner?.gate(scope,request)??historyOwner?.gate(scope,request)??null,sendCandidates,readCurrentMetadata,stop,connectPort:port=>serviceActive&&(ui?.connectPort(port)??false),handle,invalidate,acceptLocalArrival,tabClosed,broker,handshake,authority,nativeRepository,observations,continuations,readService,ui,views});
 }

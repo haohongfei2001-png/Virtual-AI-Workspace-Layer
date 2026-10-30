@@ -517,7 +517,7 @@ jobs:
             local-assets)
               node tests/host/backup-package-mv3-browser.mjs "$RUNNER_TEMP/local-backup.json"
               node tests/host/recovery-package-mv3-browser.mjs "$report"
-              node -e "for(const file of ['local-backup.json','supplementary.json']){const r=require(process.env.RUNNER_TEMP+'/'+file);if(r.status!=='PASS'||r.authorityMode!=='BROWSER_LOCAL'||r.scopeTupleLength!==4||r.sourceCommit!==process.env.GITHUB_SHA||r.workerNetworkBlocked!==true||r.cleanupOK!==true||r.guardClosed!==true||r.sourceChangedDuringRun!==false||r.buildManifestUnchanged!==true||r.runnerChangedDuringRun!==false)process.exit(1)}"
+              node -e "for(const file of ['local-backup.json','supplementary.json']){const r=require(process.env.RUNNER_TEMP+'/'+file);if(r.status!=='PASS'||r.authorityMode!=='BROWSER_LOCAL'||r.scopeTupleLength!==4||r.sourceCommit!==process.env.GITHUB_SHA||r.workerNetworkBlocked!==true||r.cleanupOK!==true||r.guardClosed!==true||r.sourceChangedDuringRun!==false||r.buildManifestUnchanged!==true||r.runnerChangedDuringRun!==false||file==='local-backup.json'&&r.existingLocalSnippets?.status!=='PASS')process.exit(1)}"
               ;;
             privacy-main) node tests/host/privacy-package-browser.mjs "$report" ;;
             privacy-isolated) node tests/host/isolated-auth-privacy-browser.mjs "$report" ;;

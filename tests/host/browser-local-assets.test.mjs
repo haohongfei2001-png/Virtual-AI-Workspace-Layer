@@ -49,7 +49,7 @@ test('confirmed local personal UI exports and explicitly restores through the ex
 });
 test('unconfirmed local RAM UI cannot allocate backup transfers or recovery plans or open persistent IDB',async t=>{
  const f=await fixture(t,false);assert.equal(f.opens,0);
- for(const operation of [()=>f.backup('EXPORT'),()=>f.backup('UPLOAD',{byteLength:20}),()=>f.recovery()])assert.equal((await operation()).ok,false);
+ for(const operation of [()=>f.backup('EXPORT'),()=>f.backup('UPLOAD',{byteLength:20}),()=>f.recovery(),()=>f.request('HOST_UI_SNIPPET_LIST',{offset:0,limit:12}),()=>f.request('HOST_UI_SNIPPET',{action:'remove',id:'j4_snippet',operationId:'unconfirmed_remove',expectedRevision:0})])assert.equal((await operation()).ok,false);
  assert.equal(f.opens,0);assert.equal(f.service.isIdle(),true);
 });
 test('confirmed local recovery reports all healthy stores without a repair or write',async t=>{
@@ -67,4 +67,14 @@ test('revoked local parent cannot read an allocated export or obtain recovery pl
  const f=await fixture(t),info=await f.backup('EXPORT');assert.equal(info.ok,true);
  f.frames.set('1:0',{documentId:'replacement',url,documentLifecycle:'active',parentFrameId:-1});f.service.invalidate({tabId:1});
  assert.equal((await f.backup('READ',{transferId:info.transferId,index:0})).ok,false);assert.equal((await f.recovery()).ok,false);
+});
+test('confirmed local existing snippets use the actual prepared view and human CAS without a native selection source',async t=>{
+ const f=await fixture(t),info=await upload(f,j4AssetBackup(f.scope,'https://chatgpt.com')),preview=await f.backup('PREVIEW',{transferId:info.transferId});assert.equal(preview.ok,true);
+ assert.equal((await f.backup('RESTORE',{transferId:info.transferId,planId:preview.planId,operationId:'existing_snippets'})).ok,true);
+ let view;for(let n=0;n<30;n++){view=await f.request('HOST_UI_VIEW',{query:{}});if(view.state!=='preparing')break;await new Promise(resolve=>setTimeout(resolve,10));}assert.equal(view.state,'ready',JSON.stringify(view));
+ const before=(await f.workspaces.read(f.scope)).state,list=await f.request('HOST_UI_SNIPPET_LIST',{offset:0,limit:12});assert.equal(list.ok,true,JSON.stringify(list));assert.equal(list.nativeSelectionAvailable,false);assert.equal(list.snippets.items[0].preview,'J4 retained human snippet');
+ const action=(kind,extra={})=>f.request('HOST_UI_SNIPPET',{action:kind,id:'j4_snippet',operationId:'local_'+kind,expectedRevision:list.workspaceRevision,...extra});
+ assert.equal((await action('save')).ok,false);assert.equal((await action('locate')).ok,false);assert.equal((await action('remove',{expectedRevision:list.workspaceRevision+1})).ok,false);assert.deepEqual((await f.workspaces.read(f.scope)).state,before);
+ assert.equal((await action('remove')).ok,true);const after=(await f.workspaces.read(f.scope)).state;assert.deepEqual(after.preferences.savedSnippets.value,[]);for(const name of ['identities','placements','workspaces','refs'])assert.deepEqual(after[name],before[name]);assert.deepEqual(after.preferences.workingSet,before.preferences.workingSet);
+ f.service.invalidate({tabId:1});assert.equal((await f.request('HOST_UI_SNIPPET_LIST',{offset:0,limit:12})).ok,false);
 });

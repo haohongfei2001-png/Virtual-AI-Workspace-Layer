@@ -63,7 +63,7 @@ async function initialize(page,colorScheme,localAssetAccess=null){
   const navigation=createNavigation({document,surface:{role:'workspace',root:document.querySelector('#mount')},adapter:{currentURL:()=>'',isCurrent:()=>false,status(){},nativeHref:url=>url,navigationPlan:()=>null},
    onProjectionRequest(next){calls.push(structuredClone(next));query=next;return project(next);},
    onHorizonRequest(){throw Error('fixture-does-not-authorize-setting-writes');},onCompactRowsRequest(){throw Error('fixture-does-not-authorize-setting-writes');},
-   onSnippetsRequest(){throw Error('unexpected-snippet-entry');},onBackupRequest(){assetCalls.push('backup');throw Error('unexpected-backup-entry');},onRecoveryRequest(){assetCalls.push('recovery');throw Error('unexpected-recovery-entry');}
+   onSnippetsRequest(){assetCalls.push('snippets');throw Error('unexpected-snippet-entry');},onBackupRequest(){assetCalls.push('backup');throw Error('unexpected-backup-entry');},onRecoveryRequest(){assetCalls.push('recovery');throw Error('unexpected-recovery-entry');}
   });
   globalThis.settingsFixture={navigation,calls,assetCalls,refresh(){navigation.updateFrameProjection(project(query));}};
   navigation.updateFrameProjection(project(query));
@@ -124,16 +124,16 @@ for(const {width,height,colorScheme}of cases)test(`settings ${width}x${height} $
  finally{await page.evaluate(()=>settingsFixture?.navigation.stop()).catch(()=>{});await context.close();await persist();t.diagnostic(JSON.stringify({id,evidence:'WEB_MECHANISM_ONLY',MV3:'NOT_RUN',realChatGPT:'NOT_RUN',status:entry.status,report:join(directory,'report.json')}));}
 });
 
-const localAssetNote='请在浏览器工具栏打开 VAIWL，确认本地空间后再使用备份或恢复。';
+const localAssetNote='请在浏览器工具栏打开 VAIWL，确认本地空间后再管理片段、备份或恢复。';
 async function measureRamGuidance(page){return page.evaluate(()=>{
  const shadow=settingsFixture.navigation.roots().workspace.shadow,panel=shadow.querySelector('section[aria-label="工作空间设置"]'),note=panel?.querySelector('#vaiwl-local-assets-note');
  const box=r=>({x:r.x,y:r.y,width:r.width,height:r.height}),range=document.createRange();if(note)range.selectNodeContents(note);
  const lines=note?[...range.getClientRects()].filter(r=>r.width>0&&r.height>0).map(r=>({...box(r),hit:shadow.elementFromPoint(r.x+r.width/2,r.y+r.height/2)===note})):[];
  const tabStops=panel?[...panel.querySelectorAll('button:not([disabled]),select:not([disabled]),input:not([disabled]),a[href]')].map(n=>({key:n.dataset.focusKey??null,tag:n.tagName,label:n.getAttribute('aria-label')??n.textContent,active:shadow.activeElement===n})):[];
- return {note:note?{text:note.textContent,rect:box(note.getBoundingClientRect()),lines}:null,controls:['备份与导入','本地数据恢复'].map(label=>{const n=[...panel?.querySelectorAll('button')??[]].find(n=>n.getAttribute('aria-label')===label);return {label,present:!!n,disabled:n?.disabled??false,describedBy:n?.getAttribute('aria-describedby')??null};}),tabStops,assetCalls:[...settingsFixture.assetCalls],activeDisabled:shadow.activeElement?.disabled??false};
+ return {note:note?{text:note.textContent,rect:box(note.getBoundingClientRect()),lines}:null,controls:['已保存片段','备份与导入','本地数据恢复'].map(label=>{const n=[...panel?.querySelectorAll('button')??[]].find(n=>n.getAttribute('aria-label')===label);return {label,present:!!n,disabled:n?.disabled??false,describedBy:n?.getAttribute('aria-describedby')??null};}),tabStops,assetCalls:[...settingsFixture.assetCalls],activeDisabled:shadow.activeElement?.disabled??false};
 });}
 function guardedRamGuidance(value){
- assert.deepEqual(value.controls.map(c=>[c.label,c.present,c.disabled,c.describedBy]),[['备份与导入',true,true,'vaiwl-local-assets-note'],['本地数据恢复',true,true,'vaiwl-local-assets-note']]);
+ assert.deepEqual(value.controls.map(c=>[c.label,c.present,c.disabled,c.describedBy]),[['已保存片段',true,true,'vaiwl-local-assets-note'],['备份与导入',true,true,'vaiwl-local-assets-note'],['本地数据恢复',true,true,'vaiwl-local-assets-note']]);
  assert.equal(value.note?.text,localAssetNote);assert(value.note.lines.length>1,'the new explanation must wrap at this narrow width');assert.deepEqual(value.assetCalls,[],'disabled local-asset controls must not reach either callback');
 }
 async function scrollGuidanceLine(page,edge){await page.evaluate(edge=>{
@@ -158,7 +158,7 @@ for(const {width,height,colorScheme}of ramCases)test(`RAM guidance ${width}x${he
   await page.locator('section[aria-label="工作空间设置"] button[disabled]').evaluateAll(nodes=>nodes.forEach(n=>n.click()));
   entry.tabOrder=[];for(let i=1;i<initial.tabStops.length;i++){
    await page.keyboard.press('Tab');const current=await measureRamGuidance(page),active=current.tabStops.find(n=>n.active);entry.tabOrder.push(active??null);
-   assert.deepEqual(active,{...initial.tabStops[i],active:true},'Tab must visit each enabled settings control in DOM order, skipping the two disabled local-asset actions');assert.equal(current.activeDisabled,false);assert.deepEqual(current.assetCalls,[]);
+   assert.deepEqual(active,{...initial.tabStops[i],active:true},'Tab must visit each enabled settings control in DOM order, skipping the three disabled local-asset actions');assert.equal(current.activeDisabled,false);assert.deepEqual(current.assetCalls,[]);
   }
   const tabbed=await measure(page);entry.stages.push({stage:'home-tabbed-to-close',...tabbed,guidance:await measureRamGuidance(page)});retained(home,tabbed);assert.equal(tabbed.activeKey,'关闭设置');assert(within(tabbed.closeAction.rect,tabbed.panel)&&tabbed.closeAction.hit);await capture('home-tabbed-close');
   await page.keyboard.press('Escape');await page.locator('section[aria-label="工作空间设置"]').waitFor({state:'detached'});await settle(page);const escaped=await measure(page);retained(home,escaped);assert.equal(escaped.activeKey,'workspace-settings');entry.stages.push({stage:'home-escaped',...escaped});

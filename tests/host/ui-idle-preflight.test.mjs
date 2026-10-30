@@ -1,5 +1,7 @@
 /** Actual service/repository integration with MOCK_IDB and explicit browser/provider doubles. */
 import test from 'node:test';import assert from 'node:assert/strict';import {MockIDBFactory} from '../b23/mock-idb.mjs';import {ScopeRepository} from '../../src/b1/scope-repository.mjs';import {createHostBindingService} from '../../src/runtime/host-binding-service.mjs';import {createURLPolicy} from '../../src/host/url-policy.mjs';
+import {WorkspaceRepository} from '../../src/data/repository.mjs';
+import {FreeEvidenceRepository} from '../../src/data/free-evidence-repository.mjs';
 const url='https://chatgpt.com/',C='33333333-3333-4333-8333-333333333333';
 export async function fixture(t,createService=createHostBindingService){let time=1000,id=0,principal='A',providerReads=0,providerFailure=false,providerWait=null;const timers=new Map();let timerId=0;const frames=new Map(),base=new ScopeRepository({indexedDB:new MockIDBFactory(),databaseName:'notify-service'});t.after(()=>base.close());const profile={id:'offline',revision:1,urlPolicy:createURLPolicy()};const service=createService({extensionId:'ext',uiURL:'chrome-extension://ext/ui.html',getFrame:async({tabId,frameId})=>frames.get(`${tabId}:${frameId}`),allowedURL:u=>new URL(u).origin==='https://chatgpt.com',repository:base,provider:{read:async()=>{providerReads++;if(providerWait)await providerWait;if(providerFailure)throw Error('request-timeout');return {principalId:principal,expiresAt:new Date(100000).toISOString(),contexts:[{id:'personal',kind:'personal'}],providerProfile:'test',transport:'worker-fixed-fetch'};}},profile:{id:'test',singlePersonalDefault:true},surfaceProfiles:new Map([[profile.id,profile]]),now:()=>time,makeId:()=>`id_${++id}`,schedule:(fn,ms)=>{const key=++timerId;timers.set(key,{fn,at:time+ms});return key;},cancel:key=>timers.delete(key)});t.after(()=>service.stop());
 const bind=async(tabId,actualURL=url)=>{const sender={id:'ext',tab:{id:tabId,incognito:false},frameId:0,documentId:'doc'+tabId,documentLifecycle:'active',url};frames.set(`${tabId}:0`,{documentId:sender.documentId,url:actualURL,documentLifecycle:'active',parentFrameId:-1});const hello=await service.handle({v:1,type:'HOST_HELLO',clientId:'client',seq:1},sender),binding=hello.binding;assert(hello.ok);const packet={documentToken:binding.documentToken,producerToken:binding.producerToken,routeEpoch:binding.routeEpoch};assert.equal((await service.handle({v:1,type:'HOST_REFRESH',clientId:'client',seq:2,...packet},sender)).state,'verified');return {sender,binding,packet};};
@@ -32,4 +34,16 @@ test('forged idle checks never revoke or disturb the valid mounted UI',async t=>
   assert.equal((await f.service.handle(m,sender)).ok,false);await current(f);
  }
  assert.equal((await f.service.handle(message,f.parent.sender)).ok,true);await current(f);
+});
+for(const outcome of ['resolve','reject'])test('real binding refuses idle release until snippet selection cleanup '+outcome,async t=>{
+ let settle;const held=new Promise((resolve,reject)=>settle=outcome==='resolve'?()=>resolve({ok:true}):()=>reject(Error('cleanup-failed'))),anchor={refId:C,messageId:'fixture_message',branchId:'fixture_branch',text:'explicit synthetic selection',bodyHash:'d'.repeat(64)};
+ const f=await fixture(t,args=>createHostBindingService({...args,workspaceRepository:new WorkspaceRepository({baseRepository:args.repository}),freeEvidenceRepository:new FreeEvidenceRepository({baseRepository:args.repository}),selectionBridge:async({phase})=>phase==='release'?held:phase==='capture'?{selectionId:'fixture_selection',anchor}:{ok:true,anchor}}));
+ t.after(()=>settle());assert.equal((await f.service.handle(f.proposal(),f.parent.sender)).state,'accepted');
+ const view=async()=>{let value;for(let i=0;i<30;i++){value=await f.service.handle({v:1,type:'HOST_UI_VIEW',grantId:f.grant.id,mountId:'mount',query:{}},f.ui);if(value.state!=='preparing')break;await new Promise(resolve=>setTimeout(resolve,10));}assert.equal(value.state,'ready',JSON.stringify(value));return value.page;};
+ const page=await view();f.flushHints();await drain();assert.equal(f.service.isIdle(),true);
+ const saved=await f.service.handle({v:1,type:'HOST_UI_SNIPPET',grantId:f.grant.id,mountId:'mount',operationId:'save_before_idle',expectedRevision:page.workspaceRevision,action:'save',id:C},f.ui);assert.equal(saved.ok,true,JSON.stringify(saved));
+ await view();f.flushHints();await drain();assert.equal(f.service.isIdle(),false);
+ for(const type of ['HOST_UI_IDLE_CHECK','HOST_UI_IDLE_RELEASE'])assert.equal((await f.service.handle(packet(f,type),f.parent.sender)).ok,false);
+ await current(f);settle();await drain();f.flushHints();await drain();assert.equal(f.service.isIdle(),true);
+ assert.equal((await f.service.handle(packet(f),f.parent.sender)).ok,true);assert.equal((await f.service.handle(packet(f,'HOST_UI_IDLE_RELEASE'),f.parent.sender)).ok,true);
 });
