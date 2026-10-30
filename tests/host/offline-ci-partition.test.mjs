@@ -267,3 +267,17 @@ test('paint trace dispatch isolates the original first proof without rerunning c
  assert.deepEqual([...probe.matchAll(/node tests\/host\/([^\s]+\.mjs)/g)].map(m=>m[1]),['document-flow-browser.mjs']);
  assert(probe.includes('FREE_READING_CPU_PROFILE='));assert(probe.includes('diagnostic only; never product acceptance'));assert(probe.includes('exit 0'));assert.doesNotMatch(probe,/continue-on-error|set \+e|\|\| true/);
 });
+
+test('cold native recovery dispatch exercises the conditional and controlled branch without unrelated gates',()=>{
+ const all=Object.fromEntries([...workflow.matchAll(/^  ([\w-]+):\n([\s\S]*?)(?=^  [\w-]+:\n|$(?![\s\S]))/gm)].filter(m=>/^    runs-on:/m.test(m[2])).map(m=>[m[1],m[2]]));
+ const event={...allowedEvent,event_name:'workflow_dispatch'},input={diagnostic:'cold-native-recovery'};
+ const selected=(github,inputs)=>Object.keys(all).filter(name=>condition(all[name].match(/^    if: (.+)$/m)[1],github,inputs));
+ assert.deepEqual(selected(event,input),['offline-journeys']);
+ for(const e of [{...event,event:{repository:{private:true}}},{...event,repository:'other/repo'},{...event,ref:'refs/heads/main'},{...event,event_name:'pull_request'}])assert.deepEqual(selected(e,input),[]);
+ const active=journeySteps.filter(s=>!s.expression||condition(s.expression,event,input));
+ assert.deepEqual(active.filter(s=>s.name!=='Publish bounded text evidence to logs only').map(s=>s.name),['Install locked Host build tool','Install locked test tools and isolated Chromium','Separate cold safety boundary and genuine native navigation recovery']);
+ const step=active.find(s=>s.name.startsWith('Separate cold')).body;
+ assert(step.includes('node --test tests/host/context-cold-recovery-oracle.test.mjs tests/host/context-cold-boundary.test.mjs'));
+ assert(step.includes('"$RUNNER_TEMP/context-cold-recovery.json" cold-recovery'));assert(step.includes('"$RUNNER_TEMP/context-forced-recovery.json" cold-unavailable-recovery'));
+ assert.doesNotMatch(step,/set \+e|continue-on-error|\|\| true/);
+});

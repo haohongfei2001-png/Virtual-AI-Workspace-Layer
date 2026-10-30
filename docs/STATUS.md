@@ -2,6 +2,12 @@
 
 ## 2026-10-30 终局候选整合与同源产品门
 
+正式生产候选 `78cb2a243aa68307ff812f197668962a94055f80` 的统一 run `41043020784` 已结束：**41/42 jobs PASS**。populated-native、固定158 unknown-protocol、全部三套UI和本地资产通过；document-flow 原九段产品旅程全部通过，原首次长阅读证明39.4ms、returnReady成立，未插桩、未增加等待或放宽50ms。此同SHA结果关闭当前绘制P1，历史预算FAIL保留。独立最终审查没有新增已证生产P0；未变布局/交互源码的像素证据仅按原范围与hash继承，不外推真实宿主或所有短窗。
+
+唯一失败是C2冷恢复后的旧 `1 !== 2` oracle：默认fixture仅110px原生history，达不到正式扩展侧栏准入240px，应保持原生侧栏和一个flow工作区退出开关；两开关用于另一完整侧栏情形，不能在此强求。使用现有初始503受控模式，原oracle在相同78cb生产源码确定性失败，修正后195.942ms完成真实原生导航、新grant/VIEW及一次Return。该对照不解释云端首次TIMEOUT，原receiptCause仍NOT_ESTABLISHED。现精确断言原文档/editor/草稿、原生history节点/旧链接目标/几何/命中保全，唯一相同workspace frame为relative/非popover且实际可见，空零尺寸workspace exit唯一打开，sidebar frame缺席且exit关闭；原20秒和两次详情GET保持（另有原生history GET）。错误frame/原生受损/额外开关仍FAIL。
+
+本批仅修测试与现有workflow的限定入口，204项生产源码及包内容与78cb相同。84项受影响合同/CI分区检查通过；原条件式cold-recovery与既有确定性cold-unavailable-recovery均纳入单项门，结果绑定本批实际SHA并在PR16候选表/本机唯一候选回执登记。其余41门保留78cb原SHA及输入hash证据，不称为新SHA重跑42门。原安装仍未更新，一致Profile/IDB备份尚待Chrome安全退出；真实Mac、长期日用、完整Free与发布均未通过。新选区授权不等于branch/bodyHash来源合同已具备，相关入口保持关闭。
+
 `4859d4679427191b55ba770fd15bfb60caae0f5a` 的原同步trace run `41041396973` 复现reading-paint-budget：同一次首检wall59.929ms、thread42.635ms，约17.294ms非线程运行；同窗MinorGC仅1.643ms wall/0.624ms CPU，无layout/style重算。此样本不能把未运行时间全部归于某个进程，也不追溯认定全部历史原因。原elapsed护栏正确拒绝，不能改为CPU时间或放宽50ms。
 
 本批沿原证明减少文本DOM往返：最多32文本/64已访问节点的Range联合外框只作整个header垂直带外的充分排除；相交/非法仍逐文本原矩形与clipping检查，所有元素双pseudo/rect/opaque、prune前/成功前flush及50ms不变。联合外框不用于拒绝或选择gap。156项关联合同、全部reading-gap反例与未插桩document-flow通过；新增外框跨带但单片段安全、非法外框不能藏溢出、长文尾部文本危险反例。独立只读审查未发现漏检。六次有界4倍CPU对照保留全部样本，首个候选61.1ms不称普遍提速；正式云端是否有足够余量仍待冻结同SHA结果，不提前关闭阻塞。只运行受影响回归及一次统一正式CI，停止其他微优化扩张。

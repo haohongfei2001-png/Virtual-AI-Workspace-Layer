@@ -7,7 +7,7 @@ on:
         description: 'One isolated diagnostic, not full CI or acceptance'
         required: true
         type: choice
-        options: [temporary-project-startup, transport-expiry, temporary-navigation-appearance, j4-codec-after-evidence, fault-unknown-protocol, reading-paint-trace]
+        options: [temporary-project-startup, transport-expiry, temporary-navigation-appearance, j4-codec-after-evidence, fault-unknown-protocol, reading-paint-trace, cold-native-recovery]
   push:
     branches: [codex/vaiwl-free-first-20261013]
 
@@ -47,7 +47,7 @@ jobs:
   offline-journeys:
     # Public repository + standard GitHub-hosted runner only. No paid runner,
     # artifact/cache upload, credentials, deployment or private host access.
-    if: github.repository == 'haohongfei2001-png/Virtual-AI-Workspace-Layer' && github.event.repository.private == false && github.ref == 'refs/heads/codex/vaiwl-free-first-20261013' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && (inputs.diagnostic == 'temporary-project-startup' || inputs.diagnostic == 'transport-expiry' || inputs.diagnostic == 'temporary-navigation-appearance' || inputs.diagnostic == 'reading-paint-trace')))
+    if: github.repository == 'haohongfei2001-png/Virtual-AI-Workspace-Layer' && github.event.repository.private == false && github.ref == 'refs/heads/codex/vaiwl-free-first-20261013' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && (inputs.diagnostic == 'temporary-project-startup' || inputs.diagnostic == 'transport-expiry' || inputs.diagnostic == 'temporary-navigation-appearance' || inputs.diagnostic == 'reading-paint-trace' || inputs.diagnostic == 'cold-native-recovery')))
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -100,8 +100,11 @@ jobs:
           set -e
           node tests/host/context-cold-trace-outcome.mjs "$RUNNER_TEMP/context-cold-trace.json" "$result"
       - name: Separate cold safety boundary and genuine native navigation recovery
-        if: ${{ !cancelled() && github.event_name == 'push' }}
-        run: node tests/host/context-package-mv3-browser.mjs "$RUNNER_TEMP/context-cold-recovery.json" cold-recovery
+        if: ${{ !cancelled() && (github.event_name == 'push' || inputs.diagnostic == 'cold-native-recovery') }}
+        run: |
+          node --test tests/host/context-cold-recovery-oracle.test.mjs tests/host/context-cold-boundary.test.mjs
+          node tests/host/context-package-mv3-browser.mjs "$RUNNER_TEMP/context-cold-recovery.json" cold-recovery
+          node tests/host/context-package-mv3-browser.mjs "$RUNNER_TEMP/context-forced-recovery.json" cold-unavailable-recovery
       - name: C2 dormant scope denial and fresh native GET recovery
         if: ${{ !cancelled() && github.event_name == 'push' }}
         run: node tests/host/context-replacement-package-browser.mjs "$RUNNER_TEMP/context-dormant.json" dormant-recovery
@@ -221,7 +224,7 @@ jobs:
           echo "Source commit: $GITHUB_SHA"
           echo "Event: $GITHUB_EVENT_NAME (workflow_dispatch is diagnostic only, never full CI)"
           echo 'This job is slice evidence, not 81-case/J1-J4/real ChatGPT acceptance.'
-          for name in flow-boundary flow-boundary-mv3 late-current-body terminal-delivery context-package context-container context-cold context-cold-trace context-cold-recovery context-dormant context-dormant-mutant context-transport-expiry context-transport-expiry-mutant context-stale context-stale-mutant j1 j3 first-send j2-journey j2-fast-failure j2-fast-cancelled ui10-matrix visible-actions frame-window-retention frame-focus-return local-status observed-project-layout temporary-navigation temporary-project-navigation challenge-status preauthorization snippets-package snippets-startup-trace; do
+          for name in flow-boundary flow-boundary-mv3 late-current-body terminal-delivery context-package context-container context-cold context-cold-trace context-cold-recovery context-forced-recovery context-dormant context-dormant-mutant context-transport-expiry context-transport-expiry-mutant context-stale context-stale-mutant j1 j3 first-send j2-journey j2-fast-failure j2-fast-cancelled ui10-matrix visible-actions frame-window-retention frame-focus-return local-status observed-project-layout temporary-navigation temporary-project-navigation challenge-status preauthorization snippets-package snippets-startup-trace; do
             if [ -f "$RUNNER_TEMP/$name.json" ]; then cat "$RUNNER_TEMP/$name.json"; fi
           done
   offline-durability-compat:
