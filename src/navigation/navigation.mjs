@@ -720,8 +720,12 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
           if(compactPending||compactError)settings.append(node(doc,'span',{role:'status'},compactPending?'正在保存显示设置…':compactError));
         }
         if(typeof onSnippetsRequest==='function')settings.append(settingsButton('已保存片段',()=>{if(settingsLive()&&settingsOpen)onSnippetsRequest();},'已保存片段','more'));
-        if(typeof onBackupRequest==='function')settings.append(settingsButton('备份与导入',()=>{if(settingsLive()&&settingsOpen)onBackupRequest();},'备份与导入','more'));
-        if(typeof onRecoveryRequest==='function')settings.append(settingsButton('本地数据恢复',()=>{if(settingsLive()&&settingsOpen)onRecoveryRequest();},'本地数据恢复','more'));
+        const localAssetsLocked=frameProjection.localAssetAccess==='confirmation-required';
+        for(const [label,action]of [['备份与导入',onBackupRequest],['本地数据恢复',onRecoveryRequest]])if(typeof action==='function'){
+          const control=settingsButton(label,()=>{if(settingsLive()&&settingsOpen&&!localAssetsLocked)action();},label,'more');
+          if(localAssetsLocked){control.disabled=true;control.setAttribute('aria-describedby','vaiwl-local-assets-note');}settings.append(control);
+        }
+        if(localAssetsLocked)settings.append(node(doc,'p',{id:'vaiwl-local-assets-note'},'请在浏览器工具栏打开 VAIWL，确认本地空间后再使用备份或恢复。'));
         settings.append(settingsButton('退出工作空间增强',()=>{stop();onExit();},'退出增强','more'));
         settings.append(settingsButton('关闭设置',closeSettings,'关闭设置','more'));settingsLayer.append(settings);page.prepend(settingsLayer);
       }
@@ -840,6 +844,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     if(currentEntry&&(currentEntry.run!==projectionRequest||frameProjection?.scope!==currentEntry.scope))return;
     if(stopped)return;if(!framed||dto?.protocol!=='vaiwl-free-frame/1'||dto.role!==surface.role||dto.completeSnapshot!==false||typeof dto.scope!=='string'||!dto.navigation||!Number.isSafeInteger(dto.segment)||dto.segment<0)throw Error('invalid-frame-projection');
     if(dto.compactRows!==undefined&&typeof dto.compactRows!=='boolean')throw Error('invalid-frame-compact');
+    if(dto.localAssetAccess!==undefined&&!['available','confirmation-required'].includes(dto.localAssetAccess))throw Error('invalid-frame-local-assets');
     const policy=dto.timePolicy;if(policy!==undefined&&(!policy||typeof policy!=='object'||Array.isArray(policy)||Object.keys(policy).sort().join(',')!=='H,mode,revision'||!['fixed','auto'].includes(policy.mode)||![7,14,30,60,90].includes(policy.H)||!Number.isSafeInteger(policy.revision)||policy.revision<0))throw Error('invalid-frame-time-policy');
     const c=dto.current;
     if(c!==undefined&&(!c||typeof c!=='object'||Array.isArray(c)||Object.keys(c).sort().join(',')!=='nativeUrl,projectId,refId'||typeof c.nativeUrl!=='string'||!c.nativeUrl.length||c.nativeUrl.length>2048||!['refId','projectId'].every(k=>c[k]===null||typeof c[k]==='string'&&c[k].length>0&&c[k].length<=128&&!/[\s\x00-\x1f]/.test(c[k]))))throw Error('invalid-frame-current');

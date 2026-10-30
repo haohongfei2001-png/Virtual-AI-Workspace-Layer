@@ -2,6 +2,14 @@
 
 ## 2026-10-30 终局候选整合与同源产品门
 
+`0fe8dc6b2b1616ca8eb0a4e49508f77709c72b95` 的 17 个本机冻结 runner、Node 11907/11907 和三 profile 限定个人像素门通过；云端 run `41002531228` 为 40/41，MODERN 与 unknown-protocol 均通过。剩余失败是 document-flow 原生滚动区的首次 reading-paint-budget 拒绝，整个 inspect 为 59.2ms；同 shell 后续八项未执行，不能计通过。50ms 生产护栏保持。本批只补该正例的一次字体就绪、两个不同帧且几何稳定的前置回执，再做原唯一首次证明；WIP 11.3ms 通过不倒推原失败原因，也不替换云端旧 FAIL。
+
+F3 完整业务补验发现真实 BrowserLocal 接线遗漏：个人空间虽有备份/恢复入口，服务仍被 `!browserLocal` 禁用；损坏诊断又无法从函数路由代理取得私有 `.base`。现仅经原 UI owner 确认当前 local personal scope 后接通既有服务，在分配上传/恢复计划前拒绝 RAM；Native/Evidence repository 的薄恢复方法复用原 oracle 并由现成 scope 路由调用，不暴露私有 base、不重建引擎。界面显示有限的确认状态，未确认时禁用两入口并给出工具栏指引；它不承担授权。
+
+先失败的六项组合用例保留 5 FAIL/1 PASS，修复后相关 119 项通过。WIP 正式包的 BrowserLocal 备份六业务、恢复七业务、六类人工资产、原生未发送草稿/Range、跨空间与损坏拒绝均通过；真实同 sender 父页关闭在 70.2ms 内中止排队恢复事务、全库不变，原 18 项撤权边界保留。恢复 runner 的两个旧前置失败已分别保全：回前台已显示修复面板、异步原生计划尚未就绪；现先进入查找，再以首个可用链接核验精确 href，不等待期望 URL 来吞错。另一次 WIP 全 Node 为 11913/11914，唯一失败是新增合并 CI 门与旧 22 项清单冲突；适用 oracle 已更新为保留原 22 项加一个 local-assets 门，定向通过。
+
+备份与恢复现分别进入候选 L2 必需业务门，并合并到一次 CI job；完整冻结包含两个正式 runner。上述 WIP 不冒充新 SHA 全套验收，当前同源结果接续写入 `.git/vaiwl-artifacts/takeover-20261030/final/`。原 Profile/扩展未更新，完整安装一致备份尚未取得；真实 Mac、个人长期日用和完整 Free 仍未通过，新增片段来源及静默服务器身份阻塞不变。
+
 `d287f5b822bd7db1edec0066fcfb26a08d2a3ca1` 的 16 个本机冻结 runner 与 Node 11895/11895 通过，云端 run `40998690911` 最终 39/41；MODERN 和 unknown-protocol 仍失败。个人离线 UX 三 profile 均通过，85 张当前图精确继承、11 张实际重看，7 处原生标题叠字已消除，100 张图保全；这只关闭对应像素问题，不升级整体候选。MODERN 同场 8.5ms 内节点未变却失焦且无输入事件；unknown 目标正文不可取发生在 Worker 关闭前，正式读取器 EOF 与取消原因未建立。
 
 本批修正固定请求的取消生命周期：每次 fetch 在途时转发原调用取消，正文读取及既有 cancel/release 完成后解除转发；后续 schema 拒绝、scope/owner 清理不再追溯取消已完成传输。实际 Response 的先失败反例、在途取消、EOF 后清理悬挂、late work/idle、原 6 秒及权限回归通过，独立静态审查未发现阻塞问题；不据此倒推旧云端唯一根因。未知协议仍必须取得动作窗内所有目标 GET 的实际完整正文，不能借先前响应或夹具预期值通过；时间窗只证明观察范围，校准消费归属显式 NOT_ESTABLISHED，并保留 current 晚到请求反例。

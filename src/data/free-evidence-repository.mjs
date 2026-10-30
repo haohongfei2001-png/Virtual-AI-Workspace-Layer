@@ -11,6 +11,7 @@ export {freeEvidenceKey} from './free-evidence-partitions.mjs';
 import {emptyFreeEvidence,validateFreeEvidence,applyFreeEvidence} from './free-evidence.mjs';
 import {digest} from './hash.mjs';
 import {id} from './state.mjs';
+import {freeRecoveryStatus} from './free-recovery-status.mjs';
 const record=(key,payload)=>({key,payload,checksum:digest(payload)});
 function unpack(row){if(!row||row.checksum!==digest(row.payload))throw Error('corrupt-free-evidence-record');return row.payload;}
 function fence({guard=()=>true,signal}={}){if(signal?.aborted||guard()!==true)throw Error('stale-binding');}
@@ -85,6 +86,7 @@ export class FreeEvidenceRepository {
    tx.onabort=()=>{options.signal?.removeEventListener('abort',revoked);reject(error??tx.error??Error('free-evidence-read-aborted'));};
   });
  }
+  recoveryStatus(scope,options={}){return freeRecoveryStatus(this,scope,'evidence',options);}
   async recover(scope, {operationId, damagedHash}, options = {}) {
     const normalized = this.base.scopeOrThrow(scope), db = await this.base.open();
     id(operationId);

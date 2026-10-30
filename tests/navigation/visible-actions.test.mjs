@@ -18,6 +18,16 @@ for(const [label,callback] of [['已保存片段','onSnippetsRequest'],['备份�
  f.button('工作空间设置').click();const prior=f.button(label);const next=projection();next.scope='scopeB';f.nav.updateFrameProjection(next);prior.click();assert.equal(calls,1);assert.equal(f.button(label),undefined);
 });
 function searchDTO(){const value=projection(),ref=row('current_chat');ref.snippetMatches=[{id:'selected_snippet',preview:'Saved text'}];value.current={refId:ref.id,projectId:null,nativeUrl:ref.nativeUrl};value.search={...page([ref],1,0,24),query:'Saved',projectId:null};return value;}
+test('unconfirmed local asset settings explain the prerequisite and cannot dispatch; a fresh personal page enables them',t=>{
+ let calls=0;const f=setup(t,'workspace',{onBackupRequest:()=>calls++,onRecoveryRequest:()=>calls++});
+ f.nav.updateFrameProjection({...projection(),localAssetAccess:'confirmation-required'});f.button('工作空间设置').click();
+ const previous=[];for(const label of ['备份与导入','本地数据恢复']){const action=f.button(label);previous.push(action);assert.equal(action.disabled,true);assert.equal(action.getAttribute('aria-describedby'),'vaiwl-local-assets-note');action.click();}assert.equal(calls,0);
+ assert.match(visibleText(f.pane()),/确认本地空间后再使用备份或恢复/);
+ const next={...projection(),scope:'confirmed-personal',localAssetAccess:'available'};f.nav.updateFrameProjection(next);f.button('工作空间设置').click();
+ for(const action of previous)action.click();assert.equal(calls,0,'retired session controls remain inert');
+ for(const label of ['备份与导入','本地数据恢复']){const action=f.button(label);assert.notEqual(action.disabled,true);action.click();}assert.equal(calls,2);
+ assert.throws(()=>f.nav.updateFrameProjection({...next,localAssetAccess:'trust-me'}),/invalid-frame-local-assets/);
+});
 test('search snippet locate displays text and dispatches exact selected ID with pending and stop guards',async t=>{
  let release;const calls=[],f=setup(t,'workspace',{onSnippetLocateRequest:v=>{calls.push(v);return new Promise(resolve=>{release=resolve;});}});f.nav.updateFrameProjection({...searchDTO(),scope:'searchScope'});const action=f.button('定位片段');assert(action);assert.equal(visibleText(action),'定位片段');action.click();action.click();assert.deepEqual(calls,[{id:'selected_snippet'}]);assert.equal(action.disabled,true);f.nav.stop();release({ok:true});await tick();action.click();assert.equal(calls.length,1);
 });

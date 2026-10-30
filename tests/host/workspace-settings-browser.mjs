@@ -18,8 +18,9 @@ const root=fileURLToPath(new URL('../..',import.meta.url)),hash=x=>createHash('s
 const allCases=[1440,420].flatMap(width=>[1000,520].flatMap(height=>['light','dark'].map(colorScheme=>({width,height,colorScheme,id:`${width}-${height}-${colorScheme}`}))));
 const shortFrames=[{width:420,height:120},{width:420,height:96},{width:420,height:200},{width:160,height:96}];
 const selected=process.env.FREE_SETTINGS_CASE;assert(!selected||allCases.some(c=>c.id===selected),'unknown selected settings case');const cases=selected?allCases.filter(c=>c.id===selected):allCases;
+const ramCases=selected?[]:[{width:420,height:220,colorScheme:'light'},{width:420,height:220,colorScheme:'dark'},{width:160,height:96,colorScheme:'dark'}];
 let server,guard,browser,origin,directory,overrides={};const served=new Map();
-const report={kind:'WORKSPACE_SETTINGS_ACTUAL_RENDERER',evidence:'WEB_MECHANISM_ONLY',MV3:'NOT_RUN',realChatGPT:'NOT_RUN',matrix:selected?'SELECTED_CASES':'FULL_8_CASES',expectedCases:cases.map(c=>c.id),shortFrameBoundaries:cases.some(c=>c.id==='420-520-dark')?shortFrames.map(viewport=>({...viewport,outcome:'NOT_RUN'})):[],status:'NOT_RUN',cases:[],sourceHashes:{},fixtureHashes:{}};
+const report={kind:'WORKSPACE_SETTINGS_ACTUAL_RENDERER',evidence:'WEB_MECHANISM_ONLY',MV3:'NOT_RUN',realChatGPT:'NOT_RUN',matrix:selected?'SELECTED_CASES':'FULL_8_CASES',expectedCases:cases.map(c=>c.id),expectedRamGuidanceCases:ramCases.map(c=>`ram-${c.width}-${c.height}-${c.colorScheme}`),ramGuidanceCases:[],shortFrameBoundaries:cases.some(c=>c.id==='420-520-dark')?shortFrames.map(viewport=>({...viewport,outcome:'NOT_RUN'})):[],status:'NOT_RUN',cases:[],sourceHashes:{},fixtureHashes:{}};
 const persist=()=>writeFile(join(directory,'report.json'),JSON.stringify(report,null,2)+'\n');
 before(async()=>{
  directory=process.env.FREE_SETTINGS_ARTIFACT_DIR?resolve(process.env.FREE_SETTINGS_ARTIFACT_DIR):await mkdtemp(join(tmpdir(),'vaiwl-workspace-settings-'));await mkdir(directory,{recursive:true});
@@ -46,27 +47,27 @@ after(async()=>{
  const cleanup=[];for(const [name,close]of [['browser',()=>browser?.close()],['networkGuard',()=>guard?.close()],['fixtureServer',()=>server&&new Promise(resolve=>server.close(resolve))]])try{await close();cleanup.push({name,closed:true});}catch(error){cleanup.push({name,closed:false,error:String(error)});}
  report.cleanup=cleanup;report.sourceHashesAfter={};for(const path of served.keys())report.sourceHashesAfter[path]=hash(overrides[path]??await readFile(resolve(root,path),'utf8'));
  report.sourceStable=JSON.stringify(report.sourceHashesAfter)===JSON.stringify(report.sourceHashes);report.fixtureStable=hash(await readFile(fileURLToPath(import.meta.url)))===report.fixtureHashes['tests/host/workspace-settings-browser.mjs'];
- report.status=report.cases.length===cases.length&&report.cases.every(c=>c.status==='PASS')&&report.sourceStable&&report.fixtureStable&&cleanup.every(c=>c.closed)?'PASS_WEB_MECHANISM_ONLY':'FAIL';
+ report.status=report.cases.length===cases.length&&report.cases.every(c=>c.status==='PASS')&&report.ramGuidanceCases.length===ramCases.length&&report.ramGuidanceCases.every(c=>c.status==='PASS')&&report.sourceStable&&report.fixtureStable&&cleanup.every(c=>c.closed)?'PASS_WEB_MECHANISM_ONLY':'FAIL';
  if(directory)await persist();console.log('WORKSPACE_SETTINGS_REPORT '+join(directory,'report.json'));assert.equal(report.status,'PASS_WEB_MECHANISM_ONLY');
 });
 
-async function initialize(page,colorScheme){
+async function initialize(page,colorScheme,localAssetAccess=null){
  await page.goto(origin+'/frame');
- await page.evaluate(async theme=>{
+ await page.evaluate(async({theme,localAssetAccess})=>{
   const colors=theme==='dark'?{'--surface':'#212121','--ink':'#ececec','--muted':'#a0a0a0','--line':'#484848','--bubble':'#303030','--hover':'#3a3a3a','--focus':'#8ab4f8'}:{'--surface':'#ffffff','--ink':'#202123','--muted':'#646464','--line':'#e5e5e5','--bubble':'#f4f4f4','--hover':'#eeeeee','--focus':'#3877ba'};
   for(const [key,value]of Object.entries(colors))document.documentElement.style.setProperty(key,value);document.documentElement.style.colorScheme=theme;
   const [{createNavigation},{freeNavigationSnapshot},{projectFreeFrame},{projectFreeSearch}]=await Promise.all([import('/src/navigation/navigation.mjs'),import('/src/navigation/free-view.mjs'),import('/src/runtime/free-frame-projection.mjs'),import('/src/runtime/free-search-projection.mjs')]);
   const scope='settings-scroll-fixture',refs=Array.from({length:40},(_,i)=>{const id='70000000-0000-4000-8000-'+(i+1).toString(16).padStart(12,'0');return {id,scope,nativeTitle:'Continuous chat '+String(i+1).padStart(2,'0'),nativeUrl:'https://chatgpt.com/c/'+id,membership:'NONE',projectId:null,activityDecision:{segment:0}};});
-  const world={snapshot:freeNavigationSnapshot({scope,viewMode:'free',revision:1,viewSession:{H:30,T:20000,Z:'UTC',policyRevision:0},refs,projects:[]})},calls=[];let query={role:'workspace',list:'noProject',rowOffset:0,rowLimit:41};
-  const project=next=>{const {search,...frameQuery}=next,value=projectFreeFrame(world,frameQuery);if(search!==undefined)value.search=projectFreeSearch(world,search);return value;};
+  const world={snapshot:freeNavigationSnapshot({scope,viewMode:'free',revision:1,viewSession:{H:30,T:20000,Z:'UTC',policyRevision:0},refs,projects:[]})},calls=[],assetCalls=[];let query={role:'workspace',list:'noProject',rowOffset:0,rowLimit:41};
+  const project=next=>{const {search,...frameQuery}=next,value=projectFreeFrame(world,frameQuery);if(search!==undefined)value.search=projectFreeSearch(world,search);if(localAssetAccess!==null)value.localAssetAccess=localAssetAccess;return value;};
   const navigation=createNavigation({document,surface:{role:'workspace',root:document.querySelector('#mount')},adapter:{currentURL:()=>'',isCurrent:()=>false,status(){},nativeHref:url=>url,navigationPlan:()=>null},
    onProjectionRequest(next){calls.push(structuredClone(next));query=next;return project(next);},
    onHorizonRequest(){throw Error('fixture-does-not-authorize-setting-writes');},onCompactRowsRequest(){throw Error('fixture-does-not-authorize-setting-writes');},
-   onSnippetsRequest(){throw Error('unexpected-snippet-entry');},onBackupRequest(){throw Error('unexpected-backup-entry');},onRecoveryRequest(){throw Error('unexpected-recovery-entry');}
+   onSnippetsRequest(){throw Error('unexpected-snippet-entry');},onBackupRequest(){assetCalls.push('backup');throw Error('unexpected-backup-entry');},onRecoveryRequest(){assetCalls.push('recovery');throw Error('unexpected-recovery-entry');}
   });
-  globalThis.settingsFixture={navigation,calls,refresh(){navigation.updateFrameProjection(project(query));}};
+  globalThis.settingsFixture={navigation,calls,assetCalls,refresh(){navigation.updateFrameProjection(project(query));}};
   navigation.updateFrameProjection(project(query));
- },colorScheme);
+ },{theme:colorScheme,localAssetAccess});
  await page.locator('[data-free-list="noProject"] .row').last().waitFor();
  await page.evaluate(()=>{const r=settingsFixture.navigation.roots().workspace;r.scroller.scrollTop=Math.min(300,r.scroller.scrollHeight-r.scroller.clientHeight);});
  await page.waitForFunction(()=>settingsFixture.navigation.view().scroll===settingsFixture.navigation.roots().workspace.scroller.scrollTop&&settingsFixture.navigation.view().scroll>=150);
@@ -120,5 +121,59 @@ for(const {width,height,colorScheme}of cases)test(`settings ${width}x${height} $
   }
   await page.getByRole('button',{name:'关闭已知查找',exact:true}).click();await page.locator('.search').waitFor({state:'detached'});await settle(page);const returned=await measure(page);entry.stages.push({stage:'returned-from-search',...returned});retained(baseline,returned);await capture('returned');entry.status='PASS';
  }catch(error){entry.status='FAIL';entry.error=String(error);for(const boundary of report.shortFrameBoundaries)if(boundary.outcome==='RUNNING'){boundary.outcome='FAIL';boundary.error=String(error);}entry.failure=await measure(page).catch(()=>null);await capture('failure').catch(()=>{});throw error;}
+ finally{await page.evaluate(()=>settingsFixture?.navigation.stop()).catch(()=>{});await context.close();await persist();t.diagnostic(JSON.stringify({id,evidence:'WEB_MECHANISM_ONLY',MV3:'NOT_RUN',realChatGPT:'NOT_RUN',status:entry.status,report:join(directory,'report.json')}));}
+});
+
+const localAssetNote='请在浏览器工具栏打开 VAIWL，确认本地空间后再使用备份或恢复。';
+async function measureRamGuidance(page){return page.evaluate(()=>{
+ const shadow=settingsFixture.navigation.roots().workspace.shadow,panel=shadow.querySelector('section[aria-label="工作空间设置"]'),note=panel?.querySelector('#vaiwl-local-assets-note');
+ const box=r=>({x:r.x,y:r.y,width:r.width,height:r.height}),range=document.createRange();if(note)range.selectNodeContents(note);
+ const lines=note?[...range.getClientRects()].filter(r=>r.width>0&&r.height>0).map(r=>({...box(r),hit:shadow.elementFromPoint(r.x+r.width/2,r.y+r.height/2)===note})):[];
+ const tabStops=panel?[...panel.querySelectorAll('button:not([disabled]),select:not([disabled]),input:not([disabled]),a[href]')].map(n=>({key:n.dataset.focusKey??null,tag:n.tagName,label:n.getAttribute('aria-label')??n.textContent,active:shadow.activeElement===n})):[];
+ return {note:note?{text:note.textContent,rect:box(note.getBoundingClientRect()),lines}:null,controls:['备份与导入','本地数据恢复'].map(label=>{const n=[...panel?.querySelectorAll('button')??[]].find(n=>n.getAttribute('aria-label')===label);return {label,present:!!n,disabled:n?.disabled??false,describedBy:n?.getAttribute('aria-describedby')??null};}),tabStops,assetCalls:[...settingsFixture.assetCalls],activeDisabled:shadow.activeElement?.disabled??false};
+});}
+function guardedRamGuidance(value){
+ assert.deepEqual(value.controls.map(c=>[c.label,c.present,c.disabled,c.describedBy]),[['备份与导入',true,true,'vaiwl-local-assets-note'],['本地数据恢复',true,true,'vaiwl-local-assets-note']]);
+ assert.equal(value.note?.text,localAssetNote);assert(value.note.lines.length>1,'the new explanation must wrap at this narrow width');assert.deepEqual(value.assetCalls,[],'disabled local-asset controls must not reach either callback');
+}
+async function scrollGuidanceLine(page,edge){await page.evaluate(edge=>{
+ const shadow=settingsFixture.navigation.roots().workspace.shadow,panel=shadow.querySelector('section[aria-label="工作空间设置"]'),note=panel.querySelector('#vaiwl-local-assets-note'),range=document.createRange();range.selectNodeContents(note);
+ const lines=[...range.getClientRects()].filter(r=>r.width>0&&r.height>0),rect=panel.getBoundingClientRect();
+ // A long paragraph need not fit in an admitted 96px-high frame at once.
+ // Check its first and last line with two bounded positions in the same
+ // existing scrollport; never enlarge the production panel or retry focus.
+ panel.scrollTop+=edge==='first'?lines[0].top-(rect.top+panel.clientTop+6):lines.at(-1).bottom-(rect.bottom-panel.clientTop-6);
+},edge);await settle(page);}
+
+for(const {width,height,colorScheme}of ramCases)test(`RAM guidance ${width}x${height} ${colorScheme}: disabled actions, wrapping, scroll, Tab and Escape`,{timeout:20000},async t=>{
+ const context=await browser.newContext({viewport:{width,height},colorScheme});await context.route('**/*',route=>new URL(route.request().url()).origin===origin?route.continue():route.abort());
+ const page=await context.newPage();page.setDefaultTimeout(5000);const id=`ram-${width}-${height}-${colorScheme}`,entry={id,status:'RUNNING',localAssetAccess:'confirmation-required',stages:[],screenshots:[]};report.ramGuidanceCases.push(entry);
+ const capture=async label=>{const path=join(directory,id+'-'+label+'.png');await page.screenshot({path});entry.screenshots.push({label,path,sha256:hash(await readFile(path))});};
+ try{
+  await initialize(page,colorScheme,'confirmation-required');await settle(page);const home=await measure(page);entry.stages.push({stage:'home-deep-scroll',...home});
+  await page.getByRole('button',{name:'工作空间设置',exact:true}).click();await settle(page);const opened=await measure(page),initial=await measureRamGuidance(page);entry.stages.push({stage:'home-settings-open',...opened,guidance:initial});await capture('home-open');
+  retained(home,opened);assert(within(opened.panel,opened.workspace));assert(within(opened.firstActionRect,opened.panel)&&opened.firstActionHit);assert.equal(opened.activeKey,'查找已知项目与聊天');guardedRamGuidance(initial);
+  // HTMLElement.click respects disabled controls; no synthetic dispatch or
+  // programmatic enabling is used to manufacture a successful refusal.
+  await page.locator('section[aria-label="工作空间设置"] button[disabled]').evaluateAll(nodes=>nodes.forEach(n=>n.click()));
+  entry.tabOrder=[];for(let i=1;i<initial.tabStops.length;i++){
+   await page.keyboard.press('Tab');const current=await measureRamGuidance(page),active=current.tabStops.find(n=>n.active);entry.tabOrder.push(active??null);
+   assert.deepEqual(active,{...initial.tabStops[i],active:true},'Tab must visit each enabled settings control in DOM order, skipping the two disabled local-asset actions');assert.equal(current.activeDisabled,false);assert.deepEqual(current.assetCalls,[]);
+  }
+  const tabbed=await measure(page);entry.stages.push({stage:'home-tabbed-to-close',...tabbed,guidance:await measureRamGuidance(page)});retained(home,tabbed);assert.equal(tabbed.activeKey,'关闭设置');assert(within(tabbed.closeAction.rect,tabbed.panel)&&tabbed.closeAction.hit);await capture('home-tabbed-close');
+  await page.keyboard.press('Escape');await page.locator('section[aria-label="工作空间设置"]').waitFor({state:'detached'});await settle(page);const escaped=await measure(page);retained(home,escaped);assert.equal(escaped.activeKey,'workspace-settings');entry.stages.push({stage:'home-escaped',...escaped});
+  await page.getByRole('button',{name:'工作空间设置',exact:true}).click();await page.getByRole('button',{name:'查找已知项目与聊天',exact:true}).click();const input=page.getByRole('searchbox',{name:'已知聊天查找输入',exact:true});await input.waitFor();
+  await input.fill('Continuous chat 03');await page.waitForFunction(()=>settingsFixture.calls.at(-1)?.search?.query==='Continuous chat 03');await settle(page);await input.evaluate(n=>n.setSelectionRange(2,7));await page.evaluate(()=>settingsFixture.refresh());await settle(page);
+  const search=await measure(page);entry.stages.push({stage:'search-before-settings',...search});assert.equal(search.query,'Continuous chat 03');assert.equal(search.activeKey,'search-input');assert.equal(search.selectionStart,2);assert.equal(search.selectionEnd,7);
+  await page.getByRole('button',{name:'工作空间设置',exact:true}).click();await settle(page);const searchOpen=await measure(page);retained(search,searchOpen);assert(within(searchOpen.panel,searchOpen.workspace));assert.equal(searchOpen.query,search.query);guardedRamGuidance(await measureRamGuidance(page));
+  for(const edge of ['first','last']){
+   await scrollGuidanceLine(page,edge);const state=await measure(page),guidance=await measureRamGuidance(page),line=edge==='first'?guidance.note.lines[0]:guidance.note.lines.at(-1);entry.stages.push({stage:`search-guidance-${edge}-line`,...state,guidance});await capture(`search-guidance-${edge}`);
+   retained(search,state);assert.equal(state.query,search.query);assert(within(state.panel,state.workspace));guardedRamGuidance(guidance);
+   assert(guidance.note.lines.every(r=>r.x>=state.panel.x&&r.x+r.width<=state.panel.x+state.panel.width),'no explanation line may require horizontal scrolling');assert(within(line,state.panel)&&within(line,state.workspace)&&line.hit,'the selected explanation line must be fully visible and hit-tested inside the existing panel scrollport');
+  }
+  await page.locator('section[aria-label="工作空间设置"]').evaluate(panel=>{panel.scrollTop=panel.scrollHeight;});await settle(page);const bottom=await measure(page);entry.stages.push({stage:'search-settings-bottom',...bottom,guidance:await measureRamGuidance(page)});await capture('search-bottom');retained(search,bottom);assert(within(bottom.closeAction.rect,bottom.panel)&&within(bottom.closeAction.rect,bottom.workspace)&&bottom.closeAction.hit);
+  await page.keyboard.press('Escape');await page.locator('section[aria-label="工作空间设置"]').waitFor({state:'detached'});await settle(page);const searchEscaped=await measure(page);entry.stages.push({stage:'search-escaped',...searchEscaped});retained(search,searchEscaped);assert.equal(searchEscaped.activeKey,'workspace-settings');assert.equal(searchEscaped.query,search.query);assert.deepEqual(await page.evaluate(()=>settingsFixture.assetCalls),[]);
+  await page.getByRole('button',{name:'关闭已知查找',exact:true}).click();await page.locator('.search').waitFor({state:'detached'});await settle(page);const returned=await measure(page);entry.stages.push({stage:'home-returned',...returned});retained(home,returned);entry.status='PASS';
+ }catch(error){entry.status='FAIL';entry.error=String(error);entry.failure=await measure(page).catch(()=>null);entry.guidanceFailure=await measureRamGuidance(page).catch(()=>null);await capture('failure').catch(()=>{});throw error;}
  finally{await page.evaluate(()=>settingsFixture?.navigation.stop()).catch(()=>{});await context.close();await persist();t.diagnostic(JSON.stringify({id,evidence:'WEB_MECHANISM_ONLY',MV3:'NOT_RUN',realChatGPT:'NOT_RUN',status:entry.status,report:join(directory,'report.json')}));}
 });

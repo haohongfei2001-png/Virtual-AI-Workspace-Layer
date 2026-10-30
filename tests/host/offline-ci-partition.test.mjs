@@ -179,16 +179,21 @@ test('six bounded evidence-reconciliation gates require exact source and narrow 
 });
 
 
-test('supplementary scheduling prioritizes causal feedback and the longest case without changing coverage',()=>{
+test('supplementary scheduling retains previous coverage and adds one combined local asset gate',()=>{
  const body=workflow.split('  cloud-supplementary-gates:')[1],gates=body.match(/gate: \[([^\]]+)\]/)[1].split(',').map(v=>v.trim());
  const original=['fault-auth-failure','fault-unsafe-reading','fault-forged-scope','fault-csp','fault-iframe-destroy','fault-stale-response','fault-rate-limit','fault-corrupt','fault-unknown-protocol','privacy-main','privacy-isolated','idle-draft-active','idle-safe-empty-reading','populated-native','visual-components','existing-source-repair','native-entry-safety','page-command-native-fetch','non-atomic-terminal','mixed-role','mixed-role-alt','membership-after-message'];
- const priority=['fault-unknown-protocol','native-entry-safety','populated-native','existing-source-repair','membership-after-message'];
+ const priority=['fault-unknown-protocol','local-assets','native-entry-safety','populated-native','existing-source-repair','membership-after-message'];
  const expected=priority.concat(original.filter(g=>!priority.includes(g)));
- const check=value=>{assert.deepEqual(value,expected);assert.deepEqual([...value].sort(),[...original].sort());assert.equal(new Set(value).size,22);};check(gates);
+ const check=value=>{assert.deepEqual(value,expected);assert.deepEqual([...value].sort(),[...original,'local-assets'].sort());assert.equal(new Set(value).size,23);};check(gates);
  const wrongPriority=[...gates];[wrongPriority[0],wrongPriority[1]]=[wrongPriority[1],wrongPriority[0]];
  const wrongRemainder=[...gates];[wrongRemainder[5],wrongRemainder[6]]=[wrongRemainder[6],wrongRemainder[5]];
  for(const mutant of [gates.slice(1),[...gates,gates[0]],wrongPriority,wrongRemainder])assert.throws(()=>check(mutant));
  assert.match(body,/fail-fast: false/);assert.match(body,/max-parallel: 3/);
+ const assets=body.split('            local-assets)')[1].split('              ;;')[0];
+ assert(assets.includes('node tests/host/backup-package-mv3-browser.mjs "$RUNNER_TEMP/local-backup.json"'));
+ assert(assets.includes('node tests/host/recovery-package-mv3-browser.mjs "$report"'));
+ assert.match(assets,/scopeTupleLength!==4/);assert.match(assets,/workerNetworkBlocked!==true/);assert.match(assets,/guardClosed!==true/);
+ assert.doesNotMatch(assets,/set \+e|\|\| true|--retry|rerun/);
 });
 
 

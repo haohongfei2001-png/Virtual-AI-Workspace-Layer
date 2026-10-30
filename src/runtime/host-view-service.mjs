@@ -222,6 +222,8 @@ export function createHostViewService({ui,readService,workspaceRepository=null,p
    if(search!==undefined)page.search=projectFreeSearch(current,search);
    if(workingSet!==undefined)page.workingSet=projectFreeWorkingSet(current,workingSet);
    page.presentation=structuredClone(entry.presentation);
+   // Display guidance only; the asset services independently recheck authority.
+   if(context.scope.kind==='browser-local')page.localAssetAccess=context.scope.storage==='personal'?'available':'confirmation-required';
 
    page.current={nativeUrl,refId:ref?.id??null,projectId:currentProjectId};
    page.currentRef=ref?freeFrameRowDTO(ref):null;

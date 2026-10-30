@@ -106,8 +106,15 @@ export function createHostBindingService({extensionId,getFrame,getContexts=null,
  const views=ui&&readService?createHostViewService({ui,readService,workspaceRepository,nativeWritePending:scopeKey=>observations?.isNativeWritePending(scopeKey)===true,prepareNavigation,readNativeManagement,openLocalData,registerCurrentNavigation:currentNavigation?input=>currentNavigation.register(input):null,nativeCandidatesEnabled:!!candidateBridge,presentSurface,clock:()=>new Date(now()).toISOString(),elapsedNow,schedule,cancel}):null;
  const candidates=ui&&candidateBridge?createHostCandidateService({ui,bridge:candidateBridge,elapsedNow,schedule,cancel,makeId}):null;
  const snippets=ui&&views&&selectionBridge?createHostSnippetService({ui,workspaceRepository,resolveView:views.resolveSnippetView,selectionBridge,onChanged:scopeKey=>{views.refreshScope(scopeKey);ui.notifyScope?.(scopeKey);},elapsedNow,schedule,cancel,makeId}):null;
- recovery=!browserLocal&&ui&&readService?createHostRecoveryService({ui,readService,workspaceRepository,onRecovered:scopeKey=>{views?.refreshScope(scopeKey);ui.notifyScope?.(scopeKey);},elapsedNow,schedule,cancel}):null;
- backup=!browserLocal&&ui&&['exportBackup','previewRestore','restoreBackup'].every(name=>typeof workspaceRepository?.[name]==='function')?createHostBackupService({ui,workspaceRepository,onRestored:scopeKey=>{views?.refreshScope(scopeKey);ui.notifyScope?.(scopeKey);},elapsedNow,schedule,cancel,makeId}):null;
+ // The existing UI owner still supplies document/scope authority. BrowserLocal
+ // durable assets additionally require an explicitly confirmed personal space,
+ // before either service can allocate an upload or a recovery comparison.
+ const assetUi=browserLocal&&ui?{withScope:(request,work)=>ui.withScope(request,context=>{
+  if(context.scope?.kind!=='browser-local'||context.scope.storage!=='personal'||context.isCurrent()!==true)throw Error('local-personal-space-required');
+  return work(context);
+ })}:ui;
+ recovery=assetUi&&readService&&['read','recoveryStatus','recover'].every(name=>typeof workspaceRepository?.[name]==='function')?createHostRecoveryService({ui:assetUi,readService,workspaceRepository,onRecovered:scopeKey=>{views?.refreshScope(scopeKey);ui.notifyScope?.(scopeKey);},elapsedNow,schedule,cancel}):null;
+ backup=assetUi&&['exportBackup','previewRestore','restoreBackup'].every(name=>typeof workspaceRepository?.[name]==='function')?createHostBackupService({ui:assetUi,workspaceRepository,onRestored:scopeKey=>{views?.refreshScope(scopeKey);ui.notifyScope?.(scopeKey);},elapsedNow,schedule,cancel,makeId}):null;
  const commands={};if(readService)for(const name of ['snapshot','command','undo','history','saveView','exportBackup','previewRestore','restoreBackup','recoveryStatus','recover'])if(typeof workspaceRepository[name]==='function')commands[name]=workspaceRepository[name].bind(workspaceRepository);
  const broker=createDocumentBindingBroker({extensionId,getFrame,allowedURL,repository,workspaceRepository:readService?{...readService,...commands}:workspaceRepository,freeRuntime,now,makeId,hostHandshake:handshake,resolveScope:({currentFrame,sender})=>authority.scopeFor(asFrame(currentFrame,sender))});
  // Claims last only through concurrent service delivery, not the grant lifetime.

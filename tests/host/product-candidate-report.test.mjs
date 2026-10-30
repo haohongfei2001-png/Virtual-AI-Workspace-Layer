@@ -69,6 +69,11 @@ test('terminal case success without source/package integrity and actual live che
 test('a receipt cannot be created without actual before/after snapshots and command result',()=>{
  assert.throws(()=>createProductRunReceipt({before:{},after:{},reportPath:'unused',command:['node'],exitCode:0}));
 });
+for(const [journey,kind,count]of [['local-backup-business','BACKUP',6],['local-recovery-business','RECOVERY',7]])test(journey+' requires the current personal MV3 business report, not a legacy or incomplete run',()=>{
+ const raw={status:'PASS',evidence:'REAL_HEADLESS_PACKAGED_MV3_OFFLINE_'+kind,authorityMode:'BROWSER_LOCAL',scopeTupleLength:4,results:Array.from({length:count},(_,i)=>({name:'case_'+i,status:'PASS'})),workerNetworkBlocked:true,cleanupOK:true,guardClosed:true,sourceChangedDuringRun:false,buildManifestUnchanged:true,runnerChangedDuringRun:false};
+ assert.equal(interpretProductEvidence(journey,raw).outcome,'PASS');
+ for(const patch of [{authorityMode:'EXPLICIT_OFFLINE_C3'},{scopeTupleLength:3},{evidence:'BROWSER_MECHANISM_ONLY'},{results:raw.results.slice(1)},{results:raw.results.map(()=>raw.results[0])},{workerNetworkBlocked:false},{cleanupOK:false},{runnerChangedDuringRun:true}])assert.notEqual(interpretProductEvidence(journey,{...raw,...patch}).outcome,'PASS');
+});
 
 test('run receipts bind the complete source/fixture snapshots, report bytes and complete Node selection',()=>{
  const sourceHashes={'src/a.mjs':'1'.repeat(64)},fixtures={'tests/host/a.test.mjs':'2'.repeat(64),'tests/host/b.test.mjs':'3'.repeat(64)},candidate={codeSHA:'a'.repeat(40),sourceHashes},receipt={schema:'vaiwl-product-run-receipt-v1',startedAt:'2026-10-30T01:00:00Z',finishedAt:'2026-10-30T01:01:00Z',codeSHA:candidate.codeSHA,codeSHAAfter:candidate.codeSHA,sourceHashesBefore:sourceHashes,sourceHashesAfter:sourceHashes,fixtureHashesBefore:fixtures,fixtureHashesAfter:fixtures,reportSHA256:'f'.repeat(64),exitCode:0,command:['node','--test',...Object.keys(fixtures)],testFiles:Object.keys(fixtures)},expected={candidate,journey:'node-contracts',evidenceSHA256:receipt.reportSHA256,fixturePaths:Object.keys(fixtures)};

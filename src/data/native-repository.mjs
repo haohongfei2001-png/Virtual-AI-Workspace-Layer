@@ -13,6 +13,7 @@ import { emptyNativeFacts, validateNativeFacts, applyNativeObservations, invalid
 import { freeProjection } from './free-projection.mjs';
 import { id } from './state.mjs';
 import { digest } from './hash.mjs';
+import {freeRecoveryStatus} from './free-recovery-status.mjs';
 
 const record = (key, payload) => ({key, payload, checksum: digest(payload)});
 function unpack(row) {
@@ -221,6 +222,7 @@ export class NativeRepository {
   /** Repair a damaged root only from the current atomically saved recovery root.
    * Sources are revoked; this never restores a grant or overwrites manual B23 assets.
    */
+  recoveryStatus(scope,options={}){return freeRecoveryStatus(this,scope,'native',options);}
   async recover(scope, {operationId, damagedHash}, options = {}) {
     const normalized = this.base.scopeOrThrow(scope), db = await this.base.open();
     id(operationId);

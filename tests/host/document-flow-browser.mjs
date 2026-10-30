@@ -274,6 +274,17 @@ try{
  const regionProof=await region.evaluate(async()=>{
   const {createChatGPTAdapter,createURLPolicy,CHATGPT_OBSERVED_PROFILE:profile,createFlowMountSurface,captureNativeBaseline}=flowModule;let surface;
   const viewport=document.querySelector('[data-app-action-timeline-scroll]');viewport.setAttribute('role','region');viewport.setAttribute('tabindex','0');
+  // This positive case starts from a rendered native fixture. Attribute writes
+  // plus await adapter.start() alone only cross a microtask boundary. Establish
+  // the rendering precondition once; never warm or retry the security proof.
+  let renderDeadline;const rendered=async()=>{
+   await document.fonts.ready;
+   const first=await new Promise(resolve=>requestAnimationFrame(resolve)),a=viewport.getBoundingClientRect().toJSON();
+   const second=await new Promise(resolve=>requestAnimationFrame(resolve)),b=viewport.getBoundingClientRect().toJSON();
+   if(second<=first||!viewport.isConnected||viewport.getAttribute('role')!=='region'||viewport.getAttribute('tabindex')!=='0'||a.width<=0||a.height<=0||JSON.stringify(a)!==JSON.stringify(b))throw Error('native-scroll-region-render-precondition');
+   return {status:'RENDER_PRECONDITION_ESTABLISHED',animationFrames:2,frameTimes:[first,second],fontsStatus:document.fonts.status,stableBounds:b,securityProofCalls:0};
+  };
+  try{globalThis.nativeScrollRegionRenderReceipt=await Promise.race([rendered(),new Promise((_,reject)=>{renderDeadline=setTimeout(()=>reject(Error('native-scroll-region-render-timeout')),1500);})]);}finally{clearTimeout(renderDeadline);}
   const original=viewport.outerHTML,parent=viewport.parentElement,editor=viewport.querySelector('textarea');
   const adapter=createChatGPTAdapter({document,profile,urlPolicy:createURLPolicy(),isOwnedMask:n=>surface?.isMasked(n),isOwnedSurface:n=>surface?.isOwnedSurface(n)});
   const binding={documentToken:'region',producerToken:'region',browserDocumentId:'region',routeEpoch:1,origin:location.origin,expiresAt:new Date(Date.now()+20000).toISOString()};
@@ -299,7 +310,7 @@ try{
   surface.dispose(handle);adapter.stop();
   return {adapterReady:inspection.ok,returnReady:!!inspection.returnSlot,policy:inspection.viewportFocus,flowReady:true,unselectedRejected,actionRejected,tabOrderRejected,editableRejected,nonScrollingRejected,shown,active,focusRetained,readingRestored,changedRoleSurrendered,restored:viewport.outerHTML===original&&viewport.parentElement===parent&&viewport.querySelector('textarea')===editor};
  });
- console.log(JSON.stringify({nativeScrollRegionFirstProof:await region.evaluate(()=>globalThis.nativeScrollRegionFirstProof)}));
+ console.log(JSON.stringify(await region.evaluate(()=>({nativeScrollRegionRenderReceipt:globalThis.nativeScrollRegionRenderReceipt,nativeScrollRegionFirstProof:globalThis.nativeScrollRegionFirstProof}))));
  assert.deepEqual(regionProof,{adapterReady:true,returnReady:true,policy:'native-scroll-region',flowReady:true,unselectedRejected:true,actionRejected:true,tabOrderRejected:true,editableRejected:true,nonScrollingRejected:true,shown:true,active:true,focusRetained:true,readingRestored:true,changedRoleSurrendered:true,restored:true});
  console.log(JSON.stringify({nativeScrollRegion:regionProof}));
  // Browser mechanism counterexample on the same reconstructed native region:

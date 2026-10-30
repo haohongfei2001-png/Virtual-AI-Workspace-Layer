@@ -20,6 +20,7 @@ export const PRODUCT_CASES=Object.freeze([
  ['worker-twice','L2'],['cosmetic-native-island','L2'],['native-island-evolution','L2'],['extension-disable','L2'],
  ['continuous-browser-local','L2'],['UI10-LEGACY','L2'],['UI10-MODERN','L2'],['UI10-PARTIAL','L2'],
  ['existing-snippet-business','L2'],['historical-upgrade-assets','L2'],
+ ['local-backup-business','L2'],['local-recovery-business','L2'],
  ['live-home-project-chat','L3'],['live-existing-assets','L3'],['live-navigation-search-return','L3'],
  ['live-physical-ime-tools','L3'],['live-responsive-themes','L3'],['live-document-lock-restore','L3'],['live-disable-native-restore','L3'],
 ].map(([journey,level])=>Object.freeze({journey,level})));

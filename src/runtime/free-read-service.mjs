@@ -105,7 +105,9 @@ export function createFreeReadService({repository,workspaces,native,evidence,clo
     return {scopeKey:state.scopeKey,events:{...sharedEvents,...rows(stored.events,storedSources)},hints:rows(stored.hints,storedSources),coverage:{...rows(state.coverage,sharedSources),...rows(stored.coverage,storedSources)},sources,evidenceRevision:`${state.revision}:${stored.revision}`};
   }
   return Object.freeze({workspaceContext,activityEvidence,
-      freeRecoveryStatus:async(scope,options)=>({native:await freeRecoveryStatus(native,scope,'native',options),evidence:await freeRecoveryStatus(evidence,scope,'evidence',options)}),
+      // Scoped adapters route this method to their owning repository. Passing
+      // the adapter itself to the oracle would lose its private base on damage.
+      freeRecoveryStatus:async(scope,options)=>({native:await (typeof native.recoveryStatus==='function'?native.recoveryStatus(scope,options):freeRecoveryStatus(native,scope,'native',options)),evidence:await (typeof evidence.recoveryStatus==='function'?evidence.recoveryStatus(scope,options):freeRecoveryStatus(evidence,scope,'evidence',options))}),
       freeRecover:(scope,request,options)=>(request.kind==='native'?native:evidence).recover(scope,request,options),
       freeHeader:async(scope,options,now=clock(),timeZone=defaultTimeZone,viewSession=null,url,staged=false)=>{
         const root=await ensureNative(scope,options,url?new URL(url).origin:null,staged);

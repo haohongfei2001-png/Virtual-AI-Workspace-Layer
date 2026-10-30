@@ -491,7 +491,7 @@ jobs:
       max-parallel: 3
       matrix:
         # Prioritize the remaining causal gate and longest case; coverage and limits stay unchanged.
-        gate: [fault-unknown-protocol, native-entry-safety, populated-native, existing-source-repair, membership-after-message, fault-auth-failure, fault-unsafe-reading, fault-forged-scope, fault-csp, fault-iframe-destroy, fault-stale-response, fault-rate-limit, fault-corrupt, privacy-main, privacy-isolated, idle-draft-active, idle-safe-empty-reading, visual-components, page-command-native-fetch, non-atomic-terminal, mixed-role, mixed-role-alt]
+        gate: [fault-unknown-protocol, local-assets, native-entry-safety, populated-native, existing-source-repair, membership-after-message, fault-auth-failure, fault-unsafe-reading, fault-forged-scope, fault-csp, fault-iframe-destroy, fault-stale-response, fault-rate-limit, fault-corrupt, privacy-main, privacy-isolated, idle-draft-active, idle-safe-empty-reading, visual-components, page-command-native-fetch, non-atomic-terminal, mixed-role, mixed-role-alt]
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
@@ -514,6 +514,11 @@ jobs:
           report="$RUNNER_TEMP/supplementary.json"
           case "$SELECTED_GATE" in
             fault-*) node tests/host/fault-package-matrix-browser.mjs "$report" "${SELECTED_GATE#fault-}" ;;
+            local-assets)
+              node tests/host/backup-package-mv3-browser.mjs "$RUNNER_TEMP/local-backup.json"
+              node tests/host/recovery-package-mv3-browser.mjs "$report"
+              node -e "for(const file of ['local-backup.json','supplementary.json']){const r=require(process.env.RUNNER_TEMP+'/'+file);if(r.status!=='PASS'||r.authorityMode!=='BROWSER_LOCAL'||r.scopeTupleLength!==4||r.sourceCommit!==process.env.GITHUB_SHA||r.workerNetworkBlocked!==true||r.cleanupOK!==true||r.guardClosed!==true||r.sourceChangedDuringRun!==false||r.buildManifestUnchanged!==true||r.runnerChangedDuringRun!==false)process.exit(1)}"
+              ;;
             privacy-main) node tests/host/privacy-package-browser.mjs "$report" ;;
             privacy-isolated) node tests/host/isolated-auth-privacy-browser.mjs "$report" ;;
             populated-native)
