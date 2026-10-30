@@ -308,5 +308,62 @@
     "permissionsChanged": false,
     "realMac": "NOT_RUN",
     "sourceHash": "ef4fb72ba9e22d36d517720ae7465e6b806dc1d339f059cd03260495a9f47920"
+  },
+  "nativeProbeInputContinuity": {
+    "baseCommit": "3d786add10e3b5013677f0d914b929e977b851cf",
+    "priorCI": {
+      "run": 41113790531,
+      "passedJobs": 41,
+      "failedJob": "cloud-ui-controls (MODERN)",
+      "classification": "Production input continuity defect; not waived as fixture failure",
+      "coldRecovery": "PASS",
+      "populatedNative": "PASS",
+      "faultUnknownProtocol": "PASS"
+    },
+    "failure": "Same connected input received final y key events without character insertion. Isolated native-visibility keyboard/probe overlap reproduced loss; a later intermediate state-move package also recorded same-node blur. Original failures retained.",
+    "change": "Keep the exact owned workspace iframe outside the native ancestor layout rebuild with state-preserving moveBefore, prove retained offscreen geometry before moving, restore exact parent/next sibling, preserve CSSOM/frame/window identity and continuous mutation rejection. No native nodes moved and no remove/insert fallback. Ignore only exact owned childList changes for native rescans; independently check parked owned frame and registered return-control geometry in fresh reading proof.",
+    "causeLimit": "Ancestor-layout/probe overlap is supported by isolated differential evidence; the one intermediate blur call stack was not captured. Instrumented package PASS is diagnostic only, never acceptance.",
+    "validation": {
+      "readingProbe": {
+        "status": "PASS",
+        "checks": 44,
+        "report": ".git/vaiwl-artifacts/takeover-20261030/final/hidden-marker-evidence/retained-before-move-reading-final.json",
+        "typing": "One keyboard.type with 1ms key pacing across fixed 150ms probe; actual events must occur before and after probe end, no refocus or retry."
+      },
+      "modern": {
+        "status": "PASS_LAYOUT_SUBCONTRACT_ONLY",
+        "interactionCoverageComplete": true,
+        "report": ".git/vaiwl-artifacts/takeover-20261030/final/hidden-marker-evidence/retained-before-move-modern.json",
+        "fullV27Acceptance": "NOT_ESTABLISHED"
+      },
+      "formalNestedMV3": {
+        "status": "PASS",
+        "sourceHashCount": 206,
+        "report": ".git/vaiwl-artifacts/takeover-20261030/final/hidden-marker-evidence/retained-before-move-formal.json"
+      },
+      "nodeBeforeFinalGeometryPrecheck": {
+        "passed": 12011,
+        "failed": 0,
+        "skipped": 0,
+        "log": ".git/vaiwl-artifacts/takeover-20261030/final/hidden-marker-evidence/state-move-node.log",
+        "finalCandidate": "Await unified CI; do not relabel earlier bytes"
+      },
+      "guardMutationsBeforeFinalGeometryPrecheck": {
+        "selected": 12,
+        "killed": 12,
+        "report": ".git/vaiwl-artifacts/takeover-20261030/final/hidden-marker-evidence/state-move-guards.json"
+      },
+      "formalCI": "PENDING_FROZEN_HEAD"
+    },
+    "changedInputHashes": {
+      "src/host/chatgpt-adapter.mjs": "5d854272226561c77d0ec8dc8ed2f6becbb5d91f6055ad142c24d685a2e6b1c5",
+      "src/navigation/flow-mount-surface.mjs": "10a08400aa7f5a53216f9d14ffd2c066bf1d8e477da278fe91a74e312abd4526",
+      "tests/host/chatgpt-adapter.test.mjs": "7006d37fc7bb1d2361961efe49e594b106efdebadbc34d24de0ed0b5f2acccf8",
+      "tests/host/flow-reading-probe-browser.mjs": "14e4aaebdf4d9fe9705106c60cffdd4720caa666ebcd049ad6ab07014392fb0d"
+    },
+    "realMac": "NOT_RUN for this candidate; user renewed 30 minutes / 60 actions, clock starts only after necessary CI passes",
+    "installedProfile": "UNCHANGED",
+    "freeAccepted": false,
+    "releaseReady": false
   }
 }

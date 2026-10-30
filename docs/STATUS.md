@@ -1,5 +1,16 @@
 # VAIWL实际状态：渐进积累工程已接线，真实来源逐项待准入
 
+## 2026-10-31 原生读取探针与跨源输入连续性收口
+
+3d786add 统一 CI [41113790531](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/actions/runs/41113790531) 完成 41/42 jobs PASS，冷恢复、populated-native、fault-unknown-protocol 均通过；唯一 MODERN 搜索丢末字失败保留为生产输入连续性问题，不以夹具错误豁免。
+
+隔离真实焦点实验重现：原生读取探针切换祖先布局时，仍连接且聚焦的跨源输入可收到键盘事件却丢失字符。现仅用 moveBefore 保状态移动自有 workspace slot，提前证明离屏尺寸，读取结束还原精确 parent/next sibling；原生节点、输入、handler 不移动，无 remove/insert 降级。CSSOM、frame/window、原生可见性和连续变更观察继续严格校验；移动异常、原位置失效、额外节点、规则替换均拒绝。原生扫描只忽略精确 owned childList 变化，fresh source proof 同时核验临时 body 下的自有框架及唯一返回按钮。
+
+最终源码的 44 项浏览器机制检查、MODERN 16 格完整控件交互以及正式 nested MV3 连续产品旅程 PASS，206 生产来源 hash 逐一匹配。真正覆盖首页→Project→聊天→原生输入/返回→搜索导航→Worker 恢复→刷新锁定/合成资产恢复→实际隔离卸载。原生探针与一次键入流的实际跨界事件、同节点/窗口/焦点、无重试及安全反例均保留。先前 Node 12011/12011、guard 12/12 属于最后几何预检前输入；最终统一 CI 待冻结 SHA 验证。中间包曾出现一次同节点 blur，唯一即时调用栈未捕获，诊断插桩通过不作验收依据；本批以未插桩正式包和统一 CI 继续复核。
+
+原安装、Profile 4 与私人资产未修改。用户已续期限定原生终验：必要 CI 通过后才开始 30 分钟 / 60 动作计时，目前未启动。真实 Mac 新候选、个人长期日用、完整 Free、公开发布仍未接受；不扩范围、不 merge/部署/发布。证据追加于同一[有限修复回执](engineering/free-hidden-native-marker-20261031.json)。
+
+
 ## 2026-10-31 初次失败后的新原生导航恢复
 
 91bd9651统一CI41111182580的完整Node12008/12008及guard12/12通过；截至本节已有40个job通过，populated仍在途，offline-journeys仅受控cold-unavailable-recovery超时而失败。此前取消导航及frame-renderer的旧失败本轮通过。原冷恢复FAIL保留：先503、缺私有surface、再原生导航200后仍无frame；原worker事件顺序未捕获，不能宣布唯一实时根因。

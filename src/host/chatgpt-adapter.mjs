@@ -371,6 +371,16 @@ if(!p){
  }
  function mutations(records){
   if(!live())return;
+  // Moving only an exact owned shell does not change a native source. Keep
+  // mixed records and all native/attribute changes; the surface's independent
+  // geometry observer still receives the complete batch, including removals.
+  const hadRecords=records.length>0;
+  records=records.filter(record=>{
+   if(record.type!=='childList')return true;
+   const changed=[...(record.addedNodes??[]),...(record.removedNodes??[])];
+   return !changed.length||!changed.every(node=>isOwnedSurface(node)===true);
+  });
+  if(hadRecords&&!records.length)return;
   const bodyChanged=bodyDiscovery?.affectsBody(records),surfaceChanged=discovery?.affectsSurface(records);
   if(bodyChanged)bodyWanted=true;
   if(bodyChanged||surfaceChanged)try{
@@ -482,7 +492,18 @@ if(!p){
   }
   // Native reads keep their own fresh route/source/landmark identity proof.
   // They never inherit the more permissive opaque-island layout continuity.
-  value.nativeReadingCurrent=()=>isSameNativeRegions(value);
+  value.nativeReadingCurrent=()=>isSameNativeRegions(value)&&[...document.body.children].every(node=>{
+   if(!isOwnedSurface(node))return true;
+   if(document.defaultView.getComputedStyle(node).display==='none')return true;
+   if(node===returnControl&&value.returnPlacement==='header-gap')return isReturnSlotCurrent(value);
+   // A synchronous reading probe may park its exact owned frame outside the
+   // native viewport to preserve OOPIF input. The fresh source proof must still
+   // reject a visible/tampered parked frame. Empty zero-area popover switches
+   // carry no private UI; every other displayed owned body child needs the
+   // active probe's identity, CSSOM and offscreen-geometry receipt.
+   const box=node.getBoundingClientRect();
+   return node.hasAttribute('popover')&&node.childNodes.length===0&&box.width===0&&box.height===0||isReadingProbeSurface(node)===true;
+  });
   const placement=profile.sidebarComposition==='partitioned-flow-v1'?nativeSidebarComposition({document,source:value.historySource,history:value.history,isOwnedSurface}):null;
   if(profile.sidebarComposition==='partitioned-flow-v1'){
    // A new inspection cannot inherit admission for a detached native subtree.

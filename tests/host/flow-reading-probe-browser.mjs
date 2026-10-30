@@ -12,7 +12,8 @@ import {createHash} from 'node:crypto';
 import {chromium} from '../b1/tooling/node_modules/playwright/index.mjs';
 import {longDesktopHTML,materializePartitionedSidebar} from './fixtures/observed-host-replay.mjs';
 import partition from './fixtures/observed-sidebar-project-details-20261026.json' with {type:'json'};
-import {createHistoricalNetworkGuard,historicalNetworkGuardArgs} from './historical-network-guard.mjs';
+import {createHistoricalNetworkGuard} from './historical-network-guard.mjs';
+import {launchNativeVisibilityBrowser} from './native-visibility-browser.mjs';
 
 const source=process.env.VAIWL_SOURCE??process.cwd(),require=createRequire(new URL('../../extension/tooling/package.json',import.meta.url));
 const {outputFiles}=await require('esbuild').build({stdin:{contents:"export * from './src/host/document-flow-layout.mjs';export {createChatGPTAdapter} from './src/host/chatgpt-adapter.mjs';export {CHATGPT_OBSERVED_PROFILE} from './src/host/chatgpt-observed-profile.mjs';export {createFlowMountSurface} from './src/navigation/flow-mount-surface.mjs';export {createURLPolicy} from './src/host/url-policy.mjs';",resolveDir:source},bundle:true,write:false,format:'iife',globalName:'readingModule'});
@@ -32,9 +33,9 @@ const sourcePaths=['src/navigation/flow-mount-surface.mjs','src/host/document-fl
 const hashes=async()=>Object.fromEntries(await Promise.all(sourcePaths.map(async path=>[path,createHash('sha256').update(await readFile(join(source,path))).digest('hex')])));
 const report={status:'RUNNING',evidence:'WEB_MECHANISM_ONLY',realChatGPT:'NOT_RUN',formalRenderer:'NOT_RUN',sourceHashes:await hashes(),browserVersion:null,viewports:[],checks:[]};
 const check=(name,value)=>{report.checks.push({name,...value});assert.equal(value.ok,true,name+' '+JSON.stringify(value));};
-let context,extensionId;
+let context,extensionId,browserHandle;
 async function setup(){
- const page=await context.newPage();await page.goto(origin+'/c/'+C);await page.evaluate(materializePartitionedSidebar,partition.sidebarStructure.rows);await page.addScriptTag({content:outputFiles[0].text});
+ const page=await context.newPage();await page.setViewportSize({width:1400,height:900});await page.goto(origin+'/c/'+C);await page.evaluate(materializePartitionedSidebar,partition.sidebarStructure.rows);await page.addScriptTag({content:outputFiles[0].text});
  const setup=await page.evaluate(async({extensionId,origin})=>{
   const {createChatGPTAdapter,CHATGPT_OBSERVED_PROFILE:profile,createFlowMountSurface,createURLPolicy,captureNativeBaseline}=readingModule;
   const binding={documentToken:'reading-document',producerToken:'reading-producer',browserDocumentId:'reading-browser-document',routeEpoch:1,origin,expiresAt:new Date(Date.now()+60000).toISOString()};
@@ -128,41 +129,73 @@ async function setupSearchRenderer(){
  });
  await frame.waitForFunction(()=>searchProbe.snapshot().rowCount===24&&!searchProbe.snapshot().loading);await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
  const before=await frame.evaluate(()=>searchProbe.prepare());
- const runProbe=()=>page.evaluate(()=>{
+ const runProbe=(duration=150)=>page.evaluate(duration=>{
   const p=readingProbe,frame=p.frame,frameWindow=frame.contentWindow,sideWindow=p.sidebar.contentWindow,originalStyle=frame.parentElement.getAttribute('style');let window=null;
   const rect=node=>{const r=node.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height,right:r.right,bottom:r.bottom};};
   const measure=()=>{const f=rect(frame),r=rect(p.plan.reading),left=Math.max(0,r.x),top=Math.max(0,r.y),right=Math.min(innerWidth,r.right),bottom=Math.min(innerHeight,r.bottom),hit=right>left&&bottom>top?document.elementFromPoint((left+right)/2,(top+bottom)/2):null;return {frame:f,offscreen:f.right<=-1,receipt:p.surface.isReadingProbeSurface(frame.parentElement),nativeCurrent:readingModule.isNativeReadingCurrent(p.plan),nativeUnmasked:!p.surface.isMasked(p.plan.reading),readingVisible:getComputedStyle(p.plan.reading).visibility==='visible',readingHit:!!hit&&(hit===p.plan.reading||p.plan.reading.contains(hit)),nativeScroll:p.port.scrollTop,windowScroll:{x:scrollX,y:scrollY}};};
-  const before=measure();p.surrendered.length=0;const sheet=document.querySelector(`style[data-va-owned="${p.handle.id}"]`).sheet,rules=[...sheet.cssRules],canonical=rules.map(rule=>rule.cssText),mutations=[];const observer=new MutationObserver(records=>mutations.push(...records));observer.observe(document.documentElement,{subtree:true,childList:true,attributes:true,characterData:true});
-  const value=p.surface.withNativeReading(p.handle,()=>{const start=performance.timeOrigin+performance.now(),before=measure(),deadline=performance.now()+150;console.debug('VAIWL_TEST_SEARCH_INPUT_WINDOW');while(performance.now()<deadline){}const after=measure();window={start,end:performance.timeOrigin+performance.now(),before,after};return after.nativeCurrent;},()=>p.authority.allowed);
+  const before=measure(),parent=frame.parentElement.parentElement,next=frame.parentElement.nextSibling;p.surrendered.length=0;const sheet=document.querySelector(`style[data-va-owned="${p.handle.id}"]`).sheet,rules=[...sheet.cssRules],canonical=rules.map(rule=>rule.cssText),mutations=[];const observer=new MutationObserver(records=>mutations.push(...records));observer.observe(document.documentElement,{subtree:true,childList:true,attributes:true,characterData:true});
+  const value=p.surface.withNativeReading(p.handle,()=>{const start=performance.timeOrigin+performance.now(),before=measure(),deadline=performance.now()+duration;console.debug('VAIWL_TEST_SEARCH_INPUT_WINDOW');while(performance.now()<deadline){}const after=measure();window={start,end:performance.timeOrigin+performance.now(),before,after};return after.nativeCurrent;},()=>p.authority.allowed);
   mutations.push(...observer.takeRecords());observer.disconnect();const cssomRestored=rules.length===sheet.cssRules.length&&rules.every((rule,index)=>sheet.cssRules[index]===rule&&rule.cssText===canonical[index]);
-  return {value,acceptedProbe:value===true,cssomRestored,parentMutations:mutations.map(record=>({type:record.type,attribute:record.attributeName})),before,window,after:measure(),workspace:p.surface.visibility(p.handle).workspace,sidebar:p.surface.visibility(p.handle).sidebar,activeFrame:document.activeElement===frame,sameFrame:p.frame===frame&&frame.contentWindow===frameWindow,sameSidebar:p.sidebar.contentWindow===sideWindow,styleRestored:frame.parentElement.getAttribute('style')===originalStyle,nativeDraftUnchanged:p.native.value===p.nativeValue,surrenders:p.surrendered};
- });
+  return {value,acceptedProbe:value===true,cssomRestored,ownedMovesOnly:mutations.length===4&&mutations.every(record=>record.type==='childList'&&[parent,document.body].includes(record.target)&&[...record.addedNodes,...record.removedNodes].length===1&&[...record.addedNodes,...record.removedNodes][0]===frame.parentElement),positionRestored:frame.parentElement.parentElement===parent&&frame.parentElement.nextSibling===next,parentMutations:mutations.map(record=>({type:record.type,attribute:record.attributeName})),before,window,after:measure(),workspace:p.surface.visibility(p.handle).workspace,sidebar:p.surface.visibility(p.handle).sidebar,activeFrame:document.activeElement===frame,sameFrame:p.frame===frame&&frame.contentWindow===frameWindow,sameSidebar:p.sidebar.contentWindow===sideWindow,styleRestored:frame.parentElement.getAttribute('style')===originalStyle,nativeDraftUnchanged:p.native.value===p.nativeValue,surrenders:p.surrendered};
+ },duration);
  return {page,frame,before,runProbe};
 }
 
 try{
- context=await chromium.launchPersistentContext(join(dir,'profile'),{headless:true,viewport:{width:1400,height:900},executablePath:process.env.FREE_CHROME_EXECUTABLE??(platform()==='darwin'?'/Users/hhf/Library/Caches/ms-playwright/chromium-1248/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing':'/usr/bin/chromium'),ignoreDefaultArgs:['--disable-extensions'],args:['--enable-unsafe-extension-debugging',...historicalNetworkGuardArgs(network.config)]});
+ browserHandle=await launchNativeVisibilityBrowser({chromium,profileDir:join(dir,'profile'),headed:false,executablePath:process.env.FREE_CHROME_EXECUTABLE??(platform()==='darwin'?'/Users/hhf/Library/Caches/ms-playwright/chromium-1248/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing':'/usr/bin/chromium'),historicalNetworkGuard:network.config});context=browserHandle.context;report.browserPrecondition=browserHandle.diagnostic;
  await context.route('**/*',route=>route.request().url().startsWith(origin+'/')||route.request().url().startsWith('chrome-extension://')?route.continue():route.abort());
  report.browserVersion=context.browser().version();report.viewports.push({width:1400,height:900});
  const cdp=await context.browser().newBrowserCDPSession();({id:extensionId}=await cdp.send('Extensions.loadUnpacked',{path:extension}));
 
- for(const mode of ['retained-input','fresh-view-input']){
-  const {page,frame,before,runProbe}=await setupSearchRenderer(),text='UI10 definitely absent query';
+ {
+  const {page}=await setup();
+  const result=await page.evaluate(()=>{
+   const p=readingProbe;p.surface.showReading(p.handle);const inspection=p.adapter.inspect(),box=inspection.returnSlot,button=document.createElement('button');
+   button.type='button';button.textContent='Return';button.style.cssText='box-sizing:border-box;margin:0;padding:0;position:fixed;border:0;border-radius:9px;background:transparent;z-index:30;pointer-events:auto';
+   Object.assign(button.style,{left:box.x+'px',top:box.y+'px',width:box.width+'px',height:box.height+'px'});document.body.append(button);p.surface.setReturnControl(p.handle,button);p.adapter.setReturnControl(button);
+   const registered=readingModule.isNativeReadingCurrent(p.plan);button.style.left='0px';const displaced=readingModule.isNativeReadingCurrent(p.plan);button.style.left=box.x+'px';
+   const restored=readingModule.isNativeReadingCurrent(p.plan),copy=button.cloneNode(true);button.remove();document.body.append(copy);p.surface.setReturnControl(p.handle,copy);const copied=readingModule.isNativeReadingCurrent(p.plan);
+   return {ok:inspection.returnPlacement==='header-gap'&&registered&&!displaced&&restored&&!copied,registered,displaced,restored,copied};
+  });
+  check('native reading accepts only the registered header-gap return control with fresh geometry',result);await page.close();
+ }
+
+ for(const mode of ['retained-input','fresh-view-input','keyboard-transition-input']){
+  const {page,frame,before,runProbe}=await setupSearchRenderer(),text=mode==='keyboard-transition-input'?'UI10 definitely absent query '+('x'.repeat(171)):'UI10 definitely absent query';
   const inputTask=page.waitForEvent('console',{predicate:message=>message.text()==='VAIWL_TEST_SEARCH_INPUT_WINDOW',timeout:2000}).then(async()=>{
    // Force a real non-search presentation change. Result-only replies now
    // preserve the input; this counterexample must still exercise replacement.
    const rebuild=mode==='fresh-view-input'?await frame.evaluate(()=>searchProbe.refresh()):null;
-   const beforeInsert=await frame.evaluate(()=>searchProbe.snapshot());await page.keyboard.insertText(text);const afterInsert=await frame.evaluate(()=>searchProbe.snapshot());return {rebuild,beforeInsert,afterInsert};
+   // One paced keystroke stream crosses both ends of the fixed 150ms probe.
+   // Assert actual event overlap below; do not refocus or retry missing text.
+   const beforeInsert=await frame.evaluate(()=>searchProbe.snapshot());if(mode==='keyboard-transition-input')await page.keyboard.type(text,{delay:1});else await page.keyboard.insertText(text);const afterInsert=await frame.evaluate(()=>searchProbe.snapshot());return {rebuild,beforeInsert,afterInsert};
   });
-  const [host,attempt]=await Promise.all([runProbe(),inputTask]);await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));const afterReopen=await frame.evaluate(()=>searchProbe.snapshot());
+  const [host,attempt]=await Promise.all([runProbe(150),inputTask]);await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));const afterReopen=await frame.evaluate(()=>searchProbe.snapshot());
   await frame.evaluate(()=>searchProbe.releaseResponses());await frame.waitForFunction(()=>!searchProbe.snapshot().loading,{},{timeout:2000});await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));const settled=await frame.evaluate(()=>searchProbe.snapshot());
-  const overlap=attempt.beforeInsert.at>=host.window.start&&attempt.afterInsert.at<=host.window.end;
+  const overlap=mode==='keyboard-transition-input'?settled.events.some(event=>event.type==='input'&&event.at>=host.window.start&&event.at<host.window.end)&&settled.events.some(event=>event.type==='input'&&event.at>host.window.end):attempt.beforeInsert.at>=host.window.start&&attempt.afterInsert.at<=host.window.end;
   const initial=before.focused&&before.documentHasFocus&&before.value==='Synthetic chat'&&before.start===0&&before.end===before.value.length&&!before.loading&&before.rowCount===24;
-  const identity=mode==='retained-input'?attempt.beforeInsert.sameInput&&attempt.beforeInsert.originalConnected:!attempt.beforeInsert.sameInput&&!attempt.beforeInsert.originalConnected&&attempt.rebuild.before.sameInput;
+  const identity=mode!=='fresh-view-input'?attempt.beforeInsert.sameInput&&attempt.beforeInsert.originalConnected:!attempt.beforeInsert.sameInput&&!attempt.beforeInsert.originalConnected&&attempt.rebuild.before.sameInput;
   const readable=host.acceptedProbe&&host.value===true&&[host.window.before,host.window.after].every(sample=>sample.receipt&&sample.offscreen&&sample.nativeCurrent&&sample.nativeUnmasked&&sample.readingVisible&&sample.readingHit&&sample.frame.width===host.before.frame.width&&sample.frame.height===host.before.frame.height&&sample.nativeScroll===host.before.nativeScroll);
-  const restored=host.workspace&&host.sidebar&&host.activeFrame&&host.sameFrame&&host.sameSidebar&&host.styleRestored&&host.cssomRestored&&host.parentMutations.length===0&&!host.after.receipt&&host.nativeDraftUnchanged&&host.surrenders.length===0&&JSON.stringify(host.before.frame)===JSON.stringify(host.after.frame)&&JSON.stringify(host.before.windowScroll)===JSON.stringify(host.after.windowScroll)&&host.before.nativeScroll===host.after.nativeScroll&&before.scroll===afterReopen.scroll&&JSON.stringify(before.windowScroll)===JSON.stringify(afterReopen.windowScroll);
-  const inputEvents=settled.events.filter(event=>['beforeinput','input'].includes(event.type)),delivered=attempt.beforeInsert.focused&&attempt.beforeInsert.documentHasFocus&&attempt.beforeInsert.start===0&&attempt.beforeInsert.end===before.value.length&&attempt.beforeInsert.rect.width>0&&attempt.beforeInsert.rect.height>0&&attempt.afterInsert.value===text&&attempt.afterInsert.focused&&afterReopen.value===text&&afterReopen.focused&&settled.value===text&&settled.focused&&!settled.loading&&settled.rowCount===0&&settled.requests.length===1&&settled.requests[0].query===text&&inputEvents.length===2&&inputEvents[0].type==='beforeinput'&&inputEvents[1].type==='input'&&inputEvents.every(event=>event.trusted&&event.current&&event.connected&&event.targetId===attempt.beforeInsert.currentId&&event.data===text&&event.inputType==='insertText');
-  check('accepted native reading probe preserves one real search input delivery: '+mode,{ok:initial&&identity&&overlap&&readable&&restored&&delivered,initial,identity,overlap,readable,restored,delivered,insertedOnce:true,before,host,attempt,afterReopen,settled,inputEvents});await frame.evaluate(()=>searchProbe.navigation.stop());await page.close();
+  const restored=host.workspace&&host.sidebar&&host.activeFrame&&host.sameFrame&&host.sameSidebar&&host.styleRestored&&host.cssomRestored&&host.ownedMovesOnly&&host.positionRestored&&!host.after.receipt&&host.nativeDraftUnchanged&&host.surrenders.length===0&&JSON.stringify(host.before.frame)===JSON.stringify(host.after.frame)&&JSON.stringify(host.before.windowScroll)===JSON.stringify(host.after.windowScroll)&&host.before.nativeScroll===host.after.nativeScroll&&before.scroll===afterReopen.scroll&&JSON.stringify(before.windowScroll)===JSON.stringify(afterReopen.windowScroll);
+  const inputEvents=settled.events.filter(event=>['beforeinput','input'].includes(event.type)),delivered=attempt.beforeInsert.focused&&attempt.beforeInsert.documentHasFocus&&attempt.beforeInsert.start===0&&attempt.beforeInsert.end===before.value.length&&attempt.beforeInsert.rect.width>0&&attempt.beforeInsert.rect.height>0&&attempt.afterInsert.value===text&&attempt.afterInsert.focused&&afterReopen.value===text&&afterReopen.focused&&settled.value===text&&settled.focused&&!settled.loading&&settled.rowCount===0&&settled.requests.length===(mode==='keyboard-transition-input'?text.length:1)&&settled.requests.at(-1).query===text&&inputEvents.length===(mode==='keyboard-transition-input'?text.length*2:2)&&inputEvents.every((event,index)=>event.type===(index%2?'input':'beforeinput')&&event.trusted&&event.current&&event.connected&&event.targetId===attempt.beforeInsert.currentId&&event.data===(mode==='keyboard-transition-input'?text[Math.floor(index/2)]:text)&&event.inputType==='insertText');
+  check('accepted native reading probe preserves one real search input delivery: '+mode,{ok:initial&&identity&&overlap&&readable&&restored&&delivered,initial,identity,overlap,readable,restored,delivered,inputOperation:mode==='keyboard-transition-input'?'ONE_KEYBOARD_TYPE_NO_REFOCUS':'ONE_INSERT_TEXT_NO_REFOCUS',before,host,attempt,afterReopen,settled,inputEvents});await frame.evaluate(()=>searchProbe.navigation.stop());await page.close();
+ }
+ for(const mode of ['unsupported-move','initial-throw','moved-then-throw','restore-throw','restore-native-mutation','next-replaced','extra-slot-child']){
+  const {page}=await setup();
+  const result=await page.evaluate(mode=>{
+   const p=readingProbe,node=p.frame.parentElement,parent=node.parentNode,next=node.nextSibling,body=document.body,frame=p.frame,window=frame.contentWindow,rule=document.querySelector(`style[data-va-owned="${p.handle.id}"]`).sheet.cssRules;
+   const originalRules=[...rule].map(r=>r.cssText),originalMove=Element.prototype.moveBefore;let reads=0,moves=0;
+   if(mode==='unsupported-move')body.moveBefore=undefined;
+   if(mode==='initial-throw')body.moveBefore=()=>{throw Error('synthetic-initial-move-failure');};
+   if(mode==='moved-then-throw')body.moveBefore=function(...args){moves++;Reflect.apply(originalMove,this,args);throw Error('synthetic-after-move-failure');};
+   if(mode==='restore-throw')parent.moveBefore=()=>{moves++;throw Error('synthetic-restore-failure');};
+   if(mode==='restore-native-mutation')parent.moveBefore=function(...args){moves++;Reflect.apply(originalMove,this,args);p.native.setAttribute('data-synthetic-move-mutation','1');};
+   if(mode==='extra-slot-child')node.append(document.createElement('span'));
+   const value=p.surface.withNativeReading(p.handle,()=>{reads++;if(mode==='next-replaced')next.replaceWith(next.cloneNode(true));return 'must-not-escape';},()=>true);
+   const visible=p.surface.visibility(p.handle),position=node.parentNode===parent&&node.nextSibling===next,rect=frame.getBoundingClientRect(),cssomRestored=JSON.stringify([...rule].map(r=>r.cssText))===JSON.stringify(originalRules),unchanged=['unsupported-move','extra-slot-child'].includes(mode);
+   return {ok:value===null&&reads===(['restore-throw','restore-native-mutation','next-replaced'].includes(mode)?1:0)&&cssomRestored&&visible?.workspace===unchanged&&!p.surface.isReadingProbeSurface(node)&&frame===p.frame&&window===frame.contentWindow&&p.native.value===p.nativeValue&&(unchanged||['restore-throw','next-replaced'].includes(mode)?unchanged?position:rect.width===0&&rect.height===0:position),mode,value,reads,moves,position,cssomRestored,workspace:visible?.workspace,finalFrame:{width:rect.width,height:rect.height},nativeDraftUnchanged:p.native.value===p.nativeValue,surrenders:p.surrendered};
+  },mode);
+  check('atomic reading move fails closed: '+mode,result);await page.close();
  }
  {
   const {page}=await setup();
@@ -174,14 +207,14 @@ try{
  for(const mode of ['onscreen','rule-tamper','frame-tamper','native-forged-attribute']){
   const {page}=await setup();
   const result=await page.evaluate(mode=>{const p=readingProbe,node=p.frame.parentElement,exit=document.getElementById(p.handle.id+'_workspace_exit'),sheet=document.querySelector(`style[data-va-owned="${p.handle.id}"]`).sheet,rule=sheet.cssRules[sheet.cssRules.length-1],canonical=rule.cssText;let reads=0,before=null,after=null,sourceAfter=null,probeGeometry=null;
-   const originalRect=node.getBoundingClientRect;node.getBoundingClientRect=function(...args){const r=Reflect.apply(originalRect,this,args);if(rule.media.mediaText==='all'&&!exit.matches(':popover-open'))probeGeometry={x:r.x,y:r.y,width:r.width,height:r.height,right:r.right};return r;};
+   const originalRect=node.getBoundingClientRect;node.getBoundingClientRect=function(...args){const r=Reflect.apply(originalRect,this,args);if(rule.media.mediaText==='all')probeGeometry={x:r.x,y:r.y,width:r.width,height:r.height,right:r.right,switchOpen:exit.matches(':popover-open')};return r;};
    // Higher specificity really puts the private slot onscreen, without
    // changing its exact owned CSSOM rule or any native node. The measured
    // receipt-time rect is part of the oracle, not an assumed CSS effect.
    if(mode==='onscreen'){const style=document.createElement('style');style.textContent=`html body #${node.id}#${node.id}#${node.id}{left:0!important}`;document.head.append(style);}
    const value=p.surface.withNativeReading(p.handle,()=>{reads++;before=p.surface.isReadingProbeSurface(node);if(mode==='rule-tamper')rule.cssRules[0].style.setProperty('outline-color','red');if(mode==='frame-tamper')p.frame.setAttribute('srcdoc','<p>Synthetic frame replacement</p>');if(mode==='native-forged-attribute')p.plan.reading.setAttribute('data-va-reading-probe',p.handle.id);after=p.surface.isReadingProbeSurface(mode==='native-forged-attribute'?p.plan.reading:node);sourceAfter=readingModule.isNativeReadingCurrent(p.plan);return 'must-not-escape';},()=>true);
    const cssomRestored=sheet.cssRules[sheet.cssRules.length-1]===rule&&rule.cssText===canonical,visibility=p.surface.visibility(p.handle),closed=!exit.matches(':popover-open')&&(mode==='frame-tamper'?visibility===null:visibility?.workspace===false);
-   return {ok:value===null&&reads===(mode==='onscreen'?0:1)&&(mode==='onscreen'?probeGeometry?.x===0&&probeGeometry.right>0:before===true&&after===false)&&closed&&!p.surface.isReadingProbeSurface(node)&&cssomRestored&&node.getAttribute('style')===p.originalWorkspaceStyle&&p.native.value===p.nativeValue,mode,value,reads,before,after,sourceAfter,probeGeometry,closed,visibility,cssomRestored,styleRestored:node.getAttribute('style')===p.originalWorkspaceStyle};
+   return {ok:value===null&&reads===(mode==='onscreen'?0:1)&&(mode==='onscreen'?probeGeometry?.x===0&&probeGeometry.right>0&&probeGeometry.switchOpen===true:before===true&&after===false)&&closed&&!p.surface.isReadingProbeSurface(node)&&cssomRestored&&node.getAttribute('style')===p.originalWorkspaceStyle&&p.native.value===p.nativeValue,mode,value,reads,before,after,sourceAfter,probeGeometry,closed,visibility,cssomRestored,styleRestored:node.getAttribute('style')===p.originalWorkspaceStyle};
   },mode);
   check('reading-probe receipt refuses '+mode,result);await page.close();
  }
@@ -195,8 +228,8 @@ try{
     sheet.deleteRule(index);sheet.insertRule(activeCopy,index);const replacement=sheet.cssRules[index];replacement.cssRules[0].style.setProperty('left','0px','important');
     const rect=p.frame.getBoundingClientRect();attack={replaced:replacement!==original,media:replacement.media.mediaText,x:rect.x,width:rect.width,height:rect.height};afterReceipt=p.surface.isReadingProbeSurface(node);sourceAfter=readingModule.isNativeReadingCurrent(p.plan);return 'must-not-escape';
    },()=>true);
-   mutations.push(...observer.takeRecords());observer.disconnect();const restoredRules=[...ownedStyle.sheet.cssRules],rect=p.frame.getBoundingClientRect(),style=getComputedStyle(node),closed=!exit.matches(':popover-open')&&p.surface.visibility(p.handle)?.workspace===false,privateZero=rect.width===0&&rect.height===0,privateNonvisible=style.display==='none'||style.visibility==='hidden',canonicalRestored=ownedStyle.textContent===canonicalText&&JSON.stringify(restoredRules.map(rule=>rule.cssText))===JSON.stringify(canonicalRules)&&restoredRules.at(-1).media.mediaText==='not all',receiptAfter=p.surface.isReadingProbeSurface(node),onlyOwnedSheetRestored=mutations.every(record=>(record.target===ownedStyle||record.target.parentNode===ownedStyle)&&['childList','characterData'].includes(record.type))&&nativeNodes.every((node,index)=>node.getAttribute('style')===nativeStyles[index]);
-   return {ok:value===null&&reads===1&&beforeReceipt===true&&afterReceipt===false&&sourceAfter===false&&attack?.replaced&&attack.media==='all'&&attack.x===0&&attack.width>0&&attack.height>0&&closed&&privateZero&&privateNonvisible&&canonicalRestored&&receiptAfter===false&&onlyOwnedSheetRestored&&p.native.value===p.nativeValue,value,reads,beforeReceipt,afterReceipt,sourceAfter,attack,closed,privateZero,privateNonvisible,canonicalRestored,receiptAfter,onlyOwnedSheetRestored,parentMutations:mutations.map(record=>({type:record.type,ownedSheet:record.target===ownedStyle})),finalFrame:{width:rect.width,height:rect.height},finalDisplay:style.display,finalVisibility:style.visibility};
+   mutations.push(...observer.takeRecords());observer.disconnect();const restoredRules=[...ownedStyle.sheet.cssRules],rect=p.frame.getBoundingClientRect(),style=getComputedStyle(node),closed=!exit.matches(':popover-open')&&p.surface.visibility(p.handle)?.workspace===false,privateZero=rect.width===0&&rect.height===0,privateNonvisible=style.display==='none'||style.visibility==='hidden',canonicalRestored=ownedStyle.textContent===canonicalText&&JSON.stringify(restoredRules.map(rule=>rule.cssText))===JSON.stringify(canonicalRules)&&restoredRules.at(-1).media.mediaText==='not all',receiptAfter=p.surface.isReadingProbeSurface(node),onlyOwnedRestored=mutations.every(record=>(record.target===ownedStyle||record.target.parentNode===ownedStyle)&&['childList','characterData'].includes(record.type)||record.type==='childList'&&[...record.addedNodes,...record.removedNodes].length===1&&[...record.addedNodes,...record.removedNodes][0]===node)&&nativeNodes.every((node,index)=>node.getAttribute('style')===nativeStyles[index]);
+   return {ok:value===null&&reads===1&&beforeReceipt===true&&afterReceipt===false&&sourceAfter===false&&attack?.replaced&&attack.media==='all'&&attack.x===0&&attack.width>0&&attack.height>0&&closed&&privateZero&&privateNonvisible&&canonicalRestored&&receiptAfter===false&&onlyOwnedRestored&&p.native.value===p.nativeValue,value,reads,beforeReceipt,afterReceipt,sourceAfter,attack,closed,privateZero,privateNonvisible,canonicalRestored,receiptAfter,onlyOwnedRestored,parentMutations:mutations.map(record=>({type:record.type,ownedSheet:record.target===ownedStyle})),finalFrame:{width:rect.width,height:rect.height},finalDisplay:style.display,finalVisibility:style.visibility};
   });
   check('replaced active CSSOM rule cannot outlive a rejected native reading probe',result);await page.close();
  }
@@ -320,7 +353,7 @@ try{
  report.status='PASS';
 }catch(error){report.status='FAIL';report.error=error.stack;process.exitCode=1;}
 finally{
- await context?.close();await network.close();await new Promise(resolve=>server.close(resolve));report.sourceHashesAfter=await hashes();report.sourceUnchanged=JSON.stringify(report.sourceHashes)===JSON.stringify(report.sourceHashesAfter);
+ await browserHandle?.close();await network.close();await new Promise(resolve=>server.close(resolve));report.sourceHashesAfter=await hashes();report.sourceUnchanged=JSON.stringify(report.sourceHashes)===JSON.stringify(report.sourceHashesAfter);
  if(!report.sourceUnchanged){report.status='FAIL';report.error??='source-changed';process.exitCode=1;}
  if(process.env.FREE_FLOW_READING_REPORT)await writeFile(process.env.FREE_FLOW_READING_REPORT,JSON.stringify(report,null,2)+'\n');console.log(JSON.stringify(report,null,2));
 }

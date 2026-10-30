@@ -176,6 +176,19 @@ test('popover toggle rescans deferred native changes and stop removes its listen
  button.textContent='Changed while masked';const toggle=f.documentListeners.get('toggle');assert.equal(typeof toggle,'function');toggle();await settle();assert.equal(f.emitted.at(-1).payload.candidates[0].nativeTitle,'Changed while masked');const count=f.emitted.length;toggle();await settle();assert.equal(f.emitted.length,count);f.adapter.stop();assert.equal(f.documentListeners.has('toggle'),false);toggle();await settle();assert.equal(f.emitted.length,count);
 });
 
+test('exact owned shell moves do not rescan native sources; mixed and forged records still do',async()=>{
+ const owned={},forged={getAttribute:()=> 'copied-owned-marker'},changes=[];
+ const f=fixture({isOwnedSurface:n=>n===owned,onSurfaceChange:records=>changes.push(records)}),button={tagName:'BUTTON',textContent:'Before',isConnected:true,ownerDocument:f.document,getAttribute:()=>null};
+ const root={...visibleDirectoryNode(f.document),isConnected:true,contains:n=>n===button,querySelectorAll:()=>[button]};button.parentNode=root;Object.assign(button,visibleDirectoryNode(f.document,root));f.selectors.set(LEGACY_SURFACE_PROFILE.regions.projects,[root]);
+ await f.start();await settle();const count=f.emitted.length;
+ button.textContent='Native change not yet signalled';
+ for(let i=0;i<4;i++)f.observer().cb([{type:'childList',target:root,addedNodes:i%2?[owned]:[],removedNodes:i%2?[]:[owned]}]);
+ await settle();assert.equal(f.emitted.length,count);assert.equal(changes.length,0);
+ f.observer().cb([{type:'childList',target:root,addedNodes:[owned,button],removedNodes:[]}]);await settle();assert.equal(f.emitted.at(-1).payload.candidates[0].nativeTitle,button.textContent);assert.equal(changes.length,1);
+ button.textContent='Forged marker cannot hide native change';f.observer().cb([{type:'childList',target:root,addedNodes:[forged],removedNodes:[]}]);await settle();assert.equal(f.emitted.at(-1).payload.candidates[0].nativeTitle,button.textContent);assert.equal(changes.length,2);
+ button.textContent='Attributes remain observed';f.observer().cb([{type:'attributes',target:root,attributeName:'class'}]);await settle();assert.equal(f.emitted.at(-1).payload.candidates[0].nativeTitle,button.textContent);assert.equal(changes.length,3);f.adapter.stop();
+});
+
 test('trusted native preparation refreshes restored reading proof before later send, never creates intent itself',async()=>{
  const f=sendFixture();await f.start(p=>{f.emitted.push(p);return bodyAck(p);});await settle();f.reading.hidden=true;f.trigger();await settle();assert.equal(f.emitted.filter(p=>p.kind==='current-observation').at(-1).payload.body.association,'unproven');
  f.reading.hidden=false;f.documentListeners.get('pointerdown')({type:'pointerdown',isTrusted:true,target:f.button,button:0});await settle();assert.equal(f.emitted.filter(p=>p.kind==='current-observation').at(-1).payload.body.association,'explicit-body-id');assert.equal(f.emitted.filter(p=>p.kind==='send-candidate').length,0);
