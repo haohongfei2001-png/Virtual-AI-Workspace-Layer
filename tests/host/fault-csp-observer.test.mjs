@@ -61,6 +61,20 @@ test('mount witness rejects unrelated extension CSP event and tracks actual retr
  for(let i=0;i<2;i++)callbacks[0]([{type:'childList',addedNodes:[{nodeType:1,tagName:'IFRAME',src:'chrome-extension://own/workspace.html',childNodes:[]}]}]);assert.equal(sandbox.__faultCspMounts.attempts,2);const reused={nodeType:1,tagName:'IFRAME',src:'chrome-extension://own/workspace.html',childNodes:[]};callbacks[0]([{type:'childList',addedNodes:[reused]},{type:'childList',addedNodes:[reused]},{type:'attributes',target:reused}]);assert.equal(sandbox.__faultCspMounts.attempts,5);
 });
 
+test('mount witness distinguishes atomic moves from a recreated iframe browsing context and src retry',()=>{
+ const callbacks=[],sandbox={location:{protocol:'http:'},document:{childNodes:[]},addEventListener(){},MutationObserver:class{constructor(f){callbacks.push(f);}observe(){}}};
+ vm.runInNewContext('('+installCspMountObservation.toString()+')({extensionId:"own"})',sandbox);
+ const frame={nodeType:1,tagName:'IFRAME',src:'chrome-extension://own/workspace.html',contentWindow:{},childNodes:[]},add=()=>callbacks[0]([{type:'childList',addedNodes:[frame]}]);
+ add();add();add();assert.equal(sandbox.__faultCspMounts.attempts,1,'same connected browsing context is not a remount');
+ frame.contentWindow={};add();assert.equal(sandbox.__faultCspMounts.attempts,2,'a new browsing context on the same node is a retry');
+ callbacks[0]([{type:'attributes',target:frame}]);assert.equal(sandbox.__faultCspMounts.attempts,3,'same-value src write still counts');
+ frame.contentWindow=null;add();add();assert.equal(sandbox.__faultCspMounts.attempts,5,'missing browsing-context proof cannot hide retries');
+ const fresh={...frame,contentWindow:{}};callbacks[0]([{type:'childList',addedNodes:[fresh]},{type:'childList',addedNodes:[fresh]}]);
+ assert.equal(sandbox.__faultCspMounts.attempts,7,'first insertion and recreation in one delivery cannot borrow newly observed continuity');
+ callbacks[0]([{type:'childList',addedNodes:[fresh]},{type:'childList',addedNodes:[fresh]}]);
+ assert.equal(sandbox.__faultCspMounts.attempts,7,'only prior-batch continuity can exempt atomic moves');
+});
+
 test('final scan detects historical removed private DOM and late message, not just final endpoint',async()=>{
  let capture={shell:[],dom:[],messages:[],dropped:0,unsupported:0};
  const page={evaluate:async(fn,arg)=>fn===cspDomStrings?{strings:['native'],dropped:0}:capture};

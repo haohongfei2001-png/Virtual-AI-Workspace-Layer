@@ -48,8 +48,21 @@ export function installCspMountObservation({extensionId}){
  if(location.protocol!=='http:')return;
  const data={attempts:0,violations:0,byRole:{workspace:0,sidebar:0}};globalThis.__faultCspMounts=data;
  const seen=new WeakMap(),targets=new Map(['workspace','sidebar'].map(role=>[`chrome-extension://${extensionId}/${role}.html`,role]));
- function visit(n,force=false){if(n.nodeType===1&&n.tagName==='IFRAME'){const role=targets.get(n.src);if(role&&(force||seen.get(n)!==n.src)){seen.set(n,n.src);data.attempts++;data.byRole[role]++;}}for(const child of n.childNodes??[])visit(child,force);}
- new MutationObserver(records=>{for(const r of records){if(r.type==='attributes')visit(r.target,true);else for(const n of r.addedNodes)visit(n,true);}}).observe(document,{subtree:true,childList:true,attributes:true,attributeFilter:['src']});
+ // moveBefore emits childList records while preserving the exact browsing
+ // context. Removing/reinserting the same iframe creates a different WindowProxy;
+ // new nodes, missing context proof and every src write still count as attempts.
+ function visit(n,force=false,baseline=null){
+  if(n.nodeType===1&&n.tagName==='IFRAME'){
+   // A first insert/remove/reinsert can deliver both additions together. Only
+   // evidence predating this batch can prove continuity; never dedupe against
+   // the final WindowProxy just registered by another record in this batch.
+   if(baseline&&!baseline.has(n))baseline.set(n,seen.get(n));
+   const role=targets.get(n.src),prior=baseline?baseline.get(n):seen.get(n),window=n.contentWindow;
+   if(role&&(force||!prior||prior.src!==n.src||!window||prior.window!==window)){seen.set(n,{src:n.src,window});data.attempts++;data.byRole[role]++;}
+  }
+  for(const child of n.childNodes??[])visit(child,force,baseline);
+ }
+ new MutationObserver(records=>{const baseline=new WeakMap();for(const r of records){if(r.type==='attributes')visit(r.target,true,baseline);else for(const n of r.addedNodes)visit(n,false,baseline);}}).observe(document,{subtree:true,childList:true,attributes:true,attributeFilter:['src']});
  addEventListener('securitypolicyviolation',e=>{if(e.effectiveDirective==='frame-src'&&targets.has(e.blockedURI))data.violations++;});visit(document);
 }
 export function exactBlockedCandidatesReply(value){return !!value&&value.ok===false&&value.state==='blocked'&&Object.keys(value).sort().join(',')==='ok,state';}

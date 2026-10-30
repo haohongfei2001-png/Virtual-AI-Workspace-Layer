@@ -365,5 +365,68 @@
     "installedProfile": "UNCHANGED",
     "freeAccepted": false,
     "releaseReady": false
+  },
+  "declarativeCloseAndCspObservation": {
+    "baseCommit": "ab5bb797a7319b702441f4aa6622413efe54a757",
+    "priorCI": {
+      "run": 41122794801,
+      "passedJobs": 40,
+      "totalJobs": 42,
+      "populatedNative": "PASS",
+      "faultUnknownProtocol": "PASS",
+      "modern": "PASS"
+    },
+    "productionDefect": {
+      "failure": "A probe moves the close control between trusted pointerdown and pointerup, cancelling click. Cloud passive trace and deterministic browser counterexample agree.",
+      "change": "Defer probe only while the exact owned close button is focused or active; preserve declarative activation and all existing authorization, mutation and budget checks.",
+      "red": ".git/vaiwl-artifacts/takeover-20261030/final/hidden-marker-evidence/close-gesture-red.json"
+    },
+    "testObservationError": {
+      "failure": "Atomic same-context iframe moves counted as new CSP mount attempts.",
+      "change": "Deduplicate only exact src/WindowProxy known before current observer batch; new, missing, changed contexts, same-batch first insertion/recreation and src writes remain attempts. Original budget/assertions unchanged.",
+      "red": ".git/vaiwl-artifacts/takeover-20261030/final/hidden-marker-evidence/csp-move-counterexample-red.log",
+      "batchRed": ".git/vaiwl-artifacts/takeover-20261030/final/hidden-marker-evidence/csp-move-batch-red.log",
+      "packageBeforeCloseGuard": ".git/vaiwl-artifacts/takeover-20261030/final/hidden-marker-evidence/csp-move-package-final.json"
+    },
+    "validation": {
+      "node": {
+        "passed": 12012,
+        "failed": 0,
+        "skipped": 0,
+        "log": ".git/vaiwl-artifacts/takeover-20261030/final/hidden-marker-evidence/close-gesture-node.log"
+      },
+      "targeted": {
+        "passed": 321,
+        "log": ".git/vaiwl-artifacts/takeover-20261030/final/hidden-marker-evidence/close-gesture-targeted.log"
+      },
+      "readingProbe": {
+        "checks": 47,
+        "report": ".git/vaiwl-artifacts/takeover-20261030/final/hidden-marker-evidence/close-gesture-final.json"
+      },
+      "snippets": {
+        "results": 6,
+        "report": ".git/vaiwl-artifacts/takeover-20261030/final/hidden-marker-evidence/close-gesture-snippets.json"
+      },
+      "formalNestedMV3": {
+        "report": ".git/vaiwl-artifacts/takeover-20261030/final/hidden-marker-evidence/close-gesture-formal.json"
+      },
+      "modern": {
+        "report": ".git/vaiwl-artifacts/takeover-20261030/final/hidden-marker-evidence/close-gesture-modern.json",
+        "fullV27Acceptance": "NOT_ESTABLISHED"
+      },
+      "formalCI": "PENDING_FROZEN_HEAD"
+    },
+    "review": "Read-only review found no blocker; focus-only Tab departure can defer observation until existing mutation/renewal, without scheduler expansion.",
+    "changedInputHashes": {
+      "src/navigation/flow-mount-surface.mjs": "2fa94b9154431a97eb7a327f83495d405ba6457ad32d67b438b0817022761426",
+      "tests/host/fault-csp-observer.mjs": "2f0d683e150cd5e98e4368bc169fca17308e2c80cc74a80bd7cb12aa8f285b39",
+      "tests/host/fault-csp-observer.test.mjs": "15a90da9695f9c1c9737a3daa041b5f218ede390bd3cb91c6f21d3d46ae13c72",
+      "tests/host/flow-reading-probe-browser.mjs": "0620cf5fc24591d93eabda475e1dd87eabccd0d977e0a592104b6b4236053e6c"
+    },
+    "realMac": "NOT_RUN",
+    "nativeRenewalStarted": false,
+    "installedProfile": "UNCHANGED",
+    "freeAccepted": false,
+    "releaseReady": false
   }
 }

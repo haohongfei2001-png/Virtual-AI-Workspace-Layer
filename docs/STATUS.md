@@ -1,5 +1,16 @@
 # VAIWL实际状态：渐进积累工程已接线，真实来源逐项待准入
 
+## 2026-10-31 声明式关闭手势与 CSP 观测收口
+
+ab5bb797 正式 CI [41122794801](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/actions/runs/41122794801) 全部结束，40/42 jobs PASS；populated-native、fault-unknown-protocol、MODERN、完整 Node 均通过。两项失败分别处理，原 FAIL 保留：
+
+- 生产缺陷：片段旅程的真实 pointerdown 与 pointerup 之间发生自有 slot 移动，浏览器没有产生 click。确定性真实浏览器反例修前同样失败；现在仅在自有关闭按钮持焦点或激活时延期读取探针，原声明式关闭完成后自然恢复，不影响 iframe 输入、原生阅读、安全与请求预算。鼠标和 Space 均一次激活成功，无重试点击。
+- 测试观测错误：CSP 观察器把同一 iframe / WindowProxy 的保状态移动重复算为装载。仅接受前一批已证明的同上下文连续性；新 frame、移除重建、src 重写、缺失 WindowProxy 和同批首次插入后重建仍计数。原装载预算与断言不变，修前反例、同批反例及实际 Chromium 装载实验均保留。
+
+最终源码本地完整 Node **12012/12012**（零失败/跳过）、321 项定向合同、47 项浏览器机制检查、六段完整片段打包旅程、MODERN 交互矩阵及正式 nested MV3 连续产品旅程通过，正式包来源 hash 复核一致。CSP 独立打包门在关闭按钮五行 guard 前通过，冻结后的统一 CI 再覆盖最终源码，不把前一版本结果改标为当前通过。只读独立审查无阻断；仅 Tab 聚焦关闭按钮再离开时读取可延至既有下一次变化/续期，不增加新调度机制。
+
+本批等待新冻结 SHA 的统一正式 CI。原安装、Profile 4、私人资产不变；续期的 30 分钟 / 60 动作原生终验计时未启动。真实 Mac 新候选仍 NOT_RUN，未宣称个人日用、完整 Free 或发布就绪。
+
 ## 2026-10-31 原生读取探针与跨源输入连续性收口
 
 3d786add 统一 CI [41113790531](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/actions/runs/41113790531) 完成 41/42 jobs PASS，冷恢复、populated-native、fault-unknown-protocol 均通过；唯一 MODERN 搜索丢末字失败保留为生产输入连续性问题，不以夹具错误豁免。

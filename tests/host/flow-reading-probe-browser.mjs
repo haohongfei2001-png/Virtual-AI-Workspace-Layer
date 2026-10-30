@@ -14,6 +14,7 @@ import {longDesktopHTML,materializePartitionedSidebar} from './fixtures/observed
 import partition from './fixtures/observed-sidebar-project-details-20261026.json' with {type:'json'};
 import {createHistoricalNetworkGuard} from './historical-network-guard.mjs';
 import {launchNativeVisibilityBrowser} from './native-visibility-browser.mjs';
+import {installCspMountObservation} from './fault-csp-observer.mjs';
 
 const source=process.env.VAIWL_SOURCE??process.cwd(),require=createRequire(new URL('../../extension/tooling/package.json',import.meta.url));
 const {outputFiles}=await require('esbuild').build({stdin:{contents:"export * from './src/host/document-flow-layout.mjs';export {createChatGPTAdapter} from './src/host/chatgpt-adapter.mjs';export {CHATGPT_OBSERVED_PROFILE} from './src/host/chatgpt-observed-profile.mjs';export {createFlowMountSurface} from './src/navigation/flow-mount-surface.mjs';export {createURLPolicy} from './src/host/url-policy.mjs';",resolveDir:source},bundle:true,write:false,format:'iife',globalName:'readingModule'});
@@ -24,12 +25,13 @@ const server=createServer((_request,response)=>{response.writeHead(200,{'Content
 await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
 const origin='http://127.0.0.1:'+server.address().port,network=await createHistoricalNetworkGuard({fixtureOrigin:origin});
 const dir=await mkdtemp(join(tmpdir(),'vaiwl-flow-reading-probe-')),extension=join(dir,'extension');await mkdir(extension);
-await writeFile(join(extension,'manifest.json'),JSON.stringify({manifest_version:3,name:'Isolated native-reading regression frame',version:'0.0.1',web_accessible_resources:[{resources:['frame.html','frame.js'],matches:[origin+'/*']}],content_security_policy:{extension_pages:"script-src 'self'; object-src 'none'; connect-src 'none'"}}));
+await writeFile(join(extension,'manifest.json'),JSON.stringify({manifest_version:3,name:'Isolated native-reading regression frame',version:'0.0.1',web_accessible_resources:[{resources:['frame.html','frame.js','workspace.html'],matches:[origin+'/*']}],content_security_policy:{extension_pages:"script-src 'self'; object-src 'none'; connect-src 'none'"}}));
+await writeFile(join(extension,'workspace.html'),'<meta charset="utf-8"><p>Synthetic CSP mount observer counterexample</p>');
 await writeFile(join(extension,'frame.html'),'<meta charset="utf-8"><style>body{margin:0;height:2200px}input{display:block;width:90%;height:30px}#scroller{height:120px;overflow:auto}#inside{height:1600px}</style><input id="search" value="UNSENT_SYNTHETIC_SEARCH_DRAFT"><div id="scroller"><div id="inside">Synthetic long list</div></div><script src="frame.js"></script>');
 await writeFile(join(extension,'frame.js'),`globalThis.events=[];for(const type of ['focus','blur','focusin','focusout'])document.addEventListener(type,event=>events.push({type,target:event.target.id||event.target.tagName}),true);
 globalThis.snapshot=()=>({focused:document.activeElement===document.querySelector('#search'),documentHasFocus:document.hasFocus(),value:document.querySelector('#search').value,start:document.querySelector('#search').selectionStart,end:document.querySelector('#search').selectionEnd,scroll:document.querySelector('#scroller').scrollTop,windowScroll:scrollY,events:[...events]});`);
 await writeFile(join(extension,'renderer.js'),renderer.outputFiles[0].text);
-const sourcePaths=['src/navigation/flow-mount-surface.mjs','src/host/document-flow-layout.mjs','src/host/chatgpt-adapter.mjs','src/navigation/navigation.mjs','src/navigation/styles.mjs','src/runtime/free-search-projection.mjs','src/runtime/free-frame-projection.mjs'];
+const sourcePaths=['src/navigation/flow-mount-surface.mjs','src/host/document-flow-layout.mjs','src/host/chatgpt-adapter.mjs','src/navigation/navigation.mjs','src/navigation/styles.mjs','src/runtime/free-search-projection.mjs','src/runtime/free-frame-projection.mjs','tests/host/fault-csp-observer.mjs'];
 const hashes=async()=>Object.fromEntries(await Promise.all(sourcePaths.map(async path=>[path,createHash('sha256').update(await readFile(join(source,path))).digest('hex')])));
 const report={status:'RUNNING',evidence:'WEB_MECHANISM_ONLY',realChatGPT:'NOT_RUN',formalRenderer:'NOT_RUN',sourceHashes:await hashes(),browserVersion:null,viewports:[],checks:[]};
 const check=(name,value)=>{report.checks.push({name,...value});assert.equal(value.ok,true,name+' '+JSON.stringify(value));};
@@ -146,6 +148,39 @@ try{
  await context.route('**/*',route=>route.request().url().startsWith(origin+'/')||route.request().url().startsWith('chrome-extension://')?route.continue():route.abort());
  report.browserVersion=context.browser().version();report.viewports.push({width:1400,height:900});
  const cdp=await context.browser().newBrowserCDPSession();({id:extensionId}=await cdp.send('Extensions.loadUnpacked',{path:extension}));
+
+ for(const mode of ['pointer','space']){
+  const {page}=await setup(),button=page.getByRole('button',{name:'返回原生阅读',exact:true});
+  await page.evaluate(()=>{globalThis.readingCloseEvents=[];const p=readingProbe,b=p.frame.parentElement.firstElementChild;for(const type of ['pointerdown','pointerup','keydown','keyup','click'])b.addEventListener(type,e=>readingCloseEvents.push({type,trusted:e.isTrusted}));});
+  if(mode==='pointer'){const box=await button.boundingBox();await page.mouse.move(box.x+box.width/2,box.y+box.height/2);await page.mouse.down();}
+  else{await button.focus();await page.keyboard.down('Space');}
+  const during=await page.evaluate(()=>{const p=readingProbe;let reads=0;const result=p.surface.withNativeReading(p.handle,()=>{reads++;return true;},()=>true);return {result,reads,workspace:p.surface.visibility(p.handle).workspace,focused:document.activeElement===p.frame.parentElement.firstElementChild};});
+  if(mode==='pointer')await page.mouse.up();else await page.keyboard.up('Space');
+  const after=await page.evaluate(()=>{const p=readingProbe;return {workspace:p.surface.visibility(p.handle).workspace,reading:readingModule.isNativeReadingCurrent(p.plan),events:readingCloseEvents};});
+  check('native reading probe preserves one declarative close gesture: '+mode,{ok:during.result===null&&during.reads===0&&during.workspace&&during.focused&&!after.workspace&&after.reading&&after.events.filter(e=>e.type==='click'&&e.trusted).length===1,during,after});await page.close();
+ }
+
+ {
+  const page=await context.newPage();await page.goto(origin+'/');
+  // The native parent exists before observation, as in the packaged host.
+  // Do not conflate adding a new container and its frame in the same delivery.
+  await page.evaluate(()=>{globalThis.cspMountParent=document.createElement('div');document.body.append(cspMountParent);});
+  await page.evaluate(installCspMountObservation,{extensionId});
+  const result=await page.evaluate(async extensionId=>{
+   const parent=cspMountParent,frame=document.createElement('iframe');frame.src=`chrome-extension://${extensionId}/workspace.html`;
+   const loaded=action=>new Promise(resolve=>{frame.addEventListener('load',resolve,{once:true});action();});
+   await loaded(()=>parent.append(frame));const first=frame.contentWindow,initial=__faultCspMounts.attempts;
+   document.body.moveBefore(frame,null);parent.moveBefore(frame,null);await new Promise(resolve=>queueMicrotask(resolve));
+   const moved=__faultCspMounts.attempts,sameWindow=frame.contentWindow===first;
+   await loaded(()=>{frame.remove();parent.append(frame);});const reinserted=__faultCspMounts.attempts,newWindow=frame.contentWindow!==first;
+   await loaded(()=>frame.src=frame.src);const srcRetry=__faultCspMounts.attempts;
+   const burst=document.createElement('iframe');burst.src=frame.src;let burstFirst;
+   await new Promise(resolve=>{burst.addEventListener('load',resolve,{once:true});parent.append(burst);burstFirst=burst.contentWindow;burst.remove();parent.append(burst);});
+   const sameTaskRetries=__faultCspMounts.attempts-srcRetry,burstContextReplaced=burstFirst!==burst.contentWindow;
+   return {ok:initial===1&&moved===1&&sameWindow&&reinserted===2&&newWindow&&srcRetry===3&&sameTaskRetries===2&&burstContextReplaced,initial,moved,sameWindow,reinserted,newWindow,srcRetry,sameTaskRetries,burstContextReplaced};
+  },extensionId);
+  check('CSP mount counter distinguishes actual atomic move, removal/reinsertion and same-src reload',result);await page.close();
+ }
 
  {
   const {page}=await setup();

@@ -328,6 +328,11 @@ export function createFlowMountSurface({document:doc,createFrameURL,hasNativeLay
    const m=lookup(handle),workspace=m.roles[0],plan=m.plan;
    if(m.readingProbe||typeof read!=='function'||typeof guard!=='function')return null;
    const states=m.roles.map(open),frame=workspace.frame,window=frame.contentWindow,parent=workspace.node.parentNode,next=workspace.node.nextSibling,body=doc.body;
+   // A state-preserving move still cancels a button's pending activation.
+   // Leave the declarative close control in place for pointer and keyboard
+   // gestures. A focused control also stays stable between keydown and keyup.
+   // Closed reading and focused iframe inputs remain independently readable.
+   if(states[0]&&(doc.activeElement===workspace.button||workspace.button.matches(':active')))return null;
    const slotIntact=()=>workspace.node.childNodes.length===2&&workspace.node.firstChild===workspace.button&&workspace.node.lastChild===frame&&workspace.button.children.length===0&&frame.childNodes.length===0;
    const originalPosition=()=>workspace.node.parentNode===parent&&workspace.node.nextSibling===next;
    if(states[0]&&(parent!==plan.root||parent===body||!slotIntact()||typeof body?.moveBefore!=='function'||typeof parent?.moveBefore!=='function'))return null;
