@@ -2,6 +2,10 @@
 
 ## 2026-10-30 终局候选整合与同源产品门
 
+`4859d4679427191b55ba770fd15bfb60caae0f5a` 的原同步trace run `41041396973` 复现reading-paint-budget：同一次首检wall59.929ms、thread42.635ms，约17.294ms非线程运行；同窗MinorGC仅1.643ms wall/0.624ms CPU，无layout/style重算。此样本不能把未运行时间全部归于某个进程，也不追溯认定全部历史原因。原elapsed护栏正确拒绝，不能改为CPU时间或放宽50ms。
+
+本批沿原证明减少文本DOM往返：最多32文本/64已访问节点的Range联合外框只作整个header垂直带外的充分排除；相交/非法仍逐文本原矩形与clipping检查，所有元素双pseudo/rect/opaque、prune前/成功前flush及50ms不变。联合外框不用于拒绝或选择gap。156项关联合同、全部reading-gap反例与未插桩document-flow通过；新增外框跨带但单片段安全、非法外框不能藏溢出、长文尾部文本危险反例。独立只读审查未发现漏检。六次有界4倍CPU对照保留全部样本，首个候选61.1ms不称普遍提速；正式云端是否有足够余量仍待冻结同SHA结果，不提前关闭阻塞。只运行受影响回归及一次统一正式CI，停止其他微优化扩张。
+
 `169415581419dd83c355363668a9b5ebf56c63d3` 的限定 run `41038073804` 两门成功：真实打包BrowserLocal资产恢复7业务与备份门通过，首个链接同场全部断言成立；资产观察问题关闭。绘制插桩首检35ms无layout/style重算，但探针在首检前增加了异步边界，仍仅DIAGNOSTIC_ONLY，不能覆盖原FAIL。多个私有几何/循环替代没有稳定收益，全部保存后撤回，204项生产源码保持b1。现改为原同步首检两端UserTiming标记的wall/thread时钟及GC/renderer trace，不在首检前插入await、不预热、不重试；仅单独云端trace，不重复已通过的资产门。原50ms和全部产品断言不变，绘制阻塞未关闭。
 
 当前正式 `b1a8457ca284fab3beb03555f0328189fb45d748` 的 run `41034158654` 最终 **40/42 PASS**，unknown-protocol 固定158实际旅程和 populated-native 均通过。剩余两项：document-flow 首检59.3ms仍因原50ms绘制护栏拒绝；local-assets 的修复后链接已在首个同步快照正确，下一独立任务读取href为null，原日志不足以确定该次触发，不能推断生产导航出错。其余40门保留本SHA结果。

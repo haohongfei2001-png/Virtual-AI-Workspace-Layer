@@ -25,11 +25,18 @@ try{
   // A normal leaf still gets both pseudo checks and its text range, without
   // a normal-style query used only for the optional containment shortcut.
   const plainLeaf=document.createElement('span');plainLeaf.textContent='x';q('#text').append(plainLeaf);
-  const originalStyle=window.getComputedStyle,originalRangeRects=Range.prototype.getClientRects,leafQueries={normal:0,before:0,after:0,textRanges:0};
+  const originalStyle=window.getComputedStyle,originalRangeBounds=Range.prototype.getBoundingClientRect,leafQueries={normal:0,before:0,after:0,textRanges:0};
   window.getComputedStyle=function(node,pseudo){if(node===plainLeaf){if(!pseudo)leafQueries.normal++;else if(pseudo==='::before')leafQueries.before++;else if(pseudo==='::after')leafQueries.after++;}return originalStyle.call(this,node,pseudo);};
-  Range.prototype.getClientRects=function(){if(this.startContainer===plainLeaf.firstChild)leafQueries.textRanges++;return originalRangeRects.call(this);};
-  try{out.normalLeafFullProofWithoutOptionalStyle=ok()&&leafQueries.normal===0&&leafQueries.before===1&&leafQueries.after===1&&leafQueries.textRanges===1;}finally{window.getComputedStyle=originalStyle;Range.prototype.getClientRects=originalRangeRects;plainLeaf.remove();}
+  Range.prototype.getBoundingClientRect=function(){if(this.comparePoint(plainLeaf.firstChild,0)===0&&this.comparePoint(plainLeaf.firstChild,plainLeaf.firstChild.length)===0)leafQueries.textRanges++;return originalRangeBounds.call(this);};
+  try{out.normalLeafFullProofWithoutOptionalStyle=ok()&&leafQueries.normal===0&&leafQueries.before===1&&leafQueries.after===1&&leafQueries.textRanges===1;}finally{window.getComputedStyle=originalStyle;Range.prototype.getBoundingClientRect=originalRangeBounds;plainLeaf.remove();}
   globalThis.leafPaintQueries=leafQueries;
+  // A union can cross the band even though all actual fragments are outside.
+  // It is exclusion-only: such a union must use the original fragment proof.
+  const separated=[-10,70].map(top=>{const n=document.createElement('span');n.style.cssText='position:fixed;left:234px;top:'+top+'px;width:0;height:0;font:2px monospace;overflow:visible';n.append(document.createTextNode('x'));root.append(n);return n;});
+  out.intersectingTextUnionUsesIndividualFragments=ok();separated.forEach(n=>n.remove());
+  root.append(box);let aggregateFallbackReason=null;args.onReject=value=>aggregateFallbackReason=value;
+  Range.prototype.getBoundingClientRect=function(){return {x:NaN,y:70,width:2,height:2};};
+  try{out.invalidTextUnionCannotHideOverflow=!ok()&&aggregateFallbackReason==='reading-paint-overlap';}finally{Range.prototype.getBoundingClientRect=originalRangeBounds;box.remove();delete args.onReject;}
   // Paint-contained leaves retain their old clipping proof even when their
   // overflowing text or generated paint would otherwise cross the header.
   const leaf=document.createElement('div');leaf.id='gap-contained-leaf';leaf.style.cssText='contain:paint;position:fixed;left:234px;top:70px;width:20px;height:2px;font:100px monospace;line-height:0';leaf.textContent='xxxxxxxxxxxxxxxx';root.append(leaf);
@@ -59,6 +66,7 @@ try{
   // Observe this existing call once; the later injected-clock check stays separate.
   globalThis.longTranscriptFirstProof={allowed:out.longTranscriptAllowed,reason:firstReject,elapsedMs:firstProofElapsed,measurement:'nativeReturnGapRect-total'};
   root.append(obstacle);out.lateLongTranscriptObstacleRejected=!ok();obstacle.remove();
+  root.append(box);let lateTextReason=null;args.onReject=value=>lateTextReason=value;out.lateLongTranscriptOverflowTextRejected=!ok()&&lateTextReason==='reading-paint-overlap';delete args.onReject;box.remove();
   root.append(custom);out.lateOpaqueDescendantRejected=!ok();custom.remove();
   let ticks=0,reason=null;
   Object.defineProperty(performance,'now',{configurable:true,value:()=>ticks++});

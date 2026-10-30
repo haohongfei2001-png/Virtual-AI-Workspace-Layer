@@ -150,9 +150,27 @@ export function nativeReturnGapRect({document,header,slot,hitRoot,readingRoot=nu
    // be skipped; advance to its following sibling, ascending at most to root.
    const walker=document.createTreeWalker(readingRoot,5),range=document.createRange();let node=readingRoot;
    const afterSubtree=()=>{let next;while(!(next=walker.nextSibling()))if(!walker.parentNode())return null;return next;};
+   // A bounded Range includes every selected text rectangle (CSSOM View §9).
+   // Prove a batch wholly outside the candidate band with one native query.
+   // Any intersecting/invalid box keeps the original per-text clipping proof.
+   // Never include an unvisited or pruned subtree, cache across tasks, or carry
+   // an unchecked batch into a successful result.
+   const textBatch=[];let batchNodes=0;
+   const flushText=()=>{
+    if(!textBatch.length)return true;
+    range.setStart(textBatch[0],0);const last=textBatch.at(-1);range.setEnd(last,last.length);
+    const box=range.getBoundingClientRect(),{x,y,width,height}=box;
+    if(!withinBudget()){stage='reading-paint-budget';return false;}
+    const outside=Number.isFinite(x)&&Number.isFinite(y)&&Number.isFinite(width)&&Number.isFinite(height)&&width>=0&&height>=0&&(y>=r.y+r.height||y+height<=r.y);
+    if(!outside)for(const text of textBatch){
+     range.selectNodeContents(text);
+     for(const box of range.getClientRects()){if(!withinBudget()){stage='reading-paint-budget';return false;}if(paintBlocksGap(text,box)){stage='reading-paint-overlap';return false;}}
+    }
+    textBatch.length=0;batchNodes=0;return true;
+   };
    do{
     if(!withinBudget()){stage='reading-paint-budget';return reject();}
-    if(node!==readingRoot&&node.nodeType===1&&node.firstElementChild&&containedOutsideBand(node)){node=afterSubtree();continue;}
+    if(node!==readingRoot&&node.nodeType===1&&node.firstElementChild&&containedOutsideBand(node)){if(!flushText())return reject();node=afterSubtree();continue;}
     if(node.nodeType===1){
      if(node.shadowRoot||node.localName?.includes('-')){stage='reading-paint-opaque';return reject();}
      for(const pseudo of paintPseudos){
@@ -168,11 +186,12 @@ export function nativeReturnGapRect({document,header,slot,hitRoot,readingRoot=nu
      }
      if(node!==readingRoot){const box=rect(node);if(paintBlocksGap(node,box)){stage='reading-paint-overlap';return reject();}}
     }else{
-     range.selectNodeContents(node);
-     for(const box of range.getClientRects()){if(!withinBudget()){stage='reading-paint-budget';return reject();}if(paintBlocksGap(node,box)){stage='reading-paint-overlap';return reject();}}
+     textBatch.push(node);
     }
+    if(textBatch.length&&(++batchNodes>=64||textBatch.length>=32)&&!flushText())return reject();
     node=walker.nextNode();
    }while(node);
+   if(!flushText())return reject();
    if(gapPolicy==='first-empty-header-gap'){
     gapBlocks.sort((a,b)=>a.x-b.x);
     for(const box of gapBlocks)if(overlap(r,box))r.x=box.x+box.width+8;
