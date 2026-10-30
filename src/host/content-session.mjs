@@ -16,8 +16,9 @@ import {createMainMountDiagnosticSlot} from './native-flow-diagnostic.mjs';
 
 /** Isolated content composition. The entry must restrict supported hosts; this
  * module never exposes its runtime bridge or authority on the page window. */
-export function createHostContentSession({document:doc,runtime,origin=doc?.location?.origin,adapterFactory=createChatGPTAdapter,prepareDocument=null,identityReader=null,contextRecovery=false,automaticDormancy=false,mainMountDiagnostic=false,surfaceFactory=createFlowMountSurface,controllerFactory=createSurfaceController,plansFactory=createFrameNativePlans,now=Date.now,elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout,makeId=()=>crypto.randomUUID()}={}){
+export function createHostContentSession({document:doc,runtime,origin=doc?.location?.origin,adapterFactory=createChatGPTAdapter,prepareDocument=null,identityReader=null,contextRecovery=false,localReconnect=false,automaticDormancy=false,mainMountDiagnostic=false,surfaceFactory=createFlowMountSurface,controllerFactory=createSurfaceController,plansFactory=createFrameNativePlans,now=Date.now,elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout,makeId=()=>crypto.randomUUID()}={}){
  if(prepareDocument!==null&&typeof prepareDocument!=='function')throw Error('invalid-document-readiness');
+ if(typeof localReconnect!=='boolean')throw Error('invalid-local-reconnect');
  if(typeof automaticDormancy!=='boolean')throw Error('invalid-automatic-dormancy');
  if(typeof mainMountDiagnostic!=='boolean')throw Error('invalid-mount-diagnostic');
  if(!doc?.defaultView||new URL(origin).origin!==origin||doc.location.origin!==origin||!['http:','https:'].includes(new URL(origin).protocol)||!tokenOK(runtime?.id)||typeof runtime.sendMessage!=='function'||typeof runtime.getURL!=='function'||!runtime.onMessage?.addListener)throw Error('invalid-content-session');
@@ -93,7 +94,7 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
  let seq=0,epoch=0,current=null,enabled=false,rebindQueued=false,rebindRun=0,restoreArmed=false,recoveryRemaining=0,contextResumeAllowed=false,contextWaitSuspended=false,contextResumeMode='workspace',contextResumeURL=null,verificationWaitURL=null;
  let activeWork=0,rawIPC=0,workRevision=0,observation=null;
  // Private, document-local presentation failure; never inferred from page data.
- let frameReplaced=false,startupFailure=null;
+ let frameReplaced=false,startupFailure=null,transportWait=null;
  let establishedProducer=null,recoveryTimes=[],recoveryClock=null,recoveryBlocked=null,recoveryResume=null;
  const transportFrameFailures=new Set(['ui-port-disconnected','ui-grant-expired','ui-renew-failed']);
  // A successful JOIN establishes a new producer, not stable product use. Bound
@@ -274,7 +275,7 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
  function retainMigration(s,handle){const m=liveMigration(s);if(!m)return false;try{if(typeof s.adapter?.retainLoadedHandles==='function'&&s.adapter.retainLoadedHandles(m.leaseOwner,[handle],m.elapsedDeadline)!==true){clearMigration(s);return false;}}catch{clearMigration(s);return false;}m.handle=handle;return true;}
  function dispose(s,keepObservation=false){if(!s)return;clearMigration(s);doc.removeEventListener?.('visibilitychange',s.visibility);doc.defaultView.removeEventListener('focus',s.focus);doc.defaultView.removeEventListener('blur',s.blur);s.restorePending?.();s.capturePending?.cancel();s.snippets?.stop();s.candidates?.stop();try{s.controller?.stop();}catch{}s.abort.abort();try{runtime.onMessage.removeListener(s.listener);}catch{}doc.defaultView.removeEventListener('pagehide',s.pagehide);try{if(!keepObservation||observation?.adapter!==s.adapter)s.adapter?.stop();}catch{}}
  function reset(keepObservation=false){if(!keepObservation)stopObservation();epoch++;const s=current;current=null;dispose(s,keepObservation);}
- function stop(){recoveryResume=null;recoveryBlocked=null;nativeUseIntent=null;contextWaitSuspended=false;verificationWaitURL=null;contextResumeAllowed=false;contextResumeMode='workspace';contextResumeURL=null;clearLearned();clearRecent();clearUpgrade();for(const type of ['pointerdown','keydown'])doc.removeEventListener?.(type,interruptUpgrade,true);enabled=false;restoreArmed=false;rebindQueued=false;rebindRun++;reset();doc.defaultView.removeEventListener('pagehide',pagehide);doc.defaultView.removeEventListener('pageshow',pageshow);}
+ function stop(){transportWait=null;recoveryResume=null;recoveryBlocked=null;nativeUseIntent=null;contextWaitSuspended=false;verificationWaitURL=null;contextResumeAllowed=false;contextResumeMode='workspace';contextResumeURL=null;clearLearned();clearRecent();clearUpgrade();for(const type of ['pointerdown','keydown'])doc.removeEventListener?.(type,interruptUpgrade,true);enabled=false;restoreArmed=false;rebindQueued=false;rebindRun++;reset();doc.defaultView.removeEventListener('pagehide',pagehide);doc.defaultView.removeEventListener('pageshow',pageshow);}
  function presentationIntent(state){return (state.controller?.presentationIntent?.()??state.controller?.presentationMode?.()??state.initialMode)==='workspace'?'workspace':'reading';}
  function sidebarPreference(s){
   if(s.recoveryDenied)return null;
@@ -285,6 +286,7 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
   return s.sidebarPreference??null;
  }
  function pagehide(event){
+  transportWait=null;
   stopObservation();
   if(event?.persisted!==true){stop();return;}
   if(!enabled&&contextResumeAllowed){
@@ -318,7 +320,7 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
  async function recoverLayout(){return null;}
  async function recoverRoute(){return null;}
  async function begin(rebinding=false,initialMode='workspace',recovery=null,preference=null){
-  reset();const s={run:epoch,initialMode,sidebarPreference:preference,url:doc.location.href,abort:new AbortController(),binding:null,controller:null,adapter:null,listener:()=>{},pagehide,plans:null,rebinding,ready:false,recoveryDenied:false,snippets:null,snippetRef:null,snippetScopeGrant:null,identityChallenges:new Map(),identityPending:false,identityAuthority:0};current=s;doc.defaultView.addEventListener('pagehide',s.pagehide);
+  transportWait=null;reset();const s={run:epoch,initialMode,sidebarPreference:preference,url:doc.location.href,abort:new AbortController(),binding:null,controller:null,adapter:null,listener:()=>{},pagehide,plans:null,rebinding,ready:false,recoveryDenied:false,snippets:null,snippetRef:null,snippetScopeGrant:null,identityChallenges:new Map(),identityPending:false,identityAuthority:0};current=s;doc.defaultView.addEventListener('pagehide',s.pagehide);
   let foregroundArmed=doc.visibilityState==='hidden',foregroundPending=false;
   s.blur=()=>{foregroundArmed=true;};
   s.focus=()=>{
@@ -658,7 +660,11 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
     // before the adapter has installed its route listeners. The old reply
     // remains unusable; bind the new route instead of disabling the document.
     // Same-route failures still stop, and replaced/stopped sessions cannot retry.
-    if(enabled&&doc.location.href!==s.url)rebind(s);else if(error?.message==='scope-not-verified'||contextRecovery===true&&contextResumeAllowed&&['context-handshake-superseded','context-handshake-transport-unavailable'].includes(error?.message))contextPending(true);else {
+    if(enabled&&doc.location.href!==s.url)rebind(s);else if(error?.message==='scope-not-verified'||contextRecovery===true&&contextResumeAllowed&&['context-handshake-superseded','context-handshake-transport-unavailable'].includes(error?.message)){
+     const retry=localReconnect&&startupPhase==='hello'&&error?.message==='context-handshake-transport-unavailable'?{url:s.url,mode:initialMode,recovery,preference}:null;
+     contextPending(true);
+     if(retry&&contextResumeAllowed&&!contextWaitSuspended&&doc.location.href===retry.url)transportWait=retry;
+    }else {
      stop();
     }
    }
@@ -666,6 +672,7 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
   }
  }
  function contextPending(preserveObservation=false){
+  transportWait=null;
   // A real new invalidation/revocation discards any paused presentation hint.
   // The document-wide failure window remains until time advances or start().
   recoveryResume=null;
@@ -705,6 +712,14 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
   doc.defaultView.addEventListener('pageshow',pageshow);
   return begin(true,contextResumeMode,resume?.recovery??null,resume?.preference??null);
  }
- function localStatus(){if(frameReplaced)return 'frame-blocked';if(recoveryBlocked&&startupFailure?.url===doc.location.href)return recoveryBlocked;if(!enabled&&!contextResumeAllowed&&!observation&&startupFailure?.url===doc.location.href)return startupFailure.state;if(!enabled)return contextResumeAllowed||observation?(verificationWaitURL===doc.location.href?'verification-required':'waiting'):'unavailable';if(!current||!live(current))return 'unavailable';if(!current.ready)return 'connecting';const state=current.controller?.localStatus?.()??'unavailable';return ['unavailable','surface-controller-absent'].includes(state)&&startupFailure?.url===doc.location.href?startupFailure.state:state;}
- return Object.freeze({localStatus,recoverLayout,recoverRoute,localLayoutStatus:()=>{const layout=startupFailure?.url===doc.location.href&&localStatus().startsWith('layout-')?startupFailure.shape:current&&live(current)&&current.adapter?.navigationSummary?{navigation:current.adapter.navigationSummary(),...(current.adapter.deliverySummary?{delivery:current.adapter.deliverySummary()}:{} ),presentation:current.controller?.presentationSnapshot?.()??null}:null;const mainMountCheck=mountDiagnostic.read();return mainMountCheck?{...(layout??{}),mainMountCheck}:layout;},start,stop,contextPending,contextReady,prepareIdle,enterDormant,isOwnedMask:node=>!!current&&live(current)&&current.surface?.isMasked?.(node)===true,showWorkspace:()=>sync(()=>current?.controller?.showWorkspace()??false),showReading:()=>sync(()=>current?.controller?.showReading()??false)});
+ // Explicit private-popup recovery is separate from automatic recovery. It
+ // consumes the same document-wide rate window and never resets start/budgets.
+ function reconnect(expectedURL=doc.location.href){
+  const pending=transportWait;
+  if(expectedURL!==doc.location.href||!localReconnect||!pending||enabled||current||frameReplaced||!contextResumeAllowed||contextWaitSuspended||doc.visibilityState!=='visible'||doc.location.href!==pending.url||!recoveryWindow(true))return false;
+  transportWait=null;recoveryBlocked=null;recoveryResume=pending;
+  void contextReady();return true;
+ }
+ function localStatus(){if(frameReplaced)return 'frame-blocked';if(!enabled&&transportWait&&doc.location.href===transportWait.url){if(recoveryWindow())return 'hello-transport-unavailable';return recoveryBlocked;}if(recoveryBlocked&&startupFailure?.url===doc.location.href)return recoveryBlocked;if(!enabled&&!contextResumeAllowed&&!observation&&startupFailure?.url===doc.location.href)return startupFailure.state;if(!enabled)return contextResumeAllowed||observation?(verificationWaitURL===doc.location.href?'verification-required':'waiting'):'unavailable';if(!current||!live(current))return 'unavailable';if(!current.ready)return 'connecting';const state=current.controller?.localStatus?.()??'unavailable';return ['unavailable','surface-controller-absent'].includes(state)&&startupFailure?.url===doc.location.href?startupFailure.state:state;}
+ return Object.freeze({localStatus,reconnect,recoverLayout,recoverRoute,localLayoutStatus:()=>{const layout=startupFailure?.url===doc.location.href&&localStatus().startsWith('layout-')?startupFailure.shape:current&&live(current)&&current.adapter?.navigationSummary?{navigation:current.adapter.navigationSummary(),...(current.adapter.deliverySummary?{delivery:current.adapter.deliverySummary()}:{} ),presentation:current.controller?.presentationSnapshot?.()??null}:null;const mainMountCheck=mountDiagnostic.read();return mainMountCheck?{...(layout??{}),mainMountCheck}:layout;},start,stop,contextPending,contextReady,prepareIdle,enterDormant,isOwnedMask:node=>!!current&&live(current)&&current.surface?.isMasked?.(node)===true,showWorkspace:()=>sync(()=>current?.controller?.showWorkspace()??false),showReading:()=>sync(()=>current?.controller?.showReading()??false)});
 }

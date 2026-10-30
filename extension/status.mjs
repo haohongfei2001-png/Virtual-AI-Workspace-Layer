@@ -1,3 +1,4 @@
+import {requestLocalReconnect} from '../src/host/local-reconnect.mjs';
 import {HOST_CONFIG} from './config.mjs';
 import {readActiveLocalStatus,readActiveLocalLayout,readLocalBoot,validLocalPipeline,createSidebarSnapshot,createMainMountSnapshot} from '../src/host/local-status.mjs';
 import {HISTORY_DIAGNOSTIC_BATCH,validHistoryStructureReport,runHistoryDiagnosticOnce,sidebarStructureCoverage} from '../src/host/history-structure-diagnostic.mjs';
@@ -36,6 +37,11 @@ if(state.startsWith('layout-')||HOST_CONFIG.browserLocal&&localTarget&&state!=='
   });diagnostics.append(save);}
  }
  const note=document.createElement('pre');note.id='local-layout-shape';note.textContent=(shape.navigation?'导航末页及本代累计接收（无内容；累计不是去重库存） ':'布局类别（无内容） ')+JSON.stringify(shape);diagnostics.append(note);}}
+
+if(HOST_CONFIG.browserLocal&&state==='hello-transport-unavailable'&&localTarget){
+ const retry=document.createElement('button'),result=document.createElement('p');retry.id='reconnect';retry.textContent='重新连接';result.setAttribute('role','status');document.body.append(retry);document.body.append(result);
+ retry.addEventListener('click',async()=>{if(retry.disabled)return;retry.disabled=true;const ok=await requestLocalReconnect({tabs:chrome.tabs,webNavigation:chrome.webNavigation,target:localTarget});result.textContent=ok?'已发起重新连接。关闭并重新打开面板可查看结果。':'未确认重连结果。请关闭并重新打开面板查看；不会自动重试。';});
+}
 
 if(HOST_CONFIG.browserLocal){
  const note=document.createElement('p');note.className='note';note.textContent='本页记录可继续使用。恢复本地资料需确认当前账号与空间。';document.body.append(note);

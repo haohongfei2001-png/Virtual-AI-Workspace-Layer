@@ -1,5 +1,13 @@
 # VAIWL实际状态：渐进积累工程已接线，真实来源逐项待准入
 
+## 2026-10-30 断线后显式重连收口（继承原候选，实机终验仍独立）
+
+客户端重启后重新实测：浏览器工具已不再报告 Work 设置禁用，控制页与原首页的限定无正文读取能够完成；此前执行者使用10秒外层调用时限导致连接反复重置，改用45秒工具调用上限后取得回执，产品内部截止和请求预算没有改动。原首页当时无增强frame，保留的公开阶段属性显示 `hello-failed / ui-frame-suspended`，这些历史属性不证明唯一当前根因。既有外部frame监视脚本与历史已证脚本hash相同，但本次真实销毁调用栈未捕获，不能把它定为本次故障唯一原因，也不能据此停止独立工程。
+
+已从真实生产 session / owner / provider 的隔离合同复现：Worker恢复的首次 HELLO 传输失败后，BrowserLocal没有网络READY来源，切回页面不会再恢复。原自动恢复次数护栏正确；缺失的是显式操作入口。本批仅为私有弹窗增加“重新连接”，绑定快照的活动标签、浏览器documentId和URL；只接受私有transport wait，并继续验证原scope/document，沿原3次/60秒窗口，不调用start重置预算、不解锁私人空间、不自动重试。窗口用完后只在实际额度恢复的状态读取时重新显示按钮；超时回执明确结果未确认，不补派发。停止、BFCache、文档/URL改变、scope改变和重新失效继续拒绝旧授权。
+
+123项针对性反例及665项受影响owner/status/package合同通过（两组有重叠，不相加为新覆盖数量）。最新正式打包的nested首页→Project→聊天→原生输入/工具→搜索与返回→同文档Worker恢复→刷新锁定/合成个人资产恢复→隔离卸载连续MV3旅程PASS，仍无内部API请求；证据在 `.git/vaiwl-artifacts/takeover-20261030/final/reconnect-evidence/`，含精确sourceHashes。新重连动作由生产弹窗模块、实际session/provider合同分别验证，尚不宣称真实Mac点击或实际MV3故障注入已通过。2258份原未提交文件hash未变，原安装/个人Profile未更新。本次生产改动需新冻结SHA统一CI，旧候选通过不改签；真实Mac其余项目继续NOT_RUN，个人日用/完整Free/发布尚未接受。无新增P2范围、分支、PR、部署或发布。
+
 ## 2026-10-30 必要内部门收口、同ID激活与真实首页定向复验
 
 正式分支及Draft PR16不变。测试源码提交 `4604d46e63f5014d8fc81d6edaabc362473b7345` 的限定CI [41065211844](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/actions/runs/41065211844) 两个运行job均PASS：54项受影响合同、修正后的nested完整连续MV3旅程，以及原populated 64次导航/64条证据/64次本地使用、8格布局与4张完整PNG。原当前使用oracle为 `PASS_CURRENT_USE_MV3_SUBCONTRACT`；原历史 `PARTIAL_UI10_HISTORY_NOT_COVERED` 不改写，取消历史项不转发布欠账。4张当前SHA的桌面浅色/窄屏深色初始与长列表末端图实际查看，未发现新增明显P0/P1；不据这4张图宣称8格全视觉或真实ChatGPT审查。

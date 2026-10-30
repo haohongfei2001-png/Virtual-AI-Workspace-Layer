@@ -1,3 +1,4 @@
+import {requestLocalReconnect} from '../../src/host/local-reconnect.mjs';
 import {projectSurfaceFailureReasons} from '../../src/host/native-project-surface.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -5,12 +6,13 @@ import {readFileSync} from 'node:fs';
 import {initializationFailureStates,readActiveLocalStatus,readActiveLocalLayout,validLocalPipeline} from '../../src/host/local-status.mjs';
 const source=readFileSync(new URL('../../extension/status.mjs',import.meta.url),'utf8');
 const html=readFileSync(new URL('../../extension/status.html',import.meta.url),'utf8');
-const importLine="import {HOST_CONFIG} from './config.mjs';\nimport {readActiveLocalStatus,readActiveLocalLayout,readLocalBoot,validLocalPipeline,createSidebarSnapshot,createMainMountSnapshot} from '../src/host/local-status.mjs';\nimport {HISTORY_DIAGNOSTIC_BATCH,validHistoryStructureReport,runHistoryDiagnosticOnce,sidebarStructureCoverage} from '../src/host/history-structure-diagnostic.mjs';\n";
+const importLine="import {requestLocalReconnect} from '../src/host/local-reconnect.mjs';\nimport {HOST_CONFIG} from './config.mjs';\nimport {readActiveLocalStatus,readActiveLocalLayout,readLocalBoot,validLocalPipeline,createSidebarSnapshot,createMainMountSnapshot} from '../src/host/local-status.mjs';\nimport {HISTORY_DIAGNOSTIC_BATCH,validHistoryStructureReport,runHistoryDiagnosticOnce,sidebarStructureCoverage} from '../src/host/history-structure-diagnostic.mjs';\n";
 assert(source.startsWith(importLine),'execute actual popup body after its exact imports');
 const AsyncFunction=Object.getPrototypeOf(async function(){}).constructor;
-async function render(initial,browserLocal=false,localState={ok:true},boot=null){
+async function render(initial,browserLocal=false,localState={ok:true},boot=null,trustedTarget=false){
  let current=initial;const calls=[],node={textContent:''};
- const chrome={tabs:{query:async args=>{calls.push(['query',args]);return [{id:7,get title(){throw Error('PRIVATE_TITLE');},get url(){throw Error('PRIVATE_URL');}}];},sendMessage:async(...args)=>{calls.push(['send',...args]);return args[1]?.type==='HOST_LOCAL_LAYOUT'?{v:1,shape:null}:current;}}};
+ const chrome={tabs:{query:async args=>{calls.push(['query',args]);return [{id:7,get title(){throw Error('PRIVATE_TITLE');},get url(){throw Error('PRIVATE_URL');}}];},sendMessage:async(...args)=>{calls.push(['send',...args]);return args[1]?.type==='HOST_LOCAL_LAYOUT'?{v:1,shape:null}:args[1]?.type==='HOST_LOCAL_RECONNECT'?{v:1,ok:true}:current;}}};
+ if(trustedTarget)chrome.webNavigation={getFrame:async()=>({documentId:'document',url:'https://chatgpt.com/',documentLifecycle:'active'})};
  const elements=[];
  const make=tag=>({tag,textContent:'',children:[],append(...nodes){this.children.push(...nodes);},listeners:{},setAttribute(){},addEventListener(type,fn){this.listeners[type]=fn;}});
  const details=make('details'),summary=make('summary'),buildKind=make('p');details.id='diagnostic-details';summary.textContent='诊断详情';buildKind.id='build-kind';buildKind.textContent='构建类别未标定，请先验证安装包。';details.append(summary,buildKind);elements.push(details);
@@ -18,7 +20,7 @@ async function render(initial,browserLocal=false,localState={ok:true},boot=null)
  const byId=id=>id==='status'?node:find(elements,id);
  const document={getElementById:byId,body:{append:e=>{const old=elements.indexOf(e);if(old>=0)elements.splice(old,1);elements.push(e);}},createElement:make};
  chrome.runtime={sendMessage:async message=>{calls.push(['control',message]);return localState;}};
- await new AsyncFunction('HOST_CONFIG','readActiveLocalStatus','readActiveLocalLayout','readLocalBoot','validLocalPipeline','chrome','document',source.slice(importLine.length))({browserLocal},readActiveLocalStatus,readActiveLocalLayout,async()=>boot,validLocalPipeline,chrome,document);
+ await new AsyncFunction('requestLocalReconnect','HOST_CONFIG','readActiveLocalStatus','readActiveLocalLayout','readLocalBoot','validLocalPipeline','chrome','document',source.slice(importLine.length))(requestLocalReconnect,{browserLocal},readActiveLocalStatus,readActiveLocalLayout,async()=>boot,validLocalPipeline,chrome,document);
  return {calls,node,elements,byId,change:value=>{current=value;}};
 }
 const drain=async()=>{for(let i=0;i<30;i++)await Promise.resolve();};
@@ -111,4 +113,15 @@ test('missing runtime receipt does not infer activated build from disk or user R
  const f=await render({v:1,state:'authorization-failed'});await drain();
  assert.match(f.byId('runtime-build').textContent,/未核实.*不能用磁盘文件推定运行版本/);
  assert.equal(f.calls.length,2);
+});
+
+test('real popup offers one explicit reconnect only for document-bound transport failure',async()=>{
+ const f=await render({v:1,state:'hello-transport-unavailable'},true,{ok:true},null,true);
+ const button=f.elements.find(e=>e.id==='reconnect');assert(button);assert(!f.calls.some(c=>c[0]==='send'&&c[2].type==='HOST_LOCAL_RECONNECT'));
+ await button.listeners.click();await button.listeners.click();
+ const sent=f.calls.filter(c=>c[0]==='send'&&c[2].type==='HOST_LOCAL_RECONNECT');assert.equal(sent.length,1);assert.deepEqual(sent[0].slice(1),[7,{v:1,type:'HOST_LOCAL_RECONNECT',url:'https://chatgpt.com/'},{documentId:'document'}]);
+ assert(f.elements.some(e=>e.textContent.includes('已发起重新连接')));assert(!f.calls.some(c=>c[0]==='control'));
+});
+for(const state of ['waiting','frame-blocked','hello-invalid-binding','foreground-scope-changed','ready'])test('popup does not offer reconnect for '+state,async()=>{
+ const f=await render({v:1,state},true,{ok:true},null,true);assert(!f.elements.some(e=>e.id==='reconnect'));
 });

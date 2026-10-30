@@ -31,7 +31,7 @@ async function fixture(t,{nativeAfterRestart=true,clocked=false,contentClock=fal
  const makeBootstrap=()=>bootstrap=createHostBrowserBootstrap({chrome,origin,scopeProfile});
  const startWorker=()=>worker=createHostWorkerRuntime({chrome,indexedDB,origin,scopeProfile,browserBootstrap:bootstrap,...(browserLocal?{}:{provider:provider()})});
  const runtime={id:'ext',getURL:chrome.runtime.getURL,onMessage:contentEvents,sendMessage:async m=>{const response=await (browserLocal?new Promise(resolve=>e.onMessage.emit(m,sender,resolve)):worker.service.handle(m,sender));calls.push({type:m.type,response});if(m.type==='HOST_FOCUS'&&holdFocus){await holdFocus;}if(m.type==='HOST_HELLO'&&holdHello){await holdHello;}if(m.type==='HOST_REFRESH'&&holdRefresh){await holdRefresh;}if(m.type==='HOST_FOCUS'&&afterFocus)afterFocus();return response;}};
- const session=createHostContentSession({document,runtime,contextRecovery:true,...contentTiming,adapterFactory:()=>({start:async()=>({}),inspect:()=>({ok:true}),stop(){},hasNativeLayer:()=>false,snippetReady:()=>snippetReady,restoreSnippet:()=>{restoreCalls++;return {ok:true};}}),surfaceFactory:()=>({}),plansFactory:()=>({}),controllerFactory:options=>{let active=false;const c={options,start:async context=>{c.binding=context.binding;const r=await options.bridge.registerMount({handle:{id:'mount_'+controllers.length,regionEpoch:1}});assert.equal(r.ok,true,JSON.stringify(r));active=true;options.bridge.workspaceEstablished({binding:context.binding,mountId:'mount_'+controllers.length});return {id:'mount_'+controllers.length};},stop(){active=false;},presentationMode:()=>options.initialMode,showWorkspace:()=>active,showReading:()=>active};controllers.push(c);return c;}});
+ const session=createHostContentSession({document,runtime,contextRecovery:true,localReconnect:browserLocal,...contentTiming,adapterFactory:()=>({start:async()=>({}),inspect:()=>({ok:true}),stop(){},hasNativeLayer:()=>false,snippetReady:()=>snippetReady,restoreSnippet:()=>{restoreCalls++;return {ok:true};}}),surfaceFactory:()=>({}),plansFactory:()=>({}),controllerFactory:options=>{let active=false;const c={options,start:async context=>{c.binding=context.binding;const r=await options.bridge.registerMount({handle:{id:'mount_'+controllers.length,regionEpoch:1}});assert.equal(r.ok,true,JSON.stringify(r));active=true;options.bridge.workspaceEstablished({binding:context.binding,mountId:'mount_'+controllers.length});return {id:'mount_'+controllers.length};},stop(){active=false;},presentationMode:()=>options.initialMode,showWorkspace:()=>active,showReading:()=>active};controllers.push(c);return c;}});
  t.after(()=>{session.stop();worker?.stop();bootstrap?.stop();});
  makeBootstrap();if(!browserLocal)await nativeGET();startWorker();if(initialPersonal)await worker.service.authority.bindPersonal(localFrame(),initialPersonal);assert(await session.start());assert.equal(session.showWorkspace(),true);const initialScope=worker.service.authority.scopeFor({tabId:7,frameId:0,documentId:'doc',actualURL:url,documentLifecycle:'active',incognito:false});assert(initialScope);
  return {databaseOpens:()=>databaseOpens,setAfterFocus:f=>afterFocus=f,session,document,calls,sent,fetches,controllers,initialScope,windowEvents,nativeGET,contentEvents,restoreCalls:()=>restoreCalls,setSnippetReady:v=>snippetReady=v,scope:()=>worker.service.authority.scopeFor({tabId:7,frameId:0,documentId:'doc',actualURL:url,documentLifecycle:'active',incognito:false}),setPrincipal:v=>principal=v,setNativeContext:v=>nativeContext=v,setCompletion:v=>completionPatch=v,holdFocus:p=>holdFocus=p,holdHello:p=>holdHello=p,holdRefresh:p=>holdRefresh=p,advance:ms=>{wall+=ms;for(const[id,timer]of [...timers])if(timer.at<=wall){timers.delete(id);timer.fn();}},setActual:v=>actual=v,async restart({personal=null}={}){worker.stop();makeBootstrap();if(nativeAfterRestart&&!browserLocal)await nativeGET();const n=sent.length;startWorker();if(personal)await worker.service.authority.bindPersonal(localFrame(),personal);assert.equal(sent.length,n,'bootstrap attach must not replay old READY');},async foreground(){windowEvents.get('blur')?.();windowEvents.get('focus')?.();await settle();},hellos:()=>calls.filter(c=>c.type==='HOST_HELLO').length};
@@ -175,4 +175,37 @@ test('C2 REFRESH transport loss after a new binding withdraws until a fresh nati
  // receipts are deliberately rejected by the owner and can never produce READY.
  const readyBefore=f.sent.filter(type=>type==='HOST_CONTEXT_READY').length;f.advance(1);
  await f.nativeGET();await settle();assert.equal(f.sent.filter(type=>type==='HOST_CONTEXT_READY').length,readyBefore+1);assert.equal(f.hellos(),3);assert.equal(f.session.showWorkspace(),true);assert.equal(f.scope().key,f.initialScope.key);assert.equal(f.document.draft,'UNSENT');
+});
+
+// BrowserLocal has no network READY producer. A failed automatic recovery must
+// remain quiet, while a separate explicit local action can request a fresh bind.
+test('BrowserLocal transport wait has a bounded explicit reconnect without unlock or automatic replay',async t=>{
+ const f=await fixture(t,{browserLocal:true});await f.restart();let reject;
+ f.holdHello(new Promise((_,r)=>reject=r));await f.foreground();f.holdHello(null);reject(Error('transient port loss'));await settle();
+ assert.equal(f.hellos(),2);assert.equal(f.session.localStatus(),'hello-transport-unavailable');
+ for(let i=0;i<4;i++)await f.foreground();assert.equal(f.hellos(),2);
+ assert.equal(f.session.reconnect(),true);assert.equal(f.session.reconnect(),false);await settle();
+ assert.equal(f.hellos(),3);assert.equal(f.session.showWorkspace(),true);assert.equal(f.document.draft,'UNSENT');
+ assert.equal(f.fetches.length,0);assert.equal(f.databaseOpens(),0);
+});
+
+for(const mode of ['stop','pagehide','route','hidden','invalidation'])test('explicit transport reconnect rejects '+mode,async t=>{
+ const f=await fixture(t,{browserLocal:true});await f.restart();let reject;f.holdHello(new Promise((_,r)=>reject=r));await f.foreground();f.holdHello(null);reject(Error('port loss'));await settle();
+ if(mode==='invalidation')f.session.contextPending();if(mode==='stop')f.session.stop();if(mode==='pagehide')f.windowEvents.get('pagehide')?.({persisted:true});if(mode==='route')f.document.location.href+='?changed';if(mode==='hidden')f.document.visibilityState='hidden';
+ assert.equal(f.session.reconnect(),false);await settle();assert.equal(f.hellos(),2);assert.equal(f.session.showWorkspace(),false);
+});
+test('explicit reconnect retains the shared rate limit across failed handshakes',async t=>{
+ const f=await fixture(t,{browserLocal:true,contentClock:true,clocked:true});
+ async function failHeld(){let reject;f.holdHello(new Promise((_,r)=>reject=r));return async()=>{f.holdHello(null);reject(Error('port loss'));await settle();};}
+ await f.restart();let fail=await failHeld();await f.foreground();await fail();
+ for(let i=0;i<2;i++){fail=await failHeld();assert.equal(f.session.reconnect(),true);await settle();await fail();}
+ assert.equal(f.hellos(),4);assert.equal(f.session.reconnect(),false);assert.equal(f.hellos(),4);
+ assert.equal(f.session.localStatus(),'surface-recovery-rate-limited');f.advance(60000);assert.equal(f.session.localStatus(),'hello-transport-unavailable');assert.equal(f.hellos(),4);assert.equal(f.session.reconnect(),true);await settle();assert.equal(f.hellos(),5);assert.equal(f.session.showWorkspace(),true);
+});
+
+for(const personal of ['old-personal','other-personal'])test('explicit reconnect rechecks personal scope: '+personal,async t=>{
+ const f=await fixture(t,{browserLocal:true,initialPersonal:'old-personal'});await f.restart({personal});let reject;
+ f.holdHello(new Promise((_,r)=>reject=r));await f.foreground();f.holdHello(null);reject(Error('port loss'));await settle();
+ assert.equal(f.session.reconnect(),true);await settle();assert.equal(f.hellos(),3);assert.equal(f.session.showWorkspace(),personal==='old-personal');
+ if(personal!=='old-personal')assert.equal(f.session.localStatus(),'authorization-failed');assert.equal(f.document.draft,'UNSENT');assert.deepEqual(f.fetches,[]);
 });
