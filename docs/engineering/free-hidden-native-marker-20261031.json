@@ -449,5 +449,44 @@
     "testHash": "8f2885f39b18277d8b450c4e51a7a268a8fed7ba3706ad04933cb22da0d82bb2",
     "realMac": "NOT_RUN",
     "formalCI": "PENDING_FROZEN_HEAD"
+  },
+  "composerControlOverhang20261031": {
+    "baseSHA": "1ddb4f00e4a644b98f0f6778e6b5d952f409663b",
+    "realRefusal": "control-overlap",
+    "board": [
+      241,
+      52,
+      994,
+      440
+    ],
+    "nativeControl": [
+      721,
+      468,
+      32,
+      32
+    ],
+    "controlRegion": "composer-descendant",
+    "hidden": false,
+    "inert": false,
+    "repair": "reserve current enumerated native composer control overhang in existing auto grid track; all active guards unchanged",
+    "node": {
+      "pass": 12014,
+      "fail": 0,
+      "skipped": 0,
+      "note": "before final diagnostic-only integrity correction"
+    },
+    "guards": {
+      "killed": 12,
+      "selected": 12
+    },
+    "formalNestedMV3": "PASS before final diagnostic-only integrity correction",
+    "realRepairRetest": "NOT_RUN",
+    "nativeBudget": {
+      "used": 60,
+      "limit": 60,
+      "controllerStopped": true
+    },
+    "evidence": ".git/vaiwl-artifacts/takeover-20261030/final/composer-overhang-evidence",
+    "fullFree": "NOT_ACCEPTED"
   }
 }

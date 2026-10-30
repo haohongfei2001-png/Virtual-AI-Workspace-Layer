@@ -91,16 +91,25 @@ function controlSnapshot({protectedRegions,document:doc,isOwnedSurface}) {
 
 // These native layout coordinates supply the conditional flow rules/baseline.
 // Read them only in the restored native layout, never by disabling live CSS.
-const layoutCoordinates = ({root,header,composer,headerInside}) => {
+const layoutCoordinates = ({root,header,composer,headerInside,nativeControls=[]}) => {
  const box=rect(root),head=rect(header),form=rect(composer);
  if(!positive(box)||!positive(head)||!positive(form))return null;
- return {composerWidth:form.width,top:Math.max(0,headerInside?box.y:head.y+head.height,box.y),rootTop:box.y,rootLeft:box.x,rootPosition:root.ownerDocument.defaultView.getComputedStyle(root).position};
+ // Keep native controls that protrude above their composer in its flow track.
+ // Only already enumerated visible descendants participate; the active hit and
+ // viewport proof still decides whether the resulting layout is safe.
+ let composerClearance=0;
+ for(const {node,visible} of nativeControls)if(visible&&composer.contains(node)){
+  const control=rect(node);if(!positive(control))return null;
+  composerClearance=Math.max(composerClearance,Math.ceil(form.y-control.y));
+ }
+ if(!Number.isFinite(composerClearance)||composerClearance>root.ownerDocument.defaultView.innerHeight)return null;
+ return {composerClearance,composerWidth:form.width,top:Math.max(0,headerInside?box.y:head.y+head.height,box.y),rootTop:box.y,rootLeft:box.x,rootPosition:root.ownerDocument.defaultView.getComputedStyle(root).position};
 };
 
 export function isSameNativeLayout(plan) {
  try {
-  const next=layoutCoordinates(plan);
   const current=controlSnapshot(plan);
+  const next=current&&layoutCoordinates({...plan,nativeControls:current});
   return !!next&&Object.keys(next).every(key=>next[key]===plan[key])&&!!current&&current.length===plan.nativeControls.length&&current.every((value,i)=>value.node===plan.nativeControls[i].node&&value.parent===plan.nativeControls[i].parent&&value.visible===plan.nativeControls[i].visible);
  }catch{return false;}
 }
@@ -184,7 +193,7 @@ export function captureNativeBaseline({document:doc,inspection,isOwnedSurface=()
   const protectedRegions=[...new Set([header,...protectedNodes,nativeComposer,...retainedMembers.map(m=>m.node)])];
   const nativeControls=controlSnapshot({protectedRegions,document:doc,isOwnedSurface});
   evidence.phase='controls';if(!nativeControls)return refuse('native-flow-protected-controls','protected-controls',root);
-  const coordinates=layoutCoordinates({root,header,composer,headerInside});
+  const coordinates=layoutCoordinates({root,header,composer,headerInside,nativeControls});
   evidence.phase='geometry';if(!coordinates)return refuse('native-flow-geometry','geometry',root);
   const readingChain=[];for(let node=reading;node&&node!==doc.documentElement;node=node.parentElement){if(readingChain.length>=64)return refuse('native-flow-regions','reading-chain',node);readingChain.push({node,parent:node.parentElement});}
   evidence.phase='complete';evidence.detail='accepted';evidence.node=null;diagnose('none');
@@ -272,7 +281,7 @@ export function flowLayoutRules(plan,{id,exitId,workspaceId}) {
  return `${select('root')}{display:grid!important;grid-template-columns:minmax(0,1fr)!important;grid-template-rows:${rows}!important;box-sizing:border-box!important;min-height:0!important;height:calc(100dvh - ${plan.rootTop}px)!important;max-height:none!important;width:100%!important;max-width:${maxWidth}!important;padding:${Math.max(0,plan.top-plan.rootTop)}px 0 24px!important;gap:16px!important;overflow:auto!important;align-content:stretch!important;align-items:stretch!important}
 ${select('shell')}{display:contents!important}
 ${select('reading')}{grid-column:1!important;grid-row:${workspaceRow}!important;visibility:hidden!important;interactivity:inert!important;min-height:0!important;height:0!important;overflow:clip!important;margin:0!important;padding:0!important}
-${select('composer')}{grid-column:1!important;grid-row:${composerRow}!important;position:relative!important;inset:auto!important;transform:none!important;align-self:end!important;justify-self:center!important;width:min(calc(100% - 48px),${plan.composerWidth}px)!important;max-width:100%!important;margin:0!important}
+${select('composer')}{grid-column:1!important;grid-row:${composerRow}!important;position:relative!important;inset:auto!important;transform:none!important;align-self:end!important;justify-self:center!important;width:min(calc(100% - 48px),${plan.composerWidth}px)!important;max-width:100%!important;margin:${plan.composerClearance}px 0 0!important}
 ${plan.flowOrder.map((_,i)=>`${select('row-'+i)}{grid-column:1!important;grid-row:${i+1}!important}`).join('\n')}
 ${select('title')},${select('tabs')}{margin:0 24px!important}
 ${active} #${workspaceId}{display:flex!important;visibility:visible!important;grid-column:1!important;grid-row:${workspaceRow}!important;min-width:0!important;min-height:96px!important;align-self:stretch!important}
@@ -283,24 +292,29 @@ ${active} #${workspaceId}{display:flex!important;visibility:visible!important;gr
 // Finite geometry/hit checks for already enumerated native controls. No DOM
 // descendant walk, text ranges, paint/style whitelist or elapsed-time budget.
 // A CSSOM rule can move an existing control without Mutation/Resize events.
-export function validateCriticalLayout(plan,{workspace,nativeControls=[],nativeShadowCandidates=plan?.nativeShadowCandidates??[]}={}){
+export function validateCriticalLayout(plan,{workspace,nativeControls=[],nativeShadowCandidates=plan?.nativeShadowCandidates??[],onRefused=()=>{}}={}){
+ const refuse=(reason,geometry=[])=>{try{onRefused(reason,geometry);}catch{}return false;};
  try{
   const doc=plan.document,win=doc.defaultView;
-  if(!workspace?.isConnected||workspace.parentElement!==plan.root||!plan.composer.isConnected||!plan.header.isConnected||nativeControls.length>128)return false;
-  if(!sameExternalSeam(plan)||!plan.nativeComposerChain.every(({node,parent})=>node.isConnected&&node.ownerDocument===doc&&node.parentElement===parent))return false;
-  if(nativeShadowCandidates.length>4096||nativeShadowCandidates.some(node=>node.isConnected&&node.shadowRoot))return false;
-  if(win.getComputedStyle(plan.root).position!==plan.rootPosition)return false;
+  if(!workspace?.isConnected||workspace.parentElement!==plan.root||!plan.composer.isConnected||!plan.header.isConnected||nativeControls.length>128)return refuse('structure');
+  if(!sameExternalSeam(plan)||!plan.nativeComposerChain.every(({node,parent})=>node.isConnected&&node.ownerDocument===doc&&node.parentElement===parent))return refuse('external-seam');
+  if(nativeShadowCandidates.length>4096||nativeShadowCandidates.some(node=>node.isConnected&&node.shadowRoot))return refuse('shadow-root');
+  if(win.getComputedStyle(plan.root).position!==plan.rootPosition)return refuse('root-position');
   const board=rect(workspace),form=rect(plan.composer);
-  if(!positive(board)||!positive(form)||board.width<160||board.height<96||board.y<0||board.x<0||board.x+board.width>win.innerWidth+1||board.y+board.height>win.innerHeight+1||form.y+form.height>win.innerHeight+1||overlaps(board,form))return false;
+  if(!positive(board)||!positive(form))return refuse('workspace-composer-empty');
+  if(board.width<160||board.height<96)return refuse('workspace-minimum');
+  if(board.y<0||board.x<0||board.x+board.width>win.innerWidth+1||board.y+board.height>win.innerHeight+1)return refuse('workspace-viewport');
+  if(form.y+form.height>win.innerHeight+1)return refuse('composer-viewport');
+  if(overlaps(board,form))return refuse('workspace-composer-overlap');
   if(plan.composer!==plan.nativeComposer){
    const native=rect(plan.nativeComposer),s=win.getComputedStyle(plan.nativeComposer);
-   if(!positive(native)||plan.nativeComposer.checkVisibility?.({checkOpacity:true,checkVisibilityCSS:true,contentVisibilityAuto:true})!==true||s.display==='none'||s.visibility!=='visible'||overlaps(board,native)||native.x<0||native.y<0||native.x+native.width>win.innerWidth+1||native.y+native.height>win.innerHeight+1)return false;
+   if(!positive(native)||plan.nativeComposer.checkVisibility?.({checkOpacity:true,checkVisibilityCSS:true,contentVisibilityAuto:true})!==true||s.display==='none'||s.visibility!=='visible'||overlaps(board,native)||native.x<0||native.y<0||native.x+native.width>win.innerWidth+1||native.y+native.height>win.innerHeight+1)return refuse('native-composer-geometry');
   }
   for(const member of plan.retainedMembers){
-   if(!retainedBoundary(member,doc,{viewport:true}))return false;
+   if(!retainedBoundary(member,doc,{viewport:true}))return refuse('retained-boundary');
    if(member.hidden)continue;
    const b=rect(member.node);
-   if(overlaps(board,b)||plan.protectedRegions.some(other=>other!==member.node&&!other.contains(member.node)&&!member.node.contains(other)&&win.getComputedStyle(other).visibility==='visible'&&overlaps(b,rect(other))))return false;
+   if(overlaps(board,b)||plan.protectedRegions.some(other=>other!==member.node&&!other.contains(member.node)&&!member.node.contains(other)&&win.getComputedStyle(other).visibility==='visible'&&overlaps(b,rect(other))))return refuse('retained-overlap');
   }
   for(const node of nativeControls){
    // A detached old button is not a reason to revoke the workspace. Mutation
@@ -308,26 +322,29 @@ export function validateCriticalLayout(plan,{workspace,nativeControls=[],nativeS
    if(!node.isConnected||node.ownerDocument!==doc||!plan.protectedRegions.some(region=>region===node||region.contains(node)))continue;
    const r=rect(node),s=win.getComputedStyle(node);
    if(s.display==='none'||s.visibility!=='visible'||!positive(r))continue;
-   if(node.hidden||node.inert||overlaps(board,r))return false;
+   if(node.hidden||node.inert||overlaps(board,r))return refuse('control-overlap',[board.x,board.y,board.width,board.height,r.x,r.y,r.width,r.height,node===plan.header?1:plan.composer.contains(node)?2:3,node.hidden?1:0,node.inert?1:0].map(Math.round));
    if(node===plan.header&&s.pointerEvents==='none'&&!node.matches(controls))continue;
-   if(r.x<0||r.y<0||r.x+r.width>win.innerWidth+1||r.y+r.height>win.innerHeight+1)return false;
+   if(r.x<0||r.y<0||r.x+r.width>win.innerWidth+1||r.y+r.height>win.innerHeight+1)return refuse('control-viewport');
    const hit=doc.elementFromPoint(r.x+r.width/2,r.y+r.height/2);
-   if(!hit||!(node===hit||node.contains(hit)))return false;
+   if(!hit||!(node===hit||node.contains(hit)))return refuse('control-hit');
   }
   const exitButton=workspace.querySelector(':scope > button');
-  if(exitButton&&win.getComputedStyle(workspace).visibility==='visible'){const r=rect(exitButton),hit=doc.elementFromPoint(r.x+r.width/2,r.y+r.height/2);if(!positive(r)||!(hit===exitButton||exitButton.contains(hit)))return false;}
+  if(exitButton&&win.getComputedStyle(workspace).visibility==='visible'){const r=rect(exitButton),hit=doc.elementFromPoint(r.x+r.width/2,r.y+r.height/2);if(!positive(r)||!(hit===exitButton||exitButton.contains(hit)))return refuse('exit-hit');}
   return true;
- }catch{return false;}
+ }catch{return refuse('exception');}
 }
 
-export function validateActiveLayout(plan,{workspace,style,styleText,exit,isOwnedSurface=plan?.isOwnedSurface,onControls=()=>{}}={}) {
+export function validateActiveLayout(plan,{workspace,style,styleText,exit,isOwnedSurface=plan?.isOwnedSurface,onControls=()=>{},onRefused=()=>{}}={}) {
+ const refuse=(reason,geometry=[])=>{try{onRefused(reason,geometry);}catch{}return false;};
  try {
   const doc=plan.document;
-  if(!isSameNativeRegions(plan)||!style?.isConnected||style.textContent!==styleText||!exit?.matches(':popover-open')||!workspace?.isConnected||workspace.parentElement!==plan.root||!isOwnedSurface(workspace)||hasNativeLayer(doc)||!workspace.querySelector('iframe'))return false;
+  if(!isSameNativeRegions(plan)||!style?.isConnected||style.textContent!==styleText||!exit?.matches(':popover-open')||!workspace?.isConnected||workspace.parentElement!==plan.root||!isOwnedSurface(workspace)||hasNativeLayer(doc)||!workspace.querySelector('iframe'))return refuse('active-structure');
   // Only a layout event or explicit presentation request enumerates controls.
   // The activity watch uses this bounded set; it does not scan native subtrees.
-  const snapshot=controlSnapshot(plan);if(!snapshot)return false;
+  const snapshot=controlSnapshot(plan);if(!snapshot)return refuse('control-snapshot');
   const nativeControls=snapshot.map(({node})=>node),nativeShadowCandidates=snapshot.shadowCandidates;onControls(nativeControls,nativeShadowCandidates);
-  return validateCriticalLayout(plan,{workspace,nativeControls,nativeShadowCandidates});
- }catch{return false;}
+  return validateCriticalLayout(plan,{workspace,nativeControls,nativeShadowCandidates,onRefused});
+ }catch{return refuse('exception');}
 }
+
+export const activeLayoutFailureReasons=Object.freeze(['structure','external-seam','shadow-root','root-position','workspace-composer-empty','workspace-minimum','workspace-viewport','composer-viewport','workspace-composer-overlap','native-composer-geometry','retained-boundary','retained-overlap','control-overlap','control-viewport','control-hit','exit-hit','exception','active-structure','control-snapshot','native-layer','native-regions','surface-integrity']);

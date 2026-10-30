@@ -1,6 +1,6 @@
 import {projectSurfaceFailureReasons,projectClipDiagnostic} from './native-project-surface.mjs';
 import {historyFailureReasons} from './native-history-list.mjs';
-import {nativeFlowFailureReasons} from './document-flow-layout.mjs';
+import {nativeFlowFailureReasons,activeLayoutFailureReasons} from './document-flow-layout.mjs';
 import {validMainMountCheck} from './native-flow-diagnostic.mjs';
 import {validHistoryStructureReport,validSidebarStructure,sidebarStructureCoverage} from './history-structure-diagnostic.mjs';
 // Shared fixed frame failures; arbitrary renderer/transport error text stays private.
@@ -15,6 +15,7 @@ export const recoverableLayoutFailure=state=>typeof state==='string'&&(state.sta
 export const surfaceFailureStates=Object.freeze([...nativeFlowFailureReasons,'flow-marker-conflict','recovery-rate-limited','recovery-clock-invalid',...frameFailureReasons.map(reason=>'frame-'+reason),...historyFailureReasons.map(reason=>'unsafe-native-history-list-'+reason),'frame-policy-blocked','frame-resource-failed','frame-script-failed','mount-registration-pending','frame-join-rejected','frame-module-pending','frame-join-pending','frame-grant-pending','frame-presentation-pending','geometry-paused','document-stale','binding-expired','grants-incomplete','grants-expired','frames-detached','controller-absent','ui-authority-revoked','close-cancellation-failed','dormant-resume-failed','idle-frame-unavailable','idle-suspend-failed','ui-grant-expired','ui-frame-suspended','session-renew-failed','session-renew-document','session-renew-scope','session-renew-ui-pair','session-renew-local-validity','session-renew-ack','session-renew-adapter','stale-session-renewal','region-identity-changed','native-region-changed','native-geometry-changed','dormant-document-changed','missing-history','missing-header','missing-reading','missing-composer','missing-navigationSlot','missing-or-ambiguous-native-boundary','unsafe-native-home-layout','unsafe-native-history-list','return-slot-outside-native-header','unsafe-native-reading-viewport','overlapping-native-boundary','native-content-occupies-return-slot','unsafe-native-geometry','unsafe-native-project-layout','invalid-return-slot','unsupported-mount-surface','invalid-mount-inspection','unsafe-mask-region','invalid-mount-rect','unsafe-mask-geometry','invalid-ui-frame-origin','incomplete-dual-surface','mount-registration-denied','stale-mount-registration'].map(reason=>'surface-'+reason));
 const states=new Set([...initializationFailureStates,...foregroundFailureStates,...helloFailureStates,...layoutFailureStates,...surfaceFailureStates,'ready','reading','suspended','dormant','connecting','waiting','verification-required','frame-blocked','layout-failed','hello-failed','adapter-failed','authorization-failed','surface-failed','foreground-failed','unavailable']);
 const exact=(value,keys)=>value!==null&&typeof value==='object'&&!Array.isArray(value)&&Object.getPrototypeOf(value)===Object.prototype&&Reflect.ownKeys(value).length===keys.length&&keys.every(key=>Object.hasOwn(value,key));
+const denseGeometry=value=>Array.isArray(value)&&[0,11].includes(value.length)&&Reflect.ownKeys(value).length===value.length+1&&Array.from({length:value.length},(_,i)=>Object.getOwnPropertyDescriptor(value,String(i))).every(d=>d&&Object.hasOwn(d,'value')&&Number.isSafeInteger(d.value)&&Math.abs(d.value)<=65536);
 // Bounded layout categories or numeric computed inset geometry only; never
 // native text, IDs, URLs, arbitrary CSS, attribute values or credential material.
 export function validLayoutShape(value){
@@ -28,6 +29,14 @@ export function validLayoutShape(value){
   // Passive structural evidence does not require a successful UI mount or
   // navigation batch. Absence of those fields is not an empty inventory.
   return exact(value,[...Object.keys(rest),'sidebarStructure'])&&validSidebarStructure(sidebarStructure)&&(Object.keys(rest).length===0||validLayoutShape(rest));
+ }
+ if(exact(value,['navigation','delivery','presentation'])&&value.presentation&&Object.hasOwn(value.presentation,'layoutGeometry')){
+  const {layoutGeometry,...rest}=value.presentation;
+  return denseGeometry(layoutGeometry)&&(layoutGeometry.length===0||(rest.layoutRefusal==='control-overlap'&&[2,3,6,7].every(i=>layoutGeometry[i]>=0)&&[1,2,3].includes(layoutGeometry[8])&&layoutGeometry.slice(9).every(n=>n===0||n===1)))&&validLayoutShape({...value,presentation:rest});
+ }
+ if(exact(value,['navigation','delivery','presentation'])&&value.presentation&&Object.hasOwn(value.presentation,'layoutRefusal')){
+  const {layoutRefusal,...rest}=value.presentation;
+  return (layoutRefusal===null||activeLayoutFailureReasons.includes(layoutRefusal))&&validLayoutShape({...value,presentation:rest});
  }
  if(exact(value,['navigation','delivery','presentation'])&&value.presentation&&Object.hasOwn(value.presentation,'transitions')){
   const {desiredMode,transitions,...legacy}=value.presentation;

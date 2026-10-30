@@ -643,7 +643,15 @@ try{
  assert.deepEqual(recovery,{initiallyAbsent:true,lateHidden:true,lateRecovered:true,pendingDidNotOverwrite:true,restoredAfterGrowth:true,manualScrollPreserved:true,recentProof:true,recentRecovered:true,parentRecovered:true,workspacePreserved:true,oldScrollDetached:true,newScrollBound:true,unknownRejected:true});await replacement.close();
  for(const [kind,path,html]of [['home','/',observedHomeHTML(C)],['project','/g/'+P+'/project',observedProjectHTML(P,C)],['conversation','/c/'+C,longDesktopHTML(C)],['header-inside','/c/'+C,legacy]]){
   const page=await browser.newPage({viewport:{width:1400,height:900}}),url='https://chatgpt.com'+path;
-  await page.route('**/*',r=>r.request().url()===url?r.fulfill({contentType:'text/html',body:html}):r.abort());await page.goto(url);await page.addScriptTag({content:outputFiles[0].text});
+  await page.route('**/*',r=>r.request().url()===url?r.fulfill({contentType:'text/html',body:html}):r.abort());await page.goto(url);
+  if(kind==='conversation')await page.evaluate(()=>{
+   // Anonymous reproduction of the real 32px composer descendant extending
+   // 40px above its native box. No live node, label or URL is captured here.
+   const composer=document.querySelector('[data-thread-scroll-footer]'),control=document.createElement('button');
+   composer.style.position='relative';control.type='button';control.id='fixture-composer-overhang';control.textContent='Fixture native control';
+   control.style.cssText='position:absolute;bottom:calc(100% + 8px);left:calc(50% - 16px);width:32px;height:32px;padding:0;border:0';composer.append(control);
+  });
+  await page.addScriptTag({content:outputFiles[0].text});
   const result=await page.evaluate(async kind=>{
    const {createChatGPTAdapter,createURLPolicy,CHATGPT_OBSERVED_PROFILE:profile,createFlowMountSurface}=flowModule;
    let surface;const adapter=createChatGPTAdapter({document,profile:kind==='header-inside'?undefined:profile,urlPolicy:createURLPolicy({profile:{projectId:({container})=>container}}),isOwnedMask:n=>surface?.isMasked(n),isOwnedSurface:n=>surface?.isOwnedSurface(n)});
@@ -656,6 +664,23 @@ try{
    const shown=surface.showWorkspace(handle),workspace=surface.frames(handle)[0].frame.parentElement;
    const boxes={workspace:workspace.getBoundingClientRect().toJSON(),composer:before.composer.getBoundingClientRect().toJSON()};
    const structural=adapter.inspectStructure(before).ok,active=surface.validateActiveLayout(handle),privatePopover=workspace.hasAttribute('popover');
+   if(kind==='conversation'){
+    const control=document.querySelector('#fixture-composer-overhang'),controlParent=control.parentElement;
+    const hit=()=>{const b=workspace.getBoundingClientRect(),r=control.getBoundingClientRect();return b.bottom<=r.top&&document.elementFromPoint(r.x+r.width/2,r.y+r.height/2)===control;};
+    if(!shown||!hit())throw Error('native-overhang-must-remain-clickable');
+    const css=document.createElement('style');css.textContent='#fixture-composer-overhang{bottom:calc(100% + 8px)!important}';document.head.append(css);
+    const unchangedAttributes=control.outerHTML;
+    css.sheet.cssRules[0].style.setProperty('bottom','calc(100% + 72px)','important');
+    if(control.outerHTML!==unchangedAttributes||surface.validateActiveLayout(handle))throw Error('css-only-overhang-must-revoke');
+    surface.surrenderChanged();
+    const oldRole=before.composer.getAttribute('role');before.composer.setAttribute('role','group');surface.showWorkspace(handle,{roles:['sidebar']});
+    if(surface.activeLayoutFailure(handle)!=='native-regions'||surface.activeLayoutGeometry(handle).length)throw Error('refusal-must-not-retain-another-checks-geometry');
+    if(oldRole===null)before.composer.removeAttribute('role');else before.composer.setAttribute('role',oldRole);
+    if(!surface.needsNativeBaselineRefresh(handle)||!surface.refreshNativeBaseline(handle,()=>adapter.inspect())||!surface.showWorkspace(handle)||!hit())throw Error('css-only-overhang-must-reprove');
+    surface.showReading(handle);css.remove();
+    if(!surface.needsNativeBaselineRefresh(handle)||!surface.refreshNativeBaseline(handle,()=>adapter.inspect())||!surface.showWorkspace(handle)||!hit()||control.parentElement!==controlParent)throw Error('native-overhang-recovery-failed');
+   }
+
    // CSS-only positioning changes must not retain a baseline for a different
    // containing-block model, even when attributes and node identities match.
    const changedPosition=document.createElement('style');

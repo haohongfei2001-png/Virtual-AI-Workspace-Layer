@@ -74,7 +74,7 @@ export function createFlowMountSurface({document:doc,createFrameURL,hasNativeLay
   m.management=observeNativeProjectManagement({document:doc,root:p?.project,isCurrent:()=>mounts.get(m.handle.id)===m&&m.sidebarBinding===p&&sidebarIntact(m),onChanged:m.onManagementChanged});
   if(old)m.onManagementChanged();
  }
- function active(m){return intact(m,m.roles[0])&&validateActiveLayout(m.plan,{workspace:m.roles[0].node,style:m.style,styleText:m.css,exit:m.roles[0].exit,isOwnedSurface:owned,onControls:(nodes,shadowCandidates)=>{m.criticalControls=nodes;m.criticalShadowCandidates=shadowCandidates;}});}
+ function active(m){return intact(m,m.roles[0])&&validateActiveLayout(m.plan,{workspace:m.roles[0].node,style:m.style,styleText:m.css,exit:m.roles[0].exit,isOwnedSurface:owned,onRefused:(reason,geometry=[])=>{m.activeRefusal=reason;m.activeGeometry=geometry;},onControls:(nodes,shadowCandidates)=>{m.criticalControls=nodes;m.criticalShadowCandidates=shadowCandidates;}});}
  function mark(m,node,name){const attr='data-va-flow-'+name,previous=node.getAttribute(attr);if(previous!==null)throw Error('flow-marker-conflict');m.markers.push({node,attr,previous});node.setAttribute(attr,m.handle.id);}
  function restorePendingScroll(m){const s=m.roles[1],p=m.inspection.sidebarPlacement?.scrollPort;if(m.pendingScroll===undefined||!sidebarIntact(m)||!open(s)||s.pendingHeight||nativeLayer())return;const value=m.pendingScroll;if(value!==null)p.scrollTop=value;
   // Keep only the presentation target while the natural content is shorter.
@@ -294,11 +294,13 @@ export function createFlowMountSurface({document:doc,createFrameURL,hasNativeLay
   refreshGeometry(handle,inspection){const m=lookup(handle);if(!inspection?.ok||inspection.regionEpoch!==handle.regionEpoch)return false;m.inspection=inspection;bindSidebar(m);applySidebarSize(m);restorePendingScroll(m);return geometry(m);},
   setAppearance(handle,role,value){const appearance=validateFrameAppearance(value),s=lookup(handle).roles.find(s=>s.role===role);if(!s)return false;s.node.style.setProperty('--va-canvas',appearance.canvas??(appearance.theme==='dark'?'#212121':'#ffffff'));s.node.style.colorScheme=appearance.theme;return true;},
   showWorkspace(handle,{roles=['workspace','sidebar']}={}){
-   const m=lookup(handle);if(nativeLayer()){hide(m,null);return false;}
-   const workspaceCurrent=isSameNativeRegions(m.plan);if(!workspaceCurrent)hide(m,'workspace','workspace-geometry');
+   const m=lookup(handle);if(roles.includes('workspace')){m.activeRefusal=null;m.activeGeometry=[];}if(nativeLayer()){if(roles.includes('workspace')){m.activeRefusal='native-layer';m.activeGeometry=[];}hide(m,null);return false;}
+   const workspaceCurrent=isSameNativeRegions(m.plan);if(!workspaceCurrent){m.activeRefusal='native-regions';m.activeGeometry=[];hide(m,'workspace','workspace-geometry');}
    for(const s of m.roles){if(!roles.includes(s.role)||s.retired||!intact(m,s)||s.role==='workspace'&&!workspaceCurrent||s.role==='sidebar'&&!sidebarIntact(m))continue;s.reason=null;s.node.removeAttribute('data-va-input-handoff');if(!open(s)){if(s.role==='workspace')rememberReading(m);s.exit.showPopover();if(s.role==='workspace')recordReadingClamp(m);}if(s.role==='workspace'&&!active(m))hide(m,'workspace','workspace-geometry');}
-   restorePendingScroll(m);return open(m.roles[0]);
+   restorePendingScroll(m);if(roles.includes('workspace')&&!open(m.roles[0])&&!m.activeRefusal){m.activeRefusal='surface-integrity';m.activeGeometry=[];}return open(m.roles[0]);
   },
+  activeLayoutGeometry(handle){return [...(lookup(handle).activeGeometry??[])];},
+  activeLayoutFailure(handle){return lookup(handle).activeRefusal??null;},
   showReading(handle){hide(lookup(handle),'workspace','native-reading');},
   suspend(handle,reason='suspended',role=null){hide(lookup(handle),role,reason);},
   visibility(handle){const m=lookup(handle);if(!intact(m,m.roles[0]))return null;return Object.fromEntries(m.roles.map(s=>[s.role,!s.retired&&open(s)&&!s.node.hasAttribute('data-va-input-handoff')]));},
