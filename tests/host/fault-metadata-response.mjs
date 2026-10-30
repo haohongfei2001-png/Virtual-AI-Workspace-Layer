@@ -12,17 +12,19 @@ export async function observeFaultMetadataResponse(response,row){
  row.unknownSchema=row.method==='GET'&&row.status===200&&row.protocolClass==='EXPECTED_UNKNOWN_PROTOCOL'&&!row.mappingPresent;
 }
 
-/** Request-start order, never response arrival order, defines the explicit action cohort. */
+/** Request-start order defines the Return action window, not the owning reader.
+ * Current reads may dispatch before Node observes a calibration reply; this
+ * cohort proves observed response content only, never calibration consumption. */
 export function createFaultMetadataRequestTracker({origin,path}){
  let sequence=0;const requests=new WeakMap(),rows=[];
  return {start(request){const url=new URL(request.url());if(url.origin!==origin||url.pathname!==path)return;const row={requestStart:++sequence,path,method:request.method(),worker:!!request.serviceWorker(),bodyRead:'NO_RESPONSE',unknownSchema:false};requests.set(request,row);rows.push(row);},row:request=>requests.get(request),boundary:()=>sequence,rows:()=>rows};
 }
-export function unknownCalibrationCohort(rows,start,end){
+export function unknownActionWindowCohort(rows,start,end){
  if(!Number.isSafeInteger(start)||start<0||!Number.isSafeInteger(end)||end<=start)return [];
  return rows.filter(r=>r.worker&&r.method==='GET'&&Number.isSafeInteger(r.requestStart)&&r.requestStart>start&&r.requestStart<=end);
 }
-export function validUnknownCalibrationCohort(rows,start,end){
+export function validUnknownActionWindowCohort(rows,start,end){
  if(!Array.isArray(rows)||rows.some(r=>!Number.isSafeInteger(r.requestStart)||r.requestStart<1)||new Set(rows.map(r=>r.requestStart)).size!==rows.length)return false;
- const cohort=unknownCalibrationCohort(rows,start,end);
+ const cohort=unknownActionWindowCohort(rows,start,end);
  return cohort.length>0&&cohort.every(r=>r.status===200&&r.bodyRead==='COMPLETE'&&r.jsonParse==='VALID'&&r.protocolClass==='EXPECTED_UNKNOWN_PROTOCOL'&&r.mappingPresent===false&&r.unknownSchema===true);
 }

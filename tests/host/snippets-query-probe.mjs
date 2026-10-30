@@ -26,7 +26,7 @@ export function installSnippetsQueryProbe({role}){
   const target=event.composedPath().slice(0,12).find(node=>label(node)!==null);if(!target)return;
   events++;console.log('SNIPPET_INPUT_TRACE '+JSON.stringify({role,at:at(),type:event.type,isTrusted:event.isTrusted===true,inputType:text(event.inputType),target:describe(target)}));
  };
- const types=['input','beforeinput','focusin','click'];
+ const types=['input','beforeinput','focusin','focusout','blur','click'];
  for(const type of types)document.addEventListener(type,record,{capture:true,passive:true});
  const runtime=role==='host'?null:chrome.runtime,originalSend=runtime?.sendMessage;
  const wrapped=runtime?async function(message){

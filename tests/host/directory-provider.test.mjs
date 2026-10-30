@@ -30,7 +30,7 @@ test('fixed five-GET chain reauthenticates exact non-first roster context before
  assert.deepEqual(result,{state:'candidate'});assert.equal(proof.context,context);assert.equal(proof.payload,ordinary());assert.equal(proof.expiresAt,new Date(start+60000).toISOString());
  assert.deepEqual(f.calls.map(c=>new URL(c.url).pathname+new URL(c.url).search),['/api/auth/session','/backend-api/accounts/check/v4-2023-04-27',context.request.path,'/api/auth/session','/backend-api/accounts/check/v4-2023-04-27']);
  assert.equal(f.reservations.length,5);assert.deepEqual(f.reservations.map(r=>r.attemptKey),['directory:'+context.request.path,null,null,null,null]);assert(f.reservations.slice(1).every(r=>r.windowStartedAt===start));
- assert.equal(f.calls[2].options.headers['ChatGPT-Account-ID'],'personal');assert(f.calls.filter((_,i)=>[0,3].includes(i)).every(c=>!c.options.headers.Authorization));assert(f.calls.every(c=>c.options.method==='GET'&&c.options.redirect==='error'&&c.options.credentials==='include'&&c.options.signal.aborted));
+ assert.equal(f.calls[2].options.headers['ChatGPT-Account-ID'],'personal');assert(f.calls.filter((_,i)=>[0,3].includes(i)).every(c=>!c.options.headers.Authorization));assert(f.calls.every(c=>c.options.method==='GET'&&c.options.redirect==='error'&&c.options.credentials==='include'&&c.options.signal.aborted===false));
  assert.equal(f.provider.directoryProvider.directoryFor(structuredClone(result)),null);assert.equal(f.make().directoryProvider.directoryFor(result),null);assert(!JSON.stringify(result).includes('PRIVATE'));f.controller.abort();assert.equal(f.provider.directoryProvider.directoryFor(result),null);
 });
 test('target or context substitution is refused before a session request',async t=>{

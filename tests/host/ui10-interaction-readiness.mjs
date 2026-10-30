@@ -13,6 +13,6 @@ export async function readUi10Geometry(locator,{now=()=>performance.now(),pause=
 /** Inspect only the live workspace shadow tree. No focus/value/DOM writes. */
 export function inspectUi10Search(){
  const root=[...document.querySelectorAll('[data-vaiwl-owned]')].find(n=>n.shadowRoot?.querySelector('.workspace'))?.shadowRoot,input=root?.querySelector('input[aria-label="已知聊天查找输入"]'),results=root?.querySelector('.search-results');
- return {present:!!input,connected:input?.isConnected===true,value:input?.value??null,focused:root?.activeElement===input,loading:results?.textContent.includes('正在查找已知记录…')??true,resultText:results?.textContent.slice(0,1500)??null,workspaceText:root?.querySelector('.workspace')?.textContent.slice(0,2000)??null};
+ return {present:!!input,connected:input?.isConnected===true,value:input?.value??null,focused:root?.activeElement===input,documentHasFocus:document.hasFocus(),loading:results?.textContent.includes('正在查找已知记录…')??true,resultText:results?.textContent.slice(0,1500)??null,workspaceText:root?.querySelector('.workspace')?.textContent.slice(0,2000)??null};
 }
 export function ui10InitialSearchReady(s){return s.present&&s.connected&&s.value===''&&s.loading===false&&s.resultText!==null;}

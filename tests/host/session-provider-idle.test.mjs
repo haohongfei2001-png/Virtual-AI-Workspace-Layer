@@ -14,6 +14,18 @@ const deferred=()=>{let resolve,reject;const promise=new Promise((a,b)=>{resolve
 const response=url=>Object.assign({url,status:200,redirected:false},
  {headers:new Headers({'content-type':'application/json'}),body:new Response(JSON.stringify({user:{id:'self'},expires:new Date(now+60000).toISOString(),accessToken:'fixture-only'})).body});
 
+test('EOF does not detach cancellation until body disposal has actually settled',async()=>{
+ const cleanup=deferred(),entered=deferred(),owner=new AbortController();let fetches=0,signal,released=false;
+ const provider=createSessionProvider({now:()=>now,fetch:async(url,options)=>{fetches++;signal=options.signal;let reads=0;return {url,status:200,redirected:false,headers:new Headers({'content-type':'application/json'}),body:{getReader:()=>({
+  async read(){return ++reads===1?{done:false,value:new TextEncoder().encode(JSON.stringify({user:{id:'self'},expires:new Date(now+60000).toISOString(),accessToken:'fixture-only'}))}:{done:true};},
+  cancel(){entered.resolve();return cleanup.promise;},releaseLock(){released=true;}
+ })}};}});
+ const pending=provider.read({signal:owner.signal});await entered.promise;
+ assert.equal(provider.isIdle(),false);assert.equal(signal.aborted,false);owner.abort();await assert.rejects(pending,/session-aborted/);
+ assert.equal(signal.aborted,true,'EOF with pending disposal is still cancellable');assert.equal(provider.isIdle(),false);assert.equal(released,false);
+ cleanup.resolve();await flush();assert.equal(provider.isIdle(),true);assert.equal(released,true);assert.equal(fetches,1,'cancellation prevents the next endpoint');
+});
+
 test('real identity provider abort cannot hide a fetch still running from scope idle',async()=>{
  const gate=deferred();let calls=0,target;
  const provider=createSessionProvider({now:()=>now,fetch:url=>{calls++;target=url;return gate.promise;}});

@@ -11,7 +11,7 @@ import {launchNativeVisibilityBrowser} from './native-visibility-browser.mjs';
 import {createHistoricalNetworkGuard} from './historical-network-guard.mjs';
 import {faultCases,assertFaultObservation,assertFaultPackageReport} from './fault-package-contract.mjs';
 import {cspObservationScript,installCspMountObservation,observeAuthenticatedCsp,scanCspPage,prepareCspNativeClose,exactCspControlMessage} from './fault-csp-observer.mjs';
-import {observeFaultMetadataResponse,createFaultMetadataRequestTracker,unknownCalibrationCohort,validUnknownCalibrationCohort} from './fault-metadata-response.mjs';
+import {observeFaultMetadataResponse,createFaultMetadataRequestTracker,unknownActionWindowCohort,validUnknownActionWindowCohort} from './fault-metadata-response.mjs';
 import {createFaultUnknownTracePackage,verifyFaultUnknownTracePackage,captureFaultUnknownTrace,summarizeFaultUnknownTrace,FAULT_UNKNOWN_TRACE_KIND} from './fault-unknown-trace.mjs';
 import {runCspPositiveControl} from './fault-csp-control-browser.mjs';
 import {observeFaultBodyStream,BODY_STREAM_KIND} from './fault-body-stream-observer.mjs';
@@ -111,7 +111,7 @@ for(const fault of requestedCases){
    // Classify observed responses only; do not issue another metadata request.
    await Promise.all(responseTasks);const workerRows=metadata.filter(r=>r.worker);
    if(fault==='corrupt')result.invalidJSON=workerRows.length>0&&workerRows.every(r=>r.invalidJSON===true);
-   if(fault==='unknown-protocol'){result.metadataResponseObservations=metadataTracker.rows().map(row=>({...row}));result.targetWorkerRequestStarts=unknownCalibrationCohort(result.metadataResponseObservations,result.calibrationRequestBoundary,result.calibrationTerminalBoundary).map(r=>r.requestStart);result.unknownSchema=validUnknownCalibrationCohort(result.metadataResponseObservations,result.calibrationRequestBoundary,result.calibrationTerminalBoundary);result.workerMetadataRequests=metadataTracker.rows().filter(r=>r.worker).length;assert(result.workerMetadataRequests<=3);}
+   if(fault==='unknown-protocol'){result.calibrationConsumption='NOT_ESTABLISHED';result.metadataResponseObservations=metadataTracker.rows().map(row=>({...row}));result.targetWorkerRequestStarts=unknownActionWindowCohort(result.metadataResponseObservations,result.calibrationRequestBoundary,result.calibrationTerminalBoundary).map(r=>r.requestStart);result.unknownSchema=validUnknownActionWindowCohort(result.metadataResponseObservations,result.calibrationRequestBoundary,result.calibrationTerminalBoundary);result.workerMetadataRequests=metadataTracker.rows().filter(r=>r.worker).length;assert(result.workerMetadataRequests<=3);}
    result.triggerObserved=true;
   }
   if(fault==='auth-failure'){await until(()=>responses.some(r=>r.path==='/api/auth/session'&&r.status===401));result.session401=responses.filter(r=>r.path==='/api/auth/session'&&r.status===401).length;result.triggerObserved=true;}
@@ -166,8 +166,11 @@ for(const fault of requestedCases){
   if(bodyStream)try{result.bodyStream=await bodyStream.finish();}catch{result.bodyStream={kind:BODY_STREAM_KIND,status:'FAIL_DIAGNOSTIC',captureComplete:false,reason:'collector-unavailable'};}
   if(trace){try{traceAfter=await captureFaultUnknownTrace(traceWorker);}catch{result.traceCaptureError='snapshot-unavailable-or-timeout';}try{result.tracePackageVerified=await verifyFaultUnknownTracePackage(trace);}catch{result.tracePackageVerified=false;}try{result.workerTrace={before:traceBefore??null,after:traceAfter??null};result.browserTrace={clock:'node-performance-relative',timeOrigin:performance.timeOrigin,start:traceClock,limit:256,dropped:traceBrowserDropped,events:traceBrowserEvents};result.traceFixture=server.snapshot().faultUnknownTrace??null;result.traceSummary=summarizeFaultUnknownTrace({fixtureResponseTrace:result.traceFixture,before:traceBefore,after:traceAfter,rows:traceRows?.rows()??[],start:result.calibrationRequestBoundary,end:result.calibrationTerminalBoundary,browserEvents:traceBrowserEvents,browserDropped:traceBrowserDropped});}catch{result.traceSummary={status:'INCOMPLETE',correlationComplete:false,reason:'trace-capture-or-verification-failed'};}}
   const cleanup=await Promise.allSettled([handle?.close(),server?.close(),guard?.close()]);result.cleanupOK=cleanup.every(r=>r.status==='fulfilled');result.guardClosed=guard?.snapshot().closed===true;
+  result.cleanupErrors=cleanup.flatMap((r,i)=>r.status==='rejected'?[{resource:['browser','fixture','network-guard'][i],code:/^[A-Z_]{1,40}$/.test(r.reason?.code??'')?r.reason.code:'CLOSE_FAILED'}]:[]);
   result.sourceChanged=(await Promise.all(Object.entries({...build?.sourceHashes,...evidenceHashes}).map(async([path,digest])=>hash(await readFile(path))!==digest))).some(Boolean);
-  if(dir){try{await rm(dir,{recursive:true,force:true});result.temporaryDirectoryRemoved=true;}catch{result.cleanupOK=false;result.temporaryDirectoryRemoved=false;}}
+  // Only this runner's new temporary root; Chromium descendants may finish
+  // their last profile writes just after the launcher has closed its process.
+  if(dir){try{await rm(dir,{recursive:true,force:true,maxRetries:5,retryDelay:100});result.temporaryDirectoryRemoved=true;}catch(error){result.cleanupOK=false;result.temporaryDirectoryRemoved=false;result.cleanupErrors.push({resource:'temporary-root',code:/^[A-Z_]{1,40}$/.test(error?.code??'')?error.code:'REMOVE_FAILED'});}}
   if(result.status==='OBSERVED'){try{assertFaultObservation(result);result.status='PASS_NARROW_OBSERVATION';}catch(error){result.status='FAIL';result.phase='fixed-oracle';result.error=String(error.message);process.exitCode=1;}}
   if(!result.cleanupOK||result.sourceChanged){result.status='FAIL';result.phase='cleanup-or-source';process.exitCode=1;}
  }

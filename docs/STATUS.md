@@ -2,6 +2,12 @@
 
 ## 2026-10-30 终局候选整合与同源产品门
 
+`d287f5b822bd7db1edec0066fcfb26a08d2a3ca1` 的 16 个本机冻结 runner 与 Node 11895/11895 通过，云端 run `40998690911` 最终 39/41；MODERN 和 unknown-protocol 仍失败。个人离线 UX 三 profile 均通过，85 张当前图精确继承、11 张实际重看，7 处原生标题叠字已消除，100 张图保全；这只关闭对应像素问题，不升级整体候选。MODERN 同场 8.5ms 内节点未变却失焦且无输入事件；unknown 目标正文不可取发生在 Worker 关闭前，正式读取器 EOF 与取消原因未建立。
+
+本批修正固定请求的取消生命周期：每次 fetch 在途时转发原调用取消，正文读取及既有 cancel/release 完成后解除转发；后续 schema 拒绝、scope/owner 清理不再追溯取消已完成传输。实际 Response 的先失败反例、在途取消、EOF 后清理悬挂、late work/idle、原 6 秒及权限回归通过，独立静态审查未发现阻塞问题；不据此倒推旧云端唯一根因。未知协议仍必须取得动作窗内所有目标 GET 的实际完整正文，不能借先前响应或夹具预期值通过；时间窗只证明观察范围，校准消费归属显式 NOT_ESTABLISHED，并保留 current 晚到请求反例。
+
+UI10 搜索改为真实 click 后立即独立核验当前输入、空值和真实焦点，再仅一次 page.keyboard.type；无 locator 再聚焦、填值或重试，保留 6000ms、逐字值/结果、原生节点/草稿/文件和完整布局保护。原 fill 失败保留为未定因的批量注入路径，键盘路径通过不销账、不认证物理输入/IME。本机 WIP MODERN 16 格通过；未知协议目标完整正文与原窄合同通过，第一次临时根目录清理失败另存 FAIL，补有界清理及错误类别后单次复验通过。正式新 SHA 全套冻结与云端回归接续执行，Mac、个人长期日用、完整 Free 仍未通过，原安装未更新。
+
 `8251cace4a3c699d7333a0aee00894a27684192c` 完成 16 个本机冻结 runner、Node 11895/11895，云端 run `40994832301` 为 41/41 jobs 通过。独立审查实际查看 90 张新 UI10 图和 4 张批准参考，6 张连续图按精确 PNG 哈希继承，100 张图均保全；204 源码及 1166 fixture 与当次回执绑定。48 张设置图完整绘出，但 7 张 MODERN/PARTIAL 桌面原生 Chats 长标题叠字，因此该 SHA 的 UX 保留 LEGACY PASS、另两组 PARTIAL，汇总 L1 2/2、L2 10/12、L3 0/7 NOT_RUN；CI 绿色没有替代视觉门。
 
 一次无 VAIWL 的原生夹具对照取得 8 格图片和完整字节/节点证据：原 CSS 已发生同形叠字，仅 nowrap/hidden/ellipsis 三条样式后重叠消失，标题、href、HTML 和 JS 不变。本批只在原 `ui10FullSidebar` 条件内修正 MODERN/PARTIAL history anchor，默认紧凑/FAULT 及生产源码不变。该私有 driver 在采图后的额外零 Service Worker 断言失败，来源未记录，原 FAIL 保留；窄像素与精确 CSS 对照单独有效，不冒充整 driver 或 MV3 通过。PARTIAL 低屏原生 Account 不在对照图内，未借标题修正宣称完整原生侧栏认证。
