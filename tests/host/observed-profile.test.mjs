@@ -9,7 +9,8 @@ test('observed profile is explicit and cannot replace default or invent authorit
  for(const value of [null,'unknown','chatgpt-context-unverified',{},true])assert.throws(()=>selectHostSurfaceProfile(value),/unsupported-host-surface-profile/);
  assert.equal(observed.liveVerified,false);assert.equal(observed.reconstruction,false);
  assert.equal(observed.currentBody,CHATGPT_SELECTION_CURRENT_BODY);
- assert.equal(observed.revision,10);
+ assert.equal(observed.revision,11);
+ assert.equal(observed.nativeFlowSeam.homeComposerContainer,'nested-native-contents-v1');
  assert.equal(observed.nativeFlowSeam.version,'native-flow-seam-v1');
  assert(Object.isFrozen(observed.nativeFlowSeam)&&Object.isFrozen(observed.nativeFlowSeam.rootSelectors)&&Object.isFrozen(observed.nativeFlowSeam.shellSelectors));
  for(const key of ['scopeProfile','sendIntent','sendAckProfile','inputRisk','memberProjectIdAttribute','noneLabel'])assert.equal(Object.hasOwn(observed,key),false);

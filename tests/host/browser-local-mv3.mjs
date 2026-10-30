@@ -1,7 +1,7 @@
 import partitionDetails from './fixtures/observed-sidebar-project-details-20261026.json' with {type:'json'};
 import historyStructure from './fixtures/observed-history-structure.json' with {type:'json'};
 import projectSidebarSnapshot from './fixtures/observed-sidebar-project-20261026.json' with {type:'json'};
-import {HOST_BASELINE_VERSION,materializePartitionedSidebar,materializeFlatHomeBranch,materializeHistoryStructure,progressiveOrders,homeMain,longDesktopHTML,observedHomeHTML,prepareHistoryRun,reorderHistory,addPendingChat,promotePendingChat,enterStableChat,setNativeModal,insertHistoryGap,clearHistoryGap} from './fixtures/observed-host-replay.mjs';
+import {HOST_BASELINE_VERSION,materializePartitionedSidebar,materializeFlatHomeBranch,materializeNestedHomeFlow,materializeHistoryStructure,progressiveOrders,homeMain,longDesktopHTML,observedHomeHTML,prepareHistoryRun,reorderHistory,addPendingChat,promotePendingChat,enterStableChat,setNativeModal,insertHistoryGap,clearHistoryGap} from './fixtures/observed-host-replay.mjs';
 /** Actual formal MV3 UI with an empty local memory session; offline host only. */
 import assert from 'node:assert/strict';
 import {createServer} from 'node:http';
@@ -141,11 +141,12 @@ try{
  }
  if(process.argv.includes('--flow-only')){
   page=await context.newPage();await setViewport(page,{width:1400,height:900});
-  await page.addInitScript({content:'if(window===window.top)document.addEventListener("DOMContentLoaded",()=>{('+materializePartitionedSidebar.toString()+')('+JSON.stringify(partitionDetails.sidebarStructure.rows)+');if(document.querySelector("[data-app-shell-main-content-layout] .home-composer-anchor"))('+materializeFlatHomeBranch.toString()+')();},{once:true});'});
+  const nestedHome=process.argv.includes('--nested-home');report.nestedHome=nestedHome;
+  await page.addInitScript({content:'if(window===window.top)document.addEventListener("DOMContentLoaded",()=>{('+materializePartitionedSidebar.toString()+')('+JSON.stringify(partitionDetails.sidebarStructure.rows)+');if(document.querySelector("[data-app-shell-main-content-layout] .home-composer-anchor"))('+(nestedHome?materializeNestedHomeFlow:materializeFlatHomeBranch).toString()+')();},{once:true});'});
   // Local counterexample for an inspected home with additional native flow
   // content. This is not a claim about the real unidentified rejected branch.
   await page.addInitScript(()=>{if(window===window.top)document.addEventListener('DOMContentLoaded',()=>{
-   const parent=document.querySelector('[role=main]');if(!parent?.querySelector('.home-composer-anchor'))return;
+   const parent=document.querySelector('#nested-home-band')??document.querySelector('[role=main]');if(!parent||!document.querySelector('.home-composer-anchor'))return;
    // The real rejected-path geometry is replayed by materializeFlatHomeBranch
    // above. Keep this distinct, previously supported native action alongside
    // it; neither fixture subtree claims to be the unidentified real content.
@@ -175,8 +176,21 @@ try{
     report.checks.nativeScrollRegion={originalTabStop:true,flowRoot:true};
    }
    if(scene==='home'){
-    report.checks.flatHomeMember=await page.locator('#fixture-flat-native-member').evaluate(n=>({sameNativeParent:n.parentElement.tagName==='DIV'&&!n.parentElement.hasAttribute('data-va-owned'),height:n.getBoundingClientRect().height,explicitFlowRow:[...n.attributes].some(a=>a.name.startsWith('data-va-flow-row-'))}));
+    report.checks.flatHomeMember=await page.locator(nestedHome?'#nested-home-before':'#fixture-flat-native-member').evaluate(n=>({sameNativeParent:n.parentElement.tagName==='DIV'&&!n.parentElement.hasAttribute('data-va-owned'),height:n.getBoundingClientRect().height,explicitFlowRow:[...n.attributes].some(a=>a.name.startsWith('data-va-flow-row-'))}));
     assert.deepEqual(report.checks.flatHomeMember,{sameNativeParent:true,height:0,explicitFlowRow:true});
+    if(nestedHome){
+     report.checks.nestedHomeContainer=await page.evaluate(()=>{const box=document.querySelector('#nested-home-composer-container'),form=document.querySelector('form[data-chatgpt-composer]'),plate=document.querySelector('#nested-home-composer-plate');return {member:box.hasAttribute('data-va-flow-composer'),formNotPatched:!form.hasAttribute('data-va-flow-composer'),nativePlate:getComputedStyle(plate).backgroundColor,formParent:form.parentElement.id};});
+     assert.deepEqual(report.checks.nestedHomeContainer,{member:true,formNotPatched:true,nativePlate:'rgb(242, 242, 242)',formParent:'nested-home-form-wrap'});
+     await setViewport(page,{width:720,height:900});
+     await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
+     await page.locator('[id$="_workspace"]:visible').waitFor();
+     await page.getByRole('button',{name:'Native container tool',exact:true}).click();
+     await page.locator('textarea').focus();
+     report.checks.nestedHomeNarrow=await page.evaluate(()=>{const form=document.querySelector('form[data-chatgpt-composer]'),plate=document.querySelector('#nested-home-composer-plate'),board=document.querySelector('[id$="_workspace"][data-va-owned]'),f=form.getBoundingClientRect(),p=plate.getBoundingClientRect(),b=board.getBoundingClientRect();return {nativeClick:globalThis.nestedHomeNativeClicks===1,focus:document.activeElement===form.querySelector('textarea'),inputFits:f.width>0&&f.left>=0&&f.right<=innerWidth&&f.bottom<=innerHeight,plateFits:p.width>0&&p.left>=0&&p.right<=innerWidth,workspaceFits:b.width>=160&&b.height>=96&&b.right<=innerWidth&&b.bottom<=f.top};});
+     assert.deepEqual(report.checks.nestedHomeNarrow,{nativeClick:true,focus:true,inputFits:true,plateFits:true,workspaceFits:true});
+     const narrowHome=join(dir,'flow-home-narrow.png');await page.screenshot({path:narrowHome,caret:'initial'});report.images.push(narrowHome);
+     await setViewport(page,{width:1400,height:900});
+    }
     await page.getByRole('button',{name:'Native auxiliary action',exact:true}).click();
     report.checks.retainedHomeMember=await page.evaluate(()=>{const p=window.nativeFlowExtra;return {sameParents:p.branch.parentElement===p.parent&&p.button.parentElement===p.branch&&p.icon.parentElement===p.button&&p.hidden.parentElement===p.parent,nativeClick:p.clicks===1,inlineGraphicRetained:p.button.querySelector('svg')===p.icon&&getComputedStyle(p.icon).overflowX==='hidden',hiddenUntouched:p.hidden.outerHTML==='<div hidden=""></div>',workspaceVisible:[...document.querySelectorAll('[id$="_workspace"][data-va-owned]')].some(n=>getComputedStyle(n).display!=='none')};});
     assert.deepEqual(report.checks.retainedHomeMember,{sameParents:true,nativeClick:true,inlineGraphicRetained:true,hiddenUntouched:true,workspaceVisible:true});

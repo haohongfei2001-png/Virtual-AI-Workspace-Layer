@@ -270,7 +270,7 @@ export function createFlowMountSurface({document:doc,createFrameURL,hasNativeLay
    // the old frame grants. Return its fully proved epoch without changing any
    // old marker or baseline; the controller retires this mount before startup.
    if(inspection.regionEpoch!==handle.regionEpoch)return inspection;
-   if(!isSameNativeStructure(prior,{allowPresentationChange:true,anchorsOnly:true})||['root','reading','composer','header','kind','headerInside'].some(k=>next[k]!==prior[k])||['leaves','shells','patchedShells','nativeContents','protectedNodes'].some(k=>next[k].length!==prior[k].length||next[k].some((node,i)=>node!==prior[k][i])))return null;
+   if(!isSameNativeStructure(prior,{allowPresentationChange:true,anchorsOnly:true})||['root','reading','composer','nativeComposer','header','kind','headerInside'].some(k=>next[k]!==prior[k])||['leaves','shells','patchedShells','nativeContents','protectedNodes'].some(k=>next[k].length!==prior[k].length||next[k].some((node,i)=>node!==prior[k][i])))return null;
    // Island root/visibility changes are layout changes, not new frame/data
    // authority. Re-prove the closed native layout with the exact same native
    // anchors and patch targets. Replace only this mount's owned row markers.

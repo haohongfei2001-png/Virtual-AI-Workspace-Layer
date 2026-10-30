@@ -12,7 +12,7 @@ const projectFlowContent='[data-chatgpt-project-conversation-drop-target] > div 
 const nativeFlowSeam=Object.freeze({version:'native-flow-seam-v1',rootSelectors:Object.freeze([
  'main [data-app-shell-main-content-layout]',
  'main [data-app-shell-main-content-layout] > [role="main"]',
-]),homeComposerBand:'direct-grid-under-native-contents-v1',shellSelectors:Object.freeze([
+]),homeComposerBand:'direct-grid-under-native-contents-v1',homeComposerContainer:'nested-native-contents-v1',shellSelectors:Object.freeze([
  'main [data-app-shell-main-content-layout] > [role="main"]',
  projectFlowContent,
  projectFlowContent+' > div:has(> [role="tabpanel"]):has(> div > [role="tablist"])',
@@ -22,7 +22,7 @@ const nativeFlowSeam=Object.freeze({version:'native-flow-seam-v1',rootSelectors:
 // The observed Chinese desktop surface is a candidate, not an authority profile.
 // Unsupported membership/send/risk grammars stay absent; no synthetic NONE/ACK.
 export const CHATGPT_OBSERVED_PROFILE=Object.freeze({
- id:'chatgpt-zh-desktop-observed-20261018',revision:10,reconstruction:false,liveVerified:false,
+ id:'chatgpt-zh-desktop-observed-20261018',revision:11,reconstruction:false,liveVerified:false,
  memberAssociation:'route-linked-project-panel-v1',
  nativeProjectLayout:'panel-after-composer',
  nativeFlowSeam,

@@ -106,9 +106,16 @@ export function captureNativeBaseline({document:doc,inspection,isOwnedSurface=()
  try {
   if (!inspection?.ok) return refuse('native-flow-inspection');
   evidence.phase='regions';
-  const {reading,composer,header}=inspection,win=doc.defaultView;
+  const {reading,header}=inspection,nativeComposer=inspection.composer,win=doc.defaultView;
+  const composer=inspection.flowSeam?.version==='native-flow-seam-v1'?(inspection.flowSeam.composerMember??nativeComposer):nativeComposer;
+  const nativeComposerChain=[],externalSeam=(inspection.flowSeam?.externalSeam??[]).map(value=>({...value,attrs:attrs(value.node)}));
+  if(externalSeam.length>2||!sameExternalSeam({externalSeam,document:doc,isOwnedSurface}))return refuse('native-flow-root','wrapper-seam');
+  if(composer!==nativeComposer){
+   if(!plain(composer)||!composer.contains(nativeComposer)||composer.contains(reading)||nativeComposer.checkVisibility?.({checkOpacity:true,checkVisibilityCSS:true,contentVisibilityAuto:true})!==true||!retainedBoundary({node:composer,hidden:false},doc))return refuse('native-flow-regions','invalid-regions',composer);
+   for(let n=nativeComposer;n!==composer;n=n.parentElement){if(!n||nativeComposerChain.length>=64)return refuse('native-flow-regions','invalid-regions',composer);nativeComposerChain.push({node:n,parent:n.parentElement});}
+  }
   if (![reading,composer,header].every(n=>n?.isConnected&&n.ownerDocument===doc) || reading.contains(composer) || composer.contains(reading)) return refuse('native-flow-regions','invalid-regions');
-  const protectedNodes=[...new Set([composer,...inspection.protectedRegions.filter(n=>n!==header).map(n=>n.tagName==='H1'&&plain(n.parentElement)&&!n.parentElement.contains(composer)&&!n.parentElement.contains(reading)?n.parentElement:n)])];
+  const protectedNodes=[...new Set([composer,...inspection.protectedRegions.filter(n=>n!==header).map(n=>n===nativeComposer?composer:n.tagName==='H1'&&plain(n.parentElement)&&!n.parentElement.contains(composer)&&!n.parentElement.contains(reading)?n.parentElement:n)])];
   const leaves=[reading,...protectedNodes];
   evidence.kind=protectedNodes.some(n=>n.getAttribute('role')==='tablist')?'project':inspection.homeLayoutNodes?'home':'conversation';evidence.phase='root';
   let root=inspection.readingViewport??reading.parentElement;
@@ -161,19 +168,20 @@ export function captureNativeBaseline({document:doc,inspection,isOwnedSurface=()
   const walked=walk(root);evidence.visited=count;
   if(!walked)return refuse(failure??'native-flow-uncovered-branch');
   const missing=leaves.find(n=>!records.some(r=>r.node===n));if(missing)return refuse('native-flow-uncovered-branch','leaf-uncovered',missing);
+  if(composer!==nativeComposer)records.push({node:nativeComposer,parent:nativeComposer.parentElement,attrs:attrs(nativeComposer)});
   // Headers outside the flow root are never laid out by us, but remain part
   // of the native identity and occlusion proof. React may replace them alone.
   if(!headerInside)records.push({node:header,parent:header.parentElement,attrs:attrs(header)});
   const flowOrder=orderedFlowMembers([...(headerInside?[header]:[]),...protectedNodes.filter(n=>n!==header&&n!==composer),reading,composer],retainedMembers);
   evidence.phase='order';if(!flowOrder)return refuse('native-flow-branch-order','order',root);
-  const protectedRegions=[...new Set([header,...protectedNodes,...retainedMembers.map(m=>m.node)])];
+  const protectedRegions=[...new Set([header,...protectedNodes,nativeComposer,...retainedMembers.map(m=>m.node)])];
   const nativeControls=controlSnapshot({protectedRegions,document:doc,isOwnedSurface});
   evidence.phase='controls';if(!nativeControls)return refuse('native-flow-protected-controls','protected-controls',root);
   const coordinates=layoutCoordinates({root,header,composer,headerInside});
   evidence.phase='geometry';if(!coordinates)return refuse('native-flow-geometry','geometry',root);
   const readingChain=[];for(let node=reading;node&&node!==doc.documentElement;node=node.parentElement){if(readingChain.length>=64)return refuse('native-flow-regions','reading-chain',node);readingChain.push({node,parent:node.parentElement});}
   evidence.phase='complete';evidence.detail='accepted';evidence.node=null;diagnose('none');
-  return Object.freeze({kind,root,reading,composer,header,leaves,protectedNodes,protectedRegions,shells,patchedShells,nativeContents,records,nativeChildren,nativeControls,nativeShadowCandidates:nativeControls.shadowCandidates,inactiveMarkers,retainedMembers,flowOrder,markerViewport,focusViewport,readingChain,nativeReadingCurrent:inspection.nativeReadingCurrent,
+  return Object.freeze({kind,root,reading,composer,nativeComposer,nativeComposerChain,externalSeam,header,leaves,protectedNodes,protectedRegions,shells,patchedShells,nativeContents,records,nativeChildren,nativeControls,nativeShadowCandidates:nativeControls.shadowCandidates,inactiveMarkers,retainedMembers,flowOrder,markerViewport,focusViewport,readingChain,nativeReadingCurrent:inspection.nativeReadingCurrent,
    headerInside,document:doc,url:doc.location.href,regionEpoch:inspection.regionEpoch,isOwnedSurface,
    ...coordinates});
  }catch{evidence.phase='exception';return refuse('native-flow-check-failed','exception',null);}
@@ -181,10 +189,17 @@ export function captureNativeBaseline({document:doc,inspection,isOwnedSurface=()
 
 // Structural guard for a new proof in the restored native layout. This alone
 // cannot authorize presentation: controls still need a fresh bounded snapshot.
+function sameExternalSeam(plan){
+ return plan.externalSeam.every(({node,parent,child,contents,attrs:before})=>{
+  if(!node.isConnected||node.ownerDocument!==plan.document||node.parentElement!==parent||node.children.length>16||!attrs(node).every((value,i)=>value===before[i]))return false;
+  const children=[...node.children].filter(n=>!plan.isOwnedSurface(n));
+  return children.length===1&&children[0]===child&&(!contents||plan.document.defaultView.getComputedStyle(node).display==='contents');
+ });
+}
 export function isSameNativeStructure(plan,{allowPresentationChange=false,anchorsOnly=false}={}){
  try {
-  if(!plan||plan.document.location.href!==plan.url)return false;
-  const anchors=plan.records.every(({node,parent,attrs:before})=>node.isConnected&&node.ownerDocument===plan.document&&node.parentElement===parent&&attrs(node).every((value,i)=>allowPresentationChange&&i<2||value===before[i]))&&
+  if(!plan||plan.document.location.href!==plan.url||!sameExternalSeam(plan))return false;
+  const anchors=plan.nativeComposerChain.every(({node,parent})=>node.isConnected&&node.ownerDocument===plan.document&&node.parentElement===parent)&&plan.records.every(({node,parent,attrs:before})=>node.isConnected&&node.ownerDocument===plan.document&&node.parentElement===parent&&attrs(node).every((value,i)=>allowPresentationChange&&i<2||value===before[i]))&&
    plan.nativeContents.every(node=>plan.document.defaultView.getComputedStyle(node).display==='contents')&&
    (!plan.focusViewport||isNativeScrollRegion(plan.focusViewport,'native-scroll-region',plan.document));
   if(!anchors||anchorsOnly)return anchors;
@@ -265,10 +280,15 @@ export function validateCriticalLayout(plan,{workspace,nativeControls=[],nativeS
  try{
   const doc=plan.document,win=doc.defaultView;
   if(!workspace?.isConnected||workspace.parentElement!==plan.root||!plan.composer.isConnected||!plan.header.isConnected||nativeControls.length>128)return false;
+  if(!sameExternalSeam(plan)||!plan.nativeComposerChain.every(({node,parent})=>node.isConnected&&node.ownerDocument===doc&&node.parentElement===parent))return false;
   if(nativeShadowCandidates.length>4096||nativeShadowCandidates.some(node=>node.isConnected&&node.shadowRoot))return false;
   if(win.getComputedStyle(plan.root).position!==plan.rootPosition)return false;
   const board=rect(workspace),form=rect(plan.composer);
   if(!positive(board)||!positive(form)||board.width<160||board.height<96||board.y<0||board.x<0||board.x+board.width>win.innerWidth+1||board.y+board.height>win.innerHeight+1||form.y+form.height>win.innerHeight+1||overlaps(board,form))return false;
+  if(plan.composer!==plan.nativeComposer){
+   const native=rect(plan.nativeComposer),s=win.getComputedStyle(plan.nativeComposer);
+   if(!positive(native)||plan.nativeComposer.checkVisibility?.({checkOpacity:true,checkVisibilityCSS:true,contentVisibilityAuto:true})!==true||s.display==='none'||s.visibility!=='visible'||overlaps(board,native)||native.x<0||native.y<0||native.x+native.width>win.innerWidth+1||native.y+native.height>win.innerHeight+1)return false;
+  }
   for(const member of plan.retainedMembers){
    if(!retainedBoundary(member,doc,{viewport:true}))return false;
    if(member.hidden)continue;

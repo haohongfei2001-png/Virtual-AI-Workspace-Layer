@@ -75,6 +75,7 @@ jobs:
             exit 0
           fi
           node tests/host/document-flow-browser.mjs
+          node tests/host/nested-home-flow-browser.mjs
           node tests/host/document-flow-boundary-browser.mjs "$RUNNER_TEMP/flow-boundary.json"
           node --test tests/host/frame-navigation-hydration-browser.mjs
           FREE_FLOW_READING_REPORT="$RUNNER_TEMP/flow-reading-probe.json" node tests/host/flow-reading-probe-browser.mjs
@@ -83,6 +84,7 @@ jobs:
           node tests/host/late-current-body-package-browser.mjs "$RUNNER_TEMP/late-current-body.json"
           VAIWL_PROBE_OUTPUT="$RUNNER_TEMP/terminal-delivery.json" node tests/host/terminal-delivery-mv3.mjs all
           node tests/host/browser-local-mv3.mjs --flow-only
+          node tests/host/browser-local-mv3.mjs --flow-only --nested-home
       - name: Actual packaged C2 conversation slice
         if: ${{ !cancelled() && github.event_name == 'push' }}
         run: |

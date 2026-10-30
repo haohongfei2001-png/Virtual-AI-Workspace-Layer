@@ -27,6 +27,27 @@ export function materializeFlatHomeBranch(){
  const leaf=document.createElement('div');leaf.id='fixture-flat-native-leaf';leaf.style.cssText='width:10px;height:0';branch.append(leaf);
  band.append(composer,branch);shell.append(reading,band);root.append(shell);
 }
+// The 2026-10-30 anonymous geometry read identified a nested home common
+// root and a separate native composer container. Only these relationships
+// and layout categories are observed; text, controls and CSS sizes below are
+// explicit synthetic inputs. This is not a captured native subtree.
+export function materializeNestedHomeFlow(){
+ const outer=document.querySelector('[data-app-shell-main-content-layout]'),main=outer.querySelector('[role=main]'),reading=main.querySelector('.home-composer-anchor'),form=main.querySelector('form');
+ outer.style.cssText='position:fixed;left:241px;top:0;width:calc(100vw - 241px);height:100vh;padding-top:52px;box-sizing:border-box';
+ main.style.cssText='position:relative;display:flex;flex-direction:column;width:100%;height:calc(100% - 16px);overflow:auto';
+ const header=document.querySelector('header[data-app-shell-titlebar]');header.style.cssText='left:241px;width:calc(100vw - 241px)';header.firstElementChild.style.width='100%';
+ const make=(id,css)=>{const n=document.createElement('div');n.id=id;n.style.cssText=css;return n;};
+ const wrap=make('nested-home-outer-contents','display:contents'),root=make('nested-home-root','display:flex;position:relative;flex-direction:column;width:100%;height:100%'),corridor=make('nested-home-corridor','display:contents');
+ const readA=make('nested-home-reading-a','display:contents'),readB=make('nested-home-reading-b','display:contents');
+ reading.style.cssText='position:relative;display:flex;width:100%;height:325px;flex:none';readB.append(reading);readA.append(readB);
+ const band=make('nested-home-band','display:flex;flex-direction:column;position:static;width:100%;flex:1'),before=make('nested-home-before','display:flex;width:min(808px,100%);height:0;margin-inline:auto'),after=make('nested-home-after','height:0;width:100%');
+ const container=make('nested-home-composer-container','display:block;width:100%;padding-bottom:16px;box-sizing:border-box'),inner=make('nested-home-composer-inner','display:block;position:relative;width:100%');
+ const plate=make('nested-home-composer-plate','display:flex;position:relative;flex-direction:column;width:min(808px,100%);margin:auto;border-radius:16px;background:rgb(242,242,242)');
+ const nativeTool=document.createElement('button');nativeTool.textContent='⋯';nativeTool.setAttribute('aria-label','Native container tool');nativeTool.style.cssText='position:absolute;right:0;bottom:0;width:20px;height:20px;padding:0';nativeTool.addEventListener('click',()=>globalThis.nestedHomeNativeClicks=(globalThis.nestedHomeNativeClicks??0)+1);
+ const contents=make('nested-home-form-contents','display:contents'),formWrap=make('nested-home-form-wrap','display:flex;width:min(768px,calc(100% - 40px));margin:auto');
+ form.style.cssText='position:relative;display:flex;width:100%;height:52px;margin:0';formWrap.append(form);contents.append(formWrap);plate.append(contents,nativeTool);inner.append(plate);container.append(inner);
+ band.append(before,container,after);corridor.append(readA,band);root.append(corridor);wrap.append(root);main.append(wrap);
+}
 export const longDesktopHTML=id=>observedDesktopHTML(id).replace('Fixture text','Fixture text'+'<span>x</span>'.repeat(3000));
 // Browser-side operations are fixture-only functions, passed to existing
 // Playwright runners. Assertions and grant/owner actions remain in the runners.

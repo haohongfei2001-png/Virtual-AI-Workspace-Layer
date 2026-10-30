@@ -2,6 +2,7 @@ import {hasNativeLayer} from './native-layer.mjs';
 import {profileElement} from './native-surface-boundary.mjs';
 import {nativeSidebarComposition} from './native-sidebar-composition.mjs';
 import {inspectNativeProjectSurface,inspectNativeHomeSurface} from './native-project-surface.mjs';
+import {nestedHomeFlowSeam} from './native-home-flow-seam.mjs';
 import {nativeReturnGapRect,isEmptyViewportMarker} from './native-return-gap.mjs';
 import {sidebarPresentationFits,nativeHistoryPresentation,historyFailureReasons} from './native-history-list.mjs';
 import {nativeReturnSlotRect} from './native-return-slot.mjs';
@@ -470,7 +471,9 @@ if(!p){
    // grid allocation is owned by this profile; unknown nested bands are not.
    const band=value.composer?.parentElement,corridor=value.reading?.parentElement;
    if(homeLayout&&seam.homeComposerBand==='direct-grid-under-native-contents-v1'&&band?.parentElement===corridor&&band.tagName==='DIV'&&document.defaultView.getComputedStyle(corridor).display==='contents'&&document.defaultView.getComputedStyle(band).display==='grid')shells.add(band);
-   value.flowSeam=Object.freeze({version:seam.version,roots:Object.freeze([...roots]),shells:Object.freeze([...shells])});
+   const nested=homeLayout&&seam.homeComposerContainer==='nested-native-contents-v1'?nestedHomeFlowSeam({document,reading:value.reading,composer:value.composer,isOwnedSurface}):null;
+   if(nested){roots.add(nested.root);shells.add(nested.band);}
+   value.flowSeam=Object.freeze({version:seam.version,roots:Object.freeze([...roots]),shells:Object.freeze([...shells]),...(nested?{composerMember:nested.composerMember,externalSeam:nested.externalSeam}:{})});
   }else{
    // The package's legacy reconstruction contract has direct MAIN children;
    // an extra arbitrary common ancestor is not a new implicit layout root.
