@@ -7,7 +7,7 @@ on:
         description: 'One isolated diagnostic, not full CI or acceptance'
         required: true
         type: choice
-        options: [temporary-project-startup, transport-expiry, temporary-navigation-appearance, j4-codec-after-evidence, fault-unknown-protocol, reading-paint-trace, cold-native-recovery, host-delivery-recheck]
+        options: [temporary-project-startup, transport-expiry, temporary-navigation-appearance, j4-codec-after-evidence, fault-unknown-protocol, reading-paint-trace, cold-native-recovery, host-delivery-recheck, flow-product-recheck]
   push:
     branches: [codex/vaiwl-free-first-20261013]
 
@@ -47,7 +47,7 @@ jobs:
   offline-journeys:
     # Public repository + standard GitHub-hosted runner only. No paid runner,
     # artifact/cache upload, credentials, deployment or private host access.
-    if: github.repository == 'haohongfei2001-png/Virtual-AI-Workspace-Layer' && github.event.repository.private == false && github.ref == 'refs/heads/codex/vaiwl-free-first-20261013' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && (inputs.diagnostic == 'temporary-project-startup' || inputs.diagnostic == 'transport-expiry' || inputs.diagnostic == 'temporary-navigation-appearance' || inputs.diagnostic == 'reading-paint-trace' || inputs.diagnostic == 'cold-native-recovery' || inputs.diagnostic == 'host-delivery-recheck')))
+    if: github.repository == 'haohongfei2001-png/Virtual-AI-Workspace-Layer' && github.event.repository.private == false && github.ref == 'refs/heads/codex/vaiwl-free-first-20261013' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && (inputs.diagnostic == 'temporary-project-startup' || inputs.diagnostic == 'transport-expiry' || inputs.diagnostic == 'temporary-navigation-appearance' || inputs.diagnostic == 'reading-paint-trace' || inputs.diagnostic == 'cold-native-recovery' || inputs.diagnostic == 'host-delivery-recheck' || inputs.diagnostic == 'flow-product-recheck')))
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -66,20 +66,23 @@ jobs:
           tests/b1/tooling/node_modules/.bin/playwright install --with-deps chromium
           node --input-type=module -e "import {chromium} from './tests/b1/tooling/node_modules/playwright/index.mjs'; console.log('FREE_CHROME_EXECUTABLE='+chromium.executablePath())" >> "$GITHUB_ENV"
       - name: Document-flow native protection and continuous packaged product journey
-        if: ${{ !cancelled() && (github.event_name == 'push' || inputs.diagnostic == 'reading-paint-trace' || inputs.diagnostic == 'host-delivery-recheck') }}
+        if: ${{ !cancelled() && (github.event_name == 'push' || inputs.diagnostic == 'reading-paint-trace' || inputs.diagnostic == 'host-delivery-recheck' || inputs.diagnostic == 'flow-product-recheck') }}
         env:
           VAIWL_DELIVERY_RECHECK: ${{ inputs.diagnostic == 'host-delivery-recheck' }}
+          VAIWL_FLOW_RECHECK: ${{ inputs.diagnostic == 'flow-product-recheck' }}
         run: |
           if test "$VAIWL_DELIVERY_RECHECK" = true; then
             node --test tests/host/ui10-admission-trace.test.mjs tests/host/ui10-admission-trace-outcome.test.mjs tests/host/offline-ci-partition.test.mjs
             node tests/host/browser-local-mv3.mjs --flow-only --nested-home
             exit 0
           fi
+          if test "$VAIWL_FLOW_RECHECK" != true; then
           if test "$GITHUB_EVENT_NAME" = workflow_dispatch; then
             echo 'Original first proof trace diagnostic only; never product acceptance'
             trap 'test ! -f "$RUNNER_TEMP/reading-paint-cpu.json" || cat "$RUNNER_TEMP/reading-paint-cpu.json"' EXIT
             FREE_READING_CPU_PROFILE="$RUNNER_TEMP/reading-paint-cpu.json" node tests/host/document-flow-browser.mjs
             exit 0
+          fi
           fi
           node tests/host/document-flow-browser.mjs
           node tests/host/nested-home-flow-browser.mjs
@@ -233,7 +236,7 @@ jobs:
           echo "Source commit: $GITHUB_SHA"
           echo "Event: $GITHUB_EVENT_NAME (workflow_dispatch is diagnostic only, never full CI)"
           echo 'This job is slice evidence, not 81-case/J1-J4/real ChatGPT acceptance.'
-          for name in flow-boundary flow-boundary-mv3 late-current-body terminal-delivery context-package context-container context-cold context-cold-trace context-cold-recovery context-forced-recovery context-dormant context-dormant-mutant context-transport-expiry context-transport-expiry-mutant context-stale context-stale-mutant j1 j3 first-send j2-journey j2-fast-failure j2-fast-cancelled ui10-matrix visible-actions frame-window-retention frame-focus-return local-status observed-project-layout temporary-navigation temporary-project-navigation challenge-status preauthorization snippets-package snippets-startup-trace; do
+          for name in flow-reading-probe flow-boundary flow-boundary-mv3 late-current-body terminal-delivery context-package context-container context-cold context-cold-trace context-cold-recovery context-forced-recovery context-dormant context-dormant-mutant context-transport-expiry context-transport-expiry-mutant context-stale context-stale-mutant j1 j3 first-send j2-journey j2-fast-failure j2-fast-cancelled ui10-matrix visible-actions frame-window-retention frame-focus-return local-status observed-project-layout temporary-navigation temporary-project-navigation challenge-status preauthorization snippets-package snippets-startup-trace; do
             if [ -f "$RUNNER_TEMP/$name.json" ]; then cat "$RUNNER_TEMP/$name.json"; fi
           done
   offline-durability-compat:

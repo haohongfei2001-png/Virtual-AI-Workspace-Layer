@@ -124,7 +124,7 @@ async function setupSearchRenderer(){
   const pane=()=>navigation.roots().workspace,input=()=>pane().shadow.querySelector('[data-focus-key="search-input"]');
   const snapshot=()=>{const current=input(),page=pane().scroller,rect=current.getBoundingClientRect();return {at:now(),currentId:id(current),originalId:id(original),sameInput:current===original,originalConnected:original?.isConnected??null,currentConnected:current.isConnected,value:current.value,start:current.selectionStart,end:current.selectionEnd,focused:pane().shadow.activeElement===current,documentHasFocus:document.hasFocus(),documentActive:document.activeElement?.tagName,shadowActive:pane().shadow.activeElement?.dataset.focusKey??null,rect:{width:rect.width,height:rect.height},visibility:getComputedStyle(current).visibility,pageVisibility:getComputedStyle(page).visibility,loading:pane().shadow.textContent.includes('正在查找已知记录'),empty:pane().shadow.textContent.includes('没有找到已知记录'),rowCount:pane().shadow.querySelectorAll('.search-results .row').length,scroll:page.scrollTop,windowScroll:{x:scrollX,y:scrollY},events:[...events],requests:[...requests],responses:responses.length};};
   for(const type of ['focus','blur','focusin','focusout','beforeinput','input'])pane().shadow.addEventListener(type,event=>{const target=event.composedPath()[0];events.push({at:now(),type,trusted:event.isTrusted,targetId:id(target),original:target===original,current:target===input(),connected:target.isConnected,value:target instanceof HTMLInputElement?target.value:null,inputType:event.inputType??null,data:event.data??null});},true);
-  globalThis.searchProbe={navigation,snapshot,prepare(){original=input();original.focus({preventScroll:true});original.setSelectionRange(0,original.value.length);events.length=0;requests.length=0;return snapshot();},refresh(){const before=snapshot();navigation.updateFrameProjection(project(query));return {before,after:snapshot()};},releaseResponses(){for(const response of responses.splice(0))response();}};
+  globalThis.searchProbe={navigation,snapshot,prepare(){original=input();original.focus({preventScroll:true});original.setSelectionRange(0,original.value.length);events.length=0;requests.length=0;return snapshot();},refresh(){const before=snapshot();navigation.updateFrameProjection({...project(query),compactRows:false});return {before,after:snapshot()};},releaseResponses(){for(const response of responses.splice(0))response();}};
  });
  await frame.waitForFunction(()=>searchProbe.snapshot().rowCount===24&&!searchProbe.snapshot().loading);await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
  const before=await frame.evaluate(()=>searchProbe.prepare());
@@ -149,6 +149,8 @@ try{
  for(const mode of ['retained-input','fresh-view-input']){
   const {page,frame,before,runProbe}=await setupSearchRenderer(),text='UI10 definitely absent query';
   const inputTask=page.waitForEvent('console',{predicate:message=>message.text()==='VAIWL_TEST_SEARCH_INPUT_WINDOW',timeout:2000}).then(async()=>{
+   // Force a real non-search presentation change. Result-only replies now
+   // preserve the input; this counterexample must still exercise replacement.
    const rebuild=mode==='fresh-view-input'?await frame.evaluate(()=>searchProbe.refresh()):null;
    const beforeInsert=await frame.evaluate(()=>searchProbe.snapshot());await page.keyboard.insertText(text);const afterInsert=await frame.evaluate(()=>searchProbe.snapshot());return {rebuild,beforeInsert,afterInsert};
   });
