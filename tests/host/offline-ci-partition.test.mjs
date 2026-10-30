@@ -163,7 +163,7 @@ test('only populated-native gets the evidence-backed longer finite job window',(
  const body=workflow.split('  cloud-supplementary-gates:')[1];
  const match=body.match(/timeout-minutes: \$\{\{ matrix\.gate == '([^']+)' && (\d+) \|\| (\d+) \}\}/);
  assert(match);assert.equal(match[1],'populated-native');assert.equal(Number(match[2]),25);assert.equal(Number(match[3]),15);
- const gates=body.match(/gate: \[([^\]]+)\]/)[1].split(',').map(v=>v.trim());assert.equal(gates.filter(g=>g===match[1]).length,1);
+ const gates=JSON.parse(body.match(/gate:.*\|\| '(\[[^']+\])'/)[1]);assert.equal(gates.filter(g=>g===match[1]).length,1);
  for(const gate of [...gates,'populated-native-extra','other'])assert.equal(gate===match[1]?Number(match[2]):Number(match[3]),gate==='populated-native'?25:15);
 });
 
@@ -180,7 +180,7 @@ test('six bounded evidence-reconciliation gates require exact source and narrow 
 
 
 test('supplementary scheduling retains previous coverage and adds one combined local asset gate',()=>{
- const body=workflow.split('  cloud-supplementary-gates:')[1],gates=body.match(/gate: \[([^\]]+)\]/)[1].split(',').map(v=>v.trim());
+ const body=workflow.split('  cloud-supplementary-gates:')[1],gates=JSON.parse(body.match(/gate:.*\|\| '(\[[^']+\])'/)[1]);
  const original=['fault-auth-failure','fault-unsafe-reading','fault-forged-scope','fault-csp','fault-iframe-destroy','fault-stale-response','fault-rate-limit','fault-corrupt','fault-unknown-protocol','privacy-main','privacy-isolated','idle-draft-active','idle-safe-empty-reading','populated-native','visual-components','existing-source-repair','native-entry-safety','page-command-native-fetch','non-atomic-terminal','mixed-role','mixed-role-alt','membership-after-message'];
  const priority=['fault-unknown-protocol','local-assets','native-entry-safety','populated-native','existing-source-repair','membership-after-message'];
  const expected=priority.concat(original.filter(g=>!priority.includes(g)));
@@ -235,6 +235,20 @@ test('unknown-protocol copy diagnostic never replaces the formal fault report',(
  assert(step.includes('FREE_FAULT_UNKNOWN_TRACE=1 timeout 180s node tests/host/fault-package-matrix-browser.mjs "$RUNNER_TEMP/fault-unknown-trace.json" unknown-protocol'));
  assert(step.includes('test "$result" -eq 2'));assert(step.includes('node tests/host/fault-unknown-trace-outcome.mjs "$RUNNER_TEMP/fault-unknown-trace.json" "$result" "$GITHUB_SHA"'));
  assert.doesNotMatch(step,/supplementary.json|continue-on-error|success\(\)|rerun/);
- assert(body.includes('fault-*) node tests/host/fault-package-matrix-browser.mjs "$report" "${SELECTED_GATE#fault-}" ;;'));
+ assert.match(body,/fault-\*\)\n\s+node tests\/host\/fault-package-matrix-browser.mjs/);
  assert(body.includes('test ! -f "$RUNNER_TEMP/fault-unknown-trace.json" || cat "$RUNNER_TEMP/fault-unknown-trace.json"'));
+});
+
+
+test('unknown runtime repair dispatch selects only its unchanged formal gate and retains exact runtime identity',()=>{
+ const all=Object.fromEntries([...workflow.matchAll(/^  ([\w-]+):\n([\s\S]*?)(?=^  [\w-]+:\n|$(?![\s\S]))/gm)].filter(m=>/^    runs-on:/m.test(m[2])).map(m=>[m[1],m[2]]));
+ const event={...allowedEvent,event_name:'workflow_dispatch'},input={diagnostic:'fault-unknown-protocol'};
+ const selected=(github,inputs)=>Object.keys(all).filter(name=>condition(all[name].match(/^    if: (.+)$/m)[1],github,inputs));
+ assert.deepEqual(selected(event,input),['cloud-supplementary-gates']);
+ for(const [github,inputs] of [[event,{}],[event,{diagnostic:'fault-corrupt'}],[{...event,event:{repository:{private:true}}},input],[{...event,repository:'other/repo'},input],[{...event,ref:'refs/heads/main'},input],[{...event,event_name:'pull_request'},input]])assert.deepEqual(selected(github,inputs),[]);
+ const body=all['cloud-supplementary-gates'],expression=body.match(/^        gate: \$\{\{ (.+) \}\}$/m)[1];assert.deepEqual(new Function('github','fromJSON','return '+expression)(event,JSON.parse),['fault-unknown-protocol']);
+ const script=body.match(/node -e "(const r=require\(process\.argv\[1\]\);[^\n]+)" "\$report"/)[1],rejected=Symbol('rejected'),run=new Function('require','process',script),check=value=>run(()=>value,{argv:['node','synthetic-report'],env:{GITHUB_SHA:'expected'},exit:()=>{throw rejected;}});
+ const good={sourceCommit:'expected',results:[{fault:'unknown-protocol',browserVersion:'158.0.8127.2'}]};check(good);
+ for(const bad of [{...good,sourceCommit:'old'},{...good,results:[]},{...good,results:[{...good.results[0],browserVersion:'156.0.8078.4'}]},{...good,results:[{...good.results[0],fault:'corrupt'}]}])assert.throws(()=>check(bad),e=>e===rejected);
+ assert(body.includes('fb01efc602946373162437203a5458c0aaaf706526cdcb465c8b319c25ae65df'));assert(body.includes('sha256sum --check -'));assert.doesNotMatch(body,/--version|continue-on-error|upload-artifact|actions\/cache|secrets\./);
 });

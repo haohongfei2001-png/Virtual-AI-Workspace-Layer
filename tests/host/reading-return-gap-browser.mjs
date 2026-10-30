@@ -48,6 +48,10 @@ try{
   const original=q('#text').style.cssText;q('#text').style.cssText='contain:paint;position:absolute;left:320px;top:70px;width:400px;height:400px';
   const oldRects=Range.prototype.getClientRects;let ranges=0;Range.prototype.getClientRects=function(){ranges++;return oldRects.call(this);};
   out.containedLongTranscriptLocal=ok()&&ranges===0;Range.prototype.getClientRects=oldRects;
+  let followingReason=null;args.onReject=value=>followingReason=value;
+  root.append(obstacle);out.containedBranchDoesNotSkipLaterSibling=!ok()&&followingReason==='reading-paint-overlap';obstacle.remove();
+  const nested=document.createElement('div');readingContent.replaceWith(nested);nested.append(readingContent);nested.after(custom);
+  followingReason=null;out.containedBranchDoesNotSkipAncestorSibling=!ok()&&followingReason==='reading-paint-opaque';custom.remove();nested.replaceWith(readingContent);delete args.onReject;
   const escaped=document.createElement('div');escaped.setAttribute('popover','manual');escaped.style.cssText='position:fixed;inset:0;margin:0;width:1000px;height:700px';q('#text').append(escaped);escaped.showPopover();
   out.containedTopLayerNotSkipped=!ok();escaped.hidePopover();escaped.remove();q('#text').style.cssText=original;
   let firstReject=null;args.onReject=stage=>{firstReject=stage;};

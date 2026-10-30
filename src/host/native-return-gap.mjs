@@ -145,9 +145,14 @@ export function nativeReturnGapRect({document,header,slot,hitRoot,readingRoot=nu
    // Keep their full pseudo/box/text scan, proving containment only if paint
    // would matter. The reading root never had the descendant prune exception.
    const containedLeaf=node=>node&&node!==readingRoot&&node.nodeType===1&&!node.firstElementChild&&containedOutsideBand(node);
-   const walker=document.createTreeWalker(readingRoot,5,{acceptNode:node=>node.nodeType===1&&node.firstElementChild&&containedOutsideBand(node)?2:1}),range=document.createRange();let node=readingRoot;
+   // Keep the same complete preorder scan without a JS filter callback for
+   // every native walker step. Only the already-proven contained subtree may
+   // be skipped; advance to its following sibling, ascending at most to root.
+   const walker=document.createTreeWalker(readingRoot,5),range=document.createRange();let node=readingRoot;
+   const afterSubtree=()=>{let next;while(!(next=walker.nextSibling()))if(!walker.parentNode())return null;return next;};
    do{
     if(!withinBudget()){stage='reading-paint-budget';return reject();}
+    if(node!==readingRoot&&node.nodeType===1&&node.firstElementChild&&containedOutsideBand(node)){node=afterSubtree();continue;}
     if(node.nodeType===1){
      if(node.shadowRoot||node.localName?.includes('-')){stage='reading-paint-opaque';return reject();}
      for(const pseudo of paintPseudos){
@@ -166,7 +171,8 @@ export function nativeReturnGapRect({document,header,slot,hitRoot,readingRoot=nu
      range.selectNodeContents(node);
      for(const box of range.getClientRects()){if(!withinBudget()){stage='reading-paint-budget';return reject();}if(paintBlocksGap(node,box)){stage='reading-paint-overlap';return reject();}}
     }
-   }while(node=walker.nextNode());
+    node=walker.nextNode();
+   }while(node);
    if(gapPolicy==='first-empty-header-gap'){
     gapBlocks.sort((a,b)=>a.x-b.x);
     for(const box of gapBlocks)if(overlap(r,box))r.x=box.x+box.width+8;

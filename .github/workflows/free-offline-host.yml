@@ -7,7 +7,7 @@ on:
         description: 'One isolated diagnostic, not full CI or acceptance'
         required: true
         type: choice
-        options: [temporary-project-startup, transport-expiry, temporary-navigation-appearance, j4-codec-after-evidence]
+        options: [temporary-project-startup, transport-expiry, temporary-navigation-appearance, j4-codec-after-evidence, fault-unknown-protocol]
   push:
     branches: [codex/vaiwl-free-first-20261013]
 
@@ -483,7 +483,7 @@ jobs:
 
   cloud-supplementary-gates:
     # Finite explicit offline cases, synthetic fixtures only. No artifacts or live credentials.
-    if: github.repository == 'haohongfei2001-png/Virtual-AI-Workspace-Layer' && github.event.repository.private == false && github.event_name == 'push'
+    if: github.repository == 'haohongfei2001-png/Virtual-AI-Workspace-Layer' && github.event.repository.private == false && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/codex/vaiwl-free-first-20261013' && inputs.diagnostic == 'fault-unknown-protocol'))
     runs-on: ubuntu-latest
     timeout-minutes: ${{ matrix.gate == 'populated-native' && 25 || 15 }}
     strategy:
@@ -491,7 +491,7 @@ jobs:
       max-parallel: 3
       matrix:
         # Prioritize the remaining causal gate and longest case; coverage and limits stay unchanged.
-        gate: [fault-unknown-protocol, local-assets, native-entry-safety, populated-native, existing-source-repair, membership-after-message, fault-auth-failure, fault-unsafe-reading, fault-forged-scope, fault-csp, fault-iframe-destroy, fault-stale-response, fault-rate-limit, fault-corrupt, privacy-main, privacy-isolated, idle-draft-active, idle-safe-empty-reading, visual-components, page-command-native-fetch, non-atomic-terminal, mixed-role, mixed-role-alt]
+        gate: ${{ fromJSON(github.event_name == 'workflow_dispatch' && '["fault-unknown-protocol"]' || '["fault-unknown-protocol","local-assets","native-entry-safety","populated-native","existing-source-repair","membership-after-message","fault-auth-failure","fault-unsafe-reading","fault-forged-scope","fault-csp","fault-iframe-destroy","fault-stale-response","fault-rate-limit","fault-corrupt","privacy-main","privacy-isolated","idle-draft-active","idle-safe-empty-reading","visual-components","page-command-native-fetch","non-atomic-terminal","mixed-role","mixed-role-alt"]') }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
@@ -516,7 +516,8 @@ jobs:
             printf '%s  %s\n' fb01efc602946373162437203a5458c0aaaf706526cdcb465c8b319c25ae65df "$vaiwl_archive" | sha256sum --check -
             unzip -q "$vaiwl_archive" -d "$RUNNER_TEMP/vaiwl-fixed-chrome"
             vaiwl_chrome="$RUNNER_TEMP/vaiwl-fixed-chrome/chrome-linux64/chrome"
-            test "$("$vaiwl_chrome" --version)" = 'Google Chrome for Testing 158.0.8127.2'
+            # The runner records Browser.version(); verify that exact value
+            # after the real launch instead of comparing OS-specific CLI branding.
             echo "FREE_CHROME_EXECUTABLE=$vaiwl_chrome" >> "$GITHUB_ENV"
           else
             tests/b1/tooling/node_modules/.bin/playwright install --with-deps chromium
@@ -529,7 +530,12 @@ jobs:
         run: |
           report="$RUNNER_TEMP/supplementary.json"
           case "$SELECTED_GATE" in
-            fault-*) node tests/host/fault-package-matrix-browser.mjs "$report" "${SELECTED_GATE#fault-}" ;;
+            fault-*)
+              node tests/host/fault-package-matrix-browser.mjs "$report" "${SELECTED_GATE#fault-}"
+              if test "$SELECTED_GATE" = fault-unknown-protocol; then
+                node -e "const r=require(process.argv[1]);if(r.results?.length!==1||r.results[0].fault!=='unknown-protocol'||r.results[0].browserVersion!=='158.0.8127.2'||r.sourceCommit!==process.env.GITHUB_SHA)process.exit(1)" "$report"
+              fi
+              ;;
             local-assets)
               node tests/host/backup-package-mv3-browser.mjs "$RUNNER_TEMP/local-backup.json"
               node tests/host/recovery-package-mv3-browser.mjs "$report"
