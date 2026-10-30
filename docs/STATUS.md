@@ -1,5 +1,21 @@
 # VAIWL实际状态：渐进积累工程已接线，真实来源逐项待准入
 
+## 2026-10-30 必要内部门收口、同ID激活与真实首页定向复验
+
+正式分支及Draft PR16不变。测试源码提交 `4604d46e63f5014d8fc81d6edaabc362473b7345` 的限定CI [41065211844](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/actions/runs/41065211844) 两个运行job均PASS：54项受影响合同、修正后的nested完整连续MV3旅程，以及原populated 64次导航/64条证据/64次本地使用、8格布局与4张完整PNG。原当前使用oracle为 `PASS_CURRENT_USE_MV3_SUBCONTRACT`；原历史 `PARTIAL_UI10_HISTORY_NOT_COVERED` 不改写，取消历史项不转发布欠账。4张当前SHA的桌面浅色/窄屏深色初始与长列表末端图实际查看，未发现新增明显P0/P1；不据这4张图宣称8格全视觉或真实ChatGPT审查。
+
+205个生产来源逐一绑定Git对象并与fd008相同；1171个未变测试输入保留，4个改动输入由上述限定门覆盖。fd008统一CI的40个通过job及11978/11978 Node结果按精确来源保留；未重复42门，也不将限定运行称作一套新的42-job CI。冻结包构建指纹 `06997a97e8f4f814bb1919172bdb240260ea7218f142cc608b14e8c063493ae7`，ZIP SHA256 `7a04425a13a863afaec4eff1ce5eecd7f8dab3311742ddd03990707db5781f40`。本节结算仅修改状态文档，不改变生产包或任何测试输入，后续正式HEAD可按全部来源哈希复用这些结果，无需重装或重跑。
+
+失败分类：窄首页失败为测试遗漏原生输入交接后的真实四格返回，已修正并通过原断言；fd008 populated第5次缺证仍为UNKNOWN，不能用本次通过倒改原FAIL。其已证现象是C3证据活性缺失，没有观察到越权/伪ACK/错误归属；BrowserLocal禁止启用该C3详情/历史/ACK链，因此不构成新增个人模式安全前置。被动观察达到512条上限、丢48条，明确 `INCOMPLETE / absenceInferenceAllowed=false`，未用于缺席推断。
+
+本人再次正常退出原Profile后，新完整一致资料备份2247文件/440621539字节已逐字节验证，更新前2955个源码文件另有完整备份。原同ID目录替换8个包文件并新增1个有限首页适配文件，204个包文件全部匹配，2752个额外文件保持原样，Profile元数据未改。host/storage权限不变；manifest只增加该适配模块的同源公开资源声明。未清理Profile、IndexedDB、草稿、旧资料或原未提交成果。
+
+真实诊断首先确认新content构建、两个frame/grant与返回入口，但导航全部收到拒绝ACK。该时点没有Worker运行版本证明，不能将磁盘文件或content构建当完整激活。执行者遗漏了未打包扩展要求的显式reload；补齐本人同ID“重新加载扩展→刷新首页→四格返回”后，用户固定字段回执为 **ready**：workspace/sidebar均报告visible，acceptedPackets=7、rejectedPackets=0、nativeRevision=5、refs=12、rendered rows=5。此次首页挂载和全拒包障碍通过定向复验；没有修改安全准入。旧Worker缓存/版本错配与症状相容，但未检查旧运行脚本，不能声称唯一根因已获证明。[Chrome官方更新要求](https://developer.chrome.com/docs/extensions/get-started/tutorial/hello-world#reload-the-extension)
+
+当前P0/P1边界：内部必要门已按来源闭合，真实首页技术链已通；12条UNKNOWN记录不证明Project归属或完整导航库存。真实Project/普通聊天连续旅程、搜索/时间、模型/工具/附件与物理IME、本人确认旧资产恢复、真实窗口主题/重启连续性及可逆停启仍为 **NOT_RUN**。旧私人资料继续锁定符合合同；新增选区读取仍须获验证的真实来源合同，不由一般授权推定。无关Pro、极端优化及已取消历史范围不进入当前关键路径。
+
+外部阻塞明确：本地浏览器工具持续返回 `Local browser use is disabled in Work settings`，在用户确认开启及一次工具连接重置后仍未恢复。没有用其他通道绕过，没有读取私人正文或账号，不再转嫁一串手工产品测试；最后3次Apple Events几何额度已耗尽，未追加执行。代码候选已冻结且同ID激活；隔离适用门通过；真实Mac仅首页诊断子合同通过，完整实机、个人长期日用、完整Free、公开发布均未接受。PR继续Draft，不merge、部署或发布，无后台测试继续运行。
+
 ## 2026-10-30 冻结门失败分类与限定复核
 
 `fd008fbf9a9ffa2b734a4843d3b3b836d08bc79d` 的统一CI `41060093933` 已结束 **40/42 jobs PASS**，完整Node **11978/11978**、原guard变异、unknown-protocol、三套UI、本地资产和其他已完成门通过。原安装没有更新；真实主区P0仍开放。
