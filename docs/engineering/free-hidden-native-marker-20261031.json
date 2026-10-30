@@ -288,5 +288,25 @@
       "sourceCommit": "5ce85585",
       "followingFocusFixNotIncluded": true
     }
+  },
+  "failedInitialRequestRecovery": {
+    "originalRun": 41111182580,
+    "originalJob": 124253891896,
+    "originalEventOrder": "NOT_CAPTURED",
+    "classification": "DETERMINISTIC_PRODUCTION_RECOVERY_DEFECT_ORIGINAL_CLOUD_ORDER_NOT_PROVEN",
+    "red": [
+      "failed initial GET leaves empty bookkeeping which drops next new pending native GET on history",
+      "revocation callback can replace the same document key before retirement"
+    ],
+    "fix": "Retire only the still-current revoked failed document with no pending siblings. Retain closed request IDs and poisoned sibling epochs; new GET must establish all original evidence.",
+    "nodePassed": 12010,
+    "targetedPassed": 169,
+    "formalForcedRecovery": "PASS",
+    "sourceInputsVerified": 206,
+    "independentSafetyReview": "NO_BLOCKING_FINDING",
+    "requestBudgetChanged": false,
+    "permissionsChanged": false,
+    "realMac": "NOT_RUN",
+    "sourceHash": "ef4fb72ba9e22d36d517720ae7465e6b806dc1d339f059cd03260495a9f47920"
   }
 }

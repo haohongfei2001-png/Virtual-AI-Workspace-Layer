@@ -1,5 +1,13 @@
 # VAIWL实际状态：渐进积累工程已接线，真实来源逐项待准入
 
+## 2026-10-31 初次失败后的新原生导航恢复
+
+91bd9651统一CI41111182580的完整Node12008/12008及guard12/12通过；截至本节已有40个job通过，populated仍在途，offline-journeys仅受控cold-unavailable-recovery超时而失败。此前取消导航及frame-renderer的旧失败本轮通过。原冷恢复FAIL保留：先503、缺私有surface、再原生导航200后仍无frame；原worker事件顺序未捕获，不能宣布唯一实时根因。
+
+新增确定性反例证明独立生产缺口：初次已受理请求失败后空document保留request-failed原因，下一真正新GET若先于其history事件但尚未完成首次frame lookup，会被错误丢弃。现在仅在原失败已drop撤权、无receipt且无pending sibling时退役该空document，closedRequests继续保留消费ID；新GET重新走原完整frame/tab/body/context检查与6秒预算。pending sibling仍保留被撤销epoch，不能借清理恢复旧授权。同步撤权回调若建立同key新document，删除前identity复核保护它。两个反例修前RED，未放宽原断言或时间/请求预算。
+
+169项定向及最终完整Node **12010/12010**（零失败/跳过）通过；最终实际打包503→原生导航→新grant/实际VIEW→唯一Return恢复PASS，206源hash逐一匹配。独立只读安全审查无阻断。此前本地未修版本也可通过此非确定事件时序，因此不以单次PASS倒改云端FAIL；新候选须核对云端恢复门。原安装/Profile/资产未变，实机续期尚待用户确认，最终候选内部门通过前不开始原生终验。当前修复属于既定恢复可靠性，不新增产品范围。
+
 ## 2026-10-31 结果区键盘焦点回归修复并重新冻结
 
 55c622统一CI的Node为12004/12007，三个失败均属真实遗漏：原位结果更新保留搜索输入，却替换了分页/片段控件而未恢复它们的焦点。沿已有scope与时间有界焦点恢复逻辑修正，只恢复非输入控件，不重新聚焦正在键入的原输入。原三个测试不改断言，修前本机同样RED；修后134项受影响合同、完整Node **12008/12008**（零跳过）、真实每字符回包连续输入及正式nested完整BrowserLocal MV3旅程PASS。完整Node包括此前同步的42项workflow合同；没有新增覆盖数字合并。

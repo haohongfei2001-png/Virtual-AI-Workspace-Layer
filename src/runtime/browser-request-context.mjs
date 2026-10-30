@@ -139,7 +139,17 @@ export function createBrowserRequestContext({webRequest,getFrame,getTab,associat
  }
  // Protect only an installed receipt from a newer successful native request.
  // Without one, a failed old request must still poison pending preparations.
- function fail(details){const r=requests.get(details?.requestId);if(!r)return;requests.delete(r.requestId);closedRequests.set(r.requestId,r);if(r.accepted&&(!r.document.receipt||r.epoch===r.document.epoch)&&documents.get(key(r))===r.document)drop(r.document,'request-failed');}
+ function fail(details){
+  const r=requests.get(details?.requestId);if(!r)return;requests.delete(r.requestId);closedRequests.set(r.requestId,r);
+  if(r.accepted&&(!r.document.receipt||r.epoch===r.document.epoch)&&documents.get(key(r))===r.document){
+   drop(r.document,'request-failed');
+   // Retire only empty failed bookkeeping, after revocation. A genuinely new
+   // native GET then starts cold; no failed epoch or prior selection survives.
+   // Pending siblings retain the poisoned epoch, and consumed request IDs stay
+   // in closedRequests so neither delayed preparation nor replay can revive it.
+   if(documents.get(key(r))===r.document&&![...requests.values()].some(p=>p.document===r.document))documents.delete(key(r));
+  }
+ }
  function complete(details){
   diagnostic('completion-observed');
   // A cache flag is observable even when no matching send event was admitted;

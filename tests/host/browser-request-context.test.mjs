@@ -216,3 +216,30 @@ test('history switch from ordinary to container chat revokes old receipt and req
  const next=f.details({requestId:'container-next',url:origin+'/backend-api/conversation/'+D});f.webRequest.onSendHeaders.emit(next);f.owner.invalidateHistory({tabId:7,frameId:0,documentId:'doc',documentLifecycle:'active',frameType:'outermost_frame',url:actualURL});
  assert.equal(f.owner.isCurrent(frame,old),false);assert.equal(await f.owner.verify(current),null);await f.finish(next);const receipt=await f.owner.verify(current);assert.equal(receipt?.conversationId,D);assert.equal(Object.hasOwn(receipt,'projectId'),false);
 });
+
+test('a completed failed initial GET does not poison the next native navigation before its first lookup',async t=>{
+ const trace=[],f=fixture(t,{onDiagnostic:code=>trace.push(code)}),first=await f.send();
+ f.webRequest.onCompleted.emit({...first,statusCode:503,fromCache:false});await flush();
+ assert.equal(await f.owner.verify(frame),null);assert.equal(f.ready.length,0);
+ const actualURL=origin+'/c/'+D;f.current={...browserFrame,url:actualURL};
+ const next=f.details({requestId:'fresh-after-failure',url:origin+'/backend-api/conversation/'+D});
+ f.webRequest.onSendHeaders.emit(next);
+ f.owner.invalidateHistory({...browserFrame,tabId:7,frameId:0,url:actualURL});
+ assert.equal(await f.owner.verify({...frame,actualURL}),null,'history alone grants nothing');
+ await f.finish(next);const receipt=await f.owner.verify({...frame,actualURL});
+ assert.equal(receipt?.conversationId,D);assert.equal(receipt?.contextId,'team');assert.equal(f.ready.length,1);
+ assert(trace.includes('history-retained-pending'));
+ // The failed request remains consumed even after its empty document is retired.
+ f.webRequest.onSendHeaders.emit(first);await f.finish(first);
+ assert.equal(await f.owner.verify({...frame,actualURL}),receipt);
+});
+
+test('failed-document retirement cannot remove a replacement created during revocation',async t=>{
+ let armed=false,next,f;const actualURL=origin+'/c/'+D;
+ f=fixture(t,{onInvalidate:()=>{
+  if(!armed)return;armed=false;f.owner.invalidateTab(7);f.current={...browserFrame,url:actualURL};
+  next=f.details({requestId:'replacement-after-revoke',url:origin+'/backend-api/conversation/'+D});f.webRequest.onSendHeaders.emit(next);
+ }});
+ const first=await f.send();armed=true;f.webRequest.onCompleted.emit({...first,statusCode:503,fromCache:false});await flush();
+ assert(next);await f.finish(next);assert.equal((await f.owner.verify({...frame,actualURL}))?.conversationId,D);
+});
