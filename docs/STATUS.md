@@ -2,6 +2,8 @@
 
 ## 2026-10-30 终局候选整合与同源产品门
 
+`38371e1b6de9b6df1b0617be319fbf590f374e64` 的冻结 Node 为 11922 PASS / 1 FAIL；唯一失败是旧 idle trace 的精确 source anchor 未包含新增 snippets owner，导致该测试模块拒绝加载。后续 18 runner 均 NOT_RUN，正式远端 ref 仍未移动。当前只修测试插桩的 owner 数组与名字映射；实际 binding 的 snippets 清理和后续 views 准备分别挂起时，plain/trace 的 CHECK、RELEASE、grant 保全与最终恢复决策一致，删除或重排 owner 仍拒绝插桩。16 项定向通过；生产源码不改，旧 FAIL 保留，继续新 SHA 的完整冻结。
+
 `ee1860120fe4e889dcd98d3b1d7459f3e705ce06` 完成 Node 11916/11916 及前 9 个冻结 runner。随后完整性审查确认另一个可自主关闭的接线缺口，因此在自然 checkpoint 停止该次冻结，余 10 个记 NOT_RUN；该中间 commit 只创建了远端 Git 对象，未移动正式远端 ref、未触发额外 CI。原始回执保持，不冒充全套通过。
 
 本批让 BrowserLocal 已有片段的 LIST/remove 独立于尚不可用的原生选区来源：仅个人空间、当前 view 与原 human CAS 可读写旧资产；无 bridge 的 save/locate 在准备 view 前拒绝，不读取原生正文、不改 anchor/hash。限制型 DTO 只能携带 `nativeSelectionAvailable:false`；界面禁用新建/定位并解释，未确认空间的三个资产入口也禁用。生产包 WIP 的备份六业务及已有片段只读预览、显式删除、其余人工资产/草稿/Range 保全通过；已有原生片段旅程继续单独核验，不能以本地列表通过关闭新捕获来源阻塞。片段 owner 的真实 scope 工作与独立异步 release 纳入 idle 判定，六秒 RPC 返回后不提前归零；真实 binding 的 idle-check/release 在清理 resolve/reject 前拒绝、settle 后恢复。定向与独立代码审查通过，当前源码再做唯一完整冻结和一次远端 CI。
