@@ -2,6 +2,12 @@
 
 ## 2026-10-30 终局候选整合与同源产品门
 
+`a80ecb914f4064c07d2e5c23fdeb77e115f9890d` 完整冻结 Node 11928/11928，19 个 runner 中 18 个通过；当前三个 BrowserLocal 资产业务门及独立三 profile 个人离线像素门通过，限定 L1 2/2、L2 15/15。未知协议 runner 仍 FAIL，整体内部关口保持 FAIL、远端 ref 未移动。动作窗 request3 在 HTTP 200 后 ERR_ABORTED，窗前完整响应不计入；五份读取/解析/校准包内源码 hash 与 `0fe8dc6b` 相同。一次 copy-only owner trace 与一次未改包 Network stream 诊断均 INCOMPLETE、未复现原失败，不能覆盖原 FAIL。
+
+已确认原未知协议前置的分支竞争：关闭阅读后马上返回，没有核实自动休眠的真实 release/所有已挂载角色 clear 是否完成，返回可以落在不同 binding 生命周期。当前仅增加有界、被动的已完成休眠前置后执行一次唤醒，保留完整未知 JSON、全动作窗 GET、前台优先和原六秒边界；不宣称此即旧 ERR_ABORTED 的根因。快速往返安全回归及所有旧失败继续保留，修正后再执行同 SHA 全部适用关口。
+
+此前置 73 项定向与单次正式包 WIP 通过：本场唯一实际挂载角色 workspace 的原文档/main 已清空，真实 release request/reply 同序号成功，102.071ms 内完成，observer 恢复、CDP 脱离及资源清理通过。其后一次 Return 的 `(2,3]` 窗只含 request3，HTTP200/完整50字节未知JSON成立；窗前 request2 的 ERR_ABORTED 原样保留、不用于目标窗裁决。WIP 不替代冻结及云端结果。
+
 `38371e1b6de9b6df1b0617be319fbf590f374e64` 的冻结 Node 为 11922 PASS / 1 FAIL；唯一失败是旧 idle trace 的精确 source anchor 未包含新增 snippets owner，导致该测试模块拒绝加载。后续 18 runner 均 NOT_RUN，正式远端 ref 仍未移动。当前只修测试插桩的 owner 数组与名字映射；实际 binding 的 snippets 清理和后续 views 准备分别挂起时，plain/trace 的 CHECK、RELEASE、grant 保全与最终恢复决策一致，删除或重排 owner 仍拒绝插桩。16 项定向通过；生产源码不改，旧 FAIL 保留，继续新 SHA 的完整冻结。
 
 `ee1860120fe4e889dcd98d3b1d7459f3e705ce06` 完成 Node 11916/11916 及前 9 个冻结 runner。随后完整性审查确认另一个可自主关闭的接线缺口，因此在自然 checkpoint 停止该次冻结，余 10 个记 NOT_RUN；该中间 commit 只创建了远端 Git 对象，未移动正式远端 ref、未触发额外 CI。原始回执保持，不冒充全套通过。

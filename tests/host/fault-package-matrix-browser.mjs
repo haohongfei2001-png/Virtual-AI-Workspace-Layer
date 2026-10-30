@@ -15,6 +15,7 @@ import {observeFaultMetadataResponse,createFaultMetadataRequestTracker,unknownAc
 import {createFaultUnknownTracePackage,verifyFaultUnknownTracePackage,captureFaultUnknownTrace,summarizeFaultUnknownTrace,FAULT_UNKNOWN_TRACE_KIND} from './fault-unknown-trace.mjs';
 import {runCspPositiveControl} from './fault-csp-control-browser.mjs';
 import {observeFaultBodyStream,BODY_STREAM_KIND} from './fault-body-stream-observer.mjs';
+import {installFaultDormancyPrecondition} from './fault-dormancy-precondition.mjs';
 const unknownTraceEnabled=process.env.FREE_FAULT_UNKNOWN_TRACE==='1';
 const bodyStreamEnabled=process.env.FREE_FAULT_BODY_STREAM==='1';
 const requestedCases=process.argv[3]?process.argv[3].split(','):faultCases;
@@ -23,10 +24,12 @@ if(unknownTraceEnabled)assert.deepEqual(requestedCases,['unknown-protocol'],'unk
 if(bodyStreamEnabled){assert.deepEqual(requestedCases,['unknown-protocol'],'body stream requires the single designated case');assert.equal(unknownTraceEnabled,false,'body stream observes only the unchanged package');}
 const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
 const paths=['tests/host/fault-package-matrix-browser.mjs','tests/host/fault-metadata-response.mjs','tests/host/fault-csp-observer.mjs','tests/host/fault-csp-contract.mjs','tests/host/fault-csp-control-browser.mjs','tests/host/disable-states-profile.mjs','tests/host/fault-package-contract.mjs','tests/host/expected/fault.mjs','tests/host/fixtures/server.mjs','tests/host/fixtures/variants-server.mjs','tests/host/fixtures/variants-native.mjs','tests/host/fixtures/native.mjs','tests/host/fixtures/native.css','tests/host/fixtures/legacy.html','tests/host/native-visibility-browser.mjs','tests/host/historical-network-guard.mjs','tests/host/isolated-browser-cleanup.mjs'];
+if(requestedCases.includes('unknown-protocol'))paths.push('tests/host/fault-dormancy-precondition.mjs');
 if(unknownTraceEnabled)paths.push('tests/host/fault-unknown-trace.mjs');
 if(bodyStreamEnabled)paths.push('tests/host/fault-body-stream-observer.mjs');
 const evidenceHashes=Object.fromEntries(await Promise.all(paths.map(async p=>[p,hash(await readFile(p))])));
 const report={status:'NOT_RUN',evidence:'ACTUAL_PACKAGED_MV3_DESIGNATED_FAULT_OBSERVATIONS',sourceCommit:process.env.GITHUB_SHA??null,realChatGPT:'NOT_RUN',fullFAULT:'NOT_ESTABLISHED',requestedCases,evidenceHashes,limits:['Finite terminal observation is not infinite-time retry proof.','iframe-destroy removes frames before prior JOIN; already-issued grant revocation is a separate gate.','stale-response delays native navigation, which changes route when released; old worker epoch rejection is a separate context-stale-request-package-browser gate.'],results:[]};
+if(requestedCases.includes('unknown-protocol'))report.limits.push('Unknown protocol covers only a completed reading-to-dormant-to-wake journey. Rapid return cancellation remains a separate safety contract. This precondition does not establish the cause of earlier aborted responses.');
 if(unknownTraceEnabled)Object.assign(report,{evidence:FAULT_UNKNOWN_TRACE_KIND,diagnosticOnly:true,acceptance:'NOT_ESTABLISHED',formalReportSuperseded:false});
 if(bodyStreamEnabled){Object.assign(report,{evidence:BODY_STREAM_KIND,diagnosticOnly:true,acceptance:'NOT_ESTABLISHED',formalReportSuperseded:false});report.limits.push('Additional non-intercepting Network session can change timing. Only its own request ID binds stream and cache readback; Playwright correlation is not exact. Network completion is not production reader EOF.');}
 if(unknownTraceEnabled)report.limits.push('Copy-only synchronous probes can perturb timing. This collector intentionally reports correlationComplete=false: unique-action order alone is only a candidate. Optional unique synthetic response headers link the actual response across processes but change diagnostic headers and cannot establish causality. Complete capture does not close target GET acceptance or supersede the formal FAIL.');
@@ -57,7 +60,7 @@ for(const fault of requestedCases){
  if(metadataLifecycle)result.metadataLifecycle=metadataLifecycle;
  let trace,traceWorker,traceBefore,traceAfter,traceRows,traceBrowserEvents=[],traceBrowserDropped=0,traceClock=performance.now();
  const traceBrowserEvent=event=>{if(traceBrowserEvents.length<256)traceBrowserEvents.push(event);else traceBrowserDropped++;};
- let server,guard,handle,dir,build,built,page,cspRescan,cspRecheck,cspMountsBefore,bodyStream,phase='setup';
+ let server,guard,handle,dir,build,built,page,cspRescan,cspRecheck,cspMountsBefore,bodyStream,dormancy,phase='setup';
  try{
   server=await createHostFixtureServer({profile:'FAULT',fault,...(unknownTraceEnabled?{faultUnknownTrace:true}:{}),...(['rate-limit','corrupt','unknown-protocol'].includes(fault)?{faultNativeBody:true}:{})});guard=await createHistoricalNetworkGuard({fixtureOrigin:server.origin});dir=await mkdtemp(join(tmpdir(),'vaiwl-fault-'+fault+'-'));
   built=packageHost(join(dir,'package'),{offlineOrigin:server.origin,...(['rate-limit','corrupt','unknown-protocol'].includes(fault)?{offlineHistory:true}:{})});build=JSON.parse(await readFile(join(built.unpacked,'build-manifest.json')));result.sourceHashes=build.sourceHashes;result.metadataReadEnabled=build.offlineHistory===true;result.fixture=server.manifest;if(['rate-limit','corrupt','unknown-protocol'].includes(fault))assert.equal(result.fixture.faultNativeBody,true,'independent native body fixture must be enabled at actual server entry');
@@ -102,7 +105,11 @@ for(const fault of requestedCases){
   if(['rate-limit','corrupt','unknown-protocol'].includes(fault)){
    result.nativeMessageIds=await page.locator('#reading [data-message-id]').evaluateAll(nodes=>[...new Set(nodes.map(n=>n.getAttribute('data-message-id')))]);assert.deepEqual(result.nativeMessageIds,['msg-self']);
    const workspace=frame();await workspace.evaluate(()=>{globalThis.faultCalibration=[];const send=chrome.runtime.sendMessage.bind(chrome.runtime);chrome.runtime.sendMessage=function(...args){const result=send(...args);if(args[0]?.type==='HOST_UI_CALIBRATION_ENTRY'&&result?.then)result.then(r=>faultCalibration.push({ok:r?.ok,state:r?.state}),()=>faultCalibration.push({rejected:true}));return result;};});
-   const close=page.getByRole('button',{name:'返回原生阅读',exact:true});if(await close.isVisible())await close.click();
+   const close=page.getByRole('button',{name:'返回原生阅读',exact:true});
+   if(fault==='unknown-protocol'){
+    phase='unknown-dormancy-precondition';dormancy=await installFaultDormancyPrecondition({context,page,extensionId:id});result.dormancyPrecondition=dormancy.receipt;
+    await dormancy.arm();assert.equal(await close.isVisible(),true,'unknown protocol requires the one original workspace close');await close.click({timeout:dormancy.remaining()});await dormancy.wait();await dormancy.close();phase='fault-terminal';
+   }else if(await close.isVisible())await close.click();
    if(trace)traceBefore=await captureFaultUnknownTrace(worker);
    if(fault==='unknown-protocol'){result.calibrationRequestBoundary=metadataTracker.boundary();recordMetadataLifecycle(metadataLifecycle,'calibration-before',null,{boundary:result.calibrationRequestBoundary});}
    await page.getByRole('button',{name:'返回工作空间',exact:true}).click();await workspace.waitForFunction(()=>faultCalibration.length===1);if(fault==='unknown-protocol')result.calibrationTerminalBoundary=metadataTracker.boundary();const terminal=await workspace.evaluate(()=>faultCalibration[0]);result.calibrationObservation=terminal;if(fault==='unknown-protocol')recordMetadataLifecycle(metadataLifecycle,'calibration-terminal',null,{boundary:result.calibrationTerminalBoundary});assert.equal(terminal.ok,false);result.calibrationTerminal=terminal.state;
@@ -165,8 +172,8 @@ for(const fault of requestedCases){
  finally{
   if(bodyStream)try{result.bodyStream=await bodyStream.finish();}catch{result.bodyStream={kind:BODY_STREAM_KIND,status:'FAIL_DIAGNOSTIC',captureComplete:false,reason:'collector-unavailable'};}
   if(trace){try{traceAfter=await captureFaultUnknownTrace(traceWorker);}catch{result.traceCaptureError='snapshot-unavailable-or-timeout';}try{result.tracePackageVerified=await verifyFaultUnknownTracePackage(trace);}catch{result.tracePackageVerified=false;}try{result.workerTrace={before:traceBefore??null,after:traceAfter??null};result.browserTrace={clock:'node-performance-relative',timeOrigin:performance.timeOrigin,start:traceClock,limit:256,dropped:traceBrowserDropped,events:traceBrowserEvents};result.traceFixture=server.snapshot().faultUnknownTrace??null;result.traceSummary=summarizeFaultUnknownTrace({fixtureResponseTrace:result.traceFixture,before:traceBefore,after:traceAfter,rows:traceRows?.rows()??[],start:result.calibrationRequestBoundary,end:result.calibrationTerminalBoundary,browserEvents:traceBrowserEvents,browserDropped:traceBrowserDropped});}catch{result.traceSummary={status:'INCOMPLETE',correlationComplete:false,reason:'trace-capture-or-verification-failed'};}}
-  const cleanup=await Promise.allSettled([handle?.close(),server?.close(),guard?.close()]);result.cleanupOK=cleanup.every(r=>r.status==='fulfilled');result.guardClosed=guard?.snapshot().closed===true;
-  result.cleanupErrors=cleanup.flatMap((r,i)=>r.status==='rejected'?[{resource:['browser','fixture','network-guard'][i],code:/^[A-Z_]{1,40}$/.test(r.reason?.code??'')?r.reason.code:'CLOSE_FAILED'}]:[]);
+  const observerCleanup=await Promise.allSettled([dormancy?.close()]);const cleanup=await Promise.allSettled([handle?.close(),server?.close(),guard?.close()]);result.cleanupOK=[...observerCleanup,...cleanup].every(r=>r.status==='fulfilled');result.guardClosed=guard?.snapshot().closed===true;
+  result.cleanupErrors=[...observerCleanup,...cleanup].flatMap((r,i)=>r.status==='rejected'?[{resource:['dormancy-observer','browser','fixture','network-guard'][i],code:/^[A-Z_]{1,40}$/.test(r.reason?.code??'')?r.reason.code:'CLOSE_FAILED'}]:[]);
   result.sourceChanged=(await Promise.all(Object.entries({...build?.sourceHashes,...evidenceHashes}).map(async([path,digest])=>hash(await readFile(path))!==digest))).some(Boolean);
   // Only this runner's new temporary root; Chromium descendants may finish
   // their last profile writes just after the launcher has closed its process.
