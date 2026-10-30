@@ -230,5 +230,38 @@
     "src/host/document-flow-layout.mjs": "c6d46a693f97d3666b059068452f7235527fa8c062afe7ff4b4ff77b8a971d92",
     "tests/host/document-flow-browser.mjs": "9b4c1ada9f9d7b857ef2d073ad4082fa2a0b92e2c5ecc0255f8672b6bb4efb55",
     "tests/host/browser-local-mv3.mjs": "6f2476ebb79ef03659d8196f6254d342b0ad0b8be112bf69107e8b86105bf6e1"
+  },
+  "followingSearchAndFixtureClosure": {
+    "classification": "PRODUCTION_INPUT_FOCUS_CHURN_FIXED_ORIGINAL_CLOUD_EVENT_CAUSE_NOT_UNIQUELY_PROVEN",
+    "ciRun": 41107412599,
+    "sourceCommitBefore": "bc3587e5824f10c13e5c33d53358a9d64e57d5ba",
+    "originalFailure": "PARTIAL long-Chinese search keyboard sequence lost one n; original FAIL retained",
+    "evidence": "Original input events show focused search nodes replaced during the sequence. The exact missing-key browser dispatch was not recorded.",
+    "fix": "Only search results change when all non-search DTO fields match exactly; preserve live input/page/focus, update results and query-specific scroll state. Scope/policy/presentation changes still fully render; invalidation clears retained references.",
+    "red": "Existing result-only response replaced original input; deterministic identity assertion failed.",
+    "green": {
+      "targetedNode": 44,
+      "realBrowserContinuousKeyboard": {
+        "mode": "continuous-keyboard-owner-reply-per-input",
+        "sameInput": true,
+        "connected": true,
+        "events": 3,
+        "focused": true,
+        "value": "一次输入不得丢失abc"
+      },
+      "packagedPartialControls": "PASS_CONTROL_SUBMATRIX_ONLY",
+      "formalBrowserLocal": "PASS",
+      "finalFormalSourceInputs": 206,
+      "scopeRevokeAndFreshSearchRestore": "PASS"
+    },
+    "fixtureStartup": {
+      "failure": "invalid-isolated-debug-endpoint before J4 product journey",
+      "classification": "FIXTURE_STARTUP_INCOMPLETE_FILE_RACE_COVERED_ORIGINAL_BYTES_NOT_CAPTURED",
+      "fix": "Empty or port-only native file remains pending inside original 15 second launch deadline; complete malformed or non-loopback endpoint still rejected, including extra lines.",
+      "red": "Empty freshly-created file threw before it could become complete.",
+      "green": "Parser pending-to-complete and strict rejection contracts PASS"
+    },
+    "realMac": "NOT_RUN",
+    "navigationHash": "1f05639339b551f3d3dde3a8475092b260be1734f80e78fe17bd71799a648478"
   }
 }

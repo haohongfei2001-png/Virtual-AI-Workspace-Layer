@@ -59,7 +59,8 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     if(navigationFeedback.nativeReturn){const feedback=navigationFeedback,source=frameProjection,control=node(doc,'button',{type:'button','aria-label':'返回原生页面'},'返回原生页面');control.dataset.focusKey='navigation-native-return';control.addEventListener('click',()=>{if(!stopped&&frameProjection===source&&navigationFeedback===feedback&&snapshot?.scope===feedback.scope&&adapter.currentURL()===feedback.url){enterReading(false);onPresentationRequest({kind:'show-native-page'});}});notice.append(control);}parent.append(notice);
   }
   let settingsOpen=false,settingsFocus=null,withdrawnSettings=null,timePolicyNotice=null,timePolicyNoticeTimer=null,lastTimePolicyNotice=null;
-  let index=null,sidebarDirty=true,sidebarKey=null,frameProjection=null,frameRowPaging=null,frameWindowsSuspended=false,projectionRequest=0,horizonPending=null,horizonError=null,compactPending=null,compactError=null,workingSetPending=null,workingSetError=null,snippetLocatePending=null,resumeLayout=null;
+  let index=null,sidebarDirty=true,sidebarKey=null,frameProjection=null,frameRowPaging=null,frameWindowsSuspended=false,projectionRequest=0,horizonPending=null,horizonError=null,compactPending=null,compactError=null,workingSetPending=null,workingSetError=null,snippetLocatePending=null,resumeLayout=null,frameSearchPaint=null;
+  const searchContext=value=>{const {search,...context}=value;return JSON.stringify(context);};
   // Keep the original event target alive until its click, drop, or composition
   // completes. Coalesce updates instead of extending a debounce on each change.
   const pointers=new Set(),keys=new Set(),win=doc.defaultView??globalThis;
@@ -173,7 +174,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
   function own(tag='div'){const n=node(doc,tag,{'data-vaiwl-owned':token});const shadow=n.attachShadow({mode:'open'});shadow.append(node(doc,'style',{},css));return {n,shadow};}
   function restoreMask(){if(!mask)return;for(const[name,prior,expected]of mask.attrs){if(mask.node.getAttribute(name)===expected){if(prior===null)mask.node.removeAttribute(name);else mask.node.setAttribute(name,prior);}}mask=null;}
   function setMask(n,enabled){if(!enabled){restoreMask();return;}if(mask?.node===n)return;restoreMask();const attrs=[['data-vaiwl-mask',n.getAttribute('data-vaiwl-mask'),token],['inert',n.getAttribute('inert'),'']];for(const[k,,v]of attrs)n.setAttribute(k,v);mask={node:n,attrs};}
-  function detach(){cancelHiddenLayout();cancelOwnedFocus();surfaceResize?.disconnect();surfaceResize=null;sidebarDirty=true;sidebarKey=null;closeMenu(false);restoreMask();if(roots){roots.sidebar?.n.remove();roots.workspace?.n.remove();roots.back?.remove();roots.maskStyle?.remove();roots=null;}}
+  function detach(){frameSearchPaint=null;cancelHiddenLayout();cancelOwnedFocus();surfaceResize?.disconnect();surfaceResize=null;sidebarDirty=true;sidebarKey=null;closeMenu(false);restoreMask();if(roots){roots.sidebar?.n.remove();roots.workspace?.n.remove();roots.back?.remove();roots.maskStyle?.remove();roots=null;}}
   function layout(){
     if(stopped||!snapshot)return;
     if(framed){
@@ -646,7 +647,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     const pending={focus:{root:f.root,key:f.key,start:f.start,end:f.end},scope:snapshot?.scope,view,mode:view?.mode,segment:view?.segment,generation:presentationGeneration,session:JSON.stringify(frameProjection?.viewSession),query:searchQuery,theme:searchTheme,workset:view?.worksetOpen,expires,raf:null};pendingOwnedFocus=pending;
     pending.raf=win.requestAnimationFrame(()=>{pending.raf=null;if(pendingOwnedFocus===pending)resumeOwnedFocus();});
   }
-  function render(){if(!roots||!view)return;cancelHiddenLayout();renderRevision++;const focused=focusState();rememberSidebarScroll(roots.sidebar?.shadow.querySelector('.themes'));closeMenu(false);
+  function render(){if(!roots||!view)return;frameSearchPaint=null;cancelHiddenLayout();renderRevision++;const focused=focusState();rememberSidebarScroll(roots.sidebar?.shadow.querySelector('.themes'));closeMenu(false);
     const selected=current().selected;
     if(framed)applySidebarChoices(choices());
     if(selected&&lastSelected!==adapter.currentURL()){if(lastSelected!==null)restoredSidebarScroll.delete(view);if(!framed)view.sidebarOpen.add(selected.id);lastSelected=adapter.currentURL();selectionPending=true;}
@@ -767,6 +768,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
       input.oncompositionend=()=>{inputComposing=false;commitSearch();};
       input.oninput=event=>{if(inputComposing||event?.isComposing||composing)return;commitSearch();};
       section.append(input,node(doc,'p',{},'仅查找已知项目、聊天与已保存片段。更多记录请使用 ChatGPT 搜索聊天。'),results);display();page.append(section);
+      frameSearchPaint={page,input,display,context:searchContext(frameProjection)};
     }else if(frameProjection&&view.worksetOpen){
       const section=node(doc,'section',{class:'search working-set','aria-label':'当前工作集'}),found=frameProjection.workingSet;
       section.append(node(doc,'strong',{},'当前工作集'),button('返回工作空间',closeFrameWorkingSet,'返回工作空间','more'),node(doc,'p',{},'按已保存的人工顺序显示聊天引用。草稿由原生页面保留。'));
@@ -859,6 +861,19 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     if(snapshot?.scope===dto.scope&&dto.workingSet&&(!view.worksetOpen||searchQuery!==null||dto.workingSet.offset!==frameWorkingSetOffset))return;
     if(snapshot?.scope===dto.scope&&dto.search&&(searchQuery===null||dto.search.query!==searchQuery||dto.search.projectId!==searchTheme||dto.search.offset!==frameSearchOffset))return;
     if(snapshot?.scope===dto.scope&&(interacting()||updateTimer!==null)){pendingUpdate=[dto,null,null,null,'frame',currentEntry,requestContext,projectionRequest];return;}
+    // A result-only reply must not detach the typing target or round-trip its
+    // focus through the browser. Every non-search DTO field must still match;
+    // scope, policy, presentation and navigation changes use the full path.
+    const searchPaint=frameSearchPaint;
+    if(dto.search&&!currentEntry&&!requestContext?.resetScroll&&surface.role==='workspace'&&view?.mode==='workspace'&&
+       searchPaint&&searchPaint.page===roots?.workspace?.scroller&&searchPaint.input.isConnected&&searchPaint.input.value===searchQuery&&
+       searchPaint.context===searchContext(dto)){
+      frameProjection=structuredClone(dto);projectionRequest++;frameSearchWaiting=false;searchPaint.display();
+      const state=workspacePages.get(searchPaint.page),key=JSON.stringify(['search',searchQuery,searchTheme,frameSearchOffset]);
+      if(state&&state.specialKey!==key){state.specialKey=key;specialScroll.delete(view);searchPaint.page.scrollTop=0;}
+      try{onFrameRendered(dto,{cards:searchPaint.page.querySelectorAll('[data-theme-id]').length,rows:searchPaint.page.querySelectorAll('[data-ref-id]').length});}catch{}
+      return;
+    }
     const selection=dto.selection,key=selection?rowPagingKey(dto,selection.groupId,selection.list):null;
     if(frameRowPaging?.key!==key)frameRowPaging=null;
     const query=requestContext?.query;

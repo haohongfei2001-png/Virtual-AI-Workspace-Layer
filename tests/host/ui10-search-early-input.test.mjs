@@ -37,6 +37,16 @@ const tick=async()=>{for(let i=0;i<15;i++)await Promise.resolve();};
 
 // Actual createNavigation event handling with controlled owner response order.
 const reply=(query,items=[])=>({...projection(),search:{...query,items,total:items.length,hasMore:false}});
+test('same-context search results preserve the live input while context changes still replace it',async()=>{
+ const calls=[],pending=[],f=fixture('workspace',q=>{calls.push(q);return new Promise(r=>pending.push(r));});
+ f.nav.updateFrameProjection(projection());f.nav.present({kind:'search-known'});
+ const input=f.pane().querySelector('input');pending[0](reply(calls[0].search));await tick();
+ assert.equal(f.pane().querySelector('input'),input,'initial result must not replace the input');
+ for(const value of ['a','ab','abc']){input.value=value;input.oninput();pending.at(-1)(reply(calls.at(-1).search,[row(value)]));await tick();assert.equal(f.pane().querySelector('input'),input);assert.equal(input.value,value);assert(f.pane().querySelector('[data-ref-id="'+value+'"]'));}
+ const changed={...reply(calls.at(-1).search),compactRows:false};f.nav.updateFrameProjection(changed);assert.notEqual(f.pane().querySelector('input'),input,'changed presentation settings must use the full render path');
+ const beforeScope=f.pane().querySelector('input');f.nav.updateFrameProjection({...changed,scope:'scopeB'});assert.notEqual(f.pane().querySelector('input'),beforeScope);
+ const beforeRevoke=f.pane().querySelector('input');f.nav.invalidate();f.nav.updateFrameProjection({...changed,scope:'scopeB'});assert.notEqual(f.pane().querySelector('input'),beforeRevoke);assert.equal(f.pane().querySelector('input').value,'abc');f.nav.stop();
+});
 for(const order of ['initial-first','typed-first'])test('one early input survives '+order+' response order',async()=>{
  const calls=[],pending=[],f=fixture('workspace',q=>{calls.push(q);return new Promise(r=>pending.push(r));});
  f.nav.updateFrameProjection(projection());f.nav.present({kind:'search-known'});

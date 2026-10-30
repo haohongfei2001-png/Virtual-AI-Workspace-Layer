@@ -12,8 +12,12 @@ export function nativeBrowserArgs(profileDir,{headed=true,historicalNetworkGuard
  return ['--user-data-dir='+profileDir,'--remote-debugging-address=127.0.0.1','--remote-debugging-port=0','--no-first-run','--no-default-browser-check','--disable-background-networking','--disable-component-update','--disable-sync','--disable-default-apps','--metrics-recording-only','--no-sandbox','--enable-unsafe-extension-debugging','--window-size=1440,1000',...headed?[]:['--headless=new'],...(historicalNetworkGuard===null?[]:historicalNetworkGuardArgs(historicalNetworkGuard)),'about:blank'];
 }
 export function endpointFromActivePort(text){
- const [port,path]=text.trim().split('\n');
- if(!/^\d+$/.test(port)||Number(port)<1||Number(port)>65535||!/^\/devtools\/browser\/[a-zA-Z0-9-]+$/.test(path))throw Error('invalid-isolated-debug-endpoint');
+ // Chromium creates this file before its complete two-line value is visible.
+ // Keep the existing launch deadline; an incomplete file grants no endpoint.
+ const lines=text.trim().split('\n');
+ if(lines.length===1&&(lines[0]===''||/^\d+$/.test(lines[0])))return null;
+ const [port,path]=lines;
+ if(lines.length!==2||!/^\d+$/.test(port)||Number(port)<1||Number(port)>65535||!/^\/devtools\/browser\/[a-zA-Z0-9-]+$/.test(path))throw Error('invalid-isolated-debug-endpoint');
  return `ws://127.0.0.1:${port}${path}`;
 }
 export async function launchNativeVisibilityBrowser({chromium,executablePath,profileDir,headed=true,historicalNetworkGuard=null}){
@@ -23,7 +27,7 @@ export async function launchNativeVisibilityBrowser({chromium,executablePath,pro
  const cleanup=()=>cleanupIsolatedBrowser({browser,child,profileDir});
  try{
   const until=Date.now()+15000;let endpoint;
-  while(Date.now()<until){if(launchError)throw launchError;if(child.exitCode!==null)throw Error('isolated-chrome-exited:'+child.exitCode+':'+stderr);try{endpoint=endpointFromActivePort(await readFile(join(profileDir,'DevToolsActivePort'),'utf8'));break;}catch(e){if(e.code!=='ENOENT')throw e;}await new Promise(r=>setTimeout(r,50));}
+  while(Date.now()<until){if(launchError)throw launchError;if(child.exitCode!==null)throw Error('isolated-chrome-exited:'+child.exitCode+':'+stderr);try{endpoint=endpointFromActivePort(await readFile(join(profileDir,'DevToolsActivePort'),'utf8'));if(endpoint)break;}catch(e){if(e.code!=='ENOENT')throw e;}await new Promise(r=>setTimeout(r,50));}
   if(!endpoint)throw Error('isolated-chrome-debug-startup-timeout:'+stderr);
   browser=await chromium.connectOverCDP(endpoint,{noDefaults:true});const context=browser.contexts()[0];if(!context)throw Error('missing-isolated-default-context');
   return {browser,context,debugEndpoint:endpoint,close:cleanup,diagnostic:{transport:'isolated-loopback-CDP',noDefaults:true,headed,focusEmulation:'NOT_ENABLED_BY_PLAYWRIGHT',...(historicalNetworkGuard?{networkGuard:{mode:'DISPOSABLE_CHROME_REJECT_PROXY',...historicalNetworkGuard}}:{}),source:'Playwright connectOverCDP noDefaults public option; native Chromium capturer is session-owned'}};

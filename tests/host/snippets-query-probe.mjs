@@ -23,10 +23,10 @@ export function installSnippetsQueryProbe({role}){
   return {node:id(node),label:name,connected:node.isConnected===true,currentInput:node===currentInput(),focused:node.getRootNode().activeElement===node,value:name==='已知聊天查找输入'?text(node.value):null};
  };
  const record=event=>{
-  const target=event.composedPath().slice(0,12).find(node=>label(node)!==null);if(!target)return;
-  events++;console.log('SNIPPET_INPUT_TRACE '+JSON.stringify({role,at:at(),type:event.type,isTrusted:event.isTrusted===true,inputType:text(event.inputType),target:describe(target)}));
+  const target=event.composedPath().slice(0,12).find(node=>label(node)!==null),keyboard=['keydown','keyup'].includes(event.type),input=keyboard?currentInput():null;if(!target&&!input)return;
+  events++;console.log('SNIPPET_INPUT_TRACE '+JSON.stringify({role,at:at(),type:event.type,isTrusted:event.isTrusted===true,inputType:text(event.inputType),target:describe(target),...(keyboard?{key:text(event.key),code:text(event.code),documentHasFocus:document.hasFocus(),currentInput:describe(input)}:{})}));
  };
- const types=['input','beforeinput','focusin','focusout','blur','click'];
+ const types=['input','beforeinput','focusin','focusout','blur','click','keydown','keyup'];
  for(const type of types)document.addEventListener(type,record,{capture:true,passive:true});
  const runtime=role==='host'?null:chrome.runtime,originalSend=runtime?.sendMessage;
  const wrapped=runtime?async function(message){

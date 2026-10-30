@@ -5,7 +5,7 @@ import {installSnippetsQueryProbe,recordSnippetsProbeConsole} from './snippets-q
 function fixture(role='workspace'){
  const logs=[],listeners=new Map(),globals={},calls=[];let current=null,active=null,time=0,response={ok:true};
  const root={get activeElement(){return active;},querySelector:()=>current};
- const document={querySelector:selector=>{assert.equal(selector,'[data-vaiwl-frame-role="workspace"]');return {shadowRoot:root};},addEventListener(type,listener,options){assert.deepEqual(options,{capture:true,passive:true});listeners.set(type,listener);},removeEventListener(type,listener,capture){assert.equal(capture,true);assert.equal(listeners.get(type),listener);listeners.delete(type);}};
+ const document={hasFocus:()=>true,querySelector:selector=>{assert.equal(selector,'[data-vaiwl-frame-role="workspace"]');return {shadowRoot:root};},addEventListener(type,listener,options){assert.deepEqual(options,{capture:true,passive:true});listeners.set(type,listener);},removeEventListener(type,listener,capture){assert.equal(capture,true);assert.equal(listeners.get(type),listener);listeners.delete(type);}};
  const runtime={async sendMessage(message){assert.equal(this,runtime);calls.push(message);return response;}};const originalSend=runtime.sendMessage;
  const forbidden=()=>{throw Error('diagnostic must not schedule or mutate');};
  const run=new Function('document','chrome','performance','console','globalThis','setTimeout','setInterval','requestAnimationFrame','options',`'use strict';return (${installSnippetsQueryProbe.toString()})(options);`);
@@ -20,6 +20,11 @@ function fixture(role='workspace'){
 }
 const parse=(f,prefix)=>f.logs.filter(text=>text.startsWith(prefix)).map(text=>JSON.parse(text.slice(prefix.length)));
 const poison={get(){throw Error('private payload must not be read');}};
+test('keyboard trace distinguishes current search target from document-level delivery without changing focus',()=>{
+ const f=fixture(),input=f.element('INPUT',{'aria-label':'已知聊天查找输入','data-focus-key':'search-input'},'ab');f.setCurrent(input.node);
+ f.fire('keydown',input.node,{key:'n',code:'KeyN'});f.fire('keyup',f.element('BODY').node,{key:'n',code:'KeyN'});
+ const rows=parse(f,'SNIPPET_INPUT_TRACE ');assert.equal(rows[0].target.node,rows[0].currentInput.node);assert.equal(rows[1].target,null);assert.equal(rows[1].currentInput.value,'ab');assert(rows.every(r=>r.key==='n'&&r.code==='KeyN'&&r.documentHasFocus&&r.currentInput.focused));f.probe().finish();
+});
 
 test('runtime metadata keeps fixed bounded fields and preserves the original reply',async()=>{
  const f=fixture(),long='x'.repeat(250),pageSearch={query:long,projectId:long,offset:0,limit:24};Object.defineProperty(pageSearch,'items',poison);
