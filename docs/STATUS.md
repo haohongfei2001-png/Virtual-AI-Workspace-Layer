@@ -1,5 +1,13 @@
 # VAIWL实际状态：渐进积累工程已接线，真实来源逐项待准入
 
+## 2026-10-31 当前使用证据清单修正与限定实机复验准备
+
+`41c18935142a3b74b93fa41044d19347967837ae` 的限定 CI [41139287231](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/actions/runs/41139287231) 已结束：J4 原限定片段25步完成；populated 实际完成64次原生导航、64条独立观察、64次本地使用、8组布局及4张完整PNG，但任务最终 FAIL。唯一新失败为验收器 `FIXTURE_CLOSURE_MISMATCH`：runner 已记录两个失败诊断依赖，独立必需文件清单漏了它们。原始报告在本地重评准确复现该失败。
+
+本次只补清单中的 `j3-failure-inspection.mjs` 和 `j3-failure-closures.mjs`，保留精确文件集合、独立Git哈希、前后稳定及全部安全断言；新增缺失/改写/额外依赖反例。14项定向合同通过；同一份原始云端报告与完整PNG重新核验得到 `PASS_CURRENT_USE_MV3_SUBCONTRACT`，原任务仍记FAIL，不改日志或报告SHA。4张原图已实际查看，当前布局未发现新增明显P0/P1；不推称全部8格视觉或真实Mac通过。
+
+生产源码、206项生产输入及完整浏览器旅程均未改变，因此不重复64次旅程；以精确来源绑定复用205的40项适用通过门、本次J4与实际populated旅程，并单独记录当前验收器更正后的结论。205两项原活性失败根因仍UNKNOWN，新旅程未复现不等于根因已修复。此状态只允许进入聊天上溢修复及剩余原生连续旅程的集中技术复验，不宣称个人日用或完整Free已接受。原Mac仍为旧诊断包，更新与修复后验收NOT_RUN；此前30分钟/60动作额度已耗尽，等待一次限定续期。无后台本地浏览器控制、无merge/部署/发布。原始、修前/修后判定及截图位于 `.git/vaiwl-artifacts/takeover-20261030/final/41c18935142a3b74b93fa41044d19347967837ae/`。
+
 ## 2026-10-31 205cd254 正式门两项失败继续阻断
 
 正式 HEAD `205cd2546d39c995f9d345a1f69490b927c679fd` 的统一 CI [41135595446](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/actions/runs/41135595446) 最终40/42 job通过。`populated-native` 在第5个聊天的原6秒观察入库门超时：请求窗口已恢复12额度，renderer可见，但本次producer未见body入站；完整被动记录无丢弃，尚不能区分生产调度、夹具或环境问题。`j4-before-native` 在损坏注入前的工作区/返回入口15秒轮询超时；此前真实Worker中断、旧操作不重放、原事件及跨空间隔离步骤已通过。两项均保持原FAIL和根因UNKNOWN，不放宽期限/请求预算、不改不适用。

@@ -20,6 +20,7 @@ import {inspectSyntheticPng} from './ui10-visual-png-log.mjs';
 
 export const UI10_CURRENT_USE_CAPTURE_IDS=Object.freeze(['mv3-desktop-initial','mv3-narrow-dark-initial','mv3-desktop-long-list-end','mv3-narrow-dark-long-list-end']);
 export const UI10_CURRENT_USE_REQUIRED_FIXTURES=Object.freeze([
+ 'tests/host/j3-failure-inspection.mjs','tests/host/j3-failure-closures.mjs',
  'tests/host/ui10-native-preflight.mjs','tests/host/ui10-admission-trace.mjs','tests/host/ui10-native-initial-layout.mjs',
  'tests/host/historical-network-guard.mjs','tests/host/isolated-browser-cleanup.mjs','tests/host/ui10-capture-preparation.mjs',
  'tests/host/ui10-native-member-rows.mjs','tests/host/ui10-native-progress.mjs','tests/host/ui10-native-surface.mjs',

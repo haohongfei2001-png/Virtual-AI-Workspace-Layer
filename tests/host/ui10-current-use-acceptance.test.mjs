@@ -69,6 +69,14 @@ test('initial workspace plus unobscured native controls are required before popu
 test('before/after self-consistency cannot omit or replace independent source and fixture inventory',()=>{
  for(const change of [r=>{delete r.sourceHashes['extension/build.mjs'];delete r.sourceHashesAfter['extension/build.mjs'];},r=>{r.sourceHashes['extension/build.mjs']='0'.repeat(64);r.sourceHashesAfter=clone(r.sourceHashes);},r=>{delete r.testHashesBefore['tests/host/fixtures/native.mjs'];delete r.testHashesAfter['tests/host/fixtures/native.mjs'];},r=>{r.testHashesBefore['tests/host/fixtures/native.mjs']='0'.repeat(64);r.testHashesAfter=clone(r.testHashesBefore);},r=>r.buildManifestHashAfter='0'.repeat(64),r=>r.fixtureStable=false,r=>r.packageVerification.status='PASS'])rejected(change,'package-source-and-fixture-integrity');
 });
+test('failure-only collector dependencies remain mandatory even for a successful journey',()=>{
+ for(const path of ['tests/host/j3-failure-inspection.mjs','tests/host/j3-failure-closures.mjs']){
+  assert(UI10_CURRENT_USE_REQUIRED_FIXTURES.includes(path));
+  rejected((r,o)=>{delete r.testHashesBefore[path];delete r.testHashesAfter[path];delete o.expectedFixtureHashes[path];},'package-source-and-fixture-integrity');
+  rejected(r=>{r.testHashesBefore[path]='0'.repeat(64);r.testHashesAfter[path]='0'.repeat(64);},'package-source-and-fixture-integrity');
+ }
+ rejected((r,o)=>{const path='tests/host/unexpected-collector.mjs';r.testHashesBefore[path]=r.testHashesAfter[path]=o.expectedFixtureHashes[path]=hash(path);},'package-source-and-fixture-integrity');
+});
 test('send, unexpected endpoint, dropped network accounting and cleanup failure block acceptance',()=>{
  for(const change of [r=>r.native.actions.send=1,r=>r.native.requests['/backend-api/private']=1,r=>r.native.requests['/native/move-menu']=29,r=>r.progress.network.currentDetail=127,r=>r.networkGuard.closed=false,r=>r.networkGuard.denied=2,r=>r.cleanupOK=false])rejected(change,'network-boundary-native-actions-and-cleanup');
 });
