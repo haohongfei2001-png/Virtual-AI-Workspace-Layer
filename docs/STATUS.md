@@ -2,6 +2,12 @@
 
 ## 2026-10-30 终局候选整合与同源产品门
 
+`8251cace4a3c699d7333a0aee00894a27684192c` 完成 16 个本机冻结 runner、Node 11895/11895，云端 run `40994832301` 为 41/41 jobs 通过。独立审查实际查看 90 张新 UI10 图和 4 张批准参考，6 张连续图按精确 PNG 哈希继承，100 张图均保全；204 源码及 1166 fixture 与当次回执绑定。48 张设置图完整绘出，但 7 张 MODERN/PARTIAL 桌面原生 Chats 长标题叠字，因此该 SHA 的 UX 保留 LEGACY PASS、另两组 PARTIAL，汇总 L1 2/2、L2 10/12、L3 0/7 NOT_RUN；CI 绿色没有替代视觉门。
+
+一次无 VAIWL 的原生夹具对照取得 8 格图片和完整字节/节点证据：原 CSS 已发生同形叠字，仅 nowrap/hidden/ellipsis 三条样式后重叠消失，标题、href、HTML 和 JS 不变。本批只在原 `ui10FullSidebar` 条件内修正 MODERN/PARTIAL history anchor，默认紧凑/FAULT 及生产源码不变。该私有 driver 在采图后的额外零 Service Worker 断言失败，来源未记录，原 FAIL 保留；窄像素与精确 CSS 对照单独有效，不冒充整 driver 或 MV3 通过。PARTIAL 低屏原生 Account 不在对照图内，未借标题修正宣称完整原生侧栏认证。
+
+另一次正式源码的隔离 MV3 窄窗诊断完成四个目标的单次真实滚轮：两个 profile 的片段滚动 32px、搜索滚动 105px 后，目标在 46–65ms 内满足内外裁剪与双层命中；原返回/关闭/焦点及草稿/File/节点保全通过，8 张前后图实际查看。只证明这些目标可通过正常滚动到达，不称全内容同时可见或物理输入通过。新 fixture 的正式冻结与独立像素复验接续执行。实机准备的 Chrome 内部页读取被工具 URL 策略拒绝，运行 Profile 与完整一致备份仍未确认；原安装未更新，真实 Mac、个人长期日用及完整 Free 未通过。
+
 `17d6952cbd72f192df174fc2ffea1d1dce9273bd` 的云端 run `40989814080` 最终为 38/41 jobs。unknown-protocol 本轮正式通过，旧正文不可取记录保留。MODERN/420/light/long-Chinese/520 在单次 fill 前后保持同一当前输入节点，但没有 beforeinput/input，也没有非空 VIEW；这次失败是文字未进入 DOM，不能再猜作随后查询重置。单次完整键盘诊断、单次关闭 Playwright 焦点模拟的原 fill 诊断均完成 16 格，只记 DIAGNOSTIC_ONLY，尚未确定旧云端输入交付失败的唯一原因。
 
 另外两个失败已分离出观测合同问题。LEGACY 的截图准备跨两个既有 RAF 后仍使用旧 workspace 的裁剪框，却采集新面板；同形反例先失败，现同步重新取得当前 workspace 与控件，实际裁剪负例仍拒绝。原云日志没有节点身份，不能反填其唯一触发。完整离线旅程的按钮在两个不同 paint 时刻均 current/hit/visible 且几何一致，仅自有 DOM 身份不同；现将身份保留为诊断，仍逐次核验唯一当前控件、可见标签、命中、几何、不同绘制时刻与原有界限。新反例确认隐藏、过期、移动和不可命中不能借节点替换通过。

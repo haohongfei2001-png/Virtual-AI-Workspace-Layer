@@ -64,6 +64,10 @@ export async function createVariantHostFixtureServer({profile,journey=null,j3Lay
  // Default MODERN remains the compact 110px layout for local-failure coverage.
  if(ui10FullSidebar&&profile==='MODERN')css+='\naside nav[aria-label="Chat history"]{flex:1 1 auto;height:auto}\n';
  if(profile==='PARTIAL')css+='\naside nav[aria-label="Chat history"]{max-height:320px;min-height:200px}aside nav[aria-label="Chat history"] a{min-height:40px}\n';
+ // The UI10 native baseline owns long-title clipping. Keep full text/targets
+ // while preventing glyphs from painting over subsequent native history rows.
+ // Compact/fault fixtures retain their original layout and failure contracts.
+ if(ui10FullSidebar)css+='\naside nav[aria-label="Chat history"] > a{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}\n';
  if(profile==='FAULT'&&fault==='unsafe-reading')html=html.replace('<section aria-label="Conversation" id="reading"><p>How can I help?</p></section>','<section aria-label="Conversation" id="reading"><p>How can I help?</p>').replace('</form></main>','</form></section></main>');
  // Hostile traffic is deliberately fabricated; it is not a legitimate authority provider.
  let faultScript='';
