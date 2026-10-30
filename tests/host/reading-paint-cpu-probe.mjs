@@ -3,25 +3,23 @@
 import {writeFile} from 'node:fs/promises';
 export async function observeReadingProofCPU(page,path){
  const cdp=await page.context().newCDPSession(page);
- await cdp.send('Profiler.enable');await cdp.send('Profiler.setSamplingInterval',{interval:250});
- await cdp.send('Performance.enable',{timeDomain:'threadTicks'});
- const record={status:'DIAGNOSTIC_ONLY',sourceCommit:process.env.FREE_SOURCE_COMMIT??process.env.GITHUB_SHA??null,window:'FIRST_INSPECT_ENVELOPE',metricsClock:'THREAD_TICKS',profileClock:'SAMPLE_INTERVALS',instrumented:true,profileIncludes:['original inspect','start/stop bridge','metrics collection'],sampleUse:'hotspot and GC clues only; not net function CPU time',proofCalls:0};
- const metrics=async()=>Object.fromEntries((await cdp.send('Performance.getMetrics')).metrics.map(m=>[m.name,m.value]));
- let started=false,finished=false;
- await page.exposeFunction('__vaiwlReadingProofStart',async()=>{
-  if(started)throw Error('reading-cpu-repeated-start');started=true;
-  record.before=await metrics();await cdp.send('Profiler.start');
- });
+ const record={status:'DIAGNOSTIC_ONLY',sourceCommit:process.env.FREE_SOURCE_COMMIT??process.env.GITHUB_SHA??null,window:'MARKED_FIRST_INSPECT',instrumented:true,extraAwaitBeforeInspect:false,proofCalls:0};
+ const events=[];let overflow=false,finished=false;
+ cdp.on('Tracing.dataCollected',({value})=>{if(events.length+value.length>50000)overflow=true;else events.push(...value);});
+ await cdp.send('Tracing.start',{categories:'devtools.timeline,blink.user_timing,disabled-by-default-devtools.timeline,renderer.scheduler',options:'record-until-full',transferMode:'ReportEvents'});
  await page.exposeFunction('__vaiwlReadingProofStop',async proof=>{
-  if(!started||finished)throw Error('reading-cpu-invalid-stop');finished=true;
-  record.after=await metrics();record.profile=(await cdp.send('Profiler.stop')).profile;
+  if(finished)throw Error('reading-cpu-invalid-stop');finished=true;
+  const complete=new Promise(resolve=>cdp.once('Tracing.tracingComplete',resolve));await cdp.send('Tracing.end');await complete;
   record.proofCalls=1;record.proof=proof;
-  record.deltas=Object.fromEntries(['TaskDuration','ScriptDuration','LayoutDuration','RecalcStyleDuration','V8CompileDuration','LayoutCount','RecalcStyleCount'].map(k=>[k,record.after[k]-record.before[k]]));
-  const byId=new Map(record.profile.nodes.map(n=>[n.id,n])),samples=new Map();
-  for(let i=0;i<record.profile.samples.length;i++){const frame=byId.get(record.profile.samples[i])?.callFrame,key=(frame?.functionName??'unknown')+':'+(frame?.lineNumber??-1);samples.set(key,(samples.get(key)??0)+record.profile.timeDeltas[i]);}
-  record.topSampleIntervalMicroseconds=[...samples].sort((a,b)=>b[1]-a[1]).slice(0,25);
+  const starts=events.filter(e=>e.name==='vaiwl:first-inspect:start'),ends=events.filter(e=>e.name==='vaiwl:first-inspect:end');
+  if(overflow||starts.length!==1||ends.length!==1)throw Error('reading-trace-window-invalid');
+  const start=starts[0],end=ends[0];if(start.pid!==end.pid||start.tid!==end.tid||end.ts<start.ts)throw Error('reading-trace-window-mismatch');
+  record.markedWindow={start,end,wallMicroseconds:end.ts-start.ts,threadMicroseconds:Number.isFinite(end.tts)&&Number.isFinite(start.tts)?end.tts-start.tts:null};
+  record.threads=events.filter(e=>e.ph==='M'&&e.name==='thread_name').map(e=>({pid:e.pid,tid:e.tid,name:e.args?.name}));
+  record.intervals=events.filter(e=>e.ph==='X'&&e.ts<=end.ts&&e.ts+(e.dur??0)>=start.ts).map(({name,cat,pid,tid,ts,dur,tts,tdur})=>({name,cat,pid,tid,ts,dur,tts,tdur}));
+  record.traceEventCount=events.length;record.traceOverflow=overflow;
   await writeFile(path,JSON.stringify(record,null,2)+'\n');
-  console.log(JSON.stringify({readingPaintCPU:{...record,profile:undefined,before:undefined,after:undefined}}));
+  console.log(JSON.stringify({readingPaintCPU:{...record,threads:undefined,intervals:undefined}}));
   await cdp.detach();
  });
 }

@@ -291,10 +291,11 @@ try{
   const adapter=createChatGPTAdapter({document,profile,urlPolicy:createURLPolicy(),isOwnedMask:n=>surface?.isMasked(n),isOwnedSurface:n=>surface?.isOwnedSurface(n)});
   const binding={documentToken:'region',producerToken:'region',browserDocumentId:'region',routeEpoch:1,origin:location.origin,expiresAt:new Date(Date.now()+20000).toISOString()};
   await adapter.start({binding,emit:async p=>({state:'accepted',localSeq:p.localSeq,receiptId:'region'})});
-  if(typeof globalThis.__vaiwlReadingProofStart==='function')await globalThis.__vaiwlReadingProofStart();
+  if(typeof globalThis.__vaiwlReadingProofStop==='function')performance.mark('vaiwl:first-inspect:start');
   const firstInspectStarted=performance.now(),inspection=adapter.inspect(),firstInspectElapsed=performance.now()-firstInspectStarted;
   // Preserve the first refusal; later flow checks are a separate proof.
   globalThis.nativeScrollRegionFirstProof={returnReady:!!inspection.returnSlot,reason:inspection.roles?.return?.reason??inspection.reason??null,elapsedMs:firstInspectElapsed,measurement:'adapter.inspect-total'};
+  if(typeof globalThis.__vaiwlReadingProofStop==='function')performance.mark('vaiwl:first-inspect:end');
   if(typeof globalThis.__vaiwlReadingProofStop==='function')await globalThis.__vaiwlReadingProofStop(globalThis.nativeScrollRegionFirstProof);
   let refusal=null;
   const plan=captureNativeBaseline({document,inspection,onRefused:value=>refusal=value});

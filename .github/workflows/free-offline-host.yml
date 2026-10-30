@@ -7,7 +7,7 @@ on:
         description: 'One isolated diagnostic, not full CI or acceptance'
         required: true
         type: choice
-        options: [temporary-project-startup, transport-expiry, temporary-navigation-appearance, j4-codec-after-evidence, fault-unknown-protocol, delivery-blockers]
+        options: [temporary-project-startup, transport-expiry, temporary-navigation-appearance, j4-codec-after-evidence, fault-unknown-protocol, reading-paint-trace]
   push:
     branches: [codex/vaiwl-free-first-20261013]
 
@@ -47,7 +47,7 @@ jobs:
   offline-journeys:
     # Public repository + standard GitHub-hosted runner only. No paid runner,
     # artifact/cache upload, credentials, deployment or private host access.
-    if: github.repository == 'haohongfei2001-png/Virtual-AI-Workspace-Layer' && github.event.repository.private == false && github.ref == 'refs/heads/codex/vaiwl-free-first-20261013' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && (inputs.diagnostic == 'temporary-project-startup' || inputs.diagnostic == 'transport-expiry' || inputs.diagnostic == 'temporary-navigation-appearance' || inputs.diagnostic == 'delivery-blockers')))
+    if: github.repository == 'haohongfei2001-png/Virtual-AI-Workspace-Layer' && github.event.repository.private == false && github.ref == 'refs/heads/codex/vaiwl-free-first-20261013' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && (inputs.diagnostic == 'temporary-project-startup' || inputs.diagnostic == 'transport-expiry' || inputs.diagnostic == 'temporary-navigation-appearance' || inputs.diagnostic == 'reading-paint-trace')))
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -66,10 +66,10 @@ jobs:
           tests/b1/tooling/node_modules/.bin/playwright install --with-deps chromium
           node --input-type=module -e "import {chromium} from './tests/b1/tooling/node_modules/playwright/index.mjs'; console.log('FREE_CHROME_EXECUTABLE='+chromium.executablePath())" >> "$GITHUB_ENV"
       - name: Document-flow native protection and continuous packaged product journey
-        if: ${{ !cancelled() && (github.event_name == 'push' || inputs.diagnostic == 'delivery-blockers') }}
+        if: ${{ !cancelled() && (github.event_name == 'push' || inputs.diagnostic == 'reading-paint-trace') }}
         run: |
           if test "$GITHUB_EVENT_NAME" = workflow_dispatch; then
-            echo 'Original single proof CPU diagnostic only; never product acceptance'
+            echo 'Original first proof trace diagnostic only; never product acceptance'
             trap 'test ! -f "$RUNNER_TEMP/reading-paint-cpu.json" || cat "$RUNNER_TEMP/reading-paint-cpu.json"' EXIT
             FREE_READING_CPU_PROFILE="$RUNNER_TEMP/reading-paint-cpu.json" node tests/host/document-flow-browser.mjs
             exit 0
@@ -489,7 +489,7 @@ jobs:
 
   cloud-supplementary-gates:
     # Finite explicit offline cases, synthetic fixtures only. No artifacts or live credentials.
-    if: github.repository == 'haohongfei2001-png/Virtual-AI-Workspace-Layer' && github.event.repository.private == false && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/codex/vaiwl-free-first-20261013' && (inputs.diagnostic == 'fault-unknown-protocol' || inputs.diagnostic == 'delivery-blockers')))
+    if: github.repository == 'haohongfei2001-png/Virtual-AI-Workspace-Layer' && github.event.repository.private == false && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/codex/vaiwl-free-first-20261013' && inputs.diagnostic == 'fault-unknown-protocol'))
     runs-on: ubuntu-latest
     timeout-minutes: ${{ matrix.gate == 'populated-native' && 25 || 15 }}
     strategy:
@@ -497,7 +497,7 @@ jobs:
       max-parallel: 3
       matrix:
         # Prioritize the remaining causal gate and longest case; coverage and limits stay unchanged.
-        gate: ${{ fromJSON(github.event_name == 'workflow_dispatch' && (inputs.diagnostic == 'delivery-blockers' && '["local-assets"]' || '["fault-unknown-protocol"]') || '["fault-unknown-protocol","local-assets","native-entry-safety","populated-native","existing-source-repair","membership-after-message","fault-auth-failure","fault-unsafe-reading","fault-forged-scope","fault-csp","fault-iframe-destroy","fault-stale-response","fault-rate-limit","fault-corrupt","privacy-main","privacy-isolated","idle-draft-active","idle-safe-empty-reading","visual-components","page-command-native-fetch","non-atomic-terminal","mixed-role","mixed-role-alt"]') }}
+        gate: ${{ fromJSON(github.event_name == 'workflow_dispatch' && '["fault-unknown-protocol"]' || '["fault-unknown-protocol","local-assets","native-entry-safety","populated-native","existing-source-repair","membership-after-message","fault-auth-failure","fault-unsafe-reading","fault-forged-scope","fault-csp","fault-iframe-destroy","fault-stale-response","fault-rate-limit","fault-corrupt","privacy-main","privacy-isolated","idle-draft-active","idle-safe-empty-reading","visual-components","page-command-native-fetch","non-atomic-terminal","mixed-role","mixed-role-alt"]') }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:

@@ -253,14 +253,14 @@ test('unknown runtime repair dispatch selects only its unchanged formal gate and
  assert(body.includes('fb01efc602946373162437203a5458c0aaaf706526cdcb465c8b319c25ae65df'));assert(body.includes('sha256sum --check -'));assert.doesNotMatch(body,/--version|continue-on-error|upload-artifact|actions\/cache|secrets\./);
 });
 
-test('delivery blocker dispatch isolates existing assets and one first-proof diagnostic without a full rerun',()=>{
+test('paint trace dispatch isolates the original first proof without rerunning closed gates',()=>{
  const all=Object.fromEntries([...workflow.matchAll(/^  ([\w-]+):\n([\s\S]*?)(?=^  [\w-]+:\n|$(?![\s\S]))/gm)].filter(m=>/^    runs-on:/m.test(m[2])).map(m=>[m[1],m[2]]));
- const event={...allowedEvent,event_name:'workflow_dispatch'},input={diagnostic:'delivery-blockers'};
+ const event={...allowedEvent,event_name:'workflow_dispatch'},input={diagnostic:'reading-paint-trace'};
  const selected=(github,inputs)=>Object.keys(all).filter(name=>condition(all[name].match(/^    if: (.+)$/m)[1],github,inputs));
- assert.deepEqual(selected(event,input),['offline-journeys','cloud-supplementary-gates']);
+ assert.deepEqual(selected(event,input),['offline-journeys']);
  for(const e of [{...event,event:{repository:{private:true}}},{...event,repository:'other/repo'},{...event,ref:'refs/heads/main'},{...event,event_name:'pull_request'}])assert.deepEqual(selected(e,input),[]);
  const body=all['cloud-supplementary-gates'],expression=body.match(/^        gate: \$\{\{ (.+) \}\}$/m)[1];
- assert.deepEqual(new Function('github','inputs','fromJSON','return '+expression)(event,input,JSON.parse),['local-assets']);
+ assert.deepEqual(new Function('github','inputs','fromJSON','return '+expression)(event,input,JSON.parse),['fault-unknown-protocol']);
  const active=journeySteps.filter(s=>!s.expression||condition(s.expression,event,input));
  assert.deepEqual(active.filter(s=>s.name!=='Publish bounded text evidence to logs only').map(s=>s.name),['Install locked Host build tool','Install locked test tools and isolated Chromium','Document-flow native protection and continuous packaged product journey']);
  const probe=active.find(s=>s.name.startsWith('Document-flow')).body.split('if test "$GITHUB_EVENT_NAME" = workflow_dispatch; then')[1].split('          fi')[0];

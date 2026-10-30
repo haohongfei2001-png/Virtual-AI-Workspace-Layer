@@ -2,6 +2,8 @@
 
 ## 2026-10-30 终局候选整合与同源产品门
 
+`169415581419dd83c355363668a9b5ebf56c63d3` 的限定 run `41038073804` 两门成功：真实打包BrowserLocal资产恢复7业务与备份门通过，首个链接同场全部断言成立；资产观察问题关闭。绘制插桩首检35ms无layout/style重算，但探针在首检前增加了异步边界，仍仅DIAGNOSTIC_ONLY，不能覆盖原FAIL。多个私有几何/循环替代没有稳定收益，全部保存后撤回，204项生产源码保持b1。现改为原同步首检两端UserTiming标记的wall/thread时钟及GC/renderer trace，不在首检前插入await、不预热、不重试；仅单独云端trace，不重复已通过的资产门。原50ms和全部产品断言不变，绘制阻塞未关闭。
+
 当前正式 `b1a8457ca284fab3beb03555f0328189fb45d748` 的 run `41034158654` 最终 **40/42 PASS**，unknown-protocol 固定158实际旅程和 populated-native 均通过。剩余两项：document-flow 首检59.3ms仍因原50ms绘制护栏拒绝；local-assets 的修复后链接已在首个同步快照正确，下一独立任务读取href为null，原日志不足以确定该次触发，不能推断生产导航出错。其余40门保留本SHA结果。
 
 本批只处理上述两项验证：在原真实client/renderer中确定性复现新VIEW撤销旧href、disabled拒绝旧/新点击、随后新计划恢复，故资产测试将原URL/归属/可见性/禁用/Pro标题断言归于同一次首个enabled快照；错误href/null/混入Pro等仍立即FAIL，不等待后续正确值。15项定向通过。只为原首次inspect增加显式开启的CPU诊断，不预热、不重试、不改生产时钟或50ms；独立4倍CPU实验的批量Range实现无实测收益，已原样保存并撤回。现有workflow增加唯一限定delivery-blockers手动入口，仅运行原document-flow单次诊断和local-assets门，不重跑42门、不将插桩结果算产品通过。本批204项生产源码与b1完全相同，正式候选仍受绘制预算门阻断，真实Mac/完整Free仍NOT_RUN。
