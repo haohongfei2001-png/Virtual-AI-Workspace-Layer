@@ -18,7 +18,7 @@ import {validLocalPipeline} from '../../src/host/local-status.mjs';
 const P='g-p-11111111111111111111111111111111',C='33333333-3333-4333-8333-333333333333',B='44444444-4444-4444-8444-444444444444',requests=[];
 // Existing explicit scroll-region contract, reconstructed in the same host.
 // Exercise it through the real package/owner path, not just the return proof.
-const conversationHTML=id=>process.argv.includes('--flow-only')?longDesktopHTML(id).replace('<div data-app-action-timeline-scroll>','<div data-app-action-timeline-scroll role="region" tabindex="0">').replace('</style>','#reading{height:2600px}[data-thread-scroll-footer]{position:fixed;left:280px;top:602px;width:600px;height:98px}</style>'):longDesktopHTML(id);
+const conversationHTML=id=>process.argv.includes('--flow-only')?longDesktopHTML(id).replace('<div data-app-action-timeline-scroll>','<div data-app-action-timeline-scroll role="region" tabindex="0">').replace('<footer data-thread-scroll-footer>','<div data-fixture-hidden-viewport-marker style="display:block;height:0;visibility:hidden;flex-shrink:0"></div><footer data-thread-scroll-footer>').replace('</style>','#reading{height:2600px}[data-thread-scroll-footer]{position:fixed;left:280px;top:602px;width:600px;height:98px}</style>'):longDesktopHTML(id);
 // The native search navigation reaches a home layout, not a conversation DOM
 // under a home URL. Use the observed home boundaries while retaining the same
 // document, sidebar, draft and unplanned browser-navigation event.
@@ -174,6 +174,7 @@ try{
     const original=await page.locator('[data-app-action-timeline-scroll]').elementHandle();
     assert(await original.evaluate(n=>n.getAttribute('role')==='region'&&n.getAttribute('tabindex')==='0'&&getComputedStyle(n).display==='grid'));
     report.checks.nativeScrollRegion={originalTabStop:true,flowRoot:true};
+    await page.locator('[data-fixture-hidden-viewport-marker]').evaluate(n=>{window.originalHiddenViewportMarker=n;});
    }
    if(scene==='home'){
     report.checks.flatHomeMember=await page.locator(nestedHome?'#nested-home-before':'#fixture-flat-native-member').evaluate(n=>({sameNativeParent:n.parentElement.tagName==='DIV'&&!n.parentElement.hasAttribute('data-va-owned'),height:n.getBoundingClientRect().height,explicitFlowRow:[...n.attributes].some(a=>a.name.startsWith('data-va-flow-row-'))}));
@@ -237,6 +238,10 @@ try{
    const inputFrames=await page.evaluate(()=>({before:window.flowInputFrames.map(n=>({role:n.src.split('/').pop(),connected:n.isConnected})),after:[...document.querySelectorAll('iframe[src^="chrome-extension://"]')].map(n=>({role:n.src.split('/').pop(),retained:window.flowInputFrames.includes(n)}))}));
    assert(inputFrames.before.every(n=>n.connected)&&inputFrames.after.every(n=>n.retained),'native presentation recovery must retain the existing frames: '+JSON.stringify(inputFrames));
    report.checks[scene+'FormalFlowInputReturn']=true;
+   if(scene==='conversation'){
+    report.checks.hiddenViewportMarker=await page.locator('[data-fixture-hidden-viewport-marker]').evaluate(n=>({sameNode:n===window.originalHiddenViewportMarker,empty:n.childNodes.length===0,hidden:getComputedStyle(n).visibility==='hidden',zeroHeight:n.getBoundingClientRect().height===0,retainedRow:[...n.attributes].some(a=>a.name.startsWith('data-va-flow-row-')),beforeFooter:n.nextElementSibling.hasAttribute('data-thread-scroll-footer')}));
+    assert.deepEqual(report.checks.hiddenViewportMarker,{sameNode:true,empty:true,hidden:true,zeroHeight:true,retainedRow:true,beforeFooter:true});
+   }
    if(scene==='project'){
     await page.locator('#project-tool').evaluate(n=>{
      window.fixtureToolClicks=0;window.fixtureToolEvents=[];

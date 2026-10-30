@@ -32,6 +32,12 @@ function retainedBoundary(member,doc,{viewport=false}={}){
  const node=member.node,win=doc.defaultView,s=win.getComputedStyle(node),box=rect(node);
  if(!node.isConnected||node.ownerDocument!==doc||(s.display==='none')!==member.hidden)return false;
  if(member.hidden)return true;
+ // A selected native empty marker may occupy a real zero-height flow row
+ // while already visibility:hidden. Keep that row/order (including its gap),
+ // never treat it as display:none or change the native visibility. Its narrow
+ // empty-marker contract must still hold on every active geometry check.
+ const hiddenMarker=!!member.hiddenMarkerViewport;
+ if(hiddenMarker&&(!isEmptyViewportMarker(node,member.hiddenMarkerViewport,doc)||s.visibility!=='hidden'||box.height!==0))return false;
  // Browser-maintained scroll extents expose actual overflowing text/content
  // without inspecting its nodes or imposing new clipping on the native tree.
  // Shadows do not change these extents. Existing native overflow clips remain
@@ -39,7 +45,7 @@ function retainedBoundary(member,doc,{viewport=false}={}){
  const tolerance=box.height===0?0:1;
  if(s.overflowX==='visible'&&node.scrollWidth>node.clientWidth+1||s.overflowY==='visible'&&node.scrollHeight>node.clientHeight+tolerance)return false;
  return Object.values(box).every(Number.isFinite)&&box.width>0&&box.height>=0&&
-  ['static','relative'].includes(s.position)&&s.cssFloat==='none'&&s.visibility==='visible'&&
+  ['static','relative'].includes(s.position)&&s.cssFloat==='none'&&(s.visibility==='visible'||hiddenMarker)&&
   (!viewport||box.x>=0&&box.y>=0&&box.x+box.width<=win.innerWidth+1&&box.y+box.height<=win.innerHeight+1);
 }
 
@@ -137,6 +143,7 @@ export function captureNativeBaseline({document:doc,inspection,isOwnedSurface=()
   const reject=(reason,detail,node,phase='walk')=>{if(!failure){failure=reason;Object.assign(evidence,{phase,detail,node});}return false;};
   function retain(node){
    const member={node,parent:node.parentElement,hidden:win.getComputedStyle(node).display==='none'};
+   if(markerViewport&&win.getComputedStyle(node).visibility==='hidden'&&isEmptyViewportMarker(node,markerViewport,doc))member.hiddenMarkerViewport=markerViewport;
    if(!retainedBoundary(member,doc))return reject('native-flow-branch-paint','retained-box',node,'retained-paint');
    retainedMembers.push(member);return true;
   }

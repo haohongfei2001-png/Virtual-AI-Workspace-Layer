@@ -1,0 +1,234 @@
+{
+  "baseCommit": "9f55f1e37c6802a32238ad417ae0d00b7d22a74a",
+  "classification": "PRODUCTION_DEFECT",
+  "realObservation": {
+    "route": "conversation",
+    "status": "surface-native-flow-branch-paint",
+    "capturedBeforeBrowserClaim": true,
+    "runtimeFingerprint": "5ba713cd50f8b1dd5592621c60b7a1160cb9f2b177e4130a6916ca3a08763c90",
+    "marker": {
+      "tag": "DIV",
+      "children": 0,
+      "childNodes": 0,
+      "shadowRoot": false,
+      "role": false,
+      "tabindex": false,
+      "contenteditable": false,
+      "width": 799.5,
+      "height": 0,
+      "display": "block",
+      "visibility": "hidden",
+      "position": "static",
+      "float": "none",
+      "effects": "none",
+      "pseudoContent": "none",
+      "parent": "timeline viewport",
+      "between": "reading and composer footer"
+    },
+    "privateContentRead": false
+  },
+  "change": "Keep package-selected empty hidden zero-height marker as an original flow row; revalidate its narrow contract while active. No visibility writes or absent-node exception.",
+  "validation": {
+    "red": "NativeFlowPreflightError: native-flow-branch-paint",
+    "documentFlowBrowser": "PASS",
+    "boundaryBrowser": "PASS_BOUNDARY_MECHANISMS",
+    "targetedNode": {
+      "passed": 135,
+      "failed": 0
+    },
+    "formalPackagedMV3": {
+      "status": "PASS",
+      "checks": {
+        "projectFooter": {
+          "y": 118,
+          "bottom": 158,
+          "height": 40,
+          "viewport": 158,
+          "panel": 158
+        },
+        "projectFormalFlowInputReturn": true,
+        "firstNativeKeyboardToolGesture": true,
+        "firstNativeToolGesture": true,
+        "nativeManagementAvailabilityKeepsFormalNavigation": {
+          "trustedExpansion": true,
+          "inertRestoresRows": true,
+          "unblockedKeepsIntent": true,
+          "responsiveClippingRestoresRows": true,
+          "nativeCollapseRestoresChoice": true,
+          "workspaceAndDraftUnchanged": true
+        },
+        "homeFooter": {
+          "y": 61,
+          "bottom": 101,
+          "height": 40,
+          "viewport": 128,
+          "panel": 101
+        },
+        "flatHomeMember": {
+          "sameNativeParent": true,
+          "height": 0,
+          "explicitFlowRow": true
+        },
+        "nestedHomeContainer": {
+          "member": true,
+          "formNotPatched": true,
+          "nativePlate": "rgb(242, 242, 242)",
+          "formParent": "nested-home-form-wrap"
+        },
+        "nestedHomeNarrow": {
+          "inputFits": true,
+          "plateFits": true,
+          "workspaceFits": true,
+          "nativeClick": true,
+          "nativeInputFocus": true
+        },
+        "retainedHomeMember": {
+          "sameParents": true,
+          "nativeClick": true,
+          "inlineGraphicRetained": true,
+          "hiddenUntouched": true,
+          "workspaceVisible": true
+        },
+        "sameDocumentHeaderReplacement": {
+          "newFrames": true,
+          "freshView": true,
+          "workspaceAndSidebarRestored": true,
+          "explicitLayoutRestored": true,
+          "originalEditorAndDraft": true
+        },
+        "homeFormalFlowInputReturn": true,
+        "conversationFooter": {
+          "y": 92,
+          "bottom": 132,
+          "height": 40,
+          "viewport": 132,
+          "panel": 132
+        },
+        "nativeScrollRegion": {
+          "originalTabStop": true,
+          "flowRoot": true
+        },
+        "conversationFormalFlowInputReturn": true,
+        "hiddenViewportMarker": {
+          "sameNode": true,
+          "empty": true,
+          "hidden": true,
+          "zeroHeight": true,
+          "retainedRow": true,
+          "beforeFooter": true
+        },
+        "afterUnlock": {
+          "ok": true,
+          "exists": true,
+          "mode": "personal"
+        },
+        "nativeNavScrollChain": true,
+        "localSidebarFailurePreservesWorkspace": true,
+        "nativePartitionReplacementRejoinsSidebarOnly": true,
+        "beforeMember": {
+          "ok": true,
+          "exists": true,
+          "mode": "personal"
+        },
+        "afterMember": {
+          "ok": true,
+          "exists": true,
+          "mode": "personal"
+        },
+        "navigationTrace": [
+          {
+            "type": "history",
+            "documentId": "A0260C40899163BCC4B96B9307C7DAEA"
+          }
+        ],
+        "nativeListChoiceAcrossFreshDocumentBinding": true,
+        "sameDocumentProjectMemberReadingReturn": true,
+        "returnPaint": {
+          "box": {
+            "x": 24,
+            "y": 24,
+            "width": 356,
+            "height": 140,
+            "top": 24,
+            "right": 380,
+            "bottom": 164,
+            "left": 24
+          },
+          "viewport": [
+            1140,
+            694
+          ],
+          "scroll": 0,
+          "visible": true,
+          "hit": true
+        },
+        "narrowFlowStructure": {
+          "workspaces": 1,
+          "headers": 1,
+          "composers": 1,
+          "roots": [
+            {
+              "x": 260,
+              "y": 0,
+              "width": 460,
+              "height": 900,
+              "top": 0,
+              "right": 720,
+              "bottom": 900,
+              "left": 260
+            }
+          ],
+          "height": 900
+        },
+        "persistedNativeNav": [
+          {
+            "segment": 0,
+            "oldOpen": [],
+            "sidebarOpen": [],
+            "capacities": [],
+            "scroll": 0,
+            "sidebarScroll": 0,
+            "sidebarVisible": true,
+            "inventoryChoices": [],
+            "sidebarChoices": [
+              [
+                "g-p-11111111111111111111111111111111",
+                false
+              ]
+            ],
+            "freeSession": {
+              "H": 30,
+              "T": 20757,
+              "Z": "Asia/Shanghai",
+              "policyRevision": 0
+            },
+            "sidebarViewport": {
+              "owner": "native-nav",
+              "scroll": 100
+            }
+          }
+        ],
+        "workerRecoveryKeepsPersonalAndUserExpansion": true,
+        "newDocumentLocksAndConfirmedPrivateObjectAndLayoutRestore": true,
+        "privateScopeRevokeClearsPriorProject": true,
+        "actualIsolatedUninstallRestoresNativeGeometryDraftAndInput": true,
+        "actualIsolatedUninstallRestoresNativeReadingPosition": true,
+        "noInternalRequests": true
+      },
+      "browserVersion": "156.0.8078.4"
+    },
+    "visualReview": [
+      "flow-conversation.png",
+      "flow-journey-narrow.png"
+    ],
+    "visualScope": "Synthetic formal-renderer screenshots only; no new overlap/clipping. Not real Mac visual acceptance."
+  },
+  "realMacFixedCandidate": "NOT_RUN",
+  "fullFree": "NOT_ACCEPTED",
+  "release": "NOT_READY",
+  "changedInputHashes": {
+    "src/host/document-flow-layout.mjs": "c6d46a693f97d3666b059068452f7235527fa8c062afe7ff4b4ff77b8a971d92",
+    "tests/host/document-flow-browser.mjs": "9b4c1ada9f9d7b857ef2d073ad4082fa2a0b92e2c5ecc0255f8672b6bb4efb55",
+    "tests/host/browser-local-mv3.mjs": "6f2476ebb79ef03659d8196f6254d342b0ad0b8be112bf69107e8b86105bf6e1"
+  }
+}

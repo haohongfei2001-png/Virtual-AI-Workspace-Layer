@@ -1,5 +1,15 @@
 # VAIWL实际状态：渐进积累工程已接线，真实来源逐项待准入
 
+## 2026-10-31 真实首页恢复与聊天隐藏标记修复
+
+原候选9f55f1e3已在本人Profile 4取得原生诊断，运行content指纹与5ba713cd50f8匹配：首页ready、两个frame/grant、workspace/sidebar可见、导航无拒包，工作空间→原生阅读→四格返回已通过限定实机验证。原生窗口绑定问题已解决，不再以Work设置或窗口占用作为阻塞。继续通过首页搜索（只键入并清除本任务合成词）、工作集打开/返回、设置焦点往返；旧资产保持锁定，未读取私人正文、输入值或账号。此前frame监视器隔离反例保留，但不代表当前首页仍失败。
+
+真实聊天打开后出现独立生产缺陷：`surface-native-flow-branch-paint`，在浏览器控制接管前已取得此诊断。限定只读结构核查发现timeline中原生空DIV为visibility:hidden、零高度、无子节点/焦点/绘制效果，符合已有empty-div-v1，但布局保留分支只接受visible，因此拒绝整页。本批只使明确选中的该类标记保留原生流行/顺序/间隙，不更改其隐藏状态，不当成display:none；活动期间继续复核同一空标记合同。非零高度、内容、tabindex、绝对定位、绘制效果及活动期间可见性变化均拒绝，未知隐藏分支仍不获准。
+
+修前反例明确RED，修后document-flow浏览器、22项布局边界机制、135项定向Node通过。真正打包的正式MV3 nested首页→Project→聊天→原生输入/返回→搜索导航→Worker恢复→刷新锁定/合成资产恢复→实际隔离卸载旅程PASS；聊天夹具加入相同隐藏标记，验证原节点/空内容/零高/隐藏/原顺序和流行均保持。查看本批桌面聊天与窄屏返回图，没有新增遮挡或裁剪；匿名宿主图不代替实机视觉。证据见[有限修复回执](engineering/free-hidden-native-marker-20261031.json)，完整源哈希/日志/图保存在`.git/vaiwl-artifacts/takeover-20261030/final/hidden-marker-evidence/`。
+
+当前修复候选尚未安装/激活，完整正式CI待当前冻结提交执行。真实聊天修复后复验、Project/工具模型附件/物理IME、本人资产确认恢复、主题窗口/长时连续与可逆停启仍NOT_RUN。实机首页通过不替代这些关口；个人长期日用、完整Free、公开发布均未接受。不扩架构或权限，不改Profile/旧资产，不merge、部署或发布。
+
 ## 2026-10-31 内部门闭合与实机框架替换阻塞
 
 本节仅固化事实，不改生产与测试输入。生产修复SHA为 `08e947c21f116defb09e5c9b69b3535abc20fd59`，诊断夹具同步后SHA为 `d46f5ee25a36ea371d751cff5f4d06bfadb013f2`。统一CI [41083510431](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/actions/runs/41083510431) 完成41/42 jobs PASS；唯一原Node失败为上一节四个过时诊断锚点。修正后的完整Node在d46f5ee2通过 **12004/12004**（本机Node v26.8.2），12/12 guard变异被杀死，输入未变。云端原12000通过及4失败保留，不宣称原run全绿。206生产来源逐一匹配，其他云端job按未变输入绑定；仅两个诊断测试文件改变，由完整Node和实际诊断编译覆盖。populated原64次原生访问、8布局格及4完整PNG通过 `PASS_CURRENT_USE_MV3_SUBCONTRACT`；原历史PARTIAL不改写。正式nested连续MV3及单次HELLO故障→真实私有弹窗重连→正式renderer→原草稿保全均PASS。

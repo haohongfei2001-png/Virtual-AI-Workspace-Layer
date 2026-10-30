@@ -432,6 +432,40 @@ try{
  });
  assert.deepEqual(markerProof,{adapterReady:true,policy:'empty-div-v1',unselectedRetained:true,shown:true,active:true,untouched:true,stableBeforeChange:true,automaticallyHidden:true,cssChangeRejected:true,visibleZeroReproved:true,childRejected:true,focusRejected:true,recovered:true,cssomAutomaticallyHidden:true,cleanupComplete:true,restored:true});
  console.log(JSON.stringify({inactiveViewportMarker:markerProof}));await markers.close();
+ // Real conversation receipt 2026-10-31: a zero-height, visibility:hidden
+ // empty-div-v1 marker remains in native flow between reading and footer.
+ // It needs an explicit retained row, not an absent-node/masking exception.
+ const hiddenMarkerPage=await browser.newPage({viewport:{width:1400,height:900}});
+ await hiddenMarkerPage.route('**/*',r=>r.request().url()==='https://chatgpt.com/c/'+C?r.fulfill({contentType:'text/html',body:longDesktopHTML(C)}):r.abort());
+ await hiddenMarkerPage.goto('https://chatgpt.com/c/'+C);await hiddenMarkerPage.addScriptTag({content:outputFiles[0].text});
+ const hiddenMarkerProof=await hiddenMarkerPage.evaluate(async()=>{
+  const {createChatGPTAdapter,createURLPolicy,CHATGPT_OBSERVED_PROFILE:profile,createFlowMountSurface,captureNativeBaseline}=flowModule;let surface;
+  const adapter=createChatGPTAdapter({document,profile,urlPolicy:createURLPolicy(),isOwnedMask:n=>surface?.isMasked(n),isOwnedSurface:n=>surface?.isOwnedSurface(n)});
+  const binding={documentToken:'hidden-marker',producerToken:'hidden-marker',browserDocumentId:'hidden-marker',routeEpoch:1,origin:location.origin,expiresAt:new Date(Date.now()+20000).toISOString()};
+  await adapter.start({binding,emit:async p=>({state:'accepted',localSeq:p.localSeq,receiptId:'hidden-marker'})});
+  const viewport=document.querySelector('[data-app-action-timeline-scroll]'),footer=viewport.querySelector('[data-thread-scroll-footer]'),marker=document.createElement('div');
+  marker.id='fixture-hidden-viewport-marker';marker.style.cssText='display:block;height:0;visibility:hidden;flex-shrink:0';viewport.insertBefore(marker,footer);
+  const baseline=marker.outerHTML,style=marker.style.cssText,editor=document.querySelector('textarea'),draft=editor.value,nativeChildren=[...viewport.children];
+  const inspect=()=>adapter.inspect(),accepted=()=>{const i=inspect();return i.ok&&!!captureNativeBaseline({document,inspection:i});};
+  const initial=inspect(),unselectedRejected=!captureNativeBaseline({document,inspection:{...initial,viewportMarkers:null}}),plan=captureNativeBaseline({document,inspection:initial});
+  const retained=!!plan&&plan.retainedMembers.some(m=>m.node===marker)&&plan.flowOrder.includes(marker)&&!plan.inactiveMarkers.includes(marker);
+  const refusals=[];
+  for(const [name,change]of [
+   ['nonzero-height',()=>marker.style.height='1px'],
+   ['native-content',()=>marker.append(document.createElement('span'))],
+   ['native-control',()=>marker.setAttribute('tabindex','0')],
+   ['absolute-position',()=>marker.style.position='absolute'],
+   ['paint-effect',()=>marker.style.boxShadow='0 0 5px red'],
+  ]){change();refusals.push([name,!accepted()]);marker.replaceChildren();marker.removeAttribute('tabindex');marker.style.cssText=style;}
+  surface=createFlowMountSurface({document,createFrameURL:({role})=>'chrome-extension://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/'+role+'.html'});
+  const handle=await surface.mount({binding},inspect()),shown=surface.showWorkspace(handle),active=surface.validateActiveLayout(handle);
+  const sameNative=editor===document.querySelector('textarea')&&editor.value===draft&&marker.parentElement===viewport&&getComputedStyle(marker).visibility==='hidden'&&marker.getBoundingClientRect().height===0;
+  marker.style.visibility='visible';const visibilityChangeRejected=!surface.validateActiveLayout(handle);marker.style.cssText=style;
+  surface.dispose(handle);adapter.stop();
+  return {adapterReady:initial.ok,unselectedRejected,retained,refusals,shown,active,sameNative,visibilityChangeRejected,restored:marker.outerHTML===baseline&&nativeChildren.every((n,i)=>viewport.children[i]===n)&&editor.value===draft&&!document.querySelector('[data-va-owned],[data-va-flow-root]')};
+ });
+ assert.deepEqual(hiddenMarkerProof,{adapterReady:true,unselectedRejected:true,retained:true,refusals:[['nonzero-height',true],['native-content',true],['native-control',true],['absolute-position',true],['paint-effect',true]],shown:true,active:true,sameNative:true,visibilityChangeRejected:true,restored:true});
+ console.log(JSON.stringify({hiddenViewportMarker:hiddenMarkerProof}));await hiddenMarkerPage.close();
  // Native popovers have no required aria-modal attribute. The real adapter,
  // controller and flow backend must agree while one is open and after close.
  // Grants below are offline mechanism doubles, never account evidence.
