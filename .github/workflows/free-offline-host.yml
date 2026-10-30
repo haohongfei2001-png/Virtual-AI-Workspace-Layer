@@ -501,11 +501,27 @@ jobs:
         with:
           node-version: '24'
       - name: Install locked build and isolated browser tools
+        env:
+          SELECTED_GATE: ${{ matrix.gate }}
         run: |
           npm ci --prefix extension/tooling --ignore-scripts --no-audit --no-fund
           npm ci --prefix tests/b1/tooling --ignore-scripts
-          tests/b1/tooling/node_modules/.bin/playwright install --with-deps chromium
-          node --input-type=module -e "import {chromium} from './tests/b1/tooling/node_modules/playwright/index.mjs'; console.log('FREE_CHROME_EXECUTABLE='+chromium.executablePath())" >> "$GITHUB_ENV"
+          if test "$SELECTED_GATE" = fault-unknown-protocol; then
+            # Chromium 156 can report ERR_ABORTED after no-store stream EOF.
+            # CL8508456 is present in this exact CfT runtime. Keep the strict
+            # body oracle and production reader; never fall back on failure.
+            tests/b1/tooling/node_modules/.bin/playwright install-deps chromium
+            vaiwl_archive="$RUNNER_TEMP/chrome-158.0.8127.2-linux64.zip"
+            curl --fail --silent --show-error --location --proto '=https' 'https://storage.googleapis.com/chrome-for-testing-public/158.0.8127.2/linux64/chrome-linux64.zip' --output "$vaiwl_archive"
+            printf '%s  %s\n' fb01efc602946373162437203a5458c0aaaf706526cdcb465c8b319c25ae65df "$vaiwl_archive" | sha256sum --check -
+            unzip -q "$vaiwl_archive" -d "$RUNNER_TEMP/vaiwl-fixed-chrome"
+            vaiwl_chrome="$RUNNER_TEMP/vaiwl-fixed-chrome/chrome-linux64/chrome"
+            test "$("$vaiwl_chrome" --version)" = 'Google Chrome for Testing 158.0.8127.2'
+            echo "FREE_CHROME_EXECUTABLE=$vaiwl_chrome" >> "$GITHUB_ENV"
+          else
+            tests/b1/tooling/node_modules/.bin/playwright install --with-deps chromium
+            node --input-type=module -e "import {chromium} from './tests/b1/tooling/node_modules/playwright/index.mjs'; console.log('FREE_CHROME_EXECUTABLE='+chromium.executablePath())" >> "$GITHUB_ENV"
+          fi
       - name: Execute one bounded supplementary case
         id: formal_supplementary
         env:
@@ -569,7 +585,7 @@ jobs:
           test "$result" -eq 2
           node tests/host/ui10-admission-trace-outcome.mjs verify "$RUNNER_TEMP/ui10-admission-trace.json" "$GITHUB_SHA" "$formal" "$result"
       - name: Independent unknown-protocol consumption trace (diagnostic only)
-        if: ${{ !cancelled() && matrix.gate == 'fault-unknown-protocol' }}
+        if: ${{ !cancelled() && matrix.gate == 'fault-unknown-protocol' && steps.formal_supplementary.outcome == 'failure' }}
         run: |
           set +e
           FREE_FAULT_UNKNOWN_TRACE=1 timeout 180s node tests/host/fault-package-matrix-browser.mjs "$RUNNER_TEMP/fault-unknown-trace.json" unknown-protocol

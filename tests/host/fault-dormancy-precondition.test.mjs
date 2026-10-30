@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {EventEmitter} from 'node:events';
 import vm from 'node:vm';
-import {createFaultDormancyRpcObserver,waitForSettledFaultDormancy,installFaultDormancyPrecondition} from './fault-dormancy-precondition.mjs';
+import {createFaultDormancyRpcObserver,waitForSettledFaultDormancy,installFaultDormancyPrecondition,faultCurrentObservationTerminal} from './fault-dormancy-precondition.mjs';
 
 const flush=async()=>{await Promise.resolve();await Promise.resolve();};
 const deferred=()=>{let resolve,reject;const promise=new Promise((a,b)=>{resolve=a;reject=b;});return {promise,resolve,reject};};
@@ -87,4 +87,34 @@ test('isolated adapter only observes an existing release and restores its wrappe
 test('selected isolated world destruction is terminal and is never retargeted',async()=>{
  const f=isolatedFixture(),observer=await installFaultDormancyPrecondition(f);await observer.arm();f.session.emit('Runtime.executionContextDestroyed',{executionContextId:7});f.session.emit('Runtime.executionContextCreated',{context:{id:8,auxData:{isDefault:false}}});
  await assert.rejects(observer.wait(),/world-changed/);assert.equal(vm.runInContext('calls',f.realm),0);await observer.close();assert.equal(f.session.detached,true);
+});
+
+
+test('current observer follows the new wake binding and original final Promise, not calibration',async()=>{
+ const pending=deferred(),binding={documentToken:'PRIVATE_NEW_DOCUMENT',producerToken:'PRIVATE_NEW_PRODUCER',routeEpoch:2,origin:'http://fixture.test'},runtime={sendMessage(message){if(message.type==='HOST_HELLO')return Promise.resolve({ok:true,binding});if(message.kind==='current-observation')return pending.promise;return Promise.resolve({ok:true});}},original=runtime.sendMessage;
+ const observer=createFaultDormancyRpcObserver(runtime,{observeCurrent:true,conversationId:'conversation',messageId:'msg-self',origin:binding.origin});
+ await runtime.sendMessage({type:'HOST_UI_IDLE_RELEASE',documentToken:'PRIVATE_OLD_DOCUMENT',producerToken:'PRIVATE_OLD_PRODUCER',routeEpoch:1});await runtime.sendMessage({type:'HOST_HELLO'});
+ const message={protocol:'vaiwl-host-observation/2',kind:'current-observation',...binding,localSeq:1,payload:{body:{association:'explicit-body-id',conversationId:'conversation',messageIds:['msg-self'],privateText:'PRIVATE_BODY'}}};
+ const actual=runtime.sendMessage(message);assert.equal(actual,pending.promise);
+ await runtime.sendMessage({type:'HOST_UI_CALIBRATION_ENTRY'});assert.equal(faultCurrentObservationTerminal(observer.snapshot(),0),null);
+ pending.resolve({state:'rejected',localSeq:1,reason:'PRIVATE_REASON'});await actual;await flush();
+ assert.deepEqual(faultCurrentObservationTerminal(observer.snapshot(),0),{kind:'CURRENT_OBSERVATION_TERMINAL',boundary:0,sequence:1,state:'rejected'});
+ assert.equal(faultCurrentObservationTerminal(observer.snapshot(),1),null);assert(!JSON.stringify(observer.snapshot()).includes('PRIVATE'));
+ observer.restore();assert.equal(runtime.sendMessage,original);
+});
+
+test('old binding, unproven body, empty body and another conversation never complete the wake observation',async()=>{
+ for(const mutate of [m=>m.producerToken='old',m=>m.payload.body.association='unproven',m=>m.payload.body.messageIds=[],m=>m.payload.body.conversationId='other']){
+  const binding={documentToken:'new-document',producerToken:'new',routeEpoch:2,origin:'http://fixture.test'},runtime={sendMessage:m=>Promise.resolve(m.type==='HOST_HELLO'?{ok:true,binding}:{state:'accepted',localSeq:m.localSeq,ok:true})},observer=createFaultDormancyRpcObserver(runtime,{observeCurrent:true,conversationId:'conversation',messageId:'msg-self',origin:binding.origin});
+  await runtime.sendMessage({type:'HOST_UI_IDLE_RELEASE',producerToken:'old'});await runtime.sendMessage({type:'HOST_HELLO'});
+  const message={protocol:'vaiwl-host-observation/2',kind:'current-observation',...binding,localSeq:1,payload:{body:{association:'explicit-body-id',conversationId:'conversation',messageIds:['msg-self']}}};mutate(message);await runtime.sendMessage(message);await flush();
+  assert.equal(faultCurrentObservationTerminal(observer.snapshot(),0),null);observer.restore();
+ }
+});
+
+test('retry, late old reply and truncated observer cannot certify a current terminal',()=>{
+ const sample={current:true,bodySequence:2,bodyDropped:0,bodyEvents:[{sequence:1,direction:'request',eligible:true},{sequence:1,direction:'reply',matched:true,state:'accepted'},{sequence:2,direction:'request',eligible:true},{sequence:2,direction:'reply',matched:true,state:'retry-after'}]};
+ assert.equal(faultCurrentObservationTerminal(sample,1),null);
+ assert.throws(()=>faultCurrentObservationTerminal({...sample,bodyDropped:1},1),/dropped/);
+ const mismatch=structuredClone(sample);mismatch.bodyEvents[3].matched=false;assert.throws(()=>faultCurrentObservationTerminal(mismatch,1),/unmatched/);
 });

@@ -2,6 +2,26 @@
 
 ## 2026-10-30 终局候选整合与同源产品门
 
+本批开始时本地、origin 与 PR16 head 均核实为 `74ef142921376381d91a0cf26ab3f30ee841f094`，Draft/base 不变。云端 run `41016555843` 为 **40/42 PASS**，`populated-native` 与 `fault-unknown-protocol` FAIL；以下旧时点的未推送/未运行记录保留为历史，不能当作当前状态。唯一正式源码与 Git writer 仍为本任务，其余审查只读。
+
+按用户最新产品化指令压缩原交付路径：**P0** 为错误授权、资产损坏、原生功能受损及失控请求；已有拒绝/预算/恢复护栏继续阻断，当前两个 CI 失败尚不能证明这些生产缺陷，未确认安全风险不销账。原安装一致备份是更新前的 P0 前置。**P1** 为两项 CI 的实际合同闭环、PARTIAL 零高观察、既定 v2.7 连续体验/视觉审查与真实主区显示确认。**P2** 为全历史/极端规模优化和非阻塞扩展，不进入个人候选关键路径。新片段选区读取已授权，但 branch/bodyHash 合同未建立；静默身份缺可靠来源，隔离保证仍未认证。来源接入可后置，相关安全风险不降级、不伪称完整 Free 已交付。
+
+populated 首失败是第 5 次原生导航后的六秒证据准入；URL/正文容器关联和 renderer 已成立，点击前共享预算剩余12，期间 detail 请求数保持8，不能归因预算耗尽。其 C3 合成来源读链仍 UNKNOWN，默认 BrowserLocal 禁用该联网来源。unknown 本轮休眠前置通过，但校准窗 `(2,2]` 为空；request3 在校准终点的边界采样后才被 Node 观察到，且完整收到未知 JSON，两个通道的送达时刻不能反推 Worker 内部先后；原校准终点不能代表独立当前读取终点。窗前 request2 的取消及全部失败保留。完整日志位于 `.git/vaiwl-artifacts/takeover-20261030/ci/74ef1429/`。
+
+本批只做受影响定向回归及相关旅程，不再每个小 commit 重跑全量。只继承未受生产源码、测试依赖或输入变化影响的证据，保留原 SHA；已改观察器的旧通过不能改签。下一次统一正式 CI 绑定本批唯一冻结 SHA。
+
+unknown 分成两个已证问题处理：校准 `unavailable` 不是独立 current-v2 终点，现由同次 Return 新 HELLO 的真实 producer/binding、原始请求 Promise 与精确 seq 共同观察二者结束，共享原六秒，不增加 RPC。旧请求、旧 producer、空正文、错误会话、截断、晚到新请求及 overflow 均不能通过。另查明当前 Chromium156 不含 [上游 EOF 修复 CL8508456](https://chromium-review.googlesource.com/c/chromium/src/+/8508456)；独立合成反例在无 AbortController/cancel 下完整读到50B和EOF，却报 ERR_ABORTED，含修复的158消除此误报，而实际截断仍拒绝。已直接核对156/158源码tag，不只推测版本。CI仅为unknown固定CfT158.0.8127.2的Linux包SHA `fb01efc602946373162437203a5458c0aaaf706526cdcb465c8b319c25ae65df`，保留Playwright锁、no-store、完整正文与所有原护栏；不修改用户Chrome或生产读取器，不在失败时fallback。成功后不再自动跑冗余copy trace。
+
+同一204项生产源码的Chrome158未插桩未知协议定向旅程 `PASS_NARROW_PACKAGED_FAULT_OBSERVATIONS`：实际三个响应均完整50B，目标窗 `(2,3]`、worker请求2、current/校准共同终点后请求稳定、cleanup通过。173项相关反例及88项CI/trace定向检查通过。Chrome156新共同终点下的真实body FAIL与所有旧FAIL继续保留；独立反例不能追溯认定每次旧失败的唯一原因。populated只读核对和本机六次copy trace未找到固定期限/预算断点，仍UNKNOWN；该诊断不替代64次正式门，不猜因修改生产。
+
+PARTIAL的单次定向包完成普通/长中文标题各12步和16控制格；23个单样本、1个明确owned-beforetoggle/child-identity变化后重取。30张代表图全部实际查看、16设置图完整，补齐旧缺15代表/8设置，不回填74旧失败。短窗需自然滚动的既有范围继续保留。本批生产源码未变，完整新SHA的统一结果由冻结回执接续记录。
+
+用户本次确认原运行Profile；仅核对该Profile的扩展记录，与原扩展ID和source-witness路径一致，完整路径只保留本机私有回执。完整一致安装备份仍未创建；ChatGPT无正文结构读取再次超时，保留独立transport阻塞。原安装/私人数据不变，真实Mac仍NOT_RUN，不以隔离Chrome158通过冒充个人主用Chrome156终验。
+
+`74ef142921376381d91a0cf26ab3f30ee841f094` 的本机 Node 11940/11940、未知协议有界休眠前置及其余主要旅程通过，19 runner 为 18 PASS / 1 FAIL。唯一本机失败是 UI10-PARTIAL 长中文标题首格：子 frame 为 1180×722、main 的同场高度为 0；原普通标题 12 步通过。此前标题框正尺寸、后续截图正常均不覆盖该失败，零高原因 UNKNOWN；缺少同场父几何、展示切换与节点身份，不能判为清空子树或无害瞬态。该本机记录形成时远端 ref 和云端 CI 尚未更新，当前云端结果见上文。
+
+本批仅为 shell oracle 补有界的一致性观察：绑定父子节点、同场几何与真实 owned exit beforetoggle 计数，明确变化才丢弃不一致快照；保留所有丢弃理由，最多三次、共用六秒。原 1px 几何/遮挡断言保持，一致的零高立即 FAIL，不等待高度变正；旧 FAIL 与失败截图原样保存。
+
 `a80ecb914f4064c07d2e5c23fdeb77e115f9890d` 完整冻结 Node 11928/11928，19 个 runner 中 18 个通过；当前三个 BrowserLocal 资产业务门及独立三 profile 个人离线像素门通过，限定 L1 2/2、L2 15/15。未知协议 runner 仍 FAIL，整体内部关口保持 FAIL、远端 ref 未移动。动作窗 request3 在 HTTP 200 后 ERR_ABORTED，窗前完整响应不计入；五份读取/解析/校准包内源码 hash 与 `0fe8dc6b` 相同。一次 copy-only owner trace 与一次未改包 Network stream 诊断均 INCOMPLETE、未复现原失败，不能覆盖原 FAIL。
 
 已确认原未知协议前置的分支竞争：关闭阅读后马上返回，没有核实自动休眠的真实 release/所有已挂载角色 clear 是否完成，返回可以落在不同 binding 生命周期。当前仅增加有界、被动的已完成休眠前置后执行一次唤醒，保留完整未知 JSON、全动作窗 GET、前台优先和原六秒边界；不宣称此即旧 ERR_ABORTED 的根因。快速往返安全回归及所有旧失败继续保留，修正后再执行同 SHA 全部适用关口。

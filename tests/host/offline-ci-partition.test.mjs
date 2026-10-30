@@ -231,7 +231,7 @@ test('explicit J4 dispatch schedules one existing case without other runners or 
 test('unknown-protocol copy diagnostic never replaces the formal fault report',()=>{
  const body=workflow.split('  cloud-supplementary-gates:')[1];
  const step=body.split('      - name: Independent unknown-protocol consumption trace')[1].split('      - name: Preserve exact supplementary result')[0];
- assert(step.includes("if: ${{ !cancelled() && matrix.gate == 'fault-unknown-protocol' }}"));
+ assert(step.includes("if: ${{ !cancelled() && matrix.gate == 'fault-unknown-protocol' && steps.formal_supplementary.outcome == 'failure' }}"));
  assert(step.includes('FREE_FAULT_UNKNOWN_TRACE=1 timeout 180s node tests/host/fault-package-matrix-browser.mjs "$RUNNER_TEMP/fault-unknown-trace.json" unknown-protocol'));
  assert(step.includes('test "$result" -eq 2'));assert(step.includes('node tests/host/fault-unknown-trace-outcome.mjs "$RUNNER_TEMP/fault-unknown-trace.json" "$result" "$GITHUB_SHA"'));
  assert.doesNotMatch(step,/supplementary.json|continue-on-error|success\(\)|rerun/);

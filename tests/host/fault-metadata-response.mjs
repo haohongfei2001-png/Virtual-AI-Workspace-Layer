@@ -13,8 +13,9 @@ export async function observeFaultMetadataResponse(response,row){
 }
 
 /** Request-start order defines the Return action window, not the owning reader.
- * Current reads may dispatch before Node observes a calibration reply; this
- * cohort proves observed response content only, never calibration consumption. */
+ * Calibration and current-observation replies are independent. This
+ * cohort ends only after both observed terminals, and proves response content
+ * only, never calibration consumption. */
 export function createFaultMetadataRequestTracker({origin,path}){
  let sequence=0;const requests=new WeakMap(),rows=[];
  return {start(request){const url=new URL(request.url());if(url.origin!==origin||url.pathname!==path)return;const row={requestStart:++sequence,path,method:request.method(),worker:!!request.serviceWorker(),bodyRead:'NO_RESPONSE',unknownSchema:false};requests.set(request,row);rows.push(row);},row:request=>requests.get(request),boundary:()=>sequence,rows:()=>rows};

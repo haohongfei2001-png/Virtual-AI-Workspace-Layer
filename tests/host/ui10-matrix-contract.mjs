@@ -3,6 +3,7 @@
  * frame-shell-layout-browser.mjs bounded()/sample(). No browser is launched.
  */
 import assert from 'node:assert/strict';
+import {observeUi10ShellConsistently} from './ui10-shell-observation.mjs';
 
 export const UI10_PROFILES=Object.freeze(['LEGACY','MODERN','PARTIAL']);
 export const UI10_BROWSER='chrome-mv3-runner'; // Current package runner; no invented cross-browser support.
@@ -56,15 +57,7 @@ export function assertUi10ShellBounds(m,outer){
 
 /** Read-only Playwright frame sampler. No generated DOM, styles, goldens or clicks. */
 export async function observeUi10Shell(frame){
- const measurement=await frame.evaluate(()=>{
-  const root=document.documentElement,main=document.querySelector('main'),r=main.getBoundingClientRect();
-  return {width:innerWidth,height:innerHeight,document:{scrollWidth:root.scrollWidth,scrollHeight:root.scrollHeight},main:{y:r.y,height:r.height},scrollX,scrollY};
- });
- const element=await frame.frameElement();
- const outer=await element.evaluate(n=>{const button=n.previousElementSibling,r=button.getBoundingClientRect();return {backend:n.parentElement.hasAttribute('popover')?'manual':'document-flow',frame:n.getBoundingClientRect().toJSON(),surface:n.parentElement.getBoundingClientRect().toJSON(),close:r.toJSON(),closeHit:document.elementFromPoint(r.x+r.width/2,r.y+r.height/2)===button};});
- if(outer.backend==='document-flow')outer.closeCoversControl=await frame.evaluate(({frame:f,close:c})=>[...document.querySelectorAll('button,a,input,select,textarea,[tabindex]')].some(n=>{const r=n.getBoundingClientRect(),s=getComputedStyle(n);return r.width>0&&r.height>0&&s.visibility==='visible'&&s.display!=='none'&&r.right+f.x>c.left&&r.left+f.x<c.right&&r.bottom+f.y>c.top&&r.top+f.y<c.bottom;}),outer);
- assertUi10ShellBounds(measurement,outer);
- return {measurement,outer,evidence:'SHELL_GEOMETRY_ONLY',fullV27Acceptance:'NOT_ESTABLISHED'};
+ return observeUi10ShellConsistently(frame,assertUi10ShellBounds);
 }
 
 /** Preparation cannot manufacture native PASS from deterministic contracts. */

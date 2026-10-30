@@ -1,4 +1,5 @@
 import {validUnknownActionWindowCohort,unknownActionWindowCohort} from './fault-metadata-response.mjs';
+import {faultCurrentObservationTerminal} from './fault-dormancy-precondition.mjs';
 /** Fixed observation gates. Passing these gates is narrower than FAULT acceptance. */
 import assert from 'node:assert/strict';
 import {assertCanonicalCspObservation} from './fault-csp-contract.mjs';
@@ -22,7 +23,13 @@ export function assertFaultObservation(c){
    assert(c.workerMetadataResponses<=3);assert.equal(c.workerRequestsStableAfterTerminal,true);
    if(c.fault==='rate-limit')assert.equal(c.metadataStatus,429);
    if(c.fault==='corrupt')assert.equal(c.invalidJSON,true);
-   if(c.fault==='unknown-protocol'){assert.equal(c.calibrationConsumption,'NOT_ESTABLISHED');assert.equal(c.unknownSchema,true);assert.equal(validUnknownActionWindowCohort(c.metadataResponseObservations,c.calibrationRequestBoundary,c.calibrationTerminalBoundary),true);assert.deepEqual(c.targetWorkerRequestStarts,unknownActionWindowCohort(c.metadataResponseObservations,c.calibrationRequestBoundary,c.calibrationTerminalBoundary).map(r=>r.requestStart));assert.equal(c.workerMetadataRequests,c.metadataResponseObservations.filter(r=>r.worker).length);assert(c.workerMetadataRequests>0&&c.workerMetadataRequests<=3);}
+   if(c.fault==='unknown-protocol'){
+    const t=c.currentObservationTerminal;assert(t&&t.kind==='CURRENT_OBSERVATION_TERMINAL'&&Number.isFinite(t.elapsedMs)&&t.elapsedMs>=0&&t.elapsedMs<6000);
+    assert.deepEqual(faultCurrentObservationTerminal(t.snapshot,t.boundary),{kind:t.kind,boundary:t.boundary,sequence:t.sequence,state:t.state});
+    assert(Number.isSafeInteger(c.calibrationTerminalBoundary)&&c.calibrationTerminalBoundary>=c.calibrationRequestBoundary);assert(Number.isSafeInteger(c.currentObservationTerminalBoundary)&&c.currentObservationTerminalBoundary>=c.calibrationTerminalBoundary);
+    assert.equal(c.entryTerminalBoundary,Math.max(c.calibrationTerminalBoundary,c.currentObservationTerminalBoundary));
+    assert.equal(c.calibrationConsumption,'NOT_ESTABLISHED');assert.equal(c.unknownSchema,true);assert.equal(validUnknownActionWindowCohort(c.metadataResponseObservations,c.calibrationRequestBoundary,c.entryTerminalBoundary),true);assert.deepEqual(c.targetWorkerRequestStarts,unknownActionWindowCohort(c.metadataResponseObservations,c.calibrationRequestBoundary,c.entryTerminalBoundary).map(r=>r.requestStart));assert.equal(c.workerMetadataRequests,c.metadataResponseObservations.filter(r=>r.worker).length);assert(c.workerMetadataRequests>0&&c.workerMetadataRequests<=3);
+   }
  }
  return true;
 }

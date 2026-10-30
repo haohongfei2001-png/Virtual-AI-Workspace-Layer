@@ -30,8 +30,12 @@ for(const [name,mutate] of [
  ['frame below surface',x=>x.outer.frame.bottom=522],['zero viewport',x=>x.m.width=0],
 ])test(`shell oracle rejects ${name}`,()=>{const x=geometry();mutate(x);assert.throws(()=>assertUi10ShellBounds(x.m,x.outer));});
 test('read-only sampler checks geometry without claiming full UI acceptance',async()=>{
- const {m,outer}=geometry();let reads=0;const result=await observeUi10Shell({evaluate:async()=>{reads++;return m;},frameElement:async()=>({evaluate:async()=>{reads++;return outer;}})});
- assert.equal(reads,2);assert.equal(result.evidence,'SHELL_GEOMETRY_ONLY');assert.equal(result.fullV27Acceptance,'NOT_ESTABLISHED');
+ const {m,outer}=geometry();let disposed=0,closed=0;
+ Object.assign(outer,{backend:'manual',timeOrigin:1,identity:{document:true,frame:true,surface:true,close:true,exit:true},sequence:0,dropped:0});
+ const handle=value=>({evaluate:async fn=>fn(value),dispose:async()=>{disposed++;}});
+ const parent=handle({before:outer,read:()=>outer,close:()=>{closed++;return true;}}),child=handle({sample:{timeOrigin:2,measurement:m,controls:[],controlsDropped:0,presence:{main:true,root:true,shadow:true,renderer:true}},current:()=>({timeOrigin:2,identity:{document:true,main:true,root:true,shadow:true,renderer:true}})});
+ const result=await observeUi10Shell({evaluateHandle:async()=>child,frameElement:async()=>({...handle(null),evaluateHandle:async()=>parent})});
+ assert.equal(disposed,3);assert.equal(closed,1);assert.equal(result.observation.attempts.length,1);assert.equal(result.evidence,'SHELL_GEOMETRY_ONLY');assert.equal(result.fullV27Acceptance,'NOT_ESTABLISHED');
 });
 test('document-flow exit may share the frame plane but cannot cover a renderer control',()=>{
  const {m,outer}=geometry();Object.assign(outer,{backend:'document-flow',closeHit:true,closeCoversControl:false});
