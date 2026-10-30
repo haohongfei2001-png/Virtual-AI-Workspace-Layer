@@ -1,5 +1,15 @@
 # VAIWL实际状态：渐进积累工程已接线，真实来源逐项待准入
 
+## 2026-10-31 内部门闭合与实机框架替换阻塞
+
+本节仅固化事实，不改生产与测试输入。生产修复SHA为 `08e947c21f116defb09e5c9b69b3535abc20fd59`，诊断夹具同步后SHA为 `d46f5ee25a36ea371d751cff5f4d06bfadb013f2`。统一CI [41083510431](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/actions/runs/41083510431) 完成41/42 jobs PASS；唯一原Node失败为上一节四个过时诊断锚点。修正后的完整Node在d46f5ee2通过 **12004/12004**（本机Node v26.8.2），12/12 guard变异被杀死，输入未变。云端原12000通过及4失败保留，不宣称原run全绿。206生产来源逐一匹配，其他云端job按未变输入绑定；仅两个诊断测试文件改变，由完整Node和实际诊断编译覆盖。populated原64次原生访问、8布局格及4完整PNG通过 `PASS_CURRENT_USE_MV3_SUBCONTRACT`；原历史PARTIAL不改写。正式nested连续MV3及单次HELLO故障→真实私有弹窗重连→正式renderer→原草稿保全均PASS。
+
+已有一致Profile备份保留，更新前再次核验并完整备份2956个原安装源码文件。本次同ID更换7个文件（含1个新模块），205包文件全部匹配、2752额外文件不变；不写Profile、IndexedDB或资产数据，没有schema迁移、权限扩张或清理。ZIP SHA256 `a6e645d595663bfd155c7619e6ba67221e2e1bd9b6c49d60127c6ef6b55289f2`；content构建指纹 `5ba713cd50f8b1dd5592621c60b7a1160cb9f2b177e4130a6916ca3a08763c90`。用户已确认扩展重新加载并刷新首页；尚未取得该文档私有运行构建回执，不能仅以文件和用户操作当完整运行版本证明。
+
+真实无正文结构回执：home=true、boot=loaded、startup=surface-failed、stop=`ui-frame-document-replaced`，增强frame与返回入口均0。当前浏览器连接已经恢复，**不再是Work设置禁用**。读取已安装浏览器控制扩展的公开执行代码，hash仍为 `337ad4ff3ec7846134e5d39528936b1cbb68107de3c4da0e0641c712bda66129`；将其原监视函数放入隔离正式MV3验证：自身extension ID不改变frame，其他ID把frame写成空srcdoc，新候选随即按原护栏退出，原输入/草稿保全。该反例证明与当前监视函数的兼容问题，**实机写入方调用栈NOT_CAPTURED，不冒充唯一实时根因**。未关闭、绕过或修改监视器/框架保护，没有采用新架构。
+
+必要内部门为 `PASS_SOURCE_BOUND`；同ID文件已更新且用户确认reload；真实Mac本次框架替换故障仍阻断验收，其余真实Project/聊天、模型/工具/附件/IME、本人资产恢复、主题窗口/连续状态和可逆停启仍NOT_RUN。个人长期日用、完整Free和公开发布均未接受。2258份原未提交成果及3份stash保全，PR16保持Draft，未merge、部署或发布。完整回执与下一入口为 `.git/vaiwl-artifacts/takeover-20261030/final/d46f5ee25a36ea371d751cff5f4d06bfadb013f2/quality-receipt.json`、`real-mac-receipt.json` 与 `same-id-update-receipt.json`；后续只解决这个实机框架替换边界再补剩余终验，不重跑未变工程。此事实提交的所有生产/测试来源与d46f5ee2相同，可直接绑定既有证据，无需再次安装。
+
 ## 2026-10-30 重连候选统一CI与诊断锚点同步
 
 生产冻结 `08e947c21f116defb09e5c9b69b3535abc20fd59` 已推送原分支/PR16，统一CI [41083510431](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/actions/runs/41083510431) 运行中。新增实际打包MV3单次HELLO传输故障注入验证已PASS：由真正私有弹窗发送绑定documentId的点击请求，重新建立正式renderer，原输入节点/草稿保全、无私人IDB或内部请求。此证据补齐上一节尚未执行的隔离故障操作，不代表实机通过。
