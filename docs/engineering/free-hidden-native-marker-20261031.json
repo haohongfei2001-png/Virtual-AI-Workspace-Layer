@@ -428,5 +428,26 @@
     "installedProfile": "UNCHANGED",
     "freeAccepted": false,
     "releaseReady": false
+  },
+  "lateSourceProbeTestContract": {
+    "baseCommit": "00dfde0f9936ac438b4fb41a7b0b4e6f8903f6d5",
+    "ci": 41125519998,
+    "classification": "STALE_TEST_ASSERTION",
+    "originalFailure": ".git/vaiwl-artifacts/takeover-20261030/final/hidden-marker-evidence/00df-cloud-late-body-failure.json",
+    "singleErrorMarkerInOfflineJourneyLog": true,
+    "productionChanged": false,
+    "change": "Replace obsolete popover-dependent probe selector expectation with exact workspace selector, body parent and actual retained offscreen position; keep all authorization, request, mutation and revocation assertions.",
+    "validation": {
+      "status": "PASS",
+      "cases": [
+        "late-body",
+        "source-revoked"
+      ],
+      "report": ".git/vaiwl-artifacts/takeover-20261030/final/hidden-marker-evidence/late-body-current-contract.json",
+      "productionSourceHashesVerified": 206
+    },
+    "testHash": "8f2885f39b18277d8b450c4e51a7a268a8fed7ba3706ad04933cb22da0d82bb2",
+    "realMac": "NOT_RUN",
+    "formalCI": "PENDING_FROZEN_HEAD"
   }
 }

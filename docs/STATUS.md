@@ -1,5 +1,11 @@
 # VAIWL实际状态：渐进积累工程已接线，真实来源逐项待准入
 
+## 2026-10-31 晚到来源撤销断言同步
+
+00dfde0f 的统一 CI 41125519998 已通过 CSP 和片段关闭手势；offline-journeys 仅一处错误标记：晚到来源撤销测试仍要求旧的 `:popover-open` 探针选择器。原记录实际只有一次可信探针，来源真实隐藏，零显式 proposal/ACK/入库/元数据请求，最终保持撤销和关闭；失败属于旧断言，不是安全保护失效。
+
+仅同步测试：要求精确 workspace ID 的独立选择器、slot 已位于 body、实测离屏 right=-2/top=0 与保留尺寸一致，全部原授权/请求/撤销断言保留。实际打包晚到入库及来源撤销两例 PASS；同类旧探针选择器假设已检查，旧 backend 自身测试不改。生产 206 来源及包字节未变，复用已验证的 Node 12012/12012、MODERN、47 项机制和完整打包旅程；冻结测试更正后仍核对正式 CI，不将旧失败改标 PASS。实机计时未开始。
+
 ## 2026-10-31 声明式关闭手势与 CSP 观测收口
 
 ab5bb797 正式 CI [41122794801](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/actions/runs/41122794801) 全部结束，40/42 jobs PASS；populated-native、fault-unknown-protocol、MODERN、完整 Node 均通过。两项失败分别处理，原 FAIL 保留：

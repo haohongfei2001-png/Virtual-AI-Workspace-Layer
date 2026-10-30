@@ -69,7 +69,7 @@ async function revokeSourceDuringProbe(page){
    if(!state.armed||event.newState!=='closed'||globalThis.__lateNativeBody.releases!==1)return;
    state.armed=false;
    const box=workspace.getBoundingClientRect(),rules=[...document.querySelectorAll('style[data-va-owned]')].flatMap(node=>[...node.sheet.cssRules]).filter(rule=>rule.media?.mediaText==='all'&&rule.cssText.includes(workspace.id));
-   const entry={at:performance.timeOrigin+performance.now(),oldState:event.oldState,newState:event.newState,trusted:event.isTrusted,workspaceConnected:workspace.isConnected,workspaceRect:box.toJSON(),activeExactProbeRules:rules.length,probeRule:rules.length===1?{media:rules[0].media.mediaText,selector:rules[0].cssRules[0].selectorText,width:rules[0].cssRules[0].style.width,height:rules[0].cssRules[0].style.height,left:rules[0].cssRules[0].style.left}:null,readingConnected:reading.isConnected,sourceHiddenBefore:reading.hidden,bodyId:reading.dataset.conversationId,messageCount:reading.querySelectorAll('[data-message-id]').length};
+   const entry={at:performance.timeOrigin+performance.now(),oldState:event.oldState,newState:event.newState,trusted:event.isTrusted,workspaceConnected:workspace.isConnected,workspaceId:workspace.id,workspaceParentIsBody:workspace.parentElement===document.body,workspaceRect:box.toJSON(),activeExactProbeRules:rules.length,probeRule:rules.length===1?{media:rules[0].media.mediaText,selector:rules[0].cssRules[0].selectorText,width:rules[0].cssRules[0].style.width,height:rules[0].cssRules[0].style.height,left:rules[0].cssRules[0].style.left}:null,readingConnected:reading.isConnected,sourceHiddenBefore:reading.hidden,bodyId:reading.dataset.conversationId,messageCount:reading.querySelectorAll('[data-message-id]').length};
    // A real native source mutation invalidates the real controller/flow proof.
    // No grant, adapter, proposal, owner response, or ACK is stubbed.
    reading.hidden=true;entry.sourceHiddenAfter=reading.hidden;entry.nativeDisplayAfter=getComputedStyle(reading).display;state.events.push(entry);
@@ -135,10 +135,10 @@ try{
     assert(result.finalBody.workspaceVisible&&result.finalBody.exitOpen,'successful synchronous probe restores workspace');
    }else{
     result.rejection=await page.evaluate(()=>({events:globalThis.__lateBodySourceRevoke.events,armed:globalThis.__lateBodySourceRevoke.armed}));const entry=result.rejection.events[0];
-    // beforetoggle runs before :popover-open changes. At this point the real
-    // offscreen rule is armed with the captured viewport; its selector applies
-    // only after this callback returns. Do not demand its later rect here.
-    result.rejectionChecks={singleRealProbe:result.rejection.events.length===1&&entry.trusted&&entry.oldState==='open'&&entry.newState==='closed'&&entry.activeExactProbeRules===1&&entry.workspaceConnected&&entry.workspaceRect.width>0&&entry.workspaceRect.height>0&&entry.probeRule?.media==='all'&&entry.probeRule.selector.includes(':popover-open')&&parseFloat(entry.probeRule.width)===entry.workspaceRect.width&&parseFloat(entry.probeRule.height)===entry.workspaceRect.height&&parseFloat(entry.probeRule.left)===-entry.workspaceRect.width-2,
+    // The exact owned slot is already retained offscreen before the empty
+    // exit closes. Its private rule is independent of :popover-open so moving
+    // the OOPIF never collapses the captured viewport during a probe.
+    result.rejectionChecks={singleRealProbe:result.rejection.events.length===1&&entry.trusted&&entry.oldState==='open'&&entry.newState==='closed'&&entry.activeExactProbeRules===1&&entry.workspaceConnected&&entry.workspaceRect.width>0&&entry.workspaceRect.height>0&&entry.probeRule?.media==='all'&&entry.probeRule.selector==='#'+entry.workspaceId&&entry.workspaceParentIsBody&&entry.workspaceRect.left===-entry.workspaceRect.width-2&&entry.workspaceRect.right===-2&&entry.workspaceRect.top===0&&parseFloat(entry.probeRule.width)===entry.workspaceRect.width&&parseFloat(entry.probeRule.height)===entry.workspaceRect.height&&parseFloat(entry.probeRule.left)===-entry.workspaceRect.width-2,
      realSourceRevoked:entry?.readingConnected&&entry.sourceHiddenBefore===false&&entry.sourceHiddenAfter===true&&entry.nativeDisplayAfter==='none'&&entry.bodyId===report.target&&entry.messageCount===1,
      noExplicitProposal:result.explicitProposals.length===0,noAcceptedBodyACK:result.acceptedBodyACKs.length===0,noAdmission:!admitted&&result.samples.every(sample=>sample.verifiedNewSend===0),noMetadataGET:result.metadataGETDelta===0,
      sourceRemainsRevoked:result.finalBody.nativeHidden&&result.finalBody.readingDisplay==='none'&&result.finalBody.bodyId===report.target&&result.finalBody.messageIds.length===1,closedPresentation:result.finalBody.exitOpen===false};
