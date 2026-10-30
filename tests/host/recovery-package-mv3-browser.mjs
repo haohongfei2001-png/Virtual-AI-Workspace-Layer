@@ -1,5 +1,6 @@
 import {verifyRecoveryRetirement} from './recovery-retirement-browser-probe.mjs';
 import {verifyRecoveryParentClose} from './recovery-inflight-browser-probe.mjs';
+import {assertRecoveryNativeLinkSample} from './recovery-native-link-observation.mjs';
 /** Actual packaged flow/renderer/IDB. Only disposable synthetic assets and damage. */
 import assert from 'node:assert/strict';
 import {createServer} from 'node:http';
@@ -19,7 +20,7 @@ import {packageHost,verifyHost} from '../../extension/package.mjs';
 const mode=process.argv[3]??'browser-local';assert(['browser-local','c3'].includes(mode));
 const local=mode==='browser-local',hash=value=>createHash('sha256').update(value).digest('hex');
 const script='tests/host/recovery-package-mv3-browser.mjs';
-const paths=[script,'tests/host/recovery-inflight-browser-probe.mjs','tests/host/recovery-retirement-browser-probe.mjs','tests/host/j2-runner-bounds.mjs','tests/host/fixtures/server.mjs','tests/host/fixtures/legacy.html','tests/host/fixtures/native.mjs','tests/host/fixtures/native.css','tests/host/fixtures/observed-desktop.mjs','tests/host/fixtures/j4-assets.mjs','tests/host/native-visibility-browser.mjs','tests/host/historical-network-guard.mjs','tests/host/isolated-browser-cleanup.mjs'];
+const paths=[script,'tests/host/recovery-native-link-observation.mjs','tests/host/recovery-inflight-browser-probe.mjs','tests/host/recovery-retirement-browser-probe.mjs','tests/host/j2-runner-bounds.mjs','tests/host/fixtures/server.mjs','tests/host/fixtures/legacy.html','tests/host/fixtures/native.mjs','tests/host/fixtures/native.css','tests/host/fixtures/observed-desktop.mjs','tests/host/fixtures/j4-assets.mjs','tests/host/native-visibility-browser.mjs','tests/host/historical-network-guard.mjs','tests/host/isolated-browser-cleanup.mjs'];
 const hashes=async names=>Object.fromEntries(await Promise.all(names.map(async path=>[path,hash(await readFile(path))])));
 const requests=[];
 async function fixture(){
@@ -156,12 +157,13 @@ try{
   // Rows are published before their asynchronous native plan. Observe the
   // first usable row, never wait for an expected URL to replace a wrong plan.
   while(performance.now()<deadline){
-   const sample=await link.evaluateAll(nodes=>{if(nodes.length!==1)return {count:nodes.length};const n=nodes[0],r=n.getBoundingClientRect(),s=getComputedStyle(n);return {count:1,at:performance.timeOrigin+performance.now(),ownerDocument:n.ownerDocument===document,connected:n.isConnected,visible:r.width>0&&r.height>0&&s.display!=='none'&&s.visibility==='visible',href:n.getAttribute('href'),ariaDisabled:n.getAttribute('aria-disabled'),reason:n.getAttribute('data-navigation-reason')};});
+   const sample=await link.evaluateAll(nodes=>{if(nodes.length!==1)return {count:nodes.length};const n=nodes[0],r=n.getBoundingClientRect(),s=getComputedStyle(n);return {count:1,at:performance.timeOrigin+performance.now(),ownerDocument:n.ownerDocument===document,connected:n.isConnected,visible:r.width>0&&r.height>0&&s.display!=='none'&&s.visibility==='visible',href:n.getAttribute('href'),ariaDisabled:n.getAttribute('aria-disabled'),reason:n.getAttribute('data-navigation-reason'),refId:n.getAttribute('data-ref-id'),list:n.closest('[data-free-list]')?.getAttribute('data-free-list'),containsProTitle:(n.textContent??'').includes('SYNTHETIC_PRO_KEEP')};});
    observation.samples++;observation.first??=sample;observation.last=sample;assert(sample.count<=1,'repaired UNKNOWN row must remain unique');
+   assert(performance.now()<deadline,'repaired UNKNOWN link observation must complete within the original six seconds');
    if(sample.count===1&&sample.ownerDocument&&sample.connected&&sample.visible&&sample.ariaDisabled!=='true'){observation.firstEnabled=sample;break;}
    await new Promise(resolve=>setTimeout(resolve,Math.min(10,Math.max(0,deadline-performance.now()))));
   }
-  assert(observation.firstEnabled,'repaired UNKNOWN link must become usable within six seconds');assert.equal(observation.firstEnabled.href,ref.nativeUrl);assert.equal(await link.getAttribute('href'),ref.nativeUrl);assert.notEqual(await link.getAttribute('aria-disabled'),'true');assert(!((await link.textContent())??'').includes('SYNTHETIC_PRO_KEEP'));
+  assertRecoveryNativeLinkSample(observation.firstEnabled,ref);
  }
  assert.equal(await workspace.getByText('SYNTHETIC_PRO_KEEP',{exact:true}).count(),0);await draft();await screenshot('repaired-unknown-native-links');
  report.results.push({name:'explicit-repair-revokes-sources-retains-facts-Pro-draft-and-UNKNOWN-native-links',status:'PASS',oldTitleRestoration:'not authorized; old source remains revoked'});

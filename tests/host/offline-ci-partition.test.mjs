@@ -246,9 +246,24 @@ test('unknown runtime repair dispatch selects only its unchanged formal gate and
  const selected=(github,inputs)=>Object.keys(all).filter(name=>condition(all[name].match(/^    if: (.+)$/m)[1],github,inputs));
  assert.deepEqual(selected(event,input),['cloud-supplementary-gates']);
  for(const [github,inputs] of [[event,{}],[event,{diagnostic:'fault-corrupt'}],[{...event,event:{repository:{private:true}}},input],[{...event,repository:'other/repo'},input],[{...event,ref:'refs/heads/main'},input],[{...event,event_name:'pull_request'},input]])assert.deepEqual(selected(github,inputs),[]);
- const body=all['cloud-supplementary-gates'],expression=body.match(/^        gate: \$\{\{ (.+) \}\}$/m)[1];assert.deepEqual(new Function('github','fromJSON','return '+expression)(event,JSON.parse),['fault-unknown-protocol']);
+ const body=all['cloud-supplementary-gates'],expression=body.match(/^        gate: \$\{\{ (.+) \}\}$/m)[1];assert.deepEqual(new Function('github','inputs','fromJSON','return '+expression)(event,input,JSON.parse),['fault-unknown-protocol']);
  const script=body.match(/node -e "(const r=require\(process\.argv\[1\]\);[^\n]+)" "\$report"/)[1],rejected=Symbol('rejected'),run=new Function('require','process',script),check=value=>run(()=>value,{argv:['node','synthetic-report'],env:{GITHUB_SHA:'expected'},exit:()=>{throw rejected;}});
  const good={sourceCommit:'expected',results:[{fault:'unknown-protocol',browserVersion:'158.0.8127.2'}]};check(good);
  for(const bad of [{...good,sourceCommit:'old'},{...good,results:[]},{...good,results:[{...good.results[0],browserVersion:'156.0.8078.4'}]},{...good,results:[{...good.results[0],fault:'corrupt'}]}])assert.throws(()=>check(bad),e=>e===rejected);
  assert(body.includes('fb01efc602946373162437203a5458c0aaaf706526cdcb465c8b319c25ae65df'));assert(body.includes('sha256sum --check -'));assert.doesNotMatch(body,/--version|continue-on-error|upload-artifact|actions\/cache|secrets\./);
+});
+
+test('delivery blocker dispatch isolates existing assets and one first-proof diagnostic without a full rerun',()=>{
+ const all=Object.fromEntries([...workflow.matchAll(/^  ([\w-]+):\n([\s\S]*?)(?=^  [\w-]+:\n|$(?![\s\S]))/gm)].filter(m=>/^    runs-on:/m.test(m[2])).map(m=>[m[1],m[2]]));
+ const event={...allowedEvent,event_name:'workflow_dispatch'},input={diagnostic:'delivery-blockers'};
+ const selected=(github,inputs)=>Object.keys(all).filter(name=>condition(all[name].match(/^    if: (.+)$/m)[1],github,inputs));
+ assert.deepEqual(selected(event,input),['offline-journeys','cloud-supplementary-gates']);
+ for(const e of [{...event,event:{repository:{private:true}}},{...event,repository:'other/repo'},{...event,ref:'refs/heads/main'},{...event,event_name:'pull_request'}])assert.deepEqual(selected(e,input),[]);
+ const body=all['cloud-supplementary-gates'],expression=body.match(/^        gate: \$\{\{ (.+) \}\}$/m)[1];
+ assert.deepEqual(new Function('github','inputs','fromJSON','return '+expression)(event,input,JSON.parse),['local-assets']);
+ const active=journeySteps.filter(s=>!s.expression||condition(s.expression,event,input));
+ assert.deepEqual(active.filter(s=>s.name!=='Publish bounded text evidence to logs only').map(s=>s.name),['Install locked Host build tool','Install locked test tools and isolated Chromium','Document-flow native protection and continuous packaged product journey']);
+ const probe=active.find(s=>s.name.startsWith('Document-flow')).body.split('if test "$GITHUB_EVENT_NAME" = workflow_dispatch; then')[1].split('          fi')[0];
+ assert.deepEqual([...probe.matchAll(/node tests\/host\/([^\s]+\.mjs)/g)].map(m=>m[1]),['document-flow-browser.mjs']);
+ assert(probe.includes('FREE_READING_CPU_PROFILE='));assert(probe.includes('diagnostic only; never product acceptance'));assert(probe.includes('exit 0'));assert.doesNotMatch(probe,/continue-on-error|set \+e|\|\| true/);
 });

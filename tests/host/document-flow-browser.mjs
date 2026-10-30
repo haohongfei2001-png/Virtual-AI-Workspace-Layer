@@ -10,6 +10,7 @@ import {j3ModernPage} from './fixtures/j3-modern.mjs';
 import {observedProjectHTML} from './fixtures/observed-project.mjs';
 import {observedHomeHTML,longDesktopHTML,materializePartitionedSidebar,materializeFlatHomeBranch} from './fixtures/observed-host-replay.mjs';
 import mainMountReceipt from './fixtures/observed-main-mount-20261029.json' with {type:'json'};
+import {observeReadingProofCPU} from './reading-paint-cpu-probe.mjs';
 import partitionDetails from './fixtures/observed-sidebar-project-details-20261026.json' with {type:'json'};
 const require=createRequire(new URL('../../extension/tooling/package.json',import.meta.url));
 const {outputFiles}=await require('esbuild').build({stdin:{contents:"export {captureNativeBaseline} from './src/host/document-flow-layout.mjs';export {validMainMountCheck} from './src/host/native-flow-diagnostic.mjs';export {createSurfaceController} from './src/host/surface-controller.mjs';export {createChatGPTAdapter} from './src/host/chatgpt-adapter.mjs';export {createURLPolicy} from './src/host/url-policy.mjs';export {CHATGPT_OBSERVED_PROFILE} from './src/host/chatgpt-observed-profile.mjs';export {createFlowMountSurface} from './src/navigation/flow-mount-surface.mjs';export {observeNativeProjectManagement} from './src/host/native-project-management.mjs';",resolveDir:process.cwd()},bundle:true,write:false,format:'iife',globalName:'flowModule'});
@@ -271,6 +272,7 @@ try{
  const region=await browser.newPage({viewport:{width:1400,height:900}});
  await region.route('**/*',r=>r.request().url()==='https://chatgpt.com/c/'+C?r.fulfill({contentType:'text/html',body:longDesktopHTML(C)}):r.abort());
  await region.goto('https://chatgpt.com/c/'+C);await region.addScriptTag({content:outputFiles[0].text});
+ if(process.env.FREE_READING_CPU_PROFILE)await observeReadingProofCPU(region,process.env.FREE_READING_CPU_PROFILE);
  const regionProof=await region.evaluate(async()=>{
   const {createChatGPTAdapter,createURLPolicy,CHATGPT_OBSERVED_PROFILE:profile,createFlowMountSurface,captureNativeBaseline}=flowModule;let surface;
   const viewport=document.querySelector('[data-app-action-timeline-scroll]');viewport.setAttribute('role','region');viewport.setAttribute('tabindex','0');
@@ -289,9 +291,11 @@ try{
   const adapter=createChatGPTAdapter({document,profile,urlPolicy:createURLPolicy(),isOwnedMask:n=>surface?.isMasked(n),isOwnedSurface:n=>surface?.isOwnedSurface(n)});
   const binding={documentToken:'region',producerToken:'region',browserDocumentId:'region',routeEpoch:1,origin:location.origin,expiresAt:new Date(Date.now()+20000).toISOString()};
   await adapter.start({binding,emit:async p=>({state:'accepted',localSeq:p.localSeq,receiptId:'region'})});
+  if(typeof globalThis.__vaiwlReadingProofStart==='function')await globalThis.__vaiwlReadingProofStart();
   const firstInspectStarted=performance.now(),inspection=adapter.inspect(),firstInspectElapsed=performance.now()-firstInspectStarted;
   // Preserve the first refusal; later flow checks are a separate proof.
   globalThis.nativeScrollRegionFirstProof={returnReady:!!inspection.returnSlot,reason:inspection.roles?.return?.reason??inspection.reason??null,elapsedMs:firstInspectElapsed,measurement:'adapter.inspect-total'};
+  if(typeof globalThis.__vaiwlReadingProofStop==='function')await globalThis.__vaiwlReadingProofStop(globalThis.nativeScrollRegionFirstProof);
   let refusal=null;
   const plan=captureNativeBaseline({document,inspection,onRefused:value=>refusal=value});
   if(!plan){adapter.stop();return {adapterReady:inspection.ok,returnReady:!!inspection.returnSlot,policy:inspection.viewportFocus??null,flowReady:false,refusal};}

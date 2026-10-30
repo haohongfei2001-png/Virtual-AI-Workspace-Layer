@@ -47,10 +47,10 @@ async function openFrame(t){
    return {id,scope,nativeTitle:'Fixture '+i,nativeUrl:'https://chatgpt.com/c/'+id,membership:'NONE',projectId:null,activityDecision:{segment:0}};
   });
   const world={snapshot:freeNavigationSnapshot({scope,viewMode:'free',revision:1,viewSession:{H:30,T:20000,Z:'UTC',policyRevision:0},refs,projects:[]})};
-  const calls=[],renders=[],held=[];let delivery=0,navigation,pending=false;
+  const calls=[],renders=[],held=[],listeners=new Set();let delivery=0,navigation,pending=false;
   const grant=()=>({id:'grant',mountId:'mount',parentDocumentId:'parent',uiDocumentId:'ui',scopeGrantId:'scope',role:'workspace',expiresAt:new Date(Date.now()+20000).toISOString()});
   const runtime={
-   connect:()=>({onMessage:{addListener(){},removeListener(){}},onDisconnect:{addListener(){},removeListener(){}},disconnect(){}}),
+   connect:()=>({onMessage:{addListener(fn){listeners.add(fn);},removeListener(fn){listeners.delete(fn);}},onDisconnect:{addListener(){},removeListener(){}},disconnect(){}}),
    async sendMessage(message){
     calls.push(structuredClone(message));
     if(message.type==='HOST_UI_VIEW')return {ok:true,state:'ready',deliveryId:++delivery,page:projectFreeFrame(world,{role:'workspace',...message.query}),navigation:[]};
@@ -70,7 +70,7 @@ async function openFrame(t){
     return {...navigation,setNativeNavigationPending(value){pending=value;navigation.setNativeNavigationPending(value);}};
    }
   });
-  globalThis.hydration={client,calls,renders,held,get navigation(){return navigation;},get pending(){return pending;}};
+  globalThis.hydration={client,calls,renders,held,emit:message=>{for(const fn of listeners)fn(message);},get navigation(){return navigation;},get pending(){return pending;}};
   await client.start();
  });
  await page.locator('[data-free-list="noProject"] .row').first().waitFor();
@@ -142,6 +142,22 @@ for(const mode of ['empty','href'])test('same-delivery '+mode+' navigation hydra
    return {defaultAllowed,dispatches:h.calls.filter(message=>['HOST_UI_DISPATCH_CURRENT','HOST_UI_DISPATCH_NATIVE'].includes(message.type)).length};
   });
   assert.equal(activation.defaultAllowed,true,'hydrated href must allow the browser default');assert.equal(activation.dispatches,0);
+  // Counterexample to combining an enabled snapshot with a later Locator read:
+  // a new real client VIEW retires the old capability before its new plans.
+  await page.evaluate(()=>hydration.emit({type:'VAIWL_UI_DATA_CHANGED'}));
+  await page.waitForFunction(()=>hydration.held.length===1&&hydration.held[0].deliveryId>hydration.sameDelivery);
+  const retired=await page.evaluate(()=>{
+   const h=hydration,row=h.navigation.roots().workspace.shadow.querySelector('[data-ref-id="'+h.originalTail.dataset.refId+'"]');
+   const activate=target=>{let allowed;target.addEventListener('click',e=>{allowed=!e.defaultPrevented;e.preventDefault();},{once:true});target.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true,button:0}));return allowed;};
+   const snapshot={oldConnected:h.originalTail.isConnected,newNode:row!==h.originalTail,href:row.getAttribute('href'),disabled:row.getAttribute('aria-disabled')};
+   return {...snapshot,retiredDefault:activate(h.originalTail),pendingDefault:activate(row),dispatches:h.calls.filter(m=>['HOST_UI_DISPATCH_CURRENT','HOST_UI_DISPATCH_NATIVE'].includes(m.type)).length};
+  });
+  assert.deepEqual(retired,{oldConnected:false,newNode:true,href:null,disabled:'true',retiredDefault:false,pendingDefault:false,dispatches:0});
+  await page.evaluate(()=>{const h=hydration,answer=h.held.shift(),dto=h.renders.at(-1);answer.resolve({ok:true,deliveryId:answer.deliveryId,navigation:[...new Map([...dto.entries.noProject.items,...(dto.selection?.items??[])].map(row=>[row.id,row])).values()].map(row=>({refId:row.id,targetKey:'fresh_'+row.id,plan:{mode:'href',planRevision:2,disposition:'new-tab-preserve-current',target:{kind:'resolved',entity:'conversation',nativeId:row.id,navigationURL:row.nativeUrl,liveHandle:null}}}))});});
+  await page.waitForFunction(()=>!hydration.pending);
+  const restored=await page.locator('[data-ref-id="'+after.id+'"]').evaluate(n=>({href:n.getAttribute('href'),disabled:n.getAttribute('aria-disabled')}));
+  assert.deepEqual(restored,{href:after.href,disabled:null});
+  t.diagnostic(JSON.stringify({crossTaskSnapshotCounterexample:{firstEnabled:{href:after.href,disabled:after.disabled},retired,restored}}));
  }else{assert.equal(after.href,null);assert.equal(after.disabled,'true','an empty answer must not invent action authority');}
  await page.evaluate(()=>hydration.client.stop());
  t.diagnostic(JSON.stringify({evidence:'WEB_MECHANISM_ONLY',MV3:'NOT_RUN',realChatGPT:'NOT_RUN',browserVersion,mode,scrollOnly,after}));

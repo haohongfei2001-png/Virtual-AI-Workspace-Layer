@@ -2,6 +2,10 @@
 
 ## 2026-10-30 终局候选整合与同源产品门
 
+当前正式 `b1a8457ca284fab3beb03555f0328189fb45d748` 的 run `41034158654` 最终 **40/42 PASS**，unknown-protocol 固定158实际旅程和 populated-native 均通过。剩余两项：document-flow 首检59.3ms仍因原50ms绘制护栏拒绝；local-assets 的修复后链接已在首个同步快照正确，下一独立任务读取href为null，原日志不足以确定该次触发，不能推断生产导航出错。其余40门保留本SHA结果。
+
+本批只处理上述两项验证：在原真实client/renderer中确定性复现新VIEW撤销旧href、disabled拒绝旧/新点击、随后新计划恢复，故资产测试将原URL/归属/可见性/禁用/Pro标题断言归于同一次首个enabled快照；错误href/null/混入Pro等仍立即FAIL，不等待后续正确值。15项定向通过。只为原首次inspect增加显式开启的CPU诊断，不预热、不重试、不改生产时钟或50ms；独立4倍CPU实验的批量Range实现无实测收益，已原样保存并撤回。现有workflow增加唯一限定delivery-blockers手动入口，仅运行原document-flow单次诊断和local-assets门，不重跑42门、不将插桩结果算产品通过。本批204项生产源码与b1完全相同，正式候选仍受绘制预算门阻断，真实Mac/完整Free仍NOT_RUN。
+
 最新正式 `68905b10a5a1275130833234feedb79c66e04589` 的云端 run `41028032288` 已完成 **40/42 PASS**：populated-native 的64次连续原生导航、Node、三套UI及本地资产业务均通过；旧 populated 失败原因仍 UNKNOWN，未为其猜因修改生产。剩余为 unknown 的安装前置失败和 document-flow 首次绘制预算失败。日志中的 J2/J4 超时均是指定变异被正确杀死，同场正常恢复通过，不是新增故障。
 
 unknown 的固定浏览器压缩包校验已通过，但Linux CLI品牌字符串的精确比较在启动前退出，实际旅程 NOT_RUN。本批移除平台相关的CLI展示字符串比较，改由真实 Browser.version()、唯一unknown结果及事件SHA一起严格校验158.0.8127.2；固定包SHA、原始正文、网络隔离和失败拒绝不变。仅新增现有unknown门的单项手动触发，不减少push覆盖、不把诊断冒充全套CI。
