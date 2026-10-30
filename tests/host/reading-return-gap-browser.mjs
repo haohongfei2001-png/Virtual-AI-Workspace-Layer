@@ -22,6 +22,24 @@ try{
   decoration.textContent='#text::before{content:"";position:absolute;inset:0;box-sizing:border-box;margin:0;border-image-source:linear-gradient(red,red);border-image-outset:100px}';out.borderPaintOutsetRejected=!ok();decoration.remove();
   const shadowHost=document.createElement('div');shadowHost.style.cssText='position:fixed;left:500px;top:100px;width:0;height:0';root.append(shadowHost);shadowHost.attachShadow({mode:'open'}).innerHTML='<button style="position:fixed;left:234px;top:14px;width:2px;height:2px;padding:0;border:0"></button>';out.shadowOverflowRejected=!ok();shadowHost.remove();
   const custom=document.createElement('native-widget');root.append(custom);out.unknownCustomElementRejected=!ok();custom.remove();
+  // A normal leaf still gets both pseudo checks and its text range, without
+  // a normal-style query used only for the optional containment shortcut.
+  const plainLeaf=document.createElement('span');plainLeaf.textContent='x';q('#text').append(plainLeaf);
+  const originalStyle=window.getComputedStyle,originalRangeRects=Range.prototype.getClientRects,leafQueries={normal:0,before:0,after:0,textRanges:0};
+  window.getComputedStyle=function(node,pseudo){if(node===plainLeaf){if(!pseudo)leafQueries.normal++;else if(pseudo==='::before')leafQueries.before++;else if(pseudo==='::after')leafQueries.after++;}return originalStyle.call(this,node,pseudo);};
+  Range.prototype.getClientRects=function(){if(this.startContainer===plainLeaf.firstChild)leafQueries.textRanges++;return originalRangeRects.call(this);};
+  try{out.normalLeafFullProofWithoutOptionalStyle=ok()&&leafQueries.normal===0&&leafQueries.before===1&&leafQueries.after===1&&leafQueries.textRanges===1;}finally{window.getComputedStyle=originalStyle;Range.prototype.getClientRects=originalRangeRects;plainLeaf.remove();}
+  globalThis.leafPaintQueries=leafQueries;
+  // Paint-contained leaves retain their old clipping proof even when their
+  // overflowing text or generated paint would otherwise cross the header.
+  const leaf=document.createElement('div');leaf.id='gap-contained-leaf';leaf.style.cssText='contain:paint;position:fixed;left:234px;top:70px;width:20px;height:2px;font:100px monospace;line-height:0';leaf.textContent='xxxxxxxxxxxxxxxx';root.append(leaf);
+  const leafRange=document.createRange();leafRange.selectNodeContents(leaf);const leafTextBox=leafRange.getBoundingClientRect();
+  out.leafTextActuallyCrossesHeaderBand=leaf.getBoundingClientRect().top>=40&&leafTextBox.top<40&&leafTextBox.bottom>8&&leafTextBox.left<260&&leafTextBox.right>1000;
+  out.containedLeafTextAllowed=ok();leaf.style.contain='none';out.uncontainedLeafTextRejected=!ok();leaf.style.contain='paint';args.gapPolicy='first-empty-header-gap';out.containedLeafTextKeepsFirstGap=gapModule.nativeReturnGapRect(args)?.x===228;leaf.style.contain='none';out.uncontainedLeafTextStillBlocksAllGaps=!ok();delete args.gapPolicy;leaf.style.contain='paint';leaf.replaceChildren();
+  const leafDecoration=document.createElement('style');leafDecoration.textContent='#gap-contained-leaf::before{content:"x";position:absolute;left:0;top:-62px;width:1000px;height:32px;background:red}';document.head.append(leafDecoration);
+  out.containedLeafGeneratedPaintAllowed=ok();leaf.style.contain='none';out.uncontainedLeafGeneratedPaintRejected=!ok();leaf.remove();
+  const readingContent=q('#text'),readingStyle=root.style.cssText;readingContent.remove();root.style.cssText='contain:paint;position:fixed;left:234px;top:70px;width:20px;height:2px';leafDecoration.textContent='#reading::before{content:"x";position:absolute;left:0;top:-62px;width:1000px;height:32px;background:red}';
+  out.containedReadingRootGetsNoLeafException=!ok();leafDecoration.remove();root.style.cssText=readingStyle;root.append(readingContent);
   const many=document.createDocumentFragment();for(let i=0;i<3000;i++){const span=document.createElement('span');span.textContent='x';many.append(span);}q('#text').append(many);
   // More than the old element AND text-rectangle caps: complete proof passes,
   // but a tiny last descendant still blocks it (no early success/truncation).
@@ -43,7 +61,9 @@ try{
   args.onReject=value=>reason=value;
   out.elapsedBudgetFailsClosed=!ok()&&reason==='reading-paint-budget';
   delete performance.now;delete args.onReject;
-  out.freshProofAfterBudget=ok();
+  let freshReject=null;args.onReject=stage=>{freshReject=stage;};
+  const freshProofStarted=performance.now();out.freshProofAfterBudget=ok();const freshProofElapsed=performance.now()-freshProofStarted;delete args.onReject;
+  globalThis.freshProofAfterBudgetDiagnostic={allowed:out.freshProofAfterBudget,reason:freshReject,elapsedMs:freshProofElapsed,measurement:'nativeReturnGapRect-total'};
   q('#text').replaceChildren(document.createTextNode('Native content'));
   const replacement=root.cloneNode(true);root.replaceWith(replacement);out.staleReadingRejected=!ok();replacement.replaceWith(root);
   out.restored=ok();
@@ -91,6 +111,6 @@ try{
  await page.evaluate(()=>{const root=document.querySelector('#reading'),v=document.createElement('div');v.id='keyboard-viewport';v.setAttribute('role','region');v.tabIndex=0;v.style.cssText='height:300px;overflow:auto';root.replaceWith(v);v.append(root);v.focus();});
  await page.keyboard.press('ArrowDown');await page.waitForFunction(()=>document.querySelector('#keyboard-viewport').scrollTop>0,null,{timeout:1000});
  checks.nativeKeyboardScroll=await page.evaluate(()=>document.activeElement===document.querySelector('#keyboard-viewport'));
- console.log(JSON.stringify({longTranscriptFirstProof:await page.evaluate(()=>globalThis.longTranscriptFirstProof)}));
+ console.log(JSON.stringify(await page.evaluate(()=>({longTranscriptFirstProof:globalThis.longTranscriptFirstProof,freshProofAfterBudgetDiagnostic:globalThis.freshProofAfterBudgetDiagnostic,leafPaintQueries:globalThis.leafPaintQueries}))));
  assert(Object.values(checks).every(Boolean),JSON.stringify(checks));console.log(JSON.stringify({status:'PASS_WEB_MECHANISM_ONLY',checks}));
 }finally{await browser.close();}

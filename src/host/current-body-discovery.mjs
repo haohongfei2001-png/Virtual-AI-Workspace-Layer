@@ -55,9 +55,10 @@ export function createCurrentBodyDiscovery({document:doc,urlPolicy,profile,isOwn
   try{const roots=[lastRoot,...doc.querySelectorAll(config.rootSelector)].filter(Boolean),contains=(a,b)=>a===b||a?.contains?.(b)===true;
    return records.some(r=>roots.some(root=>{
     if(r.type==='attributes'&&['data-va-mask-workspace','data-va-mask-sidebar'].includes(r.attributeName))return false;
-    // Text updates do not change native message identity or structure. The
-    // adapter still schedules its bounded current-body recheck; no proof is renewed
-    // from hidden text, and native attribute/child changes still surrender.
+    // Character data and pure text/comment replacement do not change message
+    // identity. They cannot trigger a masked body-reading window. Elements,
+    // identity/visibility attributes and ancestor changes still require reproof.
+    if(r.type==='childList'){const changed=[...(r.addedNodes??[]),...(r.removedNodes??[])];if(changed.length&&changed.every(n=>n.nodeType===3||n.nodeType===8))return false;}
     if(contains(root,r.target))return ['attributes','childList'].includes(r.type);
     if(r.type==='attributes'&&contains(r.target,root))return true;
     return r.type==='childList'&&[...(r.addedNodes??[]),...(r.removedNodes??[])].some(n=>contains(n,root));

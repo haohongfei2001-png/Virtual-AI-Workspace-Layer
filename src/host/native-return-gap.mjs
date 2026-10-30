@@ -107,14 +107,16 @@ export function nativeReturnGapRect({document,header,slot,hitRoot,readingRoot=nu
    // The same package-selected gap policy must consider reading paint as well
    // as titlebar children. Collect every intersecting box before selecting a
    // gap; no occluder is ignored and no partial scan can move the control.
-   const paintBlocksGap=box=>{
+   const paintBlocksGap=(node,box)=>{
     if(![box.x,box.y,box.width,box.height].every(Number.isFinite))return true;
     if(box.width<=0||box.height<=0)return false;
+    const affectsGap=gapPolicy==='first-empty-header-gap'?box.y<r.y+r.height&&r.y<box.y+box.height:overlap(r,box);
+    if(!affectsGap||containedLeaf(node.nodeType===1?node:node.parentElement))return false;
     if(gapPolicy==='first-empty-header-gap'){
-     if(box.y<r.y+r.height&&r.y<box.y+box.height)gapBlocks.push(box);
+     gapBlocks.push(box);
      return false;
     }
-    return overlap(r,box);
+    return true;
    };
    // A CSS paint-contained branch outside the local header band cannot paint
    // into the return slot, including its fixed/absolute descendants. This is
@@ -130,13 +132,18 @@ export function nativeReturnGapRect({document,header,slot,hitRoot,readingRoot=nu
     }
     return true;
    };
-   const walker=document.createTreeWalker(readingRoot,5,{acceptNode:node=>containedOutsideBand(node)?2:1}),range=document.createRange();let node=readingRoot;
+   // Ordinary leaves need no normal style merely to try an optional prune.
+   // Keep their full pseudo/box/text scan, proving containment only if paint
+   // would matter. The reading root never had the descendant prune exception.
+   const containedLeaf=node=>node&&node!==readingRoot&&node.nodeType===1&&!node.firstElementChild&&containedOutsideBand(node);
+   const walker=document.createTreeWalker(readingRoot,5,{acceptNode:node=>node.nodeType===1&&node.firstElementChild&&containedOutsideBand(node)?2:1}),range=document.createRange();let node=readingRoot;
    do{
     if(!withinBudget()){stage='reading-paint-budget';return reject();}
     if(node.nodeType===1){
      if(node.shadowRoot||node.localName?.includes('-')){stage='reading-paint-opaque';return reject();}
      for(const pseudo of ['::before','::after']){
       const style=win.getComputedStyle(node,pseudo);if(['none','normal'].includes(style.content))continue;
+      if(containedLeaf(node))break;
       // Empty native decorations are safe only when their entire border box
       // is proven inside an already-excluded descendant's own padding box.
       const px=value=>/^\d+(?:\.\d+)?px$/.test(value)?Number.parseFloat(value):NaN;
@@ -145,10 +152,10 @@ export function nativeReturnGapRect({document,header,slot,hitRoot,readingRoot=nu
       const paddingHeight=host.boxSizing==='border-box'?px(host.height)-px(host.borderTopWidth)-px(host.borderBottomWidth):px(host.height)+px(host.paddingTop)+px(host.paddingBottom);
       if(node===readingRoot||style.content!=='""'||host.position==='static'||style.position!=='absolute'||style.boxSizing!=='border-box'||!['left','top','right','bottom','width','height'].every(k=>Number.isFinite(px(style[k])))||![paddingWidth,paddingHeight].every(Number.isFinite)||left+width>paddingWidth||px(style.right)+width>paddingWidth||top+height>paddingHeight||px(style.bottom)+height>paddingHeight||['marginLeft','marginTop','marginRight','marginBottom'].some(k=>px(style[k])!==0)||['transform','translate','rotate','scale','boxShadow','textShadow','filter','backdropFilter','offsetPath','borderImageSource'].some(k=>style[k]!=='none')||!['none','hidden'].includes(style.outlineStyle)||style.zoom!=='1'){stage='reading-paint-decoration';return reject();}
      }
-     if(node!==readingRoot){const box=rect(node);if(paintBlocksGap(visibleBox(node,box))){stage='reading-paint-overlap';return reject();}}
+     if(node!==readingRoot){const box=rect(node);if(paintBlocksGap(node,visibleBox(node,box))){stage='reading-paint-overlap';return reject();}}
     }else{
      range.selectNodeContents(node);
-     for(const box of range.getClientRects()){if(!withinBudget()){stage='reading-paint-budget';return reject();}if(paintBlocksGap(visibleBox(node,box))){stage='reading-paint-overlap';return reject();}}
+     for(const box of range.getClientRects()){if(!withinBudget()){stage='reading-paint-budget';return reject();}if(paintBlocksGap(node,visibleBox(node,box))){stage='reading-paint-overlap';return reject();}}
     }
    }while(node=walker.nextNode());
    if(gapPolicy==='first-empty-header-gap'){

@@ -74,6 +74,7 @@ jobs:
           FREE_FLOW_READING_REPORT="$RUNNER_TEMP/flow-reading-probe.json" node tests/host/flow-reading-probe-browser.mjs
           FREE_SETTINGS_ARTIFACT_DIR="$RUNNER_TEMP/workspace-settings" node --test tests/host/workspace-settings-browser.mjs
           node tests/host/document-flow-boundary-mv3.mjs "$RUNNER_TEMP/flow-boundary-mv3.json"
+          node tests/host/late-current-body-package-browser.mjs "$RUNNER_TEMP/late-current-body.json"
           VAIWL_PROBE_OUTPUT="$RUNNER_TEMP/terminal-delivery.json" node tests/host/terminal-delivery-mv3.mjs all
           node tests/host/browser-local-mv3.mjs --flow-only
       - name: Actual packaged C2 conversation slice
@@ -214,7 +215,7 @@ jobs:
           echo "Source commit: $GITHUB_SHA"
           echo "Event: $GITHUB_EVENT_NAME (workflow_dispatch is diagnostic only, never full CI)"
           echo 'This job is slice evidence, not 81-case/J1-J4/real ChatGPT acceptance.'
-          for name in flow-boundary flow-boundary-mv3 terminal-delivery context-package context-container context-cold context-cold-trace context-cold-recovery context-dormant context-dormant-mutant context-transport-expiry context-transport-expiry-mutant context-stale context-stale-mutant j1 j3 first-send j2-journey j2-fast-failure j2-fast-cancelled ui10-matrix visible-actions frame-window-retention frame-focus-return local-status observed-project-layout temporary-navigation temporary-project-navigation challenge-status preauthorization snippets-package snippets-startup-trace; do
+          for name in flow-boundary flow-boundary-mv3 late-current-body terminal-delivery context-package context-container context-cold context-cold-trace context-cold-recovery context-dormant context-dormant-mutant context-transport-expiry context-transport-expiry-mutant context-stale context-stale-mutant j1 j3 first-send j2-journey j2-fast-failure j2-fast-cancelled ui10-matrix visible-actions frame-window-retention frame-focus-return local-status observed-project-layout temporary-navigation temporary-project-navigation challenge-status preauthorization snippets-package snippets-startup-trace; do
             if [ -f "$RUNNER_TEMP/$name.json" ]; then cat "$RUNNER_TEMP/$name.json"; fi
           done
   offline-durability-compat:
@@ -542,7 +543,7 @@ jobs:
             *) exit 1 ;;
           esac
           node -e "const expected={'native-entry-safety':'PASS_LEGACY_SUBSCENARIOS_ONLY','page-command-native-fetch':'PASS_NARROW_PACKAGED_PAGE_COMMAND_AND_NO_TAP_CONTINUITY','non-atomic-terminal':'PASS_D_SCOPED','mixed-role':'PASS_SCOPED_OFFLINE_D_S','mixed-role-alt':'PASS_SCOPED_OFFLINE_D_S','membership-after-message':'PASS_SCOPED_OFFLINE_D_S'}[process.env.SELECTED_GATE];if(expected){const r=require(process.env.RUNNER_TEMP+'/supplementary.json');if(r.status!==expected||r.sourceCommit!==process.env.GITHUB_SHA)process.exit(1)}"
-      - name: First-five admission trace after eligible early failure (diagnostic only)
+      - name: First-six admission trace after eligible early failure (diagnostic only)
         if: ${{ !cancelled() && matrix.gate == 'populated-native' && steps.formal_supplementary.outcome == 'failure' }}
         run: |
           formal="$RUNNER_TEMP/supplementary.json"

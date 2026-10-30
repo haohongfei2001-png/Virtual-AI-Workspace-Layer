@@ -780,3 +780,49 @@ test('observed header gap policy is accepted only with its explicit safe layout'
  assert.doesNotThrow(()=>fixture({profile:{...LEGACY_SURFACE_PROFILE,nativeLayout}}));
  for(const patch of [{gapPolicy:'unknown'},{headerLayout:undefined},{returnPlacement:undefined}])assert.throws(()=>fixture({profile:{...LEGACY_SURFACE_PROFILE,nativeLayout:{...nativeLayout,...patch}}}),/invalid-native-layout-profile|invalid-native-return-placement/);
 });
+
+for(const outcome of ['visible-read','refused','retired','binding-renewed'])test('late masked body identity requires a current native-reading receipt: '+outcome,async t=>{
+ let masked=false,probes=0,reads=0,f;
+ f=bodyFixture({isOwnedMask:n=>masked&&n===f.reading,withNativeReading:read=>{
+  probes++;if(outcome==='refused'||outcome==='binding-renewed'&&probes>1)return null;
+  masked=false;f.reading.style.visibility='visible';for(const node of f.reading.children)node.style.visibility='visible';
+  try{reads++;const result=read();if(outcome==='retired')f.adapter.stop();if(outcome==='binding-renewed'){f.setTime(90000);f.adapter.updateBinding({...f.binding,expiresAt:new Date(110000).toISOString()});}return result;}
+  finally{masked=true;f.reading.style.visibility='hidden';for(const node of f.reading.children)node.style.visibility='hidden';}
+ }});t.after(()=>f.adapter.stop());
+ f.reading.attrs={};f.reading.children=[];
+ await f.start(p=>{f.emitted.push(p);return bodyAck(p);});await settle();
+ assert.equal(f.emitted.filter(p=>p.kind==='current-observation').length,1);
+ assert.equal(f.emitted.find(p=>p.kind==='current-observation').payload.body.association,'unproven');
+ masked=true;f.reading.style.visibility='hidden';f.reading.attrs['data-conversation-id']=C;
+ const message=f.makeMessage('late-message');message.style.visibility='hidden';f.reading.children=[message];
+ f.observer().cb([{type:'attributes',attributeName:'data-conversation-id',target:f.reading},{type:'childList',target:f.reading,addedNodes:[message],removedNodes:[]}]);await settle();
+ const fresh=()=>f.emitted.filter(p=>p.kind==='current-observation'&&p.payload.body.association==='explicit-body-id');
+ assert.equal(fresh().length,outcome==='visible-read'?1:0);
+ assert(probes>0);assert.equal(reads,outcome==='refused'?0:1);
+ if(outcome!=='visible-read')return;
+ assert.deepEqual(fresh()[0].payload.body.messageIds,['late-message']);assert.equal(fresh()[0].bodyProofId,null);
+ assert.equal(probes,1);assert.equal(masked,true);
+ const before=f.emitted.length,text={nodeType:3,parentNode:message,parentElement:message};
+ for(let i=0;i<20;i++){f.observer().cb([{type:'characterData',target:text},{type:'childList',target:message,addedNodes:[text],removedNodes:[{nodeType:8}]}]);await settle();}
+ assert.equal(probes,1,'streaming text must not open repeated native-reading windows');assert.equal(f.emitted.length,before);
+ f.setTime(90000);f.adapter.updateBinding({...f.binding,expiresAt:new Date(110000).toISOString()});await settle();
+ assert.equal(probes,2,'binding renewal still requires a fresh visible read');assert.equal(fresh().length,2);
+ delete f.reading.attrs['data-conversation-id'];f.observer().cb([{type:'attributes',attributeName:'data-conversation-id',target:f.reading}]);await settle();
+ assert.equal(probes,3);assert.equal(f.emitted.filter(p=>p.kind==='current-observation').at(-1).payload.body.association,'unproven','newly unproven identity must invalidate the old body through the normal ACK path');
+});
+
+test('a rejected first masked body scan is consumed until another identity change',async t=>{
+ let masked=true,probes=0,f;
+ f=bodyFixture({isOwnedMask:n=>masked&&n===f.reading,withNativeReading:read=>{
+  probes++;masked=false;f.reading.style.visibility='visible';for(const n of f.reading.children)n.style.visibility='visible';
+  try{return read();}finally{masked=true;f.reading.style.visibility='hidden';for(const n of f.reading.children)n.style.visibility='hidden';}
+ }});t.after(()=>f.adapter.stop());f.reading.style.visibility=f.reading.children[0].style.visibility='hidden';
+ await f.start(p=>{f.emitted.push(p);return p.kind==='current-observation'?{state:'rejected',localSeq:p.localSeq}:bodyAck(p);});await settle();
+ assert.equal(probes,1);const count=f.emitted.filter(p=>p.kind==='current-observation').length;assert.equal(count,1);
+ const text={nodeType:3,parentElement:f.reading.children[0]};
+ for(let i=0;i<20;i++){f.observer().cb([{type:'characterData',target:text},{type:'childList',target:text.parentElement,addedNodes:[text],removedNodes:[{nodeType:3}]}]);await settle();}
+ assert.equal(probes,1,'a missing successful ACK is not another pending scan');assert.equal(f.emitted.filter(p=>p.kind==='current-observation').length,count);
+ const old=f.reading.children[0],next=f.makeMessage('next-identity');next.style.visibility='hidden';f.reading.children=[next];
+ f.observer().cb([{type:'childList',target:f.reading,addedNodes:[next],removedNodes:[old]}]);await settle();
+ assert.equal(probes,2);assert.deepEqual(f.emitted.filter(p=>p.kind==='current-observation').at(-1).payload.body.messageIds,['next-identity']);
+});

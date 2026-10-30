@@ -56,7 +56,7 @@ export function createChatGPTAdapter({document,urlPolicy=createURLPolicy(),profi
  const returnGeometry=(history,header,readingRect,composer,slot)=>gapMode?nativeReturnGapRect({document,header,slot,hitRoot:one(nativeLayout.returnHitRoot),headerLayout:nativeLayout.headerLayout??null,gapPolicy:nativeLayout.gapPolicy??null,onReject:stage=>{returnGeometryStage=stage;},...(nativeLayout.readingViewport?{readingRoot:one(nativeLayout.reading),readingViewport:one(nativeLayout.readingViewport),viewportFocus:nativeLayout.viewportFocus??null,viewportMarkers:nativeLayout.viewportMarkers??null,isOwnedMask,isOwnedSurface}:{}),button:returnControl,excluded:returnExclusions(history,composer),excludedRects:[readingRect]}):nativeReturnSlotRect({document,header,slot,excluded:returnExclusions(history,composer),excludedRects:[readingRect]});
 
  inputRisk=inputRisk??createNativeInputRisk({document,profile});
- let binding=null,emit=null,discovery=null,bodyDiscovery=null,actions=null,observer=null,stopped=true,epoch=0,seq=0,url='',busy=false,dirty=false,queued=false,generation=0,last=new Map(),regionEpoch=0,priorNodes=[],failedKey=new Map(),retryTimer=null,pausedSurface=null,sendObserver=null,acceptedBody=null,snippets=null,snippetReady=()=>false,intents=[],sendGap=null,sendGapBlocked=false,surfaceParts=[],surfaceKey=null,surfaceSequence=null,surfaceWanted=true,surfaceScanning=false,surfaceCursor=null,surfacePage=0,surfacePageKey=null,surfaceEpoch=0,surfaceSnapshotEpoch=0,surfaceRetryWanted=false;const surfaceAccepted=new Map(),surfaceFailed=new Map();
+ let binding=null,emit=null,discovery=null,bodyDiscovery=null,actions=null,observer=null,stopped=true,epoch=0,seq=0,url='',busy=false,dirty=false,queued=false,generation=0,last=new Map(),regionEpoch=0,priorNodes=[],failedKey=new Map(),retryTimer=null,pausedSurface=null,sendObserver=null,acceptedBody=null,bodyWanted=true,snippets=null,snippetReady=()=>false,intents=[],sendGap=null,sendGapBlocked=false,surfaceParts=[],surfaceKey=null,surfaceSequence=null,surfaceWanted=true,surfaceScanning=false,surfaceCursor=null,surfacePage=0,surfacePageKey=null,surfaceEpoch=0,surfaceSnapshotEpoch=0,surfaceRetryWanted=false;const surfaceAccepted=new Map(),surfaceFailed=new Map();
  const terminalWork=new Set();
  let observationOnly=false,observationRAM=null,observationExpiry=null,observationStarted=0,observationLifetime=0,observationRows=[],observationKeys=new Set(),observationCursor=null,observationScanStarted=0,observationScanning=false;
  let navigationPhase='not-scanned';
@@ -178,7 +178,7 @@ export function createChatGPTAdapter({document,urlPolicy=createURLPolicy(),profi
   const keys=['documentToken','producerToken','browserDocumentId','routeEpoch','origin'];
   if(!next||Object.keys(next).sort().join(',')!==[...keys,'expiresAt'].sort().join(',')||keys.some(key=>next[key]!==binding[key]))throw Error('invalid-host-binding-renewal');
   const expiry=Date.parse(next.expiresAt),time=now();if(!Number.isFinite(expiry)||expiry<=time||expiry>time+20000)throw Error('invalid-host-binding-renewal');
-  binding=Object.freeze({...next});last.delete('current-object');failedKey.delete('current-object');requestScan(true,true,true);return true;
+  binding=Object.freeze({...next});bodyWanted=true;last.delete('current-object');failedKey.delete('current-object');requestScan(true,true,true);return true;
  }
  function proposal(page=false){if(!live())throw Error('stale-host-binding');syncRoute();const found=page?discovery.scanPage(surfaceCursor):null,payload=found?found.payload:discovery.scan();if(found){surfaceCursor=found.cursor;surfaceScanning=found.cursor!==null;}return {protocol:'vaiwl-host-observation/1',documentToken:binding.documentToken,producerToken:binding.producerToken,localSeq:++seq,routeEpoch:epoch,profileId:profile.id,profileVersion:profile.revision,bodyProofId:null,kind:'surface-delta',payload};}
  // Private content-side iterator yields bounded packets without aggregating them. This does not fetch unmounted history or authorize any native action.
@@ -201,7 +201,16 @@ export function createChatGPTAdapter({document,urlPolicy=createURLPolicy(),profi
  }
  const loadedPages=signal=>loadedPageStream(signal,false);
  const loadedCandidatePages=signal=>loadedPageStream(signal,true);
- function bodyProposal(){if(!live())throw Error('stale-host-binding');syncRoute();if(bodyDiscovery.isPresentationMasked())return null;return {protocol:'vaiwl-host-observation/1',documentToken:binding.documentToken,producerToken:binding.producerToken,localSeq:++seq,routeEpoch:epoch,profileId:profile.id,profileVersion:profile.revision,bodyProofId:null,kind:'current-object',payload:bodyDiscovery.scan()};}
+ function bodyProposal(){
+  if(!live())throw Error('stale-host-binding');syncRoute();const run=generation,reader=bodyDiscovery,grant=binding,scanURL=url;
+  // Opaque native bodies may hydrate after the workspace opens. Reobserve their
+  // identity only through the same guarded, synchronous native-reading window.
+  // Unchanged hidden text cannot trigger a window or renew the original proof.
+  const masked=reader.isPresentationMasked();if(masked&&!bodyWanted)return null;
+  const payload=masked?withNativeReading(()=>reader.scan()):reader.scan();
+  if(!payload||!live()||run!==generation||reader!==bodyDiscovery||grant!==binding||scanURL!==url||document.location.href!==scanURL)return null;bodyWanted=false;
+  return {protocol:'vaiwl-host-observation/1',documentToken:binding.documentToken,producerToken:binding.producerToken,localSeq:++seq,routeEpoch:epoch,profileId:profile.id,profileVersion:profile.revision,bodyProofId:null,kind:'current-object',payload};
+ }
  function intentProposal(item){return {protocol:'vaiwl-host-observation/1',documentToken:binding.documentToken,producerToken:binding.producerToken,localSeq:++seq,routeEpoch:epoch,profileId:profile.id,profileVersion:profile.revision,bodyProofId:item.proofId,kind:'send-candidate',payload:item.payload};}
  // Trusted native preparation can retry a partial metadata baseline without
  // changing the body proof. The worker retains its per-proof/shared read budgets.
@@ -212,7 +221,7 @@ export function createChatGPTAdapter({document,urlPolicy=createURLPolicy(),profi
   if(!Number.isFinite(at)||at<0||nativePrepareAt!==null&&at-nativePrepareAt<1000)return;
   // DOM/clock hooks may synchronously retire this adapter while checking readiness.
   if(!live()||run!==generation||busy)return;
-  nativePrepareAt=at;last.delete('current-object');
+  nativePrepareAt=at;bodyWanted=true;last.delete('current-object');
  }
  function captureIntent(intent,producer=binding){
   if(producer.producerToken!==binding?.producerToken)return;
@@ -306,7 +315,7 @@ if(!p){
     if(ack.state==='accepted'||ack.state==='duplicate'){tally('acceptedPackets');tally('acceptedProjects',rowCount(p.payload,'project'));tally('acceptedChats',rowCount(p.payload,'conversation'));}
     else if(ack.state==='rejected')tally('rejectedPackets');
    }
-   if(ack.state==='accepted'||ack.state==='duplicate'){if(p.kind==='send-gap'){sendGapBlocked=false;acceptedBody=null;last.delete('current-object');failedKey.delete('current-object');}if(p.kind==='current-object'||p.kind==='current-observation'){const body=p.kind==='current-observation'?p.payload.body:p.payload;acceptedBody=body.association==='explicit-body-id'&&typeof ack.bodyProofId==='string'?{proofId:ack.bodyProofId,bodyEpoch:ack.bodyEpoch,fingerprint:JSON.stringify(body),validUntil:proofExpiry}:null;}if(p.kind==='surface-delta'){surfaceParts.shift();if(!surfaceParts.length&&!surfaceScanning&&surfaceEpoch===surfaceSnapshotEpoch)finishPass('end');if(!surfaceParts.length){surfaceAccepted.set(surfacePageKey,key);surfaceFailed.delete(surfacePageKey);}}if(p.kind!=='surface-delta'||!surfaceParts.length)last.set(p.kind==='current-observation'?'current-object':p.kind,key);failedKey.delete(p.kind==='current-observation'?'current-object':p.kind);dirty=true;return finish();}
+   if(ack.state==='accepted'||ack.state==='duplicate'){if(p.kind==='send-gap'){sendGapBlocked=false;acceptedBody=null;bodyWanted=true;last.delete('current-object');failedKey.delete('current-object');}if(p.kind==='current-object'||p.kind==='current-observation'){const body=p.kind==='current-observation'?p.payload.body:p.payload;acceptedBody=body.association==='explicit-body-id'&&typeof ack.bodyProofId==='string'?{proofId:ack.bodyProofId,bodyEpoch:ack.bodyEpoch,fingerprint:JSON.stringify(body),validUntil:proofExpiry}:null;}if(p.kind==='surface-delta'){surfaceParts.shift();if(!surfaceParts.length&&!surfaceScanning&&surfaceEpoch===surfaceSnapshotEpoch)finishPass('end');if(!surfaceParts.length){surfaceAccepted.set(surfacePageKey,key);surfaceFailed.delete(surfacePageKey);}}if(p.kind!=='surface-delta'||!surfaceParts.length)last.set(p.kind==='current-observation'?'current-object':p.kind,key);failedKey.delete(p.kind==='current-observation'?'current-object':p.kind);dirty=true;return finish();}
    if(ack.state==='retry-after'&&Number.isFinite(ack.delayMs)&&ack.delayMs>=0){
     const delay=Math.max(50,ack.delayMs),left=remaining();
     if(delay>=left||attempts>=120)return finish('host-observation-retry-budget');
@@ -362,6 +371,7 @@ if(!p){
  function mutations(records){
   if(!live())return;
   const bodyChanged=bodyDiscovery?.affectsBody(records),surfaceChanged=discovery?.affectsSurface(records);
+  if(bodyChanged)bodyWanted=true;
   if(bodyChanged||surfaceChanged)try{
    // A mixed batch may contain a directory/header update and unrelated body
    // tokens. Forward only relevant text records, so the latter cannot close
@@ -373,7 +383,7 @@ if(!p){
   // an unrelated directory cursor or its pending bounded fragments.
   if(surfaceChanged)requestScan();else schedule();
  }
- function stop(){historySelections=new WeakMap();discardPausedSurface();if(observationExpiry!==null){cancelRetry(observationExpiry);observationExpiry=null;}observationRAM=null;observationRows=[];observationKeys.clear();observationCursor=null;observationScanning=false;observationOnly=false;surfaceRetryWanted=false;nativePrepareAt=null;idleRevision++;finishPass('cancel');ingestionPass=null;generation++;if(retryTimer!==null){cancelRetry(retryTimer);retryTimer=null;}stopped=true;snippets?.stop();snippets=null;snippetReady=()=>false;sendObserver?.stop();sendObserver=null;acceptedBody=null;intents=[];sendGap=null;sendGapBlocked=false;surfaceParts=[];surfaceKey=null;surfaceSequence=null;surfaceWanted=true;surfaceScanning=false;surfaceCursor=null;surfacePage=0;surfacePageKey=null;surfaceAccepted.clear();surfaceFailed.clear();observer?.disconnect();observer=null;document.removeEventListener('scroll',requestScan,true);document.removeEventListener('click',nativeUseClick,true);document.removeEventListener('toggle',surfaceToggle,true);document.removeEventListener('visibilitychange',visibilityChanged);document.removeEventListener('focusout',schedule,true);document.defaultView.removeEventListener('popstate',requestScan);document.defaultView.removeEventListener('hashchange',requestScan);document.defaultView.removeEventListener('resize',requestScan);discovery?.stop();bodyDiscovery?.stop();bodyDiscovery=null;actions=null;dirty=false;queued=false;busy=false;last.clear();failedKey.clear();return Promise.all([...terminalWork]).then(results=>results.every(Boolean));}
+ function stop(){historySelections=new WeakMap();discardPausedSurface();if(observationExpiry!==null){cancelRetry(observationExpiry);observationExpiry=null;}observationRAM=null;observationRows=[];observationKeys.clear();observationCursor=null;observationScanning=false;observationOnly=false;surfaceRetryWanted=false;nativePrepareAt=null;idleRevision++;finishPass('cancel');ingestionPass=null;generation++;if(retryTimer!==null){cancelRetry(retryTimer);retryTimer=null;}stopped=true;snippets?.stop();snippets=null;snippetReady=()=>false;sendObserver?.stop();sendObserver=null;acceptedBody=null;bodyWanted=true;intents=[];sendGap=null;sendGapBlocked=false;surfaceParts=[];surfaceKey=null;surfaceSequence=null;surfaceWanted=true;surfaceScanning=false;surfaceCursor=null;surfacePage=0;surfacePageKey=null;surfaceAccepted.clear();surfaceFailed.clear();observer?.disconnect();observer=null;document.removeEventListener('scroll',requestScan,true);document.removeEventListener('click',nativeUseClick,true);document.removeEventListener('toggle',surfaceToggle,true);document.removeEventListener('visibilitychange',visibilityChanged);document.removeEventListener('focusout',schedule,true);document.defaultView.removeEventListener('popstate',requestScan);document.defaultView.removeEventListener('hashchange',requestScan);document.defaultView.removeEventListener('resize',requestScan);discovery?.stop();bodyDiscovery?.stop();bodyDiscovery=null;actions=null;dirty=false;queued=false;busy=false;last.clear();failedKey.clear();return Promise.all([...terminalWork]).then(results=>results.every(Boolean));}
  // Freeze only this mount's presentation row set, never the discovered objects.
  // Appended/prepended native rows remain visible and discoverable. Existing row
  // removal, reordering or an inserted gap still invalidates the old mount.
