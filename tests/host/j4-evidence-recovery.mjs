@@ -235,8 +235,10 @@ export async function runJ4EvidenceRecovery({a,id,server,inspector,assets,preser
  const ackView=await readyView(acknowledged.evidence.revision,0);await unchangedAssets();assert.deepEqual((await inspect(team)).evidence,teamBefore.evidence);
  recordEvidence(beforeNativeCommit?'same-J4-one-genuine-new-native-send-creates-first-ACK-after-aborted-ACK-and-evidence-repair':'same-J4-one-genuine-new-native-send-creates-successor-ACK-with-old-anchors-still-revoked',{...sendBudget,messageId:sent.id,originalSendAt:sent.at,oldACKState:recoveryMode.oldACKState,anchor:{id:hint.id,messageId:hint.messageId,sourceId:hint.sourceId,generation:hint.generation,firstObservedAt:hint.firstObservedAt,candidateInterval:hint.candidateInterval,calibrationDueAt:hint.calibrationDueAt,ackWitness:hint.ackWitness},source:{id:source.id,generation:source.generation,revoked:source.revoked,codecVersion:source.codecVersion,profileId:source.profileId,profileVersion:source.profileVersion},projection:ackView,originalMessageIds,nativeSends:acceptsBefore+1,actualNewSends:1,activityProjection:'REAL_HOST_UI_VIEW_CURRENT_REF_SEGMENT; ACK_AND_AUTHENTICATED_ORIGINAL_COEXIST'});
 
- const repeatBudget=await budgetWindow(),repeatReadStart=completedReads().length;
+ // Two 30-second budget windows can outlive the 60-second native C2 receipt.
+ // Capture the old grant now; the existing reload below supplies the new C2.
  const preRebindGrant=(await waitJ4Grant(a,id,scopeKey,{expectedCurrentRef:J4_SEND_C})).grant;
+ const repeatBudget=await budgetWindow(),repeatReadStart=completedReads().length;
  assert.equal(await a.locator('textarea').inputValue(),'');await a.reload();await a.locator('[data-message-id="'+sent.id+'"]').first().waitFor();
  await poll(()=>completedReads().length>repeatReadStart,'rebind-authenticated-response');
  const repeatedGrant=(await waitJ4Grant(a,id,scopeKey,{previousGrant:preRebindGrant,expectedCurrentRef:J4_SEND_C})).grant;assert.notEqual(repeatedGrant,preRebindGrant);assert.notEqual(repeatedGrant,freshGrant);

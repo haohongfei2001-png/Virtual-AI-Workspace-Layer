@@ -101,16 +101,25 @@ export function nativeReturnGapRect({document,header,slot,hitRoot,readingRoot=nu
    // tree or carry geometry across mutations/scrolls. Bound elapsed work rather
    // than document size, so an ordinary long transcript is not itself unsafe.
    // Cache styles only for this synchronous proof, never between inspections.
-   const paintStarted=win.performance.now(),styles=new WeakMap();
+   const paintStarted=win.performance.now(),styles=new WeakMap(),paintPseudos=['::before','::after'];
    const withinBudget=()=>{const elapsed=win.performance.now()-paintStarted;return Number.isFinite(elapsed)&&elapsed>=0&&elapsed<50;};
    const paintStyle=n=>{let value=styles.get(n);if(!value){value=win.getComputedStyle(n);styles.set(n,value);}return value;};
    // The same package-selected gap policy must consider reading paint as well
    // as titlebar children. Collect every intersecting box before selecting a
    // gap; no occluder is ignored and no partial scan can move the control.
-   const paintBlocksGap=(node,box)=>{
-    if(![box.x,box.y,box.width,box.height].every(Number.isFinite))return true;
-    if(box.width<=0||box.height<=0)return false;
-    const affectsGap=gapPolicy==='first-empty-header-gap'?box.y<r.y+r.height&&r.y<box.y+box.height:overlap(r,box);
+   const paintBlocksGap=(node,rawBox)=>{
+    const {x,y,width,height}=rawBox;
+    // Clipping only shrinks finite boxes. Most transcript paint is already
+    // outside the gap; invalid or intersecting boxes keep the full proof.
+    if(Number.isFinite(x)&&Number.isFinite(y)&&Number.isFinite(width)&&Number.isFinite(height)){
+     if(width<=0||height<=0)return false;
+     const rawAffectsGap=gapPolicy==='first-empty-header-gap'?y<r.y+r.height&&r.y<y+height:overlap(r,rawBox);
+     if(!rawAffectsGap)return false;
+    }
+    const box=visibleBox(node,rawBox),{x:cx,y:cy,width:cw,height:ch}=box;
+    if(!Number.isFinite(cx)||!Number.isFinite(cy)||!Number.isFinite(cw)||!Number.isFinite(ch))return true;
+    if(cw<=0||ch<=0)return false;
+    const affectsGap=gapPolicy==='first-empty-header-gap'?cy<r.y+r.height&&r.y<cy+ch:overlap(r,box);
     if(!affectsGap||containedLeaf(node.nodeType===1?node:node.parentElement))return false;
     if(gapPolicy==='first-empty-header-gap'){
      gapBlocks.push(box);
@@ -141,8 +150,8 @@ export function nativeReturnGapRect({document,header,slot,hitRoot,readingRoot=nu
     if(!withinBudget()){stage='reading-paint-budget';return reject();}
     if(node.nodeType===1){
      if(node.shadowRoot||node.localName?.includes('-')){stage='reading-paint-opaque';return reject();}
-     for(const pseudo of ['::before','::after']){
-      const style=win.getComputedStyle(node,pseudo);if(['none','normal'].includes(style.content))continue;
+     for(const pseudo of paintPseudos){
+      const style=win.getComputedStyle(node,pseudo),content=style.content;if(content==='none'||content==='normal')continue;
       if(containedLeaf(node))break;
       // Empty native decorations are safe only when their entire border box
       // is proven inside an already-excluded descendant's own padding box.
@@ -152,10 +161,10 @@ export function nativeReturnGapRect({document,header,slot,hitRoot,readingRoot=nu
       const paddingHeight=host.boxSizing==='border-box'?px(host.height)-px(host.borderTopWidth)-px(host.borderBottomWidth):px(host.height)+px(host.paddingTop)+px(host.paddingBottom);
       if(node===readingRoot||style.content!=='""'||host.position==='static'||style.position!=='absolute'||style.boxSizing!=='border-box'||!['left','top','right','bottom','width','height'].every(k=>Number.isFinite(px(style[k])))||![paddingWidth,paddingHeight].every(Number.isFinite)||left+width>paddingWidth||px(style.right)+width>paddingWidth||top+height>paddingHeight||px(style.bottom)+height>paddingHeight||['marginLeft','marginTop','marginRight','marginBottom'].some(k=>px(style[k])!==0)||['transform','translate','rotate','scale','boxShadow','textShadow','filter','backdropFilter','offsetPath','borderImageSource'].some(k=>style[k]!=='none')||!['none','hidden'].includes(style.outlineStyle)||style.zoom!=='1'){stage='reading-paint-decoration';return reject();}
      }
-     if(node!==readingRoot){const box=rect(node);if(paintBlocksGap(node,visibleBox(node,box))){stage='reading-paint-overlap';return reject();}}
+     if(node!==readingRoot){const box=rect(node);if(paintBlocksGap(node,box)){stage='reading-paint-overlap';return reject();}}
     }else{
      range.selectNodeContents(node);
-     for(const box of range.getClientRects()){if(!withinBudget()){stage='reading-paint-budget';return reject();}if(paintBlocksGap(node,visibleBox(node,box))){stage='reading-paint-overlap';return reject();}}
+     for(const box of range.getClientRects()){if(!withinBudget()){stage='reading-paint-budget';return reject();}if(paintBlocksGap(node,box)){stage='reading-paint-overlap';return reject();}}
     }
    }while(node=walker.nextNode());
    if(gapPolicy==='first-empty-header-gap'){

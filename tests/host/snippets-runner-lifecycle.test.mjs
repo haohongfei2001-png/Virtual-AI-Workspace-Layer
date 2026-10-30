@@ -53,6 +53,19 @@ test('a report-write failure after a successful journey is nonzero with a fallba
 
 const runner=await readFile(new URL('./snippets-package-mv3-browser.mjs',import.meta.url),'utf8');
 test('six-case browser journey retains original assertions plus explicit return and focus checks',()=>{
+ // Normalize only the enumerated passive records and the equivalent sequence
+ // cursor. Every original business assertion still contributes to the old hash.
+ const passiveChanges=[
+  ["page.on('console',m=>recordSnippetsProbeConsole(report,m.text()));","page.on('console',m=>{if(m.text().startsWith('SNIPPET_PUBLIC_TRACE '))try{report.transport.push(JSON.parse(m.text().slice('SNIPPET_PUBLIC_TRACE '.length)));}catch{}});"],
+  [" for(const frame of [workspace,sidebar])await frame.evaluate(installSnippetsQueryProbe,{role:frame===workspace?'workspace':'sidebar'});\n await page.evaluate(installSnippetsQueryProbe,{role:'host'});", " for(const frame of [workspace,sidebar])await frame.evaluate(()=>{const send=chrome.runtime.sendMessage.bind(chrome.runtime);chrome.runtime.sendMessage=async message=>{const result=await send(message);console.log('SNIPPET_PUBLIC_TRACE '+JSON.stringify({type:message.type,action:message.action,ok:result?.ok,state:result?.state,reason:result?.reason}));return result;};});"],
+  [" report.searchDiagnostic.afterFill=await workspace.evaluate(()=>globalThis.__vaiwlSnippetQueryProbe.snapshot('after-fill'));\n",''],
+  [' const beforeSearchLocate=report.transportSequence;',' const beforeSearchLocate=report.transport.length;'],
+  [" report.searchDiagnostic.beforeLocate=await match.getByRole('button',{name:'定位片段',exact:true}).evaluate(node=>globalThis.__vaiwlSnippetQueryProbe.snapshot('before-locate',node));\n",''],
+  ["assert.equal(report.transport.some(r=>r.sequence>beforeSearchLocate&&r.type==='HOST_UI_SNIPPET'&&r.action==='locate'&&r.ok===true),true);","assert.equal(report.transport.slice(beforeSearchLocate).some(r=>r.type==='HOST_UI_SNIPPET'&&r.action==='locate'&&r.ok===true),true);"],
+  [" report.searchDiagnostic.afterReturn=await search.evaluate(node=>globalThis.__vaiwlSnippetQueryProbe.snapshot('after-return',node));\n",'']
+ ];
+ let comparable=runner;
+ for(const [addition,prior]of passiveChanges){assert.equal(comparable.split(addition).length,2,addition);comparable=comparable.replace(addition,prior);}
  const probeStart=' await page.evaluate(installSnippetsPresentationProbe);\n try{\n';
  const probeEnd=" }finally{\n  try{report.presentationDiagnostic=await page.evaluate(()=>globalThis.__vaiwlSnippetPresentationProbe.finish());}\n  catch{report.presentationDiagnostic={kind:'PASSIVE_PRESENTATION_DIAGNOSTIC_NOT_ACCEPTANCE',status:'UNAVAILABLE'};}\n }\n";
  assert.equal(runner.split(probeStart).length,2);assert.equal(runner.split(probeEnd).length,2);
@@ -60,8 +73,8 @@ test('six-case browser journey retains original assertions plus explicit return 
  // reviewed return-search transition, requiring retained query/result followed
  // by explicit close, visible-member and draft assertions verbatim.
  const correctedReturn=" // The sole return retains the originating search; explicit close restores\n // the main list before continuing the independent saved-panel journey.\n await search.waitFor({state:'visible',timeout:10000});\n assert.equal(await search.inputValue(),'uniquely selected fixture words');\n await match.getByText('uniquely selected fixture words',{exact:true}).waitFor({timeout:10000});\n await workspace.getByRole('button',{name:'关闭已知查找',exact:true}).click();\n await workspace.locator(`a[data-ref-id=\"${C}\"]`).first().waitFor({state:'visible',timeout:10000});\n assert.equal(await search.count(),0);await draft();";
- assert.equal(runner.split(correctedReturn).length,2);
- const core=runner.slice(runner.indexOf(' page=await context.newPage()'),runner.indexOf('},inspectFailure:')).replace(probeStart,'').replace(probeEnd,'');
+ assert.equal(comparable.split(correctedReturn).length,2);
+ const core=comparable.slice(comparable.indexOf(' page=await context.newPage()'),comparable.indexOf('},inspectFailure:')).replace(probeStart,'').replace(probeEnd,'');
  const focusChecks=["assert.equal(await panel.getByRole('heading',{name:'已保存片段',exact:true}).evaluate(n=>n.getRootNode().activeElement===n),true);","await sidebar.getByRole('button',{name:'已保存片段',exact:true}).waitFor();assert.equal(await sidebar.getByRole('button',{name:'已保存片段',exact:true}).evaluate(n=>n.getRootNode().activeElement===n),true);"];
  // Only the obsolete startup precondition changes: the current backend has
  // document-flow surfaces and keeps native project/history sections reachable.
