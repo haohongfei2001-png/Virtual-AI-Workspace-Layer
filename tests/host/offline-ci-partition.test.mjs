@@ -281,3 +281,15 @@ test('cold native recovery dispatch exercises the conditional and controlled bra
  assert(step.includes('"$RUNNER_TEMP/context-cold-recovery.json" cold-recovery'));assert(step.includes('"$RUNNER_TEMP/context-forced-recovery.json" cold-unavailable-recovery'));
  assert.doesNotMatch(step,/set \+e|continue-on-error|\|\| true/);
 });
+
+test('delivery recheck selects only corrected nested journey and original populated gate',()=>{
+ const all=Object.fromEntries([...workflow.matchAll(/^  ([\w-]+):\n([\s\S]*?)(?=^  [\w-]+:\n|$(?![\s\S]))/gm)].filter(m=>/^    runs-on:/m.test(m[2])).map(m=>[m[1],m[2]]));
+ const event={...allowedEvent,event_name:'workflow_dispatch'},input={diagnostic:'host-delivery-recheck'};
+ const selected=(github,inputs)=>Object.keys(all).filter(name=>condition(all[name].match(/^    if: (.+)$/m)[1],github,inputs));
+ assert.deepEqual(selected(event,input),['offline-journeys','cloud-supplementary-gates']);
+ for(const e of [{...event,event:{repository:{private:true}}},{...event,repository:'other/repo'},{...event,ref:'refs/heads/main'},{...event,event_name:'pull_request'}])assert.deepEqual(selected(e,input),[]);
+ const expression=all['cloud-supplementary-gates'].match(/^        gate: \$\{\{ (.+) \}\}$/m)[1];assert.deepEqual(new Function('github','inputs','fromJSON','return '+expression)(event,input,JSON.parse),['populated-native']);
+ const active=journeySteps.filter(s=>!s.expression||condition(s.expression,event,input));assert.deepEqual(active.filter(s=>s.name!=='Publish bounded text evidence to logs only').map(s=>s.name),['Install locked Host build tool','Install locked test tools and isolated Chromium','Document-flow native protection and continuous packaged product journey']);
+ const command=active.find(s=>s.name.startsWith('Document-flow')).body.split('if test "$VAIWL_DELIVERY_RECHECK" = true; then')[1].split('          fi')[0];
+ assert(command.includes('node tests/host/browser-local-mv3.mjs --flow-only --nested-home'));assert(command.includes('exit 0'));assert.doesNotMatch(command,/set \+e|continue-on-error|\|\| true/);
+});

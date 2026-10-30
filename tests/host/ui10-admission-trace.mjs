@@ -74,6 +74,28 @@ export async function captureUi10AdmissionTrace(worker){
  try{return await Promise.race([worker.evaluate(()=>globalThis.__vaiwlUi10AdmissionTrace??null),new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('ui10-trace-snapshot-timeout')),1000);})]);}finally{clearTimeout(timer);}
 }
 
+/** Passive listener in the disposable fixture worker, with no response,
+ * source patch, network request, timer or authority change. Capture on the
+ * original failing run; a later diagnostic cannot explain that run. */
+export function installUi10InboundObservation(){
+ if(globalThis.__vaiwlUi10Inbound)throw Error('ui10-inbound-already-installed');
+ const tokens=new Map(),events=[],state=globalThis.__vaiwlUi10Inbound={kind:'UI10_PASSIVE_WORKER_INBOUND',timeOrigin:performance.timeOrigin,events,dropped:0,identityOverflow:false};
+ const ordinal=value=>{if(typeof value!=='string'||!value)return null;if(tokens.has(value))return tokens.get(value);if(tokens.size>=512){state.identityOverflow=true;return null;}const id=tokens.size+1;tokens.set(value,id);return id;};
+ const visit=value=>typeof value==='string'&&/^60000000-0000-4000-8000-\d{12}$/.test(value)&&Number(value.slice(-12))<64?Number(value.slice(-12)):null;
+ const integer=value=>Number.isSafeInteger(value)&&value>=0?value:null;
+ chrome.runtime.onMessage.addListener((message,sender)=>{
+  const body=message?.kind==='current-observation'?message.payload?.body:message?.kind==='current-object'?message.payload:null;
+  if(!body&&!['HOST_HELLO','HOST_REFRESH','HOST_BIND','HOST_UI_CALIBRATION_ENTRY'].includes(message?.type))return;
+  if(events.length>=512){state.dropped++;return;}
+  let route=null;try{route=new URL(sender?.url).pathname.split('/').at(-1);}catch{}
+  events.push({at:performance.timeOrigin+performance.now(),event:body?'body':message.type,document:ordinal(message.documentToken),producer:ordinal(message.producerToken),senderDocument:ordinal(sender?.documentId),frame:integer(sender?.frameId),routeEpoch:integer(message.routeEpoch),localSeq:integer(message.localSeq),senderVisit:visit(route),bodyVisit:visit(body?.conversationId),association:['unproven','explicit-body-id'].includes(body?.association)?body.association:null,messages:Array.isArray(body?.messageIds)?body.messageIds.length:null});
+ });
+ return state.timeOrigin;
+}
+export async function captureUi10InboundObservation(worker,expectedTimeOrigin){
+ let timer;try{const snapshot=await Promise.race([worker.evaluate(()=>{const value=globalThis.__vaiwlUi10Inbound;return value?{...value,capturedAt:performance.timeOrigin+performance.now()}:null;}),new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('ui10-inbound-snapshot-timeout')),1000);})]);if(!snapshot)throw Error('ui10-inbound-missing');const complete=snapshot.timeOrigin===expectedTimeOrigin&&snapshot.dropped===0&&snapshot.identityOverflow===false;return {...snapshot,status:complete?'CAPTURED':'INCOMPLETE',absenceInferenceAllowed:complete};}catch{return {kind:'UI10_PASSIVE_WORKER_INBOUND',status:'UNAVAILABLE',absenceInferenceAllowed:false};}finally{clearTimeout(timer);}
+}
+
 /** Verification failure is recorded, never allowed to skip browser cleanup. */
 export async function checkUi10AdmissionTracePackage(receipt){
  try{await verifyUi10AdmissionTracePackage(receipt);return {verified:true,error:null};}catch{return {verified:false,error:'ui10-trace-package-verification-failed'};}

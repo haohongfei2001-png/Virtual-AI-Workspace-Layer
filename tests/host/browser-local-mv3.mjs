@@ -184,10 +184,20 @@ try{
      await setViewport(page,{width:720,height:900});
      await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
      await page.locator('[id$="_workspace"]:visible').waitFor();
+     report.checks.nestedHomeNarrow=await page.evaluate(()=>{const form=document.querySelector('form[data-chatgpt-composer]'),plate=document.querySelector('#nested-home-composer-plate'),board=document.querySelector('[id$="_workspace"][data-va-owned]'),f=form.getBoundingClientRect(),p=plate.getBoundingClientRect(),b=board.getBoundingClientRect();return {inputFits:f.width>0&&f.left>=0&&f.right<=innerWidth&&f.bottom<=innerHeight,plateFits:p.width>0&&p.left>=0&&p.right<=innerWidth,workspaceFits:b.width>=160&&b.height>=96&&b.right<=innerWidth&&b.bottom<=f.top};});
+     assert.deepEqual(report.checks.nestedHomeNarrow,{inputFits:true,plateFits:true,workspaceFits:true});
      await page.getByRole('button',{name:'Native container tool',exact:true}).click();
+     assert.equal(await page.evaluate(()=>globalThis.nestedHomeNativeClicks),1);
+     report.checks.nestedHomeNarrow.nativeClick=true;
+     await page.locator('[id$="_workspace"]:visible').waitFor({state:'hidden'});
      await page.locator('textarea').focus();
-     report.checks.nestedHomeNarrow=await page.evaluate(()=>{const form=document.querySelector('form[data-chatgpt-composer]'),plate=document.querySelector('#nested-home-composer-plate'),board=document.querySelector('[id$="_workspace"][data-va-owned]'),f=form.getBoundingClientRect(),p=plate.getBoundingClientRect(),b=board.getBoundingClientRect();return {nativeClick:globalThis.nestedHomeNativeClicks===1,focus:document.activeElement===form.querySelector('textarea'),inputFits:f.width>0&&f.left>=0&&f.right<=innerWidth&&f.bottom<=innerHeight,plateFits:p.width>0&&p.left>=0&&p.right<=innerWidth,workspaceFits:b.width>=160&&b.height>=96&&b.right<=innerWidth&&b.bottom<=f.top};});
-     assert.deepEqual(report.checks.nestedHomeNarrow,{nativeClick:true,focus:true,inputFits:true,plateFits:true,workspaceFits:true});
+     assert(await page.locator('textarea').evaluate(n=>document.activeElement===n));
+     report.checks.nestedHomeNarrow.nativeInputFocus=true;
+     // Native input focus intentionally hands reading back to ChatGPT. Use
+     // the real return control before continuing the workspace journey.
+     await page.locator('[id$="_workspace"]:visible').waitFor({state:'hidden'});
+     await page.getByRole('button',{name:'返回工作空间',exact:true}).click();
+     await page.locator('[id$="_workspace"]:visible').waitFor();
      const narrowHome=join(dir,'flow-home-narrow.png');await page.screenshot({path:narrowHome,caret:'initial'});report.images.push(narrowHome);
      await setViewport(page,{width:1400,height:900});
     }
