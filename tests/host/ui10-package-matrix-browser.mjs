@@ -19,14 +19,15 @@ import {createVariantHostFixtureServer} from './fixtures/variants-server.mjs';
 import {packageHost,verifyHost} from '../../extension/package.mjs';
 import {UI10_PROFILES,UI10_LONG_CHINESE,configureUi10Environment,observeUi10Shell,ui10PreparationReport} from './ui10-matrix-contract.mjs';
 import {ui10PackageOptions,ui10Entry,ui10Sequence} from './ui10-package-sequence.mjs';
-import {createHistoricalNetworkGuard,historicalNetworkGuardArgs} from './historical-network-guard.mjs';
+import {createHistoricalNetworkGuard} from './historical-network-guard.mjs';
+import {launchNativeVisibilityBrowser} from './native-visibility-browser.mjs';
 
 const output=process.argv[2];assert(output,'output-json-path-required');
 const runInteractions=process.env.FREE_UI10_INTERACTIONS==='1';
 const profiles=process.argv[3]?[process.argv[3]]:[...UI10_PROFILES];
 assert(profiles.every(p=>UI10_PROFILES.includes(p)),'unsupported-ui10-profile');
 const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
-const testFiles=['ui10-native-preflight.mjs','fixtures/legacy.html','fixtures/native.css','fixtures/native.mjs','ui10-capture-preparation.mjs','ui10-visual-png-log.mjs','ui10-horizon-commit.mjs','ui10-visible-title.mjs','ui10-interaction-matrix.mjs','ui10-dom-contract.mjs','ui10-interaction-readiness.mjs','ui10-package-matrix-browser.mjs','ui10-package-sequence.mjs','ui10-matrix-contract.mjs','fixtures/variants-server.mjs','fixtures/ui10-conversation-title.mjs','historical-network-guard.mjs','snippets-query-probe.mjs'];
+const testFiles=['ui10-native-preflight.mjs','fixtures/legacy.html','fixtures/native.css','fixtures/native.mjs','ui10-capture-preparation.mjs','ui10-visual-png-log.mjs','ui10-horizon-commit.mjs','ui10-visible-title.mjs','ui10-interaction-matrix.mjs','ui10-dom-contract.mjs','ui10-interaction-readiness.mjs','ui10-package-matrix-browser.mjs','ui10-package-sequence.mjs','ui10-matrix-contract.mjs','fixtures/variants-server.mjs','fixtures/ui10-conversation-title.mjs','historical-network-guard.mjs','snippets-query-probe.mjs','native-visibility-browser.mjs','isolated-browser-cleanup.mjs'];
 const testHashes=async()=>Object.fromEntries(await Promise.all(testFiles.map(async name=>[name,hash(await readFile(new URL(name,import.meta.url)))])));
 const report={...ui10PreparationReport(),kind:'PACKAGED_MV3_UI10_LAYOUT_SUBCONTRACT_CANDIDATE',status:'NOT_RUN',profiles:[],testHashesBefore:await testHashes()};
 
@@ -35,7 +36,7 @@ async function runProfile(profile,titleMode='all'){
  const result={profile,titleMode,status:'NOT_RUN',steps:[],errors:[],viewports:[],fullV27Acceptance:'NOT_ESTABLISHED',physicalKeyboard:'NOT_RUN',physicalIME:'NOT_RUN',queryProbe:runInteractions?{kind:'PASSIVE_QUERY_DIAGNOSTIC_NOT_ACCEPTANCE',limit:256,transport:[],transportSequence:0,transportDropped:0,inputEvents:[],inputEventsSequence:0,inputEventsDropped:0}:null};
  report.profiles.push(result);
  const probedFrames=new WeakSet();
- let server,context,page,built,info,manifestHash,guard,id;
+ let server,context,page,built,info,manifestHash,guard,id,browserHandle;
  try{
   server=profile==='LEGACY'?await createHostFixtureServer({profile}):await createVariantHostFixtureServer({profile,ui10FullSidebar:true,ui10ConversationTitle:titleMode==='long-Chinese'?UI10_LONG_CHINESE:null});assert.equal(server.manifest.profile,profile);result.fixture=server.manifest;
   const dir=await mkdtemp(join(tmpdir(),'vaiwl-ui10-'));result.artifactDirectory=dir;
@@ -43,7 +44,11 @@ async function runProfile(profile,titleMode='all'){
   const manifestBytes=await readFile(join(built.unpacked,'build-manifest.json'));manifestHash=hash(manifestBytes);info=JSON.parse(manifestBytes);result.sourceHashes=info.sourceHashes;
   assert.equal(verifyHost(built.unpacked).status,'OFFLINE_HOST_RECONSTRUCTION');
   guard=await createHistoricalNetworkGuard({fixtureOrigin:server.origin});
-  context=await chromium.launchPersistentContext(join(dir,'profile'),{headless:true,viewport:{width:1440,height:1000},executablePath:process.env.FREE_CHROME_EXECUTABLE??'/usr/bin/chromium',ignoreDefaultArgs:['--disable-extensions'],args:['--enable-unsafe-extension-debugging',...historicalNetworkGuardArgs(guard.config)]});
+  // Exercise Chromium's actual focus/visibility instead of Playwright's
+  // capturer-based focus emulation. Input actions and their deadlines stay
+  // unchanged; a successful CDP call alone never proves delivered input.
+  browserHandle=await launchNativeVisibilityBrowser({chromium,profileDir:join(dir,'profile'),headed:false,executablePath:process.env.FREE_CHROME_EXECUTABLE??'/usr/bin/chromium',historicalNetworkGuard:guard.config});context=browserHandle.context;
+  result.browserPrecondition=browserHandle.diagnostic;
   await context.route('**/*',route=>route.request().url().startsWith(server.origin+'/')||route.request().url().startsWith('chrome-extension://')?route.continue():route.abort());
   result.browserVersion=context.browser().version();
   result.nativePreflight=await runUi10NativePreflight({context,url:server.origin+ui10Entry(profile)});
@@ -51,7 +56,7 @@ async function runProfile(profile,titleMode='all'){
   const worker=context.serviceWorkers().find(w=>w.url().startsWith(`chrome-extension://${id}/`))??await context.waitForEvent('serviceworker');
   // A worker-ready precondition, not a cold-start test or fake context receipt.
   result.workerExternalNetworkBlocked=await worker.evaluate(async()=>{try{await fetch('https://example.com/');return false;}catch{return true;}});assert.equal(result.workerExternalNetworkBlocked,true);
-  page=await context.newPage();page.on('pageerror',error=>result.errors.push(error.message));
+  page=await context.newPage();await page.setViewportSize({width:1440,height:1000});page.on('pageerror',error=>result.errors.push(error.message));
   if(runInteractions){page.on('console',message=>recordSnippetsProbeConsole(result.queryProbe,message.text()));page.on('framenavigated',frame=>probedFrames.delete(frame));}
   await page.goto(server.origin+ui10Entry(profile));
   async function workspace(allowReturn=false){
@@ -122,7 +127,7 @@ async function runProfile(profile,titleMode='all'){
  }catch(error){result.status='FAIL';result.error=error.stack;if(error.ui10NativePreflight)result.nativePreflight=error.ui10NativePreflight;if(error.ui10NativeControls)result.nativeControlsFailure=error.ui10NativeControls;if(error.ui10CaptureDiagnostics)result.captureDiagnostics=error.ui10CaptureDiagnostics;if(error.ui10SnippetDiagnostics)result.snippetDiagnostics=error.ui10SnippetDiagnostics;if(error.ui10HorizonDiagnostics)result.horizonDiagnostics=error.ui10HorizonDiagnostics;if(error.ui10SearchDiagnostics)result.searchDiagnostics=error.ui10SearchDiagnostics;if(error.ui10SearchProbe)result.searchProbeFailure=error.ui10SearchProbe;if(error.ui10Geometry)result.geometryDiagnostics=error.ui10Geometry;if(error.ui10TitleDiagnostics)result.titleDiagnostics=error.ui10TitleDiagnostics;if(error.ui10TitleDiagnosticError)result.titleDiagnosticError=error.ui10TitleDiagnosticError;process.exitCode=1;try{if(page&&result.artifactDirectory){result.failureNativeControls=await page.evaluate(observeUi10NativeControls,false);result.failureScreenshot=join(result.artifactDirectory,'failure.png');await page.screenshot({path:result.failureScreenshot});const failureURL=page.url(),probe=await context.newPage();try{await probe.goto(`chrome-extension://${id}/status.html`);result.failureStatus=await probe.evaluate(async url=>{const tab=(await chrome.tabs.query({})).find(t=>t.url===url);return tab?{status:await chrome.tabs.sendMessage(tab.id,{v:1,type:'HOST_LOCAL_STATUS'}),layout:await chrome.tabs.sendMessage(tab.id,{v:1,type:'HOST_LOCAL_LAYOUT'})}:null;},failureURL);}finally{await probe.close();}}}catch(screenshotError){result.screenshotError=screenshotError.message;}}
  finally{
   try{if(info){result.sourceChangedDuringRun=(await Promise.all(Object.entries(info.sourceHashes).map(async([path,h])=>hash(await readFile(path))!==h))).some(Boolean);result.buildManifestUnchanged=hash(await readFile(join(built.unpacked,'build-manifest.json')))===manifestHash;if(result.sourceChangedDuringRun||!result.buildManifestUnchanged){result.status='FAIL';result.error=(result.error??'')+' source-or-package-changed';process.exitCode=1;}}}catch(error){result.status='FAIL';result.error=(result.error??'')+' '+error.stack;process.exitCode=1;}
-  try{await context?.close();}catch(error){result.status='FAIL';result.cleanupError=error.message;process.exitCode=1;}
+  try{await browserHandle?.close();}catch(error){result.status='FAIL';result.cleanupError=error.message;process.exitCode=1;}
   try{await guard?.close();}catch(error){result.status='FAIL';result.cleanupError=(result.cleanupError??'')+' '+error.message;process.exitCode=1;}
   try{await server?.close();}catch(error){result.status='FAIL';result.cleanupError=(result.cleanupError??'')+' '+error.message;process.exitCode=1;}
   if(result.status==='FAIL')for(const cell of report.cells)if(cell.profile===profile&&(titleMode==='all'||cell.title===titleMode)&&cell.nativeEvidence==='PASS_LAYOUT_SUBCONTRACT_ONLY')cell.nativeEvidence='OBSERVED_LAYOUT_NOT_ACCEPTED_PROFILE_FAILED';

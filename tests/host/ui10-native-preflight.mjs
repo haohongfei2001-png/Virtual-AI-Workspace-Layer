@@ -36,6 +36,7 @@ export function assertUi10NativePreflight(sample){
 export async function runUi10NativePreflight({context,url}){
  const page=await context.newPage(),results=[];
  try{
+  await page.setViewportSize(UI10_PREFLIGHT_VIEWPORTS[0]);
   await page.goto(url);await page.locator('#prompt-textarea').waitFor();
   for(const viewport of UI10_PREFLIGHT_VIEWPORTS){
    await page.setViewportSize(viewport);

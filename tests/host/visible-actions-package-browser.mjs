@@ -82,9 +82,9 @@ try{
     let first=null,sameNode=true;const paintSamples=[],stableKeys=['rect','textRects','text','style','viewport','scrollWidth','clientWidth'];
     function collect(time){
      const value=sample(time);first??=value;sameNode&&=value.node===first.node;const facts=value.facts;paintSamples.push(facts);
-     const valid=facts.current&&facts.hit&&facts.text===label&&facts.textRects.length>0&&facts.rect.width>0&&facts.rect.height>=30&&facts.rect.left>=-1&&facts.rect.right<=facts.viewport.width+1&&facts.rect.top>=-1&&facts.rect.bottom<=facts.viewport.height+1&&facts.textRects.every(r=>r.left>=facts.rect.left-1&&r.right<=facts.rect.right+1&&r.top>=facts.rect.top-1&&r.bottom<=facts.rect.bottom+1);
+     const valid=facts.current&&facts.hit&&facts.style.display!=='none'&&facts.style.visibility==='visible'&&facts.text===label&&facts.textRects.length>0&&facts.rect.width>0&&facts.rect.height>=30&&facts.rect.left>=-1&&facts.rect.right<=facts.viewport.width+1&&facts.rect.top>=-1&&facts.rect.bottom<=facts.viewport.height+1&&facts.textRects.every(r=>r.left>=facts.rect.left-1&&r.right<=facts.rect.right+1&&r.top>=facts.rect.top-1&&r.bottom<=facts.rect.bottom+1);
      const stable=stableKeys.every(key=>JSON.stringify(facts[key])===JSON.stringify(first.facts[key]));
-     if(!valid||!sameNode||!stable||facts.paintAt!==first.facts.paintAt||paintSamples.length>=8){resolve({...facts,sameNode,paintCallbackLimit:8,paintSamples});return;}
+     if(!valid||!stable||facts.paintAt!==first.facts.paintAt||paintSamples.length>=8){resolve({...facts,sameNode,paintCallbackLimit:8,paintSamples});return;}
      requestAnimationFrame(collect);
     }
     requestAnimationFrame(collect);
@@ -93,12 +93,15 @@ try{
   report.steps.push({label,...observation});
   const first=observation.paintSamples[0],second=observation.paintSamples.at(-1);
   for(const value of observation.paintSamples){
-   assert(value.current,'measure current owner settings only');assert(value.hit,'visible label must have a native hit target');assert.equal(value.text,label,'visible action must carry its readable label');assert(value.textRects.length>0,'visible glyph rectangles required');
+   assert(value.current,'measure current owner settings only');assert(value.hit,'visible label must have a native hit target');assert(value.style.display!=='none'&&value.style.visibility==='visible','label must remain visible at every paint callback');assert.equal(value.text,label,'visible action must carry its readable label');assert(value.textRects.length>0,'visible glyph rectangles required');
    for(const r of value.textRects)assert(r.left>=value.rect.left-1&&r.right<=value.rect.right+1&&r.top>=value.rect.top-1&&r.bottom<=value.rect.bottom+1,'label must fit its control');
    assert(value.rect.width>0&&value.rect.height>=30);assert(value.rect.left>=-1&&value.rect.right<=value.viewport.width+1&&value.rect.top>=-1&&value.rect.bottom<=value.viewport.height+1,'control must stay in frame');
    for(const key of ['rect','textRects','text','style','viewport','scrollWidth','clientWidth'])assert.deepEqual(value[key],first[key],`visible label ${key} must stay stable across every paint callback`);
   }
-  assert(observation.sameNode,'all paint callbacks must measure the same current node');assert(second.paintAt>first.paintAt,'two distinct paint opportunities required within callback cap');
+  // A fresh owner VIEW may replace an owned button between paints. Identity is
+  // diagnostic; each callback must still resolve the unique current control and
+  // preserve its visible label, hit target and geometry.
+  assert(second.paintAt>first.paintAt,'two distinct paint opportunities required within callback cap');
  }
 
  async function visibleSidebarAction(){

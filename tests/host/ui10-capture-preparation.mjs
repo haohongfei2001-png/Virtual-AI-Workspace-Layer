@@ -9,15 +9,18 @@ export function observeUi10Snippets({requireReady=true}={}){
 export async function waitForUi10Snippets(frame){try{const handle=await frame.waitForFunction(observeUi10Snippets,undefined,{timeout:6000});try{return await handle.jsonValue();}finally{await handle.dispose();}}catch(error){try{error.ui10SnippetDiagnostics=await frame.evaluate(observeUi10Snippets,{requireReady:false});}catch{}throw error;}}
 /** Screenshot preparation only, not a scroll-restoration test. No DOM/style edits. */
 export async function observeUi10CaptureLayout({view,normalize=false}){
- const root=[...document.querySelectorAll('[data-vaiwl-owned]')].find(n=>n.shadowRoot?.querySelector('.workspace'))?.shadowRoot,workspace=root?.querySelector('.workspace'),docScroll=document.scrollingElement;
+ const currentRoot=()=>[...document.querySelectorAll('[data-vaiwl-owned]')].find(n=>n.shadowRoot?.querySelector('.workspace'))?.shadowRoot,previousWorkspace=currentRoot()?.querySelector('.workspace'),docScroll=document.scrollingElement;
  const rect=n=>n?.getBoundingClientRect().toJSON()??null,scroll=n=>n?{scrollTop:n.scrollTop,scrollLeft:n.scrollLeft,scrollHeight:n.scrollHeight,scrollWidth:n.scrollWidth,clientHeight:n.clientHeight,clientWidth:n.clientWidth,rect:rect(n)}:null;
- const before={workspace:scroll(workspace),document:scroll(docScroll)};
- if(normalize){workspace?.scrollTo({top:0,left:0,behavior:'instant'});docScroll?.scrollTo({top:0,left:0,behavior:'instant'});await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));}
+ const before={workspace:scroll(previousWorkspace),document:scroll(docScroll)};
+ if(normalize){previousWorkspace?.scrollTo({top:0,left:0,behavior:'instant'});docScroll?.scrollTo({top:0,left:0,behavior:'instant'});await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));}
+ // A normal owner projection may replace .workspace during the existing RAFs.
+ // Measure its current controls and scrollport together, never mix node lifetimes.
+ const root=currentRoot(),workspace=root?.querySelector('.workspace');
  const snippets=document.querySelector('[data-vaiwl-snippets]');
  const region=view==='snippets'?snippets:view==='H-settings'?root?.querySelector('[aria-label="工作空间设置"]'):view==='working-set'?root?.querySelector('[aria-label="当前工作集"]'):view==='search'?root?.querySelector('.search'):root?.querySelector('.card');
  const nodes=view==='snippets'?[snippets?.querySelector('h2')]:view==='H-settings'?[region?.querySelector('strong'),region?.querySelector('select')]:view==='working-set'?[region?.querySelector('strong')]:view==='search'?[region?.querySelector('input')]:[region?.querySelector('h2')];
  const w=workspace?.getBoundingClientRect(),clip=view==='snippets'||!workspace?{left:0,top:0,right:innerWidth,bottom:innerHeight}:{left:Math.max(0,w.left+workspace.clientLeft),top:Math.max(0,w.top+workspace.clientTop),right:Math.min(innerWidth,w.left+workspace.clientLeft+workspace.clientWidth),bottom:Math.min(innerHeight,w.top+workspace.clientTop+workspace.clientHeight)};
- return {view,preparation:normalize?'SCROLL_TO_START_FOR_CAPTURE_ONLY':'OBSERVATION_ONLY',scrollRestorationEvidence:false,before,after:{workspace:scroll(workspace),document:scroll(docScroll)},viewport:{width:innerWidth,height:innerHeight},clip,region:rect(region),firstCard:rect(root?.querySelector('.card')),targets:nodes.map(n=>({present:!!n,rect:rect(n),visible:!!n&&getComputedStyle(n).display!=='none'&&getComputedStyle(n).visibility==='visible'}))};
+ return {view,preparation:normalize?'SCROLL_TO_START_FOR_CAPTURE_ONLY':'OBSERVATION_ONLY',scrollRestorationEvidence:false,before,after:{workspace:scroll(workspace),document:scroll(docScroll)},workspaceIdentity:{changed:previousWorkspace!==workspace,previousConnected:previousWorkspace?.isConnected??null,currentConnected:workspace?.isConnected??null},viewport:{width:innerWidth,height:innerHeight},clip,region:rect(region),firstCard:rect(root?.querySelector('.card')),targets:nodes.map(n=>({present:!!n,rect:rect(n),visible:!!n&&getComputedStyle(n).display!=='none'&&getComputedStyle(n).visibility==='visible'}))};
 }
 export function assertUi10CaptureLayout(state){assert(state.region,'capture region required');assert(state.targets.length>0);for(const target of state.targets){const r=target.rect,c=state.clip;assert(target.present&&target.visible&&r?.width>0&&r?.height>0,'capture key control required');assert(r.left>=c.left-1&&r.top>=c.top-1&&r.right<=c.right+1&&r.bottom<=c.bottom+1,'capture key control must fit visible scrollport');}return state;}
 
