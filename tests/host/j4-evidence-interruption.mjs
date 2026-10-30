@@ -7,12 +7,22 @@ const poll=async read=>{const end=Date.now()+15000;while(Date.now()<end){const v
 // Native route changes may already remount workspace; inspect actual presentation
 // before requesting an explicit return from a still-native view.
 export async function ensureJ4Workspace(page,mounted){
- await poll(async()=>{
+ try{await poll(async()=>{
   if(await page.locator('[data-va-owned][id$="_workspace"]:not([popover])').isVisible())return true;
   const back=page.getByRole('button',{name:'返回工作空间',exact:true});
   if(await back.isVisible()){await back.click();return true;}
   return false;
- });
+ });}catch(error){
+  // Failure-only observation: preserve the original deadline and failed result.
+  // Read fixed public mount metadata, geometry and roles, never repair/retry here.
+  let presentation;
+  try{presentation=await page.evaluate(()=>{
+   const shape=node=>{const r=node.getBoundingClientRect(),s=getComputedStyle(node);return {tag:node.tagName,box:[r.x,r.y,r.width,r.height].map(Math.round),display:s.display,visibility:s.visibility,hidden:node.hidden===true,inert:node.inert===true};};
+   const slots=[...document.querySelectorAll('[data-va-owned][id$="_workspace"]')].slice(0,2),returns=[...document.querySelectorAll('button[aria-label="返回工作空间"]')].slice(0,2);
+   return {startup:document.documentElement.dataset.vaiwlStartup??null,stop:document.documentElement.dataset.vaiwlSurfaceStop??null,boundary:document.documentElement.dataset.vaiwlBoundary??null,geometry:document.documentElement.dataset.vaiwlGeometry??null,visibility:document.visibilityState,focused:document.hasFocus(),activeTag:document.activeElement?.tagName??null,viewport:[innerWidth,innerHeight],nativeLayers:[...document.querySelectorAll('dialog[open],[aria-modal="true"]')].filter(n=>!n.closest('[data-va-owned]')).slice(0,8).map(shape),slots:slots.map(n=>({...shape(n),join:n.querySelector('iframe')?.dataset.vaiwlFrameJoin??null})),returns:returns.map(shape)};
+  });}catch{presentation={inspection:'unavailable'};}
+  throw new Error(error.message+'; presentation='+JSON.stringify(presentation),{cause:error});
+ }
  return mounted(page);
 }
 export function interruptionRequestFacts(snapshot){const s=snapshot?.interruption;return s?{accepts:s.accepts,held:s.held,pending:s.pending,rowCount:s.rows.length,reads:s.reads.slice(-64).map(r=>({authenticatedWorker:r.authenticatedWorker,held:r.held,receivedAt:r.receivedAt,finishedAt:r.finishedAt}))}:null;}

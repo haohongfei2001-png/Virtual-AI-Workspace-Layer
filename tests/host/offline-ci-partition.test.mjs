@@ -219,7 +219,7 @@ test('explicit J4 dispatch schedules one existing case without other runners or 
  assert.deepEqual(selected(event,input),['cloud-journey-matrix']);
  for(const [github,inputs] of [[event,{}],[event,{diagnostic:'j4-before-native'}],[event,{diagnostic:'arbitrary-command'}],[{...event,event:{repository:{private:true}}},input],[{...event,repository:'other/repo'},input],[{...event,ref:'refs/heads/main'},input],[{...event,event_name:'pull_request'},input]])assert.deepEqual(selected(github,inputs),[]);
  const body=all['cloud-journey-matrix'],expression=body.match(/^        case: \$\{\{ (.+) \}\}$/m)[1];
- const cases=new Function('github','fromJSON','return '+expression)(event,JSON.parse);assert.deepEqual(cases,['j4-codec-after-evidence']);assert(!expression.includes('inputs.'));
+ const cases=new Function('github','inputs','fromJSON','return '+expression)(event,input,JSON.parse);assert.deepEqual(cases,['j4-codec-after-evidence']);assert(expression.includes("inputs.diagnostic == 'delivery-blockers-recheck'"));
  const trace=body.split('      - name: Independent first re-enable owner trace')[1].split('      - name: Preserve exact scoped result')[0];
  const traceCondition=trace.match(/^        if: (.+)$/m)[1].replace(/^\$\{\{\s*|\s*\}\}$/g,'');
  assert.equal(new Function('matrix','cancelled','return '+traceCondition)({case:cases[0]},()=>false),false);
@@ -309,4 +309,18 @@ test('flow product recheck runs the original affected step without unrelated mat
  const full=step.split('          node tests/host/document-flow-browser.mjs\n')[1];
  assert(full.includes('node tests/host/flow-reading-probe-browser.mjs'));assert(full.includes('node tests/host/browser-local-mv3.mjs --flow-only --nested-home'));
  assert.doesNotMatch(full,/exit 0|set \+e|continue-on-error|\|\| true/);
+});
+
+
+test('delivery blockers dispatch retains both original failed cases without repeating passed jobs',()=>{
+ const all=Object.fromEntries([...workflow.matchAll(/^  ([\w-]+):\n([\s\S]*?)(?=^  [\w-]+:\n|$(?![\s\S]))/gm)].filter(m=>/^    runs-on:/m.test(m[2])).map(m=>[m[1],m[2]]));
+ const event={...allowedEvent,event_name:'workflow_dispatch'},input={diagnostic:'delivery-blockers-recheck'};
+ const selected=(github,inputs)=>Object.keys(all).filter(name=>condition(all[name].match(/^    if: (.+)$/m)[1],github,inputs));
+ assert.deepEqual(selected(event,input),['cloud-journey-matrix','cloud-supplementary-gates']);
+ for(const e of [{...event,event:{repository:{private:true}}},{...event,repository:'other/repo'},{...event,ref:'refs/heads/main'},{...event,event_name:'pull_request'}])assert.deepEqual(selected(e,input),[]);
+ for(const [job,key,wanted]of [['cloud-journey-matrix','case',['j4-before-native']],['cloud-supplementary-gates','gate',['populated-native']]]){
+  const line=all[job].split('\n').find(line=>line.trim().startsWith(key+': ${{'));
+  const expression=line.slice(line.indexOf('${{')+3,line.lastIndexOf('}}')).trim();
+  assert.deepEqual(new Function('github','inputs','fromJSON','return '+expression)(event,input,JSON.parse),wanted);
+ }
 });
