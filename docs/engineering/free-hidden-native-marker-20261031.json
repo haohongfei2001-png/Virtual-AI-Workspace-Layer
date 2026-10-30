@@ -262,6 +262,31 @@
       "green": "Parser pending-to-complete and strict rejection contracts PASS"
     },
     "realMac": "NOT_RUN",
-    "navigationHash": "1f05639339b551f3d3dde3a8475092b260be1734f80e78fe17bd71799a648478"
+    "navigationHash": "1f05639339b551f3d3dde3a8475092b260be1734f80e78fe17bd71799a648478",
+    "resultControlFocusCorrection": {
+      "classification": "PRODUCTION_REGRESSION",
+      "ciRun": 41109893571,
+      "originalFailures": [
+        "search paging focus after result reply",
+        "selected snippet focus after repaint",
+        "same snippet IDs across scope and repaint"
+      ],
+      "red": "Original existing regression assertions fail locally and in CI; no assertion changes.",
+      "fix": "Capture the existing scoped focus state before result repaint and reuse bounded focus restoration for non-input controls only. The retained input is never refocused.",
+      "targetedNodePassed": 134,
+      "realKeyboardInput": "PASS",
+      "formalNestedBrowserLocal": "PASS",
+      "realMac": "NOT_RUN",
+      "navigationHash": "dabc29edfd505a34efe9565048355724ae1b4d64ddcd5cf619213f9a1151a7f9"
+    },
+    "readingProbeFixtureCorrection": {
+      "classification": "TEST_FIXTURE_CONTRACT_ERROR",
+      "fix": "fresh-view-input changes compactRows, so the existing replacement assertion exercises a real layout change.",
+      "local": "PASS_WEB_MECHANISM_ONLY",
+      "linuxScopedRun": 41110720059,
+      "linuxScopedResult": "PASS",
+      "sourceCommit": "5ce85585",
+      "followingFocusFixNotIncluded": true
+    }
   }
 }

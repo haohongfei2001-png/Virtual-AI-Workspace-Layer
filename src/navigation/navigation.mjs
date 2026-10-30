@@ -868,7 +868,11 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     if(dto.search&&!currentEntry&&!requestContext?.resetScroll&&surface.role==='workspace'&&view?.mode==='workspace'&&
        searchPaint&&searchPaint.page===roots?.workspace?.scroller&&searchPaint.input.isConnected&&searchPaint.input.value===searchQuery&&
        searchPaint.context===searchContext(dto)){
+      const focused=focusState();
       frameProjection=structuredClone(dto);projectionRequest++;frameSearchWaiting=false;searchPaint.display();
+      // Result controls are replaced even though the typing target survives.
+      // Reuse scoped restoration for paging/snippets without refocusing input.
+      if(focused&&focused.key!=='search-input')restoreOwnedFocus(focused);
       const state=workspacePages.get(searchPaint.page),key=JSON.stringify(['search',searchQuery,searchTheme,frameSearchOffset]);
       if(state&&state.specialKey!==key){state.specialKey=key;specialScroll.delete(view);searchPaint.page.scrollTop=0;}
       try{onFrameRendered(dto,{cards:searchPaint.page.querySelectorAll('[data-theme-id]').length,rows:searchPaint.page.querySelectorAll('[data-ref-id]').length});}catch{}
