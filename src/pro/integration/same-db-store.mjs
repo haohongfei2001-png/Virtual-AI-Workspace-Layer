@@ -1,166 +1,131 @@
-import {digest, sha256, stable} from '../../data/hash.mjs';
+import {digest, stable} from '../../data/hash.mjs';
 import {emptyOverlay, validateOverlay} from '../domain/index.mjs';
+import {proRootKey,proOperationKey,proRecord,unpackProRecord,emptyProRoot,validateProRoot,
+  validateProJournal,validateProJournalChain,assertRegisteredProDatabase,PRO_STORAGE_REGISTRY} from './storage-registry.mjs';
+export {proRootKey,proOperationKey} from './storage-registry.mjs';
+const stores=['b23_states','b23_operations','b23_checkpoints','native_states','native_operations'];
+const clone=value=>structuredClone(value);
 
-/** Optional integration adapter. It NEVER opens or upgrades a database.
- * The shared owner supplies its existing connection and a synchronous-in-IDB
- * input fence. Not imported by Free or any production entry point in R1.
- * The namespace is deliberately invisible to legacy Free's journal reader;
- * codec registration, backup/GC and the minimum binary reader remain owner gates.
- */
-export const proRootKey = scopeKey => JSON.stringify(['vaiwl-pro-overlay/1', scopeKey]);
-export const proOperationKey = (scopeKey, id) => JSON.stringify([proRootKey(scopeKey), id]);
-const stores = ['b23_states', 'b23_operations', 'b23_checkpoints', 'native_states', 'native_operations'];
-const clone = value => structuredClone(value);
-const MAX_BYTES = 16 * 1024 * 1024;
-function envelope(key, payload, serialized=stable(payload)) { return {key, payload, checksum: sha256(serialized)}; }
-function unpack(row, key) {
-  if (!row || row.key !== key) throw Error('pro-corrupt-record');
-  const serialized=stable(row.payload);
-  if (new TextEncoder().encode(serialized).length > MAX_BYTES) throw Error('pro-record-too-large');
-  if (row.checksum !== sha256(serialized)) throw Error('pro-corrupt-record');
-  // IndexedDB get already returns an isolated structured clone. This adapter
-  // keeps no cache/alias to it; callers cannot mutate the stored row by reference.
-  return row.payload;
-}
-function root(scopeKey) {
-  return {format:'vaiwl-pro-root/1', minimumReader:'vaiwl-pro-overlay/1', scopeKey:proRootKey(scopeKey),
-    targetScopeKey:scopeKey, sequence:0, state:emptyOverlay(scopeKey), operationIds:[]};
-}
-function validateRootEnvelope(value, scopeKey) {
-  if (value?.format !== 'vaiwl-pro-root/1' || value.minimumReader !== 'vaiwl-pro-overlay/1' ||
-      value.scopeKey !== proRootKey(scopeKey) || value.targetScopeKey !== scopeKey ||
-      !Number.isSafeInteger(value.sequence) || value.sequence < 0 ||
-      !Array.isArray(value.operationIds) || value.operationIds.length > 10000 ||
-      value.operationIds.length !== new Set(value.operationIds).size) throw Error('pro-reader-incompatible');
-  if (value.state.scopeKey !== scopeKey) throw Error('pro-cross-scope-state');
-  return value;
-}
-function validateRoot(value, scopeKey) {
-  validateRootEnvelope(value,scopeKey);
-  validateOverlay(value.state);
-  return value;
+/** All reads are queued on the caller's transaction. Missing root + retained
+ * history/checkpoint is corruption, never an empty workspace. */
+function readInTransaction(tx,scope,check,ready,fail) {
+  const key=proRootKey(scope.key),q=tx.objectStore('b23_states').get(key);
+  q.onsuccess=()=>{try{
+    if(!check())return;
+    if(!q.result){
+      const checkpoint=tx.objectStore('b23_checkpoints').get(key),history=tx.objectStore('b23_operations').index('scopeKey').openCursor(key);
+      let remaining=2;
+      for(const probe of [checkpoint,history])probe.onsuccess=()=>{try{if(!check())return;if(probe.result)throw Error('pro-missing-root-with-history');if(!--remaining)ready(emptyProRoot(scope.key),[],null);}catch(e){fail(e.message);}};
+      return;
+    }
+    const current=validateProRoot(unpackProRecord(q.result,key),scope.key),logs=[];
+    if(!current.operationIds.length){ready(current,logs,q.result);return;}
+    let remaining=current.operationIds.length;
+    for(const id of current.operationIds){
+      const opKey=proOperationKey(scope.key,id),request=tx.objectStore('b23_operations').get(opKey);
+      request.onsuccess=()=>{try{
+        if(!check())return;if(!request.result)throw Error('pro-missing-journal');
+        logs.push(unpackProRecord(request.result,opKey));
+        if(!--remaining){validateProJournalChain(current,logs);ready(current,logs,q.result);}
+      }catch(e){fail(e.message);}};
+    }
+  }catch(e){fail(e.message);}};
 }
 
-export function createSameDatabaseStore({connection, verifyGrant, verifyInputFence, enabled=false}={}) {
-  if (typeof connection !== 'function' || typeof verifyGrant !== 'function' || typeof verifyInputFence !== 'function')
-    throw Error('pro-shared-owner-required');
-  const guard = (grant, signal) => {
-    if (!enabled) throw Error('pro-integration-disabled');
-    if (signal?.aborted) throw Error('aborted');
-    const scope = verifyGrant(grant);
-    if (!scope || typeof scope.key !== 'string' || scope.persistence !== 'same-idb') throw Error('pro-persistent-scope-required');
-    return scope;
+/** Registered same-DB4 owner adapter. It never opens/upgrades a database and
+ * cannot turn a serialized scope/receipt into authority. */
+export function createSameDatabaseStore({connection,verifyGrant,verifyInputFence,enabled=false}={}) {
+  if([connection,verifyGrant,verifyInputFence].some(f=>typeof f!=='function'))throw Error('pro-shared-owner-required');
+  const guard=(grant,signal,expectedScope=null)=>{
+    if(!enabled)throw Error('pro-integration-disabled');if(signal?.aborted)throw Error('aborted');
+    const scope=verifyGrant(grant);
+    if(!scope||typeof scope.key!=='string'||scope.persistence!=='same-idb')throw Error('pro-persistent-scope-required');
+    if(expectedScope!==null&&stable(scope)!==expectedScope)throw Error('pro-authority-scope-changed');
+    return clone(scope);
   };
-
-  async function read(grant, signal) {
-    const scope = guard(grant, signal), db = await connection();
-    guard(grant, signal);
-    return new Promise((resolve,reject) => {
-      const tx = db.transaction(['b23_states','b23_operations'], 'readonly');
-      const key = proRootKey(scope.key), request = tx.objectStore('b23_states').get(key);
-      let current, logs = [], failure = null;
-      const fail = error => {failure=error;try {tx.abort();} catch {}};
-      request.onsuccess = () => {
-        try {
-          guard(grant, signal);
-          current = request.result ? validateRoot(unpack(request.result,key),scope.key) : root(scope.key);
-          for (const id of current.operationIds) {
-            const opKey=proOperationKey(scope.key,id), q=tx.objectStore('b23_operations').get(opKey);
-            q.onsuccess=()=>{try {if(!q.result)throw Error('pro-missing-journal');logs.push(unpack(q.result,opKey));}catch(e){fail(e);}};
-          }
-        } catch(e) {fail(e);}
-      };
-      tx.oncomplete=()=>{try {guard(grant,signal);logs.sort((a,b)=>a.sequence-b.sequence);resolve({state:current.state,sequence:current.sequence,records:logs});}catch(e){reject(e);}};
-      tx.onabort=()=>reject(failure??tx.error??Error('pro-read-aborted'));
-      tx.onerror=()=>{};
+  async function read(grant,signal) {
+    const scope=guard(grant,signal),identity=stable(scope),db=assertRegisteredProDatabase(await connection());guard(grant,signal,identity);
+    return new Promise((resolve,reject)=>{
+      const tx=db.transaction(['b23_states','b23_operations','b23_checkpoints'],'readonly');let answer=null,failure=null;
+      const fail=reason=>{failure=Error(reason);try{tx.abort();}catch{}};
+      const check=()=>{try{guard(grant,signal,identity);return true;}catch(e){fail(e.message);return false;}};
+      const abort=()=>fail('aborted');signal?.addEventListener('abort',abort,{once:true});
+      readInTransaction(tx,scope,check,(current,records)=>{answer={state:current.state,sequence:current.sequence,records};},fail);
+      tx.oncomplete=()=>{signal?.removeEventListener('abort',abort);try{guard(grant,signal,identity);if(!answer)throw Error('pro-read-no-result');resolve(answer);}catch(e){reject(e);}};
+      tx.onabort=()=>{signal?.removeEventListener('abort',abort);reject(failure??tx.error??Error('pro-read-aborted'));};tx.onerror=()=>{};
     });
   }
 
-  /** Execute is trusted, synchronous pure code, never a JSON patch supplied by UI/model.
-   * The owner checks native/evidence roots IN THIS transaction before execute.
-   * On any abort both overlay and journal remain at the preceding root.
-   */
-  async function transact(grant, request, signal) {
-    const scope=guard(grant,signal);
-    const {operationId, fingerprint, expected, execute}=request;
-    if(typeof operationId!=='string'||!/^[A-Za-z0-9_-]{1,128}$/.test(operationId)||typeof execute!=='function')throw Error('invalid-pro-transaction');
-    const expectedCopy=clone(expected), fp=digest(fingerprint), db=await connection();
-    guard(grant,signal);
-    return new Promise(resolve=>{
-      const tx=db.transaction(stores,'readwrite'), key=proRootKey(scope.key), opKey=proOperationKey(scope.key,operationId);
-      let outcome=null, completed=false;
-      const fail=reason=>{if(completed)return;outcome={ok:false,reason};try{tx.abort();}catch{}};
-      const check=()=>{try{guard(grant,signal);return true;}catch(e){fail(e.message);return false;}};
-      const revoke=()=>fail('aborted');signal?.addEventListener('abort',revoke,{once:true});
-      const lookup=tx.objectStore('b23_operations').get(opKey);
-      lookup.onsuccess=()=>{
-        if(!check())return;
+  /** Enlist in a shared owner's already-open readwrite transaction. This is a
+   * worker-local capability, not an RPC action. done means requests are queued;
+   * ONLY the owner's tx.oncomplete may report a committed result. */
+  function enlist(tx,grant,request,signal,done,fail) {
+    let failed=false;
+    const reject=reason=>{if(failed)return;failed=true;fail(reason);};
+    try {
+      if(tx.mode!=='readwrite')throw Error('pro-readwrite-transaction-required');assertRegisteredProDatabase(tx.db);
+      const scope=guard(grant,signal),identity=stable(scope);
+      const {operationId,fingerprint,expected,execute}=request;
+      if(typeof operationId!=='string'||!/^[A-Za-z0-9_-]{1,128}$/.test(operationId)||typeof execute!=='function')throw Error('invalid-pro-transaction');
+      const expectedCopy=clone(expected),fp=digest(fingerprint),key=proRootKey(scope.key),opKey=proOperationKey(scope.key,operationId);
+      const check=()=>{try{if(failed)return false;guard(grant,signal,identity);return true;}catch(e){reject(e.message);return false;}};
+      readInTransaction(tx,scope,check,(current,logs,oldEnvelope)=>{
         try {
-          if(lookup.result){const old=unpack(lookup.result,opKey);outcome=old.fingerprint===fp?{ok:true,value:old.transaction,replayed:true}:{ok:false,reason:'operation-replay-conflict'};return;}
-          const sr=tx.objectStore('b23_states').get(key);
-          sr.onsuccess=()=>{
-            if(!check())return;
+          if(!check())return;
+          const prior=logs.find(row=>row.transaction.operationId===operationId);
+          if(prior){if(prior.fingerprint!==fp){reject('operation-replay-conflict');return;}done({ok:true,value:clone(prior.transaction),replayed:true});return;}
+          if(expectedCopy?.scopeKey!==scope.key||current.state.revision!==expectedCopy.overlayRevision)throw Error('overlay-revision-conflict');
+          let entered=false;
+          const fenced=()=>{
             try {
-              const current=sr.result?validateRoot(unpack(sr.result,key),scope.key):root(scope.key);
-              if(expectedCopy.scopeKey!==scope.key||current.state.revision!==expectedCopy.overlayRevision)throw Error('overlay-revision-conflict');
-              const logs=[];
-              const finish=()=>{
-                try {
-                  if(!check())return;
-                  verifyInputFence(tx,scope,expectedCopy,check,()=>{
-                    try {
-                      if(!check())return;
-                      const result=execute(clone(current.state),logs.map(clone));
-                      if(result?.then)throw Error('async-pro-reducer-denied');
-                      const proposedState=result.state,proposedTransaction=result.transaction,undoneOperationId=result.undoneOperationId??null;
-                      validateOverlay(proposedState);
-                      if(proposedState.scopeKey!==scope.key||!proposedTransaction||proposedTransaction.operationId!==operationId)throw Error('invalid-pro-plan');
-                      if(undoneOperationId!==null&&(typeof undoneOperationId!=='string'||!/^[A-Za-z0-9_-]{1,128}$/.test(undoneOperationId)))throw Error('invalid-undo-operation');
-                      const sequence=current.sequence+1;
-                      const log={format:'vaiwl-pro-journal/1',scopeKey:key,targetScopeKey:scope.key,sequence,fingerprint:fp,transaction:clone(proposedTransaction)};
-                      // Validate output once, then detach it before calling any
-                      // owner fence again. A verifier cannot alter a retained
-                      // execute result after validation or after checksuming.
-                      const next={...current,sequence,state:clone(proposedState),operationIds:[...current.operationIds,operationId]};
-                      validateRootEnvelope(next,scope.key);
-                      const serializedNext=stable(next);
-                      if(new TextEncoder().encode(serializedNext).length>MAX_BYTES)throw Error('pro-record-too-large');
-                      if(!check())return;
-                      // Reuse the already verified previous envelope. execute
-                      // received a separate clone, so checkpoint stays exact.
-                      tx.objectStore('b23_checkpoints').put(sr.result??envelope(key,current));
-                      tx.objectStore('b23_states').put(envelope(key,next,serializedNext));
-                      tx.objectStore('b23_operations').put(envelope(opKey,log));
-                      if(undoneOperationId){
-                        const prior=logs.find(x=>x.transaction.operationId===undoneOperationId);
-                        if(!prior)throw Error('missing-undo-operation');
-                        prior.transaction.status='undone';
-                        tx.objectStore('b23_operations').put(envelope(proOperationKey(scope.key,undoneOperationId),prior));
-                      }
-                      if(!check())return;
-                      outcome={ok:true,value:clone(log.transaction),replayed:false};
-                    }catch(e){fail(e.message);}
-                  },fail);
-                }catch(e){fail(e.message);}
-              };
-              if(!current.operationIds.length){finish();return;}
-              let remaining=current.operationIds.length;
-              for(const id of current.operationIds){
-                const k=proOperationKey(scope.key,id),q=tx.objectStore('b23_operations').get(k);
-                q.onsuccess=()=>{try{if(!check())return;if(!q.result)throw Error('pro-missing-journal');logs.push(unpack(q.result,k));if(!--remaining)finish();}catch(e){fail(e.message);}};
-              }
-            }catch(e){fail(e.message);}
+              if(entered)throw Error('pro-input-fence-reentered');entered=true;
+              if(!check())return;
+              const result=execute(clone(current.state),logs.map(clone));
+              if(result?.then){if(result instanceof Promise)result.catch(()=>{});throw Error('async-pro-reducer-denied');}
+              validateOverlay(result?.state);
+              if(result.state.scopeKey!==scope.key||!result.transaction||result.transaction.operationId!==operationId)throw Error('invalid-pro-plan');
+              const undo=result.undoneOperationId??null;
+              if(undo!==null&&(typeof undo!=='string'||!/^[A-Za-z0-9_-]{1,128}$/.test(undo)))throw Error('invalid-undo-operation');
+              const sequence=current.sequence+1;
+              const log=validateProJournal({format:'vaiwl-pro-journal/1',scopeKey:key,targetScopeKey:scope.key,sequence,fingerprint:fp,transaction:clone(result.transaction)},scope.key);
+              if(log.transaction.base.overlayRevision!==current.state.revision||log.transaction.resultRevision!==result.state.revision)throw Error('pro-journal-root-mismatch');
+              const next=validateProRoot({...current,sequence,state:clone(result.state),operationIds:[...current.operationIds,operationId]},scope.key,{state:false});
+              const serializedNext=stable(next);
+              if(new TextEncoder().encode(serializedNext).length>PRO_STORAGE_REGISTRY.overlay.maximumRootBytes)throw Error('pro-record-too-large');
+              if(!check())return;
+              // Fence the success event of every queued write, while abort can
+              // still roll back the whole transaction (not only its reply).
+              const put=(name,row)=>{const write=tx.objectStore(name).put(row),observe=write.onsuccess;write.onsuccess=event=>{try{if(check())observe?.(event);}catch(e){reject(e.message);}};};
+              put('b23_checkpoints',oldEnvelope??proRecord(key,current));
+              put('b23_states',proRecord(key,next,serializedNext));
+              put('b23_operations',proRecord(opKey,log));
+              if(undo){const target=logs.find(x=>x.transaction.operationId===undo);if(!target)throw Error('missing-undo-operation');target.transaction.status='undone';put('b23_operations',proRecord(proOperationKey(scope.key,undo),target));}
+              if(!check())return;
+              done({ok:true,value:clone(log.transaction),replayed:false});
+            }catch(e){reject(e.message);}
           };
-        }catch(e){fail(e.message);}
-      };
-      tx.oncomplete=()=>{completed=true;signal?.removeEventListener('abort',revoke);try{guard(grant,signal);resolve(outcome??{ok:false,reason:'pro-no-result'});}catch{resolve({ok:false,reason:'stale-after-commit',committed:true});}};
-      tx.onabort=()=>{completed=true;signal?.removeEventListener('abort',revoke);resolve(outcome?.ok===false?outcome:{ok:false,reason:tx.error?.name??'pro-transaction-aborted'});};
-      tx.onerror=()=>{};
+          const result=verifyInputFence(tx,scope,expectedCopy,check,fenced,reject);
+          if(result?.then){if(result instanceof Promise)result.catch(()=>{});throw Error('async-pro-input-fence-denied');}
+        }catch(e){reject(e.message);}
+      },reject);
+    }catch(e){reject(e.message);}
+  }
+  async function transact(grant,request,signal) {
+    const scope=guard(grant,signal),identity=stable(scope),db=assertRegisteredProDatabase(await connection());guard(grant,signal,identity);
+    return new Promise(resolve=>{
+      let tx,outcome=null,finished=false;
+      const fail=reason=>{if(finished)return;outcome={ok:false,reason};try{tx?.abort();}catch{}};
+      const abort=()=>fail('aborted');
+      try {
+        tx=db.transaction(stores,'readwrite');signal?.addEventListener('abort',abort,{once:true});
+        enlist(tx,grant,request,signal,result=>{outcome=result;},fail);
+        tx.oncomplete=()=>{finished=true;signal?.removeEventListener('abort',abort);try{guard(grant,signal,identity);resolve(outcome??{ok:false,reason:'pro-no-result'});}catch{resolve({ok:false,reason:'stale-after-commit',committed:true});}};
+        tx.onabort=()=>{finished=true;signal?.removeEventListener('abort',abort);resolve(outcome?.ok===false?outcome:{ok:false,reason:tx.error?.name??'pro-transaction-aborted'});};tx.onerror=()=>{};
+      }catch(e){signal?.removeEventListener('abort',abort);fail(e.message);resolve({ok:false,reason:e.message});}
     });
   }
-  return Object.freeze({read,transact});
+  return Object.freeze({read,transact,enlist});
 }
-
 /** Explicit test/immediate-session storage. It has no persistent medium. */
 export function createMemoryOverlayStore({scopeKey,verifyGrant,verifyExpected}={}) {
   let state=emptyOverlay(scopeKey),records=[],sequence=0;

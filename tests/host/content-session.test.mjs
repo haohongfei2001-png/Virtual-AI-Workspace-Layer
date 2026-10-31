@@ -2,6 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createSurfaceController} from '../../src/host/surface-controller.mjs';
 import {createHostContentSession} from '../../src/host/content-session.mjs';
+import {createChatGPTAdapter} from '../../src/host/chatgpt-adapter.mjs';
+import {LEGACY_SURFACE_PROFILE} from '../../src/host/surface-discovery.mjs';
 const drain=async()=>{for(let i=0;i<40;i++)await Promise.resolve();};
 function fixture(overrides={}){
  let time=1000,id=0,bridge,context,adapterOptions,stops=0,planned=0;const presentations=[];const calls=[],listeners=new Set(),events=new Map(),timers=new Map();
@@ -372,6 +374,44 @@ for(const offset of [99,100,101])test('delayed observation timer checks original
 for(const deadlineAt of [NaN,Infinity,1000,999,7001])test('invalid or enlarged local observation budget is rejected before transport '+deadlineAt,async t=>{
  const f=observationBudgetFixture();t.after(()=>f.client.stop());await f.client.start();const before=f.calls.length;
  await assert.rejects(f.context.emit({kind:'current-object'},{deadlineAt}),/request-timeout/);assert.equal(f.calls.length,before);
+});
+for(const started of [59536.1,60000.1,65000.1])test('fractional elapsed clock preserves an exact six-second observation budget '+started,async t=>{
+ const deadlineAt=started+6000;assert(deadlineAt-started>6000,'exercise subtraction rounding across the clock precision boundary');
+ const scheduled=[],f=observationBudgetFixture({elapsedNow:()=>started,schedule:(fn,ms)=>{scheduled.push(ms);return scheduled.length;},cancel:()=>{}});t.after(()=>f.client.stop());await f.client.start();
+ const proposal={kind:'current-object',localSeq:1,payload:{association:'explicit-body-id',conversationId:'C'}},reply={state:'accepted',localSeq:1,bodyProofId:'proof'};
+ f.setResponse(()=>reply);scheduled.length=0;
+ assert.deepEqual(await f.context.emit(proposal,{deadlineAt}),reply);
+ assert.deepEqual(f.calls.at(-1),proposal,'deadline remains local and the current observation reaches transport');
+ assert.equal(f.adapterOptions.priorityConversationId(),'C');assert(scheduled.length>0);assert(scheduled.every(ms=>ms>0&&ms<=6000),'rounding cannot enlarge the scheduled timeout');
+});
+test('fractional observation budget still rejects the next representable enlarged deadline',async t=>{
+ const started=60000.1,ceiling=started+6000,deadlineAt=ceiling+Number.EPSILON*ceiling;assert(deadlineAt>ceiling);
+ const f=observationBudgetFixture({elapsedNow:()=>started});t.after(()=>f.client.stop());await f.client.start();const before=f.calls.length;
+ await assert.rejects(f.context.emit({kind:'current-object'},{deadlineAt}),/request-timeout/);assert.equal(f.calls.length,before);
+});
+test('fractional observation budget keeps its original deadline when a reply arrives at expiry',async t=>{
+ let clock=60000.1;const deadlineAt=clock+6000,f=observationBudgetFixture({elapsedNow:()=>clock});t.after(()=>f.client.stop());await f.client.start();let release;
+ const proposal={kind:'current-object',localSeq:1,payload:{association:'explicit-body-id',conversationId:'C'}};f.setResponse(()=>new Promise(resolve=>release=resolve));
+ const pending=f.context.emit(proposal,{deadlineAt}),rejected=assert.rejects(pending,/request-timeout/);await drain();
+ assert.equal(typeof release,'function','valid original budget must reach transport before the deadline');clock=deadlineAt;release({state:'accepted',localSeq:1,bodyProofId:'late-proof'});await rejected;
+ assert.equal(f.adapterOptions.priorityConversationId(),null,'late reply cannot create a recent-current hint');
+});
+test('real adapter publishes its first body through content transport at a fractional clock boundary',async t=>{
+ const clock=60000.1,conversationId='33333333-3333-4333-8333-333333333333',issues=[],observers=[];
+ const f=observationBudgetFixture({elapsedNow:()=>clock,adapterFactory:options=>createChatGPTAdapter({...options,onObservationIssue:issue=>issues.push(issue.reason)})});t.after(()=>f.client.stop());
+ // Only explicit native identity is present. No directory or body text is seeded.
+ const doc=f.document,root={ownerDocument:doc,isConnected:true,parentElement:null,hidden:false,children:[],getAttribute:key=>key==='data-conversation-id'?conversationId:null,getClientRects:()=>[{}]};
+ const message={ownerDocument:doc,isConnected:true,parentElement:root,getAttribute:key=>key==='data-message-id'?'native-message':null,getClientRects:()=>[{}],get textContent(){throw Error('body-text-read');}};
+ root.children=[message];root.contains=node=>node===root||node===message;root.querySelectorAll=selector=>selector==='[data-message-id]'?[message]:[];
+ doc.location.href=doc.location.origin+'/c/'+conversationId;doc.documentElement={dataset:{}};doc.addEventListener=()=>{};doc.removeEventListener=()=>{};doc.querySelector=()=>null;
+ doc.querySelectorAll=selector=>selector===LEGACY_SURFACE_PROFILE.currentBody.rootSelector?[root]:[];
+ Object.assign(doc.defaultView,{crypto,getComputedStyle:()=>({display:'block',visibility:'visible'}),MutationObserver:class{constructor(callback){this.callback=callback;observers.push(this);}observe(){}disconnect(){this.closed=true;}}});
+ f.setResponse(m=>m.type==='HOST_HELLO'?{binding:f.binding()}:m.type==='HOST_REFRESH'?{state:'verified',scopeKey:'scope-budget'}:m.kind?{state:'accepted',localSeq:m.localSeq,receiptId:'receipt',bodyProofId:'body-proof',bodyEpoch:1}:{ok:true,grants:[]});
+ assert.deepEqual(await f.client.start(),{id:'mount'});await drain();await drain();
+ const bodies=()=>f.calls.filter(m=>m.kind==='current-observation');assert.equal(bodies().length,1,'the original body must reach the worker without waiting for renewal');
+ assert.equal(bodies()[0].payload.body.conversationId,conversationId);assert.deepEqual(bodies()[0].payload.body.messageIds,['native-message']);assert.equal(Object.hasOwn(bodies()[0],'deadlineAt'),false);assert.deepEqual(issues,[]);
+ for(let i=0;i<5;i++){for(const observer of observers)if(!observer.closed)observer.callback([]);await drain();}
+ assert.equal(bodies().length,1,'normal observation callbacks cannot duplicate the acknowledged body');assert.deepEqual(issues,[]);
 });
 test('microtask-delayed observation dispatch rechecks original deadline before sending',async t=>{
  let clock=1000;const f=observationBudgetFixture({elapsedNow:()=>clock});t.after(()=>f.client.stop());await f.client.start();const before=f.calls.length;

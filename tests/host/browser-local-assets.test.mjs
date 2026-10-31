@@ -72,6 +72,7 @@ test('confirmed local existing snippets use the actual prepared view and human C
  const f=await fixture(t),info=await upload(f,j4AssetBackup(f.scope,'https://chatgpt.com')),preview=await f.backup('PREVIEW',{transferId:info.transferId});assert.equal(preview.ok,true);
  assert.equal((await f.backup('RESTORE',{transferId:info.transferId,planId:preview.planId,operationId:'existing_snippets'})).ok,true);
  let view;for(let n=0;n<30;n++){view=await f.request('HOST_UI_VIEW',{query:{}});if(view.state!=='preparing')break;await new Promise(resolve=>setTimeout(resolve,10));}assert.equal(view.state,'ready',JSON.stringify(view));
+ assert.equal(view.page.nativeSelectionAvailable,false,'the real owner must also restrict search locate');
  const before=(await f.workspaces.read(f.scope)).state,list=await f.request('HOST_UI_SNIPPET_LIST',{offset:0,limit:12});assert.equal(list.ok,true,JSON.stringify(list));assert.equal(list.nativeSelectionAvailable,false);assert.equal(list.snippets.items[0].preview,'J4 retained human snippet');
  const action=(kind,extra={})=>f.request('HOST_UI_SNIPPET',{action:kind,id:'j4_snippet',operationId:'local_'+kind,expectedRevision:list.workspaceRevision,...extra});
  assert.equal((await action('save')).ok,false);assert.equal((await action('locate')).ok,false);assert.equal((await action('remove',{expectedRevision:list.workspaceRevision+1})).ok,false);assert.deepEqual((await f.workspaces.read(f.scope)).state,before);

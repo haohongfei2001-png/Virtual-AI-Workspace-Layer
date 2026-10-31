@@ -1,0 +1,223 @@
+{
+  "format": "vaiwl-pro-development-performance/1",
+  "recordedAt": "2026-10-31T14:10:26.883Z",
+  "status": "PASS_DEVELOPMENT_TARGETS",
+  "baselineGitHead": null,
+  "sourceDigests": {
+    "src/pro/domain/index.mjs": "cb54dfa89333452a37814542557fa48158511612ce776d3594c6d097df21107b",
+    "src/pro/domain/schema.mjs": "a78bc00a4f369804546ebc6d28058cba3e69db302aa49ab10ff46ae9ddcfa1ec",
+    "src/pro/projection/project.mjs": "d09304d0fd7b02ded37a0fe6cce8da321abb0abc8ef07605d60b973c9b2a091d",
+    "src/pro/integration/same-db-store.mjs": "2bc787c8df2d24df7a823a3a3d86e1d614432b0a6e289c13b548bad8f5e3c6c0",
+    "src/data/hash.mjs": "aef21d1842cdc09b33fef973a9d29f15cb7c0c3f773a6a9d31726b83ffee7b21",
+    "src/data/native-repository.mjs": "f4f84f7e30ef92ebef2a785d192cb6d2226490a2cccc110c77ad1695effc1e87",
+    "src/data/free-time-policy.mjs": "8a75b5bdde8abf8ee07873ecf2aa45a19faccd030b9f03c738b56db6ba9ea17a",
+    "tests/b23/mock-idb.mjs": "f45f7d387ff82223f8d64b36f31727f86030182a1b705426a4540b17c5d10e0a",
+    "tests/pro/performance.mjs": "7d356a8de57cc8b3a451985bf28fdbf70dbddbd675eedc463374b74c001182bd"
+  },
+  "changedDuringMeasurement": [],
+  "priorObservations": [],
+  "environment": {
+    "runtime": "v24.22.1",
+    "v8": "13.6.233.17-node.58",
+    "platform": "linux",
+    "release": "6.18.57",
+    "architecture": "x64",
+    "cpuModel": "AMD EPYC 9V74 80-Core Processor",
+    "logicalCpuCount": 9,
+    "totalMemoryGiB": 10,
+    "storage": "MockIDBFactory in-process serial transaction double"
+  },
+  "dataset": {
+    "synthetic": true,
+    "realUserData": false,
+    "positiveNoneRefs": 1000,
+    "topics": 100,
+    "placements": 1000,
+    "derivedTitles": 1000,
+    "refsPerTopic": 10,
+    "initialOverlayBytes": 636446,
+    "projectedCardLimit": 24,
+    "projectedRowsPerCard": 5,
+    "projectedVisibleRows": 120,
+    "viewSession": {
+      "H": 30,
+      "T": 20757,
+      "Z": "Asia/Shanghai",
+      "policyRevision": 0,
+      "TUnit": "local-calendar-day"
+    },
+    "setup": "one direct synthetic checkpoint plus one real NativeRepository synthetic batch"
+  },
+  "measurements": {
+    "manualReducerFeedback": {
+      "coldFirstInvocationMs": 85.379,
+      "warmupInvocations": 5,
+      "sampleCount": 30,
+      "minMs": 42.186,
+      "medianMs": 55.155,
+      "p95Ms": 74.832,
+      "maxMs": 92.91,
+      "targetP95Ms": 100,
+      "met": true,
+      "rawSampleMs": [
+        62.274,
+        55.117,
+        66.798,
+        57.63,
+        65.955,
+        52.009,
+        59.501,
+        50.556,
+        61.024,
+        53.538,
+        58.175,
+        55.155,
+        53.626,
+        50.773,
+        71.255,
+        59.704,
+        48.199,
+        50.256,
+        74.832,
+        56.597,
+        53.249,
+        49.588,
+        67.395,
+        92.91,
+        67.461,
+        46.389,
+        44.83,
+        52.197,
+        42.186,
+        44.994
+      ]
+    },
+    "cachedFreeProSwitchProjection": {
+      "coldFirstInvocationMs": 20.088,
+      "warmupInvocations": 5,
+      "sampleCount": 30,
+      "minMs": 10.733,
+      "medianMs": 13.883,
+      "p95Ms": 18.997,
+      "maxMs": 19.809,
+      "targetP95Ms": 150,
+      "met": true,
+      "rawSampleMs": [
+        14.915,
+        15.808,
+        14.875,
+        14.854,
+        13.883,
+        14.822,
+        14.164,
+        13.273,
+        13.216,
+        13.069,
+        12.883,
+        14.31,
+        13.459,
+        12.932,
+        13.066,
+        13.002,
+        10.919,
+        10.733,
+        11.591,
+        14.616,
+        18.997,
+        19.809,
+        18.63,
+        18.531,
+        18.947,
+        17.134,
+        12.63,
+        11.19,
+        12.025,
+        11.261
+      ]
+    },
+    "mockIDBCompleteChain": {
+      "coldFirstInvocationMs": 408.181,
+      "warmupInvocations": 5,
+      "sampleCount": 30,
+      "minMs": 329.755,
+      "medianMs": 379.241,
+      "p95Ms": 490.618,
+      "maxMs": 535.665,
+      "targetP95Ms": 500,
+      "met": true,
+      "rawSampleMs": [
+        354.937,
+        335.927,
+        338.061,
+        350.381,
+        386.203,
+        357.609,
+        350.167,
+        350.682,
+        421.097,
+        426.089,
+        329.755,
+        401.572,
+        428.831,
+        397.426,
+        430.722,
+        372.691,
+        347.323,
+        360.192,
+        340.217,
+        331.56,
+        334.6,
+        425.985,
+        351.879,
+        415.861,
+        384.542,
+        398.375,
+        379.241,
+        535.665,
+        490.618,
+        409.939
+      ]
+    }
+  },
+  "mockIDBPhaseMilliseconds": {
+    "nativeSnapshot": {
+      "median": 46.603,
+      "p95": 61.265
+    },
+    "initialOverlayRead": {
+      "median": 58.901,
+      "p95": 85.375
+    },
+    "domainPlannerWithinTransaction": {
+      "median": 67.774,
+      "p95": 102.238
+    },
+    "transactionIncludingPlanner": {
+      "median": 185.435,
+      "p95": 264.714
+    },
+    "readback": {
+      "median": 57.454,
+      "p95": 82.938
+    },
+    "projection": {
+      "median": 17.516,
+      "p95": 26.532
+    }
+  },
+  "definitions": {
+    "cold": "First measured invocation in this process after module import and fixture construction; not cold disk or browser start.",
+    "warm": "Five unrecorded warmup invocations followed by recorded samples; no forced GC; elapsed wall time includes assertions and normal GC.",
+    "manualReducerFeedback": "Validated reducer on 1000 approved synthetic refs and a full 100-topic overlay, including clone and output validation.",
+    "cachedFreeProSwitchProjection": "Native mode then Pro mode using cached authorized metadata and the actual Free DTO. Existing activity aggregation reused; no DOM/layout.",
+    "mockIDBCompleteChain": "NativeRepository snapshot -> same-IDB overlay+journal read -> original native/evidence fence in transaction -> real domain plan/inverse -> overlay+checkpoint+journal commit -> readback -> bounded Pro projection. Journal grows across samples.",
+    "phases": "Warm-sample phase diagnostics. domainPlannerWithinTransaction is included in transactionIncludingPlanner, not additive; per-phase p95 values must not be summed.",
+    "p95": "Nearest-rank order statistic ceil(0.95*n), milliseconds."
+  },
+  "limits": [
+    "Synthetic Node development measurement only.",
+    "MockIDB does not establish physical disk durability, browser scheduling, MV3 lifecycle, real-host responsiveness or user-perceived DOM paint.",
+    "The 1000-reference/100-topic fixture does not qualify deferred 10k/100k scale.",
+    "No provider network, personal browser, production source, credentials or real user data used."
+  ]
+}

@@ -11,7 +11,12 @@ export function createFixtureServer({fontPath=process.env.PRO_CJK_FONT}={}) {
   if(name==='/__fixture-font.ttf'&&!fontPath){res.writeHead(204).end();return;}
   if(path!==fontPath&&!path.startsWith(repository+'/')){res.writeHead(403).end();return;}
   const mime={'.html':'text/html;charset=utf-8','.mjs':'text/javascript;charset=utf-8','.json':'application/json','.ttf':'font/ttf','.png':'image/png'}[extname(path)]??'application/octet-stream';
-  const bytes=await readFile(path);res.setHeader('Content-Type',mime);res.setHeader('Cache-Control','no-store');
+  let bytes=await readFile(path);
+  // A declared @font-face with an empty 204 response is a failed font, not a
+  // system-font fallback: document.fonts.load() rejects in Chromium. Keep the
+  // documented no-font fixture runnable without weakening browser assertions.
+  if(!fontPath&&extname(path)==='.html')bytes=Buffer.from(bytes.toString('utf8').replace(/@font-face\{[^}]*url\('\/__fixture-font\.ttf'\)[^}]*\}/g,''));
+  res.setHeader('Content-Type',mime);res.setHeader('Cache-Control','no-store');
   res.setHeader('Content-Security-Policy',"default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'none'; frame-src 'self'; base-uri 'none'; form-action 'none'");
   res.end(req.method==='HEAD'?undefined:bytes);
  }catch{res.writeHead(404).end();}});

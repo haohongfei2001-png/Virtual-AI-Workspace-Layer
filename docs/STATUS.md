@@ -1,5 +1,39 @@
 # VAIWL实际状态：渐进积累工程已接线，真实来源逐项待准入
 
+## 2026-10-31 接管后 CI 缺包追查：修复小数时钟预算误拒绝
+
+接管候选 `e794928418cce704916e680a7ee512d3648fa57c` 的统一 [CI41209270147](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/actions/runs/41209270147) 暴露 `populated-native` 正式失败：[job124560645185](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/actions/runs/41209270147/job/124560645185)。第六次原生聊天访问等待证据超过既定6秒；完整未截断的入站观察确认该路由没有正文观察包，currentDetail停在10、bodyWanted=false且观察器已空闲。后续诊断副本完成前六次仅是诊断，未覆盖原失败。该旧SHA的完整Node合约12062/12062及12/12护栏mutant通过，不能替代失败的旅程。
+
+远程已独立复现一项能够导致同型缺包的生产缺陷：adapter把 `started+6000` 作为本地绝对截止时刻，content再次相减并检查 `left>6000`。在59536.1、60000.1、65000.1等正常小数时钟值上，浮点减法得到6000.000000000007，尚未发送的合法观察被误拒绝；adapter随后消费bodyWanted并抑制不变包。真实adapter→content模块集成反例在旧代码上发送0包（期望1包），挂载仍可完成。正式失败日志没有保存该次具体时钟，因此历史CI的精确归因仍是有依据的推断，不伪造现场值。
+
+修复只在 `src/host/content-session.mjs` 用原绝对时钟比较上限，并把发送timer限制到不超过6000；保留原绝对截止时刻、发送前/回复后的检查、live及producer权限。未增加epsilon、重试、授权续期、隐藏内容复用或更长等待；未修改原旅程、夹具、CI预算和验收判据。
+
+新增6项反例覆盖三个小数边界、最小可表示超额、到期回复和真实adapter→content首包。直接反例旧代码4项失败，真实模块集成旧代码1项失败；修后content/adapter相关322/322及公共request-deadline 10/10通过，独立复核无阻断。原SHA本地隔离复现经过10次访问后，在确定模块缺陷时主动停止，仅保留诊断和cleanupOK，不称完整PASS；没有继续重跑旧候选。完整有界回执见 [deadline-followup.json](evidence/free-remote-takeover-20261031/deadline-followup.json)。新提交统一CI须单独核对，旧失败保留，新SHA结果在PR记载。
+
+下方真实Project/NONE、片段生产锚来源、Mac连续使用及本人旧资产确认关口全部保留；仍为FREE_NOT_ACCEPTED、NOT_RELEASE_READY。远程唯一writer分工不变，未合并、部署或发布。
+
+## 2026-10-31 Pro 正式接管：当前边界诊断与搜索片段能力修复
+
+已核对 PR16、原 AUTHORITY/唯一计划、分工评论6544150475和 [HANDOFF_READY 6544226609](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16#issuecomment-6544226609)；Pro 在[6544395306](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16#issuecomment-6544395306)正式接任远程唯一 writer。接管基准 `2c9b043ce3c65a4b92c6f8f83b59fb416f63132a`，原分支、Draft PR16 和 base 均不变。GitHub 实读基准 CI41204058082 的42个job均SUCCESS，本批未重跑基准。Codex 的未提交 STATUS patch、原Profile备份、stash及未跟踪文件已由其保全，远程未操作原Mac。
+
+接管后的独立审查确认两项可以远程复现的差额，已沿原 C2/C4 修复：
+
+- **当前宿主边界诊断。** 原公开 `vaiwlBoundary` 在恢复后残留，且 adapter 将当前节点缺失与原节点被替换共用原因；这些字段不能证明当前页面挂载失败。现有私有 `HOST_LOCAL_LAYOUT` 的 `presentation.boundary` 记录本生命周期最近已有检查的固定 phase/reason/key；成功的新证明清除当前拒绝，旧 observer 不改写新状态。节点替换改用已有 `region-identity-changed`，原拒绝条件不变。动态诊断不再写原生祖先属性；未新增扫描、timer、重挂或授权。`vaiwlStartup` 和 `mainMountCheck` 仍是首次尝试历史，当前呈现须看私有 localStatus/presentation/geometry/grants；boundary=null不代表完整布局或产品验收通过。
+- **搜索片段不可用操作。** BrowserLocal 的 selectionBridge 仍明确为空，但搜索原先提供启用的“定位片段”。owner 现把只收紧的 `nativeSelectionAvailable:false` 传给页面；frame与renderer均严格检查，旧按钮/旧回调及迟到回复不能继续定位。已保存内容、搜索预览、原聊天链接、删除和备份恢复保留。该显示字段不授予原生权限，新片段来源没有被开启。开发包说明同步纠正普通失焦/Worker恢复及已有片段能力的旧措辞。
+
+定向证据：新增片段反例在生产修复前15/15失败；新增边界反例修前5/5失败。修后两组及私有字段验证共21/21通过；相关15份测试文件共1061/1061通过，零失败/跳过。独立只读审查两组均无阻断；补空state防护后其3项边界/旧回调回归通过。本环境默认Node子进程隔离在加载阶段失败，定向执行使用Node24的 `--test-isolation=none`，不将该环境失败称为产品反例。最终原CI仍使用其原正常隔离入口，不修改runner门槛。最终205文件BrowserLocal开发包完整性校验通过，ZIP SHA256 `5eb2d7a4ca3c565a53a3208405ae386ed7ad112f5e330bf1fc9a04ddc8fd7c5e`。锁定完整Chrome156.0.8078.4、新匿名Profile及原外网阻断下，正式打包nested MV3连续旅程34项记录PASS，206生产输入与最终包及当前源码逐项一致；包含原生输入/返回、Project夹具往返、布局重建、Worker恢复、新文档锁定、合成旧资产及隔离卸载，browserErrors为空。实际查看3张截图，但本机缺中文字形，只计夹具几何，不称完整视觉或真实Mac验收。最初沙箱端口/精简Chromium缺CDP扩展API/CDN截断均保留为环境失败，已使用官方直链校验的精确锁定浏览器解决。完整回执见 [receipt.json](evidence/free-remote-takeover-20261031/receipt.json)；新HEAD统一CI结果以PR链接补记，不挪用旧SHA结果。
+
+继承的最新真实证据来自上述HANDOFF_READY：无Browser claim标准首页的双frame已JOIN/grant/module且无srcdoc；侧栏可见、workspace零高、返回入口存在。稍后固定正式selector各唯一且可见，因此不能认定当前selector缺失或唯一内部竞态；reading模式也可能合法隐藏workspace。实际返回指针派发为0，页面运行build指纹尚未取得。上述事实不因本轮诊断修复而自动改判。
+
+**仍未完成的个人必需项（不是已实现待盖章）：**
+
+1. B2.F1/FR-01/02：真实Project入口/成员和普通聊天正向NONE来源。Codex须提供已有Project与普通聊天对应的脱敏结构及原生归属菜单明确当前状态；普通/c路由、缺徽章、缺成员不能推出NONE，不选择移动或创建。
+2. C2/C3/C5：原Mac可靠窗口绑定后的实际四格点击、原生导航/返回/输入/模型/工具/附件、窄窗主题及Worker连续旅程。先核当前私有build、模式和最新边界，区分未派发、合法reading、当前拒绝；不重复lease A/B或无变更重装。
+3. C4/FR-15：**新增片段捕获和原文定位的生产接线仍关闭。** 限定选区读取已有授权；缺的是当前聊天—消息—分支—正文边界的真实结构绑定。Codex只取最小无正文锚结构；不以删除null守卫、固定分支ID或夹具字段伪造支持。已有片段管理通过不替代本项。
+4. B4/B5/F4：原Profile/同ID的本人旧资产确认及真实持续使用。离线恢复不替代本人确认，备份与原私有数据保留；实机动作在原许可和额度内集中完成。
+
+这些缺证据项仅阻塞对应实现/验收；远程继续负责收到真实最小证据后的修复和集成。条件性同标签代理互操作仍为 `P0_CONDITIONAL_HOST_INTEROP`，不改变当前方案B。个人日用 `NOT_ACCEPTED`、`FREE_NOT_ACCEPTED`、`NOT_RELEASE_READY`；本批未操作真实Mac、merge、部署或发布。
+
 
 ## 2026-10-31 正常 Chrome 日用收口：条件性互操作限制与剩余真实来源
 

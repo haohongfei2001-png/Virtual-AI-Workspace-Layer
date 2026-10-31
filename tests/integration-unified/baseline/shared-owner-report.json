@@ -1,0 +1,57 @@
+{
+  "kind": "shared-owner-patch-temporary-mirror",
+  "source": "src/runtime/host-binding-service.mjs",
+  "originalSHA256": "33570d5d2d54fd66f17da7792cb5fafc0a3c7f5ee0107edc42362da4327adeee",
+  "candidateSHA256": "e9b4f97ebc39687144e1993bdf76681ebc22bd3794627a368b9cebe500528ac2",
+  "appliedToWorkingTree": false,
+  "noLiveHost": true,
+  "noModelCalls": true,
+  "syntax": "PASS",
+  "applyCheck": "PASS",
+  "results": [
+    {
+      "file": "tests/host/host-binding-service.test.mjs",
+      "tests": 45,
+      "passed": 45,
+      "failed": 0,
+      "skipped": 0,
+      "status": "PASS"
+    },
+    {
+      "file": "tests/host/host-binding-idle.test.mjs",
+      "tests": 10,
+      "passed": 10,
+      "failed": 0,
+      "skipped": 0,
+      "status": "PASS"
+    },
+    {
+      "file": "tests/host/ui-owner.test.mjs",
+      "tests": 64,
+      "passed": 64,
+      "failed": 0,
+      "skipped": 0,
+      "status": "PASS"
+    },
+    {
+      "file": "tests/host/ui-owner-isolation.test.mjs",
+      "tests": 73,
+      "passed": 73,
+      "failed": 0,
+      "skipped": 0,
+      "status": "PASS"
+    },
+    {
+      "file": "tests/pro/integration/shared-owner-fixture.mjs",
+      "tests": 10,
+      "passed": 10,
+      "failed": 0,
+      "skipped": 0,
+      "status": "PASS"
+    }
+  ],
+  "workingTreeUnchanged": true,
+  "tests": 202,
+  "passed": 202,
+  "status": "PASS"
+}

@@ -246,3 +246,18 @@ test('corrupt or forward-incompatible root fails closed without resetting balanc
     await assert.rejects(f.storeA.read(f.authA), /billing-reader-incompatible/); assert.deepEqual(await readRaw(f.dbA, 'b23_states', billingRootKey), forward);
   } finally { f.close(); }
 });
+
+test('missing billing root cannot reset a retained uncertain charge or replay its orphan receipt', async () => {
+  const f=await fixture();try{
+    await initialize(f);await seedJob(f);await f.must(f.execute(f.storeA,f.authA,reserve('job_a')));
+    const request={operationId:'last_dispatch_receipt',expectedRevision:(await f.storeA.read(f.authA)).revision,command:{type:'DISPATCH_JOB',jobId:'job_a'}};
+    assert.equal((await f.storeA.transact(f.authA,request)).ok,true);
+    await new Promise(resolve=>{const tx=f.dbA.transaction('b23_states','readwrite');tx.objectStore('b23_states').delete(billingRootKey);tx.oncomplete=resolve;});
+    const log=await readRaw(f.dbA,'b23_operations',billingOperationKey(request.operationId));
+    await assert.rejects(()=>f.storeA.read(f.authA),/billing-missing-root-with-history/);
+    assert.equal((await f.storeA.transact(f.authA,request)).reason,'billing-missing-root-with-history');
+    const fresh=await f.storeA.transact(f.authA,{operationId:'cannot_reset_budget',expectedRevision:0,command:{type:'CONFIGURE_POLICIES',policies:policies()}});
+    assert.equal(fresh.ok,false);assert.equal(fresh.reason,'billing-missing-root-with-history');
+    assert.equal(await readRaw(f.dbA,'b23_states',billingRootKey),undefined);assert.deepEqual(await readRaw(f.dbA,'b23_operations',billingOperationKey(request.operationId)),log);
+  }finally{f.close();}
+});

@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {runInNewContext} from 'node:vm';
 import {createProWorkerService, PRO_WORKER_ACTIONS, PRO_WORKER_MAX_BYTES} from '../../src/pro/integration/worker-service.mjs';
 import {createFixtureOwner} from './support/fixture-owner.mjs';
 import {createProController} from '../../src/pro/runtime/controller.mjs';
@@ -24,6 +25,15 @@ function fixture(options = {}) {
   return {service, calls, scopes, projections, context, gate, timers,
     setTime(value) { time = value; }, async advance(ms) { time += ms; for (const [id, item] of [...timers]) if (item.at <= time) { timers.delete(id); item.fn(); } await drain(); }};
 }
+
+test('cross-realm rejecting projector is refused and its rejection is consumed', async () => {
+  const foreign = runInNewContext('Promise.reject(new Error("private-foreign-projector-error"))');
+  assert.equal(foreign instanceof Promise, false);
+  const f = fixture({projectReply: () => foreign});
+  assert.deepEqual(await f.service.handle(request(), sender()), unavailable);
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(f.service.isIdle(), true);
+});
 
 test('worker requires shared owner, invoke and synchronous public projector composition', () => {
   for (const input of [{}, {ui: {withScope() {}}, invoke() {}}, {invoke() {}, projectReply() {}},

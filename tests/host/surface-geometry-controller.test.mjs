@@ -31,6 +31,18 @@ test('workspace entry validates latest geometry before opening and refuses faile
  const f=fixture();await f.controller.start({});await f.both();const shown=f.calls.indexOf('show');assert.ok(shown>0);assert.equal(typeof f.calls[shown-1],'object');f.controller.showReading();f.surface.refreshGeometry=()=>false;
  assert.equal(f.controller.showWorkspace(),false);assert.equal(f.calls.at(-1),'suspend');assert.equal(f.calls.filter(x=>x==='show').length,1);assert.equal(f.controller.showWorkspace(),false);
 });
+test('current boundary refusal clears on a fresh proof while geometry refusal remains separate',async t=>{
+ const f=fixture(),inspect=f.adapter.inspect;t.after(()=>f.controller.stop());await f.controller.start({});await f.both();
+ f.adapter.inspect=()=>({ok:false,reason:'region-identity-changed',boundaryKey:'composer'});f.emit('resize');
+ assert.deepEqual(f.controller.presentationSnapshot().boundary,{phase:'presentation',reason:'region-identity-changed',key:'composer'});
+ assert.equal(f.controller.presentationSnapshot().geometryPaused,true);assert.equal(f.controller.showWorkspace(),false);
+ f.adapter.inspect=inspect;f.surface.refreshGeometry=()=>false;f.emit('resize');
+ assert.equal(f.controller.presentationSnapshot().boundary,null);assert.equal(f.controller.presentationSnapshot().geometryPaused,true);
+ assert.equal(f.controller.showWorkspace(),false,'boundary proof does not bypass the geometry gate');
+ f.surface.refreshGeometry=()=>true;f.emit('resize');assert.equal(f.controller.presentationSnapshot().boundary,null);assert.equal(f.controller.presentationMode(),'workspace');
+ const old=f.observers[0];f.controller.stop();await f.controller.start({});f.adapter.inspect=()=>({ok:false,reason:'unsafe-native-geometry'});
+ old.fn();assert.equal(f.controller.presentationSnapshot().boundary,null,'retired callbacks cannot update a new state');
+});
 for(const failure of ['false','throw'])test('geometry '+failure+' suspends presentation but retains recovery listeners',async()=>{
  const f=fixture();await f.controller.start({});await f.both();f.surface.refreshGeometry=()=>{if(failure==='throw')throw Error('unsafe');return false;};f.observers[0].fn();assert.equal(f.calls.filter(x=>x==='dispose').length,0);assert.equal(f.observers[0].disconnected,false);assert.equal(f.events.get('resize').size,2);assert.equal(f.viewport.get('resize').size,1);assert.equal(f.controller.showWorkspace(),false);f.surface.refreshGeometry=()=>true;f.emit('resize');assert.equal(f.controller.presentationMode(),'workspace');f.controller.stop();
 });

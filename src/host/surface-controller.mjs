@@ -1,5 +1,5 @@
 import {historyFailureReasons} from './native-history-list.mjs';
-import {surfaceFailureStates,frameFailureReasons} from './local-status.mjs';
+import {surfaceFailureStates,frameFailureReasons,nativeBoundaryFailureReasons as boundaryReasons} from './local-status.mjs';
 import {workspaceReturnIcon} from '../navigation/icons.mjs';
 import {readFrameAppearance} from './frame-appearance.mjs';
 import {withRequestDeadline} from '../data/request-deadline.mjs';
@@ -25,12 +25,20 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
   }
  }
 
- const boundaryReasons=['missing-or-ambiguous-native-boundary','unsafe-native-home-layout','unsafe-native-history-list','return-slot-outside-native-header','unsafe-native-reading-viewport','overlapping-native-boundary','native-content-occupies-return-slot','unsafe-native-geometry','unsafe-native-project-layout'];
  // Keep diagnostics on our frame: ancestor mutations would invalidate native masks.
  const joinSnapshot=state=>({loaded:state.loadedRoles?.size??0,joined:state.joinedRoles?.size??0,granted:state.grants.size,registered:state.registered,joinSignal:state.joinSignal??'not-observed',modules:state.moduleRoles?.size??0,boot:state.bootStages??{},bootSignal:state.bootSignal??'not-observed',inlineFrames:state.frames?.filter(x=>x.frame.hasAttribute?.('srcdoc')).length??0,framePolicy:state.framePolicy??'not-observed',mode:state.mode,presentation:state.presentation??'not-attempted'});
  const reportJoin=state=>{const node=state.frames?.[0]?.frame;if(node?.dataset)node.dataset.vaiwlFrameJoin=JSON.stringify(joinSnapshot(state));};
  const historyBoundary=inspection=>inspection?.reason==='unsafe-native-history-list'&&historyFailureReasons.includes(inspection.historyFailure)?'unsafe-native-history-list-'+inspection.historyFailure:null;
- const reportBoundary=inspection=>{const previous=lastBoundary;lastBoundary=historyBoundary(inspection)??(boundaryReasons.includes(inspection?.reason)?inspection.reason:inspection?.ok?'region-identity-changed':'native-region-changed');if(previous!==lastBoundary&&surfaceFailureStates.includes('surface-'+lastBoundary))try{onFailure('surface-'+lastBoundary);}catch{}if(doc.documentElement?.dataset)doc.documentElement.dataset.vaiwlBoundary=boundaryReasons.includes(inspection?.reason)?inspection.reason:inspection?.ok?'region-identity-changed':'unavailable';if(doc.documentElement?.dataset&&['roots','header-gap','button','hit-root','viewport','reading-root','reading-paint','protected-regions','header-paint','hit-test','header-layer','region-rect'].includes(inspection?.geometryStage))doc.documentElement.dataset.vaiwlGeometry=inspection.geometryStage;};
+ // Keep the latest result in the existing private layout response. Mutating
+ // documentElement here both retained stale failures and invalidated host masks.
+ function noteBoundaryCheck(state,phase,inspection){
+  if(!state||current!==state||state.epoch!==epoch)return inspection;
+  const changed=inspection?.ok===true&&state.handle&&inspection.regionEpoch!==state.handle.regionEpoch;
+  if(inspection?.ok===true&&!changed){state.boundary=null;lastBoundary=null;}
+  else state.boundary={phase,reason:changed?'region-identity-changed':boundaryReasons.includes(inspection?.reason)?inspection.reason:'unavailable',key:['header','reading','composer','readingViewport'].includes(inspection?.boundaryKey)?inspection.boundaryKey:null};
+  return inspection;
+ }
+ const reportBoundary=inspection=>{const previous=lastBoundary;lastBoundary=historyBoundary(inspection)??(boundaryReasons.includes(inspection?.reason)?inspection.reason:inspection?.ok?'region-identity-changed':'native-region-changed');if(previous!==lastBoundary&&surfaceFailureStates.includes('surface-'+lastBoundary))try{onFailure('surface-'+lastBoundary);}catch{}};
  function removeReturn(state){if(state.handle)surface.setReturnControl?.(state.handle,null);state.button?.remove();state.button=null;state.returnStyle=null;adapter.setReturnControl?.(null);}
  function dispose(state,reason,retainMount=false){if(!state)return;state.resolveIdle?.(false);cancel(state.nativeDispatch?.timer);state.nativeDispatch=null;cancel(state.timer);cancel(state.renewTimer);cancel(state.appearanceTimer);unwatchInitialLayout(state);state.frameObserver?.disconnect();state.geometryObserver?.disconnect();win.removeEventListener('resize',state.geometryChanged);win.removeEventListener('scroll',state.geometryChanged,true);win.visualViewport?.removeEventListener?.('resize',state.geometryChanged);win.visualViewport?.removeEventListener?.('scroll',state.geometryChanged);state.appearanceObserver?.disconnect();state.media?.removeEventListener?.('change',state.appearanceChanged);win.removeEventListener('resize',state.appearanceChanged);state.observer?.disconnect();win.removeEventListener('message',state.listener);doc.removeEventListener?.('securitypolicyviolation',state.policyViolation);win.removeEventListener('popstate',state.changed);win.removeEventListener('hashchange',state.changed);doc.removeEventListener?.('beforetoggle',state.nativeToggle,true);doc.removeEventListener?.('toggle',state.changed,true);win.removeEventListener('pagehide',state.pagehide);removeReturn(state);if(state.handle){try{surface.suspend(state.handle,reason);}catch{}try{surface.dispose(state.handle);}catch{}if(!retainMount)try{Promise.resolve(bridge.revokeMount?.({mountId:state.handle.id})).catch(()=>{});}catch{}}}
  function stop(reason='surface-stopped'){
@@ -133,18 +141,18 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
   state.media=win.matchMedia?.('(prefers-color-scheme: dark)');state.media?.addEventListener?.('change',state.appearanceChanged);win.addEventListener('resize',state.appearanceChanged);
  }
  function inspectPresentation(state){
-  if(surface.backend!=='document-flow'||!state?.handle)return adapter.inspect();
+  if(surface.backend!=='document-flow'||!state?.handle)return noteBoundaryCheck(state,'presentation',adapter.inspect());
   const previous=surface.isSameNativeRegions(state.handle)===true&&surface.needsNativeBaselineRefresh?.(state.handle)!==true?adapter.inspectStructure(state.inspection):{ok:false,reason:'native-region-changed'};
-  if(previous?.ok)return previous;
+  if(previous?.ok)return noteBoundaryCheck(state,'presentation',previous);
   // A failed intermediate proof may advance the adapter epoch even if React
   // later restores the original nodes. Re-prove that case too. The backend
   // admits only a genuinely closed native layout; a new epoch retires the old
   // mount below and cannot authorize its existing private frames.
   if(!state.nativeDispatch&&authorized(state)&&!adapter.hasNativeLayer()){
    const refreshed=surface.refreshNativeBaseline?.(state.handle,()=>adapter.inspect());
-   if(refreshed?.ok&&authorized(state)&&!state.nativeDispatch&&!adapter.hasNativeLayer())return refreshed;
+   if(refreshed?.ok&&authorized(state)&&!state.nativeDispatch&&!adapter.hasNativeLayer())return noteBoundaryCheck(state,'presentation',refreshed);
   }
-  return previous;
+  return noteBoundaryCheck(state,'presentation',previous);
  }
  function refreshGeometry(state,inspection=null){
   if(typeof surface.refreshGeometry!=='function')return true;
@@ -380,7 +388,7 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
   }
  }
  async function start(options,sidebarDesired=true){
-  stop('surface-restart');lastBoundary=null;const run=epoch,state={startedAt:elapsedNow(),epoch:run,intentEpoch:0,url:doc.location.href,registered:false,handle:null,grants:new Map(),earlyJoins:new Map(),pending:new Set(),button:null,timer:null,renewTimer:null,renewing:false,renewalCeiling:null,observer:null,appearanceObserver:null,appearanceTimer:null,appearanceKeys:new Map(),frames:[],surfaceKey:null,surfaceRevision:0,mode:'waiting',desiredMode:options?.mode??initialMode,resumeMode:options?.mode??initialMode,dormant:false,waking:false,geometryPaused:false,geometryRevision:0};current=state;
+  stop('surface-restart');lastBoundary=null;const run=epoch,state={startedAt:elapsedNow(),epoch:run,intentEpoch:0,url:doc.location.href,registered:false,handle:null,grants:new Map(),earlyJoins:new Map(),pending:new Set(),button:null,timer:null,renewTimer:null,renewing:false,renewalCeiling:null,observer:null,appearanceObserver:null,appearanceTimer:null,appearanceKeys:new Map(),frames:[],surfaceKey:null,surfaceRevision:0,mode:'waiting',desiredMode:options?.mode??initialMode,resumeMode:options?.mode??initialMode,dormant:false,waking:false,geometryPaused:false,geometryRevision:0,boundary:null};current=state;
   // Layout restarts and the document owner may carry a same-scope display
   // choice. This is not authority: every new mount still needs fresh grants.
   state.sidebarDesired=sidebarDesired!==false;
@@ -393,7 +401,7 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
  }
  async function mountState(state){
   if(current!==state||state.mounting||state.handle||doc.location.href!==state.url||Date.parse(state.context.binding.expiresAt)<=now())return null;
-  state.inspection=adapter.inspect();
+  state.inspection=noteBoundaryCheck(state,'initial',adapter.inspect());
   if(!state.inspection?.ok){
    reportBoundary(state.inspection);
    state.layoutFailure=surfaceFailureStates.includes('surface-'+lastBoundary)?'surface-'+lastBoundary:null;
@@ -655,7 +663,7 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
  function presentationSnapshot(){
   const state=current;if(!state)return null;
   let visibility=null,layoutRefusal=null,layoutGeometry=[];try{visibility=surface.visibility?.(state.handle);layoutRefusal=surface.activeLayoutFailure?.(state.handle)??null;layoutGeometry=surface.activeLayoutGeometry?.(state.handle)??[];}catch{}
-  return {layoutGeometry,layoutRefusal,mode:state.mode,desiredMode:state.desiredMode,transitions:structuredClone(transitions),attempt:state.presentation??'not-attempted',registered:state.registered===true,frames:state.frames.filter(x=>x.frame.isConnected&&x.frame.contentWindow===x.window).length,grants:state.grants.size,workspace:typeof visibility?.workspace==='boolean'?visibility.workspace:null,sidebar:typeof visibility?.sidebar==='boolean'?visibility.sidebar:null,geometryPaused:state.geometryPaused===true,returnPresent:state.button?.isConnected===true};
+  return {boundary:state.boundary?{...state.boundary}:null,layoutGeometry,layoutRefusal,mode:state.mode,desiredMode:state.desiredMode,transitions:structuredClone(transitions),attempt:state.presentation??'not-attempted',registered:state.registered===true,frames:state.frames.filter(x=>x.frame.isConnected&&x.frame.contentWindow===x.window).length,grants:state.grants.size,workspace:typeof visibility?.workspace==='boolean'?visibility.workspace:null,sidebar:typeof visibility?.sidebar==='boolean'?visibility.sidebar:null,geometryPaused:state.geometryPaused===true,returnPresent:state.button?.isConnected===true};
  }
  return Object.freeze({readNativeManagement(){const s=current;return s&&valid(s)&&authorized(s)&&s.handle?surface.readNativeManagement?.(s.handle)??[]:[];},isNativeStructureCurrent(){try{const state=current;if(!state||!authorized(state))return false;const inspection=inspectPresentation(state);return current===state&&inspection?.ok===true&&inspection.regionEpoch===state.handle.regionEpoch;}catch{return false;}},presentationSnapshot,localStatus,withNativeReading,cancelDormantClose,renewDormantLease,idleReleaseBusy:()=>current?.releaseBusy===true&&dormantReady(),checkIdle,enterDormant,settleDormant,dormantReady,resumeDormant,start,sidebarPresentationIntent:()=>current?.sidebarDesired??null,presentationIntent:()=>current?.desiredMode==='workspace'?'workspace':'reading',presentationMode:()=>current?.mode==='workspace'?'workspace':'reading',showWorkspace(){if(current)current.sidebarDesired=true;return showWorkspace(true);},isWorkspacePresented,showReading,showNativeReading,beginNativeDispatch,focusFrame,isFrameTarget(role,node){return !!current&&authorized(current)&&current.frames.some(x=>x.role===role&&x.frame===node);},isReturnTarget:node=>!!current&&current.button===node&&authorized(current),intentGuard(){const state=current,revision=state?.intentEpoch;return ()=>!!state&&current===state&&state.intentEpoch===revision&&authorized(state)&&!adapter.hasNativeLayer();},readingGuard(){const state=current,revision=state?.intentEpoch;return ()=>!!state&&current===state&&state.intentEpoch===revision&&state.mode==='reading'&&authorized(state)&&!adapter.hasNativeLayer();},suspend,stop,revoke:()=>stop('ui-authority-revoked')});
 }

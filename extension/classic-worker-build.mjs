@@ -1,5 +1,5 @@
 import {createRequire} from 'node:module';
-import {realpathSync} from 'node:fs';
+import {realpathSync,readFileSync} from 'node:fs';
 const require=createRequire(new URL('./tooling/package.json',import.meta.url));
 const TOOL_VERSION='0.25.12';
 /** Temporary DOM observation has no asynchronous module-registration gap. */
@@ -17,7 +17,8 @@ export function compileClassicWorker(unpackedRoot){
  const root=realpathSync(unpackedRoot),bridge='__vaiwlHostBootstrap';
  const bundle=contents=>esbuild.buildSync({absWorkingDir:root,stdin:{contents,resolveDir:root,sourcefile:'host-worker-entry.mjs'},bundle:true,format:'iife',platform:'browser',target:'chrome120',treeShaking:false,write:false,logLevel:'silent'}).outputFiles[0].text;
  const bootstrap=bundle(`import {HOST_BROWSER_BOOTSTRAP} from './extension/browser-bootstrap.mjs';globalThis.${bridge}=HOST_BROWSER_BOOTSTRAP;`);
- const runtime=bundle(`import {createHostWorkerRuntime} from './src/runtime/host-worker-runtime.mjs';import {HOST_CONFIG} from './extension/config.mjs';if(HOST_CONFIG.temporaryReadOnly!==true){const bootstrap=globalThis.${bridge};if(!bootstrap)throw Error('missing-host-bootstrap');createHostWorkerRuntime({chrome,indexedDB,...HOST_CONFIG,browserBootstrap:bootstrap});}`);
+ const pro=readFileSync(root+'/extension/config.mjs','utf8').includes('"proR1":true');
+ const runtime=bundle(`${pro?"import {createProductionProService} from './src/pro/integration/production-owner.mjs';":''}import {createHostWorkerRuntime} from './src/runtime/host-worker-runtime.mjs';import {HOST_CONFIG} from './extension/config.mjs';if(HOST_CONFIG.temporaryReadOnly!==true){const bootstrap=globalThis.${bridge};if(!bootstrap)throw Error('missing-host-bootstrap');createHostWorkerRuntime({chrome,indexedDB,...HOST_CONFIG,browserBootstrap:bootstrap${pro?',proServiceFactory:createProductionProService':''}});}`);
  const entry=bootstrap+`\ntry{importScripts('classic-runtime.js');}catch(error){globalThis.${bridge}?.stop();throw error;}finally{delete globalThis.${bridge};}\n`;
  return {entry,runtime};
 }

@@ -64,6 +64,14 @@ function jsonClone(input, {publicReply = false} = {}) {
 
 const failure = reason => ({ok: false, reason});
 const unavailable = () => failure('pro-request-unavailable');
+// `instanceof Promise` misses genuine promises created in another realm. The
+// native then operation checks the internal Promise brand and does not read a
+// plain DTO's `then` getter. Consume both settlements before rejecting an async
+// projector so a private exception cannot escape as an unhandled rejection.
+function consumePromise(value) {
+  try { Promise.prototype.then.call(value, () => {}, () => {}); return true; }
+  catch { return false; }
+}
 
 /** Worker-local RPC shell. It never opens a database, mints a grant, invokes a
  * provider, interprets payload as authority or exposes a private port result.
@@ -165,7 +173,7 @@ export function createProWorkerService({ui, invoke, projectReply, maxPending = 3
           const value = projectReply({action: message.action, value: result.value, context});
           // A miscomposed async projector is rejected, but its eventual reject
           // must not escape as an unhandled worker exception after RPC failure.
-          if (value instanceof Promise) { value.catch(() => {}); throw Error('pro-projector-must-be-synchronous'); }
+          if (consumePromise(value)) throw Error('pro-projector-must-be-synchronous');
           check();
           approvedReply = jsonClone({ok: true, value}, {publicReply: true});
           check();

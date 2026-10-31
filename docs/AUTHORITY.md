@@ -1,5 +1,15 @@
 # VAIWL：权威、权限与文档职责
 
+## 2026-10-31 远程研发与原 Mac 实机职责正式切换
+
+按用户最新指令及[分工评论6544150475](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16#issuecomment-6544150475)，Codex 已以 [HANDOFF_READY 6544226609](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16#issuecomment-6544226609) 保全原本地成果并冻结源码写入。Pro 已在[接管确认6544395306](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16#issuecomment-6544395306)核对 `2c9b043ce3c65a4b92c6f8f83b59fb416f63132a`，正式成为原分支 `codex/vaiwl-free-first-20261013` / Draft PR #16 的唯一远程源码、测试和集成 writer。
+
+Pro 自主完成原计划中可由 GitHub、源码、夹具和 Actions 解决的 Free P0/个人必需 P1，负责缺陷修复、定向回归、独立代码审查、统一 CI 与候选冻结。并行协作者只读审查；不建立竞争分支、第二产品路线或第二开发计划。远程隔离检查副本不改动原 Mac 工作树、未提交 STATUS、stash、未跟踪文件或私人备份。后续提交使用原分支的非强制 expected-head 更新。
+
+Codex 只负责必要的原 Mac 备份、同 ID 更新、真实网页最小结构取证与集中实机验收；接管后不提交产品源码/测试，不向同一分支 push。真实缺陷先回传脱敏结构证据，由 Pro 修复。必须临时转交 Mac 专属代码写入时，先在同一 PR 明确 writer 与文件占用交接。既有真实操作授权和额度沿用，不因新角色或新目录自动续期；需要本人确认的旧私人空间仍由本人确认。
+
+缺少真实来源时不得猜测 Project/NONE、消息/分支或片段锚语义。已授权的限定选区读取不自动证明生产 anchor 合同。无 claim 的个人正常 Chrome 验收与同标签代理互操作分别记录；保留方案 B、所有隐私/授权/原生保护及历史失败。当前不 merge、部署或公开发布，不抢跑 Pro 付费能力。下方与此不一致的历史 writer/文档专员描述只保留形成时语境。
+
 ## 2026-10-30 终局接管与集中限定授权
 
 用户正式采纳 [终局技术裁决及唯一交接](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16#issuecomment-6503154092)，由新会话在原目录、原分支和 PR16 接任唯一集成 writer。继承候选 `7275d88223a69f4c4675c71c20062a0fc7df59ce` 的方案 B 修正：有限版本化 seam、原生区域内部变化与布局拥有权分离、同 URL root 重建重新授权、多次 Worker 恢复受跨代预算限制。其具体合同替代历史全子树 paint/identity 冻结和整页一次恢复；权限、数据与原生保护不放宽。沿原 A–G 执行，不另立计划，完成全部可执行内部质量门后才进行集中实机验收。

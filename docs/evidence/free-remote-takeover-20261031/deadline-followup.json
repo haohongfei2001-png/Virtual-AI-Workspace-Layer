@@ -1,0 +1,124 @@
+{
+  "schema": "vaiwl-free-deadline-followup/1",
+  "baseCommit": "e794928418cce704916e680a7ee512d3648fa57c",
+  "branch": "codex/vaiwl-free-first-20261013",
+  "pullRequest": 16,
+  "originalFormalFailure": {
+    "runId": 41209270147,
+    "jobId": 124560645185,
+    "gate": "populated-native",
+    "url": "https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/actions/runs/41209270147/job/124560645185",
+    "status": "FAIL_OR_BLOCKED",
+    "completedVisits": 5,
+    "failedVisitIndex": 5,
+    "error": "ui10-admission-deadline",
+    "deadlineMs": 6000,
+    "inboundObservationComplete": true,
+    "failedVisitBodyPackets": 0,
+    "currentDetailRequests": 10,
+    "diagnosticFirstSix": "BOUND_REACHED_DIAGNOSTIC_ONLY_FORMAL_FAILURE_RETAINED",
+    "specificClockAtFailure": "NOT_CAPTURED_CAUSAL_ATTRIBUTION_IS_INFERENCE",
+    "nodeTests": {
+      "pass": 12062,
+      "fail": 0,
+      "skipped": 0
+    },
+    "guardMutants": {
+      "selected": 12,
+      "killed": 12
+    }
+  },
+  "confirmedDefect": {
+    "mechanism": "fractional absolute deadline round-trip exceeds duration ceiling before transport",
+    "clockSamples": [
+      59536.1,
+      60000.1,
+      65000.1
+    ],
+    "computedDuration": 6000.000000000007,
+    "actualAdapterContentPreFix": {
+      "expectedBodyPackets": 1,
+      "observedBodyPackets": 0
+    }
+  },
+  "correction": {
+    "source": "src/host/content-session.mjs",
+    "absoluteCeilingMs": 6000,
+    "timerMaximumMs": 6000,
+    "preservesOriginalDeadline": true,
+    "addedRetries": 0,
+    "addedTolerance": 0,
+    "authorityChanged": false,
+    "runnerChanged": false,
+    "fixtureChanged": false,
+    "ciBudgetChanged": false
+  },
+  "verification": {
+    "newRegressions": 6,
+    "preFixDirect": {
+      "pass": 1,
+      "fail": 4
+    },
+    "preFixIntegrated": {
+      "pass": 0,
+      "fail": 1
+    },
+    "postFixFocused": {
+      "pass": 6,
+      "fail": 0,
+      "skipped": 0
+    },
+    "affectedContentAdapter": {
+      "pass": 322,
+      "fail": 0,
+      "skipped": 0
+    },
+    "sharedRequestDeadline": {
+      "pass": 10,
+      "fail": 0,
+      "skipped": 0
+    },
+    "independentReview": "PASS_NO_BLOCKER",
+    "node": "24.22.1",
+    "localRunner": "node --test-isolation=none --test"
+  },
+  "localOriginalHeadDiagnostic": {
+    "status": "STOPPED_BY_OPERATOR_AFTER_DETERMINISTIC_MODULE_REPRODUCTION",
+    "completedVisits": 10,
+    "cleanupOK": true,
+    "fixtureStable": true,
+    "productSourceStable": true,
+    "browserVersion": "156.0.8078.4",
+    "acceptance": "NOT_ESTABLISHED"
+  },
+  "correctedBrowserLocalPackage": {
+    "files": 205,
+    "verify": "PASS",
+    "sha256": "5cb602c60e15ab4ff4afa7935008d31ba169441169791733673dfa9ea5cb2ac6",
+    "releaseStatus": "NOT_RELEASE_READY",
+    "installedOnRealMac": false
+  },
+  "implementationHashes": {
+    "src/host/content-session.mjs": "0953f87d8f17262cadc8ae5ba352eafff454607f26c19a05ab8ab1b53b5bbe25",
+    "tests/host/content-session.test.mjs": "023f966be3f40ab98e87ab5b96255cf88b90a1b8e5748379defc12e183ed81e4"
+  },
+  "localEvidenceSha256": {
+    "vaiwl-free-fractional-red.log": "bb923ddc55d695ecc9b21a3ed537e473c7519a00117de7db747fb416c899bc1e",
+    "vaiwl-free-fractional-integrated-red.log": "972e07f2c9d144894c90aafb5b77a3f81cc86d9dd3887f8d9bc50f31b9f1bde4",
+    "vaiwl-free-fractional-integrated-green.log": "207e5c0e28e40c6d45c498021fa658a071d5d13d496dc29057aefd514edf6a0b",
+    "vaiwl-free-deadline-regression.log": "0890385612acb31b83094962f9120a413939201c08218340edc94cf78d68db85",
+    "vaiwl-free-request-deadline-regression.log": "7eeb55da9481f4af387646b5441ed07fa02778f8c8c4ab9b97df4427946b5f6f",
+    "vaiwl-free-populated-e794.log": "4e4eaa9fcd7f918776981d9b41d56acc9c11b5afcc06d6c49868423d2c226e59",
+    "vaiwl-free-populated-e794.json": "ba3715b221f2080c0f4e30038125d5bd3e3acf920d45555fc1c996398a4b44f5",
+    "vaiwl-free-deadline-browser-local-package.log": "b91d1a9129851db4ecc92406d54b62af6ebb2435dee3a67726fc76115fa54612"
+  },
+  "correctedUnifiedCI": "PENDING_EXACT_NEW_HEAD_RECORD_IN_PR_AFTER_PUSH",
+  "retainedGates": [
+    "REAL_PROJECT_NONE_SOURCE",
+    "NEW_SNIPPET_PRODUCTION_ANCHOR_SOURCE",
+    "REAL_MAC_CONTINUITY",
+    "PERSONAL_ORIGINAL_PROFILE_ASSET_CONFIRMATION"
+  ],
+  "free": "NOT_ACCEPTED",
+  "release": "NOT_RELEASE_READY"
+}

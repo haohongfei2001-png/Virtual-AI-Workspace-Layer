@@ -14,8 +14,8 @@ import {projectFreeFrame,freeFrameRowDTO} from './free-frame-projection.mjs';
 import {withRequestDeadline} from '../data/request-deadline.mjs';
 /** One privileged replica per mount, shared by its two granted UI documents.
  * Preparation is polled in bounded RPCs; a pending read is never an empty view. */
-export function createHostViewService({ui,readService,workspaceRepository=null,prepareNavigation=null,readNativeManagement=null,openLocalData=null,registerCurrentNavigation=null,nativeCandidatesEnabled=false,presentSurface=null,nativeWritePending=()=>false,clock=()=>new Date().toISOString(),maxViews=32,elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout}={}){
- if(typeof nativeWritePending!=='function'||typeof ui?.withScope!=='function'||!readService||!Number.isInteger(maxViews)||maxViews<1||maxViews>128)throw Error('invalid-host-view-service');
+export function createHostViewService({ui,readService,workspaceRepository=null,prepareNavigation=null,readNativeManagement=null,openLocalData=null,registerCurrentNavigation=null,nativeCandidatesEnabled=false,nativeSelectionAvailable=true,presentSurface=null,nativeWritePending=()=>false,clock=()=>new Date().toISOString(),maxViews=32,elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout}={}){
+ if(typeof nativeSelectionAvailable!=='boolean'||typeof nativeWritePending!=='function'||typeof ui?.withScope!=='function'||!readService||!Number.isInteger(maxViews)||maxViews<1||maxViews>128)throw Error('invalid-host-view-service');
  const views=new Map(),resumes=new Map(),readWindows=new Map();let stopped=false,refreshes=0,reads=0,scopeWork=0,deliverySequence=0,presentationSequence=0;const layoutWrites=new Map();
  // A cancelled owner refresh can settle before its underlying read does.
  // Count both without changing the original deadlines or cancellation guards.
@@ -224,6 +224,8 @@ export function createHostViewService({ui,readService,workspaceRepository=null,p
    page.presentation=structuredClone(entry.presentation);
    // Display guidance only; the asset services independently recheck authority.
    if(context.scope.kind==='browser-local')page.localAssetAccess=context.scope.storage==='personal'?'available':'confirmation-required';
+   // A false-only restriction is display guidance, never native authority.
+   if(!nativeSelectionAvailable)page.nativeSelectionAvailable=false;
 
    page.current={nativeUrl,refId:ref?.id??null,projectId:currentProjectId};
    page.currentRef=ref?freeFrameRowDTO(ref):null;
@@ -515,6 +517,11 @@ export function createHostViewService({ui,readService,workspaceRepository=null,p
   }),{now:elapsedNow,schedule,cancel});}catch(error){return {ok:false,reason:reason(error)};}finally{active=false;}
  }
  // Private owner view; no full snapshot or body proof is sent to an iframe.
+ function resolveProView(context,mountId){
+  const entry=views.get(mountId),current=entry?.owner.current();
+  if(!entry||entry.pending||entry.error||!current||entry.scopeKey!==context.scope.key||entry.scopeGrantId!==context.scopeGrantId||!context.isCurrent())throw Error('free-view-not-ready');
+  return {current,isCurrent:()=>context.isCurrent()&&views.get(mountId)===entry&&!entry.pending&&!entry.error&&entry.owner.current()===current};
+ }
  function resolveSnippetView(context,mountId){
   const entry=views.get(mountId),current=entry?.owner.current();
   if(!entry||entry.pending||entry.error||!current||entry.scopeKey!==context.scope.key||entry.scopeGrantId!==context.scopeGrantId||!context.isCurrent())throw Error('free-view-not-ready');
@@ -533,5 +540,5 @@ export function createHostViewService({ui,readService,workspaceRepository=null,p
   const matching=[...views.values()].filter(e=>e.scopeKey===scopeKey&&e.parentFrame.tabId===frame.tabId&&e.parentFrame.documentId===frame.documentId&&e.parentFrame.actualURL===frame.actualURL&&e.isCurrent());
   return matching.length===1&&matching[0].lastWorkspaceDelivery?structuredClone(matching[0].lastWorkspaceDelivery):null;
  }
- return Object.freeze({navigationPlans,nativeManagement,localData,receipt,receiptSummary,deliverySummary,isIdle,handle,resume,present,confirmScope,isForegroundReadPending:liveWindow,nativePublished(scopeKey){const window=readWindows.get(scopeKey);if(window&&!liveWindow(scopeKey)){if([...views.values()].some(entry=>entry.scopeKey===scopeKey))window.used=false;else readWindows.delete(scopeKey);}for(const entry of views.values())if(entry.scopeKey===scopeKey&&entry.pending&&entry.isCurrent())entry.deferPreparation?.();},resolveSnippetView,enterCurrent,undoAutoHorizon,setHorizon,setWorkingSet,setCompactRows,refreshScope(scopeKey){for(const entry of views.values())if(entry.scopeKey===scopeKey&&entry.isCurrent()&&!retryableRead(entry.error))begin(entry);},revokeDocument,revokeTab,revokeMount:remove,stop(){stopped=true;readWindows.clear();resumes.clear();for(const key of [...views.keys()])remove(key);}});
+ return Object.freeze({resolveProView,navigationPlans,nativeManagement,localData,receipt,receiptSummary,deliverySummary,isIdle,handle,resume,present,confirmScope,isForegroundReadPending:liveWindow,nativePublished(scopeKey){const window=readWindows.get(scopeKey);if(window&&!liveWindow(scopeKey)){if([...views.values()].some(entry=>entry.scopeKey===scopeKey))window.used=false;else readWindows.delete(scopeKey);}for(const entry of views.values())if(entry.scopeKey===scopeKey&&entry.pending&&entry.isCurrent())entry.deferPreparation?.();},resolveSnippetView,enterCurrent,undoAutoHorizon,setHorizon,setWorkingSet,setCompactRows,refreshScope(scopeKey){for(const entry of views.values())if(entry.scopeKey===scopeKey&&entry.isCurrent()&&!retryableRead(entry.error))begin(entry);},revokeDocument,revokeTab,revokeMount:remove,stop(){stopped=true;readWindows.clear();resumes.clear();for(const key of [...views.keys()])remove(key);}});
 }

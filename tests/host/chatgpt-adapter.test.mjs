@@ -548,6 +548,16 @@ test('explicit native layout binds the same production inspection and continuity
  f.profile.nativeLayout.reading='#changed';assert.equal(f.adapter.inspect().ok,true,'package layout is snapshotted');
  f.selectors.set(explicitLayout.reading,[{...f.reading}]);assert.equal(f.adapter.isSameNativeRegions(result),false);assert(f.adapter.inspect().regionEpoch>result.regionEpoch);f.adapter.stop();
 });
+for(const kind of ['replacement','missing','ambiguous'])test('current boundary distinguishes '+kind+' without accepting a stale inspection',async t=>{
+ const f=layoutFixture();t.after(()=>f.adapter.stop());await f.start();const first=f.adapter.inspect();assert.equal(first.ok,true);
+ if(kind==='replacement')f.selectors.set(explicitLayout.reading,[{...f.reading}]);
+ if(kind==='missing')f.selectors.delete(explicitLayout.reading);
+ if(kind==='ambiguous')f.selectors.set(explicitLayout.reading,[f.reading,{...f.reading}]);
+ const next=f.adapter.inspectStructure(first);assert.equal(next.ok,false);assert.equal(next.boundaryKey,'reading');
+ assert.equal(next.reason,kind==='replacement'?'region-identity-changed':'missing-or-ambiguous-native-boundary');
+ assert.equal(f.adapter.isSameNativeRegions(first),false);
+ if(kind==='replacement')assert(f.adapter.inspect().regionEpoch>first.regionEpoch);
+});
 for(const kind of ['missing','ambiguous','occupied','overlap','bad-selector','outside-header','slot-is-header','slot-in-composer','slot-in-reading'])test('explicit layout preserves boundary refusal: '+kind,async()=>{
  const f=layoutFixture();await f.start();
  if(kind==='missing')f.selectors.delete(explicitLayout.composer);

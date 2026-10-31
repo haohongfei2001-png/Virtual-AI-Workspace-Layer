@@ -84,3 +84,13 @@ body[data-frame-role="workspace"] [data-vaiwl-candidate-root] { max-width:356px;
 html:has(body[data-frame-role="sidebar"]), body[data-frame-role="sidebar"],
 body[data-frame-role="sidebar"] main {height:auto;overflow:visible;}
 body[data-frame-role="sidebar"] main > div, body[data-frame-role="sidebar"] [data-vaiwl-candidate-root][open] > div {flex:none;max-height:none;overflow:visible;}
+
+/* Optional Pro controls are confined to the same extension-owned frame. */
+[data-vaiwl-mode-switch] {display:flex;align-items:center;gap:3px;flex:none;padding:5px 10px;min-height:30px;border-bottom:1px solid var(--line);background:var(--surface);}
+[data-vaiwl-mode-switch] button {border:0;border-radius:6px;background:transparent;padding:4px 10px;min-height:28px;color:var(--muted);cursor:pointer;font-size:12px;}
+[data-vaiwl-mode-switch] button[aria-pressed=true] {background:var(--bubble);color:var(--ink);}
+[data-vaiwl-mode-switch] button:focus-visible {outline:2px solid var(--focus);outline-offset:2px;}
+[data-vaiwl-mode-switch] span {font-size:11px;color:var(--muted);margin-left:6px;}
+[data-vaiwl-pro-root] {flex:1 1 0;overflow:hidden;min-height:0;}
+[data-vaiwl-pro-root][hidden], [data-vaiwl-frame-root][hidden] {display:none!important;}
+body[data-frame-role=sidebar] [data-vaiwl-pro-root] {flex:none;overflow:visible;}

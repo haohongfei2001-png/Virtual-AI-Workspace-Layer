@@ -1,6 +1,7 @@
 import {digest, stable} from '../../data/hash.mjs';
 import {boundedJSON, exact, integer, boundedText} from '../model/schema-runtime.mjs';
 import {validateSourceScope} from '../evidence/metadata.mjs';
+import {assertRegisteredProDatabase} from './storage-registry.mjs';
 import {emptyBudgetLedger, validateBudgetLedger, configureBudgetPolicies, reserveBudget,
   markBudgetDispatched, releaseReservation, settleReservation} from '../jobs/budget.mjs';
 import {validateJob, admitJob, transitionJob, recoverJob} from '../jobs/lifecycle.mjs';
@@ -222,13 +223,13 @@ export function createSameDatabaseBillingStore({connection, verifyAuthority, ena
     // It must resolve the exact RAM object and authorize the requested action,
     // including separate admin/billing/reconciliation capabilities as applicable.
     const resolved = verifyAuthority(authority, intent);
-    if (resolved?.then) throw Error('async-billing-authority-denied');
+    if (resolved?.then) { if (resolved instanceof Promise) resolved.catch(() => {}); throw Error('async-billing-authority-denied'); }
     const scope = validateSourceScope(resolved);
     if (scope.persistence !== 'same-idb') throw Error('billing-persistent-scope-required');
-    return scope;
+    return clone(scope);
   }
   async function read(authority, signal) {
-    const initialScope = guard(authority, {action: 'READ_BILLING', phase: 'before-connection'}, signal), db = await connection();
+    const initialScope = guard(authority, {action: 'READ_BILLING', phase: 'before-connection'}, signal), db = assertRegisteredProDatabase(await connection());
     if (stable(guard(authority, {action: 'READ_BILLING', phase: 'before-transaction'}, signal)) !== stable(initialScope)) throw Error('billing-authority-scope-changed');
     return new Promise((resolve, reject) => {
       let tx, current, failure, logs = [];
@@ -241,6 +242,10 @@ export function createSameDatabaseBillingStore({connection, verifyAuthority, ena
         request.onsuccess = () => {
           try {
             check(); current = request.result ? validateRoot(unpack(request.result, billingRootKey)) : emptyRoot();
+            if (!request.result) {
+              const orphan = tx.objectStore('b23_operations').index('scopeKey').openCursor(billingRootKey);
+              orphan.onsuccess = () => { try { check(); if (orphan.result) throw Error('billing-missing-root-with-history'); } catch (error) { fail(error); } };
+            }
             for (const id of current.operationIds) {
               const key = billingOperationKey(id), q = tx.objectStore('b23_operations').get(key);
               q.onsuccess = () => { try { check(); if (!q.result) throw Error('billing-missing-journal'); logs.push(validateLog(unpack(q.result, key))); } catch (error) { fail(error); } };
@@ -267,7 +272,7 @@ export function createSameDatabaseBillingStore({connection, verifyAuthority, ena
     exact(input, ['operationId', 'expectedRevision', 'command']); operationIdOK(input.operationId); integer(input.expectedRevision);
     boundedText(input.command?.type, 64);
     const fingerprint = digest(input), intent = {action: input.command.type, operationId: input.operationId, command: clone(input.command)};
-    const initialScope = guard(authority, {...intent, phase: 'before-connection'}, signal), db = await connection();
+    const initialScope = guard(authority, {...intent, phase: 'before-connection'}, signal), db = assertRegisteredProDatabase(await connection());
     const priorScope = guard(authority, {...intent, phase: 'before-transaction'}, signal);
     if (stable(priorScope) !== stable(initialScope)) throw Error('billing-authority-scope-changed');
     return new Promise(resolve => {
@@ -290,13 +295,19 @@ export function createSameDatabaseBillingStore({connection, verifyAuthority, ena
             if (logRequest.result) {
               const old = validateLog(unpack(logRequest.result, opKey));
               if (old.fingerprint !== fingerprint || old.actorScopeKey !== initialScope.key) { fail('billing-operation-replay-conflict'); return; }
-              outcome = {ok: true, value: clone(old.result), replayed: true}; return;
+              const liveRoot = tx.objectStore('b23_states').get(billingRootKey);
+              liveRoot.onsuccess = () => { try { if (!check()) return; if (!liveRoot.result) throw Error('billing-missing-root-with-history'); const root = validateRoot(unpack(liveRoot.result, billingRootKey)); if (!root.operationIds.includes(input.operationId)) throw Error('billing-orphan-receipt'); outcome = {ok: true, value: clone(old.result), replayed: true}; } catch (error) { fail(error.message); } };
+              return;
             }
             const rootRequest = tx.objectStore('b23_states').get(billingRootKey);
             rootRequest.onsuccess = () => {
               if (!check()) return;
               try {
                 const current = rootRequest.result ? validateRoot(unpack(rootRequest.result, billingRootKey)) : emptyRoot();
+                if (!rootRequest.result) {
+                  const orphan = tx.objectStore('b23_operations').index('scopeKey').openCursor(billingRootKey);
+                  orphan.onsuccess = () => { try { if (!check()) return; if (orphan.result) throw Error('billing-missing-root-with-history'); } catch (error) { fail(error.message); } };
+                }
                 if (current.revision !== input.expectedRevision) throw Error('billing-revision-conflict');
                 const scope = check(current); if (!scope) return;
                 const reduced = applyCommand(current, input.command, scope, clock());
@@ -307,8 +318,8 @@ export function createSameDatabaseBillingStore({connection, verifyAuthority, ena
                   sequence, fingerprint, actorScopeKey: scope.key, action: input.command.type,
                   beforeDigest: stateDigest(current), afterDigest: stateDigest(next), result});
                 if (!check(current)) return;
-                tx.objectStore('b23_states').put(envelope(billingRootKey, next));
-                tx.objectStore('b23_operations').put(envelope(opKey, log));
+                const stateWrite = tx.objectStore('b23_states').put(envelope(billingRootKey, next)); stateWrite.onsuccess = () => { check(current); };
+                const logWrite = tx.objectStore('b23_operations').put(envelope(opKey, log)); logWrite.onsuccess = () => { check(current); };
                 if (!check(current)) return;
                 outcome = {ok: true, value: clone(result), replayed: false};
               } catch (error) { fail(error.message); }

@@ -1,0 +1,84 @@
+name: VAIWL unified Free + Pro R1 candidate
+
+on:
+  push:
+    branches: ['codex/vaiwl-unified-r1-*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: vaiwl-unified-r1-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  VAIWL_SOURCE_COMMIT: ${{ github.sha }}
+  FREE_SOURCE_COMMIT: ${{ github.sha }}
+  FREE_SCALE_ACCEPTANCE: DEFERRED
+
+jobs:
+  node-and-package:
+    if: github.repository == 'haohongfei2001-png/Virtual-AI-Workspace-Layer' && github.event.repository.private == false
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '24'
+      - name: Install locked build dependencies
+        run: npm ci --prefix extension/tooling --ignore-scripts --no-audit --no-fund
+      - name: Complete Free and Pro Node contracts at exact source SHA
+        run: node tests/integration-unified/run.mjs node
+      - name: Formal unified and standalone Free packages
+        if: ${{ !cancelled() }}
+        run: node tests/integration-unified/run.mjs package
+      - name: Development performance with raw samples and unchanged targets
+        if: ${{ !cancelled() }}
+        run: node tests/integration-unified/run.mjs performance
+      - name: Preserve candidate package and exact-SHA reports
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: vaiwl-unified-node-package-${{ github.sha }}
+          path: artifacts/unified-r1
+          if-no-files-found: error
+          retention-days: 14
+
+  chromium-mv3:
+    if: github.repository == 'haohongfei2001-png/Virtual-AI-Workspace-Layer' && github.event.repository.private == false
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '24'
+      - name: Install locked dependencies and the pinned full Chrome for Testing
+        run: |
+          npm ci --prefix extension/tooling --ignore-scripts --no-audit --no-fund
+          npm ci --prefix tests/b1/tooling --ignore-scripts --no-audit --no-fund
+          tests/b1/tooling/node_modules/.bin/playwright install-deps chromium
+          curl --fail --location --retry 3 --output "$RUNNER_TEMP/vaiwl-chrome143.zip" https://storage.googleapis.com/chrome-for-testing-public/143.0.7499.4/linux64/chrome-linux64.zip
+          printf '%s  %s\n' ab56b2a7955c2961f74348e2349f1e907489283da23dba37c730b624e4d670bb "$RUNNER_TEMP/vaiwl-chrome143.zip" | sha256sum --check --strict
+          unzip -q "$RUNNER_TEMP/vaiwl-chrome143.zip" -d "$RUNNER_TEMP/vaiwl-chrome143"
+          printf '%s\n' "FREE_CHROME_EXECUTABLE=$RUNNER_TEMP/vaiwl-chrome143/chrome-linux64/chrome" "PRO_CHROMIUM_EXECUTABLE=$RUNNER_TEMP/vaiwl-chrome143/chrome-linux64/chrome" "CODEX_PRIMARY_RUNTIME_NODE_MODULES=$GITHUB_WORKSPACE/tests/b1/tooling/node_modules" >> "$GITHUB_ENV"
+      - name: Pro continuous journey and unified production MV3 candidate
+        run: node tests/integration-unified/run.mjs browser
+      - name: Preserve actual Chromium and MV3 evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: vaiwl-unified-chromium-mv3-${{ github.sha }}
+          path: artifacts/unified-r1
+          if-no-files-found: error
+          retention-days: 14

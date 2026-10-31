@@ -744,9 +744,10 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
           results.append(row(ref,'search'));
           for(const snippet of ref.snippetMatches??[]){
             const detail=node(doc,'section',{'data-snippet-id':snippet.id,class:'snippet-match'}),feedback=node(doc,'span',{role:'status'});detail.append(node(doc,'p',{},snippet.preview));
-            if(frameProjection.current?.refId===ref.id&&typeof onSnippetLocateRequest==='function'){
+            if(frameProjection.nativeSelectionAvailable===false)detail.append(node(doc,'p',{},'当前页面暂不支持片段定位，可查看原聊天。'));
+            else if(frameProjection.current?.refId===ref.id&&typeof onSnippetLocateRequest==='function'){
               const locate=button('定位片段',async()=>{
-                if(stopped||snippetLocatePending)return;const attempt={projection:frameProjection,query:searchQuery,theme:searchTheme,offset:frameSearchOffset,run:projectionRequest};snippetLocatePending=attempt;locate.disabled=true;feedback.textContent='正在定位…';
+                if(stopped||frameProjection?.nativeSelectionAvailable===false||snippetLocatePending)return;const attempt={projection:frameProjection,query:searchQuery,theme:searchTheme,offset:frameSearchOffset,run:projectionRequest};snippetLocatePending=attempt;locate.disabled=true;feedback.textContent='正在定位…';
                 const valid=()=>!stopped&&snippetLocatePending===attempt&&frameProjection===attempt.projection&&searchQuery===attempt.query&&searchTheme===attempt.theme&&frameSearchOffset===attempt.offset&&projectionRequest===attempt.run;
                 try{const result=await onSnippetLocateRequest({id:snippet.id});if(valid())feedback.textContent=result?.ok===true?'已定位片段。':'定位未确认，可使用原生搜索。';}catch{if(valid())feedback.textContent='定位未确认，可使用原生搜索。';}finally{if(snippetLocatePending===attempt){const active=valid();snippetLocatePending=null;if(active)locate.disabled=false;}}
               },'定位片段','more');locate.dataset.focusKey=JSON.stringify(['free-snippet',frameProjection.scope,ref.id,snippet.id]);detail.append(locate,feedback);
@@ -845,6 +846,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     if(currentEntry&&(currentEntry.run!==projectionRequest||frameProjection?.scope!==currentEntry.scope))return;
     if(stopped)return;if(!framed||dto?.protocol!=='vaiwl-free-frame/1'||dto.role!==surface.role||dto.completeSnapshot!==false||typeof dto.scope!=='string'||!dto.navigation||!Number.isSafeInteger(dto.segment)||dto.segment<0)throw Error('invalid-frame-projection');
     if(dto.compactRows!==undefined&&typeof dto.compactRows!=='boolean')throw Error('invalid-frame-compact');
+    if(Object.hasOwn(dto,'nativeSelectionAvailable')&&dto.nativeSelectionAvailable!==false)throw Error('invalid-frame-native-selection');
     if(dto.localAssetAccess!==undefined&&!['available','confirmation-required'].includes(dto.localAssetAccess))throw Error('invalid-frame-local-assets');
     const policy=dto.timePolicy;if(policy!==undefined&&(!policy||typeof policy!=='object'||Array.isArray(policy)||Object.keys(policy).sort().join(',')!=='H,mode,revision'||!['fixed','auto'].includes(policy.mode)||![7,14,30,60,90].includes(policy.H)||!Number.isSafeInteger(policy.revision)||policy.revision<0))throw Error('invalid-frame-time-policy');
     const c=dto.current;
