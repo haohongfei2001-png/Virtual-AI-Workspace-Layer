@@ -1,0 +1,72 @@
+{
+  "kind": "RETAINED_NATIVE_REQUEST_HISTORY_FIX_NOT_FULL_J4_ACCEPTANCE",
+  "baseCommit": "23385f1f960061385e883365bb421120bf8e222e",
+  "productionFile": "src/runtime/browser-request-context.mjs",
+  "originalSourceSha256": "8aa2f44916a966501ff64fac961be23b6cf4124442f898e9a22ddfd1038dbc66",
+  "candidateSourceSha256": "314525a55616261333e5cc98535ba5205a6f161f44d798f91226da112623d066",
+  "findings": [
+    "A legitimate history-retained GET with an exact old-route initial browser frame lookup never retried metadata at successful completion, so READY could be lost",
+    "History retention could retag an already stale request epoch after a newer team/personal receipt, allowing old selection revival"
+  ],
+  "repair": [
+    "Check request epoch before retention may update it",
+    "Record exact prior receipt URL and allow one metadata reprepare only after real noncache 200 under original deadline, current document/request/epoch and no conflict",
+    "Preserve final browser/body/current-request checks and new HELLO after READY"
+  ],
+  "bounds": {
+    "requestDeadlineMs": 6000,
+    "receiptTtlMs": 60000,
+    "maxMetadataReprepare": 1,
+    "newNativeNetworkRequests": 0,
+    "profileOrPermissionChanges": false
+  },
+  "authorFocused": {
+    "tests": 315,
+    "pass": 315,
+    "skip": 0,
+    "logSha256": "4583b78d214e2fd18f67edd96e6335d077a17e44c7a1dc31ec3f429cfd8e66af"
+  },
+  "independent": {
+    "newTests": 79,
+    "existingTests": 245,
+    "combinedPass": 324,
+    "skip": 0,
+    "logSha256": "34342c0046b29ba1a1eca2a5b2d0e2332d35cfe340d88e0bf61241cdd1bdfb1e",
+    "originalSelected": {
+      "pass": 2,
+      "fail": 4
+    },
+    "removedEpochGuardMutant": {
+      "pass": 2,
+      "fail": 4
+    },
+    "portableIntegrated": {
+      "pass": 79,
+      "skip": 0,
+      "durationMs": 292.390612
+    }
+  },
+  "historicalV1": "Rejected before integration for stale-epoch revival; original RED evidence preserved",
+  "oldCiTimeoutCausation": "NOT_ESTABLISHED",
+  "browser": "PENDING_NEW_CI",
+  "realChatGPT": "NOT_RUN",
+  "release": "NOT_RELEASE_READY",
+  "integratedFrozenBatch": {
+    "fullNode": {
+      "tests": 8026,
+      "pass": 8026,
+      "fail": 0,
+      "skip": 0,
+      "durationMs": 162043.952489,
+      "logSha256": "ba5234ca96c709624af9287a6ec9963be6da949125b73b3f8d418c067e072543"
+    },
+    "guardMutations": {
+      "selected": 12,
+      "killed": 12,
+      "inputUnchanged": true,
+      "reportSha256": "e1a7356cd8ff1c9ba5955ea7258e08526f431e1b20a1f63ec07a55b199576c99"
+    },
+    "sourceTestsExtensionWorkflowUnchangedDuringRun": true,
+    "combinedTree": "Manifest verifier + retained history v2; no Native GC hint candidate"
+  }
+}

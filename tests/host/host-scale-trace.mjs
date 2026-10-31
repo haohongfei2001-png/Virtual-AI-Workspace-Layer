@@ -1,0 +1,212 @@
+import {compileClassicWorker} from '../../extension/classic-worker-build.mjs';
+import {cp,readFile,writeFile} from 'node:fs/promises';
+import {join} from 'node:path';
+import {createHash} from 'node:crypto';
+const hash=value=>createHash('sha256').update(value).digest('hex');
+export const TRACE_PATHS=['src/data/native-repository.mjs','src/runtime/host-view-service.mjs','src/host/chatgpt-adapter.mjs','src/runtime/free-view-owner.mjs','src/runtime/free-read-service.mjs','src/runtime/host-observation-owner.mjs'];
+export const TRACE_KINDS=['native-start','native-root','native-commit','native-abort','view-begin','view-run','view-error','view-retry','view-terminal','view-stop','pass-start','pass-complete','pass-drained','pass-summary','migration-start','migration-end','window-reserve','window-expire','window-release','window-refused','view-version-restart','replica-terminal','page-terminal','surface-page-decision','scan-cause','owner-publication','owner-result','owner-terminal','adapter-start','adapter-stop'];
+const phaseFields=['ownerFirstVerifyMs','ownerFrameMs','ownerPageMs','ownerSecondVerifyMs','ownerApplyMs','ownerPublishedMs','pageReadsMs','pageProjectionMs','headerMs','pagesMs','assembleMs','snapshotMs','indexMs','versionMs','elapsed','txMs','rootMs','saveMs','reduceMs','sharedMs','publishMs','queuedMs','scanCount','scanMs','scanMaxMs','splitCount','splitMs','splitMaxMs','emitCount','emitMs','emitMaxMs','accepted','duplicate','retry','rejected','samples'];
+const fields=['adapterOrdinal','previousProducerKnown','wasLive','pageOrdinal','equalAcceptedKey','detachedCount','publishDecision','mutationCause','toggleCause','ownedToggle','renewalCause','initialCause','revalidating','combined','projectsCount','membershipCount','window','refusal','shared','nativeChanged','workspaceChanged','evidenceChanged','viewChanged','freshnessChanged','realmOrdinal','dropped','waitCount','waitFirstMs','waitLastMs','producer','generation','attempt','elapsed','revision','expectedRevision','selectedProjectsCount','selectedRefsCount','refsCount','pages','fragments','candidates','busy','pending','ok','replayed','format','error',...phaseFields];
+// Ring retains latest events; dropped counts disclose missing early history.
+// Fixed schema; no arbitrary string fields, identifiers, URLs or thrown text.
+export const TRACE_RECORDER=`
+const __scaleKinds=${JSON.stringify(TRACE_KINDS)},__scaleFields=${JSON.stringify(fields)};
+const __scalePhaseFields=${JSON.stringify(phaseFields)};
+const __scaleNow=()=>{try{return performance.now();}catch{return null;}};
+const __scaleDelta=start=>{const end=__scaleNow();return start!==null&&end!==null&&end>=start?end-start:null;};
+const __scalePassStats=producer=>({producer,scanCount:0,scanMs:0,scanMaxMs:0,splitCount:0,splitMs:0,splitMaxMs:0,emitCount:0,emitMs:0,emitMaxMs:0,accepted:0,duplicate:0,retry:0,rejected:0,samples:0});
+const __scaleAdd=(s,key,start)=>{try{if(!s)return;const ms=__scaleDelta(start);s[key+'Count']++;if(ms!==null){s[key+'Ms']+=ms;s[key+'MaxMs']=Math.max(s[key+'MaxMs'],ms);}}catch{}};
+const __scaleStore=()=>globalThis.__vaiwlScaleTrace??={events:[],bytes:0,dropped:0,producers:0};
+const __scaleOrdinal=()=>{try{const s=__scaleStore();return s.producers=Math.min(1000000000,s.producers+1);}catch{return 0;}};
+const __scaleError=value=>['snapshot-revision-changed','stale-free-page','revision-conflict','read-budget-exhausted','stale-binding'].includes(value)?value:'other';
+const __scaleEmit=(kind,fields={})=>{try{
+ if(!__scaleKinds.includes(kind))return;const s=__scaleStore(),row={kind,at:Date.now(),realm:"__SCALE_REALM__",dropped:s.dropped};
+ for(const key of __scaleFields){const value=fields[key];if(value===undefined)continue;
+ if(value===null&&__scalePhaseFields.includes(key))row[key]=null;
+ else if(key==='format'){if(['ABSENT','FACTS','PARTITIONED','VERSION_INDEX'].includes(value))row[key]=value;}
+ else if(key==='error')row[key]=__scaleError(value);
+ else if(typeof value==='boolean')row[key]=value;
+ else if(typeof value==='number'&&Number.isFinite(value)&&value>=0&&value<=1e15)row[key]=value;}
+ const encoded=JSON.stringify(row),bytes=new TextEncoder().encode(encoded).length;
+ while(s.events.length&&(s.events.length>=1024||s.bytes+bytes>131072)){const old=s.events.shift();s.bytes-=new TextEncoder().encode(JSON.stringify(old)).length;s.dropped=Math.min(1000000000,s.dropped+1);}
+ s.events.push(row);s.bytes+=bytes;__SCALE_CONSOLE__
+}catch{}};
+`;
+function once(source,from,to){if(source.split(from).length!==2)throw Error('scale-trace-anchor-mismatch');return source.replace(from,to);}
+// Test-only phase offsets are monotonic relative to mutate entry. Differences
+// delimit work + scheduling, never exclusive CPU/IDB time. publishMs is the
+// shared enlist callback; queuedMs is synchronous writer/bookkeeping return,
+// not completion of asynchronous index/GC requests. The transaction terminal
+// is the only drain boundary. Unreached stages stay null; a native-start without
+// a terminal can mean pre-transaction failure or an unfinished operation.
+// Pass summaries cover the private surface scan/hash/split and emit await only;
+// body discovery, transport, owner admission, and scheduling remain separate gaps.
+export function instrumentScaleSource(path,source,{clockAlignment=false}={}){
+ if(typeof clockAlignment!=='boolean')throw Error('invalid-scale-trace-clock-options');
+ if(source.includes('const __scaleKinds='))throw Error('scale-trace-anchor-mismatch');
+ let out=source;const add=(a,b)=>{out=once(out,a,b);};
+ if(path===TRACE_PATHS[0]){
+  const cut=out.indexOf('  async mutate(scope,');if(cut<0)throw Error('scale-trace-anchor-mismatch');const prefix=out.slice(0,cut);out=out.slice(cut);
+  add('    command=structuredClone(command);','    command=structuredClone(command);const __scaleProducer=__scaleOrdinal();const __scaleMono=__scaleNow(),__scaleStages={txMs:null,rootMs:null,saveMs:null,reduceMs:null,sharedMs:null,publishMs:null,queuedMs:null};let __scaleFormat="ABSENT";__scaleEmit("native-start",{producer:__scaleProducer,expectedRevision,refsCount:command.batch?.refs?.length??0});');
+  add('          const indexReader=isNativeVersionIndexed(payload)', '          __scaleStages.rootMs=__scaleDelta(__scaleMono);__scaleFormat=isNativeVersionIndexed(payload)?"VERSION_INDEX":isNativePartitioned(payload)?"PARTITIONED":payload?"FACTS":"ABSENT";__scaleEmit("native-root",{producer:__scaleProducer,revision:payload?.revision??0,format:__scaleFormat,elapsed:__scaleDelta(__scaleMono)});\n          const indexReader=isNativeVersionIndexed(payload)');
+  add('      transaction.oncomplete = () => {','      transaction.oncomplete = () => {__scaleEmit("native-commit",{...__scaleStages,producer:__scaleProducer,revision:result?.revision??expectedRevision,ok:result?.ok===true,replayed:result?.replayed===true,elapsed:__scaleDelta(__scaleMono)});');
+  add('      transaction.onabort = () => {','      transaction.onabort = () => {__scaleEmit("native-abort",{...__scaleStages,producer:__scaleProducer,expectedRevision,format:__scaleFormat,error:__scaleError(result?.reason),elapsed:__scaleDelta(__scaleMono)});');out=prefix+out;
+  add("      const states = transaction.objectStore('native_states')", "      __scaleStages.txMs=__scaleDelta(__scaleMono);const states = transaction.objectStore('native_states')");
+  add('                  const save = (partial, storage = null) => {','                  const save = (partial, storage = null) => {__scaleStages.saveMs=__scaleDelta(__scaleMono);');
+  add('                      const next = reduce(partial);','                      const next = reduce(partial);__scaleStages.reduceMs=__scaleDelta(__scaleMono);');
+  add('                      const publish=()=>{','                      const publish=()=>{__scaleStages.publishMs=__scaleDelta(__scaleMono);');
+  add('                        this.shared.registerNativeReferences(', '                        __scaleStages.sharedMs=__scaleDelta(__scaleMono);this.shared.registerNativeReferences(');
+  add('                          check();result = {ok: true, replayed: false, revision: next.revision, operationId};', '                          __scaleStages.queuedMs=__scaleDelta(__scaleMono);check();result = {ok: true, replayed: false, revision: next.revision, operationId};');
+  add("try{fence(options);await this.migrateVersionIndex(normalized,{operationId:'host_initial_index_'+digest([normalized.key,request.operationId]),expectedRevision:1},options);}catch{/* Keep the actual committed observation result. */}", "const __scaleMigration=__scaleOrdinal(),__scaleMigrationStart=__scaleNow();__scaleEmit('migration-start',{producer:__scaleMigration,expectedRevision:1});try{fence(options);const __scaleMigrationResult=await this.migrateVersionIndex(normalized,{operationId:'host_initial_index_'+digest([normalized.key,request.operationId]),expectedRevision:1},options);__scaleEmit('migration-end',{producer:__scaleMigration,elapsed:__scaleDelta(__scaleMigrationStart),ok:__scaleMigrationResult?.ok===true,revision:__scaleMigrationResult?.revision,error:__scaleError(__scaleMigrationResult?.reason)});}catch{__scaleEmit('migration-end',{producer:__scaleMigration,elapsed:__scaleDelta(__scaleMigrationStart),ok:false,error:'other'});/* Keep the actual committed observation result. */}");
+ }else if(path===TRACE_PATHS[1]){
+  // Trace-only WeakMap associates live window objects with anonymous ordinals.
+  // Refusal: 1=used, 2=capacity, 3=clock. Expiry: 1=clock, 2=deadline, 3=no live reader.
+  add('const views=new Map(),resumes=new Map(),readWindows=new Map();', 'const views=new Map(),resumes=new Map(),readWindows=new Map();const __scaleWindows=new WeakMap();const __scaleWindow=w=>{try{return w?__scaleWindows.get(w):undefined;}catch{return undefined;}};');
+  add('){window.active=false;return false;}', '){__scaleEmit("window-expire",{window:__scaleWindow(window),elapsed:Number.isFinite(at)?Math.max(0,at-(window.until-1000)):null,refusal:!Number.isFinite(at)||at<window.last?1:at>=window.until?2:3});window.active=false;return false;}');
+  add('if(window?.used&&!liveWindow(entry.scopeKey))return;', 'if(window?.used&&!liveWindow(entry.scopeKey)){__scaleEmit("window-refused",{window:__scaleWindow(window),generation:entry.prepareGeneration,refusal:1});return;}');
+  add('if(!window&&readWindows.size>=maxViews)return;', 'if(!window&&readWindows.size>=maxViews){__scaleEmit("window-refused",{generation:entry.prepareGeneration,refusal:2});return;}');
+  add('const at=elapsedNow();if(!Number.isFinite(at))return;', 'const at=elapsedNow();if(!Number.isFinite(at)){__scaleEmit("window-refused",{generation:entry.prepareGeneration,refusal:3});return;}');
+  add('readWindows.set(entry.scopeKey,window);', 'readWindows.set(entry.scopeKey,window);__scaleWindows.set(window,__scaleOrdinal());');
+  add('  entry.readWindow=window;', '  __scaleEmit("window-reserve",{window:__scaleWindow(window),generation:entry.prepareGeneration,shared:[...views.values()].some(value=>value!==entry&&value.readWindow===window),elapsed:Math.max(0,window.last-(window.until-1000))});entry.readWindow=window;');
+  add('if(entry.prepareGeneration!==generation||entry.readWindow!==window)return;entry.awaitingDelivery=false;entry.readWindow=null;liveWindow(entry.scopeKey);', 'if(entry.prepareGeneration!==generation||entry.readWindow!==window){__scaleEmit("window-release",{window:__scaleWindow(window),generation,ok:false});return;}__scaleEmit("window-release",{window:__scaleWindow(window),generation,ok:true});entry.awaitingDelivery=false;entry.readWindow=null;liveWindow(entry.scopeKey);');
+  const versionCheck='if(freshnessChanged||version.nativeRevision!==value.revision||version.revision!==value.workspaceRevision||version.evidenceRevision!==value.evidenceRevision||version.viewRevision!==(entry.persistedViewRevision??value.viewRevision)){';
+  add(versionCheck,versionCheck+'__scaleEmit("view-version-restart",{window:__scaleWindow(entry.readWindow),generation:entry.prepareGeneration,freshnessChanged,nativeChanged:version.nativeRevision!==value.revision,workspaceChanged:version.revision!==value.workspaceRevision,evidenceChanged:version.evidenceRevision!==value.evidenceRevision,viewChanged:version.viewRevision!==(entry.persistedViewRevision??value.viewRevision)});');
+  add('if(entry){entry.prepareGeneration=', 'if(entry){__scaleEmit("view-stop",{generation:entry.prepareGeneration??0,pending:entry.pending===true,error:__scaleError(entry.error)});entry.prepareGeneration=');
+  add('started=elapsedNow();let retries=0;', 'started=elapsedNow();let retries=0;let __scaleLastBusy,__scaleWaitCount=0,__scaleWaitFirst,__scaleWaitLast;const __scaleProducer=__scaleOrdinal();__scaleEmit("view-begin",{producer:__scaleProducer,generation,attempt:1,elapsed:0});');
+  add('if(nativeWritePending(entry.scopeKey)){', 'const __scaleBusy=nativeWritePending(entry.scopeKey);__scaleLastBusy=__scaleBusy;if(__scaleBusy){__scaleWaitCount++;__scaleWaitLast=elapsedNow()-started;__scaleWaitFirst??=__scaleWaitLast;');
+  add('   refreshOwner(entry).then(', '   __scaleEmit("view-run",{producer:__scaleProducer,generation,attempt:retries+1,elapsed:elapsedNow()-started,waitCount:__scaleWaitCount,waitFirstMs:__scaleWaitFirst,waitLastMs:__scaleWaitLast,busy:__scaleLastBusy});refreshOwner(entry).then(');
+  add("entry.pending=false;entry.awaitingDelivery=true;if(elapsedNow()-started>=30000)entry.error='read-budget-exhausted';", "entry.pending=false;entry.awaitingDelivery=true;if(elapsedNow()-started>=30000)entry.error='read-budget-exhausted';__scaleEmit(\"view-terminal\",{producer:__scaleProducer,generation,attempt:retries+1,elapsed:elapsedNow()-started,waitCount:__scaleWaitCount,waitFirstMs:__scaleWaitFirst,waitLastMs:__scaleWaitLast,ok:!entry.error,error:__scaleError(entry.error)});");
+  add("    if(['snapshot-revision-changed','stale-free-page'].includes(error?.message)", "    __scaleEmit(\"view-error\",{producer:__scaleProducer,generation,attempt:retries+1,elapsed:elapsedNow()-started,waitCount:__scaleWaitCount,waitFirstMs:__scaleWaitFirst,waitLastMs:__scaleWaitLast,error:__scaleError(error?.message)});if(['snapshot-revision-changed','stale-free-page'].includes(error?.message)");
+  add('retries++;entry.deferPreparation=queueRetry;', 'retries++;__scaleEmit("view-retry",{producer:__scaleProducer,generation,attempt:retries+1,elapsed:elapsedNow()-started,waitCount:__scaleWaitCount,waitFirstMs:__scaleWaitFirst,waitLastMs:__scaleWaitLast});entry.deferPreparation=queueRetry;');
+  add('entry.pending=false;entry.error=reason(error);', 'entry.pending=false;entry.error=reason(error);__scaleEmit("view-terminal",{producer:__scaleProducer,generation,attempt:retries+1,elapsed:elapsedNow()-started,waitCount:__scaleWaitCount,waitFirstMs:__scaleWaitFirst,waitLastMs:__scaleWaitLast,ok:false,error:__scaleError(entry.error)});');
+  const budget="entry.error='read-budget-exhausted';return;";if(out.split(budget).length!==3)throw Error('scale-trace-anchor-mismatch');out=out.replaceAll(budget,"entry.error='read-budget-exhausted';__scaleEmit(\"view-terminal\",{producer:__scaleProducer,generation,attempt:retries+1,elapsed:elapsedNow()-started,waitCount:__scaleWaitCount,waitFirstMs:__scaleWaitFirst,waitLastMs:__scaleWaitLast,ok:false,error:'read-budget-exhausted'});return;");
+  add("entry.error='read-budget-exhausted';releaseRead(entry);completed();entry.owner.invalidate();", "entry.error='read-budget-exhausted';__scaleEmit('view-terminal',{producer:__scaleProducer,generation,attempt:retries+1,elapsed:elapsedNow()-started,waitCount:__scaleWaitCount,waitFirstMs:__scaleWaitFirst,waitLastMs:__scaleWaitLast,ok:false,error:'read-budget-exhausted'});releaseRead(entry);completed();entry.owner.invalidate();");
+ }else if(path===TRACE_PATHS[2]){
+  add('const surfaceAccepted=new Map(),surfaceFailed=new Map();','let __scaleAdapter=0,__scaleStatsOwner=null,__scaleStats=null,__scalePass=0,__scaleFragments=0,__scaleCandidates=0;const surfaceAccepted=new Map(),surfaceFailed=new Map();');
+  add('surfacePage=0;surfaceScanning=true;', 'surfacePage=0;surfaceScanning=true;__scalePass=__scaleOrdinal();__scaleStats=__scalePassStats(__scalePass);__scaleStatsOwner=pass;__scaleFragments=0;__scaleCandidates=0;__scaleEmit("pass-start",{producer:__scalePass});');
+  add('if(!surfaceParts.length&&(surfaceScanning||surfaceWanted))schedule();','if(!surfaceParts.length&&!surfaceScanning)__scaleEmit("pass-drained",{producer:__scalePass,pages:surfacePage,fragments:__scaleFragments,candidates:__scaleCandidates});if(!surfaceParts.length&&(surfaceScanning||surfaceWanted))schedule();');
+  add("if(p.kind==='surface-delta'){surfaceParts.shift();", "if(p.kind==='surface-delta'){__scaleFragments++;__scaleCandidates+=p.payload.candidates.length;surfaceParts.shift();if(!surfaceParts.length&&!surfaceScanning)__scaleEmit(\"pass-complete\",{producer:__scalePass,pages:surfacePage,fragments:__scaleFragments,candidates:__scaleCandidates});");
+  add('const found=page?discovery.scanPage(surfaceCursor):null,payload=', 'let found=null;const __scaleScanStats=__scaleStats,__scaleScanStart=__scaleNow();try{found=page?discovery.scanPage(surfaceCursor):null;}finally{if(page)__scaleAdd(__scaleScanStats,"scan",__scaleScanStart);}const payload=');
+  add('surfaceKey=publicationKey(source);', 'const __scaleSplitStats=__scaleStats,__scaleSplitStart=__scaleNow();try{surfaceKey=publicationKey(source);');
+  add('surfaceParts=splitSurfacePayload(source.payload,source);', 'surfaceParts=splitSurfacePayload(source.payload,source);}finally{__scaleAdd(__scaleSplitStats,"split",__scaleSplitStart);}');
+  add('  const send=async()=>{', '  const __scaleSendStats=p.kind==="surface-delta"?__scaleStats:null;const send=async()=>{');
+  add("let ack;try{ack=await track(()=>emit(p,budget));}catch{return finish(remaining()<=0?'host-observation-retry-budget':'host-observation-ack-unknown');}", "let ack;const __scaleEmitStart=__scaleNow();try{try{ack=await track(()=>emit(p,budget));}finally{__scaleAdd(__scaleSendStats,'emit',__scaleEmitStart);}}catch{return finish(remaining()<=0?'host-observation-retry-budget':'host-observation-ack-unknown');}");
+  add("   if(ack?.localSeq!==p.localSeq)", "   if(__scaleSendStats){if(ack?.state==='accepted')__scaleSendStats.accepted++;else if(ack?.state==='duplicate')__scaleSendStats.duplicate++;else if(ack?.state==='retry-after')__scaleSendStats.retry++;else __scaleSendStats.rejected++;if(__scaleSendStats.emitCount%32===0&&__scaleSendStats.samples<8){__scaleSendStats.samples++;__scaleEmit('pass-summary',__scaleSendStats);}}if(ack?.localSeq!==p.localSeq)");
+  add('if(surfaceEpoch!==surfaceSnapshotEpoch){if(pausedSurface)pausedSurface.invalidated=true;if(pass)pass.invalidated=true;', "if(surfaceEpoch!==surfaceSnapshotEpoch){if(pausedSurface)pausedSurface.invalidated=true;if(__scaleStats)__scaleEmit('pass-summary',{...__scaleStats,ok:false});__scaleStats=null;__scaleStatsOwner=null;if(pass)pass.invalidated=true;");
+  add('terminal:false,invalidated:false};pass=entry;', 'terminal:false,invalidated:false};__scaleStats=null;__scaleStatsOwner=null;pass=entry;');
+  add("surfaceRetryWanted=false;nativePrepareAt=null;idleRevision++;finishPass('cancel');", "surfaceRetryWanted=false;nativePrepareAt=null;idleRevision++;finishPass('cancel');__scaleStats=null;__scaleStatsOwner=null;");
+  add('  if(entry.terminal)return;entry.terminal=true;', "  if(entry.terminal)return;entry.terminal=true;if(__scaleStats&&__scaleStatsOwner===entry){__scaleEmit('pass-summary',{...__scaleStats,ok:phase==='end'});__scaleStats=null;__scaleStatsOwner=null;}");
+  add('     if(!surfaceScanning){for(const cache', '     try{__scaleEmit("surface-page-decision",{adapterOrdinal:__scaleAdapter,producer:__scaleStats?.producer??0,pageOrdinal:surfacePageKey,equalAcceptedKey:surfaceKey===surfaceAccepted.get(surfacePageKey),detachedCount:source.payload.detachedHandles.length,publishDecision:surfaceParts.length>0});}catch{}\n     if(!surfaceScanning){for(const cache');
+  add("failedKey.delete('current-object');requestScan(true,true,true);return true;", "failedKey.delete('current-object');__scaleEmit('scan-cause',{adapterOrdinal:__scaleAdapter,renewalCause:true});requestScan(true,true,true);return true;");
+  add('url=document.location.href;stopped=false;', 'url=document.location.href;stopped=false;__scaleAdapter=__scaleOrdinal();__scaleEmit("adapter-start",{adapterOrdinal:__scaleAdapter});');
+  add("surfaceRetryWanted=false;nativePrepareAt=null;idleRevision++;finishPass('cancel');__scaleStats=null;__scaleStatsOwner=null;", "surfaceRetryWanted=false;nativePrepareAt=null;idleRevision++;finishPass('cancel');__scaleStats=null;__scaleStatsOwner=null;__scaleEmit('adapter-stop',{adapterOrdinal:__scaleAdapter,wasLive:!stopped});");
+  add('  requestScan(owned,true,owned);', "  __scaleEmit('scan-cause',{adapterOrdinal:__scaleAdapter,toggleCause:true,ownedToggle:owned});requestScan(owned,true,owned);");
+  add('  if(surfaceChanged)requestScan();else schedule();', "  if(surfaceChanged){__scaleEmit('scan-cause',{adapterOrdinal:__scaleAdapter,mutationCause:true});requestScan();}else schedule();");
+  add("document.defaultView.addEventListener('hashchange',requestScan);if(profile.sidebarBoundary)document.defaultView.addEventListener('resize',requestScan);requestScan(true);", "document.defaultView.addEventListener('hashchange',requestScan);if(profile.sidebarBoundary)document.defaultView.addEventListener('resize',requestScan);__scaleEmit('scan-cause',{adapterOrdinal:__scaleAdapter,initialCause:true});requestScan(true);");
+ }else if(path===TRACE_PATHS[3]){
+  // Monotonic cumulative offsets, not CPU times. Null means a phase was not
+  // reached (including the compatible-snapshot path); one terminal per refresh.
+  add('  budget.begin();','  const __scaleReplica=__scaleOrdinal(),__scaleReplicaStart=__scaleNow(),__scaleReplicaStages={headerMs:null,pagesMs:null,assembleMs:null,snapshotMs:null,indexMs:null,versionMs:null};let __scaleReplicaOK=false;budget.begin();');
+  add('   const header=reply.header;','   __scaleReplicaStages.headerMs=__scaleDelta(__scaleReplicaStart);const header=reply.header;');
+  add('   check();let candidate=replica,snapshot,index=published?.index??cachedIndex;','   __scaleReplicaStages.pagesMs=__scaleDelta(__scaleReplicaStart);check();let candidate=replica,snapshot,index=published?.index??cachedIndex;');
+  add('candidate=await assembleFreeReplicaAsync(replica,header,pages,plan,valid);snapshot=freeNavigationSnapshot(candidate.snapshot);','candidate=await assembleFreeReplicaAsync(replica,header,pages,plan,valid);__scaleReplicaStages.assembleMs=__scaleDelta(__scaleReplicaStart);snapshot=freeNavigationSnapshot(candidate.snapshot);__scaleReplicaStages.snapshotMs=__scaleDelta(__scaleReplicaStart);');
+  add('index=(!plan.full&&index?await index.rebindCompatibleAsync(snapshot,snapshot.groups,valid):null)??await currentIndexAsync(snapshot,snapshot.groups,valid,!plan.full?index:null);','index=(!plan.full&&index?await index.rebindCompatibleAsync(snapshot,snapshot.groups,valid):null)??await currentIndexAsync(snapshot,snapshot.groups,valid,!plan.full?index:null);__scaleReplicaStages.indexMs=__scaleDelta(__scaleReplicaStart);');
+  add('   check();const version=await request(()=>readService.version(bound,options));check();','   if(__scaleReplicaStages.snapshotMs===null)__scaleReplicaStages.snapshotMs=__scaleDelta(__scaleReplicaStart);check();const version=await request(()=>readService.version(bound,options));check();__scaleReplicaStages.versionMs=__scaleDelta(__scaleReplicaStart);');
+  add('published=Object.freeze({snapshot,index});projectionWithdrawn=false;return published;','published=Object.freeze({snapshot,index});projectionWithdrawn=false;__scaleReplicaOK=true;return published;');
+  add('}).finally(()=>{budget.complete();','}).finally(()=>{__scaleEmit("replica-terminal",{...__scaleReplicaStages,producer:__scaleReplica,ok:__scaleReplicaOK,elapsed:__scaleDelta(__scaleReplicaStart)});budget.complete();');
+ }else if(path===TRACE_PATHS[4]){
+  // Observe the exact original async call and DTO. No new awaits or error
+  // conversion; the terminal finally also runs when an original await rejects.
+  add('      freePage:async(scope,query,options)=>{','      freePage:async(scope,query,options)=>{const __scalePage=__scaleOrdinal(),__scalePageStart=__scaleNow(),__scalePageStages={pageReadsMs:null,pageProjectionMs:null};let __scalePageOK=false;const __scalePageCounts={};try{');
+  add('        const {state}=context,knownState=', '        __scalePageStages.pageReadsMs=__scaleDelta(__scalePageStart);try{for(const [key,field]of [["selectedProjects","selectedProjectsCount"],["selectedRefs","selectedRefsCount"]]){const rows=Object.getOwnPropertyDescriptor(page,key)?.value;if(Array.isArray(rows))__scalePageCounts[field]=Object.getOwnPropertyDescriptor(rows,"length")?.value;}}catch{}const {state}=context,knownState=');
+  add('        return {calibrationDeadlines:deadlines(page.facts.sources','        const __scalePageResult={calibrationDeadlines:deadlines(page.facts.sources');
+  add('          offset:page.offset,total:page.total,nextOffset:page.nextOffset,workspaceRevision:state.revision,evidenceRevision:`${state.revision}:${stored.revision}`};','          offset:page.offset,total:page.total,nextOffset:page.nextOffset,workspaceRevision:state.revision,evidenceRevision:`${state.revision}:${stored.revision}`};__scalePageStages.pageProjectionMs=__scaleDelta(__scalePageStart);__scalePageOK=true;return __scalePageResult;}finally{__scaleEmit("page-terminal",{...__scalePageStages,...__scalePageCounts,producer:__scalePage,ok:__scalePageOK,elapsed:__scaleDelta(__scalePageStart)});}');
+ }else if(path===TRACE_PATHS[5]){
+  // Cumulative offsets from owner.run entry, including scheduling. They are
+  // not exclusive CPU time; null means that the original path never reached it.
+  add('  let request,newBatchProof=null,batchCommitted=false;', '  const __scaleOwner=__scaleOrdinal(),__scaleOwnerStart=__scaleNow(),__scaleOwnerPhases={ownerFirstVerifyMs:null,ownerFrameMs:null,ownerPageMs:null,ownerSecondVerifyMs:null,ownerApplyMs:null,ownerPublishedMs:null};let request,newBatchProof=null,batchCommitted=false;');
+  add("   if(!await handshake.verify(proposal,sender))return rejected('invalid-host-document');", "   if(!await handshake.verify(proposal,sender))return rejected('invalid-host-document');__scaleOwnerPhases.ownerFirstVerifyMs=__scaleDelta(__scaleOwnerStart);");
+  add("   const actual=await getFrame({tabId:sender.tab.id,frameId:0});\n   if(!handshake.matchesFrame(proposal,sender,actual))", "   const actual=await getFrame({tabId:sender.tab.id,frameId:0});__scaleOwnerPhases.ownerFrameMs=__scaleDelta(__scaleOwnerStart);\n   if(!handshake.matchesFrame(proposal,sender,actual))");
+  add('   const {sourceId,generation,sourceRevision}=nativeSourceIncarnation(page.facts.sources,profile);\n   batch=', '   __scaleOwnerPhases.ownerPageMs=__scaleDelta(__scaleOwnerStart);const {sourceId,generation,sourceRevision}=nativeSourceIncarnation(page.facts.sources,profile);\n   batch=');
+  add("   const receiptId='dom_'+digest", "   __scaleOwnerPhases.ownerSecondVerifyMs=__scaleDelta(__scaleOwnerStart);const receiptId='dom_'+digest");
+  add('   if(!result.ok)return result.reason', '   __scaleOwnerPhases.ownerApplyMs=__scaleDelta(__scaleOwnerStart);if(!result.ok)return result.reason');
+  add('   batchCommitted=true;if(combined)', '   __scaleOwnerPhases.ownerPublishedMs=__scaleDelta(__scaleOwnerStart);batchCommitted=true;if(combined)');
+  add('  finally{if(request)admissions.delete(request);if(newBatchProof', '  finally{__scaleEmit("owner-terminal",{producer:__scaleOwner,...__scaleOwnerPhases,elapsed:__scaleDelta(__scaleOwnerStart),ok:batchCommitted});if(request)admissions.delete(request);if(newBatchProof');
+
+  add('   let result;','   const __scalePublication=__scaleOrdinal();try{__scaleEmit("owner-publication",{producer:__scalePublication,nativeChanged,revalidating,combined:!!combined,previousProducerKnown:previous!==undefined,projectsCount:batch.projects.length,refsCount:batch.refs.length,membershipCount:batch.membership.length});}catch{}let result;');
+  add('if(!result.ok)return result.reason', 'try{__scaleEmit("owner-result",{producer:__scalePublication,ok:result.ok===true,revision:result.revision});}catch{}if(!result.ok)return result.reason');
+ }else throw Error('unknown-scale-trace-source');
+ // Optional combined-diagnostic clock uses an epoch sum within each realm.
+ // Existing local stage offsets remain local; bare performance.now is not cross-realm time.
+ const recorder=clockAlignment?once(TRACE_RECORDER,'dropped:s.dropped};',`dropped:s.dropped};try{const now=performance.now(),origin=performance.timeOrigin,epoch=origin+now;if(Number.isFinite(now)&&now>=0&&Number.isFinite(origin)&&origin>=0&&Number.isFinite(epoch)&&epoch>=0&&epoch<=1e15)row.clockEpochMs=epoch;}catch{}`):TRACE_RECORDER;
+ return recorder.replace('__SCALE_REALM__',path===TRACE_PATHS[2]?'content':'worker').replace('__SCALE_CONSOLE__',path===TRACE_PATHS[2]?'console.log("HOST_SCALE_TRACE "+encoded);':'')+out;
+}
+export async function createScaleTracePackage(source,destination,{clockAlignment=false}={}){
+ if(typeof clockAlignment!=='boolean')throw Error('invalid-scale-trace-clock-options');
+ await cp(source,destination,{recursive:true,errorOnExist:true,force:false});const changes=[];
+ for(const path of TRACE_PATHS){const original=await readFile(join(source,path),'utf8'),instrumented=instrumentScaleSource(path,original,{clockAlignment});await writeFile(join(destination,path),instrumented);changes.push({path,originalSha256:hash(original),instrumentedSha256:hash(instrumented)});}
+ const compiled=compileClassicWorker(destination);
+ for(const [path,instrumented] of [['extension/worker.mjs',compiled.entry],['extension/classic-runtime.js',compiled.runtime]]){
+  const original=await readFile(join(source,path),'utf8');await writeFile(join(destination,path),instrumented);
+  changes.push({path,originalSha256:hash(original),instrumentedSha256:hash(instrumented)});
+ }
+ return {unpacked:destination,kind:'DIAGNOSTIC_ONLY_INSTRUMENTED_COPY',limit:1024,maxBytes:131072,changes,authorityChanged:false,originalPackageUntouched:true,...clockAlignment?{clockAlignment:true,buildManifestSha256:hash(await readFile(join(destination,'build-manifest.json')))}:{}};
+}
+export async function verifyScaleTracePackage(trace){
+ const manifestBytes=await readFile(join(trace.unpacked,'build-manifest.json'));
+ if(trace.clockAlignment===true&&hash(manifestBytes)!==trace.buildManifestSha256)throw Error('scale-trace-manifest-changed');
+ const info=JSON.parse(manifestBytes);
+ for(const path of ['extension/worker.mjs','extension/classic-runtime.js'])if(!Object.hasOwn(info.files,path)||trace.changes.filter(row=>row.path===path).length!==1)throw Error('scale-trace-manifest-missing-generated');
+ for(const [path,expected]of Object.entries(info.files)){const changed=trace.changes.find(row=>row.path===path);if(changed&&changed.originalSha256!==expected)throw Error('scale-trace-original-hash-mismatch');if(hash(await readFile(join(trace.unpacked,path)))!==(changed?.instrumentedSha256??expected))throw Error('scale-trace-package-changed');}
+ if(TRACE_PATHS.some(path=>!Object.hasOwn(info.files,path)))throw Error('scale-trace-manifest-missing-source');
+ const compiled=compileClassicWorker(trace.unpacked);if(await readFile(join(trace.unpacked,'extension/worker.mjs'),'utf8')!==compiled.entry||await readFile(join(trace.unpacked,'extension/classic-runtime.js'),'utf8')!==compiled.runtime)throw Error('scale-trace-worker-build-mismatch');
+ return true;
+}
+/** Validate console / worker rows again before adding to the report. */
+export function appendScaleTrace(target,row){
+ try{if(!row||!TRACE_KINDS.includes(row.kind)||!Number.isFinite(row.at)||row.at<0||row.at>1e15)throw Error();
+  for(const [key,value]of Object.entries(row)){if(['kind','at'].includes(key))continue;if(key==='clockEpochMs'){if(!Number.isFinite(value)||value<0||value>1e15)throw Error();continue;}if(key==='realm'){if(!['worker','content'].includes(value))throw Error();continue;}if(!fields.includes(key))throw Error();if(value===null&&phaseFields.includes(key))continue;if(key==='format'){if(!['ABSENT','FACTS','PARTITIONED','VERSION_INDEX'].includes(value))throw Error();}else if(key==='error'){if(!['snapshot-revision-changed','stale-free-page','revision-conflict','read-budget-exhausted','stale-binding','other'].includes(value))throw Error();}else if(typeof value!=='boolean'&&!(typeof value==='number'&&Number.isFinite(value)&&value>=0&&value<=1e15))throw Error();}
+  const bytes=new TextEncoder().encode(JSON.stringify(row)).length;while(target.events.length&&(target.events.length>=1024||target.bytes+bytes>131072)){target.bytes-=new TextEncoder().encode(JSON.stringify(target.events.shift())).length;target.dropped++;}target.events.push(row);target.bytes+=bytes;
+ }catch{target.dropped++;}
+}
+/** Observe only already-existing worker; never wait for or create/warm one. */
+export async function collectScaleWorkerTrace(context,extensionId,{timeout=1000}={}){
+ const deadline=performance.now()+timeout;let timer;
+ try{const workers=context?.serviceWorkers().filter(worker=>worker.url()===`chrome-extension://${extensionId}/extension/worker.mjs`)??[];if(workers.length!==1)return {status:'NO_UNIQUE_EXISTING_WORKER'};
+  const result=await Promise.race([workers[0].evaluate(()=>{const s=globalThis.__vaiwlScaleTrace;return s?{status:'RAM_SNAPSHOT',events:s.events,dropped:s.dropped,bytes:s.bytes,producers:s.producers}:{status:'TRACE_NOT_PRESENT'};}),new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error()),Math.max(0,deadline-performance.now()));})]);
+  if(performance.now()>=deadline)return {status:'DEADLINE'};const clean={status:result?.status==='RAM_SNAPSHOT'?'RAM_SNAPSHOT':'TRACE_NOT_PRESENT',events:[],bytes:0,dropped:0};if(result?.status==='RAM_SNAPSHOT'){for(const row of (Array.isArray(result.events)?result.events:[]).slice(-1024))appendScaleTrace(clean,row);clean.producerDropped=Number.isSafeInteger(result.dropped)&&result.dropped>=0&&result.dropped<=1e9?result.dropped:0;clean.producers=Number.isSafeInteger(result.producers)&&result.producers>=0&&result.producers<=1e9?result.producers:0;}return clean;
+ }catch{return {status:'UNAVAILABLE'};}finally{clearTimeout(timer);}
+}
+
+/** One bounded CPU-end snapshot. Independent of the later failure/final trace.
+ * Epoch ranges support correlation only: no synchronized/continuous coverage claim.
+ * Content is copied synchronously before the one existing-worker RAM read.
+ */
+export async function collectScaleCPUPhaseTrace({trace,context,extensionId,profiles,timeout=1000}={}){
+ if(!Number.isFinite(timeout)||timeout<=0||timeout>1000)throw Error('invalid-cpu-phase-trace-timeout');
+ const stamp=()=>{const monotonicMs=performance.now(),timeOriginMs=performance.timeOrigin;return {wallTimeMs:Date.now(),monotonicMs,timeOriginMs,epochMs:timeOriginMs+monotonicMs};};
+ const requested=stamp(),deadline=requested.monotonicMs+timeout;
+ const result={kind:'DIAGNOSTIC_ONLY_CPU_PHASE_TRACE',acceptance:'NOT_ESTABLISHED',status:'UNAVAILABLE',limit:1024,maxBytes:131072,timeoutMs:timeout,snapshotClock:{requested},snapshotBoundary:'CONTENT_COPY_THEN_ONE_EXISTING_WORKER_READ_NOT_ATOMIC',coverageMeaning:'RECORDED_EVENT_RANGE_INTERSECTION_ONLY_NOT_CONTINUOUS_OR_SYNCHRONIZED',dropDisclosure:'SOURCE_COUNTERS_AND_RETAINED_ROW_COUNTERS_NOT_A_COMPLETE_LOSS_COUNT',events:[],bytes:0,dropped:0};
+ try{
+  if(!Array.isArray(trace?.events)||!Number.isSafeInteger(trace.dropped)||trace.dropped<0||trace.events.length>1024||!Number.isSafeInteger(trace.bytes)||trace.bytes<0||trace.bytes>131072)throw Error();
+  result.content={status:'RAM_SNAPSHOT',dropped:trace.dropped,bytes:trace.bytes};
+  for(const row of trace.events)appendScaleTrace(result,{...row});
+  const remaining=deadline-performance.now();if(remaining<=0){result.status='DEADLINE';return result;}
+  const worker=await collectScaleWorkerTrace(context,extensionId,{timeout:remaining});
+  const {events,...workerInfo}=worker;result.worker=workerInfo;
+  if(worker.status!=='RAM_SNAPSHOT')return result;
+  const rows=[...result.events,...events.map(row=>({...row,realmOrdinal:0}))].sort((a,b)=>a.clockEpochMs-b.clockEpochMs);
+  result.events=[];result.bytes=0;for(const row of rows)appendScaleTrace(result,row);
+  result.profileRanges={};
+  for(const [key,realm,realmOrdinal]of [['workerCPUProfile','worker',0],['nativePageCPUProfile','content',2]]){
+   const bounds=profiles?.[key]?.clockCorrelation,commands=['startRequested','startAcknowledged','stopRequested','stopAcknowledged'].map(k=>bounds?.[k]?.epochMs);
+   const retained=result.events.filter(row=>row.realm===realm&&row.realmOrdinal===realmOrdinal).map(row=>row.clockEpochMs);
+   if(!commands.every(Number.isFinite)||!result.events.every(row=>Number.isFinite(row.clockEpochMs)))throw Error();
+   const commandRangeEpochMs={first:Math.min(...commands),last:Math.max(...commands)},retainedEventRangeEpochMs=retained.length?{first:Math.min(...retained),last:Math.max(...retained)}:null;
+   result.profileRanges[key]={realm,realmOrdinal,retainedEvents:retained.length,commandRangeEpochMs,retainedEventRangeEpochMs,intersectsCommandBounds:retainedEventRangeEpochMs?retainedEventRangeEpochMs.first<=commandRangeEpochMs.last&&retainedEventRangeEpochMs.last>=commandRangeEpochMs.first:null};
+  }
+  result.status=performance.now()<deadline?'CAPTURED':'DEADLINE';
+ }catch{result.status='UNAVAILABLE';}
+ finally{result.snapshotClock.completed=stamp();}
+ return result;
+}

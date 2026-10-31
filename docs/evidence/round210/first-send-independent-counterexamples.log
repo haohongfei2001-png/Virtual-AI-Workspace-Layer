@@ -1,0 +1,23 @@
+✔ audit: completed POST arriving while intent verification awaits is not lost (8.607628ms)
+✔ audit: first-send readbacks obey scope-wide 12 request budget (8.310068ms)
+✔ audit: completion and navigation before intent delivery retain exact correlation (0.909652ms)
+✔ audit: revoke cannot resume pending ACK (0.840908ms)
+✔ audit: second-hop cannot resume pending ACK (0.567826ms)
+✔ audit: grant-change cannot resume pending ACK (0.452733ms)
+✔ audit: epoch-change cannot resume pending ACK (0.515948ms)
+✔ audit: independent owner reconstruction preserves aggregate GET ceiling (4.180848ms)
+✔ audit real handshake delayed IPC success (5.301639ms)
+✔ audit real handshake delayed IPC revoke (0.56353ms)
+✔ audit real handshake delayed IPC second-hop (0.33162ms)
+✔ audit real handshake delayed IPC forged-token (0.309337ms)
+✔ audit real handshake delayed IPC wrong-document (0.275656ms)
+✔ audit real handshake delayed IPC expired (0.27169ms)
+✔ audit: submillisecond POST begins in same Date.now tick as departure (0.783332ms)
+ℹ tests 15
+ℹ suites 0
+ℹ pass 15
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 142.852505

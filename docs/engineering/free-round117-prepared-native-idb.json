@@ -1,0 +1,131 @@
+{
+  "evidence": "REAL_HEADLESS_IDB_SYNTHETIC_NATIVE_BULK_AUDIT",
+  "realChatGPT": "NOT_RUN",
+  "mv3": "NOT_RUN",
+  "preparedIndex": true,
+  "sourceHashes": {
+    "src/data/native-partition-audit.mjs": "e2a2d892346a9de23eed9d646be4ef3db49a6a0dac034d9877dc0cd070639a81",
+    "src/data/native-partitions.mjs": "4e295e042a2e5e3337dddfe1f5928d0f8e920aaab981a7e2f96fcd00ccff60a9",
+    "src/data/native-index-migration.mjs": "5bd952fe558a6b7972b56fde6b8a35063759f44ed5d5ffb6f0857065bbbe9b53",
+    "src/data/native-repository.mjs": "cff865baf77bf282bc3825f1ad28d24986d968cb9b262033030682c6103b2256",
+    "src/data/native-facts.mjs": "b907f43aaab816fb903354cd89cc84ed53aa0030b772f5e7b5faddb89282f6b8",
+    "src/data/hash.mjs": "a2eb9e315c79d9594d625b0d7f114261bd7acc066c7e18ffe27169ab1e57a72d",
+    "src/data/repository.mjs": "7fcd49c80cb6ee3687dcc898895f387965d6e86cf847a158ff7ba1e2becdbe9e",
+    "src/data/schema.mjs": "4a15161852c0c0a9dcc3fab10a984c97929ed9157c33fbc97121711cb41740aa",
+    "tests/free/native-audit-bulk-browser.mjs": "aa076c82c6e2081453751843700e6b22848035a1fc7618da823b145802a11568"
+  },
+  "results": [
+    {
+      "status": "PASS",
+      "mode": "bulk",
+      "refs": 600,
+      "bulkCalls": 600,
+      "keyCalls": 3,
+      "loadedValues": 600,
+      "loadedExtraValues": 0,
+      "scanned": 1199,
+      "scanBound": 1200,
+      "exactPieceGets": 0,
+      "result": {
+        "ok": true,
+        "revision": 3,
+        "operationId": "migrate_bulk"
+      },
+      "proPreserved": true,
+      "otherScopePreserved": true,
+      "rollback": false
+    },
+    {
+      "status": "PASS",
+      "mode": "retained-extra-fallback",
+      "refs": 600,
+      "bulkCalls": 200,
+      "keyCalls": 3,
+      "loadedValues": 200,
+      "loadedExtraValues": 0,
+      "scanned": 1200,
+      "scanBound": 1200,
+      "exactPieceGets": 400,
+      "result": {
+        "ok": true,
+        "revision": 3,
+        "operationId": "migrate_retained-extra-fallback"
+      },
+      "proPreserved": true,
+      "otherScopePreserved": true,
+      "rollback": false
+    },
+    {
+      "status": "PASS",
+      "mode": "tail-checksum",
+      "refs": 600,
+      "bulkCalls": 600,
+      "keyCalls": 3,
+      "loadedValues": 600,
+      "loadedExtraValues": 0,
+      "scanned": 1199,
+      "scanBound": 1200,
+      "exactPieceGets": 0,
+      "result": {
+        "ok": false,
+        "reason": "corrupt-native-record"
+      },
+      "proPreserved": true,
+      "otherScopePreserved": true,
+      "rollback": true
+    },
+    {
+      "status": "PASS",
+      "mode": "tail-missing",
+      "refs": 600,
+      "bulkCalls": 599,
+      "keyCalls": 3,
+      "loadedValues": 599,
+      "loadedExtraValues": 0,
+      "scanned": 1198,
+      "scanBound": 1200,
+      "exactPieceGets": 1,
+      "result": {
+        "ok": false,
+        "reason": "corrupt-native-record"
+      },
+      "proPreserved": true,
+      "otherScopePreserved": true,
+      "rollback": true
+    },
+    {
+      "status": "PASS",
+      "mode": "guard",
+      "refs": 600,
+      "bulkCalls": 256,
+      "keyCalls": 2,
+      "loadedValues": 256,
+      "loadedExtraValues": 0,
+      "scanned": 1024,
+      "scanBound": 1200,
+      "exactPieceGets": 0,
+      "result": {
+        "ok": false,
+        "reason": "stale-binding"
+      },
+      "proPreserved": true,
+      "otherScopePreserved": true,
+      "rollback": true
+    }
+  ],
+  "pageErrors": [],
+  "browser": "155.0.8059.40",
+  "sourceHashesAfter": {
+    "src/data/native-partition-audit.mjs": "e2a2d892346a9de23eed9d646be4ef3db49a6a0dac034d9877dc0cd070639a81",
+    "src/data/native-partitions.mjs": "4e295e042a2e5e3337dddfe1f5928d0f8e920aaab981a7e2f96fcd00ccff60a9",
+    "src/data/native-index-migration.mjs": "5bd952fe558a6b7972b56fde6b8a35063759f44ed5d5ffb6f0857065bbbe9b53",
+    "src/data/native-repository.mjs": "cff865baf77bf282bc3825f1ad28d24986d968cb9b262033030682c6103b2256",
+    "src/data/native-facts.mjs": "b907f43aaab816fb903354cd89cc84ed53aa0030b772f5e7b5faddb89282f6b8",
+    "src/data/hash.mjs": "a2eb9e315c79d9594d625b0d7f114261bd7acc066c7e18ffe27169ab1e57a72d",
+    "src/data/repository.mjs": "7fcd49c80cb6ee3687dcc898895f387965d6e86cf847a158ff7ba1e2becdbe9e",
+    "src/data/schema.mjs": "4a15161852c0c0a9dcc3fab10a984c97929ed9157c33fbc97121711cb41740aa",
+    "tests/free/native-audit-bulk-browser.mjs": "aa076c82c6e2081453751843700e6b22848035a1fc7618da823b145802a11568"
+  },
+  "sourceChangedDuringRun": false,
+  "status": "PASS"
+}

@@ -1,0 +1,200 @@
+import {projectSurfaceFailureReasons,projectClipDiagnostic} from './native-project-surface.mjs';
+import {historyFailureReasons} from './native-history-list.mjs';
+import {nativeFlowFailureReasons,activeLayoutFailureReasons} from './document-flow-layout.mjs';
+import {validMainMountCheck} from './native-flow-diagnostic.mjs';
+import {validHistoryStructureReport,validSidebarStructure,sidebarStructureCoverage} from './history-structure-diagnostic.mjs';
+// Shared fixed frame failures; arbitrary renderer/transport error text stays private.
+export const frameFailureReasons=Object.freeze(['ui-grant-expired','ui-renew-failed','ui-join-failed','ui-port-disconnected','ui-renderer-failed','read-budget-exhausted','frame-preparation-limit','free-frame-page-too-large','frame-view-unavailable','invalid-preparation-response','invalid-frame-view','invalid-search-snippets','invalid-frame-current','invalid-frame-current-ref','invalid-frame-native-selection','invalid-frame-navigation','invalid-frame-presentation','request-timeout']);
+// Latest boundary diagnostics stay in private RAM; public startup fields are historical.
+export const nativeBoundaryFailureReasons=Object.freeze(['missing-or-ambiguous-native-boundary','unsafe-native-home-layout','unsafe-native-history-list','return-slot-outside-native-header','unsafe-native-reading-viewport','overlapping-native-boundary','native-content-occupies-return-slot','unsafe-native-geometry','unsafe-native-project-layout','region-identity-changed','native-region-changed','unavailable']);
+export const foregroundFailureStates=Object.freeze(['invalid-host-document','stale-host-document','scope-not-verified','replayed-sequence','host-refresh-unavailable','host-unavailable','capacity','transport-unavailable','scope-unverified','scope-changed'].map(reason=>'foreground-'+reason));
+export const helloFailureStates=Object.freeze(['transport-unavailable','invalid-binding','invalid-host-hello','invalid-sender','not-current-document','invalidated-during-check','replayed-sequence','capacity','bad-document-token','epoch-capacity','host-document-unavailable','host-unavailable'].map(reason=>'hello-'+reason));
+export const initializationFailureStates=Object.freeze(['preparation','candidates','snippets','navigation','surface','controller'].map(stage=>'initialization-'+stage+'-failed'));
+export const layoutFailureStates=Object.freeze(['layout-history-row-unstable',...historyFailureReasons.map(reason=>'layout-history-'+reason),...projectSurfaceFailureReasons.map(reason=>'layout-project-'+reason),...['missing','capacity','ambiguous','changed','list-not-in-boundary','no-unique-visible','excluded-branch','no-rect','ancestor-limit','hidden-attribute','aria-hidden','display-none','visibility','opacity-zero','check-visibility','unavailable'].map(reason=>'layout-sidebar-'+reason),...['header','reading','composer','navigationSlot','historyList','returnHitRoot','readingViewport'].flatMap(key=>['layout-missing-'+key,'layout-ambiguous-'+key]),...['roots','header-gap','button','hit-root','viewport','reading-root','reading-paint','reading-paint-capacity','reading-paint-budget','reading-paint-opaque','reading-paint-decoration','reading-paint-overlap','protected-regions','header-paint','hit-test','header-layer','region-rect'].map(key=>'layout-geometry-'+key),'layout-geometry-empty','layout-check-failed']);
+// Readiness recovery still requires a fresh complete layout proof; this only
+// identifies failures that may settle after the first bounded preparation.
+export const recoverableLayoutFailure=state=>typeof state==='string'&&(state.startsWith('layout-missing-')||['layout-ambiguous-header','layout-ambiguous-navigationSlot','layout-project-rows','layout-history-row-order','layout-history-row-replaced','layout-history-row-unstable'].includes(state));
+export const surfaceFailureStates=Object.freeze([...nativeFlowFailureReasons,'flow-marker-conflict','recovery-rate-limited','recovery-clock-invalid',...frameFailureReasons.map(reason=>'frame-'+reason),...historyFailureReasons.map(reason=>'unsafe-native-history-list-'+reason),'frame-policy-blocked','frame-resource-failed','frame-script-failed','mount-registration-pending','mount-transport-unavailable','frame-join-rejected','frame-module-pending','frame-join-pending','frame-grant-pending','frame-presentation-pending','geometry-paused','document-stale','binding-expired','grants-incomplete','grants-expired','frames-detached','controller-absent','ui-authority-revoked','close-cancellation-failed','dormant-resume-failed','idle-frame-unavailable','idle-suspend-failed','ui-grant-expired','ui-frame-suspended','session-renew-failed','session-renew-document','session-renew-scope','session-renew-ui-pair','session-renew-local-validity','session-renew-ack','session-renew-adapter','stale-session-renewal','region-identity-changed','native-region-changed','native-geometry-changed','dormant-document-changed','missing-history','missing-header','missing-reading','missing-composer','missing-navigationSlot','missing-or-ambiguous-native-boundary','unsafe-native-home-layout','unsafe-native-history-list','return-slot-outside-native-header','unsafe-native-reading-viewport','overlapping-native-boundary','native-content-occupies-return-slot','unsafe-native-geometry','unsafe-native-project-layout','invalid-return-slot','mount-unavailable','start-failed','unsupported-mount-surface','invalid-mount-inspection','unsafe-mask-region','invalid-mount-rect','unsafe-mask-geometry','invalid-ui-frame-origin','incomplete-dual-surface','mount-registration-denied','stale-mount-registration'].map(reason=>'surface-'+reason));
+const states=new Set([...initializationFailureStates,...foregroundFailureStates,...helloFailureStates,...layoutFailureStates,...surfaceFailureStates,'ready','reading','suspended','dormant','connecting','waiting','verification-required','frame-blocked','layout-failed','hello-failed','adapter-failed','authorization-failed','surface-failed','foreground-failed','unavailable']);
+const exact=(value,keys)=>value!==null&&typeof value==='object'&&!Array.isArray(value)&&Object.getPrototypeOf(value)===Object.prototype&&Reflect.ownKeys(value).length===keys.length&&keys.every(key=>Object.hasOwn(value,key));
+const denseGeometry=value=>Array.isArray(value)&&[0,11].includes(value.length)&&Reflect.ownKeys(value).length===value.length+1&&Array.from({length:value.length},(_,i)=>Object.getOwnPropertyDescriptor(value,String(i))).every(d=>d&&Object.hasOwn(d,'value')&&Number.isSafeInteger(d.value)&&Math.abs(d.value)<=65536);
+// Bounded layout categories or numeric computed inset geometry only; never
+// native text, IDs, URLs, arbitrary CSS, attribute values or credential material.
+export function validLayoutShape(value){
+ if(value&&Object.hasOwn(value,'mainMountCheck')){
+  if(!Object.hasOwn(Object.getOwnPropertyDescriptor(value,'mainMountCheck')??{},'value'))return false;
+  const {mainMountCheck,...rest}=value;
+  return exact(value,[...Object.keys(rest),'mainMountCheck'])&&validMainMountCheck(mainMountCheck)&&(Object.keys(rest).length===0||validLayoutShape(rest));
+ }
+ if(value&&Object.hasOwn(value,'sidebarStructure')){
+  const {sidebarStructure,...rest}=value;
+  // Passive structural evidence does not require a successful UI mount or
+  // navigation batch. Absence of those fields is not an empty inventory.
+  return exact(value,[...Object.keys(rest),'sidebarStructure'])&&validSidebarStructure(sidebarStructure)&&(Object.keys(rest).length===0||validLayoutShape(rest));
+ }
+ if(exact(value,['navigation','delivery','presentation'])&&value.presentation&&Object.hasOwn(value.presentation,'boundary')){
+  const {boundary,...rest}=value.presentation;
+  const hasStage=boundary&&Object.hasOwn(boundary,'projectStage');
+  const stage=hasStage?Object.getOwnPropertyDescriptor(boundary,'projectStage'):null;
+  return (boundary===null||exact(boundary,['phase','reason','key',...(hasStage?['projectStage']:[])])&&['initial','presentation'].includes(boundary.phase)&&nativeBoundaryFailureReasons.includes(boundary.reason)&&[null,'header','reading','composer','readingViewport'].includes(boundary.key)&&(!hasStage||Object.hasOwn(stage,'value')&&projectSurfaceFailureReasons.includes(stage.value)&&['unsafe-native-project-layout','unsafe-native-geometry'].includes(boundary.reason)))&&validLayoutShape({...value,presentation:rest});
+ }
+ if(exact(value,['navigation','delivery','presentation'])&&value.presentation&&Object.hasOwn(value.presentation,'mountFailure')){
+  const descriptor=Object.getOwnPropertyDescriptor(value.presentation,'mountFailure');if(!Object.hasOwn(descriptor,'value'))return false;
+  const {mountFailure,...rest}=value.presentation;
+  return (mountFailure===null||surfaceFailureStates.includes(mountFailure))&&validLayoutShape({...value,presentation:rest});
+ }
+ if(exact(value,['navigation','delivery','presentation'])&&value.presentation&&Object.hasOwn(value.presentation,'layoutGeometry')){
+  const {layoutGeometry,...rest}=value.presentation;
+  if(!denseGeometry(layoutGeometry))return false;
+  const boundedRectangles=[2,3,6,7].every(i=>layoutGeometry?.[i]>=0);
+  return denseGeometry(layoutGeometry)&&(layoutGeometry.length===0||(boundedRectangles&&(rest.layoutRefusal==='control-overlap'&&[1,2,3].includes(layoutGeometry[8])&&layoutGeometry.slice(9).every(n=>n===0||n===1)||rest.layoutRefusal==='control-hit'&&layoutGeometry[8]>=1&&layoutGeometry[8]<=5&&layoutGeometry[9]>=0&&layoutGeometry[9]<=7&&layoutGeometry[10]>=0&&layoutGeometry[10]<=65535)))&&validLayoutShape({...value,presentation:rest});
+ }
+ if(exact(value,['navigation','delivery','presentation'])&&value.presentation&&Object.hasOwn(value.presentation,'layoutRefusal')){
+  const {layoutRefusal,...rest}=value.presentation;
+  return (layoutRefusal===null||activeLayoutFailureReasons.includes(layoutRefusal))&&validLayoutShape({...value,presentation:rest});
+ }
+ if(exact(value,['navigation','delivery','presentation'])&&value.presentation&&Object.hasOwn(value.presentation,'transitions')){
+  const {desiredMode,transitions,...legacy}=value.presentation;
+  const states=['visible','hidden','unavailable'];
+  return ['workspace','reading'].includes(desiredMode)&&Array.isArray(transitions)&&transitions.length<=16&&transitions.every(t=>exact(t,['role','reason','from','to','intentRevision','layoutRevision','elapsedMs'])&&['workspace','sidebar'].includes(t.role)&&['visibility','authority','intent','layout'].includes(t.reason)&&states.includes(t.from)&&states.includes(t.to)&&['intentRevision','layoutRevision','elapsedMs'].every(k=>Number.isSafeInteger(t[k])&&t[k]>=0)&&t.elapsedMs<=86400000)&&validLayoutShape({...value,presentation:legacy});
+ }
+
+ if(exact(value,['navigation','delivery','presentation'])){
+  const p=value.presentation;
+  return validLayoutShape({navigation:value.navigation,delivery:value.delivery})&&(p===null||exact(p,['mode','attempt','registered','frames','grants','workspace','sidebar','geometryPaused','returnPresent'])&&['waiting','workspace','reading','suspended','dormant'].includes(p.mode)&&['not-attempted','showing','show-refused','show-returned','join-exception'].includes(p.attempt)&&['registered','geometryPaused','returnPresent'].every(k=>typeof p[k]==='boolean')&&['workspace','sidebar'].every(k=>p[k]===null||typeof p[k]==='boolean')&&['frames','grants'].every(k=>Number.isInteger(p[k])&&p[k]>=0&&p[k]<=2));
+ }
+
+ if(exact(value,['navigation','delivery'])){
+  const d=value.delivery;
+  return exact(d,['pages','resolvedProjects','resolvedChats','acceptedPackets','acceptedProjects','acceptedChats','rejectedPackets','capped'])&&typeof d.capped==='boolean'&&Object.entries(d).every(([k,v])=>k==='capped'||Number.isSafeInteger(v)&&v>=0&&v<=1000000)&&validLayoutShape({navigation:value.navigation});
+ }
+ if(exact(value,['navigation'])){
+  const n=value.navigation,counts=values=>Array.isArray(values)&&values.every(v=>Number.isInteger(v)&&v>=0&&v<=256);
+  const geometry=(values,lengths)=>Array.isArray(values)&&lengths.includes(values.length)&&values.every(v=>Number.isInteger(v)&&Math.abs(v)<=65536);
+  const topology=rows=>Array.isArray(rows)&&rows.length<=20&&rows.every((r,i)=>Array.isArray(r)&&r.length===3&&Number.isInteger(r[0])&&r[0]>=-1&&r[0]<i&&Number.isInteger(r[1])&&r[1]>=-1&&r[1]<=9&&Number.isInteger(r[2])&&r[2]>=0&&r[2]<=256);
+  return exact(n,['phase','roots','matched','visible','firstOutside','firstClip','memberShape','headingShape','memberReject','rejected','titles','association','candidates','claims'])
+   &&['not-scanned','scanned','accepted','duplicate','rejected','retry-after','failed','scan-failed'].includes(n.phase)
+   &&counts(n.memberReject)&&n.memberReject.length===7&&counts(n.rejected)&&n.rejected.length===11
+   &&topology(n.memberShape)&&topology(n.headingShape)&&geometry(n.firstClip,[0,3])&&geometry(n.firstOutside,[0,6])
+   &&Array.isArray(n.roots)&&n.roots.length===3&&n.roots.every(v=>v===0||v===1)
+   &&counts(['matched','visible','titles','association','candidates','claims'].map(k=>n[k]));
+ }
+ if(exact(value,['projectClip']))return typeof value.projectClip==='string'&&(['inset','rect','xywh','circle','ellipse','polygon','path','url','shape','border-box','padding-box','content-box','margin-box','fill-box','stroke-box','view-box','empty','unavailable','other'].includes(value.projectClip)||projectClipDiagnostic(value.projectClip).projectClip===value.projectClip);
+ return exact(value,['counts','branches'])&&Array.isArray(value.counts)&&value.counts.length===7&&value.counts.every(n=>Number.isInteger(n)&&n>=0&&n<=33)&&Array.isArray(value.branches)&&value.branches.length<=12&&value.branches.every(row=>Array.isArray(row)&&row.length===6&&['DIV','STYLE','SCRIPT','TEMPLATE','FOOTER','BUTTON','OTHER'].includes(row[0])&&row.slice(1,5).every(v=>typeof v==='boolean')&&Number.isInteger(row[5])&&row[5]>=0&&row[5]<=33);
+}
+/** Numeric local pipeline snapshot; no identities, query or row content. */
+export function validLocalPipeline(p){
+ if(exact(p,['storage','nativeRevision','projects','refs','lastWorkspaceDelivery','workspaceReceipt'])){
+  const {workspaceReceipt:r,...rest}=p;
+  return validLocalPipeline(rest)&&(r===null||exact(r,['deliveryId','phase','cards','rows'])&&Number.isSafeInteger(r.deliveryId)&&r.deliveryId>0&&['sent','received','rendered'].includes(r.phase)&&['cards','rows'].every(k=>r.phase==='rendered'?Number.isInteger(r[k])&&r[k]>=0&&r[k]<=4096:r[k]===null));
+ }
+
+ const num=v=>Number.isSafeInteger(v)&&v>=0,optional=v=>v===null||num(v),pair=v=>Array.isArray(v)&&v.length===2&&v.every(optional);
+ if(!exact(p,['storage','nativeRevision','projects','refs','lastWorkspaceDelivery'])||!['session','personal'].includes(p.storage)||!num(p.nativeRevision)||![p.projects,p.refs].every(optional))return false;
+ const d=p.lastWorkspaceDelivery;
+ return d===null||exact(d,['versions','segment','inventory','groups','noProject','unknown'])&&Array.isArray(d.versions)&&d.versions.length===4&&d.versions.every((v,i)=>optional(v)||i===2&&pair(v))&&optional(d.segment)&&['inventory','groups','noProject','unknown'].every(k=>pair(d[k]));
+}
+// A cached presentation may not silently include a native-tree diagnostic.
+const validPassiveLayout=value=>value!==null&&typeof value==='object'&&!Object.hasOwn(value,'sidebarStructure')&&!Object.hasOwn(value,'mainMountCheck')&&validLayoutShape(value);
+/** Passive isolated-world status. This is not an authority or recovery channel. */
+export function installLocalStatus({runtime,readState,readLayout=()=>null,readPresentation=()=>null,observeHistory=null}){
+ const listener=(message,sender,reply)=>{
+  if(exact(message,['v','type'])&&message.v===1&&message.type==='HOST_LOCAL_HISTORY_STRUCTURE'&&sender?.id===runtime.id&&sender?.url===runtime.getURL('status.html')&&sender.tab===undefined&&observeHistory){
+   Promise.resolve().then(observeHistory).then(report=>reply({v:1,report:validHistoryStructureReport(report)?report:null}),()=>reply({v:1,report:null}));return true;
+  }
+  if(!exact(message,['v','type'])||message.v!==1||!['HOST_LOCAL_STATUS','HOST_LOCAL_LAYOUT','HOST_LOCAL_PRESENTATION'].includes(message.type)||sender?.id!==runtime.id||sender?.url!==runtime.getURL('status.html')||sender.tab!==undefined)return;
+  if(message.type==='HOST_LOCAL_LAYOUT'||message.type==='HOST_LOCAL_PRESENTATION'){const passive=message.type==='HOST_LOCAL_PRESENTATION';let shape=null;try{const value=(passive?readPresentation:readLayout)();if((passive?validPassiveLayout:validLayoutShape)(value))shape=value;}catch{}reply({v:1,shape});return;}
+  let state='unavailable';try{const value=readState();if(states.has(value))state=value;}catch{}
+  reply({v:1,state});
+ };
+ runtime.onMessage.addListener(listener);
+ return ()=>runtime.onMessage.removeListener(listener);
+}
+/** One local query. Browser URL stays in memory for document binding only;
+ * no page content, permissions, authentication or retry. */
+export function readActiveLocalStatus({tabs,webNavigation=null,schedule=setTimeout,cancel=clearTimeout,onFailure=()=>{},onTarget=()=>{},onProbeTarget=()=>{}}){
+ return new Promise(resolve=>{
+  let stage='query',settled=false,timer,target=null,documentId=null,documentURL=null;const failure=code=>{try{onFailure(code);}catch{}};const finish=value=>{if(settled)return;settled=true;cancel(timer);resolve(value);};
+  timer=schedule(()=>{failure('timeout');finish('unavailable');},1000);
+  Promise.resolve().then(()=>tabs.query({active:true,currentWindow:true})).then(async rows=>{
+   if(settled)return;
+   if(!Array.isArray(rows)||rows.length!==1||!Number.isSafeInteger(rows[0]?.id)||rows[0].id<0){failure('tab-unavailable');finish('unavailable');return;}
+   target=rows[0].id;
+   if(webNavigation){
+    stage='frame';const frame=await webNavigation.getFrame({tabId:target,frameId:0});if(settled)return;
+    if(typeof frame?.documentId!=='string'||!frame.documentId||frame.documentLifecycle!=='active'){failure('document-unavailable');finish('unavailable');return;}
+    documentId=frame.documentId;documentURL=frame.url;
+   }
+   if(documentId)try{onProbeTarget({tabId:target,documentId,url:documentURL});}catch{}
+   stage='send';const reply=await tabs.sendMessage(target,{v:1,type:'HOST_LOCAL_STATUS'},documentId?{documentId}:{frameId:0});
+   if(settled)return;
+   if(documentId){stage='frame';const check=await webNavigation.getFrame({tabId:target,frameId:0});if(settled)return;if(check?.documentId!==documentId||check.url!==documentURL||check.documentLifecycle!=='active'){failure('document-changed');finish('unavailable');return;}}
+   if(documentId)try{onTarget({tabId:target,documentId,url:documentURL});}catch{}
+   return reply;
+  }).then(value=>{if(settled)return;const valid=exact(value,['v','state'])&&value.v===1&&states.has(value.state);if(!valid)failure('invalid-reply');finish(valid?value.state:'unavailable');},error=>{if(settled)return;
+   // Inspect only known platform error strings in memory; never return raw text.
+   const text=typeof error?.message==='string'?error.message:'';
+   const code=stage==='query'?'tab-query-failed':stage==='frame'?'document-query-failed':text.includes('Receiving end does not exist')?'receiver-unavailable':text.includes('message port closed')||text.includes('message channel closed')?'receiver-disconnected':text.includes('No tab with id')?'tab-closed':'transport-error';
+   failure(code);finish('unavailable');});
+ });
+}
+
+/** Optional same-document layout failure shape, with the same private sender gate. */
+export function readActiveLocalLayout({tabs,webNavigation=null,target=null,presentationOnly=false,schedule=setTimeout,cancel=clearTimeout}){
+ if(typeof presentationOnly!=='boolean'||presentationOnly&&(!target||!webNavigation||typeof target.documentId!=='string'||!target.documentId||typeof target.url!=='string'||!target.url))return Promise.resolve(null);
+ return new Promise(resolve=>{
+  let settled=false,timer;const finish=value=>{if(settled)return;settled=true;cancel(timer);resolve(value);};
+  timer=schedule(()=>finish(null),1000);
+  Promise.resolve().then(()=>target?[{id:target.tabId}]:tabs.query({active:true,currentWindow:true})).then(async rows=>{
+   if(settled)return;
+   if(!Array.isArray(rows)||rows.length!==1||!Number.isSafeInteger(rows[0]?.id)||rows[0].id<0){finish(null);return;}
+   const current=async()=>{if(!target)return true;if(!webNavigation)return false;const frame=await webNavigation.getFrame({tabId:target.tabId,frameId:0});return frame?.documentId===target.documentId&&frame.url===target.url&&frame.documentLifecycle==='active';};
+   if(!await current()||settled){finish(null);return;}
+   const result=await tabs.sendMessage(rows[0].id,{v:1,type:presentationOnly?'HOST_LOCAL_PRESENTATION':'HOST_LOCAL_LAYOUT'},target?{documentId:target.documentId}:{frameId:0});
+   return !settled&&await current()?result:null;
+  }).then(r=>{if(!settled)finish(exact(r,['v','shape'])&&r.v===1&&(presentationOnly?validPassiveLayout:validLayoutShape)(r.shape)?r.shape:null);},()=>finish(null));
+ });
+}
+
+/** Independent bootstrap probe, bound to the exact document sampled above.
+ * It cannot bootstrap, inject, retry, authorize, or change the page. */
+export async function readLocalBoot({tabs,webNavigation,target,schedule=setTimeout,cancel=clearTimeout}){
+ if(!target||!webNavigation)return null;
+ let active=true,timer;
+ const current=async()=>{const frame=await webNavigation.getFrame({tabId:target.tabId,frameId:0});return active&&frame?.documentId===target.documentId&&frame.url===target.url&&frame.documentLifecycle==='active';};
+ const work=async()=>{
+  if(!await current())return null;
+  const r=await tabs.sendMessage(target.tabId,{v:1,type:'HOST_LOCAL_BOOT'},{documentId:target.documentId});
+  if(!await current())return null;
+  return exact(r,['v','stage','build'])&&r.v===1&&['module-loading','module-loaded','module-load-failed'].includes(r.stage)&&typeof r.build==='string'&&/^[a-f0-9]{64}$/.test(r.build)?r:null;
+ };
+ try{return await Promise.race([work(),new Promise(resolve=>{timer=schedule(()=>resolve(null),1000);})]);}catch{return null;}finally{active=false;cancel(timer);}
+}
+
+/** Export only the already collected sidebar snapshot. The final browser
+ * document check binds boot and geometry without exporting its URL or IDs.
+ * This is transport continuity, never an account/Workspace confirmation. */
+export async function createSidebarSnapshot({webNavigation,target,boot,shape,schedule=setTimeout,cancel=clearTimeout}){
+ if(!target||!webNavigation||!exact(boot,['v','stage','build'])||boot.v!==1||boot.stage!=='module-loaded'||typeof boot.build!=='string'||!/^[a-f0-9]{64}$/.test(boot.build)||!validSidebarStructure(shape?.sidebarStructure))return null;
+ let timer;
+ try{
+  const frame=await Promise.race([webNavigation.getFrame({tabId:target.tabId,frameId:0}),new Promise(resolve=>{timer=schedule(()=>resolve(null),1000);})]);
+  if(frame?.documentId!==target.documentId||frame?.url!==target.url||frame?.documentLifecycle!=='active')return null;
+  const path=new URL(target.url).pathname;
+  const route=path==='/'?'home':/^\/g\/[^/]+\/project\/?$/.test(path)?'project':/\/c\/[^/]+\/?$/.test(path)?'conversation':'other';
+  return {schema:'vaiwl-sidebar-snapshot-v1',build:boot.build,documentBinding:'verified-at-capture-not-account-identity',route,coverage:sidebarStructureCoverage(shape.sidebarStructure),sidebarStructure:structuredClone(shape.sidebarStructure)};
+ }catch{return null;}finally{cancel(timer);}
+}
+
+/** Existing popup transport and runtime fingerprint, with no new page scan.
+ * Complete refers only to the selected refused path, not the whole main DOM. */
+export async function createMainMountSnapshot({webNavigation,target,boot,shape,schedule=setTimeout,cancel=clearTimeout}){
+ if(!target||!webNavigation||!exact(boot,['v','stage','build'])||boot.v!==1||boot.stage!=='module-loaded'||typeof boot.build!=='string'||!/^[a-f0-9]{64}$/.test(boot.build)||!validMainMountCheck(shape?.mainMountCheck))return null;
+ let timer;
+ try{
+  const url=new URL(target.url);if(url.pathname!=='/'||url.search||url.hash)return null;
+  const frame=await Promise.race([webNavigation.getFrame({tabId:target.tabId,frameId:0}),new Promise(resolve=>{timer=schedule(()=>resolve(null),1000);})]);
+  if(frame?.documentId!==target.documentId||frame?.url!==target.url||frame?.documentLifecycle!=='active')return null;
+  return {schema:'vaiwl-main-mount-snapshot-v1',build:boot.build,documentBinding:'verified-at-capture-not-account-identity',route:'home',scope:'first-preflight-path-and-landmarks-only',mainMountCheck:structuredClone(shape.mainMountCheck)};
+ }catch{return null;}finally{cancel(timer);}
+}

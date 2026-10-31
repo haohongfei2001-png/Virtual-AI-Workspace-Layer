@@ -1,0 +1,29 @@
+diff --git a/extension/build.mjs b/extension/build.mjs
+index 85cc4d5..25258c8 100644
+--- a/extension/build.mjs
++++ b/extension/build.mjs
+@@ -22,9 +22,10 @@ export function buildHost(output,{offlineOrigin=null,offlineSnippets=false,offli
+  const entries=['extension/worker.mjs','extension/content-entry.mjs','extension/workspace.mjs','extension/sidebar.mjs'],modules=closure(entries),publicModules=closure(entries.slice(1));
+  modules.set('extension/config.mjs','export const HOST_CONFIG=Object.freeze('+JSON.stringify({origin,scopeProfile,...(offlineOldSendTerminal?{offlineOldSendTerminal:true}:{}),...(offlineFirstSend?{offlineFirstSend:true,currentMetadataReadEnabled:true,sendCandidatesEnabled:true,sendAckProfile:{id:'loopback-first-send-ack',revision:1,providerProfile:'chatgpt-session-v1',ack:{kind:'authenticated-message-readback',acceptedStates:['fixture-accepted']}}}:{}),...(offlineExistingSend?{currentMetadataReadEnabled:true,sendCandidatesEnabled:true,sendAckProfile:{id:'loopback-existing-send-ack',revision:1,providerProfile:'chatgpt-session-v1',ack:{kind:'authenticated-message-readback',acceptedStates:['fixture-accepted']}}}:{}),...(offlineContext?{sessionProfile:{structures:{personal:'personal',workspace:'organization'},currentConversationContextHeader:true,currentConversationRosterContext:true}}:{}),...(offlineSnippets?{offlineSnippets:true}:{}),...(offlineHistory?{offlineHistory:true,currentMetadataReadEnabled:true,sendCandidatesEnabled:true,historicalSendProfile:OFFLINE_HISTORY_PROFILE}:{})})+');\n');
+  const match=offlineOrigin===null?'https://chatgpt.com/*':'http://127.0.0.1/*';
+- const manifest={manifest_version:3,name:'VAIWL Free Host — development',version:'0.3.0',minimum_chrome_version:'120',permissions:offlineContext||offlineFirstSend?['webNavigation','webRequest']:['webNavigation'],host_permissions:[match],background:{service_worker:'extension/worker.mjs',type:'module'},content_scripts:[{matches:[match],js:['content.js'],run_at:'document_idle',all_frames:false}],web_accessible_resources:[{resources:['workspace.html','sidebar.html',...publicModules.keys()].sort(),matches:[match]}],content_security_policy:{extension_pages:`script-src 'self'; object-src 'none'; connect-src ${origin}`}};
++ const manifest={manifest_version:3,name:'VAIWL Free Host — development',version:'0.3.0',minimum_chrome_version:'120',permissions:offlineContext||offlineFirstSend?['webNavigation','webRequest']:['webNavigation'],host_permissions:[match],background:{service_worker:'extension/worker.mjs',type:'module'},content_scripts:[{matches:[match],js:['extension/wake.js'],run_at:'document_start',all_frames:false},{matches:[match],js:['content.js'],run_at:'document_idle',all_frames:false}],web_accessible_resources:[{resources:['workspace.html','sidebar.html',...publicModules.keys()].sort(),matches:[match]}],content_security_policy:{extension_pages:`script-src 'self'; object-src 'none'; connect-src ${origin}`}};
+  const files=new Map(modules);files.set('content.js',"void import(chrome.runtime.getURL('extension/content-entry.mjs')).catch(()=>{});\n");
+  const sources=closure(entries);
++ const wakePath='extension/wake.js',wake=readFileSync(resolve(root,wakePath),'utf8');files.set(wakePath,wake);sources.set(wakePath,wake);
+  const shellPath='extension/frame-shell.css',shell=readFileSync(resolve(root,shellPath),'utf8');files.set(shellPath,shell);sources.set(shellPath,shell);
+  for(const role of ['workspace','sidebar']){const path='extension/'+role+'.html',source=readFileSync(resolve(root,path),'utf8');files.set(role+'.html',source);sources.set(path,source);}
+  files.set('manifest.json',json(manifest));
+diff --git a/extension/package.mjs b/extension/package.mjs
+index 5333890..940030c 100644
+--- a/extension/package.mjs
++++ b/extension/package.mjs
+@@ -12,7 +12,7 @@ export function verifyHost(unpacked){
+  if(info.schema!=='vaiwl-host-build-v1'||!['HOST_IMPLEMENTATION_UNVERIFIED','OFFLINE_HOST_RECONSTRUCTION'].includes(info.status)||info.releaseStatus!=='NOT_RELEASE_READY'||info.realChatGPT!=='NOT_RUN')throw Error('invalid-host-package-boundary');
+  const match=info.status==='OFFLINE_HOST_RECONSTRUCTION'?'http://127.0.0.1/*':'https://chatgpt.com/*';
+ 
+- if(manifest.manifest_version!==3||manifest.background?.service_worker!=='extension/worker.mjs'||JSON.stringify(manifest.permissions)!==JSON.stringify(info.offlineContext===true||info.offlineFirstSend===true?['webNavigation','webRequest']:['webNavigation'])||JSON.stringify(manifest.host_permissions)!==JSON.stringify([match])||JSON.stringify(manifest.content_scripts?.map(value=>value.matches))!==JSON.stringify([[match]]))throw Error('invalid-host-package-permissions');
++ if(manifest.manifest_version!==3||manifest.background?.service_worker!=='extension/worker.mjs'||JSON.stringify(manifest.permissions)!==JSON.stringify(info.offlineContext===true||info.offlineFirstSend===true?['webNavigation','webRequest']:['webNavigation'])||JSON.stringify(manifest.host_permissions)!==JSON.stringify([match])||JSON.stringify(manifest.content_scripts)!==JSON.stringify([{matches:[match],js:['extension/wake.js'],run_at:'document_start',all_frames:false},{matches:[match],js:['content.js'],run_at:'document_idle',all_frames:false}]))throw Error('invalid-host-package-permissions');
+  const expected=Object.keys(info.files).sort();if(JSON.stringify(files(root).filter(name=>name!=='build-manifest.json'))!==JSON.stringify(expected))throw Error('unexpected-host-package-files');
+  for(const name of expected){if(name.startsWith('/')||name.split('/').includes('..')||name.includes('\\')||!name)throw Error('invalid-host-package-path');if(sha(readFileSync(join(root,name)))!==info.files[name])throw Error('host-package-hash-mismatch:'+name);}
+  const offline=info.status==='OFFLINE_HOST_RECONSTRUCTION',origin=new URL(info.origin);

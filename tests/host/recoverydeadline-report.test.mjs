@@ -1,0 +1,17 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFile} from 'node:fs/promises';
+import {cleanupOwnedResources} from './isolated-browser-cleanup.mjs';
+const source=await readFile(new URL('./recoverydeadline-browser.mjs',import.meta.url),'utf8');
+const workflow=await readFile(new URL('../../.github/workflows/free-offline-host.yml',import.meta.url),'utf8');
+const body=source.split("['source-integrity',async()=>{")[1]?.split('}]]);')[0];
+assert(body,'actual runner source-integrity callback');
+const AsyncFunction=Object.getPrototypeOf(async function(){}).constructor;
+const verify=new AsyncFunction('sourceHashes','sha','readFile','report',body);
+const accepted=r=>r.status==='PASS'&&r.sourcesStable===true&&r.results.length===52;
+const report=()=>({status:'PASS',sourcesStable:false,results:Array(52).fill({status:'PASS'})});
+test('recovery runner initializes explicit source stability and matches CI gate',()=>{assert(source.includes("const report={status:'RUNNING',sourcesStable:false,"));assert(workflow.includes("r.status!=='PASS'||r.sourcesStable!==true||r.results.length!==52"));assert(!accepted(report()));});
+test('source stability becomes true only after all imported files verify',async()=>{const r=report(),seen=[];await verify({a:'A',b:'B'},x=>x,async file=>{assert.equal(r.sourcesStable,false);seen.push(file);return file.toUpperCase();},r);assert.deepEqual(seen,['a','b']);assert.deepEqual(r.sourceHashesAfter,{a:'A',b:'B'});assert(accepted(r));});
+test('source mismatch fails cleanup and cannot satisfy CI',async()=>{const r=report();assert.equal(await cleanupOwnedResources(r,[['source-integrity',()=>verify({a:'A',b:'B'},x=>x,async file=>file==='a'?'A':'CHANGED',r)]]),false);assert.equal(r.sourcesStable,false);assert.equal(r.status,'FAIL_CLEANUP');assert(!accepted(r));});
+test('source read failure leaves stability false',async()=>{const r=report();await cleanupOwnedResources(r,[['source-integrity',()=>verify({a:'A'},x=>x,async()=>{throw Error('read denied');},r)]]);assert.equal(r.sourcesStable,false);assert(!accepted(r));});
+test('other cleanup failure remains failure even when every source hash matches',async()=>{const r=report();await cleanupOwnedResources(r,[['browser',()=>{throw Error('close failed');}],['source-integrity',()=>verify({a:'A'},x=>x,async()=> 'A',r)]]);assert.equal(r.sourcesStable,true);assert.equal(r.status,'FAIL_CLEANUP');assert(!accepted(r));});

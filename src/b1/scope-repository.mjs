@@ -1,5 +1,6 @@
-import { DATABASE_VERSION, upgradeDatabase } from '../data/schema.mjs';
+import { DATABASE_VERSION, upgradeDatabase, validateDatabase } from '../data/schema.mjs';
 import { canonicalRef, normalizedScope, tokenOK } from './identity.mjs';
+import {knownAnchorCursorKey} from '../data/known-anchor-key.mjs';
 
 /** Real extension-origin IndexedDB; no page-origin storage or synthetic in-memory fallback.
  * Atomic CAS and operation deduplication are scoped by the *trusted resolver's* scope.
@@ -8,11 +9,12 @@ export class ScopeRepository {
   constructor({indexedDB, databaseName='vaiwl-b1-v1'}={}) {
     if (!indexedDB?.open || !tokenOK(databaseName)) throw Error('indexeddb-unavailable');
     this.idb=indexedDB;this.name=databaseName;
-    this.connection=null;
+    this.connection=null;this.connectionEpoch=0;
   }
   async open() {
     if(this.connection)return this.connection;
     if(this.opening)return this.opening;
+    const epoch=this.connectionEpoch;
     this.opening=new Promise((resolve,reject)=>{
       const req=this.idb.open(this.name,DATABASE_VERSION);
       let cancelled=false;
@@ -25,16 +27,22 @@ export class ScopeRepository {
       req.onsuccess=()=>{
         const db=req.result;
         if(cancelled){db.close();return;}
-        db.onversionchange=()=>{db.close();if(this.connection===db)this.connection=null;};
-        this.connection=db;resolve(db);
+        if(epoch!==this.connectionEpoch){db.close();reject(Error('idb-open-cancelled'));return;}
+        let invalidated=false;
+        db.onversionchange=()=>{invalidated=true;db.close();if(this.connection===db)this.connection=null;};
+        validateDatabase(db).then(()=>{
+          if(invalidated||epoch!==this.connectionEpoch){db.close();reject(Error(invalidated?'invalid-schema':'idb-open-cancelled'));return;}
+          this.connection=db;resolve(db);
+        },error=>{db.close();reject(error);});
       };
     }).finally(()=>{this.opening=null});
     return this.opening;
   }
-  close(){this.connection?.close();this.connection=null;}
+  close(){this.connectionEpoch++;this.connection?.close();this.connection=null;}
   scopeOrThrow(scope){
     const n=normalizedScope(scope);
     if(!n)throw Error('unverified-scope');
+    if(n.kind==='browser-local'&&n.storage==='session')throw Error('session-scope-is-memory-only');
     return n;
   }
   key(scope,id){if(!tokenOK(id))throw Error('invalid-ref');return JSON.stringify([scope.key,id]);}
@@ -74,7 +82,7 @@ export class ScopeRepository {
     const key=this.key(s,r.conversationId),opKey=JSON.stringify([s.key,operationId]);
     const fingerprint=JSON.stringify([r.conversationId,r.nativeUrl,r.projectId,expectedRevision]);
     return new Promise((resolve,reject)=>{
-      const tx=db.transaction(['refs','operations'],'readwrite'),
+      const tx=db.transaction(['refs','operations','b23_states'],'readwrite'),
         refs=tx.objectStore('refs'),ops=tx.objectStore('operations');
       let answer=null,finalized=false;
       const fail=reason=>{if(finalized)return;finalized=true;answer={ok:false,reason};tx.abort();};
@@ -92,6 +100,7 @@ export class ScopeRepository {
             projectId:r.projectId,revision:expectedRevision+1};
           const result={ok:true,record:{...value},replayed:false};
           refs.put(value);
+          if(!old)tx.objectStore('b23_states').delete(knownAnchorCursorKey(s.key));
           ops.put({key:opKey,scopeKey:s.key,fingerprint,result});
           answer=result;
         };

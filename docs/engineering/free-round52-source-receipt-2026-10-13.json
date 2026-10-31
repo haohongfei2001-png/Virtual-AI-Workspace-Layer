@@ -1,0 +1,22 @@
+{
+  "baseHead": "0600133fb88ae1e133062173a1b31d02a4f05ebd",
+  "git": "UNCOMMITTED_ROUNDS49_THROUGH52",
+  "sourceHashes": {
+    "src/data/shared-directory-migration.mjs": "7153338aed103b363d40dcafb706af1a8cc9d2148aee6351835f6f60f762225e",
+    "src/data/repository.mjs": "b5b584ba4c1534c05977022ca6ce51d7f707f4034f0ba8e0f2f94d7fd951284a",
+    "simulator/build.mjs": "cb9124eb2033e9189fa47727cc7ae2929d19f9287a52c3c1f54e983e2ad33cfb",
+    "tests/free/shared-directory-migration.test.mjs": "e4a253684bd97debfe21abb46e5344767cbc4a3cee6ab104cc8411d6b90e1a98",
+    "tests/free/shared-directory-legacy-reader.mjs": "62c8f9400e3e46242c0d7ff507467b68da4f624bbbfab4112f4f7263746012e2"
+  },
+  "fullNode": {
+    "pass": 1033,
+    "fail": 0,
+    "skip": 0
+  },
+  "migrationContracts": 10,
+  "oldReader": "ACTUAL_ROUND46_REPOSITORY_CODE_MOCK_IDB_READ_AND_RECOVERY_REFUSED_ALL_STORES_UNCHANGED",
+  "realIDBAndMV3": "NOT_RUN_APPROVAL_REVIEW_USAGE_LIMIT",
+  "automaticMigration": "NOT_ENABLED",
+  "directoryRecovery": "NOT_IMPLEMENTED",
+  "performance": "NOT_RUN_LAST_MIXED100K_FAIL"
+}

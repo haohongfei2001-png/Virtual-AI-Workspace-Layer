@@ -1,0 +1,13 @@
+{
+  "src/host/free-frame-client.mjs": "47995d3098cb67499449fb23e5fcc1c49061d29527e5c8caf345740e06861039",
+  "src/navigation/navigation.mjs": "dc6ca086331ca897d36a5aef62ec601a0e2be4092a490606acb3c503dc08daa9",
+  "src/runtime/host-binding-service.mjs": "c9d1f20b3005a52ba399aa60287e259c3fd8ce17a8d668cfa79015636496f9fa",
+  "tests/host/free-frame-client.test.mjs": "72e76486cf856c34ec84c98d41710c3155202888b5efa2c5dc1abf2351e2fc98",
+  "src/host/backup-transfer.mjs": "69b9c025e80993644ba8b37fdf77ccb9662d4050fae66e847b98b3663f59122a",
+  "src/host/free-frame-backup.mjs": "21aba465d423ebc4ee69d3b3774b7a5a4fbf37c2c8152ff1c8e2610f59b93aa6",
+  "src/runtime/host-backup-service.mjs": "46f7b84d99f1618dd7ffc442c605ac7e72fc1e4999417ddbeb9592cc7df3f0b0",
+  "tests/host/backup-package-mv3-browser.mjs": "861d65f41b9a6c74b8a36098e4c3b6a8f06c0b0151692c3ad4f380b3ebaea6d7",
+  "tests/host/backup-transfer.test.mjs": "bf80476b33602210c87046c182372f498848e6fcdb46cc7d6b75816c6e354560",
+  "tests/host/free-frame-backup.test.mjs": "c156bd1d6af22c1372a8060e1ddf49b07824a2881c4a5450210fa06b7f7255e4",
+  "tests/host/host-backup-service.test.mjs": "f0ea9439cd2a240282a3d2dca5132b0ac1b38de441c32002c90217835b49c5bd"
+}

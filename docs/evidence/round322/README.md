@@ -1,0 +1,13 @@
+# Round322 — MODERN continuous J1 and context recovery
+
+Baseline c33278970ac8b7a8556a61e82d952237f91689df, confirmed pushed to existing Draft PR16 with unchanged PR15 base. This checkpoint continues the original branch; external cleanup stash42c8877 remains preserved.
+
+The existing continuous J1 runner now explicitly supports MODERN C2 with its independent non-first Team oracle, the original 38 additional canonical Projects and 80 pending native controls. All nine original assertions, nonzero pagination and scrolling, native actions and deadlines remain. It starts from the existing UNKNOWN conversation in an empty native database. Its existing pre-navigation worker/database/network checks mean cold cache, not immediate cold-worker acceptance. The fixture is an offline reconstruction, not a real captured service.
+
+Initial actual MODERN J1 failed after step1: original native Conversation navigation dispatched once, but contextPending called full stop and contextReady called start with workspace defaults. The reading return button was absent. Fix separates context suspension from explicit user stop: old controller/mount/adapter/handles/grants are disposed immediately; only document-local presentation mode and existing bounded candidate identity correlation survive. New HELLO/REFRESH still establishes every capability. Scope/document mismatch, original six-second upgrade expiry and route/identity/ACK checks remain. No token, native action, old grant or retry budget is restored.
+
+Repeated PENDING preserves mode; changed routes while waiting force reading. A temporarily ambiguous fresh REFRESH waits for an external READY, never automatically retries. Duplicate READY cannot start concurrent handshakes. Explicit stop and pagehide (including persisted while pending) clear everything and block late wakeup. The per-start recovery allowance is not reset by context notifications.
+
+Independent new lifecycle cases first reproduced six failures, then two late-route/ambiguous failures; all final targeted 78 tests passed. Final complete Node **6270/6270 PASS**, zero skips. Independent read-only review found no blocker. Original failed browser run and red logs remain here. The first repaired MODERN J1 completed all nine original steps; final same-source browser verification also completed all nine steps with no page errors or source/fixture/runner/build-manifest drift. The runner intentionally exits 2 for PARTIAL_J1_NOT_ACCEPTED; this is not a full-profile acceptance claim.
+
+J1 remains PARTIAL_J1_NOT_ACCEPTED across the complete profile/81 matrix. The 10k/100k stable index/performance gate and other J2–J4/G/U requirements remain open. No real ChatGPT/PAIA/private data, paid APIs, deployment or publication. Free NOT_RELEASE_READY.

@@ -1,0 +1,204 @@
+{
+  "evidence": "WEB_MECHANISM_ONLY_REAL_HEADLESS_CHROME",
+  "scope": "Actual DOM TreeWalker and candidate-only traversal mechanism; not MV3, authenticated production profile, end-to-end 100k performance or latency-budget acceptance",
+  "realChatGPT": "NOT_RUN",
+  "scriptHash": "774e7dd5788da7a6918ac1066f607a9c366e117639dc7be032f87dc1590fc661",
+  "sourceHashes": {
+    "src/host/surface-discovery.mjs": "2b3d59ee961b4651029effb5ea8e2566b26e070f74e1394fc622585f9b45696e",
+    "src/host/bounded-handle-registry.mjs": "ea3a48ed3760741b8d845b4116830cffc611571b6fd01bb9561bd8a63efdee5c",
+    "src/host/contract.mjs": "35129aacf2a7e1fe1812c846379563d60ad74a66b689ad41bc38d76484a97716",
+    "src/host/url-policy.mjs": "fddfafcca2276161e6fd3c908ac896d0dab656fce6cf06aee64f1f442f7ac7e9",
+    "src/b1/identity.mjs": "6d7ca616701826733d4936d8a139395ccf1a3111e025ec6b1035d78c1dc05e99"
+  },
+  "results": [
+    {
+      "name": "100k-mixed-loaded-chats-excluded-from-candidate-only-walk-with-600-IDless-projects",
+      "status": "PASS",
+      "history": 50000,
+      "members": 50000,
+      "candidates": 600,
+      "pages": 3,
+      "maxPage": 256,
+      "tail": [
+        "Candidate 512",
+        "Candidate 513",
+        "Candidate 514",
+        "Candidate 515",
+        "Candidate 516",
+        "Candidate 517",
+        "Candidate 518",
+        "Candidate 519",
+        "Candidate 520",
+        "Candidate 521",
+        "Candidate 522",
+        "Candidate 523",
+        "Candidate 524",
+        "Candidate 525",
+        "Candidate 526",
+        "Candidate 527",
+        "Candidate 528",
+        "Candidate 529",
+        "Candidate 530",
+        "Candidate 531",
+        "Candidate 532",
+        "Candidate 533",
+        "Candidate 534",
+        "Candidate 535",
+        "Candidate 536",
+        "Candidate 537",
+        "Candidate 538",
+        "Candidate 539",
+        "Candidate 540",
+        "Candidate 541",
+        "Candidate 542",
+        "Candidate 543",
+        "Candidate 544",
+        "Candidate 545",
+        "Candidate 546",
+        "Candidate 547",
+        "Candidate 548",
+        "Candidate 549",
+        "Candidate 550",
+        "Candidate 551",
+        "Candidate 552",
+        "Candidate 553",
+        "Candidate 554",
+        "Candidate 555",
+        "Candidate 556",
+        "Candidate 557",
+        "Candidate 558",
+        "Candidate 559",
+        "Candidate 560",
+        "Candidate 561",
+        "Candidate 562",
+        "Candidate 563",
+        "Candidate 564",
+        "Candidate 565",
+        "Candidate 566",
+        "Candidate 567",
+        "Candidate 568",
+        "Candidate 569",
+        "Candidate 570",
+        "Candidate 571",
+        "Candidate 572",
+        "Candidate 573",
+        "Candidate 574",
+        "Candidate 575",
+        "Candidate 576",
+        "Candidate 577",
+        "Candidate 578",
+        "Candidate 579",
+        "Candidate 580",
+        "Candidate 581",
+        "Candidate 582",
+        "Candidate 583",
+        "Candidate 584",
+        "Candidate 585",
+        "Candidate 586",
+        "Candidate 587",
+        "Candidate 588",
+        "Candidate 589",
+        "Candidate 590",
+        "Candidate 591",
+        "Candidate 592",
+        "Candidate 593",
+        "Candidate 594",
+        "Candidate 595",
+        "Candidate 596",
+        "Candidate 597",
+        "Candidate 598",
+        "Candidate 599"
+      ],
+      "walkerRoots": [
+        "projects"
+      ],
+      "visits": {
+        "projects": 602,
+        "history": 0,
+        "members": 0
+      },
+      "stats": {
+        "records": 600,
+        "pinned": 0,
+        "owners": 0,
+        "detached": 0,
+        "lookupComplete": true
+      }
+    },
+    {
+      "name": "ordinary-facts-retain-confirmed-current-project-and-member-first-evidence",
+      "status": "PASS",
+      "firstTargets": [
+        "known",
+        "m0",
+        "m1",
+        "m2"
+      ],
+      "memberClaims": [
+        {
+          "conversationId": "m0",
+          "asserted": "PROJECT",
+          "projectId": "known",
+          "upstreamRevision": null,
+          "evidence": {
+            "profileId": "chatgpt-legacy-reconstruction",
+            "profileVersion": 1,
+            "sourceKind": "native-dom",
+            "regionEpoch": 0,
+            "fieldPaths": [
+              "members",
+              "current-project-route"
+            ],
+            "receiptId": null
+          }
+        },
+        {
+          "conversationId": "m1",
+          "asserted": "PROJECT",
+          "projectId": "known",
+          "upstreamRevision": null,
+          "evidence": {
+            "profileId": "chatgpt-legacy-reconstruction",
+            "profileVersion": 1,
+            "sourceKind": "native-dom",
+            "regionEpoch": 0,
+            "fieldPaths": [
+              "members",
+              "current-project-route"
+            ],
+            "receiptId": null
+          }
+        },
+        {
+          "conversationId": "m2",
+          "asserted": "PROJECT",
+          "projectId": "known",
+          "upstreamRevision": null,
+          "evidence": {
+            "profileId": "chatgpt-legacy-reconstruction",
+            "profileVersion": 1,
+            "sourceKind": "native-dom",
+            "regionEpoch": 0,
+            "fieldPaths": [
+              "members",
+              "current-project-route"
+            ],
+            "receiptId": null
+          }
+        }
+      ],
+      "walkerRoots": [
+        "members",
+        "projects"
+      ]
+    }
+  ],
+  "blockedExternal": [
+    "https://example.com"
+  ],
+  "externalBlocked": true,
+  "browserVersion": "155.0.8059.40",
+  "status": "PASS",
+  "sourceChangedDuringRun": false,
+  "scriptChangedDuringRun": false
+}

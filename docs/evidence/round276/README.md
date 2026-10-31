@@ -1,0 +1,11 @@
+# Round276 — Actual archived Host codec refusal; re-upgrade remains failed
+
+Base70c62ff. Production unchanged. Opt-in FREE_J4_CODEC_ROUNDTRIP=1 requires the after-evidence prepared-budget journey. A genuine v2 pending continuation and committed evidence receipt are produced by the current packaged Host, followed by confirmed worker stop. The allowed archived Host a8addaa9e014f22704a459d6ee126e8f80ead571 is built unmodified into the same disabled temporary extension slot. Actual runtime manifest, package hash, original extension ID and local-only network permissions are checked.
+
+Actual headless Chrome reaches eleven passing steps: the real archived NativeRepository reader rejects invalid-native-continuation-schema, target native operation and evidence receipt remain byte-identical, and all imported manual assets retain their digest. The current package is restored with its original directory digest and actual runtime manifest, using the same extension ID. This certifies the specific old-reader refusal, not all old-writer entry points.
+
+The complete roundtrip FAILS after restoration: current-authorized-frame-grant times out at the original boundary; the native page remains without the expected extension frame. Re-upgrade fresh authority/recovery is NOT established. No timeout was increased or old grant reused. Source and build integrity pass; original failure is retained. Next work must diagnose current package reattachment/context receipt timing after same-slot reload, preserving the successful refusal and pending records.
+
+Independent actual archived-module contracts cover before-evidence and after-committed-evidence windows with MockIDB: old validator/list reject without any table mutation, current recovery completes once and reuses the original evidence receipt. Final targeted suite63/63 PASS, zero skips. These L/D contracts do not replace actual MV3 re-upgrade. Full prior Node5430 belongs to Round275; no new full-suite result is claimed. Free/SYS03/full81 remain incomplete.
+
+Cleanup restoration is attempted even when package copying or page close fails, with aggregate errors retained. No real account data, deployment, remote changes or new worktree. Subagent usage limit occurred during this slice; completed files and evidence are saved for direct continuation.

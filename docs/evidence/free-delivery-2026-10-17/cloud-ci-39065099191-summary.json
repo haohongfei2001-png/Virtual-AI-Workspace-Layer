@@ -1,0 +1,306 @@
+{
+  "sourceCommit": "8f146ea99297d6f82739b5792d704577fa65416e",
+  "workflowRun": "https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/actions/runs/39065099191",
+  "conclusion": "failure",
+  "jobs": [
+    {
+      "id": 117490959100,
+      "name": "node-contracts",
+      "conclusion": "success"
+    },
+    {
+      "id": 117490959272,
+      "name": "offline-j4-lifecycle",
+      "conclusion": "success"
+    },
+    {
+      "id": 117490959208,
+      "name": "offline-durability-compat",
+      "conclusion": "failure",
+      "failedStep": "Formal Host 10k single-project membership sample"
+    },
+    {
+      "id": 117490958871,
+      "name": "offline-journeys",
+      "conclusion": "failure",
+      "failedStep": "Reject stale foreground transport without a fresh handshake"
+    }
+  ],
+  "logSHA256": {
+    "durability": "a02e6cf7494470f709d80c169fdbcad29655b066df6c42a4e94cedc9a4008921",
+    "journeys": "2d15841d3c2d57c9c244048bc765b20e8acf00fe8da0bbfda9f4eef71639e245"
+  },
+  "formal10k": {
+    "status": "FAIL",
+    "acceptance": "NOT_ESTABLISHED",
+    "phase": "visible-native-member-progress",
+    "nativeMemberProgressDiagnostic": {
+      "stage": "native-before",
+      "stageStarted": 35504.752367,
+      "inFlight": true,
+      "frameGeneration": 1,
+      "auditAttempts": 0,
+      "lastTail": {
+        "status": "OBSERVED_TAIL_ONLY",
+        "revision": 194,
+        "total": 8836,
+        "frameGeneration": 1
+      },
+      "audits": [],
+      "attempts": 151,
+      "stableRevision": null,
+      "elapsedMs": 29202.207601000002,
+      "stageElapsedMs": 1.2756460000018706
+    },
+    "nativeIndexProgress": {
+      "acceptance": "NOT_ESTABLISHED",
+      "evidence": "DIAGNOSTIC_ROOT_INVENTORY_ONLY",
+      "status": "POINT_IN_TIME_ROOT_SNAPSHOT",
+      "consistency": "SINGLE_READONLY_TRANSACTION_NOT_INTERVAL_STABILITY",
+      "format": "VERSION_INDEX",
+      "revision": 195,
+      "inventoryRefs": 8890,
+      "inventoryProjects": 1,
+      "sources": 1,
+      "revokedSources": 0,
+      "sourceRevisionMin": 194,
+      "sourceRevisionMax": 194,
+      "continuationWitness": false,
+      "queueState": "NOT_READ"
+    },
+    "sourceChangedDuringRun": false,
+    "fixtureChangedDuringRun": false,
+    "manifestChangedDuringRun": false,
+    "temporaryDirectoryRemoved": true
+  },
+  "transportPositive": {
+    "status": "PASS_NARROW_OFFLINE_TRANSPORT_EXPIRY",
+    "results": [
+      {
+        "name": "initial-team-projection-native-reading-and-unsent-draft",
+        "status": "PASS"
+      },
+      {
+        "name": "real-dormant-document-lease-expires-with-live-C2-no-renewal-or-native-GET",
+        "status": "PASS",
+        "bindingExpiresAt": 1792267492855,
+        "waitedMs": 19437,
+        "receiptAgeMs": 20109
+      },
+      {
+        "name": "foreground-expired-transport-fresh-same-Team-grant-and-VIEW-reading-preserved",
+        "status": "PASS",
+        "focusedAt": 1792267492865,
+        "newGrant": true,
+        "actualPostFocusVIEW": true,
+        "scopeKey": "[\"chatgpt\",\"principal_b5251fa0aba8e6d9cc5c14d0fb61db814d07c01eea39d1174341557cff7a5dd3\",\"context_c0f0405eaff152760a78ad3d6d6ce3118aa3e4b7fa7961ec9ceca6ece1a1cfee\"]",
+        "sameWorker": true,
+        "nativeGETCount": 1
+      },
+      {
+        "name": "new-projection-same-nonfirst-team-no-personal-writes",
+        "status": "PASS"
+      }
+    ],
+    "requests": [
+      {
+        "at": 1792267472812,
+        "status": 200,
+        "method": "GET",
+        "resourceType": "fetch"
+      }
+    ],
+    "nativeRequestStarts": [
+      1792267472756
+    ],
+    "transportOwner": {
+      "workerClosed": false,
+      "focusedAt": 1792267492865,
+      "observationEndedAt": 1792267493325
+    },
+    "transport": [
+      {
+        "type": "HOST_HELLO",
+        "requestedAt": 1792267472853,
+        "receivedAt": 1792267472856,
+        "ok": true,
+        "state": null,
+        "reason": null,
+        "bindingExpiresAt": 1792267492855
+      },
+      {
+        "type": "HOST_REFRESH",
+        "requestedAt": 1792267472856,
+        "receivedAt": 1792267472887,
+        "ok": true,
+        "state": "verified",
+        "reason": null,
+        "bindingExpiresAt": null
+      },
+      {
+        "type": "HOST_FOCUS",
+        "requestedAt": 1792267492876,
+        "receivedAt": 1792267492903,
+        "ok": false,
+        "state": null,
+        "reason": "invalid-host-document",
+        "bindingExpiresAt": null
+      },
+      {
+        "type": "HOST_HELLO",
+        "requestedAt": 1792267492904,
+        "receivedAt": 1792267492912,
+        "ok": true,
+        "state": null,
+        "reason": null,
+        "bindingExpiresAt": 1792267512911
+      },
+      {
+        "type": "HOST_REFRESH",
+        "requestedAt": 1792267492912,
+        "receivedAt": 1792267492927,
+        "ok": true,
+        "state": "verified",
+        "reason": null,
+        "bindingExpiresAt": null
+      }
+    ],
+    "foregroundRecovery": {
+      "focusedAt": 1792267492865,
+      "newGrant": true,
+      "actualPostFocusVIEW": true,
+      "scopeKey": "[\"chatgpt\",\"principal_b5251fa0aba8e6d9cc5c14d0fb61db814d07c01eea39d1174341557cff7a5dd3\",\"context_c0f0405eaff152760a78ad3d6d6ce3118aa3e4b7fa7961ec9ceca6ece1a1cfee\"]",
+      "sameWorker": true,
+      "nativeGETCount": 1
+    },
+    "browserPrecondition": {
+      "transport": "isolated-loopback-CDP",
+      "noDefaults": true,
+      "headed": false,
+      "focusEmulation": "NOT_ENABLED_BY_PLAYWRIGHT",
+      "source": "Playwright connectOverCDP noDefaults public option; native Chromium capturer is session-owned"
+    },
+    "sourceChangedDuringRun": false,
+    "errors": []
+  },
+  "transportMutant": {
+    "status": "FAIL",
+    "phase": "await-fresh-foreground-grant-and-VIEW",
+    "mutation": "REMOVE_EXACT_FOREGROUND_INVALID_DOCUMENT_RECOVERY",
+    "results": [
+      {
+        "name": "initial-team-projection-native-reading-and-unsent-draft",
+        "status": "PASS"
+      },
+      {
+        "name": "real-dormant-document-lease-expires-with-live-C2-no-renewal-or-native-GET",
+        "status": "PASS",
+        "bindingExpiresAt": 1792267525263,
+        "waitedMs": 19831,
+        "receiptAgeMs": 30243
+      }
+    ],
+    "requests": [
+      {
+        "at": 1792267495077,
+        "status": 200,
+        "method": "GET",
+        "resourceType": "fetch"
+      }
+    ],
+    "nativeRequestStarts": [
+      1792267495026
+    ],
+    "transportOwner": {
+      "workerClosed": false,
+      "focusedAt": 1792267525269,
+      "observationEndedAt": 1792267540299
+    },
+    "transport": [
+      {
+        "type": "HOST_HELLO",
+        "requestedAt": 1792267495111,
+        "receivedAt": 1792267495113,
+        "ok": true,
+        "state": null,
+        "reason": null,
+        "bindingExpiresAt": 1792267515113
+      },
+      {
+        "type": "HOST_REFRESH",
+        "requestedAt": 1792267495114,
+        "receivedAt": 1792267495146,
+        "ok": true,
+        "state": "verified",
+        "reason": null,
+        "bindingExpiresAt": null
+      },
+      {
+        "type": "HOST_DOCUMENT_RENEW",
+        "requestedAt": 1792267505262,
+        "receivedAt": 1792267505263,
+        "ok": true,
+        "state": null,
+        "reason": null,
+        "bindingExpiresAt": 1792267525263
+      },
+      {
+        "type": "HOST_REFRESH",
+        "requestedAt": 1792267505264,
+        "receivedAt": 1792267505267,
+        "ok": true,
+        "state": "verified",
+        "reason": null,
+        "bindingExpiresAt": null
+      },
+      {
+        "type": "HOST_HELLO",
+        "requestedAt": 1792267525281,
+        "receivedAt": 1792267525308,
+        "ok": true,
+        "state": null,
+        "reason": null,
+        "bindingExpiresAt": 1792267545308
+      },
+      {
+        "type": "HOST_REFRESH",
+        "requestedAt": 1792267525308,
+        "receivedAt": 1792267525323,
+        "ok": true,
+        "state": "verified",
+        "reason": null,
+        "bindingExpiresAt": null
+      }
+    ],
+    "failure": {
+      "frames": 0,
+      "open": 0,
+      "returns": 0
+    },
+    "browserPrecondition": {
+      "transport": "isolated-loopback-CDP",
+      "noDefaults": true,
+      "headed": false,
+      "focusEmulation": "NOT_ENABLED_BY_PLAYWRIGHT",
+      "source": "Playwright connectOverCDP noDefaults public option; native Chromium capturer is session-owned"
+    },
+    "sourceChangedDuringRun": false,
+    "errors": []
+  },
+  "mutantInterpretation": "NOT_KILLED: exact timeout occurred, but no HOST_FOCUS was observed; another native preparation path performed HELLO/REFRESH before frame loss. The strict gate correctly rejected this unrelated failure. A real non-composer focus precondition is pending; no failing condition is removed.",
+  "coldBoundary": {
+    "initialProjection": "PASS",
+    "missingReceiptSafety": "NOT_COVERED_THIS_RUN",
+    "immediateColdSupport": "NOT_ESTABLISHED_BY_THIS_RECOVERY_CASE",
+    "nativeBeforeNavigation": [
+      {
+        "path": "/backend-api/conversation/33333333-3333-4333-8333-333333333333",
+        "context": "account-host-team"
+      }
+    ],
+    "nativeNavigationRecovery": "NOT_COVERED_THIS_RUN"
+  },
+  "performanceInterpretation": "Same production modules as a9e6e66 but this independent run again did not finish ingestion (8890 refs, no complete audit). Cross-environment stability is not established; a materialization-only optimization cannot by itself establish ingestion throughput.",
+  "realChatGPT": "NOT_RUN",
+  "release": "NOT_RELEASE_READY"
+}

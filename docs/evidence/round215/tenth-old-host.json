@@ -1,0 +1,48 @@
+{
+  "evidence": "S_REAL_OLD_HOST_TO_CURRENT_HOST_SAME_EXTENSION_ID",
+  "compatibility": "OLD_HOST_ASSETS_ONLY_NOT_SCHEMA_2_MIGRATION",
+  "realChatGPT": "NOT_RUN",
+  "release": "NOT_RELEASE_READY",
+  "steps": [],
+  "limitations": [
+    "Historical Host already uses schema 3; this route does not prove schema-2 migration",
+    "Synthetic Pro schema compatibility is a separate evidence route"
+  ],
+  "sourceCommit": "f88e7378787cac1482571bf587637f0f8ee4061f",
+  "runnerFixtureHashes": {
+    "historical-host-upgrade.mjs": "4ae0c6cd04763eef28f798e1766103b45cb58091bd99c6d332180387c6e7bfe9",
+    "historical-package.mjs": "2dbd70e9ff7e759c0d3c6358bc553296b8d86581ff121656ca3b89a2719c9262",
+    "native-visibility-browser.mjs": "9661985c6ee149033b9653957e1e45d89b45feed6d67b1f8346838d187a9830a",
+    "isolated-browser-cleanup.mjs": "c3d4a053d485efbd86a487ac1e4257849120b30939e63be346ceceaaea2fafb0",
+    "historical-network-guard.mjs": "e38719134f6087c3efbc66044922967262a6c2e585c11a7ee69b5016b22dc416",
+    "fixtures/j4-assets.mjs": "12e97fd7b3b9819039a28b404d071608953ce6bcbb91b4047c7ba8495c029bdd",
+    "fixtures/server.mjs": "dbc6d2e56fd3e2f0cf7d8867389c35c258d9b7937a449fddf5197f6380fde3d5"
+  },
+  "oldSource": {
+    "commit": "a8addaa9e014f22704a459d6ee126e8f80ead571",
+    "archiveHash": "2e62167a777672ae074b18dd95144d76f0a9d2a3823167fbba76a943174b8483",
+    "paths": [
+      "src",
+      "simulator",
+      "extension"
+    ]
+  },
+  "oldBuild": {
+    "archive": "06b74c9af95b706f1d6310af2189c884637f6886761c1313ae68daf8c2fbc8d5",
+    "manifest": "f6dc5b7fc7656ae94c9016eac237ebc584ee82e11395eb3e7fdebb8ec07a8785"
+  },
+  "currentBuild": {
+    "archive": "7838b1d44c8300d2cc36ef6dc3c504ee3c9c680623600db8f4b79fcaa48aba16",
+    "manifest": "846bf142cc55c45b280c0abd8cc11eed672d51fe0c3c9a34d4c4c6af30beccf6"
+  },
+  "browserPrecondition": {
+    "transport": "isolated-loopback-CDP",
+    "noDefaults": true,
+    "headed": true,
+    "focusEmulation": "NOT_ENABLED_BY_PLAYWRIGHT",
+    "source": "Playwright connectOverCDP noDefaults public option; native Chromium capturer is session-owned"
+  },
+  "extensionId": "iogjkidphhholanhonhhfeflikebkpcp",
+  "status": "FAIL",
+  "error": "locator.click: Timeout 30000ms exceeded.\nCall log:\n  - waiting for getByRole('button', { name: '工作空间设置', exact: true })\n\n    at /home/runner/work/Virtual-AI-Workspace-Layer/Virtual-AI-Workspace-Layer/tests/host/historical-host-upgrade.mjs:15:85"
+}

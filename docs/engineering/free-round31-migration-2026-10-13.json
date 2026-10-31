@@ -1,0 +1,24 @@
+{
+  "evidence": "REAL_HEADLESS_IDB_SYNTHETIC_NATIVE_SHARED_MIGRATION",
+  "browser": "156.0.8078.4",
+  "hashes": {
+    "src/data/native-repository.mjs": "3a26ed05b63c77704e363ac424843426a4b5b5b83d03558bdfa7c467686ce052",
+    "src/data/repository.mjs": "9764bb242a70731f3c2b16f7015a4188e92dc89b9639e67b6b6e13895e7734b6",
+    "src/data/partitioned.mjs": "efbd6a84604da32fbe582a9823f7e8117c367610224530888de2a1fa6ec4c0f1",
+    "src/data/state.mjs": "df0eaff00a7f050c37653f0e740b8fabe19bce571c5e37f4ce437d180984c62a"
+  },
+  "result": {
+    "initialRefs": 15000,
+    "finalRefs": 15001,
+    "migrations": 1,
+    "abortedBeforeMigration": true,
+    "proPreserved": true,
+    "workingSetPreserved": true,
+    "scopeIsolated": true,
+    "replayIdempotent": true,
+    "corruptRootRejected": "corrupt-record",
+    "nativeUnchangedAfterRejection": true
+  },
+  "pass": 1,
+  "fail": 0
+}

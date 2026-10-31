@@ -1,0 +1,196 @@
+{
+  "schema": "vaiwl-narrow-project-menu-evidence-v1",
+  "baseHead": "1b6fe0e26a1653f217b4d86269131a8ae17c2f03",
+  "task": "C5/UI-10 owned project menu at retained narrow host rail",
+  "finding": "At 160px workspace, 156px minimum project menu begins at x=-9 and is clipped, despite workspace scrollWidth equalling clientWidth. Actual browser reproduced before CSS repair.",
+  "fix": "Only <=240px owned project menus constrain min/max width to the card header; allow text wrapping. Preserve natural 156px minimum where it fits, native regions and actions unchanged.",
+  "sourceHashes": {
+    "extension/frame-shell.css": "471ebf615b50b5adac417d7ad6205cf0ec1e2da82372eb8b42705151809829f4",
+    "src/navigation/navigation.mjs": "38c383c4b6910240fd7c2cdcaa0b569f186a3e77648c2743d349e9b583caed25",
+    "src/navigation/styles.mjs": "42bd79e60aa097eff059b8705d9f372f9abb9fa7daebaeaf4e19614c46810e94",
+    "tests/host/frame-theme-menu-layout-browser.mjs": "659de6beb305add29f7a1dd68b1e880096b4c34c1132051cafd3de9d3a5d4c68"
+  },
+  "validation": {
+    "before": {
+      "result": "FAIL_MENU_OUTSIDE_WORKSPACE",
+      "menu": {
+        "x": -9,
+        "y": 124,
+        "width": 156,
+        "height": 49.5,
+        "top": 124,
+        "right": 147,
+        "bottom": 173.5,
+        "left": -9
+      },
+      "log": "before-layout-final.json"
+    },
+    "after": {
+      "result": "PASS_SYNTHETIC_FRAME_DOM_LAYOUT_NOT_MV3",
+      "browser": "155.0.8059.85",
+      "sourceStable": true,
+      "checks": [
+        {
+          "width": 160,
+          "fontScale": 1,
+          "menu": {
+            "x": 13,
+            "y": 124,
+            "width": 134,
+            "height": 49.5,
+            "top": 124,
+            "right": 147,
+            "bottom": 173.5,
+            "left": 13
+          },
+          "keyboardFocusRestored": true
+        },
+        {
+          "width": 160,
+          "fontScale": 2,
+          "menu": {
+            "x": 13,
+            "y": 149,
+            "width": 134,
+            "height": 108,
+            "top": 149,
+            "right": 147,
+            "bottom": 257,
+            "left": 13
+          },
+          "keyboardFocusRestored": true
+        },
+        {
+          "width": 240,
+          "fontScale": 1,
+          "menu": {
+            "x": 71,
+            "y": 124,
+            "width": 156,
+            "height": 49.5,
+            "top": 124,
+            "right": 227,
+            "bottom": 173.5,
+            "left": 71
+          },
+          "keyboardFocusRestored": true
+        },
+        {
+          "width": 240,
+          "fontScale": 2,
+          "menu": {
+            "x": 61,
+            "y": 149,
+            "width": 166,
+            "height": 69,
+            "top": 149,
+            "right": 227,
+            "bottom": 218,
+            "left": 61
+          },
+          "keyboardFocusRestored": true
+        },
+        {
+          "width": 420,
+          "fontScale": 1,
+          "menu": {
+            "x": 204,
+            "y": 64,
+            "width": 156,
+            "height": 49.5,
+            "top": 64,
+            "right": 360,
+            "bottom": 113.5,
+            "left": 204
+          },
+          "keyboardFocusRestored": true
+        },
+        {
+          "width": 420,
+          "fontScale": 2,
+          "menu": {
+            "x": 194,
+            "y": 86,
+            "width": 166,
+            "height": 69,
+            "top": 86,
+            "right": 360,
+            "bottom": 155,
+            "left": 194
+          },
+          "keyboardFocusRestored": true
+        },
+        {
+          "width": 1000,
+          "fontScale": 1,
+          "menu": {
+            "x": 219,
+            "y": 73,
+            "width": 156,
+            "height": 49.5,
+            "top": 73,
+            "right": 375,
+            "bottom": 122.5,
+            "left": 219
+          },
+          "keyboardFocusRestored": true
+        },
+        {
+          "width": 1000,
+          "fontScale": 2,
+          "menu": {
+            "x": 209,
+            "y": 95,
+            "width": 166,
+            "height": 69,
+            "top": 95,
+            "right": 375,
+            "bottom": 164,
+            "left": 209
+          },
+          "keyboardFocusRestored": true
+        }
+      ],
+      "log": "final.json"
+    },
+    "node": {
+      "passed": 16,
+      "failed": 0,
+      "log": "regression.log"
+    },
+    "builds": [
+      {
+        "name": "default",
+        "result": {
+          "status": "HOST_IMPLEMENTATION_UNVERIFIED",
+          "releaseStatus": "NOT_RELEASE_READY",
+          "files": 191
+        }
+      },
+      {
+        "name": "observed",
+        "result": {
+          "status": "HOST_IMPLEMENTATION_UNVERIFIED",
+          "releaseStatus": "NOT_RELEASE_READY",
+          "files": 191
+        }
+      }
+    ],
+    "screenshotsReviewed": [
+      "before-layout-final.json.160-1.png",
+      "final.json.160-2.png",
+      "final.json.420-1.png"
+    ],
+    "review": "Primary writer only. Screenshot review confirms clipped edge removed and enlarged menu label wraps. Truncated project title at very narrow width remains, tooltip and accessible full name retained; not full visual certification."
+  },
+  "testFixtureRepair": "Original layout server omitted current-navigation-plan, frame-row-windows and contract dependencies; restored exact local allowlist. Initial module-load failures retained separately in before.json and before-layout.json; not product behavior failures. Wrapped header overlap assertion uses non-overlap on either axis, preserving desktop check.",
+  "boundaries": {
+    "realChatGPT": "NOT_RUN",
+    "MV3": "NOT_RUN",
+    "realAccountRequests": 0,
+    "installedPackageUpdated": false,
+    "newSourceBatch": false,
+    "productionEnabled": false
+  },
+  "checkpoint": ".git/vaiwl-checkpoints/20261023-narrow-project-menu"
+}

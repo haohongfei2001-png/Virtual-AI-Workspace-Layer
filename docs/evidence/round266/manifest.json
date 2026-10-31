@@ -1,0 +1,14 @@
+{
+  "base": "51d9ef2714fccd54fa5079281f2b3efa48b91aab",
+  "files": {
+    "tests/host/host-scale-package-browser.mjs": "8180436e4aa890d5db50fc637e0a7f5482aa54768a4e168a341a4aef0c560c30",
+    "tests/host/host-scale-trace.mjs": "1a7d4c4b64e5d05497ce1c6d885dfd6067fa84b25d3323d584e94570bd8c0e80",
+    "tests/host/host-scale-trace.test.mjs": "0dc7252b2fec153f01feadfd60013332c8f98d04fe67e1a18798c503fd793208"
+  },
+  "artifacts": {
+    "README.md": "cc91037812eb1ed7ce29a298240833ba8ca9a6c77c3956d340bb55b1e67f3069",
+    "node.log.gz": "c5561ed3b1e72d040d1911365f1b352267ec2e3100723c427cc9c32868f0e2ae",
+    "return-trace.json.gz": "d9cba4427fa2236b54edd0de8ab8483bb5420dd08661e958458169295a5d22d9",
+    "trace-tests.log.gz": "935c11b1b9ba8797d3a7219afae84059e3e0349e0274470ae266f780832e2e05"
+  }
+}

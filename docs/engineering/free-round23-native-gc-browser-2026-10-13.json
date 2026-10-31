@@ -1,0 +1,16 @@
+{
+  "evidence": "HEADLESS_SYNTHETIC_REAL_IDB_NATIVE_GC",
+  "browser": "154.0.8037.99",
+  "result": {
+    "orphanRemoved": true,
+    "priorAndCurrentRetained": true,
+    "postRecoveryRead": true
+  },
+  "sourceHashes": {
+    "src/data/native-partitions.mjs": "71145bc7150abe2f87f502517e5c7d11102b219c07ef0f7a98ca0555675cc8cc",
+    "src/data/native-repository.mjs": "662d697ffa4344ad832f2d7a35edc09cc5739ebf79b3319108c1d590690e5ea5"
+  },
+  "errors": [],
+  "pass": 1,
+  "fail": 0
+}

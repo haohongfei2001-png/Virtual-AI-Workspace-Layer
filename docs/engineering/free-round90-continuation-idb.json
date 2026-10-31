@@ -1,0 +1,48 @@
+{
+  "evidence": "REAL_HEADLESS_IDB_NATIVE_CONTINUATION_SYNTHETIC_AUTHORITY",
+  "authority": "EXPLICIT_TEST_WEAKMAP_NOT_PRODUCTION",
+  "drain": "NOT_IMPLEMENTED_NOT_TESTED",
+  "realChatGPT": "NOT_RUN",
+  "mv3": "NOT_RUN",
+  "sourceHashes": {
+    "tests/host/native-continuation-idb-browser.mjs": "c37a11de12e296248abd3598432ccb3ad0ade0e4148a08072372d5ca939249b0",
+    "src/data/native-repository.mjs": "3be67df4089eafa3484d6682d5eeb1fcf3a7fda3a70d1e8a2e0c891e063543a3",
+    "src/data/native-observation-continuation.mjs": "8e452661150d5702881b034b0a214a70789e033d0d1c3d3c76bc55a189d061ce",
+    "src/data/native-partitions.mjs": "df08b215677fa72bdef9523a327ff26432b076b1f61e39ca39d7ca926a996628",
+    "src/data/native-facts.mjs": "2e3d25c30cec2320962697bf6342e298f4408bdd266fea400f19610e039b6e4c",
+    "src/data/repository.mjs": "093aba679acff36dd2c40063b7bb2124e96cedc25cd1f92cbfe87a69458b737a",
+    "src/data/observed-send-anchor.mjs": "f9dbb9278502a325c2263d4adeb99ea1c0159525d505728fe84fdee2d59980da",
+    "src/data/free-evidence.mjs": "969ee529b2e4b62143ef9df887fea0abaf4e5d1b5bc0ffff1bdcba1d00de2fba",
+    "src/data/schema.mjs": "fcdfbd7759722e79e2ad089439033b7df13134c7da863fdf1c56d5e00d75847d"
+  },
+  "results": [
+    {
+      "name": "CAS-failure-atomic-across-all-stores",
+      "status": "PASS"
+    },
+    {
+      "name": "in-transaction-guard-loss-leaves-no-native-or-pending-write",
+      "status": "PASS",
+      "guardCalls": 7
+    },
+    {
+      "name": "native-and-shared-reachability-and-pending-commit-together",
+      "status": "PASS"
+    },
+    {
+      "name": "replay-singleton-and-close-reopen-pending-preservation",
+      "status": "PASS"
+    },
+    {
+      "name": "source-revocation-retains-pending-without-drain",
+      "status": "PASS"
+    },
+    {
+      "name": "root-recovery-retains-pending-and-Pro-assets-not-evidence-drain",
+      "status": "PASS"
+    }
+  ],
+  "errors": [],
+  "status": "PASS",
+  "sourceChangedDuringRun": false
+}

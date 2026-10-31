@@ -1,0 +1,1541 @@
+{
+  "schema": "vaiwl-free-project-closeout-v1",
+  "date": "2026-11-01",
+  "timezone": "Asia/Shanghai",
+  "baseSha": "5593e02eb81b1fc8fda3a12dc945d0280cf67d60",
+  "branch": "codex/vaiwl-free-first-20261013",
+  "pr": 16,
+  "status": "SOURCE_FIXED_OFFLINE_PASS_LIVE_PROJECT_BLOCKED",
+  "candidateCommit": "ab022fa464511553d564320994d30d804e65005e",
+  "evidenceRead": [
+    "https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16#issuecomment-6546112515",
+    "https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16#issuecomment-6546368431",
+    "https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16#issuecomment-6547186156",
+    "https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16#issuecomment-6547191328"
+  ],
+  "live": {
+    "existingEvidenceOnly": true,
+    "normalChatTrueMouseWorkspaceOpen": "LIVE_VERIFIED at base evidence only",
+    "nativeProjectHomeAndTwoMemberPaths": "LIVE_VERIFIED at base evidence only",
+    "projectEnhancedMount": "BLOCKED; frame=0 and return=0 at base evidence",
+    "newCandidateMac": "NOT_RUN",
+    "structureBudget": {
+      "used": 36,
+      "total": 36,
+      "renewed": false
+    },
+    "externalExtensionWriter": "NOT_CAPTURED; not attributed as the Project cause"
+  },
+  "sourceFixes": [
+    {
+      "area": "Project adapter diagnostics",
+      "status": "SOURCE_FIXED",
+      "change": "Keep the first full Project proof failure local, forward an allowlisted projectStage, distinguish missing header and region identity change; structural classification cannot overwrite the captured stage."
+    },
+    {
+      "area": "Current-document presentation and lifecycle",
+      "status": "SOURCE_FIXED",
+      "change": "Expose existing pre-mount refusal as mountFailure; clear only the matching resolved failure; stale route snapshots are null; unknown start/mount exceptions preserve fixed safe terminal codes after teardown."
+    },
+    {
+      "area": "Project membership",
+      "status": "SOURCE_FIXED",
+      "change": "Require reciprocal selected-tab/panel IDREFs and unique exact document nodes. Retract member preference when the relationship changes; preserve safe unique navigation. Observed profile revision is 12."
+    }
+  ],
+  "fixtureScope": {
+    "source": "https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16#issuecomment-6546112515",
+    "viewport": {
+      "width": 1128,
+      "height": 958
+    },
+    "boxes": {
+      "main": [
+        240.5,
+        52,
+        887.5,
+        890
+      ],
+      "composer": [
+        368.25,
+        132,
+        632,
+        52
+      ],
+      "header": [
+        0,
+        0,
+        1128,
+        52
+      ],
+      "hitRoot": [
+        240.5,
+        0,
+        887.5,
+        958
+      ],
+      "panel": [
+        368.25,
+        252,
+        632,
+        134.6875
+      ],
+      "slot": [
+        240,
+        0,
+        888,
+        52
+      ],
+      "tabs": [
+        368.25,
+        208,
+        132,
+        36
+      ]
+    },
+    "unknown": [
+      "complete-ancestor-tree",
+      "scroll-owner-and-overflow",
+      "clip-and-effects",
+      "native-controls-and-paint",
+      "header-transparency",
+      "composer-style",
+      "sidebar-structure"
+    ],
+    "privateContent": false
+  },
+  "rootCauseLimit": "The original base passes both positive membership and raw flow mount/open/read restoration on the seven measured boxes. Uncollected ancestors, effects, paint and native controls are explicitly unknown. No live mounting root cause or cure is inferred.",
+  "beforeFix": {
+    "diagnosticTests": {
+      "failed": 4,
+      "passed": 0
+    },
+    "resolvedFailureTests": {
+      "failed": 2,
+      "passed": 0
+    },
+    "terminalStageTests": {
+      "failed": 2,
+      "passed": 0
+    },
+    "browser": {
+      "status": "FAIL",
+      "evidence": "BROWSER_MECHANISM_ONLY",
+      "realChatGPT": "NOT_RUN",
+      "baseline": "5593e02eb81b1fc8fda3a12dc945d0280cf67d60",
+      "browser": "156.0.8078.4",
+      "fixture": {
+        "source": "https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16#issuecomment-6546112515",
+        "viewport": {
+          "width": 1128,
+          "height": 958
+        },
+        "boxes": {
+          "main": [
+            240.5,
+            52,
+            887.5,
+            890
+          ],
+          "composer": [
+            368.25,
+            132,
+            632,
+            52
+          ],
+          "header": [
+            0,
+            0,
+            1128,
+            52
+          ],
+          "hitRoot": [
+            240.5,
+            0,
+            887.5,
+            958
+          ],
+          "panel": [
+            368.25,
+            252,
+            632,
+            134.6875
+          ],
+          "slot": [
+            240,
+            0,
+            888,
+            52
+          ],
+          "tabs": [
+            368.25,
+            208,
+            132,
+            36
+          ]
+        },
+        "unknown": [
+          "complete-ancestor-tree",
+          "scroll-owner-and-overflow",
+          "clip-and-effects",
+          "native-controls-and-paint",
+          "header-transparency",
+          "composer-style",
+          "sidebar-structure"
+        ],
+        "privateContent": false
+      },
+      "checks": [
+        {
+          "mode": "positive",
+          "ok": true,
+          "positive": 2,
+          "none": false,
+          "geometryMatches": true,
+          "forbiddenReads": 0
+        },
+        {
+          "mode": "missing-controls",
+          "ok": false,
+          "positive": 2,
+          "none": false,
+          "geometryMatches": true,
+          "forbiddenReads": 0
+        },
+        {
+          "mode": "missing-label",
+          "ok": false,
+          "positive": 2,
+          "none": false,
+          "geometryMatches": true,
+          "forbiddenReads": 0
+        },
+        {
+          "mode": "wrong-controls",
+          "ok": false,
+          "positive": 2,
+          "none": false,
+          "geometryMatches": true,
+          "forbiddenReads": 0
+        },
+        {
+          "mode": "wrong-label",
+          "ok": false,
+          "positive": 2,
+          "none": false,
+          "geometryMatches": true,
+          "forbiddenReads": 0
+        },
+        {
+          "mode": "duplicate-panel-id",
+          "ok": false,
+          "positive": 2,
+          "none": false,
+          "geometryMatches": true,
+          "forbiddenReads": 0
+        },
+        {
+          "mode": "duplicate-tab-id",
+          "ok": false,
+          "positive": 2,
+          "none": false,
+          "geometryMatches": true,
+          "forbiddenReads": 0
+        },
+        {
+          "mode": "changed-relation",
+          "ok": false,
+          "positive": 2,
+          "none": false,
+          "geometryMatches": true,
+          "forbiddenReads": 0
+        },
+        {
+          "mode": "stage-structure",
+          "ok": false,
+          "reason": "unsafe-native-project-layout",
+          "stage": null,
+          "key": null,
+          "geometryMatches": true,
+          "forbiddenReads": 0
+        },
+        {
+          "mode": "stage-geometry",
+          "ok": false,
+          "reason": "unsafe-native-geometry",
+          "stage": null,
+          "key": null,
+          "geometryMatches": true,
+          "forbiddenReads": 0
+        },
+        {
+          "mode": "stage-header",
+          "ok": false,
+          "reason": "unsafe-native-project-layout",
+          "stage": null,
+          "key": null,
+          "geometryMatches": true,
+          "forbiddenReads": 0
+        },
+        {
+          "mode": "stage-identity",
+          "ok": false,
+          "reason": "unsafe-native-project-layout",
+          "stage": null,
+          "key": null,
+          "geometryMatches": true,
+          "forbiddenReads": 0
+        },
+        {
+          "mode": "flow-continuity",
+          "ok": true,
+          "shown": true,
+          "structure": true,
+          "restored": true,
+          "geometryMatches": true,
+          "forbiddenReads": 0
+        }
+      ]
+    },
+    "rawNodeFailures": "before-fix.txt"
+  },
+  "afterFix": {
+    "node": {
+      "status": "OFFLINE_PASS",
+      "passed": 425,
+      "failed": 0,
+      "skipped": 0,
+      "node": "v24.22.1",
+      "command": "node --test --test-isolation=none tests/host/observed-profile.test.mjs tests/host/content-region-recovery.test.mjs tests/host/content-session.test.mjs tests/host/surface-controller.test.mjs tests/host/surface-geometry-controller.test.mjs tests/host/local-status.test.mjs"
+    },
+    "projectBrowser": {
+      "status": "OFFLINE_PASS",
+      "evidence": "BROWSER_MECHANISM_ONLY",
+      "realChatGPT": "NOT_RUN",
+      "baseline": null,
+      "browser": "156.0.8078.4",
+      "fixture": {
+        "source": "https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16#issuecomment-6546112515",
+        "viewport": {
+          "width": 1128,
+          "height": 958
+        },
+        "boxes": {
+          "main": [
+            240.5,
+            52,
+            887.5,
+            890
+          ],
+          "composer": [
+            368.25,
+            132,
+            632,
+            52
+          ],
+          "header": [
+            0,
+            0,
+            1128,
+            52
+          ],
+          "hitRoot": [
+            240.5,
+            0,
+            887.5,
+            958
+          ],
+          "panel": [
+            368.25,
+            252,
+            632,
+            134.6875
+          ],
+          "slot": [
+            240,
+            0,
+            888,
+            52
+          ],
+          "tabs": [
+            368.25,
+            208,
+            132,
+            36
+          ]
+        },
+        "unknown": [
+          "complete-ancestor-tree",
+          "scroll-owner-and-overflow",
+          "clip-and-effects",
+          "native-controls-and-paint",
+          "header-transparency",
+          "composer-style",
+          "sidebar-structure"
+        ],
+        "privateContent": false
+      },
+      "checks": [
+        {
+          "mode": "positive",
+          "ok": true,
+          "positive": 2,
+          "none": false,
+          "geometryMatches": true,
+          "forbiddenReads": 0
+        },
+        {
+          "mode": "missing-controls",
+          "ok": true,
+          "positive": 0,
+          "none": false,
+          "geometryMatches": true,
+          "forbiddenReads": 0
+        },
+        {
+          "mode": "missing-label",
+          "ok": true,
+          "positive": 0,
+          "none": false,
+          "geometryMatches": true,
+          "forbiddenReads": 0
+        },
+        {
+          "mode": "wrong-controls",
+          "ok": true,
+          "positive": 0,
+          "none": false,
+          "geometryMatches": true,
+          "forbiddenReads": 0
+        },
+        {
+          "mode": "wrong-label",
+          "ok": true,
+          "positive": 0,
+          "none": false,
+          "geometryMatches": true,
+          "forbiddenReads": 0
+        },
+        {
+          "mode": "duplicate-panel-id",
+          "ok": true,
+          "positive": 0,
+          "none": false,
+          "geometryMatches": true,
+          "forbiddenReads": 0
+        },
+        {
+          "mode": "duplicate-tab-id",
+          "ok": true,
+          "positive": 0,
+          "none": false,
+          "geometryMatches": true,
+          "forbiddenReads": 0
+        },
+        {
+          "mode": "changed-relation",
+          "ok": true,
+          "positive": 0,
+          "none": false,
+          "geometryMatches": true,
+          "forbiddenReads": 0
+        },
+        {
+          "mode": "stage-structure",
+          "ok": true,
+          "reason": "unsafe-native-project-layout",
+          "stage": "tabs-panel",
+          "key": null,
+          "geometryMatches": true,
+          "forbiddenReads": 0
+        },
+        {
+          "mode": "stage-geometry",
+          "ok": true,
+          "reason": "unsafe-native-geometry",
+          "stage": "geometry-effects",
+          "key": null,
+          "geometryMatches": true,
+          "forbiddenReads": 0
+        },
+        {
+          "mode": "stage-header",
+          "ok": true,
+          "reason": "missing-or-ambiguous-native-boundary",
+          "stage": null,
+          "key": "header",
+          "geometryMatches": true,
+          "forbiddenReads": 0
+        },
+        {
+          "mode": "stage-identity",
+          "ok": true,
+          "reason": "region-identity-changed",
+          "stage": null,
+          "key": null,
+          "geometryMatches": true,
+          "forbiddenReads": 0
+        },
+        {
+          "mode": "flow-continuity",
+          "ok": true,
+          "shown": true,
+          "structure": true,
+          "restored": true,
+          "geometryMatches": true,
+          "forbiddenReads": 0
+        }
+      ]
+    },
+    "membershipBrowser": {
+      "status": "PASS_WEB_MECHANISM_ONLY",
+      "baseline": null,
+      "results": [
+        {
+          "mode": "baseline",
+          "expected": 1,
+          "members": 1,
+          "labelsOK": true,
+          "oldHandleValid": true,
+          "shouldKeepHandle": true,
+          "forbiddenReads": 0,
+          "unknownOnly": true,
+          "noProject": true,
+          "noCoverage": true,
+          "sidebarPreserved": true,
+          "conflictPreserved": true,
+          "preauthNoEmission": true,
+          "preauthCount": 2,
+          "expectedPreauth": 2,
+          "preauthCleared": true,
+          "passed": true
+        },
+        {
+          "mode": "hidden-old-root",
+          "expected": 1,
+          "members": 1,
+          "labelsOK": true,
+          "oldHandleValid": true,
+          "shouldKeepHandle": true,
+          "forbiddenReads": 0,
+          "unknownOnly": true,
+          "noProject": true,
+          "noCoverage": true,
+          "sidebarPreserved": true,
+          "conflictPreserved": true,
+          "preauthNoEmission": true,
+          "preauthCount": 2,
+          "expectedPreauth": 2,
+          "preauthCleared": true,
+          "passed": true
+        },
+        {
+          "mode": "two-visible-roots",
+          "expected": 0,
+          "members": 0,
+          "labelsOK": true,
+          "oldHandleValid": false,
+          "shouldKeepHandle": false,
+          "forbiddenReads": 0,
+          "unknownOnly": true,
+          "noProject": true,
+          "noCoverage": true,
+          "sidebarPreserved": true,
+          "conflictPreserved": true,
+          "preauthNoEmission": true,
+          "preauthCount": 1,
+          "expectedPreauth": 1,
+          "preauthCleared": true,
+          "passed": true
+        },
+        {
+          "mode": "two-visible-panels",
+          "expected": 0,
+          "members": 0,
+          "labelsOK": true,
+          "oldHandleValid": false,
+          "shouldKeepHandle": false,
+          "forbiddenReads": 0,
+          "unknownOnly": true,
+          "noProject": true,
+          "noCoverage": true,
+          "sidebarPreserved": true,
+          "conflictPreserved": true,
+          "preauthNoEmission": true,
+          "preauthCount": 1,
+          "expectedPreauth": 1,
+          "preauthCleared": true,
+          "passed": true
+        },
+        {
+          "mode": "title-missing",
+          "expected": 0,
+          "members": 0,
+          "labelsOK": true,
+          "oldHandleValid": false,
+          "shouldKeepHandle": false,
+          "forbiddenReads": 0,
+          "unknownOnly": true,
+          "noProject": true,
+          "noCoverage": true,
+          "sidebarPreserved": true,
+          "conflictPreserved": true,
+          "preauthNoEmission": true,
+          "preauthCount": 1,
+          "expectedPreauth": 1,
+          "preauthCleared": true,
+          "passed": true
+        },
+        {
+          "mode": "title-hidden",
+          "expected": 0,
+          "members": 0,
+          "labelsOK": true,
+          "oldHandleValid": false,
+          "shouldKeepHandle": false,
+          "forbiddenReads": 0,
+          "unknownOnly": true,
+          "noProject": true,
+          "noCoverage": true,
+          "sidebarPreserved": true,
+          "conflictPreserved": true,
+          "preauthNoEmission": true,
+          "preauthCount": 1,
+          "expectedPreauth": 1,
+          "preauthCleared": true,
+          "passed": true
+        },
+        {
+          "mode": "title-complex",
+          "expected": 0,
+          "members": 0,
+          "labelsOK": true,
+          "oldHandleValid": false,
+          "shouldKeepHandle": false,
+          "forbiddenReads": 0,
+          "unknownOnly": true,
+          "noProject": true,
+          "noCoverage": true,
+          "sidebarPreserved": true,
+          "conflictPreserved": true,
+          "preauthNoEmission": true,
+          "preauthCount": 1,
+          "expectedPreauth": 1,
+          "preauthCleared": true,
+          "passed": true
+        },
+        {
+          "mode": "title-empty",
+          "expected": 0,
+          "members": 0,
+          "labelsOK": true,
+          "oldHandleValid": false,
+          "shouldKeepHandle": false,
+          "forbiddenReads": 0,
+          "unknownOnly": true,
+          "noProject": true,
+          "noCoverage": true,
+          "sidebarPreserved": true,
+          "conflictPreserved": true,
+          "preauthNoEmission": true,
+          "preauthCount": 1,
+          "expectedPreauth": 1,
+          "preauthCleared": true,
+          "passed": true
+        },
+        {
+          "mode": "title-over-limit",
+          "expected": 0,
+          "members": 0,
+          "labelsOK": true,
+          "oldHandleValid": false,
+          "shouldKeepHandle": false,
+          "forbiddenReads": 0,
+          "unknownOnly": true,
+          "noProject": true,
+          "noCoverage": true,
+          "sidebarPreserved": true,
+          "conflictPreserved": true,
+          "preauthNoEmission": true,
+          "preauthCount": 1,
+          "expectedPreauth": 1,
+          "preauthCleared": true,
+          "passed": true
+        },
+        {
+          "mode": "changed-title",
+          "expected": 1,
+          "members": 1,
+          "labelsOK": true,
+          "oldHandleValid": false,
+          "shouldKeepHandle": false,
+          "forbiddenReads": 0,
+          "unknownOnly": true,
+          "noProject": true,
+          "noCoverage": true,
+          "sidebarPreserved": true,
+          "conflictPreserved": true,
+          "preauthNoEmission": true,
+          "preauthCount": 2,
+          "expectedPreauth": 2,
+          "preauthCleared": true,
+          "passed": true
+        },
+        {
+          "mode": "changed-href",
+          "expected": 1,
+          "members": 1,
+          "labelsOK": true,
+          "oldHandleValid": false,
+          "shouldKeepHandle": false,
+          "forbiddenReads": 0,
+          "unknownOnly": true,
+          "noProject": true,
+          "noCoverage": true,
+          "sidebarPreserved": true,
+          "conflictPreserved": true,
+          "preauthNoEmission": true,
+          "preauthCount": 2,
+          "expectedPreauth": 2,
+          "preauthCleared": true,
+          "passed": true
+        },
+        {
+          "mode": "replace-root",
+          "expected": 1,
+          "members": 1,
+          "labelsOK": true,
+          "oldHandleValid": false,
+          "shouldKeepHandle": false,
+          "forbiddenReads": 0,
+          "unknownOnly": true,
+          "noProject": true,
+          "noCoverage": true,
+          "sidebarPreserved": true,
+          "conflictPreserved": true,
+          "preauthNoEmission": true,
+          "preauthCount": 2,
+          "expectedPreauth": 2,
+          "preauthCleared": true,
+          "passed": true
+        },
+        {
+          "mode": "leave-project",
+          "expected": 0,
+          "members": 0,
+          "labelsOK": true,
+          "oldHandleValid": false,
+          "shouldKeepHandle": false,
+          "forbiddenReads": 0,
+          "unknownOnly": true,
+          "noProject": true,
+          "noCoverage": true,
+          "sidebarPreserved": true,
+          "conflictPreserved": true,
+          "preauthNoEmission": true,
+          "preauthCount": 1,
+          "expectedPreauth": 1,
+          "preauthCleared": true,
+          "passed": true
+        },
+        {
+          "mode": "other-project-stale-list",
+          "expected": 1,
+          "members": 1,
+          "labelsOK": true,
+          "oldHandleValid": false,
+          "shouldKeepHandle": false,
+          "forbiddenReads": 0,
+          "unknownOnly": true,
+          "noProject": true,
+          "noCoverage": true,
+          "sidebarPreserved": true,
+          "conflictPreserved": true,
+          "preauthNoEmission": true,
+          "preauthCount": 2,
+          "expectedPreauth": 2,
+          "preauthCleared": true,
+          "passed": true
+        },
+        {
+          "mode": "preview-change",
+          "expected": 1,
+          "members": 1,
+          "labelsOK": true,
+          "oldHandleValid": true,
+          "shouldKeepHandle": true,
+          "forbiddenReads": 0,
+          "unknownOnly": true,
+          "noProject": true,
+          "noCoverage": true,
+          "sidebarPreserved": true,
+          "conflictPreserved": true,
+          "preauthNoEmission": true,
+          "preauthCount": 2,
+          "expectedPreauth": 2,
+          "preauthCleared": true,
+          "passed": true
+        },
+        {
+          "mode": "sidebar-conflict",
+          "expected": 1,
+          "members": 1,
+          "labelsOK": true,
+          "oldHandleValid": true,
+          "shouldKeepHandle": true,
+          "forbiddenReads": 0,
+          "unknownOnly": true,
+          "noProject": true,
+          "noCoverage": true,
+          "sidebarPreserved": true,
+          "conflictPreserved": true,
+          "preauthNoEmission": true,
+          "preauthCount": 2,
+          "expectedPreauth": 2,
+          "preauthCleared": true,
+          "passed": true
+        },
+        {
+          "mode": "editable-title",
+          "expected": 0,
+          "members": 0,
+          "labelsOK": true,
+          "oldHandleValid": false,
+          "shouldKeepHandle": false,
+          "forbiddenReads": 0,
+          "unknownOnly": true,
+          "noProject": true,
+          "noCoverage": true,
+          "sidebarPreserved": true,
+          "conflictPreserved": true,
+          "preauthNoEmission": true,
+          "preauthCount": 1,
+          "expectedPreauth": 1,
+          "preauthCleared": true,
+          "passed": true
+        },
+        {
+          "mode": "editable-panel",
+          "expected": 0,
+          "members": 0,
+          "labelsOK": true,
+          "oldHandleValid": false,
+          "shouldKeepHandle": false,
+          "forbiddenReads": 0,
+          "unknownOnly": true,
+          "noProject": true,
+          "noCoverage": true,
+          "sidebarPreserved": true,
+          "conflictPreserved": true,
+          "preauthNoEmission": true,
+          "preauthCount": 1,
+          "expectedPreauth": 1,
+          "preauthCleared": true,
+          "passed": true
+        },
+        {
+          "mode": "fake-member-attribute",
+          "expected": 1,
+          "members": 1,
+          "labelsOK": true,
+          "oldHandleValid": true,
+          "shouldKeepHandle": true,
+          "forbiddenReads": 0,
+          "unknownOnly": true,
+          "noProject": true,
+          "noCoverage": true,
+          "sidebarPreserved": true,
+          "conflictPreserved": true,
+          "preauthNoEmission": true,
+          "preauthCount": 2,
+          "expectedPreauth": 2,
+          "preauthCleared": true,
+          "passed": true
+        },
+        {
+          "mode": "preauthorization-root-hide-show-and-ambiguity",
+          "passed": true
+        },
+        {
+          "mode": "membership-positive",
+          "passed": true,
+          "positive": 2,
+          "projects": true,
+          "title": "Native Project",
+          "ids": [
+            "g-p-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "g-p-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          ],
+          "reads": 0,
+          "none": false
+        },
+        {
+          "mode": "membership-rename",
+          "passed": true,
+          "positive": 2,
+          "projects": true,
+          "title": "Renamed Project",
+          "ids": [
+            "g-p-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "g-p-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          ],
+          "reads": 0,
+          "none": false
+        },
+        {
+          "mode": "membership-title-span",
+          "passed": true,
+          "positive": 2,
+          "projects": true,
+          "title": "Native Project",
+          "ids": [
+            "g-p-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "g-p-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          ],
+          "reads": 0,
+          "none": false
+        },
+        {
+          "mode": "membership-title-hidden-span",
+          "passed": true,
+          "positive": 0,
+          "projects": false,
+          "ids": [],
+          "reads": 0,
+          "none": false
+        },
+        {
+          "mode": "membership-title-complex-span",
+          "passed": true,
+          "positive": 0,
+          "projects": false,
+          "ids": [],
+          "reads": 0,
+          "none": false
+        },
+        {
+          "mode": "membership-stale-route",
+          "passed": true,
+          "positive": 0,
+          "projects": false,
+          "ids": [],
+          "reads": 0,
+          "none": false
+        },
+        {
+          "mode": "membership-conflicting-container",
+          "passed": true,
+          "positive": 0,
+          "projects": false,
+          "ids": [],
+          "reads": 0,
+          "none": false
+        },
+        {
+          "mode": "membership-no-linked-row",
+          "passed": true,
+          "positive": 0,
+          "projects": false,
+          "ids": [],
+          "reads": 0,
+          "none": false
+        },
+        {
+          "mode": "membership-hidden-panel",
+          "passed": true,
+          "positive": 0,
+          "projects": false,
+          "ids": [],
+          "reads": 0,
+          "none": false
+        },
+        {
+          "mode": "membership-ambiguous-panel",
+          "passed": true,
+          "positive": 0,
+          "projects": false,
+          "ids": [],
+          "reads": 0,
+          "none": false
+        },
+        {
+          "mode": "membership-no-selected-tab",
+          "passed": true,
+          "positive": 0,
+          "projects": false,
+          "ids": [],
+          "reads": 0,
+          "none": false
+        },
+        {
+          "mode": "native-control",
+          "passed": true,
+          "memberSelected": true,
+          "disposition": null,
+          "forbiddenReads": 0
+        },
+        {
+          "mode": "href",
+          "passed": true,
+          "memberSelected": false,
+          "disposition": "new-tab-preserve-current",
+          "forbiddenReads": 0
+        },
+        {
+          "mode": "href",
+          "passed": true,
+          "memberSelected": false,
+          "disposition": "new-tab-preserve-current",
+          "forbiddenReads": 0
+        },
+        {
+          "mode": "href",
+          "passed": true,
+          "memberSelected": false,
+          "disposition": "new-tab-preserve-current",
+          "forbiddenReads": 0
+        },
+        {
+          "mode": "href",
+          "passed": true,
+          "memberSelected": false,
+          "disposition": "new-tab-preserve-current",
+          "forbiddenReads": 0
+        },
+        {
+          "mode": "href",
+          "passed": true,
+          "memberSelected": true,
+          "disposition": "new-tab-preserve-current",
+          "forbiddenReads": 0
+        }
+      ]
+    }
+  },
+  "packagedJourney": {
+    "status": "PASS",
+    "evidence": "ISOLATED_MV3_FORMAL_UI_LOCAL_SESSION_AND_PERSONAL",
+    "realChatGPT": "NOT_RUN",
+    "browserVersion": "156.0.8078.4",
+    "command": "FREE_CHROME_EXECUTABLE=<Chrome for Testing 156.0.8078.4> node tests/host/browser-local-mv3.mjs --flow-only --nested-home",
+    "newDisposableProfile": true,
+    "externalNetworkBlocked": true,
+    "checks": {
+      "projectFooter": {
+        "y": 118,
+        "bottom": 158,
+        "height": 40,
+        "viewport": 158,
+        "panel": 158
+      },
+      "projectFormalFlowInputReturn": true,
+      "firstNativeKeyboardToolGesture": true,
+      "firstNativeToolGesture": true,
+      "nativeManagementAvailabilityKeepsFormalNavigation": {
+        "trustedExpansion": true,
+        "inertRestoresRows": true,
+        "unblockedKeepsIntent": true,
+        "responsiveClippingRestoresRows": true,
+        "nativeCollapseRestoresChoice": true,
+        "workspaceAndDraftUnchanged": true
+      },
+      "homeFooter": {
+        "y": 61,
+        "bottom": 101,
+        "height": 40,
+        "viewport": 128,
+        "panel": 101
+      },
+      "flatHomeMember": {
+        "sameNativeParent": true,
+        "height": 0,
+        "explicitFlowRow": true
+      },
+      "nestedHomeContainer": {
+        "member": true,
+        "formNotPatched": true,
+        "nativePlate": "rgb(242, 242, 242)",
+        "formParent": "nested-home-form-wrap"
+      },
+      "nestedHomeNarrow": {
+        "inputFits": true,
+        "plateFits": true,
+        "workspaceFits": true,
+        "nativeClick": true,
+        "nativeInputFocus": true
+      },
+      "retainedHomeMember": {
+        "sameParents": true,
+        "nativeClick": true,
+        "inlineGraphicRetained": true,
+        "hiddenUntouched": true,
+        "workspaceVisible": true
+      },
+      "sameDocumentHeaderReplacement": {
+        "newFrames": true,
+        "freshView": true,
+        "workspaceAndSidebarRestored": true,
+        "explicitLayoutRestored": true,
+        "originalEditorAndDraft": true
+      },
+      "homeFormalFlowInputReturn": true,
+      "conversationFooter": {
+        "y": 92,
+        "bottom": 132,
+        "height": 40,
+        "viewport": 132,
+        "panel": 132
+      },
+      "nativeScrollRegion": {
+        "originalTabStop": true,
+        "flowRoot": true
+      },
+      "conversationFormalFlowInputReturn": true,
+      "hiddenViewportMarker": {
+        "sameNode": true,
+        "empty": true,
+        "hidden": true,
+        "zeroHeight": true,
+        "retainedRow": true,
+        "beforeFooter": true
+      },
+      "afterUnlock": {
+        "ok": true,
+        "exists": true,
+        "mode": "personal"
+      },
+      "nativeNavScrollChain": true,
+      "localSidebarFailurePreservesWorkspace": true,
+      "nativePartitionReplacementRejoinsSidebarOnly": true,
+      "beforeMember": {
+        "ok": true,
+        "exists": true,
+        "mode": "personal"
+      },
+      "afterMember": {
+        "ok": true,
+        "exists": true,
+        "mode": "personal"
+      },
+      "navigationTrace": [
+        {
+          "type": "history",
+          "documentId": "7919D13CB869D052830D948BC21EC289"
+        }
+      ],
+      "nativeListChoiceAcrossFreshDocumentBinding": true,
+      "sameDocumentProjectMemberReadingReturn": true,
+      "returnPaint": {
+        "box": {
+          "x": 24,
+          "y": 24,
+          "width": 356,
+          "height": 140,
+          "top": 24,
+          "right": 380,
+          "bottom": 164,
+          "left": 24
+        },
+        "viewport": [
+          1140,
+          654
+        ],
+        "scroll": 0,
+        "visible": true,
+        "hit": true
+      },
+      "narrowFlowStructure": {
+        "workspaces": 1,
+        "headers": 1,
+        "composers": 1,
+        "roots": [
+          {
+            "x": 260,
+            "y": 0,
+            "width": 460,
+            "height": 900,
+            "top": 0,
+            "right": 720,
+            "bottom": 900,
+            "left": 260
+          }
+        ],
+        "height": 900
+      },
+      "persistedNativeNav": [
+        {
+          "segment": 0,
+          "oldOpen": [],
+          "sidebarOpen": [],
+          "capacities": [],
+          "scroll": 0,
+          "sidebarScroll": 0,
+          "sidebarVisible": true,
+          "inventoryChoices": [],
+          "freeSession": {
+            "H": 30,
+            "T": 20757,
+            "Z": "America/Chicago",
+            "policyRevision": 0
+          },
+          "sidebarChoices": [
+            [
+              "g-p-11111111111111111111111111111111",
+              false
+            ]
+          ],
+          "sidebarViewport": {
+            "owner": "native-nav",
+            "scroll": 100
+          }
+        }
+      ],
+      "workerRecoveryKeepsPersonalAndUserExpansion": true,
+      "newDocumentLocksAndConfirmedPrivateObjectAndLayoutRestore": true,
+      "privateScopeRevokeClearsPriorProject": true,
+      "actualIsolatedUninstallRestoresNativeGeometryDraftAndInput": true,
+      "actualIsolatedUninstallRestoresNativeReadingPosition": true,
+      "noInternalRequests": true
+    },
+    "browserErrors": [],
+    "requests": [
+      "/g/g-p-11111111111111111111111111111111/project",
+      "/",
+      "/c/44444444-4444-4444-8444-444444444444",
+      "/g/g-p-11111111111111111111111111111111/project",
+      "/c/44444444-4444-4444-8444-444444444444"
+    ],
+    "fixtureHashes": {
+      "tests/host/fixtures/observed-sidebar-project-details-20261026.json": "3fc4720e4ecef017fff4dbd2fc87817fa69a6e45650322b19c6a694f76c2ec19",
+      "tests/host/fixtures/observed-history-structure.json": "f95376a07e8668c9bc9696d4e45888b3f1d08e1ecb6b3bc1e84cbf51c1c37d34",
+      "tests/host/fixtures/observed-sidebar-project-20261026.json": "5b3a828250ac95f6e47e57d146e6020b94b36c2f18053d1cefbc612b8be934bc",
+      "tests/host/fixtures/observed-host-replay.mjs": "6bd7adc02bdb55fffce02eb470e930aca055f84759e97759f00344b67181be8c",
+      "tests/host/fixtures/observed-host-baseline.json": "91d9c36dc5771c462f7dae9028d6b0e3652da87419187b6af9c359469ddfeefd",
+      "tests/host/fixtures/observed-project.mjs": "b44c4f08807b27f15157c2c5ff018462765f92e7d59a7776740b3c5f30d4daab",
+      "tests/host/fixtures/observed-desktop.mjs": "a39fcd17a44ee8c9aee3bd7e3863b695573de56cc52ebe1b55e6bb7955c69cd7"
+    },
+    "sourceHashes": {
+      "extension/worker.mjs": "0b80790a6af44952f12d782e55ffa45008778580e1daf5aa447a4b3e2a264009",
+      "extension/browser-bootstrap.mjs": "961284ccdf807fa799b81c512607808d9a143ca6070f98aaedf28e26e87fc554",
+      "src/runtime/host-browser-bootstrap.mjs": "5a7e89e900643d7c8e9c1d5f1b4573e4d6d6bf11dfe9fc296e12a62ed38e36e3",
+      "src/runtime/browser-request-context.mjs": "ef4fb72ba9e22d36d517720ae7465e6b806dc1d339f059cd03260495a9f47920",
+      "src/host/url-policy.mjs": "fddfafcca2276161e6fd3c908ac896d0dab656fce6cf06aee64f1f442f7ac7e9",
+      "src/b1/identity.mjs": "75f25f4daf8eef16c1cc161eeb7ef1eeaa17378d701f67d2ec56cb51ebfa8289",
+      "src/data/request-deadline.mjs": "cda2ebb4158c05eb911fbb84a1af092cf91f461e3a002bef4b4d23f5a70dfdf7",
+      "extension/config.mjs": "9f38c623f8ef08e684d9b1b71fd0a49c01b736a41e75efc997117370df175c41",
+      "src/runtime/host-worker-runtime.mjs": "e121e633efbabf034c3b122b2b755711b04c9b6484cca2b6dfc701792eed1222",
+      "src/runtime/browser-local-control.mjs": "447390863cdbccbbff0ed4fb6c2ddff800ca11da23009bd66fc9a180326e5616",
+      "src/host/contract.mjs": "35129aacf2a7e1fe1812c846379563d60ad74a66b689ad41bc38d76484a97716",
+      "src/runtime/browser-old-send-terminal.mjs": "0ac8c767e1112f053d979ae411662cf1db17fc26501ea35e41ca8b4186514393",
+      "src/host/old-send-terminal-profile.mjs": "a43986f8e54b15c98e9dc3535a9e0bb08820ad2132f0eb0fdf72ace97b227b0f",
+      "src/runtime/shared-host-read-budget.mjs": "ee4e09ea97c144fbe30b029b41251ae8e313503bf706e3b4cd9966a24ae27196",
+      "src/data/hash.mjs": "aef21d1842cdc09b33fef973a9d29f15cb7c0c3f773a6a9d31726b83ffee7b21",
+      "src/runtime/browser-first-send.mjs": "609847013c92f984f0c75a4854b57ba2592eb878704d76a21d7c0364033929e6",
+      "src/host/first-send-profile.mjs": "cf0d76b36fc980a890246d255448f8b29965b5ff12882689d6884e7336e436ff",
+      "src/b1/scope-repository.mjs": "7124b1e9e6b2ff9b0af0d836bf9a8c60db401e67fb02e04366c53f8a207f750d",
+      "src/data/schema.mjs": "3b3053fef20deb617fcc7a8cff8401424c7b5537373908974eff7143efb0f2ab",
+      "src/data/free-policy-initialization.mjs": "e0a358b12ea9454f5ee657612e4c83c247ba895b082a362be9186f4b7e898a32",
+      "src/data/known-anchor-key.mjs": "e5d91c902e04440be924ef0506ff688bbbccd83150610f50199b518bcb298df3",
+      "src/data/repository.mjs": "51ae3738f5260763f68e0ea420d4ae9608b67c118486ebda724580c34d379964",
+      "src/data/free-time-policy.mjs": "8a75b5bdde8abf8ee07873ecf2aa45a19faccd030b9f03c738b56db6ba9ea17a",
+      "src/navigation/projection.mjs": "36334b5da4bd8e89718bf45b69723f4a657d46797c03c653298aaa3392399f24",
+      "src/data/activity-version-fence.mjs": "165775d2e4e9aa5acbd56af9d9e97a6bd4707e7d9c27f5b1669a215529bd1e74",
+      "src/data/native-repository.mjs": "f4f84f7e30ef92ebef2a785d192cb6d2226490a2cccc110c77ad1695effc1e87",
+      "src/data/native-lifecycle.mjs": "62d46f572dadbcc247d3d144ec4e85539ef82e6e08ccb6d9f1e8857914ecd965",
+      "src/data/state.mjs": "df0eaff00a7f050c37653f0e740b8fabe19bce571c5e37f4ce437d180984c62a",
+      "src/data/preferences.mjs": "1fb8395c5dfe23d64c91095b71a1c117b9762b3ccec68e262aaf73744b12c9d7",
+      "src/data/continuation-evidence-reader.mjs": "c28d338063eb500ef98c4fec88938d63b5adc501bdbfe44185fbc2fe781d7fbe",
+      "src/data/free-evidence-partitions.mjs": "c1cdd10d9c6a6a142759fa7589b55a1607a4518260677abb3145ea00907a0ead",
+      "src/data/free-evidence.mjs": "3a658b980251c330a09104786e5048f3e8cfa46e81e7e72403bbbdadf6c8a982",
+      "src/data/observed-send-anchor.mjs": "f9dbb9278502a325c2263d4adeb99ea1c0159525d505728fe84fdee2d59980da",
+      "src/data/free-activity.mjs": "29a89003f69d38a6927916db367af505362586168df292055941cf7aa56a0928",
+      "src/data/evidence-ref-directory.mjs": "8a89bf5b8535578881c823077554f177098044214a22fcfaf4be41e65498c867",
+      "src/data/verified-record-cache.mjs": "9b7b3c13abdd37f2b6d4fad48b85707a9815538fd793cad537f8e87b8f08cde0",
+      "src/data/native-observation-continuation.mjs": "3222a09592efd5c904cc65e036976f2f08bb260a9e639c83bcfddbd025dedee8",
+      "src/data/native-facts.mjs": "419bf63bfe02a1759528be4a9970b2a55849857aa0aaa92dabb3c8bb9fd9005e",
+      "src/data/native-partitions.mjs": "fd5fae8cbe9e64bcd9ed8b276f46714b00beea7fd8989e21fbd9e0fa9bada782",
+      "src/data/native-version-index.mjs": "943a4d05a7e0d44fa587acd1b1d9a5828988b30c74ba9903a3243b07159ad5cb",
+      "src/data/capture-json-snapshot.mjs": "d082508f8186c38c71e83e0cc8653501fcf6afde67e941b8ce8803f04106ade8",
+      "src/data/native-index-migration.mjs": "fa88d1b18c1594649b5bd1e84025dc1310c3241ee51f123a498ea49fc20a30e9",
+      "src/data/native-partition-audit.mjs": "b63440b53cda12d5bdf148914db5f88c21d868bf4186db0b339f8ffe50890a18",
+      "src/data/audit-record-prefetch.mjs": "5af85b5c8a90e0a1d236fdec784b77ee970f7ea251e18b4be386a34e909d6b7c",
+      "src/data/native-index-writer.mjs": "b9e24103156b3a9511e6284001992bba23d56b09fbe5360db545e7d3116d3fb2",
+      "src/data/native-index-reader.mjs": "6bdbf029cca3490520a24d8d9faad171d8f604b85817847239f5cceb2f3f556a",
+      "src/data/free-projection.mjs": "e184a7d3533710840fe8248b11ffde1db06ee10d42f03b850d231faf8ab3bd85",
+      "src/data/free-recovery-status.mjs": "7c87501d48823af05818e94f48304fbebbc29828d92802e6629c80232fd7a7c2",
+      "src/data/evidence-partition-audit.mjs": "3aadf876de681cc97ef5564119da7a2c691c45a472434d6e8f7080ae02d3aa79",
+      "src/data/evidence-directory-reader.mjs": "7ef90c7a37a82b2ce4562acb6afc56e4ae36d14543c776893664b79869fa895b",
+      "src/data/free-evidence-repository.mjs": "897a672c5f21518d2e6d23cb4f697d273c6320128487d077c0917c5a3bc97609",
+      "src/data/evidence-directory-writer.mjs": "9ff0c941904e155c736a29e1d232e4fecf67d7995c5d4b6907a12b0f54102944",
+      "src/data/evidence-directory-migration.mjs": "75328ab40b3327d9e9c60c44402d87ea3afc9bd385eeb3ba2f0a14036fc1b135",
+      "src/data/shared-directory-retention.mjs": "4213b173e47d2f2a43693dbd8c1fa7a5fbbabdf2439104aebc22f603cfd2be64",
+      "src/data/shared-directory-reader.mjs": "23d34f68b0dedce591ef2b99bb539a7eb56efff619d6c80ec959290f500672d7",
+      "src/data/shared-ref-directory.mjs": "995be9ccc613720e97b807d8a98ed80a336ec79ebb13b4521316548848f10626",
+      "src/data/partition-manifest.mjs": "566283402493ada28abc530354c343bc6c561e309d1e6802c981d62584a5e06a",
+      "src/data/cooperate.mjs": "ce494a33280143e1e2a2227a72413da792330311de12642a9a56b13704f2f3b4",
+      "src/data/shared-directory-migration.mjs": "0cd415f9a871b93613c3d9f3e301982cda2d1891dc847d983397f87dc2dcf0df",
+      "src/data/shared-directory-writer.mjs": "9e933860ea5b331ee78f3df09431b65925e3930e22ee55b11b692c9c764bf1b8",
+      "src/data/shared-partition-audit.mjs": "25d4b77561b36b150ce1524e27e184170f3c1ef493995251a88678908d31f6cf",
+      "src/data/partitioned.mjs": "c0d4d79ee1cd4ed6c3d95580416aaa79c2160eb7a82347717cc98afb9da453ac",
+      "src/data/shared-directory-recovery.mjs": "420077b28d9e4bc69835bb63c2c00ebfe5ce0497d2bd902a3728fe38684476ee",
+      "src/data/backup.mjs": "bb0a8639d02e2169ae15e866a464f1531b7e80e40afd7c8a4b35e99d70928396",
+      "src/data/evidence.mjs": "f84032c9a2fc08455480652b60de6fb9394a70e82a7ace8729186ff097b26238",
+      "src/data/known-anchor-backfill.mjs": "dd58e613da9564668fc7963135dd98caccf3bd6930e532864e68d9ff6afd55ca",
+      "src/host/chatgpt-observed-profile.mjs": "f0d4e61d97dbfa6cec5d7c81018f1b1a91c6d5d63489a7b5ef18198a7f1ba4ae",
+      "src/host/native-history-list.mjs": "0f29af9ed455cfdab50930938f92d1d18a36f5495211132144cef0dd9a1276da",
+      "src/host/native-project-surface.mjs": "4040b8a1f9e60f07bde1884ea2fcd1e31083c7ba7eb61301c57876d2ca0e0dbf",
+      "src/host/native-return-gap.mjs": "83ed74dd76a3a557a446a0e96fa40fe5d27396bc76786e790d3ec66acf8a8b60",
+      "src/host/native-surface-boundary.mjs": "c6aebcfb13aca3965b48304d27e9347f01f9c9c092cf4cc3225087dd366f74b8",
+      "src/host/current-body-discovery.mjs": "bae002fee0939a1ad271d0420c13f6db5c75d67637b97cc8b8b7a4995bc4938e",
+      "src/host/surface-discovery.mjs": "e626e1b867da622dfe7065c0227c226167a66f9c03533cb192e3203ab5288ead",
+      "src/host/bounded-handle-registry.mjs": "ea3a48ed3760741b8d845b4116830cffc611571b6fd01bb9561bd8a63efdee5c",
+      "src/runtime/host-binding-service.mjs": "f7698618c2f2abdd04e6a74ebc794b452ff1c44d7621919febc68382ac9fbfee",
+      "src/runtime/browser-local-storage.mjs": "ca59ae6c031212b6703607f671b3efcbee0a61c03759bea150026befca6f1017",
+      "src/runtime/browser-local-authority.mjs": "42589727194f9ca832181b86af5553a88c26016cc31aa610e43102d56e22ea9c",
+      "src/runtime/browser-local-memory.mjs": "c7070618f486d8daa46884cfcc85c13736199779cc5014ece951b078c10460b1",
+      "src/runtime/host-native-activity-owner.mjs": "54adec4047801e7e8da8f4bfb0c9ee87557cc2a64f4bc090b846b57a6bada625",
+      "src/runtime/evidence-source-incarnation.mjs": "6bcdc42a9b5e94b0597f3588186af7ba105befbc84f21021a5556936d87e6e4a",
+      "src/runtime/native-activity-profile.mjs": "2b17ad13773345a49985bf24f8fa3cf815dc584f01864068d104970b427714bb",
+      "src/host/metadata-candidates.mjs": "76637cf062eff2be631c11c63dd40db2ec33dfa835710d82147270774e1350cf",
+      "src/runtime/context-recovery/no-receipt-recovery.mjs": "14d2382c12f250de8386837a1b0845e60f7c1f1297245dbc8e4ee67d87ec2513",
+      "src/runtime/isolated-session-owner.mjs": "8c3ef00c36a387c6664e3f24910ba317f7d3a7b9d2216f70f9823d7700c0061c",
+      "src/runtime/host-entry-calibration.mjs": "25e59ade903d92af3bd70f8e7d205c8ac2d054ca6cabcaad5da41a7def1393c6",
+      "src/runtime/host-ingestion-pass-owner.mjs": "42716372e8f9d57f33d1a75d27c9fae1016d868cdd1eb87b90c712e8b3981347",
+      "src/runtime/host-old-send-terminal.mjs": "69d794d01b2ef6f60a9b466a8583a3d020a28906c8bda1381557af57e6b36a29",
+      "src/runtime/old-send-terminal-readback.mjs": "c090d556d487b58771ae56ed408547c37e893e7a78e26838a47a528fbd459fce",
+      "src/runtime/host-activity-source-admission.mjs": "7010e6644bbe7b05ae43a3b7b0fbf6928d35f46eacaa86d4b7877a5673a92489",
+      "src/runtime/send-ack-admission.mjs": "25c9033baee468e771b8f1d6d74764e619bcda669b2eaf658985e4208b349696",
+      "src/runtime/historical-send-profile.mjs": "b356d5fc7101080ba60910edc0175180924c548269816dd98900f2055195f4c9",
+      "src/host/conversation-metadata.mjs": "915e88458f46265a696e68fc4b2892916e4bc69ffd03f04d580b4dee4c9e658f",
+      "src/host/conversation-directory-metadata.mjs": "2508a697792936a889708b649c28bb8ed2b1bc1b56e43ef44c176bd0354bf733",
+      "src/runtime/host-historical-send-owner.mjs": "dd0901b6c0739146db14371fab1284c37ab43fa0e106406d51e7c7e308b76bce",
+      "src/runtime/host-first-send.mjs": "44b175a4c7f41f903b19275c84d5f1269dd179eb7c1775a87ca81fa97cbac816",
+      "src/host/first-send-causality.mjs": "cd062c0b638408b387bb469f76dac3ea389acd9943bd42c1545ac8f0a08905e6",
+      "src/runtime/first-send-readback.mjs": "4052d39db39d2e5053bb4287cde87fd45ddcce844420099203950ea68a9691f6",
+      "src/runtime/host-current-navigation.mjs": "ae1033e1b5ed4c1301653d08ba90f5e0ee64f255da910e9f7cf7046f62a5cca4",
+      "src/host/current-navigation-plan.mjs": "c33cfd6af8e7523ac85fe812b59b2e24df109d4e03a3d507b9edab6b53d413ff",
+      "src/runtime/host-send-ack-owner.mjs": "7e4362115828c9b68ff3a34923587c2711e6df854d119b9b3d3a1d91b5830fc5",
+      "src/runtime/host-candidate-service.mjs": "0ae6ff996262e89550bc49709e96647c5a738f33ca44409d465b39bf5c5af4fd",
+      "src/host/candidate-presentation.mjs": "d2a89c85c263de8f1572c8fe12e7fc1400bd4201fed7c3adb9aede868cd6cc4a",
+      "src/runtime/host-snippet-service.mjs": "041560ef146a677510c631f14ddf38454b40f7ac40e9e3a68d50873c5515b953",
+      "src/runtime/host-backup-service.mjs": "ee70a94e1f1af68c23f93ff1bc5b67d547c7661c4b1abe7e7a9c26e4da9d9c2e",
+      "src/host/backup-transfer.mjs": "69b9c025e80993644ba8b37fdf77ccb9662d4050fae66e847b98b3663f59122a",
+      "src/runtime/host-send-candidates.mjs": "454bb4ab52dbac6fafe3a5f70c9d7e8acfcce6f4011c2a70646616ca96dafac4",
+      "src/host/send-correlator.mjs": "251d50175833fb24dd945da770aafa40e34db3850da0eaa67b9944bb5798d408",
+      "src/runtime/current-metadata-reader.mjs": "c237d156abe921e5066cd267a6a7bb056b80a744f46d9045c8a34a44ad0d641c",
+      "src/runtime/host-recovery-service.mjs": "78839dcb8f8b1bc8e66b5e06e2b8d0fcea9b414bd10274d6d32bd02cb835c171",
+      "src/runtime/host-continuation-owner.mjs": "f4d2dd6393d36fe7708beb9020571a4c11f63459dc4f3075ffbfa982e5e65630",
+      "src/runtime/free-read-service.mjs": "c542b1fc6a82fe241b97630fb3e1aca26545448bda9cab7df05ca568ba7d225d",
+      "src/runtime/host-view-service.mjs": "5ed1b2948d442d22c6eb3fb20946d8695f8155e42449b40c0b03243fd0a8edcc",
+      "src/runtime/free-project-location.mjs": "45892565ac8896feb97872c59e3b504d0563b6e461c3da49d838c1359991e649",
+      "src/navigation/free-view.mjs": "ef0f8d6b798789539d16bdc3ae1d8cc66ccf5fc32f472b83ca2c475863946aaa",
+      "src/host/frame-resume-state.mjs": "865ca9945b87cce74f77d719f1077323b8f8a38ac6137caa0eec187075f564dd",
+      "src/host/frame-row-windows.mjs": "5ff48b95d0e45aba9ca779f08b5c0c4a9a4056826ffcc94d47a8c03323d42b3b",
+      "src/runtime/host-auto-time-policy.mjs": "90838ac5e0c95262911bb05289e13abe659662b7ea08255edfce14e7665516f3",
+      "src/runtime/free-working-set-projection.mjs": "b50b973005612c5d9d76cff9a4acd6d6fc23d006dea787d681c534385629ff4f",
+      "src/runtime/free-search-projection.mjs": "354fd7098b8bd695fb281f6641388127347306e63186057c9b0604f92fc224dd",
+      "src/navigation/search.mjs": "36fe6eda63bd85ff203a306a78309a91979dd9705b2cdb2b64c1f764c2e2b8d0",
+      "src/runtime/free-view-owner.mjs": "03c5230d477eb0aefc0e774ad3b894f6de4ffac468a391fc982d54fdb16f5cd7",
+      "src/data/read-recovery-budget.mjs": "7c7948a740dcc37f9a2a6b25babe8c29cd2d84441299c1429c7e524402cc8c51",
+      "src/data/free-header-loader.mjs": "7817a581a7816d744b39ed8fa37d49eb86da065335e2f46ec190fa9fae18e7cb",
+      "src/data/free-page-loader.mjs": "c4339dfa76cfab89aa1f16b40129ee9f7c779233d5d03ff2134f551a8f9b0d65",
+      "src/data/free-replica.mjs": "11326c574b31ce1fc4c93bf712b812f0d3181f0254ec08ec22e8588836dd81dc",
+      "src/navigation/current-index.mjs": "23f13e4d9556715bb029ad6724b8a3731ba87251d6ddfd8e95939085ebfab21e",
+      "src/runtime/free-frame-projection.mjs": "f6a5d42d72ed20ce580624d7c747371e55cd3a1767c822b0425d622cd781c5ae",
+      "src/runtime/host-ui-owner.mjs": "6aa7992678adf8852b7867711dba116df4ec20a63ca0b4e9e65a2d776c7a0a0e",
+      "src/host/ui-grants.mjs": "38343ba3a5dc67ca714ea29e14085eb35de8c193d6a6a8a2a95494afd3aafa5b",
+      "src/runtime/host-observation-owner.mjs": "ca209bbc5de355630b602d33c730eaf7022c746ee6005e29ff20abadb6e3d272",
+      "src/runtime/native-source-incarnation.mjs": "ae55375ce605b4d57da3d9ed6a8e3e6f8668c3189b3346bb70e8a8ff130206c2",
+      "src/host/current-observation-batch.mjs": "f7fcd583d0811a8b71d72dc5bac4ba4c57eae16e552076aa08d5a50f42b45151",
+      "src/host/send-intent-claim.mjs": "c4c748740cb6c691e03565f346fd31a83761a585c9ff2f28d94fec4db5053b23",
+      "src/host/current-body-claim.mjs": "e082ed353a0bb81c7762a65ffa258a375391ca3194618f2a9888fee0c357e13a",
+      "src/host/surface-batch.mjs": "4733a8cecdc3f4664c77da81d12441c9f2bd7cf0c16e55ec93eb94076faa4e5d",
+      "src/host/directory-batch.mjs": "6cc6546fd64a97d5b21765c12d4dc90ccc1d6a3b219aee0f7816cf4b3574eb92",
+      "src/host/project-metadata.mjs": "71980d52b0a41103a3920f86152e2387cadc5da7eb07614911cdf2acd4d9d46e",
+      "src/b1/document-binding-broker.mjs": "1f247c0fa2b3a05c5f2ae11dda39df04de9c79628b7753715bdafcadbc842aec",
+      "src/b1/host-document-handshake.mjs": "fafe938904e635da9964d222fe7dce8cc98cb5eda6501420af464c95b4a9cc6b",
+      "src/runtime/scope-authority.mjs": "e33521586cf169b4e29bc58f03b42724b8e5a55a0cd2c72213a595100b964e42",
+      "src/runtime/session-provider.mjs": "ab18ecf605dcbf9b66c58b4e04b9ce48d0173990b6fac56c75a12317465c430e",
+      "src/host/session-identity.mjs": "ff71fb796ab2c81ef07a5fae274a3de2c4317e05af48a590c952bb0c51b31281",
+      "src/host/conversation-acceptance.mjs": "92fdfc486bd9614028aacc197b99a26b8ad3ae254e54a980a04b0a1e90153144",
+      "extension/content-entry.mjs": "02dd150d4b64d2a0cf5355033b0a7b29878e11c4c71663b5950b6d84414329c3",
+      "src/host/local-reconnect.mjs": "7bc03abb7a0890a9a01a1c8fc252493e565c71f6a7f880d11b858b1e8bed02f0",
+      "src/host/native-flow-diagnostic.mjs": "3517a118b1cbba97972f0eda7aa69d950c4df0f9ffb89f6cde031b1854614d39",
+      "src/host/browser-local-lifecycle.mjs": "df971c6a6d7c9e364a57c81cdd345315cdc8100ca4b421e55c652cda02cc3e32",
+      "src/host/native-layer.mjs": "aa6db8de1c8af990a13de338759ec9464c5d923217ba2168de0de5bf22c29252",
+      "src/host/local-status.mjs": "33480b4eebf273eed9621afac9da43c2020c55e97d35f611c188978690bc70db",
+      "src/host/document-flow-layout.mjs": "c84001037e232327919546da60ccfbba29cbeec3829160ee1194ef750af5663f",
+      "src/host/history-structure-diagnostic.mjs": "e46c2ece8ee2a49cf2f9a541a81a6912320de06d5bb862f8ed22d351509e59a0",
+      "src/host/loopback-project-association-profile.mjs": "31cd5af21c95337f732c6ca4f0971d0c8ad9642d678f0e77f650094e076adc71",
+      "src/host/temporary-native-navigation.mjs": "b778ec2c049636d022e8883f6a185cc0325634fd40a8ed2ce206f95f91064388",
+      "src/host/isolated-session-reader.mjs": "49b5726c6b1317f1879a5c5b263a88bdb8e0b886a31a012d156c9b42a84118e1",
+      "src/host/context-association.mjs": "e589ecda593fb2ae08d0e0a28e9f002e31b90c754bfa2e2de65cb403ab885ff0",
+      "src/host/project-context-association.mjs": "46c098890d73b560ca5b7666eb48eb057f8390184e8d5d73ba70871e10029577",
+      "src/host/chatgpt-adapter.mjs": "a2b892e6a05a33975cf9404ca14471cdf8c72a6b78211e42ab7bada5312e77d0",
+      "src/host/native-sidebar-composition.mjs": "ffdb0eb14dc3f4cc3662ef6c9d804bbff123a695a8687f8dc9d74f11a9d2d77b",
+      "src/host/native-home-flow-seam.mjs": "87552f0ec89b815f5bb1410a9eec69255fd1837c00b8bf62956524bd90a519c6",
+      "src/host/native-return-slot.mjs": "a2c19a6d7e082a8ff82ab8f8c5c4b5adaa4188f21b8c31ab95dfd5826b97f803",
+      "src/host/surface-fragments.mjs": "1fbae58e227c4c3cfbefb991ee1f7c469a9225ac2360940b23b5cfc999555d74",
+      "src/host/native-input-risk.mjs": "65ce8e8cb44e04ae6754f5c6245abe1ea0f4e990e0e60091ce8e00fa12634158",
+      "src/host/native-send-intent.mjs": "f1d32ff506e8a289d6b6a46ae91043ea1d49c666265418af6a80a384caf53d30",
+      "src/host/native-snippets.mjs": "2e4c039073450d55cda5c09c30b7ceebfc9f0141b30a85c7c7d19a1a1bb2a142",
+      "src/host/native-actions.mjs": "5641109fa7cfbc4e1792a95137bfdf285ce60102b5b93da9a895b327390ff83e",
+      "src/host/content-session.mjs": "08bcbaecad926e8a05f52a6642904e7f30a361afafdb647cdf7494a55a232527",
+      "src/host/candidate-upgrade.mjs": "480569f2a94916408f5cb00a830f61a9d150624b4416642660879790ee85ef5a",
+      "src/host/content-candidates.mjs": "8fa2eb65858bea846f2b78303ae6a3d45e9df959e08cf93c75b2c6d04b3e68dc",
+      "src/host/candidate-page-window.mjs": "b8e741b7f46a9a0468255d56261b3c39d47e27d31d6ca87442ef32ff055d33cc",
+      "src/host/snippet-capture-wait.mjs": "8d97f82660a0fb30ebf9e904f2d9f46ba25c932e3f3efaa7895b5ad6d5f7210c",
+      "src/host/snippet-selection-session.mjs": "f5f1ccd83d3c339f525e9016bf1f39be0ef0da12d783ff002dd045af083286a0",
+      "src/navigation/flow-mount-surface.mjs": "5f7128097f182cccd8889bb2fd3060ab2dfa67d34b2bd4341fe2e234b0efabfe",
+      "src/host/native-project-management.mjs": "35085821803f60241e6b89be656f344ec8ece755c090e199a56c5504b6399352",
+      "src/host/frame-appearance.mjs": "cfdbf168116ef1e5b3ce95b3431741cca3588e2d90b3ed2d32d7bc32008efb7b",
+      "src/host/surface-controller.mjs": "d9687a1852155542b2ce888606cedcbf4c0c6823b4a157af4a1efa381d3fa3f0",
+      "src/navigation/icons.mjs": "2fae3d2fb1f4488ca16dd1a05abf8d8ae5f1f0478a4103b634961f8e62bb1ab5",
+      "src/host/frame-native-plans.mjs": "3678d30c1749468cf6c39a48e59790cb0d6422efa59e05078cb2c5517503ab44",
+      "extension/workspace.mjs": "c12419194fa2a92b3770cfdd60849e36c92261e27066c55235a082a1bbb507af",
+      "src/host/free-frame-client.mjs": "1b02b8401bc87710de76f1620711c6683b2d8867fb2d073d8efe8f85ea03d911",
+      "src/host/free-frame-read-error.mjs": "a53482488ed8a6f4ba40339d5eb116bbd445e7ca3e230e822fbe9ba2c708e5dd",
+      "src/host/local-panel-focus.mjs": "ce29e6b1c542dbe2be000a517ffaa56a1fca21088219973326808025cb64cdfa",
+      "src/host/frame-candidate-migration.mjs": "10d9b7bab81194530d589940cd1f184f5d6db9215ee7cb78be5a244168054b5c",
+      "src/host/free-frame-candidates.mjs": "f2180a9befbdc709bd97d8590f17909b4ea2ec8ec33d898bd22250bdfb57dd4f",
+      "src/host/free-frame-snippets.mjs": "b0d993a5e4a5e3f8e8145ccbebae4149049c666dde82ddeda5681c2f3563df4b",
+      "src/host/free-frame-backup.mjs": "433e747331d90eeb3af8b2de0efb29d1603d1a45759bfa1b0dbb1f0ac524d552",
+      "src/host/free-frame-recovery.mjs": "367ddb3c9b94bb5cebbaf06817c8e2db15b31255ef9af78dbe3169e0d725a34a",
+      "src/navigation/free-recovery.mjs": "20352a2a9a37bfdac9d0889d87efaf80510bf7462df3fba1ceef1e4eac3c0442",
+      "src/host/ui-frame-client.mjs": "44915d1607189ed7a86610200228e92fafe788b655561624fb0c02263bd98b01",
+      "src/navigation/navigation.mjs": "5c96d9e251ea774dcda359c63df4f41f2465dff035fe4589aa71218a0b6d1d91",
+      "src/navigation/styles.mjs": "67f2d0cdcb69be7a17cec971a732ae5ec37e7d44109c7eec95c07eae06a9781a",
+      "extension/sidebar.mjs": "8d1b85dda5d1a93b548cd37da978cb0f90ffef340ddd2744023b90eafc936220",
+      "extension/status.mjs": "d1a539586a54e241766284ea4fb6ad83bbddd95c9c36c747b5dde51ac54b86c7",
+      "extension/temporary-navigation.mjs": "a62ae7b41b83de18880faebf42b59f0a45999d28a8f506344b3e19dceb459db2",
+      "extension/temporary-content-entry.mjs": "d13222e0bf8be8c629408ea388c0a8dfcc9d5c57c32a0deb78d64f0776018624",
+      "extension/content-bootstrap.js": "13fbe317e1ba66c56cc414df4f375ccfb717754794de40cd6923d8c6691d18fa",
+      "extension/frame-shell.css": "23b5d9c3966d05be67fc4115603fdb651f34479252301c686793141ee5faa99c",
+      "extension/frame-bootstrap.js": "55ac9c3f26128ed2090c27f83fff35823640a618c24f38348aee5f4a286f5a12",
+      "extension/workspace.html": "25ae5ed0790d6307bf160ff9db6bd3df635628f604abee6b9551f78bfb357024",
+      "extension/sidebar.html": "58e09f90eba837e4ec77804c7e1672ff57af91455d56387342955e160daf4c74",
+      "extension/status.html": "fbdcd39bfe9307a3c506a6a62fa8450afcc1cc9b4731a91294dfb40a01a6eae4",
+      "extension/status.css": "dfb003477c1d2c223698cae2c375fcbcbf973b83e600fa3a22a982fc03b5ffa6",
+      "extension/README.txt": "48ac79fd611f2ecff03b85b9aa7e195a69e7b5f89d5351e0ecd913207c506e09",
+      "extension/build.mjs": "455f08a4bc72f80b107dde5208a51a3417da2d52c76f3bddc685879ea9ad1d3e",
+      "extension/classic-worker-build.mjs": "87275509401785d49ce134d0780a06e587dc8d303eacf91aab7a22752c3007b5",
+      "extension/tooling/package.json": "eae0628aefa50bf39eab0053f7ff0abb687f30c84607220e4ff0dae7b8e664d1",
+      "extension/tooling/package-lock.json": "4609d990146911013da85142a111efcd9209a26f3d51ce56a83d5d6a3bb58180"
+    },
+    "all206ProductionInputsMatchFinalPackageAndCheckout": true,
+    "imagesViewed": [
+      {
+        "file": "flow-project.png",
+        "sha256": "eb4bfb6a9d36bde82ac9c73bc87d4b41917c0e30428da727f90ee4936e36d54c"
+      },
+      {
+        "file": "flow-journey-reading.png",
+        "sha256": "7d91036e0df5b926b8f1b32ca98bf4af27490652d500fa4263ea4e7613127bda"
+      },
+      {
+        "file": "flow-journey-return.png",
+        "sha256": "9d9680bb785e7f00fe39723ab678456dc3dbe4be34e6f790dcf10f0324251153"
+      }
+    ],
+    "visualLimit": "Three synthetic geometry screenshots inspected. Missing Chinese glyphs and native fixture controls do not establish real ChatGPT visual acceptance.",
+    "isolatedArchiveSha256": "16121141aa62c534b13d6d20fc51c13385586ef0dd4a337a877e91920d00f26d",
+    "packageDifference": "The actual isolated package uses a loopback origin. The final BrowserLocal development package uses chatgpt.com. All 206 production input hashes are equal; the two ZIPs are not identical.",
+    "scopeLimits": [
+      "Existing observed-project fixture is used in the MV3 journey; the new measured-geometry fixture is covered separately by the 13-case mechanism runner.",
+      "Worker recovery is from a CDP-forced stop, not natural service-worker dormancy.",
+      "Personal unlock/lock use the existing private status.html message service with synthetic local assets, not real user confirmation or private assets.",
+      "External-network isolation is a browser launch/proxy/route/CSP constraint, not an OS firewall claim. Fixture requests are not a complete network-attempt log.",
+      "Search, working sets and saved snippet management retain their own existing evidence; this continuous journey does not retest all their UI features."
+    ],
+    "runnerAndGuardHashesAtFreeze": {
+      "tests/host/browser-local-mv3.mjs": "5a54a81d9d464c30d3e8d16e2f8ea639d4e9cbd6b2d399297c675f51a1eb4ad6",
+      "tests/host/historical-network-guard.mjs": "e38719134f6087c3efbc66044922967262a6c2e585c11a7ee69b5016b22dc416"
+    }
+  },
+  "package": {
+    "command": "node extension/package.mjs --browser-local <NEW-output-directory>",
+    "files": 205,
+    "archiveSha256": "29510771187fbbd3f0d48ccd290eac64a33bf642c146304856004675c3b95289",
+    "status": "HOST_IMPLEMENTATION_UNVERIFIED",
+    "releaseStatus": "NOT_RELEASE_READY",
+    "sourceInputs": 206,
+    "manifestKeyAndPermissions": "No manifest key was added or changed; permissions are unchanged. Same extension ID requires preserving the original registered path on Mac; no installation was performed.",
+    "installedOnMac": false,
+    "runtimeContentFingerprint": "fc9beaab7bdef4c2ca31f10a658bdaac4960aa3d9267362503274e9b8bf81f83"
+  },
+  "independentReview": {
+    "writers": 1,
+    "reviewers": [
+      "project_review",
+      "diagnostic_review",
+      "free_scope_audit"
+    ],
+    "finalBlockers": 0,
+    "corrections": [
+      "Revision assertion updated to 12.",
+      "Vacuous null-handle assertion removed; actual resolveLoadedTargets/createNativeActions/planNavigation changed-panel-relation case added.",
+      "Unknown start/mount exceptions now retain fixed terminal stage after cleanup."
+    ],
+    "reviewIsNotLiveAcceptance": true
+  },
+  "remaining": [
+    {
+      "gate": "Project live enhanced mounting",
+      "status": "BLOCKED",
+      "reason": "Current live refusal stage was absent; the collected geometry/relationships do not reproduce the live refusal.",
+      "next": "One explicitly authorized current-document private status read on the frozen build; not a new DOM investigation."
+    },
+    {
+      "gate": "Positive NONE",
+      "status": "BLOCKED",
+      "reason": "Existing move menu lists destinations but has no checked current no-project state. Keep UNKNOWN; no guessed NONE."
+    },
+    {
+      "gate": "New snippet capture and location production source",
+      "status": "BLOCKED",
+      "reason": "Observed message identifier alone does not establish current conversation, branch identity and body boundary. BrowserLocal currentBody and selectionBridge remain closed."
+    },
+    {
+      "gate": "Search, working sets, saved snippet management and recovery",
+      "status": "SOURCE_IMPLEMENTED_EXISTING_EVIDENCE_REUSED",
+      "reason": "Read-only audit found no additional deterministic defect; the new packaged journey covers synthetic persisted state, Worker recovery and new-document locking, not personal real assets."
+    },
+    {
+      "gate": "New candidate Mac journey and personal assets",
+      "status": "NOT_RUN",
+      "reason": "No new Mac authority; preserve original Profile, ID, private data, backup, stash and historical results."
+    }
+  ],
+  "ci": {
+    "status": "NOT_RUN_AT_COMMIT_CREATION",
+    "requirement": "Full original push-triggered formal CI on the exact final candidate SHA; final result belongs in the PR handoff.",
+    "addedMechanismGate": "node tests/host/project-live-regression-browser.mjs"
+  },
+  "environmentFailuresPreserved": [
+    "Initial sandbox child-process denial in the baseline mechanism runner is an environment failure, not a product RED.",
+    "First package attempt redirected its log to package.json beside the output; esbuild correctly rejected that empty ancestor file. Renamed the log and used a new output directory without product changes."
+  ],
+  "artifactLogSha256": {
+    "diagnostic-red.log": "91e3c79e4a7185dcf97c805946775579e4a389598fe8c035db91bab9340d81de",
+    "stale-lifecycle-red.log": "d882e6ef94aab788525e6a77f3be1d225696c82d40fd544fc4262bbe87faf346",
+    "terminal-stage-red.log": "2d803d841b2891ef028c5556042ee42512c8402d5e2b2bb9cdf7c2dd255cd9b8",
+    "targeted-final.log": "571930b03e272ca0c43d375ab90e916c6b60fb32d058e5c8b5807ac4aefc6729",
+    "project-browser-final-red.log": "f9044574c5cccd2d037b3ed4c934adab9cf576db1b173013335a8d2bbb700c07",
+    "project-browser-final-green.log": "d5cbbe0df5df59240269ee15a0a3f46f8fde912af469d1e97820c6b1d20a890c",
+    "observed-membership-final.log": "5e7af802a8616cbeb29f298592711d06697a9815ab603f81e0749874c137ea58",
+    "packaged-journey.log": "c3052d2c2e5006053ab73bdc19da1d7d3c4f22898d3bede05553b74c2c991d35"
+  },
+  "notPerformed": [
+    "Mac browser access",
+    "new live structure scan",
+    "profile or extension-ID change",
+    "srcdoc cleanup",
+    "paint-budget expansion",
+    "identity relaxation",
+    "unbounded retry",
+    "merge",
+    "deploy",
+    "release"
+  ],
+  "supersededByPassiveStatusFollowup": "passive-status-followup.json"
+}

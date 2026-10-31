@@ -1,0 +1,8 @@
+{
+  "baseCommit": "1946891",
+  "profileAfterIsBeforeFinalReentrancyOrderingFix": true,
+  "files": {
+    "src/data/evidence-directory-reader.mjs": "7ef90c7a37a82b2ce4562acb6afc56e4ae36d14543c776893664b79869fa895b",
+    "tests/free/evidence-directory-reader.test.mjs": "3badfb51e179c78ea13c75f59ab8ef932ee6a7e27939933765449fb0b3c8c820"
+  }
+}

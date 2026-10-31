@@ -1,0 +1,300 @@
+✖ legacy partition recovery diagnosis rejects events wrong-target without writes (6.487917ms)
+✖ legacy partition recovery diagnosis rejects events missing-locator without writes (1.255166ms)
+✖ legacy partition recovery diagnosis rejects coverage wrong-target without writes (0.990583ms)
+✖ legacy partition recovery diagnosis rejects coverage missing-locator without writes (1.017792ms)
+✖ legacy partition recovery diagnosis rejects hints wrong-target without writes (0.997416ms)
+✖ legacy partition recovery diagnosis rejects hints missing-locator without writes (1.019ms)
+✖ legacy partition recovery diagnosis rejects hintEvents wrong-target without writes (0.809166ms)
+✖ legacy partition recovery diagnosis rejects hintEvents missing-locator without writes (0.985125ms)
+✖ legacy directory recovery diagnosis rejects events wrong-target without writes (2.135833ms)
+✖ legacy directory recovery diagnosis rejects events missing-locator without writes (1.111458ms)
+✖ legacy directory recovery diagnosis rejects coverage wrong-target without writes (1.037166ms)
+✖ legacy directory recovery diagnosis rejects coverage missing-locator without writes (1.242833ms)
+✖ legacy directory recovery diagnosis rejects hints wrong-target without writes (1.137791ms)
+✖ legacy directory recovery diagnosis rejects hints missing-locator without writes (1.038541ms)
+✖ legacy directory recovery diagnosis rejects hintEvents wrong-target without writes (1.249458ms)
+✖ legacy directory recovery diagnosis rejects hintEvents missing-locator without writes (0.783ms)
+✔ intact legacy partition recovery shadow is recoverable with sources and facts unchanged (1.136584ms)
+✔ intact legacy directory recovery shadow is recoverable with sources and facts unchanged (1.434584ms)
+ℹ tests 18
+ℹ suites 0
+ℹ pass 2
+ℹ fail 16
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 79.711709
+
+✖ failing tests:
+
+test at tests/free/evidence-recovery-integrity.test.mjs:36:167
+✖ legacy partition recovery diagnosis rejects events wrong-target without writes (6.487917ms)
+  AssertionError [ERR_ASSERTION]: bad index/piece correspondence cannot advertise repair
+  
+  true !== false
+  
+      at TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/free/evidence-recovery-integrity.test.mjs:41:107)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/free/evidence-recovery-integrity.test.mjs:36:167
+✖ legacy partition recovery diagnosis rejects events missing-locator without writes (1.255166ms)
+  AssertionError [ERR_ASSERTION]: bad index/piece correspondence cannot advertise repair
+  
+  true !== false
+  
+      at TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/free/evidence-recovery-integrity.test.mjs:41:107)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/free/evidence-recovery-integrity.test.mjs:36:167
+✖ legacy partition recovery diagnosis rejects coverage wrong-target without writes (0.990583ms)
+  AssertionError [ERR_ASSERTION]: bad index/piece correspondence cannot advertise repair
+  
+  true !== false
+  
+      at TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/free/evidence-recovery-integrity.test.mjs:41:107)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/free/evidence-recovery-integrity.test.mjs:36:167
+✖ legacy partition recovery diagnosis rejects coverage missing-locator without writes (1.017792ms)
+  AssertionError [ERR_ASSERTION]: bad index/piece correspondence cannot advertise repair
+  
+  true !== false
+  
+      at TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/free/evidence-recovery-integrity.test.mjs:41:107)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/free/evidence-recovery-integrity.test.mjs:36:167
+✖ legacy partition recovery diagnosis rejects hints wrong-target without writes (0.997416ms)
+  AssertionError [ERR_ASSERTION]: bad index/piece correspondence cannot advertise repair
+  
+  true !== false
+  
+      at TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/free/evidence-recovery-integrity.test.mjs:41:107)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/free/evidence-recovery-integrity.test.mjs:36:167
+✖ legacy partition recovery diagnosis rejects hints missing-locator without writes (1.019ms)
+  AssertionError [ERR_ASSERTION]: bad index/piece correspondence cannot advertise repair
+  
+  true !== false
+  
+      at TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/free/evidence-recovery-integrity.test.mjs:41:107)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/free/evidence-recovery-integrity.test.mjs:36:167
+✖ legacy partition recovery diagnosis rejects hintEvents wrong-target without writes (0.809166ms)
+  AssertionError [ERR_ASSERTION]: bad index/piece correspondence cannot advertise repair
+  
+  true !== false
+  
+      at TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/free/evidence-recovery-integrity.test.mjs:41:107)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/free/evidence-recovery-integrity.test.mjs:36:167
+✖ legacy partition recovery diagnosis rejects hintEvents missing-locator without writes (0.985125ms)
+  AssertionError [ERR_ASSERTION]: bad index/piece correspondence cannot advertise repair
+  
+  true !== false
+  
+      at TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/free/evidence-recovery-integrity.test.mjs:41:107)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/free/evidence-recovery-integrity.test.mjs:36:167
+✖ legacy directory recovery diagnosis rejects events wrong-target without writes (2.135833ms)
+  AssertionError [ERR_ASSERTION]: bad index/piece correspondence cannot advertise repair
+  
+  true !== false
+  
+      at TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/free/evidence-recovery-integrity.test.mjs:41:107)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/free/evidence-recovery-integrity.test.mjs:36:167
+✖ legacy directory recovery diagnosis rejects events missing-locator without writes (1.111458ms)
+  AssertionError [ERR_ASSERTION]: bad index/piece correspondence cannot advertise repair
+  
+  true !== false
+  
+      at TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/free/evidence-recovery-integrity.test.mjs:41:107)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/free/evidence-recovery-integrity.test.mjs:36:167
+✖ legacy directory recovery diagnosis rejects coverage wrong-target without writes (1.037166ms)
+  AssertionError [ERR_ASSERTION]: bad index/piece correspondence cannot advertise repair
+  
+  true !== false
+  
+      at TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/free/evidence-recovery-integrity.test.mjs:41:107)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/free/evidence-recovery-integrity.test.mjs:36:167
+✖ legacy directory recovery diagnosis rejects coverage missing-locator without writes (1.242833ms)
+  AssertionError [ERR_ASSERTION]: bad index/piece correspondence cannot advertise repair
+  
+  true !== false
+  
+      at TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/free/evidence-recovery-integrity.test.mjs:41:107)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/free/evidence-recovery-integrity.test.mjs:36:167
+✖ legacy directory recovery diagnosis rejects hints wrong-target without writes (1.137791ms)
+  AssertionError [ERR_ASSERTION]: bad index/piece correspondence cannot advertise repair
+  
+  true !== false
+  
+      at TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/free/evidence-recovery-integrity.test.mjs:41:107)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/free/evidence-recovery-integrity.test.mjs:36:167
+✖ legacy directory recovery diagnosis rejects hints missing-locator without writes (1.038541ms)
+  AssertionError [ERR_ASSERTION]: bad index/piece correspondence cannot advertise repair
+  
+  true !== false
+  
+      at TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/free/evidence-recovery-integrity.test.mjs:41:107)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/free/evidence-recovery-integrity.test.mjs:36:167
+✖ legacy directory recovery diagnosis rejects hintEvents wrong-target without writes (1.249458ms)
+  AssertionError [ERR_ASSERTION]: bad index/piece correspondence cannot advertise repair
+  
+  true !== false
+  
+      at TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/free/evidence-recovery-integrity.test.mjs:41:107)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/free/evidence-recovery-integrity.test.mjs:36:167
+✖ legacy directory recovery diagnosis rejects hintEvents missing-locator without writes (0.783ms)
+  AssertionError [ERR_ASSERTION]: bad index/piece correspondence cannot advertise repair
+  
+  true !== false
+  
+      at TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/free/evidence-recovery-integrity.test.mjs:41:107)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

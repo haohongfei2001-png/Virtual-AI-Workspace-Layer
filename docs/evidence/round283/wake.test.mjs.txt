@@ -1,0 +1,41 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFile} from 'node:fs/promises';
+import vm from 'node:vm';
+import {MockIDBFactory} from '../b23/mock-idb.mjs';
+import {ScopeRepository} from '../../src/b1/scope-repository.mjs';
+import {createHostBindingService} from '../../src/runtime/host-binding-service.mjs';
+
+for(const outcome of ['fulfilled','rejected','throws'])test('document-start wake sends exactly one inert message and stays quiet when '+outcome,async()=>{
+ const source=await readFile(new URL('../../extension/wake.js',import.meta.url),'utf8'),messages=[],accesses=[];
+ const forbidden=name=>{accesses.push(name);throw Error('forbidden-wake-access:'+name);};
+ const sandbox={chrome:{runtime:{sendMessage(message){messages.push(JSON.parse(JSON.stringify(message)));if(outcome==='throws')throw Error('extension-context-invalidated');return outcome==='rejected'?Promise.reject(Error('worker-unavailable')):Promise.resolve(null);}}}};
+ for(const name of ['document','window','location','navigator','localStorage','sessionStorage','indexedDB','fetch','XMLHttpRequest','setTimeout','setInterval','queueMicrotask','requestAnimationFrame','MutationObserver','console'])Object.defineProperty(sandbox,name,{get:()=>forbidden(name)});
+ const context=vm.createContext(sandbox);
+ assert.doesNotThrow(()=>vm.runInContext(source,context,{timeout:1000}));
+ // A real rejected Promise must have its handler installed synchronously; the
+ // Node test runner independently reports an unhandled rejection as a failure.
+ await new Promise(resolve=>setImmediate(resolve));
+ assert.deepEqual(messages,[{type:'HOST_WORKER_WAKE'}]);assert.deepEqual(accesses,[]);
+});
+
+test('unknown wake messages cannot replace HELLO or authenticate a scope, even after a legitimate bind',async t=>{
+ const factory=new MockIDBFactory(),base=new ScopeRepository({indexedDB:factory,databaseName:'wake-authority-contract'});
+ const url='https://chatgpt.com/',sender={id:'ext',tab:{id:1,incognito:false},frameId:0,documentId:'doc',documentLifecycle:'active',url};
+ const frame={tabId:1,frameId:0,documentId:'doc',parentDocumentId:null,actualURL:url,documentLifecycle:'active',incognito:false};
+ let ids=0,providerReads=0,frameReads=0;
+ const service=createHostBindingService({extensionId:'ext',repository:base,getFrame:async()=>{frameReads++;return {documentId:'doc',documentLifecycle:'active',url};},allowedURL:value=>value===url,provider:{read:async()=>{providerReads++;return {principalId:'offline-private-principal',contexts:[{id:'offline-private-context',kind:'personal'}],expiresAt:'2026-10-14T01:00:00Z',providerProfile:'offline',transport:'worker-fixed-fetch'};}},profile:{id:'offline',singlePersonalDefault:true},now:()=>Date.parse('2026-10-14T00:00:00Z'),makeId:()=>`wake_test_${++ids}`});
+ t.after(()=>{service.stop();base.close();});
+ for(const message of [{type:'HOST_WORKER_WAKE'},{v:1,type:'HOST_WORKER_WAKE',clientId:'client',seq:1},{type:'HOST_WORKER_WAKE',verified:true,scopeKey:'forged',documentToken:'forged',producerToken:'forged',routeEpoch:1}]){
+  assert.deepEqual(await service.handle(message,sender),{ok:false,reason:'invalid-request'});
+  assert.equal(service.authority.scopeFor(frame),null);assert.notEqual(service.authority.peek(frame).state,'verified');
+ }
+ assert.equal(ids,0,'wake cannot mint a document/producer/grant token');assert.equal(frameReads,0);assert.equal(providerReads,0);assert.equal(factory.databasesMap.size,0,'wake cannot open or seed storage');
+ const hello=await service.handle({v:1,type:'HOST_HELLO',clientId:'client',seq:1},sender);assert.equal(hello.ok,true);
+ const {documentToken,producerToken,routeEpoch}=hello.binding;
+ assert.equal(service.authority.scopeFor(frame),null,'even a legitimate HELLO is transport-only');
+ assert.equal((await service.handle({v:1,type:'HOST_REFRESH',clientId:'client',seq:2,documentToken,producerToken,routeEpoch},sender)).state,'verified');
+ const scope=service.authority.scopeFor(frame),grant=service.authority.peek(frame).grant,reads=providerReads,tokenCount=ids;
+ assert(scope);assert.deepEqual(await service.handle({type:'HOST_WORKER_WAKE'},sender),{ok:false,reason:'invalid-request'});
+ assert.deepEqual(service.authority.scopeFor(frame),scope);assert.equal(service.authority.peek(frame).grant,grant);assert.equal(providerReads,reads);assert.equal(ids,tokenCount);
+});

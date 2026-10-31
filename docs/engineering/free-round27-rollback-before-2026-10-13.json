@@ -1,0 +1,26 @@
+{
+  "historicalSHA": "531c146",
+  "evidence": "EXACT_OLD_WRITER_IN_MEMORY_MOCK_IDB",
+  "results": [
+    {
+      "name": "completed marker survives old undo but missing B1 anchor is repaired",
+      "status": "FAIL",
+      "error": "completed scan must detect old undo"
+    },
+    {
+      "name": "completed marker detects historical B1-only insert",
+      "status": "FAIL",
+      "error": "B1 count witness must detect older writer inserts"
+    },
+    {
+      "name": "equal-count shared replacement from legal old restore and undo is detected",
+      "status": "FAIL",
+      "error": "equal shared counts cannot authorize skipping reconciliation"
+    },
+    {
+      "name": "partial cursor detects old undo before its saved position",
+      "status": "FAIL",
+      "error": "progress witness must rewind when old writer removes an already scanned anchor"
+    }
+  ]
+}

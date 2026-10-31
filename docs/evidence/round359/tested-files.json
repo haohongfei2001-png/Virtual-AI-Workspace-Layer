@@ -1,0 +1,11 @@
+{
+  "baseCommit": "dfd2853c9eef3ff6b94e57b868065c846599fbd9",
+  "sha256": {
+    "src/host/content-session.mjs": "6202af1304554d2dd24f54c545a9c10254e0c26661c06da237cd90b07b4c767d",
+    "src/host/chatgpt-adapter.mjs": "e68d357b05cd77f5937a6101d9442743d3f4f5b23630e3fbe60b3b4b76c460cc",
+    "tests/host/content-idle-preparation.test.mjs": "63af355ffc9b8f921dbb197466d77d06fae3c1d05748f4f73a45f2b0e5607772",
+    "tests/host/adapter-idle-preparation.test.mjs": "9182500f0aeb116dab6078b875c37de54cff1ed26b48dcacf76ca24120a7ee3a",
+    "tests/host/j3-context-trace.mjs": "bf0424ae97a57eac826f612a0e7432b788e1298a6139ac8dbd2a75b4f5a761eb",
+    "tests/host/j3-context-trace.test.mjs": "c1a76b8b23779ec47f0d40a4433d205197fe015d6939f2751b4f98ca97b32559"
+  }
+}

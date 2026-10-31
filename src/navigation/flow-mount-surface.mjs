@@ -1,0 +1,411 @@
+import {hasNativeLayer as documentHasNativeLayer,NATIVE_LAYER_SELECTOR} from '../host/native-layer.mjs';
+import {captureNativeBaseline,NativeFlowPreflightError,isSameNativeRegions,isSameNativeStructure,isSameNativeLayout,isNativeReadingIdentityCurrent,isNativeReadingCurrent,isNativeControlCurrent,flowLayoutRules,validateActiveLayout,validateCriticalLayout} from '../host/document-flow-layout.mjs';
+import {observeNativeProjectManagement} from '../host/native-project-management.mjs';
+import {validateFrameAppearance} from '../host/frame-appearance.mjs';
+
+/** Dual extension-origin frames, actual native flow membership. Only the empty
+ * exit switches enter the top layer; no private payload is placed there. */
+export function createFlowMountSurface({document:doc,createFrameURL,hasNativeLayer=()=>false,takeMountDiagnostic=()=>null}) {
+ const mounts=new Map(),win=doc.defaultView;
+ const lookup=handle=>{const m=mounts.get(handle?.id);if(!m||m.handle!==handle)throw Error('stale-mount');return m;};
+ const owned=node=>!!node&&[...mounts.values()].some(m=>m.returnControl===node||m.roles.some(s=>s.node===node||s.exit===node));
+ const open=s=>s.exit.matches(':popover-open');
+ const viewport=()=>`${win.innerWidth}:${win.innerHeight}`;
+ const intact=(m,s)=>s.node.isConnected&&s.frame.isConnected&&s.frame.parentElement===s.node&&!s.frame.hasAttribute('srcdoc')&&s.frame.src===s.url&&s.node.ownerDocument===doc&&m.style.isConnected&&m.style.textContent===m.css;
+ const nativeLayer=()=>hasNativeLayer()||documentHasNativeLayer(doc);
+ const bindReadingRule=m=>{m.readingRules=[...m.style.sheet.cssRules];m.readingRuleTexts=m.readingRules.map(rule=>rule.cssText);m.readingRule=m.readingRules.at(-1);m.readingRuleText=m.readingRule.cssText;};
+ const readingRuleCurrent=(m,probeText=m.readingRuleText)=>{const rules=m.style.sheet?.cssRules;return !!rules&&rules.length===m.readingRules.length&&[...rules].every((rule,i)=>rule===m.readingRules[i]&&rule.cssText===(i===rules.length-1?probeText:m.readingRuleTexts[i]));};
+ const retainedProbeGeometry=(s,p)=>{
+  const style=win.getComputedStyle(s.node),r=s.node.getBoundingClientRect(),f=s.frame.getBoundingClientRect(),same=(a,b)=>Number.isFinite(a)&&Math.abs(a-b)<1;
+  return style.position==='fixed'&&style.pointerEvents==='none'&&style.visibility==='visible'&&style.display==='flex'&&style.clipPath==='inset(0px)'&&r.right<=-1&&f.right<=-1&&same(r.y,0)&&same(f.y,0)&&same(r.width,p.viewport.width)&&same(r.height,p.viewport.height)&&same(f.width,p.viewport.width)&&same(f.height,p.viewport.height);
+ };
+ // Only this synchronous probe may retain an offscreen private frame. An
+ // arbitrary owned node or an attribute copied onto native DOM proves nothing.
+ const readingProbeSurface=node=>{try{
+  const m=[...mounts.values()].find(m=>m.roles[0]?.node===node),s=m?.roles[0],p=m?.readingProbe;
+  if(!p?.viewport||p.cancelled||open(s)||!intact(m,s)||nativeLayer()||(node.parentElement!==m.plan.root&&!(p.moved&&doc.body===p.body&&node.parentElement===p.body))||s.frame.contentWindow!==p.window||!readingRuleCurrent(m,p.ruleText))return false;
+  return retainedProbeGeometry(s,p);
+ }catch{return false;}};
+ // Flow can clamp a native scrollport when its reading child becomes a zero
+ // height grid item. Keep only presentation coordinates in this document's
+ // RAM, and restore only our layout clamp, never a later native scroll/route.
+ function clearReading(m){const saved=m.readingScroll;m.readingScroll=null;for(const entry of saved?.entries??[])entry.node.removeEventListener('scroll',entry.onScroll);return saved;}
+ function rememberReading(m){
+  clearReading(m);
+  m.readingScroll={plan:m.plan,url:doc.location.href,entries:[...new Set([...m.plan.shells,m.plan.reading])].filter(node=>node.scrollHeight>node.clientHeight||node.scrollWidth>node.clientWidth).map(node=>({node,parent:node.parentElement,left:node.scrollLeft,top:node.scrollTop}))};
+ }
+ function recordReadingClamp(m){for(const entry of m.readingScroll?.entries??[]){entry.clampedLeft=entry.node.scrollLeft;entry.clampedTop=entry.node.scrollTop;entry.onScroll=()=>{if(entry.node.scrollLeft!==entry.clampedLeft||entry.node.scrollTop!==entry.clampedTop)entry.changed=true;};entry.node.addEventListener('scroll',entry.onScroll,{passive:true});}}
+ function restoreReading(m){
+  if(!m.readingScroll||open(m.roles[0]))return;const saved=clearReading(m);
+  if(saved.plan!==m.plan||saved.url!==doc.location.href||!isNativeReadingIdentityCurrent(m.plan))return;
+  for(const {node,parent,left,top,clampedLeft,clampedTop,changed} of saved.entries)if(!changed&&node.isConnected&&node.ownerDocument===doc&&node.parentElement===parent&&node.scrollLeft===clampedLeft&&node.scrollTop===clampedTop)node.scrollTo({left,top,behavior:'instant'});
+ }
+ function hide(m,role,reason='suspended'){
+  // An explicit close during a probe still cancels it when the empty switch
+  // is already temporarily closed and therefore emits no beforetoggle event.
+  if(m.readingProbe&&(!role||role==='workspace'))m.readingProbe.cancelled=true;
+  // Native observation sees owned attribute writes too. Rewriting the same
+  // handoff marker would feed geometry back into itself and starve pointerup.
+  for(const s of m.roles)if(!role||s.role===role){s.reason=reason;if(['native-layer','workspace-geometry'].includes(reason)&&s.role==='workspace'&&m.inputPointerActive?.()&&intact(m,s)&&isSameNativeRegions(m.plan,{allowPresentationChange:true})){if(!s.node.hasAttribute('data-va-input-handoff'))s.node.setAttribute('data-va-input-handoff','');continue;}if(open(s))s.exit.hidePopover();}
+  if(!role||role==='workspace')restoreReading(m);
+ }
+ function sidebarIntact(m){
+  const p=m.inspection.sidebarPlacement,s=m.roles[1];
+  return !!p&&intact(m,s)&&p.parent.isConnected&&s.node.parentElement===p.parent&&s.node.nextElementSibling===p.before&&p.before.parentElement===p.parent&&p.recent.parentElement===p.parent&&p.scrollPort.contains(p.parent);
+ }
+ // These observers belong to the proved native partition, not to the mount's
+ // lifetime. Replacing a Project or NAV must discard old management intent.
+ function bindSidebar(m){
+  const p=sidebarIntact(m)?m.inspection.sidebarPlacement:null,old=m.sidebarBinding;
+  if(old?.project===p?.project&&old?.scrollPort===p?.scrollPort)return;
+  m.unbindSidebar?.();m.management?.stop();m.sidebarBinding=p;
+  const cancel=e=>{if(e.isTrusted)m.pendingScroll=undefined;};
+  const scrolled=()=>{if(!sidebarIntact(m)||!open(m.roles[1])||nativeLayer())return;
+   // A short first VIEW can clamp the saved NAV position before member rows
+   // arrive. Do not persist that clamp as a new user choice. A different scroll
+   // (including input inside the iframe) cancels the pending restoration.
+   const current=Math.round(p.scrollPort.scrollTop);
+   if(Number.isSafeInteger(m.pendingScroll)&&current===Math.min(m.pendingScroll,Math.max(0,p.scrollPort.scrollHeight-p.scrollPort.clientHeight)))return;
+   m.pendingScroll=undefined;m.onSidebarScroll(current);
+  };
+  for(const type of ['wheel','pointerdown','keydown'])p?.scrollPort.addEventListener(type,cancel,true);
+  p?.scrollPort.addEventListener('scroll',scrolled,{passive:true});
+  m.unbindSidebar=()=>{for(const type of ['wheel','pointerdown','keydown'])p?.scrollPort.removeEventListener(type,cancel,true);p?.scrollPort.removeEventListener('scroll',scrolled);};
+  m.management=observeNativeProjectManagement({document:doc,root:p?.project,isCurrent:()=>mounts.get(m.handle.id)===m&&m.sidebarBinding===p&&sidebarIntact(m),onChanged:m.onManagementChanged});
+  if(old)m.onManagementChanged();
+ }
+ function active(m){return intact(m,m.roles[0])&&validateActiveLayout(m.plan,{workspace:m.roles[0].node,style:m.style,styleText:m.css,exit:m.roles[0].exit,isOwnedSurface:owned,onRefused:(reason,geometry=[])=>{m.activeRefusal=reason;m.activeGeometry=geometry;},onControls:(nodes,shadowCandidates)=>{m.criticalControls=nodes;m.criticalShadowCandidates=shadowCandidates;}});}
+ function mark(m,node,name){const attr='data-va-flow-'+name,previous=node.getAttribute(attr);if(previous!==null)throw Error('flow-marker-conflict');m.markers.push({node,attr,previous});node.setAttribute(attr,m.handle.id);}
+ function restorePendingScroll(m){const s=m.roles[1],p=m.inspection.sidebarPlacement?.scrollPort;if(m.pendingScroll===undefined||!sidebarIntact(m)||!open(s)||s.pendingHeight||nativeLayer())return;const value=m.pendingScroll;if(value!==null)p.scrollTop=value;
+  // Keep only the presentation target while the natural content is shorter.
+  // Later intrinsic-size/geometry updates can finish it without new reads.
+  const actual=Math.round(p.scrollTop);if(value!==null&&actual!==value)return;
+  m.pendingScroll=undefined;m.onSidebarScroll(actual);
+ }
+ function applySidebarSize(m){const s=m.roles[1];if(!s.pendingHeight||!sidebarIntact(m)||nativeLayer())return;const height=s.pendingHeight;s.pendingHeight=null;s.frame.style.height=height+'px';s.node.style.setProperty('--va-slot-height',(height+28)+'px');restorePendingScroll(m);}
+ function geometry(m){
+  if(!isSameNativeRegions(m.plan)){hide(m,'workspace','workspace-geometry');return false;}
+  if(open(m.roles[0])&&!active(m)){hide(m,'workspace','workspace-geometry');return false;}
+  if(open(m.roles[1])&&!sidebarIntact(m))hide(m,'sidebar','sidebar-geometry');
+  return true;
+ }
+ return Object.freeze({
+  backend:'document-flow',
+  async mount(context,inspection,{onSurrender=()=>{},onSidebarScroll=()=>{},onManagementChanged=()=>{}}={}){
+   if(!win.CSS?.supports('interactivity','inert')||!win.CSS?.supports('selector(:has(*))')||!win.HTMLElement.prototype.showPopover)throw Error('unsupported-mount-surface');
+   if(!context?.binding?.documentToken)throw Error('invalid-mount-inspection');
+   let refusal='native-flow-check-failed';
+   let diagnostic=null;try{diagnostic=takeMountDiagnostic();}catch{}
+   const plan=captureNativeBaseline({document:doc,inspection,isOwnedSurface:owned,onRefused:reason=>{refusal=reason;},onDiagnostic:diagnostic});
+   // No owned node, marker, listener or grant exists before this proof. The
+   // controller may recheck it after a native layout event under the same lease.
+   if(!plan)throw new NativeFlowPreflightError(refusal);
+   const id='va_'+win.crypto.randomUUID().replaceAll('-',''),handle=Object.freeze({id,documentToken:context.binding.documentToken,regionEpoch:inspection.regionEpoch});
+   const m={handle,plan,inspection,nativeViewport:viewport(),roles:[],markers:[],style:doc.createElement('style'),css:'',onSurrender,onSidebarScroll,onManagementChanged,cleanup:()=>{}};mounts.set(id,m);
+   try{
+    for(const role of ['workspace','sidebar']){
+     const url=new URL(createFrameURL({role,mountId:id}));if(url.protocol!=='chrome-extension:')throw Error('invalid-ui-frame-origin');
+     const node=doc.createElement('section'),exit=doc.createElement('div'),button=doc.createElement('button'),frame=doc.createElement('iframe');
+     node.id=id+'_'+role;node.dataset.vaOwned=id;node.style.cssText='display:none;visibility:hidden;position:relative;box-sizing:border-box;margin:0;padding:0;border:0;min-width:0;';
+     exit.id=node.id+'_exit';exit.dataset.vaOwned=id;exit.setAttribute('popover','manual');exit.style.cssText='position:fixed;inset:0 auto auto 0;width:0;height:0;margin:0;padding:0;border:0;pointer-events:none;overflow:hidden;';
+     button.type='button';button.textContent='×';button.setAttribute('aria-label',role==='workspace'?'返回原生阅读':'显示原生列表');button.setAttribute('popovertarget',exit.id);button.setAttribute('popovertargetaction','hide');
+     frame.src=url.href;frame.title=role==='workspace'?'工作空间':'导航';frame.style.cssText='display:block;min-width:0;width:100%;border:0;';node.append(button,frame);
+     if(role==='sidebar'){node.dataset.vaSidebarSlot='';node.style.setProperty('--va-slot-height','128px');const label=doc.createElement('div');label.textContent='ChatGPT 项目管理与最近聊天';label.dataset.vaNativeBoundary='';node.append(label);}
+     const s={role,node,exit,frame,url:url.href,button,reason:null,retired:false};m.roles.push(s);
+     // A document-capture toggle handler may re-prove and reopen the surface
+     // before this target receives the old closed notification. That delayed
+     // event is not a new user exit. beforetoggle still records a real close
+     // synchronously, before any subsequent recovery can change its intent.
+     const closing=e=>{if(e.target!==exit)return;
+      const probe=m.readingProbe;
+      if(probe&&e.type==='beforetoggle'){
+       if(role==='workspace'&&(e.newState==='closed'&&probe.ownClosing||e.newState==='open'&&probe.ownOpening))return;
+       probe.cancelled=true;
+      }
+      if(e.newState!=='closed'||e.type==='toggle'&&open(s))return;if(role==='workspace'){if(e.type==='beforetoggle')m.cancelInput?.();win.queueMicrotask(()=>restoreReading(m));}if(!s.reason)onSurrender({role,reason:role==='workspace'?'native-reading':'native-list',phase:e.type==='beforetoggle'?'closing':undefined});};
+     exit.addEventListener('beforetoggle',closing);exit.addEventListener('toggle',closing);s.cleanup=()=>{exit.removeEventListener('beforetoggle',closing);exit.removeEventListener('toggle',closing);};
+     doc.body.append(exit);
+    }
+    const [workspace,sidebar]=m.roles;
+    plan.root.insertBefore(workspace.node,plan.root.firstChild);
+    const p=inspection.sidebarPlacement;
+    if(p)p.parent.insertBefore(sidebar.node,p.before);
+    else{
+     // An absent native partition is not a temporary place to load private UI.
+     // Keep only the detached empty slot; a later proved placement creates a
+     // fresh frame, with the same independent JOIN/authority checks as recovery.
+     sidebar.retired=true;sidebar.frame.remove();
+    }
+    mark(m,plan.root,'root');mark(m,plan.reading,'reading');mark(m,plan.composer,'composer');
+    for(const shell of plan.patchedShells)mark(m,shell,'shell');
+    for(const node of plan.protectedNodes)if(node!==plan.composer)mark(m,node,node===plan.header?'header':node.getAttribute('role')==='tablist'?'tabs':'title');
+    for(const [i,node] of plan.flowOrder.entries())mark(m,node,'row-'+i);
+    const enabled=s=>`body:has(#${s.exit.id}:popover-open):not(:has(${NATIVE_LAYER_SELECTOR})) #${s.node.id}`;
+    m.css=flowLayoutRules(plan,{id,exitId:workspace.exit.id,workspaceId:workspace.node.id});
+    for(const s of m.roles)m.css+=`${enabled(s)}{display:${s.role==='workspace'?'flex':'block'}!important;visibility:visible!important;background:var(--va-canvas,Canvas);color:CanvasText}#${s.node.id}>button{position:absolute;right:4px;top:4px;z-index:1;width:24px;height:24px;padding:0;margin:0;border:0;border-radius:8px;background:transparent;color:inherit;cursor:pointer}#${s.node.id}>iframe{flex:1;min-height:0;}\n`;
+    m.css+=`${enabled(workspace)}[data-va-input-handoff]{visibility:hidden!important;pointer-events:none!important}#${workspace.node.id}[data-va-input-handoff]>iframe{visibility:hidden!important}#${sidebar.node.id}{height:auto;flex:none}#${sidebar.node.id}>[data-va-native-boundary]{box-sizing:border-box;min-height:28px;padding:5px 12px;border-top:1px solid color-mix(in srgb,CanvasText 10%,Canvas);font:11px/18px system-ui;color:color-mix(in srgb,CanvasText 60%,Canvas)}#${sidebar.node.id}>button{top:auto;bottom:32px}#${workspace.node.id}>iframe{height:100%}`;
+    // Closing the empty switch must unmask native reading, but must not zero
+    // the OOPIF viewport and discard input already routed to its focused field.
+    // This private, nonpainting slot exists only until the synchronous read ends.
+    // CSSOM toggling is local; exact owned-slot moves are not native mutations.
+    m.css+=`@media not all{#${workspace.node.id}{display:flex!important;visibility:visible!important;position:fixed!important;left:-2px!important;top:0!important;right:auto!important;bottom:auto!important;width:0px!important;height:0px!important;min-height:0!important;max-height:none!important;pointer-events:none!important;overflow:hidden!important;clip-path:inset(0px)!important}}`;
+    m.style.dataset.vaOwned=id;m.style.textContent=m.css;doc.head.append(m.style);bindReadingRule(m);
+    // Let the original control finish its first trusted gesture before
+    // releasing geometry. Never move its target between pointer down and up,
+    // dispatch replacement input, or blur/refocus the native composer.
+    let pointer=null,key=null,inputTimer=null,gestureDeadline=null,inputSequence=0,gestureInput=false;
+    // Native layer observers can run between pointerup and click. The queued
+    // release is still part of that same gesture, not a new presentation lease.
+    m.inputPointerActive=()=>(pointer!==null||key!==null||inputTimer!==null)&&workspace.exit.getAttribute('data-va-gesture')===id;
+    const inputTarget=e=>m.plan.composer.contains(e.target);
+    const nativeTarget=e=>{
+     if(inputTarget(e))return true;
+     // A protected header is not permission for every future descendant.
+     // Match the nearest concrete control against the current native proof,
+     // including a control admitted by a later closed-layout reproof.
+     const node=e.target?.closest?.('button,a[href],input,textarea,select,[role="button"],[role="tab"],[role="menuitem"],[role="checkbox"],[role="radio"],[role="switch"],[role="combobox"],[role="textbox"]');
+     if(!isNativeControlCurrent(m.plan,node))return false;
+     const style=win.getComputedStyle(node),box=node.getBoundingClientRect();
+     return style.display!=='none'&&style.visibility==='visible'&&box.width>0&&box.height>0&&!node.closest('[inert],[hidden],[aria-hidden="true"]');
+    };
+    const clearInput=()=>{inputSequence++;pointer=null;key=null;gestureInput=false;if(inputTimer!==null)win.clearTimeout(inputTimer);if(gestureDeadline!==null)win.clearTimeout(gestureDeadline);inputTimer=null;gestureDeadline=null;workspace.exit.removeAttribute('data-va-gesture');workspace.node.removeAttribute('data-va-input-handoff');};
+    m.cancelInput=clearInput;
+    const releaseInput=sequence=>{
+     if(sequence!==inputSequence||pointer!==null||key!==null||mounts.get(id)!==m)return;
+     const nativeOnly=!gestureInput&&workspace.exit.getAttribute('data-va-gesture')===id;clearInput();if(!open(workspace))return;
+     // A proved titlebar/Project control can also open its layer on down.
+     // Finish that native gesture, but do not turn it into a composer intent.
+     if(nativeOnly){
+      if(nativeLayer())hide(m,null,'native-layer');else geometry(m);
+      // The layer may already have closed without a subsequent resize or
+      // mutation. Let the controller reconcile the existing intent/grants.
+      onSurrender({role:'workspace',reason:'native-gesture-complete'});return;
+     }
+     hide(m,'workspace','native-input');onSurrender({role:'workspace',reason:'native-input'});
+    };
+    const queueInput=()=>{if(inputTimer!==null)return;const sequence=inputSequence;inputTimer=win.setTimeout(()=>releaseInput(sequence),0);};
+    const startGesture=e=>{clearInput();gestureInput=inputTarget(e);workspace.exit.setAttribute('data-va-gesture',id);const sequence=inputSequence;gestureDeadline=win.setTimeout(()=>{if(sequence!==inputSequence)return;pointer=null;key=null;releaseInput(sequence);},3000);};
+    const down=e=>{if(e.isTrusted&&nativeTarget(e)&&open(workspace)&&pointer===null){if(key===null)startGesture(e);else gestureInput||=inputTarget(e);pointer=e.pointerId;}};
+    const up=e=>{if(e.isTrusted&&pointer===e.pointerId){pointer=null;if(key===null)queueInput();}};
+    const keyDown=e=>{
+     if(!e.isTrusted||e.repeat||e.isComposing||e.altKey||e.ctrlKey||e.metaKey||e.shiftKey||!['Enter',' '].includes(e.key)||key!==null||!open(workspace))return;
+     // Hold only native activation keys on proved controls, never ordinary
+     // typing/IME or Space scrolling on a link. Focus and selection stay native.
+     const node=e.target?.closest?.('button,a[href],input,[role="button"],[role="tab"],[role="menuitem"],[role="checkbox"],[role="radio"],[role="switch"]');
+     if(!node||node.isContentEditable||node.tagName==='INPUT'&&!['button','submit','reset','checkbox','radio','file'].includes(node.type)||node.tagName==='A'&&e.key!=='Enter'||!nativeTarget({target:node}))return;
+     if(pointer===null)startGesture(e);else gestureInput||=inputTarget(e);key=e.code||e.key;
+    };
+    const keyUp=e=>{if(e.isTrusted&&key===(e.code||e.key)){key=null;if(pointer===null)queueInput();}};
+    const input=e=>{if(e.isTrusted&&inputTarget(e)&&pointer===null&&key===null&&open(workspace))queueInput();};
+    const leaveGesture=()=>{clearInput();if(['native-layer','workspace-geometry'].includes(workspace.reason)&&open(workspace))workspace.exit.hidePopover();};const visibility=()=>{if(doc.visibilityState==='hidden')leaveGesture();};
+    const observe=()=>{if(!mounts.has(id))return;if(nativeLayer()){hide(m,null,'native-layer');onSurrender({reason:'native-layer'});return;}if(!geometry(m))onSurrender({role:'workspace',reason:'workspace-geometry'});};
+    // Keep the exact registration target: native document replacement can
+    // detach HEAD, but must not prevent restoring the original body layout.
+    const nativeHead=doc.head;
+    let observer=null,markerGeometry=null,layoutFrame=null,criticalFrame=null;
+    // Coalesce native mutations into one finite boundary/control measurement.
+    // Unknown island descendants are never scanned for paint on every frame.
+    const scheduleObservation=()=>{
+     if(!mounts.has(id))return;
+     if(nativeLayer()||!intact(m,workspace)){observe();return;}
+     if(layoutFrame===null)layoutFrame=win.requestAnimationFrame(()=>{layoutFrame=null;observe();});
+    };
+    // Keep the original activity watch only for a finite current control set
+    // and layout anchors. This catches CSSOM-only movement (no MO/RO event)
+    // without scanning unknown native descendants or reinstating paint bans.
+    const checkCritical=()=>{
+     criticalFrame=null;if(!mounts.has(id)||!open(workspace))return;
+     if(nativeLayer()){hide(m,null,'native-layer');onSurrender({reason:'native-layer'});}
+     else if(!validateCriticalLayout(m.plan,{workspace:workspace.node,nativeControls:m.criticalControls??[],nativeShadowCandidates:m.criticalShadowCandidates??m.plan.nativeShadowCandidates})){hide(m,'workspace','workspace-geometry');onSurrender({role:'workspace',reason:'workspace-geometry'});}
+     if(open(workspace))criticalFrame=win.requestAnimationFrame(checkCritical);
+    };
+    const criticalToggle=()=>{if(criticalFrame!==null)win.cancelAnimationFrame(criticalFrame);criticalFrame=open(workspace)?win.requestAnimationFrame(checkCritical):null;};
+    workspace.exit.addEventListener('toggle',criticalToggle);
+    const nativeSignals=['pointerover','focusin','transitionrun','transitionend','animationstart','animationiteration','animationend'];
+    const stylesheetLoaded=e=>{if(e.target?.matches?.('link[rel~="stylesheet"]'))scheduleObservation();};
+    m.cleanup=()=>{m.unbindSidebar?.();m.management?.stop();leaveGesture();win.removeEventListener('blur',leaveGesture);win.removeEventListener('pagehide',leaveGesture);win.removeEventListener('resize',scheduleObservation);doc.removeEventListener('visibilitychange',visibility);if(inputTimer!==null)win.clearTimeout(inputTimer);if(layoutFrame!==null)win.cancelAnimationFrame(layoutFrame);if(criticalFrame!==null)win.cancelAnimationFrame(criticalFrame);workspace.exit.removeEventListener('toggle',criticalToggle);doc.removeEventListener('pointerdown',down,true);doc.removeEventListener('pointerup',up,true);doc.removeEventListener('pointercancel',up,true);doc.removeEventListener('keydown',keyDown,true);doc.removeEventListener('keyup',keyUp,true);for(const type of ['focusin','click','keydown','beforeinput','compositionstart'])doc.removeEventListener(type,input,true);for(const type of nativeSignals)doc.removeEventListener(type,scheduleObservation,true);observer?.disconnect();markerGeometry?.disconnect();nativeHead?.removeEventListener('load',stylesheetLoaded,true);for(const s of m.roles)s.cleanup();};
+    doc.addEventListener('pointerdown',down,true);doc.addEventListener('pointerup',up,true);doc.addEventListener('pointercancel',up,true);
+    doc.addEventListener('keydown',keyDown,true);doc.addEventListener('keyup',keyUp,true);
+    for(const type of ['focusin','click','keydown','beforeinput','compositionstart'])doc.addEventListener(type,input,true);
+    win.addEventListener('blur',leaveGesture);win.addEventListener('pagehide',leaveGesture);doc.addEventListener('visibilitychange',visibility);
+    for(const type of nativeSignals)doc.addEventListener(type,scheduleObservation,true);win.addEventListener('resize',scheduleObservation);
+    observer=new win.MutationObserver(scheduleObservation);observer.observe(doc.body,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['class','style','hidden','aria-hidden','role','tabindex','contenteditable','inert','open','aria-modal','src','srcdoc']});
+    // The owned rules live in HEAD, outside the native body observer. Changes
+    // there must surrender immediately too, including during input handoff.
+    observer.observe(m.style,{subtree:true,childList:true,characterData:true});
+    // Removing the owned stylesheet or replacing HEAD must restore reading
+    // even on pages without inactive markers (there may be no body mutation).
+    observer.observe(nativeHead,{childList:true});
+    observer.observe(doc.documentElement,{childList:true});
+    // An admitted display:none marker can become a grid participant through
+    // native CSS without a body mutation. Observe only invalidation signals;
+    // never read stylesheet rules or change the marker. Workspace resizing
+    // also covers CSSOM rule edits that have no MutationObserver record.
+    {
+     observer.observe(nativeHead,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['media','disabled','href','rel']});
+     observer.observe(doc.documentElement,{childList:true,attributes:true,attributeFilter:['class','style']});
+     nativeHead.addEventListener('load',stylesheetLoaded,true);
+     if(win.ResizeObserver){
+      markerGeometry=new win.ResizeObserver(scheduleObservation);
+      m.observeLayoutTargets=()=>{markerGeometry.disconnect();const current=m.plan;for(const node of new Set([workspace.node,current.root,current.header,current.composer,...current.inactiveMarkers,...current.retainedMembers.map(member=>member.node)]))markerGeometry.observe(node);};
+      m.observeLayoutTargets();
+     }
+    }
+    bindSidebar(m);
+    return handle;
+   }catch(error){m.cleanup();for(const s of m.roles){s.node.remove();s.exit.remove();}m.style.remove();for(const {node,attr,previous} of m.markers)if(node.getAttribute(attr)===id){if(previous===null)node.removeAttribute(attr);else node.setAttribute(attr,previous);}mounts.delete(id);throw error;}
+  },
+  readNativeManagement(handle){return lookup(handle).management?.read()??[];},
+  setReturnControl(handle,node){lookup(handle).returnControl=node;},
+  validateActiveLayout(handle){return active(lookup(handle));},
+  isSameNativeRegions(handle){return isSameNativeRegions(lookup(handle).plan);},
+  needsNativeBaselineRefresh(handle){const m=lookup(handle);return !open(m.roles[0])&&(m.nativeViewport!==viewport()||!isSameNativeLayout(m.plan));},
+  refreshNativeBaseline(handle,inspect){
+   const m=lookup(handle),workspace=m.roles[0],prior=m.plan;
+   // Only remeasure the actual restored native page. An in-flight first
+   // gesture, visible workspace, layer or damaged owned frame cannot rebase.
+   const ready=()=>doc.location.href===prior.url&&!open(workspace)&&!m.inputPointerActive?.()&&!nativeLayer()&&intact(m,workspace);
+   if(typeof inspect!=='function'||!ready())return null;
+   const inspection=inspect();if(!ready()||!inspection?.ok)return null;
+   const next=captureNativeBaseline({document:doc,inspection,isOwnedSurface:owned});
+   if(!ready()||!next)return null;
+   // A replaced landmark needs a new mount/JOIN, not a new interpretation of
+   // the old frame grants. Return its fully proved epoch without changing any
+   // old marker or baseline; the controller retires this mount before startup.
+   if(inspection.regionEpoch!==handle.regionEpoch)return inspection;
+   if(!isSameNativeStructure(prior,{allowPresentationChange:true,anchorsOnly:true})||['root','reading','composer','nativeComposer','header','kind','headerInside'].some(k=>next[k]!==prior[k])||['leaves','shells','patchedShells','nativeContents','protectedNodes'].some(k=>next[k].length!==prior[k].length||next[k].some((node,i)=>node!==prior[k][i])))return null;
+   // Island root/visibility changes are layout changes, not new frame/data
+   // authority. Re-prove the closed native layout with the exact same native
+   // anchors and patch targets. Replace only this mount's owned row markers.
+   const options={id:handle.id,exitId:workspace.exit.id,workspaceId:workspace.node.id},oldRules=flowLayoutRules(prior,options);
+   if(!m.css.startsWith(oldRules))return null;
+   const oldRows=m.markers.filter(entry=>entry.attr.startsWith('data-va-flow-row-'));
+   const newRows=next.flowOrder.map((node,i)=>({node,attr:'data-va-flow-row-'+i}));
+   if(oldRows.some(({node,attr})=>node.hasAttribute(attr)&&node.getAttribute(attr)!==handle.id)||newRows.some(({node,attr})=>node.hasAttribute(attr)&&!oldRows.some(old=>old.node===node&&old.attr===attr&&node.getAttribute(attr)===handle.id)))return null;
+   const css=flowLayoutRules(next,options)+m.css.slice(oldRules.length);
+   for(const {node,attr} of oldRows)if(node.getAttribute(attr)===handle.id)node.removeAttribute(attr);
+   m.markers=m.markers.filter(entry=>!entry.attr.startsWith('data-va-flow-row-'));
+   for(const [i,node] of next.flowOrder.entries())mark(m,node,'row-'+i);
+   clearReading(m);m.css=css;m.plan=next;m.nativeViewport=viewport();m.criticalControls=next.nativeControls.map(({node})=>node);m.criticalShadowCandidates=next.nativeShadowCandidates;m.style.textContent=css;bindReadingRule(m);m.observeLayoutTargets?.();
+   return inspection;
+  },
+  hasNativeInputFocus(handle){const m=lookup(handle);return m.plan.composer.contains(doc.activeElement);},
+  prepareWorkspace(){return null;},
+  refreshGeometry(handle,inspection){const m=lookup(handle);if(!inspection?.ok||inspection.regionEpoch!==handle.regionEpoch)return false;m.inspection=inspection;bindSidebar(m);applySidebarSize(m);restorePendingScroll(m);return geometry(m);},
+  setAppearance(handle,role,value){const appearance=validateFrameAppearance(value),s=lookup(handle).roles.find(s=>s.role===role);if(!s)return false;s.node.style.setProperty('--va-canvas',appearance.canvas??(appearance.theme==='dark'?'#212121':'#ffffff'));s.node.style.colorScheme=appearance.theme;return true;},
+  showWorkspace(handle,{roles=['workspace','sidebar']}={}){
+   const m=lookup(handle);if(roles.includes('workspace')){m.activeRefusal=null;m.activeGeometry=[];}if(nativeLayer()){if(roles.includes('workspace')){m.activeRefusal='native-layer';m.activeGeometry=[];}hide(m,null);return false;}
+   const workspaceCurrent=isSameNativeRegions(m.plan);if(!workspaceCurrent){m.activeRefusal='native-regions';m.activeGeometry=[];hide(m,'workspace','workspace-geometry');}
+   for(const s of m.roles){if(!roles.includes(s.role)||s.retired||!intact(m,s)||s.role==='workspace'&&!workspaceCurrent||s.role==='sidebar'&&!sidebarIntact(m))continue;s.reason=null;s.node.removeAttribute('data-va-input-handoff');if(!open(s)){if(s.role==='workspace')rememberReading(m);s.exit.showPopover();if(s.role==='workspace')recordReadingClamp(m);}if(s.role==='workspace'&&!active(m))hide(m,'workspace','workspace-geometry');}
+   restorePendingScroll(m);if(roles.includes('workspace')&&!open(m.roles[0])&&!m.activeRefusal){m.activeRefusal='surface-integrity';m.activeGeometry=[];}return open(m.roles[0]);
+  },
+  activeLayoutGeometry(handle){return [...(lookup(handle).activeGeometry??[])];},
+  activeLayoutFailure(handle){return lookup(handle).activeRefusal??null;},
+  showReading(handle){hide(lookup(handle),'workspace','native-reading');},
+  suspend(handle,reason='suspended',role=null){hide(lookup(handle),role,reason);},
+  visibility(handle){const m=lookup(handle);if(!intact(m,m.roles[0]))return null;return Object.fromEntries(m.roles.map(s=>[s.role,!s.retired&&open(s)&&!s.node.hasAttribute('data-va-input-handoff')]));},
+  isRoleCurrent(handle,role){return role==='sidebar'?sidebarIntact(lookup(handle)):intact(lookup(handle),lookup(handle).roles[0]);},
+  frames(handle){return lookup(handle).roles.filter(s=>!s.retired).map(({role,frame})=>({role,frame}));},
+  retireRole(handle,role){if(role!=='sidebar')throw Error('invalid-optional-role');const m=lookup(handle),s=m.roles[1];hide(m,role,'role-retired');s.retired=true;s.frame.remove();bindSidebar(m);},
+  restoreRole(handle,role){
+   if(role!=='sidebar')return null;const m=lookup(handle),s=m.roles[1],p=m.inspection.sidebarPlacement;
+   // Reinsert only our own empty slot at the newly proved anchor. Never move
+   // native siblings or retain the old iframe/document grant through a move.
+   if(!s.retired||!p||!p.parent.isConnected||!p.scrollPort.contains(p.parent)||p.before!==p.project||p.before.parentElement!==p.parent||p.recent.parentElement!==p.parent||!m.style.isConnected||m.style.textContent!==m.css)return null;
+   const children=[...p.parent.children].filter(n=>n!==s.node);
+   if(children.length!==2||children[0]!==p.project||children[1]!==p.recent)return null;
+   const frame=doc.createElement('iframe');frame.src=s.url;frame.title=s.frame.title;frame.style.cssText=s.frame.style.cssText;
+   p.parent.insertBefore(s.node,p.before);s.button.after(frame);s.frame=frame;s.retired=false;bindSidebar(m);return {role,frame};
+  },
+  resizeSidebar(handle,height,{apply=true}={}){const m=lookup(handle),s=m.roles[1];if(!Number.isSafeInteger(height)||height<1||height>1000000||!sidebarIntact(m))return false;s.pendingHeight=height;if(apply)applySidebarSize(m);return true;},
+  revealSidebar(handle,{top,bottom}){const m=lookup(handle);if(!sidebarIntact(m)||!open(m.roles[1])||nativeLayer()||![top,bottom].every(Number.isFinite)||top<0||bottom<=top||bottom>m.roles[1].frame.getBoundingClientRect().height)return false;const p=m.inspection.sidebarPlacement.scrollPort,b=p.getBoundingClientRect(),f=m.roles[1].frame.getBoundingClientRect();m.pendingScroll=undefined;if(f.y+top<b.y)p.scrollTop+=f.y+top-b.y;else if(f.y+bottom>b.bottom)p.scrollTop+=f.y+bottom-b.bottom;return true;},
+  restoreSidebar(handle,scroll,{apply=true}={}){const m=lookup(handle);if(!sidebarIntact(m)||scroll!==null&&(!Number.isSafeInteger(scroll)||scroll<0||scroll>100000000))return false;m.pendingScroll=scroll;if(apply)restorePendingScroll(m);return true;},
+  isOwnedSurface:owned,
+  isReadingProbeSurface:readingProbeSurface,
+  isMasked(node){return [...mounts.values()].some(m=>node===m.plan.reading&&open(m.roles[0])&&isSameNativeRegions(m.plan));},
+  // The adapter can discover a change before the layout observer. A closed
+  // switch must revoke controller presentation too, so reproof can recover.
+  surrenderChanged(){let changed=false;for(const m of mounts.values())if(!geometry(m)){changed=true;m.onSurrender({role:'workspace',reason:'workspace-geometry'});}return changed;},
+  withNativeReading(handle,read,guard){
+   const m=lookup(handle),workspace=m.roles[0],plan=m.plan;
+   if(m.readingProbe||typeof read!=='function'||typeof guard!=='function')return null;
+   const states=m.roles.map(open),frame=workspace.frame,window=frame.contentWindow,parent=workspace.node.parentNode,next=workspace.node.nextSibling,body=doc.body;
+   // A state-preserving move still cancels a button's pending activation.
+   // Leave the declarative close control in place for pointer and keyboard
+   // gestures. A focused control also stays stable between keydown and keyup.
+   // Closed reading and focused iframe inputs remain independently readable.
+   if(states[0]&&(doc.activeElement===workspace.button||workspace.button.matches(':active')))return null;
+   const slotIntact=()=>workspace.node.childNodes.length===2&&workspace.node.firstChild===workspace.button&&workspace.node.lastChild===frame&&workspace.button.children.length===0&&frame.childNodes.length===0;
+   const originalPosition=()=>workspace.node.parentNode===parent&&workspace.node.nextSibling===next;
+   if(states[0]&&(parent!==plan.root||parent===body||!slotIntact()||typeof body?.moveBefore!=='function'||typeof parent?.moveBefore!=='function'))return null;
+   const current=()=>mounts.get(handle.id)===m&&m.handle===handle&&m.plan===plan&&workspace.frame===frame&&frame.contentWindow===window&&doc.body===body&&(!states[0]||slotIntact())&&
+    m.roles.filter(s=>!s.retired).every(s=>intact(m,s))&&!nativeLayer()&&!m.inputPointerActive?.()&&guard()&&isSameNativeRegions(plan);
+   try{if(!current())return null;}catch{return null;}
+   // A bounded synchronous probe restores actual native visibility, then reads
+   // through the existing fresh source callback. It never reads hidden content
+   // or changes controller intent, frame focus, or the saved reading position.
+   const box=frame.getBoundingClientRect(),rule=m.readingRule;
+   if(!readingRuleCurrent(m)||rule.media.mediaText!=='not all'){m.style.textContent=m.css;bindReadingRule(m);hide(m,'workspace','workspace-geometry');m.onSurrender({role:'workspace',reason:'workspace-geometry'});return null;}
+   if(states[0]&&(![box.width,box.height].every(n=>Number.isFinite(n)&&n>0)||box.width>win.innerWidth+1||box.height>win.innerHeight+1))return null;
+   const ruleStyle=rule.cssRules[0].style,originalRuleStyle=ruleStyle.cssText;
+   const probe=m.readingProbe={cancelled:false,ownClosing:false,ownOpening:false,window,body,viewport:states[0]?{width:box.width,height:box.height}:null};
+   const changes=new win.MutationObserver(()=>{probe.cancelled=true;});
+   changes.observe(doc.documentElement,{subtree:true,childList:true,attributes:true,characterData:true});
+   const nativeEvent=e=>{if(e.isTrusted)probe.cancelled=true;};
+   const events=['pointerdown','keydown','beforeinput','compositionstart','focusin'];
+   for(const type of events)doc.addEventListener(type,nativeEvent,true);
+   // A grid/block/contents rebuild of the native ancestor can interrupt a
+   // focused OOPIF's default character insertion without a DOM focus change.
+   // Atomic moves preserve that frame's document and input state. Never use a
+   // remove/insert fallback, and never move a native node or the exit switch.
+   const moveSlot=(destination,before)=>{
+    const from=workspace.node.parentNode;
+    if(changes.takeRecords().length)probe.cancelled=true;
+    destination.moveBefore(workspace.node,before);
+    const records=changes.takeRecords(),only=(nodes,node)=>nodes.length===1&&nodes[0]===node;
+    if(records.length!==2||records[0].type!=='childList'||records[0].target!==from||records[0].addedNodes.length||!only(records[0].removedNodes,workspace.node)||records[1].type!=='childList'||records[1].target!==destination||records[1].removedNodes.length||!only(records[1].addedNodes,workspace.node))probe.cancelled=true;
+    return workspace.node.parentNode===destination&&workspace.node.nextSibling===before;
+   };
+   const restoreSlot=()=>{
+    if(originalPosition())return true;
+    if(mounts.get(handle.id)!==m||doc.body!==body||workspace.node.parentNode!==body||!parent.isConnected||next&&next.parentNode!==parent||!slotIntact())return false;
+    return moveSlot(parent,next);
+   };
+   let ok=false,value=null;
+   try{
+    if(probe.viewport){
+     ruleStyle.setProperty('width',box.width+'px','important');ruleStyle.setProperty('height',box.height+'px','important');ruleStyle.setProperty('left',(-box.width-2)+'px','important');rule.media.mediaText='all';
+    }
+    probe.ruleText=rule.cssText;
+    // Commit and prove retention before changing ancestry. A CSSOM write alone
+    // can leave the OOPIF's old layout pending across the atomic move.
+    if(probe.viewport){if(!retainedProbeGeometry(workspace,probe)||!moveSlot(body,null))return null;probe.moved=true;}
+    if(probe.cancelled||!current())return null;
+    if(states[0]){probe.ownClosing=true;workspace.exit.hidePopover();probe.ownClosing=false;}
+    const readingCurrent=()=>!probe.cancelled&&current()&&!open(workspace)&&readingRuleCurrent(m,probe.ruleText)&&(!probe.viewport||readingProbeSurface(workspace.node))&&m.roles.every((s,i)=>i===0||open(s)===states[i])&&isNativeReadingCurrent(plan);
+    if(!readingCurrent())return null;
+    value=read();
+    if(value?.then||!readingCurrent()||changes.takeRecords().length)return null;
+    if(states[0]){probe.ownOpening=true;workspace.exit.showPopover();probe.ownOpening=false;}
+    if(!restoreSlot())return null;probe.moved=false;
+    if(probe.viewport&&readingRuleCurrent(m,probe.ruleText)){rule.media.mediaText='not all';probe.ruleText=rule.cssText;}
+    // Reopening can run native beforetoggle hooks. Never return a proof if a
+    // hook changed source nodes, authority, frame identity, or native controls.
+    ok=!probe.cancelled&&originalPosition()&&current()&&readingRuleCurrent(m,probe.ruleText)&&m.roles.every((s,i)=>open(s)===states[i])&&changes.takeRecords().length===0&&
+     (!states[0]||active(m));
+   }catch{return null;}finally{
+    try{if(!restoreSlot())ok=false;}catch{ok=false;}
+    changes.disconnect();for(const type of events)doc.removeEventListener(type,nativeEvent,true);m.readingProbe=null;
+    try{if(probe.viewport){rule.media.mediaText='not all';ruleStyle.cssText=originalRuleStyle;}}catch{ok=false;}
+    // A CSSOM replacement can detach the captured rule while leaving an active
+    // copy in our sheet. Restore only our canonical sheet before surrendering.
+    if(mounts.get(handle.id)===m&&m.style.isConnected&&!readingRuleCurrent(m)){ok=false;m.style.textContent=m.css;bindReadingRule(m);}
+    if(!ok&&mounts.get(handle.id)===m){hide(m,'workspace','workspace-geometry');m.onSurrender({role:'workspace',reason:'workspace-geometry'});}
+   }
+   return ok?value:null;
+  },
+  isRebindCurrent(handle,inspection){try{const m=lookup(handle);return !m.roles.some(open)&&inspection?.regionEpoch===handle.regionEpoch&&isSameNativeRegions(m.plan)&&m.roles.filter(s=>!s.retired).every(s=>intact(m,s));}catch{return false;}},
+  rebind(handle,context,inspection){const m=lookup(handle);if(m.roles.some(open)||!isSameNativeRegions(m.plan)||!context?.binding?.documentToken||inspection?.regionEpoch!==handle.regionEpoch)throw Error('invalid-flow-rebind');m.handle=Object.freeze({...handle,documentToken:context.binding.documentToken});return m.handle;},
+  dispose(handle){const m=lookup(handle);m.cleanup();hide(m,null,'disposed');for(const s of m.roles){s.node.remove();s.exit.remove();}m.style.remove();for(const {node,attr,previous} of m.markers)if(node.getAttribute(attr)===handle.id){if(previous===null)node.removeAttribute(attr);else node.setAttribute(attr,previous);}mounts.delete(handle.id);}
+ });
+}

@@ -1,0 +1,58 @@
+[
+  {
+    "selfMs": 42.111,
+    "stack": "sha256@hash.mjs:10 <- digest@hash.mjs:25 <- unpack@free-evidence-repository.mjs:8 <- #validateRoot@free-evidence-repository.mjs:18 <- (anon)@free-evidence-repository.mjs:19 <- #read@verified-record-cache.mjs:38 <- read@verified-record-cache.mjs:37"
+  },
+  {
+    "selfMs": 39.1,
+    "stack": "strictJSON@verified-record-cache.mjs:2 <- strictJSON@verified-record-cache.mjs:2 <- #read@verified-record-cache.mjs:38 <- read@verified-record-cache.mjs:37 <- verifiedRoot@free-evidence-repository.mjs:19 <- root.onsuccess@free-evidence-repository.mjs:39 <- (root)@:0"
+  },
+  {
+    "selfMs": 37.586,
+    "stack": "strictJSON@verified-record-cache.mjs:2 <- strictJSON@verified-record-cache.mjs:2 <- #read@verified-record-cache.mjs:38 <- readWithCounts@verified-record-cache.mjs:31 <- #rootWithCounts@free-evidence-repository.mjs:20 <- root.onsuccess@free-evidence-repository.mjs:39 <- (root)@:0"
+  },
+  {
+    "selfMs": 37.585,
+    "stack": "sha256@hash.mjs:10 <- evidenceManifestRecord@free-evidence-partitions.mjs:38 <- saveEvidencePieces@free-evidence-partitions.mjs:58 <- save@free-evidence-repository.mjs:144 <- request.onsuccess@free-evidence-partitions.mjs:47 <- (root)@:0"
+  },
+  {
+    "selfMs": 36.083,
+    "stack": "sha256@hash.mjs:10 <- nativeManifestRecord@native-partitions.mjs:56 <- saveNativePieces@native-partitions.mjs:101 <- publish@native-repository.mjs:272 <- apply@repository.mjs:156 <- (anon)@partitioned.mjs:87 <- r.onsuccess@partitioned.mjs:79"
+  },
+  {
+    "selfMs": 35.588,
+    "stack": "sha256@hash.mjs:10 <- partitionUnpack@partitioned.mjs:14 <- (anon)@partitioned.mjs:76 <- #read@verified-record-cache.mjs:38 <- read@verified-record-cache.mjs:37 <- verifiedManifest@partitioned.mjs:76 <- r.onsuccess@partitioned.mjs:78"
+  },
+  {
+    "selfMs": 32.785,
+    "stack": "sha256@hash.mjs:10 <- digest@hash.mjs:25 <- unpack@native-repository.mjs:9 <- #validateRoot@native-repository.mjs:19 <- (anon)@native-repository.mjs:20 <- #read@verified-record-cache.mjs:38 <- read@verified-record-cache.mjs:37"
+  },
+  {
+    "selfMs": 31.606,
+    "stack": "sha256@hash.mjs:10 <- digest@hash.mjs:25 <- nativeUnpack@native-partitions.mjs:14 <- oldCheckpoint.onsuccess@native-partitions.mjs:122 <- (root)@:0"
+  },
+  {
+    "selfMs": 27.065,
+    "stack": "strictJSON@verified-record-cache.mjs:2 <- strictJSON@verified-record-cache.mjs:2 <- #read@verified-record-cache.mjs:38 <- read@verified-record-cache.mjs:37 <- verifiedManifest@partitioned.mjs:76 <- r.onsuccess@partitioned.mjs:78 <- (root)@:0"
+  },
+  {
+    "selfMs": 25.575,
+    "stack": "stable@hash.mjs:2 <- evidenceManifestRecord@free-evidence-partitions.mjs:38 <- saveEvidencePieces@free-evidence-partitions.mjs:58 <- save@free-evidence-repository.mjs:144 <- request.onsuccess@free-evidence-partitions.mjs:47 <- (root)@:0"
+  },
+  {
+    "selfMs": 24.955,
+    "stack": "sha256@hash.mjs:10 <- manifestRecord@partitioned.mjs:55 <- saveMutation@partitioned.mjs:96 <- finish@repository.mjs:84 <- enter@repository.mjs:82 <- (anon)@repository.mjs:109 <- (anon)@partitioned.mjs:87"
+  },
+  {
+    "selfMs": 19.544,
+    "stack": "stable@hash.mjs:2 <- (anon)@hash.mjs:6 <- stable@hash.mjs:2 <- digest@hash.mjs:25 <- unpack@free-evidence-repository.mjs:8 <- #validateRoot@free-evidence-repository.mjs:18 <- (anon)@free-evidence-repository.mjs:19"
+  },
+  {
+    "selfMs": 19.519,
+    "stack": "strictJSON@verified-record-cache.mjs:2 <- strictJSON@verified-record-cache.mjs:2 <- #read@verified-record-cache.mjs:38 <- readWithCounts@verified-record-cache.mjs:31 <- #rootWithCounts@native-repository.mjs:21 <- request.onsuccess@native-repository.mjs:106 <- (root)@:0"
+  },
+  {
+    "selfMs": 19.256,
+    "stack": "strictJSON@verified-record-cache.mjs:2 <- strictJSON@verified-record-cache.mjs:2 <- #read@verified-record-cache.mjs:38 <- read@verified-record-cache.mjs:37 <- verifiedRoot@native-repository.mjs:20 <- request.onsuccess@native-repository.mjs:72 <- (root)@:0"
+  }
+]

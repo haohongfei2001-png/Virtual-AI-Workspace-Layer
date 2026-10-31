@@ -1,0 +1,21 @@
+{
+  "baseHead": "ab688fbaeca7c4b327348f3003806ae73be0e386",
+  "sourceHashes": {
+    "src/data/native-index-reader.mjs": "2402bfb54e0ab30641de1a78ba3d21c1d9777da7f7e8ff3bf015b356a82952d0",
+    "src/data/native-index-writer.mjs": "b24b74a4470602b8196c5ee9559aaa8d5f53454c034b02aeb84b2652532a2808",
+    "src/data/native-index-migration.mjs": "beacfb2d8688baf68a9fa51969633e1137cc537f140703dc4410f9c929a696d1",
+    "src/data/native-repository.mjs": "212cff2a0c5eedad70ae549567239ce7d177cfb79baaf12f5a626826626445ab",
+    "tests/free/native-index-write.test.mjs": "47c9055a5372fa4433177bfdddedcc472f7721ca90e708980187e3aa7bfe6b06",
+    "tests/free/native-index-write-browser.mjs": "96767cf2ff4ad46adf34c6bf0175755779bdf07f3f0b83fd026ac2a46d599d77",
+    "simulator/build.mjs": "0d281782679f310a2baad84a4de1d156da5914250cc80f11a11f525fe1c0bb39"
+  },
+  "fullNode": {
+    "passed": 832,
+    "failed": 0,
+    "skipped": 0,
+    "command": "node --test tests/b1/broker.test.mjs tests/b23/*.test.mjs tests/b4/*.test.mjs tests/f1/*.test.mjs tests/hf/*.test.mjs tests/free/*.test.mjs",
+    "logTail": "est theme segment; old children stay parent (1.668333ms)\n✔ current positive observation does not require full old coverage (0.85975ms)\n✔ old snapshot cannot assert no recent input (1.204042ms)\n✔ old child with a coverage gap is unknown, not forcibly historical (0.788917ms)\n✔ visit/update/assistant/edit timestamps never activate (0.133125ms)\n✔ duplicate events idempotent, conflicting times quarantined (0.086667ms)\n✔ scope collision rejected even for same native ID/title (0.255709ms)\n✔ theme scope mismatch rejected (0.090125ms)\n✔ time-zone projection does not mutate source (1.584667ms)\n✔ 120 themes and all 604 references accounted for (16.014416ms)\n✔ cross-Project references aggregate without native mutation (1.009084ms)\n✔ only explicit synthetic origins and paths accepted (0.433459ms)\n✔ impossible calendar instants are unknown rather than normalized into a different day (0.137459ms)\nℹ tests 832\nℹ suites 0\nℹ pass 832\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 17785.261584\n"
+  },
+  "normal100k": "NOT_RUN",
+  "automaticMigration": "NOT_ENABLED"
+}

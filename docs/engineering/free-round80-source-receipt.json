@@ -1,0 +1,29 @@
+{
+  "parent": "05e2924a7c176ea17abea1560a88e221f3975f05",
+  "sourceHashes": {
+    "src/data/free-projection.mjs": "516fad5ee288782350cfb63cf5506e070e737a0d653c128e2866d1cbeb8d07af",
+    "src/data/free-replica.mjs": "5f65439dc9c0c70b68824f6e689488db66af1380e89d8a9efbf8e7880c55630e",
+    "src/host/free-frame-client.mjs": "62f2f0d44f8c7110df316014d710a23ed5e9ac7a3e68e77e6d1a17e1f532ed73",
+    "src/host/ui-frame-client.mjs": "eea1a82b3a60e3f4d7ba9a6bc3984b72aed2a5c4f60884bafd8e44c726c2ecf3",
+    "src/navigation/navigation.mjs": "901042d10e75176bdca02671fc0cf4affde700c8a8dbb58142b7c891c5a0af42",
+    "src/runtime/free-frame-projection.mjs": "dbd21682cf281f751dd21598bdd5281e163e24fd87cb82e6a6af5fca2e7c31bb",
+    "src/runtime/free-read-service.mjs": "53f30ef511da4a283ac753c6fe8a496a1f220ca80c9666124dc3ff4b57e7c0e2",
+    "src/runtime/host-binding-service.mjs": "bc7fa6476ac27385da05bf0565cfee43788458ec05866751dd46bf37eb648807",
+    "src/runtime/host-observation-owner.mjs": "359699e9da345fd3e83d664f6dd3f3c872f033f503ce1fddb0a88114a9db7b2e",
+    "src/runtime/host-ui-owner.mjs": "f2ca504d7b40552fc2e051cf6cb1c97307960b8b05e51db9988f476e4d39f1ee",
+    "tests/host/frame-projection-renderer.test.mjs": "76e92363b4e36e9123f838f2774b1cfe1127b064d13f23394faf736b888fc2b5",
+    "tests/host/free-frame-client.test.mjs": "d40e227f731cbf941d4b6e932b5746830cd4ce9671a4ab70609e0f957c14c9e0",
+    "tests/host/free-read-service.test.mjs": "95c371e31bbd26f390ee9cadce6cbe9821bf8c3ec7b781ee8185face1e548089",
+    "tests/host/host-view-service.test.mjs": "b6fd11b929b04ddc812eb0fd5857689dbe1e7984b0dc6de372b3388ff93a6bb2",
+    "tests/host/ui-frame-client.test.mjs": "8f4117499edcb01c049efdb7a0d852ee6895e399aa30ec786e85dd0bd6e96b8b",
+    "tests/host/ui-owner.test.mjs": "86c1949e9f646da0af7b7d427bf118ba1c7f7c13df92bfe7260408459985b303",
+    "tests/host/view-mv3-browser.mjs": "faffd0ae9f6c96e267cf6463eb849d045acd5e07e2a9df3041e8c33ffa8f6035",
+    "tests/host/host-binding-service.test.mjs": "3354057e13e945bf38a1be4d4b634eb3f3c4ba47857fb157583a95e1c17ce413",
+    "tests/host/last-known-projection.test.mjs": "69b24a52c6f2ea6a63722b01d792201624b9d3a30be69c8efdd5b09b6e1be71b"
+  },
+  "nodeTests": 1627,
+  "evidence": "OFFLINE_HEADLESS_MV3_NATIVE_CHANGE_AND_NODE_LAST_KNOWN",
+  "liveChatGPT": "NOT_RUN",
+  "release": "NOT_RELEASE_READY",
+  "remoteConfirmed": "e2ae316ecb584863059c137c0a9509b1c6583f93"
+}

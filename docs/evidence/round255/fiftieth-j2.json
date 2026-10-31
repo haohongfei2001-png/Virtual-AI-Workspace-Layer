@@ -1,0 +1,639 @@
+{
+  "status": "FAIL",
+  "requirement": "VA-HOST/1.1 J2",
+  "evidence": "OFFLINE_PACKAGED_MV3_REAL_WALL_CLOCK",
+  "realChatGPT": "NOT_RUN",
+  "releaseStatus": "NOT_RELEASE_READY",
+  "sourceCommit": "18ff5632c1743e34dfa1ef80f463f3d200c3aae0",
+  "sourceHashes": {
+    "extension/worker.mjs": "9d631c76a3a6eb760ad487880e690276658aec45e687f86be96734eb1ef25ea8",
+    "extension/browser-bootstrap.mjs": "278850152bf6c3ebfc600af290ea8fb23256997d8e7bcd93b7e7ba1c496425bd",
+    "src/runtime/host-browser-bootstrap.mjs": "ccaed6c288493ac0f0705b4a325b6f7ad5ee3b125231599113795d67ef7fa05c",
+    "src/runtime/browser-request-context.mjs": "ecf8c27a3931e9ff2364d1748de00186fd721c443c5e2203b0c4604b98ed814a",
+    "src/b1/identity.mjs": "6d7ca616701826733d4936d8a139395ccf1a3111e025ec6b1035d78c1dc05e99",
+    "src/data/request-deadline.mjs": "cda2ebb4158c05eb911fbb84a1af092cf91f461e3a002bef4b4d23f5a70dfdf7",
+    "extension/config.mjs": "9f38c623f8ef08e684d9b1b71fd0a49c01b736a41e75efc997117370df175c41",
+    "src/runtime/host-worker-runtime.mjs": "54015d2c05f32cb279c9ff45075160d4ad9c1968d11ca4cda817947bc2db2be5",
+    "src/runtime/browser-old-send-terminal.mjs": "c310a6cc46fcd6f9a8718f8a087dc10719a41affd9a56ecf8cbf4be9720123c3",
+    "src/host/old-send-terminal-profile.mjs": "a43986f8e54b15c98e9dc3535a9e0bb08820ad2132f0eb0fdf72ace97b227b0f",
+    "src/runtime/shared-host-read-budget.mjs": "ee4e09ea97c144fbe30b029b41251ae8e313503bf706e3b4cd9966a24ae27196",
+    "src/data/hash.mjs": "aef21d1842cdc09b33fef973a9d29f15cb7c0c3f773a6a9d31726b83ffee7b21",
+    "src/runtime/browser-first-send.mjs": "609847013c92f984f0c75a4854b57ba2592eb878704d76a21d7c0364033929e6",
+    "src/host/first-send-profile.mjs": "cf0d76b36fc980a890246d255448f8b29965b5ff12882689d6884e7336e436ff",
+    "src/b1/scope-repository.mjs": "08d5c29e4be60c9b94ac6c7dce3e7fb1c5f2e553979c5a8f872a08d7c0c2bb91",
+    "src/data/schema.mjs": "4a15161852c0c0a9dcc3fab10a984c97929ed9157c33fbc97121711cb41740aa",
+    "src/data/free-policy-initialization.mjs": "e0a358b12ea9454f5ee657612e4c83c247ba895b082a362be9186f4b7e898a32",
+    "src/data/known-anchor-key.mjs": "e5d91c902e04440be924ef0506ff688bbbccd83150610f50199b518bcb298df3",
+    "src/data/repository.mjs": "afae2c733965935e87cab5238d3b011cdb92545662d198c14e9042f8ae77dd0b",
+    "src/data/free-time-policy.mjs": "8a75b5bdde8abf8ee07873ecf2aa45a19faccd030b9f03c738b56db6ba9ea17a",
+    "src/navigation/projection.mjs": "36334b5da4bd8e89718bf45b69723f4a657d46797c03c653298aaa3392399f24",
+    "src/data/activity-version-fence.mjs": "4ad8bee9665e2037b1be7eb1c871b024001adb25c8b630115e1a9c1ce97f36fe",
+    "src/data/native-repository.mjs": "f6be3b60ad147ea9d4b6ee280b3578f35e0f66ac24f7ab5cf476cc7d92a3ed6a",
+    "src/data/continuation-evidence-reader.mjs": "df6058de242ec65cf2c371fedd0cebb0c90da110f76a9d2fc172447be50f82b7",
+    "src/data/free-evidence-partitions.mjs": "c1cdd10d9c6a6a142759fa7589b55a1607a4518260677abb3145ea00907a0ead",
+    "src/data/free-evidence.mjs": "f0e6e9c36330c9c94e8bed11b06b92acfa0d76725f8afe70af6fee5b0afab680",
+    "src/data/observed-send-anchor.mjs": "f9dbb9278502a325c2263d4adeb99ea1c0159525d505728fe84fdee2d59980da",
+    "src/data/free-activity.mjs": "2d961ee56aaddada429ba684cf08ba1aa4a4886204f2d3a43d3b52843da7de46",
+    "src/data/state.mjs": "df0eaff00a7f050c37653f0e740b8fabe19bce571c5e37f4ce437d180984c62a",
+    "src/data/preferences.mjs": "1fb8395c5dfe23d64c91095b71a1c117b9762b3ccec68e262aaf73744b12c9d7",
+    "src/data/evidence-ref-directory.mjs": "8a89bf5b8535578881c823077554f177098044214a22fcfaf4be41e65498c867",
+    "src/data/verified-record-cache.mjs": "9b7b3c13abdd37f2b6d4fad48b85707a9815538fd793cad537f8e87b8f08cde0",
+    "src/data/native-observation-continuation.mjs": "3222a09592efd5c904cc65e036976f2f08bb260a9e639c83bcfddbd025dedee8",
+    "src/data/native-facts.mjs": "98dc17aedc9cf675fed8d720a181422956f79fd6784a4040327788a69e8c3c93",
+    "src/data/native-partitions.mjs": "4e295e042a2e5e3337dddfe1f5928d0f8e920aaab981a7e2f96fcd00ccff60a9",
+    "src/data/native-version-index.mjs": "03089b0dddfa9f948087823af1e1ad7b43fc765a6631c40647e1e4b201cd7211",
+    "src/data/native-index-migration.mjs": "69b9275e7a58878aba4eba800eb324140ac84c0730d31dcb4f3a067d29dda6a2",
+    "src/data/native-partition-audit.mjs": "3cd490dc6e38459d1562d8b2a8ec277911fe46782cb55840965fb045182f247f",
+    "src/data/audit-record-prefetch.mjs": "5af85b5c8a90e0a1d236fdec784b77ee970f7ea251e18b4be386a34e909d6b7c",
+    "src/data/native-index-writer.mjs": "b24b74a4470602b8196c5ee9559aaa8d5f53454c034b02aeb84b2652532a2808",
+    "src/data/native-index-reader.mjs": "f359a28b189dec9605dad356d3c19d474132fff2ab3a94425367997047c96c4a",
+    "src/data/free-projection.mjs": "fe87590005120f89ab41571fe9bf8ae566918748ab543e0ac172fb63274c8a48",
+    "src/data/free-evidence-repository.mjs": "64d0ea73914e840c1783e7a4a9408584a5523c14c715c6be24d998418679f240",
+    "src/data/evidence-directory-writer.mjs": "9ff0c941904e155c736a29e1d232e4fecf67d7995c5d4b6907a12b0f54102944",
+    "src/data/evidence-directory-migration.mjs": "75328ab40b3327d9e9c60c44402d87ea3afc9bd385eeb3ba2f0a14036fc1b135",
+    "src/data/evidence-partition-audit.mjs": "3aadf876de681cc97ef5564119da7a2c691c45a472434d6e8f7080ae02d3aa79",
+    "src/data/evidence-directory-reader.mjs": "7ef90c7a37a82b2ce4562acb6afc56e4ae36d14543c776893664b79869fa895b",
+    "src/data/shared-directory-retention.mjs": "3bc27b2a71994f8f0857056c8309c47107251372f25c021368d3d06248e7cbc9",
+    "src/data/shared-directory-reader.mjs": "e4abac50e4cc282e16469861009a48893a10fd76652c208791834f50678c7672",
+    "src/data/shared-ref-directory.mjs": "9d1f099d7c5e5019ba023b0d84c57779e968a55ad6397d2ee20825e0d471fa44",
+    "src/data/partition-manifest.mjs": "566283402493ada28abc530354c343bc6c561e309d1e6802c981d62584a5e06a",
+    "src/data/cooperate.mjs": "ce494a33280143e1e2a2227a72413da792330311de12642a9a56b13704f2f3b4",
+    "src/data/shared-directory-migration.mjs": "0cd415f9a871b93613c3d9f3e301982cda2d1891dc847d983397f87dc2dcf0df",
+    "src/data/shared-directory-writer.mjs": "4a060d7467d6e55a9fb2d54cd3d7099bc976c2228cf010cc97db03976a8ff8dd",
+    "src/data/shared-partition-audit.mjs": "25d4b77561b36b150ce1524e27e184170f3c1ef493995251a88678908d31f6cf",
+    "src/data/partitioned.mjs": "c73c99a9e301b25ee71635eaa9cd0fcf88ae45e24e56c5acd615e33de947b643",
+    "src/data/shared-directory-recovery.mjs": "e04870124d9cd873a8af8b3643fd3d2fa5bdb33c69809e7bbf667bb2aa4727cf",
+    "src/data/backup.mjs": "bb0a8639d02e2169ae15e866a464f1531b7e80e40afd7c8a4b35e99d70928396",
+    "src/data/evidence.mjs": "f84032c9a2fc08455480652b60de6fb9394a70e82a7ace8729186ff097b26238",
+    "src/data/known-anchor-backfill.mjs": "dd58e613da9564668fc7963135dd98caccf3bd6930e532864e68d9ff6afd55ca",
+    "src/host/surface-discovery.mjs": "785dedcba626c4c9f338485fbbc3246eb43456a206969a82de669079b371c846",
+    "src/host/bounded-handle-registry.mjs": "ea3a48ed3760741b8d845b4116830cffc611571b6fd01bb9561bd8a63efdee5c",
+    "src/host/contract.mjs": "35129aacf2a7e1fe1812c846379563d60ad74a66b689ad41bc38d76484a97716",
+    "src/host/url-policy.mjs": "fddfafcca2276161e6fd3c908ac896d0dab656fce6cf06aee64f1f442f7ac7e9",
+    "src/runtime/host-binding-service.mjs": "0b208517b32933e4fb7daab1a03d769fd3e7aa251863e8d5bc92bfedc268021e",
+    "src/runtime/host-ingestion-pass-owner.mjs": "ca3463525fd403938f006e3cb67a836fcbd35614179ac832ecd76dbccd4345dc",
+    "src/runtime/host-old-send-terminal.mjs": "6fcc2912af6cbf6cc9e5cba3cf21025d8fffb51fa703a2807ba3e9f25dccead6",
+    "src/runtime/old-send-terminal-readback.mjs": "c090d556d487b58771ae56ed408547c37e893e7a78e26838a47a528fbd459fce",
+    "src/runtime/host-activity-source-admission.mjs": "2832d39f8dad1c0868606aede14063edc7ed75df403f2c4eda6ab956d8fd6e14",
+    "src/runtime/evidence-source-incarnation.mjs": "001633d4fa680ef18f8aba3b6d4d585fad4436d69263b45396b1851ad61b3920",
+    "src/runtime/send-ack-admission.mjs": "784141e34d18be3faa6e4cdc725b8f5442f6ea103d68dca00e82d09b64bcdccc",
+    "src/runtime/historical-send-profile.mjs": "b356d5fc7101080ba60910edc0175180924c548269816dd98900f2055195f4c9",
+    "src/host/conversation-metadata.mjs": "744afe2228882a5ebff1ffd8f1294ecd80697d63b44af60640e3ff4d3a63410e",
+    "src/runtime/host-historical-send-owner.mjs": "dd0901b6c0739146db14371fab1284c37ab43fa0e106406d51e7c7e308b76bce",
+    "src/runtime/host-first-send.mjs": "92e1e0ef59139010d19143f20bbab45469d1c9a639ddde0ea9c6158737b1f3f5",
+    "src/host/first-send-causality.mjs": "cd062c0b638408b387bb469f76dac3ea389acd9943bd42c1545ac8f0a08905e6",
+    "src/runtime/first-send-readback.mjs": "4052d39db39d2e5053bb4287cde87fd45ddcce844420099203950ea68a9691f6",
+    "src/runtime/host-current-navigation.mjs": "081db9b2c4d5988f670c0022b107279ffbaaf9cf257b5c07b76ddad01fa90ea7",
+    "src/host/current-navigation-plan.mjs": "c33cfd6af8e7523ac85fe812b59b2e24df109d4e03a3d507b9edab6b53d413ff",
+    "src/runtime/host-send-ack-owner.mjs": "7e4362115828c9b68ff3a34923587c2711e6df854d119b9b3d3a1d91b5830fc5",
+    "src/runtime/host-candidate-service.mjs": "0ae6ff996262e89550bc49709e96647c5a738f33ca44409d465b39bf5c5af4fd",
+    "src/host/candidate-presentation.mjs": "d2a89c85c263de8f1572c8fe12e7fc1400bd4201fed7c3adb9aede868cd6cc4a",
+    "src/runtime/host-snippet-service.mjs": "65e7ef0bd4843fad28409495f0187fcf58daa7f5541735152d8836c80a2f0107",
+    "src/runtime/host-backup-service.mjs": "46f7b84d99f1618dd7ffc442c605ac7e72fc1e4999417ddbeb9592cc7df3f0b0",
+    "src/host/backup-transfer.mjs": "69b9c025e80993644ba8b37fdf77ccb9662d4050fae66e847b98b3663f59122a",
+    "src/runtime/host-send-candidates.mjs": "7149e95aee63d3fd4946d7538b0ff58daf2e5b614d663341673c2eb802ed0fa4",
+    "src/host/send-correlator.mjs": "b3f2090a3c5bf0e3d467de761bc79e2423c94e1e7b1e399918026d2c4575ff0c",
+    "src/runtime/current-metadata-reader.mjs": "e507ae813e11cf8ac4d5d5970b94efa0ed0309e4504111188142bd5b6550fe0a",
+    "src/runtime/host-recovery-service.mjs": "ceaf407790fa8f56e7b03795e2f88c1d00465f6d71b4a10f276844c82fe47991",
+    "src/runtime/host-continuation-owner.mjs": "a2c252fba8d39217af8aae6ceccfe93a3b99a6f9460994718dedafe0555db7d9",
+    "src/runtime/free-read-service.mjs": "3ab29a0e6cdb27bfee3f0e4334f6b075caffa3815ff4d015003f3d4185a072d1",
+    "src/data/free-recovery-status.mjs": "21b871a60c1dfc2c7c67964f30f1852c33ee225a3d9df1271a518e7850e51bb4",
+    "src/runtime/host-view-service.mjs": "911f2c1ba36ed303790070f33d8e5eb4520b50527d5991d9bd42ba0a2a872db3",
+    "src/runtime/free-project-location.mjs": "45892565ac8896feb97872c59e3b504d0563b6e461c3da49d838c1359991e649",
+    "src/navigation/free-view.mjs": "ef0f8d6b798789539d16bdc3ae1d8cc66ccf5fc32f472b83ca2c475863946aaa",
+    "src/host/frame-resume-state.mjs": "fab35558b08d800722df1d0160b602af541ba3a0aa5a2f49a321a390e35b78c2",
+    "src/runtime/host-auto-time-policy.mjs": "90838ac5e0c95262911bb05289e13abe659662b7ea08255edfce14e7665516f3",
+    "src/runtime/free-working-set-projection.mjs": "b50b973005612c5d9d76cff9a4acd6d6fc23d006dea787d681c534385629ff4f",
+    "src/runtime/free-search-projection.mjs": "8ff12eb3674d3d5fe59371aabf4f82bcba3898ae4c3357493a15ba78a2cdfadf",
+    "src/navigation/search.mjs": "a93da18f3018a6267af7634986fdf7cfca4ed72eeaa6bb982340e9b0031c85d6",
+    "src/runtime/free-view-owner.mjs": "fda3b75a5fcca2d7095a220783563b847f966325ad75760a0fb40629d4860974",
+    "src/data/read-recovery-budget.mjs": "7c7948a740dcc37f9a2a6b25babe8c29cd2d84441299c1429c7e524402cc8c51",
+    "src/data/free-header-loader.mjs": "7817a581a7816d744b39ed8fa37d49eb86da065335e2f46ec190fa9fae18e7cb",
+    "src/data/free-page-loader.mjs": "c4339dfa76cfab89aa1f16b40129ee9f7c779233d5d03ff2134f551a8f9b0d65",
+    "src/data/free-replica.mjs": "11326c574b31ce1fc4c93bf712b812f0d3181f0254ec08ec22e8588836dd81dc",
+    "src/navigation/current-index.mjs": "23f13e4d9556715bb029ad6724b8a3731ba87251d6ddfd8e95939085ebfab21e",
+    "src/runtime/free-frame-projection.mjs": "2411de58fbdb97084f62476007efc2816e9a096854ded5c2bf1a55b3d36a537e",
+    "src/runtime/host-ui-owner.mjs": "e764efeba758fa29a1e2ee00e71ab2034f7a9c7ef78f305ca5b892f77f61a03a",
+    "src/host/ui-grants.mjs": "27b39c6a0ccae66e6bb3ce08e91b24c75a738cfe53fb307eff6c9907f5b660a8",
+    "src/runtime/host-observation-owner.mjs": "b4f67c087525ca3658550da57c7fc528d7b091d03e9a224a83e3a6fa8edfb7b9",
+    "src/runtime/native-source-incarnation.mjs": "75d8d86a6b71d6c2e24dd7158a37a63fcda6cb02d77552d8c3ccf8b60354a638",
+    "src/host/current-observation-batch.mjs": "f7fcd583d0811a8b71d72dc5bac4ba4c57eae16e552076aa08d5a50f42b45151",
+    "src/host/send-intent-claim.mjs": "1e399b5af40affb0500f744f0c2c8aa5f0dc935cdbbd054dff1e483cda1f971f",
+    "src/host/current-body-claim.mjs": "4e26f9fe6c905d1dbf3a07995168c4fb5dea5e424bff238644da1c067ac03ef5",
+    "src/host/surface-batch.mjs": "4733a8cecdc3f4664c77da81d12441c9f2bd7cf0c16e55ec93eb94076faa4e5d",
+    "src/b1/document-binding-broker.mjs": "1f247c0fa2b3a05c5f2ae11dda39df04de9c79628b7753715bdafcadbc842aec",
+    "src/b1/host-document-handshake.mjs": "fafe938904e635da9964d222fe7dce8cc98cb5eda6501420af464c95b4a9cc6b",
+    "src/runtime/scope-authority.mjs": "57c1a96d78c2e4f299cab0e0cbc4d7f8a53f569d23ea8a07535cb31ebe7a4282",
+    "src/runtime/session-provider.mjs": "b3927b9f11dd704e03927e27dc91fdc4bd01b33d61f008426b73bbb908e2a07b",
+    "src/host/conversation-acceptance.mjs": "92fdfc486bd9614028aacc197b99a26b8ad3ae254e54a980a04b0a1e90153144",
+    "extension/content-entry.mjs": "d3313550a8c5f4dbf3419233563ad7568f4b78a369a32e72d31171c54cb3e575",
+    "src/host/context-association.mjs": "65144892c80bda792c4fd43331fd2bc41b867cbcbecc245dc093859d7c4b316f",
+    "src/host/current-body-discovery.mjs": "8076eb9c238826b1f6ee3416a65d13cadf0edf5864d4d6256a40de0a6e76bb1c",
+    "src/host/chatgpt-adapter.mjs": "0d2a283bbc3763c8344fa56afd4f02aed95104eba7aba684d28ef88df7350560",
+    "src/host/surface-fragments.mjs": "1fbae58e227c4c3cfbefb991ee1f7c469a9225ac2360940b23b5cfc999555d74",
+    "src/host/native-input-risk.mjs": "9c78a4f1e984fb8e39078d5c8f0ba05427f76a8c6f113f805ce6501bfc1eeb18",
+    "src/host/native-send-intent.mjs": "ee67e74a089c8078a4b780467c6366f22176dada81de0d3dec9450be7e0ee744",
+    "src/host/native-snippets.mjs": "2e4c039073450d55cda5c09c30b7ceebfc9f0141b30a85c7c7d19a1a1bb2a142",
+    "src/host/native-actions.mjs": "6a586f6724678d8b8095bf62e0adb6b739f5044224c2d3df5ee0a35a9733adfc",
+    "src/host/content-session.mjs": "e48c497e1fa3ee8f68afdef4ace3cc10fad45a10b6a1692db9648f0bcf9ccbd1",
+    "src/host/candidate-upgrade.mjs": "df0d6f58a87c794c262fc5fe3421fa08f7b90dfde2b4148caf19b312c031bd7b",
+    "src/host/content-candidates.mjs": "8fa2eb65858bea846f2b78303ae6a3d45e9df959e08cf93c75b2c6d04b3e68dc",
+    "src/host/candidate-page-window.mjs": "b8e741b7f46a9a0468255d56261b3c39d47e27d31d6ca87442ef32ff055d33cc",
+    "src/host/snippet-selection-session.mjs": "00f64ead49305f277ab739db7fc7162d907f2a3d2ec7b30f3e51d4c232d333d8",
+    "src/navigation/mount-surface.mjs": "8431ca3951f3dea8973d779952a318a6aa9f9da71b27232c176dc6046699ac06",
+    "src/host/surface-controller.mjs": "1104db3adea26b75a3f693fd21a0b351cc53d1b166a090a87e54f73060c1ae71",
+    "src/host/frame-appearance.mjs": "b393fb7be24fb0f0834d239d3ede9503f08cbef98f6fd3cc4b64312fac3b5972",
+    "src/host/frame-native-plans.mjs": "49c776435c03ba5188fb71ff89b11cb6f374bb5aad25532fea926f9674ae8d29",
+    "extension/workspace.mjs": "bf2eb026da73b65a5969d2c6d9a187e2350481c19b63f1a97efc93df6419fc64",
+    "src/host/free-frame-client.mjs": "1c9ffbaaae4077084714ddd7d504b75404d911d660ce7d69b933a5586e136ec5",
+    "src/host/frame-candidate-migration.mjs": "79fd202da8b69ae2abcbbd84659b233fa7992da91a2139fe6b9b57637e601ae8",
+    "src/host/free-frame-candidates.mjs": "348a302e812f2335b2df414d0d16f20b4d8e499a399475539e508e13814cdf10",
+    "src/host/free-frame-snippets.mjs": "1930b02a870c472271766da95204bc46ce943caa51c24d66c2b55cdadae328bf",
+    "src/host/free-frame-backup.mjs": "21aba465d423ebc4ee69d3b3774b7a5a4fbf37c2c8152ff1c8e2610f59b93aa6",
+    "src/host/free-frame-recovery.mjs": "dadb2d02f2603b504471d69072bcec36c0393cabd8c0201c63251e192383b187",
+    "src/navigation/free-recovery.mjs": "20352a2a9a37bfdac9d0889d87efaf80510bf7462df3fba1ceef1e4eac3c0442",
+    "src/host/ui-frame-client.mjs": "b573405b7260c4cd82f83faf88f3769f1a0e1cb6c66c7b7b99c7309ed4581103",
+    "src/navigation/navigation.mjs": "b600f8c77cbc6be97e6c2c762821991ffae41e8891cbc68403dc43dfeb4c5c83",
+    "src/navigation/icons.mjs": "14195d8a7a21a029278ff6f9bf0bb1add2d679b37666108d80cfadabe312d2fd",
+    "src/navigation/styles.mjs": "72850d9805a8dc725d36145cef30a59d24c6dd3f10504528f1e5c68e716d61c8",
+    "extension/sidebar.mjs": "6151804205b8393cabfff2d4b2e3deaca3a36beac14d07198ca0295d3d4a3ce6",
+    "extension/frame-shell.css": "305e002e7610347fa491671aa45d852dbc8c4ec12096e4279a50a7e3e6c2847f",
+    "extension/workspace.html": "1d8d939f9deca25ae47afb1f5e0cdbffaceb85ea6e6be972edd0dea4bfed8f55",
+    "extension/sidebar.html": "95cfccf90ac7355305faeb6f9aa20f8477b8eb4ed05f8dab8db2580066222c3d"
+  },
+  "fixtureHashes": {
+    "tests/host/j2-lifecycle-diagnostics.mjs": "d99593a63550caad8a78514078fd8fd356ec859409985d225a5b5a9d2343e596",
+    "tests/host/fixtures/server.mjs": "bf5e574279d807f1c40e32e80fe053ffdf978a118906c23f7f462d6acbd90256",
+    "tests/host/fixtures/j2-send.mjs": "e834a656271e0de3968aafc40a50cbadebc6753109af68d05504103be944b381",
+    "tests/host/fixtures/native.mjs": "15f9e9137b8879508d6579df285dfafe4bc0e65edcba49d578ab930e19d10ade"
+  },
+  "scriptHash": "2474d287e097407a111afc4fbdd0bbfbbcab5d28955fce69427253532f510708",
+  "steps": [
+    "old-conversation-authenticated-original-send",
+    "native-failed-send-no-anchor"
+  ],
+  "errors": [],
+  "fastFailureRetry": {
+    "state": "PASS_NATIVE_CONTINUOUS_RETRY",
+    "failedAt": 1792109062172,
+    "retryAt": 1792109062308
+  },
+  "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n+ actual - expected\n\n+ 'undated'\n- 'provisional'\n\n    at file:///home/runner/work/Virtual-AI-Workspace-Layer/Virtual-AI-Workspace-Layer/tests/host/j2-package-journey.mjs:25:727",
+  "failureFacts": {
+    "evidence": {
+      "format": "vaiwl-free-evidence-v2",
+      "scopeKey": "[\"chatgpt\",\"principal_b5251fa0aba8e6d9cc5c14d0fb61db814d07c01eea39d1174341557cff7a5dd3\",\"context_342ce0ccae3d4fa425a12ac33fe114e184aa508160b56198309d27e2c808c988\"]",
+      "revision": 3,
+      "sources": {
+        "host_history_7da0d3a1ea89a310b72f4fd11c851236": {
+          "id": "host_history_7da0d3a1ea89a310b72f4fd11c851236",
+          "generation": "profile_1",
+          "sourceRevision": 1,
+          "observedAt": "2026-10-16T00:04:21.962Z",
+          "validUntil": "2026-10-16T00:05:21.962Z",
+          "channel": "host-evidence",
+          "codecVersion": 2,
+          "profileId": "offline-original-send-v1",
+          "profileVersion": 1,
+          "revoked": false
+        },
+        "host_ack_205e0fc8dc2bf43f4514be6006a051fa": {
+          "id": "host_ack_205e0fc8dc2bf43f4514be6006a051fa",
+          "generation": "profile_1",
+          "sourceRevision": 1,
+          "observedAt": "2026-10-16T00:04:22.415Z",
+          "validUntil": "2026-10-16T00:05:22.415Z",
+          "channel": "host-evidence",
+          "codecVersion": 1,
+          "profileId": "loopback-first-send-ack",
+          "profileVersion": 1,
+          "revoked": false
+        }
+      },
+      "events": {
+        "history_8923ee7d78d8cca111e50d5d30f2f7c47596b905f5616f9c": {
+          "conversationId": "33333333-3333-4333-8333-333333333333",
+          "messageId": "j2_old",
+          "branchId": "lineage_f5bd609a096a14e3059d069cd6116a24e9b450973010cd60dbf803373c60a0ae",
+          "role": "user",
+          "kind": "new-send",
+          "sendState": "committed",
+          "sentAt": "2026-07-18T00:04:20.852Z",
+          "precision": "millisecond",
+          "id": "history_8923ee7d78d8cca111e50d5d30f2f7c47596b905f5616f9c",
+          "sourceId": "host_history_7da0d3a1ea89a310b72f4fd11c851236",
+          "generation": "profile_1",
+          "sourceRevision": 1,
+          "observedAt": "2026-10-16T00:04:21.962Z",
+          "actorVerified": true,
+          "actorScopeKey": "[\"chatgpt\",\"principal_b5251fa0aba8e6d9cc5c14d0fb61db814d07c01eea39d1174341557cff7a5dd3\",\"context_342ce0ccae3d4fa425a12ac33fe114e184aa508160b56198309d27e2c808c988\"]",
+          "revoked": false
+        }
+      },
+      "hints": {
+        "send_2f31dcb278c7ea129588170f9d3bb7b0367585b87dd239c2": {
+          "conversationId": "33333333-3333-4333-8333-333333333333",
+          "messageId": "3c4da621-e01d-4c72-9aac-d72cb1e80614",
+          "firstObservedAt": "2026-10-16T00:04:22.414Z",
+          "candidateInterval": {
+            "from": "2026-10-16T00:04:22.377Z",
+            "through": "2026-10-16T00:04:22.414Z"
+          },
+          "clockBasis": "local-bounded",
+          "actorVerified": true,
+          "actorScopeKey": "[\"chatgpt\",\"principal_b5251fa0aba8e6d9cc5c14d0fb61db814d07c01eea39d1174341557cff7a5dd3\",\"context_342ce0ccae3d4fa425a12ac33fe114e184aa508160b56198309d27e2c808c988\"]",
+          "ackWitness": {
+            "kind": "authenticated-message-readback",
+            "profileId": "loopback-first-send-ack",
+            "profileVersion": 1,
+            "semanticFingerprint": "3108e9eb953cd1c7e7126fcb89ecd2417a71153ba969639e71aa5cd7ee1f476e"
+          },
+          "id": "send_2f31dcb278c7ea129588170f9d3bb7b0367585b87dd239c2",
+          "sourceId": "host_ack_205e0fc8dc2bf43f4514be6006a051fa",
+          "generation": "profile_1",
+          "sourceRevision": 1,
+          "observedAt": "2026-10-16T00:04:22.415Z",
+          "eventKey": "send_2f31dcb278c7ea129588170f9d3bb7b0367585b87dd239c2",
+          "hintType": "observed-self-send",
+          "anchorVersion": 1,
+          "calibrationDueAt": "2026-10-16T00:05:22.415Z",
+          "revoked": false
+        }
+      },
+      "coverage": {}
+    },
+    "budget": [
+      {
+        "startedAt": 1792109061853,
+        "lastAt": 1792109062405,
+        "requests": 7
+      }
+    ],
+    "decisions": [
+      {
+        "id": "33333333-3333-4333-8333-333333333333",
+        "activity": {
+          "objectKey": "33333333-3333-4333-8333-333333333333",
+          "evidenceRevision": 0,
+          "basis": "undated",
+          "candidateDay": null,
+          "candidateTime": null,
+          "segment": null,
+          "reason": "no-valid-activity",
+          "nextCheck": null,
+          "validUntil": null
+        }
+      },
+      {
+        "id": "44444444-4444-4444-8444-444444444444",
+        "activity": {
+          "objectKey": "44444444-4444-4444-8444-444444444444",
+          "evidenceRevision": 0,
+          "basis": "undated",
+          "candidateDay": null,
+          "candidateTime": null,
+          "segment": null,
+          "reason": "no-valid-activity",
+          "nextCheck": null,
+          "validUntil": null
+        }
+      }
+    ]
+  },
+  "failureDOM": {
+    "readingId": "33333333-3333-4333-8333-333333333333",
+    "messageCount": 2,
+    "openSurfaces": 0
+  },
+  "observationTrace": [
+    {
+      "at": 1792109061802,
+      "protocol": "vaiwl-host-observation/2",
+      "kind": "current-observation",
+      "localSeq": 1,
+      "routeEpoch": 1,
+      "bodyProofLabel": null,
+      "documentId": "95B18F5F1030E633358848F393EF6E85",
+      "regionEpoch": 1,
+      "conversationId": "33333333-3333-4333-8333-333333333333",
+      "messageCount": 1,
+      "intentId": null
+    },
+    {
+      "at": 1792109062087,
+      "protocol": "vaiwl-host-observation/1",
+      "kind": "surface-delta",
+      "localSeq": 2,
+      "routeEpoch": 1,
+      "bodyProofLabel": null,
+      "documentId": "95B18F5F1030E633358848F393EF6E85",
+      "regionEpoch": null,
+      "conversationId": null,
+      "messageCount": null,
+      "intentId": null
+    },
+    {
+      "at": 1792109062214,
+      "protocol": "vaiwl-host-observation/1",
+      "kind": "send-candidate",
+      "localSeq": 9,
+      "routeEpoch": 1,
+      "bodyProofLabel": 1,
+      "documentId": "95B18F5F1030E633358848F393EF6E85",
+      "regionEpoch": 1,
+      "conversationId": "33333333-3333-4333-8333-333333333333",
+      "messageCount": null,
+      "intentId": "cf507437-20a0-4ab3-a8a5-6011750a7920"
+    },
+    {
+      "at": 1792109062368,
+      "protocol": "vaiwl-host-observation/1",
+      "kind": "send-candidate",
+      "localSeq": 18,
+      "routeEpoch": 1,
+      "bodyProofLabel": 1,
+      "documentId": "95B18F5F1030E633358848F393EF6E85",
+      "regionEpoch": 1,
+      "conversationId": "33333333-3333-4333-8333-333333333333",
+      "messageCount": null,
+      "intentId": "bf6a8106-55c0-4797-a1ab-7b69fe6ffc56"
+    },
+    {
+      "at": 1792109062388,
+      "protocol": "vaiwl-host-observation/2",
+      "kind": "current-observation",
+      "localSeq": 21,
+      "routeEpoch": 1,
+      "bodyProofLabel": null,
+      "documentId": "95B18F5F1030E633358848F393EF6E85",
+      "regionEpoch": 1,
+      "conversationId": "33333333-3333-4333-8333-333333333333",
+      "messageCount": 2,
+      "intentId": null
+    }
+  ],
+  "fixedGetTrace": [
+    {
+      "kind": "auth-shared-purpose",
+      "at": 1792109061748
+    },
+    {
+      "kind": "accounts-shared-purpose",
+      "at": 1792109061756
+    },
+    {
+      "kind": "auth-shared-purpose",
+      "at": 1792109061875
+    },
+    {
+      "kind": "accounts-shared-purpose",
+      "at": 1792109061920
+    },
+    {
+      "kind": "conversation-detail",
+      "at": 1792109061949
+    },
+    {
+      "kind": "auth-shared-purpose",
+      "at": 1792109062400
+    },
+    {
+      "kind": "accounts-shared-purpose",
+      "at": 1792109062404
+    },
+    {
+      "kind": "conversation-detail",
+      "at": 1792109062407
+    }
+  ],
+  "requests": {
+    "/c/33333333-3333-4333-8333-333333333333": 1,
+    "/native.css": 1,
+    "/native.mjs": 1,
+    "/native/route": 1,
+    "/api/auth/session": 3,
+    "/backend-api/accounts/check/v4-2023-04-27": 3,
+    "/backend-api/conversation/33333333-3333-4333-8333-333333333333": 2,
+    "/native/j2/failure": 1,
+    "/native/action": 2,
+    "/native/j2/send": 2,
+    "/native/j2/operations/d56b18c7-4bb7-479d-a3fa-392d7a2f974b": 1,
+    "/native/j2/success": 1
+  },
+  "native": {
+    "mode": "success",
+    "revealed": false,
+    "actions": [
+      {
+        "kind": "failure",
+        "at": 1792109062227
+      },
+      {
+        "kind": "success",
+        "at": 1792109062382
+      }
+    ],
+    "rows": [
+      {
+        "id": "j2_old",
+        "author": "user-host-fixture",
+        "parent": null,
+        "at": "2026-07-18T00:04:20.852Z",
+        "original": true
+      },
+      {
+        "id": "3c4da621-e01d-4c72-9aac-d72cb1e80614",
+        "author": "user-host-fixture",
+        "parent": "j2_old",
+        "at": "2026-10-16T00:04:22.382Z",
+        "kind": "success",
+        "original": false
+      }
+    ],
+    "operations": [
+      {
+        "operationId": "d56b18c7-4bb7-479d-a3fa-392d7a2f974b",
+        "messageId": "c6a6ed6e-a00d-43a2-a3bf-bd92d5c9af57",
+        "conversationId": "33333333-3333-4333-8333-333333333333",
+        "acceptanceState": "failed",
+        "principalId": "user-host-fixture",
+        "contextId": "account-host-personal"
+      },
+      {
+        "operationId": "132d5145-cf3e-42c2-a8d0-664abab45366",
+        "messageId": "3c4da621-e01d-4c72-9aac-d72cb1e80614",
+        "conversationId": "33333333-3333-4333-8333-333333333333",
+        "acceptanceState": "accepted",
+        "principalId": "user-host-fixture",
+        "contextId": "account-host-personal"
+      }
+    ]
+  },
+  "lifecycle": {
+    "status": "CAPTURED",
+    "errors": [],
+    "snapshots": [
+      {
+        "label": "native-document-open",
+        "at": 1792109061742,
+        "frameRoles": [],
+        "dom": {
+          "url": "/c/33333333-3333-4333-8333-333333333333",
+          "contentState": null,
+          "contentReason": null,
+          "readyState": "complete",
+          "visibility": "visible",
+          "hasFocus": true,
+          "ownedFrames": 0,
+          "openSurfaces": 0,
+          "returnControls": 0,
+          "uiSignals": []
+        },
+        "workers": [
+          {
+            "id": 1,
+            "installed": true,
+            "frozen": false,
+            "traceCount": 0
+          }
+        ]
+      },
+      {
+        "label": "failure",
+        "at": 1792109062483,
+        "frameRoles": [
+          "workspace",
+          "sidebar"
+        ],
+        "dom": {
+          "url": "/c/33333333-3333-4333-8333-333333333333",
+          "contentState": null,
+          "contentReason": null,
+          "readyState": "complete",
+          "visibility": "visible",
+          "hasFocus": true,
+          "ownedFrames": 2,
+          "openSurfaces": 0,
+          "returnControls": 1,
+          "uiSignals": []
+        },
+        "workers": [
+          {
+            "id": 1,
+            "installed": true,
+            "frozen": false,
+            "traceCount": 7
+          }
+        ]
+      },
+      {
+        "label": "final",
+        "at": 1792109062495,
+        "frameRoles": [
+          "workspace",
+          "sidebar"
+        ],
+        "dom": {
+          "url": "/c/33333333-3333-4333-8333-333333333333",
+          "contentState": null,
+          "contentReason": null,
+          "readyState": "complete",
+          "visibility": "visible",
+          "hasFocus": true,
+          "ownedFrames": 2,
+          "openSurfaces": 0,
+          "returnControls": 1,
+          "uiSignals": []
+        },
+        "workers": [
+          {
+            "id": 1,
+            "installed": true,
+            "frozen": false,
+            "traceCount": 7
+          }
+        ]
+      }
+    ],
+    "workers": [
+      {
+        "id": 1,
+        "installed": true,
+        "frozen": false,
+        "trace": [
+          {
+            "at": 1792109061731,
+            "type": "HOST_REFRESH",
+            "kind": null,
+            "protocol": null,
+            "routeEpoch": 1,
+            "localSeq": null,
+            "regionEpoch": null,
+            "messageCount": null
+          },
+          {
+            "at": 1792109061802,
+            "type": null,
+            "kind": "current-observation",
+            "protocol": "vaiwl-host-observation/2",
+            "routeEpoch": 1,
+            "localSeq": 1,
+            "regionEpoch": 1,
+            "messageCount": 1
+          },
+          {
+            "at": 1792109061967,
+            "type": "HOST_UI_JOIN",
+            "kind": null,
+            "protocol": null,
+            "routeEpoch": null,
+            "localSeq": null,
+            "regionEpoch": null,
+            "messageCount": null
+          },
+          {
+            "at": 1792109061968,
+            "type": "HOST_UI_JOIN",
+            "kind": null,
+            "protocol": null,
+            "routeEpoch": null,
+            "localSeq": null,
+            "regionEpoch": null,
+            "messageCount": null
+          },
+          {
+            "at": 1792109062214,
+            "type": null,
+            "kind": "send-candidate",
+            "protocol": "vaiwl-host-observation/1",
+            "routeEpoch": 1,
+            "localSeq": 9,
+            "regionEpoch": null,
+            "messageCount": null
+          },
+          {
+            "at": 1792109062368,
+            "type": null,
+            "kind": "send-candidate",
+            "protocol": "vaiwl-host-observation/1",
+            "routeEpoch": 1,
+            "localSeq": 18,
+            "regionEpoch": null,
+            "messageCount": null
+          },
+          {
+            "at": 1792109062388,
+            "type": null,
+            "kind": "current-observation",
+            "protocol": "vaiwl-host-observation/2",
+            "routeEpoch": 1,
+            "localSeq": 21,
+            "regionEpoch": 1,
+            "messageCount": 2
+          }
+        ]
+      }
+    ]
+  },
+  "sourceChangedDuringRun": false
+}

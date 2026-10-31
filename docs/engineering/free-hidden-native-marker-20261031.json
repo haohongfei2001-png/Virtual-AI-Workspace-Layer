@@ -1,0 +1,492 @@
+{
+  "baseCommit": "9f55f1e37c6802a32238ad417ae0d00b7d22a74a",
+  "classification": "PRODUCTION_DEFECT",
+  "realObservation": {
+    "route": "conversation",
+    "status": "surface-native-flow-branch-paint",
+    "capturedBeforeBrowserClaim": true,
+    "runtimeFingerprint": "5ba713cd50f8b1dd5592621c60b7a1160cb9f2b177e4130a6916ca3a08763c90",
+    "marker": {
+      "tag": "DIV",
+      "children": 0,
+      "childNodes": 0,
+      "shadowRoot": false,
+      "role": false,
+      "tabindex": false,
+      "contenteditable": false,
+      "width": 799.5,
+      "height": 0,
+      "display": "block",
+      "visibility": "hidden",
+      "position": "static",
+      "float": "none",
+      "effects": "none",
+      "pseudoContent": "none",
+      "parent": "timeline viewport",
+      "between": "reading and composer footer"
+    },
+    "privateContentRead": false
+  },
+  "change": "Keep package-selected empty hidden zero-height marker as an original flow row; revalidate its narrow contract while active. No visibility writes or absent-node exception.",
+  "validation": {
+    "red": "NativeFlowPreflightError: native-flow-branch-paint",
+    "documentFlowBrowser": "PASS",
+    "boundaryBrowser": "PASS_BOUNDARY_MECHANISMS",
+    "targetedNode": {
+      "passed": 135,
+      "failed": 0
+    },
+    "formalPackagedMV3": {
+      "status": "PASS",
+      "checks": {
+        "projectFooter": {
+          "y": 118,
+          "bottom": 158,
+          "height": 40,
+          "viewport": 158,
+          "panel": 158
+        },
+        "projectFormalFlowInputReturn": true,
+        "firstNativeKeyboardToolGesture": true,
+        "firstNativeToolGesture": true,
+        "nativeManagementAvailabilityKeepsFormalNavigation": {
+          "trustedExpansion": true,
+          "inertRestoresRows": true,
+          "unblockedKeepsIntent": true,
+          "responsiveClippingRestoresRows": true,
+          "nativeCollapseRestoresChoice": true,
+          "workspaceAndDraftUnchanged": true
+        },
+        "homeFooter": {
+          "y": 61,
+          "bottom": 101,
+          "height": 40,
+          "viewport": 128,
+          "panel": 101
+        },
+        "flatHomeMember": {
+          "sameNativeParent": true,
+          "height": 0,
+          "explicitFlowRow": true
+        },
+        "nestedHomeContainer": {
+          "member": true,
+          "formNotPatched": true,
+          "nativePlate": "rgb(242, 242, 242)",
+          "formParent": "nested-home-form-wrap"
+        },
+        "nestedHomeNarrow": {
+          "inputFits": true,
+          "plateFits": true,
+          "workspaceFits": true,
+          "nativeClick": true,
+          "nativeInputFocus": true
+        },
+        "retainedHomeMember": {
+          "sameParents": true,
+          "nativeClick": true,
+          "inlineGraphicRetained": true,
+          "hiddenUntouched": true,
+          "workspaceVisible": true
+        },
+        "sameDocumentHeaderReplacement": {
+          "newFrames": true,
+          "freshView": true,
+          "workspaceAndSidebarRestored": true,
+          "explicitLayoutRestored": true,
+          "originalEditorAndDraft": true
+        },
+        "homeFormalFlowInputReturn": true,
+        "conversationFooter": {
+          "y": 92,
+          "bottom": 132,
+          "height": 40,
+          "viewport": 132,
+          "panel": 132
+        },
+        "nativeScrollRegion": {
+          "originalTabStop": true,
+          "flowRoot": true
+        },
+        "conversationFormalFlowInputReturn": true,
+        "hiddenViewportMarker": {
+          "sameNode": true,
+          "empty": true,
+          "hidden": true,
+          "zeroHeight": true,
+          "retainedRow": true,
+          "beforeFooter": true
+        },
+        "afterUnlock": {
+          "ok": true,
+          "exists": true,
+          "mode": "personal"
+        },
+        "nativeNavScrollChain": true,
+        "localSidebarFailurePreservesWorkspace": true,
+        "nativePartitionReplacementRejoinsSidebarOnly": true,
+        "beforeMember": {
+          "ok": true,
+          "exists": true,
+          "mode": "personal"
+        },
+        "afterMember": {
+          "ok": true,
+          "exists": true,
+          "mode": "personal"
+        },
+        "navigationTrace": [
+          {
+            "type": "history",
+            "documentId": "A0260C40899163BCC4B96B9307C7DAEA"
+          }
+        ],
+        "nativeListChoiceAcrossFreshDocumentBinding": true,
+        "sameDocumentProjectMemberReadingReturn": true,
+        "returnPaint": {
+          "box": {
+            "x": 24,
+            "y": 24,
+            "width": 356,
+            "height": 140,
+            "top": 24,
+            "right": 380,
+            "bottom": 164,
+            "left": 24
+          },
+          "viewport": [
+            1140,
+            694
+          ],
+          "scroll": 0,
+          "visible": true,
+          "hit": true
+        },
+        "narrowFlowStructure": {
+          "workspaces": 1,
+          "headers": 1,
+          "composers": 1,
+          "roots": [
+            {
+              "x": 260,
+              "y": 0,
+              "width": 460,
+              "height": 900,
+              "top": 0,
+              "right": 720,
+              "bottom": 900,
+              "left": 260
+            }
+          ],
+          "height": 900
+        },
+        "persistedNativeNav": [
+          {
+            "segment": 0,
+            "oldOpen": [],
+            "sidebarOpen": [],
+            "capacities": [],
+            "scroll": 0,
+            "sidebarScroll": 0,
+            "sidebarVisible": true,
+            "inventoryChoices": [],
+            "sidebarChoices": [
+              [
+                "g-p-11111111111111111111111111111111",
+                false
+              ]
+            ],
+            "freeSession": {
+              "H": 30,
+              "T": 20757,
+              "Z": "Asia/Shanghai",
+              "policyRevision": 0
+            },
+            "sidebarViewport": {
+              "owner": "native-nav",
+              "scroll": 100
+            }
+          }
+        ],
+        "workerRecoveryKeepsPersonalAndUserExpansion": true,
+        "newDocumentLocksAndConfirmedPrivateObjectAndLayoutRestore": true,
+        "privateScopeRevokeClearsPriorProject": true,
+        "actualIsolatedUninstallRestoresNativeGeometryDraftAndInput": true,
+        "actualIsolatedUninstallRestoresNativeReadingPosition": true,
+        "noInternalRequests": true
+      },
+      "browserVersion": "156.0.8078.4"
+    },
+    "visualReview": [
+      "flow-conversation.png",
+      "flow-journey-narrow.png"
+    ],
+    "visualScope": "Synthetic formal-renderer screenshots only; no new overlap/clipping. Not real Mac visual acceptance."
+  },
+  "realMacFixedCandidate": "NOT_RUN",
+  "fullFree": "NOT_ACCEPTED",
+  "release": "NOT_READY",
+  "changedInputHashes": {
+    "src/host/document-flow-layout.mjs": "c6d46a693f97d3666b059068452f7235527fa8c062afe7ff4b4ff77b8a971d92",
+    "tests/host/document-flow-browser.mjs": "9b4c1ada9f9d7b857ef2d073ad4082fa2a0b92e2c5ecc0255f8672b6bb4efb55",
+    "tests/host/browser-local-mv3.mjs": "6f2476ebb79ef03659d8196f6254d342b0ad0b8be112bf69107e8b86105bf6e1"
+  },
+  "followingSearchAndFixtureClosure": {
+    "classification": "PRODUCTION_INPUT_FOCUS_CHURN_FIXED_ORIGINAL_CLOUD_EVENT_CAUSE_NOT_UNIQUELY_PROVEN",
+    "ciRun": 41107412599,
+    "sourceCommitBefore": "bc3587e5824f10c13e5c33d53358a9d64e57d5ba",
+    "originalFailure": "PARTIAL long-Chinese search keyboard sequence lost one n; original FAIL retained",
+    "evidence": "Original input events show focused search nodes replaced during the sequence. The exact missing-key browser dispatch was not recorded.",
+    "fix": "Only search results change when all non-search DTO fields match exactly; preserve live input/page/focus, update results and query-specific scroll state. Scope/policy/presentation changes still fully render; invalidation clears retained references.",
+    "red": "Existing result-only response replaced original input; deterministic identity assertion failed.",
+    "green": {
+      "targetedNode": 44,
+      "realBrowserContinuousKeyboard": {
+        "mode": "continuous-keyboard-owner-reply-per-input",
+        "sameInput": true,
+        "connected": true,
+        "events": 3,
+        "focused": true,
+        "value": "一次输入不得丢失abc"
+      },
+      "packagedPartialControls": "PASS_CONTROL_SUBMATRIX_ONLY",
+      "formalBrowserLocal": "PASS",
+      "finalFormalSourceInputs": 206,
+      "scopeRevokeAndFreshSearchRestore": "PASS"
+    },
+    "fixtureStartup": {
+      "failure": "invalid-isolated-debug-endpoint before J4 product journey",
+      "classification": "FIXTURE_STARTUP_INCOMPLETE_FILE_RACE_COVERED_ORIGINAL_BYTES_NOT_CAPTURED",
+      "fix": "Empty or port-only native file remains pending inside original 15 second launch deadline; complete malformed or non-loopback endpoint still rejected, including extra lines.",
+      "red": "Empty freshly-created file threw before it could become complete.",
+      "green": "Parser pending-to-complete and strict rejection contracts PASS"
+    },
+    "realMac": "NOT_RUN",
+    "navigationHash": "1f05639339b551f3d3dde3a8475092b260be1734f80e78fe17bd71799a648478",
+    "resultControlFocusCorrection": {
+      "classification": "PRODUCTION_REGRESSION",
+      "ciRun": 41109893571,
+      "originalFailures": [
+        "search paging focus after result reply",
+        "selected snippet focus after repaint",
+        "same snippet IDs across scope and repaint"
+      ],
+      "red": "Original existing regression assertions fail locally and in CI; no assertion changes.",
+      "fix": "Capture the existing scoped focus state before result repaint and reuse bounded focus restoration for non-input controls only. The retained input is never refocused.",
+      "targetedNodePassed": 134,
+      "realKeyboardInput": "PASS",
+      "formalNestedBrowserLocal": "PASS",
+      "realMac": "NOT_RUN",
+      "navigationHash": "dabc29edfd505a34efe9565048355724ae1b4d64ddcd5cf619213f9a1151a7f9"
+    },
+    "readingProbeFixtureCorrection": {
+      "classification": "TEST_FIXTURE_CONTRACT_ERROR",
+      "fix": "fresh-view-input changes compactRows, so the existing replacement assertion exercises a real layout change.",
+      "local": "PASS_WEB_MECHANISM_ONLY",
+      "linuxScopedRun": 41110720059,
+      "linuxScopedResult": "PASS",
+      "sourceCommit": "5ce85585",
+      "followingFocusFixNotIncluded": true
+    }
+  },
+  "failedInitialRequestRecovery": {
+    "originalRun": 41111182580,
+    "originalJob": 124253891896,
+    "originalEventOrder": "NOT_CAPTURED",
+    "classification": "DETERMINISTIC_PRODUCTION_RECOVERY_DEFECT_ORIGINAL_CLOUD_ORDER_NOT_PROVEN",
+    "red": [
+      "failed initial GET leaves empty bookkeeping which drops next new pending native GET on history",
+      "revocation callback can replace the same document key before retirement"
+    ],
+    "fix": "Retire only the still-current revoked failed document with no pending siblings. Retain closed request IDs and poisoned sibling epochs; new GET must establish all original evidence.",
+    "nodePassed": 12010,
+    "targetedPassed": 169,
+    "formalForcedRecovery": "PASS",
+    "sourceInputsVerified": 206,
+    "independentSafetyReview": "NO_BLOCKING_FINDING",
+    "requestBudgetChanged": false,
+    "permissionsChanged": false,
+    "realMac": "NOT_RUN",
+    "sourceHash": "ef4fb72ba9e22d36d517720ae7465e6b806dc1d339f059cd03260495a9f47920"
+  },
+  "nativeProbeInputContinuity": {
+    "baseCommit": "3d786add10e3b5013677f0d914b929e977b851cf",
+    "priorCI": {
+      "run": 41113790531,
+      "passedJobs": 41,
+      "failedJob": "cloud-ui-controls (MODERN)",
+      "classification": "Production input continuity defect; not waived as fixture failure",
+      "coldRecovery": "PASS",
+      "populatedNative": "PASS",
+      "faultUnknownProtocol": "PASS"
+    },
+    "failure": "Same connected input received final y key events without character insertion. Isolated native-visibility keyboard/probe overlap reproduced loss; a later intermediate state-move package also recorded same-node blur. Original failures retained.",
+    "change": "Keep the exact owned workspace iframe outside the native ancestor layout rebuild with state-preserving moveBefore, prove retained offscreen geometry before moving, restore exact parent/next sibling, preserve CSSOM/frame/window identity and continuous mutation rejection. No native nodes moved and no remove/insert fallback. Ignore only exact owned childList changes for native rescans; independently check parked owned frame and registered return-control geometry in fresh reading proof.",
+    "causeLimit": "Ancestor-layout/probe overlap is supported by isolated differential evidence; the one intermediate blur call stack was not captured. Instrumented package PASS is diagnostic only, never acceptance.",
+    "validation": {
+      "readingProbe": {
+        "status": "PASS",
+        "checks": 44,
+        "report": ".git/vaiwl-artifacts/takeover-20261030/final/hidden-marker-evidence/retained-before-move-reading-final.json",
+        "typing": "One keyboard.type with 1ms key pacing across fixed 150ms probe; actual events must occur before and after probe end, no refocus or retry."
+      },
+      "modern": {
+        "status": "PASS_LAYOUT_SUBCONTRACT_ONLY",
+        "interactionCoverageComplete": true,
+        "report": ".git/vaiwl-artifacts/takeover-20261030/final/hidden-marker-evidence/retained-before-move-modern.json",
+        "fullV27Acceptance": "NOT_ESTABLISHED"
+      },
+      "formalNestedMV3": {
+        "status": "PASS",
+        "sourceHashCount": 206,
+        "report": ".git/vaiwl-artifacts/takeover-20261030/final/hidden-marker-evidence/retained-before-move-formal.json"
+      },
+      "nodeBeforeFinalGeometryPrecheck": {
+        "passed": 12011,
+        "failed": 0,
+        "skipped": 0,
+        "log": ".git/vaiwl-artifacts/takeover-20261030/final/hidden-marker-evidence/state-move-node.log",
+        "finalCandidate": "Await unified CI; do not relabel earlier bytes"
+      },
+      "guardMutationsBeforeFinalGeometryPrecheck": {
+        "selected": 12,
+        "killed": 12,
+        "report": ".git/vaiwl-artifacts/takeover-20261030/final/hidden-marker-evidence/state-move-guards.json"
+      },
+      "formalCI": "PENDING_FROZEN_HEAD"
+    },
+    "changedInputHashes": {
+      "src/host/chatgpt-adapter.mjs": "5d854272226561c77d0ec8dc8ed2f6becbb5d91f6055ad142c24d685a2e6b1c5",
+      "src/navigation/flow-mount-surface.mjs": "10a08400aa7f5a53216f9d14ffd2c066bf1d8e477da278fe91a74e312abd4526",
+      "tests/host/chatgpt-adapter.test.mjs": "7006d37fc7bb1d2361961efe49e594b106efdebadbc34d24de0ed0b5f2acccf8",
+      "tests/host/flow-reading-probe-browser.mjs": "14e4aaebdf4d9fe9705106c60cffdd4720caa666ebcd049ad6ab07014392fb0d"
+    },
+    "realMac": "NOT_RUN for this candidate; user renewed 30 minutes / 60 actions, clock starts only after necessary CI passes",
+    "installedProfile": "UNCHANGED",
+    "freeAccepted": false,
+    "releaseReady": false
+  },
+  "declarativeCloseAndCspObservation": {
+    "baseCommit": "ab5bb797a7319b702441f4aa6622413efe54a757",
+    "priorCI": {
+      "run": 41122794801,
+      "passedJobs": 40,
+      "totalJobs": 42,
+      "populatedNative": "PASS",
+      "faultUnknownProtocol": "PASS",
+      "modern": "PASS"
+    },
+    "productionDefect": {
+      "failure": "A probe moves the close control between trusted pointerdown and pointerup, cancelling click. Cloud passive trace and deterministic browser counterexample agree.",
+      "change": "Defer probe only while the exact owned close button is focused or active; preserve declarative activation and all existing authorization, mutation and budget checks.",
+      "red": ".git/vaiwl-artifacts/takeover-20261030/final/hidden-marker-evidence/close-gesture-red.json"
+    },
+    "testObservationError": {
+      "failure": "Atomic same-context iframe moves counted as new CSP mount attempts.",
+      "change": "Deduplicate only exact src/WindowProxy known before current observer batch; new, missing, changed contexts, same-batch first insertion/recreation and src writes remain attempts. Original budget/assertions unchanged.",
+      "red": ".git/vaiwl-artifacts/takeover-20261030/final/hidden-marker-evidence/csp-move-counterexample-red.log",
+      "batchRed": ".git/vaiwl-artifacts/takeover-20261030/final/hidden-marker-evidence/csp-move-batch-red.log",
+      "packageBeforeCloseGuard": ".git/vaiwl-artifacts/takeover-20261030/final/hidden-marker-evidence/csp-move-package-final.json"
+    },
+    "validation": {
+      "node": {
+        "passed": 12012,
+        "failed": 0,
+        "skipped": 0,
+        "log": ".git/vaiwl-artifacts/takeover-20261030/final/hidden-marker-evidence/close-gesture-node.log"
+      },
+      "targeted": {
+        "passed": 321,
+        "log": ".git/vaiwl-artifacts/takeover-20261030/final/hidden-marker-evidence/close-gesture-targeted.log"
+      },
+      "readingProbe": {
+        "checks": 47,
+        "report": ".git/vaiwl-artifacts/takeover-20261030/final/hidden-marker-evidence/close-gesture-final.json"
+      },
+      "snippets": {
+        "results": 6,
+        "report": ".git/vaiwl-artifacts/takeover-20261030/final/hidden-marker-evidence/close-gesture-snippets.json"
+      },
+      "formalNestedMV3": {
+        "report": ".git/vaiwl-artifacts/takeover-20261030/final/hidden-marker-evidence/close-gesture-formal.json"
+      },
+      "modern": {
+        "report": ".git/vaiwl-artifacts/takeover-20261030/final/hidden-marker-evidence/close-gesture-modern.json",
+        "fullV27Acceptance": "NOT_ESTABLISHED"
+      },
+      "formalCI": "PENDING_FROZEN_HEAD"
+    },
+    "review": "Read-only review found no blocker; focus-only Tab departure can defer observation until existing mutation/renewal, without scheduler expansion.",
+    "changedInputHashes": {
+      "src/navigation/flow-mount-surface.mjs": "2fa94b9154431a97eb7a327f83495d405ba6457ad32d67b438b0817022761426",
+      "tests/host/fault-csp-observer.mjs": "2f0d683e150cd5e98e4368bc169fca17308e2c80cc74a80bd7cb12aa8f285b39",
+      "tests/host/fault-csp-observer.test.mjs": "15a90da9695f9c1c9737a3daa041b5f218ede390bd3cb91c6f21d3d46ae13c72",
+      "tests/host/flow-reading-probe-browser.mjs": "0620cf5fc24591d93eabda475e1dd87eabccd0d977e0a592104b6b4236053e6c"
+    },
+    "realMac": "NOT_RUN",
+    "nativeRenewalStarted": false,
+    "installedProfile": "UNCHANGED",
+    "freeAccepted": false,
+    "releaseReady": false
+  },
+  "lateSourceProbeTestContract": {
+    "baseCommit": "00dfde0f9936ac438b4fb41a7b0b4e6f8903f6d5",
+    "ci": 41125519998,
+    "classification": "STALE_TEST_ASSERTION",
+    "originalFailure": ".git/vaiwl-artifacts/takeover-20261030/final/hidden-marker-evidence/00df-cloud-late-body-failure.json",
+    "singleErrorMarkerInOfflineJourneyLog": true,
+    "productionChanged": false,
+    "change": "Replace obsolete popover-dependent probe selector expectation with exact workspace selector, body parent and actual retained offscreen position; keep all authorization, request, mutation and revocation assertions.",
+    "validation": {
+      "status": "PASS",
+      "cases": [
+        "late-body",
+        "source-revoked"
+      ],
+      "report": ".git/vaiwl-artifacts/takeover-20261030/final/hidden-marker-evidence/late-body-current-contract.json",
+      "productionSourceHashesVerified": 206
+    },
+    "testHash": "8f2885f39b18277d8b450c4e51a7a268a8fed7ba3706ad04933cb22da0d82bb2",
+    "realMac": "NOT_RUN",
+    "formalCI": "PENDING_FROZEN_HEAD"
+  },
+  "composerControlOverhang20261031": {
+    "baseSHA": "1ddb4f00e4a644b98f0f6778e6b5d952f409663b",
+    "realRefusal": "control-overlap",
+    "board": [
+      241,
+      52,
+      994,
+      440
+    ],
+    "nativeControl": [
+      721,
+      468,
+      32,
+      32
+    ],
+    "controlRegion": "composer-descendant",
+    "hidden": false,
+    "inert": false,
+    "repair": "reserve current enumerated native composer control overhang in existing auto grid track; all active guards unchanged",
+    "node": {
+      "pass": 12014,
+      "fail": 0,
+      "skipped": 0,
+      "note": "before final diagnostic-only integrity correction"
+    },
+    "guards": {
+      "killed": 12,
+      "selected": 12
+    },
+    "formalNestedMV3": "PASS before final diagnostic-only integrity correction",
+    "realRepairRetest": "NOT_RUN",
+    "nativeBudget": {
+      "used": 60,
+      "limit": 60,
+      "controllerStopped": true
+    },
+    "evidence": ".git/vaiwl-artifacts/takeover-20261030/final/composer-overhang-evidence",
+    "fullFree": "NOT_ACCEPTED"
+  }
+}

@@ -1,0 +1,1 @@
+{"status":"FAIL","error":"worker.waitForEvent: Timeout 10000ms exceeded while waiting for event \"close\"\n    at /Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/host/continuation-package-mv3-browser.mjs:32:370","results":[{"name":"existing-refresh-drains-synthetic-ACK-preserving-original-time-native-draft-and-Pro","status":"PASS"}]}

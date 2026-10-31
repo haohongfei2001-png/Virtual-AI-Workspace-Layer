@@ -1,0 +1,23 @@
+{
+  "src/runtime/current-metadata-reader.mjs": "5e0000ccd3ce8b636eb79cf453193507381ae299472291823ba132a829b18a35",
+  "src/runtime/host-binding-service.mjs": "4cb1ba4a7da5ab97f5e03e85978719a929bf5a896cff7ff6531d100321548121",
+  "src/runtime/host-continuation-owner.mjs": "f4d2dd6393d36fe7708beb9020571a4c11f63459dc4f3075ffbfa982e5e65630",
+  "src/runtime/host-ingestion-pass-owner.mjs": "2e2e25cd32cadbae243a156d8d4078ce918756ebf36de597a9fe10757711fd3d",
+  "src/runtime/host-observation-owner.mjs": "3b23b073ad652a52b7777dc46ee603d967e72afc4ef462295410d09eb6a77c87",
+  "src/runtime/host-ui-owner.mjs": "1f9a72b4a68d16ba1233d7be58bce9cb9bd527957e9310d45906eb260d86cc56",
+  "src/runtime/host-view-service.mjs": "4230722911e3a082a143e6aba5fc4d08650a646899eb443efabb70d7e7e62bbe",
+  "src/runtime/scope-authority.mjs": "927c95d809f59e34a74454b5476e50a252add2048c7ca9a821a0b105e88d03dc",
+  "tests/host/current-metadata-reader.test.mjs": "350485714423ac17d14514190f2620a4c24855b6c6e91ded937951bc161c4d94",
+  "tests/host/host-binding-idle.test.mjs": "d8deb9aa4753dcf58cf577229e50f6871b19017e3370dabb86b101ae67b29b28",
+  "tests/host/host-scale-trace.mjs": "12cd8efaa45ba239dc70b4258716200af2dfd0e6269e533ff739e0734a62c5d6",
+  "tests/host/host-view-idle.test.mjs": "49d0c154d60ec48b979fa2a4c289cf1d6ac41cd60536801cb4d4411402ffcd41",
+  "tests/host/j4-read-budget-trace.mjs": "353fc76d513c13a71e99ea451e6d230b460d1eb77d2d7b5221e644ea110c6d6b",
+  "tests/host/read-error-injection.mjs": "48074b8daba3ff87d21b828a92ddda97dc68f4684c369c1a141335d283d4bd47",
+  "tests/host/read-error-injection.test.mjs": "4c0e9b67905263c46e230a110bdb02bc24e575c0395989db38a0319a631e0cc0",
+  "tests/host/ui-owner.test.mjs": "6f53119e1921312052d91255943e8a25816bf82d350777c058c87a2e51effabb",
+  "tests/host/scope-authority-idle.test.mjs": "e6d6358701cdbb515f324de5be66387bd11e3fa5694588a5ee889f58cdcc075e",
+  "tests/host/host-continuation-idle.test.mjs": "f58dbaddf6b94291950e63240cfec086598d496a7528a13d57e9c9c45b3c02c1",
+  "tests/host/current-metadata-idle.test.mjs": "fac95e517ff56910106556c8b0110bc9371b353cf7be47f87bde125a1a57c7a3",
+  "tests/host/host-ingestion-pass-idle.test.mjs": "80edc8867c58ded76481c94d5a0128a8c1ba8f0da5da37489b88fe2b96856cde",
+  "tests/host/observation-owner-idle.test.mjs": "2627fc1105e90de723a61a29015d466f86f85d5363a6b295dd0a6ee1217ff850"
+}

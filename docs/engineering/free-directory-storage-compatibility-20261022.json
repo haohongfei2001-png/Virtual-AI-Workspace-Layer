@@ -1,0 +1,428 @@
+{
+  "schema": "vaiwl-directory-storage-compatibility-v1",
+  "baseHead": "8ad704f53be2e343dcc393dd561f193648caaf3c",
+  "task": "B4/B5/F3 host-metadata installed storage compatibility",
+  "productionSourceChanged": false,
+  "realAccount": "NOT_RUN",
+  "realRequests": 0,
+  "productionEnabled": false,
+  "installationChanged": "DISPOSABLE_TEST_PROFILE_ONLY",
+  "sourceHashes": {
+    "tests/host/historical-codec-rollback.mjs": "9bed44a5cbe97d2af0433723a823978bb4539ab8a68d7a2e1b7c1f47a7e9e167",
+    "tests/host/historical-codec-rollback.test.mjs": "9cd248e4bf4dcc285b7d0330119a68d80a63687d6c54d4c1aafc95a2d4e40624",
+    "tests/host/historical-host-upgrade.mjs": "812d189f5717fd854d865028b4e7526f40b35290080ee3fae51242b44078a7e2",
+    "tests/host/historical-package.mjs": "2bfeadf516a2193e613bf547157cfe94241de9ec66047dcb6fa739ba8d771760",
+    "tests/host/historical-package.test.mjs": "b2ab382cb1b94020671223bbbcce4e0992ca041eafca8eda111f6e7d2839e878"
+  },
+  "reportHash": "3bdc5f07f5d4d299fc8485cc105867472450100c3ee835e9687c800b95c3ab14",
+  "status": "PASS_INSTALLED_DIRECTORY_STORAGE_COMPATIBILITY",
+  "browserVersion": "156.0.8078.4",
+  "oldSource": {
+    "commit": "190b698fe7d2f2321cd94a936b2e77c42028e9d7",
+    "archiveHash": "80cdaba026df886e9959eaee3cf7e2b67dbddf8fbc514e8bd978c59051d28d6c",
+    "paths": [
+      "src",
+      "simulator",
+      "extension"
+    ]
+  },
+  "compatibleSource": {
+    "commit": "980764ebd8a92768fd565f980125cf0f18312581",
+    "archiveHash": "157a6cb318d403196ccc8d520a355fe7c0b6138bbb7661f903e799b3e8b94055",
+    "paths": [
+      "src",
+      "simulator",
+      "extension"
+    ]
+  },
+  "oldBuild": {
+    "archive": "190e58a641c244a5057de52b389b60fd747a505fa4fb34b3427aee34c53ce860",
+    "manifest": "ac722b44368a73691d7771ce9fe9a101dd4e47eb0f6d8bdd138a48b428bf50ea"
+  },
+  "compatibleBuild": {
+    "archive": "812517c4ab4536ef051e3f5ac1968bfa6bff1010c2865f9e98ea2f7b0330ff5a",
+    "manifest": "697cecb33c4a7e4181aae83a52a556647bf8f5ee0b59987c4e426bfa4500d913"
+  },
+  "currentBuild": {
+    "archive": "02ebb8811b7abf8025513fed33957f849f54db79af1b8c903fe3c0906573da47",
+    "manifest": "620dc5d56b5e6081d08906d37a34a14a8df8e2e31763c32e90963ce6b3f0b753"
+  },
+  "steps": [
+    {
+      "name": "old-package-positive-writes-and-human-assets",
+      "status": "PASS",
+      "assets": [
+        {
+          "database": "vaiwl-b1-v1",
+          "version": 4,
+          "assetHash": "9cfba40018b2646410e5b2640f296c27b967cb03eb1e40e048ce620e1c38d7ae",
+          "identities": 1,
+          "snippets": 1,
+          "workspaces": 1,
+          "placements": 1,
+          "workingSet": 1,
+          "humanRefs": 1
+        },
+        {
+          "database": "vaiwl-b1-v1",
+          "version": 4,
+          "assetHash": "9cfba40018b2646410e5b2640f296c27b967cb03eb1e40e048ce620e1c38d7ae",
+          "identities": 1,
+          "snippets": 1,
+          "workspaces": 1,
+          "placements": 1,
+          "workingSet": 1,
+          "humanRefs": 1
+        }
+      ],
+      "rowsHash": "41ec58462efa57b1d818194eace3f284d9e70b6f64bc212f279806427ac05235"
+    },
+    {
+      "name": "current-directory-channel-in-both-original-root-formats",
+      "status": "PASS",
+      "rowsHash": "a62b0e18c3a5a7a72e93877b7efc5840aaf7b2a80e38aba0e7e7d00d1f9f66ad"
+    },
+    {
+      "name": "pre-directory-package-partition-read-refuses-without-mutation",
+      "status": "PASS",
+      "result": {
+        "version": 4,
+        "outcome": "threw",
+        "name": "Error",
+        "reason": "untrusted-native-source"
+      },
+      "rowsHash": "a62b0e18c3a5a7a72e93877b7efc5840aaf7b2a80e38aba0e7e7d00d1f9f66ad"
+    },
+    {
+      "name": "pre-directory-package-partition-header-refuses-without-mutation",
+      "status": "PASS",
+      "result": {
+        "version": 4,
+        "outcome": "threw",
+        "name": "Error",
+        "reason": "untrusted-native-source"
+      },
+      "rowsHash": "a62b0e18c3a5a7a72e93877b7efc5840aaf7b2a80e38aba0e7e7d00d1f9f66ad"
+    },
+    {
+      "name": "pre-directory-package-partition-apply-refuses-without-mutation",
+      "status": "PASS",
+      "result": {
+        "version": 4,
+        "outcome": "returned",
+        "value": {
+          "ok": false,
+          "reason": "untrusted-native-source"
+        }
+      },
+      "rowsHash": "a62b0e18c3a5a7a72e93877b7efc5840aaf7b2a80e38aba0e7e7d00d1f9f66ad"
+    },
+    {
+      "name": "pre-directory-package-partition-invalidate-refuses-without-mutation",
+      "status": "PASS",
+      "result": {
+        "version": 4,
+        "outcome": "returned",
+        "value": {
+          "ok": false,
+          "reason": "untrusted-native-source"
+        }
+      },
+      "rowsHash": "a62b0e18c3a5a7a72e93877b7efc5840aaf7b2a80e38aba0e7e7d00d1f9f66ad"
+    },
+    {
+      "name": "pre-directory-package-partition-recover-refuses-without-mutation",
+      "status": "PASS",
+      "result": {
+        "version": 4,
+        "outcome": "returned",
+        "value": {
+          "ok": false,
+          "reason": "untrusted-native-source"
+        }
+      },
+      "rowsHash": "a62b0e18c3a5a7a72e93877b7efc5840aaf7b2a80e38aba0e7e7d00d1f9f66ad"
+    },
+    {
+      "name": "pre-directory-package-index-read-refuses-without-mutation",
+      "status": "PASS",
+      "result": {
+        "version": 4,
+        "outcome": "threw",
+        "name": "Error",
+        "reason": "untrusted-native-source"
+      },
+      "rowsHash": "a62b0e18c3a5a7a72e93877b7efc5840aaf7b2a80e38aba0e7e7d00d1f9f66ad"
+    },
+    {
+      "name": "pre-directory-package-index-header-refuses-without-mutation",
+      "status": "PASS",
+      "result": {
+        "version": 4,
+        "outcome": "threw",
+        "name": "Error",
+        "reason": "untrusted-native-source"
+      },
+      "rowsHash": "a62b0e18c3a5a7a72e93877b7efc5840aaf7b2a80e38aba0e7e7d00d1f9f66ad"
+    },
+    {
+      "name": "pre-directory-package-index-apply-refuses-without-mutation",
+      "status": "PASS",
+      "result": {
+        "version": 4,
+        "outcome": "returned",
+        "value": {
+          "ok": false,
+          "reason": "untrusted-native-source"
+        }
+      },
+      "rowsHash": "a62b0e18c3a5a7a72e93877b7efc5840aaf7b2a80e38aba0e7e7d00d1f9f66ad"
+    },
+    {
+      "name": "pre-directory-package-index-invalidate-refuses-without-mutation",
+      "status": "PASS",
+      "result": {
+        "version": 4,
+        "outcome": "returned",
+        "value": {
+          "ok": false,
+          "reason": "untrusted-native-source"
+        }
+      },
+      "rowsHash": "a62b0e18c3a5a7a72e93877b7efc5840aaf7b2a80e38aba0e7e7d00d1f9f66ad"
+    },
+    {
+      "name": "pre-directory-package-index-recover-refuses-without-mutation",
+      "status": "PASS",
+      "result": {
+        "version": 4,
+        "outcome": "returned",
+        "value": {
+          "ok": false,
+          "reason": "untrusted-native-source"
+        }
+      },
+      "rowsHash": "a62b0e18c3a5a7a72e93877b7efc5840aaf7b2a80e38aba0e7e7d00d1f9f66ad"
+    },
+    {
+      "name": "pinned-compatible-package-reads-and-updates-directory-with-human-assets",
+      "status": "PASS",
+      "revisions": [
+        {
+          "layout": "partition",
+          "revision": 5,
+          "sourceRevision": 5
+        },
+        {
+          "layout": "index",
+          "revision": 6,
+          "sourceRevision": 6
+        }
+      ],
+      "rowsHash": "eab06ff456fbed1fd75894f8d6a3495fa8eed754e10c89a1526054f8231e2720"
+    },
+    {
+      "name": "current-reupgrade-preserves-compatible-writes-and-unknown-membership",
+      "status": "PASS",
+      "rowsHash": "eab06ff456fbed1fd75894f8d6a3495fa8eed754e10c89a1526054f8231e2720",
+      "assets": [
+        {
+          "database": "vaiwl-b1-v1",
+          "version": 4,
+          "assetHash": "9cfba40018b2646410e5b2640f296c27b967cb03eb1e40e048ce620e1c38d7ae",
+          "identities": 1,
+          "snippets": 1,
+          "workspaces": 1,
+          "placements": 1,
+          "workingSet": 1,
+          "humanRefs": 1
+        },
+        {
+          "database": "vaiwl-b1-v1",
+          "version": 4,
+          "assetHash": "9cfba40018b2646410e5b2640f296c27b967cb03eb1e40e048ce620e1c38d7ae",
+          "identities": 1,
+          "snippets": 1,
+          "workspaces": 1,
+          "placements": 1,
+          "workingSet": 1,
+          "humanRefs": 1
+        }
+      ]
+    }
+  ],
+  "runnerFixtureHashes": {
+    "historical-codec-rollback.mjs": "9bed44a5cbe97d2af0433723a823978bb4539ab8a68d7a2e1b7c1f47a7e9e167",
+    "historical-live-page.mjs": "6526d273464cf0ab176c80e14569af1dc6c7c9a3bae9baa5dfd9c5855c776437",
+    "historical-host-upgrade.mjs": "812d189f5717fd854d865028b4e7526f40b35290080ee3fae51242b44078a7e2",
+    "loaded-worker-bytes.mjs": "63c9302e3667628366f96d1858deb1d1c979082f45fe59008957e7226c8a6630",
+    "j4-debugger-transport.mjs": "b1bdd75e2ac693957e852867881dda6e03f43a947e1c6bc2bf3f8cb22b5ddb92",
+    "historical-host-runtime.mjs": "93fdc018e64c30d85c437d82e4d15784d3ed99d1d0c8f255b3759fd747cbeaf0",
+    "historical-package.mjs": "2bfeadf516a2193e613bf547157cfe94241de9ec66047dcb6fa739ba8d771760",
+    "native-visibility-browser.mjs": "660c37d04cde8bf2a2be89ec4bc54b6201379896883d49bebc2f23b133d7adf3",
+    "isolated-browser-cleanup.mjs": "c3d4a053d485efbd86a487ac1e4257849120b30939e63be346ceceaaea2fafb0",
+    "historical-network-guard.mjs": "e38719134f6087c3efbc66044922967262a6c2e585c11a7ee69b5016b22dc416",
+    "fixtures/j4-assets.mjs": "12e97fd7b3b9819039a28b404d071608953ce6bcbb91b4047c7ba8495c029bdd",
+    "fixtures/server.mjs": "fb89ba5ba371101acc3a98ddc8dddde56adb76f2a1f9f84a048d6a30ef1d0895"
+  },
+  "sourceUnchanged": true,
+  "regression": {
+    "passed": 19,
+    "failed": 0,
+    "skipped": 0,
+    "log": "final-tests.log"
+  },
+  "networkBoundary": "Disposable browser reject proxy; denied background external attempts; no real account accessed",
+  "evidenceLimits": [
+    "No source authorization, current-space or real account claim",
+    "Private extension page invokes actual packaged repositories; not a complete personal J4 journey"
+  ],
+  "review": {
+    "reviewer": "current_gap_check",
+    "readOnly": true,
+    "closedFinding": "Assert each compatible layout revision increment and readback/sourceRevision equality; final installed run passed."
+  },
+  "preservation": {
+    "untrackedOriginals": 2258,
+    "stashes": 3,
+    "consumedRealBatches": 7
+  },
+  "checkpoint": ".git/vaiwl-checkpoints/20261022-directory-storage-compatibility",
+  "loadedOwners": {
+    "loadedInitialOwners": {
+      "version": 4,
+      "hashes": {
+        "src/data/schema.mjs": "3b3053fef20deb617fcc7a8cff8401424c7b5537373908974eff7143efb0f2ab",
+        "src/b1/scope-repository.mjs": "08d5c29e4be60c9b94ac6c7dce3e7fb1c5f2e553979c5a8f872a08d7c0c2bb91",
+        "src/data/native-repository.mjs": "36e97810e4a2d4080817d8760b9e3dc2a84dfe3870ce19a7944edde87013466f",
+        "src/data/native-facts.mjs": "f2cabe6f2e196906f1d051f50893f193de11842dcaec339ffd93cda426ba85f3",
+        "src/data/native-partitions.mjs": "fd5fae8cbe9e64bcd9ed8b276f46714b00beea7fd8989e21fbd9e0fa9bada782",
+        "src/data/native-version-index.mjs": "943a4d05a7e0d44fa587acd1b1d9a5828988b30c74ba9903a3243b07159ad5cb"
+      },
+      "worker": {
+        "targetUrl": "chrome-extension://nehoipnblfkmkiaeeafadinmgnpplfgf/extension/worker.mjs",
+        "scripts": [
+          {
+            "url": "chrome-extension://nehoipnblfkmkiaeeafadinmgnpplfgf/extension/worker.mjs",
+            "expectedSha256": "c72b41b451a7db0a1c0e57fe4971dd011638021037c7fadd08e867e20e02c0e3",
+            "loadedSha256": "c72b41b451a7db0a1c0e57fe4971dd011638021037c7fadd08e867e20e02c0e3"
+          },
+          {
+            "url": "chrome-extension://nehoipnblfkmkiaeeafadinmgnpplfgf/extension/classic-runtime.js",
+            "expectedSha256": "ceb0b74705b3acc5e353b54333010d8d3bbc783c8d09b1c0ee5adcf4024d2c9f",
+            "loadedSha256": "ceb0b74705b3acc5e353b54333010d8d3bbc783c8d09b1c0ee5adcf4024d2c9f"
+          }
+        ]
+      }
+    },
+    "loadedUpgradeOwners": {
+      "version": 4,
+      "hashes": {
+        "src/data/schema.mjs": "3b3053fef20deb617fcc7a8cff8401424c7b5537373908974eff7143efb0f2ab",
+        "src/b1/scope-repository.mjs": "08d5c29e4be60c9b94ac6c7dce3e7fb1c5f2e553979c5a8f872a08d7c0c2bb91",
+        "src/data/native-repository.mjs": "e2eaf5314683a5fbbae07066f5fb6eb92b47b96c62568eecf0c107eadd93be50",
+        "src/data/native-facts.mjs": "59e0792ec788197a194a5cf33742b0ceba7f9558671189e942318d06094803b2",
+        "src/data/native-partitions.mjs": "fd5fae8cbe9e64bcd9ed8b276f46714b00beea7fd8989e21fbd9e0fa9bada782",
+        "src/data/native-version-index.mjs": "943a4d05a7e0d44fa587acd1b1d9a5828988b30c74ba9903a3243b07159ad5cb"
+      },
+      "worker": {
+        "targetUrl": "chrome-extension://nehoipnblfkmkiaeeafadinmgnpplfgf/extension/worker.mjs",
+        "scripts": [
+          {
+            "url": "chrome-extension://nehoipnblfkmkiaeeafadinmgnpplfgf/extension/worker.mjs",
+            "expectedSha256": "c72b41b451a7db0a1c0e57fe4971dd011638021037c7fadd08e867e20e02c0e3",
+            "loadedSha256": "c72b41b451a7db0a1c0e57fe4971dd011638021037c7fadd08e867e20e02c0e3"
+          },
+          {
+            "url": "chrome-extension://nehoipnblfkmkiaeeafadinmgnpplfgf/extension/classic-runtime.js",
+            "expectedSha256": "397ae245fab32d00e9cab838047f9449188cd51d1a576053ca342a691431a61a",
+            "loadedSha256": "397ae245fab32d00e9cab838047f9449188cd51d1a576053ca342a691431a61a"
+          }
+        ]
+      }
+    },
+    "loadedDowngradeOwners": {
+      "version": 4,
+      "hashes": {
+        "src/data/schema.mjs": "3b3053fef20deb617fcc7a8cff8401424c7b5537373908974eff7143efb0f2ab",
+        "src/b1/scope-repository.mjs": "08d5c29e4be60c9b94ac6c7dce3e7fb1c5f2e553979c5a8f872a08d7c0c2bb91",
+        "src/data/native-repository.mjs": "36e97810e4a2d4080817d8760b9e3dc2a84dfe3870ce19a7944edde87013466f",
+        "src/data/native-facts.mjs": "f2cabe6f2e196906f1d051f50893f193de11842dcaec339ffd93cda426ba85f3",
+        "src/data/native-partitions.mjs": "fd5fae8cbe9e64bcd9ed8b276f46714b00beea7fd8989e21fbd9e0fa9bada782",
+        "src/data/native-version-index.mjs": "943a4d05a7e0d44fa587acd1b1d9a5828988b30c74ba9903a3243b07159ad5cb"
+      },
+      "worker": {
+        "targetUrl": "chrome-extension://nehoipnblfkmkiaeeafadinmgnpplfgf/extension/worker.mjs",
+        "scripts": [
+          {
+            "url": "chrome-extension://nehoipnblfkmkiaeeafadinmgnpplfgf/extension/worker.mjs",
+            "expectedSha256": "c72b41b451a7db0a1c0e57fe4971dd011638021037c7fadd08e867e20e02c0e3",
+            "loadedSha256": "c72b41b451a7db0a1c0e57fe4971dd011638021037c7fadd08e867e20e02c0e3"
+          },
+          {
+            "url": "chrome-extension://nehoipnblfkmkiaeeafadinmgnpplfgf/extension/classic-runtime.js",
+            "expectedSha256": "ceb0b74705b3acc5e353b54333010d8d3bbc783c8d09b1c0ee5adcf4024d2c9f",
+            "loadedSha256": "ceb0b74705b3acc5e353b54333010d8d3bbc783c8d09b1c0ee5adcf4024d2c9f"
+          }
+        ]
+      }
+    },
+    "loadedCompatibleOwners": {
+      "version": 4,
+      "hashes": {
+        "src/data/schema.mjs": "3b3053fef20deb617fcc7a8cff8401424c7b5537373908974eff7143efb0f2ab",
+        "src/b1/scope-repository.mjs": "08d5c29e4be60c9b94ac6c7dce3e7fb1c5f2e553979c5a8f872a08d7c0c2bb91",
+        "src/data/native-repository.mjs": "e2eaf5314683a5fbbae07066f5fb6eb92b47b96c62568eecf0c107eadd93be50",
+        "src/data/native-facts.mjs": "59e0792ec788197a194a5cf33742b0ceba7f9558671189e942318d06094803b2",
+        "src/data/native-partitions.mjs": "fd5fae8cbe9e64bcd9ed8b276f46714b00beea7fd8989e21fbd9e0fa9bada782",
+        "src/data/native-version-index.mjs": "943a4d05a7e0d44fa587acd1b1d9a5828988b30c74ba9903a3243b07159ad5cb"
+      },
+      "worker": {
+        "targetUrl": "chrome-extension://nehoipnblfkmkiaeeafadinmgnpplfgf/extension/worker.mjs",
+        "scripts": [
+          {
+            "url": "chrome-extension://nehoipnblfkmkiaeeafadinmgnpplfgf/extension/worker.mjs",
+            "expectedSha256": "c72b41b451a7db0a1c0e57fe4971dd011638021037c7fadd08e867e20e02c0e3",
+            "loadedSha256": "c72b41b451a7db0a1c0e57fe4971dd011638021037c7fadd08e867e20e02c0e3"
+          },
+          {
+            "url": "chrome-extension://nehoipnblfkmkiaeeafadinmgnpplfgf/extension/classic-runtime.js",
+            "expectedSha256": "eab29e10b0a1b36473edcc2ff6116c33be3c253b942eaf4666ed3536e873c450",
+            "loadedSha256": "eab29e10b0a1b36473edcc2ff6116c33be3c253b942eaf4666ed3536e873c450"
+          }
+        ]
+      }
+    },
+    "loadedRestoredOwners": {
+      "version": 4,
+      "hashes": {
+        "src/data/schema.mjs": "3b3053fef20deb617fcc7a8cff8401424c7b5537373908974eff7143efb0f2ab",
+        "src/b1/scope-repository.mjs": "08d5c29e4be60c9b94ac6c7dce3e7fb1c5f2e553979c5a8f872a08d7c0c2bb91",
+        "src/data/native-repository.mjs": "e2eaf5314683a5fbbae07066f5fb6eb92b47b96c62568eecf0c107eadd93be50",
+        "src/data/native-facts.mjs": "59e0792ec788197a194a5cf33742b0ceba7f9558671189e942318d06094803b2",
+        "src/data/native-partitions.mjs": "fd5fae8cbe9e64bcd9ed8b276f46714b00beea7fd8989e21fbd9e0fa9bada782",
+        "src/data/native-version-index.mjs": "943a4d05a7e0d44fa587acd1b1d9a5828988b30c74ba9903a3243b07159ad5cb"
+      },
+      "worker": {
+        "targetUrl": "chrome-extension://nehoipnblfkmkiaeeafadinmgnpplfgf/extension/worker.mjs",
+        "scripts": [
+          {
+            "url": "chrome-extension://nehoipnblfkmkiaeeafadinmgnpplfgf/extension/worker.mjs",
+            "expectedSha256": "c72b41b451a7db0a1c0e57fe4971dd011638021037c7fadd08e867e20e02c0e3",
+            "loadedSha256": "c72b41b451a7db0a1c0e57fe4971dd011638021037c7fadd08e867e20e02c0e3"
+          },
+          {
+            "url": "chrome-extension://nehoipnblfkmkiaeeafadinmgnpplfgf/extension/classic-runtime.js",
+            "expectedSha256": "397ae245fab32d00e9cab838047f9449188cd51d1a576053ca342a691431a61a",
+            "loadedSha256": "397ae245fab32d00e9cab838047f9449188cd51d1a576053ca342a691431a61a"
+          }
+        ]
+      }
+    }
+  },
+  "packageVerification": {
+    "oldPackageVerified": "OFFLINE_HOST_RECONSTRUCTION",
+    "compatiblePackageVerified": "OFFLINE_HOST_RECONSTRUCTION",
+    "currentPackageVerified": "OFFLINE_HOST_RECONSTRUCTION"
+  }
+}

@@ -1,0 +1,105 @@
+{
+  "evidence": "REAL_CHROME_MV3_SYNTHETIC_ONLY",
+  "realChatGPT": "NOT_RUN",
+  "headless": true,
+  "hashes": {
+    "src/b1/identity.mjs": "6d7ca616701826733d4936d8a139395ccf1a3111e025ec6b1035d78c1dc05e99",
+    "src/b1/scope-repository.mjs": "2415f70ab46da554003eb1732e82dfc0764a7165476cf4ebe914ea2eeebe2c10",
+    "src/b1/document-binding-broker.mjs": "9a404d0e773c507ca0f14fe580435ddb2a50ecc13a5dab163aa3859ef07017bd",
+    "simulator/service.mjs": "1cd8eecee043db51b57c12aef3a5bb88d731fc52451e902df7457cf97c822703",
+    "simulator/data.mjs": "a1e77db2bd6b16b5a2142c9068d717e8a109424f3f89a87d641160ce532d0845",
+    "simulator/persistent-seed.mjs": "de5208b63e2d35b58268adefc4e1a05848f069f57948976974b2bf33ee139e68",
+    "simulator/worker.mjs": "a970e35d86f516b0b131bfbf3de0afc80b63e73fbd9bd4bb9dc046877c974597",
+    "src/data/schema.mjs": "9db57336e5d79ec002ef6308100d18008140292bcf1385899524b0a6972ebad6",
+    "src/data/partitioned.mjs": "da639429c7a46b05dd4cc380e6ba1d62b118e2622b7a497efe96aa8c96367757",
+    "src/data/cooperate.mjs": "ce494a33280143e1e2a2227a72413da792330311de12642a9a56b13704f2f3b4",
+    "src/data/hash.mjs": "8fcd95aca608fb4d4ef94855e0d101ce3d560e830733f96d9ec88068a81eaab3",
+    "src/data/state.mjs": "df0eaff00a7f050c37653f0e740b8fabe19bce571c5e37f4ce437d180984c62a",
+    "src/data/preferences.mjs": "1fb8395c5dfe23d64c91095b71a1c117b9762b3ccec68e262aaf73744b12c9d7",
+    "src/data/evidence.mjs": "f84032c9a2fc08455480652b60de6fb9394a70e82a7ace8729186ff097b26238",
+    "src/data/repository.mjs": "093aba679acff36dd2c40063b7bb2124e96cedc25cd1f92cbfe87a69458b737a",
+    "src/data/backup.mjs": "bb0a8639d02e2169ae15e866a464f1531b7e80e40afd7c8a4b35e99d70928396",
+    "src/navigation/projection.mjs": "8d4b2d85dceb27b4965cd82842fec37ecdbddedae3e6a1c763720dbec35e3a4b",
+    "src/navigation/icons.mjs": "14195d8a7a21a029278ff6f9bf0bb1add2d679b37666108d80cfadabe312d2fd",
+    "src/data/shared-directory-retention.mjs": "3bc27b2a71994f8f0857056c8309c47107251372f25c021368d3d06248e7cbc9",
+    "src/data/shared-directory-recovery.mjs": "e04870124d9cd873a8af8b3643fd3d2fa5bdb33c69809e7bbf667bb2aa4727cf",
+    "src/data/shared-partition-audit.mjs": "b52d12777aa3639919e416732a8aac768af2582f71834ee5ced3ef03ceb81b4b",
+    "src/data/shared-directory-migration.mjs": "cd8082af9459262dadd1fb9e7779e6f19a5ce0c044aa26505b9297b6f952ad20",
+    "src/data/shared-directory-writer.mjs": "8b2fd950abe60c8ca00d4ceaaf4680b44ad9741c3fb35cc578613668d253bf6e",
+    "src/data/partition-manifest.mjs": "e9363342a5b44f14fcf3c12b7a65e0838e3376c250bd6d1e5978915c58ae7ef6",
+    "src/data/shared-ref-directory.mjs": "5fc522a2f93f0923b0b5839e8b964103c0edc96de45d7f6c295023a5e269f099",
+    "src/data/shared-directory-reader.mjs": "0adff92a10b4109b43973f912a6025daaff4995f0fa8d1cd15a14431acc9f8bc",
+    "src/data/known-anchor-key.mjs": "e5d91c902e04440be924ef0506ff688bbbccd83150610f50199b518bcb298df3",
+    "src/data/known-anchor-backfill.mjs": "dd58e613da9564668fc7963135dd98caccf3bd6930e532864e68d9ff6afd55ca",
+    "src/data/verified-record-cache.mjs": "9b7b3c13abdd37f2b6d4fad48b85707a9815538fd793cad537f8e87b8f08cde0",
+    "src/data/free-evidence-partitions.mjs": "dbecbc2418d79c84c8e7efd8b07db98794b5355989865c891dc551a84b5df4d5",
+    "src/data/evidence-ref-directory.mjs": "1001abca8b849e7c73390acaa730a1639efc9cc621898ca97f3d538b30832b08",
+    "src/data/evidence-directory-reader.mjs": "b94684c7e3824a0b6bc832d308cda077e37aca1c77c0517591a3df13cd6449e1",
+    "src/data/evidence-directory-writer.mjs": "0656a92e6016dcfc07f04c0014a3ea01e4fbe95dd74a4848900ae1f688747062",
+    "src/data/evidence-directory-migration.mjs": "5ba7a597c10a814d135f54339f307b597511319627047de907aa3e817f45290d",
+    "src/data/free-recovery-status.mjs": "50e3ab800c17ab190dbdc9c33d2630a7d8806889fe6c126c67068ace09a282e5",
+    "src/data/free-runtime.mjs": "f6636970124df4f440b7e2c6b295ebbe7e12f0c6f79d993505359aea52440b97",
+    "src/data/free-runtime-service.mjs": "76ba9afaebd649f18f5bc968a39c3d09d2d0fa6f449d2650bd85307a2665f14a",
+    "src/data/free-evidence-repository.mjs": "8958fd1127f8790d7d0323f5250cc3a2873c4dbb9b36c6b218ff2db2892ecd65",
+    "src/data/free-evidence.mjs": "cef8880f69556f8ea9c9c1333f16a3c6d7d4d7fc198430aabac99aabf0b3d624",
+    "src/data/native-version-index.mjs": "03089b0dddfa9f948087823af1e1ad7b43fc765a6631c40647e1e4b201cd7211",
+    "src/data/native-index-reader.mjs": "f359a28b189dec9605dad356d3c19d474132fff2ab3a94425367997047c96c4a",
+    "src/data/native-index-writer.mjs": "b24b74a4470602b8196c5ee9559aaa8d5f53454c034b02aeb84b2652532a2808",
+    "src/data/native-index-migration.mjs": "1f681e0c0049d91b37394bb26313caa8dfeba1d2ede97833c9b3321fc61a4923",
+    "src/data/native-partitions.mjs": "df08b215677fa72bdef9523a327ff26432b076b1f61e39ca39d7ca926a996628",
+    "src/data/free-activity.mjs": "0a3c86c6f7bf5d9ffabc03112586feb6293f7479d65298601d78ca44bf12b615",
+    "src/data/free-time-policy.mjs": "08192e4f8b809a3bb7ad759bc30a644bbc11a8b36bfe5cd3f412751f0c7ef64b",
+    "src/data/free-calibration.mjs": "f680455d6468e1c7f60fac7826180357038cbf7f633be1236cf58900a87ed8d4",
+    "src/data/native-facts.mjs": "af195ecccd63e2dd6730c832cb6648a8517826127d1f385e4b4ce5d5cd558dd8",
+    "src/data/native-repository.mjs": "dc584933af87370baeada2d6cf566293b26677fe946a4d86c58379b8652ea806",
+    "src/data/free-projection.mjs": "fe912d0224c6f874843b46e30610723ed666d9e26e245068e61977bd64d80acd",
+    "simulator/native-seed.mjs": "8a1a64f9acbc2c1555049dbff8398d209d835a65723b5c349dedf6321c83f752",
+    "content.js": "cbbf11390c793cd234fce349fdad0999eaf37cceea38c8dedc5791fccca4c8ad",
+    "manifest.json": "aad5e00624a2246c96471a03fc8c118c0b1eaffdd8170f61ee600d52102a80c5"
+  },
+  "results": [
+    {
+      "name": "Free package is synthetic-only and does not request production host access",
+      "status": "PASS",
+      "productionMatched": false
+    },
+    {
+      "name": "Actual MV3 worker renders default Free native names and NONE rows",
+      "status": "PASS",
+      "boot": "5e43f55e-cc4a-48c5-955b-a503230083cc"
+    },
+    {
+      "name": "Second tab shares persisted native projection without page-origin database access",
+      "status": "PASS",
+      "workspaceRevision": 1
+    },
+    {
+      "name": "Native composer, draft, tools, search and unique reading return survive navigation",
+      "status": "PASS"
+    },
+    {
+      "name": "Stopping actual worker rebinds without losing draft or native persisted projection",
+      "status": "PASS",
+      "workerBootChanged": true
+    },
+    {
+      "name": "Existing native conversation send persists observation through the MV3 queue",
+      "status": "PASS",
+      "workspaceRevision": 2
+    },
+    {
+      "name": "Native synthetic new chat becomes a persisted NONE row and accepts shared working-set metadata",
+      "status": "PASS"
+    },
+    {
+      "name": "Unknown account hides scoped Free cache while preserving native host",
+      "status": "PASS"
+    },
+    {
+      "name": "No page JavaScript errors",
+      "status": "PASS"
+    }
+  ],
+  "pageErrors": [],
+  "browser": "Chrome/155.0.8059.40"
+}

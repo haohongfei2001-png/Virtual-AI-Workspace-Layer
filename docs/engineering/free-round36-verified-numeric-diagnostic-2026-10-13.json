@@ -1,0 +1,707 @@
+{
+  "evidence": "ISOLATED_HEADLESS_VRC_DIAGNOSTIC_NOT_PRODUCT_ACCEPTANCE",
+  "browser": "156.0.8078.4",
+  "baselineCommit": "315db11ec5222afad44b7bc1f121a6c4d37a0284",
+  "baselineHash": "9b7b3c13abdd37f2b6d4fad48b85707a9815538fd793cad537f8e87b8f08cde0",
+  "candidateHash": "d1dbb27b6ad0e489a521e7fbca00b9caa63fa568958cd24e0602bdc468214973",
+  "runtimeBeforeHash": "9b7b3c13abdd37f2b6d4fad48b85707a9815538fd793cad537f8e87b8f08cde0",
+  "runtimeAfterHash": "9b7b3c13abdd37f2b6d4fad48b85707a9815538fd793cad537f8e87b8f08cde0",
+  "baseline": "/** Cache validation, never facts: every IDB read must match all payload bytes again. */\nfunction strictJSON(value,onKeys=null,fields=null,counts=null){\n // Invalid count tables remain unset until the original integrity/schema check completes.\n if(onKeys&&(value===null||typeof value!=='object'||Array.isArray(value)))onKeys=null;\n const type=typeof value;\n // NumberToString is the same finite-number representation JSON uses, including\n // negative zero. Avoid one native JSON call and one temporary array per scalar.\n if(type==='number'){if(!Number.isFinite(value))throw Error('non-json-value');return String(value);}\n if(type==='string'||type==='boolean'||value===null)return JSON.stringify(value);\n if(type!=='object')throw Error('non-json-value');\n if(Array.isArray(value)){\n  let encoded='[';\n  for(let index=0;index<value.length;index++)encoded+=(index?',':'')+strictJSON(value[index]);\n  return encoded+']';\n }\n if(![Object.prototype,null].includes(Object.getPrototypeOf(value)))throw Error('non-json-object');\n // Never invoke toJSON or iterators. Preserve every key/value in read order;\n // building the string directly avoids a 100k-element intermediate map/join.\n let encoded='{',separator='';const keys=Object.keys(value);if(onKeys)onKeys(keys.length);\n for(const key of keys){const capture=fields?.has(key)?size=>{counts[key]=size;}:null;encoded+=separator+JSON.stringify(key)+':'+strictJSON(value[key],capture);separator=',';}\n return encoded+'}';\n}\nexport class VerifiedRecordCache{\n #entries=new Map();#chars=0;\n constructor({maxEntries=2,maxChars=8*1024*1024}={}){\n  if(!Number.isSafeInteger(maxEntries)||maxEntries<0||!Number.isSafeInteger(maxChars)||maxChars<0)throw Error('invalid-validation-cache-budget');\n  this.maxEntries=maxEntries;this.maxChars=maxChars;\n }\n // Count requested top-level maps during the mandatory full-byte traversal.\n // No extra key arrays or retained metadata; each result belongs to this read.\n readWithCounts(row,context,verify,fields){\n  if(!Array.isArray(fields)||fields.length>4||fields.some(field=>typeof field!=='string'||!field.length||field.length>64))throw Error('invalid-cache-count-fields');\n  const counts=Object.create(null),payload=this.#read(row,context,verify,new Set(fields),counts);\n  if(fields.some(field=>!Object.hasOwn(counts,field)))throw Error('invalid-cache-count-table');\n  return {payload,counts};\n }\n read(row,context,verify){return this.#read(row,context,verify);}\n #read(row,context,verify,fields=null,counts=null){\n  if(!row||typeof row.key!=='string'||typeof row.checksum!=='string'||typeof context!=='string'||typeof verify!=='function')throw Error('invalid-validation-cache-record');\n  const encoded=strictJSON(row.payload,null,fields,counts),key=JSON.stringify([context,row.key]),prior=this.#entries.get(key);\n  if(prior&&prior.checksum===row.checksum&&prior.encoded===encoded){this.#entries.delete(key);this.#entries.set(key,prior);return row.payload;}\n  // No checksum-only or revision-only shortcut: corrupted bytes or a new schema\n  // always reenter the original checksum and contextual validation functions.\n  verify(row.payload,row);\n  if(prior){this.#entries.delete(key);this.#chars-=prior.encoded.length;}\n  if(this.maxEntries&&encoded.length<=this.maxChars){\n   while(this.#entries.size&&(this.#entries.size>=this.maxEntries||this.#chars+encoded.length>this.maxChars)){\n    const oldest=this.#entries.keys().next().value;this.#chars-=this.#entries.get(oldest).encoded.length;this.#entries.delete(oldest);\n   }\n   this.#entries.set(key,{encoded,checksum:row.checksum});this.#chars+=encoded.length;\n  }\n  return row.payload;\n }\n}\n",
+  "candidate": "/** Cache validation, never facts: every IDB read must match all payload bytes again. */\nfunction strictJSON(value,onKeys=null,fields=null,counts=null){\n // Invalid count tables remain unset until the original integrity/schema check completes.\n if(onKeys&&(value===null||typeof value!=='object'||Array.isArray(value)))onKeys=null;\n const type=typeof value;\n // NumberToString is the same finite-number representation JSON uses, including\n // negative zero. Avoid one native JSON call and one temporary array per scalar.\n if(type==='number'){if(!Number.isFinite(value))throw Error('non-json-value');return String(value);}\n if(type==='string'||type==='boolean'||value===null)return JSON.stringify(value);\n if(type!=='object')throw Error('non-json-value');\n if(Array.isArray(value)){\n  let encoded='[';\n  for(let index=0;index<value.length;index++)encoded+=(index?',':'')+strictJSON(value[index]);\n  return encoded+']';\n }\n if(![Object.prototype,null].includes(Object.getPrototypeOf(value)))throw Error('non-json-object');\n // Never invoke toJSON or iterators. Preserve every key/value in read order;\n // building the string directly avoids a 100k-element intermediate map/join.\n let encoded='{',separator='',previousNumber,previousEncoding;const keys=Object.keys(value);if(onKeys)onKeys(keys.length);\n for(const key of keys){\n  const capture=fields?.has(key)?size=>{counts[key]=size;}:null;\n  const encodedKey=JSON.stringify(key),child=value[key];let encodedChild;\n  if(typeof child==='number'){\n   if(!Number.isFinite(child))throw Error('non-json-value');\n   if(child===previousNumber)encodedChild=previousEncoding;\n   else {previousNumber=child;previousEncoding=encodedChild=String(child);}\n  }else encodedChild=strictJSON(child,capture);\n  encoded+=separator+encodedKey+':'+encodedChild;separator=',';\n }\n return encoded+'}';\n}\nexport class VerifiedRecordCache{\n #entries=new Map();#chars=0;\n constructor({maxEntries=2,maxChars=8*1024*1024}={}){\n  if(!Number.isSafeInteger(maxEntries)||maxEntries<0||!Number.isSafeInteger(maxChars)||maxChars<0)throw Error('invalid-validation-cache-budget');\n  this.maxEntries=maxEntries;this.maxChars=maxChars;\n }\n // Count requested top-level maps during the mandatory full-byte traversal.\n // No extra key arrays or retained metadata; each result belongs to this read.\n readWithCounts(row,context,verify,fields){\n  if(!Array.isArray(fields)||fields.length>4||fields.some(field=>typeof field!=='string'||!field.length||field.length>64))throw Error('invalid-cache-count-fields');\n  const counts=Object.create(null),payload=this.#read(row,context,verify,new Set(fields),counts);\n  if(fields.some(field=>!Object.hasOwn(counts,field)))throw Error('invalid-cache-count-table');\n  return {payload,counts};\n }\n read(row,context,verify){return this.#read(row,context,verify);}\n #read(row,context,verify,fields=null,counts=null){\n  if(!row||typeof row.key!=='string'||typeof row.checksum!=='string'||typeof context!=='string'||typeof verify!=='function')throw Error('invalid-validation-cache-record');\n  const encoded=strictJSON(row.payload,null,fields,counts),key=JSON.stringify([context,row.key]),prior=this.#entries.get(key);\n  if(prior&&prior.checksum===row.checksum&&prior.encoded===encoded){this.#entries.delete(key);this.#entries.set(key,prior);return row.payload;}\n  // No checksum-only or revision-only shortcut: corrupted bytes or a new schema\n  // always reenter the original checksum and contextual validation functions.\n  verify(row.payload,row);\n  if(prior){this.#entries.delete(key);this.#chars-=prior.encoded.length;}\n  if(this.maxEntries&&encoded.length<=this.maxChars){\n   while(this.#entries.size&&(this.#entries.size>=this.maxEntries||this.#chars+encoded.length>this.maxChars)){\n    const oldest=this.#entries.keys().next().value;this.#chars-=this.#entries.get(oldest).encoded.length;this.#entries.delete(oldest);\n   }\n   this.#entries.set(key,{encoded,checksum:row.checksum});this.#chars+=encoded.length;\n  }\n  return row.payload;\n }\n}\n",
+  "result": {
+    "rows": 100000,
+    "equivalence": [
+      "finite-numeric-spellings",
+      "reject:NaN",
+      "reject:Infinity",
+      "reject:-Infinity",
+      "nested-number-and-non-number",
+      "non-map-count-field",
+      "getter-once-in-key-order",
+      "getter-mutation-later-field",
+      "throwing-getter-order",
+      "no-toJSON-or-iterator-hooks",
+      "array-iterator-not-used",
+      "actual-cache-getter-once-per-read-and-counts",
+      "baseline:cache-hit-identity-counts-tampering",
+      "candidate:cache-hit-identity-counts-tampering",
+      "same:full-encoding-and-cache-results",
+      "mixed:full-encoding-and-cache-results",
+      "unique:full-encoding-and-cache-results"
+    ],
+    "samples": [
+      {
+        "distribution": "same",
+        "mode": "read",
+        "round": 0,
+        "variant": "baseline",
+        "elapsedMs": 12
+      },
+      {
+        "distribution": "same",
+        "mode": "read",
+        "round": 0,
+        "variant": "candidate",
+        "elapsedMs": 13.899999998509884
+      },
+      {
+        "distribution": "same",
+        "mode": "read",
+        "round": 1,
+        "variant": "candidate",
+        "elapsedMs": 11.599999994039536
+      },
+      {
+        "distribution": "same",
+        "mode": "read",
+        "round": 1,
+        "variant": "baseline",
+        "elapsedMs": 14
+      },
+      {
+        "distribution": "same",
+        "mode": "read",
+        "round": 2,
+        "variant": "baseline",
+        "elapsedMs": 12
+      },
+      {
+        "distribution": "same",
+        "mode": "read",
+        "round": 2,
+        "variant": "candidate",
+        "elapsedMs": 12.900000005960464
+      },
+      {
+        "distribution": "same",
+        "mode": "read",
+        "round": 3,
+        "variant": "candidate",
+        "elapsedMs": 11.099999994039536
+      },
+      {
+        "distribution": "same",
+        "mode": "read",
+        "round": 3,
+        "variant": "baseline",
+        "elapsedMs": 12.700000002980232
+      },
+      {
+        "distribution": "same",
+        "mode": "read",
+        "round": 4,
+        "variant": "baseline",
+        "elapsedMs": 11.600000001490116
+      },
+      {
+        "distribution": "same",
+        "mode": "read",
+        "round": 4,
+        "variant": "candidate",
+        "elapsedMs": 14
+      },
+      {
+        "distribution": "same",
+        "mode": "read",
+        "round": 5,
+        "variant": "candidate",
+        "elapsedMs": 11.799999997019768
+      },
+      {
+        "distribution": "same",
+        "mode": "read",
+        "round": 5,
+        "variant": "baseline",
+        "elapsedMs": 14.200000002980232
+      },
+      {
+        "distribution": "same",
+        "mode": "read",
+        "round": 6,
+        "variant": "baseline",
+        "elapsedMs": 12.5
+      },
+      {
+        "distribution": "same",
+        "mode": "read",
+        "round": 6,
+        "variant": "candidate",
+        "elapsedMs": 14
+      },
+      {
+        "distribution": "same",
+        "mode": "read",
+        "round": 7,
+        "variant": "candidate",
+        "elapsedMs": 12.399999998509884
+      },
+      {
+        "distribution": "same",
+        "mode": "read",
+        "round": 7,
+        "variant": "baseline",
+        "elapsedMs": 14.5
+      },
+      {
+        "distribution": "same",
+        "mode": "readWithCounts",
+        "round": 0,
+        "variant": "baseline",
+        "elapsedMs": 12.799999997019768
+      },
+      {
+        "distribution": "same",
+        "mode": "readWithCounts",
+        "round": 0,
+        "variant": "candidate",
+        "elapsedMs": 14.299999997019768
+      },
+      {
+        "distribution": "same",
+        "mode": "readWithCounts",
+        "round": 1,
+        "variant": "candidate",
+        "elapsedMs": 12.300000004470348
+      },
+      {
+        "distribution": "same",
+        "mode": "readWithCounts",
+        "round": 1,
+        "variant": "baseline",
+        "elapsedMs": 15.299999997019768
+      },
+      {
+        "distribution": "same",
+        "mode": "readWithCounts",
+        "round": 2,
+        "variant": "baseline",
+        "elapsedMs": 13.5
+      },
+      {
+        "distribution": "same",
+        "mode": "readWithCounts",
+        "round": 2,
+        "variant": "candidate",
+        "elapsedMs": 14.600000001490116
+      },
+      {
+        "distribution": "same",
+        "mode": "readWithCounts",
+        "round": 3,
+        "variant": "candidate",
+        "elapsedMs": 12.600000001490116
+      },
+      {
+        "distribution": "same",
+        "mode": "readWithCounts",
+        "round": 3,
+        "variant": "baseline",
+        "elapsedMs": 14.899999998509884
+      },
+      {
+        "distribution": "same",
+        "mode": "readWithCounts",
+        "round": 4,
+        "variant": "baseline",
+        "elapsedMs": 13.100000001490116
+      },
+      {
+        "distribution": "same",
+        "mode": "readWithCounts",
+        "round": 4,
+        "variant": "candidate",
+        "elapsedMs": 14.899999998509884
+      },
+      {
+        "distribution": "same",
+        "mode": "readWithCounts",
+        "round": 5,
+        "variant": "candidate",
+        "elapsedMs": 12.600000001490116
+      },
+      {
+        "distribution": "same",
+        "mode": "readWithCounts",
+        "round": 5,
+        "variant": "baseline",
+        "elapsedMs": 14.600000001490116
+      },
+      {
+        "distribution": "same",
+        "mode": "readWithCounts",
+        "round": 6,
+        "variant": "baseline",
+        "elapsedMs": 12.799999997019768
+      },
+      {
+        "distribution": "same",
+        "mode": "readWithCounts",
+        "round": 6,
+        "variant": "candidate",
+        "elapsedMs": 15.600000001490116
+      },
+      {
+        "distribution": "same",
+        "mode": "readWithCounts",
+        "round": 7,
+        "variant": "candidate",
+        "elapsedMs": 12.399999998509884
+      },
+      {
+        "distribution": "same",
+        "mode": "readWithCounts",
+        "round": 7,
+        "variant": "baseline",
+        "elapsedMs": 15
+      },
+      {
+        "distribution": "mixed",
+        "mode": "read",
+        "round": 0,
+        "variant": "baseline",
+        "elapsedMs": 16.899999998509884
+      },
+      {
+        "distribution": "mixed",
+        "mode": "read",
+        "round": 0,
+        "variant": "candidate",
+        "elapsedMs": 14.400000005960464
+      },
+      {
+        "distribution": "mixed",
+        "mode": "read",
+        "round": 1,
+        "variant": "candidate",
+        "elapsedMs": 15.399999998509884
+      },
+      {
+        "distribution": "mixed",
+        "mode": "read",
+        "round": 1,
+        "variant": "baseline",
+        "elapsedMs": 13.5
+      },
+      {
+        "distribution": "mixed",
+        "mode": "read",
+        "round": 2,
+        "variant": "baseline",
+        "elapsedMs": 14.799999997019768
+      },
+      {
+        "distribution": "mixed",
+        "mode": "read",
+        "round": 2,
+        "variant": "candidate",
+        "elapsedMs": 13
+      },
+      {
+        "distribution": "mixed",
+        "mode": "read",
+        "round": 3,
+        "variant": "candidate",
+        "elapsedMs": 14.600000001490116
+      },
+      {
+        "distribution": "mixed",
+        "mode": "read",
+        "round": 3,
+        "variant": "baseline",
+        "elapsedMs": 13.399999998509884
+      },
+      {
+        "distribution": "mixed",
+        "mode": "read",
+        "round": 4,
+        "variant": "baseline",
+        "elapsedMs": 14.800000004470348
+      },
+      {
+        "distribution": "mixed",
+        "mode": "read",
+        "round": 4,
+        "variant": "candidate",
+        "elapsedMs": 13.699999995529652
+      },
+      {
+        "distribution": "mixed",
+        "mode": "read",
+        "round": 5,
+        "variant": "candidate",
+        "elapsedMs": 22.899999998509884
+      },
+      {
+        "distribution": "mixed",
+        "mode": "read",
+        "round": 5,
+        "variant": "baseline",
+        "elapsedMs": 14.5
+      },
+      {
+        "distribution": "mixed",
+        "mode": "read",
+        "round": 6,
+        "variant": "baseline",
+        "elapsedMs": 23.200000002980232
+      },
+      {
+        "distribution": "mixed",
+        "mode": "read",
+        "round": 6,
+        "variant": "candidate",
+        "elapsedMs": 14.899999998509884
+      },
+      {
+        "distribution": "mixed",
+        "mode": "read",
+        "round": 7,
+        "variant": "candidate",
+        "elapsedMs": 21.700000002980232
+      },
+      {
+        "distribution": "mixed",
+        "mode": "read",
+        "round": 7,
+        "variant": "baseline",
+        "elapsedMs": 16
+      },
+      {
+        "distribution": "mixed",
+        "mode": "readWithCounts",
+        "round": 0,
+        "variant": "baseline",
+        "elapsedMs": 19.80000000447035
+      },
+      {
+        "distribution": "mixed",
+        "mode": "readWithCounts",
+        "round": 0,
+        "variant": "candidate",
+        "elapsedMs": 17.19999999552965
+      },
+      {
+        "distribution": "mixed",
+        "mode": "readWithCounts",
+        "round": 1,
+        "variant": "candidate",
+        "elapsedMs": 17.600000001490116
+      },
+      {
+        "distribution": "mixed",
+        "mode": "readWithCounts",
+        "round": 1,
+        "variant": "baseline",
+        "elapsedMs": 15.5
+      },
+      {
+        "distribution": "mixed",
+        "mode": "readWithCounts",
+        "round": 2,
+        "variant": "baseline",
+        "elapsedMs": 17.799999997019768
+      },
+      {
+        "distribution": "mixed",
+        "mode": "readWithCounts",
+        "round": 2,
+        "variant": "candidate",
+        "elapsedMs": 14.5
+      },
+      {
+        "distribution": "mixed",
+        "mode": "readWithCounts",
+        "round": 3,
+        "variant": "candidate",
+        "elapsedMs": 19.700000002980232
+      },
+      {
+        "distribution": "mixed",
+        "mode": "readWithCounts",
+        "round": 3,
+        "variant": "baseline",
+        "elapsedMs": 15.5
+      },
+      {
+        "distribution": "mixed",
+        "mode": "readWithCounts",
+        "round": 4,
+        "variant": "baseline",
+        "elapsedMs": 17.200000002980232
+      },
+      {
+        "distribution": "mixed",
+        "mode": "readWithCounts",
+        "round": 4,
+        "variant": "candidate",
+        "elapsedMs": 15.099999994039536
+      },
+      {
+        "distribution": "mixed",
+        "mode": "readWithCounts",
+        "round": 5,
+        "variant": "candidate",
+        "elapsedMs": 18.30000000447035
+      },
+      {
+        "distribution": "mixed",
+        "mode": "readWithCounts",
+        "round": 5,
+        "variant": "baseline",
+        "elapsedMs": 14.399999998509884
+      },
+      {
+        "distribution": "mixed",
+        "mode": "readWithCounts",
+        "round": 6,
+        "variant": "baseline",
+        "elapsedMs": 16.799999997019768
+      },
+      {
+        "distribution": "mixed",
+        "mode": "readWithCounts",
+        "round": 6,
+        "variant": "candidate",
+        "elapsedMs": 13.900000005960464
+      },
+      {
+        "distribution": "mixed",
+        "mode": "readWithCounts",
+        "round": 7,
+        "variant": "candidate",
+        "elapsedMs": 17
+      },
+      {
+        "distribution": "mixed",
+        "mode": "readWithCounts",
+        "round": 7,
+        "variant": "baseline",
+        "elapsedMs": 15.399999998509884
+      },
+      {
+        "distribution": "unique",
+        "mode": "read",
+        "round": 0,
+        "variant": "baseline",
+        "elapsedMs": 14.699999995529652
+      },
+      {
+        "distribution": "unique",
+        "mode": "read",
+        "round": 0,
+        "variant": "candidate",
+        "elapsedMs": 15
+      },
+      {
+        "distribution": "unique",
+        "mode": "read",
+        "round": 1,
+        "variant": "candidate",
+        "elapsedMs": 14.200000002980232
+      },
+      {
+        "distribution": "unique",
+        "mode": "read",
+        "round": 1,
+        "variant": "baseline",
+        "elapsedMs": 16.399999998509884
+      },
+      {
+        "distribution": "unique",
+        "mode": "read",
+        "round": 2,
+        "variant": "baseline",
+        "elapsedMs": 15
+      },
+      {
+        "distribution": "unique",
+        "mode": "read",
+        "round": 2,
+        "variant": "candidate",
+        "elapsedMs": 15.5
+      },
+      {
+        "distribution": "unique",
+        "mode": "read",
+        "round": 3,
+        "variant": "candidate",
+        "elapsedMs": 14.5
+      },
+      {
+        "distribution": "unique",
+        "mode": "read",
+        "round": 3,
+        "variant": "baseline",
+        "elapsedMs": 16.700000002980232
+      },
+      {
+        "distribution": "unique",
+        "mode": "read",
+        "round": 4,
+        "variant": "baseline",
+        "elapsedMs": 15.299999997019768
+      },
+      {
+        "distribution": "unique",
+        "mode": "read",
+        "round": 4,
+        "variant": "candidate",
+        "elapsedMs": 19.399999998509884
+      },
+      {
+        "distribution": "unique",
+        "mode": "read",
+        "round": 5,
+        "variant": "candidate",
+        "elapsedMs": 19.600000001490116
+      },
+      {
+        "distribution": "unique",
+        "mode": "read",
+        "round": 5,
+        "variant": "baseline",
+        "elapsedMs": 20.600000001490116
+      },
+      {
+        "distribution": "unique",
+        "mode": "read",
+        "round": 6,
+        "variant": "baseline",
+        "elapsedMs": 15.600000001490116
+      },
+      {
+        "distribution": "unique",
+        "mode": "read",
+        "round": 6,
+        "variant": "candidate",
+        "elapsedMs": 17.600000001490116
+      },
+      {
+        "distribution": "unique",
+        "mode": "read",
+        "round": 7,
+        "variant": "candidate",
+        "elapsedMs": 15.5
+      },
+      {
+        "distribution": "unique",
+        "mode": "read",
+        "round": 7,
+        "variant": "baseline",
+        "elapsedMs": 17.099999994039536
+      },
+      {
+        "distribution": "unique",
+        "mode": "readWithCounts",
+        "round": 0,
+        "variant": "baseline",
+        "elapsedMs": 15.900000005960464
+      },
+      {
+        "distribution": "unique",
+        "mode": "readWithCounts",
+        "round": 0,
+        "variant": "candidate",
+        "elapsedMs": 17.099999994039536
+      },
+      {
+        "distribution": "unique",
+        "mode": "readWithCounts",
+        "round": 1,
+        "variant": "candidate",
+        "elapsedMs": 15.600000001490116
+      },
+      {
+        "distribution": "unique",
+        "mode": "readWithCounts",
+        "round": 1,
+        "variant": "baseline",
+        "elapsedMs": 16.899999998509884
+      },
+      {
+        "distribution": "unique",
+        "mode": "readWithCounts",
+        "round": 2,
+        "variant": "baseline",
+        "elapsedMs": 16.30000000447035
+      },
+      {
+        "distribution": "unique",
+        "mode": "readWithCounts",
+        "round": 2,
+        "variant": "candidate",
+        "elapsedMs": 18.69999999552965
+      },
+      {
+        "distribution": "unique",
+        "mode": "readWithCounts",
+        "round": 3,
+        "variant": "candidate",
+        "elapsedMs": 17.400000005960464
+      },
+      {
+        "distribution": "unique",
+        "mode": "readWithCounts",
+        "round": 3,
+        "variant": "baseline",
+        "elapsedMs": 16
+      },
+      {
+        "distribution": "unique",
+        "mode": "readWithCounts",
+        "round": 4,
+        "variant": "baseline",
+        "elapsedMs": 15
+      },
+      {
+        "distribution": "unique",
+        "mode": "readWithCounts",
+        "round": 4,
+        "variant": "candidate",
+        "elapsedMs": 16.099999994039536
+      },
+      {
+        "distribution": "unique",
+        "mode": "readWithCounts",
+        "round": 5,
+        "variant": "candidate",
+        "elapsedMs": 14.900000005960464
+      },
+      {
+        "distribution": "unique",
+        "mode": "readWithCounts",
+        "round": 5,
+        "variant": "baseline",
+        "elapsedMs": 16.19999999552965
+      },
+      {
+        "distribution": "unique",
+        "mode": "readWithCounts",
+        "round": 6,
+        "variant": "baseline",
+        "elapsedMs": 16
+      },
+      {
+        "distribution": "unique",
+        "mode": "readWithCounts",
+        "round": 6,
+        "variant": "candidate",
+        "elapsedMs": 17.30000000447035
+      },
+      {
+        "distribution": "unique",
+        "mode": "readWithCounts",
+        "round": 7,
+        "variant": "candidate",
+        "elapsedMs": 14.899999998509884
+      },
+      {
+        "distribution": "unique",
+        "mode": "readWithCounts",
+        "round": 7,
+        "variant": "baseline",
+        "elapsedMs": 18.100000001490116
+      }
+    ]
+  }
+}

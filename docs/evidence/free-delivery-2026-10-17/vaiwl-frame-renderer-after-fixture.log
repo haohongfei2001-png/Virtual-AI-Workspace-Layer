@@ -1,0 +1,21 @@
+✖ single-role frame renderer reuses navigation without host DOM access (705.630625ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 867.235916
+
+✖ failing tests:
+
+test at tests/host/frame-renderer-browser.mjs:9:1
+✖ single-role frame renderer reuses navigation without host DOM access (705.630625ms)
+  page.evaluate: Error: native-create-explicit-blocked-hook
+      at check (eval at evaluate (:370:30), <anonymous>:3:57)
+      at eval (eval at evaluate (:370:30), <anonymous>:17:3)
+      at async <anonymous>:396:30
+      at TestContext.<anonymous> (/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/host/frame-renderer-browser.mjs:24:26) {
+    log: []
+  }

@@ -1,0 +1,38 @@
+✔ MOCK_IDB actual host binding and two UI grants share one native read preparation (25.97225ms)
+✔ MOCK_IDB UI view denies role/scope spoofing, parent sender and cross-frame grants (4.652708ms)
+✔ MOCK_IDB scope invalidation fences late shared page result and future UI publications (6.356709ms)
+✔ MOCK_IDB cached UI view recalibrates at native source expiry under a still-current new scope grant (8.629791ms)
+✔ MOCK_IDB trusted native plan callback receives only current bounded identities and document binding (4.13775ms)
+✔ MOCK_IDB malformed native plans different-url cannot publish UI payload (4.522125ms)
+✔ MOCK_IDB malformed native plans different-id cannot publish UI payload (5.6595ms)
+✔ MOCK_IDB malformed native plans duplicate cannot publish UI payload (3.296625ms)
+✔ MOCK_IDB malformed native plans oversize cannot publish UI payload (4.593625ms)
+✔ MOCK_IDB malformed native plans unsafe-mode cannot publish UI payload (3.125959ms)
+✔ MOCK_IDB invalidation while trusted native plans await prevents late UI publication (4.006166ms)
+✔ MOCK_IDB current conversation comes from verified parent route and existing owner index (5.319042ms)
+✔ MOCK_IDB authorized roles share presentation revision and native callback contains no search or scope (3.561542ms)
+✔ MOCK_IDB presentation rejects forged role, grant, intent fields and unknown Project before native callback (3.569ms)
+✔ MOCK_IDB scope invalidation while native presentation waits rejects late publication (2.621625ms)
+✔ MOCK_IDB failed native presentation leaves shared intent unchanged (2.817166ms)
+✔ MOCK_IDB search result receives owner navigation plan and cannot forge current conversation (4.622208ms)
+✔ MOCK_IDB working set preserves manual order and unavailable native title with reliable original links (7.304667ms)
+✔ MOCK_IDB working set rejects search combination and forged fields (4.483542ms)
+✔ MOCK_IDB account replacement cannot reveal old saved working set (7.475208ms)
+✔ MOCK_IDB human horizon change shares frozen T/Z and H across both frame views, preserving manual assets (8.469083ms)
+✔ MOCK_IDB invalid H, forged scope/grant and parent sender cannot alter policy or session (3.875375ms)
+✔ MOCK_IDB stale horizon CAS rejects without replacing the successfully published session (4.497667ms)
+✔ MOCK_IDB horizon scope revocation before delayed guarded command prevents persistence (2.711667ms)
+✔ MOCK_IDB concurrent human commit wins CAS over delayed horizon without changing shared session (6.788208ms)
+✔ MOCK_IDB delayed obsolete ordinary refresh cannot poison a newly configured horizon (4.680833ms)
+✔ MOCK_IDB document and UI lease expire before delayed horizon CAS despite unexpired RPC deadline (2.475875ms)
+✔ MOCK_IDB current ref remains separately navigable outside bounded visible history page (2.72175ms)
+✔ MOCK_IDB snapshot CAS movement has bounded preparation recovery false (57.882375ms)
+✔ MOCK_IDB snapshot CAS movement has bounded preparation recovery true (109.216541ms)
+ℹ tests 30
+ℹ suites 0
+ℹ pass 30
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 378.981417

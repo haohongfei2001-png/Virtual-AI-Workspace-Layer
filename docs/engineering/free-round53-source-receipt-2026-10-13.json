@@ -1,0 +1,24 @@
+{
+  "baseHead": "0600133fb88ae1e133062173a1b31d02a4f05ebd",
+  "git": "UNCOMMITTED_ROUNDS49_THROUGH53",
+  "sourceHashes": {
+    "src/data/shared-directory-recovery.mjs": "e04870124d9cd873a8af8b3643fd3d2fa5bdb33c69809e7bbf667bb2aa4727cf",
+    "src/data/shared-partition-audit.mjs": "b52d12777aa3639919e416732a8aac768af2582f71834ee5ced3ef03ceb81b4b",
+    "src/data/shared-directory-migration.mjs": "cd8082af9459262dadd1fb9e7779e6f19a5ce0c044aa26505b9297b6f952ad20",
+    "src/data/partitioned.mjs": "1e0ebb2a934702e040b89eb8ef878d65dbe754825b7a7cec8335bd156b299e02",
+    "simulator/build.mjs": "5bcc943bf44c0cc38b8ea331d17c040dda803271d918defc5c45d86587932807",
+    "tests/free/shared-directory-recovery.test.mjs": "c34770f2d3eb8dd81c92b301ae37326b818ba8dd52dd8226668725644fc62f76",
+    "tests/free/shared-directory-read-contracts.mjs": "a7878ce8918063f474aedc5eb24adbe6f9f3e7eac854c650ebbeb4b795bea0d8"
+  },
+  "fullNode": {
+    "pass": 1042,
+    "fail": 0,
+    "skip": 0
+  },
+  "recoveryContracts": 9,
+  "fixedFailure": "Asynchronous transaction abort must never reuse a prepared successful result; fixed new directory and legacy partition recovery",
+  "realIDBAndMV3": "NOT_RUN_APPROVAL_REVIEW_USAGE_LIMIT",
+  "automaticMigration": "NOT_ENABLED",
+  "performance": "NOT_RUN_LAST_MIXED100K_FAIL",
+  "package": "SYNTHETIC_ONLY_NOT_RELEASE_READY"
+}

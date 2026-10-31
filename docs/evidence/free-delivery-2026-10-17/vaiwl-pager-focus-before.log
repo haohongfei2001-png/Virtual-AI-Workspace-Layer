@@ -1,0 +1,119 @@
+✔ bounded DTO uses original names/order and always renders NONE/UNKNOWN entries (4.299333ms)
+✔ more/old/history issue bounded owner queries instead of treating preview as complete (0.855916ms)
+✔ owner selected rows replace bounded page and accurate total keeps more reachable (0.853667ms)
+✔ sidebar expansion requests bounded group page; shared presentation intent remains owner-directed (0.38425ms)
+✔ projection cannot enter unframed/full-snapshot path and wrong role is rejected (0.255792ms)
+✔ late page after scope replacement is discarded (0.433125ms)
+✔ bounded DTO is rejected by ordinary snapshot update and unsolicited same-scope page fences pending replies (0.77975ms)
+✔ last-known card and rows append accessible labels without changing original names or ordering (0.671333ms)
+✔ sidebar last-known qualifier is included in the button accessible name and cleared across scope (0.778209ms)
+✔ bounded current IDs select loaded group and row without a full index (0.618083ms)
+✔ current can locate a loaded selection page, but absent refs are never invented (1.628292ms)
+✔ malformed current metadata cannot enter framed renderer (0.477083ms)
+✔ frame search requests owner inventory, shows waiting and uses bounded 24-row pages (0.706041ms)
+✔ search input bounds and late previous query never overwrite current result (0.343875ms)
+✔ close clears owner search query and late/background search cannot reopen it (0.775542ms)
+✔ scope replacement cancels old search and sidebar delegates without requesting inventory (0.840958ms)
+✔ bounded search refinement uses the returned page limit for the next offset (0.5725ms)
+✔ working set uses owner saved order, unavailable states and bounded refined pagination (0.680125ms)
+✔ working set close sends ordinary page and presentation, stale result never reopens (1.135875ms)
+✔ search and working set are mutually exclusive and old scope results are discarded (1.721583ms)
+✔ sidebar working set only delegates, and malformed working set page is rejected (1.254708ms)
+✔ manual horizon is opt-in workspace-only with five legal options and trusted loaded anchor (2.117ms)
+✔ pending horizon blocks duplicate calls and failure preserves view with retry status (1.222916ms)
+✔ invalid horizon is ignored and late scope response cannot change new scope (1.654209ms)
+✔ manual horizon failure never changes an existing native input node or draft (0.903875ms)
+✔ workspace keeps page-external current chat independently reachable without changing page counts (2.92625ms)
+✔ sidebar keeps page-external current chat independently reachable without changing page counts (0.861417ms)
+✔ current fallback does not duplicate an already displayed row and rejects mismatched owner identity (0.91175ms)
+✔ frame working-set actions are link siblings, workspace-only, and never add unavailable references (0.8795ms)
+✔ frame working-set action sends only ID/action, blocks duplicates and presents retryable error (0.855375ms)
+✔ unavailable saved rows retain remove/move actions and first row cannot move up (1.107458ms)
+✔ late working-set errors after scope switch or stop cannot repaint stale state (3.207583ms)
+✔ editing a later working-set page accepts refreshed page zero; failure keeps original page usable (2.330667ms)
+✔ fresh search DTO restores recovery presentation, pagination and original native href (0.958792ms)
+✔ fresh search DTO restores first-mount presentation, pagination and original native href (0.391042ms)
+✔ fresh search DTO restores new-scope presentation, pagination and original native href (0.553709ms)
+✔ fresh workingSet DTO restores recovery presentation, pagination and original native href (0.7625ms)
+✔ fresh workingSet DTO restores first-mount presentation, pagination and original native href (0.425917ms)
+✔ fresh workingSet DTO restores new-scope presentation, pagination and original native href (0.605708ms)
+✔ settings alone owns horizon backup recovery controls and auto mode remains explicit across updates (2.713125ms)
+✔ settings reset on invalidation and scope changes; invalid optional policies are rejected (0.50525ms)
+✔ settings open/close defers rendering until owned pointer release (15.889584ms)
+✔ closing settings with "Enter" restores trigger focus only after release (6.96725ms)
+✔ closing settings with " " restores trigger focus only after release (8.34725ms)
+✔ workspace project create fallback is a browser-only original project anchor with default keyboard/modifier semantics (1.130334ms)
+✔ sidebar project create fallback is a browser-only original project anchor with default keyboard/modifier semantics (0.300625ms)
+✔ workspace project fallback rejects wrong entity ID URL disposition unsafe href and unavailable plans without C/P mixing (3.466042ms)
+✔ sidebar project fallback rejects wrong entity ID URL disposition unsafe href and unavailable plans without C/P mixing (1.601417ms)
+✔ workspace project href is not synthesized without an independent project plan and disappears across scope invalidation (1.675917ms)
+✔ sidebar project href is not synthesized without an independent project plan and disappears across scope invalidation (0.415625ms)
+✔ explicit frame history return calls safe current entry only after current DTO is applied (0.7295ms)
+✔ failed stale stopped invalidated or noncurrent frame response never announces safe current entry (2.160041ms)
+✔ safe current entry waits for pointer-deferred application and discarded pending page cannot announce (6.002125ms)
+✔ unavailable project explains limitation accessibly without inventing navigation (0.558709ms)
+✔ unavailable conversation explains limitation accessibly without inventing navigation (0.363375ms)
+✔ unavailable row "Enter" only explains and never navigates (0.37825ms)
+✔ unavailable row " " only explains and never navigates (0.283041ms)
+✔ old unavailable project closure cannot explain or return after projection (0.407084ms)
+✔ old unavailable project closure cannot explain or return after scope (0.719667ms)
+✔ old unavailable project closure cannot explain or return after invalidate (0.219041ms)
+✔ old unavailable project closure cannot explain or return after stop (0.199ms)
+✔ old unavailable conversation closure cannot explain or return after projection (0.262791ms)
+✔ old unavailable conversation closure cannot explain or return after scope (0.365291ms)
+✔ old unavailable conversation closure cannot explain or return after invalidate (0.207ms)
+✔ old unavailable conversation closure cannot explain or return after stop (0.201041ms)
+✔ same-context refreshed explanation preserves a usable newly rendered native-return button (0.372584ms)
+✔ framed workspace resize reflows existing cards without fetching, navigation, focus or scroll replacement (0.619708ms)
+✔ sidebar resize does not locate current chat or disturb sidebar scroll (0.217209ms)
+✔ sidebar project create is a sibling of disclosure and does not toggle its member list (0.759833ms)
+✖ search paging keeps keyboard position across waiting without duplicate requests (1.061875ms)
+✖ workingSet paging keeps keyboard position across waiting without duplicate requests (0.362583ms)
+ℹ tests 71
+ℹ suites 0
+ℹ pass 69
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 154.634959
+
+✖ failing tests:
+
+test at tests/host/frame-projection-renderer.test.mjs:237:43
+✖ search paging keeps keyboard position across waiting without duplicate requests (1.061875ms)
+  AssertionError [ERR_ASSERTION]: waiting keeps the pager focus
+  + actual - expected
+
+  + '主题工作区'
+  - '显示更多查找结果'
+
+      at TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/host/frame-projection-renderer.test.mjs:241:86)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: '主题工作区',
+    expected: '显示更多查找结果',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/host/frame-projection-renderer.test.mjs:237:43
+✖ workingSet paging keeps keyboard position across waiting without duplicate requests (0.362583ms)
+  AssertionError [ERR_ASSERTION]: waiting keeps the pager focus
+  + actual - expected
+
+  + '主题工作区'
+  - '显示更多工作集窗口'
+
+      at TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/host/frame-projection-renderer.test.mjs:241:86)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: '主题工作区',
+    expected: '显示更多工作集窗口',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

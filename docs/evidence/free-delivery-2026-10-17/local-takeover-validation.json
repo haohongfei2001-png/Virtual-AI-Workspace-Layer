@@ -1,0 +1,23 @@
+{
+  "baseCommit": "bdab510e2df8473ff1bdc9c80b8878a44487f80a",
+  "environment": {
+    "os": "macOS-27.0-arm64-arm-64bit-Mach-O",
+    "architecture": "arm64",
+    "node": "v26.8.2",
+    "lockedChrome": "156.0.8078.4"
+  },
+  "candidateProductionFile": "src/navigation/navigation.mjs",
+  "candidateSHA256": "41a83c928f52083e16756e1147267ebbe079268b47bb507275433bb2b0947971",
+  "newTestSHA256": "5fc4e39df61494aff555296cafcecc4d6fbee19e36e6258b3e056dc33b3f4263",
+  "untrackedPreserved": 2258,
+  "backupLocalOnly": "/private/tmp/vaiwl-local-takeover-20261018",
+  "claim": "LOCAL_SINGLE_SAMPLES_ONLY; LINUX_DEADLINE_CAUSE_NOT_ESTABLISHED; NOT_RELEASE_READY",
+  "fullNode": {
+    "passed": 8179,
+    "failed": 0,
+    "skipped": 0,
+    "cancelled": 0,
+    "durationMs": 85510.051125,
+    "trackedInputsUnchanged": true
+  }
+}

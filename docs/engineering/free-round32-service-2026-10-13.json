@@ -1,0 +1,30 @@
+{
+  "evidence": "HEADLESS_SYNTHETIC_REAL_IDB_CLIENT",
+  "hashes": {
+    "src/b1/document-binding-broker.mjs": "9a404d0e773c507ca0f14fe580435ddb2a50ecc13a5dab163aa3859ef07017bd",
+    "simulator/service.mjs": "f5540dfa7b337949ca2af6a66e54160d14ce5b127922f385d768e4d33607f732",
+    "src/data/free-runtime-service.mjs": "76ba9afaebd649f18f5bc968a39c3d09d2d0fa6f449d2650bd85307a2665f14a",
+    "src/data/known-anchor-backfill.mjs": "ac37f09dcd992c454c142f11a9e3f3897c3c785908f5a27f8de8ec422b0031df",
+    "src/data/repository.mjs": "9764bb242a70731f3c2b16f7015a4188e92dc89b9639e67b6b6e13895e7734b6",
+    "src/b1/scope-repository.mjs": "2415f70ab46da554003eb1732e82dfc0764a7165476cf4ebe914ea2eeebe2c10"
+  },
+  "results": [
+    {
+      "name": "startup B1-only historic anchor automatically becomes reachable UNKNOWN without native evidence",
+      "status": "PASS"
+    },
+    {
+      "name": "completed cursor restarts after broker UPSERT and automatically refreshes with draft and reading intact",
+      "status": "PASS"
+    },
+    {
+      "name": "foreground read aborts held real IDB backfill, remains paused throughout long RPC, then quiet resume preserves Pro and composer",
+      "status": "PASS"
+    },
+    {
+      "name": "account switch cancels held old-scope batch and never publishes A anchors into B",
+      "status": "PASS"
+    }
+  ],
+  "errors": []
+}

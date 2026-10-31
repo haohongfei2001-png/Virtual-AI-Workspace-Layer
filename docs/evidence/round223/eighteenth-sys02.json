@@ -1,0 +1,180 @@
+{
+  "status": "PASS",
+  "evidence": "D_REAL_EXTENSION_ORIGIN_INDEXEDDB_TEST_ONLY_COMPOSITION",
+  "requestedEvidence": "D_REAL_EXTENSION_ORIGIN_INDEXEDDB_TEST_ONLY_COMPOSITION",
+  "mv3Composition": "TEST_ONLY",
+  "productionHostS": "NOT_RUN",
+  "liveAccount": "NOT_RUN",
+  "physicalDiskExhaustion": "NOT_RUN",
+  "wholeProcessCrash": "NOT_RUN",
+  "injection": "TEST_ONLY_ABORT_AFTER_SUCCESSFUL_PUT_REQUEST",
+  "authority": "EXPLICIT_OFFLINE_V1_CAPACITY_AND_EXISTING_JOINT_V2_FAULT_FIXTURE",
+  "sourceHashes": {
+    "tests/host/sys02-pending-idb-cases.mjs": "d2619174fa793d694e2aa2046b844ce7cd20bfb5d368658d3c0ec283b647d61a",
+    "tests/b23/contracts.mjs": "acde33e039e979a73e0b54450a0aa92e006c04a8699d37f20a6dbfafc1824fd6",
+    "tests/b23/c34-cases.mjs": "bb1ed8425b27d401a3991cc5ba89637dc6a802504721fbfc34e05d6da0d73bda",
+    "simulator/data.mjs": "a1e77db2bd6b16b5a2142c9068d717e8a109424f3f89a87d641160ce532d0845",
+    "src/data/hash.mjs": "aef21d1842cdc09b33fef973a9d29f15cb7c0c3f773a6a9d31726b83ffee7b21",
+    "tests/b23/b5-cases.mjs": "c51a495d6bfc7d5f31879a55c1136039b430725c71885a5179bc2a34fcba93f9",
+    "src/b1/scope-repository.mjs": "08d5c29e4be60c9b94ac6c7dce3e7fb1c5f2e553979c5a8f872a08d7c0c2bb91",
+    "src/data/schema.mjs": "4a15161852c0c0a9dcc3fab10a984c97929ed9157c33fbc97121711cb41740aa",
+    "src/data/free-policy-initialization.mjs": "e0a358b12ea9454f5ee657612e4c83c247ba895b082a362be9186f4b7e898a32",
+    "src/b1/identity.mjs": "6d7ca616701826733d4936d8a139395ccf1a3111e025ec6b1035d78c1dc05e99",
+    "src/data/known-anchor-key.mjs": "e5d91c902e04440be924ef0506ff688bbbccd83150610f50199b518bcb298df3",
+    "src/data/repository.mjs": "7fcd49c80cb6ee3687dcc898895f387965d6e86cf847a158ff7ba1e2becdbe9e",
+    "src/data/free-time-policy.mjs": "8a75b5bdde8abf8ee07873ecf2aa45a19faccd030b9f03c738b56db6ba9ea17a",
+    "src/navigation/projection.mjs": "36334b5da4bd8e89718bf45b69723f4a657d46797c03c653298aaa3392399f24",
+    "src/data/activity-version-fence.mjs": "4ad8bee9665e2037b1be7eb1c871b024001adb25c8b630115e1a9c1ce97f36fe",
+    "src/data/native-repository.mjs": "bb0478d3295cc965f429b85d16a084740e01cf7fd9d7f66a1388536f81109500",
+    "src/data/continuation-evidence-reader.mjs": "df6058de242ec65cf2c371fedd0cebb0c90da110f76a9d2fc172447be50f82b7",
+    "src/data/free-evidence-partitions.mjs": "c1cdd10d9c6a6a142759fa7589b55a1607a4518260677abb3145ea00907a0ead",
+    "src/data/free-evidence.mjs": "f0e6e9c36330c9c94e8bed11b06b92acfa0d76725f8afe70af6fee5b0afab680",
+    "src/data/observed-send-anchor.mjs": "f9dbb9278502a325c2263d4adeb99ea1c0159525d505728fe84fdee2d59980da",
+    "src/data/free-activity.mjs": "2d961ee56aaddada429ba684cf08ba1aa4a4886204f2d3a43d3b52843da7de46",
+    "src/data/state.mjs": "df0eaff00a7f050c37653f0e740b8fabe19bce571c5e37f4ce437d180984c62a",
+    "src/data/preferences.mjs": "1fb8395c5dfe23d64c91095b71a1c117b9762b3ccec68e262aaf73744b12c9d7",
+    "src/data/evidence-ref-directory.mjs": "8a89bf5b8535578881c823077554f177098044214a22fcfaf4be41e65498c867",
+    "src/data/verified-record-cache.mjs": "9b7b3c13abdd37f2b6d4fad48b85707a9815538fd793cad537f8e87b8f08cde0",
+    "src/data/native-observation-continuation.mjs": "3222a09592efd5c904cc65e036976f2f08bb260a9e639c83bcfddbd025dedee8",
+    "src/data/native-facts.mjs": "98dc17aedc9cf675fed8d720a181422956f79fd6784a4040327788a69e8c3c93",
+    "src/data/native-partitions.mjs": "4e295e042a2e5e3337dddfe1f5928d0f8e920aaab981a7e2f96fcd00ccff60a9",
+    "src/data/native-version-index.mjs": "03089b0dddfa9f948087823af1e1ad7b43fc765a6631c40647e1e4b201cd7211",
+    "src/data/native-index-migration.mjs": "69b9275e7a58878aba4eba800eb324140ac84c0730d31dcb4f3a067d29dda6a2",
+    "src/data/native-partition-audit.mjs": "3cd490dc6e38459d1562d8b2a8ec277911fe46782cb55840965fb045182f247f",
+    "src/data/audit-record-prefetch.mjs": "5af85b5c8a90e0a1d236fdec784b77ee970f7ea251e18b4be386a34e909d6b7c",
+    "src/data/native-index-writer.mjs": "b24b74a4470602b8196c5ee9559aaa8d5f53454c034b02aeb84b2652532a2808",
+    "src/data/native-index-reader.mjs": "f359a28b189dec9605dad356d3c19d474132fff2ab3a94425367997047c96c4a",
+    "src/data/free-projection.mjs": "fe87590005120f89ab41571fe9bf8ae566918748ab543e0ac172fb63274c8a48",
+    "src/data/free-evidence-repository.mjs": "64d0ea73914e840c1783e7a4a9408584a5523c14c715c6be24d998418679f240",
+    "src/data/evidence-directory-writer.mjs": "9ff0c941904e155c736a29e1d232e4fecf67d7995c5d4b6907a12b0f54102944",
+    "src/data/evidence-directory-migration.mjs": "75328ab40b3327d9e9c60c44402d87ea3afc9bd385eeb3ba2f0a14036fc1b135",
+    "src/data/evidence-partition-audit.mjs": "3aadf876de681cc97ef5564119da7a2c691c45a472434d6e8f7080ae02d3aa79",
+    "src/data/evidence-directory-reader.mjs": "7ef90c7a37a82b2ce4562acb6afc56e4ae36d14543c776893664b79869fa895b",
+    "src/data/shared-directory-retention.mjs": "3bc27b2a71994f8f0857056c8309c47107251372f25c021368d3d06248e7cbc9",
+    "src/data/shared-directory-reader.mjs": "e4abac50e4cc282e16469861009a48893a10fd76652c208791834f50678c7672",
+    "src/data/shared-ref-directory.mjs": "9d1f099d7c5e5019ba023b0d84c57779e968a55ad6397d2ee20825e0d471fa44",
+    "src/data/partition-manifest.mjs": "566283402493ada28abc530354c343bc6c561e309d1e6802c981d62584a5e06a",
+    "src/data/cooperate.mjs": "ce494a33280143e1e2a2227a72413da792330311de12642a9a56b13704f2f3b4",
+    "src/data/shared-directory-migration.mjs": "0cd415f9a871b93613c3d9f3e301982cda2d1891dc847d983397f87dc2dcf0df",
+    "src/data/shared-directory-writer.mjs": "4a060d7467d6e55a9fb2d54cd3d7099bc976c2228cf010cc97db03976a8ff8dd",
+    "src/data/shared-partition-audit.mjs": "25d4b77561b36b150ce1524e27e184170f3c1ef493995251a88678908d31f6cf",
+    "src/data/partitioned.mjs": "7c519465670c6693ddd81d17e3d03cd1376bdf21c0e56837d73dd6741a63e792",
+    "src/data/shared-directory-recovery.mjs": "e04870124d9cd873a8af8b3643fd3d2fa5bdb33c69809e7bbf667bb2aa4727cf",
+    "src/data/backup.mjs": "bb0a8639d02e2169ae15e866a464f1531b7e80e40afd7c8a4b35e99d70928396",
+    "src/data/evidence.mjs": "f84032c9a2fc08455480652b60de6fb9394a70e82a7ace8729186ff097b26238",
+    "src/data/known-anchor-backfill.mjs": "dd58e613da9564668fc7963135dd98caccf3bd6930e532864e68d9ff6afd55ca",
+    "simulator/persistent-seed.mjs": "de5208b63e2d35b58268adefc4e1a05848f069f57948976974b2bf33ee139e68",
+    "src/navigation/icons.mjs": "14195d8a7a21a029278ff6f9bf0bb1add2d679b37666108d80cfadabe312d2fd",
+    "tests/host/joint-observation-fixture.mjs": "98ce52b151d2e52334a8dfab3fac89aaa49294db99a3b5fb3f6cbe2c90fc5b58",
+    "src/runtime/host-observation-owner.mjs": "e9a59419114f3b0c17f6fd7d6ac37a7f1b26fd8fec605d6aebd57fcd85be67d7",
+    "src/host/current-observation-batch.mjs": "f7fcd583d0811a8b71d72dc5bac4ba4c57eae16e552076aa08d5a50f42b45151",
+    "src/host/contract.mjs": "35129aacf2a7e1fe1812c846379563d60ad74a66b689ad41bc38d76484a97716",
+    "src/host/send-intent-claim.mjs": "1e399b5af40affb0500f744f0c2c8aa5f0dc935cdbbd054dff1e483cda1f971f",
+    "src/host/current-body-claim.mjs": "4e26f9fe6c905d1dbf3a07995168c4fb5dea5e424bff238644da1c067ac03ef5",
+    "src/data/request-deadline.mjs": "cda2ebb4158c05eb911fbb84a1af092cf91f461e3a002bef4b4d23f5a70dfdf7",
+    "src/host/surface-batch.mjs": "4733a8cecdc3f4664c77da81d12441c9f2bd7cf0c16e55ec93eb94076faa4e5d",
+    "src/runtime/host-send-ack-owner.mjs": "91fa828cc2710efc1a5dd876e9addf2bf3e29aa301268dc8a8ac59cb42073a12",
+    "src/runtime/host-continuation-owner.mjs": "99aa3f72016d7f0ac69e4dd4101a6e5724125035a68bf864d7fb464772f171b4",
+    "src/runtime/send-ack-admission.mjs": "784141e34d18be3faa6e4cdc725b8f5442f6ea103d68dca00e82d09b64bcdccc",
+    "src/runtime/session-provider.mjs": "b3927b9f11dd704e03927e27dc91fdc4bd01b33d61f008426b73bbb908e2a07b",
+    "src/runtime/historical-send-profile.mjs": "b356d5fc7101080ba60910edc0175180924c548269816dd98900f2055195f4c9",
+    "src/host/conversation-metadata.mjs": "744afe2228882a5ebff1ffd8f1294ecd80697d63b44af60640e3ff4d3a63410e",
+    "src/host/conversation-acceptance.mjs": "92fdfc486bd9614028aacc197b99a26b8ad3ae254e54a980a04b0a1e90153144",
+    "src/runtime/current-metadata-reader.mjs": "e507ae813e11cf8ac4d5d5970b94efa0ed0309e4504111188142bd5b6550fe0a",
+    "src/runtime/host-send-candidates.mjs": "7149e95aee63d3fd4946d7538b0ff58daf2e5b614d663341673c2eb802ed0fa4",
+    "src/host/send-correlator.mjs": "b3f2090a3c5bf0e3d467de761bc79e2423c94e1e7b1e399918026d2c4575ff0c",
+    "tests/host/sys02-pending-idb-browser.mjs": "dcfcbad6b8569d7497b5ad07c22207231076b882a75cb07def4601bc1682ef1a"
+  },
+  "results": [
+    {
+      "name": "SYS02 IDB count capacity rejects atomically with acknowledged queue and Pro assets intact",
+      "status": "PASS",
+      "elapsedMs": 4200
+    },
+    {
+      "name": "SYS02 IDB bytes capacity rejects atomically with acknowledged queue and Pro assets intact",
+      "status": "PASS",
+      "elapsedMs": 1605
+    },
+    {
+      "name": "SYS02 IDB joint v2 pending survives native checkpoint GC and expiry without evidence replay",
+      "status": "PASS",
+      "elapsedMs": 64
+    },
+    {
+      "name": "SYS02 IDB injected transaction abort during evidence preserves acknowledged v2 payload and retry is exact once",
+      "status": "PASS",
+      "elapsedMs": 41
+    },
+    {
+      "name": "SYS02 IDB injected transaction abort during completion preserves acknowledged v2 payload and retry is exact once",
+      "status": "PASS",
+      "elapsedMs": 34
+    },
+    {
+      "name": "SYS02 IDB corrupt root while joint v2 queued never loses acknowledged payload",
+      "status": "PASS",
+      "elapsedMs": 25
+    },
+    {
+      "name": "SYS02 IDB corrupt piece while joint v2 queued never loses acknowledged payload",
+      "status": "PASS",
+      "elapsedMs": 29
+    },
+    {
+      "name": "SYS02 IDB corrupt checkpoint while joint v2 queued never loses acknowledged payload",
+      "status": "PASS",
+      "elapsedMs": 25
+    },
+    {
+      "name": "SYS02 IDB native injected transaction abort after earlier acknowledged work rolls back and retries without dropping queue",
+      "status": "PASS",
+      "elapsedMs": 26
+    },
+    {
+      "name": "SYS02 IDB actual CAS conflict leaves earlier pending and rejected operation retryable",
+      "status": "PASS",
+      "elapsedMs": 21
+    },
+    {
+      "name": "SYS02 IDB explicit root recovery retains pending then defers revoked authority",
+      "status": "PASS",
+      "elapsedMs": 28
+    },
+    {
+      "name": "SYS02 IDB explicit root recovery refuses damaged shadow",
+      "status": "PASS",
+      "elapsedMs": 23
+    },
+    {
+      "name": "SYS02 IDB oversized single continuation cannot disturb previously acknowledged queue",
+      "status": "PASS",
+      "elapsedMs": 23
+    }
+  ],
+  "errors": [],
+  "temporaryPackage": "/tmp/vaiwl-sys02-idb-821A8F/extension",
+  "moduleCount": 73,
+  "manifest": {
+    "manifest_version": 3,
+    "name": "VAIWL SYS02 TEST ONLY IndexedDB",
+    "version": "0.0.1",
+    "background": {
+      "service_worker": "sys02-worker.mjs",
+      "type": "module"
+    },
+    "content_security_policy": {
+      "extension_pages": "script-src 'self'; object-src 'none'; connect-src 'none'"
+    }
+  },
+  "extensionId": "loapkiieilamacchgmkoplcendkhmijn",
+  "environment": {
+    "origin": "chrome-extension://loapkiieilamacchgmkoplcendkhmijn",
+    "extensionId": "loapkiieilamacchgmkoplcendkhmijn",
+    "nativeIndexedDB": "[object IDBFactory]",
+    "secureContext": true
+  },
+  "browserVersion": "156.0.8078.4",
+  "sourceChanged": false,
+  "sourceIntegrity": "PASS"
+}

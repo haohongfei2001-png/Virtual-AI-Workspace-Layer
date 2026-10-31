@@ -1,0 +1,15 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: same-scope reconnect must resume original settings dialog
+    at file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/free/read-recovery-budget-browser.mjs:47:60 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: '==',
+  diff: 'simple'
+}
+
+Node.js v26.8.2

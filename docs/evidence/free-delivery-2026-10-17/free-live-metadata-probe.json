@@ -1,0 +1,11 @@
+{
+  "status": "METADATA_ONLY_CONTEXT_UNVERIFIED",
+  "authorizedSample": "one existing conversation",
+  "conversationIdAndTitleObserved": true,
+  "contentBodyRead": false,
+  "credentialsPersisted": false,
+  "nativeWrites": false,
+  "networkObservation": "setup timed out; subsequent exact tab binding reported not found",
+  "contextFieldsObserved": false,
+  "productionScopeEnabled": false
+}

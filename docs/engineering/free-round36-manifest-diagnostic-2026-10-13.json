@@ -1,0 +1,95 @@
+{
+  "evidence": "ISOLATED_HEADLESS_MANIFEST_ENCODING_DIAGNOSTIC_NOT_PRODUCT_ACCEPTANCE",
+  "baselineCommit": "315db11",
+  "baseHash": "efbd6a84604da32fbe582a9823f7e8117c367610224530888de2a1fa6ec4c0f1",
+  "candidateHash": "7e76cdbe3f78f558cea3b6f268ea5103185df9caeefe3bd01fd8d10e273de518",
+  "runtimeBeforeHash": "efbd6a84604da32fbe582a9823f7e8117c367610224530888de2a1fa6ec4c0f1",
+  "runtimeAfterHash": "efbd6a84604da32fbe582a9823f7e8117c367610224530888de2a1fa6ec4c0f1",
+  "browser": "156.0.8078.4",
+  "encoder": "function encodeManifestContainers(value){\n let encoded='',units=0;const active=new Set(),stack=[];\n const append=text=>{units+=text.length;if(units>16*1024*1024)throw Error('state-too-large');encoded+=text;};\n const emit=v=>{const type=typeof v;if(['function','symbol','bigint','undefined'].includes(type)||type==='number'&&!Number.isFinite(v))throw Error('non-json-value');\n  if(v&&type==='object'){const array=Array.isArray(v);if(!array&&![Object.prototype,null].includes(Object.getPrototypeOf(v)))throw Error('non-json-object');if(active.has(v))throw Error('non-json-value');active.add(v);const keys=array?null:Object.keys(v).sort();stack.push({value:v,array,keys,index:0,length:array?v.length:keys.length});append(array?'[':'{');}else append(JSON.stringify(v));};\n emit(value);while(stack.length){const f=stack[stack.length-1];if(f.index===f.length){append(f.array?']':'}');active.delete(f.value);stack.pop();continue;}const i=f.index++,key=f.array?i:f.keys[i];if(i)append(',');if(!f.array)append(JSON.stringify(key)+':');if(f.array&&!Object.hasOwn(f.value,key))continue;emit(f.value[key]);}return encoded;\n}",
+  "result": {
+    "checks": [
+      "unicode-escapes-keys",
+      "null-prototype",
+      "sparse-array",
+      "shared-not-cycle",
+      "cycle",
+      "undefined",
+      "NaN",
+      "Infinity",
+      "bigint",
+      "function",
+      "symbol",
+      "date",
+      "toJSON",
+      "array-custom-iterator-ignored",
+      "exact-16Mi-codeunits",
+      "over-16Mi-codeunits",
+      "complete-root-payload-checksum-equivalence"
+    ],
+    "refs": 100000,
+    "timings": [
+      {
+        "round": 0,
+        "variant": "baseline",
+        "elapsedMs": 51
+      },
+      {
+        "round": 0,
+        "variant": "candidate",
+        "elapsedMs": 52.70000000298023
+      },
+      {
+        "round": 1,
+        "variant": "candidate",
+        "elapsedMs": 49.600000001490116
+      },
+      {
+        "round": 1,
+        "variant": "baseline",
+        "elapsedMs": 53.600000001490116
+      },
+      {
+        "round": 2,
+        "variant": "baseline",
+        "elapsedMs": 49.899999998509884
+      },
+      {
+        "round": 2,
+        "variant": "candidate",
+        "elapsedMs": 52.69999999552965
+      },
+      {
+        "round": 3,
+        "variant": "candidate",
+        "elapsedMs": 49.399999998509884
+      },
+      {
+        "round": 3,
+        "variant": "baseline",
+        "elapsedMs": 52.100000001490116
+      },
+      {
+        "round": 4,
+        "variant": "baseline",
+        "elapsedMs": 50
+      },
+      {
+        "round": 4,
+        "variant": "candidate",
+        "elapsedMs": 54.20000000298023
+      },
+      {
+        "round": 5,
+        "variant": "candidate",
+        "elapsedMs": 49.100000001490116
+      },
+      {
+        "round": 5,
+        "variant": "baseline",
+        "elapsedMs": 52.29999999701977
+      }
+    ],
+    "rootChecksum": "503f6b48398cd0a1fa0a9b87485153e66a3d0608501f000032391f079ac36625"
+  }
+}

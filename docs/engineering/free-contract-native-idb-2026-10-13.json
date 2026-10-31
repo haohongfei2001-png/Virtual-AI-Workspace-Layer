@@ -1,0 +1,85 @@
+{
+  "level": "REAL_BROWSER_INDEXEDDB_SYNTHETIC_ONLY",
+  "results": [
+    {
+      "name": "REAL_IDB v2 upgrade closes old connection and preserves Pro root bytes",
+      "status": "PASS"
+    },
+    {
+      "name": "REAL_IDB same-name projects and PROJECT/NONE/UNKNOWN survive reopen",
+      "status": "PASS"
+    },
+    {
+      "name": "REAL_IDB two connections serialize CAS with one winner",
+      "status": "PASS"
+    },
+    {
+      "name": "REAL_IDB native rename and move are atomic and do not touch Pro assets",
+      "status": "PASS"
+    },
+    {
+      "name": "REAL_IDB revoked binding aborts after put without persisting a receipt",
+      "status": "PASS"
+    },
+    {
+      "name": "REAL_IDB scope isolation and durable source invalidation",
+      "status": "PASS"
+    },
+    {
+      "name": "REAL_IDB broker-backed native fixture lists all permitted refs and original titles",
+      "status": "PASS"
+    }
+  ],
+  "pass": 7,
+  "fail": 0,
+  "realChatGPT": "NOT_RUN",
+  "nativeUI": "NOT_RUN",
+  "browser": "156.0.8078.4",
+  "headless": true,
+  "sourceHashes": {
+    "src/navigation/current-index.mjs": "909a8c2b6e9fae5db659efe82341788e37240f58d43bff7e94e85c8ac4864a89",
+    "src/navigation/icons.mjs": "14195d8a7a21a029278ff6f9bf0bb1add2d679b37666108d80cfadabe312d2fd",
+    "src/navigation/navigation.mjs": "4cbe09636dac6e7446108e36de82aee629c91c2b3d2798895525d1dfee72de5f",
+    "src/navigation/projection.mjs": "8d4b2d85dceb27b4965cd82842fec37ecdbddedae3e6a1c763720dbec35e3a4b",
+    "src/navigation/search.mjs": "0046527fb8bfbaf97ad7eb6036db7233087805e55ec2d9ac3f348a632af89efe",
+    "src/navigation/styles.mjs": "3acd56606be4653a1391a7725d21649c376b7ded6d8acb8e5b6f5c0a80c213bc",
+    "src/data/backup.mjs": "bb0a8639d02e2169ae15e866a464f1531b7e80e40afd7c8a4b35e99d70928396",
+    "src/data/cooperate.mjs": "ce494a33280143e1e2a2227a72413da792330311de12642a9a56b13704f2f3b4",
+    "src/data/evidence.mjs": "f84032c9a2fc08455480652b60de6fb9394a70e82a7ace8729186ff097b26238",
+    "src/data/free-projection.mjs": "bf63dd527eae2bea4a15948e99c239d23992d194808559ce16dcde0fae5d5aeb",
+    "src/data/hash.mjs": "1c30ed33f7f01d364680f67dc2fd2ee69f10b7be7a7afd03b5d7911275be25b7",
+    "src/data/native-facts.mjs": "727efbb64b4b70785288a40d4bff29f3054e38b95262fb79d7621dbcfaaaafba",
+    "src/data/native-repository.mjs": "add204a67000294c919f2164207cbed5e3ed497b53b2d902cb770f747b852a36",
+    "src/data/partitioned.mjs": "25d3756bf4e3e45342541140efd6d6eac8d381380c90baf57098560ddd18d63d",
+    "src/data/preferences.mjs": "1ef1278af73bb5ef27904863242ab4b09ca177d009da96b9758b83c2ee6f104b",
+    "src/data/replica.mjs": "a79882d912cae17ca5777a2ac5a8f8ff0d4d4b11585cdcbe4671628de098befc",
+    "src/data/repository.mjs": "a8f6504650db363c4092c8ac4332e3515e1d4ccc1e6b893ea4bd468b8b37a6cc",
+    "src/data/schema.mjs": "9db57336e5d79ec002ef6308100d18008140292bcf1385899524b0a6972ebad6",
+    "src/data/state.mjs": "e306bdd92ec89299e0507ab411ebbd683e3e8146535eb7179d019d4416a72af9",
+    "src/b1/document-binding-broker.mjs": "2120ecaab1f76936ac17f4df40efdd845ed8ab8576afd13a4484a8b4e65ca105",
+    "src/b1/identity.mjs": "6d7ca616701826733d4936d8a139395ccf1a3111e025ec6b1035d78c1dc05e99",
+    "src/b1/scope-repository.mjs": "387fe0586e8c9492e0b2c1eae7dc86a13c3f6b97eb52c2e520333d7a5aa855f4",
+    "simulator/adapter.mjs": "f4f8b2590915d46c10393a16c60d35805da6e10231f6bc0b7865c405417b4a44",
+    "simulator/build.mjs": "d8b694f58692066bcc15c7403827ce4e0b491b4a201f345b3800a6c796f9e6a0",
+    "simulator/client.mjs": "197dc8a846777eaa88d47f800bfc74a0940d6cd6affced630d672b2dc8d4cbe5",
+    "simulator/content-entry.mjs": "8a6b6b50df4b60df7744c66d47dc31aaab5842c5eef3cc7719c276cbb171415d",
+    "simulator/control.mjs": "1aecf9cc6f938dddb4477060f5901af6d852d89353dcd145c834564042e14355",
+    "simulator/data.mjs": "a1e77db2bd6b16b5a2142c9068d717e8a109424f3f89a87d641160ce532d0845",
+    "simulator/editor-style.mjs": "18197a2a89d8e83986b56e464c506c9bb8e08005d07f97c46959f5e9cfabf2ce",
+    "simulator/editor.mjs": "3b4a1239781cf2574973132752e2c46140be36f885d9e180422d965d00e650e2",
+    "simulator/environment.mjs": "ac3f0f1ab2edb0fcf466f3fd1b7015ab948794c672fa4d65076789a3da897039",
+    "simulator/host.mjs": "dad2550aeee3507e048b6794a3c9029f228aeb269653e9b5de5881e0bd9e8282",
+    "simulator/main.mjs": "7a6788fefe2eaf5c8abcd46cfe024c76511c422888073472bbb3b8caacf9092c",
+    "simulator/native-seed.mjs": "8a1a64f9acbc2c1555049dbff8398d209d835a65723b5c349dedf6321c83f752",
+    "simulator/persistent-seed.mjs": "de5208b63e2d35b58268adefc4e1a05848f069f57948976974b2bf33ee139e68",
+    "simulator/server.mjs": "d59a1812d5cccf6213340c7d2c1b0a3f3fdb3a6327503fb220f5cf813d27f6cd",
+    "simulator/service.mjs": "2130e37262b435f977d8bcec69d1cc6b622a8beaffc03f4420f52da70c00fb5e",
+    "simulator/worker.mjs": "1abede3e4bc224a5972c927986ecaf8fbbdfe12eb7a63b3b2372ebba8e9fb6f9",
+    "tests/free/browser-contracts.mjs": "4037559147ba5826b3c1e087eb6bd22845e85f4de8f192571e4f493eb606ac51",
+    "tests/free/migration.test.mjs": "91b951d6c3a3f06a3b1ab58b9400149a3101d8c25fd9cff9334dc5b7bd71e120",
+    "tests/free/native-browser.mjs": "bd685d8cfb26d0e4dd7a6a081489a7cf440a6effc1fc9dae616a5825ade0dd74",
+    "tests/free/native-facts.test.mjs": "40c36f7cc25ae9e9c5f2811fea2be0dd67dd60ae71ba9bd5fbf8edd79e10b6ee",
+    "tests/free/native-repository.test.mjs": "01f222e070905e2e7556bf1d2a333968417ff1d467a27dee710dca433491e681",
+    "tests/free/service.test.mjs": "166676a4de9de68b27e3b20ff448a94cca786200f025727360f44a883d7f8abc"
+  }
+}

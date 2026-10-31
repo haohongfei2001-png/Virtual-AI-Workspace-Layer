@@ -1,0 +1,2076 @@
+{
+  "schema": "vaiwl-c1-c5-product-integration-20261026-v1",
+  "baseHead": "6ee7c7bf179b4f25c1f1813dd96d551ad6d01c8c",
+  "taskbook": "https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16#issuecomment-6398255622",
+  "status": "OFFLINE_INTEGRATED_REAL_PRODUCT_ACCEPTANCE_NOT_RUN",
+  "fixes": [
+    {
+      "cause": "Geometry recovery reopened sidebar mask while native-control dispatch awaited its final authority check; the real target became hidden.",
+      "implementation": "Bounded presentation hold around existing native dispatch; final target/authority checks and single actionId remain. Finally releases only current authority.",
+      "files": [
+        "src/host/surface-controller.mjs",
+        "src/host/content-session.mjs",
+        "src/host/native-actions.mjs"
+      ],
+      "counterexample": "J1 native target visibility hidden at dispatch-check; corrected J1 all nine steps pass. J1 aggregate remains historical PARTIAL_J1_NOT_ACCEPTED."
+    },
+    {
+      "cause": "Candidate return restored row offset but new frame secondary disclosure remained closed.",
+      "implementation": "Only existing explicit migration return reopens disclosure before restoring position.",
+      "files": [
+        "src/host/free-frame-client.mjs"
+      ],
+      "counterexample": "J1 return to rows 33-64/80 now visible with saved position and canonical Project focus."
+    },
+    {
+      "cause": "New document frame height temporarily clamped saved scroll 144 to 129, and its own scroll event overwrote saved intent.",
+      "implementation": "Retain validated restoration target through layout clamp; explicit user wheel/pointer/key, period change or Project reveal relinquishes it.",
+      "files": [
+        "src/navigation/navigation.mjs"
+      ],
+      "counterexample": "Existing actual DOM renderer reproduces temporary clamp and proves later layout restoration plus subsequent user scroll priority."
+    },
+    {
+      "cause": "Focus traversing a proved native header control hid both surfaces; entering composer afterward left sidebar hidden.",
+      "implementation": "Header and composer focus surrender workspace only; unknown protected region and real native modal continue to surrender both.",
+      "files": [
+        "src/navigation/mount-surface.mjs"
+      ],
+      "counterexample": "J3 forward keyboard path 2->1->0 now remains continuous sidebar with original native draft, file, tool and permission handling intact."
+    }
+  ],
+  "verification": {
+    "browserLocal": {
+      "status": "PASS",
+      "evidence": "free-c1-c5-product-browserLocal-20261026.json.gz",
+      "sha256": "a0bff2586c2af19cddf5834859278a85bfdce6dfbe99f210fe00c7c4936a20de",
+      "realChatGPT": "NOT_RUN"
+    },
+    "productStates": {
+      "status": "PASS",
+      "evidence": "free-c1-c5-product-productStates-20261026.json.gz",
+      "sha256": "e14e71d36f6024a34ce0bef64144447f39b965867aab7bdf2bc33c59c593a064",
+      "realChatGPT": "NOT_RUN"
+    },
+    "j3": {
+      "status": "PASS",
+      "evidence": "free-c1-c5-product-j3-20261026.json.gz",
+      "sha256": "75d865c7e2598980f11eb550c464daf328984c4be4d17fc6f6ce4d825abea9f6",
+      "realChatGPT": "NOT_RUN"
+    },
+    "j1": {
+      "status": "PARTIAL_J1_NOT_ACCEPTED",
+      "evidence": "free-c1-c5-product-j1-20261026.json.gz",
+      "sha256": "07cfd28d51fec3a4205b2ff2f57c7164cfcad69d51f6e8744a92c3c22a5a61b3",
+      "realChatGPT": "NOT_RUN"
+    },
+    "sys05": {
+      "status": "PASS_NARROW_OFFLINE_SYS05_CORRECTNESS",
+      "evidence": "free-c1-c5-product-sys05-20261026.json.gz",
+      "sha256": "ee63ea0138c402f6df2b29c181e7dd8543aa044a27e539a674b3082afdc19066",
+      "realChatGPT": "NOT_RUN"
+    }
+  },
+  "sourceHashes": {
+    "extension/worker.mjs": "0b80790a6af44952f12d782e55ffa45008778580e1daf5aa447a4b3e2a264009",
+    "extension/browser-bootstrap.mjs": "961284ccdf807fa799b81c512607808d9a143ca6070f98aaedf28e26e87fc554",
+    "src/runtime/host-browser-bootstrap.mjs": "5a7e89e900643d7c8e9c1d5f1b4573e4d6d6bf11dfe9fc296e12a62ed38e36e3",
+    "src/runtime/browser-request-context.mjs": "689ee6ea95184456be52b872a0778f04abfc6e75922991ca9ac0daa3019093aa",
+    "src/host/url-policy.mjs": "fddfafcca2276161e6fd3c908ac896d0dab656fce6cf06aee64f1f442f7ac7e9",
+    "src/b1/identity.mjs": "75f25f4daf8eef16c1cc161eeb7ef1eeaa17378d701f67d2ec56cb51ebfa8289",
+    "src/data/request-deadline.mjs": "cda2ebb4158c05eb911fbb84a1af092cf91f461e3a002bef4b4d23f5a70dfdf7",
+    "extension/config.mjs": "9f38c623f8ef08e684d9b1b71fd0a49c01b736a41e75efc997117370df175c41",
+    "src/runtime/host-worker-runtime.mjs": "67f8da491f2104b81216cafd5a4ee56768dc2940e4159b87e596e9010c45a54b",
+    "src/runtime/browser-local-control.mjs": "ae92f0cac4610d08097594d91c403f051e973b4e3acea046c2a2e58e67dd634c",
+    "src/host/contract.mjs": "35129aacf2a7e1fe1812c846379563d60ad74a66b689ad41bc38d76484a97716",
+    "src/runtime/browser-old-send-terminal.mjs": "0ac8c767e1112f053d979ae411662cf1db17fc26501ea35e41ca8b4186514393",
+    "src/host/old-send-terminal-profile.mjs": "a43986f8e54b15c98e9dc3535a9e0bb08820ad2132f0eb0fdf72ace97b227b0f",
+    "src/runtime/shared-host-read-budget.mjs": "ee4e09ea97c144fbe30b029b41251ae8e313503bf706e3b4cd9966a24ae27196",
+    "src/data/hash.mjs": "aef21d1842cdc09b33fef973a9d29f15cb7c0c3f773a6a9d31726b83ffee7b21",
+    "src/runtime/browser-first-send.mjs": "609847013c92f984f0c75a4854b57ba2592eb878704d76a21d7c0364033929e6",
+    "src/host/first-send-profile.mjs": "cf0d76b36fc980a890246d255448f8b29965b5ff12882689d6884e7336e436ff",
+    "src/b1/scope-repository.mjs": "7124b1e9e6b2ff9b0af0d836bf9a8c60db401e67fb02e04366c53f8a207f750d",
+    "src/data/schema.mjs": "3b3053fef20deb617fcc7a8cff8401424c7b5537373908974eff7143efb0f2ab",
+    "src/data/free-policy-initialization.mjs": "e0a358b12ea9454f5ee657612e4c83c247ba895b082a362be9186f4b7e898a32",
+    "src/data/known-anchor-key.mjs": "e5d91c902e04440be924ef0506ff688bbbccd83150610f50199b518bcb298df3",
+    "src/data/repository.mjs": "618f5073d237821e8560be662f87fb317a205a58c6cab7d2750a9cd4f9184930",
+    "src/data/free-time-policy.mjs": "8a75b5bdde8abf8ee07873ecf2aa45a19faccd030b9f03c738b56db6ba9ea17a",
+    "src/navigation/projection.mjs": "36334b5da4bd8e89718bf45b69723f4a657d46797c03c653298aaa3392399f24",
+    "src/data/activity-version-fence.mjs": "165775d2e4e9aa5acbd56af9d9e97a6bd4707e7d9c27f5b1669a215529bd1e74",
+    "src/data/native-repository.mjs": "e2eaf5314683a5fbbae07066f5fb6eb92b47b96c62568eecf0c107eadd93be50",
+    "src/data/native-lifecycle.mjs": "62d46f572dadbcc247d3d144ec4e85539ef82e6e08ccb6d9f1e8857914ecd965",
+    "src/data/state.mjs": "df0eaff00a7f050c37653f0e740b8fabe19bce571c5e37f4ce437d180984c62a",
+    "src/data/preferences.mjs": "1fb8395c5dfe23d64c91095b71a1c117b9762b3ccec68e262aaf73744b12c9d7",
+    "src/data/continuation-evidence-reader.mjs": "c28d338063eb500ef98c4fec88938d63b5adc501bdbfe44185fbc2fe781d7fbe",
+    "src/data/free-evidence-partitions.mjs": "c1cdd10d9c6a6a142759fa7589b55a1607a4518260677abb3145ea00907a0ead",
+    "src/data/free-evidence.mjs": "3a658b980251c330a09104786e5048f3e8cfa46e81e7e72403bbbdadf6c8a982",
+    "src/data/observed-send-anchor.mjs": "f9dbb9278502a325c2263d4adeb99ea1c0159525d505728fe84fdee2d59980da",
+    "src/data/free-activity.mjs": "29a89003f69d38a6927916db367af505362586168df292055941cf7aa56a0928",
+    "src/data/evidence-ref-directory.mjs": "8a89bf5b8535578881c823077554f177098044214a22fcfaf4be41e65498c867",
+    "src/data/verified-record-cache.mjs": "9b7b3c13abdd37f2b6d4fad48b85707a9815538fd793cad537f8e87b8f08cde0",
+    "src/data/native-observation-continuation.mjs": "3222a09592efd5c904cc65e036976f2f08bb260a9e639c83bcfddbd025dedee8",
+    "src/data/native-facts.mjs": "419bf63bfe02a1759528be4a9970b2a55849857aa0aaa92dabb3c8bb9fd9005e",
+    "src/data/native-partitions.mjs": "fd5fae8cbe9e64bcd9ed8b276f46714b00beea7fd8989e21fbd9e0fa9bada782",
+    "src/data/native-version-index.mjs": "943a4d05a7e0d44fa587acd1b1d9a5828988b30c74ba9903a3243b07159ad5cb",
+    "src/data/capture-json-snapshot.mjs": "d082508f8186c38c71e83e0cc8653501fcf6afde67e941b8ce8803f04106ade8",
+    "src/data/native-index-migration.mjs": "fa88d1b18c1594649b5bd1e84025dc1310c3241ee51f123a498ea49fc20a30e9",
+    "src/data/native-partition-audit.mjs": "b63440b53cda12d5bdf148914db5f88c21d868bf4186db0b339f8ffe50890a18",
+    "src/data/audit-record-prefetch.mjs": "5af85b5c8a90e0a1d236fdec784b77ee970f7ea251e18b4be386a34e909d6b7c",
+    "src/data/native-index-writer.mjs": "b9e24103156b3a9511e6284001992bba23d56b09fbe5360db545e7d3116d3fb2",
+    "src/data/native-index-reader.mjs": "6bdbf029cca3490520a24d8d9faad171d8f604b85817847239f5cceb2f3f556a",
+    "src/data/free-projection.mjs": "e184a7d3533710840fe8248b11ffde1db06ee10d42f03b850d231faf8ab3bd85",
+    "src/data/free-evidence-repository.mjs": "cf10ba12875a9024f45bd7bb595fab1cece014eb67a852199d8e825418bd2003",
+    "src/data/evidence-directory-writer.mjs": "9ff0c941904e155c736a29e1d232e4fecf67d7995c5d4b6907a12b0f54102944",
+    "src/data/evidence-directory-migration.mjs": "75328ab40b3327d9e9c60c44402d87ea3afc9bd385eeb3ba2f0a14036fc1b135",
+    "src/data/evidence-partition-audit.mjs": "3aadf876de681cc97ef5564119da7a2c691c45a472434d6e8f7080ae02d3aa79",
+    "src/data/evidence-directory-reader.mjs": "7ef90c7a37a82b2ce4562acb6afc56e4ae36d14543c776893664b79869fa895b",
+    "src/data/shared-directory-retention.mjs": "4213b173e47d2f2a43693dbd8c1fa7a5fbbabdf2439104aebc22f603cfd2be64",
+    "src/data/shared-directory-reader.mjs": "23d34f68b0dedce591ef2b99bb539a7eb56efff619d6c80ec959290f500672d7",
+    "src/data/shared-ref-directory.mjs": "995be9ccc613720e97b807d8a98ed80a336ec79ebb13b4521316548848f10626",
+    "src/data/partition-manifest.mjs": "566283402493ada28abc530354c343bc6c561e309d1e6802c981d62584a5e06a",
+    "src/data/cooperate.mjs": "ce494a33280143e1e2a2227a72413da792330311de12642a9a56b13704f2f3b4",
+    "src/data/shared-directory-migration.mjs": "0cd415f9a871b93613c3d9f3e301982cda2d1891dc847d983397f87dc2dcf0df",
+    "src/data/shared-directory-writer.mjs": "9e933860ea5b331ee78f3df09431b65925e3930e22ee55b11b692c9c764bf1b8",
+    "src/data/shared-partition-audit.mjs": "25d4b77561b36b150ce1524e27e184170f3c1ef493995251a88678908d31f6cf",
+    "src/data/partitioned.mjs": "c0d4d79ee1cd4ed6c3d95580416aaa79c2160eb7a82347717cc98afb9da453ac",
+    "src/data/shared-directory-recovery.mjs": "420077b28d9e4bc69835bb63c2c00ebfe5ce0497d2bd902a3728fe38684476ee",
+    "src/data/backup.mjs": "bb0a8639d02e2169ae15e866a464f1531b7e80e40afd7c8a4b35e99d70928396",
+    "src/data/evidence.mjs": "f84032c9a2fc08455480652b60de6fb9394a70e82a7ace8729186ff097b26238",
+    "src/data/known-anchor-backfill.mjs": "dd58e613da9564668fc7963135dd98caccf3bd6930e532864e68d9ff6afd55ca",
+    "src/host/chatgpt-observed-profile.mjs": "e87258dc5ac699ec3c4077fdf15549e090473e9d5314847362deb4e2bbce29a2",
+    "src/host/native-history-list.mjs": "17de31f3b1988791e7d504b95ee9c2e8c85d02ce8f29986994c025325fcae0cf",
+    "src/host/native-project-surface.mjs": "55439703cb2c59382c06f6b2def97c3410d3aa07c52c9281270f07b63ada3432",
+    "src/host/native-return-gap.mjs": "d3cac63b683c855fe9aed53b884246e635d56b9a15d9cbdc8147d20801b252ba",
+    "src/host/native-surface-boundary.mjs": "905f4b21b4a640ba41b4fb2f1dfd08d3da9b1eaea3170fa93035fbd96c9d8286",
+    "src/host/current-body-discovery.mjs": "b6c78564eb4470b85cf316e5d737182b854aad2b2e4e1d56a24750c91c503fe0",
+    "src/host/surface-discovery.mjs": "1c146368f9549ba01d90cf549c767309e3fa696b5d4bdf17d7c468b74cb81893",
+    "src/host/bounded-handle-registry.mjs": "ea3a48ed3760741b8d845b4116830cffc611571b6fd01bb9561bd8a63efdee5c",
+    "src/runtime/host-binding-service.mjs": "0577caa8c2f3cfdadb87b7b68f3273e5ceb67c8a75655efc0abf14e13501e511",
+    "src/runtime/browser-local-storage.mjs": "ca59ae6c031212b6703607f671b3efcbee0a61c03759bea150026befca6f1017",
+    "src/runtime/browser-local-authority.mjs": "ca35ed8165227536324a63dc4fbc24ba328943bbe89ec54684e0c63af018d7a8",
+    "src/runtime/browser-local-memory.mjs": "c7070618f486d8daa46884cfcc85c13736199779cc5014ece951b078c10460b1",
+    "src/runtime/host-native-activity-owner.mjs": "54adec4047801e7e8da8f4bfb0c9ee87557cc2a64f4bc090b846b57a6bada625",
+    "src/runtime/evidence-source-incarnation.mjs": "6bcdc42a9b5e94b0597f3588186af7ba105befbc84f21021a5556936d87e6e4a",
+    "src/runtime/native-activity-profile.mjs": "2b17ad13773345a49985bf24f8fa3cf815dc584f01864068d104970b427714bb",
+    "src/host/metadata-candidates.mjs": "76637cf062eff2be631c11c63dd40db2ec33dfa835710d82147270774e1350cf",
+    "src/runtime/context-recovery/no-receipt-recovery.mjs": "14d2382c12f250de8386837a1b0845e60f7c1f1297245dbc8e4ee67d87ec2513",
+    "src/runtime/isolated-session-owner.mjs": "8c3ef00c36a387c6664e3f24910ba317f7d3a7b9d2216f70f9823d7700c0061c",
+    "src/runtime/host-entry-calibration.mjs": "25e59ade903d92af3bd70f8e7d205c8ac2d054ca6cabcaad5da41a7def1393c6",
+    "src/runtime/host-ingestion-pass-owner.mjs": "42716372e8f9d57f33d1a75d27c9fae1016d868cdd1eb87b90c712e8b3981347",
+    "src/runtime/host-old-send-terminal.mjs": "69d794d01b2ef6f60a9b466a8583a3d020a28906c8bda1381557af57e6b36a29",
+    "src/runtime/old-send-terminal-readback.mjs": "c090d556d487b58771ae56ed408547c37e893e7a78e26838a47a528fbd459fce",
+    "src/runtime/host-activity-source-admission.mjs": "7010e6644bbe7b05ae43a3b7b0fbf6928d35f46eacaa86d4b7877a5673a92489",
+    "src/runtime/send-ack-admission.mjs": "25c9033baee468e771b8f1d6d74764e619bcda669b2eaf658985e4208b349696",
+    "src/runtime/historical-send-profile.mjs": "b356d5fc7101080ba60910edc0175180924c548269816dd98900f2055195f4c9",
+    "src/host/conversation-metadata.mjs": "915e88458f46265a696e68fc4b2892916e4bc69ffd03f04d580b4dee4c9e658f",
+    "src/host/conversation-directory-metadata.mjs": "2508a697792936a889708b649c28bb8ed2b1bc1b56e43ef44c176bd0354bf733",
+    "src/runtime/host-historical-send-owner.mjs": "dd0901b6c0739146db14371fab1284c37ab43fa0e106406d51e7c7e308b76bce",
+    "src/runtime/host-first-send.mjs": "44b175a4c7f41f903b19275c84d5f1269dd179eb7c1775a87ca81fa97cbac816",
+    "src/host/first-send-causality.mjs": "cd062c0b638408b387bb469f76dac3ea389acd9943bd42c1545ac8f0a08905e6",
+    "src/runtime/first-send-readback.mjs": "4052d39db39d2e5053bb4287cde87fd45ddcce844420099203950ea68a9691f6",
+    "src/runtime/host-current-navigation.mjs": "ae1033e1b5ed4c1301653d08ba90f5e0ee64f255da910e9f7cf7046f62a5cca4",
+    "src/host/current-navigation-plan.mjs": "c33cfd6af8e7523ac85fe812b59b2e24df109d4e03a3d507b9edab6b53d413ff",
+    "src/runtime/host-send-ack-owner.mjs": "7e4362115828c9b68ff3a34923587c2711e6df854d119b9b3d3a1d91b5830fc5",
+    "src/runtime/host-candidate-service.mjs": "0ae6ff996262e89550bc49709e96647c5a738f33ca44409d465b39bf5c5af4fd",
+    "src/host/candidate-presentation.mjs": "d2a89c85c263de8f1572c8fe12e7fc1400bd4201fed7c3adb9aede868cd6cc4a",
+    "src/runtime/host-snippet-service.mjs": "15c63959f85f73e6be7eb194c4534120bcfabe23ec17746b6b063977bdb75cae",
+    "src/runtime/host-backup-service.mjs": "ee70a94e1f1af68c23f93ff1bc5b67d547c7661c4b1abe7e7a9c26e4da9d9c2e",
+    "src/host/backup-transfer.mjs": "69b9c025e80993644ba8b37fdf77ccb9662d4050fae66e847b98b3663f59122a",
+    "src/runtime/host-send-candidates.mjs": "454bb4ab52dbac6fafe3a5f70c9d7e8acfcce6f4011c2a70646616ca96dafac4",
+    "src/host/send-correlator.mjs": "251d50175833fb24dd945da770aafa40e34db3850da0eaa67b9944bb5798d408",
+    "src/runtime/current-metadata-reader.mjs": "c237d156abe921e5066cd267a6a7bb056b80a744f46d9045c8a34a44ad0d641c",
+    "src/runtime/host-recovery-service.mjs": "78839dcb8f8b1bc8e66b5e06e2b8d0fcea9b414bd10274d6d32bd02cb835c171",
+    "src/runtime/host-continuation-owner.mjs": "f4d2dd6393d36fe7708beb9020571a4c11f63459dc4f3075ffbfa982e5e65630",
+    "src/runtime/free-read-service.mjs": "c80f45fc03ff17c369080d70d3557f3e6c35fdba649211fa6047ecfe7d5b4428",
+    "src/data/free-recovery-status.mjs": "7c87501d48823af05818e94f48304fbebbc29828d92802e6629c80232fd7a7c2",
+    "src/runtime/host-view-service.mjs": "73205fa3d5da11f5b35e0610eda2720ad9f6093c176c7323cc31161dae886e40",
+    "src/runtime/free-project-location.mjs": "45892565ac8896feb97872c59e3b504d0563b6e461c3da49d838c1359991e649",
+    "src/navigation/free-view.mjs": "ef0f8d6b798789539d16bdc3ae1d8cc66ccf5fc32f472b83ca2c475863946aaa",
+    "src/host/frame-resume-state.mjs": "34660afc0c83ecdb4c4d36836a2c803b5649581b77ac3155e6bee248b89aebcf",
+    "src/host/frame-row-windows.mjs": "5ff48b95d0e45aba9ca779f08b5c0c4a9a4056826ffcc94d47a8c03323d42b3b",
+    "src/runtime/host-auto-time-policy.mjs": "90838ac5e0c95262911bb05289e13abe659662b7ea08255edfce14e7665516f3",
+    "src/runtime/free-working-set-projection.mjs": "b50b973005612c5d9d76cff9a4acd6d6fc23d006dea787d681c534385629ff4f",
+    "src/runtime/free-search-projection.mjs": "354fd7098b8bd695fb281f6641388127347306e63186057c9b0604f92fc224dd",
+    "src/navigation/search.mjs": "36fe6eda63bd85ff203a306a78309a91979dd9705b2cdb2b64c1f764c2e2b8d0",
+    "src/runtime/free-view-owner.mjs": "03c5230d477eb0aefc0e774ad3b894f6de4ffac468a391fc982d54fdb16f5cd7",
+    "src/data/read-recovery-budget.mjs": "7c7948a740dcc37f9a2a6b25babe8c29cd2d84441299c1429c7e524402cc8c51",
+    "src/data/free-header-loader.mjs": "7817a581a7816d744b39ed8fa37d49eb86da065335e2f46ec190fa9fae18e7cb",
+    "src/data/free-page-loader.mjs": "c4339dfa76cfab89aa1f16b40129ee9f7c779233d5d03ff2134f551a8f9b0d65",
+    "src/data/free-replica.mjs": "11326c574b31ce1fc4c93bf712b812f0d3181f0254ec08ec22e8588836dd81dc",
+    "src/navigation/current-index.mjs": "23f13e4d9556715bb029ad6724b8a3731ba87251d6ddfd8e95939085ebfab21e",
+    "src/runtime/free-frame-projection.mjs": "f6a5d42d72ed20ce580624d7c747371e55cd3a1767c822b0425d622cd781c5ae",
+    "src/runtime/host-ui-owner.mjs": "6aa7992678adf8852b7867711dba116df4ec20a63ca0b4e9e65a2d776c7a0a0e",
+    "src/host/ui-grants.mjs": "38343ba3a5dc67ca714ea29e14085eb35de8c193d6a6a8a2a95494afd3aafa5b",
+    "src/runtime/host-observation-owner.mjs": "ca209bbc5de355630b602d33c730eaf7022c746ee6005e29ff20abadb6e3d272",
+    "src/runtime/native-source-incarnation.mjs": "ae55375ce605b4d57da3d9ed6a8e3e6f8668c3189b3346bb70e8a8ff130206c2",
+    "src/host/current-observation-batch.mjs": "f7fcd583d0811a8b71d72dc5bac4ba4c57eae16e552076aa08d5a50f42b45151",
+    "src/host/send-intent-claim.mjs": "c4c748740cb6c691e03565f346fd31a83761a585c9ff2f28d94fec4db5053b23",
+    "src/host/current-body-claim.mjs": "e082ed353a0bb81c7762a65ffa258a375391ca3194618f2a9888fee0c357e13a",
+    "src/host/surface-batch.mjs": "4733a8cecdc3f4664c77da81d12441c9f2bd7cf0c16e55ec93eb94076faa4e5d",
+    "src/host/directory-batch.mjs": "6cc6546fd64a97d5b21765c12d4dc90ccc1d6a3b219aee0f7816cf4b3574eb92",
+    "src/host/project-metadata.mjs": "71980d52b0a41103a3920f86152e2387cadc5da7eb07614911cdf2acd4d9d46e",
+    "src/b1/document-binding-broker.mjs": "1f247c0fa2b3a05c5f2ae11dda39df04de9c79628b7753715bdafcadbc842aec",
+    "src/b1/host-document-handshake.mjs": "fafe938904e635da9964d222fe7dce8cc98cb5eda6501420af464c95b4a9cc6b",
+    "src/runtime/scope-authority.mjs": "e33521586cf169b4e29bc58f03b42724b8e5a55a0cd2c72213a595100b964e42",
+    "src/runtime/session-provider.mjs": "1964e5e9aa55f1a2211c909919f55723dc437e57fc5c5546c104da2f7eeb90b5",
+    "src/host/session-identity.mjs": "ff71fb796ab2c81ef07a5fae274a3de2c4317e05af48a590c952bb0c51b31281",
+    "src/host/conversation-acceptance.mjs": "92fdfc486bd9614028aacc197b99a26b8ad3ae254e54a980a04b0a1e90153144",
+    "extension/content-entry.mjs": "ac2557b2a1a1eb688954a07d2ef56273b295b21d4f4f1a9cbb80015dea9a34bc",
+    "src/host/browser-local-lifecycle.mjs": "18217bed70e478a604eda33460be984e326c246e1f196fc502d0606585e9874f",
+    "src/host/local-status.mjs": "a20f357ca4d909d9d5492e6967d6efb15d4ee9c29a7c1e68993d647767ec5037",
+    "src/host/history-structure-diagnostic.mjs": "1f129b367e3e3b96765f018a4b48231d55bb4b090eb3a73ca484b12ef2142ac4",
+    "src/host/loopback-project-association-profile.mjs": "31cd5af21c95337f732c6ca4f0971d0c8ad9642d678f0e77f650094e076adc71",
+    "src/host/temporary-native-navigation.mjs": "b778ec2c049636d022e8883f6a185cc0325634fd40a8ed2ce206f95f91064388",
+    "src/host/isolated-session-reader.mjs": "49b5726c6b1317f1879a5c5b263a88bdb8e0b886a31a012d156c9b42a84118e1",
+    "src/host/context-association.mjs": "e589ecda593fb2ae08d0e0a28e9f002e31b90c754bfa2e2de65cb403ab885ff0",
+    "src/host/project-context-association.mjs": "46c098890d73b560ca5b7666eb48eb057f8390184e8d5d73ba70871e10029577",
+    "src/host/chatgpt-adapter.mjs": "a3a46b846fcd89c8b9b9c6afc9783f983e72b8093a6649fcb4d6128e3afc46e4",
+    "src/host/native-return-slot.mjs": "a2c19a6d7e082a8ff82ab8f8c5c4b5adaa4188f21b8c31ab95dfd5826b97f803",
+    "src/host/surface-fragments.mjs": "1fbae58e227c4c3cfbefb991ee1f7c469a9225ac2360940b23b5cfc999555d74",
+    "src/host/native-input-risk.mjs": "20432694e7ddbc8832f1f61286747dc119a0e5f96f2337b0950e7df4ba0a4a5e",
+    "src/host/native-send-intent.mjs": "f1d32ff506e8a289d6b6a46ae91043ea1d49c666265418af6a80a384caf53d30",
+    "src/host/native-snippets.mjs": "2e4c039073450d55cda5c09c30b7ceebfc9f0141b30a85c7c7d19a1a1bb2a142",
+    "src/host/native-actions.mjs": "5641109fa7cfbc4e1792a95137bfdf285ce60102b5b93da9a895b327390ff83e",
+    "src/host/content-session.mjs": "e0d28ff6c8d735c7fcbdbc3af86544b27b593db7788bc605d2163a186313c7eb",
+    "src/host/candidate-upgrade.mjs": "480569f2a94916408f5cb00a830f61a9d150624b4416642660879790ee85ef5a",
+    "src/host/content-candidates.mjs": "8fa2eb65858bea846f2b78303ae6a3d45e9df959e08cf93c75b2c6d04b3e68dc",
+    "src/host/candidate-page-window.mjs": "b8e741b7f46a9a0468255d56261b3c39d47e27d31d6ca87442ef32ff055d33cc",
+    "src/host/snippet-capture-wait.mjs": "8d97f82660a0fb30ebf9e904f2d9f46ba25c932e3f3efaa7895b5ad6d5f7210c",
+    "src/host/snippet-selection-session.mjs": "f5f1ccd83d3c339f525e9016bf1f39be0ef0da12d783ff002dd045af083286a0",
+    "src/navigation/mount-surface.mjs": "4346844f2ddf515f1948b655c325f8de8b44ae64869d77e4a1c40c7f5464d38c",
+    "src/host/surface-controller.mjs": "ff00618aa0c6c2a909beabfcd41da45bf130889334a97fb601650b2e8354c59a",
+    "src/navigation/icons.mjs": "2fae3d2fb1f4488ca16dd1a05abf8d8ae5f1f0478a4103b634961f8e62bb1ab5",
+    "src/host/frame-appearance.mjs": "b393fb7be24fb0f0834d239d3ede9503f08cbef98f6fd3cc4b64312fac3b5972",
+    "src/host/frame-native-plans.mjs": "3678d30c1749468cf6c39a48e59790cb0d6422efa59e05078cb2c5517503ab44",
+    "extension/workspace.mjs": "c12419194fa2a92b3770cfdd60849e36c92261e27066c55235a082a1bbb507af",
+    "src/host/free-frame-client.mjs": "34fc89ec835162cfae94ed86aa40aad0b1b27bd38da1a4796fd43ac8528ad6af",
+    "src/host/free-frame-read-error.mjs": "a53482488ed8a6f4ba40339d5eb116bbd445e7ca3e230e822fbe9ba2c708e5dd",
+    "src/host/local-panel-focus.mjs": "ce29e6b1c542dbe2be000a517ffaa56a1fca21088219973326808025cb64cdfa",
+    "src/host/frame-candidate-migration.mjs": "10d9b7bab81194530d589940cd1f184f5d6db9215ee7cb78be5a244168054b5c",
+    "src/host/free-frame-candidates.mjs": "97ad6ddaa1c9ee09efecee36e476c26b1629e9dd49b22e4665932156e4c6368e",
+    "src/host/free-frame-snippets.mjs": "33856791be021ba262f2f6d0d7bf18a3a2bdfaaee89f2346f03f5e2f6f877eda",
+    "src/host/free-frame-backup.mjs": "433e747331d90eeb3af8b2de0efb29d1603d1a45759bfa1b0dbb1f0ac524d552",
+    "src/host/free-frame-recovery.mjs": "367ddb3c9b94bb5cebbaf06817c8e2db15b31255ef9af78dbe3169e0d725a34a",
+    "src/navigation/free-recovery.mjs": "20352a2a9a37bfdac9d0889d87efaf80510bf7462df3fba1ceef1e4eac3c0442",
+    "src/host/ui-frame-client.mjs": "dd76b3f973d3ec453c292a14e0a43e9a8cc88d092a4deffb4ffdd911b3214e5e",
+    "src/navigation/navigation.mjs": "3d3e9d1aa497ae9352ee723f44c7ea6d269c290521e66c5d1d5db7c28e08f4d6",
+    "src/navigation/styles.mjs": "87844398678679c1401240e9ff1ae56ec584052c6e1d56594ff96328b89a5a42",
+    "extension/sidebar.mjs": "8d1b85dda5d1a93b548cd37da978cb0f90ffef340ddd2744023b90eafc936220",
+    "extension/status.mjs": "95e5d9b80fbe25b69d544c8e7d788998de50ef95d7d7f77cf7b57567b891ef48",
+    "extension/temporary-navigation.mjs": "a62ae7b41b83de18880faebf42b59f0a45999d28a8f506344b3e19dceb459db2",
+    "extension/temporary-content-entry.mjs": "d13222e0bf8be8c629408ea388c0a8dfcc9d5c57c32a0deb78d64f0776018624",
+    "extension/content-bootstrap.js": "13fbe317e1ba66c56cc414df4f375ccfb717754794de40cd6923d8c6691d18fa",
+    "extension/frame-shell.css": "f2c8b913b7108f02906f1ff04346eb4febd34766c11aaab0fd36795962129c7e",
+    "extension/frame-bootstrap.js": "55ac9c3f26128ed2090c27f83fff35823640a618c24f38348aee5f4a286f5a12",
+    "extension/workspace.html": "25ae5ed0790d6307bf160ff9db6bd3df635628f604abee6b9551f78bfb357024",
+    "extension/sidebar.html": "58e09f90eba837e4ec77804c7e1672ff57af91455d56387342955e160daf4c74",
+    "extension/status.html": "4540871802f6daf6b35f8b1767dee7f7bb586cf8a29ae147b659c587ad76205b",
+    "extension/status.css": "dfb003477c1d2c223698cae2c375fcbcbf973b83e600fa3a22a982fc03b5ffa6",
+    "extension/README.txt": "0a62c1838a8043eb1aaac3536fc9134b8fcd1e6876cc2214abdfb860dc23acfb",
+    "extension/build.mjs": "f34c8f5f1b1fa31fffc3eb4c0c143349e1ad2187eab8e363cb7075998c4f22bb",
+    "extension/classic-worker-build.mjs": "87275509401785d49ce134d0780a06e587dc8d303eacf91aab7a22752c3007b5",
+    "extension/tooling/package.json": "eae0628aefa50bf39eab0053f7ff0abb687f30c84607220e4ff0dae7b8e664d1",
+    "extension/tooling/package-lock.json": "4609d990146911013da85142a111efcd9209a26f3d51ce56a83d5d6a3bb58180"
+  },
+  "finalPackage": {
+    "status": "HOST_IMPLEMENTATION_UNVERIFIED",
+    "releaseStatus": "NOT_RELEASE_READY",
+    "files": 198,
+    "unpacked": "/private/tmp/VAIWL-v27-C1-C5-Delivery-20261026/extension",
+    "archive": "/private/tmp/VAIWL-v27-C1-C5-Delivery-20261026/vaiwl-free-host-development.zip",
+    "archiveSha256": "76c2d0cf196d4edec9ac4e4c1c5c2159e18a4862b84a27f2b1fda3a51ae9e2d6",
+    "sourceClosureMatchesCheckout": true,
+    "sourceClosureMatchesFinalBrowserLocalAndFourStatesAndJ3": true,
+    "manifestIdenticalToOriginal": true,
+    "internalInterfacesEnabled": false,
+    "fixtureFlags": false
+  },
+  "visualReview": {
+    "reference": "design/approved/v2.7/VAIWL_v2.7/prototype-v2.7.html and validation/attempt1/v27-small.png",
+    "images": {
+      "empty": {
+        "file": "free-c1-c5-product-empty-20261026.png",
+        "sha256": "4dbee7c6df7f249f4c5b086468a25f7f40e40c96906346ef449b870b7c8573e2",
+        "reviewed": true,
+        "evidence": "ISOLATED_FORMAL_MV3_NOT_REAL_ACCOUNT",
+        "metrics": {
+          "cards": [],
+          "width": 780,
+          "overflow": false,
+          "rows": 0
+        }
+      },
+      "ordinary": {
+        "file": "free-c1-c5-product-ordinary-20261026.png",
+        "sha256": "f7f6660c18a69f3cbcb3ce8b1078068274bd106f71a6fa3925a42e1769b9e66c",
+        "reviewed": true,
+        "evidence": "ISOLATED_FORMAL_MV3_NOT_REAL_ACCOUNT",
+        "metrics": {
+          "cards": [],
+          "width": 780,
+          "overflow": false,
+          "rows": 5
+        }
+      },
+      "project": {
+        "file": "free-c1-c5-product-project-20261026.png",
+        "sha256": "de62062a70dc52f1b74245d17ffa16edfc3dcfc738e73581a3825511e18df372",
+        "reviewed": true,
+        "evidence": "ISOLATED_FORMAL_MV3_NOT_REAL_ACCOUNT",
+        "metrics": {
+          "cards": [
+            {
+              "width": 356,
+              "height": 140,
+              "radius": "13px"
+            }
+          ],
+          "width": 1060,
+          "overflow": false,
+          "rows": 2
+        }
+      },
+      "project-narrow": {
+        "file": "free-c1-c5-product-project-narrow-20261026.png",
+        "sha256": "705fab2c9d42b003aff3364f7cb3ca5f92c62fd8b1b75497f456f508c4f8f5e1",
+        "reviewed": true,
+        "evidence": "ISOLATED_FORMAL_MV3_NOT_REAL_ACCOUNT",
+        "metrics": {
+          "cards": [
+            {
+              "width": 350,
+              "height": 140,
+              "radius": "13px"
+            }
+          ],
+          "width": 405,
+          "overflow": false,
+          "rows": 2
+        }
+      }
+    },
+    "findings": [
+      "356px natural card width, 13px radius, gray header, indented member tree and separate UNKNOWN disclosure retained.",
+      "One Project remains one card; no invented cards or activity timestamps. Narrow card 350px without horizontal overflow.",
+      "0 Project known-chat state exposes all rows through existing more control; expanded capacity survives explicit private binding after reload.",
+      "Empty inventory uses its own empty state; bare host fixture controls are not a redesign or real ChatGPT pixels."
+    ],
+    "realSparseAccountVisual": "NOT_RUN"
+  },
+  "boundaries": {
+    "realChromeThisBatch": "NOT_OPERATED",
+    "installedPayloadAtStart": "VAIWL-v27-C1-C5-Integrated-20261026",
+    "finalPackageActivated": "NOT_RUN",
+    "database": "UNTOUCHED",
+    "drafts": "UNTOUCHED",
+    "stashes": "THREE_PRESERVED",
+    "completeFree": "NOT_ACCEPTED",
+    "priorEvidence": "INHERITED_WITHOUT_PROMOTION",
+    "remaining": "One final actual Mac product journey and real owned-region screenshot; user confirmation only for new-document private restore."
+  },
+  "realProductFollowup": {
+    "status": "NOT_ACCEPTED",
+    "evidence": "One PID/window-verified local real Project screenshot after user reported final activation; no new title/ID/body capture committed.",
+    "visible": {
+      "projectCards": 1,
+      "confirmedMembers": 2,
+      "nativeAndDerivedProjectListsDuplicated": true
+    },
+    "notProved": [
+      "runtime package fingerprint",
+      "member activation from this surface",
+      "old private record recovery",
+      "full continuous sidebar"
+    ],
+    "independentCodeDefect": {
+      "cause": "Delegated plans expire at 30 seconds; an unchanged visible VIEW had no capability renewal. Normal authority renewal could also retire a pointer hold by object identity.",
+      "fix": "Refresh current delivery action capabilities independently before expiry; preserve data, unchanged link DOM, menu, focus, pointer and dispatch reservations. Bind pointer hold to unchanged authority fields, not grant object identity. No TTL extension or click retry.",
+      "modules": [
+        "src/host/free-frame-client.mjs",
+        "src/navigation/navigation.mjs"
+      ],
+      "verification": "Existing frame/registry/renderer regression suites and existing isolated headless pointer journey pass. Latest tuple dispatch, unchanged node and open menu checked. Not real ChatGPT verification."
+    },
+    "remainingStructuralGap": {
+      "cause": "Observed profile proves only a recent-history segment, then places the full derived sidebar there; native Project region remains above it.",
+      "availableEvidence": [
+        "tests/host/fixtures/observed-history-structure.json",
+        "tests/host/fixtures/observed-project.mjs",
+        "tests/host/fixtures/observed-host-baseline.json",
+        "tests/host/fixtures/observed-sidebar-structure.json"
+      ],
+      "missing": [
+        "Project/member/disclosure/menu descendants omitted at depth 16: no complete control-purity proof",
+        "Safe replaceable Project region including descendant overflow and controls, not merely outer rectangles"
+      ],
+      "boundary": "Screenshot and AX positions do not prove DOM purity. Do not enlarge masks, hide duplicate data, or claim full sidebar completion without this structure."
+    },
+    "installation": "Explicit diagnostic-update exception: original directory backed up, seven files updated, original ID retained, one Reload dispatched, content runtime fingerprint matched; no final product acceptance.",
+    "anonymousSidebarSnapshot": {
+      "purpose": "Resolve native Project/recent container topology before changing any sidebar mask. Not a product acceptance.",
+      "channel": "Existing popup HOST_LOCAL_LAYOUT, exact extension sender and document binding; no new data ingress or authority.",
+      "fields": [
+        "fixed tag/role enums",
+        "parent and sibling indices",
+        "presence bits without native values",
+        "bounded rounded geometry and clipping categories",
+        "explicit omitted subtrees and capacity/budget result"
+      ],
+      "limits": {
+        "rows": 256,
+        "ancestors": 8,
+        "depth": 16,
+        "budgetMs": 25
+      },
+      "privacy": "No text, title, href values, native IDs, body, cookies or response reads. No observers, storage, DOM writes or old batch reset.",
+      "offline": "143 local-status tests and existing headless history browser snapshot case passed. Production build verified.",
+      "installation": {
+        "originalDirectory": "/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/.git/vaiwl-artifacts/local-source-witness-20261022/extension",
+        "candidateDirectory": "/private/tmp/vaiwl-sidebar-evidence-5eTu5Q/extension",
+        "backup": "/private/tmp/VAIWL-before-sidebar-evidence-20261026/original-extension.tar.gz",
+        "backupSha256": "b423914b0015ec8350b64a6fb1365db540f4067d092e4cd28ec828bcef03e2fd",
+        "preservedOriginalFiles": 2911,
+        "preservedExtraFiles": 2713,
+        "changedFiles": [
+          "extension/content-entry.mjs",
+          "src/host/local-status.mjs",
+          "src/host/history-structure-diagnostic.mjs",
+          "src/host/free-frame-client.mjs",
+          "src/navigation/navigation.mjs",
+          "content.js",
+          "build-manifest.json"
+        ],
+        "manifestUnchanged": true,
+        "databaseAccess": "NONE",
+        "reload": "DISPATCHED_ONCE_AND_RUNTIME_FINGERPRINT_MATCHED",
+        "installedManifestSha256": "4188a28959483e605af1e1fafaebae603a065a78b99264766253a5049304019a",
+        "runtimeContentFingerprint": "8e28f2b3a7e9387763fe3a6ea0865c2ecdf64ad68d1d2c618c9d9c260bc90140"
+      },
+      "realObservation": {
+        "status": "PARTIAL",
+        "source": "tests/host/fixtures/observed-sidebar-structure.json",
+        "channel": "existing exact original-process private status popup, AX read only after user opened it",
+        "rows": 213,
+        "ancestors": 8,
+        "reason": "capacity",
+        "facts": [
+          "Native shortcut region is outside the two sibling Project/recent section wrappers.",
+          "Project row is a nested role=button with expanded/tabindex presence, not an observed direct href.",
+          "Recent list begins stable, unmarked, unmarked, stable; later stable rows include current VAIWL masks."
+        ],
+        "missing": [
+          "Descendants omitted at depth 16 include Project row controls and member region.",
+          "Static snapshot cannot establish node replacement order or control semantics."
+        ],
+        "interpretation": "Confirms full derived sidebar is being placed below retained native Project area. Does not prove the whole Project section safe to mask.",
+        "activeMode": "reading",
+        "workspaceReceipt": "Previous reading-mode delivery is not a fresh workspace visibility or data-loss test.",
+        "additionalBrowserOperations": "NONE after this snapshot",
+        "accountUnlock": "NONE",
+        "databaseMutation": "NONE"
+      },
+      "fullProduct": "NOT_ACCEPTED"
+    },
+    "sidebarScrollRecovery": {
+      "baseHead": "dc3eeea17f5a20c6dd90dacdabceb633b5c77400",
+      "state": "OFFLINE_FIXED_NOT_MAC_VERIFIED",
+      "cause": "sidebar render and scroll callbacks saved browser-clamped scrollTop over restored sidebarScroll while frame was tall or hidden",
+      "implementation": "navigation holds scoped sidebar restoration through clamp, reapplies on ResizeObserver, yields to owned user input and subsequent current-route reveal; scope changes reset current-row locating",
+      "regression": {
+        "red": "isolated headless formal renderer failed sidebar initial clamp overwrote durable scroll intent",
+        "green": "same renderer journey passed: initial clamp, settled geometry, hidden repaint, reappearance, actual user scroll, current-row navigation, changed scope",
+        "associated": "25 tests passed in frame-resume-renderer, navigation-frame-calibration-entry and frame-window-retention",
+        "build": "Browser-Local build and verifyHost passed in /private/tmp/vaiwl-sidebar-scroll-build-t31Xqb/extension"
+      },
+      "realChrome": "NOT_RUN; installation, IndexedDB, drafts and prior artifacts unchanged",
+      "remaining": "Anonymous Project controls/member subtree was truncated; complete sidebar replacement remains unproved. No enlarged mask or final candidate."
+    },
+    "focusedSidebarObservation": {
+      "baseHead": "2081ec946853229620f6e1a38d9267e59f184e20",
+      "state": "PREPARED_OFFLINE_ONLY",
+      "change": "When the captured two single-wrapper section branches enclose the existing history target, observe their common parent instead of spending depth on the outer NAV shell. Preserve ancestor path to NAV. Unknown sibling topology retains original boundary.",
+      "budgets": "unchanged: 256 rows, depth16, ancestors8, elapsed25ms",
+      "evidence": "Replay captured anonymous tree; explicitly synthetic descendant sentinel below previously omitted node proves old traversal truncation and corrected traversal reachability. No synthetic descendant is claimed as real host structure.",
+      "verification": {
+        "headless": "Existing snapshot privacy/bounds checks plus focus/reachability/no-mutation/conservative-fallback checks passed",
+        "unit": "100 existing local-status and partial-baseline tests passed",
+        "build": {
+          "path": "/private/tmp/vaiwl-focused-sidebar-evidence-Gim9Mg/extension",
+          "status": "HOST_IMPLEMENTATION_UNVERIFIED",
+          "releaseStatus": "NOT_RELEASE_READY",
+          "files": 198,
+          "manifestHash": "c1398dbf014dc900a6c1d9eeb94dbc2492b5146b800ca15bc68f64dd7f36c8a0",
+          "buildManifestHash": "f859aae0ebd1d7cdce91dbccb7bedc74ec2c7d820b25b7a9c7ba0b3f98686939"
+        }
+      },
+      "installation": "NOT_UPDATED; daily Chrome and databases untouched",
+      "realObservation": "NOT_RUN; previous one-off exception consumed, further update/read requires explicit scope"
+    }
+  },
+  "independentContinuityClosure20261026": {
+    "baseHead": "7db6c4169a57b3ef10226a34f5400c57e3b7c7fe",
+    "scope": "Continue independent original C1-C5 engineering; no real browser, installation, private data access or new plan.",
+    "fixes": [
+      {
+        "files": [
+          "src/host/surface-controller.mjs",
+          "src/host/content-session.mjs"
+        ],
+        "cause": "Transient native-layer/geometry suspension was stored as reading by termination, same-document replacement and BFCache recovery.",
+        "change": "Carry desired presentation only; keep actual visibility separate, fresh authorization and changed-route reading remain."
+      },
+      {
+        "files": [
+          "src/host/surface-controller.mjs"
+        ],
+        "cause": "A dormant four-grid wake did not update desiredMode until presentation; a layer during authorization restored prior reading.",
+        "change": "Record wake intent before asynchronous work; subsequent native input still supersedes it."
+      },
+      {
+        "files": [
+          "src/navigation/navigation.mjs"
+        ],
+        "cause": "Zero visible objects with positive omitted inventory was described as a first empty space.",
+        "change": "Use the existing empty state to distinguish unavailable known projection, keeping known search; do not infer deletion, loading or authority."
+      }
+    ],
+    "regression": {
+      "counterexamples": "Existing termination, dormant-entry, content-session and frame-projection-renderer tests reproduced failures before fixes.",
+      "associated": "357 tests passed; final document-invalidation branch and input priority addition verified in the affected two suites (136 passed), not additive full-suite counts.",
+      "correctedLegacyAssertions": "Producer cleanup belongs to content session; workspace requires only its own grant; independently authorized sidebar remains during native input.",
+      "browser": {
+        "evidence": "free-c1-c5-independent-continuity-20261026.json.gz",
+        "sha256": "a314a5a84e095c11af821d28878d0fb262f1b3a7716e1fe68ac55c0be5cad09f",
+        "status": "PASS",
+        "realChatGPT": "NOT_RUN",
+        "qualification": "Existing isolated headless Browser-Local formal MV3 journey, disposable profile and reject-external-network proxy. Initial sandbox Chrome launch SIGABRT; approved unsandboxed isolated run passed.",
+        "sourceFilesVerified": 199,
+        "sourceDrift": []
+      }
+    },
+    "review": {
+      "C1_C2": "Presentation intent fix; document/scope retirement and independent sidebar capability retained.",
+      "C3": "Existing display/action/candidate isolation inherited; no new confirmed defect in this focused audit.",
+      "C4": "Existing host-view-service merge, WorkspaceRepository.saveView/CAS and prior 7db6c416 restoration fix inherited.",
+      "C5": "Existing v2.7 renderer retained; explicit omitted-inventory state corrected. Full real sidebar still not accepted."
+    },
+    "build": {
+      "build": {
+        "status": "HOST_IMPLEMENTATION_UNVERIFIED",
+        "releaseStatus": "NOT_RELEASE_READY",
+        "files": 198,
+        "unpacked": "/private/tmp/vaiwl-independent-integration-build-ihn7AU/package/extension",
+        "archive": "/private/tmp/vaiwl-independent-integration-build-ihn7AU/package/vaiwl-free-host-development.zip",
+        "archiveSha256": "4b587b0120cdc32acc38e8db0e503ba4ab9a346a6dacc81b1eed5c10303b78b9"
+      },
+      "verified": {
+        "status": "HOST_IMPLEMENTATION_UNVERIFIED",
+        "releaseStatus": "NOT_RELEASE_READY",
+        "files": 198
+      },
+      "testedSourceFiles": 199,
+      "sourceDrift": [],
+      "installed": false,
+      "realChatGPT": "NOT_RUN"
+    },
+    "remaining": {
+      "projectSidebar": "Only actual Project-row descendants in common Project/recent parent remain missing from the bounded real structure. Existing 213-row truncated evidence cannot authorize expanded masks.",
+      "realProduct": "NOT_ACCEPTED; previous real local results inherited, no new Mac PASS claimed.",
+      "privateOldObjectRestore": "NOT_VERIFIED; unchanged."
+    }
+  },
+  "sidebarCaptureReadiness20261026": {
+    "baseHead": "12cc859960c6665c77a4555e35d3b36409818ab7",
+    "status": "OFFLINE_CAPTURE_CHAIN_VERIFIED_REAL_ACTIVATION_NOT_CONFIRMED",
+    "fixes": [
+      "Private structural snapshot no longer depends on successful layout/navigation state.",
+      "Popup reports tree completeness separately from termination and membership semantics.",
+      "Last geometry read exceeding 25ms cannot claim complete."
+    ],
+    "sourceHashes": {
+      "extension/content-entry.mjs": "9a405cd0590e352b8691ea9830e03f40521340d487794c8b92fefa572bda95b3",
+      "extension/status.mjs": "f1dba0c0d8ff4049d744c8ea107f27e1edb6344cdc794591a23af79394d1867a",
+      "src/host/history-structure-diagnostic.mjs": "b22b9e91c6b55c63583b6673d0733290048f32f4fa22a4788df0f2e73d76c9ac",
+      "src/host/local-status.mjs": "d1ec868b3635c2b47e221a4e9c61b8542ea732760367053f6c49fda1a074b935",
+      "tests/host/local-status.test.mjs": "8131cedce5d9b12f22887873e496ff3be5042c8482b779e4931e710d842c90b4",
+      "tests/host/history-list-browser.mjs": "c876a7b9aa371095ce757e2bab8025468233f2d305ffa47eee2c364c7089fcff",
+      "tests/host/browser-local-mv3.mjs": "5b6bf8c5085450af8d24db40a256b3ecfec57fee1a504bb64ffa70c39529a0c4"
+    },
+    "verification": {
+      "unit": {
+        "passed": 99,
+        "failed": 0
+      },
+      "anonymousReplay": {
+        "status": "PASS_ANONYMOUS_SIDEBAR_SNAPSHOT_ONLY",
+        "result": {
+          "safe": true,
+          "structure": true,
+          "excluded": true,
+          "geometry": true,
+          "unchanged": true,
+          "bounded": true,
+          "lastReadBudget": true,
+          "missing": true
+        },
+        "focus": {
+          "narrowed": true,
+          "covered": true,
+          "completeness": true,
+          "unchanged": true,
+          "conservative": true,
+          "private": true,
+          "bounded": true
+        }
+      },
+      "isolatedMV3": {
+        "status": "PASS",
+        "checks": {
+          "homeCollectorPopupComplete": true,
+          "projectCollectorPopupComplete": true,
+          "collectorBuildReceiptMatchesPackage": true,
+          "staleDocumentRejected": true,
+          "noPrivateDatabaseOrDraftChanges": true,
+          "noInternalRequests": true
+        },
+        "reportPath": "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-85sHZ3/report.json",
+        "realChatGPT": "NOT_RUN",
+        "syntheticDescendants": "Completeness sentinels only, not captured Project structure"
+      }
+    },
+    "installed": {
+      "profile": "Profile 4",
+      "extensionId": "miendbcjdmecjggplepenghjnoejmaic",
+      "registrationPathMatchesOriginal": true,
+      "focusedCollectorOnDisk": false,
+      "runtimeBuild": "NOT_CONFIRMED",
+      "readOnlyCurrentProcessWindowCheck": {
+        "windows": 2,
+        "authorizedProfileWindows": 0,
+        "chatgptWindows": 0
+      },
+      "noWindowActivation": true,
+      "noInstallOrReload": true
+    },
+    "preparedPackage": {
+      "status": "HOST_IMPLEMENTATION_UNVERIFIED",
+      "releaseStatus": "NOT_RELEASE_READY",
+      "files": 198,
+      "unpacked": "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-sidebar-capture-ready-c7umZj/package/extension",
+      "archive": "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-sidebar-capture-ready-c7umZj/package/vaiwl-free-host-development.zip",
+      "archiveSha256": "cf14453260fa899cb16d7d70e1718d25d24dd94faa69e32a46b3a4565d65193c",
+      "bootBuild": "d67d0d8198f0c8335c46efbf53e6d0cff10294d7cdc6816cecd51401feddd532",
+      "installed": false,
+      "realCapture": "NOT_RUN"
+    },
+    "remaining": [
+      "Actual focused build activation and authorized current Profile 4 document still unconfirmed.",
+      "Project controls/member descendants must be present and snapshot non-truncated; complete snapshot does not prove membership or permit masking.",
+      "Only after those facts are established can the continuous sidebar boundary and final product acceptance proceed."
+    ],
+    "preserved": {
+      "extensionId": true,
+      "database": true,
+      "drafts": true,
+      "stash": true,
+      "untrackedCopies": true
+    },
+    "userProjectOperationRequested": false
+  },
+  "sidebarSnapshotDelivery20261026": {
+    "baseHead": "a445caa32e7ccd8e35b37a3ba14d7f2a5633d63f",
+    "status": "DISK_UPDATED_RUNTIME_AND_REAL_PROJECT_STRUCTURE_NOT_CONFIRMED",
+    "implementation": [
+      "Existing private status popup exports its already collected anonymous sidebar snapshot with build, route category, final exact-document check and completeness; no second scan, authorization or account identity claim.",
+      "No new observer, permission, storage, network channel or browser operator. COMPLETE_SNAPSHOT remains structural only; partial evidence is retained for analysis."
+    ],
+    "sourceHashes": {
+      "src/host/local-status.mjs": "d11edf793f31af23dc984dad905762355241692224127485c753b4195208843f",
+      "extension/status.mjs": "719e383c22abf6e099609e64095cc48f7214796efbc9653a7d1bedeb934b0cf4",
+      "tests/host/local-status.test.mjs": "85cc04814f949513b5f6e7630933b8a09dd0f3ab1ecdbf342ac4a241270bddb4",
+      "tests/host/browser-local-mv3.mjs": "b39ee88d1f35901887060bb2206df4273e191794130e0e588d5cb99679862941"
+    },
+    "verification": {
+      "statusUnit": {
+        "passed": 101,
+        "failed": 0,
+        "log": "/private/tmp/vaiwl-sidebar-export-unit.log"
+      },
+      "isolatedMV3": {
+        "status": "PASS",
+        "checks": {
+          "homeCollectorPopupComplete": true,
+          "projectCollectorPopupComplete": true,
+          "collectorBuildReceiptMatchesPackage": true,
+          "staleDocumentRejected": true,
+          "noPrivateDatabaseOrDraftChanges": true,
+          "popupDownloadsBoundAnonymousSnapshot": true,
+          "noInternalRequests": true
+        },
+        "report": "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-3uxU5y/report.json",
+        "realChatGPT": "NOT_RUN",
+        "syntheticDescendants": "Explicit offline completeness sentinels, never actual Project descendants"
+      },
+      "packageAndTestSourceClosureIdentical": true
+    },
+    "package": {
+      "status": "HOST_IMPLEMENTATION_UNVERIFIED",
+      "releaseStatus": "NOT_RELEASE_READY",
+      "files": 198,
+      "unpacked": "/private/tmp/VAIWL-Sidebar-Snapshot-20261026-QJOSKM/package/extension",
+      "archive": "/private/tmp/VAIWL-Sidebar-Snapshot-20261026-QJOSKM/package/vaiwl-free-host-development.zip",
+      "archiveSha256": "8d65cede615223db38ceaf049859d9fe5fd3cf178866c576be745ed0cc996a57",
+      "bootBuild": "b3092e59a2d160ed6618c2b620c5753010172d7504530ab75aa2ed8acfa20e71",
+      "sourceFiles": 199,
+      "testSourceClosureIdentical": true,
+      "realCapture": "NOT_RUN"
+    },
+    "installation": {
+      "originalDirectory": "/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/.git/vaiwl-artifacts/local-source-witness-20261022/extension",
+      "candidateDirectory": "/private/tmp/VAIWL-Sidebar-Snapshot-20261026-QJOSKM/package/extension",
+      "backup": "/private/tmp/VAIWL-before-sidebar-snapshot-export-20261026/original-extension.tar.gz",
+      "backupSha256": "b740b53c343436f563e0e882e78a545abcb3280cd090f116270e70d9f4818fee",
+      "preservedOriginalFiles": 2911,
+      "preservedExtraFiles": 2713,
+      "changedFiles": [
+        "extension/content-entry.mjs",
+        "src/host/local-status.mjs",
+        "src/host/history-structure-diagnostic.mjs",
+        "src/host/content-session.mjs",
+        "src/host/surface-controller.mjs",
+        "src/host/free-frame-client.mjs",
+        "src/navigation/navigation.mjs",
+        "extension/status.mjs",
+        "content.js",
+        "build-manifest.json"
+      ],
+      "manifestUnchanged": true,
+      "databaseAccess": "NONE",
+      "reload": "NOT_RUN",
+      "installedManifestSha256": "b30ebf47da87fe009b2f8c2a6f72b37ccc623bfdfcc88609fb67f3b35427f28b",
+      "extensionId": "miendbcjdmecjggplepenghjnoejmaic",
+      "profile": "Profile 4",
+      "registrationPathRecheckedBeforeWrite": true,
+      "runtimeBuild": "NOT_CONFIRMED"
+    },
+    "independentReview": {
+      "paths": [
+        "src/runtime/host-view-service.mjs",
+        "src/host/mount-surface.mjs",
+        "src/host/content-session.mjs"
+      ],
+      "result": "No additional confirmed independent defect in reviewed role isolation, field-merged CAS persistence and presentation intent paths; not an exhaustive product acceptance."
+    },
+    "remainingHostFact": "Actual native Project controls and member descendants omitted in the original anonymous tree. Do not enlarge sidebar mask without that evidence.",
+    "singleUserHandoff": {
+      "profile": "hongfei hao / Profile 4",
+      "reload": "Original VAIWL only, once; no reinstall or duplicate extension",
+      "page": "New ChatGPT tab; native existing Project home and expanded native member list",
+      "entry": "VAIWL status popup -> 保存匿名侧栏快照",
+      "file": "vaiwl-sidebar-structure.json",
+      "expectedBuild": "b3092e59a2d160ed6618c2b620c5753010172d7504530ab75aa2ed8acfa20e71",
+      "checks": [
+        "route project",
+        "verified-at-capture-not-account-identity",
+        "coverage reason, omitted subtrees and child continuity reviewed before any boundary change"
+      ],
+      "ifPartial": "Return the same report; no automatic retry, refresh or new collection request"
+    },
+    "productAcceptance": "NOT_COMPLETE; continuous sidebar real boundary and final product journey remain unverified"
+  },
+  "receivedProjectSidebar20261026": {
+    "source": "User supplied original extension snapshot file; no new browser operation",
+    "sourceSha256": "5b3a828250ac95f6e47e57d146e6020b94b36c2f18053d1cefbc612b8be934bc",
+    "fixture": "tests/host/fixtures/observed-sidebar-project-20261026.json",
+    "build": "b3092e59a2d160ed6618c2b620c5753010172d7504530ab75aa2ed8acfa20e71",
+    "runtimeEvidence": "Submitted boot receipt matches prepared build; project route and same-document binding recorded. Does not establish server account, Workspace or independently attest Chrome Profile.",
+    "coverage": "PARTIAL_CAPACITY",
+    "confirmedStructure": {
+      "rows": 256,
+      "commonParentChildren": 2,
+      "sectionIndices": [
+        2,
+        46
+      ],
+      "firstSectionList": {
+        "index": 23,
+        "children": 1,
+        "nativeHrefOrConversationMarkers": 0
+      },
+      "recentList": {
+        "index": 71,
+        "declaredChildren": 17,
+        "capturedDirectChildren": 13,
+        "lastCapturedChildPartial": true
+      }
+    },
+    "preciseGaps": {
+      "firstSectionDepth16Subtrees": [
+        {
+          "index": 32,
+          "tag": "SPAN"
+        },
+        {
+          "index": 35,
+          "tag": "SPAN"
+        },
+        {
+          "index": 40,
+          "tag": "BUTTON"
+        },
+        {
+          "index": 42,
+          "tag": "SPAN"
+        }
+      ],
+      "missingChildren": [
+        [
+          71,
+          4
+        ],
+        [
+          255,
+          1
+        ]
+      ],
+      "expansionState": "NOT_RECORDED; aria-expanded presence is not its value",
+      "membership": "NOT_ESTABLISHED by this structure"
+    },
+    "cause": "Section focusing removed outer wrappers, but the Project branch still reaches depth 16 before row exhaustion. Later history traversal fills 256 rows. More rows or waiting cannot recover the four prior depth omissions.",
+    "implementation": "Coverage now reports existing anonymous omitted indices and missing child counts separately, without DOM reads, new collection, budget increase or mask authority.",
+    "verification": {
+      "command": "node --test tests/host/local-status.test.mjs",
+      "passed": 102,
+      "failed": 0,
+      "log": "/private/tmp/vaiwl-project-snapshot-analysis-unit.log",
+      "actualSnapshotRegression": true,
+      "existingProductScenariosRepeated": false
+    },
+    "unchanged": [
+      "Daily installation",
+      "IndexedDB",
+      "drafts",
+      "original incomplete evidence",
+      "native Project controls and mask boundary"
+    ],
+    "nextBoundary": "Do not immediately recollect. Four omitted first-section descendants and member/expansion semantics remain unknown; current file cannot justify full Project-region takeover. Existing workspace and validated recent region remain independent.",
+    "productAcceptance": "NOT_COMPLETE; no new real product PASS inferred"
+  },
+  "focusedSidebarDetailRepair20261026": {
+    "baseHead": "042758ec2087e39bfd72ed3c95ff4320a48a641c",
+    "status": "OFFLINE_DETAIL_CAPTURE_REPAIRED_NO_LIVE_UPDATE",
+    "confirmedDefect": "The previous common-root traversal spends its depth budget on already observed wrappers and its row budget on known history. Recording omissions alone did not repair this.",
+    "implementation": "Recognize only the observed two-section/header/list relationship. Preserve its full outer tree and use the header and list as explicit detail roots; mark the history section context-only without walking it. The total 256 returned rows and 25ms remain shared, each named local detail root has depth 16. This is explicitly versioned sidebar-structure-v2, not silent whole-tree completeness.",
+    "coverage": "COMPLETE_FOCUSED_SNAPSHOT applies only to non-history section details; history is explicitly unobserved. Unmatched structure falls back conservatively. Local depth/row/time exhaustion remains PARTIAL. No mask, membership or account authority is produced.",
+    "sourceHashes": {
+      "src/host/history-structure-diagnostic.mjs": "e46c2ece8ee2a49cf2f9a541a81a6912320de06d5bb862f8ed22d351509e59a0",
+      "tests/host/history-list-browser.mjs": "cb149351e201390dab567c995e83cef710662e3f3ec4bb76c932da9e0d3a8e6c",
+      "tests/host/browser-local-mv3.mjs": "913b60433c672d72608b3ad1e205c3d9b141d136118d2007b10500b2252b40d7",
+      "tests/host/local-status.test.mjs": "ce3cac00a25d2f9fd5a73d09ae4b5e68602ac8f0c14f315794f021461df22b29"
+    },
+    "verification": {
+      "unit": {
+        "passed": 103,
+        "failed": 0,
+        "log": "/private/tmp/vaiwl-focused-detail-unit.log"
+      },
+      "realTopologyReplay": {
+        "status": "PASS_ANONYMOUS_SIDEBAR_SNAPSHOT_ONLY",
+        "result": {
+          "safe": true,
+          "structure": true,
+          "excluded": true,
+          "geometry": true,
+          "unchanged": true,
+          "bounded": true,
+          "lastReadBudget": true,
+          "missing": true
+        },
+        "focus": {
+          "narrowed": true,
+          "covered": true,
+          "completeness": true,
+          "unchanged": true,
+          "conservative": true,
+          "private": true,
+          "bounded": true
+        },
+        "details": {
+          "bounded": true,
+          "covered": true,
+          "honest": true,
+          "unchanged": true,
+          "depthGuard": true,
+          "conservative": true,
+          "private": true
+        }
+      },
+      "isolatedMV3": {
+        "status": "PASS",
+        "checks": {
+          "homeCollectorPopupComplete": true,
+          "projectCollectorPopupComplete": true,
+          "collectorBuildReceiptMatchesPackage": true,
+          "staleDocumentRejected": true,
+          "noPrivateDatabaseOrDraftChanges": true,
+          "popupDownloadsBoundAnonymousSnapshot": true,
+          "noInternalRequests": true
+        },
+        "report": "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-9UNroq/report.json"
+      },
+      "sentinels": "Four explicit synthetic controls beneath actual omitted nodes test reach only. They are not real native descendants. History pressure and over-depth counterexamples validate scope/bounds."
+    },
+    "dailyChrome": "UNCHANGED; no new activation, collection, candidate or product acceptance",
+    "remaining": "Actual Project control/member descendants remain unknown. Do not widen native takeover or claim full v2.7 delivery from offline capture success.",
+    "readinessFollowup": {
+      "defect": "The offline capture init script also ran in formal extension child frames and threw on absent nav. Its old positive transport checks did not assert absence of these errors.",
+      "fix": "Fixture injection is restricted to the loopback top document; capture-only mode now fails on any page script error. No product collection permission or boundary changes.",
+      "isolatedReport": "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-LTt3SZ/report.json",
+      "status": "PASS",
+      "checks": {
+        "homeCollectorPopupComplete": true,
+        "projectCollectorPopupComplete": true,
+        "collectorBuildReceiptMatchesPackage": true,
+        "staleDocumentRejected": true,
+        "noPrivateDatabaseOrDraftChanges": true,
+        "popupDownloadsBoundAnonymousSnapshot": true,
+        "captureAndFramesWithoutScriptErrors": true,
+        "noInternalRequests": true
+      },
+      "browserErrors": [],
+      "package": "/private/tmp/VAIWL-Focused-Details-fa730665/extension",
+      "archiveSha256": "2fb72e7576648f8ce2af28740fd72c1c8ced62738907174cb68c0ee2e5e66273",
+      "readiness": {
+        "sourceHead": "fa730665c4d8e3c4e1146331f83f907fc5fc12c1",
+        "sourceHashCount": 199,
+        "sourceMismatches": [],
+        "manifestUnchanged": true,
+        "changedInstallationFiles": [
+          "src/host/history-structure-diagnostic.mjs",
+          "content.js"
+        ],
+        "bootBuild": "2dd6a78932f5cbcb2118b8daaa6940ee9a2b226282f5ec470c3e0246f13d853f",
+        "installedCollectorUnchanged": true,
+        "dailyChromeUpdated": false
+      },
+      "testAndStagedProductSourcesIdentical": true,
+      "registeredOriginalId": "miendbcjdmecjggplepenghjnoejmaic",
+      "realCapture": "NOT_RUN; original installation unchanged; a new capture requires a new bounded authorization"
+    },
+    "authorizedInstallation": {
+      "extensionId": "miendbcjdmecjggplepenghjnoejmaic",
+      "originalDirectory": "/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/.git/vaiwl-artifacts/local-source-witness-20261022/extension",
+      "candidateDirectory": "/private/tmp/VAIWL-Focused-Details-fa730665/extension",
+      "backup": "/private/tmp/VAIWL-before-focused-details-ct2iq9bn/original-extension.tar.gz",
+      "backupSha256": "bfbdcbc31cd7847bf0f94df19f7d39089f4f86c63873cc0e689980b181d1f62f",
+      "preservedOriginalFiles": 2911,
+      "preservedExtraFiles": 2713,
+      "changedFiles": [
+        "build-manifest.json",
+        "content.js",
+        "src/host/history-structure-diagnostic.mjs"
+      ],
+      "manifestUnchanged": true,
+      "candidateFilesVerified": 198,
+      "databaseAccessed": false,
+      "browserOperated": false,
+      "runtimeActivation": "NOT_RUN"
+    }
+  },
+  "receivedProjectDetails20261026": {
+    "source": "/Users/hhf/Downloads/vaiwl-sidebar-structure (1).json",
+    "sha256": "3fc4720e4ecef017fff4dbd2fc87817fa69a6e45650322b19c6a694f76c2ec19",
+    "fixture": "tests/host/fixtures/observed-sidebar-project-details-20261026.json",
+    "build": "2dd6a78932f5cbcb2118b8daaa6940ee9a2b226282f5ec470c3e0246f13d853f",
+    "documentBinding": "verified-at-capture-not-account-identity",
+    "route": "project",
+    "coverage": "PARTIAL",
+    "rows": 95,
+    "contextOnly": [
+      94
+    ],
+    "depthOmissions": [
+      66,
+      71,
+      73,
+      83,
+      88,
+      90
+    ],
+    "missingChildren": [],
+    "newFacts": [
+      "The first section contains an expandable role=button Project row, nested list with two listitems, href anchors and multiple native buttons.",
+      "flags=32 on the nested listitems means tabindex presence, not conversation marker. No stable conversation marker bit is present in that section.",
+      "The prior four missing header/row wrapper positions are now represented. Remaining omissions occur beneath anchors/buttons at local depth 16, not at the total row limit."
+    ],
+    "limits": [
+      "No href values, control action labels or omitted descendants were recorded; no additional Project/member identity or control delegation is established.",
+      "A complete anonymous tag tree alone would still not establish that native Project/menu/pin controls can be replaced without losing their actions.",
+      "Do not expand history masks to this section or hide derived Projects merely to eliminate duplicate navigation. Existing member admission continues through the separately validated main Project panel."
+    ],
+    "codeAssessment": "No new narrow production recognition defect confirmed by this report. Current nativeHistoryPresentation and independent workspace behavior remain valid but do not satisfy complete nonduplicate sidebar delivery.",
+    "verification": {
+      "command": "node --test --test-name-pattern='received Project details' tests/host/local-status.test.mjs",
+      "status": "PASS",
+      "scope": "One actual-evidence regression only; no browser, matrix, runtime activation or product acceptance"
+    },
+    "dailyChrome": "No operation/update after receiving this file; prior authorized update fingerprint is observed in the supplied receipt.",
+    "remaining": "Complete continuous sidebar remains incomplete: native Project controls lack a verified replacement/delegation contract and six control/link descendant subtrees remain unknown. No immediate recollection request or new candidate."
+  },
+  "partitionedSidebarComposition20261026": {
+    "base": "6d3e8642",
+    "status": "OFFLINE_INTEGRATED_REAL_PRODUCT_NOT_RUN",
+    "design": "Existing v2.7 renderer in independent flow slot, native Project preserved",
+    "files": [
+      "src/host/native-sidebar-composition.mjs",
+      "src/host/chatgpt-adapter.mjs",
+      "src/host/chatgpt-observed-profile.mjs",
+      "src/host/native-history-list.mjs",
+      "src/host/surface-controller.mjs",
+      "src/navigation/mount-surface.mjs"
+    ],
+    "counterexample": "Closing composed sidebar during native read clamps native scrollTop. Failed before fix; observation now keeps only a proved owned slot with no native masks open.",
+    "evidence": {
+      "receivedTree": "tests/host/fixtures/observed-sidebar-project-details-20261026.json",
+      "omittedDescendants": "retained, not materialized",
+      "geometry": "offline translation and declared native scrollport; not real CSS evidence",
+      "mechanism": "node tests/host/observed-profile-browser.mjs --sidebar-composition-only",
+      "fallback": "node tests/host/observed-profile-browser.mjs --sidebar-region-only",
+      "controller": "node --test tests/host/surface-controller.test.mjs",
+      "mv3": "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-mmyKPK/report.json",
+      "normalLifecycle": "/private/tmp/vaiwl-partition-mount-lifecycle.json",
+      "hardKillWithoutActiveLifecycle": "existing measured failure; not claimed fixed"
+    },
+    "package": {
+      "directory": "/private/tmp/VAIWL-v27-Partitioned-Sidebar-20261026/extension",
+      "archiveSha256": "7bc7ecb8fc8389d107be96f2cf1875c144c4246db43f335dda8d4a98f396d8ab",
+      "dailyInstallChanged": false,
+      "databaseChanged": false,
+      "manifestDifference": "one additional local Host module in web_accessible_resources; permissions and matches unchanged"
+    },
+    "limits": [
+      "No verified native Project collapse action; expanded native Project and derived themes can both remain. No automatic action or hiding.",
+      "Requires block/flow-root or column nowrap flex and native vertical auto/scroll port, with 180x240 visible slot; otherwise native fallback, workspace independent.",
+      "Real composed layout and full v2.7 product acceptance NOT_RUN."
+    ]
+  },
+  "continuousComposition20261027": {
+    "parent": "1c01292d86331c1a9c6927560951d7c04e7e4d3a",
+    "roots": [
+      "clipped slot was mistaken for lost structural anchor",
+      "temporary hide collapsed native flow",
+      "sparse content reserved fixed large area",
+      "current member outside selected window detached from expanded owner"
+    ],
+    "implementation": [
+      "native brand -> owned theme slot -> intact native Project/history",
+      "temporary hidden slot retains geometry; explicit close/revoke releases",
+      "correlated numeric intrinsic size; hidden hints cached; fresh viewport recaps",
+      "owning theme retains current chat without overriding disclosure choices"
+    ],
+    "nativeUntouched": [
+      "Project nodes and handlers",
+      "disclosure choice",
+      "account and input",
+      "private storage schema"
+    ],
+    "offline": {
+      "unit": "296 PASS",
+      "geometry": {
+        "status": "PASS_WEB_MECHANISM_ONLY",
+        "checks": {
+          "compositionSelected": true,
+          "formalBothVisible": true,
+          "flowReserved": true,
+          "nativeProjectUnchanged": true,
+          "nativeNeverMasked": true,
+          "nativeProjectControlReachable": true,
+          "nativeInputKeepsSidebar": true,
+          "readingKeepsFrame": true,
+          "closedSlotReleasesFlow": true,
+          "scrollAnchored": true,
+          "readingProbePreservesFlow": true,
+          "clippedAnchorRetained": true,
+          "nativeCollapseDoesNotReplaceFrame": true,
+          "unknownObstructionWithdrawsOnlySidebar": true,
+          "intrinsicSizeRespectsViewport": true,
+          "viewportGrowthRestoresRequestedSize": true,
+          "hiddenLateSizePreservesFlow": true,
+          "nativeModalPreservesLayout": true,
+          "reshowAppliesDeferredSize": true,
+          "disposeLeavesNative": true,
+          "gridNotAdmitted": true
+        }
+      },
+      "mv3": {
+        "partitionSlotWithFormalProjectAndMembers": true,
+        "sparseSidebarFitsContent": true,
+        "nativeInputAndReturnKeepContinuousSidebar": true,
+        "themeDisclosureSurvivesHostChange": true,
+        "nativeDisclosureDoesNotRebuildSidebar": true,
+        "nativeScrollKeepsFrameAligned": true,
+        "nativeProjectUntouchedAndSpaceReversible": true,
+        "explicitWorkspaceReturnRestoresComposition": true,
+        "nativeMemberOpenPreservesOriginalDraftAndWorkspace": true,
+        "homeInputAndReturnKeepSidebar": true,
+        "long-chatInputAndReturnKeepSidebar": true,
+        "noInternalRequests": true
+      },
+      "sourceHashesMatched": 200,
+      "evidence": "/private/tmp/VAIWL-v27-Continuous-Sidebar-20261027/evidence"
+    },
+    "visualReview": {
+      "viewed": [
+        "partition-desktop-workspace.png",
+        "partition-narrow-workspace.png",
+        "partition-native-reading.png",
+        "partition-long-chat-reading.png"
+      ],
+      "reference": "design/approved/v2.7/VAIWL_v2.7/validation/final/v27-small.png",
+      "confirmed": [
+        "approved card header/tree/width preserved",
+        "sparse sidebar blank height removed",
+        "theme navigation above original resources",
+        "current chat reachable without date claim"
+      ],
+      "limits": [
+        "native host in screenshots is anonymous structure replay, not live design acceptance",
+        "expanded native Project remains accessible and may repeat names as a management list"
+      ]
+    },
+    "package": {
+      "status": "HOST_IMPLEMENTATION_UNVERIFIED",
+      "releaseStatus": "NOT_RELEASE_READY",
+      "files": 199,
+      "unpacked": "/private/tmp/VAIWL-v27-Continuous-Sidebar-20261027/extension",
+      "archive": "/private/tmp/VAIWL-v27-Continuous-Sidebar-20261027/vaiwl-free-host-development.zip",
+      "archiveSha256": "0c829504fe55b1293f964b38188e0f4cedd2b2965b747f902b7b978cd720e12f"
+    },
+    "realChatGPT": "NOT_RUN",
+    "dailyInstall": "UNCHANGED_PENDING_FINAL_ACTIVATION",
+    "limits": [
+      "unknown or non-flow host preserves native sidebar; workspace independent",
+      "original Chrome native tool selected separate huifei process; no inputs sent",
+      "read-only exact original process inventory found Google search window, not verified Project acceptance document",
+      "no further structure collection or operator development"
+    ]
+  },
+  "realProductScreenshots20261027": {
+    "parent": "f14159d76fd2292f0c572b9f58b160c067a505e7",
+    "realProductAcceptance": "FAIL_NOT_V27_DELIVERY",
+    "source": "Five user-supplied screenshots 2026-10-27 02:03:52 through 02:04:49; raw private screenshots are not committed",
+    "observed": [
+      "Real Project and two members visible in Project document",
+      "Workspace constrained to centered native member column",
+      "Native Project management and owned theme list both expanded",
+      "Member opens in another tab and prior theme is absent in the new instant scope",
+      "Workspace return in new document has current chat and other known chats, not prior Project",
+      "Another conversation current title remains generic in the shown snapshot"
+    ],
+    "confirmedCodeFixes": [
+      "Project workspace may use geometrically proven empty viewport gutters; a gutter control falls back to original panel width; mask remains panel-only",
+      "Unique exact member action in freshly associated Project panel wins over identical-title exact-URL sidebar duplicates; ambiguous members and draft risks retain fallback"
+    ],
+    "notEstablished": [
+      "Exact href and inputRisk flags of screenshot navigation; duplicate-handle defect is reproducible but not proven sole live cause",
+      "Safe empty rich-editor grammar",
+      "Prior private record restoration",
+      "A permitted native Project collapse action; no automatic collapse or hiding implemented"
+    ],
+    "offline": {
+      "unit": "105 PASS",
+      "width": "PASS_WEB_MECHANISM_ONLY",
+      "memberActions": "PASS_WEB_MECHANISM_ONLY",
+      "formalMV3": "PASS",
+      "checks": {
+        "partitionSlotWithFormalProjectAndMembers": true,
+        "sparseSidebarFitsContent": true,
+        "centeredNativePanelDoesNotConstrainWorkspace": true,
+        "nativeInputAndReturnKeepContinuousSidebar": true,
+        "themeDisclosureSurvivesHostChange": true,
+        "nativeDisclosureDoesNotRebuildSidebar": true,
+        "nativeScrollKeepsFrameAligned": true,
+        "nativeProjectUntouchedAndSpaceReversible": true,
+        "explicitWorkspaceReturnRestoresComposition": true,
+        "nativeMemberOpenPreservesOriginalDraftAndWorkspace": true,
+        "homeInputAndReturnKeepSidebar": true,
+        "long-chatInputAndReturnKeepSidebar": true,
+        "noInternalRequests": true
+      },
+      "sourceTestPackageMismatch": [],
+      "legacySuite": "Full project-layout browser run still has pre-existing input-surrender/controller harness assertions. Unchanged f14159d7 journey also fails inputSurrenders (expects sidebar to disappear). No full-suite PASS claimed."
+    },
+    "package": "/private/tmp/VAIWL-v27-Project-Continuity-20261027/extension",
+    "archiveSha256": "99ce32927831bf543846e3dadc2dbb90aa391429dde41ed1987d894415f01752",
+    "installation": "NOT_UPDATED; prior package files unchanged",
+    "realVerificationOfFixes": "NOT_RUN",
+    "dataSafety": "No real browser interaction, private database/drafts untouched, no cross-document scope transfer"
+  },
+  "sameDocumentThemeContinuity20261027": {
+    "baseHead": "7e9a2d8eb88c3357b32c7a23b69bd97a84c919ae",
+    "status": "OFFLINE_INTEGRATED_REAL_JOURNEY_NOT_RUN",
+    "causes": [
+      "early new-route handshake deleted live document scope and admitted RAM objects before trusted navigation event",
+      "sidebar disclosure save debounce lost explicit choice when workspace dispatched member navigation immediately"
+    ],
+    "implementation": [
+      "hold route-pending selection without granting either URL; only trusted same-document event resumes, risk/replacement/expiry still discard",
+      "control resume avoids re-binding live document; existing contextReady recovery enabled for BrowserLocal",
+      "explicit sidebar structure saves immediately using existing role/CAS contract; scroll remains coalesced",
+      "owned native-resource boundary; empty candidate disclosure omitted; native controls unchanged"
+    ],
+    "checks": {
+      "authorityAndHost": 26,
+      "frameAndResume": 235,
+      "contentAndFrameEarlierRelated": 346,
+      "formalMV3": {
+        "status": "PASS",
+        "evidence": "ISOLATED_MV3_FORMAL_UI_LOCAL_SESSION_AND_PERSONAL",
+        "realChatGPT": "NOT_RUN",
+        "baseline": "chatgpt-desktop-observed-v6",
+        "package": {
+          "status": "OFFLINE_HOST_RECONSTRUCTION",
+          "releaseStatus": "NOT_RELEASE_READY",
+          "files": 199,
+          "unpacked": "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-iMNfv7/package/extension",
+          "archive": "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-iMNfv7/package/vaiwl-free-host-development.zip",
+          "archiveSha256": "bd486f03127f011abe29bc19945706a552c0cd1a22628344ef90f5ed7f6bc5fd"
+        },
+        "checks": {
+          "partitionSlotWithFormalProjectAndMembers": true,
+          "sparseSidebarFitsContent": true,
+          "centeredNativePanelDoesNotConstrainWorkspace": true,
+          "nativeInputAndReturnKeepContinuousSidebar": true,
+          "themeDisclosureSurvivesHostChange": true,
+          "nativeDisclosureDoesNotRebuildSidebar": true,
+          "nativeScrollKeepsFrameAligned": true,
+          "nativeProjectUntouchedAndSpaceReversible": true,
+          "explicitWorkspaceReturnRestoresComposition": true,
+          "nativeMemberOpenPreservesOriginalDraftAndWorkspace": true,
+          "sameDocumentMemberRetainsProjectAndReturn": true,
+          "homeInputAndReturnKeepSidebar": true,
+          "long-chatInputAndReturnKeepSidebar": true,
+          "noInternalRequests": true
+        },
+        "requests": [
+          "/g/g-p-11111111111111111111111111111111/project",
+          "/c/44444444-4444-4444-8444-444444444444",
+          "/g/g-p-11111111111111111111111111111111/project",
+          "/",
+          "/c/44444444-4444-4444-8444-444444444444"
+        ],
+        "browserErrors": [],
+        "images": [
+          "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-iMNfv7/partition-desktop-workspace.png",
+          "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-iMNfv7/partition-native-collapsed.png",
+          "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-iMNfv7/partition-narrow-workspace.png",
+          "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-iMNfv7/partition-member-return.png",
+          "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-iMNfv7/partition-native-reading.png",
+          "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-iMNfv7/partition-home-reading.png",
+          "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-iMNfv7/partition-long-chat-reading.png"
+        ]
+      },
+      "sourceAndTestModulesEqual": 186,
+      "installedPreviousPackageFilesUnchanged": 198
+    },
+    "package": {
+      "path": "/private/tmp/VAIWL-v27-Theme-Continuity-20261027/extension",
+      "archiveSha256": "1226d19ea998577e7618757ed62e95f5c9df53eab3b040214fe983bba925d38a",
+      "installed": false,
+      "diskPrepared": true
+    },
+    "limitations": [
+      "new-document private restore requires existing personal confirmation",
+      "unverified rich-editor empty grammar remains conservative; draft-risk fallback can use a new tab",
+      "native expanded Project management may repeat names; no verified automatic folding or hiding introduced",
+      "real product journey and old private object restoration remain NOT_RUN"
+    ],
+    "realAccountRequests": 0,
+    "dailyChromeModified": "package files updated after full backup; no browser interaction or reload",
+    "installation": {
+      "source": "/private/tmp/VAIWL-v27-Theme-Continuity-20261027/extension",
+      "installedDirectory": "/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/.git/vaiwl-artifacts/local-source-witness-20261022/extension",
+      "backup": "/private/tmp/VAIWL-before-theme-continuity-qvs16ssi/original-extension.tar.gz",
+      "preservedOriginalFiles": 2950,
+      "changedFiles": [
+        "src/runtime/browser-local-control.mjs",
+        "src/host/native-project-surface.mjs",
+        "src/host/surface-discovery.mjs",
+        "src/runtime/browser-local-authority.mjs",
+        "extension/content-entry.mjs",
+        "src/host/browser-local-lifecycle.mjs",
+        "src/navigation/mount-surface.mjs",
+        "src/host/free-frame-client.mjs",
+        "content.js",
+        "extension/classic-runtime.js",
+        "build-manifest.json"
+      ],
+      "extensionId": "miendbcjdmecjggplepenghjnoejmaic",
+      "runtimeReload": "NOT_RUN",
+      "databaseAccess": false
+    },
+    "gitPush": "normal push low-speed timeout; local work preserved"
+  },
+  "overnightProductClosure20261027": {
+    "baseHead": "67beb8297e85bd4af0cac273969856b2c9959a47",
+    "status": "OFFLINE_INTEGRATED_REAL_CHROME_NOT_RUN",
+    "implementation": [
+      "current confirmed Project leads sidebar with selected highlight; owner ordering and manual disclosure unchanged",
+      "standalone current chat leads sidebar once; UNKNOWN/NONE/PROJECT facts and inventory paging retained",
+      "owned theme scroll containment matches approved v2.7",
+      "optional sidebar restoration keeps resource boundary last; only publishes role after valid owned insertion",
+      "detached or foreign reading viewport withdraws workspace authority; independent sidebar survives"
+    ],
+    "independentReview": {
+      "sidebar": "recovery atomicity finding repaired; final read-only review clear",
+      "renderer": "paging, missing current Project, current-only inventory and membership boundaries reviewed",
+      "persistence": "existing role-CAS and authorized-new-document wiring confirmed; no rewrite"
+    },
+    "checks": {
+      "relatedNode": "PASS",
+      "relatedNodeCount": 504,
+      "finalIsolatedMV3": {
+        "nativeHistoryReorderReplacesStaleMaskAndRestoresFormalUI": true,
+        "lateNativeSidebarStartsWithoutReload": true,
+        "lateProjectSidebarStartsWithoutReload": true,
+        "lateProjectRowsStartWithoutReload": true,
+        "failedProjectToNativeHomeRecoversWithoutReload": true,
+        "projectAndMembersInFormalUI": true,
+        "nativeComposerKeepsContinuousSidebar": true,
+        "nativeListUserChoiceSurvivesGeometry": true,
+        "sidebarFrameLossRejoinsWithoutReplacingWorkspace": true,
+        "nativeOpenPreservesDraft": true,
+        "uniqueReturn": true,
+        "keyboardReturnKeepsFocus": true,
+        "noDatabaseOpened": true,
+        "reloadRediscoversVisibleObjects": true,
+        "replacementDoesNotExposeOldProject": true,
+        "longChatReadingReturn": true,
+        "longChatRenewalContinuity": true,
+        "explicitBindingUsesExistingIDBInSeparateNamespace": true,
+        "trustedSameDocumentNavigationRetainsPersonalSpace": true,
+        "tabFocusKeepsBinding": true,
+        "nativeModalAcrossRenewalRestoresReadingSidebarAndReturn": true,
+        "nativeSearchAndUnplannedSpaKeepsBinding": true,
+        "actualWorkerStopped": true,
+        "workerRestartSameDocumentNoConfirmation": true,
+        "workerRecoveryPreservesDraft": true,
+        "accountRiskClearsContinuityAndPrivateProjection": true,
+        "explicitUnlockRestoresKnownProject": true,
+        "refreshLocksButPreservesPersonalCache": true,
+        "browserRestartLocksAndExplicitUnlockRestores": true,
+        "persistedPrivateLayoutRestoresAfterExplicitNewDocumentBinding": true,
+        "uninstallReleasesPrivateFramesAndNativeInput": true,
+        "noInternalRequests": true
+      },
+      "compositionMV3": {
+        "partitionSlotWithFormalProjectAndMembers": true,
+        "sparseSidebarFitsContent": true,
+        "centeredNativePanelDoesNotConstrainWorkspace": true,
+        "nativeInputAndReturnKeepContinuousSidebar": true,
+        "themeDisclosureSurvivesHostChange": true,
+        "nativeDisclosureDoesNotRebuildSidebar": true,
+        "nativeScrollKeepsFrameAligned": true,
+        "nativeProjectUntouchedAndSpaceReversible": true,
+        "explicitWorkspaceReturnRestoresComposition": true,
+        "nativeMemberOpenPreservesOriginalDraftAndWorkspace": true,
+        "sameDocumentMemberRetainsProjectAndReturn": true,
+        "homeInputAndReturnKeepSidebar": true,
+        "long-chatInputAndReturnKeepSidebar": true,
+        "noInternalRequests": true
+      },
+      "productStates": [
+        {
+          "scene": "empty",
+          "metrics": {
+            "cards": [],
+            "width": 780,
+            "overflow": false,
+            "rows": 0
+          },
+          "evidence": "ISOLATED_FORMAL_MV3_NOT_REAL_ACCOUNT"
+        },
+        {
+          "scene": "ordinary",
+          "metrics": {
+            "cards": [],
+            "width": 780,
+            "overflow": false,
+            "rows": 5
+          },
+          "evidence": "ISOLATED_FORMAL_MV3_NOT_REAL_ACCOUNT",
+          "allKnownRowsReachable": true,
+          "privateExpandedRowsRestoreAfterExplicitBinding": true
+        },
+        {
+          "scene": "project",
+          "metrics": {
+            "cards": [
+              {
+                "width": 356,
+                "height": 140,
+                "radius": "13px"
+              }
+            ],
+            "width": 1100,
+            "overflow": false,
+            "rows": 2
+          },
+          "evidence": "ISOLATED_FORMAL_MV3_NOT_REAL_ACCOUNT"
+        },
+        {
+          "scene": "project-narrow",
+          "metrics": {
+            "cards": [
+              {
+                "width": 356,
+                "height": 140,
+                "radius": "13px"
+              }
+            ],
+            "width": 445,
+            "overflow": false,
+            "rows": 2
+          },
+          "evidence": "ISOLATED_FORMAL_MV3_NOT_REAL_ACCOUNT"
+        }
+      ],
+      "finalReport": "free-night-product-journey-20261027.json.gz",
+      "packageAndTestIdenticalFiles": 192,
+      "environmentGeneratedDifferences": [
+        "extension/worker.mjs",
+        "extension/config.mjs",
+        "content.js",
+        "extension/frame-bootstrap.js",
+        "manifest.json",
+        "extension/classic-runtime.js"
+      ],
+      "verifyHost": "both packages PASS"
+    },
+    "visualReview": {
+      "reference": "design/approved/v2.7/VAIWL_v2.7/prototype-v2.7.html and validation/attempt1/v27-daily.png",
+      "images": "/private/tmp/VAIWL-v27-Overnight-Integrated-20261027/review",
+      "observed": [
+        "selected current Project and owning member tree",
+        "single Project card356px radius13, approved header and member branches",
+        "unknown memberships subordinate with Project, reachable with zero Projects",
+        "narrow width no horizontal overflow; empty state distinct"
+      ],
+      "notAccountScreenshot": true,
+      "limits": [
+        "native fixture controls are anonymous reconstruction, not real ChatGPT pixels",
+        "distinct fixture IDs can share Native A title after native title observation"
+      ]
+    },
+    "package": {
+      "status": "HOST_IMPLEMENTATION_UNVERIFIED",
+      "releaseStatus": "NOT_RELEASE_READY",
+      "files": 199,
+      "unpacked": "/private/tmp/VAIWL-v27-Overnight-Integrated-20261027/extension",
+      "archive": "/private/tmp/VAIWL-v27-Overnight-Integrated-20261027/vaiwl-free-host-development.zip",
+      "archiveSha256": "64207e268511a41d46a3e2348f90ada7fb2f78e119f3afe809ce49fd63f926fc"
+    },
+    "installed": false,
+    "dailyChromeModified": false,
+    "realAccountRequests": 0,
+    "realChrome": "NOT_RUN",
+    "limits": [
+      "expanded native Project management may repeat names; no validated automatic folding",
+      "uncertain rich-editor draft semantics retain safe new-tab fallback",
+      "new-document private restoration requires personal confirmation; revoked pending writes cannot commit",
+      "Mac full product and old personal object restore not established by isolated tests"
+    ],
+    "nextAllowedWork": "No additional confirmed independent defect from this audit. Preserve package; one daytime real journey may supply new evidence. Do not repeat unchanged offline tests or modify daily Chrome overnight.",
+    "searchAndContractClosure": {
+      "baseHead": "e166bfd95d41e2a8d73c3da0d6df71ab14659552",
+      "productFix": "A queued presentation cannot clear newer typed search or override a newer explicit action. Passive workspaceEntered retains queued presentation while still invalidating old native actions. Scope invalidation continues to clear queue and private display.",
+      "counterexample": "Existing renderer, queued search under pointer-down, one newer input, pointer-up: before fix empty query instead of newer query; after fix retained. No wait extension.",
+      "ciCausality": "CI observed empty query after one fill; this independent deterministic counterexample matches symptom but does not prove the only CI ordering.",
+      "checks": {
+        "relatedNode": 438,
+        "searchBrowser": "PASS_EARLY_INPUT_RENDERER_SUBCONTRACT_ONLY",
+        "ui10Modern": "PASS_CONTROL_SUBMATRIX_ONLY",
+        "ui10ModernCoverageComplete": true,
+        "finalProductJourney": "PASS",
+        "independentReadOnlyReview": "PASS_NO_NEW_BLOCKER",
+        "cspContractNode": 15,
+        "pageCommandReadinessNode": 53,
+        "finalContractNode": 91,
+        "ui06IndependentRolesNode": 71,
+        "partialContractNode": 45
+      },
+      "testContractRepair": "Existing entry/J1/J4/repair helpers wait for actual workspace, not both optional roles; disclose unknown rows before reading; SYS05 uses workspace tool when sidebar cannot fit; passive J4 anchors retain original cleanup. Original draft, identity, causal response, budgets and native action assertions remain.",
+      "scopedResults": {
+        "nativeEntry": "PASS_LEGACY_SUBSCENARIOS_ONLY",
+        "j1": "PARTIAL_J1_NOT_ACCEPTED",
+        "prerequisites": "PARTIAL_J2_J4_NOT_ACCEPTED",
+        "sys05": "PASS_NARROW_DIAGNOSTIC_SYS05_SLICE",
+        "membership": "PASS_SCOPED_OFFLINE_D_S",
+        "existingRepair": "PASS_NARROW_EXISTING_SOURCE_PENDING_REPAIR",
+        "earlySearch": "PASS_EARLY_INPUT_RENDERER_SUBCONTRACT_ONLY",
+        "ui10Modern": "PASS_LAYOUT_SUBCONTRACT_ONLY",
+        "finalJourney": "PASS",
+        "csp": "PASS_NARROW_PACKAGED_FAULT_OBSERVATIONS",
+        "pageCommand": "PASS_NARROW_PACKAGED_PAGE_COMMAND_AND_NO_TAP_CONTINUITY",
+        "j3Modern": "PARTIAL_NOT_J3_ACCEPTED",
+        "partialIntegrated": "PASS_ISOLATED_PARTIAL_RECONSTRUCTION_ONLY"
+      },
+      "fullCI": "NOT_ALL_GREEN: unknown-protocol worker body witness failed RESOURCE_CONTENT_UNAVAILABLE/net::ERR_ABORTED; no relaxed proof or automatic retries. Other legacy job failures reviewed separately; local subcontracts do not imply full CI acceptance.",
+      "evidence": "free-night-ci-contracts-20261027.json.gz",
+      "sourceAndFinalJourneyMatch": true,
+      "realMacChrome": "NOT_RUN",
+      "dailyInstallationUpdated": false,
+      "package": {
+        "status": "HOST_IMPLEMENTATION_UNVERIFIED",
+        "releaseStatus": "NOT_RELEASE_READY",
+        "files": 199,
+        "unpacked": "/private/tmp/VAIWL-v27-Overnight-Integrated-20261027/extension",
+        "archive": "/private/tmp/VAIWL-v27-Overnight-Integrated-20261027/vaiwl-free-host-development.zip",
+        "archiveSha256": "a19117a56c8e40f4895a18daa65cb072ca1c42963d1f6ac8ccf538df201900be"
+      },
+      "previousPackagePreserved": "/private/tmp/VAIWL-v27-Overnight-Integrated-20261027-e166-preserved",
+      "legacyGateClassification": {
+        "unknownProtocol": "NOT_ESTABLISHED: worker body witness aborted; no proof downgrade",
+        "idleReading": "legacy observer installed after initial VIEW and expects both surfaces closed; continuous sidebar deliberately remains active, not proof of product idle failure",
+        "csp": "Historical CI failure retained; exact oracle and historical counter now share the existing sidebar-only 3-field integer 240..1024 size protocol. Local packaged CSP passed; zero schema violations and private leaks, foreign sender denied, original draft/selection preserved. Not full CI acceptance.",
+        "partialJ3ContextPopulated": "legacy both-role, folded-UNKNOWN and composer-closes-both assumptions; no new product defect established by these failures",
+        "stale503Mutant": "expected negative-control failure, unchanged baseline passed"
+      },
+      "pageCommandReadiness": "Existing security runner now binds visible state to the current owned workspace frame, discloses UNKNOWN once through formal UI, and verifies the expected stable object ID before the unchanged settled-IDB/attack baseline. Sidebar is optional; replacements revalidate ownership and never replay either action. Zero unexpected requests, native writes, database mutations or private leaks. Native finite-response function/results preserved. Not full SEC08/ACT20 or real-account acceptance.",
+      "j3IndependentRoles": "Fixed MODERN fixture has 110px native history and no safe sidebar. Workspace, native history and parent AX/keyboard remain verified independently; no geometry relaxation. Registered-worker run completed 13 supported steps with no send and original drafts/nodes retained. Three readable-native-Range snippet steps NOT_COVERED; production snippet profile remains disabled/not certified. Prior immediate cold-start failure and masked-Range failure retained; neither is rewritten as PASS. UNKNOWN fixture history stays in its evidenced old segment, not invented recent use.",
+      "partialIndependentRoles": "Existing partial-window runner now checks the current UNKNOWN row independently of the folded list. Native-list release remains a real user control. Removing rows from the exact connected pure-history root (only original H2 remains) retains workspace; sidebar mask must match independently observed visibility. Rename, native search, exact 75-to-76 scoped observed union, original draft/file identity and only offsets 25/50 passed. No unknown native control masking claim; no real-account acceptance. All failed oracle attempts retained; readonly independent review passed. No production source change."
+    },
+    "sidebarRecoveryContinuity20261027": {
+      "baseHead": "9951fbb23250d228d08d1563e58eeafbbac6b0b0",
+      "status": "PRODUCT_CODE_FIXED_REAL_NOT_RUN",
+      "module": "src/host/surface-controller.mjs",
+      "changes": [
+        "preserve native-list presentation choice across internal same-document region rebuild without reusing grants",
+        "retain sidebar recovery admission after null/throw only for a new proved layout revision"
+      ],
+      "regression": "three minimal failures reproduced; controller, geometry, native focus, termination and dormant suites passed",
+      "existingOracleCorrection": "geometry call-order assertion failed unchanged base; now checks proof immediately before workspace show, with rejection checks retained",
+      "independentReview": "night_sidebar_audit read-only review accepted scope and recovery guards",
+      "isolatedJourney": {
+        "status": "PASS",
+        "evidence": "ISOLATED_MV3_FORMAL_UI_LOCAL_SESSION_AND_PERSONAL",
+        "realChatGPT": "NOT_RUN",
+        "baseline": "chatgpt-desktop-observed-v6",
+        "package": {
+          "status": "OFFLINE_HOST_RECONSTRUCTION",
+          "releaseStatus": "NOT_RELEASE_READY",
+          "files": 199,
+          "unpacked": "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-3Xf7sp/package/extension",
+          "archive": "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-3Xf7sp/package/vaiwl-free-host-development.zip",
+          "archiveSha256": "2da348b2a58a0e9aa243f0c0583078d862ae9ef24c6c12bc8fee881575a8bf8c"
+        },
+        "checks": {
+          "partitionSlotWithFormalProjectAndMembers": true,
+          "sparseSidebarFitsContent": true,
+          "centeredNativePanelDoesNotConstrainWorkspace": true,
+          "nativeInputAndReturnKeepContinuousSidebar": true,
+          "themeDisclosureSurvivesHostChange": true,
+          "nativeDisclosureDoesNotRebuildSidebar": true,
+          "nativeScrollKeepsFrameAligned": true,
+          "nativeProjectUntouchedAndSpaceReversible": true,
+          "explicitWorkspaceReturnRestoresComposition": true,
+          "nativeMemberOpenPreservesOriginalDraftAndWorkspace": true,
+          "sameDocumentMemberRetainsProjectAndReturn": true,
+          "homeInputAndReturnKeepSidebar": true,
+          "long-chatInputAndReturnKeepSidebar": true,
+          "noInternalRequests": true
+        },
+        "requests": [
+          "/g/g-p-11111111111111111111111111111111/project",
+          "/c/44444444-4444-4444-8444-444444444444",
+          "/g/g-p-11111111111111111111111111111111/project",
+          "/",
+          "/c/44444444-4444-4444-8444-444444444444"
+        ],
+        "browserErrors": [],
+        "images": [
+          "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-3Xf7sp/partition-desktop-workspace.png",
+          "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-3Xf7sp/partition-native-collapsed.png",
+          "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-3Xf7sp/partition-narrow-workspace.png",
+          "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-3Xf7sp/partition-member-return.png",
+          "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-3Xf7sp/partition-native-reading.png",
+          "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-3Xf7sp/partition-home-reading.png",
+          "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-3Xf7sp/partition-long-chat-reading.png"
+        ]
+      },
+      "package": {
+        "status": "HOST_IMPLEMENTATION_UNVERIFIED",
+        "releaseStatus": "NOT_RELEASE_READY",
+        "files": 199,
+        "unpacked": "/private/tmp/VAIWL-v27-Continuity-Integrated-20261027/extension",
+        "archive": "/private/tmp/VAIWL-v27-Continuity-Integrated-20261027/vaiwl-free-host-development.zip",
+        "archiveSha256": "b3e081ad042c681c5058be11e188d17785fb6026e36386012e7e0b44a2955cf2"
+      },
+      "sourceMismatches": [],
+      "offlinePackageDifferences": [
+        "content.js",
+        "extension/classic-runtime.js",
+        "extension/config.mjs",
+        "extension/frame-bootstrap.js",
+        "extension/worker.mjs",
+        "manifest.json"
+      ],
+      "dailyChromeModified": false,
+      "realChrome": "NOT_RUN",
+      "privateOldObjectRecovery": "NOT_RUN",
+      "fullProductAccepted": false,
+      "limits": [
+        "native Project management disclosure remains intact and may repeat theme names",
+        "ambiguous rich-text draft uses new-tab safety fallback",
+        "new-document private recovery still requires person confirmation"
+      ]
+    }
+  },
+  "documentFlowDualPro20261027": {
+    "baseHead": "ff678f3918464327e83caafd59987a3067d5b562",
+    "verdicts": [
+      "6437805652",
+      "6437829589"
+    ],
+    "implementation": "independent-formal-scheme-B-not-library-patch",
+    "sourceStatus": "INTEGRATED",
+    "realChatGPT": "NOT_RUN",
+    "productAcceptance": "NOT_ACCEPTED",
+    "package": "/private/tmp/VAIWL-v27-Document-Flow-20261027/extension",
+    "archiveSha256": "8bd4e37d3e1d65c930c006d8ad90197d399459ee08e3834eb3ea7bfd26c70d41",
+    "sourceCount": 202,
+    "sourceClosureMatchesFinalJourney": true,
+    "formalMV3": {
+      "status": "PASS",
+      "evidence": "ISOLATED_MV3_FORMAL_UI_LOCAL_SESSION_AND_PERSONAL",
+      "realChatGPT": "NOT_RUN",
+      "baseline": "chatgpt-desktop-observed-v6",
+      "package": {
+        "status": "OFFLINE_HOST_RECONSTRUCTION",
+        "releaseStatus": "NOT_RELEASE_READY",
+        "files": 201,
+        "unpacked": "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-eQZmTg/package/extension",
+        "archive": "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-eQZmTg/package/vaiwl-free-host-development.zip",
+        "archiveSha256": "8526ffbb266abfdac0eefec2c5d489e6ac407b545e08e4716b1c4903c1f17171"
+      },
+      "checks": {
+        "projectFooter": {
+          "y": 160,
+          "bottom": 200,
+          "height": 40,
+          "viewport": 200,
+          "panel": 200
+        },
+        "projectFormalFlowInputReturn": true,
+        "firstNativeToolGesture": true,
+        "homeFooter": {
+          "y": 61,
+          "bottom": 101,
+          "height": 40,
+          "viewport": 128,
+          "panel": 101
+        },
+        "homeFormalFlowInputReturn": true,
+        "conversationFooter": {
+          "y": 92,
+          "bottom": 132,
+          "height": 40,
+          "viewport": 132,
+          "panel": 132
+        },
+        "conversationFormalFlowInputReturn": true,
+        "afterUnlock": {
+          "ok": true,
+          "exists": true,
+          "mode": "personal"
+        },
+        "nativeNavScrollChain": true,
+        "localSidebarFailurePreservesWorkspace": true,
+        "beforeMember": {
+          "ok": true,
+          "exists": true,
+          "mode": "personal"
+        },
+        "afterMember": {
+          "ok": true,
+          "exists": true,
+          "mode": "personal"
+        },
+        "navigationTrace": [
+          {
+            "type": "history",
+            "documentId": "69DDC1266D8CC693EF970ED9229F42BE"
+          }
+        ],
+        "sameDocumentProjectMemberReadingReturn": true,
+        "persistedNativeNav": [
+          {
+            "segment": 0,
+            "oldOpen": [],
+            "sidebarOpen": [],
+            "capacities": [],
+            "scroll": 0,
+            "sidebarScroll": 0,
+            "sidebarVisible": true,
+            "inventoryChoices": [],
+            "sidebarChoices": [
+              [
+                "g-p-11111111111111111111111111111111",
+                false
+              ]
+            ],
+            "freeSession": {
+              "H": 30,
+              "T": 20753,
+              "Z": "Asia/Shanghai",
+              "policyRevision": 0
+            },
+            "sidebarViewport": {
+              "owner": "native-nav",
+              "scroll": 117
+            }
+          }
+        ],
+        "workerRecoveryKeepsPersonalAndUserExpansion": true,
+        "newDocumentLocksAndConfirmedPrivateObjectAndLayoutRestore": true,
+        "privateScopeRevokeClearsPriorProject": true,
+        "actualIsolatedUninstallRestoresNativeGeometryDraftAndInput": true,
+        "noInternalRequests": true
+      },
+      "requests": [
+        "/g/g-p-11111111111111111111111111111111/project",
+        "/",
+        "/c/44444444-4444-4444-8444-444444444444",
+        "/g/g-p-11111111111111111111111111111111/project",
+        "/c/44444444-4444-4444-8444-444444444444"
+      ],
+      "browserErrors": [],
+      "images": [
+        "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-eQZmTg/flow-project.png",
+        "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-eQZmTg/flow-home.png",
+        "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-eQZmTg/flow-conversation.png",
+        "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-eQZmTg/flow-journey-reading.png",
+        "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-eQZmTg/flow-journey-return.png",
+        "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-eQZmTg/flow-journey-narrow.png"
+      ]
+    },
+    "review": "/private/tmp/VAIWL-v27-Document-Flow-20261027/review/REVIEW.md",
+    "nativeManagementBoundary": "Explicit trusted disclosure with unique aria-controls, actual visible duplicate IDs only. Existing real snapshot does not establish this interaction; preserve native controls where unknown.",
+    "installation": "UNCHANGED",
+    "libraryPatch": "NOT_ACQUIRED_NOT_RUN",
+    "independentReview": "Read-only flow_contract_review: no new blocking finding; not real acceptance",
+    "integrationFollowup": {
+      "baseHead": "da07c20f8ce85b4c41ceea97daa69dce759dc3ac",
+      "formalModules": [
+        "src/host/document-flow-layout.mjs",
+        "src/navigation/flow-mount-surface.mjs",
+        "src/host/free-frame-client.mjs",
+        "src/host/surface-discovery.mjs"
+      ],
+      "changes": [
+        "native header inside root gets independent grid row; outside header retains identity and hit proof",
+        "late semantic controls guarded including role/tabindex/contenteditable",
+        "first trusted pointer gesture retains empty geometry only with intact owned CSS/frame and same native structure; nonrenewable 3000ms deadline; real revoke immediate",
+        "invalid action batch clears actions without rejecting valid VIEW",
+        "optional Project diagnostics cannot discard accepted navigation observation"
+      ],
+      "independentReview": "read-only flow_contract_review and flow_followup_review; deadline and intact guard findings fixed",
+      "package": "/private/tmp/VAIWL-v27-Document-Flow-Integrated-20261027/extension",
+      "archiveSha256": "e5328c519dc4b99c3ebe0916c1a7e73d89027e0d8f78c5f5015beb4e09af1a83",
+      "sourceCount": 202,
+      "sourceClosureMatchesFinalJourney": true,
+      "formalMV3": {
+        "status": "PASS",
+        "evidence": "ISOLATED_MV3_FORMAL_UI_LOCAL_SESSION_AND_PERSONAL",
+        "realChatGPT": "NOT_RUN",
+        "baseline": "chatgpt-desktop-observed-v6",
+        "package": {
+          "status": "OFFLINE_HOST_RECONSTRUCTION",
+          "releaseStatus": "NOT_RELEASE_READY",
+          "files": 201,
+          "unpacked": "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-xpJgnx/package/extension",
+          "archive": "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-xpJgnx/package/vaiwl-free-host-development.zip",
+          "archiveSha256": "52f499d7ce6a4c2d7f6f24d63600be2f8189d1ddda3bae7c57da7599cb37eee1"
+        },
+        "checks": {
+          "projectFooter": {
+            "y": 160,
+            "bottom": 200,
+            "height": 40,
+            "viewport": 200,
+            "panel": 200
+          },
+          "projectFormalFlowInputReturn": true,
+          "firstNativeToolGesture": true,
+          "homeFooter": {
+            "y": 61,
+            "bottom": 101,
+            "height": 40,
+            "viewport": 128,
+            "panel": 101
+          },
+          "homeFormalFlowInputReturn": true,
+          "conversationFooter": {
+            "y": 92,
+            "bottom": 132,
+            "height": 40,
+            "viewport": 132,
+            "panel": 132
+          },
+          "conversationFormalFlowInputReturn": true,
+          "afterUnlock": {
+            "ok": true,
+            "exists": true,
+            "mode": "personal"
+          },
+          "nativeNavScrollChain": true,
+          "localSidebarFailurePreservesWorkspace": true,
+          "beforeMember": {
+            "ok": true,
+            "exists": true,
+            "mode": "personal"
+          },
+          "afterMember": {
+            "ok": true,
+            "exists": true,
+            "mode": "personal"
+          },
+          "navigationTrace": [
+            {
+              "type": "history",
+              "documentId": "04FDBC43A2574E3EDCF3CC32A166888D"
+            }
+          ],
+          "sameDocumentProjectMemberReadingReturn": true,
+          "narrowFlowStructure": {
+            "workspaces": 1,
+            "headers": 1,
+            "composers": 1,
+            "roots": [
+              {
+                "x": 260,
+                "y": 0,
+                "width": 460,
+                "height": 900,
+                "top": 0,
+                "right": 720,
+                "bottom": 900,
+                "left": 260
+              }
+            ],
+            "height": 900
+          },
+          "persistedNativeNav": [
+            {
+              "segment": 0,
+              "oldOpen": [],
+              "sidebarOpen": [],
+              "capacities": [],
+              "scroll": 0,
+              "sidebarScroll": 0,
+              "sidebarVisible": true,
+              "inventoryChoices": [],
+              "sidebarChoices": [
+                [
+                  "g-p-11111111111111111111111111111111",
+                  false
+                ]
+              ],
+              "freeSession": {
+                "H": 30,
+                "T": 20753,
+                "Z": "Asia/Shanghai",
+                "policyRevision": 0
+              },
+              "sidebarViewport": {
+                "owner": "native-nav",
+                "scroll": 117
+              }
+            }
+          ],
+          "workerRecoveryKeepsPersonalAndUserExpansion": true,
+          "newDocumentLocksAndConfirmedPrivateObjectAndLayoutRestore": true,
+          "privateScopeRevokeClearsPriorProject": true,
+          "actualIsolatedUninstallRestoresNativeGeometryDraftAndInput": true,
+          "noInternalRequests": true
+        },
+        "requests": [
+          "/g/g-p-11111111111111111111111111111111/project",
+          "/",
+          "/c/44444444-4444-4444-8444-444444444444",
+          "/g/g-p-11111111111111111111111111111111/project",
+          "/c/44444444-4444-4444-8444-444444444444"
+        ],
+        "browserErrors": [],
+        "images": [
+          "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-xpJgnx/flow-project.png",
+          "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-xpJgnx/flow-home.png",
+          "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-xpJgnx/flow-conversation.png",
+          "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-xpJgnx/flow-journey-reading.png",
+          "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-xpJgnx/flow-journey-return.png",
+          "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-browser-local-mv3-xpJgnx/flow-journey-narrow.png"
+        ]
+      },
+      "j4OracleCorrection": "test waited for nonexistent data-navigation-mounted; formal .workspace used; no production recovery change to manufacture pass",
+      "realChatGPT": "NOT_RUN",
+      "productAcceptance": "NOT_ACCEPTED",
+      "remaining": [
+        "real React/IME/attachment/tool behavior",
+        "actual native Project management action semantics",
+        "real private old record restore after person confirmation",
+        "whole-screen real v2.7 acceptance"
+      ],
+      "targetedValidation": {
+        "changedContracts": "PASS 783/783",
+        "frameReadIsolation": "PASS 255/255",
+        "geometryContracts": "PASS 41/41",
+        "documentFlowBrowser": "PASS",
+        "packagedC2": "PASS",
+        "firstSendOffline": "PASS",
+        "strictJ4": {
+          "status": "PARTIAL_J4_NOT_ACCEPTED",
+          "errors": [],
+          "steps": [
+            {
+              "name": "two-native-tabs-authenticated-C2-team-context-not-first-roster-entry",
+              "status": "PASS"
+            },
+            {
+              "name": "native-account-menu-switch-personal-A-retains-team-B-with-distinct-authenticated-contexts",
+              "status": "PASS"
+            },
+            {
+              "name": "real-backup-preview-and-explicit-import-human-assets-isolated-to-personal-scope",
+              "status": "PASS"
+            },
+            {
+              "name": "native-send-accepted-authenticated-detail-held-before-evidence",
+              "status": "PASS"
+            },
+            {
+              "name": "actual-disable-between-native-acceptance-and-evidence-preserves-native-document",
+              "status": "PASS"
+            },
+            {
+              "name": "new-grant-C4-original-send-recovers-pure-evidence-without-replaying-native-send",
+              "status": "PASS"
+            },
+            {
+              "name": "second-new-grant-authenticated-read-preserves-single-original-event-and-context-isolation",
+              "status": "PASS"
+            },
+            {
+              "name": "same-J4-native-send-renames-current-C-and-authenticated-ACK-commits-real-joint-pending",
+              "status": "PASS"
+            },
+            {
+              "name": "same-J4-real-worker-stop-recovers-native-title-and-one-original-ACK-without-send-replay",
+              "status": "PASS"
+            },
+            {
+              "name": "same-J4-joint-recovery-second-load-is-idempotent-and-peer-context-isolated",
+              "status": "PASS"
+            },
+            {
+              "name": "peer-real-native-navigation-establishes-new-C2-after-worker-memory-loss",
+              "status": "PASS"
+            },
+            {
+              "name": "same-J4-existing-evidence-checksum-fault-real-UI-repair-revokes-activity-and-preserves-draft-assets",
+              "status": "PASS"
+            },
+            {
+              "name": "same-J4-fresh-authenticated-current-body-history-restores-production-activity-only",
+              "status": "PASS"
+            },
+            {
+              "name": "same-J4-one-genuine-new-native-send-creates-successor-ACK-with-old-anchors-still-revoked",
+              "status": "PASS"
+            },
+            {
+              "name": "same-J4-real-rebind-authenticated-reread-preserves-witness-bytes-origin-budget-and-context-isolation",
+              "status": "PASS"
+            },
+            {
+              "name": "healthy-production-recovery-inspection-preserves-imported-Pro-assets",
+              "status": "PASS"
+            },
+            {
+              "name": "explicit-native-root-checksum-fault-and-real-UI-repair-preserve-assets-draft-and-revoke-source",
+              "status": "PASS"
+            },
+            {
+              "name": "recovered-UNKNOWN-route-retains-identity-and-hides-revoked-titles",
+              "status": "PASS"
+            },
+            {
+              "name": "actual-target-management-disable-clears-both-tabs-private-projection-and-keeps-original-native-editor",
+              "status": "PASS"
+            },
+            {
+              "name": "reenable-without-page-refresh-does-not-resurrect-old-private-projection-or-change-assets",
+              "status": "PASS"
+            },
+            {
+              "name": "reenabled-unrefreshed-peer-keeps-native-document-draft-and-no-private-projection",
+              "status": "PASS"
+            },
+            {
+              "name": "fresh-native-observation-after-repair-revalidates-current-ref-with-old-sources-still-revoked",
+              "status": "PASS"
+            },
+            {
+              "name": "fresh-primary-grant-does-not-resurrect-unrefreshed-peer",
+              "status": "PASS"
+            },
+            {
+              "name": "actual-uninstall-keeps-original-native-document-operable-without-private-projection",
+              "status": "PASS"
+            },
+            {
+              "name": "subsequent-native-navigation-model-and-editor-operate-after-uninstall",
+              "status": "PASS"
+            }
+          ]
+        },
+        "legacyFullSuite": "earlier run contained failures; not claimed green",
+        "legacyUI10": "stopped at bounded timeout; NOT_PASS"
+      },
+      "installation": {
+        "path": "/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/.git/vaiwl-artifacts/local-source-witness-20261022/extension",
+        "previousDa07FilesCopied": true,
+        "previousBackup": "/private/tmp/VAIWL-before-document-flow-20261027-193201/extension",
+        "followupCopied": true,
+        "reload": "NOT_RUN",
+        "runtimeBuild": "UNKNOWN",
+        "nativeEntry": "selected unrelated huifei recruiting window; no input sent",
+        "browserEntry": "Local browser use disabled in Work settings",
+        "dataChanged": false,
+        "followupReceipt": {
+          "sourceCommit": "40d1cd1a",
+          "source": "/private/tmp/VAIWL-v27-Document-Flow-Integrated-20261027/extension",
+          "destination": "/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/.git/vaiwl-artifacts/local-source-witness-20261022/extension",
+          "backup": "/private/tmp/VAIWL-before-flow-integrated-20261027-211914/extension",
+          "backupFiles": 2953,
+          "verifiedPackageFiles": 201,
+          "changed": [
+            "src/host/surface-discovery.mjs",
+            "src/navigation/flow-mount-surface.mjs",
+            "src/host/document-flow-layout.mjs",
+            "src/host/free-frame-client.mjs",
+            "content.js",
+            "extension/classic-runtime.js",
+            "build-manifest.json"
+          ],
+          "untouchedExtraFiles": 2752,
+          "manifestUnchanged": true,
+          "extensionId": "miendbcjdmecjggplepenghjnoejmaic",
+          "profileDataAccessed": false,
+          "reload": "NOT_RUN",
+          "runtimeBuild": "UNKNOWN"
+        }
+      },
+      "implementationCommit": "40d1cd1a"
+    }
+  }
+}

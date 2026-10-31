@@ -1,0 +1,15 @@
+# Round319 — actual background visibility in scale harness
+
+Test harness only; production remains2f09d26. Scale now reuses the isolated headless Chrome/noDefaults launcher and exact fixture-origin reject proxy, preserving CSP, route guards,1440x900 viewport, CPU setting,30s member/return deadline, full10k oracle and timing assertions. Trusted visibility/focus events establish tab0 hidden/unfocused and member tab1 visible/focused. No focus emulation or synthetic events. Source/helper hashes are checked. Independent review added conservative retention when launch was attempted but no child-owner exit confirmation exists; normal cleanup still confirms child exit before profile removal.
+
+First uninstrumented10k run: native member tail observed with15271ms left in original30s window; real native Project card title, first5 and expanded17 member sample pass, same editor/document. Total126RPCs versus Round318757 (not a controlled timing benchmark). Full immediate audit fails UNSTABLE_REVISION after6999 records; point-in-time inventory10000 is not a stable completeness result. No timing samples accepted.
+
+Distinct existing bounded-admission preparation variant: member tail again completes with14255ms remaining; initial audit unstable at8499 records, six bounded root observations keep10000refs but revisions248→432 over25s. Final audit unstable after5499 records. Preparation FAIL retained; no extension of product or original member budget, no prepared result substituted for immediate gate. This establishes a remaining revision churn issue, not its root cause.
+
+Both real runs: no page errors, no source/fixture/manifest drift, owned browser/proxy/fixture closed, temporary directory removed. Network guard records denied browser external traffic only. Final targeted scale contracts234/234 PASS; cleanup fence22/22 PASS. No full regression rerun for this test-only slice; production full6130/6130 is Round318.
+
+Git normal fetch/push remained bounded and timed out. API confirmed PR16 stillDraft/head03b5881/base docs/vaiwl-v28-core-mechanisms-20261012; 72ca068 is already an ancestor of localHEAD. Local commits and external stash42c8877 remain intact. Free/SYS04/100k/81/live acceptance remains incomplete; NOT_RELEASE_READY.
+
+## Follow-up counterexample
+
+Actual adapter/discovery at1000/2100/10000 rows emits16/33/157 initial packets and zero unchanged-renewal packets or detached handles; real32→31 node removal emits one packet and one detached handle.4/4 tests pass. This disproves the proposed capacity-eviction→detached→republish explanation. `onEvict` only invalidates lookup; it does not enqueue detached handles. No product optimization is justified from that hypothesis. The remaining browser revision churn needs observed publication causes.

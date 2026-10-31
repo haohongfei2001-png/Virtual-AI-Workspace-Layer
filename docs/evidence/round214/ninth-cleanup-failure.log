@@ -1,0 +1,12 @@
+[Error: ENOTEMPTY: directory not empty, rmdir '/tmp/vaiwl-native-visibility-EnARx5/profile/Default'] {
+2026-10-15T03:06:38.3570298Z   errno: -39,
+2026-10-15T03:06:38.3570504Z   code: 'ENOTEMPTY',
+2026-10-15T03:06:38.3570793Z   syscall: 'rmdir',
+2026-10-15T03:06:38.3571498Z   path: '/tmp/vaiwl-native-visibility-EnARx5/profile/Default'
+2026-10-15T03:06:38.3573016Z }
+2026-10-15T03:06:38.3573227Z 
+2026-10-15T03:06:38.3573413Z Node.js v24.21.0
+2026-10-15T03:06:38.3752074Z ##[error]Process completed with exit code 1.
+2026-10-15T03:06:38.3789312Z ##[group]Run set +e
+2026-10-15T03:06:38.3789466Z [36;1mset +e[0m
+2026-10-15T03:06:38.3789627Z [36;1mnode tests/host/j3-package-journey.mjs "$RUNNER_TEM

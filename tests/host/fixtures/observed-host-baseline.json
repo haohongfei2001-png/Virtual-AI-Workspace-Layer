@@ -1,0 +1,325 @@
+{
+  "schema": "chatgpt-host-observed-baseline-v1",
+  "version": "chatgpt-desktop-observed-v6",
+  "sourceReceipt": "docs/engineering/free-mac-home-acceptance-20261023.json",
+  "rawDOMCapture": false,
+  "privateData": "NONE_SYNTHETIC_IDS_AND_TEXT_ONLY",
+  "geometry": "RECONSTRUCTED_UNLESS_EXPLICITLY_RECORDED_IN_SOURCE_RECEIPT",
+  "eventTiming": "PARTIAL_ORDER_COUNTEREXAMPLES_NOT_REAL_EVENT_TIMESTAMPS",
+  "replays": {
+    "visibilityWakeAttributes": [
+      "hidden",
+      "inert"
+    ],
+    "progressiveOrders": [
+      "route-first",
+      "rows-first"
+    ]
+  },
+  "cases": [
+    {
+      "id": "home-sidebar",
+      "evidencePointers": [
+        "/formalWorkspaceAndChatLayout20261024"
+      ],
+      "fixture": "observed-host-replay.mjs",
+      "runner": "observed-profile-browser.mjs",
+      "kind": "sanitized-structural-reconstruction",
+      "facts": [
+        "separate-home-composer",
+        "visible-sidebar-navigation",
+        "dual-frame-return"
+      ],
+      "unknowns": [
+        "exact-live-pixel-geometry"
+      ]
+    },
+    {
+      "id": "conversation",
+      "evidencePointers": [
+        "/nativeConversationReturnR65_20261024"
+      ],
+      "fixture": "observed-desktop.mjs",
+      "runner": "browser-local-mv3.mjs",
+      "kind": "sanitized-structural-reconstruction",
+      "facts": [
+        "native-target-open",
+        "four-grid-return",
+        "draft-protection"
+      ],
+      "unknowns": []
+    },
+    {
+      "id": "long-conversation",
+      "evidencePointers": [
+        "/longChatPaint20261024",
+        "/formalWorkspaceAndChatLayout20261024"
+      ],
+      "fixture": "observed-host-replay.mjs",
+      "runner": "browser-local-mv3.mjs",
+      "kind": "risk-reconstruction-not-real-transcript",
+      "facts": [
+        "reading-paint-failure-observed",
+        "return-entry-observed"
+      ],
+      "unknowns": [
+        "full-real-long-chat-workspace",
+        "paint-containment-for-local-proof"
+      ],
+      "negativeOracle": "reading-return-gap-browser.mjs"
+    },
+    {
+      "id": "project-title-members",
+      "evidencePointers": [
+        "/projectNavigationDiagnosisR79R84_20261025",
+        "/projectMemberMacR85_20261025"
+      ],
+      "fixture": "observed-project.mjs",
+      "runner": "observed-project-list-browser.mjs",
+      "kind": "sanitized-structural-reconstruction",
+      "facts": [
+        "single-span-title",
+        "positive-member-evidence",
+        "real-project-two-members"
+      ],
+      "unknowns": [],
+      "expectedSafetyContracts": [
+        "first-text-leaf-excludes-preview"
+      ]
+    },
+    {
+      "id": "late-project-members",
+      "evidencePointers": [
+        "/projectReadinessAndRecoveryR76_20261024",
+        "/projectNavigationDiagnosisR79R84_20261025"
+      ],
+      "fixture": "observed-project.mjs",
+      "runner": "browser-local-mv3.mjs",
+      "kind": "sanitized-structural-reconstruction",
+      "facts": [
+        "late-member-and-sidebar-boundaries"
+      ],
+      "unknowns": [
+        "exact-live-delay"
+      ],
+      "expectedSafetyContracts": [
+        "bounded-readiness"
+      ]
+    },
+    {
+      "id": "retained-hidden-titlebar",
+      "evidencePointers": [
+        "/projectSpaTitlebarR88_20261025"
+      ],
+      "fixture": "observed-host-replay.mjs",
+      "runner": "observed-profile-browser.mjs",
+      "kind": "sanitized-structural-reconstruction",
+      "facts": [
+        "hidden-retained-old-header"
+      ],
+      "unknowns": [],
+      "expectedSafetyContracts": [
+        "unique-visible-boundary",
+        "visible-duplicates-rejected"
+      ]
+    },
+    {
+      "id": "native-search-modal",
+      "evidencePointers": [
+        "/nativeSearchReturnR64_20261024",
+        "/nativeSearchModal20261024"
+      ],
+      "fixture": "observed-host-replay.mjs",
+      "runner": "browser-local-mv3.mjs",
+      "kind": "behavior-supported-adversarial-reconstruction",
+      "facts": [
+        "native-search-open-close-return",
+        "no-input-replacement"
+      ],
+      "unknowns": [
+        "real-modal-dom-attribution"
+      ]
+    },
+    {
+      "id": "new-stable-chat-reorder",
+      "evidencePointers": [
+        "/privateWorkerAndNewChatR92_20261025"
+      ],
+      "fixture": "observed-host-replay.mjs",
+      "runner": "browser-local-mv3.mjs --progressive-only",
+      "kind": "sanitized-structural-reconstruction",
+      "facts": [
+        "one-real-send",
+        "stable-route-observed",
+        "old-pinned-mask-row-order-failure"
+      ],
+      "unknowns": [
+        "real-pending-row-route-order",
+        "fixed-candidate-real-new-chat-projection"
+      ]
+    },
+    {
+      "id": "spa-private-continuity",
+      "evidencePointers": [
+        "/privateContinuityR91_20261025"
+      ],
+      "fixture": "observed-host-replay.mjs",
+      "runner": "browser-local-mv3.mjs",
+      "kind": "sanitized-structural-reconstruction",
+      "facts": [
+        "project-chat-project-same-document",
+        "private-binding-retained",
+        "account-risk-lock"
+      ],
+      "unknowns": [
+        "full-input-risk-grammar",
+        "actual-cross-account-switch"
+      ]
+    },
+    {
+      "id": "worker-restart",
+      "evidencePointers": [
+        "/privateWorkerAndNewChatR92_20261025"
+      ],
+      "fixture": "observed-project.mjs",
+      "runner": "browser-local-mv3.mjs",
+      "kind": "sanitized-structural-reconstruction",
+      "facts": [
+        "actual-worker-thread-change",
+        "same-document-private-continuity"
+      ],
+      "unknowns": []
+    },
+    {
+      "id": "refresh-restart-private",
+      "evidencePointers": [
+        "/privateRestartAndBindingStatusR78_20261024"
+      ],
+      "fixture": "observed-project.mjs",
+      "runner": "browser-local-mv3.mjs",
+      "kind": "sanitized-structural-reconstruction",
+      "facts": [
+        "actual-browser-restart",
+        "instant-view-before-confirmation",
+        "old-private-cache-lock"
+      ],
+      "unknowns": [
+        "actual-private-only-object-disk-restore"
+      ]
+    },
+    {
+      "id": "home-history-readiness",
+      "evidencePointers": [
+        "/r93ConcentratedAcceptance20261025",
+        "/r94ConcentratedAcceptance20261025"
+      ],
+      "fixture": "observed-host-replay.mjs",
+      "runner": "observed-profile-browser.mjs --history-ready-only",
+      "kind": "failure-supported-counterexample-not-captured-live-order",
+      "facts": [
+        "r93-home-row-order-refusal",
+        "private-cache-remains-locked",
+        "r94-home-preparation-row-order-refusal",
+        "existing-diagnostics-do-not-record-direct-dom-row-order-or-mutations"
+      ],
+      "expectedSafetyContracts": [
+        "full-history-proof-before-handshake",
+        "ordered-row-identity-stable-before-mount",
+        "original-deadline-not-extended",
+        "late-complete-proof-uses-existing-single-recovery",
+        "post-proof-deadline-checked"
+      ],
+      "unknowns": [
+        "actual-home-row-structure-and-mutation-order",
+        "whether-readiness-gap-is-real-failure-only-cause",
+        "zero-stable-direct-rows-versus-nonconsecutive-stable-direct-rows",
+        "algorithm-versus-adapter-cause"
+      ],
+      "integrationRunner": "browser-local-mv3.mjs --history-ready-only",
+      "replayLimit": "The existing reconstruction is not a reproduction of the r94 live list: no reliable real direct-row structure or mutation trace was obtained. Do not infer an implementation fix from the synthetic order."
+    },
+    {
+      "id": "home-interleaved-native-rows",
+      "evidencePointers": [
+        "/historyStructure20261025"
+      ],
+      "fixture": "observed-history-structure.json",
+      "runner": "browser-local-mv3.mjs --mixed-history-only",
+      "kind": "actual-anonymous-structure-with-synthetic-row-contents",
+      "facts": [
+        "one-explicit-list",
+        "16-direct-DIV-listitem-rows",
+        "stable-positions-0-and-3-through-14",
+        "unmarked-positions-1-2-15",
+        "no-relevant-mutation-during-6002ms",
+        "failure-phase-preparation"
+      ],
+      "unknowns": [
+        "unmarked-row-semantics",
+        "exact-live-pixel-geometry",
+        "events-before-observation"
+      ]
+    },
+    {
+      "id": "sidebar-project-recent-partial",
+      "fixture": "observed-sidebar-structure.json",
+      "runner": "local-status.test.mjs",
+      "kind": "real-anonymous-static-structure-partial",
+      "evidencePointers": [
+        "docs/engineering/free-c1-c5-product-integration-20261026.json#/realProductFollowup/anonymousSidebarSnapshot"
+      ],
+      "facts": [
+        "separate-shortcut-region",
+        "two-sibling-section-marked-regions",
+        "nested-button-disclosure-and-listitem-shape",
+        "interleaved-stable-and-unmarked-recent-rows"
+      ],
+      "limits": [
+        "deep-project-members-and-controls-omitted",
+        "not-mask-authority",
+        "paint-includes-existing-owned-masks"
+      ]
+    },
+    {
+      "id": "project-centered-panel-and-cross-document-navigation",
+      "evidencePointers": [
+        "/realProductScreenshots20261027"
+      ],
+      "fixture": "observed-project.mjs",
+      "runner": "observed-project-layout-browser.mjs --width-only; observed-project-list-browser.mjs; browser-local-mv3.mjs --sidebar-composition-only",
+      "kind": "user-screenshot-geometric-counterexample",
+      "facts": [
+        "Project member column is narrower than available main viewport",
+        "Project and two confirmed members visible in owned sidebar and workspace",
+        "native Project management remains expanded below owned theme navigation",
+        "member opened in another browser tab; new document lacks preceding Project theme",
+        "return workspace in new document contains current chat and other known chats only"
+      ],
+      "unknowns": [
+        "exact live DOM CSS and gutter controls",
+        "exact duplicate href and risk flags at original click",
+        "current account confirmation in each new document",
+        "private persisted object restoration"
+      ],
+      "privacy": "No screenshot pixels, private titles, native IDs, URLs, message body or credentials retained. Fixture geometry is a reconstructed boundary, not a measured DOM capture."
+    }
+  ],
+  "minimalMissingObservations": [
+    {
+      "id": "r93-home-history-structure",
+      "need": "r94 actually failed in preparation. Existing popup and native AX did not establish direct DOM stable/temporary row positions, natural noncontiguity, replacement or mutation order. Obtain one bounded anonymous direct-row trace through an available local diagnostic before algorithm/adapter changes; no title, ID, body, repeated send, wait/threshold change or automatic retry."
+    },
+    {
+      "id": "new-chat-event-order",
+      "need": "Only if frozen candidate differs from counterexamples: bounded navigation/row categories and ordering, no second send or body."
+    },
+    {
+      "id": "long-chat-local-clip",
+      "need": "Native reading/viewport/header clip and containment classes, fixed/top-layer escape bounds; no transcript."
+    },
+    {
+      "id": "input-risk",
+      "need": "Composer, attachment/upload, generation, voice and canvas state grammar before changing new-tab safety fallback."
+    }
+  ]
+}

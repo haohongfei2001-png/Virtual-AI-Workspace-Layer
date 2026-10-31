@@ -1,0 +1,6 @@
+{
+  "src/host/native-send-intent.mjs": "f1d32ff506e8a289d6b6a46ae91043ea1d49c666265418af6a80a384caf53d30",
+  "tests/host/native-input-prepare.test.mjs": "b0107c5aae8e04883215c300920eba27a90ed5cd6390d9aab22d9e1f58a676ea",
+  "tests/host/prepared-baseline-package-mv3.mjs": "3c3aaaae55a1315e3be95e074f3bd6bf87446e402f2d79f96024f0da6e2830a2",
+  "tests/host/native-send-retirement.test.mjs": "59b918308e02cb0eb7611b3990fe82e7622f1b6f1337cadee61436d29e63d269"
+}

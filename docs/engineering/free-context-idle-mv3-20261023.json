@@ -1,0 +1,64 @@
+{
+  "schema": "vaiwl-context-idle-mv3-evidence-v1",
+  "sourceHead": "296e36b3f082ac1c4f130c10084e94a80281747a",
+  "task": "C6/F3 actual isolated MV3 transport expiry after context and activity idle repairs",
+  "change": "Repair the existing test-only passive work-trace source anchor and owner labels for nativeActivity and optional contextObserver. No product changes, deadlines, idle decisions or navigation outcomes changed.",
+  "validation": {
+    "preFix": {
+      "passed": 3,
+      "failed": 1,
+      "reason": "idle-trace-anchor:service before browser validation",
+      "log": "before.log"
+    },
+    "targeted": {
+      "passed": 210,
+      "failed": 0,
+      "skipped": 0,
+      "log": "regression.log",
+      "newTests": 1
+    },
+    "browser": {
+      "status": "PASS_NARROW_OFFLINE_TRANSPORT_EXPIRY",
+      "evidence": "OFFLINE_C2_DORMANT_TRANSPORT_EXPIRY_FOREGROUND_RECOVERY",
+      "browserVersion": "155.0.8059.85",
+      "headless": true,
+      "sourcePaths": 191,
+      "fixturePaths": 17,
+      "allHashesVerifiedAgainstCurrentFiles": true,
+      "reportSHA256": "27ba9a917032b94059761f50d5623f1fab8be89b681b8bd31462e392fa2a17c1",
+      "idlePrecondition": {
+        "prepared": true,
+        "entered": true
+      },
+      "actualLeaseWaitMs": 19630,
+      "sameWorker": true,
+      "newGrantAndView": true,
+      "fixtureNativeGETCount": 1,
+      "unsentDraftAndSelection": "PRESERVED",
+      "nonfirstTeamAndNoPersonalWrites": "PASS",
+      "pageErrors": [],
+      "externalAttemptsRejected": 29,
+      "sourceChangedDuringRun": false,
+      "instrumentation": "Existing test package passive work/frame/transport observation and one original dormancy attempt; no clock or grant substitution. No busy context branch happened during this browser run; held-operation cases remain unit/integration evidence.",
+      "naturalWorkerSleep": "NOT_TESTED",
+      "coldStartup": "NOT_TESTED",
+      "realChatGPT": "NOT_RUN"
+    },
+    "review": "Main writer source/trace/package review, no additional independent review performed."
+  },
+  "boundaries": {
+    "productionEnabled": false,
+    "realAccountRequests": 0,
+    "newWitnessBatch": false,
+    "installedPackageUpdated": false,
+    "completeJ4": "NOT_ESTABLISHED",
+    "personalDailyAcceptance": "NOT_RUN"
+  },
+  "checkpoint": ".git/vaiwl-checkpoints/20261023-context-idle-mv3",
+  "priorIndependentSourceReview": {
+    "head": "296e36b3f082ac1c4f130c10084e94a80281747a",
+    "source": "dot message received at this checkpoint",
+    "result": "No newly confirmed blocker in source-only narrow review. Browser operation accounting, cancellation/stop retention, late guards, and service observer linkage reviewed.",
+    "limitations": "Not an independent rerun of 270 tests or this browser integration; does not review all of 29a86257 activity change or this test-only patch."
+  }
+}

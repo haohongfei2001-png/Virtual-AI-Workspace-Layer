@@ -1,0 +1,115 @@
+{
+  "evidence": "REAL_HEADLESS_CHROME_MV3_SYNTHETIC_SCALE_TWO_TABS",
+  "realChatGPT": "NOT_RUN",
+  "headless": true,
+  "requestedScale": 100000,
+  "seedSize": 99998,
+  "distribution": "project-mixed",
+  "longTitles": false,
+  "scope": "synthetic account A in one extension-origin database",
+  "otherScope": "synthetic account B remains uninitialized",
+  "sourceHashes": {
+    "tests/free/send-scale-mv3-browser.mjs": "ea184e606238e9bba4ac9b9d8e608ab155efa080da97a25d1655ff2f72599ce2",
+    "tests/free/scale-seed.mjs": "fc11df88f06cc450883e67d1ca0d68366d5630c4b373df3e68bddf13520c32dd"
+  },
+  "artifact": {
+    "status": "SYNTHETIC_ONLY",
+    "releaseStatus": "NOT_RELEASE_READY",
+    "files": 61,
+    "workerModules": 52,
+    "unpacked": "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-scale-mv3-t4QFgT/package/extension",
+    "archive": "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-scale-mv3-t4QFgT/package/vaiwl-free-synthetic-only.zip",
+    "archiveSha256": "6107adfc2da4c3d8b96fb33bddf0b54c4297d42dccc08abb50cdf22bd52b372e",
+    "sourceManifestSha256": "c392158b4cc9edcb90499aa0e1071756ef009291f162ff8174bd2cfa30f235f5"
+  },
+  "sourceManifestSha256": "c392158b4cc9edcb90499aa0e1071756ef009291f162ff8174bd2cfa30f235f5",
+  "results": [
+    {
+      "kind": "existing",
+      "id": "T0",
+      "messageId": "sent-1791907392575",
+      "nativeTitle": "从哪里开始",
+      "eventToDOMMs": 730.0999999940395,
+      "events": 1,
+      "draftPreserved": true,
+      "persisted": {
+        "extensionId": "mjmnlmnlabkhibhdgejacehoegefficl",
+        "count": 99998,
+        "scope": "[\"hf_synthetic_only\",\"A\",\"fixture_org\"]",
+        "membership": "NONE",
+        "nativeTitle": "从哪里开始",
+        "sharedEvents": 1,
+        "storedHints": 1,
+        "otherRevision": 0,
+        "otherCount": 0
+      },
+      "timingStatus": "PASS"
+    },
+    {
+      "kind": "new-none-A",
+      "id": "new-9daf9d17-d705-4059-9aab-632682708d79",
+      "messageId": "sent-1791907394216",
+      "nativeTitle": "MV3真实合成发送 new-none-A",
+      "eventToDOMMs": 707.9000000059605,
+      "events": 1,
+      "draftPreserved": true,
+      "persisted": {
+        "extensionId": "mjmnlmnlabkhibhdgejacehoegefficl",
+        "count": 99999,
+        "scope": "[\"hf_synthetic_only\",\"A\",\"fixture_org\"]",
+        "membership": "NONE",
+        "nativeTitle": "MV3真实合成发送 new-none-A",
+        "sharedEvents": 1,
+        "storedHints": 1,
+        "otherRevision": 0,
+        "otherCount": 0
+      },
+      "timingStatus": "PASS"
+    },
+    {
+      "kind": "new-none-B",
+      "id": "new-f4b130ef-bd3b-45a3-8bb5-233e06c824fb",
+      "messageId": "sent-1791907409699",
+      "nativeTitle": "MV3真实合成发送 new-none-B",
+      "eventToDOMMs": 662.0999999940395,
+      "events": 1,
+      "draftPreserved": true,
+      "persisted": {
+        "extensionId": "mjmnlmnlabkhibhdgejacehoegefficl",
+        "count": 100000,
+        "scope": "[\"hf_synthetic_only\",\"A\",\"fixture_org\"]",
+        "membership": "NONE",
+        "nativeTitle": "MV3真实合成发送 new-none-B",
+        "sharedEvents": 1,
+        "storedHints": 1,
+        "otherRevision": 0,
+        "otherCount": 0
+      },
+      "timingStatus": "PASS"
+    }
+  ],
+  "pageErrors": [],
+  "limits": {
+    "initialActiveMs": 30000,
+    "sendObservationMs": 6500,
+    "targetMs": 1000
+  },
+  "counts": "NOT_INSTRUMENTED: installed worker untouched",
+  "browser": "Chrome/155.0.8059.40",
+  "extensionId": "mjmnlmnlabkhibhdgejacehoegefficl",
+  "seed": {
+    "size": 99998,
+    "scope": {
+      "verified": true,
+      "provider": "hf_synthetic_only",
+      "accountId": "A",
+      "organizationId": "fixture_org"
+    },
+    "seedMs": 34749.29999999702
+  },
+  "tabAInitialActiveMs": 24693.355625000004,
+  "tabBInitialActiveMs": 13912.304500000006,
+  "tabAHeldDraftPreserved": true,
+  "sourceChangedDuringRun": false,
+  "timingStatus": "PASS"
+}

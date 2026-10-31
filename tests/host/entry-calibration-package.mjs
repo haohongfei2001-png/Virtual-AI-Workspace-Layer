@@ -1,0 +1,86 @@
+import {waitForBudgetExpiry} from './fixtures/budget-expiry-wait.mjs';
+import {installJ2TerminalDiagnostics} from './j2-terminal-diagnostics.mjs';
+/** Entry calibration: native body unchanged, upstream original timestamp becomes available. */
+import assert from 'node:assert/strict';import {mkdtemp,readFile,writeFile,rm} from 'node:fs/promises';import {tmpdir} from 'node:os';import {join} from 'node:path';import {createHash} from 'node:crypto';import {createHostFixtureServer} from './fixtures/server.mjs';import {J2_C} from './fixtures/j2-send.mjs';import {packageHost,verifyHost} from '../../extension/package.mjs';
+
+import {compileClassicWorker} from '../../extension/classic-worker-build.mjs';
+const hash=x=>createHash('sha256').update(x).digest('hex');
+async function mutateEntryPackage(unpacked){
+ const path=join(unpacked,'src/runtime/host-binding-service.mjs'),original=await readFile(path,'utf8'),needle='entryCalibration.handle(message,sender)';assert.equal(original.split(needle).length,2);const changed=original.replace(needle,"Promise.resolve({ok:false,state:'unavailable'})");await writeFile(path,changed);
+ const before={entry:hash(await readFile(join(unpacked,'extension/worker.mjs'))),runtime:hash(await readFile(join(unpacked,'extension/classic-runtime.js')))},compiled=compileClassicWorker(unpacked);assert.equal(hash(compiled.entry),before.entry,'mutation does not alter bootstrap');assert.notEqual(hash(compiled.runtime),before.runtime,'mutation must reach actual runtime bundle');
+ await writeFile(join(unpacked,'extension/worker.mjs'),compiled.entry);await writeFile(join(unpacked,'extension/classic-runtime.js'),compiled.runtime);
+ return {source:hash(changed),before,files:{'src/runtime/host-binding-service.mjs':hash(changed),'extension/worker.mjs':hash(compiled.entry),'extension/classic-runtime.js':hash(compiled.runtime)}};
+}
+if(process.argv[2]==='--contract'){
+ const temp=await mkdtemp(join(tmpdir(),'entry-mutation-contract-'));try{const built=packageHost(join(temp,'package'),{offlineOrigin:'http://127.0.0.1:43210',offlineFirstSend:true,offlineHistory:true,offlineOldSendTerminal:true}),result=await mutateEntryPackage(built.unpacked);for(const [path,expected]of Object.entries(result.files))assert.equal(hash(await readFile(join(built.unpacked,path))),expected);console.log(JSON.stringify({status:'PASS',evidence:'NODE_ACTUAL_CLASSIC_MUTATION_BUILD',runtimeChanged:result.before.runtime!==result.files['extension/classic-runtime.js']}));}finally{await rm(temp,{recursive:true,force:true});}process.exit(0);
+}
+let server,dir,built,manifest,fixtureHashes={};const fixturePaths=['tests/host/fixtures/budget-expiry-wait.mjs','tests/host/j2-terminal-diagnostics.mjs','tests/host/fixtures/server.mjs','tests/host/fixtures/j2-send.mjs','tests/host/fixtures/native.mjs'];
+const report={status:'NOT_RUN',requirement:'B2.F3/C3 CURRENT_BODY_ENTRY_SLICE',evidence:'OFFLINE_PACKAGED_MV3_REAL_WALL_CLOCK',realChatGPT:'NOT_RUN',releaseStatus:'NOT_RELEASE_READY',sourceCommit:process.env.FREE_SOURCE_COMMIT??null,sourceHashes:{},fixtureHashes:{},scriptHash:hash(await readFile(new URL(import.meta.url))),steps:[],errors:[],fastFailureRetry:'NOT_RUN'};let context,page,id,diagnosticWorker;
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+async function poll(fn,timeout=25000){const end=Date.now()+timeout;while(Date.now()<end){try{const v=await fn();if(v)return v;}catch{}await sleep(80);}throw Error('J2-observation-timeout');}
+const frame=()=>page.frames().find(f=>f.url()===`chrome-extension://${id}/workspace.html`);
+async function facts(){const f=frame();if(!f)return null;return f.evaluate(async()=>{
+ const {ScopeRepository}=await import(chrome.runtime.getURL('src/b1/scope-repository.mjs')),{NativeRepository}=await import(chrome.runtime.getURL('src/data/native-repository.mjs')),{FreeEvidenceRepository}=await import(chrome.runtime.getURL('src/data/free-evidence-repository.mjs')),{digest}=await import(chrome.runtime.getURL('src/data/hash.mjs')),{createHostActivitySourceAdmission}=await import(chrome.runtime.getURL('src/runtime/host-activity-source-admission.mjs')),{HOST_CONFIG}=await import(chrome.runtime.getURL('extension/config.mjs')),{freeProjection}=await import(chrome.runtime.getURL('src/data/free-projection.mjs')),{projectFreeActivity}=await import(chrome.runtime.getURL('src/data/free-activity.mjs')),{createFreeViewSession}=await import(chrome.runtime.getURL('src/data/free-time-policy.mjs'));
+ const scope={verified:true,provider:'chatgpt',accountId:'principal_'+digest(['chatgpt-principal-v1','user-host-fixture']),organizationId:'context_'+digest(['chatgpt-context-v1','user-host-fixture','account-host-personal'])},base=new ScopeRepository({indexedDB});
+ try{const native=await new NativeRepository({baseRepository:base}).read(scope),evidence=await new FreeEvidenceRepository({baseRepository:base}).read(scope),now=new Date().toISOString(),session=createFreeViewSession({now,timeZone:'UTC',H:30}),admit=createHostActivitySourceAdmission(HOST_CONFIG),sources=Object.fromEntries(Object.entries(evidence.sources).filter(([,s])=>admit(scope,s,{store:'evidence',sources:evidence.sources}))),projection=projectFreeActivity(freeProjection(native,{scope,now}),{...evidence,sources},session,now);const db=await base.open(),budget=await new Promise((resolve,reject)=>{const tx=db.transaction('b23_views','readonly'),q=tx.objectStore('b23_views').getAll();q.onsuccess=()=>resolve(q.result.filter(r=>r.key?.startsWith('host-read-budget:')).map(r=>({startedAt:r.payload.startedAt,lastAt:r.payload.lastAt,requests:r.payload.requests})));q.onerror=()=>reject(q.error);});return {scopeKey:JSON.stringify([scope.provider,scope.accountId,scope.organizationId]),admittedSourceIds:Object.keys(sources),evidence,budget,decisions:projection.refs.map(r=>({id:r.id,activity:r.activityDecision}))};}finally{base.close();}
+ });}
+const hints=s=>Object.values(s.evidence.hints),events=s=>Object.values(s.evidence.events),decision=s=>s.decisions.find(r=>r.id===J2_C)?.activity;
+async function mode(value){await page.getByRole('button',{name:'J2 mode '+value,exact:true}).click();await page.waitForFunction(value=>document.querySelector('#j2-controls')?.dataset.mode===value,value);}
+async function send(){await page.locator('#prompt-textarea').fill('J2 native send');await page.getByRole('button',{name:'Send',exact:true}).click();}
+async function reopen(){const before=server.snapshot().requests['/backend-api/conversation/'+J2_C]??0;await page.reload();await poll(()=>frame());return poll(async()=>{const s=await facts();return s&&events(s).some(e=>e.messageId==='j2_old')&&(server.snapshot().requests['/backend-api/conversation/'+J2_C]??0)>before?s:null;});}
+try{
+ const {chromium}=await import('../b1/tooling/node_modules/playwright/index.mjs');
+ server=await createHostFixtureServer({journey:'J2'});dir=await mkdtemp(join(tmpdir(),'vaiwl-entry-'));built=packageHost(join(dir,'package'),{offlineOrigin:server.origin,offlineFirstSend:true,offlineHistory:true,offlineOldSendTerminal:true});manifest=JSON.parse(await readFile(join(built.unpacked,'build-manifest.json')));fixtureHashes=Object.fromEntries(await Promise.all(fixturePaths.map(async p=>[p,hash(await readFile(p))])));report.sourceHashes=manifest.sourceHashes;report.fixtureHashes=fixtureHashes;
+ assert.equal(verifyHost(built.unpacked).status,'OFFLINE_HOST_RECONSTRUCTION');
+ const mutation=process.env.ENTRY_CALIBRATION_MUTATION??null;assert(mutation===null||mutation==='drop-entry');report.mutation=mutation;
+ if(mutation){report.mutationBuild=await mutateEntryPackage(built.unpacked);report.mutatedPackageHash=report.mutationBuild.source;}
+ context=await chromium.launchPersistentContext(join(dir,'profile'),{headless:true,viewport:{width:1440,height:1000},executablePath:process.env.FREE_CHROME_EXECUTABLE??'/usr/bin/chromium',ignoreDefaultArgs:['--disable-extensions'],args:['--enable-unsafe-extension-debugging']});await context.route('**/*',r=>r.request().url().startsWith(server.origin+'/')||r.request().url().startsWith('chrome-extension://')?r.continue():r.abort());const browserCDP=await context.browser().newBrowserCDPSession();({id}=await browserCDP.send('Extensions.loadUnpacked',{path:built.unpacked}));page=await context.newPage();page.on('pageerror',e=>report.errors.push(e.message));await page.goto(server.origin+'/c/'+J2_C);
+ const worker=context.serviceWorkers().find(w=>w.url().startsWith('chrome-extension://'+id+'/'))??await context.waitForEvent('serviceworker');assert(await worker.evaluate(async()=>{try{await fetch('https://example.com/');return false;}catch{return true;}}));
+ assert.equal(worker.url(),`chrome-extension://${id}/extension/worker.mjs`);
+ report.loadedBundleHashes=await worker.evaluate(async()=>{const digest=async path=>{const response=await fetch(chrome.runtime.getURL(path));if(!response.ok)throw Error('missing-worker-bundle');return [...new Uint8Array(await crypto.subtle.digest('SHA-256',await response.arrayBuffer()))].map(x=>x.toString(16).padStart(2,'0')).join('');};return {entry:await digest('extension/worker.mjs'),runtime:await digest('extension/classic-runtime.js')};});for(const [key,path]of [['entry','extension/worker.mjs'],['runtime','extension/classic-runtime.js']])assert.equal(report.loadedBundleHashes[key],report.mutationBuild?.files[path]??manifest.files[path]);
+ diagnosticWorker=worker;try{await worker.evaluate(installJ2TerminalDiagnostics,{origin:server.origin});}catch(error){report.terminalTraceInstallError=error.message;}
+
+ const old=await poll(async()=>{const s=await facts();return s&&events(s).some(e=>e.messageId==='j2_old')?s:null;});assert.equal(hints(old).length,0);assert(Date.now()-Date.parse(events(old)[0].sentAt)>89*86400000);report.steps.push('old-conversation-authenticated-original-send');
+ await mode('success');await send();
+ const anchored=await poll(async()=>{const s=await facts();return s&&hints(s).length===1?s:null;}),anchor=hints(anchored)[0],native=server.snapshot().j2.rows.find(r=>r.kind==='success');
+ assert.equal(anchor.messageId,native.id);assert(!events(anchored).some(e=>e.messageId===native.id));assert(!('sentAt'in anchor));
+ const originalAnchor=JSON.stringify(anchor),url=page.url(),body=await page.locator('#reading').innerHTML();
+ const identity=await page.evaluate(()=>{globalThis.entryNativeNodes=[document,document.querySelector('#reading'),...document.querySelectorAll('#reading [data-message-id]')];return {timeOrigin:performance.timeOrigin,historyLength:history.length,historyState:JSON.stringify(history.state)};});
+ assert(anchored.budget.length>0);report.budgetWaitMs=await waitForBudgetExpiry(Math.max(...anchored.budget.map(r=>r.startedAt)));
+ assert(Date.now()-Math.max(...server.snapshot().fixedGetTrace.filter(r=>r.kind==='conversation-detail').map(r=>r.at))>=6000);
+ // Upstream-only fixture transition: no page reload, native route or DOM mutation.
+ const response=await context.request.post(server.origin+'/native/j2/reveal');assert(response.ok());
+ const detailPath='/backend-api/conversation/'+J2_C,readsBefore=server.snapshot().requests[detailPath]??0;
+ await sleep(1000);const beforeEntry=await facts();
+ assert.equal(server.snapshot().requests[detailPath]??0,readsBefore);assert(!events(beforeEntry).some(e=>e.messageId===native.id));
+ assert.equal(await page.locator('#reading').innerHTML(),body);assert.equal(page.url(),url);
+ report.steps.push('upstream-time-available-without-native-body-route-or-background-read');
+ await frame().evaluate(()=>{globalThis.entryCalibrationTrace=[];const original=chrome.runtime.sendMessage.bind(chrome.runtime);chrome.runtime.sendMessage=async function(message,...rest){const startedAt=Date.now(),elapsedStart=performance.now(),result=await original(message,...rest);if(message?.type==='HOST_UI_CALIBRATION_ENTRY')globalThis.entryCalibrationTrace.push({kind:message.kind,state:result?.state,ok:result?.ok,startedAt,finishedAt:Date.now(),elapsedMs:performance.now()-elapsedStart});return result;};});
+ report.phase='workspace-entry-calibration';await page.getByRole('button',{name:'返回工作空间',exact:true}).click();
+ const calibrated=await poll(async()=>{const s=await facts();return s&&events(s).some(e=>e.messageId===native.id)?s:null;});
+ const originalEvents=events(calibrated).filter(e=>e.messageId===native.id);assert.equal(originalEvents.length,1);assert.equal(originalEvents[0].sentAt,native.at);
+ const event=originalEvents[0],source=calibrated.evidence.sources[event.sourceId];assert.equal(event.conversationId,J2_C);assert.equal(event.actorVerified,true);assert.equal(event.actorScopeKey,calibrated.scopeKey);assert.equal(event.role,'user');assert.equal(event.kind,'new-send');assert.equal(event.sendState,'committed');assert.equal(source.revoked,false);assert.equal(event.generation,source.generation);assert(calibrated.admittedSourceIds.includes(event.sourceId));
+ assert.equal(JSON.stringify(hints(calibrated).find(h=>h.messageId===native.id)),originalAnchor);assert.equal(page.url(),url);assert.equal(await page.locator('#reading').innerHTML(),body);
+ assert.equal(server.snapshot().j2.operations.length,1);assert.equal(server.snapshot().requests[detailPath],readsBefore+1);
+ report.entryTrace=await poll(async()=>{const rows=await frame().evaluate(()=>globalThis.entryCalibrationTrace);return rows.some(r=>r.ok&&r.state==='checked-current')?rows:null;});
+ const rpc=report.entryTrace.filter(r=>r.ok&&r.state==='checked-current');assert.equal(rpc.length,1);assert.equal(rpc[0].kind,'foreground');assert(rpc[0].elapsedMs>=0&&rpc[0].elapsedMs<6000);
+ const detailReads=server.snapshot().fixedGetTrace.filter(r=>r.kind==='conversation-detail'&&r.at>=rpc[0].startedAt&&r.at<=rpc[0].finishedAt);assert.equal(detailReads.length,1);
+ const afterIdentity=await page.evaluate(()=>({timeOrigin:performance.timeOrigin,historyLength:history.length,historyState:JSON.stringify(history.state),sameNodes:globalThis.entryNativeNodes?.every((node,i)=>node===[document,document.querySelector('#reading'),...document.querySelectorAll('#reading [data-message-id]')][i])===true}));assert.equal(afterIdentity.sameNodes,true);const {sameNodes,...afterDocument}=afterIdentity;assert.deepEqual(afterDocument,identity);
+ report.causality={rpc:rpc[0],detailReadAt:detailReads[0].at,identity:afterIdentity,sourceId:event.sourceId,actorScopeKey:event.actorScopeKey};
+ report.steps.push('workspace-entry-reads-current-body-once-and-persists-exact-original-send');
+ report.oracle={messageId:native.id,sentAt:originalEvents[0].sentAt,originalNativeTime:native.at,anchorUnchanged:true,nativeBodyUnchanged:true,nativeURLUnchanged:true,nativeSendCount:1,detailReads:1,eventCount:1};
+ assert.deepEqual(report.errors,[]);if(mutation){report.status='MUTATION_SURVIVED';process.exitCode=2;}else{assert.equal(verifyHost(built.unpacked).status,'OFFLINE_HOST_RECONSTRUCTION');report.status='PASS_OFFLINE_CURRENT_BODY_ENTRY';}
+
+}catch(error){report.status=context?'FAIL':'NOT_RUN_BROWSER_STARTUP';report.error=error.stack;process.exitCode=1;try{report.failureFacts=await facts();report.failureDOM=await page.evaluate(()=>({state:document.documentElement.dataset.vaiwlState,reason:document.documentElement.dataset.vaiwlReason,readingId:document.querySelector('#reading')?.dataset.conversationId,messageCount:document.querySelectorAll('#reading [data-message-id]').length,openSurfaces:document.querySelectorAll('[data-va-owned]:popover-open').length}));}catch{}}finally{
+ const capture=async(stage,fn)=>{try{await fn();}catch(error){(report.diagnosticErrors??=[]).push({stage,error:String(error?.message??error).slice(0,256)});}};
+ await capture('terminal-trace',async()=>{report.terminalTrace=await diagnosticWorker?.evaluate(()=>globalThis.j2TerminalTrace??[]);});
+ await capture('observation-trace',async()=>{report.observationTrace=(report.terminalTrace??[]).filter(row=>row.protocol);report.observationTraceEncoding='bounded-terminal-diagnostic-labels';});
+ await capture('server-snapshot',()=>{const snapshot=server.snapshot();report.fixedGetTrace=snapshot.fixedGetTrace;report.requests=snapshot.requests;report.native=snapshot.j2;});
+ await capture('context-close',()=>context?.close());
+ await capture('server-close',()=>server?.close());
+ await capture('source-hashes',async()=>{report.sourceChangedDuringRun=(await Promise.all(Object.entries({...(manifest?.sourceHashes??{}),...fixtureHashes}).map(async([p,h])=>hash(await readFile(p))!==h))).some(Boolean);if(report.sourceChangedDuringRun){report.status='SOURCE_CHANGED';process.exitCode=1;}});
+ await capture('package-hashes',async()=>{if(!built||!manifest)return;for(const [name,expected]of Object.entries(manifest.files)){const wanted=report.mutationBuild?.files[name]??expected;assert.equal(hash(await readFile(join(built.unpacked,name))),wanted);}report.packageUnchangedDuringRun=true;});
+ await capture('temporary-profile-cleanup',async()=>{if(dir)await rm(dir,{recursive:true,force:true});report.temporaryProfileRemoved=true;});
+ if(report.diagnosticErrors?.length||report.terminalTraceInstallError){report.diagnosticsStatus='INCOMPLETE';report.status='INCOMPLETE_DIAGNOSTICS';process.exitCode=1;}
+ await writeFile(process.argv[2]??(dir??join(tmpdir(),'vaiwl-entry-startup'))+'-entry-report.json',JSON.stringify(report,null,2)+'\n');
+}console.log(JSON.stringify(report));

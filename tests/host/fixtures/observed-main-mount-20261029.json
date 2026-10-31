@@ -1,0 +1,23 @@
+{
+  "schema": "observed-main-mount-receipt-v1",
+  "source": "user-supplied-existing-extension-status-20261029",
+  "build": "f8a68fa9b5b1a588bf416c95f67932b1eb87212ae5c81b67f5940eabfad7041a",
+  "evidence": "ANONYMOUS_REJECTED_PATH_NOT_FULL_DOM_OR_PAINT_CAPTURE",
+  "unknowns": ["rejected-node-descendants", "computed-styles", "native-purpose", "unreported-siblings"],
+  "mainMountCheck": {
+    "schema": "main-mount-check-v1", "outcome": "refused",
+    "reason": "native-flow-branch-paint", "kind": "home",
+    "phase": "retained-paint", "detail": "retained-box", "visited": 7,
+    "coverage": "complete", "limit": "none", "elapsedMs": 1,
+    "root": 0, "rejected": 3, "landmarks": [4, 5, 6],
+    "rows": [
+      [-1, 0, "DIV", "absent", 3, [241, 52, 994, 829]],
+      [0, 0, "DIV", "absent", 1, [0, 0, 0, 0]],
+      [1, 1, "DIV", "absent", 1, [241, 377, 994, 504]],
+      [2, 1, "DIV", "absent", 65, [333, 377, 808, 0]],
+      [-1, 0, "DIV", "absent", 5, [241, 52, 994, 325]],
+      [-1, 0, "FORM", "absent", 41, [353, 377, 768, 52]],
+      [-1, 2, "HEADER", "absent", 49, [0, 0, 1234, 52]]
+    ]
+  }
+}

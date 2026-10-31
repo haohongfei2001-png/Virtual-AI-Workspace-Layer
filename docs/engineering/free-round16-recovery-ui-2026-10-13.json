@@ -1,0 +1,14 @@
+{
+  "evidence": "REAL_BROWSER_SYNTHETIC_RECOVERY_UI",
+  "browser": "156.0.8078.4",
+  "checks": [
+    "native-corruption-manual-repair",
+    "evidence-corruption-manual-repair",
+    "checksum-valid-malformed-manifest-repair",
+    "signed-primitive-refs-manual-repair",
+    "repair-revokes-native-sources",
+    "native-composer-draft-preserved",
+    "no-native-send-replay"
+  ],
+  "fail": 0
+}

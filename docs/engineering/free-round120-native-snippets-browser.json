@@ -1,0 +1,59 @@
+{
+  "evidence": "REAL_HEADLESS_DOM_SELECTION_RECONSTRUCTION",
+  "authority": "TEST_ONLY_BODY_PROOF_AND_BINDING_CALLBACKS",
+  "productionComposition": "NOT_RUN",
+  "realChatGPT": "NOT_RUN",
+  "sourceHashes": {
+    "tests/host/native-snippets-browser.mjs": "33871df4a83b48cde1407828e082edcd322a61244de3c5f67d4a99e5484b70f6",
+    "src/host/native-snippets.mjs": "2e4c039073450d55cda5c09c30b7ceebfc9f0141b30a85c7c7d19a1a1bb2a142",
+    "src/host/snippet-selection-session.mjs": "00f64ead49305f277ab739db7fc7162d907f2a3d2ec7b30f3e51d4c232d333d8",
+    "src/host/url-policy.mjs": "fddfafcca2276161e6fd3c908ac896d0dab656fce6cf06aee64f1f442f7ac7e9",
+    "src/data/hash.mjs": "a2eb9e315c79d9594d625b0d7f114261bd7acc066c7e18ffe27169ab1e57a72d",
+    "src/b1/identity.mjs": "6d7ca616701826733d4936d8a139395ccf1a3111e025ec6b1035d78c1dc05e99"
+  },
+  "results": [
+    {
+      "name": "real Range captures legacy anchor and exact restore scrolls only matched native message",
+      "status": "PASS",
+      "nativeDraftAndNodesPreserved": true
+    },
+    {
+      "name": "Range across two message blocks is rejected",
+      "status": "PASS",
+      "nativeDraftAndNodesPreserved": true
+    },
+    {
+      "name": "repeated selected text and missing real branch cannot create precise anchor",
+      "status": "PASS",
+      "nativeDraftAndNodesPreserved": true
+    },
+    {
+      "name": "changed body hash rejects restore without scrolling",
+      "status": "PASS",
+      "nativeDraftAndNodesPreserved": true
+    },
+    {
+      "name": "textarea subtree is neither read as value nor changed",
+      "status": "PASS",
+      "nativeDraftAndNodesPreserved": true
+    },
+    {
+      "name": "contenteditable message subtree is not read into an anchor",
+      "status": "PASS",
+      "nativeDraftAndNodesPreserved": true
+    },
+    {
+      "name": "same message IDs and text on replacement DOM invalidate RAM selection ticket",
+      "status": "PASS",
+      "nativeDraftAndNodesPreserved": true
+    },
+    {
+      "name": "lost actual selection and revoked proof guard never replay cached text",
+      "status": "PASS",
+      "nativeDraftAndNodesPreserved": true
+    }
+  ],
+  "pageErrors": [],
+  "sourceChangedDuringRun": false,
+  "status": "PASS"
+}

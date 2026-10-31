@@ -1,0 +1,21 @@
+✔ each matching snippet has a separate preview and current-conversation locate action (3.526917ms)
+✔ locate is bounded single-flight and reports failure without losing native row (0.355708ms)
+✔ other conversation remains a normal native link and never gets locate actions (0.229375ms)
+✔ late locate result cannot overwrite changed query (0.430834ms)
+✔ late locate result cannot overwrite changed route (0.3335ms)
+✔ late locate result cannot overwrite changed scope (0.558334ms)
+✔ late locate result cannot overwrite changed stop (0.1725ms)
+✔ snippet DTO rejects extra authority fields and invalid bounds r=>({...r,anchor:{}}) (0.197834ms)
+✔ snippet DTO rejects extra authority fields and invalid bounds r=>({...r,messageId:'m'}) (0.087542ms)
+✔ snippet DTO rejects extra authority fields and invalid bounds r=>({...r,bodyHash:'a'.repeat(64)}) (0.112042ms)
+✔ snippet DTO rejects extra authority fields and invalid bounds r=>({...r,preview:'x'.repeat(161)}) (0.065958ms)
+✔ snippet DTO rejects extra authority fields and invalid bounds r=>({...r,id:''}) (0.065959ms)
+✔ one hundred snippets of 160 characters fit, one hundred and one rejects (0.844ms)
+ℹ tests 13
+ℹ suites 0
+ℹ pass 13
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 50.060917

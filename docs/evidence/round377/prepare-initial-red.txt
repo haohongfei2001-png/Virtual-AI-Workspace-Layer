@@ -1,0 +1,64 @@
+✔ idle preparation is unavailable before start and while first emission is pending (4.649125ms)
+✔ a new scan permanently revokes a token even when its unchanged work drains (0.502542ms)
+✔ renewal revokes old preparation without stopping native observation (0.450584ms)
+✔ preparation rejects expiry (0.3005ms)
+✔ preparation rejects route (0.285292ms)
+✔ preparation rejects stop (0.239584ms)
+✔ ingestion start and late terminal notification must settle before preparation (0.611166ms)
+✔ retry keeps preparation unavailable until acknowledgement and queue drain (0.268875ms)
+✔ loadedPages iterator blocks preparation until explicitly closed (0.407292ms)
+✔ loadedCandidatePages iterator blocks preparation until explicitly closed (0.351209ms)
+✔ late old emission remains pending across restart until its underlying promise settles (0.296417ms)
+✔ preparing does not remove native send observer or discard a subsequent intent (1.271667ms)
+✔ native dispatch awaiting authorization stays pending across adapter restart (0.96ms)
+✔ native prepare recovery callback preserves pending wake or ordinary scan: false (0.255458ms)
+✔ native prepare recovery callback preserves pending wake or ordinary scan: true (0.17175ms)
+✔ expired adapter can request native preparation without renewing old body or producer (0.178ms)
+✔ native prepare callback retiring adapter cannot schedule its old producer (0.165583ms)
+✖ unchanged acknowledged body gets native prepare reread with one-second elapsed throttle (0.595625ms)
+✔ consumed recovery prepare leaves unchanged acknowledged body and proof untouched (0.54675ms)
+✖ native preparation does not clear failed observation fingerprint for automatic replay (0.328541ms)
+ℹ tests 20
+ℹ suites 0
+ℹ pass 18
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 56.718125
+
+✖ failing tests:
+
+test at tests/host/adapter-idle-preparation.test.mjs:116:1
+✖ unchanged acknowledged body gets native prepare reread with one-second elapsed throttle (0.595625ms)
+  AssertionError [ERR_ASSERTION]: focus retries unchanged body metadata
+  
+  1 !== 2
+  
+      at TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/host/adapter-idle-preparation.test.mjs:119:79)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 2,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/host/adapter-idle-preparation.test.mjs:135:1
+✖ native preparation does not clear failed observation fingerprint for automatic replay (0.328541ms)
+  AssertionError [ERR_ASSERTION]: first explicitly requested reobservation reaches owner
+  
+  1 !== 2
+  
+      at TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/host/adapter-idle-preparation.test.mjs:138:41)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 2,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

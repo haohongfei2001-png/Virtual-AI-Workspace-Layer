@@ -1,0 +1,14 @@
+{
+  "src/host/chatgpt-adapter.mjs": "eb2e35e4b440cc7257c28999a168ec004197c0f6ea80ef73ff3d8fd2c867b5a8",
+  "src/host/surface-discovery.mjs": "be7511b85212e4dc26c0ce0c7441892c3faa03fbca1e0ede1b76eb9a87feb244",
+  "src/runtime/host-binding-service.mjs": "f3986563f5b9524ddd295f7ff0b0583418f75a2434c6e21602a5edbddc327a6f",
+  "src/runtime/host-observation-owner.mjs": "96710b8e453b41a6a8d22ef1adc722ce3f821b9fd33d59a8e7ece8499c97e44e",
+  "tests/host/chatgpt-adapter.test.mjs": "f2252c84c1e731afd8c2626c6ea261b2962e525fc6af18ed29abb7da71a62237",
+  "tests/host/observation-mv3-browser.mjs": "112fa016359ea6363d81a431d85500423c7699c72b1c83fffa0403ecdd20092f",
+  "src/host/current-body-claim.mjs": "4e26f9fe6c905d1dbf3a07995168c4fb5dea5e424bff238644da1c067ac03ef5",
+  "src/host/current-body-discovery.mjs": "b292deacac1ec33f6726b849564c19b2d28c67c2f82ee9ff0cc7d256c2cc94ee",
+  "tests/host/current-body-claim.test.mjs": "910dff94463a86a79bd716803322f9fbfda533d5c2142c257081bba478ff4788",
+  "tests/host/current-body-discovery.test.mjs": "c8ba809b61c6517a392ce1a0f506fa7071bf8d3c0dd132ab3726a36b8297f277",
+  "tests/host/current-body-owner.test.mjs": "e5de0c854f83a5fc0491d0bdd0d1f376e56b6dd4acd52907330215eb57168e86",
+  "tests/host/current-body-mv3-browser.mjs": "174ed764276f9e0c6259e426b3be67c601feea3ac53a6f0c93debb5db1e83b36"
+}

@@ -1,0 +1,61 @@
+✔ MOCK_IDB coalescing unchanged active rows ACK without renewing persisted source or row witnesses (8.217542ms)
+✔ MOCK_IDB coalescing masked UNKNOWN preserves exact PROJECT witness and fresh producer cannot renew it (1.651083ms)
+✔ MOCK_IDB coalescing must persist rename (1.6455ms)
+✔ MOCK_IDB coalescing must persist new-ref (1.762291ms)
+✔ MOCK_IDB coalescing must persist membership (1.437875ms)
+✔ MOCK_IDB coalescing expired source still refreshes explicitly observed rows through real apply (1.383416ms)
+✔ MOCK_IDB coalescing fresh source does not hide an expired individual row witness (1.904333ms)
+✔ MOCK_IDB coalescing source revocation requires a new incarnation and only observed rows revalidate (1.258791ms)
+✔ MOCK_IDB coalescing revision movement before no-op ACK retries without consuming producer sequence (1.2375ms)
+✔ MOCK_IDB coalescing authority loss during final version fence cannot ACK or persist (1.296583ms)
+✔ MOCK_IDB coalescing initial empty surface still establishes a durable partial source (0.297875ms)
+✔ MOCK_IDB coalescing row expiry during asynchronous version fence must persist its still-valid fresh observation (1.008584ms)
+✔ MOCK_IDB coalescing pure resolved no-op ACK does not send another data notification (0.659875ms)
+✔ MOCK_IDB coalescing semantic-change still notifies after persistence (1.047417ms)
+✔ MOCK_IDB coalescing expired-witness still notifies after persistence (0.746ms)
+✖ MOCK_IDB coalescing live-control keeps candidate notification without rewriting native facts (0.970667ms)
+✖ MOCK_IDB coalescing detached-handle keeps candidate notification without rewriting native facts (0.635ms)
+ℹ tests 17
+ℹ suites 0
+ℹ pass 15
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 75.806958
+
+✖ failing tests:
+
+test at tests/host/observation-owner-coalescing.test.mjs:82:54
+✖ MOCK_IDB coalescing live-control keeps candidate notification without rewriting native facts (0.970667ms)
+  AssertionError [ERR_ASSERTION]: nonpersistent candidate changes remain reachable even when native rows coalesce
+  
+  1 !== 2
+  
+      at TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/host/observation-owner-coalescing.test.mjs:85:69)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 2,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/host/observation-owner-coalescing.test.mjs:82:54
+✖ MOCK_IDB coalescing detached-handle keeps candidate notification without rewriting native facts (0.635ms)
+  AssertionError [ERR_ASSERTION]: nonpersistent candidate changes remain reachable even when native rows coalesce
+  
+  1 !== 2
+  
+      at TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/host/observation-owner-coalescing.test.mjs:85:69)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 2,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

@@ -1,0 +1,689 @@
+{
+  "kind": "WEB_MECHANISM_ONLY",
+  "evidence": "REAL_SHADOW_DOM_PRODUCTION_NAVIGATION_RENDERER_SYNTHETIC_PROJECTION",
+  "MV3": "NOT_RUN",
+  "realChatGPT": "NOT_RUN",
+  "zoom": "HOST_FONT_SCALE_NOT_BROWSER_ZOOM",
+  "checks": [
+    {
+      "width": 180,
+      "scale": 1,
+      "viewport": 180,
+      "section": {
+        "x": 8,
+        "y": 42,
+        "width": 164,
+        "height": 128,
+        "top": 42,
+        "right": 172,
+        "bottom": 170,
+        "left": 8
+      },
+      "workspace": {
+        "x": 0,
+        "y": 0,
+        "width": 180,
+        "height": 800,
+        "top": 0,
+        "right": 180,
+        "bottom": 800,
+        "left": 0
+      },
+      "clientWidth": 180,
+      "scrollWidth": 221,
+      "scrollLeft": 0,
+      "wrap": "nowrap",
+      "labelFont": 12,
+      "selectFont": 13.3333,
+      "controls": [
+        {
+          "label": "工作空间时间范围",
+          "rect": {
+            "x": 25,
+            "y": 116.5,
+            "width": 47,
+            "height": 19,
+            "top": 116.5,
+            "right": 72,
+            "bottom": 135.5,
+            "left": 25
+          },
+          "font": 13.3333
+        },
+        {
+          "label": "已保存片段",
+          "rect": {
+            "x": 98,
+            "y": 92,
+            "width": 30,
+            "height": 32,
+            "top": 92,
+            "right": 128,
+            "bottom": 124,
+            "left": 98
+          },
+          "font": 12
+        },
+        {
+          "label": "备份与导入",
+          "rect": {
+            "x": 129,
+            "y": 92,
+            "width": 30,
+            "height": 32,
+            "top": 92,
+            "right": 159,
+            "bottom": 124,
+            "left": 129
+          },
+          "font": 12
+        },
+        {
+          "label": "本地数据恢复",
+          "rect": {
+            "x": 160,
+            "y": 92,
+            "width": 30,
+            "height": 32,
+            "top": 92,
+            "right": 190,
+            "bottom": 124,
+            "left": 160
+          },
+          "font": 12
+        },
+        {
+          "label": "关闭设置",
+          "rect": {
+            "x": 191,
+            "y": 92,
+            "width": 30,
+            "height": 32,
+            "top": 92,
+            "right": 221,
+            "bottom": 124,
+            "left": 191
+          },
+          "font": 12
+        }
+      ],
+      "violations": [
+        "workspace-horizontal-overflow",
+        "select-does-not-inherit-host-font",
+        "control-outside-workspace:本地数据恢复",
+        "control-outside-workspace:关闭设置"
+      ],
+      "actionCallbacks": true,
+      "closeReachable": true
+    },
+    {
+      "width": 180,
+      "scale": 2,
+      "viewport": 180,
+      "section": {
+        "x": 8,
+        "y": 50,
+        "width": 164,
+        "height": 236,
+        "top": 50,
+        "right": 172,
+        "bottom": 286,
+        "left": 8
+      },
+      "workspace": {
+        "x": 0,
+        "y": 0,
+        "width": 180,
+        "height": 800,
+        "top": 0,
+        "right": 180,
+        "bottom": 800,
+        "left": 0
+      },
+      "clientWidth": 180,
+      "scrollWidth": 257,
+      "scrollLeft": 0,
+      "wrap": "nowrap",
+      "labelFont": 24,
+      "selectFont": 13.3333,
+      "controls": [
+        {
+          "label": "工作空间时间范围",
+          "rect": {
+            "x": 37,
+            "y": 237,
+            "width": 47,
+            "height": 19,
+            "top": 237,
+            "right": 84,
+            "bottom": 256,
+            "left": 37
+          },
+          "font": 13.3333
+        },
+        {
+          "label": "已保存片段",
+          "rect": {
+            "x": 134,
+            "y": 154,
+            "width": 30,
+            "height": 32,
+            "top": 154,
+            "right": 164,
+            "bottom": 186,
+            "left": 134
+          },
+          "font": 24
+        },
+        {
+          "label": "备份与导入",
+          "rect": {
+            "x": 165,
+            "y": 154,
+            "width": 30,
+            "height": 32,
+            "top": 154,
+            "right": 195,
+            "bottom": 186,
+            "left": 165
+          },
+          "font": 24
+        },
+        {
+          "label": "本地数据恢复",
+          "rect": {
+            "x": 196,
+            "y": 154,
+            "width": 30,
+            "height": 32,
+            "top": 154,
+            "right": 226,
+            "bottom": 186,
+            "left": 196
+          },
+          "font": 24
+        },
+        {
+          "label": "关闭设置",
+          "rect": {
+            "x": 227,
+            "y": 154,
+            "width": 30,
+            "height": 32,
+            "top": 154,
+            "right": 257,
+            "bottom": 186,
+            "left": 227
+          },
+          "font": 24
+        }
+      ],
+      "violations": [
+        "workspace-horizontal-overflow",
+        "select-does-not-inherit-host-font",
+        "control-outside-workspace:备份与导入",
+        "control-outside-workspace:本地数据恢复",
+        "control-outside-workspace:关闭设置"
+      ],
+      "actionCallbacks": true,
+      "closeReachable": true
+    },
+    {
+      "width": 240,
+      "scale": 1,
+      "viewport": 240,
+      "section": {
+        "x": 8,
+        "y": 42,
+        "width": 224,
+        "height": 128,
+        "top": 42,
+        "right": 232,
+        "bottom": 170,
+        "left": 8
+      },
+      "workspace": {
+        "x": 0,
+        "y": 0,
+        "width": 240,
+        "height": 800,
+        "top": 0,
+        "right": 240,
+        "bottom": 800,
+        "left": 0
+      },
+      "clientWidth": 240,
+      "scrollWidth": 240,
+      "scrollLeft": 0,
+      "wrap": "nowrap",
+      "labelFont": 12,
+      "selectFont": 13.3333,
+      "controls": [
+        {
+          "label": "工作空间时间范围",
+          "rect": {
+            "x": 32,
+            "y": 116.5,
+            "width": 47,
+            "height": 19,
+            "top": 116.5,
+            "right": 79,
+            "bottom": 135.5,
+            "left": 32
+          },
+          "font": 13.3333
+        },
+        {
+          "label": "已保存片段",
+          "rect": {
+            "x": 105,
+            "y": 92,
+            "width": 30,
+            "height": 32,
+            "top": 92,
+            "right": 135,
+            "bottom": 124,
+            "left": 105
+          },
+          "font": 12
+        },
+        {
+          "label": "备份与导入",
+          "rect": {
+            "x": 136,
+            "y": 92,
+            "width": 30,
+            "height": 32,
+            "top": 92,
+            "right": 166,
+            "bottom": 124,
+            "left": 136
+          },
+          "font": 12
+        },
+        {
+          "label": "本地数据恢复",
+          "rect": {
+            "x": 167,
+            "y": 92,
+            "width": 30,
+            "height": 32,
+            "top": 92,
+            "right": 197,
+            "bottom": 124,
+            "left": 167
+          },
+          "font": 12
+        },
+        {
+          "label": "关闭设置",
+          "rect": {
+            "x": 198,
+            "y": 92,
+            "width": 30,
+            "height": 32,
+            "top": 92,
+            "right": 228,
+            "bottom": 124,
+            "left": 198
+          },
+          "font": 12
+        }
+      ],
+      "violations": [
+        "select-does-not-inherit-host-font"
+      ],
+      "actionCallbacks": true,
+      "closeReachable": true
+    },
+    {
+      "width": 240,
+      "scale": 2,
+      "viewport": 240,
+      "section": {
+        "x": 8,
+        "y": 50,
+        "width": 224,
+        "height": 236,
+        "top": 50,
+        "right": 232,
+        "bottom": 286,
+        "left": 8
+      },
+      "workspace": {
+        "x": 0,
+        "y": 0,
+        "width": 240,
+        "height": 800,
+        "top": 0,
+        "right": 240,
+        "bottom": 800,
+        "left": 0
+      },
+      "clientWidth": 240,
+      "scrollWidth": 257,
+      "scrollLeft": 0,
+      "wrap": "nowrap",
+      "labelFont": 24,
+      "selectFont": 13.3333,
+      "controls": [
+        {
+          "label": "工作空间时间范围",
+          "rect": {
+            "x": 37,
+            "y": 237,
+            "width": 47,
+            "height": 19,
+            "top": 237,
+            "right": 84,
+            "bottom": 256,
+            "left": 37
+          },
+          "font": 13.3333
+        },
+        {
+          "label": "已保存片段",
+          "rect": {
+            "x": 134,
+            "y": 154,
+            "width": 30,
+            "height": 32,
+            "top": 154,
+            "right": 164,
+            "bottom": 186,
+            "left": 134
+          },
+          "font": 24
+        },
+        {
+          "label": "备份与导入",
+          "rect": {
+            "x": 165,
+            "y": 154,
+            "width": 30,
+            "height": 32,
+            "top": 154,
+            "right": 195,
+            "bottom": 186,
+            "left": 165
+          },
+          "font": 24
+        },
+        {
+          "label": "本地数据恢复",
+          "rect": {
+            "x": 196,
+            "y": 154,
+            "width": 30,
+            "height": 32,
+            "top": 154,
+            "right": 226,
+            "bottom": 186,
+            "left": 196
+          },
+          "font": 24
+        },
+        {
+          "label": "关闭设置",
+          "rect": {
+            "x": 227,
+            "y": 154,
+            "width": 30,
+            "height": 32,
+            "top": 154,
+            "right": 257,
+            "bottom": 186,
+            "left": 227
+          },
+          "font": 24
+        }
+      ],
+      "violations": [
+        "workspace-horizontal-overflow",
+        "select-does-not-inherit-host-font",
+        "control-outside-workspace:关闭设置"
+      ],
+      "actionCallbacks": true,
+      "closeReachable": true
+    },
+    {
+      "width": 420,
+      "scale": 1,
+      "viewport": 420,
+      "section": {
+        "x": 9,
+        "y": 49,
+        "width": 365,
+        "height": 57,
+        "top": 49,
+        "right": 374,
+        "bottom": 106,
+        "left": 9
+      },
+      "workspace": {
+        "x": 0,
+        "y": 0,
+        "width": 420,
+        "height": 800,
+        "top": 0,
+        "right": 420,
+        "bottom": 800,
+        "left": 0
+      },
+      "clientWidth": 420,
+      "scrollWidth": 425,
+      "scrollLeft": 0,
+      "wrap": "nowrap",
+      "labelFont": 12,
+      "selectFont": 13.3333,
+      "controls": [
+        {
+          "label": "工作空间时间范围",
+          "rect": {
+            "x": 78.59375,
+            "y": 79,
+            "width": 47,
+            "height": 19,
+            "top": 79,
+            "right": 125.59375,
+            "bottom": 98,
+            "left": 78.59375
+          },
+          "font": 13.3333
+        },
+        {
+          "label": "已保存片段",
+          "rect": {
+            "x": 247,
+            "y": 63.5,
+            "width": 30,
+            "height": 32,
+            "top": 63.5,
+            "right": 277,
+            "bottom": 95.5,
+            "left": 247
+          },
+          "font": 12
+        },
+        {
+          "label": "备份与导入",
+          "rect": {
+            "x": 278,
+            "y": 63.5,
+            "width": 30,
+            "height": 32,
+            "top": 63.5,
+            "right": 308,
+            "bottom": 95.5,
+            "left": 278
+          },
+          "font": 12
+        },
+        {
+          "label": "本地数据恢复",
+          "rect": {
+            "x": 309,
+            "y": 63.5,
+            "width": 30,
+            "height": 32,
+            "top": 63.5,
+            "right": 339,
+            "bottom": 95.5,
+            "left": 309
+          },
+          "font": 12
+        },
+        {
+          "label": "关闭设置",
+          "rect": {
+            "x": 340,
+            "y": 63.5,
+            "width": 30,
+            "height": 32,
+            "top": 63.5,
+            "right": 370,
+            "bottom": 95.5,
+            "left": 340
+          },
+          "font": 12
+        }
+      ],
+      "violations": [
+        "workspace-horizontal-overflow",
+        "select-does-not-inherit-host-font"
+      ],
+      "actionCallbacks": true,
+      "closeReachable": true
+    },
+    {
+      "width": 420,
+      "scale": 2,
+      "viewport": 420,
+      "section": {
+        "x": 9,
+        "y": 57,
+        "width": 365,
+        "height": 128,
+        "top": 57,
+        "right": 374,
+        "bottom": 185,
+        "left": 9
+      },
+      "workspace": {
+        "x": 0,
+        "y": 0,
+        "width": 420,
+        "height": 800,
+        "top": 0,
+        "right": 420,
+        "bottom": 800,
+        "left": 0
+      },
+      "clientWidth": 420,
+      "scrollWidth": 425,
+      "scrollLeft": 0,
+      "wrap": "nowrap",
+      "labelFont": 24,
+      "selectFont": 13.3333,
+      "controls": [
+        {
+          "label": "工作空间时间范围",
+          "rect": {
+            "x": 85.453125,
+            "y": 154,
+            "width": 47,
+            "height": 19,
+            "top": 154,
+            "right": 132.453125,
+            "bottom": 173,
+            "left": 85.453125
+          },
+          "font": 13.3333
+        },
+        {
+          "label": "已保存片段",
+          "rect": {
+            "x": 247,
+            "y": 107,
+            "width": 30,
+            "height": 32,
+            "top": 107,
+            "right": 277,
+            "bottom": 139,
+            "left": 247
+          },
+          "font": 24
+        },
+        {
+          "label": "备份与导入",
+          "rect": {
+            "x": 278,
+            "y": 107,
+            "width": 30,
+            "height": 32,
+            "top": 107,
+            "right": 308,
+            "bottom": 139,
+            "left": 278
+          },
+          "font": 24
+        },
+        {
+          "label": "本地数据恢复",
+          "rect": {
+            "x": 309,
+            "y": 107,
+            "width": 30,
+            "height": 32,
+            "top": 107,
+            "right": 339,
+            "bottom": 139,
+            "left": 309
+          },
+          "font": 24
+        },
+        {
+          "label": "关闭设置",
+          "rect": {
+            "x": 340,
+            "y": 107,
+            "width": 30,
+            "height": 32,
+            "top": 107,
+            "right": 370,
+            "bottom": 139,
+            "left": 340
+          },
+          "font": 24
+        }
+      ],
+      "violations": [
+        "workspace-horizontal-overflow",
+        "select-does-not-inherit-host-font"
+      ],
+      "actionCallbacks": true,
+      "closeReachable": true
+    }
+  ],
+  "sourceBefore": {
+    "src/host/current-navigation-plan.mjs": "c33cfd6af8e7523ac85fe812b59b2e24df109d4e03a3d507b9edab6b53d413ff",
+    "src/host/contract.mjs": "35129aacf2a7e1fe1812c846379563d60ad74a66b689ad41bc38d76484a97716",
+    "src/host/frame-resume-state.mjs": "fab35558b08d800722df1d0160b602af541ba3a0aa5a2f49a321a390e35b78c2",
+    "extension/frame-shell.css": "305e002e7610347fa491671aa45d852dbc8c4ec12096e4279a50a7e3e6c2847f",
+    "src/navigation/navigation.mjs": "9281ce20c79cd885b1667bed90aaf75e175ced61a7a83bfa922f92c18f37ca45",
+    "src/navigation/styles.mjs": "72850d9805a8dc725d36145cef30a59d24c6dd3f10504528f1e5c68e716d61c8",
+    "tests/host/settings-layout-browser.mjs": "9d7f39ab6cec8fb7ce0be6680fff6bdf22f730197e3f942b4c7f5bd8ad315fec"
+  },
+  "browser": "155.0.8059.80",
+  "ok": false,
+  "sourceAfter": {
+    "src/host/current-navigation-plan.mjs": "c33cfd6af8e7523ac85fe812b59b2e24df109d4e03a3d507b9edab6b53d413ff",
+    "src/host/contract.mjs": "35129aacf2a7e1fe1812c846379563d60ad74a66b689ad41bc38d76484a97716",
+    "src/host/frame-resume-state.mjs": "fab35558b08d800722df1d0160b602af541ba3a0aa5a2f49a321a390e35b78c2",
+    "extension/frame-shell.css": "305e002e7610347fa491671aa45d852dbc8c4ec12096e4279a50a7e3e6c2847f",
+    "src/navigation/navigation.mjs": "9281ce20c79cd885b1667bed90aaf75e175ced61a7a83bfa922f92c18f37ca45",
+    "src/navigation/styles.mjs": "72850d9805a8dc725d36145cef30a59d24c6dd3f10504528f1e5c68e716d61c8",
+    "tests/host/settings-layout-browser.mjs": "9d7f39ab6cec8fb7ce0be6680fff6bdf22f730197e3f942b4c7f5bd8ad315fec"
+  },
+  "sourceStable": true
+}

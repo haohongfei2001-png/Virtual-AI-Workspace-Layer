@@ -1,0 +1,35 @@
+{
+  "kind": "NODE_SYNTHETIC_VALID_NATIVE_PIECE_DIGEST_DIAGNOSTIC",
+  "node": "v26.8.2",
+  "checks": 2138,
+  "count": 2000,
+  "rounds": 7,
+  "samples": {
+    "baseline": [
+      9.132874999999999,
+      9.213750000000005,
+      9.162125000000003,
+      9.170665999999983,
+      9.167417,
+      9.221749999999986,
+      9.060625000000016
+    ],
+    "candidate": [
+      8.677915999999996,
+      8.943250000000006,
+      9.066624999999988,
+      8.737791000000016,
+      8.638040999999987,
+      8.813208000000003,
+      8.803375000000017
+    ]
+  },
+  "medianMs": {
+    "baseline": 9.167417,
+    "candidate": 8.803375000000017
+  },
+  "sourceHash": "a2eb9e315c79d9594d625b0d7f114261bd7acc066c7e18ffe27169ab1e57a72d",
+  "baselineHash": "a2eb9e315c79d9594d625b0d7f114261bd7acc066c7e18ffe27169ab1e57a72d",
+  "candidateHash": "8ba9afa0f9031b8efcdde687d24a304c6380b91269b361337ba766c45208f3a6",
+  "sink": "2578435fe7aa5dcff664b43b086ea52a3e486ca17ba40b22f2aba5b0e3974de8"
+}

@@ -1,0 +1,32 @@
+✔ audit conflicting-terminal aborts in-flight settlement (2.952484ms)
+✔ audit invalidation aborts in-flight settlement (0.448667ms)
+✔ audit conflict during real terminalAccess async guard cannot consume pending intent (2.69135ms)
+✔ exact terminal settles only failed intent, early=true (3.35364ms)
+✔ exact terminal settles only failed intent, early=false (0.45076ms)
+✔ refuses accepted (0.389678ms)
+✔ refuses wrong-message (0.321655ms)
+✔ refuses wrong-document (1.218888ms)
+✔ refuses wrong-sender (0.288285ms)
+✔ refuses expired (0.416969ms)
+✔ refuses revoked (0.300643ms)
+✔ refuses redirect-conflict (0.289627ms)
+✔ refuses wrong-stage (0.554166ms)
+✔ refuses no-intent (0.259121ms)
+✔ cancelled requires matching authenticated terminal state (0.360804ms)
+✔ invalidation prevents early terminal resurrection (0.367034ms)
+✔ late successful operation cannot clear old intent or attribute a retry (0.26509ms)
+✔ new append proof with identical scope/document/body epoch settles old failure before metadata correlation (0.613746ms)
+✔ fresh proof cannot carry old terminal across body epoch or scope grant change (0.520004ms)
+✔ accepted intent plus early terminal holds correlation until delayed operation IPC under a fresh append proof (0.545733ms)
+✔ candidate operation IPC can precede accepted intent without clearing an unaccepted candidate (0.256457ms)
+✔ one accepted gesture cannot register two operations (0.275987ms)
+✔ shared persisted 12 GET budget blocks terminal read without refund or private reset (8.66371ms)
+✔ network failure retries remain bounded to three reservations on foreground observations (0.628158ms)
+ℹ tests 24
+ℹ suites 0
+ℹ pass 24
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 106.977557

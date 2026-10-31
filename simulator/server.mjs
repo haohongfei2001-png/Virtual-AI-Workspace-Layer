@@ -12,7 +12,7 @@ export function createServer(){return http.createServer(async(req,res)=>{
   let path=decodeURIComponent(new URL(req.url,'http://127.0.0.1').pathname);
   if(path==='/'||path==='/control.html')path='/simulator/control.html';
   else if(/^\/hf\/(A|B|unknown)\/(c\/[A-Za-z0-9_-]+|project\/[A-Za-z0-9_-]+|new)$/.test(path))path='/simulator/index.html';
-  if(!/^\/(simulator|src\/b1|src\/navigation|src\/data)\//.test(path))throw Error('not-found');
+  if(path!=='/src/runtime/free-read-service.mjs'&&!['/src/host/frame-row-windows.mjs','/src/host/frame-resume-state.mjs','/src/host/current-navigation-plan.mjs','/src/host/contract.mjs'].includes(path)&&!/^\/(simulator|src\/b1|src\/navigation|src\/data)\//.test(path))throw Error('not-found');
   const target=resolve(root,'.'+path);if(!target.startsWith(root+sep)||!mime[extname(target)])throw Error('not-found');
   const content=await readFile(target);res.writeHead(200,{'Content-Type':mime[extname(target)],'Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Content-Security-Policy':"default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'"});res.end(req.method==='HEAD'?undefined:content);
  }catch{res.writeHead(404,{'Content-Type':'text/plain'});res.end('Not found');}

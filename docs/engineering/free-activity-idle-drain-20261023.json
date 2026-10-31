@@ -1,0 +1,51 @@
+{
+  "schema": "vaiwl-native-activity-idle-drain-evidence-v1",
+  "baseHead": "a218d58de0498d5e8e648b0be1dc4831bca0485f",
+  "task": "B2.F2/C6/F3 retain actual activity work through cancellation and deadline",
+  "sourceHashes": {
+    "src/runtime/host-native-activity-owner.mjs": "45e78a2e6715b435cc7bd92e9cefee94901d59754907cf3120dfca27a50a62e7",
+    "src/runtime/host-binding-service.mjs": "ce85a2374d8c5e4a350324698e3383d353031cc6041af741926be116482c9ed1",
+    "tests/host/native-activity.test.mjs": "fad359b923b6c03007b22d3bc05b130327aba320b05ee566431423a629bbb65e"
+  },
+  "rootCause": "Both activity owner busy and service background counters were tied only to the bounded race. A pending page/apply/provider could remain after isIdle became true. Two old tests explicitly expected that premature idle state.",
+  "change": "Count the inner repository chain separately and reuse service background track around actual frame/provider work. Keep bounded caller return, abort, invalid private gate, and late publication rejection.",
+  "validation": {
+    "preFix": {
+      "tests": 4,
+      "passed": 1,
+      "failed": 3,
+      "log": "before.log"
+    },
+    "targetedRegression": {
+      "passed": 75,
+      "failed": 0,
+      "skipped": 0,
+      "log": "regression.log",
+      "scope": "Native activity parser/owner/service, source admission, binding idle, and existing no-receipt wiring integration."
+    },
+    "builds": [
+      {
+        "name": "default",
+        "status": "HOST_IMPLEMENTATION_UNVERIFIED",
+        "releaseStatus": "NOT_RELEASE_READY",
+        "files": 191
+      },
+      {
+        "name": "observed",
+        "status": "HOST_IMPLEMENTATION_UNVERIFIED",
+        "releaseStatus": "NOT_RELEASE_READY",
+        "files": 191
+      }
+    ],
+    "review": "Main writer diff review; independent reviewer previously terminal with usage limit, not retried and not claimed complete."
+  },
+  "boundaries": {
+    "productionEnabled": false,
+    "realAccountRequests": 0,
+    "newWitnessBatch": false,
+    "installedPackageUpdated": false,
+    "activitySemanticsChanged": false,
+    "realDailyAcceptance": "NOT_RUN"
+  },
+  "checkpoint": ".git/vaiwl-checkpoints/20261023-activity-idle-drain"
+}

@@ -1,0 +1,46 @@
+✔ explicit accepted self message produces only frozen minimized fields (1.310167ms)
+✔ absent status cannot establish acceptance (0.161583ms)
+✔ generic status cannot establish acceptance (0.127ms)
+✔ other author cannot establish acceptance (0.117542ms)
+✔ assistant cannot establish acceptance (0.109042ms)
+✔ missing author cannot establish acceptance (0.479041ms)
+✔ partial lineage and duplicate conflicting messages fail closed (0.481875ms)
+✔ conversation mismatch, malformed JSON, unconfigured profile and caller metadata reject (0.205125ms)
+✔ input accessor is never evaluated (0.062333ms)
+✔ candidate metadata contains no body, sentAt or author verification; role alone is not self match (1.220792ms)
+✔ appending assistant leaf and changing current node never change prior root-to-message lineage (0.703125ms)
+✔ missing parents and cyclic ancestry are partial, with no invented lineage (0.202959ms)
+✔ same message with conflicting original time is excluded instead of choosing newer timestamp (0.521958ms)
+✔ wrong outer conversation is rejected and message-scoped foreign metadata cannot inherit self attribution (0.292041ms)
+✔ object payload, getters and malformed input are rejected without invoking accessor or toJSON (0.096375ms)
+✔ 256 message and 10000 mapping node budgets return explicit partial coverage (13.269084ms)
+✔ raw UTF8 8MiB boundary accepts exact and rejects over before parsing (6.811334ms)
+✔ structural depth is bounded while opaque message content is skipped (0.255875ms)
+✔ explicit ISO precision remains a candidate and unsupported time types are not coerced (2.715125ms)
+✔ unknown huge scalar arrays and wide objects hit shared visited/pending budget (10.306541ms)
+✔ private or invalid time text is omitted and reported instead of copied into candidates (0.275042ms)
+✔ explicit offline ACK profile prepares frozen fixed interval without authority or sentAt (1.982375ms)
+✔ readback proofId mismatch rejects (0.195666ms)
+✔ readback conversationId mismatch rejects (0.073459ms)
+✔ readback bodyEpoch mismatch rejects (0.061333ms)
+✔ readback principalKey mismatch rejects (0.074125ms)
+✔ readback contextKey mismatch rejects (0.058875ms)
+✔ readback providerProfile mismatch rejects (0.066291ms)
+✔ readback transport mismatch rejects (0.361083ms)
+✔ no profile ACK default and generic accepted strings cannot imply permission (0.309416ms)
+✔ role or selfMatch alone is not ACK and other authors cannot pass (0.280917ms)
+✔ lineage is complete and fixed to exact mapping node with independently checked digest (0.787667ms)
+✔ time interval is exact candidate intent, bounded inclusive 30s with future expiry (0.416ms)
+✔ semantic witness does not change when local observation time changes (0.080166ms)
+✔ all exact records and nested arrays reject accessors without executing them (0.3955ms)
+✔ extra authority fields, symbols, sparse arrays, wrong prototypes and caller mutation fail safely (0.156416ms)
+✔ scope key must canonically bind the same ChatGPT principal and account context (0.142417ms)
+✔ standalone ACK profile validation copies and deeply freezes configuration without authority (0.121125ms)
+ℹ tests 38
+ℹ suites 0
+ℹ pass 38
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 88.090875

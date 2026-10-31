@@ -1,0 +1,140 @@
+{
+  "kind": "DIAGNOSTIC_COUNTERS_MOCK_IDB_NOT_PERFORMANCE_ACCEPTANCE",
+  "baselineSourceCommit": "8d372e000d64d9fb382b54291c74e304e5ba17ab",
+  "candidateSourceHashes": {
+    "src/data/capture-json-snapshot.mjs": "d082508f8186c38c71e83e0cc8653501fcf6afde67e941b8ce8803f04106ade8",
+    "src/data/native-version-index.mjs": "0cf3d16e81993f0866eca85c7cce5599747fe2be8e3b53561915fd35d0c24bc9",
+    "src/data/native-repository.mjs": "82fc7cfdc288231e933fe2d51d745324cb601606eda88a1f00fbd9b1601b66d6",
+    "src/data/partitioned.mjs": "4b66c51d98ddf85bcba4121ff0257a35f9df64b7cfcf9ff2ec7f5d865094a710",
+    "src/data/shared-ref-directory.mjs": "82c4b549386090b761426a229bfd04e7c9eada2a09ea74e802e4965ccd132d94",
+    "src/data/shared-directory-retention.mjs": "541f5f7ec069bb647c000ed06c19e1c30a5000d20aeae15f51b94556abb035e6",
+    "src/data/shared-directory-writer.mjs": "8ae600873353f94030effff7ef775c1b6e342c3f0687ce596e607c09743aaa09",
+    "src/runtime/host-worker-runtime.mjs": "d8677651ce96af2356f1d548e1eeaf1c39b3ee545fedc364a5ee2852414c27bb",
+    "simulator/build.mjs": "2f04b853a0f6d9f4d8e62fd40ca71076d3856dcc8832c9196b8e303bd6d48da6"
+  },
+  "fixture": {
+    "limit": 10000,
+    "batchSize": 54,
+    "batches": 186,
+    "rev": 187
+  },
+  "scope": "Real native/shared owners, page then apply, both retention paths; counted JSON encodings only. Capture allocation, freeze work, browser IDB, lifecycle, wall time and performance acceptance are excluded.",
+  "baselineIngestionCounts": {
+    "calls": {
+      "validateNativeIndexRoot": 1111,
+      "checkNativeIndexRoot": 1296,
+      "validateSharedDirectoryRoot": 2221,
+      "validateRootStructure": 186
+    },
+    "stable": {
+      "vaiwl-native-partitions-v1": {
+        "calls": 2,
+        "chars": 9970
+      },
+      "vaiwl-native-version-index-v1": {
+        "calls": 1482,
+        "chars": 180795091
+      },
+      "vaiwl-partitioned-v1": {
+        "calls": 374,
+        "chars": 41852286
+      },
+      "vaiwl-shared-ref-directory-v1": {
+        "calls": 742,
+        "chars": 91827323
+      }
+    },
+    "strict": {
+      "vaiwl-native-partitions-v1": {
+        "calls": 2,
+        "chars": 9970
+      },
+      "vaiwl-native-version-index-v1": {
+        "calls": 555,
+        "chars": 67599162
+      },
+      "vaiwl-partitioned-v1": {
+        "calls": 1,
+        "chars": 2490
+      },
+      "vaiwl-shared-ref-directory-v1": {
+        "calls": 2406,
+        "chars": 298103010
+      }
+    },
+    "nativeManifestJSON": {
+      "vaiwl-native-partitions-v1": {
+        "calls": 1299,
+        "chars": 147747106
+      }
+    }
+  },
+  "candidateIngestionCounts": {
+    "calls": {
+      "validateNativeIndexRoot": 1111,
+      "checkNativeIndexRoot": 371,
+      "captureJSONSnapshot:envelope:vaiwl-native-version-index-v1": 555,
+      "validateSharedDirectoryRoot": 2220,
+      "validateRootStructure": 186,
+      "captureJSONSnapshot:envelope:vaiwl-shared-ref-directory-v1": 370,
+      "snapshotSharedDirectoryRoot": 555,
+      "captureJSONSnapshot:vaiwl-shared-ref-directory-v1": 185,
+      "captureJSONSnapshot:metadata-or-other": 185,
+      "captureJSONSnapshot:vaiwl-native-version-index-v1": 185
+    },
+    "stable": {
+      "vaiwl-native-partitions-v1": {
+        "calls": 2,
+        "chars": 9970
+      },
+      "vaiwl-native-version-index-v1": {
+        "calls": 557,
+        "chars": 67890732
+      },
+      "vaiwl-partitioned-v1": {
+        "calls": 374,
+        "chars": 41852286
+      },
+      "vaiwl-shared-ref-directory-v1": {
+        "calls": 741,
+        "chars": 91824986
+      }
+    },
+    "strict": {
+      "vaiwl-native-partitions-v1": {
+        "calls": 2,
+        "chars": 9970
+      },
+      "vaiwl-native-version-index-v1": {
+        "calls": 555,
+        "chars": 67599162
+      },
+      "vaiwl-partitioned-v1": {
+        "calls": 1,
+        "chars": 2490
+      },
+      "vaiwl-shared-ref-directory-v1": {
+        "calls": 1110,
+        "chars": 137516396
+      }
+    },
+    "nativeManifestJSON": {
+      "vaiwl-native-partitions-v1": {
+        "calls": 374,
+        "chars": 42320587
+      }
+    }
+  },
+  "baselineIntegrity": {
+    "nativeRefs": 10000,
+    "nativeMembership": 10000,
+    "sharedRefs": 10000,
+    "allIdsVerified": true
+  },
+  "candidateIntegrity": {
+    "nativeRefs": 10000,
+    "nativeMembership": 10000,
+    "sharedRefs": 10000,
+    "allIdsVerified": true
+  }
+}

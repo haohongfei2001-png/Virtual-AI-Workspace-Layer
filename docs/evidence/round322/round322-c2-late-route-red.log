@@ -1,0 +1,56 @@
+✖ C2 route changing after pending still restores native reading on READY (2.99575ms)
+✖ C2 ambiguous refresh retains reading intent while awaiting another external READY (0.617708ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 0
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 49.2465
+
+✖ failing tests:
+
+test at tests/host/content-session.test.mjs:202:1
+✖ C2 route changing after pending still restores native reading on READY (2.99575ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    [
+      'workspace',
+  +   'workspace'
+  -   'reading'
+    ]
+  
+      at TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/host/content-session.test.mjs:205:40)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ 'workspace', 'workspace' ],
+    expected: [ 'workspace', 'reading' ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at tests/host/content-session.test.mjs:208:1
+✖ C2 ambiguous refresh retains reading intent while awaiting another external READY (0.617708ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    [
+      'workspace',
+  +   'workspace'
+  -   'reading'
+    ]
+  
+      at TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/host/content-session.test.mjs:212:155)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ 'workspace', 'workspace' ],
+    expected: [ 'workspace', 'reading' ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }

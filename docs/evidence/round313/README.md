@@ -1,0 +1,15 @@
+# Round313 — Preserve candidate correlation through same-target rebind
+
+Base c693592 (Round312) is safely committed locally; its ordinary push timed out. Last API-confirmed PR16 head was b6e797d with original Draft/base. No reset, force push or external duplicate cleanup occurred.
+
+CI J1 and a fresh actual isolated headless baseline both failed the original30s canonical P2-card wait. Native activation occurred once and P2 was independently ingested, but the candidate total remained81 rather than the independent oracle80. Added bounded RPC/port diagnostics proved the new mount received WORKSPACE_ENTERED after JOIN, rejecting the initial lost-notification hypothesis. An independently copied diagnostic package then showed capture identity/display=true, target route rebind, a second same-URL rebind clearing the pending correlation, and subsequent acknowledged project scans without an identity. Diagnostic package/source hashes and fixed-label log bounds are preserved; these outputs are DIAGNOSTIC_ONLY, not acceptance.
+
+Production now retains only an already-correlated target URL across that second rebind. The original six-second timer and expiresAt remain; no action, grant, native write or persisted identity is retained/replayed. An original/other URL, expiry, cancel or interrupt cannot regain correlation. Fresh matching scope, browser document, original DOM identity and accepted native Project facts are still required by resolve. Changes are confined to candidate-upgrade and its content-session caller.
+
+Actual untouched formal-package J1 rerun: all9 continuous steps PASS, status PARTIAL_J1_NOT_ACCEPTED/exit2 as required for the LEGACY-only scope. The original32-offset canonical-page/card focus, candidate offset32/scroll, native C/Back, unique return, same native document/editor, exact40 projects/four conversations and NONE/UNKNOWN assertions all pass unchanged. Source/script/fixtures/build remain stable and browser/fixture finalization succeeded. No timeout or oracle was widened.
+
+New content-session tests preserve old-binding replay rejection and cover second same-target rebind, scope/document change, original6s expiry, a second route and absence of target navigation.79/79 PASS; isolated loader of the old HEAD source gives the exact red2!=1. Related frame/lifecycle/identity contracts131/131 and model32/32 PASS. Independent diagnostic-helper review exercised actual VM stack sanitization,128-record cap, original package/manifest unchanged and generated worker byte consistency.
+
+All failures and successful outputs are retained. This closes this concrete candidate-navigation regression, not complete J1/profile/81/G/U/scale/defaultJ4 acceptance. Free NOT_RELEASE_READY.
+
+Final complete Node6073/6073 PASS after repairing the diagnostic finalization fixture to explicitly model upgradeTrace=null. Initial6067/6068 result is retained (only that test harness ReferenceError failed). Added port notification transparency/cap contract and persistent diagnostic-package tests also pass. Production independent review found no blocker. Precommit API again confirms remote b6e797d, original Draft PR16/base.

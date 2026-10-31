@@ -1,6 +1,9 @@
 import { createFixtureService } from './service.mjs';
 import { syntheticURL, routeInfo, scopeOf } from './data.mjs';
 const service=createFixtureService({indexedDB,extensionId:chrome.runtime.id,getFrame:x=>chrome.webNavigation.getFrame(x)});
+service.subscribe(message=>{void service.broker.notificationTarget(message.leaseId).then(target=>{
+  if(target)return chrome.tabs.sendMessage(target.tabId,message,{documentId:target.documentId});
+}).catch(()=>{});});
 globalThis.hfWorkerBoot=crypto.randomUUID();
 chrome.runtime.onMessage.addListener((message,sender,reply)=>{
   // A read-only diagnostic available ONLY to the synthetic host test origin.
