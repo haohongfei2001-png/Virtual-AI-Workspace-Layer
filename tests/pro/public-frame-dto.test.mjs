@@ -110,10 +110,11 @@ test('long Series remain visible and paginated; full small detail alone is edita
  const small=projectPublicPanel({...input,kind:'series-detail',id:'other_0',limit:200});assert.equal(small.display.series.other_0.detailsComplete,true);assert.equal(small.page.count,1);
  const plan=projectPublicPreview({preview:{kind:'manual-series-plan',expected:input.snapshot.versions,planHash:digest('plan')},previewId:'series_review'});assert.equal(plan.kind,'manual-series-plan');assert.equal(plan.planHash,digest('plan'));
 });
-test('oversized protected reference relations are refused explicitly instead of hidden',async t=>{
- const f=await fixture(t);await f.controller.dispatch({type:'CREATE_TOPIC',name:'被保护的关系'});const input=await f.current();
- for(let i=0;i<101;i++)input.state.placements['placement_'+i]={conversationId:'c_alpha',topicId:'hidden_topic_'+i,role:'related',state:'included',control:{mode:'human',locked:true}};
- assert.throws(()=>projectPublicPanel({...input,kind:'reference',id:'c_alpha'}),/relations-require-paging/);
+test('more than100 protected relations remain editable through bounded reference pages',async t=>{
+ const f=await fixture(t);await f.controller.dispatch({type:'CREATE_TOPIC',name:'被保护的关系'});const input=await f.current(),original=Object.values(input.state.topics)[0],seen=new Set();
+ for(let i=0;i<131;i++){const topicId='hidden_topic_'+i;input.state.topics[topicId]={...original,id:topicId,name:'关联主题 '+i};input.state.placements['placement_'+i]={conversationId:'c_alpha',topicId,role:'related',state:'included',control:{mode:'human',locked:true}};}
+ let offset=0;do{const panel=projectPublicPanel({...input,kind:'reference',id:'c_alpha',offset});for(const p of Object.values(panel.display.placements))seen.add(p.topicId);if(!panel.page.hasMore)break;assert(panel.page.count>0);offset+=panel.page.count;}while(true);
+ assert.equal(seen.size,131);assert(seen.has('hidden_topic_130'));
 });
 test('native fallback links preserve the current draft and reject foreign or mismatched targets',()=>{
  const refId='33333333-3333-4333-8333-333333333333',make=url=>({kind:'pro-result',protocol:PRO_FRAME_PROTOCOL,state:'native-link',nativeLink:{refId,url,disposition:'new-tab-preserve-current'}});

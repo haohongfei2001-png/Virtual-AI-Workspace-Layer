@@ -1,5 +1,6 @@
 import {validatePublicProReply, PRO_FRAME_BYTES} from '../integration/public-frame-dto.mjs';
 import {stable,sha256} from '../../data/hash.mjs';
+import {PUBLIC_PRO_ERRORS} from '../integration/public-error.mjs';
 
 const tables = ['topics','titles','placements','constraints','series','legacyResolutions','proposals'];
 const clone = value => structuredClone(value);
@@ -49,7 +50,7 @@ export function createRemoteProController({request,isCurrent=()=>true,onMode=()=
     const bytes=new TextEncoder().encode(JSON.stringify(payload)).length;if(bytes>PRO_FRAME_BYTES-1024)throw Error('pro-request-too-large');
     const result=await request(action,clone(payload));
     if(!valid(run))throw Error('pro-frame-unavailable');
-    if(result?.ok!==true)throw Error('pro-request-unavailable');
+    if(result?.ok!==true)throw Error(PUBLIC_PRO_ERRORS.includes(result?.reason)?result.reason:'pro-request-unavailable');
     return validatePublicProReply(action,result.value);
   }
   function currentVersions(){const v=panelData?.versions??rowData?.versions??pageData?.versions;if(!v)throw Error('pro-view-unavailable');return clone(v);}
@@ -128,13 +129,24 @@ export function createRemoteProController({request,isCurrent=()=>true,onMode=()=
     previewMerge:(input,options)=>preview('merge',input,options),previewSplit:(input,options)=>preview('split',input,options),previewSeries:(input,options)=>preview('series',input,options),previewSeriesEdit:(input,options)=>preview('series-edit',input,options),
     previewLegacyPrimary:(refId,chosenPrimary,options)=>preview('legacy-primary',{refId,chosenPrimary},options),
     previewLegacyUpgrade:options=>preview('legacy-upgrade',{},options),
+    async getAliases(targetKind,targetId,{offset=0,limit=24}={}){const review=pageData?.versions,value=await call('view',{op:'aliases',targetKind,targetId,offset,limit});if(value.kind!=='pro-alias-page'||value.targetKind!==targetKind||value.targetId!==targetId||!sameReview(value.versions,review)||!sameReview(review,pageData?.versions))throw Error('invalid-pro-alias-response');return value;},
+    getModelStatus:({offset=0,limit=20}={})=>call('background',{op:'model-status',offset,limit}),
+    async getModelBudget(){const expected=currentVersions(),value=await call('background',{op:'model-budget'});if(value.kind!=='pro-model-budget'||!sameReview(value.versions,expected)||!sameReview(expected,currentVersions()))throw Error('stale-pro-model-budget');return value;},
+    async previewModelBudget(limits,{expected=currentVersions()}={}){if(!sameReview(expected,currentVersions()))throw Error('stale-pro-model-budget');const value=await call('background',{op:'model-budget-preview',limits,expected});if(value.kind!=='pro-model-budget-preview'||!sameReview(value.expected,expected)||!sameReview(expected,currentVersions()))throw Error('stale-pro-model-budget');return value;},
+    async configureModelBudget(preview){if(!sameReview(preview?.expected,currentVersions()))throw Error('stale-pro-model-budget');return reviewedIntent('model-budget',preview,preview.expected,()=>mutate('background',{op:'model-budget-apply',previewId:preview.previewId,expected:preview.expected}));},
+    async previewModel({refIds=null,reviewOnly=false}={}){if(typeof reviewOnly!=='boolean'||reviewOnly&&(!Array.isArray(refIds)||refIds.length!==1)||!reviewOnly&&refIds!==null)throw Error('invalid-model-review');const expected=currentVersions(),value=await call('background',{op:'model-preview',expected,...(reviewOnly?{refIds,reviewOnly:true}:{})});if(value.kind!=='pro-model-preview'||value.reviewOnly!==reviewOnly||!sameReview(value.expected,expected)||!sameReview(expected,currentVersions()))throw Error('stale-pro-model-preview');return value;},
+    async enableModel(preview,{automatic=false,backgroundWhileNative=false}={}){if(preview?.reviewOnly===true||typeof automatic!=='boolean'||typeof backgroundWhileNative!=='boolean'||automatic&&preview?.automaticAvailable!==true)throw Error('automatic-model-unavailable');if(!sameReview(preview.expected,currentVersions()))throw Error('stale-pro-model-preview');const value=await call('background',{op:'model-enable',previewId:preview.previewId,expected:preview.expected,automatic,backgroundWhileNative});await refresh({force:true});return value;},
+    async startModelReview(preview){if(preview?.reviewOnly!==true||!sameReview(preview.expected,currentVersions()))throw Error('stale-pro-model-review');return reviewedIntent('model-review',preview,preview.expected,()=>mutate('background',{op:'model-review-start',previewId:preview.previewId,expected:preview.expected}));},
+    cancelModelJob:jobId=>call('background',{op:'model-cancel',jobId}),
+    recoverModelJobs:()=>call('background',{op:'model-recover'}),
     recoveryPreview:()=>call('commit',{op:'recovery-preview'}),
     recoveryApply:async review=>reviewedIntent('recovery',review,null,operationId=>call('commit',{op:'recovery-apply',previewId:review.previewId,operationId})),
     async applyStructure(result){const expected=result?.expected??currentVersions();return reviewedIntent('structure',result,expected,operationId=>mutate('commit',{op:'apply-structure',previewId:result.previewId,expected,operationId}));},
     async suggest(){const result=await call('evidence',{op:'suggest',expected:currentVersions()});await refresh({force:true});await loadPanel('suggestions');return result;},
     applyProposal:(id,planHash)=>controller.dispatch({type:'ACCEPT_PROPOSAL',proposalId:id,planHash}),
     applyProposalBatch:proposals=>controller.dispatch({type:'ACCEPT_PROPOSAL_BATCH',proposals:proposals.map(p=>({proposalId:p.proposalId??p.id,planHash:p.planHash}))}),
-    async search(query,{topicId=null}={}){const value=await call('view',{op:'search',query,topicId,limit:24});if(value.kind!=='pro-search-page')throw Error('invalid-pro-search-response');return value.items;},
+    async searchPage(query,{topicId=null,offset=0,limit=24}={}){const review=pageData?.versions,value=await call('view',{op:'search',query,topicId,offset,limit});if(value.kind!=='pro-search-page'||!sameReview(value.versions,review)||!sameReview(review,pageData?.versions))throw Error('invalid-pro-search-response');return value;},
+    async search(query,options={}){return (await controller.searchPage(query,options)).items;},
     async setMode(mode,{selectedProjectIds=[],resumeView=null}={}){
       if(!modes.includes(mode))throw Error('invalid-mode');const ticket=++modeSerial;
       const prior=capturePro(),restore=retainedCurrent(resumeView)?resumeView:null;
@@ -147,7 +159,7 @@ export function createRemoteProController({request,isCurrent=()=>true,onMode=()=
     },
     resumePro(){const saved=retainedCurrent(retainedPro)?retainedPro:null;return controller.setMode(saved?.mode??'pro-default-none',{selectedProjectIds:saved?.selectedProjects??[],resumeView:saved});},
     async synchronizeMode(){const ticket=modeSerial,value=await call('background',{op:'status'});if(ticket!==modeSerial)return getStatus();if(value.kind!=='pro-status')throw Error('invalid-pro-status-response');const prior=capturePro(),changed=value.status.mode!==selectedMode;if(changed&&value.status.mode==='native'&&prior)retainedPro=prior;const restore=changed&&value.status.mode!=='native'&&retainedCurrent(retainedPro)&&retainedPro.mode===value.status.mode&&JSON.stringify(retainedPro.selectedProjects)===JSON.stringify(value.status.selectedProjectIds)?retainedPro:null;selectedMode=value.status.mode;selectedProjects=[...value.status.selectedProjectIds];if(restore)restoreCoordinates(restore);onMode(selectedMode);if(pageData)pageData.status=value.status;if(selectedMode!=='native'){await refresh({force:true});await restoreRows(restore);}return value.status;},
-    async setLocalProcessing(value){if(!['local','off'].includes(value))throw Error('unsupported-processing-mode');return mutate('background',{op:'processing',mode:value});},
+    async setLocalProcessing(value){if(!['local','off','cloud'].includes(value))throw Error('unsupported-processing-mode');return mutate('background',{op:'processing',mode:value});},
     async setSegment(value){if(!Number.isSafeInteger(value)||value<0)throw Error('invalid-segment');segment=value;offset=0;return refresh({force:true});},
     async setPage(value){if(!Number.isSafeInteger(value)||value<0)throw Error('invalid-page');offset=value;return refresh({force:true});},
     async setInventoryPage(kind,value){if(!['uncollected','pending'].includes(kind)||!Number.isSafeInteger(value)||value<0)throw Error('invalid-inventory-page');inventoryOffsets={...inventoryOffsets,[kind]:value};return refresh({force:true});},

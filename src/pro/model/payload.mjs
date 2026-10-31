@@ -56,11 +56,24 @@ export function buildProviderPayload(pack, overlay, {nonce = randomToken(), maxI
     return {handle: create('topic', id), approvedName: topic.name,
       approvedIntentSummary: topic.intent ? [topic.intent.object, topic.intent.objective].filter(Boolean).join(' · ').slice(0, 500) : null};
   });
-  const payload = validateProviderPayload({schema: 'vaiwl-pro-provider-input/1', requestNonce: nonce, items, candidateTopics,
-    allowedOperations: ['classify', 'name', 'propose-topic'], outputSchemaVersion: 'vaiwl-pro-model-output/1'});
+  const projected = {schema: 'vaiwl-pro-provider-input/1', requestNonce: nonce, items, candidateTopics,
+    allowedOperations: ['classify', 'name', 'propose-topic'], outputSchemaVersion: 'vaiwl-pro-model-output/1'};
+  const encoder = new TextEncoder(), maximum = Math.min(32768, maxInputTokens);
+  const bytes = () => encoder.encode(stable(projected)).byteLength;
+  let truncated = false;
+  // Full current titles/approved aliases are the evidence cited by each input
+  // handle. Keep them intact. Optional topic intent summaries are omitted first,
+  // then the least-priority tail of the owner's bounded candidate sequence.
+  // This prevents many legitimate long Chinese topic names from making every
+  // local/cloud task unusable; omitted targets cannot be invented by output.
+  if (bytes() > maximum) for (const candidate of candidateTopics) {
+    if (candidate.approvedIntentSummary !== null) { candidate.approvedIntentSummary = null; truncated = true; }
+  }
+  while (bytes() > maximum && candidateTopics.length) { candidateTopics.pop(); truncated = true; }
+  if (bytes() > maximum) throw Error('input-token-bound');
+  const payload = validateProviderPayload(projected);
   // UTF-8 byte count is a conservative input-token bound for this JSON text;
   // provider transport separately budgets its fixed instruction/schema overhead.
-  if (new TextEncoder().encode(stable(payload)).byteLength > maxInputTokens) throw Error('input-token-bound');
-  return {payload, handleMap: {requestNonce: nonce, scopeKey: pack.scope.key, inputDigest: pack.versions.evidenceDigest,
+  return {payload, truncated, handleMap: {requestNonce: nonce, scopeKey: pack.scope.key, inputDigest: pack.versions.evidenceDigest,
     handles, metadataEvidence, evidenceOwners, payloadDigest: digest(payload)}};
 }

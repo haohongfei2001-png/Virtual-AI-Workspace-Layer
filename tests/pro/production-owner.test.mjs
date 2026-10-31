@@ -23,38 +23,13 @@ const REF='11111111-1111-4111-8111-111111111111',UNKNOWN='22222222-2222-4222-822
 const unavailable={ok:false,reason:'pro-request-unavailable'};
 const drain=async()=>{for(let i=0;i<150;i++)await Promise.resolve();};
 const deferred=()=>{let resolve;const promise=new Promise(r=>resolve=r);return {promise,resolve};};
-async function fixture(t,extra={}){
-  const indexedDB=new MockIDBFactory(),scope=normalizedScope({verified:true,provider:'chatgpt',accountId:'unit_A',organizationId:'personal'});
-  const base=new ScopeRepository({indexedDB,databaseName:'production_owner_'+crypto.randomUUID()});
-  let wall=NOW,current=true,gateAt=Infinity,opens=0;const blocked=deferred();
-  const native=new NativeRepository({baseRepository:base,clock:()=>new Date(wall).toISOString(),observationGate:()=>({channel:'synthetic',sourceId:'unit_native',generation:'one'})});
-  const seed=await native.apply(scope,{operationId:'unit_seed',expectedRevision:0,batch:{scopeKey:scope.key,sourceRevision:1,observedAt:new Date(wall).toISOString(),validUntil:new Date(wall+60000).toISOString(),projects:[],refs:[REF,UNKNOWN].map((id,i)=>({id,nativeTitle:i?'Unknown membership':'Positive none',nativeUrl:'https://chatgpt.com/c/'+id,availability:'available'})),membership:[{id:REF,state:'NONE',projectId:null},{id:UNKNOWN,state:'UNKNOWN',projectId:null}],inventory:{projects:'partial',conversations:'partial',cursor:null}}});
-  assert.equal(seed.ok,true,seed.reason);
-  const workspaces=new WorkspaceRepository({baseRepository:base,clock:()=>new Date(wall).toISOString()}),evidence=new FreeEvidenceRepository({baseRepository:base});
-  const readService=createFreeReadService({repository:base,workspaces,native,evidence,clock:()=>new Date(wall).toISOString()});
-  const viewOwner=createFreeViewOwner({readService,scope,guard:()=>current,clock:()=>new Date(wall).toISOString()});
-  await viewOwner.refresh();
-  const c={scope,scopeGrantId:'scope_A',role:'workspace',binding:'binding_A',parentFrame:{tabId:1,documentId:'parent_A',actualURL:'https://chatgpt.com/'},isCurrent:()=>current};
-  const notifications=[];
-  const ui={withScope:async(args,work)=>{if(args.grantId!=='grant_A'||args.mountId!=='mount_A'||args.sender.documentId!=='ui_A'||args.sender.tab.id!==1||!current)throw Error('unit-authority-denied');return work(c);},notifyScope:key=>{notifications.push(key);}};
-  const repository={open:async()=>{if(++opens===gateAt)await blocked.promise;return base.open();}};
-  const service=createProductionProService({ui,repository,workspaceRepository:workspaces,readService,views:{resolveProView(){const currentView=viewOwner.current();return {current:currentView,isCurrent:()=>viewOwner.current()===currentView};}},now:()=>wall,...extra});
-  const sender={id:'extension_unit',documentId:'ui_A',frameId:2,tab:{id:1},url:'chrome-extension://extension_unit/workspace.html'};
-  const request=(action,payload,extra={})=>service.handle({v:1,type:'HOST_UI_PRO',grantId:'grant_A',mountId:'mount_A',action,payload,...extra},sender);
-  const page=()=>request('view',{op:'page',mode:'pro-default-none',selectedProjectIds:[],segment:0,offset:0,limit:8,rowLimit:5});
-  const mode=value=>request('background',{op:'mode',mode:value,selectedProjectIds:[]});
-  const readStore=createSameDatabaseStore({connection:()=>base.open(),enabled:true,verifyGrant:()=>({kind:'verified-scope',key:scope.key,serverIdentity:'established',persistence:'same-idb'}),verifyInputFence(){throw Error('read-only-test-helper');}});
-  t.after(()=>{service.stop();viewOwner.stop();base.close();});
-  return {service,base,native,workspaces,readService,viewOwner,scope,c,indexedDB,notifications,request,page,mode,raw:()=>readStore.read({}),
-    async ready(){assert.equal((await mode('pro-default-none')).ok,true);const result=await page();assert.equal(result.ok,true,JSON.stringify(result));return result.value.versions;},
-    wall:value=>wall=value,revoke(){current=false;},gateNextCommit(){gateAt=opens+2;return {release:()=>blocked.resolve(),wait:async()=>{await drain();assert.equal(opens,gateAt);}};}};
-}
+import {productionFixture as fixture} from './support/production-owner-fixture.mjs';
 
 test('production composition uses current Free admitted NONE, bounded public DTO and disables providers',async t=>{
   const f=await fixture(t),expected=await f.ready(),page=await f.page();
   assert.equal(page.value.display.scopeKey,f.scope.key);
   assert.equal(page.value.status.cloudBudget,0);
-  assert.equal(page.value.status.modelAvailability,'unavailable');
+  assert.equal(page.value.status.modelAvailability,'local-rules');
   assert.equal(page.value.status.processingMode,'off');
   assert.equal(page.value.status.positiveNone,'available');
   const encoded=JSON.stringify(page);assert(encoded.length<65536);assert(!encoded.includes('scope_A'));assert(!encoded.includes('nativeRoot'));assert(!encoded.includes('free_membership_'));
@@ -62,7 +37,7 @@ test('production composition uses current Free admitted NONE, bounded public DTO
   assert.equal((await f.request('evidence',{op:'suggest',expected})).ok,false);
   assert.equal((await f.request('background',{op:'processing',mode:'local'})).ok,true);
   const suggestion=await f.request('evidence',{op:'suggest',expected:(await f.page()).value.versions});
-  assert.equal(suggestion.ok,true);assert.equal(suggestion.value.state,'unavailable');
+  assert.equal(suggestion.ok,true);assert.equal(suggestion.value.state,'unchanged');
   assert.equal((await f.raw()).state.revision,0);
 });
 
@@ -121,7 +96,7 @@ test('revoking scope while a commit awaits DB leaves no operation, root or parti
 
 test('quota failure does not retain partial topic and explicit retry is one durable operation',async t=>{
   const f=await fixture(t),expected=await f.ready(),p={op:'dispatch',command:{type:'CREATE_TOPIC',name:'Atomic'},expected,operationId:'quota_retry'};
-  f.indexedDB.failNextPut=true;assert.deepEqual(await f.request('commit',p),unavailable);assert.equal((await f.raw()).state.revision,0);
+  f.indexedDB.failNextPut=true;assert.deepEqual(await f.request('commit',p),{ok:false,reason:'pro-storage-capacity'});assert.equal((await f.raw()).state.revision,0);
   assert.equal((await f.request('commit',p)).ok,true);assert.equal((await f.raw()).records.length,1);
 });
 

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {digest,stable} from '../../src/data/hash.mjs';
-import {emptyOverlay,validateOverlay,reduceProCommand,planTransaction,registerProposal,sealProposal,placementId,previewUndo,applyUndo,previewDelete,previewRemoveAIArtifacts,buildCompensationPlan,legacyResolutionPlan,replayPatch,topicIdForOperation} from '../../src/pro/domain/index.mjs';
+import {emptyOverlay,validateOverlay,reduceProCommand,planTransaction,registerProposal,sealProposal,semanticActionDigest,placementId,previewUndo,applyUndo,previewDelete,previewRemoveAIArtifacts,buildCompensationPlan,legacyResolutionPlan,replayPatch,topicIdForOperation} from '../../src/pro/domain/index.mjs';
 
 const reference=(id,state='NONE')=>({id,nativeTitle:id==='c1'?'数值积分初稿':id,nativeUrl:null,membership:state==='UNKNOWN'?{state,reason:'unconfirmed',revision:1}:state==='PROJECT'?{state,projectId:'p1',evidenceId:'e_'+id,revision:1}:{state,evidenceId:'e_'+id,revision:1},available:true,freshness:'current',nativeRevision:1,sourceIds:['src1']});
 const references=[reference('c1'),reference('c2'),reference('c3'),reference('unknown','UNKNOWN'),reference('project','PROJECT')];
@@ -72,6 +72,19 @@ test('A12: FIRST RUN and NEW_TOPIC gates independent from existing-topic gate',(
   s=run(s,command,{actor:'automation',firstRun:false,qualityGate:{newTopic:true}});assert.equal(Object.values(s.topics).filter(t=>t.createdBy==='automation').length,1);
 });
 test('automation cannot issue human commands or bypass strict schema',()=>{const s=setup();assert.throws(()=>run(s,{type:'CREATE_TOPIC',name:'injected'},{actor:'automation'}),/automation-command/);assert.throws(()=>run(s,{type:'CREATE_TOPIC',name:'ok',scope:'other'}),/invalid-schema/);});
+test('alias capacity has an explicit reversible management path without dropping the current name or human control',()=>{
+  for(const kind of ['topic-name','title']){
+    let state=setup();if(kind==='title')state=run(state,{type:'SET_DERIVED_TITLE',refId:'c1',title:'初名'});
+    for(let i=0;i<100;i++)state=run(state,kind==='title'?{type:'SET_DERIVED_TITLE',refId:'c1',title:'名称 '+i}:{type:'SET_TOPIC_NAME',topicId:'t1',name:'名称 '+i});
+    const command=kind==='title'?{type:'SET_DERIVED_TITLE',refId:'c1',title:'新的名称'}:{type:'SET_TOPIC_NAME',topicId:'t1',name:'新的名称'};
+    assert.throws(()=>run(state,command),/alias-capacity/);const row=kind==='title'?state.titles.c1:state.topics.t1,alias=row.aliases[0],target=kind==='title'?{kind,refId:'c1'}:{kind,topicId:'t1'};
+    const removal=operation(state,{type:'REMOVE_ALIAS',target,alias});const afterRow=kind==='title'?removal.state.titles.c1:removal.state.topics.t1;
+    assert.equal(afterRow.aliases.length,99);assert.equal(afterRow.title??afterRow.name,row.title??row.name);assert.deepEqual(afterRow.control??afterRow.nameControl,row.control??row.nameControl);
+    assert.deepEqual(applyUndo(removal.state,removal,ctx(removal.state)).titles,state.titles);const restored=applyUndo(removal.state,removal,ctx(removal.state));assert.deepEqual(restored.topics,state.topics);
+    const renamed=run(removal.state,command);assert.equal((kind==='title'?renamed.titles.c1.title:renamed.topics.t1.name),'新的名称');
+    assert.throws(()=>run(state,{type:'REMOVE_ALIAS',target,alias:'不存在'}),/alias-not-found/);assert.throws(()=>run(state,{type:'REMOVE_ALIAS',target,alias},{actor:'automation'}),/automation-command/);
+  }
+});
 test('A13: delete keeps native refs and suppresses previously created AI topic',()=>{
   let s=setup(),p=proposal(s,{kind:'new-topic',draftKey:'d1',name:'积分工作',intent:{object:'积分',objective:'核对',expectedOutcome:null,evidenceIds:['e_c1']},members:['c1']});s=registerProposal(s,p);const opId='accept-ai';s=reduceProCommand(s,{type:'ACCEPT_PROPOSAL',proposalId:p.id,planHash:p.planHash},ctx(s,opId));const tid=topicIdForOperation(opId),preview=previewDelete(s,tid,ctx(s));s=run(s,{type:'DELETE_TOPIC',topicId:tid,reviewedPlanHash:preview.planHash});
   assert.equal(s.topics[tid].lifecycle,'trashed');assert.ok(!Object.values(s.placements).some(x=>x.topicId===tid));assert.equal(references[0].id,'c1');
@@ -88,6 +101,36 @@ test('inverse conflict writes nothing, compensation is separately sealed at curr
 test('AI undo writes semantic rejection atomically and keeps proposal applied',()=>{
   let s=setup(),p=proposal(s);s=registerProposal(s,p);const op=operation(s,{type:'ACCEPT_PROPOSAL',proposalId:p.id,planHash:p.planHash});s=applyUndo(op.state,op,ctx(op.state));assert.equal(s.proposals[p.id].state,'applied');assert.ok(Object.values(s.constraints).some(c=>c.kind==='reject-proposal'&&c.proposalFingerprint===p.fingerprint));assert.ok(!s.placements[placementId('t1','c1')]);
   const again=sealProposal({...p,id:'pr-new-model',versions:versions(s),model:{profileId:'new',modelVersion:'new',promptVersion:'new',outputSchemaVersion:'vaiwl-pro-model-output/1'}});assert.throws(()=>registerProposal(s,again),/proposal-rejected/);
+});
+test('rejecting or undoing a grouped new theme preserves each member rejection after the live row is retired',()=>{
+  for(const method of ['reject','undo']){
+    let state=setup();const p=proposal(state,{kind:'new-topic',draftKey:'same_seed',name:'数值积分',intent:{object:'积分',objective:'核对参数',expectedOutcome:null,evidenceIds:['e_c1','e_c2']},members:['c1','c2']});state=registerProposal(state,p);
+    if(method==='reject')state=run(state,{type:'REJECT_PROPOSAL',proposalId:p.id});
+    else {const op=operation(state,{type:'ACCEPT_PROPOSAL',proposalId:p.id,planHash:p.planHash});state=op.state;delete state.proposals[p.id];state=applyUndo(state,op,ctx(state));}
+    const rejected=Object.values(state.constraints).filter(row=>row.kind==='reject-proposal');assert.equal(rejected.length,3);
+    assert(rejected.some(row=>row.proposalFingerprint===p.fingerprint&&row.targetDigest===semanticActionDigest(p)));
+    for(const refId of p.members){const fingerprint=digest([p.fingerprint,refId,'member-rejection']),row=rejected.find(row=>row.proposalFingerprint===fingerprint);assert(row);assert.equal(row.targetDigest,semanticActionDigest({...p,members:[refId]}));assert.equal(row.evidenceDigest,p.versions.evidenceDigest);}
+    assert.equal(Object.keys(state.placements).length,0);assert.equal(Object.keys(state.topics).length,2);
+  }
+});
+test('bounded live proposal retention keeps current reviews and complete historical undo rejection memory',()=>{
+  let state=setup(),accepted=proposal(state);state=registerProposal(state,accepted);const applied=operation(state,{type:'ACCEPT_PROPOSAL',proposalId:accepted.id,planHash:accepted.planHash});state=applied.state;
+  const receiptBefore=digest(applied.patch),current=versions(state);
+  for(let i=0;i<250;i++){const p=proposal(state,{kind:'unknown',reason:'insufficient-evidence'},{id:'terminal_'+i,qualityBand:'insufficient'});state.proposals[p.id]={proposal:p,state:'rejected',missingEvidence:[],appliedOperationId:null};}
+  const stillCurrent=proposal(state,{kind:'derived-title',refId:'c2',title:'still reviewable'},{id:'current_review'});state.proposals[stillCurrent.id]={proposal:stillCurrent,state:'awaiting-review',missingEvidence:[],appliedOperationId:null};
+  const staleOverlay=sealProposal({...stillCurrent,id:'stale_overlay',versions:{...current,overlayRevision:0}}),staleSource=sealProposal({...stillCurrent,id:'stale_source',versions:{...current,sourceGeneration:{src1:0}}});
+  for(const p of [staleOverlay,staleSource])state.proposals[p.id]={proposal:p,state:'awaiting-review',missingEvidence:[],appliedOperationId:null};
+  const incoming=proposal(state,{kind:'derived-title',refId:'c3',title:'new current review'},{id:'incoming_review'}),next=registerProposal(state,incoming,{currentVersions:current});
+  assert.equal(Object.keys(next.proposals).length,202);assert(next.proposals.current_review);assert(next.proposals.incoming_review);assert.equal(next.proposals.stale_overlay,undefined);assert.equal(next.proposals.stale_source,undefined);assert.equal(next.proposals[accepted.id],undefined);
+  assert.equal(previewUndo(next,applied).state,'ready');const undone=applyUndo(next,applied,ctx(next));
+  assert(Object.values(undone.constraints).some(c=>c.kind==='reject-proposal'&&c.proposalFingerprint===accepted.fingerprint));assert.equal(digest(applied.patch),receiptBefore);
+  const again=sealProposal({...accepted,id:'later_model_retry',versions:versions(undone)});assert.throws(()=>registerProposal(undone,again),/proposal-rejected/);
+  assert.throws(()=>registerProposal(state,incoming,{currentVersions:{...current,overlayRevision:current.overlayRevision+1}}),/stale-proposal-registration/);
+});
+test('current review queue capacity refuses more work without automatically deleting any actionable proposal',()=>{
+  const state=setup();for(let i=0;i<2000;i++){const p=proposal(state,{kind:'unknown',reason:'insufficient-evidence'},{id:'review_'+i,qualityBand:'insufficient'});state.proposals[p.id]={proposal:p,state:'awaiting-review',missingEvidence:[],appliedOperationId:null};}
+  const before=digest(state),incoming=proposal(state,{kind:'unknown',reason:'insufficient-evidence'},{id:'over_capacity',qualityBand:'insufficient'});
+  assert.throws(()=>registerProposal(state,incoming,{currentVersions:versions(state)}),/proposal-review-capacity/);assert.equal(digest(state),before);assert.equal(Object.keys(state.proposals).length,2000);
 });
 test('A29: native preference stores no frozen copy and retained derived title can be recovered',()=>{
   let s=run(setup(),{type:'RESTORE_NATIVE_TITLE',refId:'c1'});assert.equal(s.titles.c1.title,null);assert.equal(s.titles.c1.displayPreference,'native');assert.throws(()=>run(s,{type:'SET_TITLE_DISPLAY',refId:'c1',displayPreference:'derived'}),/missing-derived-title/);

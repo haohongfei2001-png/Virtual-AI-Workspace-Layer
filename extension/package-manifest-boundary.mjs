@@ -32,8 +32,11 @@ function publicResource(path){
 
 /** Structural checks complementary to verifyHost's exact origin, permission,
  * config, CSP-value, file-hash and compiled-worker checks. No package is edited. */
-export function assertHostManifestBoundary(manifest){
- if(!shape(manifest,requiredKeys,metadataKeys))throw Error('invalid-host-package-manifest-boundary');
+export function assertHostManifestBoundary(manifest,{proR1=false}={}){
+ if(typeof proR1!=='boolean'||!shape(manifest,requiredKeys,[...metadataKeys,...(proR1?['optional_host_permissions']:[])]))throw Error('invalid-host-package-manifest-boundary');
+ // This is a fixed, optional Pro transport capability. Neither other hosts nor
+ // required permissions can be introduced by rehashing a supplied manifest.
+ if(proR1&&JSON.stringify(manifest.optional_host_permissions)!==JSON.stringify(['https://api.openai.com/*']))throw Error('invalid-host-package-permissions');
  if(!shape(manifest.action,['default_popup'])||manifest.action.default_popup!=='status.html')throw Error('invalid-host-package-manifest-boundary');
  if(!shape(manifest.background,['service_worker']))throw Error('invalid-host-package-manifest-boundary');
  if(!Array.isArray(manifest.content_scripts)||manifest.content_scripts.length!==1)throw Error('invalid-host-package-content-script');

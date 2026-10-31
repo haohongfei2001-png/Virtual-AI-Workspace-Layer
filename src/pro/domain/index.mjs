@@ -38,7 +38,13 @@ function targetControl(s,target,ctx){record(target);switch(target.kind){case 'ti
 function versionsForProposal(s,p,ctx){validateProposal(p);if(p.versions.scopeKey!==s.scopeKey||!sameVersions(p.versions,ctx.snapshot.versions))fail('stale-proposal');}
 function rejected(s,p){return Object.values(s.constraints).some(c=>c.kind==='reject-proposal'&&c.proposalFingerprint===p.fingerprint);}
 function autoGate(p,ctx){if(ctx.firstRun!==false)fail('first-run-preview-required');if(p.qualityBand!=='eligible-auto')fail('quality-gate-required');const lane=p.kind==='existing-topic'?(p.role==='primary'?'existingTopic':'related'):p.kind==='multi-topic'?'related':p.kind==='new-topic'?'newTopic':p.kind==='derived-title'?'title':null;if(!lane||ctx.qualityGate?.[lane]!==true)fail('quality-gate-required');if(p.kind==='multi-topic'&&p.primary!==null&&ctx.qualityGate?.existingTopic!==true)fail('quality-gate-required');}
-function rejectMemory(s,p,ctx){s.constraints[rejectionKey(p.fingerprint)]={kind:'reject-proposal',proposalFingerprint:p.fingerprint,evidenceDigest:p.versions.evidenceDigest,targetDigest:semanticActionDigest(p),revision:s.revision+1,operationId:ctx.operationId};}
+function rejectMemory(s,p,ctx){
+  const targets=[[p.fingerprint,p]];
+  // A grouped seed may be split across later bounded metadata batches. Keep
+  // each exact member's semantic rejection after the live proposal is retired.
+  if(p.kind==='new-topic'&&p.members.length>1)for(const refId of p.members)targets.push([digest([p.fingerprint,refId,'member-rejection']),{...p,members:[refId]}]);
+  for(const [fingerprint,target] of targets)s.constraints[rejectionKey(fingerprint)]={kind:'reject-proposal',proposalFingerprint:fingerprint,evidenceDigest:p.versions.evidenceDigest,targetDigest:semanticActionDigest(target),revision:s.revision+1,operationId:ctx.operationId};
+}
 function proposalTarget(p){const omit=new Set(['id','planHash','fingerprint','model','summary','rationale','qualityBand','versions','evidenceIds']);return Object.fromEntries(Object.entries(p).filter(([k])=>!omit.has(k)));}
 
 function applyProposal(s,p,ctx,automatic){
@@ -79,8 +85,14 @@ export function reduceProCommand(current,command,context){
   const s=clone(current),c=command,ctx=context,next=current.revision+1;
   switch(c.type){
     case 'CREATE_TOPIC':exact(c,['type','name']);writeTopic(s,ctx.allocations?.topicId??topicIdForOperation(ctx.operationId),c.name,ctx);break;
-    case 'SET_TOPIC_NAME':{exact(c,['type','topicId','name']);const t=activeTopic(s,c.topicId),name=text(c.name);if(t.name!==name)t.aliases=[...new Set([...t.aliases,t.name])];t.name=name;t.nameControl=freshControl('human',next,ctx.operationId);t.revision=next;break;}
+    case 'SET_TOPIC_NAME':{exact(c,['type','topicId','name']);const t=activeTopic(s,c.topicId),name=text(c.name);if(t.name!==name)t.aliases=[...new Set([...t.aliases,t.name])];if(t.aliases.length>100)fail('alias-capacity');t.name=name;t.nameControl=freshControl('human',next,ctx.operationId);t.revision=next;break;}
     case 'SET_DERIVED_TITLE':exact(c,['type','refId','title']);writeTitle(s,c.refId,c.title,ctx);break;
+    case 'REMOVE_ALIAS':{
+      exact(c,['type','target','alias']);record(c.target);text(c.alias);
+      let row;if(c.target.kind==='topic-name'){exact(c.target,['kind','topicId']);row=need(s.topics,c.target.topicId);}
+      else if(c.target.kind==='title'){exact(c.target,['kind','refId']);row=need(s.titles,c.target.refId);}else fail('invalid-alias-target');
+      if(!row.aliases.includes(c.alias))fail('alias-not-found');row.aliases=row.aliases.filter(alias=>alias!==c.alias);row.revision=next;break;
+    }
     case 'RESTORE_NATIVE_TITLE':case 'SET_TITLE_DISPLAY':{
       exact(c,c.type==='RESTORE_NATIVE_TITLE'?['type','refId']:['type','refId','displayPreference']);ref(ctx,c.refId,true);const displayPreference=c.type==='RESTORE_NATIVE_TITLE'?'native':oneOf(c.displayPreference,['native','derived']);const old=s.titles[c.refId];if(displayPreference==='derived'&&!old?.title)fail('missing-derived-title');s.titles[c.refId]={conversationId:c.refId,title:old?.title??null,aliases:old?.aliases??[],control:freshControl('human',next,ctx.operationId),evidenceIds:old?.evidenceIds??[],revision:next,displayPreference};break;
     }
@@ -128,7 +140,24 @@ export function reduceProCommand(current,command,context){
   s.revision=next;return validateOverlay(s);
 }
 
-export function registerProposal(state,proposal){validateOverlay(state);validateProposal(proposal);if(proposal.versions.scopeKey!==state.scopeKey)fail('scope-mismatch');if(rejected(state,proposal))fail('proposal-rejected');const old=state.proposals[proposal.id];if(old){if(stable(old.proposal)!==stable(proposal))fail('proposal-id-collision');return clone(state);}const next=clone(state);next.proposals[proposal.id]={proposal:clone(proposal),state:'awaiting-review',missingEvidence:[],appliedOperationId:null};return validateOverlay(next);}
+export const PRO_PROPOSAL_RETENTION=Object.freeze({terminal:200,currentReview:2000});
+export function registerProposal(state,proposal,{currentVersions=null}={}){
+  validateOverlay(state);validateProposal(proposal);if(proposal.versions.scopeKey!==state.scopeKey)fail('scope-mismatch');if(rejected(state,proposal))fail('proposal-rejected');
+  if(currentVersions!==null){validateVersions(currentVersions);if(currentVersions.scopeKey!==state.scopeKey||currentVersions.overlayRevision!==state.revision||!sameVersions(proposal.versions,currentVersions))fail('stale-proposal-registration');}
+  const old=state.proposals[proposal.id];if(old){if(stable(old.proposal)!==stable(proposal))fail('proposal-id-collision');return clone(state);}
+  const next=clone(state),activeStates=new Set(['proposed','validated','awaiting-review']),terminal=[];
+  for(const [key,row] of Object.entries(next.proposals)){
+    if(activeStates.has(row.state)){
+      // Old source/overlay vectors can never be applied as a current review.
+      // The original journal keeps the complete proposal and its disposition.
+      if(row.proposal.versions.overlayRevision!==state.revision||currentVersions!==null&&!sameVersions(row.proposal.versions,currentVersions))delete next.proposals[key];
+    }else terminal.push([key,row]);
+  }
+  terminal.sort((a,b)=>b[1].proposal.versions.overlayRevision-a[1].proposal.versions.overlayRevision||a[0].localeCompare(b[0]));
+  for(const [key] of terminal.slice(PRO_PROPOSAL_RETENTION.terminal))delete next.proposals[key];
+  if(Object.values(next.proposals).filter(row=>activeStates.has(row.state)).length>=PRO_PROPOSAL_RETENTION.currentReview)fail('proposal-review-capacity');
+  next.proposals[proposal.id]={proposal:clone(proposal),state:'awaiting-review',missingEvidence:[],appliedOperationId:null};return validateOverlay(next);
+}
 
 export function overlayChanges(before,after){const patch=[];for(const [table,kind] of Object.entries(TABLE_KINDS))for(const key of new Set([...Object.keys(before[table]),...Object.keys(after[table])])){const a=before[table][key]??null,b=after[table][key]??null;if(stable(a)!==stable(b))patch.push({kind,key,before:clone(a),after:clone(b),beforeDigest:digest(a),afterDigest:digest(b)});}return patch;}
 const AGGREGATE_READS=['topic-membership-set','topic-series-set','reference-placement-set','topic-constraint-set','reference-constraint-set','topic-redirect-set'];
@@ -139,7 +168,13 @@ function validatePatch(p){exact(p,['kind','key','before','after','beforeDigest',
 function relaxation(before,after){return before?.kind==='exclude-ai-processing'&&(after===null||after.kind!=='exclude-ai-processing'||after.refId!==before.refId);}
 function validateOperation(operation){record(operation);id(operation.operationId);oneOf(operation.actor,['human','automation']);array(operation.inverse);array(operation.patch);operation.patch.forEach(validatePatch);hash(operation.inverseHash);const patches=new Map(operation.patch.filter(p=>p.kind!=='proposal-record').map(p=>[p.kind+':'+p.key,p]));if(patches.size!==operation.inverse.length)fail('incomplete-inverse');const seen=new Set();for(const p of operation.inverse){exact(p,['kind','key','expectedAfterDigest','restoreValue']);if(!KIND_TABLES[p.kind]||p.kind==='proposal-record')fail('invalid-inverse-kind');id(p.key);hash(p.expectedAfterDigest);json(p.restoreValue);const key=p.kind+':'+p.key,original=patches.get(key);if(!original||seen.has(key)||original.afterDigest!==p.expectedAfterDigest||stable(original.before)!==stable(p.restoreValue))fail('inverse-patch-mismatch');seen.add(key);}const rs=operation.readSet??[];array(rs);for(const r of rs){exact(r,['kind','key','expectedAfterDigest']);id(r.key);hash(r.expectedAfterDigest);if(!KIND_TABLES[r.kind]&&!AGGREGATE_READS.includes(r.kind))fail('invalid-read-set');}if(operation.inverseHash!==digest({inverse:operation.inverse,readSet:rs}))fail('invalid-inverse-hash');if(operation.proposalIds!==undefined)ids(operation.proposalIds,40);return operation;}
 export function previewUndo(state,operation){validateOverlay(state);validateOperation(operation);const conflicts=[];if(operation.status==='undone')conflicts.push({kind:'operation',key:operation.operationId,reason:'already-undone'});for(const p of operation.inverse){const value=state[KIND_TABLES[p.kind]][p.key]??null;if(digest(value)!==p.expectedAfterDigest)conflicts.push({kind:p.kind,key:p.key,reason:'changed-after-operation'});if(p.kind==='constraint'&&relaxation(value,p.restoreValue))conflicts.push({kind:p.kind,key:p.key,reason:'processing-consent-not-undoable'});}for(const r of operation.readSet??[])if(digest(readValue(state,r))!==r.expectedAfterDigest&&!conflicts.some(c=>c.kind===r.kind&&c.key===r.key))conflicts.push({kind:r.kind,key:r.key,reason:'read-set-changed'});return conflicts.length?{state:'conflict',inverseHash:operation.inverseHash,conflicts}:{state:'ready',inverseHash:operation.inverseHash,inverse:clone(operation.inverse)};}
-export function applyUndo(state,operation,context){validateOverlay(state);checkContext(state,context);if(context.actor!=='human')fail('undo-requires-human');const preview=previewUndo(state,operation);if(preview.state!=='ready'){const e=Error('undo-conflict');e.conflicts=preview.conflicts;throw e;}const next=clone(state);for(const p of operation.inverse){const table=KIND_TABLES[p.kind];if(p.restoreValue===null)delete next[table][p.key];else next[table][p.key]=clone(p.restoreValue);}for(const proposalId of operation.proposalIds??(operation.proposalId?[operation.proposalId]:[])){const r=next.proposals[proposalId];if(r)rejectMemory(next,r.proposal,context);}next.revision=state.revision+1;return validateOverlay(next);}
+export function applyUndo(state,operation,context){validateOverlay(state);checkContext(state,context);if(context.actor!=='human')fail('undo-requires-human');const preview=previewUndo(state,operation);if(preview.state!=='ready'){const e=Error('undo-conflict');e.conflicts=preview.conflicts;throw e;}const next=clone(state);for(const p of operation.inverse){const table=KIND_TABLES[p.kind];if(p.restoreValue===null)delete next[table][p.key];else next[table][p.key]=clone(p.restoreValue);}for(const proposalId of operation.proposalIds??(operation.proposalId?[operation.proposalId]:[])){
+  // A terminal proposal may have moved out of the bounded live queue. Its
+  // exact accepted content remains in the immutable original receipt, and must
+  // still produce rejection memory when that old operation is undone.
+  const r=operation.patch.find(p=>p.kind==='proposal-record'&&p.key===proposalId&&p.after?.proposal?.id===proposalId)?.after??next.proposals[proposalId];
+  if(r){validateProposal(r.proposal);rejectMemory(next,r.proposal,context);}
+}next.revision=state.revision+1;return validateOverlay(next);}
 
 export function buildCompensationPlan(state,operation,selectedKeys,context){validateOverlay(state);checkContext(state,context);validateOperation(operation);array(selectedKeys);if(!selectedKeys.length)fail('empty-compensation');const allowed=new Map(operation.inverse.map(p=>[p.kind+':'+p.key,p]));const patch=[];for(const selector of selectedKeys){const key=typeof selector==='string'?selector:selector.kind+':'+selector.key;const inv=allowed.get(key);if(!inv)fail('compensation-outside-operation');if(patch.some(p=>p.kind+':'+p.key===key))fail('duplicate-compensation');const before=state[KIND_TABLES[inv.kind]][inv.key]??null,after=inv.restoreValue;if(inv.kind==='constraint'&&relaxation(before,after))fail('processing-consent-not-undoable');patch.push({kind:inv.kind,key:inv.key,before:clone(before),after:clone(after),beforeDigest:digest(before),afterDigest:digest(after)});}const draft={kind:'manual-compensation-plan',sourceOperationId:operation.operationId,expected:clone(context.expected),patch};const next=clone(state);for(const p of patch)if(p.after===null)delete next[KIND_TABLES[p.kind]][p.key];else next[KIND_TABLES[p.kind]][p.key]=clone(p.after);validateOverlay(next);return {...draft,planHash:digest(draft)};}
 function applyCompensation(state,plan,ctx){exact(plan,['kind','sourceOperationId','expected','patch','planHash']);if(plan.kind!=='manual-compensation-plan'||ctx.actor!=='human')fail('invalid-compensation');const {planHash,...body}=plan;if(hash(planHash)!==digest(body)||!sameVersions(plan.expected,ctx.expected))fail('stale-compensation');const op=need(ctx.operations??{},plan.sourceOperationId);validateOperation(op);const allowed=new Map(op.inverse.map(i=>[i.kind+':'+i.key,i]));const next=clone(state);array(plan.patch);if(!plan.patch.length)fail('empty-compensation');const seen=new Set();for(const p of plan.patch){validatePatch(p);const key=p.kind+':'+p.key,inv=allowed.get(key);if(!inv||seen.has(key)||stable(p.after)!==stable(inv.restoreValue))fail('compensation-outside-operation');seen.add(key);const before=next[KIND_TABLES[p.kind]][p.key]??null;if(digest(before)!==p.beforeDigest)fail('stale-compensation');if(p.kind==='constraint'&&relaxation(before,p.after))fail('processing-consent-not-undoable');if(p.after===null)delete next[KIND_TABLES[p.kind]][p.key];else next[KIND_TABLES[p.kind]][p.key]=clone(p.after);}next.revision=state.revision+1;return validateOverlay(next);}

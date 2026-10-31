@@ -1,5 +1,15 @@
 # VAIWL Pro R1 工程候选
 
+## 独立最终收口候选（2026-11-01）
+
+本次唯一工作分支为 `codex/vaiwl-pro-closeout-20261101`，完整继承冻结的 PR #24 提交 `976487fab544baaefcd490460c98cd9dc26385df`。未将后来变化的 Free #16 覆盖到统一工程，未改写 #16、#23、#24 或 `main`，不合并、不发布。合同仍为 **VAIWL-PRO/1.0**，六个共享端口、统一 MV3 与 DB4 保持继承。
+
+当前实现、运行方式、可信模型接入要求与剩余关卡以 [CLOSEOUT_R1.md](CLOSEOUT_R1.md) 为准；逐项产品验收见 [R1 最终矩阵](../../tests/pro/evidence/closeout-r1-matrix.md)。下文 PR #24、PR #23 的计数和旧接线描述均保留为历史记录，不能代替本候选的实际 CI。
+
+本次补齐生产本地标题整理、分批遍历、可核对的建议内容、模型/费用/任务私有所有者接线、默认关闭的真实供应商通路、可信质量门后的自动事务、跨页搜索/关联/任务、历史名称维护、失效/权限/容量状态，以及长期日志与恢复。模型服务、凭据、用途许可、价格与预算、真实质量报告均未提供，交付包不会自行调用模型或付费。临时 Browser-Local 可以运行会话内本地预览；只有明确的持久空间能够保存整理资产。
+
+精确提交的 CI 为 `.github/workflows/vaiwl-pro-closeout.yml`：复用全部 Free/Pro Node、正式统一包与独立 Free 包、既有 MV3/卸载/恢复浏览器旅程，再增加收口 UI、真正的 Chrome 标签页缩放和真实 IndexedDB 日志分段回归。成绩以工作流报告的 `sourceSHA`、`sourceMatchesCommit`、`sourcesStable` 和包 SHA256 为准。
+
 ## 统一集成候选入口（2026-10-31）
 
 PR #24 的隔离分支 `codex/vaiwl-unified-r1-20261031` 已将本目录接入真实 MV3 worker、原 Free UI frame 和 DB4 owner。基于经独立复现的 Pro `5dec17dc275a79b998db6b3ba8d940710337d3b5`，在一个受控节点继承 Free `5593e02eb81b1fc8fda3a12dc945d0280cf67d60`。Free #16、Pro #23 与 `main` 继续由原负责人维护。

@@ -1,7 +1,8 @@
 import {digest, stable} from '../../data/hash.mjs';
 import {MODEL_OUTPUT_SCHEMA} from './output-schema.mjs';
 import {validateProviderPayload} from './payload.mjs';
-import {boundedJSON, boundedText, exact, integer} from './schema-runtime.mjs';
+import {boundedJSON, integer} from './schema-runtime.mjs';
+import {validateModelProfile} from './configuration.mjs';
 
 export const OPENAI_RESPONSES_ENDPOINT = 'https://api.openai.com/v1/responses';
 export const PROVIDER_ADAPTER_STATUS = Object.freeze({productionEnabled: false, liveCallsRun: false,
@@ -27,11 +28,7 @@ export function openAITransportSchema() {
 
 export function buildOpenAIRequest(rawPayload, profile) {
   const payload = validateProviderPayload(rawPayload);
-  exact(profile, ['id', 'providerProfileId', 'frozenModelVersion', 'promptVersion', 'outputSchemaVersion', 'inputKinds', 'maxInputTokens', 'maxOutputTokens', 'maxUtf8Bytes', 'priceCardVersion', 'qualityGateReference']);
-  for (const key of ['id', 'providerProfileId', 'frozenModelVersion', 'promptVersion']) boundedText(profile[key], 128);
-  if (profile.providerProfileId !== 'openai-responses' || profile.outputSchemaVersion !== 'vaiwl-pro-model-output/1' || !profile.priceCardVersion) throw Error('unconfigured-provider-profile');
-  integer(profile.maxInputTokens, 131072); integer(profile.maxOutputTokens, 8192); integer(profile.maxUtf8Bytes, 32768);
-  if (!profile.maxOutputTokens || !Array.isArray(profile.inputKinds) || !profile.inputKinds.includes('metadata')) throw Error('invalid-model-profile');
+  profile = validateModelProfile(profile);
   for (const item of payload.items) for (const text of item.approvedText) if (!profile.inputKinds.includes(text.kind)) throw Error('unapproved-input-kind');
   if (new TextEncoder().encode(stable(payload)).byteLength > profile.maxUtf8Bytes) throw Error('provider-input-too-large');
   const request = {model: profile.frozenModelVersion, store: false, background: false, stream: false,
@@ -74,22 +71,27 @@ async function readResponseJSON(response, maxBytes) {
  * authorizeDispatch is called last; arbitrary UI/model JSON cannot mint a ticket.
  * Only mock transport is exercised in this candidate. */
 export function createOpenAIResponsesAdapter({enabled = false, transport, authorizeDispatch, profile, maxResponseBytes = 131072} = {}) {
+  if (typeof enabled !== 'boolean') throw Error('invalid-provider-enabled');
   if (enabled && (typeof transport !== 'function' || typeof authorizeDispatch !== 'function')) throw Error('owner-execution-port-required');
   integer(maxResponseBytes, 262144);
+  if (maxResponseBytes < 1024) throw Error('invalid-provider-response-bound');
+  // Never retain a mutable profile object supplied by settings/UI. A queued
+  // task cannot silently change its model, price or input policy while waiting.
+  const frozenProfile = profile === undefined ? undefined : validateModelProfile(profile);
   const consumed = new WeakSet();
   return Object.freeze({provider: 'openai-responses', enabled, async execute(ticket, payload, signal) {
     if (!enabled) return {state: 'not-dispatched', reason: 'provider-disabled'};
     if (signal?.aborted) return {state: 'not-dispatched', reason: 'cancelled'};
     if (!ticket || typeof ticket !== 'object' || consumed.has(ticket)) return {state: 'not-dispatched', reason: 'invalid-or-used-execution-ticket'};
     let built;
-    try { built = buildOpenAIRequest(payload, profile); } catch { return {state: 'not-dispatched', reason: 'invalid-provider-request'}; }
+    try { built = buildOpenAIRequest(payload, frozenProfile); } catch { return {state: 'not-dispatched', reason: 'invalid-provider-request'}; }
     // Claim before awaiting the owner so two callers cannot race the same RAM
     // ticket. A denied attempt needs a fresh owner ticket, never blind reuse.
     consumed.add(ticket);
     let authorization;
-    try { authorization = await authorizeDispatch(ticket, {modelProfileId: profile.id, payloadDigest: built.payloadDigest,
-      requestNonce: payload.requestNonce, inputTokenUpperBound: built.inputTokenUpperBound, maxOutputTokens: profile.maxOutputTokens,
-      priceCardVersion: profile.priceCardVersion, endpointProfile: 'openai-responses'}); }
+    try { authorization = await authorizeDispatch(ticket, {modelProfileId: frozenProfile.id, payloadDigest: built.payloadDigest,
+      requestNonce: payload.requestNonce, inputTokenUpperBound: built.inputTokenUpperBound, maxOutputTokens: frozenProfile.maxOutputTokens,
+      priceCardVersion: frozenProfile.priceCardVersion, endpointProfile: 'openai-responses'}); }
     catch { return {state: 'not-dispatched', reason: 'dispatch-not-authorized'}; }
     if (authorization?.ok !== true || typeof authorization.apiKey !== 'string' || authorization.apiKey.length < 8 || authorization.apiKey.length > 1024) return {state: 'not-dispatched', reason: 'dispatch-not-authorized'};
     // After owner records dispatch, even abort/transport error may be charged.
@@ -113,7 +115,7 @@ export function createOpenAIResponsesAdapter({enabled = false, transport, author
       let usage = null;
       if (raw.usage) {
         integer(raw.usage.input_tokens, 10000000); integer(raw.usage.output_tokens, 10000000);
-        if (raw.usage.input_tokens > built.inputTokenUpperBound || raw.usage.output_tokens > profile.maxOutputTokens) return {state: 'outcome-unknown', providerRequestId};
+        if (raw.usage.input_tokens > built.inputTokenUpperBound || raw.usage.output_tokens > frozenProfile.maxOutputTokens) return {state: 'outcome-unknown', providerRequestId};
         usage = {inputTokens: raw.usage.input_tokens, outputTokens: raw.usage.output_tokens};
       }
       return {state: 'complete', json, providerRequestId, usage};

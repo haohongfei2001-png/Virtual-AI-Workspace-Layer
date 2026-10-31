@@ -41,6 +41,13 @@ test('NEW_TOPIC precision is independent and bad new-topic decisions cannot borr
   const report = evaluate(rows); assert.equal(report.lanes['new-topic'].qualified, false); assert.equal(report.lanes['existing-topic'].qualified, true);
 });
 
+test('eligible final rows cannot be omitted to hide incorrect decisions from the denominator', () => {
+  const rows = arithmeticRows(); rows[0].correct = false;
+  const report = evaluateDataset({samples: rows, eligibleCohortIds: rows.slice(1).map(row => row.id), modelBinding: binding, mandatoryCounterexamplesPassed: true});
+  assert.equal(report.cohortComplete, false); assert.ok(Object.values(report.lanes).every(lane => !lane.qualified));
+  assert.throws(() => wilsonInterval(1, 2, Number.NaN), /invalid-confidence-interval/);
+});
+
 test('findability requires task/participant floor, 20 percent median reduction and no error increase', () => {
   const base = {nativeTimesMs: Array(60).fill(1000), proTimesMs: Array(60).fill(750), nativeErrors: 2, proErrors: 2, participantCount: 12};
   assert.equal(evaluateFindability(base).targetMet, true); assert.equal(evaluateFindability({...base, proErrors: 3}).targetMet, false);

@@ -1,6 +1,7 @@
 import {exactHostRecord} from '../../host/contract.mjs';
 import {tokenOK} from '../../b1/identity.mjs';
 import {withRequestDeadline} from '../../data/request-deadline.mjs';
+import {publicProErrorCode} from './public-error.mjs';
 
 export const PRO_WORKER_ACTIONS = Object.freeze(['sharedSnapshot', 'evidence', 'commit', 'view', 'navigation', 'background']);
 export const PRO_WORKER_MAX_BYTES = 65536;
@@ -187,7 +188,7 @@ export function createProWorkerService({ui, invoke, projectReply, maxPending = 3
       check();
       if (approvedReply === null || result !== approvedReply) throw Error('pro-owner-result-mismatch');
       return result;
-    } catch { return unavailable(); }
+    } catch(error) { const code=publicProErrorCode(error);return code&&called&&guard()?failure(code):unavailable(); }
     finally {
       abortAttempt(attempt);
       attempt.abort.signal.removeEventListener('abort', rejectAbort);

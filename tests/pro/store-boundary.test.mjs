@@ -19,10 +19,10 @@ async function persisted(db){
 }
 const assertUnchanged=(actual,expected)=>{for(const name of TABLES)assert.deepEqual(actual[name],expected[name],`${name} must not change`);};
 const row=(data,table,key)=>data[table].find(value=>value.key===key);
-async function run(f,command,operationId,transform=value=>value){
+async function run(f,command,operationId,transform=value=>value,requestOptions={}){
   const current=await f.owner.readPrivate(),expected=current.snapshot.versions;
   const context={actor:'human',operationId,snapshot:current.snapshot,expected,mode:'pro-default-none'};
-  const request={operationId,expected,fingerprint:{command,expected},execute(input,logs){
+  const request={operationId,expected,fingerprint:{command,expected},...requestOptions,execute(input,logs){
     const plan=planTransaction(input,command,context),transaction={operationId,actor:'human',provenance:'explicit-user-command',base:expected,
       planHash:plan.planHash,resultRevision:plan.state.revision,proposalId:null,inverse:plan.inverse,patch:plan.patch,
       inverseHash:plan.inverseHash,readSet:plan.readSet,status:'applied'};
@@ -151,5 +151,34 @@ test('async and thenable reducers are refused before any root/checkpoint/journal
     const thenable=await run(f,{type:'SET_TOPIC_NAME',topicId:f.topicId,name:'thenable不得提交'},'thenable_reducer',value=>({...value,then(){thenInvoked=true;}}));
     assert.equal(thenable.result.ok,false);assert.equal(thenable.result.reason,'async-pro-reducer-denied');assert.equal(thenInvoked,false);
     assertUnchanged(await persisted(f.db),before);assert.deepEqual(await f.owner.store.read(f.owner.grant()),logicalBefore);
+  }finally{f.owner.stop();}
+});
+
+test('an action policy revoked at the final journal write aborts root, checkpoint and journal together',async()=>{
+  const f=await fixture('late_action_fence');
+  try{
+    const before=await persisted(f.db);let allowed=true,revoked=false;
+    const transaction=f.db.transaction.bind(f.db);
+    f.db.transaction=(names,mode)=>{const tx=transaction(names,mode),objectStore=tx.objectStore.bind(tx);tx.objectStore=name=>{
+      const store=objectStore(name);
+      if(name==='b23_operations'&&mode==='readwrite'){
+        const put=store.put.bind(store);store.put=value=>{const q=put(value);
+          if(value.payload?.transaction?.operationId==='late_policy')q.onsuccess=()=>{allowed=false;revoked=true;};return q;};
+      }return store;
+    };return tx;};
+    const written=await run(f,{type:'SET_TOPIC_NAME',topicId:f.topicId,name:'不得留下已失效自动许可的写入'},'late_policy',value=>value,{verifyCurrent:()=>allowed});
+    f.db.transaction=transaction;
+    assert.equal(revoked,true);assert.equal(written.result.ok,false);assert.equal(written.result.reason,'pro-action-no-longer-current');
+    assertUnchanged(await persisted(f.db),before);
+    allowed=true;assert.equal((await f.owner.store.transact(f.owner.grant(),written.request)).ok,true);
+  }finally{f.owner.stop();}
+});
+
+test('an asynchronous action fence never authorizes a write or leaks its rejection',async()=>{
+  const f=await fixture('async_action_fence');
+  try{
+    const before=await persisted(f.db);
+    await assert.rejects(()=>run(f,{type:'SET_TOPIC_NAME',topicId:f.topicId,name:'不可提交'},'async_policy',value=>value,{verifyCurrent:()=>Promise.reject(Error('private-policy-error'))}),/async-pro-action-fence-denied/);
+    await new Promise(resolve=>setImmediate(resolve));assertUnchanged(await persisted(f.db),before);
   }finally{f.owner.stop();}
 });

@@ -2,7 +2,6 @@ import {digest} from '../../data/hash.mjs';
 import {boundedJSON, exact, boundedText} from '../model/schema-runtime.mjs';
 import {validateRevisionVector, validateSourceScope, sameVersions} from '../evidence/metadata.mjs';
 
-const phases = ['queued', 'reserved', 'dispatched', 'result-ready', 'validated', 'awaiting-review', 'committed', 'paused', 'cancelled', 'stale', 'failed', 'outcome-unknown'];
 const hash = value => { if (typeof value !== 'string' || !/^[a-f0-9]{64}$/u.test(value)) throw Error('invalid-job-digest'); return value; };
 export function validateJob(input) {
   const job = boundedJSON(input, {maxBytes: 65536});
@@ -21,8 +20,11 @@ export function validateJob(input) {
   if (job.inputVersions) validateRevisionVector(job.inputVersions);
   if (job.state === 'dispatched' && job.dispatchRecorded !== true) throw Error('dispatch-marker-required');
   if ('reservationId' in job && job.reservationId !== null) boundedText(job.reservationId, 128);
+  if (job.state === 'reserved' && (!job.modelBinding || !job.reservationId)) throw Error('paid-reservation-required');
+  if (job.state === 'dispatched' && Boolean(job.modelBinding) !== Boolean(job.reservationId)) throw Error('job-reservation-mismatch');
   if (job.state === 'outcome-unknown' && !job.reservationId) throw Error('unknown-without-reservation');
   for (const key of ['dedupeKey', 'resultDigest']) if (key in job) hash(job[key]);
+  if (job.state === 'queued' && job.dedupeKey !== digest([job.inputVersions.scopeKey, job.inputFingerprint, job.modelBinding])) throw Error('invalid-job-dedupe-key');
   for (const key of ['proposalId', 'operationId', 'reason']) if (key in job) boundedText(job[key], 256);
   if (job.state === 'paused' && !['budget', 'foreground-priority', 'capability', 'consent'].includes(job.reason)) throw Error('invalid-pause-reason');
   return job;
@@ -53,7 +55,7 @@ export function transitionJob(current, event) {
       if (job.state !== 'dispatched') throw Error('job-transition-denied');
       return validateJob({...base, state: 'result-ready', resultDigest: event.resultDigest, inputVersions: job.inputVersions});
     case 'validate':
-      if (job.state !== 'result-ready' || !sameVersions(job.inputVersions, event.currentVersions)) throw Error('stale-job-result');
+      if (job.state !== 'result-ready' || typeof event.awaitingReview !== 'boolean' || !sameVersions(job.inputVersions, event.currentVersions)) throw Error('stale-job-result');
       return validateJob({...base, state: event.awaitingReview ? 'awaiting-review' : 'validated', proposalId: event.proposalId});
     case 'commit':
       if (!['validated', 'awaiting-review'].includes(job.state)) throw Error('job-transition-denied');
@@ -96,9 +98,16 @@ export function recoverJob(current, {scope, currentVersions = null, authorized =
 /** Scope-wide serialized queue admission. The owner stores the resulting
  * checkpoint in its existing database transaction; this creates no database. */
 export function admitJob(jobs, checkpoint, {maxQueued = 100, maxConcurrent = 1} = {}) {
+  if (!Number.isSafeInteger(maxQueued) || maxQueued < 1 || maxQueued > 1000 ||
+      !Number.isSafeInteger(maxConcurrent) || maxConcurrent < 1 || maxConcurrent > 10 || !Array.isArray(jobs) || jobs.length > 1000) throw Error('invalid-job-queue-bound');
   const candidate = validateJob(checkpoint), all = jobs.map(validateJob);
   if (all.some(job => job.id === candidate.id && digest(job) !== digest(candidate))) throw Error('job-id-conflict');
-  const duplicate = all.find(job => job.id === candidate.id || (job.dedupeKey && job.dedupeKey === candidate.dedupeKey && !['failed', 'cancelled', 'stale'].includes(job.state)));
+  // Only queued checkpoints carry dedupeKey in the frozen codec. Compare the
+  // stable descriptor as well, so reserving/dispatching does not remove dedupe.
+  // Callers pass a single scope, as the same-db adapter does.
+  const duplicate = all.find(job => job.id === candidate.id || (!['failed', 'cancelled', 'stale'].includes(job.state) &&
+    ((job.dedupeKey && job.dedupeKey === candidate.dedupeKey) ||
+     (job.inputFingerprint === candidate.inputFingerprint && digest(job.modelBinding) === digest(candidate.modelBinding)))));
   if (duplicate) return {checkpoint: duplicate, admitted: false, reason: 'deduplicated'};
   if (all.filter(job => ['queued', 'reserved', 'dispatched'].includes(job.state)).length >= maxQueued) throw Error('job-queue-limit');
   if (candidate.state === 'dispatched' && all.filter(job => job.state === 'dispatched').length >= maxConcurrent) throw Error('job-concurrency-limit');

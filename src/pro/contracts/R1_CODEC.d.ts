@@ -5,7 +5,8 @@ export type RuntimeCommittedPatch=Omit<CommittedOverlayPatch,'kind'>&{readonly k
 export type RuntimeInversePatch=Omit<InversePatch,'kind'>&{readonly kind:Exclude<RuntimeAssetKind,'proposal-record'>};
 export type RuntimeHumanCommand=Exclude<HumanCommand,{readonly type:'RESOLVE_LEGACY_PRIMARY'}>|{
  readonly type:'RESOLVE_LEGACY_PRIMARY';readonly refId:ConversationId;readonly chosenPrimary:TopicId|null;readonly preservedAssetDigest:Digest;readonly planHash:Digest;
-}|{readonly type:'ACCEPT_PROPOSAL_BATCH';readonly proposals:readonly {readonly proposalId:ProposalId;readonly planHash:Digest}[]};
+}|{readonly type:'ACCEPT_PROPOSAL_BATCH';readonly proposals:readonly {readonly proposalId:ProposalId;readonly planHash:Digest}[]}
+ |{readonly type:'REMOVE_ALIAS';readonly target:{readonly kind:'topic-name';readonly topicId:TopicId}|{readonly kind:'title';readonly refId:ConversationId};readonly alias:string};
 export interface RuntimeReadDependency {
  readonly kind:RuntimeAssetKind|'topic-membership-set'|'topic-series-set'|'topic-constraint-set'|'topic-redirect-set'|'reference-placement-set'|'reference-constraint-set';
  readonly key:string;readonly expectedAfterDigest:Digest;

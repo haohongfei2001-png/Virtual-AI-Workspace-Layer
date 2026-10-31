@@ -83,8 +83,8 @@ export function prepareMetadataEvidence({scope: rawScope, capabilities, referenc
     ((ref.membership.state === 'NONE' && capabilities.positiveNone === 'available') ||
       (mode === 'pro-cross-project' && ref.membership.state === 'PROJECT' && selectedProjectIds.includes(ref.membership.projectId))));
   const selected = filtered.slice(0, 10);
-  const metadata = selected.map(ref => ({refId: ref.id, nativeTitle: ref.nativeTitle,
-    humanAliases: overlay.titles?.[ref.id]?.control.mode === 'human' ? [...(overlay.titles[ref.id].aliases ?? [])].slice(0, 100) : []}));
+  const aliasCandidates = selected.map(ref => overlay.titles?.[ref.id]?.control.mode === 'human' ? [...(overlay.titles[ref.id].aliases ?? [])].slice(0, 100) : []);
+  const metadata = selected.map(ref => ({refId: ref.id, nativeTitle: ref.nativeTitle, humanAliases: []}));
   const candidateIds = candidateTopicIds ?? [...new Set(selected.flatMap(ref => recallTopics(ref, overlay).map(item => item.topicId)))];
   if (!Array.isArray(candidateIds) || candidateIds.some(id => !overlay.topics?.[id] || overlay.topics[id].scopeKey !== scope.key || overlay.topics[id].lifecycle !== 'active')) throw Error('invalid-candidate-topics');
   const pack = {format: 'vaiwl-pro-evidence/1', packId: 'pack_' + digest([scope.key, versions, selected.map(ref => ref.id)]),
@@ -92,7 +92,21 @@ export function prepareMetadataEvidence({scope: rawScope, capabilities, referenc
     missing: ['body', 'author', 'continuation', ...(capabilities.historicalCompleteness !== 'known-domain-complete' ? ['history'] : []),
       ...(refs.some(ref => ref.membership.state === 'UNKNOWN') || capabilities.positiveNone !== 'available' ? ['membership'] : [])],
     truncated: filtered.length > selected.length, evidenceIds: metadata.map(metadataEvidenceId), inputLevel: 'metadata-only', metadata};
-  if (new TextEncoder().encode(stable(pack)).byteLength > maxUtf8Bytes) throw Error('evidence-pack-too-large');
+  const encoder = new TextEncoder();
+  let bytes = encoder.encode(stable(pack)).byteLength;
+  if (bytes > maxUtf8Bytes) throw Error('evidence-pack-too-large');
+  // Native titles and current references take priority over optional aliases.
+  // Fair round-robin allocation avoids giving all remaining space to the first
+  // conversation. JSON string byte costs are exact, including escaped text;
+  // replacing fixed-length evidence hashes does not change the serialized size.
+  for (let rank = 0; rank < 100; rank++) for (let row = 0; row < metadata.length; row++) {
+    const alias = aliasCandidates[row][rank]; if (alias === undefined) continue;
+    boundedText(alias, 200);
+    const cost = encoder.encode(stable(alias)).byteLength + (metadata[row].humanAliases.length ? 1 : 0);
+    if (bytes + cost > maxUtf8Bytes) { pack.truncated = true; continue; }
+    metadata[row].humanAliases.push(alias); bytes += cost;
+  }
+  pack.evidenceIds = metadata.map(metadataEvidenceId);
   return pack;
 }
 
