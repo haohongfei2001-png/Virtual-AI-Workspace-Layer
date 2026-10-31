@@ -40,7 +40,7 @@ for(const response of [{v:1,state:'PRIVATE_TOKEN'},{v:1,state:'ready',title:'PRI
 
 test('blocked Browser-Local popup explains frame failure and keeps locking available without offering re-unlock',async()=>{
  const f=await render({v:1,state:'frame-blocked'},true);
- assert.match(f.node.textContent,/框架被替换/);assert.match(f.node.textContent,/无需重新确认账号或重装扩展/);
+ assert.match(f.node.textContent,/框架被替换/);assert.match(f.node.textContent,/重新打开页面/);assert.match(f.node.textContent,/无需重装扩展/);assert.match(f.node.textContent,/旧本地资料仍需.*确认后恢复/);assert.doesNotMatch(f.node.textContent,/无需重新确认账号/);
  const [unlock,lock]=f.elements.filter(e=>e.tag==='button');
  assert.equal(unlock.disabled,true);assert.notEqual(lock.disabled,true);assert.equal(f.calls.length,2);
  lock.listeners.click();await drain();

@@ -1,7 +1,46 @@
 # VAIWL实际状态：渐进积累工程已接线，真实来源逐项待准入
 
 
+## 2026-10-31 正常 Chrome 日用收口：条件性互操作限制与剩余真实来源
+
+已读取并执行用户[裁决6543556369](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16#issuecomment-6543556369)。下方兼容性历史结论精确归类为 **P0_CONDITIONAL_HOST_INTEROP**：已记录监视器与同标签外部 extension iframe 冲突，不代表没有代理控制时所有 Free 均不可用。停止追加 lease A/B；原失败及现场写入者 NOT_CAPTURED 保留。正常 Chrome 日用仍是交付目标；不 Browser claim 受测原标签、不清 srcdoc、不绕其他扩展、不改方案 B。受损旧文档只能经可信新文档/新 grant 恢复。
+
+本批唯一生产修改是私有扩展面板恢复文案：结束浏览器自动控制后重新打开页面，无需重装；旧本地资料仍需按页面提示确认后恢复。删除原“无需重新确认账号”的误导，不改变授权或锁定逻辑。反例修前失败、相关93项测试全部通过，独立审查无新增生产P0/P1阻断。
+
+以 `f317b26ea6ed7d1cc249c4bfc0ad90a619d29417` 的同SHA CI 41199391928（42/42 SUCCESS）为已验证基线，复用未变化的宿主/导航/存储和既有正式包连续旅程证据，不称旧CI覆盖新文案。该CI已有 document-flow/nested正式MV3连续链，包含首页/Project/聊天、原生输入与工具、阅读返回、窄窗、侧栏重建、Worker恢复、新文档锁定及隔离卸载恢复。J4等原PARTIAL范围保持，job成功不提升为完整验收。
+
+仅补缺少的连续使用组合：新匿名headless Profile、阻断worker外网、实际打包扩展及正式renderer，原匿名编辑器内同一未发送草稿贯穿搜索输入/清空/关闭、工作集返回、时间设置、原生工具/附件/模型菜单取消返回、窄窗暗色共8步PASS。同一编辑器与双frame保持，无srcdoc；四次返回分别78/67/106/112ms，等待/点击/可见确认共用原6秒绝对预算。菜单行为是原匿名按钮上的合成fixture，不代表真实ChatGPT菜单或上传验证。先前searchbox角色、异步提交与非等待count的观察器失败原样保留，未修改产品或放宽等待解决。
+
+已实际查看3张本次截图及一张来源/完整性哈希核验通过的f317 CI桌面图；未发现该范围新增遮挡。窄窗夹具原生白底/重复版式不能证明真实主题或完整视觉协调，且该截图不证明原生输入位于可视区。其余CI图片下载不完整，明确不计审查；不重复下载或全量运行。准确回执、源码/依赖哈希和失败在 `.git/vaiwl-artifacts/normal-use-closeout-20261031/`。
+
+必要未闭合关口：
+- **P1_SOURCE_PROJECT / NONE**：真实Project导航入口及正向NONE来源尚未验证。当前observed profile的moveMenu关闭，BrowserLocal不启内部metadata；普通/c路由、缺徽章、缺成员不能推出NONE。UNKNOWN安全可达不等于FR-02完成。只在集中实机中核实已有Project入口/路由/选中Chats成员结构，以及Project聊天与普通聊天原生归属菜单的明确当前状态；不选择移动、不改名、不创建。
+- **P1_LIVE_CONTINUITY**：无claim新文档上的原生指针、导航/返回、输入/工具/附件与实际窄窗主题仍需集中Mac验证；历史指针不稳定根因未证明，不能用离线PASS销账。
+- **P1_PERSONAL_ASSETS**：同一原Profile/扩展ID保留，已有备份不动；最终更新前制作一致备份，个人旧资料由本人确认后恢复。离线Worker/新旧数据隔离与备份恢复证据不替代本人真实确认。
+
+当前是可供集中实机核查的工程候选，**不是完整Free已实现或已接受**。正常无claim真实Mac本批NOT_RUN，个人日用NOT_ACCEPTED，FREE_NOT_ACCEPTED，NOT_RELEASE_READY；P2/规模后置项不进入关键路径。原Profile/安装/页面本批均未改动；最终仅用精确PID+tab的限定无正文AppleEvent/AX，不开启应用快照。未merge、部署或发布。
+
+## 2026-10-31 P0：浏览器控制监视器与外部扩展框架的兼容性裁决
+
+依据用户[独立评论6543369318](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16#issuecomment-6543369318)及既有备份中的ChatGPT for Chrome 1.26.1020.11845公开代码，当前问题列为**P0环境/宿主兼容性阻断**，不再用未证明的VAIWL内部挂载竞态解释。正式源码仍为`f317b26ea6ed7d1cc249c4bfc0ad90a619d29417`，SVG_FIXED及42/42 CI原结论保持；本批只做隔离诊断与事实更新，没有修改产品或重复已有CI。
+
+在新建匿名headless Profile中同时加载正式VAIWL包和最小测试扩展，后者逐字执行原background的5356字节准入/注入/释放函数；使用真实chrome.scripting、webNavigation及tabs事件，lease存储/session owner/localhost准入为明确合成替身。监视器SHA256为`337ad4ff3ec7846134e5d39528936b1cbb68107de3c4da0e0641c712bda66129`，background SHA256为`2564d018e01f71365db8adfb5ccd36de981446328854d84328bddcda236b8e39`。不是官方服务端lease、requireSessionTab或完整endTurnUnlocked端到端验收。
+
+A/B分项结果：
+- 无lease（未追踪及已追踪）均不注入，双正式框架保持；有lease但未追踪也不注入。
+- 已追踪且有合成有效lease时，原su/wb/gb通过真实MV3 API注入，两个既有自有框架均被写入空srcdoc，VAIWL正确撤场；原匿名编辑器节点和合成草稿保持。
+- 只撤销lease后，su=false但monitor仍存活，新foreign canary仍被改写。因此“没有活跃lease”不等于“监视器已移除”。
+- 原bb显式清理后，新canary不再被改写，但旧srcdoc仍保留，VAIWL不会自动复活。只在隔离Profile重新加载后，双正式框架及grant恢复，monitor不存在。
+
+**原A/B整体FAIL保留**：最后“有lease重新加载必然自动再次注入”的断言超时，不能宣称整轮全PASS。限定reload补测通过：lease/tracked仍存在，loading/committed/complete事件已到达，但当次monitor不存在、双框架正常；随后同页调用原su，ensure=true，经gb注入并再次清空双框架。故“暂时正常”不能证明受控标签兼容，也不宣称所有控制操作/每次reload必然触发。前三次夹具/观察器准备失败及正式失败日志均保留，不改判。
+
+独立只读复核支持上述限定结论。完整裁决、原失败、分项和补测、原函数/夹具/生成helper哈希见`.git/vaiwl-artifacts/foreign-frame-lease-ab-20261031/verdict.json`及`evidence-index.json`。本批验证的是已记录版本监视器的隔离机制；真实页面joined=2/granted=2/inlineFrames=2与机制吻合，但现场写入者调用栈仍LIVE_WRITER_NOT_CAPTURED。
+
+工程边界：保持方案B与srcdoc/frame身份/grant/epoch护栏；不清srcdoc、不循环重挂、不改或停用其他扩展。当前监视器路径与同标签VAIWL同时使用按不支持边界处理；若要求二者同时工作，另行裁决受支持宿主或明确互斥，不盲目重构。真实Mac终验仅走原Chrome精确PID+tab的限定无正文AppleEvent通道，**不再对受测标签执行官方Browser claim**。原Profile、原标签、安装、备份及私人内容本轮均未访问或变更；是否已结束lease或移除真实monitor本轮也未核实，不擅自释放或刷新。真正恢复已撤场文档仍需后续集中授权激活/新文档验证，当前REAL_MAC_BLOCKED/NOT_RUN、FREE_NOT_ACCEPTED，不以通道可达或测试绿冒充产品可用。
+
 ## 2026-10-31 侧栏设置三点 SVG 修复
+
+冻结后记录：正式候选`f317b26ea6ed7d1cc249c4bfc0ad90a619d29417`已同步原PR16；同SHA首次[CI 41199391928](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/actions/runs/41199391928)42/42 SUCCESS，含populated-native与fault-unknown-protocol。正式包ZIP SHA256 `53912bd16ebc3838d36c14dbd1c578f963767d80198d29282be56960e94ca7aa`。本段为冻结后未提交验收记录，不改变候选SHA；原安装未更新，真实Mac仍NOT_RUN，框架替换阻塞不销账。无后台本地任务。
 
 用户提供原Profile扩展错误并独立复现：侧栏设置summary调用`svgIcon('more')`，但该词不在路径表，实际生成`<path d="undefined">`。本批只复用已有`graphic(summary,'more')`三圆点图标，保留名称、标题、原生details交互和事件；不改挂载、授权、恢复或图标范围。
 
