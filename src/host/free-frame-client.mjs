@@ -87,7 +87,7 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
   sidebarSizeTimer=schedule(()=>{sidebarSizeTimer=null;publishSidebarSize();},0);
  }
  let currentDelivery=null,freshnessTimer=null;
- let navigation=null,root=null,plans=new Map(),projectPlans=new Map(),grant=null,grantCurrent=()=>false,serial=0,activeRead=null,activeLocation=null,query={segment:0,offset:0,limit:8},closed=true,splits=0,dirty=false,currentNativeURL='',presentationRevision=0,presentationIntent='',workspaceRevision=null,viewSession=null,projectionScope=null,projectionVersion=null,horizonPending=false;
+ let navigation=null,root=null,plans=new Map(),projectPlans=new Map(),grant=null,grantCurrent=()=>false,serial=0,activeRead=null,activeLocation=null,query={segment:0,offset:0,limit:8},closed=true,splits=0,dirty=false,currentNativeURL='',presentationRevision=0,presentationIntent='',presentationPending=null,presentationDeferred=false,workspaceRevision=null,viewSession=null,projectionScope=null,projectionVersion=null,horizonPending=false;
  let readEpoch=0,readTerminal=null,readErrorPanel=null,readErrorRoot=null;
  let surfaceVisible=null,surfaceRevision=0;
  let wasHidden=false,visibilityAttached=false,candidates=null,candidateRoot=null,candidateRun=0,candidateOffset=0,candidatePageTotal=null;
@@ -113,7 +113,7 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
  const recoverable=reason=>isFreeRecoveryReason(reason)||['corrupt-record','invalid-partition-manifest','invalid-partition-piece'].includes(reason);
  const budget=createReadRecoveryBudget({now:elapsedNow,schedule,cancel,onExpire:()=>fail('read-budget-exhausted')});
  function state(value){try{onState(value);}catch{}}
- function clear(){sidebarResize?.disconnect();sidebarResize=null;doc.removeEventListener?.('focusin',revealSidebarFocus);doc.removeEventListener?.('keydown',revealSidebarFocus);cancel(sidebarSizeTimer);sidebarSizeTimer=null;lastSidebarSize=null;sidebarRestore=undefined;clearNavigationRefresh();cancel(freshnessTimer);freshnessTimer=null;currentDelivery=null;clearNativeInteraction();panelReturnCancel?.();readEpoch++;readTerminal=null;readErrorPanel?.stop();readErrorPanel=null;readErrorRoot?.remove();readErrorRoot=null;surfaceVisible=null;surfaceRevision=0;calibrationPending=null;dispatchPending=null;queuedDispatchView=null;dispatchEpoch++;migration.clear();candidateRestore=null;candidateMigrationId=null;candidateMigrationProject=null;locatedMigrations.clear();workspaceEntered=false;workspaceModePending=false;for(const type of ['pointerdown','keydown','wheel'])doc.removeEventListener?.(type,interruptMigration,true);migrationListening=false;candidateOffset=0;candidatePageTotal=null;candidateRun++;candidates?.stop();candidates=null;candidateRoot?.remove();candidateRoot=null;if(visibilityAttached)doc.removeEventListener?.('visibilitychange',foreground);visibilityAttached=false;wasHidden=false;bootstrapping=false;cancel(resumeTimer);resumeTimer=null;resumeQueued=null;resumeWriting=false;resumeLast=null;resumeDesired=null;resumeQuery=null;searchSnippetIds.clear();snippetLocatePending=false;snippets?.stop();snippets=null;snippetsRoot?.remove();snippetsRoot=null;currentRef=null;clearAutoNotice();backup?.stop();backup=null;backupRoot?.remove();backupRoot=null;recovery?.stop();recovery=null;recoveryRoot?.remove();recoveryRoot=null;workspaceRevision=null;viewSession=null;projectionScope=null;projectionVersion=null;horizonPending=false;presentationRevision=0;presentationIntent='';currentNativeURL='';closed=true;dirty=false;serial++;activeRead?.abort();activeRead=null;activeLocation=null;budget.reset();grant=null;query={segment:0,offset:0,limit:8};plans.clear();projectPlans.clear();navigation?.stop();navigation=null;root?.remove();root=null;}
+ function clear(){sidebarResize?.disconnect();sidebarResize=null;doc.removeEventListener?.('focusin',revealSidebarFocus);doc.removeEventListener?.('keydown',revealSidebarFocus);cancel(sidebarSizeTimer);sidebarSizeTimer=null;lastSidebarSize=null;sidebarRestore=undefined;clearNavigationRefresh();cancel(freshnessTimer);freshnessTimer=null;currentDelivery=null;clearNativeInteraction();panelReturnCancel?.();readEpoch++;readTerminal=null;readErrorPanel?.stop();readErrorPanel=null;readErrorRoot?.remove();readErrorRoot=null;surfaceVisible=null;surfaceRevision=0;calibrationPending=null;dispatchPending=null;queuedDispatchView=null;dispatchEpoch++;migration.clear();candidateRestore=null;candidateMigrationId=null;candidateMigrationProject=null;locatedMigrations.clear();workspaceEntered=false;workspaceModePending=false;for(const type of ['pointerdown','keydown','wheel'])doc.removeEventListener?.(type,interruptMigration,true);migrationListening=false;candidateOffset=0;candidatePageTotal=null;candidateRun++;candidates?.stop();candidates=null;candidateRoot?.remove();candidateRoot=null;if(visibilityAttached)doc.removeEventListener?.('visibilitychange',foreground);visibilityAttached=false;wasHidden=false;bootstrapping=false;cancel(resumeTimer);resumeTimer=null;resumeQueued=null;resumeWriting=false;resumeLast=null;resumeDesired=null;resumeQuery=null;searchSnippetIds.clear();snippetLocatePending=false;snippets?.stop();snippets=null;snippetsRoot?.remove();snippetsRoot=null;currentRef=null;clearAutoNotice();backup?.stop();backup=null;backupRoot?.remove();backupRoot=null;recovery?.stop();recovery=null;recoveryRoot?.remove();recoveryRoot=null;workspaceRevision=null;viewSession=null;projectionScope=null;projectionVersion=null;horizonPending=false;presentationRevision=0;presentationIntent='';presentationPending=null;presentationDeferred=false;currentNativeURL='';closed=true;dirty=false;serial++;activeRead?.abort();activeRead=null;activeLocation=null;budget.reset();grant=null;query={segment:0,offset:0,limit:8};plans.clear();projectPlans.clear();navigation?.stop();navigation=null;root?.remove();root=null;}
  function ensureCandidates(){
   if(!candidates){candidateRoot=doc.createElement('details');candidateRoot.setAttribute('data-vaiwl-candidate-root','');const summary=doc.createElement('summary');summary.textContent='其他原生项目';const content=doc.createElement('div');candidateRoot.append(summary,content);privateRoot.append(candidateRoot);candidateRoot.addEventListener('toggle',queueSidebarSize);candidates=createFreeFrameCandidates({document:doc,container:content,role,onLayoutChange:queueSidebarSize,onPageRequest:next=>refreshCandidates(next),onActivate:async(renderKey,presentation)=>{
     const active=grant;if(closed||!grantCurrent()||backup||recovery||snippets)return {ok:false};
@@ -376,7 +376,11 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
  function applyPresentation(value){
   if(value===undefined)return;
   if(!value||!Number.isSafeInteger(value.revision)||value.revision<0||!value.intent||!['show-workspace','enter-reading','show-native-page','search-known','show-working-set'].includes(value.intent.kind))throw Error('invalid-frame-presentation');
-  if(value.revision<=presentationRevision)return;presentationRevision=value.revision;dispatchEpoch++;
+  if(value.revision<=presentationRevision)return;
+  // A VIEW may echo the previous panel before the latest local intent commits.
+  // Defer that echo; the current request's completion refreshes shared state.
+  if(presentationPending){presentationDeferred=true;return;}
+  presentationRevision=value.revision;dispatchEpoch++;
   if(value.intent.kind!=='show-working-set'&&query.workingSet!==undefined){const {workingSet,...rest}=query;query=rest;dirty=true;}
   if(value.intent.kind!=='search-known'&&query.search!==undefined){const {search,...rest}=query;query=rest;dirty=true;}
   const key=JSON.stringify(value.intent);if(key===presentationIntent)return;presentationIntent=key;navigation.present(value.intent);
@@ -386,16 +390,16 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
   if(intent.kind!=='show-working-set'&&query.workingSet!==undefined){const {workingSet,...rest}=query;query=rest;}
   if(intent.kind!=='search-known'&&query.search!==undefined){const {search,...rest}=query;query=rest;}
   presentationIntent=JSON.stringify(intent);try{onPresentationRequest(intent);}catch{}
-  const current=grant,renderer=navigation,epoch=readEpoch;
+  const current=grant,renderer=navigation,epoch=readEpoch,attempt={};presentationPending=attempt;
   try{const result=await withRequestDeadline(()=>runtime.sendMessage({v:1,type:'HOST_UI_PRESENT',grantId:current.id,mountId:current.mountId,intent}),{now:elapsedNow,schedule,cancel});
-   if(readTerminal||readEpoch!==epoch||closed||navigation!==renderer||grant?.id!==current.id||!grantCurrent())return;
-   if(result?.ok!==true)throw Error('presentation-unavailable');applyPresentation(result.presentation);invalidate();
-  }catch{if(!readTerminal&&readEpoch===epoch&&!closed&&navigation===renderer){
-   state({state:'ready',reason:'presentation-unavailable'});
+   if(presentationPending!==attempt||readTerminal||readEpoch!==epoch||closed||navigation!==renderer||grant?.id!==current.id||!grantCurrent())return;
+   if(result?.ok!==true)throw Error('presentation-unavailable');presentationPending=null;presentationDeferred=false;applyPresentation(result.presentation);invalidate();
+  }catch{if(presentationPending===attempt&&!readTerminal&&readEpoch===epoch&&!closed&&navigation===renderer){
+   presentationPending=null;if(presentationDeferred){presentationDeferred=false;dirty=true;}state({state:'ready',reason:'presentation-unavailable'});
    // PRESENT retired the pointer reservation; retain the ordinary visibility,
    // mutation and active-read gates while draining its queued background hint.
    if(dirty)invalidate(true);
-  }}
+  }}finally{if(presentationPending===attempt){presentationPending=null;presentationDeferred=false;}}
  }
  async function calibrateEntry({kind}={}){
   if(readTerminal||role!=='workspace'||!['foreground','history'].includes(kind)||closed||calibrationPending||backup||recovery||snippets||!grantCurrent()||Date.parse(grant?.expiresAt)<=now())return;

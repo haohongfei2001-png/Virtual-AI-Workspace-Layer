@@ -11,7 +11,7 @@ import {validateCurrentBodyProposal} from '../../src/host/current-body-claim.mjs
 import {createURLPolicy} from '../../src/host/url-policy.mjs';
 const NOW='2026-10-14T00:00:00Z',url='https://chatgpt.com/';
 // Mock IndexedDB and explicitly authored provider response; no browser auth claim.
-async function fixture(t,{prepareNavigation=null,presentSurface=null,readNativeManagement=null,openLocalData=null,selectionBridge=null,documentURL=url,priorityProof=false,elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout}={}){
+async function fixture(t,{prepareNavigation=null,presentSurface=null,readNativeManagement=null,openLocalData=null,selectionBridge=null,getContextsGate=async()=>{},documentURL=url,priorityProof=false,elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout}={}){
  const base=new ScopeRepository({indexedDB:new MockIDBFactory(),databaseName:'host-read-binding'});t.after(()=>base.close());
  const workspaces=new WorkspaceRepository({baseRepository:base,clock:()=>NOW});
  const evidence=new FreeEvidenceRepository({baseRepository:base,clock:()=>NOW});
@@ -21,7 +21,7 @@ async function fixture(t,{prepareNavigation=null,presentSurface=null,readNativeM
  if(priorityProof)Object.assign(profile,{currentBody:{rootSelector:'main',conversationIdAttribute:'data-id',messageSelector:'article',messageIdAttribute:'data-id'},sendIntent:{formSelector:'form',editorSelector:'textarea',sendButtonSelector:'button'}});
  const uiURLs={workspace:'chrome-extension://extension/workspace.html',sidebar:'chrome-extension://extension/sidebar.html'};
  const children=Object.fromEntries(Object.entries(uiURLs).map(([role,url],i)=>[role,{...sender,frameId:i+1,documentId:'ui_'+role,url}]));
- const service=createHostBindingService({currentMetadataReadEnabled:priorityProof,sendCandidatesEnabled:priorityProof,elapsedNow,schedule,cancel,extensionId:'extension',prepareNavigation,presentSurface,readNativeManagement,openLocalData,selectionBridge,uiURLs,getContexts:async({documentIds})=>Object.values(children).filter(c=>documentIds.includes(c.documentId)).map(c=>({contextType:'TAB',documentId:c.documentId,frameId:c.frameId,tabId:1,incognito:false,documentUrl:c.url,documentOrigin:'chrome-extension://extension'})),getFrame:async()=>({documentId:'document',documentLifecycle:'active',url:documentURL}),allowedURL:value=>value===documentURL,repository:base,workspaceRepository:workspaces,freeEvidenceRepository:evidence,provider:{readCurrentConversation:async()=>({principalKey:'principal_'+digest(['chatgpt-principal-v1',principal]),contextKey:'context_'+digest(['chatgpt-context-v1',principal,'personal']),expiresAt:'2026-10-14T01:00:00Z',providerProfile:'explicit-test-provider',transport:'worker-fixed-fetch',metadata:{protocol:'vaiwl-conversation-metadata-candidate/1',conversationId:'c1',state:'candidate',messages:[],gaps:[],coverage:'observed-only'}}),read:async()=>{providerReads++;return {principalId:principal,expiresAt:'2026-10-14T01:00:00Z',contexts:[{id:'personal',kind:'personal'}],providerProfile:'explicit-test-provider',transport:'worker-fixed-fetch'};}},profile:{id:'personal',singlePersonalDefault:true},surfaceProfiles:new Map([[profile.id,profile]]),now:()=>time,makeId:()=>`token_${++n}`});
+ const service=createHostBindingService({currentMetadataReadEnabled:priorityProof,sendCandidatesEnabled:priorityProof,elapsedNow,schedule,cancel,extensionId:'extension',prepareNavigation,presentSurface,readNativeManagement,openLocalData,selectionBridge,uiURLs,getContexts:async({documentIds})=>{await getContextsGate();return Object.values(children).filter(c=>documentIds.includes(c.documentId)).map(c=>({contextType:'TAB',documentId:c.documentId,frameId:c.frameId,tabId:1,incognito:false,documentUrl:c.url,documentOrigin:'chrome-extension://extension'}));},getFrame:async()=>({documentId:'document',documentLifecycle:'active',url:documentURL}),allowedURL:value=>value===documentURL,repository:base,workspaceRepository:workspaces,freeEvidenceRepository:evidence,provider:{readCurrentConversation:async()=>({principalKey:'principal_'+digest(['chatgpt-principal-v1',principal]),contextKey:'context_'+digest(['chatgpt-context-v1',principal,'personal']),expiresAt:'2026-10-14T01:00:00Z',providerProfile:'explicit-test-provider',transport:'worker-fixed-fetch',metadata:{protocol:'vaiwl-conversation-metadata-candidate/1',conversationId:'c1',state:'candidate',messages:[],gaps:[],coverage:'observed-only'}}),read:async()=>{providerReads++;return {principalId:principal,expiresAt:'2026-10-14T01:00:00Z',contexts:[{id:'personal',kind:'personal'}],providerProfile:'explicit-test-provider',transport:'worker-fixed-fetch'};}},profile:{id:'personal',singlePersonalDefault:true},surfaceProfiles:new Map([[profile.id,profile]]),now:()=>time,makeId:()=>`token_${++n}`});
  const request=(type,extra={})=>service.handle({v:1,type,clientId:'client',seq:++seq,...extra},sender);
  let binding,bound;
  async function bind(){const hello=await request('HOST_HELLO');assert.equal(hello.ok,true);binding=hello.binding;const {documentToken,producerToken,routeEpoch}=binding;assert.equal((await request('HOST_REFRESH',{documentToken,producerToken,routeEpoch})).state,'verified');bound=await request('BIND');assert.equal(bound.ok,true,JSON.stringify(bound));return bound;}
@@ -165,6 +165,53 @@ test('MOCK_IDB scope invalidation while native presentation waits rejects late p
 });
 test('MOCK_IDB failed native presentation leaves shared intent unchanged',async t=>{
  const h=await fixture(t,{presentSurface:async()=>({ok:false})});await h.bind();await h.observe();await h.mount();await ready(h);assert.equal((await h.present('sidebar',{kind:'enter-reading'})).ok,false);assert.deepEqual((await h.view()).page.presentation,{revision:0,intent:{kind:'show-workspace'}});
+});
+test('MOCK_IDB late earlier presentation cannot replace the newer intent shared by both frames',async t=>{
+ const pending=[],h=await fixture(t,{presentSurface:()=>new Promise(resolve=>pending.push(resolve))});await h.bind();await h.observe();await h.mount();await ready(h);
+ const first=h.present('sidebar',{kind:'search-known',themeId:null});
+ for(let i=0;i<50&&pending.length<1;i++)await drain();assert.equal(pending.length,1);
+ const second=h.present('workspace',{kind:'show-working-set'});
+ for(let i=0;i<50&&pending.length<2;i++)await drain();assert.equal(pending.length,2);
+ pending[1]({ok:true});const latest=await second;assert.equal(latest.ok,true);
+ pending[0]({ok:true});const stale=await first;assert.equal(stale.ok,false);
+ for(const role of ['workspace','sidebar'])assert.deepEqual((await h.view(role)).page.presentation,latest.presentation);
+ assert.deepEqual(latest.presentation.intent,{kind:'show-working-set'});
+});
+test('MOCK_IDB newer failed presentation does not revive an older pending intent',async t=>{
+ const pending=[],h=await fixture(t,{presentSurface:()=>new Promise(resolve=>pending.push(resolve))});await h.bind();await h.observe();await h.mount();await ready(h);
+ const first=h.present('sidebar',{kind:'search-known',themeId:null});
+ for(let i=0;i<50&&pending.length<1;i++)await drain();assert.equal(pending.length,1);
+ const second=h.present('workspace',{kind:'show-working-set'});
+ for(let i=0;i<50&&pending.length<2;i++)await drain();assert.equal(pending.length,2);
+ pending[1]({ok:false});assert.equal((await second).ok,false);
+ pending[0]({ok:true});assert.equal((await first).ok,false);
+ assert.deepEqual((await h.view()).page.presentation,{revision:0,intent:{kind:'show-workspace'}});
+ assert.equal(pending.length,2,'neither presentation is automatically retried');
+});
+test('MOCK_IDB current-entry calibration cannot overwrite a later reading intent',async t=>{
+ let release;const h=await fixture(t,{presentSurface:({mode})=>mode==='workspace-current'?new Promise(resolve=>release=resolve):Promise.resolve({ok:true})});await h.bind();await h.observe();await h.mount();const initial=await ready(h);
+ const pending=h.enterCurrent('workspace',{expectedRevision:initial.page.workspaceRevision,viewSession:initial.page.viewSession});
+ for(let i=0;i<50&&!release;i++)await drain();assert.equal(typeof release,'function');
+ const reading=await h.present('sidebar',{kind:'enter-reading'});assert.equal(reading.ok,true);
+ release({ok:true});assert.equal((await pending).ok,false);
+ assert.deepEqual((await h.view()).page.presentation,reading.presentation);
+});
+test('MOCK_IDB unauthorized presentation cannot retire a valid pending intent',async t=>{
+ let release;const h=await fixture(t,{presentSurface:()=>new Promise(resolve=>release=resolve)});await h.bind();await h.observe();await h.mount();await ready(h);
+ const first=h.present('sidebar',{kind:'search-known',themeId:null});
+ for(let i=0;i<50&&!release;i++)await drain();assert.equal(typeof release,'function');
+ assert.equal((await h.present('workspace',{kind:'show-working-set'},{grantId:'unknown'})).ok,false);
+ release({ok:true});assert.equal((await first).ok,true);
+ assert.deepEqual((await h.view()).page.presentation.intent,{kind:'search-known',themeId:null});
+});
+test('MOCK_IDB earlier presentation authorization completing late cannot dispatch over a newer intent',async t=>{
+ let hold=false,release;const calls=[],h=await fixture(t,{getContextsGate:()=>hold?(hold=false,new Promise(resolve=>release=resolve)):Promise.resolve(),presentSurface:async({mode})=>{calls.push(mode);return {ok:true};}});await h.bind();await h.observe();await h.mount();await ready(h);
+ hold=true;const first=h.present('sidebar',{kind:'enter-reading'});
+ for(let i=0;i<50&&!release;i++)await drain();assert.equal(typeof release,'function');
+ const second=await h.present('workspace',{kind:'show-working-set'});assert.equal(second.ok,true);
+ release();assert.equal((await first).ok,false);
+ assert.deepEqual(calls,['workspace'],'stale authorized request never reaches native surface');
+ assert.deepEqual((await h.view()).page.presentation,second.presentation);
 });
 test('MOCK_IDB search result receives owner navigation plan and cannot forge current conversation',async t=>{
  const calls=[],h=await fixture(t,{documentURL:'https://chatgpt.com/c/c1',prepareNavigation:async x=>{calls.push(x);return x.targets.map(hrefPlan);}});await h.bind();await h.observe();await h.mount();await ready(h);calls.length=0;

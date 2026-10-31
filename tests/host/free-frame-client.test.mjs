@@ -17,6 +17,30 @@ export function fixture(role='workspace',createClient=createFreeFrameClient){
  const client=createClient({document,privateRoot,runtime,role,parentOrigin:'https://chatgpt.com',onState:s=>states.push(s),now:()=>time,elapsedNow:()=>time,makeNonce:()=> 'nonce',schedule:(fn,ms)=>{const key=++id;timers.set(key,{fn,at:time+ms});return key;},cancel:key=>timers.delete(key),readErrorFactory:()=>({show(){},stop(){}}),snippetsFactory:options=>{snippetOptions=options;return {open(){snippetOpens++;},stop(){snippetStops++;},invalidate(){snippetInvalidations++;}};},backupFactory:options=>{backupOptions=options;return {open(){backupOpens++;},stop(){backupStops++;},invalidate(){backupInvalidations++;}};},recoveryFactory:options=>{recoveryOptions=options;return {open(){recoveryOpens++;},stop(){recoveryStops++;}};},navigationFactory:options=>{factories++;navOptions=options;return {focusSurface:()=>{panelFocuses++;},setNativeNavigationPending:value=>nativePending.push(value),restoreFrameView:value=>restoredViews.push(value),invalidate(){invalidations++;},present:intent=>presented.push(intent),updateFrameProjection:p=>pages.push(p),stop:()=>{stops++;}};}});
  return {focusEvents,get now(){return time;},get panelFocuses(){return panelFocuses;},nativePending,parentMessages,restoredViews,jump(ms){time+=ms;},runtime,grant,presented,messageListeners,historicalMessages,emit:m=>{for(const fn of [...messageListeners])fn(m);},client,calls,pages,states,body,privateRoot,page,setView:fn=>{view=fn;},get snippets(){return snippetOptions;},get snippetOpens(){return snippetOpens;},get snippetStops(){return snippetStops;},get snippetInvalidations(){return snippetInvalidations;},get backup(){return backupOptions;},get backupOpens(){return backupOpens;},get backupStops(){return backupStops;},get backupInvalidations(){return backupInvalidations;},get recovery(){return recoveryOptions;},get recoveryOpens(){return recoveryOpens;},get recoveryStops(){return recoveryStops;},get invalidations(){return invalidations;},get nav(){return navOptions;},get factories(){return factories;},get stops(){return stops;},get views(){return views;},disconnect:()=>{for(const fn of [...listeners])fn();},async advance(ms){time+=ms;for(const [key,t]of [...timers])if(t.at<=time&&timers.has(key)){timers.delete(key);t.fn();}await drain();}};
 }
+test('new presentation intent survives an earlier reply and VIEW echo while awaiting its own reply',async t=>{
+ const f=fixture();t.after(()=>f.client.stop());await f.client.start();await drain();const send=f.runtime.sendMessage,pending=[];
+ f.runtime.sendMessage=m=>{if(m.type==='HOST_UI_PRESENT'){const held=deferred();pending.push(held);return held.promise;}return send(m);};
+ const first=f.nav.onPresentationRequest({kind:'search-known',themeId:null});
+ const second=f.nav.onPresentationRequest({kind:'show-working-set'});
+ const old={revision:1,intent:{kind:'search-known',themeId:null}};
+ pending[0].resolve({ok:true,presentation:old});await first;await drain();assert.deepEqual(f.presented,[]);
+ f.setView(async()=>({ok:true,state:'ready',page:{...f.page(),presentation:old},navigation:[]}));
+ await f.nav.onProjectionRequest({workingSet:{offset:0,limit:24}});assert.deepEqual(f.presented,[]);
+ const reads=f.views;await f.advance(50);assert.equal(f.views,reads,'deferred presentation does not poll VIEW while awaiting its own reply');
+ const latest={revision:2,intent:{kind:'show-working-set'}};f.setView(async()=>({ok:true,state:'ready',page:{...f.page(),presentation:latest},navigation:[]}));
+ pending[1].resolve({ok:true,presentation:latest});await second;await drain();assert.deepEqual(f.presented,[],'self echo must not reconstruct the current panel');
+ assert.deepEqual(f.calls.filter(m=>m.type==='HOST_UI_VIEW').at(-1).query.workingSet,{offset:0,limit:24});
+});
+test('latest denied presentation releases deferred shared state without replaying either intent',async t=>{
+ const f=fixture();t.after(()=>f.client.stop());await f.client.start();await drain();const send=f.runtime.sendMessage,pending=[];
+ f.runtime.sendMessage=m=>{if(m.type==='HOST_UI_PRESENT'){const held=deferred();pending.push(held);return held.promise;}return send(m);};
+ const first=f.nav.onPresentationRequest({kind:'search-known',themeId:null}),second=f.nav.onPresentationRequest({kind:'show-working-set'});
+ const shared={revision:1,intent:{kind:'show-workspace'}};f.setView(async()=>({ok:true,state:'ready',page:{...f.page(),presentation:shared},navigation:[]}));
+ await f.nav.onProjectionRequest({workingSet:{offset:0,limit:24}});assert.deepEqual(f.presented,[]);
+ pending[0].resolve({ok:false});await first;assert(!f.states.some(s=>s.reason==='presentation-unavailable'),'superseded failure is silent');
+ pending[1].resolve({ok:false});await second;await drain();assert.deepEqual(f.presented,[shared.intent]);assert.equal(pending.length,2);
+ assert.equal(f.calls.filter(m=>m.type==='HOST_UI_VIEW').at(-1).query.workingSet,undefined);
+});
 test('actual lifecycle composition sends bounded VIEW without role and keeps one renderer across grant renewal',async()=>{const f=fixture();await f.client.start();await drain();assert.equal(f.pages.length,1);assert.deepEqual(f.calls.find(m=>m.type==='HOST_UI_VIEW'),{v:1,type:'HOST_UI_VIEW',grantId:'grant',mountId:'mount',query:{segment:0,offset:0,limit:8}});await f.advance(10000);assert.equal(f.factories,1);assert.equal(f.pages.length,1);assert.equal(f.stops,0);assert.equal(f.body.children[0],f.privateRoot);});
 test('preparing is not empty; bounded retry eventually publishes owner page',async()=>{const f=fixture();let n=0;f.setView(async()=>++n===1?{ok:true,state:'preparing',retryAfterMs:50}:{ok:true,state:'ready',page:f.page(),navigation:[]});await f.client.start();await drain();assert.equal(f.pages.length,0);assert.equal(f.states.at(-1).state,'preparing');await f.advance(50);assert.equal(f.pages.length,1);});
 test('a VIEW whose source freshness expires in transit is replaced without clearing the granted workspace',async()=>{

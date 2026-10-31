@@ -16,7 +16,7 @@ import {withRequestDeadline} from '../data/request-deadline.mjs';
  * Preparation is polled in bounded RPCs; a pending read is never an empty view. */
 export function createHostViewService({ui,readService,workspaceRepository=null,prepareNavigation=null,readNativeManagement=null,openLocalData=null,registerCurrentNavigation=null,nativeCandidatesEnabled=false,presentSurface=null,nativeWritePending=()=>false,clock=()=>new Date().toISOString(),maxViews=32,elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout}={}){
  if(typeof nativeWritePending!=='function'||typeof ui?.withScope!=='function'||!readService||!Number.isInteger(maxViews)||maxViews<1||maxViews>128)throw Error('invalid-host-view-service');
- const views=new Map(),resumes=new Map(),readWindows=new Map();let stopped=false,refreshes=0,reads=0,scopeWork=0,deliverySequence=0;const layoutWrites=new Map();
+ const views=new Map(),resumes=new Map(),readWindows=new Map();let stopped=false,refreshes=0,reads=0,scopeWork=0,deliverySequence=0,presentationSequence=0;const layoutWrites=new Map();
  // A cancelled owner refresh can settle before its underlying read does.
  // Count both without changing the original deadlines or cancellation guards.
  const ownerReadService=Object.fromEntries(['freeHeader','freePage','version'].map(name=>[name,async(...args)=>{reads++;try{return await readService[name](...args);}finally{reads--;}}]));
@@ -335,7 +335,9 @@ export function createHostViewService({ui,readService,workspaceRepository=null,p
    const old=current.snapshot.viewSession;
    if(current.snapshot.workspaceRevision!==message.expectedRevision||['H','T','Z','policyRevision'].some(key=>message.viewSession[key]!==old[key]))throw Error('revision-conflict');
    entry.currentEntryPending=true;
-   const valid=()=>active&&elapsedNow()-started<6000&&context.isCurrent()&&views.get(message.mountId)===entry&&entry.owner.current()===current&&!entry.pending&&entry.currentEntryEligible;
+   const presentationOrder=entry.presentationOrder??0;
+   const presentationCurrent=()=>(entry.presentationOrder??0)===presentationOrder;
+   const valid=()=>active&&elapsedNow()-started<6000&&context.isCurrent()&&views.get(message.mountId)===entry&&entry.owner.current()===current&&!entry.pending&&entry.currentEntryEligible&&presentationCurrent();
    try{
     if(!presentSurface)throw Error('host-presentation-unavailable');
     // Entry calibration follows a workspace the user already opened. A delayed
@@ -350,7 +352,7 @@ export function createHostViewService({ui,readService,workspaceRepository=null,p
     let policyCommit,autoChange;
     if(workspaceRepository&&snapshot.preferences?.freeTimePolicy?.value?.mode==='auto'){
      let fresh;entry.autoReading=true;try{fresh=await refreshOwner(entry,{now:clock()});}finally{entry.autoReading=false;}
-     if(!active||elapsedNow()-started>=6000||!context.isCurrent()||views.get(message.mountId)!==entry||entry.pending||!entry.currentEntryEligible||entry.owner.current()!==fresh)throw Error('ui-current-entry-expired');
+     if(!active||elapsedNow()-started>=6000||!context.isCurrent()||views.get(message.mountId)!==entry||entry.pending||!entry.currentEntryEligible||entry.owner.current()!==fresh||!presentationCurrent())throw Error('ui-current-entry-expired');
      current=fresh;snapshot=fresh.snapshot;
      if(snapshot.workspaceRevision!==message.expectedRevision)throw Error('revision-conflict');
      const proposal=prepareHostAutoTimePolicy(snapshot,{now:clock(),timeZone:old.Z});
@@ -365,7 +367,7 @@ export function createHostViewService({ui,readService,workspaceRepository=null,p
        entry.autoUndo={...autoChange,policy:proposal.policy,deadline:elapsedNow()+15000};
       }
       let committed;entry.autoReading=true;try{committed=await refreshOwner(entry,{now:clock()});}finally{entry.autoReading=false;}
-      if(!active||elapsedNow()-started>=6000||!context.isCurrent()||views.get(message.mountId)!==entry||entry.pending||!entry.currentEntryEligible||entry.owner.current()!==committed)throw Error('ui-current-entry-expired');
+      if(!active||elapsedNow()-started>=6000||!context.isCurrent()||views.get(message.mountId)!==entry||entry.pending||!entry.currentEntryEligible||entry.owner.current()!==committed||!presentationCurrent())throw Error('ui-current-entry-expired');
       current=committed;snapshot=committed.snapshot;
       if(snapshot.workspaceRevision!==result.revision)throw Error('revision-conflict');
       ui.notifyScope?.(context.scope.key);
@@ -493,13 +495,20 @@ export function createHostViewService({ui,readService,workspaceRepository=null,p
   let message;try{message=structuredClone(input);sender=structuredClone(sender);}catch{return {ok:false,reason:'invalid-ui-presentation'};}
   const intent=message?.intent,kind=intent?.kind;
   if(!exactHostRecord(message,['v','type','grantId','mountId','intent'])||message.v!==1||message.type!=='HOST_UI_PRESENT'||!exactHostRecord(intent,kind==='search-known'?['kind','themeId']:['kind'])||!['show-workspace','enter-reading','show-native-page','search-known','show-working-set'].includes(kind)||kind==='search-known'&&intent.themeId!==null&&(typeof intent.themeId!=='string'||intent.themeId.length<1||intent.themeId.length>128))return {ok:false,reason:'invalid-ui-presentation'};
+  const order=++presentationSequence;
   let active=true;try{return await withRequestDeadline(()=>withScope({sender,grantId:message.grantId,mountId:message.mountId},async context=>{
    const entry=views.get(message.mountId),current=entry?.owner.current();
    if(!entry||!current||entry.scopeKey!==context.scope.key||entry.scopeGrantId!==context.scopeGrantId)throw Error('free-view-not-ready');
    if(kind==='search-known'&&intent.themeId!==null&&!current.snapshot.groups.some(group=>group.id===intent.themeId))throw Error('free-search-project-unavailable');
    if(!presentSurface)throw Error('host-presentation-unavailable');
+   // Order authorized intents by arrival, not by native reply completion.
+   // A failed newer intent still retires its predecessor; never replay it.
+   if(!active||!context.isCurrent())throw Error('ui-presentation-expired');
+   if(order<=(entry.presentationOrder??0))throw Error('ui-presentation-superseded');
+   entry.presentationOrder=order;
    const shown=await presentSurface({parentFrame:context.parentFrame,binding:context.binding,mode:kind==='show-native-page'?'native-page':kind==='enter-reading'?'reading':'workspace'});
    if(!active||!context.isCurrent()||views.get(message.mountId)!==entry)throw Error('ui-presentation-expired');
+   if(entry.presentationOrder!==order)throw Error('ui-presentation-superseded');
    if(shown?.ok!==true)throw Error('host-presentation-unavailable');
    if(JSON.stringify(entry.presentation.intent)!==JSON.stringify(intent))entry.presentation={revision:entry.presentation.revision+1,intent};
    ui.notifyMount?.(message.mountId);return {ok:true,presentation:structuredClone(entry.presentation)};
