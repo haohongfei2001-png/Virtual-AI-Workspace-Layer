@@ -1,5 +1,15 @@
 # VAIWL：权威、权限与文档职责
 
+## 2026-11-01 Project 实机阻断与远程持续收口范围
+
+依本轮用户指令，Pro 继续作为原分支/PR16唯一源码、测试和集成writer，先补齐可信当前拒绝阶段，修复源码/隔离Chrome可确定的缺陷，再完成原唯一计划中无需新外部证据的Free P0/个人必需P1；不得以诊断报告或局部绿灯替代产品修复。并行协作者只读审查。原Profile、扩展ID、私人数据、备份、stash、历史失败及分支保全，不建立竞争PR，不merge、部署或发布。
+
+评论6546112515、6546368431已证明正常聊天真实四格点击及原生Project身份/两条成员路径，但Project增强界面未挂载；现有证据不允许断言唯一selector、geometry、paint、生命周期或外部扩展根因。**Mac结构检查36/36已用尽**，远程工程不会自动续期、重新计数、claim实机或追加DOM取证。原生动作尚有余额也不产生结构读取许可。
+
+完成所有独立可执行的诊断接线、匿名反例、定向回归、实际打包MV3连续旅程、独审及同SHA正式CI后，允许向Codex提交单一冻结候选与一项最小无正文证据需求；**新的Mac检查须等待对应用户授权**。只读私有状态回执亦不得暗中解释为未计数的免费检查。Codex保留本地同ID更新/真实交互/最终验收职责，不接收可远程完成的源码或测试任务。新的候选不授权重新开展完整Mac取证。
+
+NONE、片段分支/正文锚等真实语义缺失仍逐项阻塞，不能由URL、缺字段或合成夹具补造。保持身份、paint预算、原生控件和授权合同；禁止清srcdoc或无限重试。SOURCE_FIXED、OFFLINE_PASS、LIVE_VERIFIED、NOT_RUN、BLOCKED分别记载，历史LIVE事实不提升为新候选实机验收。
+
 ## 2026-10-31 远程研发与原 Mac 实机职责正式切换
 
 按用户最新指令及[分工评论6544150475](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16#issuecomment-6544150475)，Codex 已以 [HANDOFF_READY 6544226609](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16#issuecomment-6544226609) 保全原本地成果并冻结源码写入。Pro 已在[接管确认6544395306](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16#issuecomment-6544395306)核对 `2c9b043ce3c65a4b92c6f8f83b59fb416f63132a`，正式成为原分支 `codex/vaiwl-free-first-20261013` / Draft PR #16 的唯一远程源码、测试和集成 writer。

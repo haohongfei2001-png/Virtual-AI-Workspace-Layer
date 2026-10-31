@@ -43,6 +43,31 @@ test('current boundary refusal clears on a fresh proof while geometry refusal re
  const old=f.observers[0];f.controller.stop();await f.controller.start({});f.adapter.inspect=()=>({ok:false,reason:'unsafe-native-geometry'});
  old.fn();assert.equal(f.controller.presentationSnapshot().boundary,null,'retired callbacks cannot update a new state');
 });
+test('Project rejection retains only the current check stage and clears on recovery',async t=>{
+ const f=fixture(),inspect=f.adapter.inspect;t.after(()=>f.controller.stop());await f.controller.start({});await f.both();
+ f.adapter.inspect=()=>({ok:false,reason:'unsafe-native-geometry',projectStage:'geometry-overflow'});f.emit('resize');
+ assert.deepEqual(f.controller.presentationSnapshot().boundary,{phase:'presentation',reason:'unsafe-native-geometry',key:null,projectStage:'geometry-overflow'});
+ const before=f.calls.length;f.controller.presentationSnapshot();assert.equal(f.calls.length,before,'reading diagnostics does not perform another layout check');
+ f.adapter.inspect=()=>({ok:false,reason:'unsafe-native-project-layout',projectStage:'tabs-panel'});f.emit('resize');
+ assert.equal(f.controller.presentationSnapshot().boundary.projectStage,'tabs-panel');
+ f.adapter.inspect=inspect;f.emit('resize');assert.equal(f.controller.presentationSnapshot().boundary,null);
+ const old=f.observers[0];f.controller.stop();await f.controller.start({});
+ f.adapter.inspect=()=>({ok:false,reason:'unsafe-native-project-layout',projectStage:'main'});old.fn();
+ assert.equal(f.controller.presentationSnapshot().boundary,null,'old observer cannot publish a stage in the new controller');
+});
+test('Project diagnostics reject arbitrary or unrelated stages',async t=>{
+ const f=fixture();t.after(()=>f.controller.stop());await f.controller.start({});await f.both();
+ for(const failure of [{reason:'unsafe-native-project-layout',projectStage:'PRIVATE_TITLE'}, {reason:'region-identity-changed',projectStage:'paint'}]){
+  f.adapter.inspect=()=>({ok:false,...failure});f.emit('resize');
+  assert.equal(f.controller.presentationSnapshot().boundary.projectStage,undefined);
+ }
+});
+test('a previous route cannot expose its Project refusal as the current presentation',async t=>{
+ const f=fixture();t.after(()=>f.controller.stop());await f.controller.start({});await f.both();
+ f.adapter.inspect=()=>({ok:false,reason:'unsafe-native-project-layout',projectStage:'wrappers'});f.emit('resize');
+ assert(f.controller.presentationSnapshot());f.doc.location.href+='c/other';
+ assert.equal(f.controller.presentationSnapshot(),null,'passive URL check must invalidate before the route event runs');
+});
 for(const failure of ['false','throw'])test('geometry '+failure+' suspends presentation but retains recovery listeners',async()=>{
  const f=fixture();await f.controller.start({});await f.both();f.surface.refreshGeometry=()=>{if(failure==='throw')throw Error('unsafe');return false;};f.observers[0].fn();assert.equal(f.calls.filter(x=>x==='dispose').length,0);assert.equal(f.observers[0].disconnected,false);assert.equal(f.events.get('resize').size,2);assert.equal(f.viewport.get('resize').size,1);assert.equal(f.controller.showWorkspace(),false);f.surface.refreshGeometry=()=>true;f.emit('resize');assert.equal(f.controller.presentationMode(),'workspace');f.controller.stop();
 });

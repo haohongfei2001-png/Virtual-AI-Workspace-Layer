@@ -82,6 +82,13 @@ export function observedProjectAssociation(document,profile,urlPolicy,root){
   if(list?.children.length!==2||list.lastElementChild!==root||tabs?.length!==1||!visible(document,tabs[0]))return null;
   const selected=tabs[0].querySelectorAll('[role="tab"][aria-selected="true"]');
   if(selected.length!==1||!visible(document,selected[0]))return null;
+  // A selected tab beside a stale panel is not a membership witness. Prove
+  // the observed reciprocal IDREFs against the exact unique document nodes.
+  // These IDs stay in the local proof; they are never authority or diagnostics.
+  const tab=selected[0],panelId=root.id,tabId=tab.id,escape=document.defaultView.CSS?.escape;
+  if(typeof escape!=='function'||[panelId,tabId].some(id=>typeof id!=='string'||!id||id.length>256||/\s|[\u0000-\u001f\u007f]/u.test(id))||tab.getAttribute('aria-controls')!==panelId||root.getAttribute('aria-labelledby')!==tabId)return null;
+  const panels=document.querySelectorAll('#'+escape(panelId)),labels=document.querySelectorAll('#'+escape(tabId));
+  if(panels.length!==1||panels[0]!==root||labels.length!==1||labels[0]!==tab)return null;
   // The observed chats panel is a SECTION/OL of native conversation rows. No
   // tab label, preview, whole-row text or unrelated page content is read.
   const section=root.firstElementChild,ol=section?.firstElementChild;

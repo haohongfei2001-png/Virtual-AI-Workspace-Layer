@@ -1,5 +1,25 @@
 # VAIWL实际状态：渐进积累工程已接线，真实来源逐项待准入
 
+## 2026-11-01 Project 当前拒绝接线、生命周期纠错与成员来源收口
+
+本批先实读 PR16 最新 HEAD `5593e02eb81b1fc8fda3a12dc945d0280cf67d60`，核对实机评论 [6546112515](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16#issuecomment-6546112515)、[6546368431](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16#issuecomment-6546368431) 及工程任务6547186156、诊断差额6547191328。旧实机证据现应明确分开：正常聊天的真实鼠标四格点击已展开工作区；原生 Project 主页入口、身份及两条成员路径已证明；**Project 增强界面仍是 frame=0、return=0，当前实际拒绝阶段未取得**。先前“真实 Project 入口完全未知”的历史段落由本节更新，但不因此宣称增强界面可用。Mac 无正文结构额度36/36已耗尽，本批没有访问实机或增加检查。
+
+已直接修复三组可由源码与隔离浏览器证明的差额（均为 **SOURCE_FIXED / OFFLINE_PASS**）：
+
+- adapter 保留本次完整 Project 检查的第一项白名单阶段，并传至现有私有 `presentation.boundary.projectStage`；结构分类复查不覆盖原失败。缺失 header 与旧节点身份变化分别报告。controller 的预挂载拒绝进入 `presentation.mountFailure`；活动布局拒绝仍由既有 `layoutRefusal` 表达。旧路由回执返回null，异常启动/挂载在撤场后保留固定安全码，不泄露异常文本。
+- 新完整证明或成功挂载只清除本次已解决的匹配错误，避免“初次拒绝→恢复→撤权”仍被旧错误盖住。真实 content→controller 集成反例覆盖首次及同框架恢复。授权、撤场、原检查预算和重试策略不变。
+- Project 成员证据现在要求选中 tab 与 panel 的双向 IDREF、全局唯一精确节点和原有项目限定路径同时成立；关系变更撤回成员优先选择，保留合法唯一原生导航及保草稿的新标签降级。observed profile 升至 revision12，标题叶读取边界不变，未读预览或整行正文。
+
+严格匿名夹具仅复用已采集的关系和七项矩形；未采集的祖先、overflow、效果、paint、原生控件与样式均显式标为未知。原5593e02e在这些已知条件下已经通过原始 flow 挂载/展开/阅读恢复，因此**不能唯一定位 Mac 拒绝原因，也不能将本轮诊断与来源修复写成 Project 实机挂载根治**。未放宽身份、paint预算或原生控件，不清srcdoc、不无限重试、不归咎未经证明的外部扩展。
+
+修前证据：4项诊断反例、2项恢复后旧错误反例、2项终止阶段反例失败；最终匿名浏览器13项中原生产有11项失败，原本通过的正向结构与flow往返也保留。修后最终相关六文件 **425/425**、匿名Project **13/13**、成员导航 **37/37** 通过；独立只读审查已完成并关闭测试oracle及固定异常码的审查问题。正式BrowserLocal MV3 nested连续旅程 **34项记录PASS**，覆盖Project/主页/聊天、原生输入与工具、成员往返、侧栏/页头替换、Worker恢复、新文档锁定及实际隔离卸载；新匿名Profile、CfT156.0.8078.4、外网阻断，browserErrors为空。205文件包完整性校验通过，全部206生产输入与旅程、最终包和源码一致。三张合成截图只支持几何范围，本地缺中文字形，不作真实视觉验收。详细回执与原失败见 [receipt.json](evidence/free-project-closeout-20261101/receipt.json)、[before-fix.txt](evidence/free-project-closeout-20261101/before-fix.txt)。
+
+统一开发ZIP SHA256：`29510771187fbbd3f0d48ccd290eac64a33bf642c146304856004675c3b95289`；当前文档运行指纹应为 `fc9beaab7bdef4c2ca31f10a658bdaac4960aa3d9267362503274e9b8bf81f83`。提交冻结后执行原正式push CI；精确最终SHA和同SHA结果记录在PR交接，不为补CI记录再移动候选。新增Project浏览器门已加入原layout机制步骤，原全量预算/断言保持。
+
+沿唯一计划的其余远程审查未发现新的确定性生产缺陷：搜索、工作集、已有片段预览/原聊天/删除及备份恢复沿用已实现模块和既有证据；本次旅程另外验证合成个人状态、Worker恢复与新文档锁定。**正向NONE仍 BLOCKED**：真实菜单只列移动目标，没有明确当前“无项目”语义，UNKNOWN不得升级。**新增片段捕获/定位来源仍 BLOCKED**：一项消息ID不能证明当前聊天—分支—正文边界，BrowserLocal的currentBody/selectionBridge保持关闭。Project增强挂载仍BLOCKED；新候选Mac连续旅程及本人旧资产确认NOT_RUN。未完成项不以安全降级或旧资产管理通过销账。
+
+交接仅提出[一项精确的私有当前文档状态回执](evidence/free-project-closeout-20261101/HANDOFF.md)，须用户先授权；不重新开展Mac结构取证，不重置36/36。原Profile、ID、私人库、备份、stash及历史失败保持，原分支/唯一writer不变。个人日用NOT_ACCEPTED、FREE_NOT_ACCEPTED、NOT_RELEASE_READY；未merge、部署或发布。
+
 ## 2026-10-31 接管后 CI 缺包追查：修复小数时钟预算误拒绝
 
 接管候选 `e794928418cce704916e680a7ee512d3648fa57c` 的统一 [CI41209270147](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/actions/runs/41209270147) 暴露 `populated-native` 正式失败：[job124560645185](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/actions/runs/41209270147/job/124560645185)。第六次原生聊天访问等待证据超过既定6秒；完整未截断的入站观察确认该路由没有正文观察包，currentDetail停在10、bodyWanted=false且观察器已空闲。后续诊断副本完成前六次仅是诊断，未覆盖原失败。该旧SHA的完整Node合约12062/12062及12/12护栏mutant通过，不能替代失败的旅程。

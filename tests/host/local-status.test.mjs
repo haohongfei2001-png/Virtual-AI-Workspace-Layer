@@ -244,6 +244,14 @@ test('current boundary diagnostics are fixed private categories and preserve leg
  const shape={navigation,delivery,presentation},boundary={phase:'presentation',reason:'region-identity-changed',key:'composer'};
  assert(validLayoutShape(shape));assert(validLayoutShape({...shape,presentation:{...presentation,boundary:null}}));
  assert(validLayoutShape({...shape,presentation:{...presentation,boundary}}));
+ const projectBoundary={phase:'initial',reason:'unsafe-native-geometry',key:null,projectStage:'geometry-overflow'};
+ assert(validLayoutShape({...shape,presentation:{...presentation,boundary:projectBoundary}}));
+ assert(validLayoutShape({...shape,presentation:{...presentation,boundary:null,mountFailure:'surface-native-flow-wrapper-paint'}}));
+ assert(validLayoutShape({...shape,presentation:{...presentation,mountFailure:null}}));
+ for(const invalid of [{...projectBoundary,projectStage:'PRIVATE_TITLE'},{...projectBoundary,reason:'region-identity-changed'},{...projectBoundary,projectStage:{node:'PRIVATE'}},{...projectBoundary,nativeId:'PRIVATE'}])assert(!validLayoutShape({...shape,presentation:{...presentation,boundary:invalid}}));
+ let reads=0;const accessor={...projectBoundary};Object.defineProperty(accessor,'projectStage',{get(){reads++;return 'paint';}});
+ assert(!validLayoutShape({...shape,presentation:{...presentation,boundary:accessor}}));assert.equal(reads,0);
+ for(const mountFailure of ['PRIVATE','surface-'+JSON.stringify({node:'PRIVATE'}),{},false])assert(!validLayoutShape({...shape,presentation:{...presentation,mountFailure}}));
  for(const invalid of [true,{},Object.assign(Object.create(null),boundary),{...boundary,phase:'PRIVATE'},{...boundary,reason:'PRIVATE'},{...boundary,key:'PRIVATE'},{...boundary,url:'https://chatgpt.com/c/PRIVATE'}])assert(!validLayoutShape({...shape,presentation:{...presentation,boundary:invalid}}));
 });
 test('SPA replacement is rejected even with the same document ID',async()=>{

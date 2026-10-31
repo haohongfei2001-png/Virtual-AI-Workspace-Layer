@@ -58,12 +58,14 @@ test('flow preflight refusal waits for a native change, then re-proves and regis
  f.surface.backend='document-flow';f.surface.hasNativeInputFocus=()=>false;f.surface.isSameNativeRegions=()=>true;f.adapter.inspectStructure=f.adapter.inspect;f.surface.mount=async(...args)=>{attempts++;if(!safe)throw new NativeFlowPreflightError('native-flow-wrapper-paint');return mount(...args);};
  assert.equal(await f.controller.start({}),null);
  assert.equal(f.controller.localStatus(),'surface-native-flow-wrapper-paint');
+ assert.equal(f.controller.presentationSnapshot().mountFailure,'surface-native-flow-wrapper-paint');
  assert.equal(f.controller.presentationSnapshot().mode,'waiting');assert.equal(f.calls.terminations.length,0);
  f.tick(1000);await drain();assert.equal(attempts,1,'no polling or timer retry');
  f.change();await drain();assert.equal(attempts,2);assert.equal(f.calls.register,0);
  assert.deepEqual(failures,['surface-native-flow-wrapper-paint'],'unchanged refusal is not republished');
  safe=true;f.layoutEvent('transitionend');f.resize();f.change();await drain();
  assert.equal(f.calls.register,1);assert.equal(f.calls.show,0,'a recovered layout does not grant UI access');
+ assert.equal(f.controller.presentationSnapshot().mountFailure,null,'successful preflight clears the current mount refusal');
  await f.both();assert.equal(f.calls.show,1,JSON.stringify({snapshot:f.controller.presentationSnapshot(),status:f.controller.localStatus(),calls:f.calls}));assert.equal(f.controller.localStatus(),'ready');
  assert.deepEqual(f.layoutListeners(),[0,0]);f.controller.stop();assert.deepEqual(f.resizeListeners(),[0,0]);
 });
@@ -88,6 +90,14 @@ test('partial mount errors, marker conflicts and registration denial remain term
 test('owner registration and workspace UiGrant gate workspace; sidebar joins independently',async()=>{const f=fixture(),held=deferred();f.bridge.registerMount=()=>held.promise;const start=f.controller.start({});await drain();f.message();assert.equal(f.calls.confirm.length,0);assert.equal(f.controller.showWorkspace(),false);held.resolve({ok:true});await start;f.message();await drain();assert.equal(f.calls.show,1);f.message('sidebar');await drain();assert.equal(f.calls.show,1);assert.deepEqual(Object.keys(f.calls.confirm[0]).sort(),['documentToken','mountId','nonce','regionEpoch','role']);});
 test('origin, original contentWindow, connectedness and public join shape are mandatory',async()=>{for(const mutate of [f=>f.message('workspace',{origin:'https://chatgpt.com'}),f=>f.message('workspace',{source:{}}),f=>{f.frames[0].frame.isConnected=false;f.message();},f=>f.message('workspace',{data:{type:'VAIWL_UI_JOIN',role:'workspace',nonce:'n',scope:'forged'}})]){const f=fixture();await f.controller.start({});mutate(f);await drain();assert.equal(f.calls.confirm.length,0);assert.equal(f.calls.show,0);}});
 test('exactly one four-grid return exists only in reading and opens workspace',async()=>{const f=fixture();await f.controller.start({});await f.both();assert.equal(f.slot.children.length,0);f.controller.showReading();f.controller.showReading();assert.equal(f.slot.children.length,1);assert.equal((f.slot.children[0].innerHTML.match(/<rect /g)??[]).length,4);assert.equal(f.slot.children[0]['aria-label'],'返回工作空间');f.slot.children[0].events.click({isTrusted:true});assert.equal(f.slot.children.length,0);assert.equal(f.calls.show,2);});
+for(const phase of ['start','mount'])test('unknown '+phase+' exception reports a fixed current stage before terminal cleanup',async()=>{
+ const failures=[],f=fixture({onFailure:code=>failures.push(code)});let attempts=0;
+ const fail=async()=>{attempts++;throw Error('PRIVATE_NATIVE_VALUE');};
+ if(phase==='start')f.adapter.start=fail;else f.surface.mount=fail;
+ assert.equal(await f.controller.start({}),null);f.resize();f.change();await drain();
+ assert.equal(attempts,1);assert.equal(f.controller.presentationSnapshot(),null);assert.equal(f.calls.register,0);
+ assert.deepEqual(failures,[phase==='start'?'surface-start-failed':'surface-mount-unavailable']);
+});
 function headerGapFixture(){
  const f=fixture(),inspect=f.adapter.inspect,create=f.doc.createElement,box={x:300,y:8,width:32,height:32};
  let blocked=false,postBlocked=false,inspections=0,postChecks=0;

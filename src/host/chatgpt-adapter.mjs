@@ -1,7 +1,7 @@
 import {hasNativeLayer} from './native-layer.mjs';
 import {profileElement} from './native-surface-boundary.mjs';
 import {nativeSidebarComposition} from './native-sidebar-composition.mjs';
-import {inspectNativeProjectSurface,inspectNativeHomeSurface} from './native-project-surface.mjs';
+import {inspectNativeProjectSurface,inspectNativeHomeSurface,projectSurfaceFailureReasons} from './native-project-surface.mjs';
 import {nestedHomeFlowSeam} from './native-home-flow-seam.mjs';
 import {nativeReturnGapRect,isEmptyViewportMarker} from './native-return-gap.mjs';
 import {sidebarPresentationFits,nativeHistoryPresentation,historyFailureReasons} from './native-history-list.mjs';
@@ -456,15 +456,15 @@ if(!p){
  };
  const projectProofs=new WeakMap();
  const projectLayout=()=>profile.nativeProjectLayout==='panel-after-composer'&&urlPolicy.parse(document.location.href).kind==='project';
- function projectSurface(geometry=true){
+ function projectSurface(geometry=true,onFailure=()=>{}){
   const history=one(nativeLayout.historyList??profile.regions.history),header=one(nativeLayout.header),slot=one(nativeLayout.navigationSlot);
-  if(!header)return null;
+  if(!header){onFailure(null,'header');return null;}
   let historyPresentation=history?historyPresentationFor(one(profile.regions.history),history):null;if(!historyPresentation&&history){historySelections.delete(history);historyPresentation=historyPresentationFor(one(profile.regions.history),history);}
-  return inspectNativeProjectSurface({document,profile,urlPolicy,history,header,slot,button:returnControl,isOwnedMask,geometry,historyPresentation});
+  return inspectNativeProjectSurface({document,profile,urlPolicy,history,header,slot,button:returnControl,isOwnedMask,geometry,historyPresentation,onFailure:stage=>onFailure(projectSurfaceFailureReasons.includes(stage)?stage:null)});
  }
- function currentProjectSurface(inspection,geometry=true){
+ function currentProjectSurface(inspection,geometry=true,onFailure=()=>{}){
   if(!inspection||document.location.href!==url)return null;
-  const proof=projectProofs.get(inspection),current=projectSurface(geometry);
+  const proof=projectProofs.get(inspection),current=projectSurface(geometry,onFailure);
   return proof&&current&&proof.length===current.proofNodes.length&&proof.every((node,i)=>node===current.proofNodes[i]&&node===priorNodes[i])?current:null;
  }
  let sidebarRevision=0,sidebarProof=[];
@@ -524,7 +524,8 @@ if(!p){
   if(!active()||!previous?.ok||document.location.href!==url||previous.regionEpoch!==regionEpoch)return {ok:false,reason:'host-rebind-required'};
   let proof;
   if(projectLayout()){
-   if(!currentProjectSurface(previous,false))return {ok:false,reason:'unsafe-native-project-layout'};
+   let projectStage=null,boundaryKey=null;
+   if(!currentProjectSurface(previous,false,(stage,key)=>{projectStage=stage;boundaryKey=key??null;}))return {ok:false,reason:boundaryKey?'missing-or-ambiguous-native-boundary':projectStage?'unsafe-native-project-layout':'region-identity-changed',...(boundaryKey?{boundaryKey}:{}),...(projectStage?{projectStage}:{})};
    proof=projectProofs.get(previous);
   }else{
    const ownedReading=previous.reading?.isConnected&&isOwnedMask(previous.reading)&&previous.reading.matches(nativeLayout.reading);
@@ -540,7 +541,14 @@ if(!p){
  function inspect(){
   const fail=reason=>({ok:false,reason,profileId:profile.id,...(reason==='unsafe-native-history-list'&&historyFailure?{historyFailure}:{})});if(!active())return fail('stale-host-binding');try{syncRoute();}catch{return fail('host-rebind-required');}if(urlPolicy.parse(url).kind==='unsupported')return fail('unsupported-host-route');
   if(projectLayout()){
-   const found=projectSurface();if(!found)return fail(projectSurface(false)?'unsafe-native-geometry':'unsafe-native-project-layout');
+   // Keep the failed complete proof local to this check. The structure-only
+   // classification and incidental return/identity probes must not replace it.
+   let projectStage=null,boundaryKey=null;
+   const found=projectSurface(true,(stage,key)=>{projectStage=stage;boundaryKey=key??null;});
+   if(!found){
+    if(boundaryKey)return {...fail('missing-or-ambiguous-native-boundary'),boundaryKey};
+    return {...fail(projectSurface(false)?'unsafe-native-geometry':'unsafe-native-project-layout'),...(projectStage?{projectStage}:{})};
+   }
    const {proofNodes,...layout}=found;if(proofNodes.length!==priorNodes.length||proofNodes.some((node,i)=>node!==priorNodes[i])){regionEpoch++;priorNodes=proofNodes;}
    const inspection={ok:true,reason:null,profileId:profile.id,...layout,historySource:one(profile.regions.history),returnPlacement:'header-gap',viewMask:'declarative-css',regionEpoch};
    projectProofs.set(inspection,proofNodes);return sidebarVersion(inspection);

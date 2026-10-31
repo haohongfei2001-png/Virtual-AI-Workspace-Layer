@@ -22,7 +22,7 @@ const nativeFlowSeam=Object.freeze({version:'native-flow-seam-v1',rootSelectors:
 // The observed Chinese desktop surface is a candidate, not an authority profile.
 // Unsupported membership/send/risk grammars stay absent; no synthetic NONE/ACK.
 export const CHATGPT_OBSERVED_PROFILE=Object.freeze({
- id:'chatgpt-zh-desktop-observed-20261018',revision:11,reconstruction:false,liveVerified:false,
+ id:'chatgpt-zh-desktop-observed-20261018',revision:12,reconstruction:false,liveVerified:false,
  memberAssociation:'route-linked-project-panel-v1',
  nativeProjectLayout:'panel-after-composer',
  nativeFlowSeam,

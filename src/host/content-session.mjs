@@ -607,7 +607,12 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
     })
    };
    startupPhase='initialization-controller';reportStartup(startupPhase);
-   s.controller=controllerFactory({document:doc,adapter,surface,extensionOrigin:'chrome-extension://'+runtime.id,bridge,initialMode,onWake:()=>wake(s),onFailure:code=>{if(current===s&&surfaceFailureStates.includes(code)){s.surfaceFailure=code;startupFailure={url:s.url,state:code,shape:null};}},onTerminated:(reason,presentation)=>{
+   s.controller=controllerFactory({document:doc,adapter,surface,extensionOrigin:'chrome-extension://'+runtime.id,bridge,initialMode,onWake:()=>wake(s),onFailure:code=>{if(current===s&&surfaceFailureStates.includes(code)){s.surfaceFailure=code;startupFailure={url:s.url,state:code,shape:null};}},onFailureResolved:code=>{
+    // A fresh successful proof retires only its own diagnostic. It neither
+    // grants access nor discards a newer, more specific terminal failure.
+    if(!live(s)||!surfaceFailureStates.includes(code)||s.surfaceFailure!==code)return;
+    s.surfaceFailure=null;if(startupFailure?.url===s.url&&startupFailure.state===code)startupFailure=null;
+   },onTerminated:(reason,presentation)=>{
     if(current===s){
      s.stoppedSidebarDesired=['native-document-changed','dormant-document-changed','ui-frame-suspended','session-renew-failed','ui-grant-expired','stale-session-renewal','mount-transport-unavailable'].includes(reason)&&typeof presentation?.sidebarDesired==='boolean'?presentation.sidebarDesired:null;
      if(s.stoppedSidebarDesired===null)s.sidebarPreference=null;

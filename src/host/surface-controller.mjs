@@ -1,5 +1,6 @@
 import {historyFailureReasons} from './native-history-list.mjs';
 import {surfaceFailureStates,frameFailureReasons,nativeBoundaryFailureReasons as boundaryReasons} from './local-status.mjs';
+import {projectSurfaceFailureReasons} from './native-project-surface.mjs';
 import {workspaceReturnIcon} from '../navigation/icons.mjs';
 import {readFrameAppearance} from './frame-appearance.mjs';
 import {withRequestDeadline} from '../data/request-deadline.mjs';
@@ -8,7 +9,7 @@ import {exactHostRecord} from './contract.mjs';
 import {NativeFlowPreflightError} from './document-flow-layout.mjs';
 /** Isolated content composition. Public window messages only correlate an owned
  * frame. Grants and mount registration travel exclusively over the trusted bridge. */
-export function createSurfaceController({document:doc,adapter,surface,bridge,extensionOrigin,onTerminated=()=>{},onFailure=()=>{},onWake=null,initialMode='workspace',now=Date.now,elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout}={}){
+export function createSurfaceController({document:doc,adapter,surface,bridge,extensionOrigin,onTerminated=()=>{},onFailure=()=>{},onFailureResolved=()=>{},onWake=null,initialMode='workspace',now=Date.now,elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout}={}){
  const origin=new URL(extensionOrigin);if(onWake!==null&&typeof onWake!=='function'||!['workspace','reading'].includes(initialMode)||origin.protocol!=='chrome-extension:'||origin.host===''||!['','/'].includes(origin.pathname)||origin.search||origin.hash||!doc?.defaultView||!adapter||!surface||typeof bridge?.registerMount!=='function'||typeof bridge.confirmParent!=='function')throw Error('invalid-surface-controller');
  const trustedOrigin=`${origin.protocol}//${origin.host}`,win=doc.defaultView;
  let epoch=0,current=null,lastBoundary=null;
@@ -34,8 +35,12 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
  function noteBoundaryCheck(state,phase,inspection){
   if(!state||current!==state||state.epoch!==epoch)return inspection;
   const changed=inspection?.ok===true&&state.handle&&inspection.regionEpoch!==state.handle.regionEpoch;
-  if(inspection?.ok===true&&!changed){state.boundary=null;lastBoundary=null;}
-  else state.boundary={phase,reason:changed?'region-identity-changed':boundaryReasons.includes(inspection?.reason)?inspection.reason:'unavailable',key:['header','reading','composer','readingViewport'].includes(inspection?.boundaryKey)?inspection.boundaryKey:null};
+  if(inspection?.ok===true&&!changed){
+   const resolved='surface-'+lastBoundary;state.boundary=null;lastBoundary=null;
+   if(surfaceFailureStates.includes(resolved))try{onFailureResolved(resolved);}catch{}
+  }
+  else state.boundary={phase,reason:changed?'region-identity-changed':boundaryReasons.includes(inspection?.reason)?inspection.reason:'unavailable',key:['header','reading','composer','readingViewport'].includes(inspection?.boundaryKey)?inspection.boundaryKey:null,
+   ...(!changed&&['unsafe-native-project-layout','unsafe-native-geometry'].includes(inspection?.reason)&&projectSurfaceFailureReasons.includes(inspection?.projectStage)?{projectStage:inspection.projectStage}:{})};
   return inspection;
  }
  const reportBoundary=inspection=>{const previous=lastBoundary;lastBoundary=historyBoundary(inspection)??(boundaryReasons.includes(inspection?.reason)?inspection.reason:inspection?.ok?'region-identity-changed':'native-region-changed');if(previous!==lastBoundary&&surfaceFailureStates.includes('surface-'+lastBoundary))try{onFailure('surface-'+lastBoundary);}catch{}};
@@ -397,7 +402,7 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
   try{
    state.context=options?.context??await adapter.start(options);if(current!==state)return null;
    return await mountState(state);
-  }catch{if(current===state)stop('surface-start-failed');return null;}
+  }catch{if(current===state){try{onFailure('surface-start-failed');}catch{}stop('surface-start-failed');}return null;}
  }
  async function mountState(state){
   if(current!==state||state.mounting||state.handle||doc.location.href!==state.url||Date.parse(state.context.binding.expiresAt)<=now())return null;
@@ -416,7 +421,8 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
   try{
    state.policyViolation=event=>{if(current!==state||!['frame-src','child-src'].includes(event.effectiveDirective))return;let blocked;try{blocked=new URL(event.blockedURI);}catch{return;}if(blocked.protocol+'//'+blocked.host!==trustedOrigin)return;state.framePolicy=event.disposition==='enforce'?'frame-blocked':'frame-report-only';reportJoin(state);};doc.addEventListener?.('securitypolicyviolation',state.policyViolation);
    state.handle=await surface.mount(state.context,state.inspection,{onSurrender:event=>nativeSurrender(state,event),onManagementChanged:()=>{const g=state.grants.get('sidebar'),f=state.frames.find(f=>f.role==='sidebar');if(current===state&&valid(state)&&authorized(state)&&g&&Date.parse(g.expiresAt)>now()&&f)f.window.postMessage({type:'VAIWL_UI_MANAGEMENT_CHANGED',role:'sidebar',mountId:state.handle.id,grantId:g.id},trustedOrigin);},onSidebarScroll:scroll=>{const g=state.grants.get('sidebar'),frame=state.frames.find(f=>f.role==='sidebar');if(current===state&&valid(state)&&authorized(state)&&g&&Date.parse(g.expiresAt)>now()&&frame)frame.window.postMessage({type:'VAIWL_UI_SIDEBAR_VIEWPORT',role:'sidebar',mountId:state.handle.id,grantId:g.id,scroll},trustedOrigin);}});if(current!==state){dispose(state,'stale-mount');return null;}
-   state.layoutFailure=null;lastBoundary=null;
+   const resolved=state.layoutFailure;state.layoutFailure=null;lastBoundary=null;
+   if(surfaceFailureStates.includes(resolved))try{onFailureResolved(resolved);}catch{}
    state.loadedRoles=new Set();state.joinedRoles=new Set();state.moduleRoles=new Set();
    state.frames=surface.frames(state.handle).map(value=>({...value,window:value.frame.contentWindow}));if(!state.frames.some(x=>x.role==='workspace')||new Set(state.frames.map(x=>x.role)).size!==state.frames.length||state.frames.some(x=>!['workspace','sidebar'].includes(x.role)))throw Error('incomplete-dual-surface');
    const initiallyWithoutSidebar=!state.frames.some(target=>target.role==='sidebar');
@@ -447,7 +453,8 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
    watchGeometry(state);watchAppearance(state);arm(state);const queued=[...state.earlyJoins.values()];state.earlyJoins.clear();for(const event of queued)void receive(state,event);return state.handle;
   }catch(error){if(current===state){
    const code='surface-'+(historyBoundary(state.inspection)??(state.inspection?.reason==='missing-or-ambiguous-native-boundary'&&['history','header','reading','composer','navigationSlot'].includes(state.inspection.boundaryKey)?'missing-'+state.inspection.boundaryKey:state.inspection?.ok===false&&boundaryReasons.includes(state.inspection.reason)?state.inspection.reason:error?.message));
-   try{if(surfaceFailureStates.includes(code)&&state.layoutFailure!==code)onFailure(code);}catch{}
+   const failure=surfaceFailureStates.includes(code)?code:'surface-mount-unavailable';
+   try{if(state.layoutFailure!==failure)onFailure(failure);}catch{}
    if(surface.backend==='document-flow'&&!state.handle&&error instanceof NativeFlowPreflightError&&error.message!=='native-flow-check-failed'){
     // A topology refusal happens before mount has side effects. Preserve only
     // this document's waiting controller; fresh grants are still mandatory.
@@ -661,9 +668,9 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
   return state.mode==='workspace'?'ready':'unavailable';
  }
  function presentationSnapshot(){
-  const state=current;if(!state)return null;
+  const state=current;if(!state||state.epoch!==epoch||state.url!==doc.location.href)return null;
   let visibility=null,layoutRefusal=null,layoutGeometry=[];try{visibility=surface.visibility?.(state.handle);layoutRefusal=surface.activeLayoutFailure?.(state.handle)??null;layoutGeometry=surface.activeLayoutGeometry?.(state.handle)??[];}catch{}
-  return {boundary:state.boundary?{...state.boundary}:null,layoutGeometry,layoutRefusal,mode:state.mode,desiredMode:state.desiredMode,transitions:structuredClone(transitions),attempt:state.presentation??'not-attempted',registered:state.registered===true,frames:state.frames.filter(x=>x.frame.isConnected&&x.frame.contentWindow===x.window).length,grants:state.grants.size,workspace:typeof visibility?.workspace==='boolean'?visibility.workspace:null,sidebar:typeof visibility?.sidebar==='boolean'?visibility.sidebar:null,geometryPaused:state.geometryPaused===true,returnPresent:state.button?.isConnected===true};
+  return {boundary:state.boundary?{...state.boundary}:null,mountFailure:surfaceFailureStates.includes(state.layoutFailure)?state.layoutFailure:null,layoutGeometry,layoutRefusal,mode:state.mode,desiredMode:state.desiredMode,transitions:structuredClone(transitions),attempt:state.presentation??'not-attempted',registered:state.registered===true,frames:state.frames.filter(x=>x.frame.isConnected&&x.frame.contentWindow===x.window).length,grants:state.grants.size,workspace:typeof visibility?.workspace==='boolean'?visibility.workspace:null,sidebar:typeof visibility?.sidebar==='boolean'?visibility.sidebar:null,geometryPaused:state.geometryPaused===true,returnPresent:state.button?.isConnected===true};
  }
  return Object.freeze({readNativeManagement(){const s=current;return s&&valid(s)&&authorized(s)&&s.handle?surface.readNativeManagement?.(s.handle)??[]:[];},isNativeStructureCurrent(){try{const state=current;if(!state||!authorized(state))return false;const inspection=inspectPresentation(state);return current===state&&inspection?.ok===true&&inspection.regionEpoch===state.handle.regionEpoch;}catch{return false;}},presentationSnapshot,localStatus,withNativeReading,cancelDormantClose,renewDormantLease,idleReleaseBusy:()=>current?.releaseBusy===true&&dormantReady(),checkIdle,enterDormant,settleDormant,dormantReady,resumeDormant,start,sidebarPresentationIntent:()=>current?.sidebarDesired??null,presentationIntent:()=>current?.desiredMode==='workspace'?'workspace':'reading',presentationMode:()=>current?.mode==='workspace'?'workspace':'reading',showWorkspace(){if(current)current.sidebarDesired=true;return showWorkspace(true);},isWorkspacePresented,showReading,showNativeReading,beginNativeDispatch,focusFrame,isFrameTarget(role,node){return !!current&&authorized(current)&&current.frames.some(x=>x.role===role&&x.frame===node);},isReturnTarget:node=>!!current&&current.button===node&&authorized(current),intentGuard(){const state=current,revision=state?.intentEpoch;return ()=>!!state&&current===state&&state.intentEpoch===revision&&authorized(state)&&!adapter.hasNativeLayer();},readingGuard(){const state=current,revision=state?.intentEpoch;return ()=>!!state&&current===state&&state.intentEpoch===revision&&state.mode==='reading'&&authorized(state)&&!adapter.hasNativeLayer();},suspend,stop,revoke:()=>stop('ui-authority-revoked')});
 }

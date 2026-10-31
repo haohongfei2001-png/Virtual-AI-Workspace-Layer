@@ -219,6 +219,7 @@ jobs:
           node tests/host/observed-profile-browser.mjs
           node tests/host/observed-sidebar-browser.mjs
           node tests/host/observed-project-list-browser.mjs
+          node tests/host/project-live-regression-browser.mjs
           node tests/host/observed-project-layout-browser.mjs
           node tests/host/observed-project-masked-browser.mjs
           node tests/host/temporary-project-list-browser.mjs

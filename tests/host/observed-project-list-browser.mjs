@@ -10,7 +10,7 @@ const plugins=baseline?[{name:'saved-baseline',setup(build){build.onLoad({filter
 const {outputFiles}=await require('esbuild').build({stdin:{contents:"export {createChatGPTAdapter} from './src/host/chatgpt-adapter.mjs';export {createNativeActions} from './src/host/native-actions.mjs';export {createSurfaceDiscovery} from './src/host/surface-discovery.mjs';export {createURLPolicy} from './src/host/url-policy.mjs';export {CHATGPT_OBSERVED_PROFILE} from './src/host/chatgpt-observed-profile.mjs';",resolveDir:process.cwd()},plugins,bundle:true,write:false,format:'iife',globalName:'observedModule'});
 const project='g-p-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',cid='44444444-4444-4444-8444-444444444444';
 const projectHTML=`<main data-app-shell-main-surface><div data-app-shell-main-content-layout style="position:static"><div role="main"><h1><button>Native Project</button></h1><div role="tabpanel"><section><ol><li><a href="/g/${project}/c/${cid}"><div><div>Member title</div><div>DO NOT READ PREVIEW</div></div></a><div>Native actions</div></li></ol></section></div></div></div></main>`;
-const browser=await chromium.launch({headless:true}),results=[];
+const browser=await chromium.launch({headless:true,...(process.env.FREE_CHROME_EXECUTABLE?{executablePath:process.env.FREE_CHROME_EXECUTABLE}:{}),args:['--proxy-server=http://127.0.0.1:9','--proxy-bypass-list=<-loopback>']}),results=[];
 try{
  for(const mode of ['baseline','hidden-old-root','two-visible-roots','two-visible-panels','title-missing','title-hidden','title-complex','title-empty','title-over-limit','changed-title','changed-href','replace-root','leave-project','other-project-stale-list','preview-change','sidebar-conflict','editable-title','editable-panel','fake-member-attribute']){
   const page=await browser.newPage({viewport:{width:1000,height:800}}),url='https://chatgpt.com/g/'+project+'/project';
@@ -97,7 +97,7 @@ try{
  }
  // A page-specific member action must survive an equivalent sidebar entry;
  // uncertainty, draft protection and member ambiguity still fail closed.
- for(const mode of ['equivalent','conflict','duplicate-member','lost-association','draft']){
+ for(const mode of ['equivalent','conflict','duplicate-member','lost-association','changed-panel-relation','draft']){
   const memberId='33333333-3333-4333-8333-333333333333',page=await browser.newPage({viewport:{width:1000,height:800}}),url='https://chatgpt.com/g/'+project+'/project';
   await page.route('**/*',r=>r.request().url()===url?r.fulfill({contentType:'text/html',body:observedProjectHTML(project,memberId)}):r.abort());
   await page.goto(url);await page.addScriptTag({content:outputFiles[0].text});
@@ -111,6 +111,7 @@ try{
    const discovery=createSurfaceDiscovery({document,profile,binding:{documentToken:'fixture',routeEpoch:1},urlPolicy:policy});
    let page=discovery.scanPage();while(page.cursor)page=discovery.scanPage(page.cursor);
    if(mode==='lost-association')document.querySelector('#chats-tab').setAttribute('aria-selected','false');
+   if(mode==='changed-panel-relation')document.querySelector('#chats-tab').setAttribute('aria-controls','another-panel');
    const descriptor={entity:'conversation',nativeId:memberId,navigationURL:member.href};
    const [liveHandle]=discovery.resolveLoadedTargets([descriptor]);
    const actions=createNativeActions({discovery,urlPolicy:policy,currentURL:()=>location.href,inputRisk:()=>({state:'unknown',flags:mode==='draft'?['composer']:[]})});
