@@ -202,8 +202,11 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
   // Local adapter budget only; never add elapsed deadlines to the wire proposal.
   const started=elapsedNow(),left=deadlineAt-started;
   const checkBudget=()=>{const at=elapsedNow();if(!Number.isFinite(at)||at<started||at>=deadlineAt)throw Error('request-timeout');};
-  if(!Number.isFinite(left)||left<=0||left>6000)throw Error('request-timeout');
-  const result=await rpc(s,p,left,null,deadlineAt);checkBudget();
+  // Compare absolute clocks: subtracting a fractional start from start+6000
+  // can round just above 6000 and reject an unsent, valid observation. Keep the
+  // original deadline and cap the timer itself; no tolerance or renewed budget.
+  if(!Number.isFinite(started)||!Number.isFinite(deadlineAt)||deadlineAt<=started||deadlineAt>started+6000)throw Error('request-timeout');
+  const result=await rpc(s,p,Math.min(6000,left),null,deadlineAt);checkBudget();
   if(!live(s)||!sameProducer(binding,s.binding))return result;
   rememberRecent(s,p,result);if(['accepted','duplicate'].includes(result?.state)&&['surface-delta','current-observation'].includes(p.kind))for(const row of (p.kind==='current-observation'?p.payload.surface:p.payload).candidates)if(row.entity==='project'&&row.target?.kind==='resolved'&&row.evidence?.fieldPaths?.includes('current-project-route'))s.ackProjects.add(row.target.nativeId);return result;
  }};}

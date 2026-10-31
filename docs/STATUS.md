@@ -1,5 +1,17 @@
 # VAIWL实际状态：渐进积累工程已接线，真实来源逐项待准入
 
+## 2026-10-31 接管后 CI 缺包追查：修复小数时钟预算误拒绝
+
+接管候选 `e794928418cce704916e680a7ee512d3648fa57c` 的统一 [CI41209270147](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/actions/runs/41209270147) 暴露 `populated-native` 正式失败：[job124560645185](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/actions/runs/41209270147/job/124560645185)。第六次原生聊天访问等待证据超过既定6秒；完整未截断的入站观察确认该路由没有正文观察包，currentDetail停在10、bodyWanted=false且观察器已空闲。后续诊断副本完成前六次仅是诊断，未覆盖原失败。该旧SHA的完整Node合约12062/12062及12/12护栏mutant通过，不能替代失败的旅程。
+
+远程已独立复现一项能够导致同型缺包的生产缺陷：adapter把 `started+6000` 作为本地绝对截止时刻，content再次相减并检查 `left>6000`。在59536.1、60000.1、65000.1等正常小数时钟值上，浮点减法得到6000.000000000007，尚未发送的合法观察被误拒绝；adapter随后消费bodyWanted并抑制不变包。真实adapter→content模块集成反例在旧代码上发送0包（期望1包），挂载仍可完成。正式失败日志没有保存该次具体时钟，因此历史CI的精确归因仍是有依据的推断，不伪造现场值。
+
+修复只在 `src/host/content-session.mjs` 用原绝对时钟比较上限，并把发送timer限制到不超过6000；保留原绝对截止时刻、发送前/回复后的检查、live及producer权限。未增加epsilon、重试、授权续期、隐藏内容复用或更长等待；未修改原旅程、夹具、CI预算和验收判据。
+
+新增6项反例覆盖三个小数边界、最小可表示超额、到期回复和真实adapter→content首包。直接反例旧代码4项失败，真实模块集成旧代码1项失败；修后content/adapter相关322/322及公共request-deadline 10/10通过，独立复核无阻断。原SHA本地隔离复现经过10次访问后，在确定模块缺陷时主动停止，仅保留诊断和cleanupOK，不称完整PASS；没有继续重跑旧候选。完整有界回执见 [deadline-followup.json](evidence/free-remote-takeover-20261031/deadline-followup.json)。新提交统一CI须单独核对，旧失败保留，新SHA结果在PR记载。
+
+下方真实Project/NONE、片段生产锚来源、Mac连续使用及本人旧资产确认关口全部保留；仍为FREE_NOT_ACCEPTED、NOT_RELEASE_READY。远程唯一writer分工不变，未合并、部署或发布。
+
 ## 2026-10-31 Pro 正式接管：当前边界诊断与搜索片段能力修复
 
 已核对 PR16、原 AUTHORITY/唯一计划、分工评论6544150475和 [HANDOFF_READY 6544226609](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16#issuecomment-6544226609)；Pro 在[6544395306](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16#issuecomment-6544395306)正式接任远程唯一 writer。接管基准 `2c9b043ce3c65a4b92c6f8f83b59fb416f63132a`，原分支、Draft PR16 和 base 均不变。GitHub 实读基准 CI41204058082 的42个job均SUCCESS，本批未重跑基准。Codex 的未提交 STATUS patch、原Profile备份、stash及未跟踪文件已由其保全，远程未操作原Mac。
