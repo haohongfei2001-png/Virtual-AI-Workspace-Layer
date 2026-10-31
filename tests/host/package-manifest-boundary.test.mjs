@@ -190,3 +190,16 @@ test('new no-receipt recovery dependency stays packaged, hashed and private',t=>
  assert.match(readFileSync(join(f.out,'extension/classic-runtime.js'),'utf8'),/createNoReceiptContextRecovery/);
  assert.equal(verifyHost(f.out).releaseStatus,'NOT_RELEASE_READY');
 });
+
+test('unified Pro repair stays private even when an otherwise valid supplied manifest is rehashed to expose it',t=>{
+ const f=fixture(t,{browserLocal:true,proR1:true}),path='src/pro/integration/storage-recovery.mjs',info=readJson(join(f.out,'build-manifest.json'));
+ assert.equal(info.files[path],sha(readFileSync(join(f.out,path))));
+ assert.equal(info.sourceHashes[path],info.files[path]);
+ assert.equal(f.manifest.web_accessible_resources[0].resources.includes(path),false);
+ assert.equal(verifyHost(f.out).releaseStatus,'NOT_RELEASE_READY');
+ for(const target of [path,'/'+path,'//src/pro/integration/storage%2Drecovery.mjs']){
+  const changed=structuredClone(f.manifest);changed.web_accessible_resources[0].resources.push(target);f.rewrite(changed);
+  assert.throws(()=>verifyHost(f.out),/invalid-host-package-public-boundary/);
+ }
+ f.rewrite(f.manifest);assert.equal(verifyHost(f.out).releaseStatus,'NOT_RELEASE_READY');
+});

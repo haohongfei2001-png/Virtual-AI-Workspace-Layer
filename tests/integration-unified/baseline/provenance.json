@@ -1,0 +1,52 @@
+{
+  "format": "vaiwl-independent-baseline-reproduction/1",
+  "sourceSHA": "5dec17dc275a79b998db6b3ba8d940710337d3b5",
+  "freeSHA": "2c9b043ce3c65a4b92c6f8f83b59fb416f63132a",
+  "sourceMethod": "git archive exact immutable Pro commit into a separate temporary directory before editing integration source",
+  "reports": {
+    "test-results.json": {
+      "sha256": "2097f52c7fc2d5bba52d2b9c83ddd6a083952635c4017141272656be10de5fb1"
+    },
+    "source-manifest.json": {
+      "sha256": "fce70da07b8312eecd6433223f1ba23acba147ed079468246b168a6a009e0d72"
+    },
+    "browser-journey.json": {
+      "sha256": "71495fd04408338f1710bac8ae6ae5359585c09a20af3c276e7ad87c87a82a95"
+    },
+    "shared-owner-report.json": {
+      "sha256": "69773d8dc727f174fe0a6b1776c87ce3252f2567548ba863ba8c404791405cb5"
+    },
+    "performance.json": {
+      "sha256": "3b511c40f6dbfbc3522e0c9b437c8095597a65b2b45044cd57d7222887b1810f"
+    },
+    "pro-full-final.log": {
+      "sha256": "3720aea162e43d2817e3cad76a3b838ab6877b16cf70c7a97d9a304910b10f63"
+    },
+    "performance.log": {
+      "sha256": "70472eed855414db16daa15408c15ac048c05bc651a32b71ad2becab1b07c011"
+    }
+  },
+  "result": "PASS",
+  "tests": 443,
+  "skipped": 0,
+  "sharedPatchTests": 202,
+  "sharedPatchOverlap": "not additive to 443",
+  "browser": {
+    "name": "official full Chrome for Testing",
+    "version": "143.0.7499.4",
+    "linuxArchiveSHA256": "ab56b2a7955c2961f74348e2349f1e907489283da23dba37c730b624e4d670bb"
+  },
+  "node": "v24.22.1",
+  "commands": [
+    "PRO_CJK_FONT=/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf node tests/pro/run.mjs --browser --regression",
+    "node tests/pro/integration/verify-shared-owner.mjs",
+    "node tests/pro/performance.mjs"
+  ],
+  "notes": [
+    "The optional-font fixture initially failed 1/443; unmodified baseline passed with the documented local font path supplied. This server defect is separately repaired in the integration candidate.",
+    "The direct TAP counts come from actual subprocess execution. Sandbox-blocked EPERM attempts were rejected as evidence.",
+    "The browser profile and host data were isolated and synthetic. There was no live ChatGPT, personal Mac, cloud model, or actual PAIA acceptance.",
+    "Performance uses original development targets and raw 30-sample Node/MockIDB measurements; it is not real browser disk or real-host performance.",
+    "This is incoming source evidence, not evidence for a later integration commit."
+  ]
+}

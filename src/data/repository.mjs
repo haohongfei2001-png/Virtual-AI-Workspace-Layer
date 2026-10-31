@@ -78,9 +78,12 @@ export class WorkspaceRepository {
   async mutate(scope,params){
     const s=scopeChecked(scope),{operationId,expectedRevision,type,actor,apply,targetOperationId,guard=()=>true,signal=null}=params;
     id(operationId);if(!Number.isSafeInteger(expectedRevision)||expectedRevision<0)throw Error('invalid-revision');
+    // Optional packaged-owner participant (e.g. a Pro overlay restore). It joins
+    // this transaction; it is never accepted from a browser message or backup.
+    if(params.enlist!==undefined&&typeof params.enlist!=='function')throw Error('invalid-transaction-participant');
     const hash=digest(params.fingerprint),db=await this.connection();fence(guard,signal);
     return new Promise(resolve=>{
-      const tx=db.transaction(['b23_states','b23_operations','b23_checkpoints','refs',...(params.expectedActivityVersions?['native_states','native_operations']:[]),...(params.initializeFreePolicy?['b23_views']:[])],'readwrite');let outcome=null;
+      const tx=db.transaction(['b23_states','b23_operations','b23_checkpoints','refs',...(params.expectedActivityVersions||params.enlist?['native_states','native_operations']:[]),...(params.initializeFreePolicy?['b23_views']:[])],'readwrite');let outcome=null;
       const abort=reason=>{if(outcome?.ok!==false)outcome={ok:false,reason};try{tx.abort();}catch{}};
       const check=()=>{try{fence(guard,signal);return true;}catch(e){abort(e.message);return false;}};
       const onRevoke=()=>abort('stale-binding');signal?.addEventListener('abort',onRevoke,{once:true});
@@ -143,7 +146,8 @@ export class WorkspaceRepository {
               else enter(payload?validateState(payload,s.key):emptyState(s));
             }catch(e){abort(e.message);}
           };};
-          if(params.expectedActivityVersions)checkActivityVersionFence(tx,s,params.expectedActivityVersions,check,loadWorkspace,abort);else loadWorkspace();
+          const enterWorkspace=()=>{if(params.expectedActivityVersions)checkActivityVersionFence(tx,s,params.expectedActivityVersions,check,loadWorkspace,abort);else loadWorkspace();};
+          if(params.enlist){let entered=false;const ready=()=>{if(entered){abort('transaction-participant-reentered');return;}entered=true;if(check())enterWorkspace();};const result=params.enlist(tx,s,check,ready,abort);if(result?.then){try{Promise.prototype.then.call(result,()=>{},()=>{});}catch{}abort('async-transaction-participant-denied');}}else enterWorkspace();
         }catch(e){abort(e.message);}
       };
       };

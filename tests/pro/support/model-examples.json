@@ -1,0 +1,353 @@
+{
+  "scope": "synthetic design protocol examples, not real model quality data",
+  "knownHandles": {
+    "conversation": [
+      "c_alpha"
+    ],
+    "topic": [
+      "t_research",
+      "t_methods"
+    ],
+    "evidence": [
+      "e_title_alpha"
+    ]
+  },
+  "requestNonce": "sample_nonce_001",
+  "examples": [
+    {
+      "id": "M01-existing",
+      "payload": {
+        "schemaVersion": "vaiwl-pro-model-output/1",
+        "requestNonce": "sample_nonce_001",
+        "items": [
+          {
+            "kind": "EXISTING",
+            "conversationHandle": "c_alpha",
+            "topicHandle": "t_research",
+            "titleSuggestion": "数值积分参数核对",
+            "evidenceHandles": [
+              "e_title_alpha"
+            ],
+            "reason": "same-object-goal",
+            "explanation": "原名明确包含同一研究对象和积分任务。"
+          }
+        ]
+      },
+      "schemaExpected": "accept",
+      "semanticExpected": "eligible-if-owner-checks-pass",
+      "reason": "格式有效不等于已可提交；owner仍检查NONE、约束和质量。"
+    },
+    {
+      "id": "M02-unknown",
+      "payload": {
+        "schemaVersion": "vaiwl-pro-model-output/1",
+        "requestNonce": "sample_nonce_001",
+        "items": [
+          {
+            "kind": "UNKNOWN",
+            "conversationHandle": "c_alpha",
+            "titleSuggestion": null,
+            "evidenceHandles": [],
+            "reason": "unknown-membership",
+            "explanation": "当前原生归属未确认。"
+          }
+        ]
+      },
+      "schemaExpected": "accept",
+      "semanticExpected": "no-change",
+      "reason": "UNKNOWN保持原名可达。"
+    },
+    {
+      "id": "M03-new-topic",
+      "payload": {
+        "schemaVersion": "vaiwl-pro-model-output/1",
+        "requestNonce": "sample_nonce_001",
+        "items": [
+          {
+            "kind": "NEW_TOPIC",
+            "conversationHandle": "c_alpha",
+            "titleSuggestion": "数值积分参数核对",
+            "evidenceHandles": [
+              "e_title_alpha"
+            ],
+            "reason": "same-object-goal",
+            "explanation": "原名明确包含同一研究对象和积分任务。",
+            "seed": {
+              "name": "积分方案核对",
+              "object": "研究A",
+              "goal": "核对积分稳定性",
+              "outcome": null,
+              "qualifiers": []
+            }
+          }
+        ]
+      },
+      "schemaExpected": "accept",
+      "semanticExpected": "preview-unless-new-topic-gate-passes",
+      "reason": "TopicId由owner生成，不能由模型决定。"
+    },
+    {
+      "id": "M04-multi-topic",
+      "payload": {
+        "schemaVersion": "vaiwl-pro-model-output/1",
+        "requestNonce": "sample_nonce_001",
+        "items": [
+          {
+            "kind": "MULTI_TOPIC",
+            "conversationHandle": "c_alpha",
+            "titleSuggestion": "数值积分参数核对",
+            "evidenceHandles": [
+              "e_title_alpha"
+            ],
+            "reason": "same-object-goal",
+            "explanation": "原名明确包含同一研究对象和积分任务。",
+            "primaryTopicHandle": "t_research",
+            "relatedTopicHandles": [
+              "t_methods"
+            ]
+          }
+        ]
+      },
+      "schemaExpected": "accept",
+      "semanticExpected": "eligible-if-owner-checks-pass",
+      "reason": "related不贡献主题活跃。"
+    },
+    {
+      "id": "M05-extra-authority",
+      "payload": {
+        "schemaVersion": "vaiwl-pro-model-output/1",
+        "requestNonce": "sample_nonce_001",
+        "items": [
+          {
+            "kind": "EXISTING",
+            "conversationHandle": "c_alpha",
+            "topicHandle": "t_research",
+            "titleSuggestion": "数值积分参数核对",
+            "evidenceHandles": [
+              "e_title_alpha"
+            ],
+            "reason": "same-object-goal",
+            "explanation": "原名明确包含同一研究对象和积分任务。"
+          }
+        ],
+        "grant": "administrator"
+      },
+      "schemaExpected": "reject",
+      "semanticExpected": "reject",
+      "reason": "任何额外授权字段拒绝。"
+    },
+    {
+      "id": "M06-native-operation",
+      "payload": {
+        "schemaVersion": "vaiwl-pro-model-output/1",
+        "requestNonce": "sample_nonce_001",
+        "items": [
+          {
+            "kind": "MOVE_NATIVE_PROJECT",
+            "conversationHandle": "c_alpha",
+            "topicHandle": "t_research",
+            "titleSuggestion": "数值积分参数核对",
+            "evidenceHandles": [
+              "e_title_alpha"
+            ],
+            "reason": "same-object-goal",
+            "explanation": "原名明确包含同一研究对象和积分任务。"
+          }
+        ]
+      },
+      "schemaExpected": "reject",
+      "semanticExpected": "reject",
+      "reason": "模型不能输出原生操作。"
+    },
+    {
+      "id": "M07-no-evidence",
+      "payload": {
+        "schemaVersion": "vaiwl-pro-model-output/1",
+        "requestNonce": "sample_nonce_001",
+        "items": [
+          {
+            "kind": "EXISTING",
+            "conversationHandle": "c_alpha",
+            "topicHandle": "t_research",
+            "titleSuggestion": "数值积分参数核对",
+            "evidenceHandles": [],
+            "reason": "same-object-goal",
+            "explanation": "原名明确包含同一研究对象和积分任务。"
+          }
+        ]
+      },
+      "schemaExpected": "reject",
+      "semanticExpected": "reject",
+      "reason": "实际改动建议必须有证据handle。"
+    },
+    {
+      "id": "M08-unknown-title",
+      "payload": {
+        "schemaVersion": "vaiwl-pro-model-output/1",
+        "requestNonce": "sample_nonce_001",
+        "items": [
+          {
+            "kind": "UNKNOWN",
+            "conversationHandle": "c_alpha",
+            "titleSuggestion": "虚构结论",
+            "evidenceHandles": [],
+            "reason": "insufficient-evidence",
+            "explanation": "没有内容"
+          }
+        ]
+      },
+      "schemaExpected": "reject",
+      "semanticExpected": "reject",
+      "reason": "UNKNOWN不得夹带改名。"
+    },
+    {
+      "id": "M09-invented-handle",
+      "payload": {
+        "schemaVersion": "vaiwl-pro-model-output/1",
+        "requestNonce": "sample_nonce_001",
+        "items": [
+          {
+            "kind": "EXISTING",
+            "conversationHandle": "c_alpha",
+            "topicHandle": "t_not_in_input",
+            "titleSuggestion": "数值积分参数核对",
+            "evidenceHandles": [
+              "e_title_alpha"
+            ],
+            "reason": "same-object-goal",
+            "explanation": "原名明确包含同一研究对象和积分任务。"
+          }
+        ]
+      },
+      "schemaExpected": "accept",
+      "semanticExpected": "reject",
+      "reason": "格式有效但不在输入handle映射。"
+    },
+    {
+      "id": "M10-duplicate-conversation",
+      "payload": {
+        "schemaVersion": "vaiwl-pro-model-output/1",
+        "requestNonce": "sample_nonce_001",
+        "items": [
+          {
+            "kind": "EXISTING",
+            "conversationHandle": "c_alpha",
+            "topicHandle": "t_research",
+            "titleSuggestion": "数值积分参数核对",
+            "evidenceHandles": [
+              "e_title_alpha"
+            ],
+            "reason": "same-object-goal",
+            "explanation": "原名明确包含同一研究对象和积分任务。"
+          },
+          {
+            "kind": "EXISTING",
+            "conversationHandle": "c_alpha",
+            "topicHandle": "t_research",
+            "titleSuggestion": "数值积分参数核对",
+            "evidenceHandles": [
+              "e_title_alpha"
+            ],
+            "reason": "same-object-goal",
+            "explanation": "原名明确包含同一研究对象和积分任务。"
+          }
+        ]
+      },
+      "schemaExpected": "accept",
+      "semanticExpected": "reject",
+      "reason": "同一个C只接受一条结果，由确定性validator拒绝。"
+    },
+    {
+      "id": "M11-wrong-request",
+      "payload": {
+        "schemaVersion": "vaiwl-pro-model-output/1",
+        "requestNonce": "another_nonce",
+        "items": [
+          {
+            "kind": "EXISTING",
+            "conversationHandle": "c_alpha",
+            "topicHandle": "t_research",
+            "titleSuggestion": "数值积分参数核对",
+            "evidenceHandles": [
+              "e_title_alpha"
+            ],
+            "reason": "same-object-goal",
+            "explanation": "原名明确包含同一研究对象和积分任务。"
+          }
+        ]
+      },
+      "schemaExpected": "accept",
+      "semanticExpected": "reject",
+      "reason": "nonce不匹配本次请求。"
+    },
+    {
+      "id": "M12-hard-exclusion",
+      "payload": {
+        "schemaVersion": "vaiwl-pro-model-output/1",
+        "requestNonce": "sample_nonce_001",
+        "items": [
+          {
+            "kind": "EXISTING",
+            "conversationHandle": "c_alpha",
+            "topicHandle": "t_research",
+            "titleSuggestion": "数值积分参数核对",
+            "evidenceHandles": [
+              "e_title_alpha"
+            ],
+            "reason": "same-object-goal",
+            "explanation": "原名明确包含同一研究对象和积分任务。"
+          }
+        ]
+      },
+      "schemaExpected": "accept",
+      "semanticExpected": "reject",
+      "reason": "输入当前存在t_research与c_alpha的人工pair exclusion。"
+    },
+    {
+      "id": "M13-none-became-project",
+      "payload": {
+        "schemaVersion": "vaiwl-pro-model-output/1",
+        "requestNonce": "sample_nonce_001",
+        "items": [
+          {
+            "kind": "EXISTING",
+            "conversationHandle": "c_alpha",
+            "topicHandle": "t_research",
+            "titleSuggestion": "数值积分参数核对",
+            "evidenceHandles": [
+              "e_title_alpha"
+            ],
+            "reason": "same-object-goal",
+            "explanation": "原名明确包含同一研究对象和积分任务。"
+          }
+        ]
+      },
+      "schemaExpected": "accept",
+      "semanticExpected": "reject",
+      "reason": "运行期间NONE变PROJECT；default-none计划失效。"
+    },
+    {
+      "id": "M14-human-title-changed",
+      "payload": {
+        "schemaVersion": "vaiwl-pro-model-output/1",
+        "requestNonce": "sample_nonce_001",
+        "items": [
+          {
+            "kind": "EXISTING",
+            "conversationHandle": "c_alpha",
+            "topicHandle": "t_research",
+            "titleSuggestion": "数值积分参数核对",
+            "evidenceHandles": [
+              "e_title_alpha"
+            ],
+            "reason": "same-object-goal",
+            "explanation": "原名明确包含同一研究对象和积分任务。"
+          }
+        ]
+      },
+      "schemaExpected": "accept",
+      "semanticExpected": "reject",
+      "reason": "相关title/constraint revision变更；不覆盖人工。"
+    }
+  ]
+}
