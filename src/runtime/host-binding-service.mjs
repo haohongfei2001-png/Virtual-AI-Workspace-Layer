@@ -103,7 +103,7 @@ export function createHostBindingService({extensionId,getFrame,getContexts=null,
  }:null;
  const currentNavigation=ui&&observations&&dispatchCurrent?createHostCurrentNavigation({ui,observations,bridge:dispatchCurrent,onConfirmedUse:recordLocalUse,urlPolicy:navigationURLPolicy,elapsedNow,schedule,cancel}):null;
  if(localMemory)localMemory.setGates({native:observations.gate,activity:(scope,request)=>localUse?.gate(scope,request)});
- const views=ui&&readService?createHostViewService({ui,readService,workspaceRepository,nativeWritePending:scopeKey=>observations?.isNativeWritePending(scopeKey)===true,prepareNavigation,readNativeManagement,openLocalData,registerCurrentNavigation:currentNavigation?input=>currentNavigation.register(input):null,nativeCandidatesEnabled:!!candidateBridge,presentSurface,clock:()=>new Date(now()).toISOString(),elapsedNow,schedule,cancel}):null;
+ const views=ui&&readService?createHostViewService({ui,readService,workspaceRepository,nativeWritePending:scopeKey=>observations?.isNativeWritePending(scopeKey)===true,prepareNavigation,readNativeManagement,openLocalData,registerCurrentNavigation:currentNavigation?input=>currentNavigation.register(input):null,nativeCandidatesEnabled:!!candidateBridge,nativeSelectionAvailable:selectionBridge!==null,presentSurface,clock:()=>new Date(now()).toISOString(),elapsedNow,schedule,cancel}):null;
  const candidates=ui&&candidateBridge?createHostCandidateService({ui,bridge:candidateBridge,elapsedNow,schedule,cancel,makeId}):null;
  // The existing UI owner still supplies document/scope authority. BrowserLocal
  // durable assets additionally require an explicitly confirmed personal space,

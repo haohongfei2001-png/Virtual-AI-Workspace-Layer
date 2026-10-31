@@ -237,6 +237,15 @@ test('anonymous delivery shape rejects content, extra fields and overflow',()=>{
  const delivery={pages:3,resolvedProjects:0,resolvedChats:4,acceptedPackets:2,acceptedProjects:0,acceptedChats:4,rejectedPackets:0,capped:false};
  assert(validLayoutShape({navigation,delivery}));for(const bad of [{...delivery,title:'PRIVATE'},{...delivery,pages:'PRIVATE'},{...delivery,pages:1000001}])assert(!validLayoutShape({navigation,delivery:bad}));
 });
+test('current boundary diagnostics are fixed private categories and preserve legacy layout compatibility',()=>{
+ const navigation={phase:'accepted',roots:[1,1,0],firstOutside:[],firstClip:[],memberShape:[],headingShape:[],memberReject:Array(7).fill(0),rejected:Array(11).fill(0),matched:0,visible:0,titles:0,association:0,candidates:0,claims:0};
+ const delivery={pages:0,resolvedProjects:0,resolvedChats:0,acceptedPackets:0,acceptedProjects:0,acceptedChats:0,rejectedPackets:0,capped:false};
+ const presentation={mode:'reading',attempt:'show-returned',registered:true,frames:2,grants:2,workspace:false,sidebar:true,geometryPaused:false,returnPresent:true};
+ const shape={navigation,delivery,presentation},boundary={phase:'presentation',reason:'region-identity-changed',key:'composer'};
+ assert(validLayoutShape(shape));assert(validLayoutShape({...shape,presentation:{...presentation,boundary:null}}));
+ assert(validLayoutShape({...shape,presentation:{...presentation,boundary}}));
+ for(const invalid of [true,{},Object.assign(Object.create(null),boundary),{...boundary,phase:'PRIVATE'},{...boundary,reason:'PRIVATE'},{...boundary,key:'PRIVATE'},{...boundary,url:'https://chatgpt.com/c/PRIVATE'}])assert(!validLayoutShape({...shape,presentation:{...presentation,boundary:invalid}}));
+});
 test('SPA replacement is rejected even with the same document ID',async()=>{
  let reads=0,code,target;const webNavigation={getFrame:async()=>({documentId:'doc',url:reads++?'https://chatgpt.com/g/private/project':'https://chatgpt.com/',documentLifecycle:'active'})};
  assert.equal(await readActiveLocalStatus({webNavigation,tabs:{query:async()=>[{id:7}],sendMessage:async()=>({v:1,state:'ready'})},onTarget:t=>target=t,onFailure:c=>code=c}),'unavailable');assert.equal(code,'document-changed');assert.equal(target,undefined);

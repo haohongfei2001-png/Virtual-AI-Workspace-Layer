@@ -1,5 +1,7 @@
 # VAIWL 唯一开发计划：Free 完整交付 → Pro 智能增强
 
+2026-10-31执行权更新：Codex 的 HANDOFF_READY 已发布，Pro 以[接管确认6544395306](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16#issuecomment-6544395306)正式接任原分支/PR16唯一远程源码与测试 writer；Codex 保留 Mac 专属操作、最小真实结构取证及集中终验。继续本计划原 B2.F1/C2–C5/B4–B5/F3/F4 的 P0/个人必需 P1，不新增计划或 Pro 路线。最新职责见 AUTHORITY 首节，实际差异、证据与剩余阻塞见 STATUS 首节；本次不重复已通过的 `2c9b043c` 全套 CI。新片段捕获/定位的生产来源尚未接通，必须与 Project/NONE 来源一起保留为 C4/FR-15 未完成项，已有片段 LIST/remove/搜索/备份通过不替代它。
+
 2026-10-30用户追加产品化收口指令：沿本计划先关闭 P0，再集中关闭个人日用必需 P1；P2 不进入当前关键路径，不增加架构/功能路线。验证改为受影响定向回归→相关连续产品旅程→候选冻结后一次统一正式门；按源码、依赖和输入哈希复用未受影响的原 SHA 证据，不重写历史失败。优先定位当前 populated-native/unknown-protocol 的真实根因并前移已授权的无正文宿主结构验证；原安装个人终验仍在必要内部关口通过、完整一致备份后集中完成。当前分类和实际结果只记 STATUS。
 
 2026-10-30用户采纳[终局交接6503154092](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16#issuecomment-6503154092)，新会话接任原分支/PR16唯一集成writer。沿原C1–C5/F3/F4连续收口：继承`7275d882`已完成的有限seam/布局拥有权、root及Worker生命周期修正，再处理适用CI、F02/F08、完整隔离产品旅程与独立质量复核；不重选架构、不重新实施候选。仅所有可自主关键门通过后进行一次集中Mac验收。限定选区读取和集中终验已在同会话获明确批准，范围见AUTHORITY首节；来源合同未实证仍阻塞相应能力。实际SHA、检查和未完成项由STATUS及原始证据记录，历史FAIL不改判，merge/部署/发布未授权。

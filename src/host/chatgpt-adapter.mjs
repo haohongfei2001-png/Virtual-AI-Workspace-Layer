@@ -532,7 +532,8 @@ if(!p){
    const reading=ownedReading&&readings.length<=8&&!readings.some(n=>n!==previous.reading&&n.checkVisibility({checkOpacity:true,checkVisibilityCSS:true}))?previous.reading:one(nativeLayout.reading);
    const actual=[one(nativeLayout.header),reading,one(nativeLayout.composer),nativeLayout.readingViewport?one(nativeLayout.readingViewport):null];
    const prior=[previous.header,previous.reading,previous.composer,previous.readingViewport??null];
-   if(actual.some((node,i)=>node!==prior[i]||node&&(!node.isConnected||node.ownerDocument!==document)))return {ok:false,reason:'missing-or-ambiguous-native-boundary'};
+   const changed=actual.findIndex((node,i)=>node!==prior[i]||node&&(!node.isConnected||node.ownerDocument!==document));
+   if(changed>=0){const node=actual[changed];return {ok:false,reason:node&&node.isConnected&&node.ownerDocument===document?'region-identity-changed':'missing-or-ambiguous-native-boundary',boundaryKey:['header','reading','composer','readingViewport'][changed]};}
   }
   const next=sidebarVersion({...previous,history:one(nativeLayout.historyList??profile.regions.history),historySource:one(profile.regions.history)});if(proof)projectProofs.set(next,proof);return next;
  }

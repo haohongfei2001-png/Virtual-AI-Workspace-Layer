@@ -14,8 +14,8 @@ import {projectFreeFrame,freeFrameRowDTO} from './free-frame-projection.mjs';
 import {withRequestDeadline} from '../data/request-deadline.mjs';
 /** One privileged replica per mount, shared by its two granted UI documents.
  * Preparation is polled in bounded RPCs; a pending read is never an empty view. */
-export function createHostViewService({ui,readService,workspaceRepository=null,prepareNavigation=null,readNativeManagement=null,openLocalData=null,registerCurrentNavigation=null,nativeCandidatesEnabled=false,presentSurface=null,nativeWritePending=()=>false,clock=()=>new Date().toISOString(),maxViews=32,elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout}={}){
- if(typeof nativeWritePending!=='function'||typeof ui?.withScope!=='function'||!readService||!Number.isInteger(maxViews)||maxViews<1||maxViews>128)throw Error('invalid-host-view-service');
+export function createHostViewService({ui,readService,workspaceRepository=null,prepareNavigation=null,readNativeManagement=null,openLocalData=null,registerCurrentNavigation=null,nativeCandidatesEnabled=false,nativeSelectionAvailable=true,presentSurface=null,nativeWritePending=()=>false,clock=()=>new Date().toISOString(),maxViews=32,elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout}={}){
+ if(typeof nativeSelectionAvailable!=='boolean'||typeof nativeWritePending!=='function'||typeof ui?.withScope!=='function'||!readService||!Number.isInteger(maxViews)||maxViews<1||maxViews>128)throw Error('invalid-host-view-service');
  const views=new Map(),resumes=new Map(),readWindows=new Map();let stopped=false,refreshes=0,reads=0,scopeWork=0,deliverySequence=0,presentationSequence=0;const layoutWrites=new Map();
  // A cancelled owner refresh can settle before its underlying read does.
  // Count both without changing the original deadlines or cancellation guards.
@@ -224,6 +224,8 @@ export function createHostViewService({ui,readService,workspaceRepository=null,p
    page.presentation=structuredClone(entry.presentation);
    // Display guidance only; the asset services independently recheck authority.
    if(context.scope.kind==='browser-local')page.localAssetAccess=context.scope.storage==='personal'?'available':'confirmation-required';
+   // A false-only restriction is display guidance, never native authority.
+   if(!nativeSelectionAvailable)page.nativeSelectionAvailable=false;
 
    page.current={nativeUrl,refId:ref?.id??null,projectId:currentProjectId};
    page.currentRef=ref?freeFrameRowDTO(ref):null;

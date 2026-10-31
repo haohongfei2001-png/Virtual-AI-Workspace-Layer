@@ -41,6 +41,18 @@ test('waiting layout cannot mount after route change, expiry, revoke or pagehide
   assert.equal(f.calls.register,0);assert.equal(f.calls.show,0);f.controller.stop();assert.deepEqual(f.resizeListeners(),[0,0]);
  }
 });
+test('current boundary diagnostic recovers in RAM without ancestor mutations or granting UI',async t=>{
+ const failures=[],writes=[],f=fixture({onFailure:code=>failures.push(code)}),inspect=f.adapter.inspect;t.after(()=>f.controller.stop());
+ f.doc.documentElement={dataset:new Proxy({}, {set(target,key,value){writes.push(key);target[key]=value;return true;}})};
+ f.adapter.inspect=()=>({ok:false,reason:'missing-or-ambiguous-native-boundary',boundaryKey:'reading'});
+ assert.equal(await f.controller.start({}),null);
+ assert.deepEqual(f.controller.presentationSnapshot().boundary,{phase:'initial',reason:'missing-or-ambiguous-native-boundary',key:'reading'});
+ assert.deepEqual(writes,[],'current boundary evidence must not mutate an observed native ancestor');
+ f.adapter.inspect=inspect;f.resize();await drain();assert.equal(f.controller.presentationSnapshot().boundary,null);
+ assert.equal(f.calls.register,1);assert.equal(f.calls.show,0,'a proved boundary alone is not a grant');
+ await f.both();assert.equal(f.controller.localStatus(),'ready');assert.deepEqual(failures,['surface-missing-or-ambiguous-native-boundary']);
+ assert.deepEqual(writes,[]);f.controller.stop();assert.equal(f.controller.presentationSnapshot(),null);
+});
 test('flow preflight refusal waits for a native change, then re-proves and registers once',async()=>{
  const failures=[],f=fixture({onFailure:code=>failures.push(code)}),mount=f.surface.mount;let safe=false,attempts=0;
  f.surface.backend='document-flow';f.surface.hasNativeInputFocus=()=>false;f.surface.isSameNativeRegions=()=>true;f.adapter.inspectStructure=f.adapter.inspect;f.surface.mount=async(...args)=>{attempts++;if(!safe)throw new NativeFlowPreflightError('native-flow-wrapper-paint');return mount(...args);};

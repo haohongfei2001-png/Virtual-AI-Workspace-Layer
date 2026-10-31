@@ -362,15 +362,31 @@ test('scope replacement clears snippet panel and rejects late selected-asset rep
  const pending=panel.request({type:'HOST_UI_SNIPPET',action:'save',id:'C'}),rejected=assert.rejects(pending,/snippet-unavailable/);await f.advance(1000);held.resolve({ok:true});await rejected;panel.onClose();assert.equal(f.snippetStops,1);assert.equal(f.privateRoot.children.length,0);
 });
 
-async function searchSnippetFixture(){
+async function searchSnippetFixture(capability={}){
  const f=fixture(),C='11111111-1111-4111-8111-111111111111';
- f.setView(async m=>({ok:true,state:'ready',page:{...f.page(),workspaceRevision:5,current:{refId:C,projectId:null,nativeUrl:'https://chatgpt.com/c/'+C},...(m.query.search?{search:{...m.query.search,items:[{id:C,snippetMatches:[{id:'saved',preview:'match'}]},{id:'other',snippetMatches:[{id:'elsewhere',preview:'match'}]}]}}:{})},navigation:[]}));
- await f.client.start();await drain();await f.nav.onProjectionRequest({search:{query:'match',offset:0,limit:24,projectId:null}});return f;
+ f.setView(async m=>({ok:true,state:'ready',page:{...f.page(),...capability,workspaceRevision:5,current:{refId:C,projectId:null,nativeUrl:'https://chatgpt.com/c/'+C},...(m.query.search?{search:{...m.query.search,items:[{id:C,snippetMatches:[{id:'saved',preview:'match'}]},{id:'other',snippetMatches:[{id:'elsewhere',preview:'match'}]}]}}:{})},navigation:[]}));
+ await f.client.start();await drain();f.searchPage=await f.nav.onProjectionRequest({search:{query:'match',offset:0,limit:24,projectId:null}});return f;
 }
 test('search locate uses only current owner-issued saved asset and bounded authority',async()=>{
  const f=await searchSnippetFixture(),send=f.runtime.sendMessage,packets=[];f.runtime.sendMessage=m=>m.type==='HOST_UI_SNIPPET'?(packets.push(m),Promise.resolve({ok:true})):send(m);
  for(const value of [{id:'unknown'},{id:'elsewhere'},{id:'saved',scope:'A'},null])assert.equal((await f.nav.onSnippetLocateRequest(value)).ok,false);
  assert.equal(packets.length,0);assert.deepEqual(await f.nav.onSnippetLocateRequest({id:'saved'}),{ok:true});assert.deepEqual({...packets[0],operationId:'uuid'},{v:1,type:'HOST_UI_SNIPPET',grantId:'grant',mountId:'mount',operationId:'uuid',expectedRevision:5,action:'locate',id:'saved'});f.client.stop();
+});
+test('search locate respects the owner restriction before sending any native request',async t=>{
+ const f=await searchSnippetFixture({nativeSelectionAvailable:false});t.after(()=>f.client.stop());
+ assert.equal(f.pages.at(-1).nativeSelectionAvailable,false);assert.deepEqual(await f.nav.onSnippetLocateRequest({id:'saved'}),{ok:false});
+ assert.equal(f.calls.filter(m=>m.type==='HOST_UI_SNIPPET').length,0);assert.equal(f.searchPage.search.items[0].snippetMatches[0].preview,'match');
+});
+test('latest owner restriction fences old callbacks and an in-flight locate reply',async t=>{
+ const capability={},f=await searchSnippetFixture(capability),held=deferred(),send=f.runtime.sendMessage;let calls=0;t.after(()=>f.client.stop());
+ f.runtime.sendMessage=m=>m.type==='HOST_UI_SNIPPET'?(calls++,held.promise):send(m);
+ const oldLocate=f.nav.onSnippetLocateRequest,pending=oldLocate({id:'saved'});await drain();assert.equal(calls,1);
+ capability.nativeSelectionAvailable=false;await f.nav.onProjectionRequest({search:{query:'match',offset:0,limit:24,projectId:null}});
+ held.resolve({ok:true});assert.deepEqual(await pending,{ok:false});assert.deepEqual(await oldLocate({id:'saved'}),{ok:false});assert.equal(calls,1);
+});
+for(const value of [true,'false',null,{},undefined])test('frame rejects malformed native selection restriction '+String(value),async t=>{
+ const f=fixture();t.after(()=>f.client.stop());f.setView(async()=>({ok:true,state:'ready',page:{...f.page(),nativeSelectionAvailable:value},navigation:[]}));
+ await f.client.start();await drain();assert.equal(f.pages.length,0);assert.equal(f.calls.filter(m=>m.type==='HOST_UI_SNIPPET').length,0);
 });
 for(const change of ['query','stop','disconnect','scope','deadline'])test('search locate rejects duplicate and late '+change+' reply',async()=>{
  const f=await searchSnippetFixture(),held=deferred(),send=f.runtime.sendMessage;let count=0;

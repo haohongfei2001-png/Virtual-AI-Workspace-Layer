@@ -4,7 +4,9 @@ import {nativeFlowFailureReasons,activeLayoutFailureReasons} from './document-fl
 import {validMainMountCheck} from './native-flow-diagnostic.mjs';
 import {validHistoryStructureReport,validSidebarStructure,sidebarStructureCoverage} from './history-structure-diagnostic.mjs';
 // Shared fixed frame failures; arbitrary renderer/transport error text stays private.
-export const frameFailureReasons=Object.freeze(['ui-grant-expired','ui-renew-failed','ui-join-failed','ui-port-disconnected','ui-renderer-failed','read-budget-exhausted','frame-preparation-limit','free-frame-page-too-large','frame-view-unavailable','invalid-preparation-response','invalid-frame-view','invalid-search-snippets','invalid-frame-current','invalid-frame-current-ref','invalid-frame-navigation','invalid-frame-presentation','request-timeout']);
+export const frameFailureReasons=Object.freeze(['ui-grant-expired','ui-renew-failed','ui-join-failed','ui-port-disconnected','ui-renderer-failed','read-budget-exhausted','frame-preparation-limit','free-frame-page-too-large','frame-view-unavailable','invalid-preparation-response','invalid-frame-view','invalid-search-snippets','invalid-frame-current','invalid-frame-current-ref','invalid-frame-native-selection','invalid-frame-navigation','invalid-frame-presentation','request-timeout']);
+// Latest boundary diagnostics stay in private RAM; public startup fields are historical.
+export const nativeBoundaryFailureReasons=Object.freeze(['missing-or-ambiguous-native-boundary','unsafe-native-home-layout','unsafe-native-history-list','return-slot-outside-native-header','unsafe-native-reading-viewport','overlapping-native-boundary','native-content-occupies-return-slot','unsafe-native-geometry','unsafe-native-project-layout','region-identity-changed','native-region-changed','unavailable']);
 export const foregroundFailureStates=Object.freeze(['invalid-host-document','stale-host-document','scope-not-verified','replayed-sequence','host-refresh-unavailable','host-unavailable','capacity','transport-unavailable','scope-unverified','scope-changed'].map(reason=>'foreground-'+reason));
 export const helloFailureStates=Object.freeze(['transport-unavailable','invalid-binding','invalid-host-hello','invalid-sender','not-current-document','invalidated-during-check','replayed-sequence','capacity','bad-document-token','epoch-capacity','host-document-unavailable','host-unavailable'].map(reason=>'hello-'+reason));
 export const initializationFailureStates=Object.freeze(['preparation','candidates','snippets','navigation','surface','controller'].map(stage=>'initialization-'+stage+'-failed'));
@@ -29,6 +31,10 @@ export function validLayoutShape(value){
   // Passive structural evidence does not require a successful UI mount or
   // navigation batch. Absence of those fields is not an empty inventory.
   return exact(value,[...Object.keys(rest),'sidebarStructure'])&&validSidebarStructure(sidebarStructure)&&(Object.keys(rest).length===0||validLayoutShape(rest));
+ }
+ if(exact(value,['navigation','delivery','presentation'])&&value.presentation&&Object.hasOwn(value.presentation,'boundary')){
+  const {boundary,...rest}=value.presentation;
+  return (boundary===null||exact(boundary,['phase','reason','key'])&&['initial','presentation'].includes(boundary.phase)&&nativeBoundaryFailureReasons.includes(boundary.reason)&&[null,'header','reading','composer','readingViewport'].includes(boundary.key))&&validLayoutShape({...value,presentation:rest});
  }
  if(exact(value,['navigation','delivery','presentation'])&&value.presentation&&Object.hasOwn(value.presentation,'layoutGeometry')){
   const {layoutGeometry,...rest}=value.presentation;

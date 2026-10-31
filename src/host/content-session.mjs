@@ -429,6 +429,8 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
    });
   };runtime.onMessage.addListener(s.listener);
   let startupPhase='hello';
+  // Historical first-start phase only. Current presentation and boundary state
+  // are read through the private controller status/layout, without ancestor writes.
   const reportStartup=phase=>{if(current!==s)return;startupFailure=[...initializationFailureStates,'layout-failed','hello-failed','adapter-failed','authorization-failed','surface-failed'].includes(phase)?{url:s.url,shape:s.layoutShape??null,state:phase==='hello-failed'&&helloFailureStates.includes(s.helloFailure)?s.helloFailure:phase==='layout-failed'&&layoutFailureStates.includes(s.layoutFailure)?s.layoutFailure:phase==='surface-failed'&&surfaceFailureStates.includes(s.surfaceFailure)?s.surfaceFailure:phase}:null;if(doc.documentElement?.dataset)doc.documentElement.dataset.vaiwlStartup=phase;};
   reportStartup(startupPhase);
   try{
