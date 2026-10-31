@@ -1,6 +1,7 @@
 import {buildMergePlan,buildSplitPlan,buildSeriesPlan,buildCompensationPlan,previewDelete,previewRemoveAIArtifacts,legacyResolutionPlan,emptyOverlay} from '../domain/index.mjs';
 import {runLocalSuggestions} from '../organize/index.mjs';
 import {buildLaunchContext} from '../navigation/launch-context.mjs';
+import {searchProReferencePage} from '../projection/project.mjs';
 
 /** UI facade over the six ports. Authority remains in owner closures; no grant,
  * receipt, credential or provider handle map is returned to the UI.
@@ -35,6 +36,8 @@ export async function createProController(owner,{mountNativeView=null}={}) {
     getState:()=>structuredClone(cached.state), getSnapshot:()=>structuredClone(cached.snapshot), getView:()=>view,
     getOperations:()=>structuredClone(cached.records.filter(r=>r.transaction.actor!=='system').map(r=>r.transaction)),
     getStatus:()=>({...owner.status(),mode,selectedProjectIds:[...selectedProjectIds],launchContext:reading,segment,rowLimit}),
+    searchPage:async(query,options={})=>({kind:'pro-search-page',protocol:'vaiwl-pro-public/1',versions:structuredClone(cached.snapshot.versions),...searchProReferencePage(cached.state,cached.snapshot,query,{...options,mode,selectedProjectIds})}),
+    async getAliases(targetKind,targetId,{offset=0,limit=24}={}){const target=targetKind==='topic'?cached.state.topics[targetId]:targetKind==='title'?cached.state.titles[targetId]:null;if(!target)throw Error('alias-target-unavailable');const all=target.aliases??[],aliases=all.slice(offset,offset+limit);return {kind:'pro-alias-page',protocol:'vaiwl-pro-public/1',versions:structuredClone(cached.snapshot.versions),targetKind,targetId,aliases,page:{offset,total:all.length,count:aliases.length,limit,hasMore:offset+aliases.length<all.length}};},
     subscribe(listener){listeners.add(listener);return()=>listeners.delete(listener);},refresh,dispatch,
     async previewUndo(id){return success(await ports.commit.previewUndo(owner.grant(),id,new AbortController().signal));},
     async undo(id,inverseHash){return dispatch({type:'UNDO_TRANSACTION',targetOperationId:id,reviewedInverseHash:inverseHash});},

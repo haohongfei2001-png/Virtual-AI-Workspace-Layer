@@ -8,25 +8,36 @@ import {exact, id, uint, hash, array, json, validateVersions, KIND_TABLES} from 
 export const PRO_OVERLAY_NAMESPACE = 'vaiwl-pro-overlay/1';
 export const PRO_BILLING_NAMESPACE = 'vaiwl-pro-billing/1';
 export const PRO_RECOVERY_NAMESPACE = 'vaiwl-pro-recovery/1';
+export const PRO_RECOVERY_READER = 'vaiwl-pro-recovery/2';
+export const PRO_SEGMENTED_READER = 'vaiwl-pro-storage/2';
+// A repaired root requires writers that atomically maintain the recovery
+// high-water marker. Earlier readers must not silently make unmarked edits.
+export const PRO_RECOVERED_READER = 'vaiwl-pro-storage/3';
+export const PRO_HISTORY_FORMAT = 'vaiwl-pro-history/1';
+// Portable data assets keep their /1 codec. Only segmented on-disk history
+// needs the newer reader, so old, valid compound backups remain importable.
 export const UNIFIED_MINIMUM_READER = 'vaiwl-unified-r1/1';
 export const PRO_STORAGE_REGISTRY = Object.freeze({
   databaseVersion: 4,
   minimumReader: UNIFIED_MINIMUM_READER,
   overlay: Object.freeze({namespace: PRO_OVERLAY_NAMESPACE, stores: Object.freeze(['b23_states','b23_checkpoints','b23_operations']),
-    maximumRootBytes: 16 * 1024 * 1024, maximumOperations: 10000, backup: 'data-only-scope-assets',
-    retention: 'retain-root-checkpoint-all-journal-and-inverse', downgrade: 'legacy-free-ignores-namespace'}),
+    maximumRootBytes: 16 * 1024 * 1024, maximumOperations: 10000, activeJournalWindow: 512, maximumHistoryBytes: 20 * 1024 * 1024, segmentedMinimumReader:PRO_SEGMENTED_READER, recoveredMinimumReader:PRO_RECOVERED_READER, backup: 'data-only-scope-assets',
+    retention: 'retain-root-checkpoint-all-journal-inverse-and-history-segments', downgrade: 'legacy-free-ignores-namespace; pre-segmentation-pro-reader-refuses-storage-2'}),
   billing: Object.freeze({namespace: PRO_BILLING_NAMESPACE, stores: Object.freeze(['b23_states','b23_operations']),
-    maximumRootBytes: 8 * 1024 * 1024, maximumOperations: 10000, maximumJobs: 1000,
+    maximumRootBytes: 8 * 1024 * 1024, maximumOperations: 10000, activeJournalWindow:512, maximumJobs: 1000,segmentedMinimumReader:'vaiwl-pro-billing-storage/2', userBudgetMinimumReader:'vaiwl-pro-billing-storage/3',
     backup: 'never-import-permissions-or-reset-installation-cost',
     retention: 'retain-all-including-uncertain-dispatch', downgrade: 'legacy-free-ignores-namespace'}),
   recovery: Object.freeze({namespace: PRO_RECOVERY_NAMESPACE, stores: Object.freeze(['b23_states']),
     maximumRecordBytes: 34 * 1024 * 1024, maximumReplayBytes: 64 * 1024 * 1024,
-    maximumSnapshotsPerScope: 1, backup: 'private-quarantine-not-a-portable-asset',
-    retention: 'retain-original-root-checkpoint-and-exact-repair-receipt', downgrade: 'legacy-free-ignores-namespace'})
+    maximumHeadBytes: 8192, activeReceiptIndexSize: 1, minimumReader:PRO_RECOVERY_READER, backup: 'private-quarantine-not-a-portable-asset',
+    retention: 'append-only-original-root-checkpoint-and-exact-repair-receipts', downgrade: 'legacy-free-ignores-namespace; legacy-pro-retains-first-quarantine'})
 });
 export const proRootKey = scopeKey => JSON.stringify([PRO_OVERLAY_NAMESPACE, scopeKey]);
 export const proOperationKey = (scopeKey, operationId) => JSON.stringify([proRootKey(scopeKey), operationId]);
 export const proRecoveryKey = scopeKey => JSON.stringify([PRO_RECOVERY_NAMESPACE, scopeKey]);
+export const proRecoveryHeadKey = scopeKey => JSON.stringify([proRecoveryKey(scopeKey),'head']);
+export const proRecoveryReceiptKey = (scopeKey,operationId) => JSON.stringify([proRecoveryKey(scopeKey),'receipt',operationId]);
+export const proHistoryKey = (scopeKey,number) => JSON.stringify([proRootKey(scopeKey),'history',number]);
 const encoder = new TextEncoder();
 export const proRecord = (key, payload, serialized=stable(payload)) => ({key,payload,checksum:sha256(serialized)});
 export function unpackProRecord(row,key) {
@@ -47,16 +58,19 @@ export function emptyProRoot(scopeKey) {
     targetScopeKey:scopeKey,sequence:0,state:emptyOverlay(scopeKey),operationIds:[]};
 }
 export function validateProRoot(root,scopeKey,{state=true}={}) {
-  exact(root,['format','minimumReader','scopeKey','targetScopeKey','sequence','state','operationIds']);
-  if(root.format!=='vaiwl-pro-root/1'||root.minimumReader!==PRO_OVERLAY_NAMESPACE||root.scopeKey!==proRootKey(scopeKey)||
+  const segmented=root?.format==='vaiwl-pro-root/2';
+  exact(root,['format','minimumReader','scopeKey','targetScopeKey','sequence','state','operationIds',...(segmented?['history']:[])]);
+  if((segmented?![PRO_SEGMENTED_READER,PRO_RECOVERED_READER].includes(root.minimumReader):root.format!=='vaiwl-pro-root/1'||![PRO_OVERLAY_NAMESPACE,PRO_RECOVERED_READER].includes(root.minimumReader))||root.scopeKey!==proRootKey(scopeKey)||
       root.targetScopeKey!==scopeKey)throw Error('pro-reader-incompatible');
-  uint(root.sequence);array(root.operationIds,PRO_STORAGE_REGISTRY.overlay.maximumOperations);
-  if(root.sequence!==root.operationIds.length||new Set(root.operationIds).size!==root.operationIds.length)throw Error('pro-journal-index-invalid');
+  if(segmented)validateProHistoryPointer(root.history);
+  uint(root.sequence);array(root.operationIds,segmented?PRO_STORAGE_REGISTRY.overlay.activeJournalWindow:PRO_STORAGE_REGISTRY.overlay.maximumOperations);
+  if(root.sequence!==(segmented?root.history.sequence:0)+root.operationIds.length||new Set(root.operationIds).size!==root.operationIds.length)throw Error('pro-journal-index-invalid');
   for(const operationId of root.operationIds)if(typeof operationId!=='string'||!/^[A-Za-z0-9_-]{1,128}$/.test(operationId))throw Error('pro-journal-operation-invalid');
   if(root.state?.scopeKey!==scopeKey)throw Error('pro-cross-scope-state');
   if(state)validateOverlay(root.state);
   return root;
 }
+export function validateProHistoryPointer(value){exact(value,['number','sequence','revision','visibleCount','checksum']);uint(value.number);uint(value.sequence);uint(value.revision);uint(value.visibleCount);hash(value.checksum);if(!value.number||!value.sequence||value.visibleCount>value.sequence)throw Error('pro-history-pointer-invalid');return value;}
 export function validateProJournal(row,scopeKey) {
   exact(row,['format','scopeKey','targetScopeKey','sequence','fingerprint','transaction']);
   if(row.format!=='vaiwl-pro-journal/1'||row.scopeKey!==proRootKey(scopeKey)||row.targetScopeKey!==scopeKey)throw Error('pro-journal-cross-scope');
@@ -100,9 +114,11 @@ export function validateProJournalChain(root,records) {
   records.sort((a,b)=>a.sequence-b.sequence);
   for(let i=0;i<records.length;i++){
     const r=validateProJournal(records[i],root.targetScopeKey);
-    if(r.sequence!==i+1||r.transaction.operationId!==root.operationIds[i]||
+    if(r.sequence!==(root.history?.sequence??0)+i+1||r.transaction.operationId!==root.operationIds[i]||
         i>0&&r.transaction.base.overlayRevision!==records[i-1].transaction.resultRevision)throw Error('pro-journal-chain-invalid');
   }
+  if(records.length&&root.history&&records[0].transaction.base.overlayRevision!==root.history.revision)throw Error('pro-journal-chain-invalid');
+  if(!records.length&&root.history&&root.history.revision!==root.state.revision)throw Error('pro-journal-root-mismatch');
   if(records.length&&records.at(-1).transaction.resultRevision!==root.state.revision)throw Error('pro-journal-root-mismatch');
   return records;
 }

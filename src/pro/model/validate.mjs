@@ -3,7 +3,7 @@ import {MODEL_OUTPUT_SCHEMA} from './output-schema.mjs';
 import {validateSchema} from './schema-runtime.mjs';
 import {sameVersions} from '../evidence/metadata.mjs';
 import {validateProviderPayload} from './payload.mjs';
-import {lexicalOverlap} from '../organize/recall.mjs';
+import {lexicalOverlap, conflictingVersions} from '../organize/recall.mjs';
 
 export function validateModelSchema(value) { return validateSchema(value, MODEL_OUTPUT_SCHEMA); }
 const normalized = text => text.normalize('NFKC').toLocaleLowerCase('en-US');
@@ -52,6 +52,7 @@ export function validateModelOutput(reply, {payload: rawPayload, handleMap, pack
       if (!payload.candidateTopics.some(entry => entry.handle === handle) || !topic || topic.lifecycle !== 'active' || topic.scopeKey !== overlay.scopeKey) throw Error('stale-topic');
       if (constraints.some(c => c.kind === 'exclude-topic' && c.refId === refId && c.topicId === id)) throw Error('hard-pair-exclusion');
       const comparison = [topic.name, ...(topic.aliases ?? []), topic.intent?.object ?? '', topic.intent?.objective ?? ''].join(' ');
+      if (conflictingVersions(evidence, comparison)) throw Error('conflicting-topic-version');
       if (!lexicalOverlap(evidence, comparison).common.length && !normalized(evidence).includes(normalized(topic.name))) throw Error('unsupported-topic-evidence');
       return id;
     };

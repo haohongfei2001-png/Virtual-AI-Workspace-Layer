@@ -56,6 +56,8 @@ test('A04 session jobs stay local RAM and are discarded on restart', () => {
 test('bounded queue deduplicates same semantic input and rejects conflicting job identity', () => {
   const q = queued(); assert.equal(admitJob([q], q).admitted, false);
   assert.equal(admitJob([q], {...q, id: 'another_job'}).reason, 'deduplicated');
-  assert.throws(() => admitJob([q], {...q, inputFingerprint: digest('other')}), /job-id-conflict/);
-  assert.throws(() => admitJob([q], {...q, id: 'new', dedupeKey: digest('new')}, {maxQueued: 1}), /job-queue-limit/);
+  const changed = queueJob({id: q.id, scope, versions, inputFingerprint: digest('other'), modelBinding: binding, processing: 'cloud'});
+  assert.throws(() => admitJob([q], changed), /job-id-conflict/);
+  const other = queueJob({id: 'new', scope, versions, inputFingerprint: digest('new'), modelBinding: binding, processing: 'cloud'});
+  assert.throws(() => admitJob([q], other, {maxQueued: 1}), /job-queue-limit/);
 });

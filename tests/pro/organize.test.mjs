@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {digest} from '../../src/data/hash.mjs';
 import {emptyOverlay, validateProposal} from '../../src/pro/domain/index.mjs';
 import {prepareMetadataEvidence, authorizeContentPack, buildProviderPayload, validateModelOutput, runLocalSuggestions,
-  planSuggestions, recallTopics, incrementalCacheKey, createSuggestionCache, semanticActionDigest, automaticGate} from '../../src/pro/organize/index.mjs';
+  planSuggestions, recallTopics, incrementalCacheKey, createSuggestionCache, semanticActionDigest, automaticGate, evaluateDataset} from '../../src/pro/organize/index.mjs';
 
 function setup() {
   const scope = {kind: 'verified-scope', key: 'scope_fixture', serverIdentity: 'established', persistence: 'same-idb'};
@@ -156,9 +156,14 @@ test('A12/A14 each auto lane needs actual quality and first round stays preview'
   const fixture = setup(), pack = evidence(fixture), result = await runLocalSuggestions({pack, overlay: fixture.overlay});
   const proposal = result.proposals[0];
   assert.equal(automaticGate(proposal, {overlay: fixture.overlay, pack, firstRun: false, autoRequested: true}).eligible, false);
-  const model = {profileId: 'model_fixture', modelVersion: 'snapshot', promptVersion: 'prompt1', outputSchemaVersion: 'vaiwl-pro-model-output/1'};
-  const quality = {approvedByOwner: true, report: {status: 'evaluated-unapproved', naturalSampleCount: 1000, leakage: false,
-    mandatoryCounterexamplesPassed: true, modelBinding: model, lanes: {'existing-topic': {qualified: true}, 'new-topic': {qualified: false}}}};
+  const binding = {profileId: 'model_fixture', modelVersion: 'snapshot', promptVersion: 'prompt1', outputSchemaVersion: 'vaiwl-pro-model-output/1'};
+  // Fabricated counts exercise owner gating only. These are not a natural
+  // benchmark, model-quality claim or a report shipped with the product.
+  const samples = Array.from({length: 1000}, (_, i) => ({id: 'gate_fixture_' + i, lane: 'existing-topic', split: 'final',
+    provenance: 'natural-consented', decision: 'automatic', eligible: true, correct: true, userGroup: 'u_' + i,
+    objectGroup: 'o_' + i, seriesGroup: 's_' + i, timePartition: 't_' + i, annotators: ['a', 'b'], annotationAgreement: true}));
+  const report = evaluateDataset({samples, modelBinding: binding, eligibleCohortIds: samples.map(row => row.id), mandatoryCounterexamplesPassed: true});
+  const model = {...binding, qualityGateReference: report.reportDigest}, quality = {approvedByOwner: true, report};
   assert.equal(automaticGate(proposal, {overlay: fixture.overlay, pack, quality, modelProfile: model, firstRun: true, autoRequested: true}).eligible, false);
   assert.equal(automaticGate(proposal, {overlay: fixture.overlay, pack, quality, modelProfile: model, firstRun: false, autoRequested: true}).eligible, true);
   const newProposal = result.proposals.find(p => p.kind === 'new-topic');

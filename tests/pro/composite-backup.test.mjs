@@ -7,6 +7,7 @@ import {WorkspaceRepository} from '../../src/data/repository.mjs';
 import {digest,stable} from '../../src/data/hash.mjs';
 import {createCompositeBackupRepository,parseCompositeBackup,previewOverlayMerge} from '../../src/pro/integration/composite-backup.mjs';
 import {normalizedScope} from '../../src/b1/identity.mjs';
+import {proRootKey,proOperationKey,proRecoveryHeadKey} from '../../src/pro/integration/storage-registry.mjs';
 const clone=x=>structuredClone(x);
 async function fixture(name,{seed=false,scope=FIXTURE_SCOPE}={}){
  const factory=new MockIDBFactory(),owner=await createFixtureOwner({indexedDB:factory,databaseName:'composite_'+name,fixtureOnly:true,scope}),controller=await createProController(owner),workspace=new WorkspaceRepository({baseRepository:owner.base,evidenceGate:()=> 'synthetic'});let restored=0;
@@ -27,6 +28,19 @@ test('one data-only compound backup restores Free and Pro in the same DB4 transa
  const request=await plan(b,bundle),result=await b.composite.restoreBackup(b.scope,request);assert.equal(result.ok,true,result.reason);
  assert.equal((await b.workspace.read(b.scope)).state.workspaces.free_legacy.name,'原有人工工作区');assert.equal((await b.owner.store.read(b.owner.grant())).state.titles.c_beta.title,'保留派生标题');assert.deepEqual((await rows(b.db)).native_states,nativeBefore);assert.equal(b.restored(),1);assert.equal(b.db.version,4);assert.equal(b.factory.databasesMap.size,1);
  const before=await rows(b.db),replay=await b.composite.restoreBackup(b.scope,request);assert.equal(replay.ok,true,replay.reason);assert.equal(replay.replayed,true);assert.deepEqual(await rows(b.db),before);assert.equal(b.restored(),1);
+ }finally{a.controller.destroy();b.controller.destroy();}
+});
+
+test('compound restore after repair atomically advances the Pro recovery high-water and preserves its minimum reader',async()=>{
+ const a=await fixture('repaired_source',{seed:true}),b=await fixture('repaired_target');try{
+ await b.controller.dispatch({type:'CREATE_TOPIC',name:'恢复后的目标资产'});const expected=(await b.owner.readPrivate()).snapshot.versions,key=proRootKey(b.scope.key);
+ const remove=(store,id)=>new Promise((resolve,reject)=>{const tx=b.db.transaction(store,'readwrite');tx.objectStore(store).delete(id);tx.oncomplete=resolve;tx.onabort=()=>reject(tx.error);});
+ await remove('b23_states',key);const review=await b.owner.store.previewRecovery(b.owner.grant(),{expected}),repair=await b.owner.store.recover(b.owner.grant(),{operationId:'before_compound_repair',expected,planHash:review.planHash});assert.equal(repair.ok,true,repair.reason);
+ const bundle=await a.composite.exportBackup(a.scope),request=await plan(b,bundle,'after_repair_restore'),restored=await b.composite.restoreBackup(b.scope,request);assert.equal(restored.ok,true,restored.reason);
+ const saved=await rows(b.db),root=saved.b23_states.find(row=>row.key===key),head=saved.b23_states.find(row=>row.key===proRecoveryHeadKey(b.scope.key)),pro=await b.owner.raw();
+ assert.equal(root.payload.minimumReader,'vaiwl-pro-storage/3');assert.equal(head.payload.current.sequence,pro.sequence);assert.equal(head.payload.current.overlayRevision,pro.state.revision);assert.equal(head.payload.current.checksum,root.checksum);assert.equal(pro.state.titles.c_beta.title,'保留派生标题');
+ await remove('b23_states',key);await remove('b23_operations',proOperationKey(b.scope.key,request.operationId));const damaged=await rows(b.db);
+ await assert.rejects(()=>b.owner.store.previewRecovery(b.owner.grant(),{expected:{...expected,overlayRevision:0,constraintRevision:0}}),/incomplete-history|high-water/);assert.deepEqual(await rows(b.db),damaged);
  }finally{a.controller.destroy();b.controller.destroy();}
 });
 

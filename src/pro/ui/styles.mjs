@@ -13,5 +13,17 @@ export const proCSS = sharedCSS + `
 :host([data-vaiwl-theme="dark"]){--ink:#ececec;--muted:#b4b4b4;--surface:#212121;--line:#444;--hover:#303030;--bubble:#2b2b2b;--focus:#ddd}
 :host([data-vaiwl-theme="light"]) .pro-sidebar{background:#f9f9f9}:host([data-vaiwl-theme="dark"]) .pro-sidebar{background:#171717}
 :host([data-pro-role]){font-family:var(--vaiwl-font-family,system-ui)}
+.pro-sheet-head h2,.pro-sheet-footer button,.pro-actions button,.pro-note,.pro-scope,.pro-notice{overflow-wrap:anywhere;min-width:0}
+.pro-sheet-footer{max-height:45%;overflow:auto;overscroll-behavior:contain}
+.pro-sheet-footer button{flex-shrink:1}
+.pro-sheet> .pro-warning{margin:0 18px 12px;flex:none}
+button[aria-busy=true]{cursor:progress;opacity:.65}
+.pro-sidebar-feedback{font-size:12px;line-height:20px;color:var(--muted);margin:0;padding:8px 12px;overflow-wrap:anywhere}
+.pro-sidebar-feedback:empty{display:none}
+.pro-sidebar summary>span:not(.chevron){min-width:0;overflow-wrap:anywhere}
+.pro-sidebar summary svg{flex:none}
+.pro-advanced{border-top:1px solid var(--line);margin:18px 0;padding-top:10px;font-size:12px;line-height:21px}
+.pro-advanced>summary{cursor:pointer;padding:5px 0;color:var(--muted)}
+@media(max-height:420px){.pro-toolbar{min-height:44px;padding-top:5px;padding-bottom:5px}.pro-sheet-head{padding-top:10px;padding-bottom:8px}.pro-sheet-footer{padding-top:8px;padding-bottom:8px}.pro-layer.wide{padding:5px}}
 
 `;

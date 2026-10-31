@@ -5,7 +5,7 @@ import {MockIDBFactory} from '../b23/mock-idb.mjs';
 import {createFixtureOwner} from './support/fixture-owner.mjs';
 import {createProController} from '../../src/pro/runtime/controller.mjs';
 import {createSameDatabaseStore} from '../../src/pro/integration/same-db-store.mjs';
-import {proRootKey,proOperationKey,proRecoveryKey,proRetentionDecision} from '../../src/pro/integration/storage-registry.mjs';
+import {proRootKey,proOperationKey,proRecoveryKey,proRecoveryHeadKey,proRecoveryReceiptKey,proRetentionDecision} from '../../src/pro/integration/storage-registry.mjs';
 import {digest,stable} from '../../src/data/hash.mjs';
 
 async function edit(db,store,key,fn){return new Promise((resolve,reject)=>{const tx=db.transaction(store,'readwrite'),s=tx.objectStore(store),q=s.get(key);q.onsuccess=()=>{const row=fn(q.result);if(row===null)s.delete(key);else s.put(row);};tx.oncomplete=resolve;tx.onabort=()=>reject(tx.error);});}
@@ -86,10 +86,72 @@ test('abort after the immutable quarantine write and quota failure roll back roo
  }finally{f.controller.destroy();}}
 });
 
-test('quarantine is immutable, a new damaged root does not overwrite prior evidence, and another scope cannot replay it',async()=>{
- const f=await fixture('immutable');try{await edit(f.db,'b23_states',f.key,()=>null);const input=await request(f);assert.equal((await f.owner.store.recover(f.owner.grant(),input)).ok,true);await edit(f.db,'b23_states',f.key,()=>null);const before=await rows(f.db);
- await assert.rejects(()=>f.owner.store.previewRecovery(f.owner.grant(),{expected:f.expected}),/quarantine-occupied/);const again=await f.owner.store.recover(f.owner.grant(),{...input,operationId:'new_repair'});assert.equal(again.reason,'pro-recovery-quarantine-occupied');assert.deepEqual(await rows(f.db),before);
- const other=createSameDatabaseStore({enabled:true,connection:()=>f.db,verifyGrant:()=>({...f.owner.capabilities.scope,key:'other-scope'}),verifyInputFence(){throw Error('must-not-run');}});assert.equal(await other.reconcileRecovery({}, {operationId:input.operationId,requestFingerprint:input.requestFingerprint}),null);assert.deepEqual(await rows(f.db),before);
+test('repeated corruption appends immutable evidence, preserves new edits and replays every exact old repair',async()=>{
+ const f=await fixture('immutable');try{
+ await edit(f.db,'b23_states',f.key,()=>null);const first=await request(f),one=await f.owner.store.recover(f.owner.grant(),first);assert.equal(one.ok,true,one.reason);
+ const legacy=(await rows(f.db)).b23_states.find(row=>row.key===proRecoveryKey(f.owner.scope.key));
+ // No intervening edit: the prior explicit repair itself must prove the
+ // checkpoint high-water, instead of requiring a nonexistent fourth journal.
+ await edit(f.db,'b23_states',f.key,()=>null);const second=await request(f,'repair_twice');assert.notEqual(second.planHash,first.planHash);
+ const two=await f.owner.store.recover(f.owner.grant(),second);assert.equal(two.ok,true,two.reason);assert.deepEqual(await f.owner.store.read(f.owner.grant()),f.original);
+ const afterTwo=await rows(f.db),secondRow=afterTwo.b23_states.find(row=>row.key===proRecoveryReceiptKey(f.owner.scope.key,second.operationId));
+ assert.deepEqual(afterTwo.b23_states.find(row=>row.key===legacy.key),legacy);assert.equal(secondRow.payload.format,'vaiwl-pro-recovery/2');assert.equal(secondRow.payload.previous.checksum,legacy.checksum);assert.equal(proRetentionDecision(secondRow.key).action,'retain');
+ assert.equal(afterTwo.b23_states.find(row=>row.key===proRecoveryHeadKey(f.owner.scope.key)).payload.latest.number,2);
+ await f.controller.dispatch({type:'SET_DERIVED_TITLE',refId:'c_beta',title:'多次恢复后仍可继续人工编辑'});f.expected=f.controller.getSnapshot().versions;const updated=await f.owner.store.read(f.owner.grant());
+ await edit(f.db,'b23_states',f.key,row=>({...row,checksum:'0'.repeat(64)}));const third=await request(f,'repair_third'),three=await f.owner.store.recover(f.owner.grant(),third);assert.equal(three.ok,true,three.reason);assert.deepEqual(await f.owner.store.read(f.owner.grant()),updated);
+ const final=await rows(f.db);assert.deepEqual(final.b23_states.find(row=>row.key===legacy.key),legacy);assert.deepEqual(final.b23_states.find(row=>row.key===secondRow.key),secondRow);assert.equal(final.b23_states.find(row=>row.key===proRecoveryHeadKey(f.owner.scope.key)).payload.latest.number,3);
+ for(const [input,written] of [[first,one],[second,two],[third,three]]){const replay=await f.owner.store.reconcileRecovery(f.owner.grant(),{operationId:input.operationId,requestFingerprint:input.requestFingerprint});assert.equal(replay.replayed,true);assert.deepEqual(replay.value,written.value);assert.equal((await f.owner.store.recover(f.owner.grant(),input)).replayed,true);}
+ const conflict=await f.owner.store.reconcileRecovery(f.owner.grant(),{operationId:first.operationId,requestFingerprint:{changed:true}});assert.equal(conflict.reason,'operation-replay-conflict');
+ const other=createSameDatabaseStore({enabled:true,connection:()=>f.db,verifyGrant:()=>({...f.owner.capabilities.scope,key:'other-scope'}),verifyInputFence(){throw Error('must-not-run');}});assert.equal(await other.reconcileRecovery({}, {operationId:first.operationId,requestFingerprint:first.requestFingerprint}),null);assert.deepEqual(await rows(f.db),final);
+ }finally{f.controller.destroy();}
+});
+
+test('a headless legacy quarantine cannot prove a missing successor; its next normal write upgrades the writer fence',async()=>{
+ const f=await fixture('legacy_repair');try{
+ await edit(f.db,'b23_states',f.key,()=>null);const first=await request(f);assert.equal((await f.owner.store.recover(f.owner.grant(),first)).ok,true);
+ // Lawful old /1 persisted fixture: the old repair wrote a /1 reader root and
+ // checksum-bound receipt, with no high-water head. It cannot certify that an
+ // older writer never committed a later, now-missing successor.
+ await edit(f.db,'b23_states',f.key,row=>{row.payload.minimumReader='vaiwl-pro-overlay/1';row.checksum=digest(row.payload);return row;});
+ const legacyRoot=(await rows(f.db)).b23_states.find(row=>row.key===f.key);await edit(f.db,'b23_checkpoints',f.key,()=>structuredClone(legacyRoot));
+ await edit(f.db,'b23_states',proRecoveryKey(f.owner.scope.key),row=>{const p=row.payload;p.repairedChecksum=legacyRoot.checksum;p.receipt.planHash=digest({format:'vaiwl-pro-recovery/1',scopeKey:f.owner.scope.key,expected:f.expected,root:p.original.root,checkpoint:p.original.checkpoint,journalDigest:p.journalDigest,repairedChecksum:legacyRoot.checksum});row.checksum=digest(p);return row;});
+ const original=(await rows(f.db)).b23_states.find(row=>row.key===proRecoveryKey(f.owner.scope.key));await edit(f.db,'b23_states',proRecoveryHeadKey(f.owner.scope.key),()=>null);await edit(f.db,'b23_states',f.key,()=>null);
+ await assert.rejects(()=>f.owner.store.previewRecovery(f.owner.grant(),{expected:f.expected}),/high-water-unproven/);
+ await edit(f.db,'b23_states',f.key,()=>legacyRoot);await f.controller.dispatch({type:'SET_DERIVED_TITLE',refId:'c_beta',title:'旧版恢复后的新人工编辑'});f.expected=f.controller.getSnapshot().versions;const latest=await f.owner.raw();
+ const upgraded=await rows(f.db),head=upgraded.b23_states.find(row=>row.key===proRecoveryHeadKey(f.owner.scope.key));assert.equal(head.payload.current.sequence,latest.sequence);assert.equal(upgraded.b23_states.find(row=>row.key===f.key).payload.minimumReader,'vaiwl-pro-storage/3');
+ await edit(f.db,'b23_states',f.key,()=>null);const second=await request(f,'legacy_next'),result=await f.owner.store.recover(f.owner.grant(),second);assert.equal(result.ok,true,result.reason);assert.deepEqual((await rows(f.db)).b23_states.find(row=>row.key===original.key),original);assert.deepEqual(await f.owner.store.read(f.owner.grant()),latest);
+ assert.equal((await f.owner.store.reconcileRecovery(f.owner.grant(),{operationId:first.operationId,requestFingerprint:first.requestFingerprint})).replayed,true);
+ }finally{f.controller.destroy();}
+});
+
+test('repair then human edit then missing root and final journal cannot roll back to the earlier repaired checkpoint',async()=>{
+ const f=await fixture('lost_post_repair_edit');try{
+ await edit(f.db,'b23_states',f.key,()=>null);const first=await request(f);assert.equal((await f.owner.store.recover(f.owner.grant(),first)).ok,true);
+ await f.controller.dispatch({type:'SET_DERIVED_TITLE',refId:'c_beta',title:'最新人工资产不得因旧修复凭据而丢失'});const latest=await f.owner.raw(),last=latest.records.at(-1),head=(await rows(f.db)).b23_states.find(row=>row.key===proRecoveryHeadKey(f.owner.scope.key));assert.equal(head.payload.current.sequence,latest.sequence);
+ await edit(f.db,'b23_states',f.key,()=>null);await edit(f.db,'b23_operations',proOperationKey(f.owner.scope.key,last.transaction.operationId),()=>null);const damaged=await rows(f.db);
+ // A restarted owner cannot derive the lost overlay revision from an absent
+ // root. The durable marker, not this caller vector, must detect lost history.
+ const expected={...f.expected,overlayRevision:0,constraintRevision:0};await assert.rejects(()=>f.owner.store.previewRecovery(f.owner.grant(),{expected}),/high-water|incomplete-history/);assert.deepEqual(await rows(f.db),damaged);
+ assert.equal((await f.owner.store.reconcileRecovery(f.owner.grant(),{operationId:first.operationId,requestFingerprint:first.requestFingerprint})).replayed,true);assert.deepEqual(await rows(f.db),damaged);
+ }finally{f.controller.destroy();}
+});
+
+test('missing, rolled-back or corrupt recovery history is not replaced by a shorter repair sequence',async()=>{
+ for(const kind of ['head-missing','head-rollback','receipt-missing','receipt-corrupt']){const f=await fixture('history_'+kind);try{
+ await edit(f.db,'b23_states',f.key,()=>null);const first=await request(f);assert.equal((await f.owner.store.recover(f.owner.grant(),first)).ok,true);const headOne=(await rows(f.db)).b23_states.find(row=>row.key===proRecoveryHeadKey(f.owner.scope.key));
+ await edit(f.db,'b23_states',f.key,()=>null);const second=await request(f,'second');assert.equal((await f.owner.store.recover(f.owner.grant(),second)).ok,true);await edit(f.db,'b23_states',f.key,()=>null);
+ if(kind==='head-missing')await edit(f.db,'b23_states',headOne.key,()=>null);
+ else if(kind==='head-rollback')await edit(f.db,'b23_states',headOne.key,()=>headOne);
+ else await edit(f.db,'b23_states',proRecoveryReceiptKey(f.owner.scope.key,second.operationId),row=>kind==='receipt-missing'?null:{...row,checksum:'0'.repeat(64)});
+ const before=await rows(f.db);await assert.rejects(()=>f.owner.store.previewRecovery(f.owner.grant(),{expected:f.expected}),/pro-recovery-(?:head|history|receipt|quarantine)/);assert.deepEqual(await rows(f.db),before);
+ }finally{f.controller.destroy();}}
+});
+
+test('quota failure while appending a later repair keeps the previous head and every original receipt',async()=>{
+ const f=await fixture('append_quota');try{
+ await edit(f.db,'b23_states',f.key,()=>null);const first=await request(f);assert.equal((await f.owner.store.recover(f.owner.grant(),first)).ok,true);await edit(f.db,'b23_states',f.key,()=>null);
+ const second=await request(f,'second_quota'),before=await rows(f.db);f.factory.failNextPut=true;const rejected=await f.owner.store.recover(f.owner.grant(),second);assert.equal(rejected.ok,false);assert.match(rejected.reason,/Quota/);assert.deepEqual(await rows(f.db),before);
+ assert.equal((await f.owner.store.recover(f.owner.grant(),second)).ok,true);assert.deepEqual(await f.owner.store.read(f.owner.grant()),f.original);
  }finally{f.controller.destroy();}
 });
 
@@ -113,9 +175,19 @@ test('retained recovery evidence prevents an all-root-and-history-loss scope fro
  }finally{f.controller.destroy();}
 });
 
+test('an appended recovery receipt alone also prevents silent empty reinitialization',async()=>{
+ const f=await fixture('appended_witness');try{
+ await edit(f.db,'b23_states',f.key,()=>null);const first=await request(f);assert.equal((await f.owner.store.recover(f.owner.grant(),first)).ok,true);await edit(f.db,'b23_states',f.key,()=>null);const second=await request(f,'surviving_appended_receipt');assert.equal((await f.owner.store.recover(f.owner.grant(),second)).ok,true);
+ for(const key of [f.key,proRecoveryKey(f.owner.scope.key),proRecoveryHeadKey(f.owner.scope.key)])await edit(f.db,'b23_states',key,()=>null);
+ await edit(f.db,'b23_checkpoints',f.key,()=>null);for(const row of f.original.records)await edit(f.db,'b23_operations',proOperationKey(f.owner.scope.key,row.transaction.operationId),()=>null);
+ const before=await rows(f.db);assert(before.b23_states.some(row=>row.key===proRecoveryReceiptKey(f.owner.scope.key,second.operationId)));
+ await assert.rejects(()=>f.owner.store.read(f.owner.grant()),/missing-root-with-history/);await assert.rejects(()=>f.owner.store.previewRecovery(f.owner.grant(),{expected:f.expected}),/recovery-head-missing/);assert.deepEqual(await rows(f.db),before);
+ }finally{f.controller.destroy();}
+});
+
 test('concurrent same repair commits once and another operation cannot replace its immutable evidence',async()=>{
  const f=await fixture('concurrent');try{await edit(f.db,'b23_states',f.key,()=>null);const input=await request(f),grant=f.owner.grant();
  const both=await Promise.all([f.owner.store.recover(grant,input),f.owner.store.recover(grant,input)]);assert.equal(both.filter(r=>r.ok&&!r.replayed).length,1);assert.equal(both.filter(r=>r.ok&&r.replayed).length,1);
- const before=await rows(f.db),different=await f.owner.store.recover(grant,{...input,operationId:'different_repair'});assert.equal(different.reason,'pro-recovery-quarantine-occupied');assert.deepEqual(await rows(f.db),before);
+ const before=await rows(f.db),different=await f.owner.store.recover(grant,{...input,operationId:'different_repair'});assert.equal(different.reason,'pro-recovery-not-needed');assert.deepEqual(await rows(f.db),before);
  }finally{f.controller.destroy();}
 });

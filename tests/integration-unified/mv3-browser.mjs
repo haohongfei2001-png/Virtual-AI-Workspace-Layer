@@ -213,7 +213,12 @@ try{
  server.setPrincipal('user-host-fixture');await page.reload();await freeReady();f=await pro();await f.getByRole('heading',{name:NAME,exact:true}).waitFor();assert.equal(await f.getByRole('heading',{name:'Other account only',exact:true}).count(),0);check('verified offline principal switch cannot mix Pro namespaces');
  // Controller is a separate test-only extension. Product permissions remain
  // unchanged; disabling/uninstalling here affects only this disposable profile.
- await installLifecycleController();await page.bringToFront();await page.getByRole('button',{name:'返回原生阅读',exact:true}).click();await page.locator('textarea').fill('UNIFIED_UNSENT_DRAFT');await page.evaluate(()=>{globalThis.unifiedEditor=document.querySelector('textarea');});await workspace();assert.equal(await privateProjectionAbsent(page),false,'private-data detector needs a positive control before actual disable');
+ await installLifecycleController();await page.bringToFront();await page.getByRole('button',{name:'返回原生阅读',exact:true}).click();await page.locator('textarea').fill('UNIFIED_UNSENT_DRAFT');await page.evaluate(()=>{globalThis.unifiedEditor=document.querySelector('textarea');});f=await workspace();
+ // A new frame exposes its Free/Pro shell before the asynchronous owner mode
+ // and private projection have resumed. Prove the actual retained topic is
+ // visible before testing disable; shell readiness is not a positive control.
+ await f.getByRole('heading',{name:NAME,exact:true}).waitFor({timeout:10000});
+ assert.equal(await privateProjectionAbsent(page),false,'private-data detector needs a positive control before actual disable');
  const disabled=await control.evaluate(()=>setTargetEnabled(false));assert.equal(disabled.enabled,false);
  await page.waitForFunction(()=>[...document.querySelectorAll('[data-va-owned]')].every(n=>!n.matches(':popover-open')),null,{timeout:15000});assert(await privateProjectionAbsent(page));await assertDraft();await page.locator('textarea').fill('UNIFIED_NATIVE_AFTER_DISABLE');await page.getByRole('button',{name:'Tools',exact:true}).click();await page.locator('#native-dialog').getByRole('button',{name:'Close',exact:true}).click();check('actual extension disable retires private UI and restores native draft and tools');
  const enabled=await control.evaluate(()=>setTargetEnabled(true));assert.equal(enabled.enabled,true);await page.reload();await freeReady();f=await pro();await f.getByRole('heading',{name:NAME,exact:true}).waitFor();check('same extension ID reenable retains user assets');

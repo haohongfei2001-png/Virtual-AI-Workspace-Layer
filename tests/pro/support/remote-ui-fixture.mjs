@@ -3,7 +3,7 @@
 import {digest} from '../../../src/data/hash.mjs';
 import {emptyOverlay,placementId,planTransaction,buildSplitPlan,buildMergePlan,legacyResolutionPlan,previewUndo,registerProposal,overlayChanges} from '../../../src/pro/domain/index.mjs';
 import {buildSeriesEditPlan} from '../../../src/pro/integration/series-edit.mjs';
-import {projectPublicPage,projectPublicPanel,projectPublicPreview,projectPublicOperationReview,publicVersions,publicStatus} from '../../../src/pro/integration/public-frame-dto.mjs';
+import {projectPublicPage,projectPublicPanel,projectPublicSearch,projectPublicPreview,projectPublicOperationReview,publicVersions,publicStatus} from '../../../src/pro/integration/public-frame-dto.mjs';
 import {createRemoteProController} from '../../../src/pro/ui/remote-controller.mjs';
 import {createProWorkspace} from '../../../src/pro/ui/workspace.mjs';
 import {nextSeriesEntry} from '../../../src/pro/navigation/launch-context.mjs';
@@ -25,6 +25,7 @@ const assetDigest=()=>digest({topics:state.topics,placements:state.placements,se
 const remote=createRemoteProController({request:async(action,payload)=>{
   calls.push({action,payload});const current=snapshot(),input={state,snapshot:current,status:status(),view:{mode,native:null},records};let value;
   if(action==='view'&&payload.op==='page')value=projectPublicPage({...input,query:payload});
+  else if(action==='view'&&payload.op==='search')value=projectPublicSearch({...input,...payload});
   else if(action==='view'&&payload.op==='panel')value=projectPublicPanel({...input,...payload});
   else if(action==='view'&&payload.op==='operation-review'){
     const entry=previews.get(payload.previewId);if(entry?.kind!=='undo-review'||payload.expected.reviewId!==publicVersions(versions()).reviewId||payload.offset>entry.reviewNext)return {ok:false};
@@ -80,6 +81,7 @@ window.testApi={series:()=>structuredClone(state.series.series),calls:()=>struct
     state.revision++;await remote.refresh({force:true});
   },
   unresolved:()=>Object.values(state.legacyResolutions).filter(r=>r.status==='primary-resolution-required').map(r=>r.refId),topicState:id=>structuredClone(state.topics[id]),
+  async seedManyRelations(){const refId=references[0].id;for(const topic of Object.values(state.topics).filter(t=>t.lifecycle==='active')){const key=placementId(topic.id,refId);if(state.placements[key]?.role==='primary'||Object.values(state.constraints).some(c=>c.kind==='exclude-topic'&&c.refId===refId&&c.topicId===topic.id))continue;state.placements[key]={conversationId:refId,topicId:topic.id,role:'related',activityContribution:'none',state:'included',control:{...control,locked:false},constraintRefs:[],evidenceIds:[],revision:1};}state.revision++;await remote.refresh({force:true});},
   referenceState:n=>({title:structuredClone(state.titles[references[n-1].id]),placements:structuredClone(Object.values(state.placements).filter(p=>p.conversationId===references[n-1].id))}),selectedProjects:()=>[...selectedProjectIds],
   async bumpReview(){state.revision++;await remote.refresh({force:true});},
   recoveryCounts:()=>({previews:recoveryPreviews,applies:recoveryApplies}),dropNextRecoveryReply(){recoveryDrop=true;},

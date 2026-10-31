@@ -119,7 +119,9 @@ export function reserveBudget(current, request) {
       if (r.billingProfileId !== billingProfileId || r.currency !== currency) continue;
       // Unknown liabilities cannot be escaped by rolling windows or switching
       // scope; hold them against every later applicable installation budget.
-      if (r.policyIds.includes(policy.id) || (r.status === 'sent-uncertain' &&
+      const inPolicyWindow = instant(row.createdAt) >= instant(policy.window.from) && instant(row.createdAt) <= instant(policy.window.through) &&
+        (policy.appliesTo.kind === 'installation-total' || row.scopeKey === policy.appliesTo.scopeKey);
+      if (r.policyIds.includes(policy.id) || inPolicyWindow || (r.status === 'sent-uncertain' &&
           (policy.appliesTo.kind === 'installation-total' || row.scopeKey === scope.key))) spent += liability(r);
     }
     if (spent + BigInt(maximum) > BigInt(policy.ceiling)) throw Error('budget-exceeded');
@@ -131,14 +133,29 @@ export function reserveBudget(current, request) {
   return {ledger: validateBudgetLedger(ledger), reservation: structuredClone(reservation), idempotent: false};
 }
 
-export function markBudgetDispatched(current, id, expectedRevision, providerRequestId = null) {
+export function markBudgetDispatched(current, id, expectedRevision, providerRequestId = null, {now = null} = {}) {
   const ledger = validateBudgetLedger(current), row = ledger.reservations[id];
   if (!row || row.reservation.revision !== expectedRevision || row.reservation.status !== 'reserved' || row.dispatchRecorded) throw Error('reservation-not-dispatchable');
   if (ledger.blockedBillingProfiles[row.reservation.billingProfileId]) throw Error('billing-reconciliation-required');
-  for (const policyId of row.reservation.policyIds) {
-    const policy = ledger.policies[policyId];
+  const time = now === null ? null : instant(now);
+  // Re-check every applicable installation/scope policy, including one added
+  // after reservation. Reserve-time approval cannot survive a stricter policy.
+  const relevant = Object.values(ledger.policies).filter(policy => policy.billingProfileId === row.reservation.billingProfileId &&
+    (policy.appliesTo.kind === 'installation-total' || policy.appliesTo.scopeKey === row.scopeKey) &&
+    (time === null ? row.reservation.policyIds.includes(policy.id) : time >= instant(policy.window.from) && time <= instant(policy.window.through)));
+  if (time !== null && (!relevant.some(policy => policy.appliesTo.kind === 'installation-total') ||
+      row.reservation.policyIds.some(policyId => { const p = ledger.policies[policyId]; return time < instant(p.window.from) || time > instant(p.window.through); }))) throw Error('budget-window-expired-before-dispatch');
+  for (const policy of relevant) {
+    if (policy.currency !== row.reservation.currency || policy.pricingVersion !== row.reservation.priceCardVersion) throw Error('budget-price-changed-before-dispatch');
     let committed = 0n;
-    for (const record of Object.values(ledger.reservations)) if (record.reservation.policyIds.includes(policyId)) committed += liability(record.reservation);
+    for (const record of Object.values(ledger.reservations)) {
+      const r = record.reservation;
+      if (r.billingProfileId !== row.reservation.billingProfileId || r.currency !== row.reservation.currency) continue;
+      const inPolicyWindow = instant(record.createdAt) >= instant(policy.window.from) && instant(record.createdAt) <= instant(policy.window.through) &&
+        (policy.appliesTo.kind === 'installation-total' || record.scopeKey === policy.appliesTo.scopeKey);
+      if (r.policyIds.includes(policy.id) || inPolicyWindow || (r.status === 'sent-uncertain' &&
+          (policy.appliesTo.kind === 'installation-total' || record.scopeKey === row.scopeKey)) || record === row) committed += liability(r);
+    }
     if (committed > BigInt(policy.ceiling)) throw Error('budget-tightened-before-dispatch');
   }
   const {maxCharge, ...base} = row.reservation;
@@ -166,10 +183,44 @@ export function settleReservation(current, id, expectedRevision, {actualCharge, 
   row.reservation = {...base, status: 'settled', actualCharge, reportedExactChargeDecimal, revision: expectedRevision + 1}; ledger.revision++;
   return {ledger: validateBudgetLedger(ledger), reservation: structuredClone(row.reservation), exceededReservation};
 }
-export function budgetSummary(current, billingProfileId) {
+/** The billing owner may archive FINALIZED entries only after every original
+ * window has ended. It must persist retired-ID receipts and these totals in the
+ * same transaction as this ledger; this helper does not delete database rows.
+ * Reserved and sent-uncertain liability is never eligible, even across years. */
+export function archiveFinalizedReservations(current, {now, retainReservationIds = []} = {}) {
+  const ledger = validateBudgetLedger(current), time = instant(now);
+  if (!Array.isArray(retainReservationIds) || retainReservationIds.length > 10000 || new Set(retainReservationIds).size !== retainReservationIds.length) throw Error('invalid-reservation-retention');
+  retainReservationIds.forEach(value => boundedText(value, 128));
+  const retained = new Set(retainReservationIds), archived = [], totals = new Map();
+  for (const [id, row] of Object.entries(ledger.reservations)) {
+    const reservation = row.reservation;
+    if (retained.has(id) || !['settled', 'released'].includes(reservation.status) ||
+        reservation.policyIds.some(policyId => instant(ledger.policies[policyId].window.through) >= time)) continue;
+    archived.push({id, jobId: reservation.jobId, scopeKey: row.scopeKey, billingProfileId: reservation.billingProfileId,
+      currency: reservation.currency, status: reservation.status, requestDigest: row.requestDigest,
+      actualCharge: reservation.status === 'settled' ? reservation.actualCharge : 0});
+    const key = JSON.stringify([reservation.billingProfileId, reservation.currency]);
+    if (!totals.has(key)) totals.set(key, {billingProfileId: reservation.billingProfileId, currency: reservation.currency, settled: 0n});
+    totals.get(key).settled += BigInt(reservation.status === 'settled' ? reservation.actualCharge : 0);
+    delete ledger.reservations[id];
+  }
+  if (archived.length) ledger.revision++;
+  return {ledger: validateBudgetLedger(ledger), archived,
+    settledTotals: [...totals.values()].map(row => ({...row, settled: safe(row.settled)}))};
+}
+
+export function budgetSummary(current, billingProfileId, {archivedSettledTotals = []} = {}) {
   const ledger = validateBudgetLedger(current);
   let reserved = 0n, uncertain = 0n, settled = 0n;
   const currencies = new Set();
+  if (!Array.isArray(archivedSettledTotals) || archivedSettledTotals.length > 10000) throw Error('invalid-archived-billing-totals');
+  const seen = new Set();
+  for (const row of archivedSettledTotals) {
+    exact(row, ['billingProfileId', 'currency', 'settled']); boundedText(row.billingProfileId, 128); currencyOK(row.currency); integer(row.settled);
+    const key = JSON.stringify([row.billingProfileId, row.currency]);
+    if (seen.has(key)) throw Error('duplicate-archived-billing-total'); seen.add(key);
+    if (row.billingProfileId === billingProfileId) { currencies.add(row.currency); settled += BigInt(row.settled); }
+  }
   for (const {reservation: r} of Object.values(ledger.reservations)) if (r.billingProfileId === billingProfileId) {
     currencies.add(r.currency);
     if (r.status === 'reserved') reserved += BigInt(r.maxCharge);
@@ -179,4 +230,79 @@ export function budgetSummary(current, billingProfileId) {
   if (currencies.size > 1) throw Error('mixed-currency-summary');
   return {currency: [...currencies][0] ?? null, reserved: safe(reserved), uncertain: safe(uncertain), settled: safe(settled),
     blocked: Boolean(ledger.blockedBillingProfiles[billingProfileId]), limitScope: 'this-installation-only'};
+}
+
+/** User choices are installation-wide money limits, never a scope, provider,
+ * price, time window or credential supplied by a frame. */
+export function validateUserBudgetLimits(input) {
+  const limits = boundedJSON(input, {maxBytes: 1024});
+  exact(limits, ['taskMicros', 'dayMicros', 'monthMicros']);
+  Object.values(limits).forEach(value => integer(value));
+  return limits;
+}
+export const userBudgetKey = billingProfileId => 'user_budget_' + digest(billingProfileId);
+export function budgetPeriods(now) {
+  const time = new Date(instant(now)), year = time.getUTCFullYear(), month = time.getUTCMonth(), day = time.getUTCDate();
+  if (year < 100 || year > 9998) throw Error('invalid-budget-time');
+  return {dayFrom: new Date(Date.UTC(year, month, day)).toISOString(), dayThrough: new Date(Date.UTC(year, month, day + 1) - 1).toISOString(),
+    monthFrom: new Date(Date.UTC(year, month, 1)).toISOString(), monthThrough: new Date(Date.UTC(year, month + 1, 1) - 1).toISOString()};
+}
+export function validateUserBudget(input) {
+  const value = boundedJSON(input, {maxBytes: 4096});
+  exact(value, ['billingProfileId', 'currency', 'providerProfileId', 'pricingVersion', 'revision', 'limits']);
+  for (const key of ['billingProfileId', 'providerProfileId', 'pricingVersion']) boundedText(value[key], 128);
+  currencyOK(value.currency); integer(value.revision); validateUserBudgetLimits(value.limits);
+  return value;
+}
+export function userBudgetPolicies(setting, ledger, now) {
+  const selected = validateUserBudget(setting), periods = budgetPeriods(now);
+  return ['day', 'month'].map(kind => {
+    const from = periods[kind + 'From'], id = 'user_' + kind + '_' + digest([selected.billingProfileId, selected.currency, from]);
+    const old = ledger.policies[id];
+    return {id, billingProfileId: selected.billingProfileId, appliesTo: {kind: 'installation-total'}, currency: selected.currency, scale: 6,
+      ceiling: selected.limits[kind + 'Micros'], window: {from, through: periods[kind + 'Through']}, providerProfileId: selected.providerProfileId,
+      pricingVersion: selected.pricingVersion, revision: (old?.revision ?? 0) + 1};
+  });
+}
+/** Current-period spending includes all scopes and all reserved/unknown money.
+ * In particular, crossing midnight never makes an unresolved charge free. */
+export function userBudgetUsage(current, {billingProfileId, currency, now}) {
+  const ledger = validateBudgetLedger(current), periods = budgetPeriods(now), totals = {dayMicros: 0n, monthMicros: 0n};
+  for (const row of Object.values(ledger.reservations)) {
+    const r = row.reservation;
+    if (r.billingProfileId !== billingProfileId || r.currency !== currency || r.status === 'released') continue;
+    for (const kind of ['day', 'month']) if (['reserved', 'sent-uncertain'].includes(r.status) ||
+        instant(row.createdAt) >= instant(periods[kind + 'From']) && instant(row.createdAt) <= instant(periods[kind + 'Through'])) totals[kind + 'Micros'] += liability(r);
+  }
+  return {dayMicros: safe(totals.dayMicros), monthMicros: safe(totals.monthMicros)};
+}
+export function applicableBudgetRemaining(current, {billingProfileId, currency, providerProfileId, pricingVersion, scopeKey = null, now}) {
+  const ledger = validateBudgetLedger(current), time = instant(now);
+  const policies = Object.values(ledger.policies).filter(p => p.billingProfileId === billingProfileId && time >= instant(p.window.from) && time <= instant(p.window.through) &&
+    (p.appliesTo.kind === 'installation-total' || p.appliesTo.scopeKey === scopeKey));
+  let remaining = Number.MAX_SAFE_INTEGER;
+  for (const p of policies) {
+    if (p.currency !== currency || p.providerProfileId !== providerProfileId || p.pricingVersion !== pricingVersion) return 0;
+    let used = 0n;
+    for (const row of Object.values(ledger.reservations)) {
+      const r = row.reservation;
+      if (r.billingProfileId !== billingProfileId || r.currency !== currency) continue;
+      const inWindow = instant(row.createdAt) >= instant(p.window.from) && instant(row.createdAt) <= instant(p.window.through) &&
+        (p.appliesTo.kind === 'installation-total' || row.scopeKey === p.appliesTo.scopeKey);
+      if (r.policyIds.includes(p.id) || inWindow || r.status === 'sent-uncertain' &&
+          (p.appliesTo.kind === 'installation-total' || row.scopeKey === scopeKey)) used += liability(r);
+    }
+    remaining = Math.min(remaining, used >= BigInt(p.ceiling) ? 0 : safe(BigInt(p.ceiling) - used));
+  }
+  return remaining;
+}
+/** This digest excludes ordinary job/spend revisions so independent work does
+ * not revoke another task. It includes every current policy and user choice;
+ * externally administered tightening therefore invalidates the same fence. */
+export function userBudgetFingerprint({ledger, userBudgets = {}}, binding, scopeKey, now) {
+  const time = instant(now), setting = userBudgets[userBudgetKey(binding.billingProfileId)] ?? null;
+  const policies = Object.values(ledger.policies).filter(p => p.billingProfileId === binding.billingProfileId &&
+    time >= instant(p.window.from) && time <= instant(p.window.through) &&
+    (p.appliesTo.kind === 'installation-total' || p.appliesTo.scopeKey === scopeKey)).sort((a, b) => a.id.localeCompare(b.id));
+  return digest({binding, setting, policies, blocked: ledger.blockedBillingProfiles[binding.billingProfileId] ?? null, periods: budgetPeriods(now)});
 }

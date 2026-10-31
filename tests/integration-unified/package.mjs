@@ -22,9 +22,15 @@ try{
   const modules=Object.keys(info.files),proModules=modules.filter(path=>path.startsWith('src/pro/'));
   const exposed=new Set(manifest.web_accessible_resources.flatMap(row=>row.resources));
   assert(!modules.some(path=>path.startsWith('tests/')||path.includes('fixture-owner')),'test owner must never be packaged');
-  assert.equal(manifest.content_security_policy.extension_pages.includes("connect-src 'none'"),true,'formal Browser-Local has no cloud transport');
-  if(name==='standalone-free')assert.equal(proModules.length,0,'Free package must not import Pro');
+  if(name==='standalone-free'){
+   assert.equal(manifest.content_security_policy.extension_pages,"script-src 'self'; object-src 'none'; connect-src 'none'",'Free Browser-Local retains its exact no-network CSP');
+   assert.equal(Object.hasOwn(manifest,'optional_host_permissions'),false,'Free has no optional model permission');
+   assert.equal(proModules.length,0,'Free package must not import Pro');
+  }
   else{
+   assert.equal(manifest.content_security_policy.extension_pages,"script-src 'self'; object-src 'none'; connect-src https://api.openai.com",'Pro permits only its fixed future provider transport');
+   assert.deepEqual(manifest.optional_host_permissions,['https://api.openai.com/*'],'Pro provider permission is optional and exact');
+   assert.deepEqual(manifest.host_permissions,['https://chatgpt.com/*'],'Pro does not add a required provider grant');
    for(const required of ['src/pro/ui/remote-controller.mjs','src/pro/integration/worker-service.mjs','src/pro/integration/same-db-store.mjs'])assert(modules.includes(required),'missing production Pro module '+required);
    for(const path of proModules.filter(path=>/integration\/(?:worker-service|production-owner|same-db-store|billing-store|composite-backup|storage-registry|storage-recovery)|runtime\/controller|model\//.test(path)))assert(!exposed.has(path),'private Pro module exposed as WAR: '+path);
   }

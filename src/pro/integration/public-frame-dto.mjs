@@ -1,5 +1,5 @@
 import {digest} from '../../data/hash.mjs';
-import {projectTopicGroups, searchProReferences} from '../projection/project.mjs';
+import {projectTopicGroups, searchProReferencePage} from '../projection/project.mjs';
 import {createURLPolicy} from '../../host/url-policy.mjs';
 
 export const PRO_FRAME_BYTES = 65536;
@@ -47,8 +47,8 @@ export function publicStatus(status = {}) {
   const result = {
     authorized: status.authorized === true,
     entitlement: ['pro', 'active'].includes(status.entitlement) ? status.entitlement : 'free',
-    processingMode: status.processingMode === 'local' ? 'local' : 'off',
-    modelAvailability: status.modelAvailability === 'local-rules' ? 'local-rules' : 'unavailable',
+    processingMode: ['local','cloud'].includes(status.processingMode) ? status.processingMode : 'off',
+    modelAvailability: ['local-rules','configured-provider'].includes(status.modelAvailability) ? status.modelAvailability : 'unavailable',
     cloudBudget: 0,
     metadataOnly: true,
     positiveNone: status.positiveNone === 'available' ? 'available' : 'unavailable',
@@ -81,7 +81,8 @@ function seriesDisplay(s, {entries = [], edges = [], labels = [], detailsComplet
     edges:edges.map(e=>pick(e,['kind','from','to'])), labels:labels.map(l=>pick(l,['refId','sequence','source'])),
     totalEntries:s.entries.length, totalEdges:s.edges.length, detailsComplete};
 }
-function displayFor(state, refIds, topicIds, {proposalIds = [], seriesIds = null} = {}) {
+function proposalIsCurrent(proposal,snapshot){try{return publicVersions(proposal.versions).reviewId===publicVersions(snapshot.versions).reviewId;}catch{return false;}}
+function displayFor(state, refIds, topicIds, {proposalIds = [], seriesIds = null, snapshot=null} = {}) {
   const result = emptyDisplay(state.scopeKey), rset = new Set(refIds), tset = new Set(topicIds);
   // Only the selected page/panel's local assets are sent. Journal, inverse,
   // evidence, excluded unrelated references and complete vectors stay private.
@@ -105,10 +106,23 @@ function displayFor(state, refIds, topicIds, {proposalIds = [], seriesIds = null
     preservedPlacements: (r.preservedPlacements ?? []).filter(p => tset.has(p.workspaceId ?? p.topicId)).map(p => ({workspaceId: p.workspaceId ?? p.topicId, locked: p.locked === true || p.control?.locked === true})),
   };
   for (const key of proposalIds) {const r=state.proposals[key]; result.proposals[key] = {
-    state: r.state, proposal: {id: r.proposal.id, planHash: r.proposal.planHash, kind: r.proposal.kind, summary: text(r.proposal.summary, 500), rationale: (r.proposal.rationale ?? []).slice(0, 8).map(x => text(x, 500))},
+    state: snapshot&&['proposed','validated','awaiting-review'].includes(r.state)&&!proposalIsCurrent(r.proposal,snapshot)?'stale':r.state, proposal: {id: r.proposal.id, planHash: r.proposal.planHash, kind: r.proposal.kind, summary: text(r.proposal.summary, 500), rationale: (r.proposal.rationale ?? []).slice(0, 8).map(x => text(x, 500)),details:proposalDetails(r.proposal,state,snapshot),reviewUnavailable:proposalReviewUnavailable(r.proposal)},
   };}
   return result;
 }
+function proposalDetails(p,state,snapshot){
+  if(proposalReviewUnavailable(p))return [];
+  const name=refId=>text(snapshot?.references.find(r=>r.id===refId)?.nativeTitle??state.titles[refId]?.title??'已保存聊天',200),topic=id=>text(state.topics[id]?.name??'已保存主题',200);
+  let details=[];
+  if(p.kind==='derived-title')details=[`原名：${name(p.refId)}`,`整理名称：${text(p.title,200)}`];
+  if(p.kind==='existing-topic'){const prior=list(state.placements).find(r=>r.conversationId===p.refId&&r.role==='primary'&&r.state==='included');details=[`聊天：${name(p.refId)}`,`${p.role==='primary'?'主收录':'也关联到'}：${topic(p.topicId)}`,...(p.role==='primary'&&prior&&prior.topicId!==p.topicId?[`原主主题：${topic(prior.topicId)}`]:[])];}
+  if(p.kind==='new-topic')details=[`新主题：${text(p.name,200)}`,...(p.members??[]).map(id=>`主收录：${name(id)}`)];
+  if(p.kind==='multi-topic')details=[`聊天：${name(p.refId)}`,`主主题：${p.primary===null?'暂不指定':topic(p.primary)}`,...(p.related??[]).map(id=>`也关联到：${topic(id)}`)];
+  // Current provider input admits at most 10 chats and 20 candidate topics.
+  // Oversized imported proposals are not silently truncated into a blind review.
+  return details;
+}
+export function proposalReviewUnavailable(p){if(['merge-plan','split-plan','series-plan','topic-relation'].includes(p.kind))return 'structure-review-required';return p.kind==='new-topic'&&(p.members?.length??0)>63||p.kind==='multi-topic'&&(p.related?.length??0)>62?'needs-smaller-batch':null;}
 function sourceItems(snapshot, refIds) {
   const wanted = new Set(refIds);
   return snapshot.references.filter(r => wanted.has(r.id)).map(publicItem).slice(0, 200);
@@ -148,7 +162,7 @@ export function projectPublicPage({state, snapshot, view, status = {}, query = {
   }
 }
 
-export function projectPublicPanel({state, snapshot, status = {}, kind, id: targetId = null, offset = 0, limit = 24, records = []}) {
+export function projectPublicPanel({state, snapshot, status = {}, kind, id: targetId = null, offset = 0, limit = 24, records = [], recordWindow=null}) {
   checkSource(state,snapshot);
   if (!panelKinds.includes(kind) || !integer(offset) || !integer(limit, kind==='series-detail'?200:100) || !limit) throw Error('invalid-pro-public-panel');
   if(['reference','topic','collect','series','series-detail','series-edges'].includes(kind)&&!id(targetId))throw Error('invalid-pro-public-panel');
@@ -160,10 +174,12 @@ export function projectPublicPanel({state, snapshot, status = {}, kind, id: targ
   if (kind === 'reference') {
     refIds = snapshot.references.some(r => r.id === targetId) ? [targetId] : [];
     topicIds = topics.slice(offset, offset + limit).map(t => t.id); total = topics.length;
-    const protectedTopics = new Set(list(state.placements).filter(p=>p.conversationId===targetId).map(p=>p.topicId));
-    for (const c of list(state.constraints)) if(c.refId===targetId&&c.topicId)protectedTopics.add(c.topicId);
+    // Primary stays visible independently of the topic-choice page. Every
+    // related relation/exclusion remains editable on its own page; collecting
+    // all of them into one DTO made a heavily-used reference uneditable.
+    const protectedTopics = new Set(list(state.placements).filter(p=>p.conversationId===targetId&&p.role==='primary').map(p=>p.topicId));
     for (const key of state.legacyResolutions?.[targetId]?.candidates??[])protectedTopics.add(key);
-    if(protectedTopics.size>100)throw Error('pro-reference-relations-require-paging');
+    if(protectedTopics.size>100)throw Error('pro-legacy-resolution-require-paging');
     topicIds=[...new Set([...protectedTopics,...topicIds])];
   } else if (kind === 'topic') {
     if (!state.topics[targetId]) throw Error('pro-topic-unavailable');
@@ -177,16 +193,16 @@ export function projectPublicPanel({state, snapshot, status = {}, kind, id: targ
     limit=Math.min(limit,24);const all=list(state.series).filter(s=>s.topicId===targetId);
     topicIds=[targetId];seriesIds=all.slice(offset,offset+limit).map(s=>s.id);total=all.length;
   } else if(kind==='suggestions') {
-    limit=Math.min(limit,24);const all=Object.keys(state.proposals??{});proposalIds=all.slice(offset,offset+limit);total=all.length;seriesIds=[];
+    limit=Math.min(limit,24);const all=Object.keys(state.proposals??{}).filter(key=>!['applied','rejected'].includes(state.proposals[key].state));proposalIds=all.slice(offset,offset+limit);total=all.length;seriesIds=[];
   } else if(kind==='records') {
     limit=Math.min(limit,24);seriesIds=[];
   } else {
     topicIds = topics.slice(offset, offset + limit).map(t => t.id); total = topics.length;
   }
   const reply = {kind: 'pro-panel-page', protocol: PRO_FRAME_PROTOCOL, panel: kind, versions: publicVersions(snapshot.versions), status: publicStatus(status),
-    display: displayFor(state, refIds, topicIds, {proposalIds,seriesIds}), items: sourceItems(snapshot, refIds), projects: [], page: page(offset, total, Math.min(limit, Math.max(0, total - offset)), limit)};
-  if (kind === 'records') {const projected=projectPublicRecords({records,state,snapshot,offset,limit,maxBytes:PRO_FRAME_BYTES-new TextEncoder().encode(JSON.stringify(reply)).length-1024});reply.operations=projected.items;reply.page=projected.page;}
-  return validatePublicProReply('view', reply);
+    display: displayFor(state, refIds, topicIds, {proposalIds,seriesIds,snapshot}), items: sourceItems(snapshot, refIds), projects: [], page: page(offset, total, Math.min(limit, Math.max(0, total - offset)), limit)};
+  if (kind === 'records') {const projected=projectPublicRecords({records,recordWindow,state,snapshot,offset,limit,maxBytes:PRO_FRAME_BYTES-new TextEncoder().encode(JSON.stringify(reply)).length-1024});reply.operations=projected.items;reply.page=projected.page;}
+  try{return validatePublicProReply('view', reply);}catch(e){if(kind!=='suggestions'||!['pro-public-size','pro-public-complexity'].includes(e.message)||limit===1)throw e;return projectPublicPanel({state,snapshot,status,kind,id:targetId,offset,limit:Math.max(1,Math.floor(limit/2)),records,recordWindow});}
 }
 
 function projectChoicePanel({state,snapshot,status,kind,offset,limit}) {
@@ -231,14 +247,16 @@ function patchLabel(p, state, snapshot) {
   if (p.kind === 'derived-title' && after) return `${nativeTitle(after.conversationId)} → ${after.displayPreference === 'native' ? '持续显示原名' : after.title ?? '原名'}`;
   return `${p.after === null ? '移除：' : ''}${after?.name ?? after?.title ?? state.topics[p.key]?.name ?? ({constraint:'人工设置',series:'工作线',redirect:'主题来路'}[p.kind] ?? '整理内容')}`;
 }
-export function projectPublicRecords({records = [], state, snapshot, offset = 0, limit = 24, maxBytes = PRO_FRAME_BYTES}) {
+export function projectPublicRecords({records = [], recordWindow=null, state, snapshot, offset = 0, limit = 24, maxBytes = PRO_FRAME_BYTES}) {
   checkSource(state,snapshot);
   if(!integer(offset)||!integer(limit,100)||!limit||!integer(maxBytes,PRO_FRAME_BYTES)||maxBytes<1024)throw Error('invalid-pro-public-records');
-  const all = records.map(r => r.transaction ?? r).filter(r => r.actor !== 'system').reverse();
+  if(recordWindow&&(!integer(recordWindow.total)||!integer(recordWindow.offset)||recordWindow.offset!==offset||!Array.isArray(recordWindow.records)||recordWindow.records.length>limit||recordWindow.records.some(r=>r.transaction.actor==='system')))throw Error('invalid-pro-history-window');
+  const all = recordWindow?recordWindow.records.map(r=>r.transaction):records.map(r => r.transaction ?? r).filter(r => r.actor !== 'system').reverse();
+  const total=recordWindow?.total??all.length,start=recordWindow?0:offset;
   let cap=Math.min(limit,24),changeCap=200;
-  for(;;){const items=all.slice(offset,offset+cap).map(r=>({operationId:r.operationId,actor:r.actor,status:r.status,
+  for(;;){const items=all.slice(start,start+cap).map(r=>({operationId:r.operationId,actor:r.actor,status:r.status,
     changes:(r.patch??[]).slice(0,changeCap).map(p=>({kind:p.kind,key:p.key,label:text(patchLabel(p,state,snapshot),500)})),changesTruncated:(r.patch?.length??0)>changeCap}));
-    const reply={kind:'pro-records-page',protocol:PRO_FRAME_PROTOCOL,items,page:page(offset,all.length,items.length,cap)};
+    const reply={kind:'pro-records-page',protocol:PRO_FRAME_PROTOCOL,items,page:page(offset,total,items.length,cap)};
     try{if(new TextEncoder().encode(JSON.stringify(reply)).length>maxBytes)throw Error('pro-public-size');return validatePublicProReply('view',reply);}catch(error){if(!['pro-public-size','pro-public-complexity'].includes(error.message))throw error;if(cap>1)cap=Math.max(1,Math.floor(cap/2));else if(changeCap>1)changeCap=Math.max(1,Math.floor(changeCap/2));else throw error;}
   }
 }
@@ -269,35 +287,54 @@ export function projectPublicRows({state, snapshot, status = {}, topicId, lane =
     try { return validatePublicProReply('view', reply); } catch (e) { if (!['pro-public-size','pro-public-complexity'].includes(e.message) || cap === 1) throw e; cap = Math.max(1, Math.floor(cap / 2)); }
   }
 }
-export function projectPublicSearch({state, snapshot, status = {}, query = '', topicId = null, limit = 24}) {
+export function projectPublicSearch({state, snapshot, status = {}, query = '', topicId = null, offset=0, limit = 24}) {
   checkSource(state,snapshot);
-  const items = searchProReferences(state, snapshot, query, {topicId, limit, mode: status.mode ?? 'pro-default-none', selectedProjectIds: status.selectedProjectIds ?? []}).map(r => ({...r, displayTitle: text(r.displayTitle, 1000), nativeTitle: text(r.nativeTitle, 1000), contexts: r.contexts.slice(0, 24)}));
-  return validatePublicProReply('view', {kind: 'pro-search-page', protocol: PRO_FRAME_PROTOCOL, items, page: page(0, items.length, items.length, limit)});
+  const found=searchProReferencePage(state,snapshot,query,{topicId,offset,limit,mode:status.mode??'pro-default-none',selectedProjectIds:status.selectedProjectIds??[]});
+  let cap=Math.min(limit,24);
+  for(;;){const items=found.items.slice(0,cap).map(r=>({...r,displayTitle:text(r.displayTitle,1000),nativeTitle:text(r.nativeTitle,1000),contexts:[...r.contexts].sort((a,b)=>Number(b.role==='primary')-Number(a.role==='primary')).slice(0,4).map(c=>({...c,name:text(state.topics[c.topicId]?.name??'已保存主题',200)}))}));
+    try{return validatePublicProReply('view',{kind:'pro-search-page',protocol:PRO_FRAME_PROTOCOL,versions:publicVersions(snapshot.versions),items,page:page(offset,found.page.total,items.length,cap)});}catch(e){if(!['pro-public-size','pro-public-complexity'].includes(e.message)||cap===1)throw e;cap=Math.max(1,Math.floor(cap/2));}
+  }
 }
-export function projectPublicPreview({preview, previewId}) {
+function conflictDescription(c,state,snapshot){
+  const topic=id=>text(state?.topics?.[id]?.name??'已保存主题',100),ref=id=>text(state?.titles?.[id]?.title??snapshot?.references.find(r=>r.id===id)?.nativeTitle??'已保存聊天',100);
+  if(c.kind==='include-exclude')return `「${ref(c.refId)}」已明确排除于「${topic(c.excludedTopicId)}」；本次合并会将它收录到「${topic(c.targetTopicId)}」。请先核对并处理原排除。`;
+  if(c.kind==='forbid-merge')return `「${(c.topicIds??[]).map(topic).join('」与「')}」之间有明确的禁止合并约束。`;
+  if(c.kind==='locked-topic-membership')return `「${topic(c.topicId)}」的成员整理已锁定。请先明确解除对应保护。`;
+  if(c.kind==='locked-placement')return `「${ref(c.refId??c.conversationId)}」的收录关系已锁定。请先明确解除对应保护。`;
+  if(c.kind==='series-crosses-split')return `工作线「${text(state?.series?.[c.seriesId]?.title??'已保存工作线',100)}」将跨越拆分后的主题（移出 ${c.movedEntries?.length??0} 条，保留 ${c.retainedEntries?.length??0} 条）。请先调整工作线或拆分选择。`;
+  if(c.reason==='processing-consent-not-undoable')return '这一步会放宽处理许可，撤销不能代替当前的明确授权。';
+  return null;
+}
+export function projectPublicPreview({preview, previewId,state=null,snapshot=null}) {
   if (!id(previewId)) throw Error('invalid-pro-preview-id');
   const reply = {kind: preview.kind === 'manual-series-plan' ? 'manual-series-plan' : 'pro-preview', protocol: PRO_FRAME_PROTOCOL, previewId,
-    proposal: !!preview.proposal, conflicts: (preview.conflicts ?? []).slice(0, 100).map(c => pick(c, ['kind', 'reason', 'refId', 'conversationId', 'topicId', 'key'])),
+    proposal: !!preview.proposal, conflicts: (preview.conflicts ?? []).slice(0, 100).map(c => {const description=conflictDescription(c,state,snapshot);return {...pick(c, ['kind', 'reason', 'refId', 'conversationId', 'topicId', 'key']),...(description?{description}:{})};}),
     summary: text(preview.proposal?.summary ?? preview.summary, 1000)};
+  if((preview.conflicts?.length??0)>reply.conflicts.length)reply.summary=text(reply.summary+` 共 ${preview.conflicts.length} 项冲突，当前显示前 ${reply.conflicts.length} 项。处理后请重新预览。`,1000);
   for (const key of ['state', 'inverseHash', 'planHash', 'chosenPrimary', 'preservedAssetDigest']) if (own(preview, key)) reply[key] = preview[key];
   if (preview.expected) reply.expected = publicVersions(preview.expected);
   if (preview.patch) reply.changes = preview.patch.slice(0, 40).map(p => ({kind: p.kind, key: p.key, label: text(p.after?.name ?? p.after?.title ?? p.before?.name ?? p.before?.title ?? p.kind, 500)}));
-  return validatePublicProReply('commit', reply);
+  for(;;){try{return validatePublicProReply('commit', reply);}catch(e){if(!['pro-public-size','pro-public-complexity'].includes(e.message))throw e;if(reply.conflicts.length>1){reply.conflicts=reply.conflicts.slice(0,Math.ceil(reply.conflicts.length/2));reply.summary=text((preview.summary??preview.proposal?.summary??'')+` 共 ${preview.conflicts.length} 项冲突，当前显示前 ${reply.conflicts.length} 项。处理后请重新预览。`,1000);}else if(reply.changes?.length>1)reply.changes=reply.changes.slice(0,Math.ceil(reply.changes.length/2));else throw e;}}
 }
 
 const keys = {
   'pro-frame-page': ['kind','protocol','versions','status','view','projection','display','items','projects','page'],
   'pro-panel-page': ['kind','protocol','panel','versions','status','display','items','projects','page','operations'],
   'pro-rows-page': ['kind','protocol','versions','topicId','lane','items','rows','display','page'],
-  'pro-search-page': ['kind','protocol','items','page'],
+  'pro-search-page': ['kind','protocol','versions','items','page'],
   'pro-records-page': ['kind','protocol','items','page'],
   'pro-operation-page': ['kind','protocol','versions','previewId','operationId','actor','operationStatus','changes','page'],
   'pro-preview': ['kind','protocol','previewId','proposal','conflicts','summary','state','inverseHash','planHash','chosenPrimary','preservedAssetDigest','expected','changes'],
   'manual-series-plan': ['kind','protocol','previewId','proposal','conflicts','summary','expected','changes','planHash'],
   'pro-result': ['kind','protocol','state','operationId','replayed','anchor','message','nativeLink'],
   'pro-status': ['kind','protocol','status'],
+  'pro-model-status': ['kind','protocol','model'],
+  'pro-model-preview': ['kind','protocol','previewId','expected','provider','model','inputKinds','sample','sampleTotal','topicNames','topicTotal','currency','maximumMicros','taskLimitMicros','policyVersion','policyUrl','retentionText','truncated','automaticAvailable','reviewOnly','withinBudget'],
+  'pro-model-budget': ['kind','protocol','versions','settings'],
+  'pro-model-budget-preview': ['kind','protocol','previewId','expected','budgetRevision','currency','priceCardVersion','taskMaximumMicros','before','after'],
+  'pro-alias-page': ['kind','protocol','versions','targetKind','targetId','aliases','page'],
 };
-const permitted = {sharedSnapshot:['pro-status','pro-frame-page'],view:['pro-frame-page','pro-panel-page','pro-rows-page','pro-search-page','pro-records-page','pro-operation-page','pro-status'],commit:['pro-result','pro-preview','manual-series-plan'],evidence:['pro-result','pro-panel-page','pro-status'],navigation:['pro-result'],background:['pro-result','pro-status']};
+const permitted = {sharedSnapshot:['pro-status','pro-frame-page'],view:['pro-frame-page','pro-panel-page','pro-rows-page','pro-search-page','pro-records-page','pro-operation-page','pro-status','pro-alias-page'],commit:['pro-result','pro-preview','manual-series-plan'],evidence:['pro-result','pro-panel-page','pro-status'],navigation:['pro-result'],background:['pro-result','pro-status','pro-model-status','pro-model-preview','pro-model-budget','pro-model-budget-preview']};
 const forbidden = new Set(['grant','grants','grantid','scopegrantid','intent','ticket','executionticket','credential','credentials','apikey','secret','password','authority','authorization','token','accesstoken','refreshtoken','binding','parentframe','evidencepack','metadataevidence','handlemap','privateindex','nativeindex','overlay','patch','inverse','readset','sourcegeneration','nativefields','targets']);
 function shape(value,allowed,required=allowed){
   if(!rec(value)||Object.keys(value).some(k=>!allowed.includes(k))||required.some(k=>!own(value,k)))throw Error('invalid-pro-public-shape');
@@ -309,7 +346,7 @@ function checkRow(value){shape(value,['refId','displayTitle','available','member
 function checkPage(value){shape(value,['offset','total','count','limit','hasMore']);if(!['offset','total','count','limit'].every(k=>integer(value[k]))||value.count>value.limit||typeof value.hasMore!=='boolean'||value.hasMore!==(value.offset+value.count<value.total))throw Error('invalid-pro-public-page');}
 function checkStatus(value){
   shape(value,['authorized','entitlement','processingMode','modelAvailability','cloudBudget','metadataOnly','positiveNone','persistence','mode','selectedProjectIds','segment','launchContext']);
-  if(typeof value.authorized!=='boolean'||!['pro','active','free'].includes(value.entitlement)||!['off','local'].includes(value.processingMode)||!['local-rules','unavailable'].includes(value.modelAvailability)||value.cloudBudget!==0||value.metadataOnly!==true||!['available','unavailable'].includes(value.positiveNone)||!['same-idb','memory-only','session-only','unavailable'].includes(value.persistence)||!modes.includes(value.mode)||!ids(value.selectedProjectIds,100)||!integer(value.segment))throw Error('invalid-pro-public-status');
+  if(typeof value.authorized!=='boolean'||!['pro','active','free'].includes(value.entitlement)||!['off','local','cloud'].includes(value.processingMode)||!['local-rules','configured-provider','unavailable'].includes(value.modelAvailability)||value.cloudBudget!==0||value.metadataOnly!==true||!['available','unavailable'].includes(value.positiveNone)||!['same-idb','memory-only','session-only','unavailable'].includes(value.persistence)||!modes.includes(value.mode)||!ids(value.selectedProjectIds,100)||!integer(value.segment))throw Error('invalid-pro-public-status');
   if(value.launchContext!==null){const c=value.launchContext;shape(c,['referenceId','topicId','seriesId','nativeProjectId','nextReferenceId','origin']);if(!id(c.referenceId)||!['topicId','seriesId','nativeProjectId','nextReferenceId'].every(k=>nullableId(c[k]))||!['topic','native-project','search','working-set','direct'].includes(c.origin)||c.origin==='topic'&&c.topicId===null||c.origin==='native-project'&&c.nativeProjectId===null||c.nextReferenceId!==null&&(c.topicId===null||c.seriesId===null||c.nextReferenceId===c.referenceId))throw Error('invalid-pro-public-launch');}
 }
 function checkDisplay(value){
@@ -329,11 +366,19 @@ function checkDisplay(value){
     const labeled=new Set();for(const l of s.labels){shape(l,['refId','sequence','source']);if(!id(l.refId)||!refs.has(l.refId)||labeled.has(l.refId)||!['human-confirmed','evidence-confirmed'].includes(l.source)||l.sequence!==null&&(!Array.isArray(l.sequence)||!l.sequence.length||l.sequence.length>12||!l.sequence.every(n=>integer(n))))throw Error('invalid-pro-public-series-label');labeled.add(l.refId);}
   }
   for(const [key,r] of Object.entries(value.legacyResolutions)){shape(r,['refId','status','candidates','preservedPlacements']);if(r.refId!==key||!['primary-resolution-required','resolved'].includes(r.status)||!ids(r.candidates,100)||!Array.isArray(r.preservedPlacements)||r.preservedPlacements.length>100)throw Error('invalid-pro-public-legacy');for(const p of r.preservedPlacements){shape(p,['workspaceId','locked']);if(!id(p.workspaceId)||typeof p.locked!=='boolean')throw Error('invalid-pro-public-legacy');}}
-  for(const [key,r] of Object.entries(value.proposals)){shape(r,['state','proposal']);shape(r.proposal,['id','planHash','kind','summary','rationale']);const p=r.proposal;if(p.id!==key||!hash(p.planHash)||!['proposed','validated','awaiting-review','rejected','stale','applied'].includes(r.state)||!['existing-topic','new-topic','multi-topic','derived-title','topic-relation','series-plan','merge-plan','split-plan','unknown'].includes(p.kind)||!string(p.summary,500)||!Array.isArray(p.rationale)||p.rationale.length>8||p.rationale.some(x=>!string(x,500)))throw Error('invalid-pro-public-proposal');}
+  for(const [key,r] of Object.entries(value.proposals)){shape(r,['state','proposal']);shape(r.proposal,['id','planHash','kind','summary','rationale','details','reviewUnavailable'],['id','planHash','kind','summary','rationale']);const p=r.proposal;if(p.id!==key||!hash(p.planHash)||!['proposed','validated','awaiting-review','rejected','stale','applied'].includes(r.state)||!['existing-topic','new-topic','multi-topic','derived-title','topic-relation','series-plan','merge-plan','split-plan','unknown'].includes(p.kind)||!string(p.summary,500)||!Array.isArray(p.rationale)||p.rationale.length>8||p.rationale.some(x=>!string(x,500))||own(p,'details')&&(!Array.isArray(p.details)||p.details.length>64||p.details.some(x=>!string(x,500)))||own(p,'reviewUnavailable')&&p.reviewUnavailable!==null&&!['needs-smaller-batch','structure-review-required'].includes(p.reviewUnavailable))throw Error('invalid-pro-public-proposal');}
 }
 function checkChanges(items){if(!Array.isArray(items)||items.length>200)throw Error('invalid-pro-public-changes');for(const x of items){shape(x,['kind','key','label']);if(!id(x.key)||!id(x.kind)||!string(x.kind,80)||!string(x.label,500))throw Error('invalid-pro-public-change');}}
 function checkOperation(op){shape(op,['operationId','actor','status','changes','changesTruncated']);if(!id(op.operationId)||!['human','automation'].includes(op.actor)||!['applied','undone'].includes(op.status)||typeof op.changesTruncated!=='boolean')throw Error('invalid-pro-public-operation');checkChanges(op.changes);}
 function checkVersions(v){shape(v,['scopeKey','authorizationEpoch','overlayRevision','reviewId']);if(!id(v.scopeKey)||!hash(v.reviewId)||!integer(v.authorizationEpoch)||!integer(v.overlayRevision))throw Error('invalid-pro-public-versions');}
+function checkModelBudgetAmounts(v,fields){shape(v,fields);if(!fields.every(k=>integer(v[k])))throw Error('invalid-pro-model-budget-settings');}
+function checkModelBudgetSettings(v){
+  shape(v,['configured','currency','priceCardVersion','revision','taskMaximumMicros','limits','usage','remaining','periods','nearLimit','blocked']);
+  if(typeof v.configured!=='boolean'||typeof v.nearLimit!=='boolean'||typeof v.blocked!=='boolean'||!integer(v.revision)||!integer(v.taskMaximumMicros)||v.currency!==null&&!/^[A-Z]{3}$/u.test(v.currency)||v.priceCardVersion!==null&&!string(v.priceCardVersion,128)||v.configured&&(v.currency===null||v.priceCardVersion===null))throw Error('invalid-pro-model-budget-settings');
+  checkModelBudgetAmounts(v.limits,['taskMicros','dayMicros','monthMicros']);checkModelBudgetAmounts(v.usage,['dayMicros','monthMicros']);checkModelBudgetAmounts(v.remaining,['dayMicros','monthMicros','queueMicros']);
+  shape(v.periods,['dayFrom','dayThrough','monthFrom','monthThrough']);if(Object.values(v.periods).some(t=>!string(t,32)||!Number.isFinite(Date.parse(t))))throw Error('invalid-pro-model-budget-periods');
+  if(v.remaining.queueMicros>Math.min(v.remaining.dayMicros,v.remaining.monthMicros)||v.remaining.dayMicros>v.limits.dayMicros||v.remaining.monthMicros>v.limits.monthMicros||Date.parse(v.periods.dayFrom)>Date.parse(v.periods.dayThrough)||Date.parse(v.periods.monthFrom)>Date.parse(v.periods.monthThrough))throw Error('invalid-pro-model-budget-settings');
+}
 function checkAnchor(a){
   if(a===null)return;
   shape(a,['cardId','refId','segment','scrollOffset','openOldItems','sidebarChoices']);
@@ -352,7 +397,7 @@ function checkNativeLink(value){
 }
 function checkPreview(v){
   if(!id(v.previewId)||typeof v.proposal!=='boolean'||!Array.isArray(v.conflicts)||v.conflicts.length>100||!string(v.summary,1000))throw Error('invalid-pro-public-preview');
-  for(const c of v.conflicts){shape(c,['kind','reason','refId','conversationId','topicId','key'],['kind']);if(!id(c.kind)||!string(c.kind,80)||own(c,'reason')&&!string(c.reason,500)||['refId','conversationId','topicId','key'].some(k=>own(c,k)&&!id(c[k])))throw Error('invalid-pro-public-conflict');}
+  for(const c of v.conflicts){shape(c,['kind','reason','description','refId','conversationId','topicId','key'],['kind']);if(!id(c.kind)||!string(c.kind,80)||own(c,'reason')&&!string(c.reason,500)||own(c,'description')&&!string(c.description,500)||['refId','conversationId','topicId','key'].some(k=>own(c,k)&&!id(c[k])))throw Error('invalid-pro-public-conflict');}
   if(own(v,'state')&&!['ready','conflict'].includes(v.state)||['inverseHash','planHash','preservedAssetDigest'].some(k=>own(v,k)&&!hash(v[k]))||own(v,'chosenPrimary')&&!nullableId(v.chosenPrimary))throw Error('invalid-pro-public-preview');
   if(own(v,'expected'))checkVersions(v.expected);
   if(own(v,'changes'))checkChanges(v.changes);
@@ -431,6 +476,30 @@ export function validatePublicProReply(action, value) {
   if(required.some(k=>!own(value,k)))throw Error('invalid-pro-public-reply');
   if(own(value,'versions'))checkVersions(value.versions);
   if(own(value,'status'))checkStatus(value.status);
+  if(value.kind==='pro-model-budget')checkModelBudgetSettings(value.settings);
+  if(value.kind==='pro-model-budget-preview'){
+    checkVersions(value.expected);checkModelBudgetAmounts(value.before,['taskMicros','dayMicros','monthMicros']);checkModelBudgetAmounts(value.after,['taskMicros','dayMicros','monthMicros']);
+    if(!id(value.previewId)||!integer(value.budgetRevision)||!integer(value.taskMaximumMicros)||!/^[A-Z]{3}$/u.test(value.currency)||!string(value.priceCardVersion,128)||value.after.taskMicros>value.taskMaximumMicros)throw Error('invalid-pro-model-budget-preview');
+  }
+  if(value.kind==='pro-model-preview'){
+    checkVersions(value.expected);
+    if(typeof value.automaticAvailable!=='boolean'||typeof value.reviewOnly!=='boolean'||typeof value.withinBudget!=='boolean'||value.reviewOnly&&value.automaticAvailable)throw Error('invalid-pro-model-preview');
+    if(!id(value.previewId)||!string(value.provider,128)||!string(value.model,128)||!Array.isArray(value.inputKinds)||value.inputKinds.length!==1||value.inputKinds[0]!=='metadata'||!Array.isArray(value.sample)||value.sample.length>3||!integer(value.sampleTotal,10)||value.sample.length>value.sampleTotal||!Array.isArray(value.topicNames)||value.topicNames.length>3||value.topicNames.some(n=>!string(n,200))||!integer(value.topicTotal,20)||value.topicNames.length>value.topicTotal||!['maximumMicros','taskLimitMicros'].every(k=>integer(value[k]))||!/^[A-Z]{3}$/u.test(value.currency)||!string(value.policyVersion,128)||!string(value.policyUrl,500)||!string(value.retentionText,1000)||typeof value.truncated!=='boolean')throw Error('invalid-pro-model-preview');
+    const url=new URL(value.policyUrl);if(url.protocol!=='https:'||url.username||url.password||!['openai.com','platform.openai.com','developers.openai.com'].includes(url.hostname))throw Error('invalid-pro-model-disclosure');
+    for(const sample of value.sample){shape(sample,['title','aliases']);if(!string(sample.title,400)||!Array.isArray(sample.aliases)||sample.aliases.length>2||sample.aliases.some(a=>!string(a,200)))throw Error('invalid-pro-model-preview');}
+  }
+  if(value.kind==='pro-model-status'){
+    const m=value.model;shape(m,['configured','enabled','provider','model','profileId','inputKinds','currency','automaticEnabled','backgroundWhileNative','budget','jobs','totalJobs','runningCount','page'],['configured','enabled','provider','model','profileId','inputKinds','currency','automaticEnabled','budget','jobs','totalJobs','runningCount']);
+    if(own(m,'backgroundWhileNative')&&typeof m.backgroundWhileNative!=='boolean')throw Error('invalid-pro-model-status');
+    if(typeof m.configured!=='boolean'||typeof m.enabled!=='boolean'||m.enabled&&!m.configured||typeof m.automaticEnabled!=='boolean'||m.automaticEnabled&&!m.enabled||['provider','model','profileId'].some(k=>m[k]!==null&&!string(m[k],128))||m.currency!==null&&!/^[A-Z]{3}$/u.test(m.currency)||!Array.isArray(m.inputKinds)||m.inputKinds.length>3||new Set(m.inputKinds).size!==m.inputKinds.length||m.inputKinds.some(k=>!['metadata','selected-text','sent-user-input'].includes(k))||!integer(m.totalJobs)||!integer(m.runningCount,32)||!Array.isArray(m.jobs)||m.jobs.length>20||m.jobs.length>m.totalJobs)throw Error('invalid-pro-model-status');
+    if(own(m,'page')){checkPage(m.page);if(m.page.limit>20||m.page.total!==m.totalJobs||m.page.count!==m.jobs.length)throw Error('invalid-pro-model-page');}
+    const b=m.budget;shape(b,['currency','reserved','uncertain','settled','blocked','limitScope']);
+    if(b.currency!==null&&!/^[A-Z]{3}$/u.test(b.currency)||!['reserved','uncertain','settled'].every(k=>integer(b[k]))||typeof b.blocked!=='boolean'||b.limitScope!=='this-installation-only')throw Error('invalid-pro-model-budget');
+    for(const j of m.jobs){shape(j,['id','state','reason','proposalId']);if(!id(j.id)||!['queued','reserved','dispatched','result-ready','validated','awaiting-review','committed','paused','cancelled','stale','failed','outcome-unknown'].includes(j.state)||j.reason!==null&&!/^[a-z][a-z0-9-]{0,99}$/u.test(j.reason)||!nullableId(j.proposalId))throw Error('invalid-pro-model-job');}
+  }
+  if(value.kind==='pro-alias-page'){
+    if(!['topic','title'].includes(value.targetKind)||!id(value.targetId)||!Array.isArray(value.aliases)||value.aliases.length>24||value.aliases.some(a=>!string(a,200))||new Set(value.aliases).size!==value.aliases.length||value.page.count!==value.aliases.length||value.page.total>100||value.page.limit>24)throw Error('invalid-pro-alias-page');
+  }
   if(own(value,'display')){checkDisplay(value.display);if(value.display.scopeKey!==value.versions?.scopeKey)throw Error('cross-scope-pro-display');}
   if (own(value,'items') && (!Array.isArray(value.items) || value.items.length > 200)) throw Error('invalid-pro-public-items');
   if(own(value,'page'))checkPage(value.page);
@@ -456,7 +525,7 @@ export function validatePublicProReply(action, value) {
     checkChanges(value.changes);const p=value.page;
     if(p.total>20000||!p.limit||p.limit>100||p.offset>p.total||p.count!==value.changes.length||p.offset+p.count>p.total||new Set(value.changes.map(c=>JSON.stringify([c.kind,c.key]))).size!==p.count)throw Error('invalid-pro-operation-review');
   }
-  if(value.kind==='pro-search-page')for(const item of value.items){shape(item,['refId','displayTitle','nativeTitle','available','contexts']);if(!id(item.refId)||!string(item.displayTitle,1000)||!string(item.nativeTitle,1000)||typeof item.available!=='boolean'||!Array.isArray(item.contexts)||item.contexts.length>24)throw Error('invalid-pro-public-search');for(const c of item.contexts){shape(c,['topicId','role']);if(!id(c.topicId)||!['primary','related'].includes(c.role))throw Error('invalid-pro-public-search');}}
+  if(value.kind==='pro-search-page')for(const item of value.items){shape(item,['refId','displayTitle','nativeTitle','available','contexts']);if(!id(item.refId)||!string(item.displayTitle,1000)||!string(item.nativeTitle,1000)||typeof item.available!=='boolean'||!Array.isArray(item.contexts)||item.contexts.length>4)throw Error('invalid-pro-public-search');for(const c of item.contexts){shape(c,['topicId','role','name'],['topicId','role']);if(own(c,'name')&&!string(c.name,200)||!id(c.topicId)||!['primary','related'].includes(c.role))throw Error('invalid-pro-public-search');}}
   if(own(value,'view')){shape(value.view,['mode','native']);if(!modes.includes(value.view.mode)||value.view.mode!==value.status.mode)throw Error('invalid-pro-public-view');if(value.view.native!==null)checkNativePage(value.view.native,value.versions.scopeKey);}
   if(['pro-preview','manual-series-plan'].includes(value.kind))checkPreview(value);
   if(value.kind==='pro-result'){

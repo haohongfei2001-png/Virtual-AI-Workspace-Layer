@@ -3,8 +3,11 @@ export {recallTopics, lexicalTerms, lexicalOverlap} from './recall.mjs';
 export {buildProviderPayload, validateProviderPayload} from '../model/payload.mjs';
 export {validateModelOutput, validateModelSchema} from '../model/validate.mjs';
 export {createFixtureModelAdapter} from '../model/fixture-adapter.mjs';
-export {planSuggestions, sealSuggestion, automaticGate, semanticActionDigest, incrementalCacheKey, createSuggestionCache} from './planner.mjs';
-export {evaluateDataset, wilsonInterval, evaluateFindability} from './evaluation.mjs';
+export {createLocalMetadataAdapter} from '../model/local-metadata.mjs';
+export {runLocalMetadataSuggestions} from './local-runner.mjs';
+export {planMetadataBatch, metadataBatchCursorKey} from './metadata-batch.mjs';
+export {planSuggestions, sealSuggestion, automaticGate, automaticReadiness, semanticActionDigest, incrementalCacheKey, createSuggestionCache} from './planner.mjs';
+export {evaluateDataset, validateQualityReport, wilsonInterval, evaluateFindability} from './evaluation.mjs';
 
 import {buildProviderPayload} from '../model/payload.mjs';
 import {validateModelOutput} from '../model/validate.mjs';

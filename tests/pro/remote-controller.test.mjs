@@ -30,6 +30,12 @@ test('remote manual command sends public review hash and restores its bounded re
  assert(Object.values(f.remote.getState().topics).some(t=>t.name==='远程人工主题'));
  const command=f.calls.find(c=>c.action==='commit');assert.deepEqual(command.payload.expected,expected);assert(!('nativeFields' in command.payload.expected));assert(!('intent' in command.payload));assert.equal(f.remote.getProjection().groups.length,1);
 });
+
+test('remote capacity feedback preserves only the bounded public vocabulary',async t=>{
+ const f=await fixture(t);for(const reason of ['alias-capacity','proposal-review-capacity','pro-storage-capacity','pro-batch-capacity','private-customer-title']){
+  const hold=f.holdNext(),pending=f.remote.dispatch({type:'CREATE_TOPIC',name:'Capacity check '+reason});hold.resolve({ok:false,reason});await assert.rejects(pending,error=>error.message===(reason==='private-customer-title'?'pro-request-unavailable':reason));
+ }
+});
 test('stale dialog review hash rejects atomically and does not overwrite a newer title',async t=>{
  const f=await fixture(t),old=f.remote.getSnapshot().versions;await f.local.dispatch({type:'CREATE_TOPIC',name:'另一个标签的更改'});
  await assert.rejects(f.remote.dispatch({type:'CREATE_TOPIC',name:'不得写入'},{expected:old}),/unavailable/);

@@ -5,6 +5,7 @@ import {createProWorkerService, PRO_WORKER_ACTIONS, PRO_WORKER_MAX_BYTES} from '
 import {createFixtureOwner} from './support/fixture-owner.mjs';
 import {createProController} from '../../src/pro/runtime/controller.mjs';
 import {MockIDBFactory} from '../b23/mock-idb.mjs';
+import {publicProError} from '../../src/pro/integration/public-error.mjs';
 
 const deferred = () => { let resolve, reject; const promise = new Promise((a, b) => { resolve = a; reject = b; }); return {promise, resolve, reject}; };
 const drain = async () => { for (let index = 0; index < 32; index++) await Promise.resolve(); };
@@ -204,6 +205,14 @@ test('owner failure and exception text never reach public reply or public projec
     async () => { throw Error('private-person-and-body'); }]) {
     const f = fixture({invoke}); assert.deepEqual(await f.service.handle(request('commit'), sender()), unavailable); assert.equal(f.projections.length, 0);
   }
+});
+
+test('only owner-marked capacity failures reach a live authorized frame; text and expired failures stay private',async()=>{
+ const marked=fixture({invoke:async()=>{throw publicProError('alias-capacity');}});assert.deepEqual(await marked.service.handle(request('commit'),sender()),{ok:false,reason:'alias-capacity'});
+ const unmarked=fixture({invoke:async()=>{throw Error('alias-capacity');}});assert.deepEqual(await unmarked.service.handle(request('commit'),sender()),unavailable);
+ const authority=fixture({withScope:async()=>{throw publicProError('alias-capacity');}});assert.deepEqual(await authority.service.handle(request('commit'),sender()),unavailable);
+ const expired=fixture({invoke:async()=>{expired.gate.current=false;throw publicProError('pro-storage-capacity');}});assert.deepEqual(await expired.service.handle(request('commit'),sender()),unavailable);
+ assert.throws(()=>publicProError('private-name'),/invalid-public/);
 });
 
 test('public projection blocks authority keys and full index even under innocuous nesting', async () => {

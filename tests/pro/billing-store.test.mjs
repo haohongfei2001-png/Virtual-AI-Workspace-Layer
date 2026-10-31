@@ -4,7 +4,7 @@ import {ScopeRepository} from '../../src/b1/scope-repository.mjs';
 import {MockIDBFactory} from '../b23/mock-idb.mjs';
 import {digest, stable} from '../../src/data/hash.mjs';
 import {queueJob, budgetSummary} from '../../src/pro/jobs/index.mjs';
-import {createSameDatabaseBillingStore, billingRootKey, billingOperationKey} from '../../src/pro/integration/billing-store.mjs';
+import {createSameDatabaseBillingStore, billingRootKey, billingOperationKey,billingHistoryKey,billingArchivedJobKey,billingArchivedReservationKey} from '../../src/pro/integration/billing-store.mjs';
 
 const NOW = '2026-10-31T12:00:00.000Z';
 const sourceScope = key => ({kind: 'verified-scope', key, serverIdentity: 'established', persistence: 'same-idb'});
@@ -23,7 +23,7 @@ const reserve = (jobId, maximum = 30000) => ({type: 'RESERVE_JOB', jobId, reserv
   billingProfileId: 'billing_fixture', providerProfileId: 'openai-responses', currency: 'USD', priceCardVersion: 'fixture_prices',
   expectedBudgetRevisions: {month: 1, day: 1, scope_a: 1, scope_b: 1}});
 
-async function fixture() {
+async function fixture({clock=()=>NOW,verifyDispatchFence=null}={}) {
   const factory = new MockIDBFactory(), name = 'pro_billing_fixture_' + crypto.randomUUID();
   const first = new ScopeRepository({indexedDB: factory, databaseName: name}), second = new ScopeRepository({indexedDB: factory, databaseName: name});
   const dbA = await first.open(), dbB = await second.open(), authorities = new WeakMap(), hook = {run: null};
@@ -37,7 +37,7 @@ async function fixture() {
     return grant.scope;
   };
   const authA = mint('scope_a', true), authB = mint('scope_b', true);
-  const create = connection => createSameDatabaseBillingStore({connection: async () => connection, verifyAuthority, enabled: true, clock: () => NOW});
+  const create = connection => createSameDatabaseBillingStore({connection: async () => connection, verifyAuthority,verifyDispatchFence, enabled: true, clock});
   const storeA = create(dbA), storeB = create(dbB);
   let counter = 0;
   const execute = async (store, auth, command, expectedRevision = null, operationId = null) => {
@@ -260,4 +260,76 @@ test('missing billing root cannot reset a retained uncertain charge or replay it
     assert.equal(fresh.ok,false);assert.equal(fresh.reason,'billing-missing-root-with-history');
     assert.equal(await readRaw(f.dbA,'b23_states',billingRootKey),undefined);assert.deepEqual(await readRaw(f.dbA,'b23_operations',billingOperationKey(request.operationId)),log);
   }finally{f.close();}
+});
+
+async function seedBillingLifetime(f,{operations=10000,jobs=1000}={}){
+  const current=(await readRaw(f.dbA,'b23_states',billingRootKey)).payload,root=structuredClone(current),before=digest({ledger:root.ledger,jobs:root.jobs});
+  for(let i=0;Object.keys(root.jobs).length<jobs;i++)root.jobs['retired_local_'+i]={scope:sourceScope('scope_a'),checkpoint:{state:'cancelled',id:'retired_local_'+i,inputFingerprint:digest(['local',i]),modelBinding:null,reason:'synthetic-completed-work'}};
+  const after=digest({ledger:root.ledger,jobs:root.jobs}),rows=[];
+  for(let n=current.revision+1;n<=operations;n++){const operationId='billing_lifetime_'+n,result={revision:n,ledgerRevision:root.ledger.revision,detail:null,changedJobs:[]};
+    const p={format:'vaiwl-pro-billing-journal/1',scopeKey:billingRootKey,operationId,sequence:n,fingerprint:digest({synthetic:n}),actorScopeKey:'scope_a',action:'RECOVER_SCOPE',beforeDigest:n===current.revision+1?before:after,afterDigest:after,result};
+    rows.push({key:billingOperationKey(operationId),payload:p,checksum:digest(p)});root.operationIds.push(operationId);
+  }root.revision=operations;
+  await new Promise((resolve,reject)=>{const tx=f.dbA.transaction(['b23_states','b23_operations'],'readwrite');tx.objectStore('b23_states').put({key:billingRootKey,payload:root,checksum:digest(root)});for(const row of rows)tx.objectStore('b23_operations').put(row);tx.oncomplete=resolve;tx.onabort=()=>reject(tx.error);});
+  return root;
+}
+
+test('billing operation 10,001 and job 1,001 stay usable through lossless receipt segments and finalized job archives',async()=>{
+  const f=await fixture();try{
+    const original={operationId:'original_config',expectedRevision:0,command:{type:'CONFIGURE_POLICIES',policies:[]}};
+    assert.equal((await f.storeA.transact(f.authA,original)).ok,true);await seedBillingLifetime(f);
+    const prior=await readRaw(f.dbA,'b23_operations',billingOperationKey('original_config'));
+    const queuedLocal=queueJob({id:'job_1001',scope:sourceScope('scope_a'),versions:versions('scope_a'),inputFingerprint:digest('job1001'),processing:'local'});
+    const result=await f.execute(f.storeA,f.authA,{type:'QUEUE_JOB',checkpoint:queuedLocal},10000,'after_lifetime_limit');assert.equal(result.ok,true,result.reason);
+    const saved=await f.storeA.read(f.authA);assert.equal(saved.revision,10001);assert.equal(saved.records.length,1);assert.equal(saved.archivedJobCount,800);assert.equal(Object.keys(saved.jobs).length,201);assert(saved.jobs.job_1001);
+    assert(await readRaw(f.dbA,'b23_states',billingArchivedJobKey('retired_local_0')));assert(await readRaw(f.dbA,'b23_states',billingHistoryKey(1)));
+    assert.equal((await f.storeA.readArchivedJob(f.authA,'retired_local_0')).job.checkpoint.state,'cancelled');await assert.rejects(()=>f.storeB.readArchivedJob(f.authB,'retired_local_0'),/cross-scope/);assert.equal(await f.storeA.readArchivedJob(f.authA,'not_present'),null);
+    assert.deepEqual(await readRaw(f.dbA,'b23_operations',billingOperationKey('original_config')),prior);
+    const replay=await f.storeA.transact(f.authA,original);assert.equal(replay.ok,true,replay.reason);assert.equal(replay.replayed,true);
+    const reused=await f.execute(f.storeA,f.authA,{type:'QUEUE_JOB',checkpoint:{...queuedLocal,id:'retired_local_0'}});assert.equal(reused.reason,'billing-retired-job-id');
+    assert.equal((await f.execute(f.storeA,f.authA,{type:'CANCEL_JOB',jobId:'job_1001',reason:'finished'})).ok,true);
+  }finally{f.close();}
+});
+
+test('finalized billing archival preserves historical exact charges and uncertain liabilities without allowing retroactive budget resets',async()=>{
+  let now=NOW;const f=await fixture({clock:()=>now});try{
+    await initialize(f);await seedJob(f,'paid_done');await f.must(f.execute(f.storeA,f.authA,reserve('paid_done',1000)));await f.must(f.execute(f.storeA,f.authA,{type:'DISPATCH_JOB',jobId:'paid_done'}));
+    await f.must(f.execute(f.storeA,f.authA,{type:'COMPLETE_JOB',jobId:'paid_done',resultDigest:digest('done'),actualCharge:700,reportedExactChargeDecimal:'0.0007'}));await f.must(f.execute(f.storeA,f.authA,{type:'CANCEL_JOB',jobId:'paid_done',reason:'preview-dismissed'}));
+    await seedJob(f,'uncertain');await f.must(f.execute(f.storeA,f.authA,reserve('uncertain',1500)));await f.must(f.execute(f.storeA,f.authA,{type:'DISPATCH_JOB',jobId:'uncertain'}));await f.must(f.execute(f.storeA,f.authA,{type:'CANCEL_JOB',jobId:'uncertain',reason:'connection-lost'}));
+    now='2026-11-01T12:00:00.000Z';await seedBillingLifetime(f,{operations:512,jobs:1000});
+    await f.must(f.execute(f.storeA,f.authA,{type:'RECOVER_SCOPE'},512,'archive_expired_finalized'));
+    const saved=await f.storeA.read(f.authA);assert.equal(saved.ledger.reservations.reservation_paid_done,undefined);assert.equal(saved.ledger.reservations.reservation_uncertain.reservation.status,'sent-uncertain');assert.equal(saved.jobs.uncertain.checkpoint.state,'outcome-unknown');
+    const summary=budgetSummary(saved.ledger,'billing_fixture',{archivedSettledTotals:saved.archivedSettledTotals});assert.equal(summary.settled,700);assert.equal(summary.uncertain,1500);
+    const archive=await readRaw(f.dbA,'b23_states',billingArchivedJobKey('paid_done'));assert.equal(archive.payload.reservations[0].row.reservation.actualCharge,700);assert(await readRaw(f.dbA,'b23_states',billingArchivedReservationKey('reservation_paid_done')));
+    const retrospective={...policy('new_reset',{kind:'installation-total'},1000),window:{from:'2026-10-01T00:00:00.000Z',through:'2026-11-30T23:59:59.999Z'}};
+    const denied=await f.execute(f.storeA,f.authA,{type:'CONFIGURE_POLICIES',policies:[retrospective]});assert.equal(denied.reason,'billing-archived-window-requires-current-start');
+    const current={...retrospective,id:'november',window:{from:'2026-11-01T00:00:00.000Z',through:'2026-11-30T23:59:59.999Z'}};assert.equal((await f.execute(f.storeA,f.authA,{type:'CONFIGURE_POLICIES',policies:[current]})).ok,true);
+    assert.equal(budgetSummary((await f.storeA.read(f.authA)).ledger,'billing_fixture',{archivedSettledTotals:(await f.storeA.read(f.authA)).archivedSettledTotals}).uncertain,1500);
+  }finally{f.close();}
+});
+
+test('billing archival quota failure is atomic and a retained archive prevents silently resetting a missing ledger',async()=>{
+  const f=await fixture();try{
+    await initialize(f);await seedBillingLifetime(f,{operations:512,jobs:1000});const before=await readRaw(f.dbA,'b23_states',billingRootKey);
+    f.factory.failNextPut=true;const fail=await f.execute(f.storeA,f.authA,{type:'RECOVER_SCOPE'},512,'failed_archive');assert.equal(fail.ok,false);assert.match(fail.reason,/Quota/);assert.deepEqual(await readRaw(f.dbA,'b23_states',billingRootKey),before);assert.equal(await readRaw(f.dbA,'b23_states',billingArchivedJobKey('retired_local_0')),undefined);
+    await f.must(f.execute(f.storeA,f.authA,{type:'RECOVER_SCOPE'},512,'successful_archive'));const current=(await readRaw(f.dbA,'b23_states',billingRootKey)).payload;
+    await new Promise((resolve,reject)=>{const tx=f.dbA.transaction(['b23_states','b23_operations'],'readwrite');tx.objectStore('b23_states').delete(billingRootKey);tx.objectStore('b23_states').delete(billingHistoryKey(1));for(const id of [...before.payload.operationIds,...current.operationIds])tx.objectStore('b23_operations').delete(billingOperationKey(id));tx.oncomplete=resolve;tx.onabort=()=>reject(tx.error);});
+    await assert.rejects(()=>f.storeA.read(f.authA),/missing-root-with-history/);assert(await readRaw(f.dbA,'b23_states',billingArchivedJobKey('retired_local_0')));
+  }finally{f.close();}
+});
+
+test('model dispatch rechecks the owner source fence in the billing transaction and aborts late async/reentered fences',async()=>{
+  for(const mode of ['denied','async','reentered','ready']){
+    let fenceCalls=0;const f=await fixture({verifyDispatchFence(tx,scope,checkpoint,check,ready,fail){
+      fenceCalls++;assert.equal(scope.key,'scope_a');assert.equal(checkpoint.id,'job_a');assert.equal(checkpoint.inputVersions.scopeKey,scope.key);assert(tx.objectStore('native_states'));assert.equal(check(),true);
+      if(mode==='denied'){fail('actual-source-revision-changed');return;}
+      if(mode==='async'){ready();return Promise.reject(Error('private async fence'));}
+      if(mode==='reentered'){ready();ready();return;}
+      const q=tx.objectStore('native_states').get('explicit_synthetic_source');q.onsuccess=()=>{if(check())ready();};
+    }});
+    try{await initialize(f);await seedJob(f);await f.must(f.execute(f.storeA,f.authA,reserve('job_a')));const before=await f.storeA.read(f.authA),result=await f.execute(f.storeA,f.authA,{type:'DISPATCH_JOB',jobId:'job_a'});
+      assert.equal(fenceCalls,1);if(mode==='ready'){assert.equal(result.ok,true,result.reason);assert.equal((await f.storeA.read(f.authA)).jobs.job_a.checkpoint.state,'dispatched');}
+      else{assert.equal(result.ok,false);assert.match(result.reason,/source-revision|async-billing|reentered/);assert.deepEqual(await f.storeA.read(f.authA),before);}await new Promise(resolve=>setImmediate(resolve));
+    }finally{f.close();}
+  }
 });
