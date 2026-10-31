@@ -68,6 +68,14 @@ function orderedFlowMembers(base,members){
 function nativeInvisibleControl(node,style,protectedRegions){
  return !protectedRegions.includes(node)&&style.opacity==='0'&&style.pointerEvents==='none'&&node.checkVisibility?.({checkOpacity:true,checkVisibilityCSS:true,contentVisibilityAuto:true})===false;
 }
+// A native accessibility control can have geometry while its own exact clip
+// has an empty paint region. This is a separate closed-baseline qualification;
+// no node, focus semantics, event handler or accessibility state is changed.
+function nativeClippedControl(node,style,protectedRegions){
+ return !protectedRegions.includes(node)&&!node.hidden&&!node.inert&&node.getAttribute('aria-hidden')!=='true'&&
+  style.position==='absolute'&&style.clipPath==='inset(50%)'&&style.width==='1px'&&style.height==='1px'&&style.overflowX==='hidden'&&style.overflowY==='hidden'&&
+  ['paddingTop','paddingRight','paddingBottom','paddingLeft','borderTopWidth','borderRightWidth','borderBottomWidth','borderLeftWidth'].every(key=>style[key]==='0px');
+}
 const controlRegions=(node,regions)=>regions.filter(region=>region===node||region.contains(node));
 const sameControlRegions=(before,after)=>Array.isArray(before)&&before.length===after.length&&before.every((region,i)=>region===after[i]);
 function controlSnapshot({protectedRegions,document:doc,isOwnedSurface}) {
@@ -89,8 +97,8 @@ function controlSnapshot({protectedRegions,document:doc,isOwnedSurface}) {
   if(seen.has(node)||isOwnedSurface(node))continue;
   seen.add(node);if(result.length>=128)return null;
   const style=doc.defaultView.getComputedStyle(node);
-  const nativeInvisible=nativeInvisibleControl(node,style,protectedRegions);
-  result.push({node,parent:node.parentElement,regions:controlRegions(node,protectedRegions),nativeInvisible,visible:!nativeInvisible&&style.display!=='none'&&style.visibility==='visible'&&positive(rect(node)),diagnosticPainted:node.checkVisibility?.({checkOpacity:true,checkVisibilityCSS:true,contentVisibilityAuto:true})===true,diagnosticPointerNone:style.pointerEvents==='none',diagnosticOpacityZero:style.opacity==='0'});
+  const nativeInvisible=nativeInvisibleControl(node,style,protectedRegions),nativeClipped=nativeClippedControl(node,style,protectedRegions);
+  result.push({node,parent:node.parentElement,regions:controlRegions(node,protectedRegions),nativeInvisible,nativeClipped,visible:!nativeInvisible&&!nativeClipped&&style.display!=='none'&&style.visibility==='visible'&&positive(rect(node)),diagnosticPainted:node.checkVisibility?.({checkOpacity:true,checkVisibilityCSS:true,contentVisibilityAuto:true})===true,diagnosticPointerNone:style.pointerEvents==='none',diagnosticOpacityZero:style.opacity==='0'});
  }
  result.shadowCandidates=shadowCandidates;return result;
 }
@@ -116,7 +124,7 @@ export function isSameNativeLayout(plan) {
  try {
   const current=controlSnapshot(plan);
   const next=current&&layoutCoordinates({...plan,nativeControls:current});
-  return !!next&&Object.keys(next).every(key=>next[key]===plan[key])&&!!current&&current.length===plan.nativeControls.length&&current.every((value,i)=>value.node===plan.nativeControls[i].node&&value.parent===plan.nativeControls[i].parent&&sameControlRegions(plan.nativeControls[i].regions,value.regions)&&value.visible===plan.nativeControls[i].visible&&value.nativeInvisible===plan.nativeControls[i].nativeInvisible);
+  return !!next&&Object.keys(next).every(key=>next[key]===plan[key])&&!!current&&current.length===plan.nativeControls.length&&current.every((value,i)=>value.node===plan.nativeControls[i].node&&value.parent===plan.nativeControls[i].parent&&sameControlRegions(plan.nativeControls[i].regions,value.regions)&&value.visible===plan.nativeControls[i].visible&&value.nativeInvisible===plan.nativeControls[i].nativeInvisible&&value.nativeClipped===plan.nativeControls[i].nativeClipped);
  }catch{return false;}
 }
 
@@ -332,6 +340,7 @@ export function validateCriticalLayout(plan,{workspace,nativeControls=[],nativeS
    // Keep the node in enumeration so becoming visible or changing identity or
    // parent immediately returns to the full native-control protection below.
    if(plan.nativeControls?.some(item=>item.node===node&&item.parent===node.parentElement&&item.nativeInvisible===true&&sameControlRegions(item.regions,controlRegions(node,plan.protectedRegions)))&&nativeInvisibleControl(node,s,plan.protectedRegions))continue;
+   if(plan.nativeControls?.some(item=>item.node===node&&item.parent===node.parentElement&&item.nativeClipped===true&&sameControlRegions(item.regions,controlRegions(node,plan.protectedRegions)))&&nativeClippedControl(node,s,plan.protectedRegions))continue;
    if(node.hidden||node.inert||overlaps(board,r))return refuse('control-overlap',[board.x,board.y,board.width,board.height,r.x,r.y,r.width,r.height,node===plan.header?1:plan.composer.contains(node)?2:3,node.hidden?1:0,node.inert?1:0].map(Math.round));
    if(node===plan.header&&s.pointerEvents==='none'&&!node.matches(controls))continue;
    if(r.x<0||r.y<0||r.x+r.width>win.innerWidth+1||r.y+r.height>win.innerHeight+1)return refuse('control-viewport');

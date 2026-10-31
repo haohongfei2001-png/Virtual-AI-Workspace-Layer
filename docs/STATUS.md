@@ -1,5 +1,16 @@
 # VAIWL实际状态：渐进积累工程已接线，真实来源逐项待准入
 
+## 2026-10-31 原生空裁剪控件误拒定位与限定修复
+
+`9bbb5ac5517e270edeace6fc900a692008f43a35` 同 SHA 统一 CI [41174394228](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/actions/runs/41174394228) 42/42 job PASS；完整 Node 12016/12016、12项guard变异全通过。populated原64次导航/本地使用及8格检查通过当前使用子合同，原历史PARTIAL保留；4张当前运行PNG实际审查无新增阻断。该正式候选已在原Profile4同ID激活，实际指纹 `9c14b5eed70d027d6c7600fc2dbaa77f9a22ea7f9d2cff3db9226e348294e752`。首页展开、已有聊天导航通过；聊天返回仍FAIL，新的control-hit为1×1 composer后代，故不接受为个人日用候选。
+
+限定无正文诊断确认：该节点自身精确clip-path:inset(50%)，双轴overflow:hidden，尺寸1×1、padding/border全0，非hidden/inert/aria-hidden；关闭态与增强态的定位、裁剪、尺寸、溢出、边框及焦点顺序相同，关闭态中心也不可命中。不由尺寸或tag推断控件语义。临时诊断包保留原拒绝，完成后已恢复正式9bbb源码并执行同ID Reload及刷新；恢复后指纹未另采。诊断及原始回执位于 `.git/vaiwl-artifacts/takeover-20261030/final/tiny-native-diagnostic/`。
+
+本次只为原关闭态已具此精确空裁剪形态的同一node/parent/protected-regions保存独立nativeClipped资格；保护根、新节点、后来裁剪、换父/跨区及取消裁剪均不继承。继续枚举后代、不改原生节点/ARIA/事件/输入。原透明控件资格独立，非空裁剪、边界变化仍回到原命中保护和关闭态重证。
+
+最终夹具在原生产代码先失败；新11项裁剪浏览器场景、原11项透明场景、241项定向合同、原document-flow机制与包含可见/透明/空裁剪控件的正式nested MV3连续旅程PASS。206生产输入逐一绑定，2258原未提交文件hash保全。独立只读审查无阻断。裁剪测试的focus/click是恢复阅读后的程序调用，仅证明原节点、恢复态焦点及handler保全，不冒充真实键盘操作。新冻结候选统一CI及修复后的Mac效果仍待验证；既有30分钟/60动作续期边界不延长，个人日用、完整Free、公开发布仍未接受。
+
+
 ## 2026-10-31 实机透明控件误拒已复现并完成限定修复
 
 正式候选 `2328105db9d53a539660c58c92953bd986524dc9` 已在原 Profile 4 同 ID 激活，实际页面指纹 `00ac65f6b862bd2748cc46313ae0bc2a06958b2fbd7150a19eb9b9cf7a7c6f0e`。独立窗口的首页工作区展开、已有聊天导航通过限定原生操作；聊天四格返回仍拒绝，故真实连续验收FAIL，不转为个人日用接受。新拒绝码为 `control-hit`，不是旧 `control-overlap`。
