@@ -1,6 +1,45 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {initializationFailureStates,foregroundFailureStates,installLocalStatus,readActiveLocalStatus,validLayoutShape,readActiveLocalLayout,validLocalPipeline,createSidebarSnapshot} from '../../src/host/local-status.mjs';
+
+test('private presentation reads never invoke native structure collectors or fall back to them',()=>{
+ let listener,presentationReads=0,structureReads=0,historyReads=0;
+ const runtime={id:'extension',getURL:p=>'chrome-extension://extension/'+p,onMessage:{addListener:f=>{listener=f;},removeListener(){}}};
+ const sender={id:runtime.id,url:runtime.getURL('status.html')},shape={counts:[1,1,1,1,1,1,1],branches:[]};
+ const options={runtime,readState:()=> 'reading',readLayout:()=>{structureReads++;throw Error('native-structure-read');},observeHistory:()=>{historyReads++;throw Error('native-history-read');}};
+ installLocalStatus({...options,readPresentation:()=>{presentationReads++;return shape;}});
+ for(const source of [{...sender,id:'other'},{...sender,url:'https://chatgpt.com/'},{...sender,url:sender.url+'?probe'},{...sender,tab:{}}])listener({v:1,type:'HOST_LOCAL_PRESENTATION'},source,()=>assert.fail('foreign sender'));
+ listener({v:1,type:'HOST_LOCAL_PRESENTATION',includeStructure:true},sender,()=>assert.fail('extra request fields'));
+ assert.equal(presentationReads,0);
+ let reply;listener({v:1,type:'HOST_LOCAL_PRESENTATION'},sender,r=>{reply=r;});assert.deepEqual(reply,{v:1,shape});assert.equal(presentationReads,1);
+ installLocalStatus(options);reply=undefined;listener({v:1,type:'HOST_LOCAL_PRESENTATION'},sender,r=>{reply=r;});assert.deepEqual(reply,{v:1,shape:null});
+ assert.equal(structureReads,0);assert.equal(historyReads,0);
+});
+
+test('private presentation rejects structural payloads at both ends without collecting a replacement',async()=>{
+ const shape={counts:[1,1,1,1,1,1,1],branches:[]},target={tabId:7,documentId:'doc',url:'https://chatgpt.com/'};
+ for(const key of ['sidebarStructure','mainMountCheck']){
+  let listener,reads=0;const runtime={id:'extension',getURL:p=>'chrome-extension://extension/'+p,onMessage:{addListener:f=>{listener=f;},removeListener(){}}};
+  const forbidden={...shape};Object.defineProperty(forbidden,key,{enumerable:true,get(){assert.fail('structural payload accessor');}});
+  installLocalStatus({runtime,readState:()=> 'reading',readPresentation:()=>forbidden,readLayout:()=>{reads++;throw Error('native-structure-read');}});
+  let reply;listener({v:1,type:'HOST_LOCAL_PRESENTATION'},{id:runtime.id,url:runtime.getURL('status.html')},r=>{reply=r;});assert.deepEqual(reply,{v:1,shape:null});assert.equal(reads,0);
+  let sends=0;const result=await readActiveLocalLayout({presentationOnly:true,target,webNavigation:{getFrame:async()=>({...target,documentLifecycle:'active'})},tabs:{query:()=>assert.fail('exact target only'),sendMessage:async(id,message,options)=>{sends++;assert.deepEqual(message,{v:1,type:'HOST_LOCAL_PRESENTATION'});assert.deepEqual(options,{documentId:'doc'});return {v:1,shape:forbidden};}}});
+  assert.equal(result,null);assert.equal(sends,1);
+ }
+});
+
+test('private presentation discards changed-document replies with no full-layout fallback',async()=>{
+ const target={tabId:7,documentId:'doc',url:'https://chatgpt.com/'};let frames=0,sends=0;
+ const result=await readActiveLocalLayout({presentationOnly:true,target,webNavigation:{getFrame:async()=>({documentId:'doc',url:frames++?target.url+'changed':target.url,documentLifecycle:'active'})},tabs:{query:()=>assert.fail('must keep original target'),sendMessage:async(id,message,options)=>{sends++;assert.equal(id,7);assert.deepEqual(message,{v:1,type:'HOST_LOCAL_PRESENTATION'});assert.deepEqual(options,{documentId:'doc'});return {v:1,shape:{counts:[1,1,1,1,1,1,1],branches:[]}};}}});
+ assert.equal(result,null);assert.equal(sends,1);assert.equal(frames,2);
+});
+
+test('private presentation requires a trusted document target without querying another active tab',async()=>{
+ for(const options of [{},{target:{tabId:7}},{target:{tabId:7,documentId:'doc',url:'https://chatgpt.com/'}}]){
+  const result=await readActiveLocalLayout({...options,presentationOnly:true,tabs:{query:()=>assert.fail('unbound active-tab query'),sendMessage:()=>assert.fail('unbound presentation read')}});
+  assert.equal(result,null);
+ }
+});
 import {validSidebarStructure,sidebarStructureCoverage} from '../../src/host/history-structure-diagnostic.mjs';
 import observedSidebar from './fixtures/observed-sidebar-structure.json' with {type:'json'};
 import observedProjectSidebar from './fixtures/observed-sidebar-project-20261026.json' with {type:'json'};

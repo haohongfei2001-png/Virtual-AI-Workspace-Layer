@@ -310,6 +310,19 @@ try{
   const workspace=page.frameLocator('iframe[src="chrome-extension://'+id+'/workspace.html"]'),sidebar=page.frameLocator('iframe[src="chrome-extension://'+id+'/sidebar.html"]');
   await workspace.getByRole('link',{name:'Native B',exact:true}).first().waitFor({timeout:15000});
   const popup=await context.newPage();await popup.goto('chrome-extension://'+id+'/status.html');await page.bringToFront();
+  const passiveStatus=await popup.evaluate(async()=>{
+   const types=[],send=chrome.tabs.sendMessage;chrome.tabs.sendMessage=function(...args){types.push(args[1]?.type);return send.apply(chrome.tabs,args);};
+   try{
+    await import(chrome.runtime.getURL('extension/status.mjs')+'?passive-project-regression');
+    const text=[...document.querySelectorAll('#local-layout-shape')].at(-1)?.textContent??'',at=text.indexOf('{');
+    const shape=at<0?null:JSON.parse(text.slice(at));
+    return {types,registered:shape?.presentation?.registered===true,frames:shape?.presentation?.frames??0,hasStructure:!!shape&&Object.hasOwn(shape,'sidebarStructure'),hasExport:!!document.querySelector('#save-sidebar-snapshot'),explicitCaptureAvailable:!!document.querySelector('#read-sidebar-structure')};
+   }finally{chrome.tabs.sendMessage=send;}
+  });
+  assert.equal(passiveStatus.types.filter(type=>type==='HOST_LOCAL_PRESENTATION').length,1);
+  assert(!passiveStatus.types.some(type=>['HOST_LOCAL_LAYOUT','HOST_LOCAL_HISTORY_STRUCTURE'].includes(type)));
+  assert.equal(passiveStatus.registered,true);assert(passiveStatus.frames>=1);assert.equal(passiveStatus.hasStructure,false);assert.equal(passiveStatus.hasExport,false);assert.equal(passiveStatus.explicitCaptureAvailable,true);
+  report.checks.privatePresentationWithoutStructure=passiveStatus;
   const unlocked=await popup.evaluate(()=>chrome.runtime.sendMessage({v:1,type:'HOST_LOCAL_SPACE',action:'unlock'}));assert.equal(unlocked.ok,true,JSON.stringify(unlocked));
   const localState=()=>popup.evaluate(()=>chrome.runtime.sendMessage({v:1,type:'HOST_LOCAL_SPACE',action:'status'}));
   report.checks.afterUnlock=await localState();assert.equal(report.checks.afterUnlock.mode,'personal');
@@ -738,22 +751,26 @@ try{
   for(const [index,route]of ['/', '/g/'+P+'/project'].entries()){
    await page.goto(origin+route);await page.bringToFront();
    await page.waitForFunction(()=>document.documentElement.dataset.vaiwlBoot==='loaded');
-   const sample=await control.evaluate(async index=>{
+   await control.reload();
+   const sample=await control.evaluate(async()=>{
     const api=await import(chrome.runtime.getURL('src/host/local-status.mjs'));let target;
     const state=await api.readActiveLocalStatus({tabs:chrome.tabs,webNavigation:chrome.webNavigation,onTarget:t=>target=t});
     const boot=await api.readLocalBoot({tabs:chrome.tabs,webNavigation:chrome.webNavigation,target});
-    const shape=await api.readActiveLocalLayout({tabs:chrome.tabs,webNavigation:chrome.webNavigation,target});
-    await import(chrome.runtime.getURL('extension/status.mjs')+'?sidebar-capture='+index);
-    return {state,boot,shape,target,coverage:document.querySelector('#sidebar-structure-coverage')?.textContent};
-   },index);
+    const shape=await api.readActiveLocalLayout({tabs:chrome.tabs,webNavigation:chrome.webNavigation,target,presentationOnly:true});
+    return {state,boot,shape,target};
+   });
+   assert(!Object.hasOwn(sample.shape??{},'sidebarStructure'),'default status must not collect native structure');
+   assert.equal(await control.locator('#save-sidebar-snapshot').count(),0);
+   await control.locator('#diagnostic-details > summary').click();
+   await control.locator('#read-sidebar-structure').click();
+   await control.locator('#sidebar-structure-coverage').waitFor({state:'attached'});
+   sample.coverage=await control.locator('#sidebar-structure-coverage').textContent();
    assert.equal(sample.boot?.build,build);assert.equal(sample.boot.stage,'module-loaded');
-   assert(sample.shape?.sidebarStructure);assert.equal(sample.shape.sidebarStructure.reason,'complete');
    assert.match(sample.coverage??'',/COMPLETE_FOCUSED_SNAPSHOT/);
-   assert(!JSON.stringify(sample.shape.sidebarStructure).includes('PRIVATE_SENTINEL'));
-   assert(!JSON.stringify(sample.shape.sidebarStructure).includes('66666666'));
-   assert.equal(sample.shape.sidebarStructure.rows.filter(r=>r[3]==='menuitem').length,4);
    const [download]=await Promise.all([control.waitForEvent('download'),control.locator('#save-sidebar-snapshot').click()]);
    const exported=JSON.parse(await readFile(await download.path(),'utf8'));
+   assert.equal(exported.sidebarStructure.reason,'complete');
+   assert.equal(exported.sidebarStructure.rows.filter(r=>r[3]==='menuitem').length,4);
    assert.equal(download.suggestedFilename(),'vaiwl-sidebar-structure.json');
    assert.equal(exported.build,build);assert.equal(exported.route,index?'project':'home');
    assert.equal(exported.documentBinding,'verified-at-capture-not-account-identity');

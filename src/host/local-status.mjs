@@ -94,14 +94,16 @@ export function validLocalPipeline(p){
  const d=p.lastWorkspaceDelivery;
  return d===null||exact(d,['versions','segment','inventory','groups','noProject','unknown'])&&Array.isArray(d.versions)&&d.versions.length===4&&d.versions.every((v,i)=>optional(v)||i===2&&pair(v))&&optional(d.segment)&&['inventory','groups','noProject','unknown'].every(k=>pair(d[k]));
 }
+// A cached presentation may not silently include a native-tree diagnostic.
+const validPassiveLayout=value=>value!==null&&typeof value==='object'&&!Object.hasOwn(value,'sidebarStructure')&&!Object.hasOwn(value,'mainMountCheck')&&validLayoutShape(value);
 /** Passive isolated-world status. This is not an authority or recovery channel. */
-export function installLocalStatus({runtime,readState,readLayout=()=>null,observeHistory=null}){
+export function installLocalStatus({runtime,readState,readLayout=()=>null,readPresentation=()=>null,observeHistory=null}){
  const listener=(message,sender,reply)=>{
   if(exact(message,['v','type'])&&message.v===1&&message.type==='HOST_LOCAL_HISTORY_STRUCTURE'&&sender?.id===runtime.id&&sender?.url===runtime.getURL('status.html')&&sender.tab===undefined&&observeHistory){
    Promise.resolve().then(observeHistory).then(report=>reply({v:1,report:validHistoryStructureReport(report)?report:null}),()=>reply({v:1,report:null}));return true;
   }
-  if(!exact(message,['v','type'])||message.v!==1||!['HOST_LOCAL_STATUS','HOST_LOCAL_LAYOUT'].includes(message.type)||sender?.id!==runtime.id||sender?.url!==runtime.getURL('status.html')||sender.tab!==undefined)return;
-  if(message.type==='HOST_LOCAL_LAYOUT'){let shape=null;try{const value=readLayout();if(validLayoutShape(value))shape=value;}catch{}reply({v:1,shape});return;}
+  if(!exact(message,['v','type'])||message.v!==1||!['HOST_LOCAL_STATUS','HOST_LOCAL_LAYOUT','HOST_LOCAL_PRESENTATION'].includes(message.type)||sender?.id!==runtime.id||sender?.url!==runtime.getURL('status.html')||sender.tab!==undefined)return;
+  if(message.type==='HOST_LOCAL_LAYOUT'||message.type==='HOST_LOCAL_PRESENTATION'){const passive=message.type==='HOST_LOCAL_PRESENTATION';let shape=null;try{const value=(passive?readPresentation:readLayout)();if((passive?validPassiveLayout:validLayoutShape)(value))shape=value;}catch{}reply({v:1,shape});return;}
   let state='unavailable';try{const value=readState();if(states.has(value))state=value;}catch{}
   reply({v:1,state});
  };
@@ -138,7 +140,8 @@ export function readActiveLocalStatus({tabs,webNavigation=null,schedule=setTimeo
 }
 
 /** Optional same-document layout failure shape, with the same private sender gate. */
-export function readActiveLocalLayout({tabs,webNavigation=null,target=null,schedule=setTimeout,cancel=clearTimeout}){
+export function readActiveLocalLayout({tabs,webNavigation=null,target=null,presentationOnly=false,schedule=setTimeout,cancel=clearTimeout}){
+ if(typeof presentationOnly!=='boolean'||presentationOnly&&(!target||!webNavigation||typeof target.documentId!=='string'||!target.documentId||typeof target.url!=='string'||!target.url))return Promise.resolve(null);
  return new Promise(resolve=>{
   let settled=false,timer;const finish=value=>{if(settled)return;settled=true;cancel(timer);resolve(value);};
   timer=schedule(()=>finish(null),1000);
@@ -147,9 +150,9 @@ export function readActiveLocalLayout({tabs,webNavigation=null,target=null,sched
    if(!Array.isArray(rows)||rows.length!==1||!Number.isSafeInteger(rows[0]?.id)||rows[0].id<0){finish(null);return;}
    const current=async()=>{if(!target)return true;if(!webNavigation)return false;const frame=await webNavigation.getFrame({tabId:target.tabId,frameId:0});return frame?.documentId===target.documentId&&frame.url===target.url&&frame.documentLifecycle==='active';};
    if(!await current()||settled){finish(null);return;}
-   const result=await tabs.sendMessage(rows[0].id,{v:1,type:'HOST_LOCAL_LAYOUT'},target?{documentId:target.documentId}:{frameId:0});
+   const result=await tabs.sendMessage(rows[0].id,{v:1,type:presentationOnly?'HOST_LOCAL_PRESENTATION':'HOST_LOCAL_LAYOUT'},target?{documentId:target.documentId}:{frameId:0});
    return !settled&&await current()?result:null;
-  }).then(r=>{if(!settled)finish(exact(r,['v','shape'])&&r.v===1&&validLayoutShape(r.shape)?r.shape:null);},()=>finish(null));
+  }).then(r=>{if(!settled)finish(exact(r,['v','shape'])&&r.v===1&&(presentationOnly?validPassiveLayout:validLayoutShape)(r.shape)?r.shape:null);},()=>finish(null));
  });
 }
 

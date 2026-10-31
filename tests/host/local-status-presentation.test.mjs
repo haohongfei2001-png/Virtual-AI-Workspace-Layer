@@ -3,15 +3,15 @@ import {projectSurfaceFailureReasons} from '../../src/host/native-project-surfac
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {initializationFailureStates,readActiveLocalStatus,readActiveLocalLayout,validLocalPipeline} from '../../src/host/local-status.mjs';
+import {initializationFailureStates,readActiveLocalStatus,readActiveLocalLayout,validLocalPipeline,createSidebarSnapshot} from '../../src/host/local-status.mjs';
 const source=readFileSync(new URL('../../extension/status.mjs',import.meta.url),'utf8');
 const html=readFileSync(new URL('../../extension/status.html',import.meta.url),'utf8');
 const importLine="import {requestLocalReconnect} from '../src/host/local-reconnect.mjs';\nimport {HOST_CONFIG} from './config.mjs';\nimport {readActiveLocalStatus,readActiveLocalLayout,readLocalBoot,validLocalPipeline,createSidebarSnapshot,createMainMountSnapshot} from '../src/host/local-status.mjs';\nimport {HISTORY_DIAGNOSTIC_BATCH,validHistoryStructureReport,runHistoryDiagnosticOnce,sidebarStructureCoverage} from '../src/host/history-structure-diagnostic.mjs';\n";
 assert(source.startsWith(importLine),'execute actual popup body after its exact imports');
 const AsyncFunction=Object.getPrototypeOf(async function(){}).constructor;
-async function render(initial,browserLocal=false,localState={ok:true},boot=null,trustedTarget=false){
+async function render(initial,browserLocal=false,localState={ok:true},boot=null,trustedTarget=false,layouts={}){
  let current=initial;const calls=[],node={textContent:''};
- const chrome={tabs:{query:async args=>{calls.push(['query',args]);return [{id:7,get title(){throw Error('PRIVATE_TITLE');},get url(){throw Error('PRIVATE_URL');}}];},sendMessage:async(...args)=>{calls.push(['send',...args]);return args[1]?.type==='HOST_LOCAL_LAYOUT'?{v:1,shape:null}:args[1]?.type==='HOST_LOCAL_RECONNECT'?{v:1,ok:true}:current;}}};
+ const chrome={tabs:{query:async args=>{calls.push(['query',args]);return [{id:7,get title(){throw Error('PRIVATE_TITLE');},get url(){throw Error('PRIVATE_URL');}}];},sendMessage:async(...args)=>{calls.push(['send',...args]);return args[1]?.type==='HOST_LOCAL_LAYOUT'?{v:1,shape:layouts.full??null}:args[1]?.type==='HOST_LOCAL_PRESENTATION'?{v:1,shape:layouts.presentation??null}:args[1]?.type==='HOST_LOCAL_RECONNECT'?{v:1,ok:true}:current;}}};
  if(trustedTarget)chrome.webNavigation={getFrame:async()=>({documentId:'document',url:'https://chatgpt.com/',documentLifecycle:'active'})};
  const elements=[];
  const make=tag=>({tag,textContent:'',children:[],append(...nodes){this.children.push(...nodes);},listeners:{},setAttribute(){},addEventListener(type,fn){this.listeners[type]=fn;}});
@@ -20,10 +20,21 @@ async function render(initial,browserLocal=false,localState={ok:true},boot=null,
  const byId=id=>id==='status'?node:find(elements,id);
  const document={getElementById:byId,body:{append:e=>{const old=elements.indexOf(e);if(old>=0)elements.splice(old,1);elements.push(e);}},createElement:make};
  chrome.runtime={sendMessage:async message=>{calls.push(['control',message]);return localState;}};
- await new AsyncFunction('requestLocalReconnect','HOST_CONFIG','readActiveLocalStatus','readActiveLocalLayout','readLocalBoot','validLocalPipeline','chrome','document',source.slice(importLine.length))(requestLocalReconnect,{browserLocal},readActiveLocalStatus,readActiveLocalLayout,async()=>boot,validLocalPipeline,chrome,document);
+ await new AsyncFunction('requestLocalReconnect','HOST_CONFIG','readActiveLocalStatus','readActiveLocalLayout','readLocalBoot','validLocalPipeline','createSidebarSnapshot','chrome','document',source.slice(importLine.length))(requestLocalReconnect,{browserLocal},readActiveLocalStatus,readActiveLocalLayout,async()=>boot,validLocalPipeline,createSidebarSnapshot,chrome,document);
  return {calls,node,elements,byId,change:value=>{current=value;}};
 }
 const drain=async()=>{for(let i=0;i<30;i++)await Promise.resolve();};
+test('actual BrowserLocal popup reads presentation by default and collects structure only on one explicit click',async()=>{
+ const f=await render({v:1,state:'reading'},true,{ok:true,mode:'locked',exists:true},null,true,{presentation:{counts:[1,1,1,1,1,1,1],branches:[]}});
+ assert.equal(f.calls.filter(c=>c[0]==='send'&&c[2].type==='HOST_LOCAL_LAYOUT').length,0);
+ assert.equal(f.calls.filter(c=>c[0]==='send'&&c[2].type==='HOST_LOCAL_PRESENTATION').length,1);
+ assert.equal(f.calls.filter(c=>c[0]==='send'&&c[2].type==='HOST_LOCAL_HISTORY_STRUCTURE').length,0);
+ assert(f.byId('local-layout-shape'));assert(!f.byId('save-sidebar-snapshot'));
+ const capture=f.byId('read-sidebar-structure');assert(capture);const first=capture.listeners.click();const second=capture.listeners.click();await Promise.all([first,second]);await drain();
+ assert.equal(capture.disabled,true);assert.equal(f.calls.filter(c=>c[0]==='send'&&c[2].type==='HOST_LOCAL_LAYOUT').length,1);
+ assert.equal(f.calls.filter(c=>c[0]==='send'&&c[2].type==='HOST_LOCAL_HISTORY_STRUCTURE').length,0);
+ assert(!f.byId('save-sidebar-snapshot'),'failed explicit read must not create an export or retry');
+});
 function assertSnapshotMeaning(text){
  const visible=text+' '+html.replace(/<[^>]*>/g,' ');
  assert.match(visible,/打开.{0,12}(?:时|状态)|本次(?:检查|读取)|状态快照/,'one-shot result must be explicitly presented as a snapshot');

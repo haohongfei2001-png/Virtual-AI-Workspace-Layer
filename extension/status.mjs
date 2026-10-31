@@ -20,7 +20,9 @@ void bootReceipt.then(boot=>{
  runtimeBuild.textContent=boot?'当前文档运行构建：'+boot.build+'；启动阶段：'+boot.stage+'。此回执不代表产品验收通过。':'运行构建：未核实。未取得与当前文档一致的有效启动回执；不能用磁盘文件推定运行版本。';
  if(boot){const note=document.createElement('pre');note.textContent='当前文档启动（无内容） '+JSON.stringify(boot);diagnostics.append(note);}
 });
-if(state.startsWith('layout-')||HOST_CONFIG.browserLocal&&localTarget&&state!=='verification-required'){const shape=await readActiveLocalLayout({tabs:chrome.tabs,webNavigation:chrome.webNavigation,target:localTarget});if(shape){
+if(state.startsWith('layout-')||HOST_CONFIG.browserLocal&&localTarget&&state!=='verification-required'){
+ const passive=HOST_CONFIG.browserLocal&&!HOST_CONFIG.mainMountDiagnostic;
+ const shape=await readActiveLocalLayout({tabs:chrome.tabs,webNavigation:chrome.webNavigation,target:localTarget,presentationOnly:passive});if(shape){
  if(HOST_CONFIG.mainMountDiagnostic){
   const snapshot=await createMainMountSnapshot({webNavigation:chrome.webNavigation,target:localTarget,boot:await bootReceipt,shape});
   const receipt=document.createElement('p');receipt.id='main-mount-receipt';receipt.textContent=snapshot?'首次主区挂载检查已绑定本次文档；构建 '+snapshot.build.slice(0,12)+'；'+snapshot.mainMountCheck.reason+'；拒绝路径 '+snapshot.mainMountCheck.coverage+'。这不是整页结构或产品验收；重复打开不重新采集。':'本次文档没有可交付的主区挂载报告；未执行重试，不据此推断拒绝原因。';diagnostics.append(receipt);
@@ -28,15 +30,22 @@ if(state.startsWith('layout-')||HOST_CONFIG.browserLocal&&localTarget&&state!=='
    const url=URL.createObjectURL(new Blob([JSON.stringify(snapshot,null,2)+'\n'],{type:'application/json'})),a=document.createElement('a');a.href=url;a.download='vaiwl-main-mount-check.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
   });diagnostics.append(save);}
  }
- if(shape.sidebarStructure){const coverage=document.createElement('pre');coverage.id='sidebar-structure-coverage';coverage.textContent='侧栏快照完整性（仅结构，不证明成员归属或允许接管） '+JSON.stringify(sidebarStructureCoverage(shape.sidebarStructure));diagnostics.append(coverage);}
- const snapshot=HOST_CONFIG.browserLocal&&!HOST_CONFIG.mainMountDiagnostic?await createSidebarSnapshot({webNavigation:chrome.webNavigation,target:localTarget,boot:await bootReceipt,shape}):null;
- if(HOST_CONFIG.browserLocal&&!HOST_CONFIG.mainMountDiagnostic){
+ const note=document.createElement('pre');note.id='local-layout-shape';note.textContent=(shape.navigation?'导航末页及本代累计接收（无内容；累计不是去重库存） ':'布局类别（无内容） ')+JSON.stringify(shape);diagnostics.append(note);}
+ if(passive&&localTarget){
+  // Opening the status page reads cached presentation only. Native structure
+  // collection remains a separate explicit, one-shot action on this document.
+  const capture=document.createElement('button');capture.id='read-sidebar-structure';capture.textContent='读取一次匿名侧栏结构';diagnostics.append(capture);
+  capture.addEventListener('click',async()=>{if(capture.disabled)return;capture.disabled=true;
+  const shape=await readActiveLocalLayout({tabs:chrome.tabs,webNavigation:chrome.webNavigation,target:localTarget});
+  if(shape?.sidebarStructure){const coverage=document.createElement('pre');coverage.id='sidebar-structure-coverage';coverage.textContent='侧栏快照完整性（仅结构，不证明成员归属或允许接管） '+JSON.stringify(sidebarStructureCoverage(shape.sidebarStructure));diagnostics.append(coverage);}
+  const snapshot=await createSidebarSnapshot({webNavigation:chrome.webNavigation,target:localTarget,boot:await bootReceipt,shape});
   const receipt=document.createElement('p');receipt.id='sidebar-snapshot-receipt';receipt.textContent=snapshot?'匿名快照已绑定本次文档；构建 '+snapshot.build.slice(0,12)+'；结构 '+snapshot.coverage.state+'。完整快照不等于成员语义已确认。':'本次匿名快照未取得有效构建及文档绑定；没有生成可交付报告。';diagnostics.append(receipt);
   if(snapshot){const save=document.createElement('button');save.id='save-sidebar-snapshot';save.textContent='保存匿名侧栏快照';save.addEventListener('click',()=>{
    const url=URL.createObjectURL(new Blob([JSON.stringify(snapshot,null,2)+'\n'],{type:'application/json'})),a=document.createElement('a');a.href=url;a.download='vaiwl-sidebar-structure.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
   });diagnostics.append(save);}
+  });
  }
- const note=document.createElement('pre');note.id='local-layout-shape';note.textContent=(shape.navigation?'导航末页及本代累计接收（无内容；累计不是去重库存） ':'布局类别（无内容） ')+JSON.stringify(shape);diagnostics.append(note);}}
+}
 
 if(HOST_CONFIG.browserLocal&&state==='hello-transport-unavailable'&&localTarget){
  const retry=document.createElement('button'),result=document.createElement('p');retry.id='reconnect';retry.textContent='重新连接';result.setAttribute('role','status');document.body.append(retry);document.body.append(result);

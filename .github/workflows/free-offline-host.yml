@@ -194,7 +194,9 @@ jobs:
           FREE_WINDOW_RETENTION_RUN=1 FREE_NAVIGATION_CANCEL_RUN=1 FREE_PANEL_CANCEL_RUN=1 node tests/host/frame-window-retention-package-browser.mjs "$RUNNER_TEMP/frame-window-retention.json"
       - name: Passive local extension status (isolated MV3)
         if: ${{ !cancelled() && github.event_name == 'push' }}
-        run: node tests/host/local-status-package-browser.mjs "$RUNNER_TEMP/local-status.json"
+        run: |
+          node tests/host/local-status-package-browser.mjs "$RUNNER_TEMP/local-status.json"
+          node tests/host/browser-local-mv3.mjs --sidebar-capture-only
       - name: Temporary native navigation (isolated MV3, no authentication)
         if: ${{ !cancelled() && (github.event_name == 'push' || inputs.diagnostic == 'temporary-navigation-appearance') }}
         run: node tests/host/temporary-navigation-package-browser.mjs "$RUNNER_TEMP/temporary-navigation.json"

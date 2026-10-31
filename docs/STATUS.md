@@ -4,17 +4,21 @@
 
 本批先实读 PR16 最新 HEAD `5593e02eb81b1fc8fda3a12dc945d0280cf67d60`，核对实机评论 [6546112515](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16#issuecomment-6546112515)、[6546368431](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16#issuecomment-6546368431) 及工程任务6547186156、诊断差额6547191328。旧实机证据现应明确分开：正常聊天的真实鼠标四格点击已展开工作区；原生 Project 主页入口、身份及两条成员路径已证明；**Project 增强界面仍是 frame=0、return=0，当前实际拒绝阶段未取得**。先前“真实 Project 入口完全未知”的历史段落由本节更新，但不因此宣称增强界面可用。Mac 无正文结构额度36/36已耗尽，本批没有访问实机或增加检查。
 
-已直接修复三组可由源码与隔离浏览器证明的差额（均为 **SOURCE_FIXED / OFFLINE_PASS**）：
+已直接修复四组可由源码与隔离浏览器证明的差额（均为 **SOURCE_FIXED / OFFLINE_PASS**）：
 
 - adapter 保留本次完整 Project 检查的第一项白名单阶段，并传至现有私有 `presentation.boundary.projectStage`；结构分类复查不覆盖原失败。缺失 header 与旧节点身份变化分别报告。controller 的预挂载拒绝进入 `presentation.mountFailure`；活动布局拒绝仍由既有 `layoutRefusal` 表达。旧路由回执返回null，异常启动/挂载在撤场后保留固定安全码，不泄露异常文本。
 - 新完整证明或成功挂载只清除本次已解决的匹配错误，避免“初次拒绝→恢复→撤权”仍被旧错误盖住。真实 content→controller 集成反例覆盖首次及同框架恢复。授权、撤场、原检查预算和重试策略不变。
 - Project 成员证据现在要求选中 tab 与 panel 的双向 IDREF、全局唯一精确节点和原有项目限定路径同时成立；关系变更撤回成员优先选择，保留合法唯一原生导航及保草稿的新标签降级。observed profile 升至 revision12，标题叶读取边界不变，未读预览或整行正文。
 
+- 交接复核另发现普通状态页会附带调用侧栏结构采集器，超出最小当前状态回执的必要范围。新增独立私有 `HOST_LOCAL_PRESENTATION`，默认只读现有缓存与自有节点；双端拒绝结构报告且不回退完整扫描。原侧栏采集/导出保留为明确单次按钮，连点和失败均不重试。原文档绑定、1秒期限、授权及恢复账本不变。
+
 严格匿名夹具仅复用已采集的关系和七项矩形；未采集的祖先、overflow、效果、paint、原生控件与样式均显式标为未知。原5593e02e在这些已知条件下已经通过原始 flow 挂载/展开/阅读恢复，因此**不能唯一定位 Mac 拒绝原因，也不能将本轮诊断与来源修复写成 Project 实机挂载根治**。未放宽身份、paint预算或原生控件，不清srcdoc、不无限重试、不归咎未经证明的外部扩展。
 
-修前证据：4项诊断反例、2项恢复后旧错误反例、2项终止阶段反例失败；最终匿名浏览器13项中原生产有11项失败，原本通过的正向结构与flow往返也保留。修后最终相关六文件 **425/425**、匿名Project **13/13**、成员导航 **37/37** 通过；独立只读审查已完成并关闭测试oracle及固定异常码的审查问题。正式BrowserLocal MV3 nested连续旅程 **34项记录PASS**，覆盖Project/主页/聊天、原生输入与工具、成员往返、侧栏/页头替换、Worker恢复、新文档锁定及实际隔离卸载；新匿名Profile、CfT156.0.8078.4、外网阻断，browserErrors为空。205文件包完整性校验通过，全部206生产输入与旅程、最终包和源码一致。三张合成截图只支持几何范围，本地缺中文字形，不作真实视觉验收。详细回执与原失败见 [receipt.json](evidence/free-project-closeout-20261101/receipt.json)、[before-fix.txt](evidence/free-project-closeout-20261101/before-fix.txt)。
+初批修前证据：4项诊断反例、2项恢复后旧错误反例、2项终止阶段反例失败；匿名浏览器13项中原生产有11项失败，原本通过的正向结构与flow往返也保留。初批相关六文件425/425、匿名Project13/13、成员导航37/37通过，冻结提交 `ab022fa464511553d564320994d30d804e65005e` 的 [CI41229782486](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/actions/runs/41229782486) 首次42/42 SUCCESS，Node12075/12075、12个guard mutant全拦截。这些结果按原SHA保留；该提交因状态页附带采集差额被后续候选替代，未交给Mac安装。
 
-统一开发ZIP SHA256：`29510771187fbbd3f0d48ccd290eac64a33bf642c146304856004675c3b95289`；当前文档运行指纹应为 `fc9beaab7bdef4c2ca31f10a658bdaac4960aa3d9267362503274e9b8bf81f83`。提交冻结后执行原正式push CI；精确最终SHA和同SHA结果记录在PR交接，不为补CI记录再移动候选。新增Project浏览器门已加入原layout机制步骤，原全量预算/断言保持。
+默认状态读取增量的4项反例在ab022fa上全部失败，修后相关209/209通过；独立只读审查无阻断。最终正式BrowserLocal MV3 nested连续旅程35项记录PASS，其中真实默认popup只发送STATUS、BOOT、PRESENTATION，当前双frame已登记、没有结构报告或导出；完整Project/主页/聊天、输入/工具、成员往返、替换、强制Worker恢复、新文档锁定及实际隔离卸载均保持。另一个实际MV3显式侧栏采集/下载旅程8项记录PASS，首页与Project均由明确点击触发，旧文档拒绝与原生草稿保护保持。两个新匿名Profile、CfT156.0.8078.4、浏览器级外网阻断，browserErrors均为空。205文件包完整性校验通过，全部206生产输入与两次旅程、最终包和源码一致。精确证据见 [passive-status-followup.json](evidence/free-project-closeout-20261101/passive-status-followup.json)，初批 [receipt.json](evidence/free-project-closeout-20261101/receipt.json) 与全部修前失败保留；夹具与本地缺中文字形的旧截图不作真实Mac视觉验收。
+
+统一开发ZIP SHA256：`7d7fbb4ad891d587153a10d0ea7141221bd55c8e697d499e243a04ede222ecc0`；当前文档运行指纹应为 `11f5bcbca4838be9001858e0fbdcc6933d8ebf0b160d6a9d882c2fb840c25d6b`。提交冻结后执行原正式push CI；精确最终SHA和同SHA结果记录在PR交接，不为补CI记录再移动候选。新增Project浏览器门已加入原layout机制步骤，原全量预算/断言保持。
 
 沿唯一计划的其余远程审查未发现新的确定性生产缺陷：搜索、工作集、已有片段预览/原聊天/删除及备份恢复沿用已实现模块和既有证据；本次旅程另外验证合成个人状态、Worker恢复与新文档锁定。**正向NONE仍 BLOCKED**：真实菜单只列移动目标，没有明确当前“无项目”语义，UNKNOWN不得升级。**新增片段捕获/定位来源仍 BLOCKED**：一项消息ID不能证明当前聊天—分支—正文边界，BrowserLocal的currentBody/selectionBridge保持关闭。Project增强挂载仍BLOCKED；新候选Mac连续旅程及本人旧资产确认NOT_RUN。未完成项不以安全降级或旧资产管理通过销账。
 

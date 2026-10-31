@@ -6,12 +6,12 @@
 
 SOURCE_FIXED / OFFLINE_PASS：Project第一拒绝阶段完整传递；预挂载失败可见；旧路由回执拒绝；成功恢复清除匹配旧错误；未知启动/挂载异常留下固定阶段码；Project成员要求唯一双向tab/panel关系，关系改变撤回成员优先权而保留安全导航。未放宽任何准入或预算。
 
-最终定向Node425/425、Project匿名浏览器13/13、成员导航37/37、正式打包MV3连续旅程34项记录通过。修前失败和原本能通过的flow挂载都在receipt.json中保留；不能由该夹具宣称Mac的frame=0已修复。最终独立只读审查无剩余阻断。
+初批Node425/425、Project匿名浏览器13/13、成员导航37/37及ab022fa同SHA42项CI通过。随后根治默认status页附带侧栏采集：独立HOST_LOCAL_PRESENTATION仅返回已有状态，结构采集改为明确单次按钮；4项修前反例失败，修后相关209/209通过。最终正式打包MV3连续旅程35项记录及显式侧栏采集/导出8项记录通过。修前失败和原本能通过的flow挂载都在receipt.json中保留；不能由该夹具宣称Mac的frame=0已修复。最终独立只读审查无剩余阻断。
 
 包：`node extension/package.mjs --browser-local <NEW-output-directory>`；使用仓库锁定的extension/tooling依赖。`node extension/package.mjs --verify <unpacked-extension-directory>`应验证205文件。
 
-- ZIP SHA256：`29510771187fbbd3f0d48ccd290eac64a33bf642c146304856004675c3b95289`。
-- 当前文档content运行指纹：`fc9beaab7bdef4c2ca31f10a658bdaac4960aa3d9267362503274e9b8bf81f83`。
+- ZIP SHA256：`7d7fbb4ad891d587153a10d0ea7141221bd55c8e697d499e243a04ede222ecc0`。
+- 当前文档content运行指纹：`11f5bcbca4838be9001858e0fbdcc6933d8ebf0b160d6a9d882c2fb840c25d6b`。
 - 206生产输入已与实际打包旅程、最终包和源码逐项相等。磁盘包或HEAD不能替代运行文档指纹。
 - 不增加权限、test profile或诊断专包。原manifest/注册路径/ID保持；原Mac尚未安装本候选。
 
@@ -41,7 +41,7 @@ SOURCE_FIXED / OFFLINE_PASS：Project第一拒绝阶段完整传递；预挂载�
 }
 ```
 
-以上是字段模板，数值不是本候选实测。boundary或presentation可为null；projectStage只在对应Project/几何拒绝时存在。直接使用面板的当前状态码、当前文档启动回执及`local-layout-shape`里的presentation，不读取页面正文、标题、输入值、账号、消息/分支、href列表、DOM树或新几何。只做一次观察；不要保存侧栏结构快照或启用首次主区专包。面板已有的documentId/URL前后检查继续成立，不在评论中回传真实URL或标识符。
+以上是字段模板，数值不是本候选实测。boundary或presentation可为null；projectStage只在对应Project/几何拒绝时存在。直接使用面板的当前状态码、当前文档启动回执及`local-layout-shape`里的presentation，不读取页面正文、标题、输入值、账号、消息/分支、href列表、DOM树或新几何。普通打开默认只用HOST_LOCAL_PRESENTATION，不触发侧栏或历史结构采集；只做一次观察，不点击“读取一次匿名侧栏结构”“执行一次匿名列表观察”或导出按钮，不启用首次主区专包。面板已有的documentId/URL前后检查继续成立，不在评论中回传真实URL或标识符。
 
 ## 回执如何决定后续源码工作
 

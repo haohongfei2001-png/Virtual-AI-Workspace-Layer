@@ -6,7 +6,7 @@
   "branch": "codex/vaiwl-free-first-20261013",
   "pr": 16,
   "status": "SOURCE_FIXED_OFFLINE_PASS_LIVE_PROJECT_BLOCKED",
-  "candidateCommit": "The commit containing this receipt; exact SHA and same-SHA CI are recorded in the final PR handoff, without a follow-up source commit.",
+  "candidateCommit": "ab022fa464511553d564320994d30d804e65005e",
   "evidenceRead": [
     "https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16#issuecomment-6546112515",
     "https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16#issuecomment-6546368431",
@@ -1536,5 +1536,6 @@
     "merge",
     "deploy",
     "release"
-  ]
+  ],
+  "supersededByPassiveStatusFollowup": "passive-status-followup.json"
 }

@@ -32,7 +32,7 @@ if(window===window.top&&location.origin===HOST_CONFIG.origin&&HOST_CONFIG.tempor
   window.addEventListener('pagehide',event=>{if(!event.persisted)bridge.stop();});
  }
  if(HOST_CONFIG.browserLocal){const removeReconnect=installLocalReconnect({runtime:chrome.runtime,reconnect:session.reconnect});window.addEventListener('pagehide',event=>{if(!event.persisted)removeReconnect();});const remove=installBrowserLocalLifecycle({document,runtime:chrome.runtime,session,profile});window.addEventListener('pagehide',event=>{if(!event.persisted)remove();});}
- const removeStatus=installLocalStatus({runtime:chrome.runtime,readState:session.localStatus,readLayout:()=>{const layout=session.localLayoutStatus();return HOST_CONFIG.browserLocal&&!HOST_CONFIG.mainMountDiagnostic?{...(layout??{}),sidebarStructure:readSidebarStructure({document,profile})}:layout;},observeHistory:HOST_CONFIG.browserLocal&&!HOST_CONFIG.mainMountDiagnostic?createHistoryStructureDiagnostic({document,profile,readState:session.localStatus}):null});
+ const removeStatus=installLocalStatus({runtime:chrome.runtime,readState:session.localStatus,readPresentation:session.localLayoutStatus,readLayout:()=>{const layout=session.localLayoutStatus();return HOST_CONFIG.browserLocal&&!HOST_CONFIG.mainMountDiagnostic?{...(layout??{}),sidebarStructure:readSidebarStructure({document,profile})}:layout;},observeHistory:HOST_CONFIG.browserLocal&&!HOST_CONFIG.mainMountDiagnostic?createHistoryStructureDiagnostic({document,profile,readState:session.localStatus}):null});
  window.addEventListener('pagehide',event=>{if(!event.persisted)removeStatus();});
  void session.start();
 }
