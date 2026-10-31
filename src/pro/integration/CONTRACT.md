@@ -77,3 +77,7 @@ Free/Pro 切换与 entitlement 失效不删除资产。Free 不读取 Pro 派生
 5. 自然中文标注集、独立自动 lane 质量、真实找回收益与用户验收。所有未达 lane 保持建议/人工模式。
 
 以上各关卡分别报告。当前候选没有正式合并、安装变更、部署或发布。
+
+## 测试接入
+
+纯 Node 用例保持 `tests/pro/*.test.mjs`，可进入既有 CI 收集；浏览器两项沿用宿主的 `*-browser.mjs` / 显式 `.mjs` 入口约定，通过 `node tests/pro/run.mjs --browser` 运行，需要受控 Chromium 和 Playwright。共享 workflow 未改；正式 owner 接线时再将这个显式命令加入已有隔离浏览器 job。缺少浏览器时不能跳过并标成功。

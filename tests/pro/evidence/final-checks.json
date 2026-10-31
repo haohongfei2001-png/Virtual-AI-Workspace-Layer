@@ -1,8 +1,8 @@
 {
   "format": "vaiwl-pro-final-checks/1",
-  "verifiedAt": "2026-10-31T13:14:20.276362+00:00",
+  "verifiedAt": "2026-10-31T13:31:35.412124+00:00",
   "handoffBaseline": "f317b26ea6ed7d1cc249c4bfc0ad90a619d29417",
-  "candidateParent": "2c9b043ce3c65a4b92c6f8f83b59fb416f63132a",
+  "candidateParent": "36d1fecf5f57cc19d01fe99b245969d5c63f6109",
   "latestPR16": "https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16",
   "baselineAdvance": {
     "commits": 1,
@@ -13,7 +13,8 @@
     ],
     "allSharedSrcFilesUnchanged": true,
     "all443AggregateTestFilesAndProSourcesUnchanged": true,
-    "aggregateReuseReason": "Only inherited status prose and its own presentation test changed; the tested Pro sources, all shared src dependencies, and all 34 aggregate test files are byte-identical. The changed presentation test is separately rerun on the latest parent."
+    "finalAggregateRerunOnLatestBase": true,
+    "explanation": "The shared src and original aggregate test bodies are unchanged. Browser entrypoints were then renamed without changing test bodies, and the complete final 443-test aggregate was rerun on the latest shared base."
   },
   "aggregate": {
     "status": "PASS",
@@ -22,8 +23,10 @@
     "skipped": 0,
     "pro": 209,
     "shared": 234,
-    "sourceDigest": "9687d53e39d0b7151dbb5c6500299e6a408528c9258d5c6c1b0b9901bb80823e",
-    "file": "tests/pro/evidence/test-results.json"
+    "sourceDigest": "e0148eb66b2893ea188905149104896553e838b1888deafc35ff915724b8b58e",
+    "file": "tests/pro/evidence/test-results.json",
+    "verifiedAt": "2026-10-31T13:30:49.334Z",
+    "sharedBase": "2c9b043ce3c65a4b92c6f8f83b59fb416f63132a"
   },
   "newBaselineTargetedTest": {
     "command": "node --test-reporter=tap tests/host/local-status-presentation.test.mjs",
@@ -131,5 +134,20 @@
     ],
     "allOtherNewFilesDiffCheckExit": 0,
     "contractSHA256": "50c981057b61e8b9ca4f333a8a45b44db9352a58e1446e2bae9f1f3fba070e81"
+  },
+  "sharedBase": "2c9b043ce3c65a4b92c6f8f83b59fb416f63132a",
+  "browserSuiteDiscovery": {
+    "pureNodeTestFiles": 18,
+    "pureNodeTests": 207,
+    "explicitBrowserFiles": [
+      "tests/pro/browser-journey.mjs",
+      "tests/pro/ui-browser.mjs"
+    ],
+    "explicitBrowserTests": 2,
+    "browserTestBodiesByteIdenticalToFirstCandidate": true,
+    "sharedWorkflowUnchanged": true,
+    "pureNodeGlobIncludesBrowserFiles": false,
+    "browserCommand": "node tests/pro/run.mjs --browser --regression",
+    "status": "PASS"
   }
 }

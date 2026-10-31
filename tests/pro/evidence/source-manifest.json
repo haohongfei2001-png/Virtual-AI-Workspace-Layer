@@ -1,5 +1,5 @@
 {
-  "sourceDigest": "9687d53e39d0b7151dbb5c6500299e6a408528c9258d5c6c1b0b9901bb80823e",
+  "sourceDigest": "e0148eb66b2893ea188905149104896553e838b1888deafc35ff915724b8b58e",
   "files": [
     {
       "file": "src/pro/contracts/model-output.schema.json",
@@ -122,7 +122,7 @@
       "sha256": "ea5bfa4495527fd39495fa13fafc6400114d0ae7d11dcdb3c51b6f45ac565c8c"
     },
     {
-      "file": "tests/pro/browser-journey.test.mjs",
+      "file": "tests/pro/browser-journey.mjs",
       "sha256": "700dad66dbd95730de9030d3b390b663a90832cf4128e4c9d1fa26b6a398d9f4"
     },
     {
@@ -211,7 +211,7 @@
     },
     {
       "file": "tests/pro/run.mjs",
-      "sha256": "a770668f96995b5033e0ab72469b131e2570606a801eb744487e53da6cf0dc0b"
+      "sha256": "66af3c646009806f05afac88727091e6b605c7e6a4979cfb0eba61bb65ac8892"
     },
     {
       "file": "tests/pro/serve.mjs",
@@ -254,7 +254,7 @@
       "sha256": "4ecc21d68a2e905637d0ec24748645e7adca82278672c55f3b72ce65012f74af"
     },
     {
-      "file": "tests/pro/ui-browser.test.mjs",
+      "file": "tests/pro/ui-browser.mjs",
       "sha256": "87a11503692ee4f52af7017124d1ce8fd7560435c598b347d324331c2dfb0dae"
     },
     {

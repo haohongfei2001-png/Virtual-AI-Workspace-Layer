@@ -1,13 +1,13 @@
 {
   "format": "vaiwl-pro-acceptance-map/1",
   "contract": "VAIWL-PRO/1.0",
-  "generatedAt": "2026-10-31T13:15:08.862001+00:00",
+  "generatedAt": "2026-10-31T13:31:35.407750+00:00",
   "contractSource": "tests/pro/support/contract-scenarios.json",
   "sourceBinding": {
-    "baseGitHead": "f317b26ea6ed7d1cc249c4bfc0ad90a619d29417",
+    "baseGitHead": "2c9b043ce3c65a4b92c6f8f83b59fb416f63132a",
     "candidateCommit": null,
     "candidateCommitStatus": "SOURCE_MANIFEST_BOUND;COMMIT_RECORDED_IN_DRAFT_PR",
-    "workingTreeNote": "Final tested sources are sealed by source-manifest.json. The containing commit SHA is recorded in the Draft PR and delivery receipt, avoiding a self-referential commit identifier. The candidate inherits the newer PR16 parent after verifying all shared src dependencies and aggregate tests are byte-identical.",
+    "workingTreeNote": "Final tested sources are sealed by source-manifest.json; the containing commit SHA is recorded in the Draft PR. This final run is on inherited shared base 2c9b043. Browser test bodies are unchanged and were renamed to explicit .mjs entrypoints to preserve shared pure-Node CI discovery.",
     "sourceSelection": "src/pro runtime .mjs, declaration .ts and schema .json; documentation excluded. Final aggregate manifest additionally covers tests/pro .mjs/.ts/.json/.html/.patch excluding tests/pro/evidence.",
     "srcProTreeSHA256": "942bf5a6a2e0ad929074e76d8769b716cae0d1f2fc4fe3111cf7e3da92495f9f",
     "srcProFilesSHA256": {
@@ -41,11 +41,12 @@
       "src/pro/ui/styles.mjs": "435a365747d8aee7508c1006e581b5d0f0b195c5c8b1473c5d030a26bbb7ae1d",
       "src/pro/ui/workspace.mjs": "6ebaec399f5195a9a6da8703c6d20cc63a8c7f6943492737980dc097ff4ae19b"
     },
-    "candidateParent": "2c9b043ce3c65a4b92c6f8f83b59fb416f63132a",
+    "candidateParent": "36d1fecf5f57cc19d01fe99b245969d5c63f6109",
     "srcProTreeHashEncoding": "SHA256 of UTF-8 JSON object srcProFilesSHA256, lexicographically sorted keys, no whitespace",
-    "aggregateSourceDigest": "9687d53e39d0b7151dbb5c6500299e6a408528c9258d5c6c1b0b9901bb80823e",
+    "aggregateSourceDigest": "e0148eb66b2893ea188905149104896553e838b1888deafc35ff915724b8b58e",
     "aggregateManifest": "tests/pro/evidence/source-manifest.json",
-    "finalChecks": "tests/pro/evidence/final-checks.json"
+    "finalChecks": "tests/pro/evidence/final-checks.json",
+    "handoffBaseGitHead": "f317b26ea6ed7d1cc249c4bfc0ad90a619d29417"
   },
   "statusMeaning": {
     "OFFLINE_VERIFIED": "The explicitly listed offline assertions passed on synthetic data. This status never grants real-host, natural-quality, paid-provider or release acceptance.",
@@ -77,17 +78,17 @@
       "node": "v24.22.1"
     },
     "focusedUIRun": {
-      "file": "tests/pro/ui-browser.test.mjs",
+      "file": "tests/pro/ui-browser.mjs",
       "passed": 1,
       "failed": 0,
       "skipped": 0,
       "durationMs": 4918.581933,
-      "command": "PRO_CHROMIUM_EXECUTABLE=<isolated Chromium> PRO_UI_FONT=<local CJK font> node tests/pro/ui-browser.test.mjs",
+      "command": "PRO_CHROMIUM_EXECUTABLE=<isolated Chromium> PRO_UI_FONT=<local CJK font> node tests/pro/ui-browser.mjs",
       "coverage": "real controller manual workflow, stale draft, entry focus, consent pause/resume/restart, dark computed colors, 430px keyboard dialog, entitlement/revocation, 255-row sidebar and workspace pagination"
     },
     "parentBrowserJourneyReceipt": {
       "file": "tests/pro/evidence/browser-journey.json",
-      "receiptSHA256AtMapping": "9329140e57aa102557ccb35d8f591bfe3bb79e331b7739cb752aa4a0987d6c8e",
+      "receiptSHA256AtMapping": "93aa8495604cc531a01ba6dec1b41f54229faa8edb270240834568490824a646",
       "status": "PASS",
       "realIndexedDB": true,
       "browserProcessRestart": true,
@@ -100,8 +101,8 @@
     },
     "finalRootRun": {
       "file": "tests/pro/evidence/test-results.json",
-      "verifiedAt": "2026-10-31T13:09:23.772Z",
-      "sourceDigest": "9687d53e39d0b7151dbb5c6500299e6a408528c9258d5c6c1b0b9901bb80823e",
+      "verifiedAt": "2026-10-31T13:30:49.334Z",
+      "sourceDigest": "e0148eb66b2893ea188905149104896553e838b1888deafc35ff915724b8b58e",
       "totalFiles": 34,
       "passed": 443,
       "failed": 0,
@@ -131,10 +132,10 @@
       "passed": 12,
       "failed": 0,
       "skipped": 0,
-      "note": "Final source-manifest bound run on synthetic data; browser files use isolated real Chromium/IndexedDB. No real host or natural-model acceptance."
+      "note": "Final source-manifest bound run on synthetic data; explicit browser entries use isolated real Chromium/IndexedDB. No real host or natural-model acceptance."
     },
     {
-      "file": "tests/pro/browser-journey.test.mjs",
+      "file": "tests/pro/browser-journey.mjs",
       "testFileSHA256AtMapping": "700dad66dbd95730de9030d3b390b663a90832cf4128e4c9d1fa26b6a398d9f4",
       "runFileSHA256": "700dad66dbd95730de9030d3b390b663a90832cf4128e4c9d1fa26b6a398d9f4",
       "executedBy": "root final aggregate",
@@ -142,7 +143,7 @@
       "passed": 1,
       "failed": 0,
       "skipped": 0,
-      "note": "Final source-manifest bound run on synthetic data; browser files use isolated real Chromium/IndexedDB. No real host or natural-model acceptance."
+      "note": "Final source-manifest bound run on synthetic data; explicit browser entries use isolated real Chromium/IndexedDB. No real host or natural-model acceptance."
     },
     {
       "file": "tests/pro/budget.test.mjs",
@@ -153,7 +154,7 @@
       "passed": 9,
       "failed": 0,
       "skipped": 0,
-      "note": "Final source-manifest bound run on synthetic data; browser files use isolated real Chromium/IndexedDB. No real host or natural-model acceptance."
+      "note": "Final source-manifest bound run on synthetic data; explicit browser entries use isolated real Chromium/IndexedDB. No real host or natural-model acceptance."
     },
     {
       "file": "tests/pro/domain.test.mjs",
@@ -164,7 +165,7 @@
       "passed": 28,
       "failed": 0,
       "skipped": 0,
-      "note": "Final source-manifest bound run on synthetic data; browser files use isolated real Chromium/IndexedDB. No real host or natural-model acceptance."
+      "note": "Final source-manifest bound run on synthetic data; explicit browser entries use isolated real Chromium/IndexedDB. No real host or natural-model acceptance."
     },
     {
       "file": "tests/pro/evaluation.test.mjs",
@@ -175,7 +176,7 @@
       "passed": 5,
       "failed": 0,
       "skipped": 0,
-      "note": "Final source-manifest bound run on synthetic data; browser files use isolated real Chromium/IndexedDB. No real host or natural-model acceptance."
+      "note": "Final source-manifest bound run on synthetic data; explicit browser entries use isolated real Chromium/IndexedDB. No real host or natural-model acceptance."
     },
     {
       "file": "tests/pro/jobs.test.mjs",
@@ -186,7 +187,7 @@
       "passed": 6,
       "failed": 0,
       "skipped": 0,
-      "note": "Final source-manifest bound run on synthetic data; browser files use isolated real Chromium/IndexedDB. No real host or natural-model acceptance."
+      "note": "Final source-manifest bound run on synthetic data; explicit browser entries use isolated real Chromium/IndexedDB. No real host or natural-model acceptance."
     },
     {
       "file": "tests/pro/journey.test.mjs",
@@ -197,7 +198,7 @@
       "passed": 1,
       "failed": 0,
       "skipped": 0,
-      "note": "Final source-manifest bound run on synthetic data; browser files use isolated real Chromium/IndexedDB. No real host or natural-model acceptance."
+      "note": "Final source-manifest bound run on synthetic data; explicit browser entries use isolated real Chromium/IndexedDB. No real host or natural-model acceptance."
     },
     {
       "file": "tests/pro/migration-recovery.test.mjs",
@@ -208,7 +209,7 @@
       "passed": 19,
       "failed": 0,
       "skipped": 0,
-      "note": "Final source-manifest bound run on synthetic data; browser files use isolated real Chromium/IndexedDB. No real host or natural-model acceptance."
+      "note": "Final source-manifest bound run on synthetic data; explicit browser entries use isolated real Chromium/IndexedDB. No real host or natural-model acceptance."
     },
     {
       "file": "tests/pro/model-provider.test.mjs",
@@ -219,7 +220,7 @@
       "passed": 12,
       "failed": 0,
       "skipped": 0,
-      "note": "Final source-manifest bound run on synthetic data; browser files use isolated real Chromium/IndexedDB. No real host or natural-model acceptance."
+      "note": "Final source-manifest bound run on synthetic data; explicit browser entries use isolated real Chromium/IndexedDB. No real host or natural-model acceptance."
     },
     {
       "file": "tests/pro/model-schema.test.mjs",
@@ -230,7 +231,7 @@
       "passed": 11,
       "failed": 0,
       "skipped": 0,
-      "note": "Final source-manifest bound run on synthetic data; browser files use isolated real Chromium/IndexedDB. No real host or natural-model acceptance."
+      "note": "Final source-manifest bound run on synthetic data; explicit browser entries use isolated real Chromium/IndexedDB. No real host or natural-model acceptance."
     },
     {
       "file": "tests/pro/navigation.test.mjs",
@@ -241,7 +242,7 @@
       "passed": 7,
       "failed": 0,
       "skipped": 0,
-      "note": "Final source-manifest bound run on synthetic data; browser files use isolated real Chromium/IndexedDB. No real host or natural-model acceptance."
+      "note": "Final source-manifest bound run on synthetic data; explicit browser entries use isolated real Chromium/IndexedDB. No real host or natural-model acceptance."
     },
     {
       "file": "tests/pro/organize.test.mjs",
@@ -252,7 +253,7 @@
       "passed": 22,
       "failed": 0,
       "skipped": 0,
-      "note": "Final source-manifest bound run on synthetic data; browser files use isolated real Chromium/IndexedDB. No real host or natural-model acceptance."
+      "note": "Final source-manifest bound run on synthetic data; explicit browser entries use isolated real Chromium/IndexedDB. No real host or natural-model acceptance."
     },
     {
       "file": "tests/pro/ports.test.mjs",
@@ -263,7 +264,7 @@
       "passed": 12,
       "failed": 0,
       "skipped": 0,
-      "note": "Final source-manifest bound run on synthetic data; browser files use isolated real Chromium/IndexedDB. No real host or natural-model acceptance."
+      "note": "Final source-manifest bound run on synthetic data; explicit browser entries use isolated real Chromium/IndexedDB. No real host or natural-model acceptance."
     },
     {
       "file": "tests/pro/projection.test.mjs",
@@ -274,7 +275,7 @@
       "passed": 12,
       "failed": 0,
       "skipped": 0,
-      "note": "Final source-manifest bound run on synthetic data; browser files use isolated real Chromium/IndexedDB. No real host or natural-model acceptance."
+      "note": "Final source-manifest bound run on synthetic data; explicit browser entries use isolated real Chromium/IndexedDB. No real host or natural-model acceptance."
     },
     {
       "file": "tests/pro/stability.test.mjs",
@@ -285,7 +286,7 @@
       "passed": 3,
       "failed": 0,
       "skipped": 0,
-      "note": "Final source-manifest bound run on synthetic data; browser files use isolated real Chromium/IndexedDB. No real host or natural-model acceptance."
+      "note": "Final source-manifest bound run on synthetic data; explicit browser entries use isolated real Chromium/IndexedDB. No real host or natural-model acceptance."
     },
     {
       "file": "tests/pro/store-boundary.test.mjs",
@@ -296,7 +297,7 @@
       "passed": 5,
       "failed": 0,
       "skipped": 0,
-      "note": "Final source-manifest bound run on synthetic data; browser files use isolated real Chromium/IndexedDB. No real host or natural-model acceptance."
+      "note": "Final source-manifest bound run on synthetic data; explicit browser entries use isolated real Chromium/IndexedDB. No real host or natural-model acceptance."
     },
     {
       "file": "tests/pro/structural-commit.test.mjs",
@@ -307,7 +308,7 @@
       "passed": 3,
       "failed": 0,
       "skipped": 0,
-      "note": "Final source-manifest bound run on synthetic data; browser files use isolated real Chromium/IndexedDB. No real host or natural-model acceptance."
+      "note": "Final source-manifest bound run on synthetic data; explicit browser entries use isolated real Chromium/IndexedDB. No real host or natural-model acceptance."
     },
     {
       "file": "tests/pro/structure.test.mjs",
@@ -318,10 +319,10 @@
       "passed": 12,
       "failed": 0,
       "skipped": 0,
-      "note": "Final source-manifest bound run on synthetic data; browser files use isolated real Chromium/IndexedDB. No real host or natural-model acceptance."
+      "note": "Final source-manifest bound run on synthetic data; explicit browser entries use isolated real Chromium/IndexedDB. No real host or natural-model acceptance."
     },
     {
-      "file": "tests/pro/ui-browser.test.mjs",
+      "file": "tests/pro/ui-browser.mjs",
       "testFileSHA256AtMapping": "87a11503692ee4f52af7017124d1ce8fd7560435c598b347d324331c2dfb0dae",
       "runFileSHA256": "87a11503692ee4f52af7017124d1ce8fd7560435c598b347d324331c2dfb0dae",
       "executedBy": "root final aggregate",
@@ -329,7 +330,7 @@
       "passed": 1,
       "failed": 0,
       "skipped": 0,
-      "note": "Final source-manifest bound run on synthetic data; browser files use isolated real Chromium/IndexedDB. No real host or natural-model acceptance."
+      "note": "Final source-manifest bound run on synthetic data; explicit browser entries use isolated real Chromium/IndexedDB. No real host or natural-model acceptance."
     },
     {
       "file": "tests/pro/worker-service.test.mjs",
@@ -340,7 +341,7 @@
       "passed": 28,
       "failed": 0,
       "skipped": 0,
-      "note": "Final source-manifest bound run on synthetic data; browser files use isolated real Chromium/IndexedDB. No real host or natural-model acceptance."
+      "note": "Final source-manifest bound run on synthetic data; explicit browser entries use isolated real Chromium/IndexedDB. No real host or natural-model acceptance."
     }
   ],
   "scenarioCounts": {
@@ -392,7 +393,7 @@
       "status": "OFFLINE_VERIFIED",
       "evidence": [
         {
-          "file": "tests/pro/browser-journey.test.mjs",
+          "file": "tests/pro/browser-journey.mjs",
           "testNames": [
             "actual Chromium: continuous journey, original Free renderer, unchanged composer, disk restart and data-only restore"
           ]
@@ -485,7 +486,7 @@
           ]
         },
         {
-          "file": "tests/pro/ui-browser.test.mjs",
+          "file": "tests/pro/ui-browser.mjs",
           "testNames": [
             "actual Pro UI saves manual operations, preserves stale drafts, reviews Series and works at narrow widths"
           ]
@@ -530,7 +531,7 @@
           ]
         },
         {
-          "file": "tests/pro/ui-browser.test.mjs",
+          "file": "tests/pro/ui-browser.mjs",
           "testNames": [
             "actual Pro UI saves manual operations, preserves stale drafts, reviews Series and works at narrow widths"
           ]
@@ -664,7 +665,7 @@
           ]
         },
         {
-          "file": "tests/pro/browser-journey.test.mjs",
+          "file": "tests/pro/browser-journey.mjs",
           "testNames": [
             "actual Chromium: continuous journey, original Free renderer, unchanged composer, disk restart and data-only restore"
           ]
@@ -700,7 +701,7 @@
           ]
         },
         {
-          "file": "tests/pro/ui-browser.test.mjs",
+          "file": "tests/pro/ui-browser.mjs",
           "testNames": [
             "actual Pro UI saves manual operations, preserves stale drafts, reviews Series and works at narrow widths"
           ]
@@ -1119,13 +1120,13 @@
           ]
         },
         {
-          "file": "tests/pro/ui-browser.test.mjs",
+          "file": "tests/pro/ui-browser.mjs",
           "testNames": [
             "actual Pro UI saves manual operations, preserves stale drafts, reviews Series and works at narrow widths"
           ]
         },
         {
-          "file": "tests/pro/browser-journey.test.mjs",
+          "file": "tests/pro/browser-journey.mjs",
           "testNames": [
             "actual Chromium: continuous journey, original Free renderer, unchanged composer, disk restart and data-only restore"
           ]
@@ -1198,7 +1199,7 @@
           ]
         },
         {
-          "file": "tests/pro/browser-journey.test.mjs",
+          "file": "tests/pro/browser-journey.mjs",
           "testNames": [
             "actual Chromium: continuous journey, original Free renderer, unchanged composer, disk restart and data-only restore"
           ]
@@ -1228,7 +1229,7 @@
           ]
         },
         {
-          "file": "tests/pro/ui-browser.test.mjs",
+          "file": "tests/pro/ui-browser.mjs",
           "testNames": [
             "actual Pro UI saves manual operations, preserves stale drafts, reviews Series and works at narrow widths"
           ]
@@ -1280,13 +1281,13 @@
       "status": "PARTIAL_EXTERNAL_GATE",
       "evidence": [
         {
-          "file": "tests/pro/ui-browser.test.mjs",
+          "file": "tests/pro/ui-browser.mjs",
           "testNames": [
             "actual Pro UI saves manual operations, preserves stale drafts, reviews Series and works at narrow widths"
           ]
         },
         {
-          "file": "tests/pro/browser-journey.test.mjs",
+          "file": "tests/pro/browser-journey.mjs",
           "testNames": [
             "actual Chromium: continuous journey, original Free renderer, unchanged composer, disk restart and data-only restore"
           ]
@@ -1405,7 +1406,7 @@
           ]
         },
         {
-          "file": "tests/pro/browser-journey.test.mjs",
+          "file": "tests/pro/browser-journey.mjs",
           "testNames": [
             "actual Chromium: continuous journey, original Free renderer, unchanged composer, disk restart and data-only restore"
           ]
@@ -1662,7 +1663,7 @@
         ]
       },
       {
-        "file": "tests/pro/browser-journey.test.mjs",
+        "file": "tests/pro/browser-journey.mjs",
         "testNames": [
           "actual Chromium: continuous journey, original Free renderer, unchanged composer, disk restart and data-only restore"
         ]

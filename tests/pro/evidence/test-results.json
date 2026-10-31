@@ -1,7 +1,8 @@
 {
   "contract": "VAIWL-PRO/1.0",
-  "baseline": "f317b26ea6ed7d1cc249c4bfc0ad90a619d29417",
-  "verifiedAt": "2026-10-31T13:09:23.772Z",
+  "handoffBaseline": "f317b26ea6ed7d1cc249c4bfc0ad90a619d29417",
+  "baseline": "2c9b043ce3c65a4b92c6f8f83b59fb416f63132a",
+  "verifiedAt": "2026-10-31T13:30:49.334Z",
   "environment": {
     "node": "v24.22.1",
     "platform": "linux",
@@ -13,7 +14,7 @@
   "tests": 443,
   "passed": 443,
   "skipped": 0,
-  "sourceDigest": "9687d53e39d0b7151dbb5c6500299e6a408528c9258d5c6c1b0b9901bb80823e",
+  "sourceDigest": "e0148eb66b2893ea188905149104896553e838b1888deafc35ff915724b8b58e",
   "results": [
     {
       "file": "tests/pro/billing-store.test.mjs",
@@ -22,7 +23,7 @@
       "passed": 12,
       "failed": 0,
       "skipped": 0,
-      "milliseconds": 333,
+      "milliseconds": 307,
       "cases": [
         "billing adapter needs explicit enabled + live owner verifier, never opens another DB",
         "zero budget is the durable default; rejected reserve writes no root/journal change",
@@ -39,13 +40,13 @@
       ]
     },
     {
-      "file": "tests/pro/browser-journey.test.mjs",
+      "file": "tests/pro/browser-journey.mjs",
       "status": "PASS",
       "tests": 1,
       "passed": 1,
       "failed": 0,
       "skipped": 0,
-      "milliseconds": 3304,
+      "milliseconds": 3785,
       "cases": [
         "actual Chromium: continuous journey, original Free renderer, unchanged composer, disk restart and data-only restore"
       ]
@@ -57,7 +58,7 @@
       "passed": 9,
       "failed": 0,
       "skipped": 0,
-      "milliseconds": 78,
+      "milliseconds": 76,
       "cases": [
         "default budget is zero; money uses exact rationals and conservative micro rounding",
         "A24 two scopes share a single installation ceiling, not a reset per account",
@@ -77,7 +78,7 @@
       "passed": 28,
       "failed": 0,
       "skipped": 0,
-      "milliseconds": 143,
+      "milliseconds": 124,
       "cases": [
         "A01: human cannot convert UNKNOWN or an unselected PROJECT into NONE",
         "A10: one primary, many related, one global title; no domain-created activity",
@@ -116,7 +117,7 @@
       "passed": 5,
       "failed": 0,
       "skipped": 0,
-      "milliseconds": 303,
+      "milliseconds": 296,
       "cases": [
         "confidence interval and sample floor prevent tiny perfect subsets from enabling auto",
         "synthetic engineering fixtures never count as Chinese model quality",
@@ -132,7 +133,7 @@
       "passed": 6,
       "failed": 0,
       "skipped": 0,
-      "milliseconds": 78,
+      "milliseconds": 58,
       "cases": [
         "queued → reserved → dispatched → result → reviewed → committed has no skipped paid stage",
         "A25 recovery of dispatched paid job keeps unknown reservation and never dispatches",
@@ -149,7 +150,7 @@
       "passed": 1,
       "failed": 0,
       "skipped": 0,
-      "milliseconds": 471,
+      "milliseconds": 521,
       "cases": [
         "P0–P3 continuous journey through actual shared NativeRepository and six ports (MockIDB)"
       ]
@@ -161,7 +162,7 @@
       "passed": 19,
       "failed": 0,
       "skipped": 0,
-      "milliseconds": 403,
+      "milliseconds": 371,
       "cases": [
         "legacy migration preserves IDs, aliases, icon, ordering and per-field protection",
         "multiple old human placements remain unresolved with every original row and lock",
@@ -191,7 +192,7 @@
       "passed": 12,
       "failed": 0,
       "skipped": 0,
-      "milliseconds": 103,
+      "milliseconds": 104,
       "cases": [
         "cloud provider remains disabled and zero transport/key calls occur by default",
         "fixed HTTPS Responses transport is bounded, no tools/store/stream, only approved payload",
@@ -214,7 +215,7 @@
       "passed": 11,
       "failed": 0,
       "skipped": 0,
-      "milliseconds": 72,
+      "milliseconds": 65,
       "cases": [
         "frozen four output variants validate and UNKNOWN cannot carry title",
         "A22/A23 rejects authority",
@@ -236,7 +237,7 @@
       "passed": 7,
       "failed": 0,
       "skipped": 0,
-      "milliseconds": 95,
+      "milliseconds": 91,
       "cases": [
         "A/B entries for one C retain separate return anchors and do not first-match ownership",
         "search/direct entry never invents topic ownership; context contains no authority",
@@ -254,7 +255,7 @@
       "passed": 22,
       "failed": 0,
       "skipped": 0,
-      "milliseconds": 131,
+      "milliseconds": 116,
       "cases": [
         "A01/A03 metadata pipeline accepts positive NONE only and never fabricates body or membership",
         "capability missing cannot be replaced by checkbox, URL, permission field or cloud membership",
@@ -287,7 +288,7 @@
       "passed": 12,
       "failed": 0,
       "skipped": 0,
-      "milliseconds": 322,
+      "milliseconds": 275,
       "cases": [
         "forged grants and serialized human receipts do not convey commit authority",
         "a receipt binds command and expected read set; exact operation replay is idempotent",
@@ -310,7 +311,7 @@
       "passed": 12,
       "failed": 0,
       "skipped": 0,
-      "milliseconds": 58,
+      "milliseconds": 61,
       "cases": [
         "single global title, one row per card, related contributes no activity and remains in uncollected",
         "native mode returns the exact original Free DTO without looking at or requiring Pro assets",
@@ -333,7 +334,7 @@
       "passed": 3,
       "failed": 0,
       "skipped": 0,
-      "milliseconds": 302,
+      "milliseconds": 327,
       "cases": [
         "A30 combined H/timezone/model-version/repeated-open sequence keeps stable primary, title and hard exclusion",
         "G02 one conversation with two related-only topics remains uncollected and advances neither topic",
@@ -347,7 +348,7 @@
       "passed": 5,
       "failed": 0,
       "skipped": 0,
-      "milliseconds": 228,
+      "milliseconds": 200,
       "cases": [
         "same-IDB read and replay results are detached from persistent root, checkpoint and journal",
         "execute input/log mutations preserve checkpoint; retained output mutations after put and commit cannot change DB",
@@ -363,7 +364,7 @@
       "passed": 3,
       "failed": 0,
       "skipped": 0,
-      "milliseconds": 450,
+      "milliseconds": 495,
       "cases": [
         "A16 split journal failure after root put rolls back root/checkpoint/journal; fresh intent retries",
         "A16 merge journal failure after root put rolls back root/checkpoint/journal; fresh intent retries",
@@ -377,7 +378,7 @@
       "passed": 12,
       "failed": 0,
       "skipped": 0,
-      "milliseconds": 137,
+      "milliseconds": 127,
       "cases": [
         "A17: Series rejects both continuation and branch cycles and duplicate next nodes",
         "branch stays separate from main numbering; semantic 2.10 remains integer tuple",
@@ -394,13 +395,13 @@
       ]
     },
     {
-      "file": "tests/pro/ui-browser.test.mjs",
+      "file": "tests/pro/ui-browser.mjs",
       "status": "PASS",
       "tests": 1,
       "passed": 1,
       "failed": 0,
       "skipped": 0,
-      "milliseconds": 5441,
+      "milliseconds": 5315,
       "cases": [
         "actual Pro UI saves manual operations, preserves stale drafts, reviews Series and works at narrow widths"
       ]
@@ -412,7 +413,7 @@
       "passed": 28,
       "failed": 0,
       "skipped": 0,
-      "milliseconds": 194,
+      "milliseconds": 187,
       "cases": [
         "worker requires shared owner, invoke and synchronous public projector composition",
         "all six exact actions use existing ui.withScope and keep context/private result worker-local",
@@ -451,7 +452,7 @@
       "passed": 24,
       "failed": 0,
       "skipped": 0,
-      "milliseconds": 593,
+      "milliseconds": 705,
       "cases": [
         "SHA256 known-or-independent vector 0",
         "SHA256 known-or-independent vector 3",
@@ -486,7 +487,7 @@
       "passed": 42,
       "failed": 0,
       "skipped": 0,
-      "milliseconds": 16158,
+      "milliseconds": 17555,
       "cases": [
         "MOCK_IDB_NOT_NATIVE: B5-01-last-human-edit-survives-checkpoint-recovery",
         "MOCK_IDB_NOT_NATIVE: B5-02-portable-backup-assets-not-evidence",
@@ -539,7 +540,7 @@
       "passed": 5,
       "failed": 0,
       "skipped": 0,
-      "milliseconds": 583,
+      "milliseconds": 620,
       "cases": [
         "MOCK_IDB migration v1 to current preserves old records",
         "MOCK_IDB malformed v1 schema rolls back atomic upgrade",
@@ -555,7 +556,7 @@
       "passed": 2,
       "failed": 0,
       "skipped": 0,
-      "milliseconds": 1196,
+      "milliseconds": 1297,
       "cases": [
         "VIEW_ISOLATION invalid-checksum preserves intact assets and reports view corruption",
         "VIEW_ISOLATION invalid-schema preserves intact assets and reports view corruption"
@@ -568,7 +569,7 @@
       "passed": 7,
       "failed": 0,
       "skipped": 0,
-      "milliseconds": 2979,
+      "milliseconds": 3031,
       "cases": [
         "AUDIT01 final awaited frame cannot outlive explicit broker revocation",
         "AUDIT02 view transaction aborts on revocation after put is queued",
@@ -586,7 +587,7 @@
       "passed": 5,
       "failed": 0,
       "skipped": 0,
-      "milliseconds": 819,
+      "milliseconds": 945,
       "cases": [
         "MOCK_IDB native facts share the B1 database and preserve all Pro assets byte-for-byte",
         "MOCK_IDB native CAS and idempotent receipts survive two connections",
@@ -602,7 +603,7 @@
       "passed": 30,
       "failed": 0,
       "skipped": 0,
-      "milliseconds": 174,
+      "milliseconds": 183,
       "cases": [
         "MOCK_IDB fresh absent activity roots admit only the human time-policy command at zero",
         "MOCK_IDB native revision advance rejects without any store write",
@@ -643,7 +644,7 @@
       "passed": 8,
       "failed": 0,
       "skipped": 0,
-      "milliseconds": 62,
+      "milliseconds": 55,
       "cases": [
         "prepared native order and exact titles retained; each member class previews five",
         "group and child pagination remains reachable without reordering or complete inventory copies",
@@ -662,7 +663,7 @@
       "passed": 3,
       "failed": 0,
       "skipped": 0,
-      "milliseconds": 53,
+      "milliseconds": 57,
       "cases": [
         "permanently pending provider settles at the fixed six-second deadline",
         "caller abort settles a pending refresh promptly and a late provider cannot publish",
@@ -676,7 +677,7 @@
       "passed": 45,
       "failed": 0,
       "skipped": 0,
-      "milliseconds": 343,
+      "milliseconds": 307,
       "cases": [
         "MOCK service only accepted observations notify; duplicate and rejected carry no new data hint",
         "MOCK accepted other-scope observation never notifies prior-scope frame",
@@ -732,7 +733,7 @@
       "passed": 10,
       "failed": 0,
       "skipped": 0,
-      "milliseconds": 120,
+      "milliseconds": 126,
       "cases": [
         "service idle tracks every overlapping HELLO from entry until settlement",
         "service idle covers scope provider refresh and never starts its own request",
@@ -753,7 +754,7 @@
       "passed": 21,
       "failed": 0,
       "skipped": 0,
-      "milliseconds": 170,
+      "milliseconds": 174,
       "cases": [
         "default worker HELLO and REFRESH never fetch identity or open the database without a context contract",
         "zero-seed default is unverified context and exact supported origin only",
@@ -785,7 +786,7 @@
       "passed": 4,
       "failed": 0,
       "skipped": 0,
-      "milliseconds": 66,
+      "milliseconds": 69,
       "cases": [
         "all byte values roundtrip in a full chunk below the private RPC byte budget",
         "multichunk UTF8 preserves Chinese and supplementary characters without per-chunk decoding",
@@ -800,7 +801,7 @@
       "passed": 28,
       "failed": 0,
       "skipped": 0,
-      "milliseconds": 197,
+      "milliseconds": 206,
       "cases": [
         "export chunks are bound, strict DTO and close consumes transfer",
         "upload requires ordered chunks; exact repeat idempotent and conflicting repeat denied",

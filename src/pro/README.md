@@ -27,7 +27,7 @@ node tests/pro/serve.mjs
 
 页面明确标明合成样本与本地规则，不连接真实账号。两张同名 Project 卡片来自原 Free 组件，保留不同原生 ID。“运行连续旅程”对空白样本执行真实 controller/port/domain/IDB 调用；“新建空白样本”使用另一组独立测试资料，保留已有样本。
 
-浏览器测试需要自行提供 Chromium 和 Playwright；不读取或复用用户浏览器资料。使用已有的开发环境依赖即可：
+浏览器测试使用 `browser-journey.mjs` / `ui-browser.mjs` 显式入口，由 `--browser` 加入；不进入共享纯 Node 的 `*.test.mjs` 自动收集。浏览器测试需要自行提供 Chromium 和 Playwright；不读取或复用用户浏览器资料。使用已有的开发环境依赖即可：
 
 ```bash
 PRO_CHROMIUM_EXECUTABLE=/path/to/chromium \
@@ -60,7 +60,7 @@ tsc --noEmit --strict --lib ES2022,DOM --module ESNext --moduleResolution bundle
 8. Free/Pro 切换保留全部资产；自动与人工 journal 按数据 patch 顺序重建。
 9. 重启和真实浏览器进程重开保留数据，处理许可保持关闭；纯数据备份可导入空白目标，授权和待执行任务不恢复。
 
-`tests/pro/support/continuous-journey.mjs` 是这条旅程的可执行定义。Node 和真实浏览器使用同一函数。`ui-browser.test.mjs` 另用实际鼠标/键盘交互验证编辑、旧草稿、焦点、点击中的更新、撤权、工作线预览、窄屏，以及超过 200 条时的有界分页。
+`tests/pro/support/continuous-journey.mjs` 是这条旅程的可执行定义。Node 和真实浏览器使用同一函数。`ui-browser.mjs` 另用实际鼠标/键盘交互验证编辑、旧草稿、焦点、点击中的更新、撤权、工作线预览、窄屏，以及超过 200 条时的有界分页。
 
 ## 模块与复用
 
