@@ -1,7 +1,29 @@
 # VAIWL实际状态：渐进积累工程已接线，真实来源逐项待准入
 
 
+## 2026-10-31 侧栏设置三点 SVG 修复
+
+用户提供原Profile扩展错误并独立复现：侧栏设置summary调用`svgIcon('more')`，但该词不在路径表，实际生成`<path d="undefined">`。本批只复用已有`graphic(summary,'more')`三圆点图标，保留名称、标题、原生details交互和事件；不改挂载、授权、恢复或图标范围。
+
+真实renderer定向反例在修前因`d="undefined"`失败；修后相关Node36/36通过、零跳过。既有隔离headless sidebar辅助面板旅程增加实际三圆点SVG、Enter展开、导航隐藏/恢复和重绘检查，1/1通过；这是renderer/browser机制证据，不是完整MV3或真实Mac验收。独立只读复核通过。生产源码仅此一处调用修改，未做本地全量重跑；新SHA的正式CI结果另记，不能沿用上一SHA全绿。原真实Profile未刷新、重装、清错或改动。
+
+该错误是已确认的独立P1，不证明导致整页撤场；真实`srcdoc`框架替换与Project/NONE来源、完整Mac终验关口继续保留。证据位于`.git/vaiwl-artifacts/sidebar-settings-svg-20261031/`。本批同原唯一分支/PR16集成，不合并、部署或发布。
+
+## 2026-10-31 精确原标签纠错与只读框架撤场诊断
+
+**纠正此前结论：原专用标签557758042并未消失。** 近期标签列表不完整，不能支持“身份失效”判断；下文同日旧节保留为历史误判，并由本节更正。用户新授权仅限精确原首页的无正文只读结构诊断，不授权应用快照、刷新、重装或页面操作。
+
+官方选定browser的精确claim未返回句柄，不证明标签不存在。按应用bundle名称的AppleScript也未找到目标；本机存在两个同名Chrome进程。固定原PID85206并逐一核验标签ID及完整首页URL后，Chrome AppleEvent执行成功。三次固定只读脚本均返回；0次界面动作、0次刷新/安装/页面修改，没有读取正文、输入值、账号或私人存储。**原生只读通道已证实可达，官方连接绑定仍未完成；二者分开记录。**
+
+实际结构为boot=loaded、startup=ready、当前框架/返回入口均0；停止码为`ui-frame-document-replaced`。固定退出快照显示registered=true、joined=2、granted=2、modules=2、inlineFrames=2、mode=reading、presentation=show-returned。说明曾建立授权界面，随后两个自有框架出现srcdoc而触发撤场；startup=ready是历史阶段，不是当前可用证明。不是未注入或未启用的证据，也不归为已修复的首次登记传输故障。
+
+产品源码没有srcdoc写入路径；ac56与2fa的框架身份判定及终止策略一致。历史隔离反例已证特定浏览器控制监视器会改写其他扩展框架，但本轮未取得实时写入者调用栈，**写入来源仍NOT_CAPTURED**。保留框架身份与授权保护，不自动移除srcdoc、重复挂载或恢复旧grant，不改工具/其他扩展。独立复核及精确回执见`.git/vaiwl-artifacts/exact-tab-mount-20261031/`。
+
+正式候选仍为`2fa94ba303273dd56d74d4c66950a093e7b8038c`；生产和测试输入未改，复用同SHA42项CI及已有打包隔离旅程，不追加全量运行。原安装文件仍为既有ac56对应源码，本轮未读取实时构建私有回执、未更新安装。真实Mac当前页框架替换为已证阻塞，完整产品旅程仍BLOCKED/NOT_RUN；Project真实入口及正向NONE来源、个人资产确认和连续日用关口不销账。只读权限不能恢复已撤场文档，后续仅在统一终验窗口内进行必要激活与验证，不再重复请求连接。个人日用、完整Free和发布均未接受。
+
 ## 2026-10-31 首次挂载登记传输故障的有界恢复
+
+冻结后最终记录：唯一正式SHA `2fa94ba303273dd56d74d4c66950a093e7b8038c` 已同步原分支/PR16；[CI 41197210296](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/actions/runs/41197210296) 同SHA首次运行42/42 SUCCESS，含完整Node、populated-native与fault-unknown-protocol。正式ZIP SHA256 `21088c4a9c47f18cdf7cf270314117b5ab285bc891005c6c7f83eab43fbe3707`，205包文件校验通过、206生产输入与实际隔离旅程一致。下文“冻结后CI”保留提交前时点；本段仅为未提交验收后记录，不改变冻结SHA。原2258未跟踪文件及3份stash保全，原Profile安装未变，无后台工作。真实Mac BLOCKED/NOT_RUN、完整Free与个人日用未接受。
 
 用户明确不重新绑定原Chrome、不授权应用快照；真实浏览器终验保持BLOCKED/NOT_RUN，不再请求连接或以私人正文取证。原Profile、安装身份、数据及备份未操作。全部可独立工程继续沿原PR16与方案B，不新增路线。
 
@@ -11,7 +33,7 @@
 
 Project来源→入库→投影的独立审查未发现新的可证P0/P1；现有UNKNOWN、安全原生返回及来源撤销边界保持。真实Project入口、正向NONE来源、指针可靠性及剩余Mac旅程仍未闭合，不因本次修复销账，也不把它认定为此前浏览器工具超时根因。证据在 `.git/vaiwl-artifacts/mount-transport-20261031/`；个人日用、完整Free及公开发布仍未接受。
 
-## 2026-10-31 收口复核：证据未漂移，原专用标签身份失效
+## 2026-10-31 收口复核：证据未漂移，标签身份历史误判（已由上方精确诊断纠正）
 
 继续以 `84274269bfa8ac56e44756a2e4c33399a81e7c2c` 为唯一正式工程候选。最新 GitHub REST 确认 PR16 仍 Draft/open、原 base 不变、远端与本地 HEAD 一致；206生产输入和26份既有证据哈希复核全部匹配，复用同SHA的42/42 CI与已记录隔离旅程，不重复全量运行。本轮未修改生产代码、安装目录或原Profile数据。
 

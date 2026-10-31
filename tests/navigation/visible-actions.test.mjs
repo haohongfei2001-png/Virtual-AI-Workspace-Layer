@@ -6,6 +6,11 @@ assert.equal(text.split(boundary).length,2);
 const source=(text.slice(0,text.indexOf(boundary))+'\nexport {fixture,projection,page,row,tick};').replace(/from '(\.\.?\/[^']+)'/g,(_,path)=>"from '"+new URL(path,url).href+"'");
 const {fixture,projection,page,row,tick}=await import('data:text/javascript;base64,'+Buffer.from(source).toString('base64'));
 function setup(t,role='workspace',extra={}){const f=fixture(role,()=>null,null,null,{},extra);t.after(()=>f.nav.stop());f.nav.updateFrameProjection(projection(role));return f;}
+test('sidebar settings renders the three-dot control without an undefined SVG path after redraw',t=>{
+ const f=setup(t,'sidebar');
+ const check=()=>{const summary=f.pane().querySelector('summary');assert(summary);assert.equal(summary.getAttribute('aria-label'),'项目导航设置');assert.equal(summary.getAttribute('title'),'项目导航设置');assert.doesNotMatch(summary.innerHTML,/undefined|NaN/);assert.equal((summary.innerHTML.match(/<circle\b/g)??[]).length,3);};
+ check();f.button('隐藏项目导航').click();check();assert(f.button('显示项目导航'));
+});
 const visibleText=node=>[node.textContent,...node.children.map(visibleText)].join('').trim();
 for(const label of ['已保存片段','备份与导入','本地数据恢复','关闭设置'])test('workspace settings '+label+' has actual text, not only accessible name',t=>{
  const f=setup(t,'workspace',{onSnippetsRequest(){},onBackupRequest(){},onRecoveryRequest(){}});f.button('工作空间设置').click();const action=f.button(label);assert(action);assert.equal(visibleText(action),label);

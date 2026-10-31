@@ -37,6 +37,14 @@ test('sidebar auxiliary panels resize after navigation detaches without a second
   f.client=createFreeFrameClient({document,runtime,role:'sidebar',parentOrigin:location.origin,privateRoot:document.querySelector('main')});await f.client.start();
  });
  await frame.getByRole('button',{name:'已保存片段',exact:true}).waitFor();
+ const summary=frame.locator('summary[aria-label="项目导航设置"]');
+ assert.equal(await summary.locator('svg circle').count(),3,'settings must render the valid three-dot SVG');
+ assert.equal(await summary.locator('path[d="undefined"]').count(),0);
+ await summary.focus();await summary.press('Enter');
+ await frame.getByRole('button',{name:'隐藏项目导航',exact:true}).click();
+ assert.equal(await summary.locator('svg circle').count(),3,'redraw preserves the settings icon');
+ await summary.focus();await summary.press('Enter');
+ await frame.getByRole('button',{name:'显示项目导航',exact:true}).click();
  const settled=()=>frame.waitForFunction(()=>Math.abs(innerHeight-Math.max(128,Math.ceil(document.querySelector('main').getBoundingClientRect().height)))<1,{},{timeout:2000});
  await settled();await frame.getByRole('button',{name:'已保存片段',exact:true}).click();
  await frame.waitForFunction(()=>typeof panelFixture.release==='function');await frame.evaluate(()=>panelFixture.release());
