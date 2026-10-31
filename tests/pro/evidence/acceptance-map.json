@@ -1,0 +1,1706 @@
+{
+  "format": "vaiwl-pro-acceptance-map/1",
+  "contract": "VAIWL-PRO/1.0",
+  "generatedAt": "2026-10-31T13:15:08.862001+00:00",
+  "contractSource": "tests/pro/support/contract-scenarios.json",
+  "sourceBinding": {
+    "baseGitHead": "f317b26ea6ed7d1cc249c4bfc0ad90a619d29417",
+    "candidateCommit": null,
+    "candidateCommitStatus": "SOURCE_MANIFEST_BOUND;COMMIT_RECORDED_IN_DRAFT_PR",
+    "workingTreeNote": "Final tested sources are sealed by source-manifest.json. The containing commit SHA is recorded in the Draft PR and delivery receipt, avoiding a self-referential commit identifier. The candidate inherits the newer PR16 parent after verifying all shared src dependencies and aggregate tests are byte-identical.",
+    "sourceSelection": "src/pro runtime .mjs, declaration .ts and schema .json; documentation excluded. Final aggregate manifest additionally covers tests/pro .mjs/.ts/.json/.html/.patch excluding tests/pro/evidence.",
+    "srcProTreeSHA256": "942bf5a6a2e0ad929074e76d8769b716cae0d1f2fc4fe3111cf7e3da92495f9f",
+    "srcProFilesSHA256": {
+      "src/pro/contracts/model-output.schema.json": "973c5580d4e6bd71db6294559e089e396b1c6652745722b91868547c2f50f10f",
+      "src/pro/contracts/R1_CODEC.d.ts": "02799d8f1399b9a7bbb5e0952bfba7576a244a5ccabeb5677911a18e4928d4be",
+      "src/pro/contracts/VAIWL_PRO_CONTRACTS.d.ts": "50c981057b61e8b9ca4f333a8a45b44db9352a58e1446e2bae9f1f3fba070e81",
+      "src/pro/domain/index.mjs": "cb54dfa89333452a37814542557fa48158511612ce776d3594c6d097df21107b",
+      "src/pro/domain/schema.mjs": "a78bc00a4f369804546ebc6d28058cba3e69db302aa49ab10ff46ae9ddcfa1ec",
+      "src/pro/evidence/metadata.mjs": "8b0144c50ea741e55a2703de385b47f441c32309fc05c4008db1bafac403ed07",
+      "src/pro/integration/billing-store.mjs": "85c7f54544a4c51b9e7a587e4f94f5a7e8772db2d571bd6fe739baf66ce64485",
+      "src/pro/integration/same-db-store.mjs": "2bc787c8df2d24df7a823a3a3d86e1d614432b0a6e289c13b548bad8f5e3c6c0",
+      "src/pro/integration/worker-service.mjs": "dbf0e78fbb6cd8b8b26f656dec28ebed7e89e301f5c34c2a2b70a74c995a072c",
+      "src/pro/jobs/budget.mjs": "10d872ec4d9b243399271430de605bfe0b455a2477ec9733c8228473bda0b2f6",
+      "src/pro/jobs/index.mjs": "4fe0d23b724fc6579fcf6c3baefc60b3075370dd75455152343bec060dd7d4fe",
+      "src/pro/jobs/lifecycle.mjs": "190e867bb1c41aa55b0e2ec571fc5c920deca3e440fd8149d3d5d2431de88bd8",
+      "src/pro/migration/legacy.mjs": "9d1caec86937e19c9e132975f19250cbe85ea5e1d45a8c1e81ad364f16773f8e",
+      "src/pro/migration/recovery.mjs": "f80bcc977de608b37bf9df44e047c00cc622d395378e96a27b404dbf0b3635f6",
+      "src/pro/model/fixture-adapter.mjs": "3bd6a0068edd08faf32fa6865a68abb51bd413cf7f8aa44e96acf387d31515a9",
+      "src/pro/model/openai-responses.mjs": "8bc2da1f7c41f402333bcb807d5f66f9a2129ecfe2eefebf1f126ceebcf99df1",
+      "src/pro/model/output-schema.mjs": "601696008765abdfc5bcdc26e1da3ef383c4600215b9a8814cb64fac07d141ea",
+      "src/pro/model/payload.mjs": "b0aaf2ed5f9e6bcda98218d7d35e652789f2247cee79f438c39d043357a6126f",
+      "src/pro/model/schema-runtime.mjs": "f26e4f4dee47bece5d1abfc67dc322b86bd0e1513be4bd94fd450f5c87d20918",
+      "src/pro/model/validate.mjs": "a9ac1a267d642e8a51c850c96825973085553a91b976d5f9f7c08710d3cdca69",
+      "src/pro/navigation/launch-context.mjs": "9a1b50070ebee7a72cf71c2ca0ba52246aca66ac788ce0b54438b984e288da6c",
+      "src/pro/organize/evaluation.mjs": "32154479e821bd64db1965456031aff94eea994d5e35a8354023a7723085250c",
+      "src/pro/organize/index.mjs": "413262460ddd174f049937ac9ef5dcd456d157e329c345da2340cddb6dd14d96",
+      "src/pro/organize/planner.mjs": "5314911517f9614f40ef0c1d734fde652f226a06add25013607486f9631a3260",
+      "src/pro/organize/recall.mjs": "2506ceafe7f54c40b070478d3c97a54fbbafe5fdadb3e934e074bdfb856dca5e",
+      "src/pro/projection/project.mjs": "d09304d0fd7b02ded37a0fe6cce8da321abb0abc8ef07605d60b973c9b2a091d",
+      "src/pro/runtime/controller.mjs": "8317367d91823b03964451f0867513bc7d887c794fac75814ef35c01e3b960ba",
+      "src/pro/ui/styles.mjs": "435a365747d8aee7508c1006e581b5d0f0b195c5c8b1473c5d030a26bbb7ae1d",
+      "src/pro/ui/workspace.mjs": "6ebaec399f5195a9a6da8703c6d20cc63a8c7f6943492737980dc097ff4ae19b"
+    },
+    "candidateParent": "2c9b043ce3c65a4b92c6f8f83b59fb416f63132a",
+    "srcProTreeHashEncoding": "SHA256 of UTF-8 JSON object srcProFilesSHA256, lexicographically sorted keys, no whitespace",
+    "aggregateSourceDigest": "9687d53e39d0b7151dbb5c6500299e6a408528c9258d5c6c1b0b9901bb80823e",
+    "aggregateManifest": "tests/pro/evidence/source-manifest.json",
+    "finalChecks": "tests/pro/evidence/final-checks.json"
+  },
+  "statusMeaning": {
+    "OFFLINE_VERIFIED": "The explicitly listed offline assertions passed on synthetic data. This status never grants real-host, natural-quality, paid-provider or release acceptance.",
+    "PARTIAL_EXTERNAL_GATE": "Some offline assertions passed, but a named scenario part or external integration gate remains unverified. See notCovered and externalGates.",
+    "NOT_RUN": "The frozen sequence was not run. Adjacent evidence, if listed, is not a substitute."
+  },
+  "evidenceBoundary": {
+    "syntheticDataOnly": true,
+    "realUserData": false,
+    "realHostIntegration": "NOT_RUN",
+    "naturalChineseModelQuality": "NOT_RUN",
+    "paidProviderCalls": 0,
+    "paidProviderAcceptance": "NOT_RUN",
+    "realDeviceOrIMEAcceptance": "NOT_RUN",
+    "productionMerge": "NOT_RUN",
+    "productionDeployment": "NOT_RUN",
+    "finalRootAggregate": "PASS_443_OF_443_ZERO_SKIPPED",
+    "browserEnvironment": "Linux x64, Chromium 153.0.8010.0, loopback-only disposable profile, actual IndexedDB; no logged-in real browser."
+  },
+  "executionSummary": {
+    "nonBrowserIndependentRun": {
+      "startedAt": "2026-10-31T12:56:50.436978+00:00",
+      "endedAt": "2026-10-31T13:03:37.323388+00:00",
+      "files": 17,
+      "passed": 202,
+      "failed": 0,
+      "skipped": 0,
+      "runner": "subagent /root/projection_ui",
+      "node": "v24.22.1"
+    },
+    "focusedUIRun": {
+      "file": "tests/pro/ui-browser.test.mjs",
+      "passed": 1,
+      "failed": 0,
+      "skipped": 0,
+      "durationMs": 4918.581933,
+      "command": "PRO_CHROMIUM_EXECUTABLE=<isolated Chromium> PRO_UI_FONT=<local CJK font> node tests/pro/ui-browser.test.mjs",
+      "coverage": "real controller manual workflow, stale draft, entry focus, consent pause/resume/restart, dark computed colors, 430px keyboard dialog, entitlement/revocation, 255-row sidebar and workspace pagination"
+    },
+    "parentBrowserJourneyReceipt": {
+      "file": "tests/pro/evidence/browser-journey.json",
+      "receiptSHA256AtMapping": "9329140e57aa102557ccb35d8f591bfe3bb79e331b7739cb752aa4a0987d6c8e",
+      "status": "PASS",
+      "realIndexedDB": true,
+      "browserProcessRestart": true,
+      "originalFreeRenderer": true,
+      "originalNativeStateUnchanged": true,
+      "composerIdentityPreserved": true,
+      "dataOnlyBackupRestore": true,
+      "networkRequestsOutsideLoopback": [],
+      "uncaughtErrors": []
+    },
+    "finalRootRun": {
+      "file": "tests/pro/evidence/test-results.json",
+      "verifiedAt": "2026-10-31T13:09:23.772Z",
+      "sourceDigest": "9687d53e39d0b7151dbb5c6500299e6a408528c9258d5c6c1b0b9901bb80823e",
+      "totalFiles": 34,
+      "passed": 443,
+      "failed": 0,
+      "skipped": 0,
+      "proFiles": 20,
+      "proPassed": 209,
+      "sharedPassed": 234,
+      "browserIncluded": true,
+      "sharedRegressionIncluded": true
+    },
+    "newParentTargetedRun": {
+      "file": "tests/pro/evidence/final-checks.json",
+      "candidateParent": "2c9b043ce3c65a4b92c6f8f83b59fb416f63132a",
+      "passed": 63,
+      "failed": 0,
+      "skipped": 0,
+      "aggregateSourcesAndSharedDependenciesUnchanged": true
+    }
+  },
+  "testExecutionManifest": [
+    {
+      "file": "tests/pro/billing-store.test.mjs",
+      "testFileSHA256AtMapping": "ea5bfa4495527fd39495fa13fafc6400114d0ae7d11dcdb3c51b6f45ac565c8c",
+      "runFileSHA256": "ea5bfa4495527fd39495fa13fafc6400114d0ae7d11dcdb3c51b6f45ac565c8c",
+      "executedBy": "root final aggregate",
+      "execution": "PASS",
+      "passed": 12,
+      "failed": 0,
+      "skipped": 0,
+      "note": "Final source-manifest bound run on synthetic data; browser files use isolated real Chromium/IndexedDB. No real host or natural-model acceptance."
+    },
+    {
+      "file": "tests/pro/browser-journey.test.mjs",
+      "testFileSHA256AtMapping": "700dad66dbd95730de9030d3b390b663a90832cf4128e4c9d1fa26b6a398d9f4",
+      "runFileSHA256": "700dad66dbd95730de9030d3b390b663a90832cf4128e4c9d1fa26b6a398d9f4",
+      "executedBy": "root final aggregate",
+      "execution": "PASS",
+      "passed": 1,
+      "failed": 0,
+      "skipped": 0,
+      "note": "Final source-manifest bound run on synthetic data; browser files use isolated real Chromium/IndexedDB. No real host or natural-model acceptance."
+    },
+    {
+      "file": "tests/pro/budget.test.mjs",
+      "testFileSHA256AtMapping": "5e7904d6f2ac06d06f4909db7a330dbad8abd451c6671fe4e4d5a21cea6ea921",
+      "runFileSHA256": "5e7904d6f2ac06d06f4909db7a330dbad8abd451c6671fe4e4d5a21cea6ea921",
+      "executedBy": "root final aggregate",
+      "execution": "PASS",
+      "passed": 9,
+      "failed": 0,
+      "skipped": 0,
+      "note": "Final source-manifest bound run on synthetic data; browser files use isolated real Chromium/IndexedDB. No real host or natural-model acceptance."
+    },
+    {
+      "file": "tests/pro/domain.test.mjs",
+      "testFileSHA256AtMapping": "8d4b2c4e7a02b6b841e1e98cd4c011650f6879acf89d1557411945d69caf1b18",
+      "runFileSHA256": "8d4b2c4e7a02b6b841e1e98cd4c011650f6879acf89d1557411945d69caf1b18",
+      "executedBy": "root final aggregate",
+      "execution": "PASS",
+      "passed": 28,
+      "failed": 0,
+      "skipped": 0,
+      "note": "Final source-manifest bound run on synthetic data; browser files use isolated real Chromium/IndexedDB. No real host or natural-model acceptance."
+    },
+    {
+      "file": "tests/pro/evaluation.test.mjs",
+      "testFileSHA256AtMapping": "cc5845d6b643bd60c5d1ea3931412f0f5bdab2a9fce39030b73ce064ae0ea77a",
+      "runFileSHA256": "cc5845d6b643bd60c5d1ea3931412f0f5bdab2a9fce39030b73ce064ae0ea77a",
+      "executedBy": "root final aggregate",
+      "execution": "PASS",
+      "passed": 5,
+      "failed": 0,
+      "skipped": 0,
+      "note": "Final source-manifest bound run on synthetic data; browser files use isolated real Chromium/IndexedDB. No real host or natural-model acceptance."
+    },
+    {
+      "file": "tests/pro/jobs.test.mjs",
+      "testFileSHA256AtMapping": "9112fe932645c5cb72e11526dadffd39f64a39835dce08ed31fe1642a0086243",
+      "runFileSHA256": "9112fe932645c5cb72e11526dadffd39f64a39835dce08ed31fe1642a0086243",
+      "executedBy": "root final aggregate",
+      "execution": "PASS",
+      "passed": 6,
+      "failed": 0,
+      "skipped": 0,
+      "note": "Final source-manifest bound run on synthetic data; browser files use isolated real Chromium/IndexedDB. No real host or natural-model acceptance."
+    },
+    {
+      "file": "tests/pro/journey.test.mjs",
+      "testFileSHA256AtMapping": "3fd4e0734d1f627fb88370244c63df85562384f0933399c64dadf7469b5d3007",
+      "runFileSHA256": "3fd4e0734d1f627fb88370244c63df85562384f0933399c64dadf7469b5d3007",
+      "executedBy": "root final aggregate",
+      "execution": "PASS",
+      "passed": 1,
+      "failed": 0,
+      "skipped": 0,
+      "note": "Final source-manifest bound run on synthetic data; browser files use isolated real Chromium/IndexedDB. No real host or natural-model acceptance."
+    },
+    {
+      "file": "tests/pro/migration-recovery.test.mjs",
+      "testFileSHA256AtMapping": "02da3dce04979d410b9c88513697b61669640fc83f07e2b5e4875187ce8405c9",
+      "runFileSHA256": "02da3dce04979d410b9c88513697b61669640fc83f07e2b5e4875187ce8405c9",
+      "executedBy": "root final aggregate",
+      "execution": "PASS",
+      "passed": 19,
+      "failed": 0,
+      "skipped": 0,
+      "note": "Final source-manifest bound run on synthetic data; browser files use isolated real Chromium/IndexedDB. No real host or natural-model acceptance."
+    },
+    {
+      "file": "tests/pro/model-provider.test.mjs",
+      "testFileSHA256AtMapping": "d74517b296e008db5a5fb8cf6eaaddcab50765c0b130aea631d6ff8aa87bff34",
+      "runFileSHA256": "d74517b296e008db5a5fb8cf6eaaddcab50765c0b130aea631d6ff8aa87bff34",
+      "executedBy": "root final aggregate",
+      "execution": "PASS",
+      "passed": 12,
+      "failed": 0,
+      "skipped": 0,
+      "note": "Final source-manifest bound run on synthetic data; browser files use isolated real Chromium/IndexedDB. No real host or natural-model acceptance."
+    },
+    {
+      "file": "tests/pro/model-schema.test.mjs",
+      "testFileSHA256AtMapping": "d58e36bef5e0db0946af6f279503b304a42b4b47ed3e2dd2f702a853e2031b51",
+      "runFileSHA256": "d58e36bef5e0db0946af6f279503b304a42b4b47ed3e2dd2f702a853e2031b51",
+      "executedBy": "root final aggregate",
+      "execution": "PASS",
+      "passed": 11,
+      "failed": 0,
+      "skipped": 0,
+      "note": "Final source-manifest bound run on synthetic data; browser files use isolated real Chromium/IndexedDB. No real host or natural-model acceptance."
+    },
+    {
+      "file": "tests/pro/navigation.test.mjs",
+      "testFileSHA256AtMapping": "b2cb6e0a853a33d28618914a7dbde83abc8fbfb77e3a026b83fbdc4f6533d298",
+      "runFileSHA256": "b2cb6e0a853a33d28618914a7dbde83abc8fbfb77e3a026b83fbdc4f6533d298",
+      "executedBy": "root final aggregate",
+      "execution": "PASS",
+      "passed": 7,
+      "failed": 0,
+      "skipped": 0,
+      "note": "Final source-manifest bound run on synthetic data; browser files use isolated real Chromium/IndexedDB. No real host or natural-model acceptance."
+    },
+    {
+      "file": "tests/pro/organize.test.mjs",
+      "testFileSHA256AtMapping": "2638ee2699301e80050be40fd83442b563a0a5288929ef1fb7c7057af6334872",
+      "runFileSHA256": "2638ee2699301e80050be40fd83442b563a0a5288929ef1fb7c7057af6334872",
+      "executedBy": "root final aggregate",
+      "execution": "PASS",
+      "passed": 22,
+      "failed": 0,
+      "skipped": 0,
+      "note": "Final source-manifest bound run on synthetic data; browser files use isolated real Chromium/IndexedDB. No real host or natural-model acceptance."
+    },
+    {
+      "file": "tests/pro/ports.test.mjs",
+      "testFileSHA256AtMapping": "d69cc8f39d9b0d3d2175693cec41dfed16ed4ab33a7a5c464a7d67df9f5579fb",
+      "runFileSHA256": "d69cc8f39d9b0d3d2175693cec41dfed16ed4ab33a7a5c464a7d67df9f5579fb",
+      "executedBy": "root final aggregate",
+      "execution": "PASS",
+      "passed": 12,
+      "failed": 0,
+      "skipped": 0,
+      "note": "Final source-manifest bound run on synthetic data; browser files use isolated real Chromium/IndexedDB. No real host or natural-model acceptance."
+    },
+    {
+      "file": "tests/pro/projection.test.mjs",
+      "testFileSHA256AtMapping": "e511dbd6a876730ae70c1f184a26080cdea2e17e93437579e690c1996a430bf8",
+      "runFileSHA256": "e511dbd6a876730ae70c1f184a26080cdea2e17e93437579e690c1996a430bf8",
+      "executedBy": "root final aggregate",
+      "execution": "PASS",
+      "passed": 12,
+      "failed": 0,
+      "skipped": 0,
+      "note": "Final source-manifest bound run on synthetic data; browser files use isolated real Chromium/IndexedDB. No real host or natural-model acceptance."
+    },
+    {
+      "file": "tests/pro/stability.test.mjs",
+      "testFileSHA256AtMapping": "34a773fd62d189e1c7d71bd27225a452db9a50bbf3488c50433924b4376dd469",
+      "runFileSHA256": "34a773fd62d189e1c7d71bd27225a452db9a50bbf3488c50433924b4376dd469",
+      "executedBy": "root final aggregate",
+      "execution": "PASS",
+      "passed": 3,
+      "failed": 0,
+      "skipped": 0,
+      "note": "Final source-manifest bound run on synthetic data; browser files use isolated real Chromium/IndexedDB. No real host or natural-model acceptance."
+    },
+    {
+      "file": "tests/pro/store-boundary.test.mjs",
+      "testFileSHA256AtMapping": "2c2229b2aa3f33f34654b8a87cc0f301100ae6c5c1167750d821257bc2698b97",
+      "runFileSHA256": "2c2229b2aa3f33f34654b8a87cc0f301100ae6c5c1167750d821257bc2698b97",
+      "executedBy": "root final aggregate",
+      "execution": "PASS",
+      "passed": 5,
+      "failed": 0,
+      "skipped": 0,
+      "note": "Final source-manifest bound run on synthetic data; browser files use isolated real Chromium/IndexedDB. No real host or natural-model acceptance."
+    },
+    {
+      "file": "tests/pro/structural-commit.test.mjs",
+      "testFileSHA256AtMapping": "d5978b0663c3ce1ec22f672624db77b5c0177c3649f27bc3524665ababfc7421",
+      "runFileSHA256": "d5978b0663c3ce1ec22f672624db77b5c0177c3649f27bc3524665ababfc7421",
+      "executedBy": "root final aggregate",
+      "execution": "PASS",
+      "passed": 3,
+      "failed": 0,
+      "skipped": 0,
+      "note": "Final source-manifest bound run on synthetic data; browser files use isolated real Chromium/IndexedDB. No real host or natural-model acceptance."
+    },
+    {
+      "file": "tests/pro/structure.test.mjs",
+      "testFileSHA256AtMapping": "c80c446c0d5ee19fe3f3d3a0303463e6a6465af21a946f8f9eb54f9d2962a7a1",
+      "runFileSHA256": "c80c446c0d5ee19fe3f3d3a0303463e6a6465af21a946f8f9eb54f9d2962a7a1",
+      "executedBy": "root final aggregate",
+      "execution": "PASS",
+      "passed": 12,
+      "failed": 0,
+      "skipped": 0,
+      "note": "Final source-manifest bound run on synthetic data; browser files use isolated real Chromium/IndexedDB. No real host or natural-model acceptance."
+    },
+    {
+      "file": "tests/pro/ui-browser.test.mjs",
+      "testFileSHA256AtMapping": "87a11503692ee4f52af7017124d1ce8fd7560435c598b347d324331c2dfb0dae",
+      "runFileSHA256": "87a11503692ee4f52af7017124d1ce8fd7560435c598b347d324331c2dfb0dae",
+      "executedBy": "root final aggregate",
+      "execution": "PASS",
+      "passed": 1,
+      "failed": 0,
+      "skipped": 0,
+      "note": "Final source-manifest bound run on synthetic data; browser files use isolated real Chromium/IndexedDB. No real host or natural-model acceptance."
+    },
+    {
+      "file": "tests/pro/worker-service.test.mjs",
+      "testFileSHA256AtMapping": "e94ac54322e9884080c6c2d06656206aa11b5d3c5bd1ade23e21002fb5762c54",
+      "runFileSHA256": "e94ac54322e9884080c6c2d06656206aa11b5d3c5bd1ade23e21002fb5762c54",
+      "executedBy": "root final aggregate",
+      "execution": "PASS",
+      "passed": 28,
+      "failed": 0,
+      "skipped": 0,
+      "note": "Final source-manifest bound run on synthetic data; browser files use isolated real Chromium/IndexedDB. No real host or natural-model acceptance."
+    }
+  ],
+  "scenarioCounts": {
+    "OFFLINE_VERIFIED": 30,
+    "NOT_RUN": 2,
+    "PARTIAL_EXTERNAL_GATE": 3
+  },
+  "scenarios": [
+    {
+      "id": "A01",
+      "scenario": "UNKNOWN/路由缺Project信息",
+      "oracle": "无默认NONE收录，原引用仍可达",
+      "status": "OFFLINE_VERIFIED",
+      "evidence": [
+        {
+          "file": "tests/pro/domain.test.mjs",
+          "testNames": [
+            "A01: human cannot convert UNKNOWN or an unselected PROJECT into NONE"
+          ]
+        },
+        {
+          "file": "tests/pro/organize.test.mjs",
+          "testNames": [
+            "A01/A03 metadata pipeline accepts positive NONE only and never fabricates body or membership",
+            "capability missing cannot be replaced by checkbox, URL, permission field or cloud membership"
+          ]
+        },
+        {
+          "file": "tests/pro/ports.test.mjs",
+          "testNames": [
+            "UNKNOWN cannot be promoted by a human placement or included in AI evidence"
+          ]
+        },
+        {
+          "file": "tests/pro/navigation.test.mjs",
+          "testNames": [
+            "UNKNOWN cannot launch from a topic; still navigable from direct entry"
+          ]
+        }
+      ],
+      "observed": "UNKNOWN 和未经选择的 PROJECT 不可变成 NONE；UNKNOWN 不入 AI payload，仍能由直接入口打开。",
+      "notCovered": [],
+      "externalGates": []
+    },
+    {
+      "id": "A02",
+      "scenario": "同名两个原生Project",
+      "oracle": "不合并，真实ID不变",
+      "status": "OFFLINE_VERIFIED",
+      "evidence": [
+        {
+          "file": "tests/pro/browser-journey.test.mjs",
+          "testNames": [
+            "actual Chromium: continuous journey, original Free renderer, unchanged composer, disk restart and data-only restore"
+          ]
+        }
+      ],
+      "observed": "原 Free renderer 在真实隔离 Chromium 中保留两个同名 Project 的 p_alpha/p_beta ID；Pro 操作前后 NativeRepository 状态完全相同。",
+      "notCovered": [],
+      "externalGates": [
+        "真实 ChatGPT 宿主 Project 适配和账户数据未操作；此证据只针对合成双 Project。"
+      ]
+    },
+    {
+      "id": "A03",
+      "scenario": "无正文的Browser-Local",
+      "oracle": "不出现body/message ID读取或云外传",
+      "status": "OFFLINE_VERIFIED",
+      "evidence": [
+        {
+          "file": "tests/pro/organize.test.mjs",
+          "testNames": [
+            "A01/A03 metadata pipeline accepts positive NONE only and never fabricates body or membership",
+            "A04 Browser Local session is metadata-only memory and cannot send cloud jobs",
+            "provider receives job-scoped handles and approved fields only"
+          ]
+        },
+        {
+          "file": "tests/pro/ports.test.mjs",
+          "testNames": [
+            "Browser-Local is memory preview only: no persistence, mutation, durable work or paid budget"
+          ]
+        }
+      ],
+      "observed": "metadata-only pack 不含正文；获准字段 payload 不含原生 URL、scope、native ID 或授权；Browser-Local 禁内容授权与云任务。",
+      "notCovered": [],
+      "externalGates": [
+        "没有在真实 Browser-Local 页面抓取正文或消息 ID；没有真实模型调用。"
+      ]
+    },
+    {
+      "id": "A04",
+      "scenario": "仅即时会话",
+      "oracle": "内容不持久化；付费任务不启动",
+      "status": "OFFLINE_VERIFIED",
+      "evidence": [
+        {
+          "file": "tests/pro/jobs.test.mjs",
+          "testNames": [
+            "A04 session jobs stay local RAM and are discarded on restart"
+          ]
+        },
+        {
+          "file": "tests/pro/ports.test.mjs",
+          "testNames": [
+            "Browser-Local is memory preview only: no persistence, mutation, durable work or paid budget"
+          ]
+        },
+        {
+          "file": "tests/pro/budget.test.mjs",
+          "testNames": [
+            "rollover cannot discard unknown liabilities and session scope cannot reserve paid work"
+          ]
+        }
+      ],
+      "observed": "会话模式不创建 DB，不允许持久工作/修改/付费预留；恢复丢弃 RAM job，重启不恢复处理同意。",
+      "notCovered": [],
+      "externalGates": []
+    },
+    {
+      "id": "A05",
+      "scenario": "scope切换/撤权后迟到结果",
+      "oracle": "无旧私人显示、无提交",
+      "status": "OFFLINE_VERIFIED",
+      "evidence": [
+        {
+          "file": "tests/pro/organize.test.mjs",
+          "testNames": [
+            "A05/A21 fresh version fence rejects scope/revocation/native membership change"
+          ]
+        },
+        {
+          "file": "tests/pro/ports.test.mjs",
+          "testNames": [
+            "revocation immediately clears cached private views and rejects previously issued actions"
+          ]
+        },
+        {
+          "file": "tests/pro/navigation.test.mjs",
+          "testNames": [
+            "stale scope/document rejected; invalidation removes all RAM contexts"
+          ]
+        },
+        {
+          "file": "tests/pro/ui-browser.test.mjs",
+          "testNames": [
+            "actual Pro UI saves manual operations, preserves stale drafts, reviews Series and works at narrow widths"
+          ]
+        },
+        {
+          "file": "tests/pro/worker-service.test.mjs",
+          "testNames": [
+            "document revocation ui_fixture aborts in-flight invoke before any late private result",
+            "document revocation parent_fixture aborts in-flight invoke before any late private result",
+            "pending authorization is promptly aborted by revokeDocument and remains nonidle until settlement",
+            "pending authorization is promptly aborted by revokeMount and remains nonidle until settlement",
+            "pending authorization is promptly aborted by revokeTab and remains nonidle until settlement",
+            "inactive scope or wrong parent tab is rejected before invoking the port",
+            "authority changed after invoke or during ui final revalidation never returns private results",
+            "six-second deadline holds invoke activity until its late resolve",
+            "six-second deadline holds invoke activity until its late reject"
+          ]
+        }
+      ],
+      "observed": "版本/授权 epoch/scope/native变化拒绝迟到结果；撤权即时清除缓存与 UI，即使 pointerdown 正在进行也不延迟隐私清除。 Worker RPC在document/mount/tab撤权或六秒到期后拒绝迟到私人回复，执行未结束前仍占用容量。",
+      "notCovered": [],
+      "externalGates": [
+        "真实跨账号宿主通道的整链路仍待 owner 接线验收。"
+      ]
+    },
+    {
+      "id": "A06",
+      "scenario": "用户改名后模型结果到达",
+      "oracle": "人工标题与控制状态保持",
+      "status": "OFFLINE_VERIFIED",
+      "evidence": [
+        {
+          "file": "tests/pro/domain.test.mjs",
+          "testNames": [
+            "A06: stale proposal cannot overwrite later manual title"
+          ]
+        },
+        {
+          "file": "tests/pro/organize.test.mjs",
+          "testNames": [
+            "A06/A07 human title remains protected even unlocked; model cannot invent entities or versions"
+          ]
+        },
+        {
+          "file": "tests/pro/ui-browser.test.mjs",
+          "testNames": [
+            "actual Pro UI saves manual operations, preserves stale drafts, reviews Series and works at narrow widths"
+          ]
+        }
+      ],
+      "observed": "人工改名后旧 proposal 不能提交；人工字段控制状态保留。UI 还验证旧 expected 的脏编辑不会覆盖后来状态。",
+      "notCovered": [],
+      "externalGates": []
+    },
+    {
+      "id": "A07",
+      "scenario": "locked=false但owner=human",
+      "oracle": "AI仍被拒；显式恢复自动后才可评估",
+      "status": "OFFLINE_VERIFIED",
+      "evidence": [
+        {
+          "file": "tests/pro/domain.test.mjs",
+          "testNames": [
+            "A07: unlocking manual title is not release to automation",
+            "locking an automatic title takes human control; unlock cannot give it back",
+            "locking an untouched native name protects a following-native preference without copying text"
+          ]
+        },
+        {
+          "file": "tests/pro/organize.test.mjs",
+          "testNames": [
+            "A06/A07 human title remains protected even unlocked; model cannot invent entities or versions"
+          ]
+        }
+      ],
+      "observed": "解除锁定不解除 human ownership；只有显式 RELEASE_TO_AUTO 后的新有效建议可以评估。",
+      "notCovered": [],
+      "externalGates": []
+    },
+    {
+      "id": "A08",
+      "scenario": "排除此主题后重跑/换模型/新增证据",
+      "oracle": "人工pair exclusion未解除就不复活",
+      "status": "OFFLINE_VERIFIED",
+      "evidence": [
+        {
+          "file": "tests/pro/domain.test.mjs",
+          "testNames": [
+            "A08: correction preserves precise hard exclusion across new model and evidence"
+          ]
+        },
+        {
+          "file": "tests/pro/organize.test.mjs",
+          "testNames": [
+            "A08 hard pair exclusions survive newer evidence and model output",
+            "rejection fingerprint ignores model/nonce; metadata spelling changes do not defeat target rejection"
+          ]
+        }
+      ],
+      "observed": "移动/排除生成精确 pair constraint；新 model/version/证据不能绕过；明确解除之后才可人工收录。",
+      "notCovered": [],
+      "externalGates": []
+    },
+    {
+      "id": "A09",
+      "scenario": "C不参与AI整理",
+      "oracle": "队列取消、结果不提交；Free仍可用",
+      "status": "OFFLINE_VERIFIED",
+      "evidence": [
+        {
+          "file": "tests/pro/jobs.test.mjs",
+          "testNames": [
+            "A05/A09 late results cancelled on exclusion and stale input require replan"
+          ]
+        },
+        {
+          "file": "tests/pro/domain.test.mjs",
+          "testNames": [
+            "A09: processing exclusion blocks model acceptance but preserves accepted assets",
+            "ordinary inverse cannot relax processing consent"
+          ]
+        },
+        {
+          "file": "tests/pro/organize.test.mjs",
+          "testNames": [
+            "A09 excluded references do not reach payload; available assets remain untouched"
+          ]
+        }
+      ],
+      "observed": "排除对象不入 payload；取消 job 拒绝迟到结果；接受过的人工资产保持，普通 inverse 不恢复同意。",
+      "notCovered": [],
+      "externalGates": []
+    },
+    {
+      "id": "A10",
+      "scenario": "一个C多主题",
+      "oracle": "单一DerivedTitle；每卡唯一；primary才推进活跃",
+      "status": "OFFLINE_VERIFIED",
+      "evidence": [
+        {
+          "file": "tests/pro/domain.test.mjs",
+          "testNames": [
+            "A10: one primary, many related, one global title; no domain-created activity"
+          ]
+        },
+        {
+          "file": "tests/pro/projection.test.mjs",
+          "testNames": [
+            "single global title, one row per card, related contributes no activity and remains in uncollected",
+            "pair exclusion hides a retained edge, duplicates of primary are rejected"
+          ]
+        }
+      ],
+      "observed": "同一 C 只有一份 derived title；每卡一次；主关系最多一条，related不推进主题活跃，也不隐藏未收录入口。",
+      "notCovered": [],
+      "externalGates": []
+    },
+    {
+      "id": "A11",
+      "scenario": "A/B不同入口阅读与返回",
+      "oracle": "分别恢复LaunchContext，不first-match",
+      "status": "OFFLINE_VERIFIED",
+      "evidence": [
+        {
+          "file": "tests/pro/navigation.test.mjs",
+          "testNames": [
+            "A/B entries for one C retain separate return anchors and do not first-match ownership",
+            "search/direct entry never invents topic ownership; context contains no authority",
+            "new tab inherits only explicit verified same-scope context; does not consume original"
+          ]
+        },
+        {
+          "file": "tests/pro/journey.test.mjs",
+          "testNames": [
+            "P0–P3 continuous journey through actual shared NativeRepository and six ports (MockIDB)"
+          ]
+        },
+        {
+          "file": "tests/pro/browser-journey.test.mjs",
+          "testNames": [
+            "actual Chromium: continuous journey, original Free renderer, unchanged composer, disk restart and data-only restore"
+          ]
+        }
+      ],
+      "observed": "同一 C 从 A/B 打开保留独立 card/scroll/old-item/sidebar anchor；直接/搜索入口不猜主题。连续旅程验证 Series 来源和返回。",
+      "notCovered": [],
+      "externalGates": []
+    },
+    {
+      "id": "A12",
+      "scenario": "首次新主题",
+      "oracle": "未达NEW_TOPIC门只预览；单窗口可由人工建立",
+      "status": "OFFLINE_VERIFIED",
+      "evidence": [
+        {
+          "file": "tests/pro/domain.test.mjs",
+          "testNames": [
+            "A12: FIRST RUN and NEW_TOPIC gates independent from existing-topic gate",
+            "first preview batch applies multiple immutable proposals in one journal/inverse"
+          ]
+        },
+        {
+          "file": "tests/pro/organize.test.mjs",
+          "testNames": [
+            "A12/A14 each auto lane needs actual quality and first round stays preview"
+          ]
+        },
+        {
+          "file": "tests/pro/evaluation.test.mjs",
+          "testNames": [
+            "NEW_TOPIC precision is independent and bad new-topic decisions cannot borrow existing lane quality"
+          ]
+        },
+        {
+          "file": "tests/pro/ui-browser.test.mjs",
+          "testNames": [
+            "actual Pro UI saves manual operations, preserves stale drafts, reviews Series and works at narrow widths"
+          ]
+        }
+      ],
+      "observed": "首次只预览；NEW_TOPIC 门与已有主题独立；人工创建单窗口主题可用，首轮批量确认是一笔可原子撤销操作。",
+      "notCovered": [],
+      "externalGates": [
+        "自然中文样本的门槛通过与批准尚未发生；算术夹具不代表模型质量。"
+      ]
+    },
+    {
+      "id": "A13",
+      "scenario": "删除主题",
+      "oracle": "不删原生C；同依据不自动重生",
+      "status": "OFFLINE_VERIFIED",
+      "evidence": [
+        {
+          "file": "tests/pro/domain.test.mjs",
+          "testNames": [
+            "A13: delete keeps native refs and suppresses previously created AI topic"
+          ]
+        }
+      ],
+      "observed": "删除主题仅移除派生关系并留下抑制依据；原生 C 不删；同依据改名重建仍被阻止。",
+      "notCovered": [],
+      "externalGates": []
+    },
+    {
+      "id": "A14",
+      "scenario": "稳定主归属与新证据冲突",
+      "oracle": "只生成变更提案，不静默搬家",
+      "status": "OFFLINE_VERIFIED",
+      "evidence": [
+        {
+          "file": "tests/pro/organize.test.mjs",
+          "testNames": [
+            "A12/A14 each auto lane needs actual quality and first round stays preview"
+          ]
+        },
+        {
+          "file": "tests/pro/domain.test.mjs",
+          "testNames": [
+            "A10: one primary, many related, one global title; no domain-created activity",
+            "conflicting batch primary rejects all without retagging or partial title"
+          ]
+        }
+      ],
+      "observed": "稳定 primary 存在时 automatic gate 关闭；另一个 primary 与冲突批次被拒，原状态不被静默替换。",
+      "notCovered": [
+        "没有声称用自然增量语料验证推荐正确率。"
+      ],
+      "externalGates": []
+    },
+    {
+      "id": "A15",
+      "scenario": "合并include/exclude冲突",
+      "oracle": "精确提示原约束与映射，未解不提交",
+      "status": "OFFLINE_VERIFIED",
+      "evidence": [
+        {
+          "file": "tests/pro/structure.test.mjs",
+          "testNames": [
+            "A15: merge include/exclude conflict blocks the entire preview and preserves all state"
+          ]
+        },
+        {
+          "file": "tests/pro/journey.test.mjs",
+          "testNames": [
+            "P0–P3 continuous journey through actual shared NativeRepository and six ports (MockIDB)"
+          ]
+        }
+      ],
+      "observed": "merge preview 精确列出 refId、原排除 topicId 和映射目标；冲突未解除 proposal 为 null，状态不变；显式解除后才提交。",
+      "notCovered": [],
+      "externalGates": []
+    },
+    {
+      "id": "A16",
+      "scenario": "拆分/合并中途失败",
+      "oracle": "0部分成员丢失、0半个redirect",
+      "status": "OFFLINE_VERIFIED",
+      "evidence": [
+        {
+          "file": "tests/pro/structural-commit.test.mjs",
+          "testNames": [
+            "A16 split journal failure after root put rolls back root/checkpoint/journal; fresh intent retries",
+            "A16 merge journal failure after root put rolls back root/checkpoint/journal; fresh intent retries"
+          ]
+        },
+        {
+          "file": "tests/pro/structure.test.mjs",
+          "testNames": [
+            "A16: late failed merge plan cannot leak half redirect or members",
+            "split inverse restores exact original topology and all stable IDs"
+          ]
+        }
+      ],
+      "observed": "同笔split/merge实测checkpoint成功、root成功后journal put失败：5张表及state/journal逐项不变，无半个redirect/成员。旧receipt不能改ID重用；新intent重试才整笔成功，native表不变。",
+      "notCovered": [],
+      "externalGates": [
+        "MockIDB事务故障注入不是物理磁盘故障或真实MV3进程崩溃验收。"
+      ]
+    },
+    {
+      "id": "A17",
+      "scenario": "Series环/两分支/断链",
+      "oracle": "拒绝环，分支不冒充连续编号",
+      "status": "OFFLINE_VERIFIED",
+      "evidence": [
+        {
+          "file": "tests/pro/structure.test.mjs",
+          "testNames": [
+            "A17: Series rejects both continuation and branch cycles and duplicate next nodes",
+            "branch stays separate from main numbering; semantic 2.10 remains integer tuple",
+            "removing middle Series item keeps the gap and preserves surviving labels",
+            "split preserves whole Series and rejects partial silent continuity loss"
+          ]
+        },
+        {
+          "file": "tests/pro/navigation.test.mjs",
+          "testNames": [
+            "Series next follows continuation only and keeps deletion gap"
+          ]
+        }
+      ],
+      "observed": "拒绝环和一节点双 continuation；branch 不混主编号，2.10 使用整数元组；删除中间项不补接、不重编号。",
+      "notCovered": [],
+      "externalGates": []
+    },
+    {
+      "id": "A18",
+      "scenario": "AI撤销与后续人改冲突",
+      "oracle": "不整库回滚，给差异/补偿计划",
+      "status": "OFFLINE_VERIFIED",
+      "evidence": [
+        {
+          "file": "tests/pro/structural-commit.test.mjs",
+          "testNames": [
+            "G04 one committed merge -> changed member -> zero-write inverse conflict -> separately replanned compensation"
+          ]
+        },
+        {
+          "file": "tests/pro/domain.test.mjs",
+          "testNames": [
+            "A18: correction inverse is whole-operation atomic; unrelated new assets survive",
+            "inverse conflict writes nothing, compensation is separately sealed at current versions",
+            "AI undo writes semantic rejection atomically and keeps proposal applied",
+            "inverse cannot be forged by recomputing a hash around an unrelated restore"
+          ]
+        },
+        {
+          "file": "tests/pro/journey.test.mjs",
+          "testNames": [
+            "P0–P3 continuous journey through actual shared NativeRepository and six ports (MockIDB)"
+          ]
+        }
+      ],
+      "observed": "同一merge后修改其原member并增加新member，原inverse冲突零写；危险全补偿拒绝；旧选择性补偿CAS失效拒绝；新封装补偿单独提交并保留后续成员，原operation/proposal仍applied。",
+      "notCovered": [],
+      "externalGates": []
+    },
+    {
+      "id": "A19",
+      "scenario": "一次operationId重复",
+      "oracle": "相同payload幂等，不同payload拒绝",
+      "status": "OFFLINE_VERIFIED",
+      "evidence": [
+        {
+          "file": "tests/pro/ports.test.mjs",
+          "testNames": [
+            "a receipt binds command and expected read set; exact operation replay is idempotent",
+            "two writers and one receipt cannot turn one user decision into two transactions"
+          ]
+        },
+        {
+          "file": "tests/pro/billing-store.test.mjs",
+          "testNames": [
+            "operation ID+same original payload is idempotent; changed payload conflicts"
+          ]
+        },
+        {
+          "file": "tests/pro/budget.test.mjs",
+          "testNames": [
+            "same reservation is idempotent, changed payload and second reservation for same job fail"
+          ]
+        }
+      ],
+      "observed": "同 operationId+原 payload/expected 幂等；不同 payload 拒绝；一份人工 receipt 不能并发成为两笔提交。",
+      "notCovered": [],
+      "externalGates": []
+    },
+    {
+      "id": "A20",
+      "scenario": "新聊天取消/第二tab/导航旧C",
+      "oracle": "不消费pending意图、不造成员",
+      "status": "NOT_RUN",
+      "evidence": [
+        {
+          "file": "tests/pro/navigation.test.mjs",
+          "testNames": [
+            "new tab inherits only explicit verified same-scope context; does not consume original"
+          ]
+        }
+      ],
+      "observed": "只证明新 tab 的显式、同 scope 上下文继承不消费原阅读上下文；这不构成原生新聊天意图测试。",
+      "notCovered": [
+        "没有实际执行新聊天取消、第二 tab 打开既有 C、pending意图不被消费的完整序列。"
+      ],
+      "externalGates": [
+        "需要共享宿主提供新建聊天身份/单次 intent 绑定能力；不能由 URL 或随后出现的 C 推断。"
+      ]
+    },
+    {
+      "id": "A21",
+      "scenario": "NONE在模型期间变PROJECT",
+      "oracle": "默认候选失效，原生与人工资产保全",
+      "status": "OFFLINE_VERIFIED",
+      "evidence": [
+        {
+          "file": "tests/pro/stability.test.mjs",
+          "testNames": [
+            "G03 an actual pending suggestion cannot commit after its NONE reference moves into a Project"
+          ]
+        },
+        {
+          "file": "tests/pro/organize.test.mjs",
+          "testNames": [
+            "A05/A21 fresh version fence rejects scope/revocation/native membership change"
+          ]
+        },
+        {
+          "file": "tests/pro/ports.test.mjs",
+          "testNames": [
+            "shared native root fence is checked inside the Pro write transaction",
+            "NONE to Project preserves assets, suspends default Pro projection and retains native Project reachability"
+          ]
+        }
+      ],
+      "observed": "真实登记的pending suggestion在NONE→PROJECT后接受被stale拒绝，raw state与journal不变、Free仍达。独立测试证明同C既有人控placement/title保留但默认Pro暂停展示。",
+      "notCovered": [],
+      "externalGates": []
+    },
+    {
+      "id": "A22",
+      "scenario": "Provider返回未知handle/URL/注入指令",
+      "oracle": "严格拒绝，无native调用",
+      "status": "OFFLINE_VERIFIED",
+      "evidence": [
+        {
+          "file": "tests/pro/model-schema.test.mjs",
+          "testNames": [
+            "A22/A23 rejects authority",
+            "A22/A23 rejects scope",
+            "A22/A23 rejects confidence",
+            "A22/A23 rejects native action",
+            "A22/A23 rejects URL handle"
+          ]
+        },
+        {
+          "file": "tests/pro/organize.test.mjs",
+          "testNames": [
+            "A22 citations are own title or exact same-ref content; unrelated evidence is rejected",
+            "A22/A23 runtime rejects unknown topic without producing any plan",
+            "A22/A23 runtime rejects unknown conversation without producing any plan",
+            "provider receives job-scoped handles and approved fields only"
+          ]
+        },
+        {
+          "file": "tests/pro/worker-service.test.mjs",
+          "testNames": [
+            "strict JSON rejects exotic/hidden/accessor/cyclic/sparse payloads without invoking getters",
+            "public projection blocks authority keys and full index even under innocuous nesting",
+            "owner still verifies grant; caller scope data cannot supply semantic authorization"
+          ]
+        }
+      ],
+      "observed": "未知/跨任务 handle、URL、权限或 native action 字段严格拒绝；引用必须属于当前 C 的真实输入 evidence；无 native mutation command 可从输出生成。",
+      "notCovered": [
+        "测试注入字段/非法协议，不代表已通过自然 prompt-injection 语料集。"
+      ],
+      "externalGates": []
+    },
+    {
+      "id": "A23",
+      "scenario": "token截断/refusal/过长JSON",
+      "oracle": "不应用、不无限重试",
+      "status": "OFFLINE_VERIFIED",
+      "evidence": [
+        {
+          "file": "tests/pro/model-provider.test.mjs",
+          "testNames": [
+            "A23/A25 refusal makes one bounded attempt and cannot auto-retry",
+            "A23/A25 truncation makes one bounded attempt and cannot auto-retry",
+            "A23/A25 broken JSON makes one bounded attempt and cannot auto-retry",
+            "A23/A25 oversized response makes one bounded attempt and cannot auto-retry"
+          ]
+        },
+        {
+          "file": "tests/pro/model-schema.test.mjs",
+          "testNames": [
+            "bounded JSON refuses non-JSON/prototypes/accessors without invoking getter",
+            "A22/A23 rejects overlong title",
+            "A22/A23 rejects too many items"
+          ]
+        },
+        {
+          "file": "tests/pro/organize.test.mjs",
+          "testNames": [
+            "A22/A23 runtime rejects refusal without producing any plan",
+            "A22/A23 runtime rejects truncated without producing any plan"
+          ]
+        }
+      ],
+      "observed": "refusal/truncation/过长/损坏 JSON 不能产生 plan；stub transport 至多一次，ticket不能重复调用，无自动无限重试。",
+      "notCovered": [],
+      "externalGates": [
+        "实际 provider 响应、收费请求和真实 rate limit 未调用。"
+      ]
+    },
+    {
+      "id": "A24",
+      "scenario": "两tab/两scope同时预算预留",
+      "oracle": "安装付款总额和子额均不超",
+      "status": "OFFLINE_VERIFIED",
+      "evidence": [
+        {
+          "file": "tests/pro/budget.test.mjs",
+          "testNames": [
+            "A24 two scopes share a single installation ceiling, not a reset per account",
+            "parallel callers through one owner serialize current ledger and cannot exceed ceiling",
+            "all applicable scope limits, currency, price and revision fences are checked"
+          ]
+        },
+        {
+          "file": "tests/pro/billing-store.test.mjs",
+          "testNames": [
+            "A24 two connections/scopes atomically share installation day/month budgets under CAS"
+          ]
+        }
+      ],
+      "observed": "纯账本总额40000时只接受一次30000；同 DB 两连接/两scope CAS共用安装日/月限额，失败后不以换账号重置。",
+      "notCovered": [],
+      "externalGates": [
+        "并发是两个 MockIDB connection，不是两个真实扩展 tab；共享 owner 集成后需重跑安装级预算验收。"
+      ]
+    },
+    {
+      "id": "A25",
+      "scenario": "dispatch后超时+worker重启",
+      "oracle": "保守记账、不自动重复收费",
+      "status": "OFFLINE_VERIFIED",
+      "evidence": [
+        {
+          "file": "tests/pro/jobs.test.mjs",
+          "testNames": [
+            "A25 recovery of dispatched paid job keeps unknown reservation and never dispatches"
+          ]
+        },
+        {
+          "file": "tests/pro/budget.test.mjs",
+          "testNames": [
+            "A25 dispatch marker immediately holds charge; timeout/restart cannot release or resend"
+          ]
+        },
+        {
+          "file": "tests/pro/billing-store.test.mjs",
+          "testNames": [
+            "one atomic dispatch persists job marker and held charge; reopening only resumes checkpoints",
+            "unsent cancellation releases; cancellation after dispatch retains uncertain fee until explicit reconciliation"
+          ]
+        },
+        {
+          "file": "tests/pro/model-provider.test.mjs",
+          "testNames": [
+            "same one-use RAM ticket cannot race or be replayed after a completed dispatch",
+            "abort before dispatch has no side effect; abort or throw after marker holds uncertainty"
+          ]
+        }
+      ],
+      "observed": "派发标记与预留同事务持久化；重开后改 outcome-unknown 并保守持有30000；不能重新派发或自动释放，只有明确核账才能解除。",
+      "notCovered": [],
+      "externalGates": [
+        "恢复测试重建 checkpoint/DB连接；未终止真实 MV3 worker 或发出真实收费请求。"
+      ]
+    },
+    {
+      "id": "A26",
+      "scenario": "Pro关闭/会员断网/预算0",
+      "oracle": "Free立即可用，恢复/导出不收费锁定",
+      "status": "PARTIAL_EXTERNAL_GATE",
+      "evidence": [
+        {
+          "file": "tests/pro/ports.test.mjs",
+          "testNames": [
+            "entitlement loss preserves export and undo while new edits stop; native switch retains data",
+            "restart invalidates original authority, does not replay consent and does not auto run suggestions"
+          ]
+        },
+        {
+          "file": "tests/pro/jobs.test.mjs",
+          "testNames": [
+            "A26 Free mode or foreground work pauses; explicit background choice and current grant are independent"
+          ]
+        },
+        {
+          "file": "tests/pro/budget.test.mjs",
+          "testNames": [
+            "default budget is zero; money uses exact rationals and conservative micro rounding"
+          ]
+        },
+        {
+          "file": "tests/pro/projection.test.mjs",
+          "testNames": [
+            "native mode returns the exact original Free DTO without looking at or requiring Pro assets"
+          ]
+        },
+        {
+          "file": "tests/pro/ui-browser.test.mjs",
+          "testNames": [
+            "actual Pro UI saves manual operations, preserves stale drafts, reviews Series and works at narrow widths"
+          ]
+        },
+        {
+          "file": "tests/pro/browser-journey.test.mjs",
+          "testNames": [
+            "actual Chromium: continuous journey, original Free renderer, unchanged composer, disk restart and data-only restore"
+          ]
+        },
+        {
+          "file": "tests/pro/worker-service.test.mjs",
+          "testNames": [
+            "actual projectProFrame and existing projectFreeFrame DTOs survive the RPC reply boundary"
+          ]
+        }
+      ],
+      "observed": "Free切换直接复用原DTO/renderer；free entitlement保留导出/撤销且禁新整理；预算默认0；UI能显式暂停和恢复本地标题同意，重启保持off。",
+      "notCovered": [
+        "没有模拟真实会员服务断网、过期缓存和网络重连。"
+      ],
+      "externalGates": [
+        "真实会员/owner连接后的离线降级门待验收。"
+      ]
+    },
+    {
+      "id": "A27",
+      "scenario": "迁移quota/崩溃/旧reader",
+      "oracle": "最后有效根可用，人工资产不丢",
+      "status": "PARTIAL_EXTERNAL_GATE",
+      "evidence": [
+        {
+          "file": "tests/pro/migration-recovery.test.mjs",
+          "testNames": [
+            "legacy migration preserves IDs, aliases, icon, ordering and per-field protection",
+            "migration verifies source and target hashes and refuses an older reader",
+            "corrupt patch, cross-scope and non-overlay effects reject without mutating checkpoint",
+            "journal gaps and stale, backward or jumping overlay revisions are rejected"
+          ]
+        },
+        {
+          "file": "tests/pro/ports.test.mjs",
+          "testNames": [
+            "quota failure aborts checkpoint, state and journal as one unit"
+          ]
+        },
+        {
+          "file": "tests/pro/billing-store.test.mjs",
+          "testNames": [
+            "corrupt or forward-incompatible root fails closed without resetting balances"
+          ]
+        }
+      ],
+      "observed": "迁移计划校验源/目标哈希、拒绝旧 reader；原人工资产冻结保持；损坏或跳号 journal 拒绝；普通共享事务 quota 零部分写入。",
+      "notCovered": [
+        "未在真实已有数据库上执行升级迁移及中途杀进程/quota组合；未验证旧扩展 reader 与新根并存。"
+      ],
+      "externalGates": [
+        "共享迁移 owner 及正式版本升级门由集成负责人接入后执行。"
+      ]
+    },
+    {
+      "id": "A28",
+      "scenario": "备份恢复",
+      "oracle": "无grant/key/pending请求复活",
+      "status": "OFFLINE_VERIFIED",
+      "evidence": [
+        {
+          "file": "tests/pro/migration-recovery.test.mjs",
+          "testNames": [
+            "backup preserves accepted assets and exclusions, excludes proposals and has no authority material",
+            "backup rejects checksum, cross-scope, recomputed permission injection and machine proposals",
+            "legacyAssetsDigest is a hash or null, never a second unvalidated payload",
+            "restore preview cannot replace residual hard constraints in an otherwise empty view",
+            "restore is data-only and a live owner grant is required; restored processing stays off"
+          ]
+        },
+        {
+          "file": "tests/pro/browser-journey.test.mjs",
+          "testNames": [
+            "actual Chromium: continuous journey, original Free renderer, unchanged composer, disk restart and data-only restore"
+          ]
+        }
+      ],
+      "observed": "备份只带数据及校验和；拒绝 grant/key/consent/机器提案注入；非空有约束目标不隐式覆盖；真实隔离浏览器新DB导入后处理off，不恢复jobs/authority。",
+      "notCovered": [],
+      "externalGates": []
+    },
+    {
+      "id": "A29",
+      "scenario": "恢复原名后原生改名",
+      "oracle": "跟随新nativeTitle，不被AI改回",
+      "status": "OFFLINE_VERIFIED",
+      "evidence": [
+        {
+          "file": "tests/pro/domain.test.mjs",
+          "testNames": [
+            "A29: native preference stores no frozen copy and retained derived title can be recovered",
+            "locking an untouched native name protects a following-native preference without copying text"
+          ]
+        },
+        {
+          "file": "tests/pro/projection.test.mjs",
+          "testNames": [
+            "native preference follows subsequently observed native titles"
+          ]
+        },
+        {
+          "file": "tests/pro/ui-browser.test.mjs",
+          "testNames": [
+            "actual Pro UI saves manual operations, preserves stale drafts, reviews Series and works at narrow widths"
+          ]
+        }
+      ],
+      "observed": "恢复原名保存显示偏好而非冻结副本；NativeRepository后来改名立即跟随；保留派生名但不会自动切回。",
+      "notCovered": [],
+      "externalGates": []
+    },
+    {
+      "id": "A30",
+      "scenario": "H/时区/新模型/重复打开",
+      "oracle": "无伪活动、无自动改名/Series重编号",
+      "status": "OFFLINE_VERIFIED",
+      "evidence": [
+        {
+          "file": "tests/pro/stability.test.mjs",
+          "testNames": [
+            "A30 combined H/timezone/model-version/repeated-open sequence keeps stable primary, title and hard exclusion"
+          ]
+        },
+        {
+          "file": "tests/pro/projection.test.mjs",
+          "testNames": [
+            "single global title, one row per card, related contributes no activity and remains in uncollected",
+            "paging does not mix older members into recent slots and shared precision survives"
+          ]
+        },
+        {
+          "file": "tests/pro/structure.test.mjs",
+          "testNames": [
+            "branch stays separate from main numbering; semantic 2.10 remains integer tuple",
+            "removing middle Series item keeps the gap and preserves surviving labels",
+            "merge preserves primary/related union, aliases, hard exclusions and Series IDs",
+            "split preserves whole Series and rejects partial silent continuity loss"
+          ]
+        }
+      ],
+      "observed": "同一已保存状态（包含实际c_alpha→c_beta Series、标签[2,9]/[2,10]）经历5种H×3种时区、两个模型绑定版本、三轮打开/返回/Free-Pro切换；primary/title/exclusion和全部Series值的digest始终不变。",
+      "notCovered": [],
+      "externalGates": [
+        "全部时间和模型是离线明确输入；真实设备时区与自然模型验收尚未执行。"
+      ]
+    },
+    {
+      "id": "A31",
+      "scenario": "窄屏/200%/键盘/IME/原生弹层",
+      "oracle": "原生输入可用、唯一返回、面板不越frame",
+      "status": "PARTIAL_EXTERNAL_GATE",
+      "evidence": [
+        {
+          "file": "tests/pro/ui-browser.test.mjs",
+          "testNames": [
+            "actual Pro UI saves manual operations, preserves stale drafts, reviews Series and works at narrow widths"
+          ]
+        },
+        {
+          "file": "tests/pro/browser-journey.test.mjs",
+          "testNames": [
+            "actual Chromium: continuous journey, original Free renderer, unchanged composer, disk restart and data-only restore"
+          ]
+        },
+        {
+          "file": "tests/pro/navigation.test.mjs",
+          "testNames": [
+            "A/B entries for one C retain separate return anchors and do not first-match ownership",
+            "Series next follows continuation only and keeps deletion gap"
+          ]
+        },
+        {
+          "file": "tests/pro/worker-service.test.mjs",
+          "testNames": [
+            "request byte bound is 64 KiB UTF-8 inclusive, not character count",
+            "public projection must be synchronous strict JSON and fit entire 64 KiB response"
+          ]
+        }
+      ],
+      "observed": "隔离 Chromium 430px不溢出；own-shadow dialog键盘/Escape/focus恢复、脏稿、pointer目标保持、revocation即时清空；workspace/sidebar各列表5/+12/200分页；原Free组件及外层composer identity和值不变；dark稳定后的文字与背景可读。",
+      "notCovered": [
+        "430px是窄视口，不能当作真实 browser zoom 200%证据。",
+        "未以实体中文IME、原生ChatGPT popover或实际辅助技术运行。"
+      ],
+      "externalGates": [
+        "实际机型/200%缩放/IME/host overlay可访问性门待运行。"
+      ]
+    },
+    {
+      "id": "A32",
+      "scenario": "扩展停用/卸载/宿主恢复",
+      "oracle": "继承Free门，原生可操作与隐私残留分别检查",
+      "status": "NOT_RUN",
+      "evidence": [],
+      "observed": "此轮没有真实扩展停用、卸载或 ChatGPT 宿主恢复执行证据。",
+      "notCovered": [
+        "未测停用/卸载后的原生可操作性及隐私残留两个独立结果。"
+      ],
+      "externalGates": [
+        "必须在正式接线的扩展与受控宿主中继承并重跑Free gate，不能以夹具或此前 Free 结果代签。"
+      ]
+    },
+    {
+      "id": "A33",
+      "scenario": "旧C具有多个无role人工Placement",
+      "oracle": "全部保留、一次性主关系选择，不first-match、不静默丢锁",
+      "status": "OFFLINE_VERIFIED",
+      "evidence": [
+        {
+          "file": "tests/pro/migration-recovery.test.mjs",
+          "testNames": [
+            "multiple old human placements remain unresolved with every original row and lock",
+            "explicit legacy primary and explicit no-primary resolve without dropping assets",
+            "verified legacy primary intent is honored; unknown topic cannot become the primary",
+            "same-IDB fixture resolves ambiguous migration through current human receipt"
+          ]
+        },
+        {
+          "file": "tests/pro/domain.test.mjs",
+          "testNames": [
+            "A33: multiple preserved legacy placements require explicit choice; null is deliberate"
+          ]
+        }
+      ],
+      "observed": "多条旧人工 placement、顺序和锁全部保留；迁移状态primary-resolution-required、chosenPrimary=null；明确选择或明确无主后才确定role，不first-match。",
+      "notCovered": [
+        "migration settings入口已实现；迁移专用 UI 流程未在 focused browser test单独点击验收。"
+      ],
+      "externalGates": []
+    },
+    {
+      "id": "A34",
+      "scenario": "只有related或primary暂停的NONE聊天",
+      "oracle": "原名剩余入口持续可达，不能因“已关联”消失",
+      "status": "OFFLINE_VERIFIED",
+      "evidence": [
+        {
+          "file": "tests/pro/projection.test.mjs",
+          "testNames": [
+            "single global title, one row per card, related contributes no activity and remains in uncollected",
+            "suspended primary remains reachable in original-title entry; no UNKNOWN/Project coercion",
+            "pair exclusion hides a retained edge, duplicates of primary are rejected",
+            "unavailable known conversation retains a disabled manual reference and is never lost by availability filtering"
+          ]
+        }
+      ],
+      "observed": "只有related/primary暂停/精确pair排除时，NONE的原名未收录入口保持；不可用已知引用仍以disabled行保留。",
+      "notCovered": [],
+      "externalGates": []
+    },
+    {
+      "id": "A35",
+      "scenario": "自动patch后人工patch再恢复",
+      "oracle": "按已提交顺序恢复数据；不重跑模型或忽略自动前置",
+      "status": "OFFLINE_VERIFIED",
+      "evidence": [
+        {
+          "file": "tests/pro/migration-recovery.test.mjs",
+          "testNames": [
+            "actual human, proposal-registration, machine and human records replay in original order",
+            "corrupt patch, cross-scope and non-overlay effects reject without mutating checkpoint",
+            "journal gaps and stale, backward or jumping overlay revisions are rejected",
+            "duplicate journal sequence is corruption, not an ignored alternate history"
+          ]
+        },
+        {
+          "file": "tests/pro/domain.test.mjs",
+          "testNames": [
+            "A35: machine patch then manual patch replay in committed order; no command/model replay"
+          ]
+        },
+        {
+          "file": "tests/pro/journey.test.mjs",
+          "testNames": [
+            "P0–P3 continuous journey through actual shared NativeRepository and six ports (MockIDB)"
+          ]
+        },
+        {
+          "file": "tests/pro/browser-journey.test.mjs",
+          "testNames": [
+            "actual Chromium: continuous journey, original Free renderer, unchanged composer, disk restart and data-only restore"
+          ]
+        }
+      ],
+      "observed": "实际 human→system提案注册→automation→human journal按sequence重建同一state；逆序输入按提交顺序恢复；不重跑模型/命令、不忽略机器前置；浏览器进程重开与数据备份导入一致。",
+      "notCovered": [],
+      "externalGates": []
+    }
+  ],
+  "goldenEventSequences": [
+    {
+      "id": "G01-human-wins",
+      "status": "OFFLINE_VERIFIED",
+      "relationToFrozenSequence": "same ordering and invariant; synthetic IDs and revision numbers differ",
+      "evidence": [
+        {
+          "file": "tests/pro/domain.test.mjs",
+          "testNames": [
+            "A06: stale proposal cannot overwrite later manual title"
+          ]
+        },
+        {
+          "file": "tests/pro/organize.test.mjs",
+          "testNames": [
+            "A06/A07 human title remains protected even unlocked; model cannot invent entities or versions"
+          ]
+        }
+      ],
+      "observed": "旧提案生成→人工更名→接受旧提案抛错；title与human控制状态不变。",
+      "notCovered": [],
+      "expected": {
+        "commit": false,
+        "titleRevision": 5,
+        "reason": "stale-target-or-human-protected"
+      }
+    },
+    {
+      "id": "G02-related-does-not-hide",
+      "status": "OFFLINE_VERIFIED",
+      "relationToFrozenSequence": "exact two-related-only initial topology",
+      "evidence": [
+        {
+          "file": "tests/pro/stability.test.mjs",
+          "testNames": [
+            "G02 one conversation with two related-only topics remains uncollected and advances neither topic"
+          ]
+        }
+      ],
+      "observed": "同一C只有A/B两条related；两主题segment/candidateTime均null，卡片共享派生名，而原名uncollected仍含C。",
+      "notCovered": [],
+      "expected": {
+        "uncollectedContains": [
+          "c_alpha"
+        ],
+        "activityContribution": {
+          "t_a": "none",
+          "t_b": "none"
+        }
+      }
+    },
+    {
+      "id": "G03-native-membership-change",
+      "status": "OFFLINE_VERIFIED",
+      "relationToFrozenSequence": "actual pending suggestion sequence plus independent existing-human-placement preservation case",
+      "evidence": [
+        {
+          "file": "tests/pro/stability.test.mjs",
+          "testNames": [
+            "G03 an actual pending suggestion cannot commit after its NONE reference moves into a Project"
+          ]
+        },
+        {
+          "file": "tests/pro/ports.test.mjs",
+          "testNames": [
+            "NONE to Project preserves assets, suspends default Pro projection and retains native Project reachability"
+          ]
+        }
+      ],
+      "observed": "已登记建议→同C更新PROJECT→旧proposal被stale拒绝，原raw state/journal无变化且Free可达；另一同C已有人控边用例证明资产保留。",
+      "notCovered": [],
+      "expected": {
+        "modelCommit": false,
+        "nativeMembership": "PROJECT",
+        "oldHumanPlacement": "retained-ineligible"
+      }
+    },
+    {
+      "id": "G04-undo-structural-conflict",
+      "status": "OFFLINE_VERIFIED",
+      "relationToFrozenSequence": "exact merge/change/conflicting-inverse/new-compensation sequence, with stale-CAS and unsafe-compensation counterexamples",
+      "evidence": [
+        {
+          "file": "tests/pro/structural-commit.test.mjs",
+          "testNames": [
+            "G04 one committed merge -> changed member -> zero-write inverse conflict -> separately replanned compensation"
+          ]
+        }
+      ],
+      "observed": "同一已提交merge→修改原member/新增member→inverse零写→危险全补偿拒绝→旧选择性补偿stale拒绝→最新CAS重计划后独立提交；新成员/新hard exclusion保持，原operation和proposal仍applied。",
+      "notCovered": [],
+      "expected": {
+        "inverseWrites": 0,
+        "next": "explicit-new-compensation-plan"
+      }
+    },
+    {
+      "id": "G05-dispatch-crash",
+      "status": "OFFLINE_VERIFIED",
+      "relationToFrozenSequence": "simulated durable restart; no real send/worker crash",
+      "evidence": [
+        {
+          "file": "tests/pro/budget.test.mjs",
+          "testNames": [
+            "A25 dispatch marker immediately holds charge; timeout/restart cannot release or resend"
+          ]
+        },
+        {
+          "file": "tests/pro/jobs.test.mjs",
+          "testNames": [
+            "A25 recovery of dispatched paid job keeps unknown reservation and never dispatches"
+          ]
+        },
+        {
+          "file": "tests/pro/billing-store.test.mjs",
+          "testNames": [
+            "one atomic dispatch persists job marker and held charge; reopening only resumes checkpoints"
+          ]
+        }
+      ],
+      "observed": "30000预留→持久dispatch→重建账本/DB连接→outcome-unknown；automaticDispatch=false且资金保持。",
+      "notCovered": [
+        "未发送真实请求或终止真实service worker；网络阶段仅stub适配器独立验证。"
+      ],
+      "expected": {
+        "automaticResendCount": 0,
+        "reservation": "held",
+        "state": "outcome-unknown"
+      }
+    },
+    {
+      "id": "G06-two-scopes-budget",
+      "status": "OFFLINE_VERIFIED",
+      "relationToFrozenSequence": "exact amounts in pure ledger plus atomic two-connection variant",
+      "evidence": [
+        {
+          "file": "tests/pro/budget.test.mjs",
+          "testNames": [
+            "A24 two scopes share a single installation ceiling, not a reset per account",
+            "parallel callers through one owner serialize current ledger and cannot exceed ceiling"
+          ]
+        },
+        {
+          "file": "tests/pro/billing-store.test.mjs",
+          "testNames": [
+            "A24 two connections/scopes atomically share installation day/month budgets under CAS"
+          ]
+        }
+      ],
+      "observed": "安装上限40000，A预留30000后B再要30000失败，B要10000成功；另有日上限35000的双连接CAS变体。",
+      "notCovered": [],
+      "expected": {
+        "successfulReservations": 1,
+        "installationRemainingMicros": 10000
+      }
+    },
+    {
+      "id": "G07-legacy-ambiguity",
+      "status": "OFFLINE_VERIFIED",
+      "relationToFrozenSequence": "same ambiguous two-locked-placement topology",
+      "evidence": [
+        {
+          "file": "tests/pro/migration-recovery.test.mjs",
+          "testNames": [
+            "multiple old human placements remain unresolved with every original row and lock",
+            "explicit legacy primary and explicit no-primary resolve without dropping assets",
+            "same-IDB fixture resolves ambiguous migration through current human receipt"
+          ]
+        },
+        {
+          "file": "tests/pro/projection.test.mjs",
+          "testNames": [
+            "suspended primary remains reachable in original-title entry; no UNKNOWN/Project coercion"
+          ]
+        }
+      ],
+      "observed": "两条人控锁定关系均保留，chosenPrimary=null并要求人工解决；保留原名入口的投影规则独立验证。",
+      "notCovered": [],
+      "expected": {
+        "preservedRows": 2,
+        "chosenPrimary": null,
+        "status": "primary-resolution-required",
+        "freeReachable": true
+      }
+    },
+    {
+      "id": "G08-hard-exclude-not-dismiss",
+      "status": "OFFLINE_VERIFIED",
+      "relationToFrozenSequence": "same hard constraint semantics with changed model/evidence inputs",
+      "evidence": [
+        {
+          "file": "tests/pro/domain.test.mjs",
+          "testNames": [
+            "A08: correction preserves precise hard exclusion across new model and evidence"
+          ]
+        },
+        {
+          "file": "tests/pro/organize.test.mjs",
+          "testNames": [
+            "A08 hard pair exclusions survive newer evidence and model output",
+            "rejection fingerprint ignores model/nonce; metadata spelling changes do not defeat target rejection"
+          ]
+        }
+      ],
+      "observed": "跨新model/fingerprint的pair exclusion不变；只有显式REMOVE_TOPIC_EXCLUSION解除；不是把旧proposal dismiss当硬排除。",
+      "notCovered": [],
+      "expected": {
+        "automaticApply": false,
+        "pairConstraint": "unchanged",
+        "requires": "new explicit human解除排除"
+      }
+    },
+    {
+      "id": "G09-new-chat-not-next-chat",
+      "status": "NOT_RUN",
+      "relationToFrozenSequence": "not executed",
+      "evidence": [
+        {
+          "file": "tests/pro/navigation.test.mjs",
+          "testNames": [
+            "new tab inherits only explicit verified same-scope context; does not consume original"
+          ]
+        }
+      ],
+      "observed": "仅有阅读上下文新tab继承测试，不冒充新聊天intent归属验证。",
+      "notCovered": [
+        "未触发原生新聊天再由第二tab打开旧C；现有显式收录能力不等于完成这条事件序列。"
+      ],
+      "expected": {
+        "newPlacementCount": 0,
+        "next": "explicit collect current conversation after independent qualification"
+      }
+    }
+  ],
+  "continuousJourney": {
+    "implementation": "tests/pro/support/continuous-journey.mjs",
+    "function": "runContinuousJourney",
+    "sameConversation": "c_beta",
+    "runs": [
+      {
+        "file": "tests/pro/journey.test.mjs",
+        "testNames": [
+          "P0–P3 continuous journey through actual shared NativeRepository and six ports (MockIDB)"
+        ]
+      },
+      {
+        "file": "tests/pro/browser-journey.test.mjs",
+        "testNames": [
+          "actual Chromium: continuous journey, original Free renderer, unchanged composer, disk restart and data-only restore"
+        ]
+      }
+    ],
+    "recordedSteps": [
+      "legal-NONE-in-Free",
+      "manual-topic-created",
+      "fixture-AI-suggestion-reviewed",
+      "manual-correction-and-hard-exclusion",
+      "atomic-undo",
+      "conflicting-inverse-zero-write",
+      "separate-reviewed-compensation",
+      "Series-and-explicit-return",
+      "split-merge-with-explicit-conflict-resolution",
+      "Free-Pro-switch",
+      "restart-and-ordered-recovery"
+    ],
+    "result": "PASS in final aggregate: MockIDB and isolated real Chromium, including complete browser process restart",
+    "meaning": "Real domain commands, immutable previews, same-DB ports, actual UI/Free renderer and disk restart. The AI adapter is fixture-rules and quality remains not-evaluated. Golden negative sequences are mapped separately; the successful journey does not imply all 35 scenarios are fully accepted."
+  },
+  "qualityGates": {
+    "engineeringEvaluationCode": [
+      {
+        "file": "tests/pro/evaluation.test.mjs",
+        "testNames": [
+          "confidence interval and sample floor prevent tiny perfect subsets from enabling auto",
+          "synthetic engineering fixtures never count as Chinese model quality",
+          "split leakage, disagreement, failed counterexamples, and missing eligible denominator close gate",
+          "NEW_TOPIC precision is independent and bad new-topic decisions cannot borrow existing lane quality",
+          "findability requires task/participant floor, 20 percent median reduction and no error increase"
+        ]
+      }
+    ],
+    "actualNaturalDataset": "NOT_RUN",
+    "actualDoubleAnnotation": "NOT_RUN",
+    "actualHeldOutQuality": "NOT_RUN",
+    "actualFindabilityUserStudy": "NOT_RUN",
+    "automaticModelQualityApproval": false
+  }
+}

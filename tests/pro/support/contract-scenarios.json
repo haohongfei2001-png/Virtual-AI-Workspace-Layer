@@ -1,0 +1,606 @@
+{
+  "contract": "VAIWL-PRO/1.0",
+  "status": "DESIGN_TEST_ORACLES_NOT_PRODUCT_RESULTS",
+  "scenarios": [
+    {
+      "id": "A01",
+      "scenario": "UNKNOWN/路由缺Project信息",
+      "oracle": "无默认NONE收录，原引用仍可达",
+      "status": "SPECIFIED_NOT_RUN",
+      "requiredEvidence": [
+        "implementation SHA",
+        "environment",
+        "observed state/network/storage outcomes"
+      ],
+      "nativeMutationExpected": false
+    },
+    {
+      "id": "A02",
+      "scenario": "同名两个原生Project",
+      "oracle": "不合并，真实ID不变",
+      "status": "SPECIFIED_NOT_RUN",
+      "requiredEvidence": [
+        "implementation SHA",
+        "environment",
+        "observed state/network/storage outcomes"
+      ],
+      "nativeMutationExpected": false
+    },
+    {
+      "id": "A03",
+      "scenario": "无正文的Browser-Local",
+      "oracle": "不出现body/message ID读取或云外传",
+      "status": "SPECIFIED_NOT_RUN",
+      "requiredEvidence": [
+        "implementation SHA",
+        "environment",
+        "observed state/network/storage outcomes"
+      ],
+      "nativeMutationExpected": false
+    },
+    {
+      "id": "A04",
+      "scenario": "仅即时会话",
+      "oracle": "内容不持久化；付费任务不启动",
+      "status": "SPECIFIED_NOT_RUN",
+      "requiredEvidence": [
+        "implementation SHA",
+        "environment",
+        "observed state/network/storage outcomes"
+      ],
+      "nativeMutationExpected": false
+    },
+    {
+      "id": "A05",
+      "scenario": "scope切换/撤权后迟到结果",
+      "oracle": "无旧私人显示、无提交",
+      "status": "SPECIFIED_NOT_RUN",
+      "requiredEvidence": [
+        "implementation SHA",
+        "environment",
+        "observed state/network/storage outcomes"
+      ],
+      "nativeMutationExpected": false
+    },
+    {
+      "id": "A06",
+      "scenario": "用户改名后模型结果到达",
+      "oracle": "人工标题与控制状态保持",
+      "status": "SPECIFIED_NOT_RUN",
+      "requiredEvidence": [
+        "implementation SHA",
+        "environment",
+        "observed state/network/storage outcomes"
+      ],
+      "nativeMutationExpected": false
+    },
+    {
+      "id": "A07",
+      "scenario": "locked=false但owner=human",
+      "oracle": "AI仍被拒；显式恢复自动后才可评估",
+      "status": "SPECIFIED_NOT_RUN",
+      "requiredEvidence": [
+        "implementation SHA",
+        "environment",
+        "observed state/network/storage outcomes"
+      ],
+      "nativeMutationExpected": false
+    },
+    {
+      "id": "A08",
+      "scenario": "排除此主题后重跑/换模型/新增证据",
+      "oracle": "人工pair exclusion未解除就不复活",
+      "status": "SPECIFIED_NOT_RUN",
+      "requiredEvidence": [
+        "implementation SHA",
+        "environment",
+        "observed state/network/storage outcomes"
+      ],
+      "nativeMutationExpected": false
+    },
+    {
+      "id": "A09",
+      "scenario": "C不参与AI整理",
+      "oracle": "队列取消、结果不提交；Free仍可用",
+      "status": "SPECIFIED_NOT_RUN",
+      "requiredEvidence": [
+        "implementation SHA",
+        "environment",
+        "observed state/network/storage outcomes"
+      ],
+      "nativeMutationExpected": false
+    },
+    {
+      "id": "A10",
+      "scenario": "一个C多主题",
+      "oracle": "单一DerivedTitle；每卡唯一；primary才推进活跃",
+      "status": "SPECIFIED_NOT_RUN",
+      "requiredEvidence": [
+        "implementation SHA",
+        "environment",
+        "observed state/network/storage outcomes"
+      ],
+      "nativeMutationExpected": false
+    },
+    {
+      "id": "A11",
+      "scenario": "A/B不同入口阅读与返回",
+      "oracle": "分别恢复LaunchContext，不first-match",
+      "status": "SPECIFIED_NOT_RUN",
+      "requiredEvidence": [
+        "implementation SHA",
+        "environment",
+        "observed state/network/storage outcomes"
+      ],
+      "nativeMutationExpected": false
+    },
+    {
+      "id": "A12",
+      "scenario": "首次新主题",
+      "oracle": "未达NEW_TOPIC门只预览；单窗口可由人工建立",
+      "status": "SPECIFIED_NOT_RUN",
+      "requiredEvidence": [
+        "implementation SHA",
+        "environment",
+        "observed state/network/storage outcomes"
+      ],
+      "nativeMutationExpected": false
+    },
+    {
+      "id": "A13",
+      "scenario": "删除主题",
+      "oracle": "不删原生C；同依据不自动重生",
+      "status": "SPECIFIED_NOT_RUN",
+      "requiredEvidence": [
+        "implementation SHA",
+        "environment",
+        "observed state/network/storage outcomes"
+      ],
+      "nativeMutationExpected": false
+    },
+    {
+      "id": "A14",
+      "scenario": "稳定主归属与新证据冲突",
+      "oracle": "只生成变更提案，不静默搬家",
+      "status": "SPECIFIED_NOT_RUN",
+      "requiredEvidence": [
+        "implementation SHA",
+        "environment",
+        "observed state/network/storage outcomes"
+      ],
+      "nativeMutationExpected": false
+    },
+    {
+      "id": "A15",
+      "scenario": "合并include/exclude冲突",
+      "oracle": "精确提示原约束与映射，未解不提交",
+      "status": "SPECIFIED_NOT_RUN",
+      "requiredEvidence": [
+        "implementation SHA",
+        "environment",
+        "observed state/network/storage outcomes"
+      ],
+      "nativeMutationExpected": false
+    },
+    {
+      "id": "A16",
+      "scenario": "拆分/合并中途失败",
+      "oracle": "0部分成员丢失、0半个redirect",
+      "status": "SPECIFIED_NOT_RUN",
+      "requiredEvidence": [
+        "implementation SHA",
+        "environment",
+        "observed state/network/storage outcomes"
+      ],
+      "nativeMutationExpected": false
+    },
+    {
+      "id": "A17",
+      "scenario": "Series环/两分支/断链",
+      "oracle": "拒绝环，分支不冒充连续编号",
+      "status": "SPECIFIED_NOT_RUN",
+      "requiredEvidence": [
+        "implementation SHA",
+        "environment",
+        "observed state/network/storage outcomes"
+      ],
+      "nativeMutationExpected": false
+    },
+    {
+      "id": "A18",
+      "scenario": "AI撤销与后续人改冲突",
+      "oracle": "不整库回滚，给差异/补偿计划",
+      "status": "SPECIFIED_NOT_RUN",
+      "requiredEvidence": [
+        "implementation SHA",
+        "environment",
+        "observed state/network/storage outcomes"
+      ],
+      "nativeMutationExpected": false
+    },
+    {
+      "id": "A19",
+      "scenario": "一次operationId重复",
+      "oracle": "相同payload幂等，不同payload拒绝",
+      "status": "SPECIFIED_NOT_RUN",
+      "requiredEvidence": [
+        "implementation SHA",
+        "environment",
+        "observed state/network/storage outcomes"
+      ],
+      "nativeMutationExpected": false
+    },
+    {
+      "id": "A20",
+      "scenario": "新聊天取消/第二tab/导航旧C",
+      "oracle": "不消费pending意图、不造成员",
+      "status": "SPECIFIED_NOT_RUN",
+      "requiredEvidence": [
+        "implementation SHA",
+        "environment",
+        "observed state/network/storage outcomes"
+      ],
+      "nativeMutationExpected": false
+    },
+    {
+      "id": "A21",
+      "scenario": "NONE在模型期间变PROJECT",
+      "oracle": "默认候选失效，原生与人工资产保全",
+      "status": "SPECIFIED_NOT_RUN",
+      "requiredEvidence": [
+        "implementation SHA",
+        "environment",
+        "observed state/network/storage outcomes"
+      ],
+      "nativeMutationExpected": false
+    },
+    {
+      "id": "A22",
+      "scenario": "Provider返回未知handle/URL/注入指令",
+      "oracle": "严格拒绝，无native调用",
+      "status": "SPECIFIED_NOT_RUN",
+      "requiredEvidence": [
+        "implementation SHA",
+        "environment",
+        "observed state/network/storage outcomes"
+      ],
+      "nativeMutationExpected": false
+    },
+    {
+      "id": "A23",
+      "scenario": "token截断/refusal/过长JSON",
+      "oracle": "不应用、不无限重试",
+      "status": "SPECIFIED_NOT_RUN",
+      "requiredEvidence": [
+        "implementation SHA",
+        "environment",
+        "observed state/network/storage outcomes"
+      ],
+      "nativeMutationExpected": false
+    },
+    {
+      "id": "A24",
+      "scenario": "两tab/两scope同时预算预留",
+      "oracle": "安装付款总额和子额均不超",
+      "status": "SPECIFIED_NOT_RUN",
+      "requiredEvidence": [
+        "implementation SHA",
+        "environment",
+        "observed state/network/storage outcomes"
+      ],
+      "nativeMutationExpected": false
+    },
+    {
+      "id": "A25",
+      "scenario": "dispatch后超时+worker重启",
+      "oracle": "保守记账、不自动重复收费",
+      "status": "SPECIFIED_NOT_RUN",
+      "requiredEvidence": [
+        "implementation SHA",
+        "environment",
+        "observed state/network/storage outcomes"
+      ],
+      "nativeMutationExpected": false
+    },
+    {
+      "id": "A26",
+      "scenario": "Pro关闭/会员断网/预算0",
+      "oracle": "Free立即可用，恢复/导出不收费锁定",
+      "status": "SPECIFIED_NOT_RUN",
+      "requiredEvidence": [
+        "implementation SHA",
+        "environment",
+        "observed state/network/storage outcomes"
+      ],
+      "nativeMutationExpected": false
+    },
+    {
+      "id": "A27",
+      "scenario": "迁移quota/崩溃/旧reader",
+      "oracle": "最后有效根可用，人工资产不丢",
+      "status": "SPECIFIED_NOT_RUN",
+      "requiredEvidence": [
+        "implementation SHA",
+        "environment",
+        "observed state/network/storage outcomes"
+      ],
+      "nativeMutationExpected": false
+    },
+    {
+      "id": "A28",
+      "scenario": "备份恢复",
+      "oracle": "无grant/key/pending请求复活",
+      "status": "SPECIFIED_NOT_RUN",
+      "requiredEvidence": [
+        "implementation SHA",
+        "environment",
+        "observed state/network/storage outcomes"
+      ],
+      "nativeMutationExpected": false
+    },
+    {
+      "id": "A29",
+      "scenario": "恢复原名后原生改名",
+      "oracle": "跟随新nativeTitle，不被AI改回",
+      "status": "SPECIFIED_NOT_RUN",
+      "requiredEvidence": [
+        "implementation SHA",
+        "environment",
+        "observed state/network/storage outcomes"
+      ],
+      "nativeMutationExpected": false
+    },
+    {
+      "id": "A30",
+      "scenario": "H/时区/新模型/重复打开",
+      "oracle": "无伪活动、无自动改名/Series重编号",
+      "status": "SPECIFIED_NOT_RUN",
+      "requiredEvidence": [
+        "implementation SHA",
+        "environment",
+        "observed state/network/storage outcomes"
+      ],
+      "nativeMutationExpected": false
+    },
+    {
+      "id": "A31",
+      "scenario": "窄屏/200%/键盘/IME/原生弹层",
+      "oracle": "原生输入可用、唯一返回、面板不越frame",
+      "status": "SPECIFIED_NOT_RUN",
+      "requiredEvidence": [
+        "implementation SHA",
+        "environment",
+        "observed state/network/storage outcomes"
+      ],
+      "nativeMutationExpected": false
+    },
+    {
+      "id": "A32",
+      "scenario": "扩展停用/卸载/宿主恢复",
+      "oracle": "继承Free门，原生可操作与隐私残留分别检查",
+      "status": "SPECIFIED_NOT_RUN",
+      "requiredEvidence": [
+        "implementation SHA",
+        "environment",
+        "observed state/network/storage outcomes"
+      ],
+      "nativeMutationExpected": false
+    },
+    {
+      "id": "A33",
+      "scenario": "旧C具有多个无role人工Placement",
+      "oracle": "全部保留、一次性主关系选择，不first-match、不静默丢锁",
+      "status": "SPECIFIED_NOT_RUN",
+      "requiredEvidence": [
+        "implementation SHA",
+        "environment",
+        "observed state/network/storage outcomes"
+      ],
+      "nativeMutationExpected": false
+    },
+    {
+      "id": "A34",
+      "scenario": "只有related或primary暂停的NONE聊天",
+      "oracle": "原名剩余入口持续可达，不能因“已关联”消失",
+      "status": "SPECIFIED_NOT_RUN",
+      "requiredEvidence": [
+        "implementation SHA",
+        "environment",
+        "observed state/network/storage outcomes"
+      ],
+      "nativeMutationExpected": false
+    },
+    {
+      "id": "A35",
+      "scenario": "自动patch后人工patch再恢复",
+      "oracle": "按已提交顺序恢复数据；不重跑模型或忽略自动前置",
+      "status": "SPECIFIED_NOT_RUN",
+      "requiredEvidence": [
+        "implementation SHA",
+        "environment",
+        "observed state/network/storage outcomes"
+      ],
+      "nativeMutationExpected": false
+    }
+  ],
+  "goldenEventSequences": [
+    {
+      "id": "G01-human-wins",
+      "initial": {
+        "c": "c_alpha",
+        "membership": "NONE",
+        "titleRevision": 4,
+        "titleOwner": "automation"
+      },
+      "events": [
+        "job reads title revision 4",
+        "human sets title revision 5, human ownership",
+        "model result for revision 4 arrives"
+      ],
+      "expected": {
+        "commit": false,
+        "titleRevision": 5,
+        "reason": "stale-target-or-human-protected"
+      }
+    },
+    {
+      "id": "G02-related-does-not-hide",
+      "initial": {
+        "c": "c_alpha",
+        "membership": "NONE",
+        "primary": null,
+        "related": [
+          "t_a",
+          "t_b"
+        ]
+      },
+      "events": [
+        "render pro-default-none"
+      ],
+      "expected": {
+        "uncollectedContains": [
+          "c_alpha"
+        ],
+        "activityContribution": {
+          "t_a": "none",
+          "t_b": "none"
+        }
+      }
+    },
+    {
+      "id": "G03-native-membership-change",
+      "initial": {
+        "c": "c_alpha",
+        "membership": "NONE",
+        "primary": "t_a"
+      },
+      "events": [
+        "model reads NONE revision 2",
+        "native owner commits PROJECT revision 3",
+        "model attempts apply revision 2"
+      ],
+      "expected": {
+        "modelCommit": false,
+        "nativeMembership": "PROJECT",
+        "oldHumanPlacement": "retained-ineligible"
+      }
+    },
+    {
+      "id": "G04-undo-structural-conflict",
+      "initial": {
+        "operation": "merge_1",
+        "writeSet": [
+          "topic_a",
+          "topic_b",
+          "placement_a",
+          "redirect_b"
+        ]
+      },
+      "events": [
+        "merge commits",
+        "human changes placement_a",
+        "undo merge_1"
+      ],
+      "expected": {
+        "inverseWrites": 0,
+        "next": "explicit-new-compensation-plan"
+      }
+    },
+    {
+      "id": "G05-dispatch-crash",
+      "initial": {
+        "reservationMicros": 30000,
+        "billingProfile": "bill_1"
+      },
+      "events": [
+        "reserve",
+        "persist dispatched marker",
+        "send request",
+        "worker dies before result"
+      ],
+      "expected": {
+        "automaticResendCount": 0,
+        "reservation": "held",
+        "state": "outcome-unknown"
+      }
+    },
+    {
+      "id": "G06-two-scopes-budget",
+      "initial": {
+        "installationRemainingMicros": 40000,
+        "scopeARemainingMicros": 40000,
+        "scopeBRemainingMicros": 40000
+      },
+      "events": [
+        "scope A reserves 30000",
+        "scope B attempts reserve 30000"
+      ],
+      "expected": {
+        "successfulReservations": 1,
+        "installationRemainingMicros": 10000
+      }
+    },
+    {
+      "id": "G07-legacy-ambiguity",
+      "initial": {
+        "legacyPlacements": [
+          {
+            "c": "c_alpha",
+            "topic": "t_a",
+            "owner": "human",
+            "locked": true
+          },
+          {
+            "c": "c_alpha",
+            "topic": "t_b",
+            "owner": "human",
+            "locked": true
+          }
+        ]
+      },
+      "events": [
+        "prepare migration"
+      ],
+      "expected": {
+        "preservedRows": 2,
+        "chosenPrimary": null,
+        "status": "primary-resolution-required",
+        "freeReachable": true
+      }
+    },
+    {
+      "id": "G08-hard-exclude-not-dismiss",
+      "initial": {
+        "pairExclusion": [
+          "c_alpha",
+          "t_a"
+        ],
+        "dismissFingerprint": "proposal_old"
+      },
+      "events": [
+        "new evidence arrives",
+        "model recommends t_a with a new model version"
+      ],
+      "expected": {
+        "automaticApply": false,
+        "pairConstraint": "unchanged",
+        "requires": "new explicit human解除排除"
+      }
+    },
+    {
+      "id": "G09-new-chat-not-next-chat",
+      "initial": {
+        "canBindNewConversationIntent": false,
+        "topic": "t_a"
+      },
+      "events": [
+        "open native new chat",
+        "another tab opens existing c_beta"
+      ],
+      "expected": {
+        "newPlacementCount": 0,
+        "next": "explicit collect current conversation after independent qualification"
+      }
+    }
+  ]
+}
