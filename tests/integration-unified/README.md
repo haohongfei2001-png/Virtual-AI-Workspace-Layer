@@ -65,16 +65,41 @@ before/after stability. CI requires committed source. Missing Chromium or missin
 browser evidence fails; it never becomes a skipped green test.
 
 The browser phase includes the original continuous Pro and UI journeys, the
-bounded remote renderer with a long Series, native IndexedDB compound restore,
-the production unified MV3 journey, and both standalone Free and unified formal
-BrowserLocal packages. The latter exercises the memory-only default, explicit
+bounded remote renderer with a long Series, native IndexedDB compound restore
+and damaged-root recovery, the production unified MV3 journey, and both
+standalone Free and unified formal BrowserLocal packages. The latter exercises the memory-only default, explicit
 existing popup binding, private local persistence, document replacement, fresh
 binding and revocation. It never treats an observed conversation route as
 positive NONE membership. The verified loopback journey separately exercises
 positive native NONE, explicit correction and exclusions, split/merge/Series,
 whole-operation undo, native reading/return, composite download and blank-profile
 restore, multiple tabs, worker termination, browser restart, account replacement,
-and actual disable/reenable/uninstall of only the disposable installation.
+and actual disable/reenable/uninstall of only the disposable installation. The
+same journey deletes only the current Pro root through a test-only CDP fault
+injection, proves the real recovery preview is read-only, and confirms the whole
+journal-backed overlay through the production recovery dialog. It also imports
+a synthetic legacy Free file through the original backup UI and upgrades it
+through Pro's review, retaining the Free assets and requiring an explicit choice
+for ambiguous historical primary relationships.
+
+The formal BrowserLocal test uses exactly `{browserLocal:true}` and
+`{browserLocal:true,proR1:true}`. It does not replace the formal manifest, CSP, or
+Host config with an offline build. Playwright fulfills synthetic observed-shape
+HTML at the exact allowed `https://chatgpt.com/c/<synthetic-id>` URL; a local deny
+proxy has no outbound forwarding, and every other page request is aborted. No
+real ChatGPT page or account is accessed. The actual loaded formal ZIPs are
+retained in `formal-tested-packages/` alongside their source and SHA-256 reports.
+Their hashes can be compared directly with the independently rebuilt package
+job artifacts for the same commit.
+
+The unified journey also reuses its saved assets in a raw-CDP browser with no
+host tabs for one fixed 60-second observation. The inherited independent idle
+oracle verifies that no worker or page target was attached and no stop, page
+freeze, production timer change, or polling occurred during that window.
+Playwright connects only afterward to verify normal fresh host authorization
+and retained assets. A missing stop is recorded as `NOT_OBSERVED`; an unforced
+target destruction is recorded without claiming that its cause was natural
+idle. These finite observations never manufacture a natural-sleep pass.
 
 The workflow checks out the immutable event SHA and runs only on the isolated
 integration branch or explicit dispatch. It uploads the exact reports and
@@ -82,11 +107,14 @@ candidate packages. It neither merges nor releases the extension.
 
 ## Evidence limits
 
-The unified browser test loads the real packaged service worker and extension
-frames into an anonymous loopback Host reconstruction. Fixture authentication is
-confined to that reconstruction; production ports and storage run unchanged.
+The verified-scope unified browser test loads the real packaged service worker
+and extension frames into an anonymous loopback Host reconstruction. Fixture
+authentication is confined to that reconstruction; production ports and storage
+run unchanged. The separate formal BrowserLocal test uses the unchanged formal
+package with synthetic browser-fulfilled HTML and no server identity.
 Synthetic coexistence probes are not a test of an installed PAIA build. Forced
-worker termination is not evidence of natural idle suspension. Real ChatGPT
+worker termination and unforced target destruction do not establish natural
+idle causality. Real ChatGPT
 markup, real positive NONE source evidence, private old assets, physical input
 methods, actual PAIA, personal Mac, and paid model/provider gates remain separately
 identified. No offline pass is a claim of `FREE_ACCEPTED` or `RELEASE_READY`.

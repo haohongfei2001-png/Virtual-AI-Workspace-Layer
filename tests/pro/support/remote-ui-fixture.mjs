@@ -1,12 +1,13 @@
 // Isolated renderer/DTO regression data. This module is never packaged and
 // establishes no real scope, NativeRepository or production authorization.
 import {digest} from '../../../src/data/hash.mjs';
-import {emptyOverlay,placementId,planTransaction} from '../../../src/pro/domain/index.mjs';
+import {emptyOverlay,placementId,planTransaction,buildSplitPlan,previewUndo,registerProposal,overlayChanges} from '../../../src/pro/domain/index.mjs';
 import {buildSeriesEditPlan} from '../../../src/pro/integration/series-edit.mjs';
-import {projectPublicPage,projectPublicPanel,projectPublicPreview,publicVersions,publicStatus} from '../../../src/pro/integration/public-frame-dto.mjs';
+import {projectPublicPage,projectPublicPanel,projectPublicPreview,projectPublicOperationReview,publicVersions,publicStatus} from '../../../src/pro/integration/public-frame-dto.mjs';
 import {createRemoteProController} from '../../../src/pro/ui/remote-controller.mjs';
 import {createProWorkspace} from '../../../src/pro/ui/workspace.mjs';
-let state=emptyOverlay('remote_ui_fixture'),persistence='same-idb';
+import {nextSeriesEntry} from '../../../src/pro/navigation/launch-context.mjs';
+let state=emptyOverlay('remote_ui_fixture'),persistence='same-idb',launchContext=null,beforeLarge=null;
 state.revision=1;
 const control={mode:'human',locked:false,revision:1,lastHumanOperation:'synthetic_seed'};
 state.topics.topic={id:'topic',scopeKey:state.scopeKey,name:'分页工作',aliases:[],icon:'◇',intent:null,nameControl:control,membershipControl:control,lifecycle:'active',createdBy:'human',revision:1};
@@ -16,26 +17,55 @@ const entries=references.slice(0,241).map(r=>r.id);
 state.series.series={id:'series',topicId:'topic',title:'长工作线',entries,edges:entries.slice(1).map((to,i)=>({kind:'continuation',from:entries[i],to})),labels:entries.map((refId,i)=>({refId,sequence:[i+1],source:'human-confirmed'})),revision:1};
 const versions=()=>({scopeKey:state.scopeKey,authorizationEpoch:1,sourceGeneration:{synthetic_source:1},nativeFields:Object.fromEntries(references.map(r=>[r.id,1])),overlayRevision:state.revision,targets:{},constraintRevision:0,policyVersion:'fixture_1',evidenceDigest:digest('synthetic')});
 const snapshot=()=>({authorized:true,references,versions:versions(),capabilities:{positiveNone:'available'},projects:[]});
-const status=()=>({authorized:true,entitlement:'pro',persistence,mode:'pro-default-none',selectedProjectIds:[],segment:0,processingMode:'off',positiveNone:'available',modelAvailability:'unavailable',launchContext:null});
-const previews=new Map(),calls=[];let maxReplyBytes=0;
+const status=()=>({authorized:true,entitlement:'pro',persistence,mode:'pro-default-none',selectedProjectIds:[],segment:0,processingMode:'off',positiveNone:'available',modelAvailability:'unavailable',launchContext:launchContext?{...launchContext,nextReferenceId:nextSeriesEntry(state.series.series,launchContext.referenceId)}:null});
+const previews=new Map(),calls=[],records=[],receipts=new Map();let maxReplyBytes=0,previewSerial=0,dropStructure=false;
+const context=operationId=>({actor:'human',operationId,snapshot:snapshot(),expected:versions(),operations:Object.fromEntries(records.map(r=>[r.transaction.operationId,r.transaction]))});
+const record=(transaction,ctx)=>({operationId:ctx.operationId,actor:'human',base:ctx.expected,planHash:transaction.planHash,resultRevision:transaction.state.revision,proposalId:null,inverse:transaction.inverse,patch:transaction.patch,inverseHash:transaction.inverseHash,readSet:transaction.readSet??[],status:'applied'});
+const assetDigest=()=>digest({topics:state.topics,placements:state.placements,series:state.series});
 const remote=createRemoteProController({request:async(action,payload)=>{
-  calls.push({action,payload});const current=snapshot(),input={state,snapshot:current,status:status(),view:{mode:'pro-default-none',native:null}};let value;
+  calls.push({action,payload});const current=snapshot(),input={state,snapshot:current,status:status(),view:{mode:'pro-default-none',native:null},records};let value;
   if(action==='view'&&payload.op==='page')value=projectPublicPage({...input,query:payload});
   else if(action==='view'&&payload.op==='panel')value=projectPublicPanel({...input,...payload});
+  else if(action==='view'&&payload.op==='operation-review'){
+    const entry=previews.get(payload.previewId);if(entry?.kind!=='undo-review'||payload.expected.reviewId!==publicVersions(versions()).reviewId||payload.offset>entry.reviewNext)return {ok:false};
+    value=projectPublicOperationReview({...input,operation:entry.operation,previewId:payload.previewId,offset:payload.offset,limit:payload.limit});entry.reviewNext=Math.max(entry.reviewNext,value.page.offset+value.page.count);
+  }
   else if(action==='background'&&payload.op==='status')value={kind:'pro-status',protocol:'vaiwl-pro-public/1',status:publicStatus(status())};
   else if(action==='commit'){
+    if(payload.op==='apply-structure'&&receipts.has(payload.operationId))return {ok:true,value:receipts.get(payload.operationId)};
     if(payload.expected.reviewId!==publicVersions(versions()).reviewId)return {ok:false};
     if(payload.op==='preview'&&payload.kind==='legacy-upgrade')value={kind:'pro-result',protocol:'vaiwl-pro-public/1',state:'unavailable',message:'当前已有 Pro 整理资料，无法在此覆盖升级。'};
+    else if(payload.op==='preview'&&payload.kind==='split')value=projectPublicPreview({preview:buildSplitPlan(state,payload.input,{actor:'human',operationId:'split_preview',snapshot:current,expected:versions()}),previewId:'split_preview'});
+    else if(payload.op==='preview'&&payload.kind==='undo-review'){
+      const operation=records.find(r=>r.transaction.operationId===payload.input.operationId)?.transaction;if(!operation)return {ok:false};const plan=previewUndo(state,operation),previewId='review_'+(++previewSerial);
+      previews.set(previewId,{kind:'undo-review',plan,operation,reviewNext:0});const {inverseHash,inverse,...publicPlan}=plan;value=projectPublicPreview({preview:publicPlan,previewId});
+    }
     else if(payload.op==='preview'&&payload.kind==='series-edit'){
-      const plan=buildSeriesEditPlan(payload.input,{state,snapshot:current,expected:versions()}),previewId='preview_'+previews.size;previews.set(previewId,plan);value=projectPublicPreview({preview:plan,previewId});
+      const plan=buildSeriesEditPlan(payload.input,{state,snapshot:current,expected:versions()}),previewId='preview_'+(++previewSerial);previews.set(previewId,{kind:'series',plan});value=projectPublicPreview({preview:plan,previewId});
     }else if(payload.op==='apply-structure'){
-      const plan=previews.get(payload.previewId);if(!plan)return {ok:false};const ctx={actor:'human',operationId:payload.operationId,snapshot:current,expected:versions()};
-      state=planTransaction(state,{type:'APPLY_SERIES_PLAN',plan},ctx).state;previews.delete(payload.previewId);value={kind:'pro-result',protocol:'vaiwl-pro-public/1',state:'applied'};
+      const entry=previews.get(payload.previewId);if(!entry)return {ok:false};const ctx=context(payload.operationId);
+      if(entry.kind==='undo-review'&&(entry.reviewNext!==entry.operation.patch.length||entry.plan.state!=='ready'))return {ok:false};
+      const command=entry.kind==='undo-review'?{type:'UNDO_TRANSACTION',targetOperationId:entry.operation.operationId,reviewedInverseHash:entry.plan.inverseHash}:{type:'APPLY_SERIES_PLAN',plan:entry.plan},transaction=planTransaction(state,command,ctx);
+      state=transaction.state;if(entry.kind==='undo-review')entry.operation.status='undone';records.push({transaction:record(transaction,ctx)});previews.delete(payload.previewId);value={kind:'pro-result',protocol:'vaiwl-pro-public/1',state:'applied'};receipts.set(payload.operationId,value);if(dropStructure){dropStructure=false;throw Error('reply-lost-after-commit');}
     }else throw Error('unexpected-commit');
   }else if(action==='navigation'&&payload.op==='open')value={kind:'pro-result',protocol:'vaiwl-pro-public/1',state:'native-link',nativeLink:{refId:payload.refId,url:location.origin+'/c/'+payload.refId,disposition:'new-tab-preserve-current'}};
   else throw Error('unexpected-request');
   maxReplyBytes=Math.max(maxReplyBytes,new TextEncoder().encode(JSON.stringify(value)).length);return {ok:true,value};
 }});
 await remote.refresh();
-window.testApi={series:()=>structuredClone(state.series.series),calls:()=>structuredClone(calls),maxReplyBytes:()=>maxReplyBytes,async readOnly(){persistence='memory-only';await remote.refresh({force:true});}};
+let recoveryPreviews=0,recoveryApplies=0,recoveryCompanion=null,recoveryDrop=false;const recoveryReceipts=new Map();
+window.testApi={series:()=>structuredClone(state.series.series),calls:()=>structuredClone(calls),maxReplyBytes:()=>maxReplyBytes,dropNextStructureReply(){dropStructure=true;},async readOnly(){persistence='memory-only';await remote.refresh({force:true});},
+  async beginReading(){launchContext={referenceId:entries[0],topicId:'topic',seriesId:'series',nativeProjectId:null,origin:'topic'};await remote.refresh({force:true});},
+  async breakNext(){state.series.series.edges=state.series.series.edges.filter(e=>!(e.kind==='continuation'&&e.from===entries[0]));await remote.refresh({force:true});},
+  async endReading(){launchContext=null;await remote.refresh({force:true});},
+  async createLargeSplit(){beforeLarge=assetDigest();const ctx=context('large_split'),preview=buildSplitPlan(state,{retainId:'topic',children:[{draftKey:'whole_series',name:'整体拆分的工作线',members:[...state.series.series.entries]}]},ctx);if(!preview.proposal)throw Error('fixture-split-conflict');const prior=state,working=registerProposal(state,preview.proposal),transaction=planTransaction(working,{type:'ACCEPT_PROPOSAL',proposalId:preview.proposal.id,planHash:preview.proposal.planHash},ctx);transaction.patch=overlayChanges(prior,transaction.state);state=transaction.state;const operation=record(transaction,ctx);records.push({transaction:operation});await remote.refresh({force:true});return {changes:operation.patch.length};},
+  largeResult:()=>({restored:assetDigest()===beforeLarge,status:records.find(r=>r.transaction.operationId==='large_split')?.transaction.status}),
+  recoveryCounts:()=>({previews:recoveryPreviews,applies:recoveryApplies}),dropNextRecoveryReply(){recoveryDrop=true;},
+  async mountRecovery(){
+    window.ui.destroy();remote.destroy();const root=document.createElement('div');root.id='workspace';document.getElementById('workspace').replaceWith(root);const freeRoot=document.createElement('div');freeRoot.textContent='Free 原生入口保留';root.append(freeRoot);
+    const {createProFrameCompanion}=await import('../../../src/host/pro-frame-client.mjs');
+    const grant={id:'synthetic_grant',mountId:'synthetic_mount',scopeGrantId:'synthetic_scope_grant',parentDocumentId:'synthetic_parent',uiDocumentId:'synthetic_frame',expiresAt:new Date(Date.now()+60000).toISOString()};
+    recoveryCompanion=createProFrameCompanion({document,runtime:{async sendMessage(message){const p=message.payload;if(message.action==='commit'&&p.op==='recovery-preview'){recoveryPreviews++;return {ok:true,value:{kind:'pro-preview',protocol:'vaiwl-pro-public/1',previewId:'synthetic_recovery_'+recoveryPreviews,proposal:false,conflicts:[],summary:'已核对 3 笔事务；原始损坏记录会保留。'}};}if(message.action==='commit'&&p.op==='recovery-apply'){if(recoveryReceipts.has(p.operationId))return recoveryReceipts.get(p.operationId);recoveryApplies++;const reply={ok:true,value:{kind:'pro-result',protocol:'vaiwl-pro-public/1',state:'applied'}};recoveryReceipts.set(p.operationId,reply);if(recoveryDrop){recoveryDrop=false;throw Error('reply-lost-after-commit');}return reply;}if(message.action==='background'&&p.op==='mode')return {ok:true,value:{kind:'pro-status',protocol:'vaiwl-pro-public/1',status:publicStatus({...status(),mode:'native'})}};return {ok:false,reason:'pro-request-unavailable'};}},role:'workspace',privateRoot:root,freeRoot,getGrant:()=>grant,isCurrent:()=>true});
+  },stopRecovery(){recoveryCompanion?.stop();},
+};
 window.ui=createProWorkspace(document.getElementById('workspace'),remote);window.ready=true;

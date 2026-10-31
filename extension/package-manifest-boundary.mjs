@@ -26,7 +26,7 @@ function publicResource(path){
  const privateTarget=target.toLowerCase();
  return target.length>0&&!/[\\%*?#:\x00-\x20\x7f]/.test(target)&&
   !target.split('/').some(part=>part===''||part.endsWith('.'))&&
-  !privateTarget.startsWith('src/runtime/')&&!['src/pro/integration/production-owner.mjs','src/pro/integration/worker-service.mjs','src/pro/integration/same-db-store.mjs','src/pro/integration/billing-store.mjs','src/pro/integration/composite-backup.mjs','src/pro/integration/storage-registry.mjs','src/pro/runtime/controller.mjs'].includes(privateTarget)&&!privateTarget.startsWith('src/pro/jobs/')&&!privateTarget.startsWith('src/pro/model/')&&privateTarget!=='extension/browser-bootstrap.mjs'&&
+  !privateTarget.startsWith('src/runtime/')&&!['src/pro/integration/production-owner.mjs','src/pro/integration/worker-service.mjs','src/pro/integration/same-db-store.mjs','src/pro/integration/billing-store.mjs','src/pro/integration/composite-backup.mjs','src/pro/integration/storage-registry.mjs','src/pro/integration/storage-recovery.mjs','src/pro/runtime/controller.mjs'].includes(privateTarget)&&!privateTarget.startsWith('src/pro/jobs/')&&!privateTarget.startsWith('src/pro/model/')&&privateTarget!=='extension/browser-bootstrap.mjs'&&
   !['status.html','extension/status.html','extension/status.mjs','extension/status.css','extension/temporary-navigation.mjs'].includes(privateTarget)&&privateTarget!=='extension/worker.mjs'&&privateTarget!=='extension/classic-runtime.js';
 }
 

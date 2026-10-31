@@ -26,7 +26,7 @@ try{
   if(name==='standalone-free')assert.equal(proModules.length,0,'Free package must not import Pro');
   else{
    for(const required of ['src/pro/ui/remote-controller.mjs','src/pro/integration/worker-service.mjs','src/pro/integration/same-db-store.mjs'])assert(modules.includes(required),'missing production Pro module '+required);
-   for(const path of proModules.filter(path=>/integration\/(?:worker-service|same-db-store|billing-store|composite-backup)|runtime\/controller|model\//.test(path)))assert(!exposed.has(path),'private Pro module exposed as WAR: '+path);
+   for(const path of proModules.filter(path=>/integration\/(?:worker-service|production-owner|same-db-store|billing-store|composite-backup|storage-registry|storage-recovery)|runtime\/controller|model\//.test(path)))assert(!exposed.has(path),'private Pro module exposed as WAR: '+path);
   }
   report.profiles.push({name,options,...built,verification:verifyHost(built.unpacked),proModuleCount:proModules.length,sourceHashes:info.sourceHashes});
  }

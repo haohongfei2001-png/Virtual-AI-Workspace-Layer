@@ -7,6 +7,7 @@ import {exact, id, uint, hash, array, json, validateVersions, KIND_TABLES} from 
  * from account authority: none of these functions can issue a live grant. */
 export const PRO_OVERLAY_NAMESPACE = 'vaiwl-pro-overlay/1';
 export const PRO_BILLING_NAMESPACE = 'vaiwl-pro-billing/1';
+export const PRO_RECOVERY_NAMESPACE = 'vaiwl-pro-recovery/1';
 export const UNIFIED_MINIMUM_READER = 'vaiwl-unified-r1/1';
 export const PRO_STORAGE_REGISTRY = Object.freeze({
   databaseVersion: 4,
@@ -17,10 +18,15 @@ export const PRO_STORAGE_REGISTRY = Object.freeze({
   billing: Object.freeze({namespace: PRO_BILLING_NAMESPACE, stores: Object.freeze(['b23_states','b23_operations']),
     maximumRootBytes: 8 * 1024 * 1024, maximumOperations: 10000, maximumJobs: 1000,
     backup: 'never-import-permissions-or-reset-installation-cost',
-    retention: 'retain-all-including-uncertain-dispatch', downgrade: 'legacy-free-ignores-namespace'})
+    retention: 'retain-all-including-uncertain-dispatch', downgrade: 'legacy-free-ignores-namespace'}),
+  recovery: Object.freeze({namespace: PRO_RECOVERY_NAMESPACE, stores: Object.freeze(['b23_states']),
+    maximumRecordBytes: 34 * 1024 * 1024, maximumReplayBytes: 64 * 1024 * 1024,
+    maximumSnapshotsPerScope: 1, backup: 'private-quarantine-not-a-portable-asset',
+    retention: 'retain-original-root-checkpoint-and-exact-repair-receipt', downgrade: 'legacy-free-ignores-namespace'})
 });
 export const proRootKey = scopeKey => JSON.stringify([PRO_OVERLAY_NAMESPACE, scopeKey]);
 export const proOperationKey = (scopeKey, operationId) => JSON.stringify([proRootKey(scopeKey), operationId]);
+export const proRecoveryKey = scopeKey => JSON.stringify([PRO_RECOVERY_NAMESPACE, scopeKey]);
 const encoder = new TextEncoder();
 export const proRecord = (key, payload, serialized=stable(payload)) => ({key,payload,checksum:sha256(serialized)});
 export function unpackProRecord(row,key) {
@@ -109,6 +115,6 @@ export function proRetentionDecision(key) {
   let parsed;try{parsed=JSON.parse(key);}catch{return null;}
   if(!Array.isArray(parsed))return null;
   const root=typeof parsed[0]==='string'&&parsed[0].startsWith('[')?(()=>{try{return JSON.parse(parsed[0]);}catch{return null;}})():parsed;
-  if(!Array.isArray(root)||![PRO_OVERLAY_NAMESPACE,PRO_BILLING_NAMESPACE].includes(root[0]))return null;
-  return Object.freeze({action:'retain',namespace:root[0],reason:root[0]===PRO_BILLING_NAMESPACE?'installation-cost-and-dispatch-history':'assets-recovery-inverse-and-operation-replay'});
+  if(!Array.isArray(root)||![PRO_OVERLAY_NAMESPACE,PRO_BILLING_NAMESPACE,PRO_RECOVERY_NAMESPACE].includes(root[0]))return null;
+  return Object.freeze({action:'retain',namespace:root[0],reason:root[0]===PRO_BILLING_NAMESPACE?'installation-cost-and-dispatch-history':root[0]===PRO_RECOVERY_NAMESPACE?'original-corruption-evidence-and-repair-receipt':'assets-recovery-inverse-and-operation-replay'});
 }

@@ -73,12 +73,13 @@ try{
   report.pro={tests:pro.tests,passed:pro.passed,sourceDigest:pro.sourceDigest};
   await command('bounded-remote-ui-browser',['--test-reporter=tap','tests/pro/remote-ui-browser.mjs'],{testCounts:true});
   await command('composite-storage-browser',['--test-reporter=tap','tests/pro/storage-browser.mjs'],{testCounts:true});
+  await command('damaged-root-recovery-browser',['--test-reporter=tap','tests/pro/recovery-browser.mjs'],{testCounts:true});
   await command('unified-mv3',['tests/integration-unified/mv3-browser.mjs',join(output,'unified-mv3.json')]);
   const mv3=JSON.parse(await readFile(join(output,'unified-mv3.json'),'utf8'));
   if(mv3.status!=='PASS'||mv3.evidenceClass!=='PACKAGED_MV3_SYNTHETIC_HOST')throw Error('incomplete-unified-mv3-report');
   await command('formal-browser-local',['tests/integration-unified/browser-local.mjs',join(output,'browser-local.json')]);
   const local=JSON.parse(await readFile(join(output,'browser-local.json'),'utf8'));
-  if(local.status!=='PASS'||local.profiles?.length!==2||local.profiles.some(p=>p.status!=='PASS'))throw Error('incomplete-formal-browser-local-report');
+  if(local.status!=='PASS'||local.packageProfile!=='UNCHANGED_FORMAL_BROWSER_LOCAL'||local.profiles?.length!==2||local.profiles.some(p=>p.status!=='PASS'||p.options?.offlineOrigin))throw Error('incomplete-formal-browser-local-report');
  }
  if(phase==='performance'){
   await command('pro-development-performance',['tests/pro/performance.mjs']);

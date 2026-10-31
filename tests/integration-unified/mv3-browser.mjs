@@ -11,9 +11,14 @@ import {chromium} from '../b1/tooling/node_modules/playwright/index.mjs';
 import {createHostFixtureServer} from '../host/fixtures/server.mjs';
 import {createHistoricalNetworkGuard,historicalNetworkGuardArgs} from '../host/historical-network-guard.mjs';
 import {packageHost,verifyHost} from '../../extension/package.mjs';
+import {reduceCommand} from '../../src/data/state.mjs';
+import {createBackup} from '../../src/data/backup.mjs';
+import {digest} from '../../src/data/hash.mjs';
+import {observeUnforcedWorker} from './unforced-worker.mjs';
 
 const C='33333333-3333-4333-8333-333333333333',unknown='44444444-4444-4444-8444-444444444444';
 const NAME='Unified manual topic',CHILD='Unified split topic',TITLE='Unified retained title',SERIES='Unified work series',CORRECTION='Explicit correction topic';
+const LEGACY='Retained legacy topic',LEGACY_RELATED='Retained legacy related',LEGACY_EXCLUDED='Retained legacy excluded',LEGACY_TITLE='Retained legacy title';
 const executablePath=process.env.FREE_CHROME_EXECUTABLE??process.env.PRO_CHROMIUM_EXECUTABLE;
 if(!executablePath)throw Error('isolated-full-Chromium-required-no-skip');
 const directory=await mkdtemp(join(tmpdir(),'vaiwl-unified-mv3-'));
@@ -28,7 +33,7 @@ const report={format:'vaiwl-unified-mv3/1',sourceSHA,sourceStatusBefore,sourceMa
  modelCalls:0,cloudBudget:0,releaseStatus:'NOT_RELEASE_READY',directory,checks:[],errors:[],screenshots:[],
  limits:['Explicit fixture identity is not real ChatGPT authorization.','Forced worker stop is not natural idle suspension.',
   'A passive synthetic extension is a coexistence regression, not actual PAIA acceptance.','Only disposable profiles and synthetic assets are used.']};
-let server,guard,context,cdp,page,extensionId,built,manifest,control;
+let server,guard,context,cdp,page,extensionId,built,manifest,control,idleProbe;
 const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
 const sourceHashes=async()=>Object.fromEntries(await Promise.all(Object.keys(manifest?.sourceHashes??{}).sort().map(async path=>[path,hash(await readFile(path))])));
 const check=(name,detail={})=>{report.checks.push({name,status:'PASS',...detail});console.log('PASS '+name);};
@@ -77,6 +82,40 @@ async function openBackup(f){
  await f.getByRole('button',{name:'Free',exact:true}).click();const settings=f.getByRole('button',{name:'工作空间设置',exact:true});
  if(await settings.getAttribute('aria-expanded')!=='true')await settings.click();
  await f.getByRole('button',{name:'备份与导入',exact:true}).click();await f.getByLabel('人工资产备份',{exact:true}).waitFor();
+}
+async function downloadBackup(f){
+ await openBackup(f);await f.getByRole('button',{name:'导出备份',exact:true}).click();const link=f.getByRole('link',{name:'下载备份',exact:true});await link.waitFor();
+ const pending=page.waitForEvent('download');await link.click();const download=await pending,bytes=await readFile(await download.path());
+ await f.getByRole('button',{name:'返回工作空间',exact:true}).click();return {bytes,bundle:JSON.parse(bytes)};
+}
+// Test-only fault injection into this disposable extension origin. Production
+// has no corruption or raw-storage API. All recovery uses the real UI/owner.
+async function proStorage({removeRoot=false}={}){
+ const worker=context.serviceWorkers().find(w=>w.url()===`chrome-extension://${extensionId}/extension/worker.mjs`);assert(worker);
+ return worker.evaluate(async removeRoot=>{
+  const db=await new Promise((resolve,reject)=>{const q=indexedDB.open('vaiwl-b1-v1');q.onsuccess=()=>resolve(q.result);q.onerror=()=>reject(q.error);});
+  try{return await new Promise((resolve,reject)=>{
+   const tx=db.transaction(['b23_states','b23_checkpoints','b23_operations'],removeRoot?'readwrite':'readonly'),values={};let failure;
+   for(const store of ['b23_states','b23_checkpoints','b23_operations']){
+    const q=tx.objectStore(store).getAll();q.onsuccess=()=>{
+     values[store]=q.result;
+     if(removeRoot&&store==='b23_states'){
+      const roots=q.result.filter(row=>row.payload?.format==='vaiwl-pro-root/1');
+      if(roots.length!==1){failure=Error('test-needs-exactly-one-pro-root');tx.abort();return;}
+      tx.objectStore(store).delete(roots[0].key);
+     }
+    };
+   }
+   tx.oncomplete=()=>{
+    const roots=values.b23_states.filter(row=>row.payload?.format==='vaiwl-pro-root/1');
+    resolve({roots,quarantine:values.b23_states.filter(row=>row.payload?.format==='vaiwl-pro-recovery/1'),
+     otherStates:values.b23_states.filter(row=>!row.payload?.format?.startsWith('vaiwl-pro-')),
+     checkpoints:values.b23_checkpoints.filter(row=>row.payload?.format==='vaiwl-pro-root/1').length,
+     journalCount:values.b23_operations.length,removed:removeRoot});
+   };
+   tx.onerror=()=>reject(tx.error??failure??Error('test-storage-read'));tx.onabort=()=>reject(failure??tx.error??Error('test-storage-abort'));
+  });}finally{db.close();}
+ },removeRoot);
 }
 async function auditRpc(f){
  await f.evaluate(()=>{
@@ -145,9 +184,17 @@ try{
  await debugWorker();const pagesBeforeNavigation=context.pages().length;await f.getByRole('button',{name:TITLE,exact:true}).first().click();await page.getByRole('button',{name:'返回工作空间',exact:true}).waitFor();assert.equal(page.url(),server.origin+'/c/'+C);assert.equal(context.pages().length,pagesBeforeNavigation);await assertDraft();
  f=await workspace();await f.getByRole('button',{name:TITLE,exact:true}).first().waitFor();await assertDraft();check('Pro current-row navigation uses native reading and four-grid return without replacing the draft');
  await screenshot('unified-pro-workspace');await verifyRpc(f);check('actual frame replies are bounded and contain no private Pro capabilities');
- await openBackup(f);await f.getByRole('button',{name:'导出备份',exact:true}).click();const link=f.getByRole('link',{name:'下载备份',exact:true});await link.waitFor();const downloadPromise=page.waitForEvent('download');await link.click();const downloaded=await downloadPromise;
- const backupBytes=await readFile(await downloaded.path()),bundle=JSON.parse(backupBytes);assert.equal(bundle.format,'vaiwl-unified-assets');assert(bundle.pro&&bundle.free);assert.equal(JSON.stringify(bundle).includes('accessToken'),false);report.backup={format:bundle.format,bytes:backupBytes.length,sha256:hash(backupBytes)};
- await f.getByRole('button',{name:'返回工作空间',exact:true}).click();f=await pro();check('one composite backup downloads Free and Pro assets without authority or billing');
+ const beforeDamage=await proStorage({removeRoot:true});assert(beforeDamage.roots[0].payload.sequence>0);assert.equal((await proStorage()).roots.length,0);
+ await f.getByRole('button',{name:'Free',exact:true}).click();await f.getByText('Ordinary conversation',{exact:true}).first().waitFor();await f.getByRole('button',{name:'Pro',exact:true}).click();
+ await f.getByText('整理暂不可用，Free 仍可使用。',{exact:true}).waitFor();assert.equal(await f.getByRole('heading',{name:NAME,exact:true}).isVisible(),false);await assertDraft();
+ await f.getByRole('button',{name:'检查 Pro 数据恢复',exact:true}).click();await f.getByRole('button',{name:'检查恢复记录',exact:true}).click();await f.getByRole('button',{name:'确认恢复 Pro 数据',exact:true}).waitFor();
+ assert.equal((await proStorage()).roots.length,0,'recovery review must not write the missing root');await f.getByRole('button',{name:'确认恢复 Pro 数据',exact:true}).click();await f.getByText('恢复完成，请重新打开 Pro。',{exact:true}).waitFor();await f.getByRole('dialog',{name:'检查 Pro 数据恢复',exact:true}).getByRole('button',{name:'完成',exact:true}).click();
+ const afterRepair=await proStorage();assert.equal(afterRepair.roots.length,1);assert.deepEqual(afterRepair.roots[0].payload.state,beforeDamage.roots[0].payload.state);assert.deepEqual(afterRepair.otherStates,beforeDamage.otherStates);assert.equal(afterRepair.journalCount,beforeDamage.journalCount);assert.equal(afterRepair.quarantine.length,1);assert.equal(afterRepair.quarantine[0].payload.original.root,null);
+ f=await pro();await f.getByRole('heading',{name:NAME,exact:true}).waitFor();await f.getByRole('button',{name:TITLE,exact:true}).first().waitFor();await assertDraft();
+ report.recovery={injection:'TEST_ONLY_CDP_DELETE_CURRENT_PRO_ROOT',previewWroteRoot:false,retainedOverlayDigest:digest(afterRepair.roots[0].payload.state),retainedJournalRows:afterRepair.journalCount,quarantineRecords:afterRepair.quarantine.length};
+ check('missing Pro root fails closed; reviewed production recovery restores the entire journal-backed overlay without changing Free assets');
+ const exported=await downloadBackup(f),backupBytes=exported.bytes,bundle=exported.bundle;assert.equal(bundle.format,'vaiwl-unified-assets');assert(bundle.pro&&bundle.free);assert.equal(JSON.stringify(bundle).includes('accessToken'),false);report.backup={format:bundle.format,bytes:backupBytes.length,sha256:hash(backupBytes)};
+ f=await pro();check('one composite backup downloads Free and Pro assets without authority or billing');
  const peer=await context.newPage();await peer.goto(server.origin+'/c/'+C);await freeReady(peer);const peerFrame=await pro(peer);await peerFrame.getByRole('heading',{name:NAME,exact:true}).waitFor();check('second tab sees persisted same-scope assets through a separate live UI grant');await peer.close();
  // Stop an actual MV3 worker. No mock service lifecycle and no injection of a
  // replacement grant; the packaged host must perform its normal fresh join.
@@ -178,12 +225,44 @@ try{
  // A data backup carries no positive membership authority. Reacquire current
  // NONE from the native source before expecting the restored organized row.
  await establishNativeNone();f=await pro();await f.getByRole('button',{name:TITLE,exact:true}).first().waitFor();check('downloaded composite backup restores actual assets through a blank installation UI with fresh native membership evidence');
+ // Free v2.7 has no exposed virtual-workspace creation control. Import a
+ // synthetic old data-only file through its real backup UI, then upgrade through
+ // the production Pro review. This file grants no source or account authority.
+ let legacyState=structuredClone(bundle.free.payload);legacyState.refs[C]??={id:C,nativeUrl:server.origin+'/c/'+C,projectId:null,nativeTitle:'Ordinary conversation',available:true};
+ for(const [id,name]of [['legacy_main',LEGACY],['legacy_related',LEGACY_RELATED],['legacy_excluded',LEGACY_EXCLUDED]]){
+  legacyState=reduceCommand(legacyState,{type:'CREATE_WORKSPACE',id,name});legacyState=reduceCommand(legacyState,{type:'PLACE',workspaceId:id,refId:C,excluded:id==='legacy_excluded',order:7,locked:true});
+ }
+ legacyState=reduceCommand(legacyState,{type:'SET_TITLE',refId:C,title:LEGACY_TITLE});const legacyFile=createBackup(legacyState),legacyBytes=Buffer.from(JSON.stringify(legacyFile));
+ await context.close();context=null;context=await launch(join(directory,'legacy-upgrade-profile'));await loadExtension();page=await context.newPage();await page.goto(server.origin+'/c/'+C);await freeReady();await establishNativeNone();f=await workspace();await openBackup(f);
+ await f.getByLabel('选择备份 JSON 文件',{exact:true}).setInputFiles({name:'synthetic-free-legacy-assets.json',mimeType:'application/json',buffer:legacyBytes});await f.getByRole('button',{name:'确认恢复',exact:true}).waitFor();await f.getByRole('button',{name:'确认恢复',exact:true}).click();
+ f=await workspace();const importedLegacy=(await downloadBackup(f)).bundle.free;f=await pro();
+ assert.equal(await f.getByRole('heading',{name:LEGACY,exact:true}).count(),0);await f.getByRole('button',{name:'整理设置',exact:true}).click();await f.getByRole('button',{name:'检查旧版整理升级',exact:true}).click();await f.getByRole('button',{name:'检查可升级资料',exact:true}).click();await f.getByRole('button',{name:'确认升级',exact:true}).waitFor();assert.equal(await f.getByRole('heading',{name:LEGACY,exact:true}).count(),0);await f.getByRole('button',{name:'确认升级',exact:true}).click();
+ await f.getByRole('heading',{name:LEGACY,exact:true}).waitFor();await f.getByRole('heading',{name:LEGACY_RELATED,exact:true}).waitFor();await f.getByRole('heading',{name:LEGACY_EXCLUDED,exact:true}).waitFor();
+ await f.getByRole('button',{name:'整理设置',exact:true}).click();await f.getByRole('button',{name:'核对：Ordinary conversation',exact:true}).click();await f.getByRole('combobox',{name:'主主题',exact:true}).selectOption('legacy_main');await f.getByRole('button',{name:'预览选择',exact:true}).click();await f.getByRole('button',{name:'确认选择',exact:true}).click();
+ await f.getByRole('button',{name:LEGACY_TITLE,exact:true}).first().waitFor();await editReference(f,LEGACY_TITLE);await f.getByRole('button',{name:'解除名称锁',exact:true}).waitFor();await f.getByRole('button',{name:'解除排除：'+LEGACY_EXCLUDED,exact:true}).waitFor();assert.equal(await f.getByRole('combobox',{name:'主主题',exact:true}).locator('option:checked').textContent(),LEGACY);await closeDialog(f);
+ const migrated=await downloadBackup(f);for(const key of ['refs','workspaces','placements','identities','preferences'])assert.deepEqual(migrated.bundle.free.payload[key],importedLegacy.payload[key],key+' legacy assets must be retained');
+ assert.equal(migrated.bundle.pro.state.topics.legacy_main.name,LEGACY);assert.equal(migrated.bundle.pro.state.legacyResolutions[C].status,'resolved');assert.equal(migrated.bundle.pro.state.legacyResolutions[C].chosenPrimary,'legacy_main');
+ report.legacyUpgrade={inputFormat:legacyFile.format,inputSHA256:hash(legacyBytes),source:'SYNTHETIC_DATA_ONLY_FILE_THROUGH_FREE_BACKUP_UI',topics:3,relationships:3,explicitPrimary:true,freeAssetsRetained:true};
+ check('legacy Free file imports and upgrades through production UI, preserving original IDs, locks, exclusion and explicit ambiguous-primary review');
+ // Reuse the same on-disk assets with no host tabs and no Playwright worker
+ // attachment during one raw-CDP observation. Lack of a stop stays explicit.
+ await context.close();context=null;
+ idleProbe=await observeUnforcedWorker({chromium,executablePath,profileDir:join(directory,'legacy-upgrade-profile'),packagePath:built.unpacked,extensionId,networkGuard:guard.config});
+ context=idleProbe.context;cdp=await context.browser().newBrowserCDPSession();report.unforcedWorkerObservation=idleProbe.report;report.naturalWorkerSleep=idleProbe.report.naturalWorkerSleep;
+ await context.route('**/*',route=>{const url=route.request().url();return url.startsWith(server.origin+'/')||url.startsWith('chrome-extension://')?route.continue():route.abort();});
+ context.on('page',p=>p.on('pageerror',error=>report.errors.push(error.message)));page=await context.newPage();await page.goto(server.origin+'/c/'+C);await freeReady();f=await pro();await f.getByRole('heading',{name:LEGACY,exact:true}).waitFor();
+ await establishNativeNone();f=await pro();await f.getByRole('button',{name:LEGACY_TITLE,exact:true}).first().waitFor();
+ const awakened=(await cdp.send('Target.getTargets')).targetInfos.find(target=>target.type==='service_worker'&&target.url===`chrome-extension://${extensionId}/extension/worker.mjs`);assert(awakened);
+ if(idleProbe.report.initialWorkerDestroyed){assert.notEqual(awakened.targetId,idleProbe.report.initialWorkerId);idleProbe.report.recovery='PASS_NEW_WORKER_FRESH_UI_RETAINED_ASSETS';idleProbe.report.status='UNFORCED_TARGET_DESTRUCTION_RECOVERY_PASS';}
+ else idleProbe.report.recovery='ASSETS_VERIFIED_NO_STOP_OBSERVED';
+ idleProbe.report.recoveredWorkerId=awakened.targetId;
+ check('persisted assets and fresh host authorization remain correct after the finite unattached-worker observation',{observation:idleProbe.report.status,naturalWorkerSleep:idleProbe.report.naturalWorkerSleep});
  assert.equal(server.snapshot().actions['send-intent']??0,0);assert.equal(server.snapshot().actions['create-project']??0,0);assert.equal(server.snapshot().actions['new-project-chat']??0,0);report.nativeActions=server.snapshot().actions;
  assert.deepEqual(report.errors,[]);report.verification=verifyHost(built.unpacked);report.status='PASS';
 }catch(error){report.status='FAIL';report.error=error.stack;process.exitCode=1;if(page&&!page.isClosed())try{report.failure={url:page.url(),frames:page.frames().map(f=>f.url()),host:await page.evaluate(()=>({startup:document.documentElement.dataset.vaiwlStartup,state:document.documentElement.dataset.vaiwlState,reason:document.documentElement.dataset.vaiwlReason})),rpc:await frame(page)?.evaluate(()=>globalThis.unifiedRpcAudit??[])};await screenshot('unified-failure');}catch{}}
 finally{
  report.sourceStatusAfter=sourceStatus();report.sourceMatchesCommit=report.sourceMatchesCommit&&report.sourceStatusAfter==='';
  if(manifest){report.sourceHashesAfter=await sourceHashes();report.sourcesStable=JSON.stringify(report.sourceHashesBefore)===JSON.stringify(report.sourceHashesAfter);if(!report.sourcesStable){report.status='FAIL';report.sourceChangedDuringRun=true;process.exitCode=1;}}
- try{await context?.close();await guard?.close();await server?.close();report.cleanup=true;}catch(error){report.cleanup=false;report.cleanupError=String(error);report.status='FAIL';process.exitCode=1;}
+ try{await context?.close();await idleProbe?.close();await guard?.close();await server?.close();report.cleanup=true;}catch(error){report.cleanup=false;report.cleanupError=String(error);report.status='FAIL';process.exitCode=1;}
  report.networkGuard=guard?.snapshot();await writeFile(output,JSON.stringify(report,null,2)+'\n');console.log(JSON.stringify({status:report.status,checks:report.checks.length,error:report.error,output}));
 }

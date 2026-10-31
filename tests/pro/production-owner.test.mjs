@@ -10,10 +10,13 @@ import {normalizedScope} from '../../src/b1/identity.mjs';
 import {NativeRepository} from '../../src/data/native-repository.mjs';
 import {WorkspaceRepository} from '../../src/data/repository.mjs';
 import {FreeEvidenceRepository} from '../../src/data/free-evidence-repository.mjs';
+import {emptyState,reduceCommand} from '../../src/data/state.mjs';
+import {createBackup} from '../../src/data/backup.mjs';
 import {createFreeReadService} from '../../src/runtime/free-read-service.mjs';
 import {createFreeViewOwner} from '../../src/runtime/free-view-owner.mjs';
 import {createProductionProService} from '../../src/pro/integration/production-owner.mjs';
 import {createSameDatabaseStore} from '../../src/pro/integration/same-db-store.mjs';
+import {proRootKey,proRecoveryKey} from '../../src/pro/integration/storage-registry.mjs';
 
 const NOW=Date.parse('2026-10-31T12:00:00.000Z');
 const REF='11111111-1111-4111-8111-111111111111',UNKNOWN='22222222-2222-4222-8222-222222222222';
@@ -211,4 +214,125 @@ test('four-grid return uses live UI authority even when Free replaces its cached
   f.viewOwner.invalidate();
   const returned=await f.request('navigation',{op:'return'});assert.equal(returned.ok,true);assert.equal(returned.value.anchor.refId,REF);assert.equal(shown.length,1);assert.equal(shown[0].mode,'workspace');
   f.revoke();assert.deepEqual(await f.request('navigation',{op:'return'}),unavailable);assert.equal(shown.length,1,'no presentation after live UI authority is withdrawn');
+});
+
+async function removeProRoot(f){
+  const db=await f.base.open();
+  await new Promise((resolve,reject)=>{const tx=db.transaction(['b23_states'],'readwrite');tx.objectStore('b23_states').delete(proRootKey(f.scope.key));tx.oncomplete=resolve;tx.onabort=()=>reject(tx.error);});
+}
+async function repairRow(f){
+  const db=await f.base.open();
+  return new Promise((resolve,reject)=>{const tx=db.transaction(['b23_states'],'readonly'),q=tx.objectStore('b23_states').get(proRecoveryKey(f.scope.key));tx.oncomplete=()=>resolve(q.result??null);tx.onabort=()=>reject(tx.error);});
+}
+
+test('damaged Pro root uses explicit production recovery without exposing private replay bytes',async t=>{
+  const f=await fixture(t),expected=await f.ready();
+  assert.equal((await f.request('commit',{op:'dispatch',command:{type:'CREATE_TOPIC',name:'Retained after repair'},expected,operationId:'repair_topic'})).ok,true);
+  const before=await f.raw();await removeProRoot(f);
+  assert.equal((await f.page()).ok,false,'normal owner never treats missing root plus history as empty');
+  const preview=await f.request('commit',{op:'recovery-preview'});assert.equal(preview.ok,true,JSON.stringify(preview));
+  assert.equal(preview.value.kind,'pro-preview');assert.match(preview.value.summary,/1 个主题/);assert.equal(await repairRow(f),null,'preview is read-only');
+  const publicBytes=JSON.stringify(preview);for(const privateKey of ['scope_A','nativeRoot','transaction','journalDigest','repairedChecksum','inverseHash','planHash'])assert(!publicBytes.includes(privateKey),privateKey);
+  const apply={op:'recovery-apply',previewId:preview.value.previewId,operationId:'explicit_repair'};
+  const recovered=await f.request('commit',apply);assert.equal(recovered.ok,true,JSON.stringify(recovered));assert.equal(recovered.value.replayed,false);
+  assert.deepEqual(await f.raw(),before,'repair retains exact assets and operation history');
+  assert.equal((await repairRow(f)).payload.original.root,null,'rejected original root state is retained');
+  assert.equal((await f.request('background',{op:'status'})).value.status.processingMode,'off');
+  f.c.scopeGrantId='scope_A_after_repair';
+  const replay=await f.request('commit',apply);assert.equal(replay.ok,true);assert.equal(replay.value.replayed,true,'new live epoch can reconcile the original receipt');
+  assert.deepEqual(await f.request('commit',{...apply,previewId:'invented_review'}),unavailable,'same operation with changed review is rejected');
+  assert.deepEqual(await f.raw(),before);
+});
+
+test('recovery review cannot cross authority generations or apply after a Free source change',async t=>{
+  const f=await fixture(t),expected=await f.ready();
+  assert.equal((await f.request('commit',{op:'dispatch',command:{type:'CREATE_TOPIC',name:'Protected repair'},expected,operationId:'protected_repair_topic'})).ok,true);
+  await removeProRoot(f);
+  const oldPreview=await f.request('commit',{op:'recovery-preview'});assert.equal(oldPreview.ok,true);
+  f.c.scopeGrantId='scope_A_replaced';
+  assert.deepEqual(await f.request('commit',{op:'recovery-apply',previewId:oldPreview.value.previewId,operationId:'retired_review'}),unavailable);
+  const preview=await f.request('commit',{op:'recovery-preview'});assert.equal(preview.ok,true);
+  assert.equal((await f.workspaces.command(f.scope,{operationId:'shared_change',expectedRevision:0,command:{type:'CREATE_WORKSPACE',id:'changed_free',name:'Changed during repair review'}})).ok,true);
+  // The cached Free view still looks identical. Only the existing same-IDB
+  // source fence can detect this committed shared-root change.
+  assert.deepEqual(await f.request('commit',{op:'recovery-apply',previewId:preview.value.previewId,operationId:'stale_source_repair'}),unavailable);
+  assert.equal(await repairRow(f),null);await assert.rejects(f.raw(),/pro-missing-root-with-history/);
+});
+
+test('recovery checks do not fabricate data for an empty or healthy workspace',async t=>{
+  const f=await fixture(t),expected=await f.ready();
+  const empty=await f.request('commit',{op:'recovery-preview'});assert.equal(empty.ok,true);assert.equal(empty.value.state,'unavailable');
+  assert.equal((await f.request('commit',{op:'dispatch',command:{type:'CREATE_TOPIC',name:'Healthy'},expected,operationId:'healthy_topic'})).ok,true);
+  const before=await f.raw(),healthy=await f.request('commit',{op:'recovery-preview'});assert.equal(healthy.ok,true);assert.equal(healthy.value.state,'unavailable');
+  assert.equal(await repairRow(f),null);assert.deepEqual(await f.raw(),before);
+  f.revoke();assert.deepEqual(await f.request('commit',{op:'recovery-preview'}),unavailable);
+});
+
+test('large operation requires every current review page before one atomic durable undo',async t=>{
+  const f=await fixture(t);let legacy=emptyState(f.scope);
+  // Test data enter through the existing Free data-only backup path. No Pro
+  // grant, synthetic Pro owner or bypass of its transaction store is used.
+  for(let i=0;i<201;i++)legacy=reduceCommand(legacy,{type:'CREATE_WORKSPACE',id:'legacy_'+i,name:'Saved topic '+i},'human');
+  const bundle=createBackup(legacy),importPlan=await f.workspaces.previewRestore(f.scope,bundle);
+  assert.equal((await f.workspaces.restoreBackup(f.scope,{operationId:'legacy_bulk_import',bundle,...importPlan})).ok,true);
+  await f.viewOwner.refresh();const review=await f.ready(),upgrade=await f.request('commit',{op:'preview',kind:'legacy-upgrade',input:{},expected:review});
+  assert.equal(upgrade.ok,true);
+  assert.equal((await f.request('commit',{op:'apply-structure',previewId:upgrade.value.previewId,expected:review,operationId:'large_upgrade'})).ok,true);
+  await f.viewOwner.refresh();const expected=(await f.page()).value.versions,before=await f.raw(),target=before.records.find(r=>r.transaction.operationId==='large_upgrade').transaction;
+  assert(target.patch.length>200);assert.equal(Object.keys(before.state.topics).length,201);
+  assert.deepEqual(await f.request('commit',{op:'preview',kind:'undo',input:{operationId:'large_upgrade'},expected}),unavailable);
+  assert.deepEqual(await f.request('commit',{op:'dispatch',command:{type:'UNDO_TRANSACTION',targetOperationId:'large_upgrade',reviewedInverseHash:target.inverseHash},expected,operationId:'bypass_review'}),unavailable);
+  const reviewed=await f.request('commit',{op:'preview',kind:'undo-review',input:{operationId:'large_upgrade'},expected});assert.equal(reviewed.ok,true,JSON.stringify(reviewed));
+  assert.equal(reviewed.value.state,'ready');assert(!Object.hasOwn(reviewed.value,'inverseHash'));
+  const request={op:'apply-structure',previewId:reviewed.value.previewId,expected,operationId:'large_atomic_undo'};
+  assert.deepEqual(await f.request('commit',request),unavailable,'confirmation before complete review is refused');
+  const pageRequest={op:'operation-review',previewId:reviewed.value.previewId,expected,offset:0,limit:37};
+  assert.deepEqual(await f.request('view',{...pageRequest,offset:37}),unavailable,'skipping the first review window is refused');
+  const seen=[];let offset=0;
+  do{
+    const reply=await f.request('view',{...pageRequest,offset});assert.equal(reply.ok,true,JSON.stringify(reply));
+    assert.equal(reply.value.kind,'pro-operation-page');assert.equal(reply.value.operationId,'large_upgrade');assert.deepEqual(reply.value.versions,expected);assert.equal(reply.value.page.total,target.patch.length);
+    assert(new TextEncoder().encode(JSON.stringify(reply)).length<=65536);for(const key of ['inverse','restoreValue','before','after','nativeRoot','scopeGrantId'])assert(!JSON.stringify(reply).includes('"'+key+'"'));
+    seen.push(...reply.value.changes.map(x=>x.kind+':'+x.key));offset+=reply.value.page.count;
+    if(reply.value.page.hasMore)assert.deepEqual(await f.request('commit',request),unavailable,'partial review never authorizes partial or complete undo');
+  }while(offset<target.patch.length);
+  assert.equal(new Set(seen).size,target.patch.length);assert.deepEqual(await f.raw(),before,'review pages never write data');
+  const undo=await f.request('commit',request);assert.equal(undo.ok,true,JSON.stringify(undo));assert.equal(undo.value.replayed,false);
+  const after=await f.raw();assert.equal(after.state.revision,before.state.revision+1);assert.equal(Object.keys(after.state.topics).length,0);assert.equal(after.records.length,before.records.length+1);
+  assert.equal(after.records.find(r=>r.transaction.operationId==='large_upgrade').transaction.status,'undone');assert.equal(Object.keys((await f.workspaces.read(f.scope)).state.workspaces).length,201,'original Free human assets retained');
+  assert.equal((await f.request('commit',request)).value.replayed,true);assert.deepEqual(await f.raw(),after);
+});
+
+test('operation review cannot cross a changed source or authorization epoch',async t=>{
+  const f=await fixture(t),initial=await f.ready();
+  assert.equal((await f.request('commit',{op:'dispatch',command:{type:'CREATE_TOPIC',name:'Current-only review'},expected:initial,operationId:'review_source'})).ok,true);
+  const expected=(await f.page()).value.versions,review=await f.request('commit',{op:'preview',kind:'undo-review',input:{operationId:'review_source'},expected});assert.equal(review.ok,true);
+  f.c.scopeGrantId='scope_A_review_replaced';
+  assert.deepEqual(await f.request('view',{op:'operation-review',previewId:review.value.previewId,offset:0,limit:24,expected}),unavailable);
+  assert.deepEqual(await f.request('commit',{op:'apply-structure',previewId:review.value.previewId,operationId:'retired_undo',expected}),unavailable);
+  assert.equal((await f.raw()).state.revision,1);
+  const fresh=(await f.page()).value.versions,next=await f.request('commit',{op:'preview',kind:'undo-review',input:{operationId:'review_source'},expected:fresh});assert.equal(next.ok,true);
+  assert.equal((await f.workspaces.command(f.scope,{operationId:'review_free_change',expectedRevision:0,command:{type:'CREATE_WORKSPACE',id:'review_new_free',name:'New shared source'}})).ok,true);
+  await f.viewOwner.refresh();
+  assert.deepEqual(await f.request('view',{op:'operation-review',previewId:next.value.previewId,offset:0,limit:24,expected:fresh}),unavailable);
+  assert.deepEqual(await f.request('commit',{op:'apply-structure',previewId:next.value.previewId,operationId:'changed_source_undo',expected:fresh}),unavailable);
+  assert.equal((await f.raw()).state.revision,1);
+});
+
+test('changing the selected Pro scope retires a completed review even when data versions stay equal',async t=>{
+  const f=await fixture(t),projects=['project_A','project_B'];
+  f.wall(NOW+1);
+  const nativeRevision=(await f.native.read(f.scope)).revision;
+  const observed=await f.native.apply(f.scope,{operationId:'unit_projects',expectedRevision:nativeRevision,batch:{scopeKey:f.scope.key,sourceRevision:2,observedAt:new Date(NOW+1).toISOString(),validUntil:new Date(NOW+60000).toISOString(),projects:projects.map(id=>({id,nativeName:id,nativeUrl:'https://chatgpt.com/g/'+id,availability:'available'})),refs:[],membership:[],inventory:{projects:'partial',conversations:'partial',cursor:null}}});assert.equal(observed.ok,true,observed.reason);
+  await f.viewOwner.refresh();let expected=await f.ready();
+  assert.equal((await f.request('commit',{op:'dispatch',command:{type:'CREATE_TOPIC',name:'Scoped review'},expected,operationId:'scope_review_topic'})).ok,true);
+  const select=selectedProjectIds=>f.request('background',{op:'mode',mode:'pro-cross-project',selectedProjectIds});
+  assert.equal((await select(['project_A'])).ok,true);
+  const page=await f.request('view',{op:'page',mode:'pro-cross-project',selectedProjectIds:['project_A'],segment:0,offset:0,limit:8,rowLimit:5});assert.equal(page.ok,true);expected=page.value.versions;
+  const preview=await f.request('commit',{op:'preview',kind:'undo-review',input:{operationId:'scope_review_topic'},expected});assert.equal(preview.ok,true);
+  const window=await f.request('view',{op:'operation-review',previewId:preview.value.previewId,offset:0,limit:100,expected});assert.equal(window.ok,true);assert.equal(window.value.page.hasMore,false);
+  assert.equal((await select(['project_B'])).ok,true);
+  const other=await f.request('view',{op:'page',mode:'pro-cross-project',selectedProjectIds:['project_B'],segment:0,offset:0,limit:8,rowLimit:5});assert.equal(other.ok,true);assert.deepEqual(other.value.versions,expected,'selection changes do not fabricate storage revisions');
+  assert.deepEqual(await f.request('commit',{op:'apply-structure',previewId:preview.value.previewId,operationId:'old_selection_undo',expected}),unavailable);
+  assert.equal((await f.raw()).state.revision,1);assert.equal(Object.keys((await f.raw()).state.topics).length,1);
 });

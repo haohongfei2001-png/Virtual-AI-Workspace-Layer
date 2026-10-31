@@ -1,5 +1,17 @@
 # VAIWL-PRO/1.0 · 最小共享集成合同
 
+## 统一分支实施附记（2026-10-31）
+
+此合同的冻结语义与原始补丁继续保留。隔离集成分支 `codex/vaiwl-unified-r1-20261031` / Draft PR #24 已由共享负责人实现生产 owner；下文描述的“未应用”“尚需 owner 接线”属于 Pro PR #23 的原交付时点。当前实施与证据以 [统一集成说明](../../../docs/engineering/UNIFIED_R1_INTEGRATION.md)、[存储复核](../../../docs/engineering/UNIFIED_R1_STORAGE_AUDIT.md) 和对应精确 SHA 的 CI 报告为准。
+
+生产入口为 `extension/pro-worker.mjs` → `integration/production-owner.mjs`，通过原 `ui.withScope`、Free prepared view、原生 navigation owner 和共享连接供给六 port。frame 使用 `vaiwl-pro-public/1` 有界 DTO；完整状态/版本/证据、人工 receipt 和修复计划留在 worker。`tests/pro/support/fixture-owner.mjs` 不进入包依赖图。
+
+DB 保持 4。`storage-registry.mjs` 登记 overlay、billing 与 recovery namespace、容量、最低 reader 和无损保留策略；`composite-backup.mjs` 接入原 Host chunked backup，提供 Free/Pro 同事务恢复、无冲突并集和显式旧资产升级。`storage-recovery.mjs` 仅在完整日志和提交高水位得到验证后允许受审修复，保留原始损坏记录，拒绝未知 codec、缺失历史、冲突或过期来源。
+
+包内人工 Pro 能力由显式构建选项提供，不构成已验证付费订阅或模型执行许可。`evidence` 没有获准模型时返回准确不可用状态，`background` 默认关闭云执行和费用。无当前 live grant、当前正向 NONE 或明确 Project 范围时，不补授权或归属。原独立样本与模型模块继续保留完整源码供审查，未因集成而启用。
+
+### 原 PR #23 的最小交付合同
+
 本候选从 PR #16 交接 HEAD `f317b26ea6ed7d1cc249c4bfc0ad90a619d29417` 开始，并已继承最新文案提交 `2c9b043ce3c65a4b92c6f8f83b59fb416f63132a`；共享 src 未变化。相对最新基线，本候选未修改任何实际共享源文件。此合同与 `tests/pro/integration/shared-owner.patch` 供唯一共享负责人审查、接入；不代表生产启用许可。
 
 ## 六个边界

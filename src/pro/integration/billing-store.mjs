@@ -223,7 +223,7 @@ export function createSameDatabaseBillingStore({connection, verifyAuthority, ena
     // It must resolve the exact RAM object and authorize the requested action,
     // including separate admin/billing/reconciliation capabilities as applicable.
     const resolved = verifyAuthority(authority, intent);
-    if (resolved?.then) { if (resolved instanceof Promise) resolved.catch(() => {}); throw Error('async-billing-authority-denied'); }
+    if (resolved?.then) { try { Promise.prototype.then.call(resolved, () => {}, () => {}); } catch {} throw Error('async-billing-authority-denied'); }
     const scope = validateSourceScope(resolved);
     if (scope.persistence !== 'same-idb') throw Error('billing-persistent-scope-required');
     return clone(scope);

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {MockIDBFactory} from '../b23/mock-idb.mjs';
 import {createFixtureOwner} from './support/fixture-owner.mjs';
 import {createProController} from '../../src/pro/runtime/controller.mjs';
-import {projectPublicPage,projectPublicPanel,projectPublicRows,projectPublicRecords,projectPublicSearch,projectPublicPreview,publicVersions,publicStatus,validatePublicProReply,PRO_FRAME_BYTES,PRO_FRAME_PROTOCOL} from '../../src/pro/integration/public-frame-dto.mjs';
+import {projectPublicPage,projectPublicPanel,projectPublicRows,projectPublicRecords,projectPublicOperationReview,projectPublicSearch,projectPublicPreview,publicVersions,publicStatus,validatePublicProReply,PRO_FRAME_BYTES,PRO_FRAME_PROTOCOL} from '../../src/pro/integration/public-frame-dto.mjs';
 import {digest} from '../../src/data/hash.mjs';
 
 async function fixture(t){const owner=await createFixtureOwner({fixtureOnly:true,indexedDB:new MockIDBFactory()}),controller=await createProController(owner);t.after(()=>controller.destroy());return {owner,controller,async current(){return {...await owner.readPrivate(),view:controller.getView(),status:controller.getStatus()};}};}
@@ -55,7 +55,8 @@ test('scalar result and preview fields cannot hide arbitrary private objects or 
 });
 test('navigation anchors and status context accept only bounded data primitives',()=>{
  const status=publicStatus({launchContext:{referenceId:'chat1',topicId:'topic1',seriesId:null,nativeProjectId:null,origin:'topic'}});
- for(const key of ['topicId','seriesId','nativeProjectId','origin']){const bad=structuredClone(status);bad.launchContext[key]={privateTitles:['x']};assert.throws(()=>validatePublicProReply('background',{kind:'pro-status',protocol:PRO_FRAME_PROTOCOL,status:bad}),/launch/);}
+ assert.equal(status.launchContext.nextReferenceId,null);
+ for(const key of ['topicId','seriesId','nativeProjectId','nextReferenceId','origin']){const bad=structuredClone(status);bad.launchContext[key]={privateTitles:['x']};assert.throws(()=>validatePublicProReply('background',{kind:'pro-status',protocol:PRO_FRAME_PROTOCOL,status:bad}),/launch/);}
  const anchor={cardId:null,refId:'chat1',segment:0,scrollOffset:0,openOldItems:[],sidebarChoices:[]};
  assert.deepEqual(validatePublicProReply('navigation',{kind:'pro-result',protocol:PRO_FRAME_PROTOCOL,state:'returned',anchor}).anchor,anchor);
  for(const key of Object.keys(anchor)){const bad=structuredClone(anchor);bad[key]={privateTitles:['x']};assert.throws(()=>validatePublicProReply('navigation',{kind:'pro-result',protocol:PRO_FRAME_PROTOCOL,anchor:bad}),/anchor/);}
@@ -132,4 +133,23 @@ test('dense Series edge pages expose every preserved edge exactly once within th
    for(const edge of s.edges){const key=JSON.stringify(edge);assert(!found.has(key));found.add(key);}offset+=dto.page.count;if(!dto.page.hasMore)break;assert(dto.page.count>0);
  }while(offset<edges.length);
  assert.equal(found.size,780);assert.deepEqual(found,new Set(edges.map(e=>JSON.stringify(e))));
+});
+test('large operation review pages every changed field exactly once without exposing values or inverse',async t=>{
+ const f=await fixture(t),input=await f.current(),operation={operationId:'large_operation',actor:'human',status:'applied',base:{scopeKey:input.state.scopeKey},patch:Array.from({length:357},(_,i)=>({kind:'topic',key:'changed_'+i,after:{name:'变化 '+i+'界'.repeat(480),privateValue:'NEVER SEND THIS'},before:{privateValue:'OLD PRIVATE'}})),inverse:[{restoreValue:'PRIVATE INVERSE'}]};
+ const found=new Set();let offset=0;
+ do{const dto=projectPublicOperationReview({...input,operation,previewId:'review_large',offset,limit:100}),json=JSON.stringify(dto);
+  assert.equal(dto.operationId,operation.operationId);assert.equal(dto.previewId,'review_large');assert.equal(dto.page.total,357);assert.equal(dto.changes.length,dto.page.count);assert(dto.page.count>0);assert(new TextEncoder().encode(json).length<=PRO_FRAME_BYTES);assert(!json.includes('PRIVATE'));assert(!json.includes('restoreValue'));assert(!json.includes('inverse'));
+  for(const change of dto.changes){assert(!found.has(change.key));found.add(change.key);}offset+=dto.page.count;if(!dto.page.hasMore)break;
+ }while(offset<357);
+ assert.equal(found.size,357);
+ assert.throws(()=>projectPublicOperationReview({...input,operation:{...operation,base:{scopeKey:'foreign'}},previewId:'r'}),/operation-review/);
+});
+test('operation review identity, change count, page bounds and exact fields cannot be forged',async t=>{
+ const f=await fixture(t),input=await f.current(),operation={operationId:'op',actor:'human',status:'applied',base:{scopeKey:input.state.scopeKey},patch:[{kind:'topic',key:'t',after:{name:'修改'}}]},dto=projectPublicOperationReview({...input,operation,previewId:'r'});
+ for(const change of [x=>{x.operationId={hidden:'private'};},x=>{x.previewId={hidden:'private'};},x=>{x.changes[0].before={private:'value'};},x=>{x.page.count=0;},x=>{x.page.offset=5;},x=>{x.operationStatus='ready';},x=>{delete x.changes;}]){const bad=structuredClone(dto);change(bad);assert.throws(()=>validatePublicProReply('view',bad),/public|review/);}
+ assert.throws(()=>validatePublicProReply('commit',dto),/reply/);
+});
+test('next Series hints require a real distinct target identity and a topic plus Series context',()=>{
+ const status=publicStatus({launchContext:{referenceId:'current',topicId:'topic',seriesId:'series',nativeProjectId:null,origin:'topic',nextReferenceId:'next'}});assert.equal(status.launchContext.nextReferenceId,'next');
+ for(const changes of [{seriesId:null},{topicId:null,origin:'direct'},{nextReferenceId:'current'},{nextReferenceId:true}]){const bad=structuredClone(status);Object.assign(bad.launchContext,changes);assert.throws(()=>validatePublicProReply('background',{kind:'pro-status',protocol:PRO_FRAME_PROTOCOL,status:bad}),/launch/);}
 });

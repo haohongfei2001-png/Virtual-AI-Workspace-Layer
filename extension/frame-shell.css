@@ -94,3 +94,11 @@ body[data-frame-role="sidebar"] main > div, body[data-frame-role="sidebar"] [dat
 [data-vaiwl-pro-root] {flex:1 1 0;overflow:hidden;min-height:0;}
 [data-vaiwl-pro-root][hidden], [data-vaiwl-frame-root][hidden] {display:none!important;}
 body[data-frame-role=sidebar] [data-vaiwl-pro-root] {flex:none;overflow:visible;}
+[data-vaiwl-pro-recovery] {position:fixed;inset:0;z-index:100;display:grid;place-items:center;padding:16px;background:rgba(0,0,0,.22);}
+[data-vaiwl-pro-recovery]>section {box-sizing:border-box;width:min(100%,560px);max-height:90vh;overflow:auto;padding:20px;border:1px solid var(--line);border-radius:14px;background:var(--surface);box-shadow:0 16px 48px rgba(0,0,0,.18);}
+[data-vaiwl-pro-recovery] h2 {font-size:16px;margin:0 0 12px;}
+[data-vaiwl-pro-recovery] p {color:var(--muted);white-space:pre-wrap;overflow-wrap:anywhere;}
+[data-vaiwl-pro-recovery] button {border:1px solid var(--line);border-radius:8px;padding:7px 12px;margin:4px 8px 0 0;background:var(--bubble);cursor:pointer;}
+[data-vaiwl-pro-recovery] button:focus-visible {outline:2px solid var(--focus);outline-offset:2px;}
+[data-vaiwl-pro-recovery] button:disabled {opacity:.45;cursor:default;}
+[data-vaiwl-pro-recovery] [hidden] {display:none;}

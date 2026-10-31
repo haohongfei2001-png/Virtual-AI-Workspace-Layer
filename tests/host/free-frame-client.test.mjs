@@ -2,6 +2,7 @@ import {freeNavigationSnapshot} from '../../src/navigation/free-view.mjs';
 import {projectFreeSearch} from '../../src/runtime/free-search-projection.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {runInNewContext} from 'node:vm';
 import {createFreeFrameClient} from '../../src/host/free-frame-client.mjs';
 const drain=async()=>{for(let i=0;i<60;i++)await Promise.resolve();};
 const deferred=()=>{let resolve;const promise=new Promise(r=>{resolve=r;});return {promise,resolve};};
@@ -965,6 +966,11 @@ test('optional Pro companion factory failure does not block the standalone Free 
 test('optional async Pro companion composition is rejected without an unhandled rejection',async()=>{
  const failures=[];const listener=e=>failures.push(e);process.on('unhandledRejection',listener);
  const f=fixture('workspace',options=>createFreeFrameClient({...options,modeCompanionFactory:()=>Promise.reject(Error('miscomposed-async-factory'))}));
+ try{await f.client.start();await drain();await new Promise(r=>setImmediate(r));assert.equal(f.pages.length,1);assert.deepEqual(failures,[]);}finally{f.client.stop();process.off('unhandledRejection',listener);}
+});
+test('cross-realm rejected Pro companion promise cannot break Free or escape as unhandled work',async()=>{
+ const failures=[],listener=e=>failures.push(e);process.on('unhandledRejection',listener);
+ const f=fixture('workspace',options=>createFreeFrameClient({...options,modeCompanionFactory:()=>runInNewContext('Promise.reject(new Error("foreign optional failure"))')}));
  try{await f.client.start();await drain();await new Promise(r=>setImmediate(r));assert.equal(f.pages.length,1);assert.deepEqual(failures,[]);}finally{f.client.stop();process.off('unhandledRejection',listener);}
 });
 test('optional Pro notification and teardown exceptions preserve Free refresh and cleanup',async()=>{

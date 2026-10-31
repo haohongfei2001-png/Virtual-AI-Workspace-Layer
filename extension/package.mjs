@@ -70,7 +70,7 @@ export function packageHost(output,options={}){
 }
 if(process.argv[1]===fileURLToPath(import.meta.url)){
  const args=process.argv.slice(2),path=value=>typeof value==='string'&&value.trim().length>0&&!value.startsWith('-');
- if(args.length===1&&args[0]==='--help')console.log('Usage: node extension/package.mjs <NEW-output-directory>\n       node extension/package.mjs --browser-local <NEW-output-directory>\n       node extension/package.mjs --verify <existing-unpacked-directory>\nVerification is read-only and does not establish Free acceptance or release readiness.');
+ if(args.length===1&&args[0]==='--help')console.log('Usage: node extension/package.mjs <NEW-output-directory>\n       node extension/package.mjs --browser-local <NEW-output-directory>\n       node extension/package.mjs --pro-r1 <NEW-output-directory>\n       node extension/package.mjs --verify <existing-unpacked-directory>\n--pro-r1 builds the unified BrowserLocal Free + Pro candidate; cloud/model calls remain disabled.\nVerification is read-only and does not establish Free acceptance or release readiness.');
  else if(args.length===2&&args[0]==='--pro-r1'&&path(args[1]))console.log(JSON.stringify(packageHost(args[1],{browserLocal:true,proR1:true}),null,2));
  else if(args.length===2&&args[0]==='--browser-local'&&path(args[1]))console.log(JSON.stringify(packageHost(args[1],{browserLocal:true}),null,2));
  else if(args.length===2&&args[0]==='--verify'&&path(args[1]))console.log(JSON.stringify(verifyHost(args[1]),null,2));

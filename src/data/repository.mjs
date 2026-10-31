@@ -147,7 +147,7 @@ export class WorkspaceRepository {
             }catch(e){abort(e.message);}
           };};
           const enterWorkspace=()=>{if(params.expectedActivityVersions)checkActivityVersionFence(tx,s,params.expectedActivityVersions,check,loadWorkspace,abort);else loadWorkspace();};
-          if(params.enlist){let entered=false;const ready=()=>{if(entered){abort('transaction-participant-reentered');return;}entered=true;if(check())enterWorkspace();};const result=params.enlist(tx,s,check,ready,abort);if(result?.then){if(result instanceof Promise)result.catch(()=>{});abort('async-transaction-participant-denied');}}else enterWorkspace();
+          if(params.enlist){let entered=false;const ready=()=>{if(entered){abort('transaction-participant-reentered');return;}entered=true;if(check())enterWorkspace();};const result=params.enlist(tx,s,check,ready,abort);if(result?.then){try{Promise.prototype.then.call(result,()=>{},()=>{});}catch{}abort('async-transaction-participant-denied');}}else enterWorkspace();
         }catch(e){abort(e.message);}
       };
       };

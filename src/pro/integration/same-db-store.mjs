@@ -1,6 +1,7 @@
 import {digest, stable} from '../../data/hash.mjs';
 import {emptyOverlay, validateOverlay} from '../domain/index.mjs';
-import {proRootKey,proOperationKey,proRecord,unpackProRecord,emptyProRoot,validateProRoot,
+import {createProRecoveryAccess} from './storage-recovery.mjs';
+import {proRootKey,proOperationKey,proRecoveryKey,proRecord,unpackProRecord,emptyProRoot,validateProRoot,
   validateProJournal,validateProJournalChain,assertRegisteredProDatabase,PRO_STORAGE_REGISTRY} from './storage-registry.mjs';
 export {proRootKey,proOperationKey} from './storage-registry.mjs';
 const stores=['b23_states','b23_operations','b23_checkpoints','native_states','native_operations'];
@@ -13,9 +14,9 @@ function readInTransaction(tx,scope,check,ready,fail) {
   q.onsuccess=()=>{try{
     if(!check())return;
     if(!q.result){
-      const checkpoint=tx.objectStore('b23_checkpoints').get(key),history=tx.objectStore('b23_operations').index('scopeKey').openCursor(key);
-      let remaining=2;
-      for(const probe of [checkpoint,history])probe.onsuccess=()=>{try{if(!check())return;if(probe.result)throw Error('pro-missing-root-with-history');if(!--remaining)ready(emptyProRoot(scope.key),[],null);}catch(e){fail(e.message);}};
+      const checkpoint=tx.objectStore('b23_checkpoints').get(key),history=tx.objectStore('b23_operations').index('scopeKey').openCursor(key),recovery=tx.objectStore('b23_states').get(proRecoveryKey(scope.key));
+      let remaining=3;
+      for(const probe of [checkpoint,history,recovery])probe.onsuccess=()=>{try{if(!check())return;if(probe.result)throw Error('pro-missing-root-with-history');if(!--remaining)ready(emptyProRoot(scope.key),[],null);}catch(e){fail(e.message);}};
       return;
     }
     const current=validateProRoot(unpackProRecord(q.result,key),scope.key),logs=[];
@@ -81,7 +82,7 @@ export function createSameDatabaseStore({connection,verifyGrant,verifyInputFence
               if(entered)throw Error('pro-input-fence-reentered');entered=true;
               if(!check())return;
               const result=execute(clone(current.state),logs.map(clone));
-              if(result?.then){if(result instanceof Promise)result.catch(()=>{});throw Error('async-pro-reducer-denied');}
+              if(result?.then){try{Promise.prototype.then.call(result,()=>{},()=>{});}catch{}throw Error('async-pro-reducer-denied');}
               validateOverlay(result?.state);
               if(result.state.scopeKey!==scope.key||!result.transaction||result.transaction.operationId!==operationId)throw Error('invalid-pro-plan');
               const undo=result.undoneOperationId??null;
@@ -105,7 +106,7 @@ export function createSameDatabaseStore({connection,verifyGrant,verifyInputFence
             }catch(e){reject(e.message);}
           };
           const result=verifyInputFence(tx,scope,expectedCopy,check,fenced,reject);
-          if(result?.then){if(result instanceof Promise)result.catch(()=>{});throw Error('async-pro-input-fence-denied');}
+          if(result?.then){try{Promise.prototype.then.call(result,()=>{},()=>{});}catch{}throw Error('async-pro-input-fence-denied');}
         }catch(e){reject(e.message);}
       },reject);
     }catch(e){reject(e.message);}
@@ -124,7 +125,7 @@ export function createSameDatabaseStore({connection,verifyGrant,verifyInputFence
       }catch(e){signal?.removeEventListener('abort',abort);fail(e.message);resolve({ok:false,reason:e.message});}
     });
   }
-  return Object.freeze({read,transact,enlist});
+  return Object.freeze({read,transact,enlist,...createProRecoveryAccess({connection,guard,verifyInputFence})});
 }
 /** Explicit test/immediate-session storage. It has no persistent medium. */
 export function createMemoryOverlayStore({scopeKey,verifyGrant,verifyExpected}={}) {

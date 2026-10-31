@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {runInNewContext} from 'node:vm';
 import {MockIDBFactory} from '../b23/mock-idb.mjs';
 import {createFixtureOwner} from './support/fixture-owner.mjs';
 import {createProController} from '../../src/pro/runtime/controller.mjs';
@@ -38,5 +39,14 @@ test('grant scope cannot change while the existing DB connection is awaited',asy
 
 test('async input-fence rejection is contained and cannot commit a prepared transaction',async()=>{
  const f=await fixture('async_fence');try{const store=createSameDatabaseStore({enabled:true,connection:()=>f.db,verifyGrant:()=>f.owner.capabilities.scope,verifyInputFence:async()=>{throw Error('private async failure');}});const before=await dump(f.db),expected=f.controller.getSnapshot().versions;const result=await store.transact(f.owner.grant(),{operationId:'async_fence',expected,fingerprint:{test:true},execute(){throw Error('must-not-run');}});assert.equal(result.ok,false);assert.equal(result.reason,'async-pro-input-fence-denied');await new Promise(resolve=>setImmediate(resolve));assert.deepEqual(await dump(f.db),before);
+ }finally{f.controller.destroy();}
+});
+
+test('foreign-realm rejected native Promises in reducer and input fence are contained without invoking arbitrary thenables',async()=>{
+ const f=await fixture('foreign_promise');try{const before=await dump(f.db),expected=f.controller.getSnapshot().versions;
+ for(const kind of ['fence','reducer']){const store=createSameDatabaseStore({enabled:true,connection:()=>f.db,verifyGrant:()=>f.owner.capabilities.scope,verifyInputFence(tx,scope,expected,check,ready){if(kind==='fence')return runInNewContext('Promise.reject(new Error("foreign-fence"))');ready();}});
+ const result=await store.transact({}, {operationId:'foreign_'+kind,expected,fingerprint:{kind},execute:()=>runInNewContext('Promise.reject(new Error("foreign-reducer"))')});assert.equal(result.ok,false);assert.match(result.reason,/async-pro-(input-fence|reducer)-denied/);}
+ let invoked=false;const store=createSameDatabaseStore({enabled:true,connection:()=>f.db,verifyGrant:()=>f.owner.capabilities.scope,verifyInputFence(){return {then(){invoked=true;}};}});const result=await store.transact({}, {operationId:'thenable',expected,fingerprint:{},execute(){throw Error('must-not-run');}});assert.equal(result.reason,'async-pro-input-fence-denied');assert.equal(invoked,false);
+ await new Promise(resolve=>setImmediate(resolve));assert.deepEqual(await dump(f.db),before);
  }finally{f.controller.destroy();}
 });

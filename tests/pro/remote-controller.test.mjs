@@ -4,7 +4,7 @@ import {MockIDBFactory} from '../b23/mock-idb.mjs';
 import {createFixtureOwner} from './support/fixture-owner.mjs';
 import {createProController} from '../../src/pro/runtime/controller.mjs';
 import {createRemoteProController} from '../../src/pro/ui/remote-controller.mjs';
-import {projectPublicPage,projectPublicPanel,projectPublicPreview,publicVersions,publicStatus} from '../../src/pro/integration/public-frame-dto.mjs';
+import {projectPublicPage,projectPublicPanel,projectPublicPreview,projectPublicOperationReview,publicVersions,publicStatus} from '../../src/pro/integration/public-frame-dto.mjs';
 const deferred=()=>{let resolve;const promise=new Promise(r=>resolve=r);return {promise,resolve};};
 
 async function fixture(t){
@@ -88,4 +88,48 @@ test('Free to Pro resume retains mode, segment and independent page cursors with
 test('clearing a revoked view discards retained Pro cursors before the next explicit resume',async t=>{
  const f=await fixture(t);await f.remote.setSegment(3);await f.remote.setPage(24);await f.remote.setMode('native');f.remote.clear();const before=f.calls.length;await f.remote.resumePro();
  const page=f.calls.slice(before).find(c=>c.action==='view'&&c.payload.op==='page');assert.equal(page.payload.segment,0);assert.equal(page.payload.offset,0);assert.deepEqual(page.payload.selectedProjectIds,[]);
+});
+test('damage recovery preview and explicit apply require no fabricated page versions',async t=>{
+ const f=await fixture(t);f.remote.clear();const held=f.holdNext(),pending=f.remote.recoveryPreview();held.resolve({ok:true,value:{kind:'pro-preview',protocol:'vaiwl-pro-public/1',previewId:'repair_review',proposal:false,conflicts:[],summary:'可复核的事务记录'}});
+ const plan=await pending;assert.deepEqual(f.calls.at(-1).payload,{op:'recovery-preview'});
+ const next=f.holdNext(),apply=f.remote.recoveryApply(plan);next.resolve({ok:true,value:{kind:'pro-result',protocol:'vaiwl-pro-public/1',state:'applied'}});await apply;
+ assert.equal(f.calls.at(-1).payload.op,'recovery-apply');assert.equal(f.calls.at(-1).payload.previewId,'repair_review');assert.equal(typeof f.calls.at(-1).payload.operationId,'string');assert(!Object.hasOwn(f.calls.at(-1).payload,'expected'));
+});
+test('large operation review carries only its opaque worker preview and frozen public version identity',async t=>{
+ const f=await fixture(t);await f.remote.dispatch({type:'CREATE_TOPIC',name:'核对主题'});const input=await f.owner.readPrivate(),operation=input.records.at(-1).transaction,expected=f.remote.getSnapshot().versions;
+ const held=f.holdNext(),begin=f.remote.beginOperationReview(operation.operationId,{expected});held.resolve({ok:true,value:projectPublicPreview({preview:{state:'ready'},previewId:'opaque_operation_review'})});const review=await begin;
+ assert.deepEqual(f.calls.at(-1).payload,{op:'preview',kind:'undo-review',input:{operationId:operation.operationId},expected});assert(!Object.hasOwn(review,'inverseHash'));
+ const dto=projectPublicOperationReview({...input,operation,previewId:review.previewId}),pageHold=f.holdNext(),pending=f.remote.loadOperationReview(review,{offset:0,limit:24});pageHold.resolve({ok:true,value:dto});const page=await pending;
+ assert.equal(page.operationId,operation.operationId);assert.deepEqual(f.calls.at(-1).payload,{op:'operation-review',previewId:review.previewId,offset:0,limit:24,expected});assert(!Object.hasOwn(page,'inverse'));assert(!Object.hasOwn(page,'patch'));
+});
+test('operation-review pages cannot cross preview, operation, cursor or current version identities',async t=>{
+ const f=await fixture(t);await f.remote.dispatch({type:'CREATE_TOPIC',name:'页面身份'});const input=await f.owner.readPrivate(),operation=input.records.at(-1).transaction,review={previewId:'r',operationId:operation.operationId,expected:f.remote.getSnapshot().versions},base=projectPublicOperationReview({...input,operation,previewId:'r'});
+ for(const mutate of [x=>{x.previewId='another_review';},x=>{x.operationId='another_operation';},x=>{x.versions.reviewId='0'.repeat(64);},x=>{x.versions.authorizationEpoch++;}]){const dto=structuredClone(base);mutate(dto);const held=f.holdNext(),pending=f.remote.loadOperationReview(review);held.resolve({ok:true,value:dto});await assert.rejects(pending,/operation-review/);}
+ const held=f.holdNext(),pending=f.remote.loadOperationReview(review);await f.remote.refresh({force:true});held.resolve({ok:true,value:base});await assert.rejects(pending,/stale-pro-operation-review/);
+});
+test('lost structure and repair replies reuse one intent ID on explicit retry and never issue a second write',async t=>{
+ const f=await fixture(t),base=projectPublicPage({...await f.owner.readPrivate(),view:f.local.getView(),status:f.local.getStatus()}),saved=new Map(),calls=[];let made=0,writes=0,drop=true,authority='current_scope';
+ const remote=createRemoteProController({getIntentEpoch:()=>authority,makeOperationId:()=>`stable_${++made}`,request:async(action,payload)=>{
+  calls.push({action,payload});if(action==='view')return {ok:true,value:base};if(action!=='commit')throw Error('unexpected action');const prior=saved.has(payload.operationId);if(!prior){writes++;saved.set(payload.operationId,payload);}
+  if(drop){drop=false;return {ok:false,reason:'simulated-lost-reply'};}return {ok:true,value:{kind:'pro-result',protocol:'vaiwl-pro-public/1',state:'applied',replayed:prior}};
+ }});t.after(()=>remote.destroy());await remote.refresh();const review={previewId:'structure_review',expected:remote.getSnapshot().versions};
+ await assert.rejects(remote.applyStructure(review),/unavailable/);assert.equal(writes,1);assert.equal(calls.filter(c=>c.action==='commit').length,1);
+ await remote.applyStructure(structuredClone(review));assert.equal(writes,1);assert.equal(made,1);assert.equal(calls.filter(c=>c.action==='commit').length,2);
+ await remote.applyStructure(review);assert.equal(calls.filter(c=>c.action==='commit').length,2);
+ const repair={previewId:'repair_review'};drop=true;await assert.rejects(remote.recoveryApply(repair),/unavailable/);assert.equal(writes,2);remote.clear();await remote.recoveryApply(repair);assert.equal(writes,2);assert.equal(made,2);
+ authority='different_scope';await assert.rejects(remote.recoveryApply(repair),/stale-pro-reviewed-intent/);assert.equal(writes,2);
+});
+test('concurrent reviewed confirmations share one pending request and immutable review fingerprint',async t=>{
+ const f=await fixture(t),base=projectPublicPage({...await f.owner.readPrivate(),view:f.local.getView(),status:f.local.getStatus()}),pending=deferred();let commits=0;
+ const remote=createRemoteProController({request:async(action)=>{if(action==='view')return {ok:true,value:base};commits++;return pending.promise;}});t.after(()=>remote.destroy());await remote.refresh();const review={previewId:'one_review',expected:remote.getSnapshot().versions};
+ const first=remote.applyStructure(review),second=remote.applyStructure(review);assert.equal(commits,1);pending.resolve({ok:true,value:{kind:'pro-result',protocol:'vaiwl-pro-public/1',state:'applied'}});await Promise.all([first,second]);
+ const forged={...review,expected:{...review.expected,reviewId:'0'.repeat(64)}};await assert.rejects(remote.applyStructure(forged),/stale-pro-reviewed-intent/);assert.equal(commits,1);
+});
+test('direct dialog retries retain the exact command and frozen review intent after a lost receipt',async t=>{
+ const f=await fixture(t);let base=projectPublicPage({...await f.owner.readPrivate(),view:f.local.getView(),status:f.local.getStatus()}),made=0,writes=0,drop=true;const saved=new Set(),calls=[];
+ const remote=createRemoteProController({makeOperationId:()=>`direct_${++made}`,request:async(action,payload)=>{if(action==='view')return {ok:true,value:base};calls.push(payload);const replayed=saved.has(payload.operationId);if(!replayed){writes++;saved.add(payload.operationId);}if(drop){drop=false;throw Error('reply-lost-after-commit');}return {ok:true,value:{kind:'pro-result',protocol:'vaiwl-pro-public/1',state:'applied',replayed}};}});t.after(()=>remote.destroy());await remote.refresh();const expected=remote.getSnapshot().versions;
+ await assert.rejects(remote.dispatch({type:'CREATE_TOPIC',name:'同一份确认'},{expected}),/reply-lost/);assert.equal(calls.length,1);assert.equal(writes,1);
+ await remote.dispatch({name:'同一份确认',type:'CREATE_TOPIC'},{expected:structuredClone(expected)});assert.equal(calls.length,2);assert.equal(calls[0].operationId,calls[1].operationId);assert.equal(writes,1);assert.equal(made,1);
+ await remote.dispatch({type:'CREATE_TOPIC',name:'同一份确认'},{expected});assert.equal(calls.length,2);
+ await f.local.dispatch({type:'CREATE_TOPIC',name:'新审阅版本'});base=projectPublicPage({...await f.owner.readPrivate(),view:f.local.getView(),status:f.local.getStatus()});await remote.refresh({force:true});await remote.dispatch({type:'CREATE_TOPIC',name:'同一份确认'});assert.equal(made,2);assert.equal(writes,2);
 });

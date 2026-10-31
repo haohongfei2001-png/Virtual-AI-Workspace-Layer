@@ -61,6 +61,7 @@ export function publicStatus(status = {}) {
       topicId: status.launchContext.topicId ?? null,
       seriesId: status.launchContext.seriesId ?? null,
       nativeProjectId: status.launchContext.nativeProjectId ?? null,
+      nextReferenceId: status.launchContext.nextReferenceId ?? null,
       origin: text(status.launchContext.origin, 30),
     } : null,
   };
@@ -228,6 +229,19 @@ export function projectPublicRecords({records = [], state, snapshot, offset = 0,
   }
 }
 
+/** One operation review window. Only a private worker-held preview can select
+ * the operation; graph values, inverse data and the journal never leave here. */
+export function projectPublicOperationReview({operation,state,snapshot,previewId,offset=0,limit=24}) {
+  checkSource(state,snapshot);
+  if(!id(previewId)||!id(operation?.operationId)||operation.base?.scopeKey!==state.scopeKey||!['human','automation'].includes(operation.actor)||!['applied','undone'].includes(operation.status)||!Array.isArray(operation.patch)||operation.patch.length>20000||!integer(offset)||offset>operation.patch.length||!integer(limit,100)||!limit)throw Error('invalid-pro-operation-review');
+  let cap=limit;
+  for(;;){
+    const changes=operation.patch.slice(offset,offset+cap).map(p=>({kind:p.kind,key:p.key,label:text(patchLabel(p,state,snapshot),500)}));
+    const reply={kind:'pro-operation-page',protocol:PRO_FRAME_PROTOCOL,versions:publicVersions(snapshot.versions),previewId,operationId:operation.operationId,actor:operation.actor,operationStatus:operation.status,changes,page:page(offset,operation.patch.length,changes.length,cap)};
+    try{return validatePublicProReply('view',reply);}catch(error){if(!['pro-public-size','pro-public-complexity'].includes(error.message)||cap===1)throw error;cap=Math.max(1,Math.floor(cap/2));}
+  }
+}
+
 export function projectPublicRows({state, snapshot, status = {}, topicId, lane = 'current', offset = 0, limit = 17}) {
   checkSource(state,snapshot);
   if (!['current', 'old'].includes(lane) || !integer(offset) || !integer(limit, 200) || !limit) throw Error('invalid-pro-public-rows');
@@ -263,12 +277,13 @@ const keys = {
   'pro-rows-page': ['kind','protocol','versions','topicId','lane','items','rows','display','page'],
   'pro-search-page': ['kind','protocol','items','page'],
   'pro-records-page': ['kind','protocol','items','page'],
+  'pro-operation-page': ['kind','protocol','versions','previewId','operationId','actor','operationStatus','changes','page'],
   'pro-preview': ['kind','protocol','previewId','proposal','conflicts','summary','state','inverseHash','planHash','chosenPrimary','preservedAssetDigest','expected','changes'],
   'manual-series-plan': ['kind','protocol','previewId','proposal','conflicts','summary','expected','changes','planHash'],
   'pro-result': ['kind','protocol','state','operationId','replayed','anchor','message','nativeLink'],
   'pro-status': ['kind','protocol','status'],
 };
-const permitted = {sharedSnapshot:['pro-status','pro-frame-page'],view:['pro-frame-page','pro-panel-page','pro-rows-page','pro-search-page','pro-records-page','pro-status'],commit:['pro-result','pro-preview','manual-series-plan'],evidence:['pro-result','pro-panel-page','pro-status'],navigation:['pro-result'],background:['pro-result','pro-status']};
+const permitted = {sharedSnapshot:['pro-status','pro-frame-page'],view:['pro-frame-page','pro-panel-page','pro-rows-page','pro-search-page','pro-records-page','pro-operation-page','pro-status'],commit:['pro-result','pro-preview','manual-series-plan'],evidence:['pro-result','pro-panel-page','pro-status'],navigation:['pro-result'],background:['pro-result','pro-status']};
 const forbidden = new Set(['grant','grants','grantid','scopegrantid','intent','ticket','executionticket','credential','credentials','apikey','secret','password','authority','authorization','token','accesstoken','refreshtoken','binding','parentframe','evidencepack','metadataevidence','handlemap','privateindex','nativeindex','overlay','patch','inverse','readset','sourcegeneration','nativefields','targets']);
 function shape(value,allowed,required=allowed){
   if(!rec(value)||Object.keys(value).some(k=>!allowed.includes(k))||required.some(k=>!own(value,k)))throw Error('invalid-pro-public-shape');
@@ -281,7 +296,7 @@ function checkPage(value){shape(value,['offset','total','count','limit','hasMore
 function checkStatus(value){
   shape(value,['authorized','entitlement','processingMode','modelAvailability','cloudBudget','metadataOnly','positiveNone','persistence','mode','selectedProjectIds','segment','launchContext']);
   if(typeof value.authorized!=='boolean'||!['pro','active','free'].includes(value.entitlement)||!['off','local'].includes(value.processingMode)||!['local-rules','unavailable'].includes(value.modelAvailability)||value.cloudBudget!==0||value.metadataOnly!==true||!['available','unavailable'].includes(value.positiveNone)||!['same-idb','memory-only','session-only','unavailable'].includes(value.persistence)||!modes.includes(value.mode)||!ids(value.selectedProjectIds,100)||!integer(value.segment))throw Error('invalid-pro-public-status');
-  if(value.launchContext!==null){const c=value.launchContext;shape(c,['referenceId','topicId','seriesId','nativeProjectId','origin']);if(!id(c.referenceId)||!['topicId','seriesId','nativeProjectId'].every(k=>nullableId(c[k]))||!['topic','native-project','search','working-set','direct'].includes(c.origin)||c.origin==='topic'&&c.topicId===null||c.origin==='native-project'&&c.nativeProjectId===null)throw Error('invalid-pro-public-launch');}
+  if(value.launchContext!==null){const c=value.launchContext;shape(c,['referenceId','topicId','seriesId','nativeProjectId','nextReferenceId','origin']);if(!id(c.referenceId)||!['topicId','seriesId','nativeProjectId','nextReferenceId'].every(k=>nullableId(c[k]))||!['topic','native-project','search','working-set','direct'].includes(c.origin)||c.origin==='topic'&&c.topicId===null||c.origin==='native-project'&&c.nativeProjectId===null||c.nextReferenceId!==null&&(c.topicId===null||c.seriesId===null||c.nextReferenceId===c.referenceId))throw Error('invalid-pro-public-launch');}
 }
 function checkDisplay(value){
   const allowed=['scopeKey','topics','titles','placements','constraints','series','legacyResolutions','proposals'];shape(value,allowed);if(!id(value.scopeKey))throw Error('invalid-pro-public-display');
@@ -417,6 +432,11 @@ export function validatePublicProReply(action, value) {
   if(value.kind==='pro-panel-page'&&(!panelKinds.includes(value.panel)||value.panel==='records'&&!own(value,'operations')))throw Error('invalid-pro-public-panel');
   if(value.kind==='pro-rows-page'&&(!id(value.topicId)||!['current','old'].includes(value.lane)))throw Error('invalid-pro-public-rows');
   if(value.kind==='pro-records-page')value.items.forEach(checkOperation);
+  if(value.kind==='pro-operation-page'){
+    if(!id(value.previewId)||!id(value.operationId)||!['human','automation'].includes(value.actor)||!['applied','undone'].includes(value.operationStatus))throw Error('invalid-pro-operation-review');
+    checkChanges(value.changes);const p=value.page;
+    if(p.total>20000||!p.limit||p.limit>100||p.offset>p.total||p.count!==value.changes.length||p.offset+p.count>p.total||new Set(value.changes.map(c=>JSON.stringify([c.kind,c.key]))).size!==p.count)throw Error('invalid-pro-operation-review');
+  }
   if(value.kind==='pro-search-page')for(const item of value.items){shape(item,['refId','displayTitle','nativeTitle','available','contexts']);if(!id(item.refId)||!string(item.displayTitle,1000)||!string(item.nativeTitle,1000)||typeof item.available!=='boolean'||!Array.isArray(item.contexts)||item.contexts.length>24)throw Error('invalid-pro-public-search');for(const c of item.contexts){shape(c,['topicId','role']);if(!id(c.topicId)||!['primary','related'].includes(c.role))throw Error('invalid-pro-public-search');}}
   if(own(value,'view')){shape(value.view,['mode','native']);if(!modes.includes(value.view.mode)||value.view.mode!==value.status.mode)throw Error('invalid-pro-public-view');if(value.view.native!==null)checkNativePage(value.view.native,value.versions.scopeKey);}
   if(['pro-preview','manual-series-plan'].includes(value.kind))checkPreview(value);

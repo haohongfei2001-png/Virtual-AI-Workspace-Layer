@@ -1,5 +1,6 @@
-/** Formal BrowserLocal composition on the existing anonymous observed-shape
- * host. No server principal, Pro fixture owner, or synthetic grant is supplied. */
+/** The unchanged formal BrowserLocal package on synthetic observed-shape HTML
+ * fulfilled in a disposable browser. The deny-only proxy never forwards to the
+ * real host. No server principal, fixture owner, or synthetic grant is supplied. */
 import assert from 'node:assert/strict';
 import {createServer} from 'node:http';
 import {mkdtemp,mkdir,readFile,writeFile} from 'node:fs/promises';
@@ -23,24 +24,34 @@ const sourceStatusBefore=sourceStatus();
 if(process.env.VAIWL_SOURCE_COMMIT&&process.env.VAIWL_SOURCE_COMMIT!==sourceSHA)throw Error('local-browser-source-sha-mismatch');
 if(process.env.CI==='true'&&sourceStatusBefore)throw Error('local-browser-CI-source-must-match-commit');
 const hash=value=>createHash('sha256').update(value).digest('hex'),requests=[];
-const html=observedDesktopHTML(C),server=createServer((request,response)=>{requests.push(request.url);response.writeHead(200,{'Content-Type':'text/html','Cache-Control':'no-store'});response.end(html);});
+const html=observedDesktopHTML(C),server=createServer((_request,response)=>{response.writeHead(403);response.end();});
 await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
-const origin='http://127.0.0.1:'+server.address().port,guard=await createHistoricalNetworkGuard({fixtureOrigin:origin});
+const origin='https://chatgpt.com',fixtureOrigin='http://127.0.0.1:'+server.address().port,guard=await createHistoricalNetworkGuard({fixtureOrigin});
 const report={format:'vaiwl-unified-browser-local/1',sourceSHA,sourceStatusBefore,sourceMatchesCommit:sourceStatusBefore==='',
  evidenceClass:'FORMAL_BROWSER_LOCAL_PACKAGED_MV3_SYNTHETIC_HOST',status:'RUNNING',realChatGPT:'NOT_RUN',personalMac:'NOT_RUN',actualPAIA:'NOT_RUN',
  modelCalls:0,cloudBudget:0,serverIdentity:'NOT_ESTABLISHED',fixtureHash:hash(html),profiles:[],errors:[],requests,
- limits:['Observed selectors are replayed with synthetic text, not a live ChatGPT page.','Personal binding uses the existing explicit extension popup action and does not establish server account identity.']};
+ packageProfile:'UNCHANGED_FORMAL_BROWSER_LOCAL',hostTransport:'PLAYWRIGHT_SYNTHETIC_HTML_FULFILL_NO_REAL_HOST_REQUEST',
+ limits:['Observed selectors are replayed with synthetic text, not a live ChatGPT page.','The formal package is unchanged; a browser route fulfills synthetic HTML at its allowed host, and the deny-only proxy has no outbound forwarding.','Personal binding uses the existing explicit extension popup action and does not establish server account identity.']};
 let context,page,manifest;
 const sourceHashes=async()=>Object.fromEntries(await Promise.all(Object.keys(manifest.sourceHashes).sort().map(async path=>[path,hash(await readFile(path))])));
 try{
  for(const proR1 of [false,true]){
-  const name=proR1?'unified-free-pro':'standalone-free',built=packageHost(join(directory,name,'package'),{offlineOrigin:origin,browserLocal:true,proR1});
+  const name=proR1?'unified-free-pro':'standalone-free',options=proR1?{browserLocal:true,proR1:true}:{browserLocal:true},built=packageHost(join(dirname(output),'formal-tested-packages',name),options);
   manifest=JSON.parse(await readFile(join(built.unpacked,'build-manifest.json'),'utf8'));
-  const profile={name,package:built,checks:[],sourceHashesBefore:await sourceHashes(),status:'RUNNING'};report.profiles.push(profile);
+  assert.equal(manifest.origin,origin);assert.equal(manifest.status,'HOST_IMPLEMENTATION_UNVERIFIED');assert.equal(manifest.browserLocal,true);
+  const profile={name,options,package:built,checks:[],sourceHashesBefore:await sourceHashes(),status:'RUNNING'};report.profiles.push(profile);
   const check=label=>{profile.checks.push({name:label,status:'PASS'});console.log('PASS '+name+': '+label);};
   context=await chromium.launchPersistentContext(join(directory,name,'profile'),{executablePath,headless:true,viewport:{width:1000,height:900},
    ignoreDefaultArgs:['--disable-extensions'],args:['--enable-unsafe-extension-debugging',...historicalNetworkGuardArgs(guard.config)]});
-  report.browser=context.browser().version();await context.route('**/*',route=>route.request().url().startsWith(origin+'/')||route.request().url().startsWith('chrome-extension://')?route.continue():route.abort());
+  report.browser=context.browser().version();await context.route('**/*',route=>{
+   const request=route.request(),url=request.url();
+   if(url.startsWith('chrome-extension://'))return route.continue();
+   if(url===origin+'/c/'+C&&request.method()==='GET'&&request.isNavigationRequest()){
+    requests.push({url,method:request.method(),action:'SYNTHETIC_HTML_FULFILL'});
+    return route.fulfill({status:200,contentType:'text/html',headers:{'Cache-Control':'no-store'},body:html});
+   }
+   requests.push({url,method:request.method(),action:'ABORT'});return route.abort();
+  });
   context.on('page',p=>p.on('pageerror',error=>report.errors.push(error.message)));
   const cdp=await context.browser().newBrowserCDPSession(),{id}=await cdp.send('Extensions.loadUnpacked',{path:built.unpacked});
   const workspaceURL=`chrome-extension://${id}/workspace.html`;
@@ -78,6 +89,8 @@ try{
   profile.verification=verifyHost(built.unpacked);profile.sourceHashesAfter=await sourceHashes();profile.sourcesStable=JSON.stringify(profile.sourceHashesBefore)===JSON.stringify(profile.sourceHashesAfter);assert(profile.sourcesStable,'source changed during local browser check');
   profile.status='PASS';await context.close();context=null;
  }
- assert(requests.every(path=>!path.startsWith('/api/')&&!path.startsWith('/backend-api/')));assert.deepEqual(report.errors,[]);report.status='PASS';
+ assert(requests.some(row=>row.action==='SYNTHETIC_HTML_FULFILL'));
+ assert(requests.every(row=>row.action==='SYNTHETIC_HTML_FULFILL'&&row.url===origin+'/c/'+C),'formal local mode must not attempt host API or model requests');
+ assert.deepEqual(report.errors,[]);report.status='PASS';
 }catch(error){report.status='FAIL';report.error=error.stack;process.exitCode=1;if(page&&!page.isClosed())try{report.failure={url:page.url(),frames:page.frames().map(f=>f.url()),startup:await page.evaluate(()=>document.documentElement.dataset.vaiwlStartup)};report.screenshot=join(dirname(output),'browser-local-failure.png');await page.screenshot({path:report.screenshot,fullPage:true});}catch{}}
 finally{report.sourceStatusAfter=sourceStatus();report.sourceMatchesCommit=report.sourceMatchesCommit&&report.sourceStatusAfter==='';await context?.close();await new Promise(resolve=>server.close(resolve));await guard.close();report.networkGuard=guard.snapshot();await writeFile(output,JSON.stringify(report,null,2)+'\n');console.log(JSON.stringify({status:report.status,profiles:report.profiles.map(p=>({name:p.name,status:p.status,checks:p.checks.length})),error:report.error,output}));}

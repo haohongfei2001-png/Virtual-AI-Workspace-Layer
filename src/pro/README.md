@@ -1,5 +1,22 @@
 # VAIWL Pro R1 工程候选
 
+## 统一集成候选入口（2026-10-31）
+
+PR #24 的隔离分支 `codex/vaiwl-unified-r1-20261031` 已将本目录接入真实 MV3 worker、原 Free UI frame 和 DB4 owner。基于经独立复现的 Pro `5dec17dc275a79b998db6b3ba8d940710337d3b5`，在一个受控节点继承 Free `5593e02eb81b1fc8fda3a12dc945d0280cf67d60`。Free #16、Pro #23 与 `main` 继续由原负责人维护。
+
+统一入口、六 port 的实现、构建、迁移/回退与验收说明见 [UNIFIED_R1_INTEGRATION.md](../../docs/engineering/UNIFIED_R1_INTEGRATION.md)。直接构建统一候选：
+
+```sh
+npm ci --prefix extension/tooling --ignore-scripts --no-audit --no-fund
+node extension/package.mjs --pro-r1 /absolute/new-output-directory
+```
+
+默认 Free 构建依然不导入 Pro。统一包复用现有 BrowserLocal 显式解锁；未确认持久空间时只读，未知归属不推断 NONE，真实模型和费用保持关闭。独立样本服务器只用于测试，不是生产入口。
+
+当前候选的证据来自 [统一验收入口](../../tests/integration-unified/README.md) 与两套隔离 GitHub workflows，必须核对报告中的精确 `sourceSHA`、源码稳定性和包 SHA256。以下章节保留 **PR #23 独立交付时的实现、历史成绩和当时的接线缺口**，不将其 443 项记录冒充后续统一包验收，也不将历史的“未接线”描述当成本分支状态。真实 ChatGPT、本人 Mac、实际 PAIA 和模型许可仍分别验收；Draft 不代表发布。
+
+## 原 Pro R1 独立交付记录
+
 合同：**VAIWL-PRO/1.0**。执行依据：交接包 `SECOND-PRO-START.md`，主稿明确语义优先于类型、场景和视觉。该目录是独立 Pro 语义层、可运行界面及共享 owner 的可选适配代码。
 
 **P0–P3 的隔离工程已实现；实际产品来源、共享宿主集成、真实用户验收和发布仍是独立关卡。** 现有扩展入口没有导入此目录，真实模型默认关闭。

@@ -659,7 +659,7 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
    if(modeCompanionFactory)try{modeCompanion=modeCompanionFactory({document:doc,runtime,role,parentOrigin,privateRoot,freeRoot:root,
     isCurrent:()=>!closed&&grantCurrent()&&Date.parse(grant?.expiresAt)>now(),getGrant:()=>grant,
     onLayout:queueSidebarSize,onSidebarRestore:scroll=>{sidebarRestore=scroll;queueSidebarSize();},onExit:()=>lifecycle.exit(),onBackup:openBackup,
-    now,elapsedNow,schedule,cancel});if(modeCompanion instanceof Promise){modeCompanion.catch(()=>{});modeCompanion=null;}}catch{modeCompanion=null;}
+    now,elapsedNow,schedule,cancel});try{Promise.prototype.then.call(modeCompanion,()=>{},()=>{});modeCompanion=null;}catch{/* A synchronous companion has no Promise internal slot. */}}catch{modeCompanion=null;}
    void bootstrapResume();void refreshManagement();return;
   }
   // Renewal updates this same authority guard only. DATA_CHANGED, entry and
