@@ -71,6 +71,13 @@ test('cancelling a historical job does not abort a different live owner task',as
     return new Promise(resolve=>{finish=()=>resolve(new Response(JSON.stringify({status:'completed',output:[{type:'message',content:[{type:'output_text',text:JSON.stringify({
       schemaVersion:'vaiwl-pro-model-output/1',requestNonce:payload.requestNonce,items:[{kind:'EXISTING',conversationHandle:payload.items[0].handle,
         topicHandle:payload.candidateTopics[0].handle,titleSuggestion:null,evidenceHandles:[payload.items[0].handle],reason:'same-object-goal',explanation:'合成协议验证'}]})}]}],usage:{input_tokens:100,output_tokens:20}}),{status:200}));});}});
+  // The old administrator policy is not a user's spending choice. This case
+  // needs one actually dispatched task; the historical-only cases above must
+  // remain usable without granting new task/day/month spending permission.
+  const initialBudget=await f.bridge.budgetSettings(f.session);
+  assert.deepEqual(initialBudget.limits,{taskMicros:0,dayMicros:0,monthMicros:0});assert.equal(initialBudget.blocked,true);
+  const selectedBudget=await f.bridge.configureBudget(f.session,{limits:{taskMicros:1000,dayMicros:1000,monthMicros:1000},expectedRevision:initialBudget.revision,operationId:'explicit_synthetic_spending_choice'});
+  assert.equal(selectedBudget.blocked,false);
   await f.seed('historical_unsent');assert.equal(f.bridge.start(f.session).state,'registered');
   await Promise.race([enteredPromise,new Promise((_,reject)=>{const timer=setTimeout(()=>reject(Error('synthetic-task-did-not-dispatch')),2000);timer.unref();})]);
   try{

@@ -13,7 +13,7 @@ try{
  if(process.env.VAIWL_SOURCE_COMMIT&&process.env.VAIWL_SOURCE_COMMIT!==sourceSHA)throw Error('exact-source-sha-required');
  if(process.env.CI==='true'&&report.sourceStatusBefore)throw Error('CI-source-must-be-clean');
  if(!process.env.PRO_CHROMIUM_EXECUTABLE)throw Error('full-isolated-chromium-required');
- for(const name of ['closeout-ui-browser','closeout-zoom-browser','closeout-history-browser']){
+ for(const name of ['closeout-ui-browser','closeout-zoom-browser','closeout-history-browser','closeout-model-crash-browser']){
   const started=Date.now(),result=await new Promise(resolve=>{let text='';const child=spawn(process.execPath,['--test-reporter=tap','tests/pro/'+name+'.mjs'],{cwd:root,env:{...process.env,PRO_EVIDENCE_DIR:join(output,name),PRO_UI_SCREENSHOT_DIR:join(output,name)},stdio:['ignore','pipe','pipe']});child.stdout.on('data',b=>text+=b);child.stderr.on('data',b=>text+=b);child.on('error',e=>text+=e.stack);child.on('close',(code,signal)=>resolve({code,signal,text}));});
   await writeFile(join(output,name+'.log'),result.text);const count=k=>Number(result.text.match(new RegExp('^# '+k+' (\\d+)$','m'))?.[1]??0);
   const passed=result.code===0&&count('tests')>0&&count('fail')===0&&count('skipped')===0&&count('cancelled')===0;

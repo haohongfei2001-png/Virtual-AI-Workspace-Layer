@@ -28,6 +28,8 @@
 | `tests/pro/remote-ui-browser.mjs` | 隔离 Chromium 实际有界 renderer PASS：242 个搜索结果翻页；长 Series 编辑；完整大操作审阅和撤销；超过 100 个候选主题/原生 Project/已保存关系；第六页的关系移除实际提交；丢失回复幂等核对；恢复 UI。所有外部请求被拦截，实际观测外部请求和 page error 均为 0。 |
 | `tests/pro/ui-browser.mjs` | 继承的实际 UI 回归在本次变更后 PASS：人工闭环、过期草稿、Series、窄窗口、合成 IME/键盘事件及撤权清屏。 |
 | `tests/pro/closeout-history-browser.mjs` | `artifacts/pro-closeout/history-browser/closeout-history-browser.json` 为 PASS：Chromium 143.0.7499.4，515 次实际顺序 domain 提交，0 条预置 journal，真实 IDB 的 512 条历史切换、事务中止回滚、旧 receipt/inverse、旧操作重放与撤销、历史分页、两次独立损坏修复及整进程重开；第 515 次后改高水位后丢失新 root 和末尾 journal 时明确拒绝较短恢复，零回退写入。不是 10,000 次浏览器操作或物理磁盘断电。 |
+| `tests/pro/closeout-model-crash-browser.mjs` | `artifacts/pro-closeout/model-crash-browser/closeout-model-crash-browser.json` 为 PASS，证据类 `MV3_SYNTHETIC_PROVIDER_CRASH`：Chromium 143.0.7499.4 的实际 MV3 worker，真实 production model bridge 与 DB4 账本，30,000 微货币预留→持久派发收据→进程内合成 transport→实际 `ServiceWorker.stopWorker`→全新 worker RAM UUID/授权 epoch→同任务恢复 `outcome-unknown`。两次恢复后金额仍占用 30,000，transport 总计一次、自动重发为 0、实际 fetch 为 0。独立测试扩展没有主机权限，CSP 禁止连接；浏览器背景请求由拒绝代理拦截并单独记录，不声称浏览器没有产生背景请求。不是实际供应商、真实费用或自然休眠验收；正式产品包不含该测试 worker。 |
+| 统一 MV3 有限无附着观察 | `tests/integration-unified/unforced-worker.mjs` 在独立 Chrome 固定观察 60 秒；没有宿主页、worker debugger、周期请求或产品 timer 修改。`mv3-browser.mjs` 随后重开宿主、取得新授权并核对同库资产。观察到 target 消失也只记 `NOT_ESTABLISHED`/原因未归因；没有消失记 `NOT_OBSERVED`，不宣称自然休眠已通过。本候选的实际观察值与恢复结果取同 SHA 的 `unforcedWorkerObservation`；这项独立工程验证不归入 RD2。 |
 | 存储/领域独立复核 | 稳定性负责人最新专项回执为 188/188 PASS，新增生产 dispatch fence 及迟到动作反例另验 17/17；两次修复、高水位和禁止较短恢复已通过独立复审。它们是各自受测源码的局部回执，不能相加成最终唯一测试数；新增预算及最终完整 CI 以同提交报告为准。旧 10,000 条边界用的是合法历史 codec 的合成持久链，不冒称 10,000 次用户点击。 |
 | `tests/pro/closeout-zoom-browser.mjs` | `artifacts/pro-closeout/zoom/real-zoom.json` PASS：真实 `chrome.tabs.setZoom` 的 100%、125%、200%，对应 devicePixelRatio 和视口变化均核对，CSS zoom 保持 1；键盘创建、弹层操作和溢出检查通过。不是用 CSS 缩放代替浏览器缩放。 |
 | 中文字形/视觉复核 | 本地镜像缺 CJK 字体，早期截图的几何和操作验证不等于中文视觉验收。最终 CI 安装官方 `fonts-noto-cjk` 后须查看实际截图；这是可独立完成的最终工程检查，不能列为 `REAL_DEVICE_VALIDATION`。 |
@@ -62,7 +64,7 @@
 | **A22 未知 handle/URL/注入** | `model/output-schema.mjs`、`model/validate.mjs`、`model/payload.mjs`、`model/openai-responses.mjs` 拒绝未知字段、handle、跨引用证据、URL/tool/权限注入；不能触发原生写操作。 | `model-schema.test.mjs`；`model-provider.test.mjs`；`organize.test.mjs` A22；`closeout-ai-service.test.mjs` wrong handle 与使用量结算。 | 无 Pro 余项。真实供应商实际输出仍须 EA1/EA2 实验。 |
 | **A23 截断/refusal/超长 JSON** | 拒绝不完整结果，bounded response/input/token/timeout；无无限重试；已派发时保守记录未知费用，未取得有效提案不应用。 | `model-provider.test.mjs`；`model-schema.test.mjs`；`closeout-ai-service.test.mjs` refusal/missing usage/network/timeout/late-result。 | 无 Pro 余项。 |
 | **A24 双 tab/scope 预算** | `jobs/budget.mjs`、`integration/model-budget.mjs` 与 billing store 将三项用户上限、安装付款总额及 scope 子额同事务 CAS；默认 0，修改需旧新预览和确认，丢失回复幂等。UTC 日/月已占用包括预留和未知费用；队列余量遵守所有更严格限额。改预算清除各 scope 云许可，不自动启动。 | `budget.test.mjs` A24；`billing-store.test.mjs` 双连接/政策/归档；`closeout-ai-budget.test.mjs`；`closeout-public-budget.test.mjs`；`closeout-ui-browser.mjs` 三额度/零/近限/只读；AI service 派发重验。 | 无 Pro 余项。真实配置、付款与账单核对需 EA1。 |
-| **A25 派发后超时/重启** | 先持久派发标记再允许 transport；未知回执保留预留费用；worker/service 重建不得自动重发。到期价格卡、关闭执行、撤回用途也不隐藏历史费用或取消/恢复入口。 | `jobs.test.mjs` A25；`billing-store.test.mjs` reopen；`closeout-ai-service.test.mjs` timeout/lost durable dispatch；`closeout-public-model.test.mjs`；统一 MV3 实际 worker/browser 生命周期。 | 无 Pro 余项。真实网络中断/供应商计费行为需 EA1；人工设备休眠场景见 RD2。 |
+| **A25 派发后超时/重启** | 先持久派发标记再允许 transport；未知回执保留预留费用；worker/service 重建不得自动重发。到期价格卡、关闭执行、撤回用途也不隐藏历史费用或取消/恢复入口。 | `jobs.test.mjs` A25；`billing-store.test.mjs` reopen；`closeout-ai-service.test.mjs` timeout/lost durable dispatch；`closeout-public-model.test.mjs`；`closeout-model-crash-browser.mjs` 实际 worker 终止与同 DB4 未知费用恢复。统一 MV3 的人工资产生命周期另验，不代替该组合。 | 无 Pro 余项。真实供应商网络/计费核对需 EA1；本人 OS 休眠/磁盘故障见 RD2，独立浏览器的可控中断不等待实机。 |
 | **A26 Pro 关闭/会员/预算 0** | mode、entitlement、processing、capability 分离；native 立即可用，Pro资产保留；新写暂停而保存内容、记录、删除、别名清理、撤销、导出恢复保留。Free→Pro 还原所选 Project 和分页位置。切原生默认暂停，当前范围的继续整理须独立明确选择且仍受当前文档许可约束，不承诺浏览器关闭后运行。 | `jobs.test.mjs` A26；`ports.test.mjs` entitlement；`production-owner.test.mjs` policy invalidation；`remote-controller.test.mjs` resume；closeout UI 只读 Series/model/跨 Project；统一 MV3。 | 无 Pro 余项。真实账户会员可信状态和撤权来源由 FD2 提供。 |
 | **A27 迁移/容量/旧 reader** | 同库版本兼容、明确最低 reader；旧 root/1 的 10,000 条历史不再锁死第 10,001 次写入，512 窗口转有封印的无损历史段。多次修复采用不可变关联回执与有界 head，后续正常编辑同事务更新高水位；缺失后继拒绝较短恢复。别名 100 条上限通过显式可撤销管理解决。 | `migration-recovery.test.mjs`；`composite-backup.test.mjs`；`storage-history.test.mjs` 边界/损坏；`closeout-history-browser.mjs` 515 次真实 IDB、两次修复和再冷重启；`domain.test.mjs` alias；closeout UI 明确删除。 | 无 Pro 余项。修复后的资产根要求 storage/3 reader；用户预算另用 billing-storage/3。旧 Pro reader 不可写不支持的根，Free 继续读取自己的命名空间。资产与未决费用仍有显式有限容量，见下文。 |
 | **A28 备份恢复** | `integration/composite-backup.mjs` 与 `migration/recovery.mjs` 只恢复资产数据；portable compound backup 仍为 /1，不导出 lifetime journal/inverse、恢复 quarantine 或安装级账本。无 token/grant/key/云许可/pending 请求复活；Free+Pro 同笔事务恢复，冲突不得覆盖人工行。 | `composite-backup.test.mjs`；`migration-recovery.test.mjs`；`storage-browser.mjs`；`recovery-browser.mjs`；统一 MV3 备份/空白配置恢复。 | 无 Pro 余项。个人备份的最终恢复验收由用户自己的环境决定（RD2），不能拿它延迟合成浏览器验证。 |
@@ -80,6 +82,24 @@
 
 本地完整操作历史、原始 inverse、历史金额和恢复 quarantine 留在同库的受保护记录中。可移植 /1 备份保存现有人工/派生资产及必要引用，不保证将整个 lifetime undo/计费/诊断历史搬到另一安装；授权与 pending 工作尤其不能随备份恢复。上述产品边界与“本地历史无损归档”是不同承诺。
 
+R1 第 11 节规定的开发性能规模是 1,000 个获准引用/100 个主题；最终同提交报告保留冷/热状态、全部采样和不变阈值。该脚本使用 Node/MockIDB，不等同于物理磁盘或浏览器绘制指标。真实浏览器的长列表、515 次顺序提交与损坏恢复，以及合法历史 codec 的 10,000 条边界另有明确证据，不能混称 10,000 次浏览器吞吐。合同原本延期的 10k/100k 性能不被重新承诺为 R1 通过项，也不列作 `REAL_DEVICE_VALIDATION`。合法合成负载和可控容量反例可独立执行；只有本人资料、设备和宿主的实际体验属于个人环境验收。
+
+## G01–G09 黄金事件序列映射
+
+以下逐项对应冻结的 `fixtures/pro-contract-scenarios.json` 中九条黄金序列。数值/对象标识可由独立夹具替代，事件次序和保护断言必须保留；证据级别逐行说明。历史验收文件中的旧 `NOT_RUN` 或 stub 范围不被追溯改写。本表不把真实宿主或真实供应商状态写成已通过。
+
+| 黄金序列 | 当前次序与必须保持的结果 | 实际测试/证据入口 | 当前范围与剩余边界 |
+|---|---|---|---|
+| **G01-human-wins** | 旧标题提案先读取→用户写入新标题和 human ownership→旧结果到达；拒绝旧提案，人工状态完整不变。 | `domain.test.mjs` 的 `A06: stale proposal cannot overwrite later manual title`；`organize.test.mjs` A06/A07；`closeout-ai-service.test.mjs` 迟到结果围栏。 | 领域及生产任务控制流已独立覆盖；不依赖实际模型产生这一错误。 |
+| **G02-related-does-not-hide** | 同一个 C 只有两个 related、没有 primary→投影默认 Pro；仍以原名出现在未收录，两个主题都不因该关系推进活动。 | `stability.test.mjs` 的 G02 完整序列；`projection.test.mjs` uncollected/related-only。 | 合法合成数据、实际 controller/projector，IDB 为 MockIDB。 |
+| **G03-native-membership-change** | 模型读取 NONE→来源变成 PROJECT→旧提案尝试提交；原状态/日志零写，当前 Project 可达，旧人工关系保留但不在默认 Pro 范围生效。 | `stability.test.mjs` 的 G03 pending suggestion 序列；`ports.test.mjs` NONE→Project 资产保留；`closeout-dispatch-fence.test.mjs` 同事务来源检查。 | 来源变化由独立 owner 合成；真实来源事实仍由 FD1 提供。 |
+| **G04-undo-structural-conflict** | 完整合并提交→人工再改成员→撤销；inverse 零写并显示冲突，只有重新明确确认的补偿计划另行提交，后来的成员/排除不丢失。 | `structural-commit.test.mjs` 的 G04 同一状态链；`domain.test.mjs` A18；`remote-ui-browser.mjs` 完整审阅与撤销。 | 结构原子性、冲突和新补偿已独立覆盖；物理存储故障不冒充此逻辑反例。 |
+| **G05-dispatch-crash** | 预留 30,000→持久派发标记→合成请求进入 transport→实际 MV3 worker 终止→新 worker 读取同一 DB4→明确恢复；任务为 `outcome-unknown`，费用仍占用 30,000，自动重发为 0，重复恢复不退款。 | `closeout-model-crash-browser.mjs`；证据类 `MV3_SYNTHETIC_PROVIDER_CRASH`，真实 production model bridge/IDB/worker，实际停止事件及新的 RAM UUID/epoch；同提交由 `closeout-run.mjs` 执行。 | 已完成可独立运行的完整组合。测试仅使用原创 metadata、合成权限与进程内 transport；真实供应商账单仍属 EA1，本人 OS 休眠属 RD2，二者不替代本测试。 |
+| **G06-two-scopes-budget** | 安装总余量 40,000；A 预留 30,000→B 再预留 30,000 被拒；只成功一笔，10,000 仍可预留，换 scope 不重置总额。 | `budget.test.mjs` A24 的精确金额序列及并行调用；`billing-store.test.mjs` A24 双连接同库 CAS；`closeout-ai-budget.test.mjs` 用户额度/更严格政策/未知费用。 | 纯预算算法和同库事务分别验证；真实付款配置与供应商对账仍属 EA1。 |
+| **G07-legacy-ambiguity** | 两条旧 human/locked 关系→准备迁移；两行与锁完整保留，`chosenPrimary: null`、`primary-resolution-required`，未擅自选择第一条，原生/未收录入口仍可达。 | `migration-recovery.test.mjs` multiple old human placements；`projection.test.mjs` suspended primary；统一 `mv3-browser.mjs` Free 备份→真实生产升级 UI→明确主关系核对。 | 独立迁移逻辑与隔离真实 IDB/UI 都有入口；本人旧安装资料的发布前验收另列 RD2。 |
+| **G08-hard-exclude-not-dismiss** | pair 排除已存→新证据/模型版本/提案指纹到达；仍禁止自动应用，负约束不变；只有显式解除排除后才可新增关系。 | `domain.test.mjs` A08；`organize.test.mjs` `hard pair exclusions survive newer evidence and model output` 与 rejection fingerprint 反例。 | 使用合法合成模型输出验证；不依赖真实供应商授权。 |
+| **G09-new-chat-not-next-chat** | 精确新建关联能力不可用→不创建可消费的 pending 归属→另一父文档打开旧聊天、独立新 C 随后出现；零自动 Placement，独立资格确认后只有显式收录才写入。 | `closeout-public-data.test.mjs` A20：实际 production owner、合成第二文档/native snapshot、原状态/日志不变断言，最后明确 `SET_PLACEMENT` 仅新增一条；普通收录 UI。 | 已验证合同允许的安全后备；没有假称真实“新建→第二 tab”宿主旅程。精确 action→新 C 关联和真实取消/第二 tab 序列为 FD4。 |
+
 ## 自动模型与质量门：实现和真实准入分开
 
 | 门 | 已实现的可独立工程 | 必须保留的真实边界 |
@@ -94,11 +114,11 @@
 | 额度设置（§6.5） | 单项/每日/每月三项上限默认 0，以整数微货币保存；UTC 周期、已占用与队列余额可见，队列不增加独立输入。提高额度须预览确认；取消/过期/重复和回复丢失不重复写，保存后必须重新确认云范围；近限提供暂停/调整，到期会员只读费用及可暂停。 | `closeout-public-budget.test.mjs`、`closeout-ai-budget.test.mjs`、`closeout-ui-browser.mjs` 验证工程；真实付款限额与计费仍需 EA1。 |
 | 单聊天精细复核（§6.3） | 当前范围内一个获准聊天单独披露和确认，使用同一冻结模型；只产生建议，不改变全局整理模式、不推进普通批次、不打开自动或后台偏好。取消返回人工编辑保留未保存草稿。 | 公开接口实际 owner 合成 transport 与浏览器交互均 PASS；真实分类质量仍需 EA2。 |
 | 当前范围后台偏好（§7.1） | “切换到原生视图后继续”独立默认关闭，取消不保存。明确选择后仅在同一当前文档许可仍有效时继续原范围；默认切原生暂停。当前自动范围的新来源有限触发，不以 UI 开关绕过来源/质量/费用门。 | 生产 owner 默认暂停/显式继续及新增来源反例、浏览器偏好传递已运行；关闭浏览器后的常驻执行从未承诺。 |
-| 效用 | `organize/evaluation.mjs` 对参与者/任务量、20% 中位找回耗时降低且错误不升的门做计算验证。 | EA3：至少 12 人、60 个真实任务的平衡对照研究及数据用途许可。本次不把调用数/测试数当找回收益。 |
+| 效用 | `organize/evaluation.mjs` 对参与者/任务量、20% 中位找回耗时降低且错误不升的门做计算验证。 | EA3：合同第 11.3 节建议的后续效用研究，至少 12 人、60 个真实任务的平衡对照及数据用途许可。本次不把调用数/测试数当找回收益，也不将该后续研究改作当前代码收口的前置条件。 |
 
 ## 最终剩余依赖清单
 
-这些条目只包含必须由外部事实、授权或本人环境补齐的事项。人工功能、DTO/分页、任务接线、合法合成数据验证、独立浏览器、实际 tab zoom、打包、CI、中文字体截图不在此列表。
+这些条目只包含必须由外部事实、授权或本人环境补齐的事项。人工功能、DTO/分页、任务接线、合法合成数据/容量反例、独立浏览器、实际 tab zoom、可控 worker 终止、有限无附着观察、打包、CI、中文字体截图不在此列表。FD3 正文增强和 EA3 效用研究是注明的后续范围，不是当前 metadata/manual R1 代码收口前置条件。
 
 | ID / 分类 | 确切缺失能力 | 已完成的 Pro 准备与当前行为 | 验收需要的实际事实 |
 |---|---|---|---|
@@ -106,17 +126,17 @@
 | **FD2 / FREE_DEPENDENCY** | 真实 ChatGPT 宿主导航确认、账户身份/授权 epoch/撤权、可信会员状态及原生 composer/popover 生命周期。 | scoped authority、CAS、原生 new-tab 后备、Free/Pro 无损切换、临时/过期只读、隔离 MV3 生命周期。 | Free owner 的真实来源与宿主通道验收；不覆盖其 PR #16 开发成果。 |
 | **FD3 / FREE_DEPENDENCY** | 仅当后续选择使用正文增强时，Free 提供当前获准选区/已发送内容的明确能力与出处。 | metadata-only 路径完整；输入类型、用途与 payload 边界已预备，缺能力不会读取正文。 | 明确来源、最小字段和独立用途许可。R1 metadata/manual 模式不等待此项。 |
 | **FD4 / FREE_DEPENDENCY** | 原生“新建聊天”操作与新 conversation ID 的精确 action 关联。 | 无推测 pending 收录；取消/其他文档/后续出现 C 均不产生关系；用户明确收录后备已验证。 | 真实新建/取消/第二 tab/旧聊天序列；不能把 first seen 当 created by action。 |
-| **EA1 / EXTERNAL_APPROVAL** | 实际模型服务、凭据、数据用途/目的地、保留政策、价格卡、付款配置/额度及真实调用许可。 | provider 关闭/零 transport；本地规则及人工可运行；配置、严格校验、账本、任务/失败/恢复、owner 接口已实现。 | 在明确授权范围内执行真实最小批次、失败/取消/对账；本次不发送个人数据、不收费。 |
+| **EA1 / EXTERNAL_APPROVAL** | 实际模型服务、凭据、数据用途/目的地、保留政策、价格卡、付款配置/额度及真实调用许可。 | 正式 provider 默认关闭，真实外网调用为 0；本地规则及人工可运行。配置、严格校验、账本、任务/失败/恢复、owner 接口已实现；进程内合成 transport 与实际 worker 中断另有明确证据类别。 | 在明确授权范围内执行真实最小批次、失败/取消/对账；本次不发送个人数据、不收费。 |
 | **EA2 / EXTERNAL_APPROVAL** | 获准自然评测数据与实际供应商运行，以及按 profile/lane 的质量报告和自动范围批准。 | 评测/隔离/分母/区间/样本门、人工保护、owner-only 自动准入已实现并用合成反例验证；没有报告不开自动。 | 冻结 profile 的独立自然中文保留集结果、双标、覆盖与稳定性；不是本地规则成绩。 |
-| **EA3 / EXTERNAL_APPROVAL** | 真实参与者与真实工作任务的研究/数据用途许可。 | 效用研究统计接口、任务量与错误率门已实现。 | 至少 12 人/60 任务的平衡对照，报告中位找回时间和维护成本；本次未招募或研究用户。 |
+| **EA3 / EXTERNAL_APPROVAL** | 后续效用研究的真实参与者与真实工作任务研究/数据用途许可。 | 效用研究统计接口、任务量与错误率门已实现；合同将此列为后续评估设计，不阻断当前代码收口。 | 建议至少 12 人/60 任务的平衡对照，报告中位找回时间和维护成本；本次未招募或研究用户。 |
 | **RD1 / REAL_DEVICE_VALIDATION** | 本人实际 OS IME、触控/辅助技术、真实屏幕和已安装扩展与真实 ChatGPT 同时使用。 | 独立浏览器的窄/短视口、真实 100/125/200% tab zoom、键盘/合成 composition、native textarea/dialog 共存已完成；CI 中文截图独立完成后另绑定。 | 实际设备输入法候选、焦点、缩放与辅助技术体验。 |
-| **RD2 / REAL_DEVICE_VALIDATION** | 本人配置的安装/停用/卸载、系统休眠/崩溃/磁盘故障、本人备份与长期宿主恢复。 | 隔离真实 Chromium IDB、整进程重开、事务 abort、历史归档与恢复、统一包 disable/uninstall 已有独立测试。 | 真实设备/账户配置的发布前验收；不能把独立已完成部分再次当作外部阻塞。 |
+| **RD2 / REAL_DEVICE_VALIDATION** | 本人既有安装/账户资料的升级、回退、停用/卸载，OS 休眠/崩溃/磁盘故障，本人备份与长期宿主恢复。 | 隔离真实 Chromium IDB、整进程重开、事务 abort、历史归档/多次恢复、派发后实际 worker 终止/未知金额保持、统一包 disable/uninstall 已有独立测试；固定 60 秒无附着观察由统一 CI 如实记录，不借此宣称休眠原因。 | 真实设备/账户配置的发布前验收；独立可控中断、合成负载与浏览器观察不列设备待办，未观测到自然停止也不等于需本人设备才能测试。 |
 
 ## 最终交付的工程回执核对规则
 
 1. 以同提交 CI 报告的 `sourceSHA`、干净源码与 `sourceMatchesCommit` 自动绑定候选；Draft PR 记录精确 SHA、实际 GitHub CI URL 和结果。只在实际最终报告与可运行包核对通过后判定 `PRO_CODE_READY`，不将本文件内局部 PASS 当作最终结果。
 2. 自动 owner、单聊天复核、三额度、原生后台偏好和一次性披露围栏的合成正/反例随最终代码运行；真实 profile/报告/凭据仍无默认值。
-3. 统一 MV3 包验证包含原 Free 回归、真实 worker 生命周期、实际停用/卸载、同库备份/迁移/恢复；注明强制终止和自然 idle 的区别。
+3. 统一 MV3 包验证包含原 Free 回归、真实 worker 生命周期、实际停用/卸载、同库备份/迁移/恢复；附加 G05 验证合成派发后的实际 worker 终止与同账本保守恢复。固定 60 秒无附着观察记录是否出现 target 消失及随后恢复，强制停止、未归因的 target 消失和本人 OS 休眠分别表述；不把 `NOT_OBSERVED`/`NOT_ESTABLISHED` 改写为自然休眠通过。
 4. 固定源码后重测 1,000 引用/100 主题的冷/热开发性能，保留全部样本及 source digest。旧 performance 数字不借用；目标为本地反馈 p95≤100 ms、缓存切换≤150 ms、完整 IDB 链≤500 ms。MockIDB 与真实浏览器指标分别说明。
 5. 在有合法 CJK 字体的独立 CI 浏览器中检查中文截图、正常/窄/短/200% 布局；不得将缺字体造成的未验收转列本人设备依赖。
 6. 产物 SHA、manifest、可运行统一包和测试源摘要一致；无用户/供应商真实调用、无 merge/release。任何剩余本轮工程失败直接修复，不能转记 FD/EA/RD。
