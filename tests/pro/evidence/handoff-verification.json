@@ -1,0 +1,225 @@
+{
+  "contract": "VAIWL-PRO/1.0",
+  "manifestSha256": "fcd9dbdbad7e66d5747b8e8253458abf724df55f8ca1ce624e8ce4cfb3fac544",
+  "filesVerified": 36,
+  "allVerified": true,
+  "baselineHead": "f317b26ea6ed7d1cc249c4bfc0ad90a619d29417",
+  "files": [
+    {
+      "path": "BASELINE_DELTA.json",
+      "sha256": "86394d0bfd212cd93616a2fbccc2cd74f40376278e432b3f9cfd533339323204",
+      "bytes": 864,
+      "verified": true
+    },
+    {
+      "path": "DESIGN_REVIEW.md",
+      "sha256": "a59992ebec2a7970add93bda3985362b8b781c6bba69c945d321c15d87612d38",
+      "bytes": 3882,
+      "verified": true
+    },
+    {
+      "path": "README.md",
+      "sha256": "5fcf81a48f9004d482c9bdd07108a43904ba52ee4ca684833cb33e4d874515a4",
+      "bytes": 2267,
+      "verified": true
+    },
+    {
+      "path": "SECOND-PRO-START.md",
+      "sha256": "718b10e0414c1c436f967edb689a6e92e33c9e6f4ef183b81a502a36d9d9e7e7",
+      "bytes": 4591,
+      "verified": true
+    },
+    {
+      "path": "SOURCE_BASELINE.json",
+      "sha256": "939a0cfdb3a6fd1062b0f3fbeecb291a3f0fc6e39bacc890ccb3dda845b4bbb5",
+      "bytes": 8368,
+      "verified": true
+    },
+    {
+      "path": "VAIWL-Pro-Design-Handoff-R1.md",
+      "sha256": "0bdc43174d5efe6cf1c79285a1da446a5dd8a1f1fe070f8881b8526a397bc4ff",
+      "bytes": 66312,
+      "verified": true
+    },
+    {
+      "path": "VAIWL-Pro-Design-Handoff-R1.pdf",
+      "sha256": "a9e9e3b18a81b9e0a451faba04e5003844eb04ae288dee5e2035ac2e3b7ad580",
+      "bytes": 293260,
+      "verified": true
+    },
+    {
+      "path": "VAIWL-Pro-Visual-R1.pdf",
+      "sha256": "94c22674427682b6e82dc2d0004337be86b08a77f15b1ce68f478eb7ca8fc27b",
+      "bytes": 1780308,
+      "verified": true
+    },
+    {
+      "path": "VALIDATION.json",
+      "sha256": "27487d725b931b48f591911c781662ff719602de6919be05d62117987e5fbee1",
+      "bytes": 2262,
+      "verified": true
+    },
+    {
+      "path": "contracts/MODEL_ADAPTER_CONTRACT.md",
+      "sha256": "ab5f2b17706ed1e6be7570b93830c178c4f9b1fb62f5b79f0bff9580d4a8a126",
+      "bytes": 3994,
+      "verified": true
+    },
+    {
+      "path": "contracts/VAIWL_PRO_CONTRACTS.d.ts",
+      "sha256": "50c981057b61e8b9ca4f333a8a45b44db9352a58e1446e2bae9f1f3fba070e81",
+      "bytes": 37942,
+      "verified": true
+    },
+    {
+      "path": "contracts/contract-format-validation.json",
+      "sha256": "a8b83cb1d8729321681f7d062c5636ffde26789df7d829646afd9993d4d0b307",
+      "bytes": 2912,
+      "verified": true
+    },
+    {
+      "path": "contracts/model-output.schema.json",
+      "sha256": "973c5580d4e6bd71db6294559e089e396b1c6652745722b91868547c2f50f10f",
+      "bytes": 9897,
+      "verified": true
+    },
+    {
+      "path": "fixtures/model-examples.json",
+      "sha256": "e946da834e3e27b30bd91e55c4534748c00a2ecee9460ba912885833ec6a8821",
+      "bytes": 11170,
+      "verified": true
+    },
+    {
+      "path": "fixtures/pro-contract-scenarios.json",
+      "sha256": "9f32311780f26c4a6e9cb0c19642a0ddc56e6b13e67c9b1132018545515b9887",
+      "bytes": 16987,
+      "verified": true
+    },
+    {
+      "path": "visuals/VAIWL-Pro-Design.html",
+      "sha256": "5ac1fe6ddc0f9542a57572ffdbfc129d3bb621665473e6792d21c87c3f069bbc",
+      "bytes": 66360,
+      "verified": true
+    },
+    {
+      "path": "visuals/VISUAL_SPEC.md",
+      "sha256": "e7cb591314c41f1f244ed7e3b9811fec0cef045fcc5f27907a586ac2c3d9525d",
+      "bytes": 10941,
+      "verified": true
+    },
+    {
+      "path": "visuals/screens/01-overview.png",
+      "sha256": "93201cc8364938876b35123430787fb39c7d050efc50dedd7322481946bdd8eb",
+      "bytes": 91418,
+      "verified": true
+    },
+    {
+      "path": "visuals/screens/02-projects.png",
+      "sha256": "1039074f168072a72b60c512a4f42422baaeecb230e502f22bfdfbe579d8f479",
+      "bytes": 85798,
+      "verified": true
+    },
+    {
+      "path": "visuals/screens/03-correction.png",
+      "sha256": "3773e17f7933dd28e8941f42c3895c7213e942d4efc710ce3acb9edcbfc695dd",
+      "bytes": 141816,
+      "verified": true
+    },
+    {
+      "path": "visuals/screens/04-changes.png",
+      "sha256": "766e726d233f4e096fe3abb5949a0a586d6df88186d0ddc3321fc0043cd18cbc",
+      "bytes": 147917,
+      "verified": true
+    },
+    {
+      "path": "visuals/screens/05-structure.png",
+      "sha256": "e3df31686fd6ab951f197c21b539064f90087eb2884bcce0552f72aaa190c706",
+      "bytes": 136313,
+      "verified": true
+    },
+    {
+      "path": "visuals/screens/06-series.png",
+      "sha256": "c546a5e5c474148323c833fcc9e9cbb21fe771c418bfdc980d956b51cc4a46bf",
+      "bytes": 147567,
+      "verified": true
+    },
+    {
+      "path": "visuals/screens/07-reader.png",
+      "sha256": "3adb66acee3d02b2eeb8e57d7f03878f7aeec63082027fbdc495e72fe315084f",
+      "bytes": 94216,
+      "verified": true
+    },
+    {
+      "path": "visuals/screens/08-limited.png",
+      "sha256": "98f1d650905856b9fd51356cd960f51848a199f86a1763ae460b1406d2aa8313",
+      "bytes": 70883,
+      "verified": true
+    },
+    {
+      "path": "visuals/screens/09-model.png",
+      "sha256": "ab619112551ba2c72ca8bfa7487a6d9b2af92489b1a44d3750457276c2100944",
+      "bytes": 162079,
+      "verified": true
+    },
+    {
+      "path": "visuals/screens/10-failure.png",
+      "sha256": "5522ed603f2ee594d6deda7022575ae797808f5d9c5972357817401adefe6e14",
+      "bytes": 124395,
+      "verified": true
+    },
+    {
+      "path": "visuals/screens/11-dark.png",
+      "sha256": "51f094e4ae38e27eb8c3f8d8c730b0d4606b7ad0585122fd5e150ccfd19414d4",
+      "bytes": 92968,
+      "verified": true
+    },
+    {
+      "path": "visuals/screens/12-narrow.png",
+      "sha256": "e6dd5fc8697423c43022f5b4b11b61de3568a9554b10e7f2a68bf9e3ff9a0960",
+      "bytes": 65564,
+      "verified": true
+    },
+    {
+      "path": "visuals/screens/13-membership-unconfirmed.png",
+      "sha256": "dbe4bfbecbb0f623bc334920ce373b8af51c1c2e9ca94f7eaad3f6f3fcbf9a7d",
+      "bytes": 73215,
+      "verified": true
+    },
+    {
+      "path": "visuals/screens/14-merge.png",
+      "sha256": "2609354f8077c9a4fd9a7e2349e9624ebab7dc6b1e06365a7146340e0beb4db9",
+      "bytes": 144565,
+      "verified": true
+    },
+    {
+      "path": "visuals/screens/15-identity-unproven.png",
+      "sha256": "731b1d8bba414160bffcaf9a527d6cc1978e32b1a98e43ad4d93acec27bf8de2",
+      "bytes": 68448,
+      "verified": true
+    },
+    {
+      "path": "visuals/screens/16-narrow-correction.png",
+      "sha256": "33cd1b02df4f6313f4e16e82d43031da3df1441918f43b456f4e4d9b2ddbcdd3",
+      "bytes": 53399,
+      "verified": true
+    },
+    {
+      "path": "visuals/tokens.json",
+      "sha256": "eb1ac54411754f791b1f853abe4bf398a1b19116dcd8d07fb1616481f11fd1ca",
+      "bytes": 4696,
+      "verified": true
+    },
+    {
+      "path": "visuals/visual-checks.json",
+      "sha256": "191c1499260c715a5b4c093da653bec51f3790c1976d98a2ede4a81d33038d59",
+      "bytes": 2997,
+      "verified": true
+    },
+    {
+      "path": "visuals/visual-cross-review.json",
+      "sha256": "caf7eb6ae78002caa87a5213b854b2c64c4813636bc911f56b90b7ee4d8e8304",
+      "bytes": 1121,
+      "verified": true
+    }
+  ]
+}

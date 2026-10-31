@@ -1,0 +1,4 @@
+const frame=document.querySelector('#pro-frame'),output=document.querySelector('#result');
+const db=new URL(location.href).searchParams.get('db')??'vaiwl_pro_r1_demo';frame.src='/tests/pro/demo-frame.html?db='+encodeURIComponent(db);
+document.querySelector('#new-fixture').onclick=()=>{const url=new URL(location.href);url.searchParams.set('db','sample_'+crypto.randomUUID().replaceAll('-',''));location.href=url;};
+document.querySelector('#journey').onclick=async event=>{event.target.disabled=true;try{const app=frame.contentWindow.proFixture;if(!app)throw Error('工作区正在加载');if(app.controller.getState().revision!==0)throw Error('完整旅程需要空白样本，请使用“新建空白样本”。现有整理会保留。');output.textContent='正在执行同一条聊天的完整旅程…';const report=await app.runJourney();output.textContent=JSON.stringify(report,null,2);window.journeyReport=report;}catch(e){output.textContent=e.message;}finally{event.target.disabled=false;}};
