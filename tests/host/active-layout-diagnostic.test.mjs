@@ -26,11 +26,14 @@ test('existing private status accepts only fixed layout refusal codes and preser
  const geometry=[240,50,800,500,500,200,40,40,2,0,0];
  assert(validLayoutShape(shape({...presentation,layoutRefusal:'control-overlap',layoutGeometry:geometry})));
  for(const layoutGeometry of [['PRIVATE'],[...geometry,1],geometry.map(()=>NaN),[...geometry.slice(0,8),4,0,0]])assert(!validLayoutShape(shape({...presentation,layoutRefusal:'control-overlap',layoutGeometry})));
- assert(!validLayoutShape(shape({...presentation,layoutRefusal:'control-hit',layoutGeometry:geometry})));
+ assert(validLayoutShape(shape({...presentation,layoutRefusal:'control-hit',layoutGeometry:geometry})));
+ for(const tail of [[0,0,0],[6,0,0],[1,8,0],[1,0,65536],[1,0,-1]])assert(!validLayoutShape(shape({...presentation,layoutRefusal:'control-hit',layoutGeometry:[...geometry.slice(0,8),...tail]})));
  const sparse=Array(11);sparse[8]=2;
  const extra=[...geometry];extra.private='PRIVATE';
  const getter=[...geometry];Object.defineProperty(getter,'0',{get(){throw Error('must not read getter');}});
+ const rectGetter=[...geometry];Object.defineProperty(rectGetter,'2',{get(){throw Error('must validate descriptors before rectangle values');}});
  for(const layoutGeometry of [sparse,extra,getter,[240,50,-1,500,500,200,40,40,2,0,0]])assert(!validLayoutShape(shape({...presentation,layoutRefusal:'control-overlap',layoutGeometry})));
+ for(const layoutRefusal of ['control-overlap','control-hit'])assert(!validLayoutShape(shape({...presentation,layoutRefusal,layoutGeometry:rectGetter})));
 
 
 });

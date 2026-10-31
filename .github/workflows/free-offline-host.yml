@@ -85,6 +85,7 @@ jobs:
           fi
           fi
           node tests/host/document-flow-browser.mjs
+          node tests/host/native-invisible-controls-browser.mjs
           node tests/host/nested-home-flow-browser.mjs
           node tests/host/document-flow-boundary-browser.mjs "$RUNNER_TEMP/flow-boundary.json"
           node --test tests/host/frame-navigation-hydration-browser.mjs

@@ -32,7 +32,9 @@ export function validLayoutShape(value){
  }
  if(exact(value,['navigation','delivery','presentation'])&&value.presentation&&Object.hasOwn(value.presentation,'layoutGeometry')){
   const {layoutGeometry,...rest}=value.presentation;
-  return denseGeometry(layoutGeometry)&&(layoutGeometry.length===0||(rest.layoutRefusal==='control-overlap'&&[2,3,6,7].every(i=>layoutGeometry[i]>=0)&&[1,2,3].includes(layoutGeometry[8])&&layoutGeometry.slice(9).every(n=>n===0||n===1)))&&validLayoutShape({...value,presentation:rest});
+  if(!denseGeometry(layoutGeometry))return false;
+  const boundedRectangles=[2,3,6,7].every(i=>layoutGeometry?.[i]>=0);
+  return denseGeometry(layoutGeometry)&&(layoutGeometry.length===0||(boundedRectangles&&(rest.layoutRefusal==='control-overlap'&&[1,2,3].includes(layoutGeometry[8])&&layoutGeometry.slice(9).every(n=>n===0||n===1)||rest.layoutRefusal==='control-hit'&&layoutGeometry[8]>=1&&layoutGeometry[8]<=5&&layoutGeometry[9]>=0&&layoutGeometry[9]<=7&&layoutGeometry[10]>=0&&layoutGeometry[10]<=65535)))&&validLayoutShape({...value,presentation:rest});
  }
  if(exact(value,['navigation','delivery','presentation'])&&value.presentation&&Object.hasOwn(value.presentation,'layoutRefusal')){
   const {layoutRefusal,...rest}=value.presentation;

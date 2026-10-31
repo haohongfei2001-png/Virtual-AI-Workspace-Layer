@@ -65,6 +65,11 @@ function orderedFlowMembers(base,members){
 
 // A closed-layout geometry snapshot, not an active native-control identity
 // lock. Controls are freshly enumerated before presentation and native gestures.
+function nativeInvisibleControl(node,style,protectedRegions){
+ return !protectedRegions.includes(node)&&style.opacity==='0'&&style.pointerEvents==='none'&&node.checkVisibility?.({checkOpacity:true,checkVisibilityCSS:true,contentVisibilityAuto:true})===false;
+}
+const controlRegions=(node,regions)=>regions.filter(region=>region===node||region.contains(node));
+const sameControlRegions=(before,after)=>Array.isArray(before)&&before.length===after.length&&before.every((region,i)=>region===after[i]);
 function controlSnapshot({protectedRegions,document:doc,isOwnedSurface}) {
  const result=[],seen=new Set(),shadowCandidates=[],structuralSeen=new Set();
  // Light-tree structure only, once per layout proof. A previously ordinary
@@ -84,7 +89,8 @@ function controlSnapshot({protectedRegions,document:doc,isOwnedSurface}) {
   if(seen.has(node)||isOwnedSurface(node))continue;
   seen.add(node);if(result.length>=128)return null;
   const style=doc.defaultView.getComputedStyle(node);
-  result.push({node,parent:node.parentElement,visible:style.display!=='none'&&style.visibility==='visible'&&positive(rect(node))});
+  const nativeInvisible=nativeInvisibleControl(node,style,protectedRegions);
+  result.push({node,parent:node.parentElement,regions:controlRegions(node,protectedRegions),nativeInvisible,visible:!nativeInvisible&&style.display!=='none'&&style.visibility==='visible'&&positive(rect(node)),diagnosticPainted:node.checkVisibility?.({checkOpacity:true,checkVisibilityCSS:true,contentVisibilityAuto:true})===true,diagnosticPointerNone:style.pointerEvents==='none',diagnosticOpacityZero:style.opacity==='0'});
  }
  result.shadowCandidates=shadowCandidates;return result;
 }
@@ -110,7 +116,7 @@ export function isSameNativeLayout(plan) {
  try {
   const current=controlSnapshot(plan);
   const next=current&&layoutCoordinates({...plan,nativeControls:current});
-  return !!next&&Object.keys(next).every(key=>next[key]===plan[key])&&!!current&&current.length===plan.nativeControls.length&&current.every((value,i)=>value.node===plan.nativeControls[i].node&&value.parent===plan.nativeControls[i].parent&&value.visible===plan.nativeControls[i].visible);
+  return !!next&&Object.keys(next).every(key=>next[key]===plan[key])&&!!current&&current.length===plan.nativeControls.length&&current.every((value,i)=>value.node===plan.nativeControls[i].node&&value.parent===plan.nativeControls[i].parent&&sameControlRegions(plan.nativeControls[i].regions,value.regions)&&value.visible===plan.nativeControls[i].visible&&value.nativeInvisible===plan.nativeControls[i].nativeInvisible);
  }catch{return false;}
 }
 
@@ -322,11 +328,24 @@ export function validateCriticalLayout(plan,{workspace,nativeControls=[],nativeS
    if(!node.isConnected||node.ownerDocument!==doc||!plan.protectedRegions.some(region=>region===node||region.contains(node)))continue;
    const r=rect(node),s=win.getComputedStyle(node);
    if(s.display==='none'||s.visibility!=='visible'||!positive(r))continue;
+   // Only the original closed-native snapshot can establish this exception.
+   // Keep the node in enumeration so becoming visible or changing identity or
+   // parent immediately returns to the full native-control protection below.
+   if(plan.nativeControls?.some(item=>item.node===node&&item.parent===node.parentElement&&item.nativeInvisible===true&&sameControlRegions(item.regions,controlRegions(node,plan.protectedRegions)))&&nativeInvisibleControl(node,s,plan.protectedRegions))continue;
    if(node.hidden||node.inert||overlaps(board,r))return refuse('control-overlap',[board.x,board.y,board.width,board.height,r.x,r.y,r.width,r.height,node===plan.header?1:plan.composer.contains(node)?2:3,node.hidden?1:0,node.inert?1:0].map(Math.round));
    if(node===plan.header&&s.pointerEvents==='none'&&!node.matches(controls))continue;
    if(r.x<0||r.y<0||r.x+r.width>win.innerWidth+1||r.y+r.height>win.innerHeight+1)return refuse('control-viewport');
    const hit=doc.elementFromPoint(r.x+r.width/2,r.y+r.height/2);
-   if(!hit||!(node===hit||node.contains(hit)))return refuse('control-hit');
+   if(!hit||!(node===hit||node.contains(hit))){
+    // Same failed hit, before native layout restoration. Fixed numeric geometry
+    // and classifications only: no native text, attribute values or identity.
+    const h=hit?rect(hit):{x:0,y:0,width:0,height:0},hs=hit?win.getComputedStyle(hit):null;
+    const region=node===plan.header?1:plan.header.contains(node)?2:node===plan.composer?3:plan.composer.contains(node)?4:5;
+    const hitRegion=!hit?0:workspace===hit||workspace.contains(hit)?1:hit===plan.header?2:plan.header.contains(hit)?3:hit===plan.composer?4:plan.composer.contains(hit)?5:hit===plan.reading||plan.reading?.contains(hit)?6:7;
+    const baseline=plan.nativeControls?.find(item=>item.node===node);
+    const flags=(s.pointerEvents==='none'?1:0)|(node.matches(controls)?2:0)|(hit?.contains(node)?4:0)|(hs?.pointerEvents==='none'?8:0)|(s.position==='fixed'?16:0)|(s.position==='absolute'?32:0)|(hs?.position==='fixed'?64:0)|(hs?.position==='absolute'?128:0)|(node.checkVisibility?.({checkOpacity:true,checkVisibilityCSS:true,contentVisibilityAuto:true})===false?256:0)|(node.disabled===true?512:0)|(node.getAttribute('aria-disabled')==='true'?1024:0)|(s.opacity==='0'?2048:0)|(baseline?4096:0)|(baseline?.diagnosticPainted?8192:0)|(baseline?.diagnosticPointerNone?16384:0)|(baseline?.diagnosticOpacityZero?32768:0);
+    return refuse('control-hit',[r.x,r.y,r.width,r.height,h.x,h.y,h.width,h.height,region,hitRegion,flags].map(Math.round));
+   }
   }
   const exitButton=workspace.querySelector(':scope > button');
   if(exitButton&&win.getComputedStyle(workspace).visibility==='visible'){const r=rect(exitButton),hit=doc.elementFromPoint(r.x+r.width/2,r.y+r.height/2);if(!positive(r)||!(hit===exitButton||exitButton.contains(hit)))return refuse('exit-hit');}
