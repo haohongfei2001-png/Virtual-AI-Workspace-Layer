@@ -417,7 +417,15 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
    if(!frameDocumentsIntact(state))return null;
    if(win.MutationObserver){state.frameObserver=new win.MutationObserver(()=>{if(current===state)frameDocumentsIntact(state);});for(const {frame}of state.frames)state.frameObserver.observe(frame,{attributes:true,attributeFilter:['srcdoc']});}
    state.listener=event=>{void receive(state,event);};win.addEventListener('message',state.listener);
-   const ack=await bridge.registerMount({handle:state.handle});if(current!==state)return null;if(ack?.ok!==true)throw Error('mount-registration-denied');state.registered=true;reportJoin(state);
+   let ack;
+   try{ack=await bridge.registerMount({handle:state.handle});}
+   catch{
+    // A lost registration reply is not an authority denial. Retire this mount
+    // before the document owner may use its existing bounded fresh handshake.
+    // Never retry this handle or accept its late acknowledgement.
+    if(current===state)stop('mount-transport-unavailable');return null;
+   }
+   if(current!==state)return null;if(ack?.ok!==true)throw Error('mount-registration-denied');state.registered=true;reportJoin(state);
    if(!valid(state))throw Error('stale-mount-registration');
    // A sidebar omitted at first mount has no prior frame/grant to release.
    // A later proved native slot may create it, but never inherit workspace's

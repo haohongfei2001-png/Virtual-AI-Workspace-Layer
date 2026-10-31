@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {createSurfaceController} from '../../src/host/surface-controller.mjs';
 import {createHostContentSession} from '../../src/host/content-session.mjs';
 const drain=async()=>{for(let i=0;i<40;i++)await Promise.resolve();};
 function fixture(overrides={}){
@@ -478,4 +479,44 @@ for(const [factory,expected] of [['plansFactory','initialization-navigation-fail
  assert.equal(f.client.showWorkspace(),false);
  assert.equal(f.listeners.size,0);
  const before=f.calls.length;await f.advance(30000);assert.equal(f.calls.length,before);
+});
+
+// Real content owner + real surface controller; only DOM/transport are fixtures.
+function mountTransportFixture(mode='reject',boundary=null){
+ const f=fixture(),doc=f.document;let generation=0,mounts=0,late,disposed=0;
+ doc.body={};doc.addEventListener=()=>{};doc.removeEventListener=()=>{};
+ const slot={isConnected:true,ownerDocument:doc},roots=Object.fromEntries(['history','header','reading','composer'].map(k=>[k,{isConnected:true,ownerDocument:doc}]));
+ const allFrames=[];
+ const options={...f.options,contextRecovery:true,controllerFactory:createSurfaceController,
+  adapterFactory:()=>({start:async o=>({binding:o.binding}),stop(){},inspect:()=>({ok:true,regionEpoch:1,navigationSlot:slot,...roots}),hasNativeLayer:()=>false}),
+  surfaceFactory:()=>{let frames;return {mount:async()=>{frames=['workspace','sidebar'].map(role=>({role,frame:{isConnected:true,ownerDocument:doc,contentWindow:{}}}));allFrames.push(frames);return {id:'mount'+(++mounts),regionEpoch:1};},frames:()=>frames,suspend(){},dispose(){disposed++;for(const x of frames??[])x.frame.isConnected=false;}};}
+ };
+ const client=createHostContentSession(options);
+ f.setResponse(m=>{
+  if(m.type==='HOST_HELLO'){generation++;return {binding:{...f.binding(),producerToken:'producer'+generation,...(generation>1&&boundary==='document'?{browserDocumentId:'other-document'}:{})}};}
+  if(m.type==='HOST_REFRESH')return {state:'verified',scopeKey:generation>1&&boundary==='scope'?'scope-other':'scope-a'};
+  if(m.type==='HOST_UI_MOUNT'&&(generation===1||mode==='repeat')){
+   if(mode==='denied')return {ok:false};
+   if(mode==='timeout')return new Promise(resolve=>{late=resolve;});
+   return Promise.reject(Error('fixture-transport-loss'));
+  }
+  return {ok:true,grants:[]};
+ });
+ return {...f,client,get mounts(){return mounts;},get disposed(){return disposed;},allFrames,late:()=>late?.({ok:true})};
+}
+for(const mode of ['reject','timeout'])test('initial mount transport '+mode+' retires old frames and recovers through one fresh authorized producer',async()=>{
+ const f=mountTransportFixture(mode);const started=f.client.start();await drain();if(mode==='timeout')await f.advance(6000);await started;await drain();
+ assert.equal(f.calls.filter(m=>m.type==='HOST_HELLO').length,2);assert.equal(f.mounts,2);assert.equal(f.disposed,1);assert(f.allFrames[0].every(x=>!x.frame.isConnected));assert(f.allFrames[1].every(x=>x.frame.isConnected));
+ const registered=f.calls.filter(m=>m.type==='HOST_UI_MOUNT');assert.deepEqual(registered.map(m=>[m.producerToken,m.mountId]),[['producer1','mount1'],['producer2','mount2']]);
+ const before=f.calls.length;f.late();await drain();assert.equal(f.calls.length,before);assert.equal(f.disposed,1);f.client.stop();
+});
+for(const mode of ['repeat','denied'])test('mount '+mode+' cannot create an automatic recovery loop',async()=>{
+ const f=mountTransportFixture(mode);await f.client.start();await drain();const expected=mode==='repeat'?2:1;
+ assert.equal(f.calls.filter(m=>m.type==='HOST_HELLO').length,expected);assert.equal(f.mounts,expected);assert.equal(f.disposed,expected);const before=f.calls.length;await f.advance(60000);assert.equal(f.calls.length,before);f.client.stop();
+});
+for(const boundary of ['scope','document'])test('mount transport recovery revalidates '+boundary+' before replacement mount',async()=>{
+ const f=mountTransportFixture('reject',boundary);await f.client.start();await drain();assert.equal(f.calls.filter(m=>m.type==='HOST_HELLO').length,2);assert.equal(f.mounts,1);assert.equal(f.disposed,1);f.client.stop();
+});
+test('stop during pending mount transport prevents recovery and late acknowledgement',async()=>{
+ const f=mountTransportFixture('timeout'),started=f.client.start();await drain();f.client.stop();await started;f.late();await drain();assert.equal(f.calls.filter(m=>m.type==='HOST_HELLO').length,1);assert.equal(f.mounts,1);assert.equal(f.disposed,1);
 });

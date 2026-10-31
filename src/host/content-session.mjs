@@ -604,11 +604,11 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
    startupPhase='initialization-controller';reportStartup(startupPhase);
    s.controller=controllerFactory({document:doc,adapter,surface,extensionOrigin:'chrome-extension://'+runtime.id,bridge,initialMode,onWake:()=>wake(s),onFailure:code=>{if(current===s&&surfaceFailureStates.includes(code)){s.surfaceFailure=code;startupFailure={url:s.url,state:code,shape:null};}},onTerminated:(reason,presentation)=>{
     if(current===s){
-     s.stoppedSidebarDesired=['native-document-changed','dormant-document-changed','ui-frame-suspended','session-renew-failed','ui-grant-expired','stale-session-renewal'].includes(reason)&&typeof presentation?.sidebarDesired==='boolean'?presentation.sidebarDesired:null;
+     s.stoppedSidebarDesired=['native-document-changed','dormant-document-changed','ui-frame-suspended','session-renew-failed','ui-grant-expired','stale-session-renewal','mount-transport-unavailable'].includes(reason)&&typeof presentation?.sidebarDesired==='boolean'?presentation.sidebarDesired:null;
      if(s.stoppedSidebarDesired===null)s.sidebarPreference=null;
     }
     if(current===s&&!s.surfaceFailure&&surfaceFailureStates.includes('surface-'+reason)){s.surfaceFailure='surface-'+reason;startupFailure={url:s.url,state:s.surfaceFailure,shape:null};}
-    const publicStops=['ui-frame-document-replaced','native-region-changed','native-geometry-changed','dormant-document-changed','mount-unavailable','ui-frame-suspended','ui-grant-expired','session-renew-failed','surface-stopped','ui-authority-revoked','ui-user-exit'];
+    const publicStops=['ui-frame-document-replaced','native-region-changed','native-geometry-changed','dormant-document-changed','mount-unavailable','mount-transport-unavailable','ui-frame-suspended','ui-grant-expired','session-renew-failed','surface-stopped','ui-authority-revoked','ui-user-exit'];
     if(current===s&&doc.documentElement?.dataset)doc.documentElement.dataset.vaiwlSurfaceStop=publicStops.includes(reason)?reason:'other';
     // A replaced frame cannot regain authority via READY, renewal or a late
     // mount reply. Keep only a fixed diagnostic after withdrawing the session.
@@ -631,8 +631,8 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
     // Transport lifecycles may repeat during one long-lived document. Only a
     // new private workspace JOIN establishes another recovery episode. Read
     // and renderer failures never earn repeated attempts merely by rejoining.
-    const transport=['session-renew-failed','ui-grant-expired','stale-session-renewal'].includes(reason)||reason==='ui-frame-suspended'&&transportFrameFailures.has(presentation?.frameFailureReason);
-    if(!enabled||(!s.ready&&!s.mountStarting)||!live(s)||s.busyClose===true||s.recoveryDenied||!['ui-frame-suspended','session-renew-failed','ui-grant-expired','stale-session-renewal'].includes(reason)||!takeRecovery(s,transport,presentation?.mode))return;
+    const transport=['session-renew-failed','ui-grant-expired','stale-session-renewal','mount-transport-unavailable'].includes(reason)||reason==='ui-frame-suspended'&&transportFrameFailures.has(presentation?.frameFailureReason);
+    if(!enabled||(!s.ready&&!s.mountStarting)||!live(s)||s.busyClose===true||s.recoveryDenied||!['ui-frame-suspended','session-renew-failed','ui-grant-expired','stale-session-renewal','mount-transport-unavailable'].includes(reason)||!takeRecovery(s,transport,presentation?.mode))return;
     rebind(s,presentation?.mode==='workspace'?'workspace':'reading',transport?s.scopeKey:null,transport);
    },now,elapsedNow,schedule,cancel});
    // Owned frames may suspend while mount registration is still awaiting its
