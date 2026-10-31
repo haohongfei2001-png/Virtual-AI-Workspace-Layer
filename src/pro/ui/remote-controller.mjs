@@ -87,7 +87,14 @@ export function createRemoteProController({request,isCurrent=()=>true,onMode=()=
   async function loadPanel(kind,id=null,{offset=0,limit=24}={}){
     const ticket=++panelSerial,review=pageData?.versions.reviewId;const value=await call('view',{op:'panel',kind,id,offset,limit});if(ticket!==panelSerial)return null;if(value.kind!=='pro-panel-page'||value.panel!==kind||value.versions.scopeKey!==pageData?.versions.scopeKey||value.versions.authorizationEpoch!==pageData?.versions.authorizationEpoch||value.versions.reviewId!==review||pageData?.versions.reviewId!==review)throw Error('invalid-pro-panel-response');panelData=value;return clone(value);
   }
-  async function mutate(action,payload){const result=await call(action,payload);await refresh({force:true});return result;}
+  async function mutate(action,payload){
+    const result=await call(action,payload);await refresh({force:true});
+    // A worker notification can supersede the mutation's page request. Its
+    // response must settle before a follow-up dialog reads that new page.
+    // This only joins an already pending refresh; it never repeats the write.
+    const notificationRefresh=refreshing;if(notificationRefresh)await notificationRefresh;
+    return result;
+  }
   const preview=async(kind,input={},options={})=>{const expected=options.expected??currentVersions();const value=await call('commit',{op:'preview',kind,input,expected});return {...value,expected:value.expected??clone(expected)};};
   const controller={
     getState,getSnapshot,getView,getStatus,getProjection,

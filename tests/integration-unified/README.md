@@ -65,7 +65,8 @@ before/after stability. CI requires committed source. Missing Chromium or missin
 browser evidence fails; it never becomes a skipped green test.
 
 The browser phase includes the original continuous Pro and UI journeys, the
-bounded remote renderer with a long Series, native IndexedDB compound restore
+bounded remote renderer with a long Series, paged topic and Project choices,
+retained editor drafts and complete legacy-resolution traversal, native IndexedDB compound restore
 and damaged-root recovery, the production unified MV3 journey, and both
 standalone Free and unified formal BrowserLocal packages. The latter exercises the memory-only default, explicit
 existing popup binding, private local persistence, document replacement, fresh

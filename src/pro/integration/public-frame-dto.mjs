@@ -15,7 +15,7 @@ const hash = x => typeof x === 'string' && /^[a-f0-9]{64}$/u.test(x);
 const nullableId = x => x === null || id(x);
 const ids = (x, max) => Array.isArray(x) && x.length <= max && x.every(id) && new Set(x).size === x.length;
 const modes = ['native', 'pro-default-none', 'pro-cross-project'];
-const panelKinds = ['reference', 'topic', 'records', 'settings', 'collect', 'suggestions', 'series', 'series-detail', 'series-edges'];
+const panelKinds = ['reference', 'topic', 'records', 'settings', 'legacy-resolutions', 'project-choices', 'collect', 'suggestions', 'series', 'series-detail', 'series-edges'];
 const pick = (x, keys) => Object.fromEntries(keys.filter(k => own(x ?? {}, k)).map(k => [k, structuredClone(x[k])]));
 const control = x => ({mode: x?.mode === 'human' ? 'human' : 'auto', locked: x?.locked === true});
 const membership = x => ({state: ['NONE', 'PROJECT'].includes(x?.state) ? x.state : 'UNKNOWN', ...(x?.state === 'PROJECT' && id(x.projectId) ? {projectId: x.projectId} : {})});
@@ -114,7 +114,7 @@ function sourceItems(snapshot, refIds) {
   return snapshot.references.filter(r => wanted.has(r.id)).map(publicItem).slice(0, 200);
 }
 function projectChoices(snapshot, native) {
-  return (snapshot.projects ?? native?.groups?.items ?? []).slice(0, 100).map(p => ({id: p.id, name: text(p.nativeName ?? p.name, 200)}));
+  return (snapshot.projects ?? native?.groups?.items ?? []).slice(0, 24).map(p => ({id: p.id, name: text(p.nativeName ?? p.name, 200)}));
 }
 
 export function projectPublicPage({state, snapshot, view, status = {}, query = {}}) {
@@ -154,6 +154,7 @@ export function projectPublicPanel({state, snapshot, status = {}, kind, id: targ
   if(['reference','topic','collect','series','series-detail','series-edges'].includes(kind)&&!id(targetId))throw Error('invalid-pro-public-panel');
   if(kind==='series-detail')return projectSeriesDetail({state,snapshot,status,seriesId:targetId,offset,limit});
   if(kind==='series-edges')return projectSeriesEdges({state,snapshot,status,seriesId:targetId,offset,limit});
+  if(['settings','legacy-resolutions','project-choices'].includes(kind))return projectChoicePanel({state,snapshot,status,kind,offset,limit});
   let refIds = [], topicIds = [], total = 0, proposalIds=[], seriesIds=null;
   const topics = list(state.topics).filter(t => t.lifecycle === 'active');
   if (kind === 'reference') {
@@ -181,12 +182,25 @@ export function projectPublicPanel({state, snapshot, status = {}, kind, id: targ
     limit=Math.min(limit,24);seriesIds=[];
   } else {
     topicIds = topics.slice(offset, offset + limit).map(t => t.id); total = topics.length;
-    refIds = kind === 'settings' ? list(state.legacyResolutions).slice(0, 24).map(r => r.refId) : [];
   }
   const reply = {kind: 'pro-panel-page', protocol: PRO_FRAME_PROTOCOL, panel: kind, versions: publicVersions(snapshot.versions), status: publicStatus(status),
-    display: displayFor(state, refIds, topicIds, {proposalIds,seriesIds}), items: sourceItems(snapshot, refIds), projects: projectChoices(snapshot), page: page(offset, total, Math.min(limit, Math.max(0, total - offset)), limit)};
+    display: displayFor(state, refIds, topicIds, {proposalIds,seriesIds}), items: sourceItems(snapshot, refIds), projects: [], page: page(offset, total, Math.min(limit, Math.max(0, total - offset)), limit)};
   if (kind === 'records') {const projected=projectPublicRecords({records,state,snapshot,offset,limit,maxBytes:PRO_FRAME_BYTES-new TextEncoder().encode(JSON.stringify(reply)).length-1024});reply.operations=projected.items;reply.page=projected.page;}
   return validatePublicProReply('view', reply);
+}
+
+function projectChoicePanel({state,snapshot,status,kind,offset,limit}) {
+  const legacy=kind==='legacy-resolutions',project=kind==='project-choices',all=legacy?list(state.legacyResolutions).filter(r=>r.status==='primary-resolution-required'):project?snapshot.projects??[]:list(state.topics).filter(t=>t.lifecycle==='active');
+  let cap=Math.min(limit,legacy||project?24:100);
+  for(;;){
+    // A just-resolved page may have disappeared. Rebase only its read cursor;
+    // the subsequent per-reference command still has a fresh frozen review.
+    const start=all.length?(offset<all.length?offset:Math.floor((all.length-1)/cap)*cap):0,selected=all.slice(start,start+cap),refIds=legacy?selected.map(r=>r.refId):[];
+    const display=legacy||project?emptyDisplay(state.scopeKey):displayFor(state,[],selected.map(t=>t.id),{seriesIds:[]});
+    if(legacy)for(const r of selected)display.legacyResolutions[r.refId]={refId:r.refId,status:r.status,candidates:[],preservedPlacements:[]};
+    const reply={kind:'pro-panel-page',protocol:PRO_FRAME_PROTOCOL,panel:kind,versions:publicVersions(snapshot.versions),status:publicStatus(status),display,items:sourceItems(snapshot,refIds),projects:project?projectChoices({projects:selected}):[],page:page(start,all.length,selected.length,cap)};
+    try{return validatePublicProReply('view',reply);}catch(error){if(!['pro-public-size','pro-public-complexity'].includes(error.message)||cap===1)throw error;cap=Math.max(1,Math.floor(cap/2));}
+  }
 }
 
 function projectSeriesDetail({state,snapshot,status,seriesId,offset,limit}) {
@@ -430,6 +444,11 @@ export function validatePublicProReply(action, value) {
   if(own(value,'rows')){if(!Array.isArray(value.rows)||value.rows.length>200)throw Error('invalid-pro-public-rows');value.rows.forEach(checkRow);}
   if(own(value,'operations')){if(value.panel!=='records'||!Array.isArray(value.operations)||value.operations.length>24)throw Error('invalid-pro-public-operations');value.operations.forEach(checkOperation);}
   if(value.kind==='pro-panel-page'&&(!panelKinds.includes(value.panel)||value.panel==='records'&&!own(value,'operations')))throw Error('invalid-pro-public-panel');
+  if(value.kind==='pro-panel-page'&&value.panel==='legacy-resolutions'){
+    const rows=list(value.display.legacyResolutions);
+    if(rows.length!==value.page.count||value.page.limit>24||value.page.offset+value.page.count>value.page.total||rows.some(r=>r.status!=='primary-resolution-required'||r.candidates.length||r.preservedPlacements.length)||Object.keys(value.display).some(k=>!['scopeKey','legacyResolutions'].includes(k)&&Object.keys(value.display[k]).length)||value.projects.length||value.items.some(r=>!own(value.display.legacyResolutions,r.id)))throw Error('invalid-pro-public-legacy-page');
+  }
+  if(value.kind==='pro-panel-page'&&value.panel==='project-choices'&&(value.projects.length!==value.page.count||value.page.limit>24||value.page.offset+value.page.count>value.page.total||value.items.length||Object.keys(value.display).some(k=>k!=='scopeKey'&&Object.keys(value.display[k]).length)))throw Error('invalid-pro-public-project-page');
   if(value.kind==='pro-rows-page'&&(!id(value.topicId)||!['current','old'].includes(value.lane)))throw Error('invalid-pro-public-rows');
   if(value.kind==='pro-records-page')value.items.forEach(checkOperation);
   if(value.kind==='pro-operation-page'){

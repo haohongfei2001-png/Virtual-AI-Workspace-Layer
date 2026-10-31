@@ -153,3 +153,30 @@ test('next Series hints require a real distinct target identity and a topic plus
  const status=publicStatus({launchContext:{referenceId:'current',topicId:'topic',seriesId:'series',nativeProjectId:null,origin:'topic',nextReferenceId:'next'}});assert.equal(status.launchContext.nextReferenceId,'next');
  for(const changes of [{seriesId:null},{topicId:null,origin:'direct'},{nextReferenceId:'current'},{nextReferenceId:true}]){const bad=structuredClone(status);Object.assign(bad.launchContext,changes);assert.throws(()=>validatePublicProReply('background',{kind:'pro-status',protocol:PRO_FRAME_PROTOCOL,status:bad}),/launch/);}
 });
+test('legacy resolution pages filter unresolved first and expose only bounded row summaries',async t=>{
+ const f=await fixture(t),input=await f.current();for(let i=0;i<40;i++){const refId='legacy_ref_'+i;input.state.legacyResolutions[refId]={refId,status:i<8?'resolved':'primary-resolution-required',candidates:['PRIVATE_CANDIDATE_'+i],preservedPlacements:[{workspaceId:'PRIVATE_CANDIDATE_'+i,locked:true}]};input.snapshot.references.push({id:refId,nativeTitle:'历史窗口 '+i,available:true,membership:{state:'NONE',evidenceId:'e_'+i,revision:1}});}
+ const first=projectPublicPanel({...input,kind:'legacy-resolutions',limit:24}),second=projectPublicPanel({...input,kind:'legacy-resolutions',offset:24,limit:24});
+ assert.equal(first.page.total,32);assert.equal(first.page.count,24);assert.equal(second.page.count,8);assert.equal(first.items[0].id,'legacy_ref_8');assert(!JSON.stringify(first).includes('PRIVATE_CANDIDATE'));assert.deepEqual(first.display.topics,{});
+ for(const row of Object.values(first.display.legacyResolutions))input.state.legacyResolutions[row.refId].status='resolved';input.state.revision++;input.snapshot.versions.overlayRevision=input.state.revision;
+ const remaining=projectPublicPanel({...input,kind:'legacy-resolutions',offset:24,limit:24});assert.equal(remaining.page.offset,0);assert.equal(remaining.page.total,8);assert.deepEqual(Object.keys(remaining.display.legacyResolutions),Object.keys(second.display.legacyResolutions));
+ for(const alter of [x=>{Object.values(x.display.legacyResolutions)[0].candidates=['hidden'];},x=>{Object.values(x.display.legacyResolutions)[0].status='resolved';},x=>{x.page.count--;},x=>{x.items[0].id='foreign_row';}]){const bad=structuredClone(remaining);alter(bad);assert.throws(()=>validatePublicProReply('view',bad),/legacy-page|public/);}
+});
+test('settings topic pages traverse beyond100 without legacy or Series payload and preserve valid nonaligned cursors',async t=>{
+ const f=await fixture(t);await f.controller.dispatch({type:'CREATE_TOPIC',name:'模板'});const input=await f.current(),template=Object.values(input.state.topics)[0];input.state.topics={};
+ for(let i=0;i<137;i++){const id='choice_'+i;input.state.topics[id]={...structuredClone(template),id,name:'选择主题 '+i};input.state.series['hidden_'+i]={id:'hidden_'+i,topicId:id,title:'NOT_THIS_PANEL',entries:['c_alpha'],edges:[],labels:[]};}
+ input.state.legacyResolutions.c_alpha={refId:'c_alpha',status:'primary-resolution-required',candidates:['choice_0'],preservedPlacements:[]};
+ const seen=[];for(let offset=0;offset<137;){const dto=projectPublicPanel({...input,kind:'settings',offset,limit:24});seen.push(...Object.keys(dto.display.topics));assert.equal(dto.page.offset,offset);assert.deepEqual(dto.display.legacyResolutions,{});assert.deepEqual(dto.display.series,{});assert(new TextEncoder().encode(JSON.stringify(dto)).length<=PRO_FRAME_BYTES);offset+=dto.page.count;}
+ assert.equal(new Set(seen).size,137);assert(seen.includes('choice_136'));
+ const tail=projectPublicPanel({...input,kind:'settings',offset:130,limit:24});assert.equal(tail.page.offset,130);assert.equal(tail.page.count,7);
+});
+test('project candidate windows traverse all admitted projects without clipping selected off-page identities',async t=>{
+ const f=await fixture(t),input=await f.current();input.snapshot.projects=Array.from({length:132},(_,i)=>({id:'native_'+i,nativeName:'项目 '+i}));input.status={...input.status,mode:'pro-cross-project',selectedProjectIds:['native_2','native_125']};const seen=[];
+ for(let offset=0;offset<132;){const dto=projectPublicPanel({...input,kind:'project-choices',offset,limit:24});assert.equal(dto.page.offset,offset);assert(dto.projects.length<=24);assert.deepEqual(dto.status.selectedProjectIds,['native_2','native_125']);assert.deepEqual(dto.items,[]);assert.deepEqual(dto.display.topics,{});seen.push(...dto.projects.map(p=>p.id));assert(new TextEncoder().encode(JSON.stringify(dto)).length<=PRO_FRAME_BYTES);offset+=dto.page.count;}
+ assert.equal(new Set(seen).size,132);assert.equal(seen.at(-1),'native_131');const tail=projectPublicPanel({...input,kind:'project-choices',offset:125,limit:24});assert.equal(tail.page.offset,125);assert.equal(tail.page.count,7);
+ const bad=structuredClone(tail);bad.projects.push({id:'outside_page',name:'不在清单中'});assert.throws(()=>validatePublicProReply('view',bad),/project-page/);
+});
+test('reference candidate paging reaches later topics while retaining every protected current relationship',async t=>{
+ const f=await fixture(t);await f.controller.dispatch({type:'CREATE_TOPIC',name:'当前主题'});const topicId=Object.keys(f.controller.getState().topics)[0];await f.controller.dispatch({type:'SET_PLACEMENT',refId:'c_alpha',topicId,role:'primary'});const input=await f.current(),template=input.state.topics[topicId];
+ for(let i=0;i<132;i++){const id='target_'+i;input.state.topics[id]={...structuredClone(template),id,name:'目标 '+i};}
+ const dto=projectPublicPanel({...input,kind:'reference',id:'c_alpha',offset:120,limit:24});assert.equal(dto.page.offset,120);assert(dto.display.topics.target_131);assert(dto.display.topics[topicId]);assert(Object.values(dto.display.placements).some(p=>p.conversationId==='c_alpha'&&p.topicId===topicId));assert.equal(dto.items.length,1);assert.equal(dto.items[0].id,'c_alpha');assert(Object.keys(dto.display.topics).length<=25);
+});

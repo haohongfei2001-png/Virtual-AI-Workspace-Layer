@@ -200,6 +200,58 @@ test('explicit legacy upgrade is previewed, preserves shared IDs and reconciles 
   assert.equal(again.ok,true);assert.equal(again.value.state,'unavailable');assert.match(again.value.message,/已有 Pro/);
 });
 
+test('migrated ambiguous relationships remain reachable beyond 24 and after resolving the first page under live authority',async t=>{
+  const f=await fixture(t),ids=Array.from({length:32},(_,i)=>'33333333-3333-4333-8333-'+String(i+1).padStart(12,'0'));
+  const refs=ids.map((id,i)=>({id,nativeTitle:'Legacy conversation '+(i+1),nativeUrl:'https://chatgpt.com/c/'+id,projectId:null,available:true}));
+  // Import real Free assets, then invoke the production upgrade route. Native
+  // membership is supplied separately through the test's explicit source gate;
+  // restored asset bytes do not establish positive NONE or a Pro grant.
+  let legacy=reduceCommand(emptyState(f.scope),{type:'INGEST',batch:{schema:'vaiwl-internal-evidence-v1',refs,sources:[],events:[],coverage:[]}},'evidence');
+  for(const id of ['legacy_a','legacy_b'])legacy=reduceCommand(legacy,{type:'CREATE_WORKSPACE',id,name:id},'human');
+  for(const [i,refId] of ids.entries())for(const workspaceId of ['legacy_a','legacy_b'])legacy=reduceCommand(legacy,{type:'PLACE',refId,workspaceId,order:i,locked:true},'human');
+  const bundle=createBackup(legacy),importPlan=await f.workspaces.previewRestore(f.scope,bundle);
+  assert.equal((await f.workspaces.restoreBackup(f.scope,{operationId:'ambiguous_import',bundle,...importPlan})).ok,true);
+  const observed=await f.native.apply(f.scope,{operationId:'ambiguous_native',expectedRevision:(await f.native.read(f.scope)).revision,batch:{scopeKey:f.scope.key,sourceRevision:2,observedAt:new Date(NOW).toISOString(),validUntil:new Date(NOW+60000).toISOString(),projects:[],refs:refs.map(({id,nativeTitle,nativeUrl})=>({id,nativeTitle,nativeUrl,availability:'available'})),membership:ids.map(id=>({id,state:'NONE',projectId:null})),inventory:{projects:'partial',conversations:'partial',cursor:null}}});
+  assert.equal(observed.ok,true,observed.reason);
+  await f.viewOwner.refresh();const expected=await f.ready(),upgrade=await f.request('commit',{op:'preview',kind:'legacy-upgrade',input:{},expected});
+  assert.equal(upgrade.ok,true,JSON.stringify(upgrade));
+  assert.equal((await f.request('commit',{op:'apply-structure',previewId:upgrade.value.previewId,expected,operationId:'ambiguous_upgrade'})).ok,true);
+  await f.viewOwner.refresh();
+  const panelRequest={op:'panel',kind:'legacy-resolutions',id:null,offset:0,limit:24};
+  const panel=async offset=>{const reply=await f.request('view',{...panelRequest,offset});assert.equal(reply.ok,true,JSON.stringify(reply));return reply.value;};
+  assert.deepEqual(await f.request('view',panelRequest,{grantId:'invented'}),unavailable,'the new listing does not bypass UI authority');
+  const first=await panel(0),second=await panel(24),firstIds=Object.keys(first.display.legacyResolutions),laterIds=Object.keys(second.display.legacyResolutions);
+  assert.equal(first.display.scopeKey,f.scope.key);assert.equal(first.page.total,32);assert.equal(first.page.count,24);assert.equal(first.page.hasMore,true);
+  assert.equal(second.page.total,32);assert.equal(second.page.offset,24);assert.equal(second.page.count,8);assert.equal(second.page.hasMore,false);
+  assert.deepEqual([...firstIds,...laterIds].sort(),[...ids].sort(),'all imported unresolved references are reachable without omission or duplication');
+  for(const row of [...Object.values(first.display.legacyResolutions),...Object.values(second.display.legacyResolutions)]){
+    assert.equal(row.status,'primary-resolution-required');assert.deepEqual(row.candidates,[]);assert.deepEqual(row.preservedPlacements,[]);
+  }
+  assert.equal(Object.keys(first.display.topics).length,0);assert(new TextEncoder().encode(JSON.stringify(first)).length<=65536);
+  const detail=await f.request('view',{op:'panel',kind:'reference',id:firstIds[0],offset:0,limit:100});assert.equal(detail.ok,true);
+  assert.deepEqual(detail.value.display.legacyResolutions[firstIds[0]].candidates.sort(),['legacy_a','legacy_b'],'selected detail retains the full protected candidate set');
+  const previewFor=async refId=>{const review=(await panel(0)).versions,reply=await f.request('commit',{op:'preview',kind:'legacy-primary',input:{refId,chosenPrimary:'legacy_a'},expected:review});assert.equal(reply.ok,true,JSON.stringify(reply));return reply.value;};
+  const commandFor=(refId,plan)=>({type:'RESOLVE_LEGACY_PRIMARY',refId,chosenPrimary:plan.chosenPrimary,preservedAssetDigest:plan.preservedAssetDigest,planHash:plan.planHash});
+  const retired=await previewFor(firstIds[0]),beforeEpoch=await f.raw();f.c.scopeGrantId='scope_A_ambiguous_replaced';
+  assert.deepEqual(await f.request('commit',{op:'dispatch',command:commandFor(firstIds[0],retired),expected:retired.expected,operationId:'retired_legacy_resolution'}),unavailable);
+  assert.deepEqual(await f.raw(),beforeEpoch,'replaced grant cannot apply a previously reviewed relationship');
+  assert.notEqual((await panel(0)).versions.authorizationEpoch,retired.expected.authorizationEpoch);
+  for(const [i,refId] of firstIds.entries()){
+    const plan=await previewFor(refId),applied=await f.request('commit',{op:'dispatch',command:commandFor(refId,plan),expected:plan.expected,operationId:'resolve_legacy_'+i});
+    assert.equal(applied.ok,true,JSON.stringify(applied));
+  }
+  const remaining=await panel(0),staleCursor=await panel(24);
+  assert.equal(remaining.page.total,8);assert.equal(remaining.page.count,8);assert.equal(remaining.page.hasMore,false);
+  assert.deepEqual(Object.keys(remaining.display.legacyResolutions).sort(),[...laterIds].sort(),'resolved rows are filtered before pagination');
+  assert.equal(staleCursor.page.offset,0);assert.deepEqual(staleCursor.display.legacyResolutions,remaining.display.legacyResolutions,'a previous later-page cursor clamps to reachable remaining rows');
+  const saved=await f.raw();assert.equal(Object.values(saved.state.legacyResolutions).filter(r=>r.status==='resolved').length,24);assert.equal(saved.records.length,25);
+  assert.equal(Object.keys((await f.workspaces.read(f.scope)).state.placements).length,64,'original Free placements are not consumed by Pro resolution');
+  const pending=await previewFor(laterIds[0]);f.revoke();f.service.revokeTab(1);
+  assert.deepEqual(await f.request('view',{...panelRequest,offset:24}),unavailable,'stored unresolved rows are not authorization after revocation');
+  assert.deepEqual(await f.request('commit',{op:'dispatch',command:commandFor(laterIds[0],pending),expected:pending.expected,operationId:'revoked_legacy_resolution'}),unavailable);
+  assert.deepEqual(await f.raw(),saved,'revocation leaves remaining data and operation history unchanged');
+});
+
 test('empty legacy upgrade reports no assets and cannot turn preview into a write',async t=>{
   const f=await fixture(t),expected=await f.ready();
   const preview=await f.request('commit',{op:'preview',kind:'legacy-upgrade',input:{},expected});
@@ -335,4 +387,41 @@ test('changing the selected Pro scope retires a completed review even when data 
   const other=await f.request('view',{op:'page',mode:'pro-cross-project',selectedProjectIds:['project_B'],segment:0,offset:0,limit:8,rowLimit:5});assert.equal(other.ok,true);assert.deepEqual(other.value.versions,expected,'selection changes do not fabricate storage revisions');
   assert.deepEqual(await f.request('commit',{op:'apply-structure',previewId:preview.value.previewId,operationId:'old_selection_undo',expected}),unavailable);
   assert.equal((await f.raw()).state.revision,1);assert.equal(Object.keys((await f.raw()).state.topics).length,1);
+});
+
+test('project picker reaches admitted projects beyond 100 while preserving selection and retiring old reviews',async t=>{
+  const f=await fixture(t),projects=Array.from({length:132},(_,i)=>'project_'+String(i).padStart(3,'0')),unadmitted='project_not_available';
+  const observed=await f.native.apply(f.scope,{operationId:'many_native_projects',expectedRevision:(await f.native.read(f.scope)).revision,batch:{scopeKey:f.scope.key,sourceRevision:2,observedAt:new Date(NOW).toISOString(),validUntil:new Date(NOW+60000).toISOString(),projects:[...projects.map(id=>({id,nativeName:'Native '+id,nativeUrl:'https://chatgpt.com/g/'+id,availability:'available'})),{id:unadmitted,nativeName:'Unavailable project',nativeUrl:'https://chatgpt.com/g/'+unadmitted,availability:'unavailable'}],refs:[],membership:[],inventory:{projects:'partial',conversations:'partial',cursor:null}}});
+  assert.equal(observed.ok,true,observed.reason);
+  await f.viewOwner.refresh();const initial=await f.ready();
+  assert.equal(f.viewOwner.current().snapshot.projects.length,132,'the real Free prepared snapshot admits every available project');
+  assert(!f.viewOwner.current().snapshot.projects.some(p=>p.id===unadmitted),'raw native storage presence is not admission');
+  assert.equal((await f.page()).value.view.native.groups.items.length,1,'the separate native card window is deliberately smaller than the picker');
+  assert.equal((await f.request('commit',{op:'dispatch',command:{type:'CREATE_TOPIC',name:'Preserved review target'},expected:initial,operationId:'picker_review_target'})).ok,true);
+  const before=await f.raw(),panelRequest={op:'panel',kind:'project-choices',id:null,offset:0,limit:24};
+  const panel=async offset=>{const reply=await f.request('view',{...panelRequest,offset});assert.equal(reply.ok,true,JSON.stringify(reply));return reply.value;};
+  assert.deepEqual(await f.request('view',panelRequest,{grantId:'invented'}),unavailable);
+  const seen=[];let last;
+  for(let offset=0;offset<projects.length;offset+=24){
+    const page=await panel(offset);assert.equal(page.page.total,132);assert.equal(page.page.offset,offset);assert.equal(page.page.count,page.projects.length);assert(page.projects.length<=24);
+    assert(new TextEncoder().encode(JSON.stringify(page)).length<=65536);assert.equal(Object.keys(page.display.topics).length,0);assert.equal(page.items.length,0);
+    seen.push(...page.projects.map(p=>p.id));last=page;
+  }
+  assert.deepEqual([...seen].sort(),[...projects].sort(),'all admitted project choices are reachable exactly once');
+  assert.equal(last.page.offset,120);assert.equal(last.page.count,12);assert.equal(last.page.hasMore,false);
+  const earlier=seen[0],later=last.projects.at(-1).id;
+  const select=selectedProjectIds=>f.request('background',{op:'mode',mode:'pro-cross-project',selectedProjectIds});
+  const pageFor=selectedProjectIds=>f.request('view',{op:'page',mode:'pro-cross-project',selectedProjectIds,segment:0,offset:0,limit:8,rowLimit:5});
+  assert.equal((await select([earlier])).ok,true);
+  const current=await pageFor([earlier]);assert.equal(current.ok,true);const expected=current.value.versions;
+  const preview=await f.request('commit',{op:'preview',kind:'undo-review',input:{operationId:'picker_review_target'},expected});assert.equal(preview.ok,true);
+  const reviewed=await f.request('view',{op:'operation-review',previewId:preview.value.previewId,offset:0,limit:24,expected});assert.equal(reviewed.ok,true);assert.equal(reviewed.value.page.hasMore,false);
+  const picked=await select([earlier,later]);assert.equal(picked.ok,true,JSON.stringify(picked));assert.deepEqual(picked.value.status.selectedProjectIds,[earlier,later]);
+  assert.deepEqual((await panel(0)).status.selectedProjectIds,[earlier,later],'reading another choice window does not drop the off-page selection');
+  const changed=await pageFor([earlier,later]);assert.equal(changed.ok,true);assert.deepEqual(changed.value.versions,expected,'selection changes do not fabricate data revisions');
+  assert.deepEqual(await f.request('commit',{op:'apply-structure',previewId:preview.value.previewId,operationId:'old_picker_review',expected}),unavailable,'changed explicit scope retires the completed earlier review');
+  for(const id of ['forged_native_project',unadmitted])assert.deepEqual(await select([earlier,id]),unavailable,'unknown or unadmitted native projects cannot enter the scope');
+  assert.deepEqual((await f.request('background',{op:'status'})).value.status.selectedProjectIds,[earlier,later],'failed selection leaves the current explicit selection intact');
+  assert.deepEqual(await f.raw(),before,'paging, selecting and refused old/forged requests do not write overlay assets or operation history');
+  assert.equal((await f.workspaces.read(f.scope)).state.revision,0,'the picker does not mutate Free assets');
 });

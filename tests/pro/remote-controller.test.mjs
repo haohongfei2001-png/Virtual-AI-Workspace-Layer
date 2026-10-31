@@ -133,3 +133,23 @@ test('direct dialog retries retain the exact command and frozen review intent af
  await remote.dispatch({type:'CREATE_TOPIC',name:'同一份确认'},{expected});assert.equal(calls.length,2);
  await f.local.dispatch({type:'CREATE_TOPIC',name:'新审阅版本'});base=projectPublicPage({...await f.owner.readPrivate(),view:f.local.getView(),status:f.local.getStatus()});await remote.refresh({force:true});await remote.dispatch({type:'CREATE_TOPIC',name:'同一份确认'});assert.equal(made,2);assert.equal(writes,2);
 });
+test('bounded settings and unresolved-history paging replace the window instead of accumulating visited assets',async t=>{
+ const f=await fixture(t);await f.local.dispatch({type:'CREATE_TOPIC',name:'模板'});await f.remote.refresh({force:true});const input=await f.owner.readPrivate(),template=Object.values(input.state.topics)[0];input.state.topics={};
+ for(let i=0;i<132;i++){const id='paged_'+i;input.state.topics[id]={...structuredClone(template),id,name:'候选 '+i};}
+ for(const offset of [0,24,120]){const held=f.holdNext(),pending=f.remote.loadPanel('settings',null,{offset,limit:24});held.resolve({ok:true,value:projectPublicPanel({...input,status:f.local.getStatus(),kind:'settings',offset,limit:24})});const result=await pending;assert.equal(result.page.offset,offset);assert(Object.keys(f.remote.getState().topics).length<=25);if(offset)assert(!Object.hasOwn(f.remote.getState().topics,'paged_0'));}
+ for(let i=0;i<32;i++){const id='legacy_'+i;input.state.legacyResolutions[id]={refId:id,status:'primary-resolution-required',candidates:[],preservedPlacements:[]};input.snapshot.references.push({id,nativeTitle:'旧整理 '+i,available:true,membership:{state:'NONE',evidenceId:'e_'+i,revision:1}});}
+ const held=f.holdNext(),pending=f.remote.loadPanel('legacy-resolutions',null,{offset:24,limit:24});held.resolve({ok:true,value:projectPublicPanel({...input,status:f.local.getStatus(),kind:'legacy-resolutions',offset:24,limit:24})});assert.equal((await pending).page.count,8);assert.equal(Object.keys(f.remote.getState().legacyResolutions).length,8);assert(!Object.hasOwn(f.remote.getState().topics,'paged_120'));
+ const late=f.holdNext(),old=f.remote.loadPanel('legacy-resolutions',null,{offset:0,limit:24});await f.remote.refresh({force:true});late.resolve({ok:true,value:projectPublicPanel({...input,status:f.local.getStatus(),kind:'legacy-resolutions'})});assert.equal(await old,null);assert.deepEqual(f.remote.getState().legacyResolutions,{});
+});
+test('a committed mutation waits for the notification refresh that superseded its own page before follow-up reads',{timeout:10000},async t=>{
+ const f=await fixture(t),pages=[],started=[deferred(),deferred()];let holdPages=false,settled=false;
+ const remote=createRemoteProController({request:async(action,payload)=>{
+  if(action==='commit'){await f.local.dispatch(payload.command,{operationId:payload.operationId});holdPages=true;return {ok:true,value:{kind:'pro-result',protocol:'vaiwl-pro-public/1',state:'applied'}};}
+  const input={...await f.owner.readPrivate(),view:f.local.getView(),status:f.local.getStatus()};
+  if(payload.op==='page'){const value=projectPublicPage(input);if(!holdPages)return {ok:true,value};const held=deferred(),index=pages.length;pages.push({held,value});started[index]?.resolve();return held.promise;}
+  return {ok:true,value:projectPublicPanel({...input,...payload})};
+ }});t.after(()=>remote.destroy());await remote.refresh();const write=remote.dispatch({type:'CREATE_TOPIC',name:'保留后续核对'}).then(value=>{settled=true;return value;});
+ await started[0].promise;const notification=remote.refresh({force:true});await started[1].promise;pages[0].held.resolve({ok:true,value:pages[0].value});await new Promise(resolve=>setImmediate(resolve));const settledBeforeNotification=settled;
+ pages[1].held.resolve({ok:true,value:pages[1].value});await Promise.all([write,notification]);assert.equal(settledBeforeNotification,false,'write facade must not start a follow-up panel on a superseded page');
+ const panel=await remote.loadPanel('legacy-resolutions',null,{offset:0,limit:24});assert.equal(panel.panel,'legacy-resolutions');assert.deepEqual(panel.versions,remote.getSnapshot().versions);
+});

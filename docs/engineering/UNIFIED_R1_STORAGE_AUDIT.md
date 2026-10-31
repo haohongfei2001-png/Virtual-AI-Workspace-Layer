@@ -87,7 +87,7 @@ Series 的摘要、成员和全部边分别分页；密集图用 40 个成员、
 
 ## 6. 可复现验证与尚未关闭的关卡
 
-本次存储复核工作树实际通过：registry 6/6（含多组破坏及跨 realm rejection 反例）、损坏恢复 13/13、复合备份/迁移 14/14、费用存储 13/13、public DTO 初次独立复核 16/16、原结构提交回归 3/3；生产 owner 最新独立复核为 24/24，包含超过 200 项变化的完整审阅与整笔撤销及跨 Project 选择变化反例，后续新增用例以最终 CI 为准。包边界 176/176，新增反例验证即使重新计算 manifest 摘要，也不能把恢复模块通过 WAR 暴露。真实 Chromium `storage-browser.mjs` 1/1 验证复合恢复两侧请求入队后强制 abort、完整回滚、成功重试、一次 receipt、浏览器进程重开和旧 Free 读取；`recovery-browser.mjs` 1/1 另外验证注入 root 缺失、连续历史重放、三条修复写入入队后的零部分提交、隔离记录与 repair receipt 跨进程保存。两个浏览器用例均明示使用隔离 fixture 授权，不冒充生产账号证据。
+本次存储复核工作树实际通过：registry 6/6（含多组破坏及跨 realm rejection 反例）、损坏恢复 13/13、复合备份/迁移 14/14、费用存储 13/13、public DTO 初次独立复核 16/16、原结构提交回归 3/3；生产 owner 最新独立复核为 26/26，包含超过 200 项变化的完整审阅与整笔撤销、跨 Project 选择变化、由 NativeRepository 准入的 132 个合成 Project 的完整候选分页，以及 32 条历史多重关系在前 24 条解决后仍能访问剩余 8 条且保留原 64 条 Free Placement 的反例，后续新增用例以最终 CI 为准。包边界 176/176，新增反例验证即使重新计算 manifest 摘要，也不能把恢复模块通过 WAR 暴露。真实 Chromium `storage-browser.mjs` 1/1 验证复合恢复两侧请求入队后强制 abort、完整回滚、成功重试、一次 receipt、浏览器进程重开和旧 Free 读取；`recovery-browser.mjs` 1/1 另外验证注入 root 缺失、连续历史重放、三条修复写入入队后的零部分提交、隔离记录与 repair receipt 跨进程保存。两个浏览器用例均明示使用隔离 fixture 授权，不冒充生产账号证据。
 
 ```sh
 node --test-reporter=tap tests/pro/storage-registry.test.mjs
