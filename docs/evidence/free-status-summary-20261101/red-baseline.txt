@@ -1,0 +1,204 @@
+✖ fixed summary has a static accessible placeholder outside closed details: runtime-build (2.518999ms)
+✖ fixed summary has a static accessible placeholder outside closed details: boot-stage (0.289485ms)
+✖ fixed summary has a static accessible placeholder outside closed details: status-code (0.138388ms)
+✖ fixed summary has a static accessible placeholder outside closed details: mount-stage (0.107281ms)
+✖ fixed summary exposes current build, boot, status and existing refusal while details stay closed (12.031998ms)
+✖ snapshot invalidation clears earlier status when documentId changes after STATUS (1.312644ms)
+✖ snapshot invalidation clears earlier status when same-document route changes after STATUS (0.516597ms)
+✖ snapshot invalidation clears earlier status when inactive document changes after STATUS (0.689186ms)
+✖ snapshot invalidation clears all successful channels if the document changes at the final check (2.701494ms)
+✖ snapshot invalidation fails closed when final document lookup rejects (1.192674ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 0
+ℹ fail 10
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 50.100479
+
+✖ failing tests:
+
+test at tests/host/local-status-presentation.test.mjs:38:28
+✖ fixed summary has a static accessible placeholder outside closed details: runtime-build (2.518999ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  0 !== 1
+  
+      at TestContext.<anonymous> (file:///workspace/scratch/ac6ed7de91d5/vaiwl/tests/host/local-status-presentation.test.mjs:40:9)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/host/local-status-presentation.test.mjs:38:28
+✖ fixed summary has a static accessible placeholder outside closed details: boot-stage (0.289485ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  0 !== 1
+  
+      at TestContext.<anonymous> (file:///workspace/scratch/ac6ed7de91d5/vaiwl/tests/host/local-status-presentation.test.mjs:40:9)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/host/local-status-presentation.test.mjs:38:28
+✖ fixed summary has a static accessible placeholder outside closed details: status-code (0.138388ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  0 !== 1
+  
+      at TestContext.<anonymous> (file:///workspace/scratch/ac6ed7de91d5/vaiwl/tests/host/local-status-presentation.test.mjs:40:9)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/host/local-status-presentation.test.mjs:38:28
+✖ fixed summary has a static accessible placeholder outside closed details: mount-stage (0.107281ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  0 !== 1
+  
+      at TestContext.<anonymous> (file:///workspace/scratch/ac6ed7de91d5/vaiwl/tests/host/local-status-presentation.test.mjs:40:9)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/host/local-status-presentation.test.mjs:44:1
+✖ fixed summary exposes current build, boot, status and existing refusal while details stay closed (12.031998ms)
+  AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+  
+    assert(fixed)
+  
+      at TestContext.<anonymous> (file:///workspace/scratch/ac6ed7de91d5/vaiwl/tests/host/local-status-presentation.test.mjs:47:43)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: null,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at tests/host/local-status-presentation.test.mjs:54:193
+✖ snapshot invalidation clears earlier status when documentId changes after STATUS (1.312644ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /unavailable.*document-changed/. Input:
+  
+  '本次状态码：ready'
+  
+      at TestContext.<anonymous> (file:///workspace/scratch/ac6ed7de91d5/vaiwl/tests/host/local-status-presentation.test.mjs:56:9)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '本次状态码：ready',
+    expected: /unavailable.*document-changed/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at tests/host/local-status-presentation.test.mjs:54:193
+✖ snapshot invalidation clears earlier status when same-document route changes after STATUS (0.516597ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /unavailable.*document-changed/. Input:
+  
+  '本次状态码：ready'
+  
+      at TestContext.<anonymous> (file:///workspace/scratch/ac6ed7de91d5/vaiwl/tests/host/local-status-presentation.test.mjs:56:9)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '本次状态码：ready',
+    expected: /unavailable.*document-changed/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at tests/host/local-status-presentation.test.mjs:54:193
+✖ snapshot invalidation clears earlier status when inactive document changes after STATUS (0.689186ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /unavailable.*document-changed/. Input:
+  
+  '本次状态码：ready'
+  
+      at TestContext.<anonymous> (file:///workspace/scratch/ac6ed7de91d5/vaiwl/tests/host/local-status-presentation.test.mjs:56:9)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '本次状态码：ready',
+    expected: /unavailable.*document-changed/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at tests/host/local-status-presentation.test.mjs:61:1
+✖ snapshot invalidation clears all successful channels if the document changes at the final check (2.701494ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /document-changed/. Input:
+  
+  '本次状态码：ready'
+  
+      at TestContext.<anonymous> (file:///workspace/scratch/ac6ed7de91d5/vaiwl/tests/host/local-status-presentation.test.mjs:63:9)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '本次状态码：ready',
+    expected: /document-changed/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at tests/host/local-status-presentation.test.mjs:66:1
+✖ snapshot invalidation fails closed when final document lookup rejects (1.192674ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /unavailable.*document-query-failed/. Input:
+  
+  '本次状态码：ready'
+  
+      at TestContext.<anonymous> (file:///workspace/scratch/ac6ed7de91d5/vaiwl/tests/host/local-status-presentation.test.mjs:68:9)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '本次状态码：ready',
+    expected: /unavailable.*document-query-failed/,
+    operator: 'match',
+    diff: 'simple'
+  }

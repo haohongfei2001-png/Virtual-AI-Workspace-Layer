@@ -9,10 +9,13 @@ import {createHostFixtureServer} from './fixtures/server.mjs';
 import {createHistoricalNetworkGuard,historicalNetworkGuardArgs} from './historical-network-guard.mjs';
 import {packageHost,verifyHost} from '../../extension/package.mjs';
 import {installStartupSurfaceObserver} from './startup-surface-observer.mjs';
+import {assertStatusSummaryAccessible,statusSummaryOracleHash} from './status-summary-accessibility.mjs';
 const server=await createHostFixtureServer(),dir=await mkdtemp(join(tmpdir(),'vaiwl-local-status-')),built=packageHost(join(dir,'package'),{offlineOrigin:server.origin}),info=JSON.parse(await readFile(join(built.unpacked,'build-manifest.json'),'utf8'));
 const runnerHash=createHash('sha256').update(await readFile(new URL(import.meta.url))).digest('hex');
 const observerURL=new URL('./startup-surface-observer.mjs',import.meta.url),observerHash=createHash('sha256').update(await readFile(observerURL)).digest('hex');
 const report={sourceCommit:process.env.FREE_SOURCE_COMMIT??null,runnerHash,startup:'IMMEDIATE_LOAD_ORIGINAL_15S_WINDOW',kind:'OFFLINE_MV3_LOCAL_STATUS',status:'RUNNING',realChatGPT:'NOT_RUN',releaseStatus:'NOT_RELEASE_READY',sourceHashes:info.sourceHashes,results:{},errors:[],stage:'launch',timeline:[]};const started=performance.now();let context,guard,page,popup;
+report.statusSummaryOracleHash=statusSummaryOracleHash;
+const expectedBuild=/\bbuild="([a-f0-9]{64})"/.exec(await readFile(join(built.unpacked,'content.js'),'utf8'))?.[1];assert(expectedBuild,'packaged bootstrap fingerprint');
 try{
  guard=await createHistoricalNetworkGuard({fixtureOrigin:server.origin});
  context=await chromium.launchPersistentContext(join(dir,'profile'),{headless:true,executablePath:process.env.FREE_CHROME_EXECUTABLE??(process.platform==='darwin'?'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome':'/usr/bin/chromium'),ignoreDefaultArgs:['--disable-extensions'],args:['--enable-unsafe-extension-debugging',...historicalNetworkGuardArgs(guard.config)]});
@@ -29,12 +32,15 @@ try{
  report.results.reading=await status();assert.equal(report.results.reading,'reading');assert.equal(await page.locator('[data-va-owned][id$="_workspace"]:visible').count(),0);assert.equal(await page.locator('textarea').inputValue(),'STATUS_UNSENT_DRAFT');
  await page.getByRole('button',{name:'返回工作空间',exact:true}).click();await page.locator('[data-va-owned][id$="_workspace"]:visible').waitFor();report.results.ready=await status();assert.equal(report.results.ready,'ready');
  await popup.evaluate(()=>import(chrome.runtime.getURL('extension/status.mjs')+'?ready'));assert.match(await popup.locator('#status').textContent(),/已连接/);assert.equal(await popup.locator('button').count(),0);
+ report.results.fixedSummary=await assertStatusSummaryAccessible(popup,{build:expectedBuild,state:'ready',bootStage:'module-loaded'});
+ report.summaryScreenshot=join(dir,'status-summary.png');await popup.locator('#diagnostic-summary').screenshot({path:report.summaryScreenshot});
  report.results.draft=await page.locator('textarea').inputValue()==='STATUS_UNSENT_DRAFT';assert(report.results.draft);
  // Public frame documents cannot impersonate the private popup sender.
  const rogue=await context.newPage();await rogue.goto(`chrome-extension://${id}/workspace.html`);await page.bringToFront();
  report.results.frameRejected=await rogue.evaluate(async()=>{const [tab]=await chrome.tabs.query({active:true,currentWindow:true});try{return await chrome.tabs.sendMessage(tab.id,{v:1,type:'HOST_LOCAL_STATUS'},{frameId:0})===undefined;}catch{return true;}});assert(report.results.frameRejected);
  await page.goto('about:blank');report.results.unavailable=await status();assert.equal(report.results.unavailable,'unavailable');
  await popup.evaluate(()=>import(chrome.runtime.getURL('extension/status.mjs')+'?unavailable'));assert.match(await popup.locator('#status').textContent(),/尚未接入/);
+ report.results.unavailableSummary=await assertStatusSummaryAccessible(popup,{state:'unavailable'});assert(!(await popup.locator('#runtime-build').textContent()).includes(expectedBuild),'no previous runtime fingerprint after current receiver disappears');
  assert.deepEqual(report.errors,[]);verifyHost(built.unpacked);
  for(const [path,expected]of Object.entries(info.sourceHashes))assert.equal(createHash('sha256').update(await readFile(path)).digest('hex'),expected,'source drift '+path);
  report.sourceChanged=false;report.status='PASS_OFFLINE_MV3_LOCAL_STATUS';

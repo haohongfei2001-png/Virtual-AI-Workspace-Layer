@@ -1,5 +1,19 @@
 # VAIWL实际状态：渐进积累工程已接线，真实来源逐项待准入
 
+## 2026-11-01 固定诊断摘要：结束对 Mac AX 折叠详情的依赖
+
+依用户本轮限定修复指令，先核对 PR16 冻结 HEAD `30d4cba74854f1a5dfe1e23e6295047cba602976`、本页/AUTHORITY/唯一计划和[隔离回执6555803640](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16#issuecomment-6555803640)。该回执证明旧折叠详情阻碍 Mac AX 字段读取，不能证明 Project 的真实挂载拒绝原因。本批直接修复产品自有状态页，不再修 Mac 展开工具或重选挂载方案。
+
+**SOURCE_FIXED / OFFLINE_PASS：** `status.html` 默认显示四个静态、唯一、可访问字段：`runtime-build`、`boot-stage`、`status-code`、`mount-stage`。未就绪时已有明确占位；展开详情不是读取前提。必要摘要只投影原 STATUS/BOOT/PRESENTATION 的运行指纹、启动阶段、状态码和已有 boundary/projectStage/mountFailure/layoutRefusal 白名单。原详细 JSON、导出和显式一次结构操作仍折叠。状态面板保持300px宽、四行摘要，不进行整体视觉重构。
+
+同时修复跨通道旧值混合：STATUS 成功后若 BOOT/PRESENTATION 或最终身份核验发现 documentId、URL、lifecycle 变化，统一丢弃旧状态/指纹/挂载回执；已观察到的中途 A→B→A 也不能恢复旧回执。保留每个原通道的前后核验，并在发布前作一次有界的最终核验；无轮询、重试或结构回退。BOOT 仍可在 STATUS 接收端未就绪时独立报告 module-loading/module-load-failed。缺回执、缺字段、控制器未就绪和明确 null 分别表达，null 不代表挂载通过。
+
+修前基准10项反例全部失败；补充一项中途URL变化反例在首版补丁失败后修正，原失败均保存。修后相关四文件 **229/229**，包/权限/经典worker相关 **209/209**。实际打包 MV3 私有状态旅程通过；实际 BrowserLocal nested Project 连续旅程 **36项记录通过**，包含四字段默认DOM可见及Chromium可访问性树，默认恰好 STATUS/BOOT/PRESENTATION 各一次、无LAYOUT/HISTORY。所有206项生产输入与最终包逐项一致，205文件完整性验证通过。独立只读源码和测试复审无剩余阻断。精确证据见 [receipt.json](evidence/free-status-summary-20261101/receipt.json)。这些结果证明隔离Chrome，不冒充原Mac AX或真实Project已挂载。
+
+最终开发ZIP SHA256 `d4a7a553293f8ddac70bcdb961b165059ce3ea61763eba0f285840cb993685c8`；生产BrowserLocal运行指纹 `26a6145413a9db5acdfdc57e7643bea119c33fd5623216d1b437727ec2eaea30`。冻结后的精确源码SHA及同SHA正式CI记录在PR最终交接，不为追加CI记录再次移动候选。
+
+原三个安全通道、隐私白名单、权限manifest、身份/授权/frame/paint/epoch/srcdoc条件均未改变；没有Project DOM新增读取。沿原分支/PR16，由远程唯一writer负责源码与测试，原Codex只执行[最小Mac验收](evidence/free-status-summary-20261101/HANDOFF.md)：原ID更新后，在专用Project标签打开自有状态面板，直接回传四个固定字段。若确认真实挂载拒绝，继续由远程writer定位修复，不把GitHub可完成的工程交回Mac。原36/36结构额度不续期；未操作原Mac、未建竞争PR、未merge或发布。真实Project挂载仍BLOCKED/NOT_VERIFIED；新候选Mac为NOT_RUN，其他真实来源和资产关口保持，FREE_NOT_ACCEPTED / NOT_RELEASE_READY。
+
 ## 2026-11-01 Project 当前拒绝接线、生命周期纠错与成员来源收口
 
 本批先实读 PR16 最新 HEAD `5593e02eb81b1fc8fda3a12dc945d0280cf67d60`，核对实机评论 [6546112515](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16#issuecomment-6546112515)、[6546368431](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16#issuecomment-6546368431) 及工程任务6547186156、诊断差额6547191328。旧实机证据现应明确分开：正常聊天的真实鼠标四格点击已展开工作区；原生 Project 主页入口、身份及两条成员路径已证明；**Project 增强界面仍是 frame=0、return=0，当前实际拒绝阶段未取得**。先前“真实 Project 入口完全未知”的历史段落由本节更新，但不因此宣称增强界面可用。Mac 无正文结构额度36/36已耗尽，本批没有访问实机或增加检查。

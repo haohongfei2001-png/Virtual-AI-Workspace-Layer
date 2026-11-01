@@ -15,6 +15,7 @@ import {observedProjectHTML} from './fixtures/observed-project.mjs';
 import {observedDesktopHTML} from './fixtures/observed-desktop.mjs';
 import {createHistoricalNetworkGuard,historicalNetworkGuardArgs} from './historical-network-guard.mjs';
 import {validLocalPipeline} from '../../src/host/local-status.mjs';
+import {assertStatusSummaryAccessible,statusSummaryOracleHash} from './status-summary-accessibility.mjs';
 const P='g-p-11111111111111111111111111111111',C='33333333-3333-4333-8333-333333333333',B='44444444-4444-4444-8444-444444444444',requests=[];
 // Existing explicit scroll-region contract, reconstructed in the same host.
 // Exercise it through the real package/owner path, not just the return proof.
@@ -26,6 +27,7 @@ const server=createServer((req,res)=>{requests.push(req.url);res.writeHead(200,{
 await new Promise(r=>server.listen(0,'127.0.0.1',r));const origin='http://127.0.0.1:'+server.address().port,guard=await createHistoricalNetworkGuard({fixtureOrigin:origin});
 const dir=await mkdtemp(join(tmpdir(),'vaiwl-browser-local-mv3-')),built=packageHost(join(dir,'package'),{offlineOrigin:origin,browserLocal:true,...(process.argv.includes('--mount-diagnostic-only')?{mainMountDiagnostic:true}:{})}),report={status:'RUNNING',evidence:'ISOLATED_MV3_FORMAL_UI_LOCAL_SESSION_AND_PERSONAL',realChatGPT:'NOT_RUN',baseline:HOST_BASELINE_VERSION,package:built,checks:{},requests};
 report.sourceHashes=JSON.parse(await readFile(join(built.unpacked,'build-manifest.json'),'utf8')).sourceHashes;
+report.statusSummaryOracleHash=statusSummaryOracleHash;
 const fixturePaths=['fixtures/observed-sidebar-project-details-20261026.json','fixtures/observed-history-structure.json','fixtures/observed-sidebar-project-20261026.json','fixtures/observed-host-replay.mjs','fixtures/observed-host-baseline.json','fixtures/observed-project.mjs','fixtures/observed-desktop.mjs'];
 report.fixtureHashes=Object.fromEntries(await Promise.all(fixturePaths.map(async path=>['tests/host/'+path,createHash('sha256').update(await readFile(new URL(path,import.meta.url))).digest('hex')])));
 report.browserVersion=null;report.viewports=[];
@@ -319,10 +321,13 @@ try{
     return {types,registered:shape?.presentation?.registered===true,frames:shape?.presentation?.frames??0,hasStructure:!!shape&&Object.hasOwn(shape,'sidebarStructure'),hasExport:!!document.querySelector('#save-sidebar-snapshot'),explicitCaptureAvailable:!!document.querySelector('#read-sidebar-structure')};
    }finally{chrome.tabs.sendMessage=send;}
   });
-  assert.equal(passiveStatus.types.filter(type=>type==='HOST_LOCAL_PRESENTATION').length,1);
-  assert(!passiveStatus.types.some(type=>['HOST_LOCAL_LAYOUT','HOST_LOCAL_HISTORY_STRUCTURE'].includes(type)));
+  assert.deepEqual([...passiveStatus.types].sort(),['HOST_LOCAL_BOOT','HOST_LOCAL_PRESENTATION','HOST_LOCAL_STATUS']);
   assert.equal(passiveStatus.registered,true);assert(passiveStatus.frames>=1);assert.equal(passiveStatus.hasStructure,false);assert.equal(passiveStatus.hasExport,false);assert.equal(passiveStatus.explicitCaptureAvailable,true);
   report.checks.privatePresentationWithoutStructure=passiveStatus;
+  const expectedBuild=/\bbuild="([a-f0-9]{64})"/.exec(await readFile(join(built.unpacked,'content.js'),'utf8'))?.[1];assert(expectedBuild);
+  report.checks.defaultAccessibleProjectSummary=await assertStatusSummaryAccessible(popup,{build:expectedBuild,bootStage:'module-loaded'});
+  assert.match(report.checks.defaultAccessibleProjectSummary.fields.find(f=>f.id==='mount-stage').text,/mode=.*attempt=.*boundary=.*mountFailure=.*layoutRefusal=/);
+  report.statusSummaryScreenshot=join(dir,'project-status-summary.png');await popup.locator('#diagnostic-summary').screenshot({path:report.statusSummaryScreenshot});
   const unlocked=await popup.evaluate(()=>chrome.runtime.sendMessage({v:1,type:'HOST_LOCAL_SPACE',action:'unlock'}));assert.equal(unlocked.ok,true,JSON.stringify(unlocked));
   const localState=()=>popup.evaluate(()=>chrome.runtime.sendMessage({v:1,type:'HOST_LOCAL_SPACE',action:'status'}));
   report.checks.afterUnlock=await localState();assert.equal(report.checks.afterUnlock.mode,'personal');

@@ -3,27 +3,105 @@ import {projectSurfaceFailureReasons} from '../../src/host/native-project-surfac
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {initializationFailureStates,readActiveLocalStatus,readActiveLocalLayout,validLocalPipeline,createSidebarSnapshot} from '../../src/host/local-status.mjs';
+import {initializationFailureStates,readActiveLocalStatus,readActiveLocalLayout,readLocalBoot,validLocalPipeline,createSidebarSnapshot} from '../../src/host/local-status.mjs';
 const source=readFileSync(new URL('../../extension/status.mjs',import.meta.url),'utf8');
 const html=readFileSync(new URL('../../extension/status.html',import.meta.url),'utf8');
 const importLine="import {requestLocalReconnect} from '../src/host/local-reconnect.mjs';\nimport {HOST_CONFIG} from './config.mjs';\nimport {readActiveLocalStatus,readActiveLocalLayout,readLocalBoot,validLocalPipeline,createSidebarSnapshot,createMainMountSnapshot} from '../src/host/local-status.mjs';\nimport {HISTORY_DIAGNOSTIC_BATCH,validHistoryStructureReport,runHistoryDiagnosticOnce,sidebarStructureCoverage} from '../src/host/history-structure-diagnostic.mjs';\n";
 assert(source.startsWith(importLine),'execute actual popup body after its exact imports');
 const AsyncFunction=Object.getPrototypeOf(async function(){}).constructor;
-async function render(initial,browserLocal=false,localState={ok:true},boot=null,trustedTarget=false,layouts={}){
+async function render(initial,browserLocal=false,localState={ok:true},boot=null,trustedTarget=false,layouts={},environment={}){
  let current=initial;const calls=[],node={textContent:''};
- const chrome={tabs:{query:async args=>{calls.push(['query',args]);return [{id:7,get title(){throw Error('PRIVATE_TITLE');},get url(){throw Error('PRIVATE_URL');}}];},sendMessage:async(...args)=>{calls.push(['send',...args]);return args[1]?.type==='HOST_LOCAL_LAYOUT'?{v:1,shape:layouts.full??null}:args[1]?.type==='HOST_LOCAL_PRESENTATION'?{v:1,shape:layouts.presentation??null}:args[1]?.type==='HOST_LOCAL_RECONNECT'?{v:1,ok:true}:current;}}};
- if(trustedTarget)chrome.webNavigation={getFrame:async()=>({documentId:'document',url:'https://chatgpt.com/',documentLifecycle:'active'})};
+ const chrome={tabs:{query:async args=>{calls.push(['query',args]);return [{id:7,get title(){throw Error('PRIVATE_TITLE');},get url(){throw Error('PRIVATE_URL');}}];},sendMessage:async(...args)=>{calls.push(['send',...args]);if(environment.reply)return environment.reply(args,current);return args[1]?.type==='HOST_LOCAL_LAYOUT'?{v:1,shape:layouts.full??null}:args[1]?.type==='HOST_LOCAL_PRESENTATION'?{v:1,shape:layouts.presentation??null}:args[1]?.type==='HOST_LOCAL_BOOT'?boot:args[1]?.type==='HOST_LOCAL_RECONNECT'?{v:1,ok:true}:current;}}};
+ let frameReads=0;
+ if(trustedTarget)chrome.webNavigation={getFrame:async()=>{frameReads++;return environment.frame?environment.frame(frameReads,calls):{documentId:'document',url:'https://chatgpt.com/',documentLifecycle:'active'};}};
  const elements=[];
  const make=tag=>({tag,textContent:'',children:[],append(...nodes){this.children.push(...nodes);},listeners:{},setAttribute(){},addEventListener(type,fn){this.listeners[type]=fn;}});
  const details=make('details'),summary=make('summary'),buildKind=make('p');details.id='diagnostic-details';summary.textContent='诊断详情';buildKind.id='build-kind';buildKind.textContent='构建类别未标定，请先验证安装包。';details.append(summary,buildKind);elements.push(details);
- const find=(nodes,id)=>nodes.flatMap(e=>[e,...e.children.flatMap(c=>[c,...c.children??[]])]).find(e=>e.id===id);
+ if(html.includes('id="diagnostic-summary"')){const fixed=make('section');fixed.id='diagnostic-summary';for(const id of ['runtime-build','boot-stage','status-code','mount-stage']){const p=make('p');p.id=id;p.textContent=new RegExp('<p id="'+id+'"[^>]*>([^<]*)</p>').exec(html)?.[1]??'';fixed.append(p);}elements.unshift(fixed);}
+ const find=(nodes,id)=>{for(const e of nodes){if(e.id===id)return e;const nested=find(e.children??[],id);if(nested)return nested;}return null;};
  const byId=id=>id==='status'?node:find(elements,id);
  const document={getElementById:byId,body:{append:e=>{const old=elements.indexOf(e);if(old>=0)elements.splice(old,1);elements.push(e);}},createElement:make};
  chrome.runtime={sendMessage:async message=>{calls.push(['control',message]);return localState;}};
- await new AsyncFunction('requestLocalReconnect','HOST_CONFIG','readActiveLocalStatus','readActiveLocalLayout','readLocalBoot','validLocalPipeline','createSidebarSnapshot','chrome','document',source.slice(importLine.length))(requestLocalReconnect,{browserLocal},readActiveLocalStatus,readActiveLocalLayout,async()=>boot,validLocalPipeline,createSidebarSnapshot,chrome,document);
- return {calls,node,elements,byId,change:value=>{current=value;}};
+ await new AsyncFunction('requestLocalReconnect','HOST_CONFIG','readActiveLocalStatus','readActiveLocalLayout','readLocalBoot','validLocalPipeline','createSidebarSnapshot','chrome','document',source.slice(importLine.length))(requestLocalReconnect,{browserLocal},readActiveLocalStatus,readActiveLocalLayout,environment.realBoot?readLocalBoot:async()=>boot,validLocalPipeline,createSidebarSnapshot,chrome,document);
+ return {calls,node,elements,byId,frameReads,change:value=>{current=value;}};
 }
 const drain=async()=>{for(let i=0;i<30;i++)await Promise.resolve();};
+const summaryIds=['runtime-build','boot-stage','status-code','mount-stage'];
+const currentFrame={documentId:'document',url:'https://chatgpt.com/',documentLifecycle:'active'};
+const currentBoot={v:1,stage:'module-loaded',build:'a'.repeat(64)};
+function presentationShape(patch={}){
+ const navigation={phase:'accepted',roots:[1,1,0],firstOutside:[],firstClip:[],memberShape:[],headingShape:[],memberReject:Array(7).fill(0),rejected:Array(11).fill(0),matched:0,visible:0,titles:0,association:0,candidates:0,claims:0};
+ const delivery={pages:0,resolvedProjects:0,resolvedChats:0,acceptedPackets:0,acceptedProjects:0,acceptedChats:0,rejectedPackets:0,capped:false};
+ const presentation={mode:'waiting',attempt:'not-attempted',registered:false,frames:0,grants:0,workspace:null,sidebar:null,geometryPaused:false,returnPresent:false,...patch};
+ return {navigation,delivery,presentation};
+}
+for(const id of summaryIds)test('fixed summary has a static accessible placeholder outside closed details: '+id,()=>{
+ const outside=html.replace(/<details\b[^>]*>[\s\S]*?<\/details>/g,'');
+ assert.equal((html.match(new RegExp('id="'+id+'"','g'))??[]).length,1);
+ assert.match(outside,new RegExp('<p id="'+id+'"[^>]*>[^<]*(?:正在|等待|未核实|未就绪)'));
+ assert.doesNotMatch(outside,/<(?:section|p)\b[^>]*(?:hidden|aria-hidden="true")/);
+});
+test('fixed summary exposes current build, boot, status and existing refusal while details stay closed',async()=>{
+ const shape=presentationShape({boundary:{phase:'initial',reason:'unsafe-native-project-layout',key:null,projectStage:'rows'},mountFailure:'surface-native-flow-wrapper-paint',layoutRefusal:null});
+ const f=await render({v:1,state:'layout-project-rows'},true,{ok:true},currentBoot,true,{presentation:shape},{realBoot:true});
+ const fixed=f.byId('diagnostic-summary');assert(fixed);assert.notEqual(f.byId('diagnostic-details').open,true);
+ for(const id of summaryIds)assert(fixed.children.includes(f.byId(id)),id+' must be outside details');
+ assert(f.byId('runtime-build').textContent.includes(currentBoot.build));assert.match(f.byId('boot-stage').textContent,/module-loaded/);
+ assert.match(f.byId('status-code').textContent,/layout-project-rows/);
+ assert.match(f.byId('mount-stage').textContent,/initial.*unsafe-native-project-layout.*rows.*surface-native-flow-wrapper-paint/);
+ assert.deepEqual(f.calls.filter(c=>c[0]==='send').map(c=>c[2].type).sort(),['HOST_LOCAL_BOOT','HOST_LOCAL_PRESENTATION','HOST_LOCAL_STATUS']);
+});
+for(const [name,change] of [['documentId',{documentId:'replacement'}],['same-document route',{url:'https://chatgpt.com/g/private/project'}],['inactive document',{documentLifecycle:'cached'}]])test('snapshot invalidation clears earlier status when '+name+' changes after STATUS',async()=>{
+ const f=await render({v:1,state:'ready'},true,{ok:true},currentBoot,true,{presentation:presentationShape()},{realBoot:true,frame:n=>n<=2?currentFrame:{...currentFrame,...change}});
+ assert.match(f.byId('status-code').textContent,/unavailable.*document-changed/);assert.doesNotMatch(f.byId('status-code').textContent,/ready/);
+ assert(!f.byId('runtime-build').textContent.includes(currentBoot.build));assert.match(f.byId('mount-stage').textContent,/文档.*变化/);
+ assert(!f.byId('local-layout-shape'));assert(!f.byId('read-sidebar-structure'));
+ assert(!f.calls.some(c=>c[0]==='control'&&c[1].action==='status'));
+});
+test('snapshot invalidation clears all successful channels if the document changes at the final check',async()=>{
+ const f=await render({v:1,state:'ready'},true,{ok:true},currentBoot,true,{presentation:presentationShape({boundary:null,mountFailure:null,layoutRefusal:null})},{realBoot:true,frame:n=>n<=6?currentFrame:{...currentFrame,documentId:'replacement'}});
+ assert.match(f.byId('status-code').textContent,/document-changed/);assert(!f.byId('runtime-build').textContent.includes(currentBoot.build));assert(!f.byId('local-layout-shape'));
+ assert.equal(f.calls.filter(c=>c[0]==='send').length,3,'no resampling or fallback');
+});
+test('snapshot invalidation fails closed when final document lookup rejects',async()=>{
+ const f=await render({v:1,state:'ready'},true,{ok:true},currentBoot,true,{presentation:presentationShape()},{realBoot:true,frame:n=>{if(n>6)throw Error('PRIVATE_DOCUMENT_ERROR');return currentFrame;}});
+ assert.match(f.byId('status-code').textContent,/unavailable.*document-query-failed/);assert(!f.byId('runtime-build').textContent.includes(currentBoot.build));
+ for(const id of summaryIds)assert(!f.byId(id).textContent.includes('PRIVATE'));
+});
+test('snapshot invalidation latches an observed route change even if the final lookup returns to the old URL',async()=>{
+ const f=await render({v:1,state:'ready'},true,{ok:true},currentBoot,true,{presentation:presentationShape()},{realBoot:true,frame:n=>n===3?{...currentFrame,url:'https://chatgpt.com/c/private'}:currentFrame});
+ assert.match(f.byId('status-code').textContent,/unavailable.*document-changed/);assert(!f.byId('runtime-build').textContent.includes(currentBoot.build));assert(!f.byId('local-layout-shape'));
+});
+for(const stage of ['module-loading','module-load-failed'])test('fixed summary keeps independent BOOT when STATUS receiver is missing: '+stage,async()=>{
+ const boot={...currentBoot,stage};
+ const f=await render(null,true,{ok:true},boot,true,{}, {realBoot:true,reply:args=>{if(args[1].type==='HOST_LOCAL_STATUS')throw Error('Could not establish connection. Receiving end does not exist.');if(args[1].type==='HOST_LOCAL_BOOT')return boot;assert.fail('unexpected request');}});
+ assert.match(f.byId('status-code').textContent,/unavailable.*receiver-unavailable/);assert(f.byId('runtime-build').textContent.includes(boot.build));assert(f.byId('boot-stage').textContent.includes(stage));
+ assert.match(f.byId('mount-stage').textContent,/未取得/);assert.equal(f.calls.filter(c=>c[0]==='send').length,2);
+});
+for(const [label,boot] of [['missing',null],['bad stage',{...currentBoot,stage:'PRIVATE_STAGE'}],['bad fingerprint',{...currentBoot,build:'PRIVATE_BUILD'}],['extra private field',{...currentBoot,title:'PRIVATE_TITLE'}]])test('fixed summary rejects '+label+' BOOT without inferring disk version',async()=>{
+ const f=await render({v:1,state:'ready'},true,{ok:true},boot,true,{}, {realBoot:true});
+ assert.match(f.byId('runtime-build').textContent,/未核实.*不能用磁盘文件推定/);assert.match(f.byId('boot-stage').textContent,/未核实/);
+ for(const id of summaryIds)assert(!f.byId(id).textContent.includes('PRIVATE'));
+});
+for(const [label,shape,expected] of [
+ ['missing',null,/未取得当前文档回执/],
+ ['no presentation field',{counts:[1,1,1,1,1,1,1],branches:[]},/未提供挂载阶段/],
+ ['controller not ready',{...presentationShape(),presentation:null},/presentation=null.*未就绪/],
+ ['omitted optional fields',presentationShape(),/boundary=未提供.*mountFailure=未提供.*layoutRefusal=未提供/],
+ ['explicit null fields',presentationShape({boundary:null,mountFailure:null,layoutRefusal:null}),/boundary=null.*mountFailure=null.*layoutRefusal=null/],
+ ['active layout refusal',presentationShape({boundary:null,mountFailure:null,layoutRefusal:'control-overlap'}),/layoutRefusal=control-overlap/],
+ ['private rejection text',presentationShape({boundary:{phase:'initial',reason:'PRIVATE_BODY',key:null}}),/未取得当前文档回执/]
+])test('fixed summary distinguishes '+label+' PRESENTATION',async()=>{
+ const f=await render({v:1,state:'ready'},true,{ok:true},currentBoot,true,{presentation:shape},{realBoot:true});
+ assert.match(f.byId('mount-stage').textContent,expected);assert.doesNotMatch(f.byId('mount-stage').textContent,/PRIVATE|挂载成功|已通过/);
+ assert(!f.calls.some(c=>c[0]==='send'&&['HOST_LOCAL_LAYOUT','HOST_LOCAL_HISTORY_STRUCTURE'].includes(c[2].type)));
+});
+test('snapshot invalidation has a bounded final check and ignores its late old-document completion',async()=>{
+ let finish;const pending=new Promise(resolve=>{finish=resolve;});
+ const f=await render({v:1,state:'ready'},true,{ok:true},currentBoot,true,{presentation:presentationShape()},{realBoot:true,frame:n=>n>6?pending:currentFrame});
+ assert.match(f.byId('status-code').textContent,/unavailable.*timeout/);assert(!f.byId('runtime-build').textContent.includes(currentBoot.build));
+ const before=summaryIds.map(id=>f.byId(id).textContent);finish(currentFrame);await drain();assert.deepEqual(summaryIds.map(id=>f.byId(id).textContent),before);
+});
 test('actual BrowserLocal popup reads presentation by default and collects structure only on one explicit click',async()=>{
  const f=await render({v:1,state:'reading'},true,{ok:true,mode:'locked',exists:true},null,true,{presentation:{counts:[1,1,1,1,1,1,1],branches:[]}});
  assert.equal(f.calls.filter(c=>c[0]==='send'&&c[2].type==='HOST_LOCAL_LAYOUT').length,0);
@@ -97,10 +175,10 @@ for(const reason of ['native-flow-uncovered-branch','native-flow-check-failed'])
  assert(!f.calls.some(c=>c[0]==='control'&&c[1].action==='unlock'));
 });
 
-test('engineering diagnostics are closed and separate from local confirmation controls',async()=>{
+test('detailed reports stay closed while fixed summary is separate from local confirmation controls',async()=>{
  const f=await render({v:1,state:'reading'},true,{ok:true,mode:'locked',exists:true});
  const detail=f.elements.find(e=>e.id==='diagnostic-details');assert(detail);assert.notEqual(detail.open,true);assert.equal(detail.children[0].textContent,'诊断详情');
- assert(detail.children.includes(f.byId('runtime-build')));assert(detail.children.includes(f.byId('build-kind')));assert.match(html,/<details id="diagnostic-details"><summary>诊断详情<\/summary><p id="build-kind"/);
+ assert(!detail.children.includes(f.byId('runtime-build')));assert(f.byId('diagnostic-summary').children.includes(f.byId('runtime-build')));assert(detail.children.includes(f.byId('build-kind')));assert.match(html,/<details id="diagnostic-details"><summary>诊断详情<\/summary><p id="build-kind"/);
  assert(!f.node.textContent.includes('构建'));assert(!f.elements.some(e=>e.id==='runtime-build'||e.id==='build-kind'));
  assert(f.elements.some(e=>e.tag==='button'&&e.textContent.includes('确认当前账号')));assert(!detail.children.some(e=>e.tag==='button'&&e.textContent.includes('确认当前账号')));
 });
@@ -113,12 +191,12 @@ for(const state of initializationFailureStates)test('post-authorization initiali
  assert.doesNotMatch(f.node.textContent,/旧私人数据保持锁定|已解锁/);
  assert.equal(f.calls.length,2);
 });
-test('existing current-document build receipt stays in closed diagnostics without new requests',async()=>{
+test('existing current-document build receipt is in the fixed summary without new requests',async()=>{
  const boot={v:1,stage:'module-loaded',build:'a'.repeat(64)};
  const f=await render({v:1,state:'authorization-failed'},false,{},boot);await drain();
- const note=f.byId('runtime-build');assert(f.byId('diagnostic-details').children.includes(note));assert.notEqual(f.byId('diagnostic-details').open,true);assert(!f.elements.includes(note));
- assert.equal(note.tag,'p');assert(note.textContent.includes(boot.build));assert(note.textContent.includes(boot.stage));
- assert.match(note.textContent,/不代表产品验收通过/);assert.equal(f.calls.length,2);
+ const note=f.byId('runtime-build');assert(f.byId('diagnostic-summary').children.includes(note));assert.notEqual(f.byId('diagnostic-details').open,true);
+ assert.equal(note.tag,'p');assert(note.textContent.includes(boot.build));assert(f.byId('boot-stage').textContent.includes(boot.stage));
+ assert.match(html,/不代表产品验收通过/);assert.equal(f.calls.length,2);
 });
 test('missing runtime receipt does not infer activated build from disk or user Reload',async()=>{
  const f=await render({v:1,state:'authorization-failed'});await drain();

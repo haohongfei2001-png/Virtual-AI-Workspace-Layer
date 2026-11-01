@@ -3,7 +3,35 @@ import {HOST_CONFIG} from './config.mjs';
 import {readActiveLocalStatus,readActiveLocalLayout,readLocalBoot,validLocalPipeline,createSidebarSnapshot,createMainMountSnapshot} from '../src/host/local-status.mjs';
 import {HISTORY_DIAGNOSTIC_BATCH,validHistoryStructureReport,runHistoryDiagnosticOnce,sidebarStructureCoverage} from '../src/host/history-structure-diagnostic.mjs';
 const messages={'foreground-failed':'本次检查：前台会话复核未通过，旧空间保持锁定，原生页面可用。','layout-failed':'本次检查：页面布局尚未满足安全挂载条件，增强界面未启动。原生页面和草稿保持不变；无需重新确认账号或重装扩展。','hello-failed':'本次检查：内容脚本已启动，但与扩展后台的初始连接未完成。旧数据未解锁。','adapter-failed':'本次检查：原生页面适配未完成，增强界面未启动。原生页面保持可用。','authorization-failed':'本次检查：工作空间授权阶段未完成，旧私人数据保持锁定。','surface-failed':'本次检查：工作空间界面挂载未完成，原生页面保持可用。',reading:'本次检查：已连接，当前保留原生阅读或输入。可使用页面顶部的四格“返回工作空间”入口展开 VAIWL。',suspended:'本次检查：已连接，增强界面正在为原生弹层或交互让位。结束当前原生操作后，可使用四格入口返回；私人空间状态见下方。','frame-blocked':'本次检查：界面框架被替换，VAIWL 已安全退出，原生页面仍可使用。若正在使用浏览器自动控制，请结束控制后重新打开页面，无需重装扩展。旧本地资料仍需按页面提示确认后恢复。',ready:'本次检查：增强界面已连接。',dormant:'本次检查：增强界面已休眠，原生 ChatGPT 仍可使用。',connecting:'本次检查：正在连接工作空间，原生 ChatGPT 仍可使用。',waiting:'本次检查：暂时无法验证工作空间，正在等待新的上下文证据。原生 ChatGPT 仍可使用。','verification-required':'本次检查：服务端要求浏览器验证，增强界面已停止连接。请查看原生 ChatGPT 页面；若出现验证请手动完成，没有验证页则无需反复刷新。',unavailable:'本次检查：此标签页尚未接入增强界面。请确认这是受支持的 ChatGPT 页面；原生页面仍可使用。'};
-let localFailure=null,localTarget=null,bootTarget=null;const state=await readActiveLocalStatus({tabs:chrome.tabs,webNavigation:chrome.webNavigation,onTarget:t=>{localTarget=t;},onProbeTarget:t=>{bootTarget=t;},onFailure:code=>{localFailure=code;}});
+let localFailure=null,localTarget=null,bootTarget=null;let state=await readActiveLocalStatus({tabs:chrome.tabs,webNavigation:chrome.webNavigation,onTarget:t=>{localTarget=t;},onProbeTarget:t=>{bootTarget=t;},onFailure:code=>{localFailure=code;}});
+let snapshotFailure=localFailure==='document-changed'?'document-changed':null;
+// Remember any observed identity change across channels, including A -> B -> A
+// SPA navigation. A later matching URL cannot rehabilitate an earlier receipt.
+const snapshotNavigation=bootTarget&&chrome.webNavigation?{getFrame:async options=>{
+ try{
+  const frame=await chrome.webNavigation.getFrame(options);
+  if(frame?.documentId!==bootTarget.documentId||frame.url!==bootTarget.url||frame.documentLifecycle!=='active')snapshotFailure='document-changed';
+  return frame;
+ }catch(error){snapshotFailure??='document-query-failed';throw error;}
+}}:chrome.webNavigation;
+const needsLayout=state.startsWith('layout-')||HOST_CONFIG.browserLocal&&localTarget&&state!=='verification-required';
+const passive=HOST_CONFIG.browserLocal&&!HOST_CONFIG.mainMountDiagnostic;
+let [boot,shape]=await Promise.all([
+ readLocalBoot({tabs:chrome.tabs,webNavigation:snapshotNavigation,target:bootTarget}),
+ needsLayout?readActiveLocalLayout({tabs:chrome.tabs,webNavigation:snapshotNavigation,target:localTarget,presentationOnly:passive}):null
+]);
+// Each channel checks its own reply. Publish their combined snapshot only after
+// a final check of the original document; an earlier ready/build is not current
+// if a later channel saw navigation. This is a bounded read, never a retry.
+if(bootTarget&&chrome.webNavigation){
+ let timer;try{
+  const frame=await Promise.race([snapshotNavigation.getFrame({tabId:bootTarget.tabId,frameId:0}),new Promise(resolve=>{timer=setTimeout(()=>resolve('timeout'),1000);})]);
+  if(frame==='timeout')snapshotFailure??='timeout';
+  else if(frame?.documentId!==bootTarget.documentId||frame.url!==bootTarget.url||frame.documentLifecycle!=='active')snapshotFailure='document-changed';
+ }catch{snapshotFailure??='document-query-failed';}finally{clearTimeout(timer);}
+ if(snapshotFailure){state='unavailable';localFailure=snapshotFailure;localTarget=null;boot=null;shape=null;}
+}
+const bootReceipt=Promise.resolve(boot);
 const layoutRegionNames={header:'原生标题栏',reading:'独立阅读区',composer:'原生输入区',navigationSlot:'返回入口区域',historyList:'原生历史列表',returnHitRoot:'页面内容容器',readingViewport:'阅读滚动区域'};
 const missing=/^layout-(missing|ambiguous)-(header|reading|composer|navigationSlot|historyList|returnHitRoot|readingViewport)$/.exec(state);
 const layoutMessage=missing?'本次检查：布局未就绪，'+layoutRegionNames[missing[2]]+(missing[1]==='missing'?'尚未找到。':'存在多个候选。')+'原生页面保持可用；本地空间状态见下方。':state.startsWith('layout-project-')?'本次检查：项目页面布局尚未就绪，增强界面未挂载；原生页面和草稿保持不变。':state.startsWith('layout-history-')?'本次检查：原生近期列表尚未就绪，原生页面保持可用。':state.startsWith('layout-sidebar-')?'本次检查：历史列表布局尚未就绪，原生页面保持可用。':state.startsWith('layout-geometry-')?'本次检查：布局安全检查未通过，增强界面未挂载；原生页面保持可用。':state==='layout-check-failed'?'本次检查：布局准备未完成；原生页面保持可用。':null;
@@ -13,16 +41,22 @@ const initializationMessage=initialization?'本次检查：已通过本次工作
 document.getElementById('status').textContent=messages[state]??initializationMessage??layoutMessage??(state.startsWith('foreground-')?'本次检查：前台连续性检查未通过，私人界面已撤回，原生页面保持可用。':null)??(state.startsWith('hello-')?'本次检查：初始文档连接未完成。旧数据保持锁定；原生页面保持可用。':null)??(state.startsWith('surface-')?'本次检查：增强界面暂不可用，原生页面保持可用；本地空间状态见下方。':'本次检查：状态不可用。');
 if(state==='unavailable')document.getElementById('status').textContent+=' 本地检查：'+({timeout:'查询超时。','tab-unavailable':'当前标签不可用。','invalid-reply':'未取得有效本地回复。','transport-error':'内容脚本通信不可用。','tab-query-failed':'当前标签查询失败。','document-query-failed':'当前文档查询失败。','document-unavailable':'当前文档尚未激活。','document-changed':'检查期间文档发生变化；未将旧回复用于新页面。','receiver-unavailable':'本次发送时内容脚本接收端不存在。','receiver-disconnected':'接收端在回复前断开。','tab-closed':'本次发送时标签已关闭。'}[localFailure]??'内容脚本已响应，但会话不可用。');
 const diagnostics=document.getElementById('diagnostic-details');
-const statusCode=document.createElement('p');statusCode.id='status-code';statusCode.className='note';statusCode.textContent='本次状态码：'+state+(localFailure?'；本地检查：'+localFailure:'');diagnostics.append(statusCode);
-const runtimeBuild=document.createElement('p');runtimeBuild.id='runtime-build';runtimeBuild.className='note';runtimeBuild.textContent='运行构建：正在核对当前文档回执…';diagnostics.append(runtimeBuild);
-const bootReceipt=readLocalBoot({tabs:chrome.tabs,webNavigation:chrome.webNavigation,target:bootTarget});
-void bootReceipt.then(boot=>{
- runtimeBuild.textContent=boot?'当前文档运行构建：'+boot.build+'；启动阶段：'+boot.stage+'。此回执不代表产品验收通过。':'运行构建：未核实。未取得与当前文档一致的有效启动回执；不能用磁盘文件推定运行版本。';
- if(boot){const note=document.createElement('pre');note.textContent='当前文档启动（无内容） '+JSON.stringify(boot);diagnostics.append(note);}
-});
-if(state.startsWith('layout-')||HOST_CONFIG.browserLocal&&localTarget&&state!=='verification-required'){
- const passive=HOST_CONFIG.browserLocal&&!HOST_CONFIG.mainMountDiagnostic;
- const shape=await readActiveLocalLayout({tabs:chrome.tabs,webNavigation:chrome.webNavigation,target:localTarget,presentationOnly:passive});if(shape){
+document.getElementById('status-code').textContent='本次状态码：'+state+(localFailure?'；本地检查：'+localFailure:'');
+const invalidSnapshot=snapshotFailure==='document-changed'?'文档已变化，本次旧回执已丢弃。':snapshotFailure?'文档核验未完成，本次回执未采用。':null;
+document.getElementById('runtime-build').textContent=boot?'运行指纹：'+boot.build:'运行指纹：未核实。'+(invalidSnapshot??'未取得当前文档启动回执；不能用磁盘文件推定运行版本。');
+document.getElementById('boot-stage').textContent='启动阶段：'+(boot?.stage??(invalidSnapshot??'未核实（无有效启动回执）。'));
+const presentation=shape?.presentation;
+let mountText=invalidSnapshot??(!shape?'未取得当前文档回执。':!Object.hasOwn(shape,'presentation')?'本次回执未提供挂载阶段。':presentation===null?'presentation=null（控制器未就绪）。':null);
+if(mountText===null){
+ const field=key=>!Object.hasOwn(presentation,key)?'未提供':presentation[key]===null?'null':presentation[key];
+ const boundary=field('boundary');
+ const boundaryText=boundary&&typeof boundary==='object'?boundary.phase+'/'+boundary.reason+'/'+boundary.key+(Object.hasOwn(boundary,'projectStage')?'/project:'+boundary.projectStage:''):boundary;
+ mountText='mode='+presentation.mode+'；attempt='+presentation.attempt+'；boundary='+boundaryText+'；mountFailure='+field('mountFailure')+'；layoutRefusal='+field('layoutRefusal');
+}
+document.getElementById('mount-stage').textContent='挂载诊断：'+mountText;
+if(boot){const note=document.createElement('pre');note.textContent='当前文档启动（无内容） '+JSON.stringify(boot);diagnostics.append(note);}
+if(needsLayout){
+ if(shape){
  if(HOST_CONFIG.mainMountDiagnostic){
   const snapshot=await createMainMountSnapshot({webNavigation:chrome.webNavigation,target:localTarget,boot:await bootReceipt,shape});
   const receipt=document.createElement('p');receipt.id='main-mount-receipt';receipt.textContent=snapshot?'首次主区挂载检查已绑定本次文档；构建 '+snapshot.build.slice(0,12)+'；'+snapshot.mainMountCheck.reason+'；拒绝路径 '+snapshot.mainMountCheck.coverage+'。这不是整页结构或产品验收；重复打开不重新采集。':'本次文档没有可交付的主区挂载报告；未执行重试，不据此推断拒绝原因。';diagnostics.append(receipt);
