@@ -1,0 +1,28 @@
+✔ J1 fixture exposes independent nonzero page target without fake project IDs (1.310277ms)
+✔ fixture rejects missing or duplicate native target (0.404381ms)
+✔ J1 is opt-in and served by native fixture, preserving default LEGACY (38.324715ms)
+✔ every extra canonical Project is a real fixture route with independent identity oracle (80.493741ms)
+✔ canonical nonzero page has deterministic native insertion order and target is eighth card (0.49729ms)
+✔ J1 previous-page locator follows accessible label rather than visible text (1.82342ms)
+✔ J3 ignores light-DOM impostors and missing navigation root (3.625931ms)
+✔ J3 recognizes enabled SVG-only interval button through its accessible label (0.62955ms)
+✔ J3 still refuses a disabled interval button and never mutates it (0.726005ms)
+✔ J3 refuses text-only impersonation of the interval control (0.545172ms)
+✔ J3 rejects wrong horizon missing label and no button (1.570499ms)
+✔ J3 retains enabled assertion native click segment transition and deadline (0.168013ms)
+✔ production graphics preserve label while replacing visible text with SVG (1.039258ms)
+✔ runner root matches the real open-shadow frame renderer and diagnostics (0.506434ms)
+✔ silent server loss before 50s is not a received auth-change signal (9.851808ms)
+✔ foreground force revalidates before natural proof boundary (1.16324ms)
+✔ diagnostic outer timeout never relaxes 60s proof acceptance (1.24901ms)
+✔ runner keeps independent natural and trusted-foreground observations (4.636855ms)
+✔ headed execution is explicit and keeps native trusted visibility assertions (1.091537ms)
+✔ foreground setup only removes Playwright focus simulation before observing native events (1.883441ms)
+ℹ tests 20
+ℹ suites 0
+ℹ pass 20
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 207.487815

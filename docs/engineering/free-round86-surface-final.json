@@ -1,0 +1,54 @@
+{
+  "evidence": "REAL_HEADLESS_DOM_RECONSTRUCTION",
+  "productionAuth": "NOT_RUN",
+  "realChatGPT": "NOT_RUN",
+  "fixture": {
+    "fixtureId": "chatgpt-host-legacy-reconstruction-v1",
+    "profile": "LEGACY",
+    "reconstruction": true,
+    "source": "VA-HOST/1.1 structure reconstruction; not a real DOM snapshot",
+    "sourceCommit": null,
+    "sourceBlob": null,
+    "fixtureHash": "02fc69f297ec2883e7e776a8d582807337ac56e3e41aa62a3f83fd151c8299ba",
+    "expectedWorldFile": "tests/host/expected/legacy.mjs",
+    "oracleHash": "32b9e3f30c9f5b4be23b859a07477e5f36db0dc8440032d1077ecc2713a8d8db",
+    "supportedCapabilities": [
+      "principal",
+      "personal-context-candidate",
+      "project-identity",
+      "idless-native-control",
+      "conversation-identity",
+      "native-move-menu",
+      "native-navigation",
+      "native-search",
+      "native-create",
+      "independent-regions",
+      "draft-preservation"
+    ]
+  },
+  "sourceHash": "9bf4a2d19845cec7893ab8ba0f2910c2dac888badc1b29dec03426c10b233c74",
+  "results": [
+    {
+      "name": "bounded-regions-same-name-idless-and-unknown",
+      "status": "PASS"
+    },
+    {
+      "name": "route-fenced-handles-and-explicit-member-region",
+      "status": "PASS"
+    },
+    {
+      "name": "none-only-current-explicit-open-menu",
+      "status": "PASS"
+    },
+    {
+      "name": "changed-or-replaced-node-never-rebound-title-over-limit-retains-id",
+      "status": "PASS"
+    },
+    {
+      "name": "reconstruction-current-conversation-id-associated-title-priority-and-stale-body-fences",
+      "status": "PASS"
+    }
+  ],
+  "errors": [],
+  "status": "PASS"
+}

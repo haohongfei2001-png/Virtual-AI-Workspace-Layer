@@ -1,0 +1,6 @@
+PASS native Chrome event shape and synchronous early invalidation
+PASS original deferred getFrame concurrency counterexample
+PASS context verify included in total deadline
+PASS abort releases hung context verify
+CAPACITY residual old receipt authorized: false
+INFLIGHT CAPACITY residual selected: null

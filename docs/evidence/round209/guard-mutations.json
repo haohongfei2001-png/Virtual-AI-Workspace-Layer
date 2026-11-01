@@ -1,0 +1,597 @@
+{
+  "specRevision": "VA-HOST/1.1 FINAL §5.2",
+  "sourceCommit": "b954abc2a0841e1576c106d07fa2e8f4efb1e287",
+  "sourceCommitProvenance": "caller-supplied; source hashes authoritative",
+  "node": "v24.19.0",
+  "platform": "linux",
+  "hashScope": "src/tests/simulator excluding dependency node_modules directories",
+  "networkPolicy": "No network/browser commands; local Node test processes only",
+  "S": "NOT_RUN",
+  "D": "NOT_RUN (MOCK_IDB is L only)",
+  "G": "NOT_RUN",
+  "U": "NOT_RUN",
+  "release": "NOT_RELEASE_READY",
+  "selected": [
+    "origin",
+    "missing-as-null",
+    "merge-by-name",
+    "old-epoch",
+    "self-certified-receipt",
+    "pre-ack-send",
+    "current-leaf-key",
+    "poll-renews-anchor",
+    "auto-popover",
+    "remove-background-inert",
+    "async-prevent-default",
+    "post-commit-continuation"
+  ],
+  "inputHashes": {
+    "src": "8cfb630e7c21c27363a82d12f9d40389ab7ebe1501b2d52e758ed0f0c03756d1",
+    "tests": "199c192316822f32ea008545a4bd9a5209599657872ed3b9356a826f132a06d7",
+    "simulator": "d55c1355ba5e7b5f2c48e3b80f44c97792f9f13b70aa88af72568c10087883cb"
+  },
+  "testArtifactHash": "cb5d07ac94babcbf1ef23cf7f350219652db2ffd671453012c5650ef85f8fa8a",
+  "manifestHash": "4bd2ac3f97431242d6083e0d5e38f584d17cb6dfc8b94cc2e114a331cfeeaa56",
+  "runnerHash": "e467fdab888c76e864ed2b1bd0f35269c4d046cabb384b502ff83ff6d67d5eb8",
+  "results": [
+    {
+      "id": "origin",
+      "specIds": [
+        "MAP-07"
+      ],
+      "evidence": "L",
+      "limitations": "",
+      "status": "KILLED",
+      "sourceFile": "src/host/url-policy.mjs",
+      "sourceHash": "fddfafcca2276161e6fd3c908ac896d0dab656fce6cf06aee64f1f442f7ac7e9",
+      "testFile": "tests/host/url-policy.test.mjs",
+      "testHash": "9b8fd742d87bd3f3b6798f1bedd4a3ce150964faa4226e503cb278ff1520f9a5",
+      "targetCase": "reject unsafe or ambiguous URL \"https://evil.test/c/11111111-2222-4333-8444-555555555555\"",
+      "baseline": {
+        "exitCode": 0,
+        "signal": null,
+        "records": [
+          {
+            "type": "test:pass",
+            "name": "reject unsafe or ambiguous URL \"https://evil.test/c/11111111-2222-4333-8444-555555555555\"",
+            "skip": false
+          }
+        ],
+        "stderr": "",
+        "stdoutHash": "78896b503ff0f4d4afe0b1e333113793602ed761dac4610418373ae11b27470d",
+        "stderrHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "mutantHash": "d7921968c5889a49cacc01521a667037bffcd2749007e80dc288938febb29101",
+      "mutant": {
+        "exitCode": 1,
+        "signal": null,
+        "records": [
+          {
+            "type": "test:fail",
+            "name": "reject unsafe or ambiguous URL \"https://evil.test/c/11111111-2222-4333-8444-555555555555\"",
+            "skip": false,
+            "code": "ERR_ASSERTION",
+            "message": "Expected values to be strictly equal:\n+ actual - expected\n\n+ 'conversation'\n- 'unsupported'\n",
+            "stack": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n+ actual - expected\n\n+ 'conversation'\n- 'unsupported'\n\n    at TestContext.<anonymous> (file:///tmp/vaiwl-guard-build-1HfgNA/mutant/tests/host/url-policy.test.mjs:15:524)\n    at Test.runInAsyncScope (node:async_hooks:227:14)\n    at Test.run (node:internal/test_runner/test:1382:25)\n    at Test.start (node:internal/test_runner/test:1242:17)\n    at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17)"
+          }
+        ],
+        "stderr": "",
+        "stdoutHash": "9a1a45ea58de4c36694c89f23addb1213748f19ab27e628f0eecace1ca281d7f",
+        "stderrHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    {
+      "id": "missing-as-null",
+      "specIds": [
+        "MAP-04"
+      ],
+      "evidence": "L",
+      "limitations": "",
+      "status": "KILLED",
+      "sourceFile": "src/host/surface-batch.mjs",
+      "sourceHash": "4733a8cecdc3f4664c77da81d12441c9f2bd7cf0c16e55ec93eb94076faa4e5d",
+      "testFile": "tests/host/surface-batch.test.mjs",
+      "testHash": "1dea1df4e0189055122d08e521edf3b9c6bb5d863e655d7b0c085aabdb4a006a",
+      "targetCase": "maps native IDs and exact titles without name merge or invented coverage",
+      "baseline": {
+        "exitCode": 0,
+        "signal": null,
+        "records": [
+          {
+            "type": "test:pass",
+            "name": "maps native IDs and exact titles without name merge or invented coverage",
+            "skip": false
+          }
+        ],
+        "stderr": "",
+        "stdoutHash": "87d2c2ea4066b405b479ab3f5e196871a078b0e8d1b514aed671bc89132f2100",
+        "stderrHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "mutantHash": "b96a7bdf002af77b7573213582feb3fb233ce6fb6d6aeae826bbfaf48d2dfea8",
+      "mutant": {
+        "exitCode": 1,
+        "signal": null,
+        "records": [
+          {
+            "type": "test:fail",
+            "name": "maps native IDs and exact titles without name merge or invented coverage",
+            "skip": false,
+            "code": "ERR_ASSERTION",
+            "message": "Expected values to be strictly deep-equal:\n+ actual - expected\n\n+ [\n+   {\n+     id: 'c1',\n+     projectId: null,\n+     state: 'NONE'\n+   }\n+ ]\n- []\n",
+            "stack": "AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:\n+ actual - expected\n\n+ [\n+   {\n+     id: 'c1',\n+     projectId: null,\n+     state: 'NONE'\n+   }\n+ ]\n- []\n\n    at TestContext.<anonymous> (file:///tmp/vaiwl-guard-build-1HfgNA/mutant/tests/host/surface-batch.test.mjs:8:196)\n    at Test.runInAsyncScope (node:async_hooks:227:14)\n    at Test.run (node:internal/test_runner/test:1382:25)\n    at Test.start (node:internal/test_runner/test:1242:17)\n    at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17)"
+          }
+        ],
+        "stderr": "",
+        "stdoutHash": "1d8be04c0b74b081eda2024236384817380e5f7c5f4fbf1571ef03e92f8098d7",
+        "stderrHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    {
+      "id": "merge-by-name",
+      "specIds": [
+        "MAP-02"
+      ],
+      "evidence": "L",
+      "limitations": "",
+      "status": "KILLED",
+      "sourceFile": "src/host/surface-batch.mjs",
+      "sourceHash": "4733a8cecdc3f4664c77da81d12441c9f2bd7cf0c16e55ec93eb94076faa4e5d",
+      "testFile": "tests/host/surface-batch.test.mjs",
+      "testHash": "1dea1df4e0189055122d08e521edf3b9c6bb5d863e655d7b0c085aabdb4a006a",
+      "targetCase": "maps native IDs and exact titles without name merge or invented coverage",
+      "baseline": {
+        "exitCode": 0,
+        "signal": null,
+        "records": [
+          {
+            "type": "test:pass",
+            "name": "maps native IDs and exact titles without name merge or invented coverage",
+            "skip": false
+          }
+        ],
+        "stderr": "",
+        "stdoutHash": "87d2c2ea4066b405b479ab3f5e196871a078b0e8d1b514aed671bc89132f2100",
+        "stderrHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "mutantHash": "43f100bbb1a8c639f7b6ac7662464874664b3f996b77531cc63220baac8c9123",
+      "mutant": {
+        "exitCode": 1,
+        "signal": null,
+        "records": [
+          {
+            "type": "test:fail",
+            "name": "maps native IDs and exact titles without name merge or invented coverage",
+            "skip": false,
+            "code": "ERR_ASSERTION",
+            "message": "Expected values to be strictly equal:\n\n1 !== 2\n",
+            "stack": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\n1 !== 2\n\n    at TestContext.<anonymous> (file:///tmp/vaiwl-guard-build-1HfgNA/mutant/tests/host/surface-batch.test.mjs:8:130)\n    at Test.runInAsyncScope (node:async_hooks:227:14)\n    at Test.run (node:internal/test_runner/test:1382:25)\n    at Test.start (node:internal/test_runner/test:1242:17)\n    at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17)"
+          }
+        ],
+        "stderr": "",
+        "stdoutHash": "a2470c05a6c26caf55ab839bd644577c53e574ba7e0ed5306a5d336149b65e3f",
+        "stderrHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    {
+      "id": "old-epoch",
+      "specIds": [
+        "SEC-06"
+      ],
+      "evidence": "L",
+      "limitations": "Late proposal route-epoch fence, not full asynchronous account-switch or MV3 certification.",
+      "status": "KILLED",
+      "sourceFile": "src/host/surface-batch.mjs",
+      "sourceHash": "4733a8cecdc3f4664c77da81d12441c9f2bd7cf0c16e55ec93eb94076faa4e5d",
+      "testFile": "tests/host/surface-batch.test.mjs",
+      "testHash": "1dea1df4e0189055122d08e521edf3b9c6bb5d863e655d7b0c085aabdb4a006a",
+      "targetCase": "old epoch rejected",
+      "baseline": {
+        "exitCode": 0,
+        "signal": null,
+        "records": [
+          {
+            "type": "test:pass",
+            "name": "old epoch rejected",
+            "skip": false
+          }
+        ],
+        "stderr": "",
+        "stdoutHash": "b986812ee6675d25965ac4340b10331805c66c50aa5702adbfab2e788b9dbf89",
+        "stderrHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "mutantHash": "e339868dd82f374c0b1b24a413505483afc88ee28903ebed054624223b4d0de5",
+      "mutant": {
+        "exitCode": 1,
+        "signal": null,
+        "records": [
+          {
+            "type": "test:fail",
+            "name": "old epoch rejected",
+            "skip": false,
+            "code": "ERR_ASSERTION",
+            "message": "Missing expected exception.",
+            "stack": "AssertionError [ERR_ASSERTION]: Missing expected exception.\n    at TestContext.<anonymous> (file:///tmp/vaiwl-guard-build-1HfgNA/mutant/tests/host/surface-batch.test.mjs:14:62)\n    at Test.runInAsyncScope (node:async_hooks:227:14)\n    at Test.run (node:internal/test_runner/test:1382:25)\n    at Test.start (node:internal/test_runner/test:1242:17)\n    at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17)"
+          }
+        ],
+        "stderr": "",
+        "stdoutHash": "350f714712e98284bc8e4361232e87757cbfc9e8a45b3081029749edc9f82a7a",
+        "stderrHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    {
+      "id": "self-certified-receipt",
+      "specIds": [
+        "SEC-02"
+      ],
+      "evidence": "L",
+      "limitations": "",
+      "status": "KILLED",
+      "sourceFile": "src/host/surface-batch.mjs",
+      "sourceHash": "4733a8cecdc3f4664c77da81d12441c9f2bd7cf0c16e55ec93eb94076faa4e5d",
+      "testFile": "tests/host/surface-batch.test.mjs",
+      "testHash": "1dea1df4e0189055122d08e521edf3b9c6bb5d863e655d7b0c085aabdb4a006a",
+      "targetCase": "unknown receipt rejected",
+      "baseline": {
+        "exitCode": 0,
+        "signal": null,
+        "records": [
+          {
+            "type": "test:pass",
+            "name": "unknown receipt rejected",
+            "skip": false
+          }
+        ],
+        "stderr": "",
+        "stdoutHash": "ba61feff8e43cdec5ebe02e2e033701f8475c3c6292ef04032ed8e1489bd394d",
+        "stderrHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "mutantHash": "a26f0442bbc94cf40d7bf2f362029fae10b343c317195ca564d076dc945e71b4",
+      "mutant": {
+        "exitCode": 1,
+        "signal": null,
+        "records": [
+          {
+            "type": "test:fail",
+            "name": "unknown receipt rejected",
+            "skip": false,
+            "code": "ERR_ASSERTION",
+            "message": "Missing expected exception.",
+            "stack": "AssertionError [ERR_ASSERTION]: Missing expected exception.\n    at TestContext.<anonymous> (file:///tmp/vaiwl-guard-build-1HfgNA/mutant/tests/host/surface-batch.test.mjs:14:62)\n    at Test.runInAsyncScope (node:async_hooks:227:14)\n    at Test.run (node:internal/test_runner/test:1382:25)\n    at Test.start (node:internal/test_runner/test:1242:17)\n    at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17)"
+          }
+        ],
+        "stderr": "",
+        "stdoutHash": "ea8099797d354e79b2152a7a3487772fa7a74715c0b3adb538abcb2aa666bc7d",
+        "stderrHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    {
+      "id": "pre-ack-send",
+      "specIds": [
+        "ACT-07"
+      ],
+      "evidence": "L",
+      "limitations": "Acceptance parser guard; complete send/network pipeline remains separately required.",
+      "status": "KILLED",
+      "sourceFile": "src/host/conversation-acceptance.mjs",
+      "sourceHash": "92fdfc486bd9614028aacc197b99a26b8ad3ae254e54a980a04b0a1e90153144",
+      "testFile": "tests/host/conversation-acceptance.test.mjs",
+      "testHash": "3a9b6a5beddd5ba186ba9434c680b9ff39d006719560bf2610981b4657b3d247",
+      "targetCase": "absent status cannot establish acceptance",
+      "baseline": {
+        "exitCode": 0,
+        "signal": null,
+        "records": [
+          {
+            "type": "test:pass",
+            "name": "absent status cannot establish acceptance",
+            "skip": false
+          }
+        ],
+        "stderr": "",
+        "stdoutHash": "3c4271a0732a61dc176e6807e378aa9780b04e92ca249b755ac6228afc7bc2bb",
+        "stderrHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "mutantHash": "530593f5eae05365706923d1028971d531c887fa59b16e1b7e1e4edcc06ceec9",
+      "mutant": {
+        "exitCode": 1,
+        "signal": null,
+        "records": [
+          {
+            "type": "test:fail",
+            "name": "absent status cannot establish acceptance",
+            "skip": false,
+            "code": "ERR_ASSERTION",
+            "message": "Expected values to be strictly deep-equal:\n+ actual - expected\n\n+ [\n+   {\n+     acceptanceState: undefined,\n+     authorPrincipalKey: 'principal_2a37ab62f5da3f388a871be58fb2b1e218ed7a15aef852ba15a581e6d0f97da1',\n+     lineage: {\n+       fingerprint: '7eb9e542045f92660ca096e52b1bc59970a80d947194310e3254bc40fd1a1dda',\n+       kind: 'derived',\n+       nodeIds: [\n+         'N'\n+       ]\n+     },\n+     mappingNodeId: 'N',\n+     messageId: 'M',\n+     role: 'user'\n+   }\n+ ]\n- []\n",
+            "stack": "AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:\n+ actual - expected\n\n+ [\n+   {\n+     acceptanceState: undefined,\n+     authorPrincipalKey: 'principal_2a37ab62f5da3f388a871be58fb2b1e218ed7a15aef852ba15a581e6d0f97da1',\n+     lineage: {\n+       fingerprint: '7eb9e542045f92660ca096e52b1bc59970a80d947194310e3254bc40fd1a1dda',\n+       kind: 'derived',\n+       nodeIds: [\n+         'N'\n+       ]\n+     },\n+     mappingNodeId: 'N',\n+     messageId: 'M',\n+     role: 'user'\n+   }\n+ ]\n- []\n\n    at TestContext.<anonymous> (file:///tmp/vaiwl-guard-build-1HfgNA/mutant/tests/host/conversation-acceptance.test.mjs:12:329)\n    at Test.runInAsyncScope (node:async_hooks:227:14)\n    at Test.run (node:internal/test_runner/test:1382:25)\n    at Test.start (node:internal/test_runner/test:1242:17)\n    at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17)"
+          }
+        ],
+        "stderr": "",
+        "stdoutHash": "1a2da7ada3329b86f0009addb889373f8dc5fb70ce0ec411fc61bdbea273c201",
+        "stderrHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    {
+      "id": "current-leaf-key",
+      "specIds": [
+        "ACT-06",
+        "ACT-11"
+      ],
+      "evidence": "L",
+      "limitations": "",
+      "status": "KILLED",
+      "sourceFile": "src/runtime/host-send-ack-owner.mjs",
+      "sourceHash": "15eb60c425aedb8f28410a2a6876addc41721b277f1beb4e745d998b5ddbb81b",
+      "testFile": "tests/host/guard-mutations/ack-key.test.mjs",
+      "testHash": "c390112749cd8c21b1ec6746290ef3de13a5aa19b6328452624d19e4af6236d1",
+      "targetCase": "ACT-06/11 current leaf cannot change durable event key",
+      "baseline": {
+        "exitCode": 0,
+        "signal": null,
+        "records": [
+          {
+            "type": "test:pass",
+            "name": "ACT-06/11 current leaf cannot change durable event key",
+            "skip": false
+          }
+        ],
+        "stderr": "",
+        "stdoutHash": "e39b72c2caa7160a7d248c7165a1b11c6f5deb6a8083603c7ef22d6ce5b4f8b2",
+        "stderrHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "mutantHash": "f4214e8b8d1a52fdf29a5c29012374396a582beb3970baa2d441b526c22d6591",
+      "mutant": {
+        "exitCode": 1,
+        "signal": null,
+        "records": [
+          {
+            "type": "test:fail",
+            "name": "ACT-06/11 current leaf cannot change durable event key",
+            "skip": false,
+            "code": "ERR_ASSERTION",
+            "message": "Expected values to be strictly equal:\n+ actual - expected\n\n+ 'send_ec5f627b188a4a807c5e71e76cefb636f60990b5ef6d4f58'\n- 'send_4ef1cb70e0040b545940fa61461127fc6d131ec9d92165a0'\n",
+            "stack": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n+ actual - expected\n\n+ 'send_ec5f627b188a4a807c5e71e76cefb636f60990b5ef6d4f58'\n- 'send_4ef1cb70e0040b545940fa61461127fc6d131ec9d92165a0'\n\n    at TestContext.<anonymous> (file:///tmp/vaiwl-guard-build-1HfgNA/mutant/tests/host/guard-mutations/ack-key.test.mjs:15:43)\n    at async Test.run (node:internal/test_runner/test:1389:7)\n    at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)"
+          }
+        ],
+        "stderr": "",
+        "stdoutHash": "6e46a6cb3ce4511a5ed7e93966dc38bd4f72a040bc7c5834230a4c0808bf8078",
+        "stderrHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    {
+      "id": "poll-renews-anchor",
+      "specIds": [
+        "ACT-16"
+      ],
+      "evidence": "L/MOCK_IDB",
+      "limitations": "",
+      "status": "KILLED",
+      "sourceFile": "src/data/free-activity.mjs",
+      "sourceHash": "cfb0533b945a3fe577376878b0a25f0cce06ad6882d50ae0511cee283c39d7f5",
+      "testFile": "tests/host/observed-anchor-repository.test.mjs",
+      "testHash": "7c0bc0195cce61536e2ad27da572d848e3c74bbb304561e9d0794a4e347e5da9",
+      "targetCase": "MOCK_IDB repeated message preserves first observation interval and calibration due",
+      "baseline": {
+        "exitCode": 0,
+        "signal": null,
+        "records": [
+          {
+            "type": "test:pass",
+            "name": "MOCK_IDB repeated message preserves first observation interval and calibration due",
+            "skip": false
+          }
+        ],
+        "stderr": "",
+        "stdoutHash": "889f28c7f5be2a2f4496f619fde43c38488264b3872045b0576bf4fbf5704728",
+        "stderrHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "mutantHash": "027e397453762b80c9d66f0d0caa992c5eac3fa995848ba46b0f06a8f847d37c",
+      "mutant": {
+        "exitCode": 1,
+        "signal": null,
+        "records": [
+          {
+            "type": "test:fail",
+            "name": "MOCK_IDB repeated message preserves first observation interval and calibration due",
+            "skip": false,
+            "code": "ERR_ASSERTION",
+            "message": "Expected values to be strictly deep-equal:\n+ actual - expected\n... Skipped lines\n\n  {\n    ackWitness: {\n      kind: 'authenticated-message-readback',\n      profileId: 'ack_profile',\n      profileVersion: 1,\n...\n    anchorVersion: 1,\n+   calibrationDueAt: '2026-10-13T12:10:00Z',\n-   calibrationDueAt: '2026-10-13T12:01:00Z',\n    candidateInterval: {\n+     from: '2026-10-13T12:00:09Z',\n+     through: '2026-10-13T12:00:10Z'\n-     from: '2026-10-13T11:59:59Z',\n-     through: '2026-10-13T12:00:00Z'\n    },\n    clockBasis: 'local-bounded',\n    conversationId: 'T0',\n    eventKey: 'T0_m',\n+   firstObservedAt: '2026-10-13T12:00:10Z',\n-   firstObservedAt: '2026-10-13T12:00:00Z',\n    generation: 'generation_1',\n    hintType: 'observed-self-send',\n    id: 'anchor_m',\n    messageId: 'm',\n+   observedAt: '2026-10-13T12:00:10Z',\n-   observedAt: '2026-10-13T12:00:00Z',\n    revoked: false,\n    sourceId: 'host_ack',\n+   sourceRevision: 2\n-   sourceRevision: 1\n  }\n",
+            "stack": "AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:\n+ actual - expected\n... Skipped lines\n\n  {\n    ackWitness: {\n      kind: 'authenticated-message-readback',\n      profileId: 'ack_profile',\n      profileVersion: 1,\n...\n    anchorVersion: 1,\n+   calibrationDueAt: '2026-10-13T12:10:00Z',\n-   calibrationDueAt: '2026-10-13T12:01:00Z',\n    candidateInterval: {\n+     from: '2026-10-13T12:00:09Z',\n+     through: '2026-10-13T12:00:10Z'\n-     from: '2026-10-13T11:59:59Z',\n-     through: '2026-10-13T12:00:00Z'\n    },\n    clockBasis: 'local-bounded',\n    conversationId: 'T0',\n    eventKey: 'T0_m',\n+   firstObservedAt: '2026-10-13T12:00:10Z',\n-   firstObservedAt: '2026-10-13T12:00:00Z',\n    generation: 'generation_1',\n    hintType: 'observed-self-send',\n    id: 'anchor_m',\n    messageId: 'm',\n+   observedAt: '2026-10-13T12:00:10Z',\n-   observedAt: '2026-10-13T12:00:00Z',\n    revoked: false,\n    sourceId: 'host_ack',\n+   sourceRevision: 2\n-   sourceRevision: 1\n  }\n\n    at TestContext.<anonymous> (file:///tmp/vaiwl-guard-build-1HfgNA/mutant/tests/host/observed-anchor-repository.test.mjs:26:426)\n    at async Test.run (node:internal/test_runner/test:1389:7)\n    at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)"
+          }
+        ],
+        "stderr": "",
+        "stdoutHash": "6c3cf06b486ca73b5a1933ed3a8e93c653d7ba2d9898e1cb678e877cf2c183cf",
+        "stderrHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    {
+      "id": "auto-popover",
+      "specIds": [
+        "UI-08"
+      ],
+      "evidence": "L",
+      "limitations": "DOM double declaration contract only; real-browser dismissal is NOT_RUN.",
+      "status": "KILLED",
+      "sourceFile": "src/navigation/mount-surface.mjs",
+      "sourceHash": "8431ca3951f3dea8973d779952a318a6aa9f9da71b27232c176dc6046699ac06",
+      "testFile": "tests/host/mount-closed-layout.test.mjs",
+      "testHash": "e6fa0c8ba60b0bd7821b0a38869441603fc31c82240d2c842bbfc07da6f31a44",
+      "targetCase": "closed layout retention is confined to both exact owned IDs and closed state",
+      "baseline": {
+        "exitCode": 0,
+        "signal": null,
+        "records": [
+          {
+            "type": "test:pass",
+            "name": "closed layout retention is confined to both exact owned IDs and closed state",
+            "skip": false
+          }
+        ],
+        "stderr": "",
+        "stdoutHash": "4142e9c4af6c0fb6a45e286c929fd548d3940d4a52e9fe084bf2f3e3eae13a53",
+        "stderrHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "mutantHash": "cafd38dccae2dd0ae38333c1552e7a1eb35fe3cb83dccea835fc90ff6b2fc699",
+      "mutant": {
+        "exitCode": 1,
+        "signal": null,
+        "records": [
+          {
+            "type": "test:fail",
+            "name": "closed layout retention is confined to both exact owned IDs and closed state",
+            "skip": false,
+            "code": "ERR_ASSERTION",
+            "message": "The expression evaluated to a falsy value:\n\n  assert(f.surfaces.every(n=>n.getAttribute('popover')==='manual'))\n",
+            "stack": "AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:\n\n  assert(f.surfaces.every(n=>n.getAttribute('popover')==='manual'))\n\n    at TestContext.<anonymous> (file:///tmp/vaiwl-guard-build-1HfgNA/mutant/tests/host/mount-closed-layout.test.mjs:13:545)\n    at async Test.run (node:internal/test_runner/test:1389:7)\n    at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)"
+          }
+        ],
+        "stderr": "",
+        "stdoutHash": "4de2cd4c6a52417ff24e0c14c17be951e1e4fda25b640cb322394c92811f1273",
+        "stderrHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    {
+      "id": "remove-background-inert",
+      "specIds": [
+        "UI-06"
+      ],
+      "evidence": "L",
+      "limitations": "CSS declaration contract only; browser focus/AX isolation is NOT_RUN.",
+      "status": "KILLED",
+      "sourceFile": "src/navigation/mount-surface.mjs",
+      "sourceHash": "8431ca3951f3dea8973d779952a318a6aa9f9da71b27232c176dc6046699ac06",
+      "testFile": "tests/host/mount-closed-layout.test.mjs",
+      "testHash": "e6fa0c8ba60b0bd7821b0a38869441603fc31c82240d2c842bbfc07da6f31a44",
+      "targetCase": "native masks still depend only on owned popover-open and never receive inline display or inert",
+      "baseline": {
+        "exitCode": 0,
+        "signal": null,
+        "records": [
+          {
+            "type": "test:pass",
+            "name": "native masks still depend only on owned popover-open and never receive inline display or inert",
+            "skip": false
+          }
+        ],
+        "stderr": "",
+        "stdoutHash": "7cd21747475293bdb33a10fb52e4201d258897c590e54aec9dabda3dba7eb72b",
+        "stderrHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "mutantHash": "5ec1a140765ca321a5874f47eafc1af602306441a04c81820f46b3b49bd330e6",
+      "mutant": {
+        "exitCode": 1,
+        "signal": null,
+        "records": [
+          {
+            "type": "test:fail",
+            "name": "native masks still depend only on owned popover-open and never receive inline display or inert",
+            "skip": false,
+            "code": "ERR_ASSERTION",
+            "message": "Expected values to be strictly deep-equal:\n+ actual - expected\n\n  {\n-   interactivity: 'inert',\n    visibility: 'hidden'\n  }\n",
+            "stack": "AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:\n+ actual - expected\n\n  {\n-   interactivity: 'inert',\n    visibility: 'hidden'\n  }\n\n    at TestContext.<anonymous> (file:///tmp/vaiwl-guard-build-1HfgNA/mutant/tests/host/mount-closed-layout.test.mjs:14:572)\n    at async Test.run (node:internal/test_runner/test:1389:7)\n    at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)"
+          }
+        ],
+        "stderr": "",
+        "stdoutHash": "2c50d60dc8f151a3591a6ca298c02725928d39ceae2edfceb3e16991192535c5",
+        "stderrHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    {
+      "id": "async-prevent-default",
+      "specIds": [
+        "UI-01"
+      ],
+      "evidence": "L",
+      "limitations": "Renderer event timing with DOM double; real native handler/browser navigation is NOT_RUN.",
+      "status": "KILLED",
+      "sourceFile": "src/navigation/navigation.mjs",
+      "sourceHash": "afa3b2a5aadd18dbfa562d3aaa1aec70ca75509bc32f7e0ab9968ecf17f448f2",
+      "testFile": "tests/host/guard-mutations/navigation.test.mjs",
+      "testHash": "134a3c5505a0a9615218498cbed7c2b79b8a115540b1e5fa9a968ec53e73121e",
+      "targetCase": "UI-01 delegated action prevents default before asynchronous RPC",
+      "baseline": {
+        "exitCode": 0,
+        "signal": null,
+        "records": [
+          {
+            "type": "test:pass",
+            "name": "UI-01 delegated action prevents default before asynchronous RPC",
+            "skip": false
+          }
+        ],
+        "stderr": "",
+        "stdoutHash": "80f348bc3b31ebdd343a9bb708855db56f778650d96aeece8f74f3ca042993f7",
+        "stderrHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "mutantHash": "a7234afcc79f355498a6cc9202b5c43cce039f9cc2ed5ba69f93061769d7f6a4",
+      "mutant": {
+        "exitCode": 1,
+        "signal": null,
+        "records": [
+          {
+            "type": "test:fail",
+            "name": "UI-01 delegated action prevents default before asynchronous RPC",
+            "skip": false,
+            "code": "ERR_ASSERTION",
+            "message": "native href must be canceled before click returns\n\nfalse !== true\n",
+            "stack": "AssertionError [ERR_ASSERTION]: native href must be canceled before click returns\n\nfalse !== true\n\n    at TestContext.<anonymous> (file:///tmp/vaiwl-guard-build-1HfgNA/mutant/tests/host/guard-mutations/navigation.test.mjs:44:36)\n    at Test.runInAsyncScope (node:async_hooks:227:14)\n    at Test.run (node:internal/test_runner/test:1382:25)\n    at Test.start (node:internal/test_runner/test:1242:17)\n    at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17)"
+          }
+        ],
+        "stderr": "",
+        "stdoutHash": "16e415a58651fddc45ab9a39170839636e0d29117d06fe39a502a1a13d4d9a09",
+        "stderrHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    {
+      "id": "post-commit-continuation",
+      "specIds": [
+        "SYS-01"
+      ],
+      "evidence": "L/MOCK_IDB",
+      "limitations": "Crash-window mutant: native commits without continuation; process loss before the moved post-commit continuation write. Real IndexedDB crash evidence is NOT_RUN.",
+      "status": "KILLED",
+      "sourceFile": "src/data/native-repository.mjs",
+      "sourceHash": "cff865baf77bf282bc3825f1ad28d24986d968cb9b262033030682c6103b2256",
+      "testFile": "tests/host/native-continuation-repository.test.mjs",
+      "testHash": "6a7db0126064a9281170a8729c00711f7aa78fe0d4fc5259fc4d5ab942993027",
+      "targetCase": "MOCK_IDB native, shared anchor and pending evidence commit together; replay remains single and scoped",
+      "baseline": {
+        "exitCode": 0,
+        "signal": null,
+        "records": [
+          {
+            "type": "test:pass",
+            "name": "MOCK_IDB native, shared anchor and pending evidence commit together; replay remains single and scoped",
+            "skip": false
+          }
+        ],
+        "stderr": "",
+        "stdoutHash": "0a1deefdcc582bb284dd13ef0fa6c80458daf612e9529b2cc9516f73832df4b2",
+        "stderrHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "mutantHash": "fd58bb7b55affb42bb77293e9084347ddf707b990fa5d29d739f8352636d5c54",
+      "mutant": {
+        "exitCode": 1,
+        "signal": null,
+        "records": [
+          {
+            "type": "test:fail",
+            "name": "MOCK_IDB native, shared anchor and pending evidence commit together; replay remains single and scoped",
+            "skip": false,
+            "code": "ERR_ASSERTION",
+            "message": "Expected values to be strictly equal:\n\n0 !== 1\n",
+            "stack": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\n0 !== 1\n\n    at TestContext.<anonymous> (file:///tmp/vaiwl-guard-build-1HfgNA/mutant/tests/host/native-continuation-repository.test.mjs:26:112)\n    at async Test.run (node:internal/test_runner/test:1389:7)\n    at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)"
+          }
+        ],
+        "stderr": "",
+        "stdoutHash": "db55df7f028a1785438ffd532873ef7f40347ad750ba5fe9c2e68ac3ac095d9d",
+        "stderrHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    }
+  ],
+  "inputUnchanged": true,
+  "summary": {
+    "selected": 12,
+    "killed": 12,
+    "pass": true
+  }
+}

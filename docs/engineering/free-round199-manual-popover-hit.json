@@ -1,0 +1,491 @@
+{
+  "evidence": "WEB_MECHANISM_ONLY_MINIMAL_MANUAL_POPOVER_EXPERIMENT",
+  "scope": "No VAIWL source, renderer, extension or worker. Distinct loopback ports are cross-origin but normally same-site; no OOPIF or MV3 equivalence claimed.",
+  "scriptHash": "b57688f5b59cb9aceb135e9cabda8abb35fb21af2eaf826d3ec54f81da6f0364",
+  "cases": [
+    {
+      "popover": true,
+      "crossOrigin": false,
+      "mode": "FRESH_PAGE_IMMEDIATE_NO_ADDED_WAIT",
+      "before": {
+        "rect": {
+          "x": 50,
+          "y": 80,
+          "width": 120,
+          "height": 40,
+          "top": 80,
+          "right": 170,
+          "bottom": 120,
+          "left": 50
+        },
+        "connected": true,
+        "hit": "target"
+      },
+      "clicked": 1,
+      "childEvents": [
+        {
+          "type": "pointerdown",
+          "target": "BUTTON",
+          "id": "target",
+          "trusted": true,
+          "epochMs": 1792021398715.7,
+          "x": 110,
+          "y": 100
+        },
+        {
+          "type": "mousedown",
+          "target": "BUTTON",
+          "id": "target",
+          "trusted": true,
+          "epochMs": 1792021398715.7,
+          "x": 110,
+          "y": 100
+        },
+        {
+          "type": "pointerup",
+          "target": "BUTTON",
+          "id": "target",
+          "trusted": true,
+          "epochMs": 1792021398715.8,
+          "x": 110,
+          "y": 100
+        },
+        {
+          "type": "mouseup",
+          "target": "BUTTON",
+          "id": "target",
+          "trusted": true,
+          "epochMs": 1792021398715.8,
+          "x": 110,
+          "y": 100
+        },
+        {
+          "type": "click",
+          "target": "BUTTON",
+          "id": "target",
+          "trusted": true,
+          "epochMs": 1792021398715.8,
+          "x": 110,
+          "y": 100
+        }
+      ],
+      "parentEvents": [
+        {
+          "type": "pointerdown",
+          "target": "BUTTON",
+          "id": "close",
+          "trusted": true,
+          "epochMs": 1792021398679.4,
+          "x": 358.75,
+          "y": 70
+        },
+        {
+          "type": "mousedown",
+          "target": "BUTTON",
+          "id": "close",
+          "trusted": true,
+          "epochMs": 1792021398679.5,
+          "x": 358,
+          "y": 70
+        },
+        {
+          "type": "pointerup",
+          "target": "BUTTON",
+          "id": "close",
+          "trusted": true,
+          "epochMs": 1792021398679.6,
+          "x": 358.75,
+          "y": 70
+        },
+        {
+          "type": "mouseup",
+          "target": "BUTTON",
+          "id": "close",
+          "trusted": true,
+          "epochMs": 1792021398679.6,
+          "x": 358,
+          "y": 70
+        },
+        {
+          "type": "click",
+          "target": "BUTTON",
+          "id": "close",
+          "trusted": true,
+          "epochMs": 1792021398679.6,
+          "x": 358,
+          "y": 70
+        }
+      ],
+      "state": {
+        "workspaceOpen": false,
+        "sidebarOpen": true
+      },
+      "screenshot": "/private/tmp/manual-popover-hit-xYHlRc/popover-same.png",
+      "status": "OBSERVED_SUCCESS_NOT_MV3_ACCEPTANCE"
+    },
+    {
+      "popover": true,
+      "crossOrigin": true,
+      "mode": "FRESH_PAGE_IMMEDIATE_NO_ADDED_WAIT",
+      "before": {
+        "rect": {
+          "x": 50,
+          "y": 80,
+          "width": 120,
+          "height": 40,
+          "top": 80,
+          "right": 170,
+          "bottom": 120,
+          "left": 50
+        },
+        "connected": true,
+        "hit": "target"
+      },
+      "clicked": 1,
+      "childEvents": [
+        {
+          "type": "pointerdown",
+          "target": "BUTTON",
+          "id": "target",
+          "trusted": true,
+          "epochMs": 1792021398920.3,
+          "x": 110,
+          "y": 100
+        },
+        {
+          "type": "mousedown",
+          "target": "BUTTON",
+          "id": "target",
+          "trusted": true,
+          "epochMs": 1792021398920.4001,
+          "x": 110,
+          "y": 100
+        },
+        {
+          "type": "pointerup",
+          "target": "BUTTON",
+          "id": "target",
+          "trusted": true,
+          "epochMs": 1792021398920.4001,
+          "x": 110,
+          "y": 100
+        },
+        {
+          "type": "mouseup",
+          "target": "BUTTON",
+          "id": "target",
+          "trusted": true,
+          "epochMs": 1792021398920.4001,
+          "x": 110,
+          "y": 100
+        },
+        {
+          "type": "click",
+          "target": "BUTTON",
+          "id": "target",
+          "trusted": true,
+          "epochMs": 1792021398920.4001,
+          "x": 110,
+          "y": 100
+        }
+      ],
+      "parentEvents": [
+        {
+          "type": "pointerdown",
+          "target": "BUTTON",
+          "id": "close",
+          "trusted": true,
+          "epochMs": 1792021398883,
+          "x": 358.75,
+          "y": 70
+        },
+        {
+          "type": "mousedown",
+          "target": "BUTTON",
+          "id": "close",
+          "trusted": true,
+          "epochMs": 1792021398883,
+          "x": 358,
+          "y": 70
+        },
+        {
+          "type": "pointerup",
+          "target": "BUTTON",
+          "id": "close",
+          "trusted": true,
+          "epochMs": 1792021398883.2,
+          "x": 358.75,
+          "y": 70
+        },
+        {
+          "type": "mouseup",
+          "target": "BUTTON",
+          "id": "close",
+          "trusted": true,
+          "epochMs": 1792021398883.2,
+          "x": 358,
+          "y": 70
+        },
+        {
+          "type": "click",
+          "target": "BUTTON",
+          "id": "close",
+          "trusted": true,
+          "epochMs": 1792021398883.2,
+          "x": 358,
+          "y": 70
+        }
+      ],
+      "state": {
+        "workspaceOpen": false,
+        "sidebarOpen": true
+      },
+      "screenshot": "/private/tmp/manual-popover-hit-xYHlRc/popover-cross.png",
+      "status": "OBSERVED_SUCCESS_NOT_MV3_ACCEPTANCE"
+    },
+    {
+      "popover": false,
+      "crossOrigin": false,
+      "mode": "FRESH_PAGE_IMMEDIATE_NO_ADDED_WAIT",
+      "before": {
+        "rect": {
+          "x": 50,
+          "y": 80,
+          "width": 120,
+          "height": 40,
+          "top": 80,
+          "right": 170,
+          "bottom": 120,
+          "left": 50
+        },
+        "connected": true,
+        "hit": "target"
+      },
+      "clicked": 1,
+      "childEvents": [
+        {
+          "type": "pointerdown",
+          "target": "BUTTON",
+          "id": "target",
+          "trusted": true,
+          "epochMs": 1792021399162.8,
+          "x": 110,
+          "y": 100
+        },
+        {
+          "type": "mousedown",
+          "target": "BUTTON",
+          "id": "target",
+          "trusted": true,
+          "epochMs": 1792021399162.9,
+          "x": 110,
+          "y": 100
+        },
+        {
+          "type": "pointerup",
+          "target": "BUTTON",
+          "id": "target",
+          "trusted": true,
+          "epochMs": 1792021399163,
+          "x": 110,
+          "y": 100
+        },
+        {
+          "type": "mouseup",
+          "target": "BUTTON",
+          "id": "target",
+          "trusted": true,
+          "epochMs": 1792021399163,
+          "x": 110,
+          "y": 100
+        },
+        {
+          "type": "click",
+          "target": "BUTTON",
+          "id": "target",
+          "trusted": true,
+          "epochMs": 1792021399163,
+          "x": 110,
+          "y": 100
+        }
+      ],
+      "parentEvents": [
+        {
+          "type": "pointerdown",
+          "target": "BUTTON",
+          "id": "close",
+          "trusted": true,
+          "epochMs": 1792021399125.8,
+          "x": 358.75,
+          "y": 70
+        },
+        {
+          "type": "mousedown",
+          "target": "BUTTON",
+          "id": "close",
+          "trusted": true,
+          "epochMs": 1792021399125.8,
+          "x": 358,
+          "y": 70
+        },
+        {
+          "type": "pointerup",
+          "target": "BUTTON",
+          "id": "close",
+          "trusted": true,
+          "epochMs": 1792021399125.9,
+          "x": 358.75,
+          "y": 70
+        },
+        {
+          "type": "mouseup",
+          "target": "BUTTON",
+          "id": "close",
+          "trusted": true,
+          "epochMs": 1792021399125.9,
+          "x": 358,
+          "y": 70
+        },
+        {
+          "type": "click",
+          "target": "BUTTON",
+          "id": "close",
+          "trusted": true,
+          "epochMs": 1792021399125.9,
+          "x": 358,
+          "y": 70
+        }
+      ],
+      "state": {
+        "workspaceOpen": false,
+        "sidebarOpen": true
+      },
+      "screenshot": "/private/tmp/manual-popover-hit-xYHlRc/plain-same.png",
+      "status": "OBSERVED_SUCCESS_NOT_MV3_ACCEPTANCE"
+    },
+    {
+      "popover": false,
+      "crossOrigin": true,
+      "mode": "FRESH_PAGE_IMMEDIATE_NO_ADDED_WAIT",
+      "before": {
+        "rect": {
+          "x": 50,
+          "y": 80,
+          "width": 120,
+          "height": 40,
+          "top": 80,
+          "right": 170,
+          "bottom": 120,
+          "left": 50
+        },
+        "connected": true,
+        "hit": "target"
+      },
+      "clicked": 1,
+      "childEvents": [
+        {
+          "type": "pointerdown",
+          "target": "BUTTON",
+          "id": "target",
+          "trusted": true,
+          "epochMs": 1792021399348.8,
+          "x": 110,
+          "y": 100
+        },
+        {
+          "type": "mousedown",
+          "target": "BUTTON",
+          "id": "target",
+          "trusted": true,
+          "epochMs": 1792021399348.9,
+          "x": 110,
+          "y": 100
+        },
+        {
+          "type": "pointerup",
+          "target": "BUTTON",
+          "id": "target",
+          "trusted": true,
+          "epochMs": 1792021399349,
+          "x": 110,
+          "y": 100
+        },
+        {
+          "type": "mouseup",
+          "target": "BUTTON",
+          "id": "target",
+          "trusted": true,
+          "epochMs": 1792021399349,
+          "x": 110,
+          "y": 100
+        },
+        {
+          "type": "click",
+          "target": "BUTTON",
+          "id": "target",
+          "trusted": true,
+          "epochMs": 1792021399349,
+          "x": 110,
+          "y": 100
+        }
+      ],
+      "parentEvents": [
+        {
+          "type": "pointerdown",
+          "target": "BUTTON",
+          "id": "close",
+          "trusted": true,
+          "epochMs": 1792021399313,
+          "x": 358.75,
+          "y": 70
+        },
+        {
+          "type": "mousedown",
+          "target": "BUTTON",
+          "id": "close",
+          "trusted": true,
+          "epochMs": 1792021399313.2,
+          "x": 358,
+          "y": 70
+        },
+        {
+          "type": "pointerup",
+          "target": "BUTTON",
+          "id": "close",
+          "trusted": true,
+          "epochMs": 1792021399313.3,
+          "x": 358.75,
+          "y": 70
+        },
+        {
+          "type": "mouseup",
+          "target": "BUTTON",
+          "id": "close",
+          "trusted": true,
+          "epochMs": 1792021399313.3,
+          "x": 358,
+          "y": 70
+        },
+        {
+          "type": "click",
+          "target": "BUTTON",
+          "id": "close",
+          "trusted": true,
+          "epochMs": 1792021399313.3,
+          "x": 358,
+          "y": 70
+        }
+      ],
+      "state": {
+        "workspaceOpen": false,
+        "sidebarOpen": true
+      },
+      "screenshot": "/private/tmp/manual-popover-hit-xYHlRc/plain-cross.png",
+      "status": "OBSERVED_SUCCESS_NOT_MV3_ACCEPTANCE"
+    }
+  ],
+  "blockedExternal": [],
+  "browserVersion": "155.0.8059.40",
+  "status": "MECHANISM_CASES_SUCCEEDED_NOT_CERTIFIED",
+  "scriptChangedDuringRun": false
+}

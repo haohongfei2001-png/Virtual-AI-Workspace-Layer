@@ -1,0 +1,13 @@
+✔ AUDIT actual history alone revokes old transport/UI authority while retaining display (104.994952ms)
+✔ AUDIT foreign tab event cannot remove this tabs display or revoke its grants (20.930159ms)
+✔ AUDIT history retained display never crosses principal on next bind (30.55032ms)
+✔ AUDIT hostile renderer fields cannot request history retention (18.415816ms)
+✔ AUDIT committed or mismatched history document cannot retain current display (56.809938ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 382.069019

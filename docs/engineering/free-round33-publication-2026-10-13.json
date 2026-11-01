@@ -1,0 +1,181 @@
+{
+  "sourceHashes": {
+    "simulator/client.mjs": "3b9ae97b818786cc915899527e7029d44d4848d056828ac5f95d07511f1e1a96",
+    "src/navigation/free-view.mjs": "ef0f8d6b798789539d16bdc3ae1d8cc66ccf5fc32f472b83ca2c475863946aaa",
+    "src/data/free-replica.mjs": "c1a6329f3766d72bb4c511db7cc30f42eabd78a483e50ef444c9591c81176a0b"
+  },
+  "evidence": "HEADLESS_SYNTHETIC_REAL_IDB_TEST_SCHEDULING_SEAM",
+  "results": [
+    {
+      "mode": "scope",
+      "hooked": true,
+      "timeline": [
+        "BIND",
+        "B23_FREE_HEADER",
+        "B23_FREE_PAGE",
+        "ASSEMBLY_START",
+        "ADAPT",
+        "CHECK"
+      ],
+      "status": {
+        "state": "WAITING",
+        "reason": "stale-client-response"
+      },
+      "candidateVisible": false
+    },
+    {
+      "mode": "revision",
+      "hooked": true,
+      "timeline": [
+        "BIND",
+        "B23_FREE_HEADER",
+        "B23_FREE_PAGE",
+        "ASSEMBLY_START",
+        "ADAPT",
+        "CHECK"
+      ],
+      "status": {
+        "state": "WAITING",
+        "reason": "snapshot-revision-changed"
+      },
+      "candidateVisible": false
+    },
+    {
+      "mode": "hidden",
+      "hooked": true,
+      "timeline": [
+        "BIND",
+        "B23_FREE_HEADER",
+        "B23_FREE_PAGE",
+        "ASSEMBLY_START",
+        "ADAPT"
+      ],
+      "status": {
+        "state": "WAITING",
+        "reason": "validating-binding"
+      },
+      "candidateVisible": false
+    },
+    {
+      "mode": "cancel",
+      "hooked": true,
+      "timeline": [
+        "BIND",
+        "B23_FREE_HEADER",
+        "B23_FREE_PAGE",
+        "ASSEMBLY_START",
+        "ADAPT"
+      ],
+      "status": {
+        "state": "STOPPED"
+      },
+      "candidateVisible": false
+    },
+    {
+      "mode": "reuse",
+      "hooked": false,
+      "timeline": [
+        "BIND",
+        "B23_FREE_HEADER",
+        "CHECK"
+      ],
+      "status": {
+        "state": "ACTIVE",
+        "mode": "reading",
+        "scope": "[\"hf_synthetic_only\",\"A\",\"fixture_org\"]"
+      },
+      "sidebarHidden": false,
+      "candidateVisible": false
+    },
+    {
+      "mode": "metadata",
+      "hooked": false,
+      "timeline": [
+        "BIND",
+        "B23_FREE_HEADER",
+        "CHECK"
+      ],
+      "status": {
+        "state": "ACTIVE",
+        "mode": "reading",
+        "scope": "[\"hf_synthetic_only\",\"A\",\"fixture_org\"]"
+      },
+      "sidebarHidden": true,
+      "candidateVisible": false
+    },
+    {
+      "mode": "reuse-scope",
+      "hooked": false,
+      "timeline": [
+        "BIND",
+        "B23_FREE_HEADER",
+        "CHECK"
+      ],
+      "status": {
+        "state": "WAITING",
+        "reason": "stale-client-response"
+      },
+      "candidateVisible": false
+    },
+    {
+      "mode": "document-reuse",
+      "hooked": false,
+      "timeline": [
+        "BIND",
+        "B23_FREE_HEADER",
+        "ADAPT",
+        "CHECK"
+      ],
+      "status": {
+        "state": "ACTIVE",
+        "mode": "reading",
+        "scope": "[\"hf_synthetic_only\",\"A\",\"fixture_org\"]"
+      },
+      "sidebarHidden": false,
+      "candidateVisible": false,
+      "secondTimeline": [
+        "BIND",
+        "B23_FREE_HEADER",
+        "CHECK"
+      ]
+    },
+    {
+      "mode": "empty",
+      "hooked": false,
+      "timeline": [
+        "BIND",
+        "B23_FREE_HEADER",
+        "ASSEMBLY_START",
+        "ADAPT",
+        "CHECK"
+      ],
+      "status": {
+        "state": "ACTIVE",
+        "mode": "reading",
+        "scope": "[\"hf_synthetic_only\",\"A\",\"fixture_org\"]"
+      },
+      "candidateVisible": false
+    },
+    {
+      "mode": "renew",
+      "hooked": true,
+      "timeline": [
+        "BIND",
+        "B23_FREE_HEADER",
+        "B23_FREE_PAGE",
+        "BIND",
+        "ASSEMBLY_START",
+        "ADAPT",
+        "CHECK"
+      ],
+      "status": {
+        "state": "ACTIVE",
+        "mode": "reading",
+        "scope": "[\"hf_synthetic_only\",\"A\",\"fixture_org\"]"
+      },
+      "sidebarHidden": false,
+      "candidateVisible": true
+    }
+  ],
+  "fail": 0
+}

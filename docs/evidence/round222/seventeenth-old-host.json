@@ -1,0 +1,264 @@
+{
+  "evidence": "S_REAL_OLD_HOST_TO_CURRENT_HOST_SAME_EXTENSION_ID",
+  "compatibility": "OLD_HOST_ASSETS_ONLY_NOT_SCHEMA_2_MIGRATION",
+  "realChatGPT": "NOT_RUN",
+  "release": "NOT_RELEASE_READY",
+  "steps": [
+    {
+      "name": "archived-Host-real-backup-UI-preview-and-human-asset-import",
+      "status": "PASS",
+      "assets": {
+        "database": "vaiwl-b1-v1",
+        "version": 3,
+        "assetHash": "df255b6e5668af6192bea94c385be22b4626069310b89fb843460c084aea8a23",
+        "identities": 1,
+        "snippets": 1,
+        "workspaces": 1,
+        "placements": 1,
+        "workingSet": 1,
+        "humanRefs": 1
+      }
+    },
+    {
+      "name": "same-extension-identity-current-Host-update-preserves-original-database-scope-and-all-manual-assets",
+      "status": "PASS",
+      "assets": {
+        "database": "vaiwl-b1-v1",
+        "version": 3,
+        "assetHash": "df255b6e5668af6192bea94c385be22b4626069310b89fb843460c084aea8a23",
+        "identities": 1,
+        "snippets": 1,
+        "workspaces": 1,
+        "placements": 1,
+        "workingSet": 1,
+        "humanRefs": 1
+      },
+      "databaseSchemaMigration": false
+    }
+  ],
+  "limitations": [
+    "Historical Host already uses schema 3; this route does not prove schema-2 migration",
+    "Synthetic Pro schema compatibility is a separate evidence route"
+  ],
+  "sourceCommit": "211d75fca72d4e5650e083277bf0c374c707c049",
+  "runnerFixtureHashes": {
+    "historical-host-upgrade.mjs": "1f1ae5de99542de7c96a1a680f024288d8ffaea98a69eeb5b73a4040ed5d824f",
+    "historical-host-runtime.mjs": "93fdc018e64c30d85c437d82e4d15784d3ed99d1d0c8f255b3759fd747cbeaf0",
+    "historical-package.mjs": "2dbd70e9ff7e759c0d3c6358bc553296b8d86581ff121656ca3b89a2719c9262",
+    "native-visibility-browser.mjs": "9661985c6ee149033b9653957e1e45d89b45feed6d67b1f8346838d187a9830a",
+    "isolated-browser-cleanup.mjs": "c3d4a053d485efbd86a487ac1e4257849120b30939e63be346ceceaaea2fafb0",
+    "historical-network-guard.mjs": "e38719134f6087c3efbc66044922967262a6c2e585c11a7ee69b5016b22dc416",
+    "fixtures/j4-assets.mjs": "12e97fd7b3b9819039a28b404d071608953ce6bcbb91b4047c7ba8495c029bdd",
+    "fixtures/server.mjs": "bf5e574279d807f1c40e32e80fe053ffdf978a118906c23f7f462d6acbd90256"
+  },
+  "oldSource": {
+    "commit": "a8addaa9e014f22704a459d6ee126e8f80ead571",
+    "archiveHash": "2e62167a777672ae074b18dd95144d76f0a9d2a3823167fbba76a943174b8483",
+    "paths": [
+      "src",
+      "simulator",
+      "extension"
+    ]
+  },
+  "oldBuild": {
+    "archive": "aa9f1ae315c37f9b2a069d68b61b7d6ec37aa0081bda90ae8257ec5e05854010",
+    "manifest": "d1932f01bd6fad88863c6c0b8d2b6b3067e200623e0637635f5a224aa998e31b"
+  },
+  "currentBuild": {
+    "archive": "b97bf4a927df72e6296bdd0f226733bae8a3de0bebe6d0b0bd746905467fd53b",
+    "manifest": "2bf3ecd472e7351dc292cd34ad97a364d635ba420c89d2005d905e2c65b4f486"
+  },
+  "browserPrecondition": {
+    "transport": "isolated-loopback-CDP",
+    "noDefaults": true,
+    "headed": true,
+    "focusEmulation": "NOT_ENABLED_BY_PLAYWRIGHT",
+    "source": "Playwright connectOverCDP noDefaults public option; native Chromium capturer is session-owned"
+  },
+  "extensionId": "difkmafcacjfdfgliekjdhjoniijocdb",
+  "updatedSlotHash": "e22315a27a0dd14b4ae4f6a110c9966f49e02cefe25af42f118f55dce6fff668",
+  "runtimeUpdate": {
+    "scope": "CRITICAL_RUNTIME_MANIFEST_CONTRACT_NOT_ALL_MANIFEST_BYTES",
+    "api": "Extensions.loadUnpacked",
+    "documentation": "https://chromedevtools.github.io/devtools-protocol/tot/Extensions/#method-loadUnpacked",
+    "completion": "ACKNOWLEDGED_SAME_PATH_SAME_ID_LOAD",
+    "before": {
+      "manifest_version": 3,
+      "version": "0.3.0",
+      "permissions": [
+        "webNavigation"
+      ],
+      "host_permissions": [
+        "http://127.0.0.1/*"
+      ],
+      "background": {
+        "service_worker": "extension/worker.mjs",
+        "type": "module"
+      },
+      "content_scripts": [
+        {
+          "all_frames": false,
+          "js": [
+            "content.js"
+          ],
+          "matches": [
+            "http://127.0.0.1/*"
+          ],
+          "run_at": "document_idle"
+        }
+      ],
+      "web_accessible_resources": [
+        {
+          "matches": [
+            "http://127.0.0.1/*"
+          ],
+          "resources": [
+            "extension/config.mjs",
+            "extension/content-entry.mjs",
+            "extension/sidebar.mjs",
+            "extension/workspace.mjs",
+            "sidebar.html",
+            "src/b1/identity.mjs",
+            "src/data/cooperate.mjs",
+            "src/data/free-time-policy.mjs",
+            "src/data/read-recovery-budget.mjs",
+            "src/data/request-deadline.mjs",
+            "src/host/backup-transfer.mjs",
+            "src/host/chatgpt-adapter.mjs",
+            "src/host/content-session.mjs",
+            "src/host/contract.mjs",
+            "src/host/current-body-discovery.mjs",
+            "src/host/frame-native-plans.mjs",
+            "src/host/free-frame-backup.mjs",
+            "src/host/free-frame-client.mjs",
+            "src/host/free-frame-recovery.mjs",
+            "src/host/native-actions.mjs",
+            "src/host/native-send-intent.mjs",
+            "src/host/surface-controller.mjs",
+            "src/host/surface-discovery.mjs",
+            "src/host/ui-frame-client.mjs",
+            "src/host/url-policy.mjs",
+            "src/navigation/current-index.mjs",
+            "src/navigation/free-recovery.mjs",
+            "src/navigation/free-view.mjs",
+            "src/navigation/icons.mjs",
+            "src/navigation/mount-surface.mjs",
+            "src/navigation/navigation.mjs",
+            "src/navigation/projection.mjs",
+            "src/navigation/search.mjs",
+            "src/navigation/styles.mjs",
+            "workspace.html"
+          ]
+        }
+      ],
+      "content_security_policy": {
+        "extension_pages": "script-src 'self'; object-src 'none'; connect-src http://127.0.0.1:38391"
+      }
+    },
+    "reloadRequested": true,
+    "loadAcknowledgement": {
+      "id": "difkmafcacjfdfgliekjdhjoniijocdb",
+      "sameId": true
+    },
+    "after": {
+      "manifest_version": 3,
+      "version": "0.3.0",
+      "permissions": [
+        "webNavigation"
+      ],
+      "host_permissions": [
+        "http://127.0.0.1/*"
+      ],
+      "background": {
+        "service_worker": "extension/worker.mjs",
+        "type": "module"
+      },
+      "content_scripts": [
+        {
+          "all_frames": false,
+          "js": [
+            "content.js"
+          ],
+          "matches": [
+            "http://127.0.0.1/*"
+          ],
+          "run_at": "document_idle"
+        }
+      ],
+      "web_accessible_resources": [
+        {
+          "matches": [
+            "http://127.0.0.1/*"
+          ],
+          "resources": [
+            "extension/config.mjs",
+            "extension/content-entry.mjs",
+            "extension/sidebar.mjs",
+            "extension/workspace.mjs",
+            "sidebar.html",
+            "src/b1/identity.mjs",
+            "src/data/cooperate.mjs",
+            "src/data/free-time-policy.mjs",
+            "src/data/hash.mjs",
+            "src/data/read-recovery-budget.mjs",
+            "src/data/request-deadline.mjs",
+            "src/host/backup-transfer.mjs",
+            "src/host/bounded-handle-registry.mjs",
+            "src/host/candidate-page-window.mjs",
+            "src/host/candidate-presentation.mjs",
+            "src/host/candidate-upgrade.mjs",
+            "src/host/chatgpt-adapter.mjs",
+            "src/host/content-candidates.mjs",
+            "src/host/content-session.mjs",
+            "src/host/context-association.mjs",
+            "src/host/contract.mjs",
+            "src/host/current-body-discovery.mjs",
+            "src/host/current-navigation-plan.mjs",
+            "src/host/current-observation-batch.mjs",
+            "src/host/first-send-profile.mjs",
+            "src/host/frame-appearance.mjs",
+            "src/host/frame-candidate-migration.mjs",
+            "src/host/frame-native-plans.mjs",
+            "src/host/frame-resume-state.mjs",
+            "src/host/free-frame-backup.mjs",
+            "src/host/free-frame-candidates.mjs",
+            "src/host/free-frame-client.mjs",
+            "src/host/free-frame-recovery.mjs",
+            "src/host/free-frame-snippets.mjs",
+            "src/host/native-actions.mjs",
+            "src/host/native-input-risk.mjs",
+            "src/host/native-send-intent.mjs",
+            "src/host/native-snippets.mjs",
+            "src/host/old-send-terminal-profile.mjs",
+            "src/host/snippet-selection-session.mjs",
+            "src/host/surface-controller.mjs",
+            "src/host/surface-discovery.mjs",
+            "src/host/surface-fragments.mjs",
+            "src/host/ui-frame-client.mjs",
+            "src/host/url-policy.mjs",
+            "src/navigation/current-index.mjs",
+            "src/navigation/free-recovery.mjs",
+            "src/navigation/free-view.mjs",
+            "src/navigation/icons.mjs",
+            "src/navigation/mount-surface.mjs",
+            "src/navigation/navigation.mjs",
+            "src/navigation/projection.mjs",
+            "src/navigation/search.mjs",
+            "src/navigation/styles.mjs",
+            "workspace.html"
+          ]
+        }
+      ],
+      "content_security_policy": {
+        "extension_pages": "script-src 'self'; object-src 'none'; connect-src http://127.0.0.1:38391"
+      }
+    },
+    "matchesExpected": true
+  },
+  "loadedCurrentManifestHash": "2bf3ecd472e7351dc292cd34ad97a364d635ba420c89d2005d905e2c65b4f486",
+  "oldPackageVerified": "OFFLINE_HOST_RECONSTRUCTION",
+  "currentPackageVerified": "OFFLINE_HOST_RECONSTRUCTION",
+  "browserVersion": "156.0.8078.4",
+  "sourceUnchanged": true,
+  "status": "PASS_OLD_HOST_UPDATE_ASSETS_ONLY"
+}

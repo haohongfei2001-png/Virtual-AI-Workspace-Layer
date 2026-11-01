@@ -1,0 +1,27 @@
+✔ actual broker HELLO → fixed provider → strict BIND; no seeded account or storage read (2.805875ms)
+✔ no valid HELLO or extra authority fields cannot trigger fixed authentication (0.132667ms)
+✔ MOCK service only accepted observations notify; duplicate and rejected carry no new data hint (7.533583ms)
+✔ MOCK accepted other-scope observation never notifies prior-scope frame (1.447417ms)
+✔ MOCK expired document binding suppresses dirty hint even if UI grant was renewed (0.546625ms)
+✔ MOCK accepted SPA observation uses current verified frame scope rather than stale sender URL (0.85ms)
+✔ MOCK SPA actual route authorizes both UI roles and status despite original sender URL (1.366042ms)
+✔ MOCK SPA grants reject subsequent actual document replacement (0.709458ms)
+✔ MOCK SPA grants reject subsequent actual url replacement (0.462ms)
+✔ MOCK near-deadline revalidation identity-change rejects existing UI authorization (1.227083ms)
+✔ MOCK near-deadline revalidation provider-timeout rejects existing UI authorization (0.787459ms)
+✔ MOCK HOST_REFRESH rejects interleaved A/B/A actual-frame snapshot before provider authentication (0.29275ms)
+✔ MOCK whole HOST_REFRESH deadline includes hanging first frame verification and prevents late provider call (0.293625ms)
+✔ MOCK whole HOST_REFRESH deadline revokes its unpublished grant when final frame verification hangs (0.192459ms)
+✔ MOCK timed-out old refresh cannot revoke replacement grant or revive itself on late frame reply (0.236375ms)
+✔ MOCK short same-document restore authenticates changed principal and revokes old UI (0.366791ms)
+✔ MOCK failed new-producer authentication never falls back to old same-document scope (0.274125ms)
+✔ MOCK ordinary same-producer refresh keeps grant and performs no extra provider read (0.239708ms)
+✔ MOCK concurrent new-producer refresh cannot bypass unfinished fresh identity proof (0.3425ms)
+ℹ tests 19
+ℹ suites 0
+ℹ pass 19
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 68.871167

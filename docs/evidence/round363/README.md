@@ -1,0 +1,11 @@
+# Round363：content 同作用域重新授权恢复
+
+从992d524继续，已核对PR16远端仍为同一HEAD、Draft和原base。保留原session/controller/frames，onWake先检查双frame ACK、真实adapter/身份读取与content无在途工作，再以单飞fresh HELLO和同scope REFRESH调用resumeDormant。不调用begin/reset，不启用自动enterDormant。
+
+adapter prepareRecovery仅允许同route、未stop且所有实际队列/读取已settle的局部准备；旧lease过期可以准备，但不能观察、发送或授权。新producer必须不同且browserDocument/origin不变，旧发送回调固定所属启动binding，旧ingestion取消保留旧token，native plan key加入producer。新发送baseline或过期proof不跨producer重放。
+
+独立审查修复三个窗口：新worker identityAuthority从低值重新开始；REFRESH可先于IDENTITY_RESULT回包，须等待真实identityTask；准备依赖可同步重入，须前后revision/在途复核。HELLO、REFRESH、identityTask共享六秒elapsed预算。独立25项content+7项真实adapter反例包含真实isolated reader、回包反序、期限耗尽与旧observer重入。
+
+首次完整Node 7019/7021通过，两个失败为旧stale-content-session错误语义和J3诊断锚点非唯一。保留原错误语义并精确收窄诊断锚点，106项相关回归通过。最终完整Node **7032/7032 PASS**，零skip/cancel；源码hash与完整测试清单保留，失败日志不删除。
+
+本轮没有新浏览器/MV3或自然休眠通过声明。自动关闭的同producer协调、休眠期间首个发送因果仍待完成；不把send-candidate accepted当作持久化ACK，不将局部wake接线宣称UI-11或完整Free验收。真实账户/PAIA/物理IME/跨端门槛保留，完整Free仍NOT_RELEASE_READY。整理stash及旧紧急备份保持，不修改main/base。

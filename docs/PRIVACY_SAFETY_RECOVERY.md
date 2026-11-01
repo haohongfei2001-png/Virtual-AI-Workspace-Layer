@@ -1,61 +1,86 @@
-# 隐私、安全与恢复：Free基础保障，Pro独立授权
+# 隐私、安全与恢复：Free/Pro共享合同
 
-适用于两个产品分级。Free基本查找、原生名称、活动可用性、账户隔离、备份与恢复不付费锁定；Pro不能凭订阅取得ChatGPT权限。当前仅文档整合，无账户读取、Mac/PAIA、模型或原生写入。
+2026-10-22用户采纳[PR16体验裁决](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16#issuecomment-6335005042)：本人Mac Chrome主用连续体验为个人交付标准。原计划及81项原表按①个人必需/②发布完善/③后续优化/④取消简化分层；历史结果不改PASS，取消的全历史与逐消息完整审计不转为发布欠账。安全、权限、正确归属、资产、完整v2.7不削弱。
 
-## 1. 身份和事实边界
+本文件按用户正式采用的[VA-HOST/1.1 FINAL](specs/chatgpt-host/VAIWL_CHATGPT_HOST_SPEC.md)统一生产宿主边界；[类型合同](specs/chatgpt-host/VAIWL_HOST_CONTRACTS.d.ts)和[81项验收](specs/chatgpt-host/VAIWL_OFFLINE_ACCEPTANCE.md)为完整附件，任务只在[唯一DEVELOPMENT_PLAN](DEVELOPMENT_PLAN.md)。本次文档固化不改变任何实际状态、测试成绩或产品代码，不自动授权真实账号/费用/原生writer/发布。
 
-当前宿主账户/原生组织、扩展侧身份及来源范围分开核验。Project不是账户scope；没有可信scope时不得显示旧库敏感标题/原始列表来追求可用性。保持原生UI是此时的安全可用退路。
+## 1. 账户、workspace、文档与UI隔离
 
-FreeProject ID和成员来自可靠原生观察，不按标题同名、虚拟Placement、URL片段或未出现项目字段猜测。UNKNOWN不是NONE；Project未被分页读到不是被删。已知不可达对象保留必要状态/诊断但不能绕过当前权限展示历史隐私。
+主体principal、当前context/workspace、browser document/route/body、producer与UI frame分别核验。HOST_HELLO仅给当前topframe文档的传输资格，不能读取账户缓存；ScopeAuthority独立认证后才走原严格BIND/20秒lease。未确认scope不展示上个账户缓存，任意页面accountId/verified/nonce/名称/头像/URL/roster第一项不提供授权。当前route正确不等于旧DOM属于当前聊天。
 
-原始用户发送事实、观察型活动、可逆排序决定分别存储。点击/访问/修改名称/文件/AI回答/HTTP Date/updated_at不自动变成原始sentAt。弱提示失效仅降低依据，不能生成“已确定不活跃”；新的轮询/刷新不能让旧提示永久保鲜。共享Project需核对发送者，不把role=user当作本人。
+主认证是worker固定第一方session请求；备选是worker challenge下包内隔离世界固定同源读取，不是MAIN bridge。固定origin/endpoint/method、schema/MIME/redirect/字节和6秒期限，不接受网页任意URL/header/JSON/token。主token仅worker RAM；备通道确需固定accounts核验时可在隔离闭包短期使用并如实披露，不能传MAIN/UI/日志/DB，不要求用户复制cookie/token。
 
-## 2. 数据通道与产品可用性
+当前context依真实存在的认证active字段，或认证roster+Chrome正常native request context+页面关联，或经验证唯一个人默认语义。webRequest只提供浏览器请求关联，不单独证明账户/作者/持久发送；若启用只读所需权限，不读requestBody、不blocking/extraHeaders，立即丢弃其他header，排除prefetch/扩展核验/旧epoch。无缓存请求事件、字段缺失和冲突不得用DOM候选补权威。
 
-当前已证明的合成机制不代表已建立真实完整历史渠道。Free优先验证原生Project/成员和可靠活动摘要；不要求复制全部消息正文才可以验证活动，但必须知道来源/精度/范围。未经支持的内部历史接口、批量隐藏tab/搜索爬虫、绕登录/挑战/组织限制不纳入默认实现。
+peek纯本地、refresh单飞有限，保留Repository前后scope栅栏但不每次guard联网、不在IDB事务await网络。检测到切换/撤权先废弃旧grant、producer/selection epoch和迟到响应；信号只能收紧权限不能授权另一账户。正常/隐身分区不共用未验证缓存。20秒lease不是连续实时认证，不承诺检测无任何信号的瞬间上游变化。
 
-不得把官方导出/ZIP/周期补文件/人工日期整理作为Free日常必经流程。旧相关实验保留作历史和格式研究；B5人工资产备份/恢复仍是独立基础功能，不承担ChatGPT历史抓取。需要真实clean数据必须另有授权，不能借现有历史记录暗含批准。
+扩展origin UI通过实际parent/ui document/frame、owner持有的iframe.contentWindow/mount和scope/lease双通道一次配对获取UiDocumentGrant；join key不写URL、不当账户认证。WAR仅必需静态壳/assets，不含数据/备份/session。私人投影走授权runtime有界通道，page postMessage无标题/原生ID/token；网页自己嵌入同名frame不能读库。
 
-缺数据时显示已有可信库存、结束无限等待、有限后台校准和可逆位置；不能通过把未知全部塞较早或全部永远留最近冒充质量。完全缺信息的正常原始回退不算完成活动能力，C6要实测典型近期/旧项与跨端纠正。
+## 2. 数据最小化与来源接纳
 
-## 3. 权限层次
+Free自动观察仅需要原生对象ID/原名/原生URL、成员三态、必要消息/作者/时间候选、版本、覆盖和受限证明。只读活动native区域，排除assistant正文示例链接、隐藏旧body和第三方扩展UI；metadata只读固定profile白名单字段，不eval/getter/React fiber/全bootstrap，opaque状态不解码。
 
-| 动作 | Free/共享 | Pro/独立许可 |
+正常已加载信息优先；获准的当前对象窄读取若返回正文必须准确披露实际范围，不宣称存在已证明的metadata-only接口。只持久元字段不等于未接触过响应正文；不得因此扩大到全历史/隐藏聊天或后台批量开页。官方导出、ZIP导入、周期手工补文件/维护日期不作为Free日常主备流程；人工资产备份是不同功能。
+
+response tap仅旁路宿主自然已有且获准的请求，保留原fetch receiver/参数/原Promise/错误，clone分支限字节/时间/深度/并发，异常不能阻塞原流，不抓全部XHR/WebSocket。JSON/SSE/NDJSON独立解析，HTTP Date/revision/status/updated_at不当原始发送时间。私有原文、完整request/response、HAR、附件/AI正文、凭证不写报告/DB/WAR。
+
+用户主动选择的片段走原独立人工路径，保留2000字符上限和`{refId,messageId,branchId,text,bodyHash}`；选区歧义不伪精确锚，不能借此自动采集所有正文。草稿、Range、DOM/Event与模型/工具/上传/Agent运行态仅归宿主，扩展不持久复制或在节点重建后回写旧草稿。
+
+ObservationProposal不带scope/verified/actorVerified/channel/canonical revision；owner凭真实注册receipt/profile/目标与当前授权接纳。locator、profile名、nonce不是来源证明。统一canonical source保留字段级witness，不洗白所有producer。包内profile代码随扩展发布，不执行远程JS/任意选择器配置。第三方开源实现仅证工程机制，不能替代平台许可或长期稳定性承诺。
+
+## 3. 原生权限、Free与Pro边界
+
+| 操作域 | 允许边界 | 不得推导的权限 |
 |---|---|---|
-| 读取原生项目/标题/成员与必要活动元数据 | 最小获准只读范围，实时scope复核 | Pro使用同一事实，不复制认证 |
-| 用户原生新建/改名/移动/发送 | 原生UI由用户实际操作，VAIWL只后验更新 | 不以付费代替宿主许可 |
-| 正文索引/手选片段 | 用户主动选择或单独授权，默认不抓助手/草稿/项目文件 | AI证据外传/端侧模型另设授权 |
-| 自动原生创建/改名 | 不是Free必需，默认不开 | E精确目标/类型/次数/时限与post-read |
-| 同步/PAIA数据/计费 | 非Free依赖，未知服务不默认接入 | F2/G和会员业务分别批准 |
+| Free原生观察 | 已授权scope内正常显示/加载及明确获准当前域窄读取；scope/来源/预算验证 | 全账户正文镜像、隐藏页面扫描、任意fetch代理、认证材料抓取 |
+| 用户原生入口 | 明确已识别P/C/new/search控件或安全href，预计划、一次派发，后验观察 | 后台自动创建/移动/改名/删除、未知结果自动重试、按钮点击即假成功 |
+| Free人工偏好/工作集/片段 | 现有CAS/inverse、人工审阅和有界备份；不改变原生成员 | 对真实Project/Conversation写回或自动发消息 |
+| Pro语义层 | Free完成后按原授权/质量/预算启用；旧人工资产完整保存 | 用Pro会员/建议actor=human越过锁、获得原生写权或让Free依赖计费 |
+| E原生代理 | 未来独立Intent/planHash/范围/次数/时限/任务级预算及真实回执 | 从读取许可、会员、模型建议或观察continuation自动取得writer权 |
+| F2/G高级同步/PAIA协议 | 独立双方范围/服务/密钥和数据许可 | 读取PAIA私有DB、共用可写owner/凭证、把ChatGPT自然跨端变化称VAIWL同步 |
 
-用户聊天文本、网页postMessage、LLM输出不授予任何权限；nonce/Shadow DOM不证明可信scope。公开仓库仅合成或经许可的去敏元数据，不保存完整HAR、Cookie/Token、真实对话ID/正文或私有账户截图。
+失效/拒绝的真实权限不通过换Profile/目录/身份重试绕过。默认不加cookies/debugger/all_urls/测试管理权限，不绕源站挑战、账户/管理员/浏览器限制；所需host/webNavigation、storage/scripting、可选只读webRequest按具体capability最小化并准确列明。
 
-## 4. 原生动作不做隐式补偿
+## 4. 本人活动与原生动作不可混同
 
-Free项目＋只打开已验证原生入口，用户自行提交；click/新页面不能认作Project或conversation已经创建。使用原生工具所受的模式/权限变化必须保留，不自动切工具或记忆来“兼容”。
+strict UserSendEvent只有本人、持久消息身份、确证new-send/ACK、原始时间语义/精度和body/scope关联成立才入库；role=user、会话归我、共享项目创作者、气泡新增、HTTP200或整个流complete不充分。编辑/复制/分支/重生成、访问、改名、文件/AI回复不能冒充本人新发送。
 
-E将来可提供确定性代理：审阅scope/原生目标/旧新名或创建名/预算/expiry；先记派发，再执行，UNKNOWN先只读核对。不同tab/重启/run/目录不能重置同任务总限额；不同安装/设备无协调时不承诺全局exactly-once。
+原始时间未证实但本地本人ACK确证时使用durable observed-self-send观察锚，只支持provisional、本机有界区间，无sentAt/serverTime。校准due不删除已ACK活动，重复轮询/重开不续起点；错误关联、实际失败或撤销可撤锚；旧短TTL hint不批量升级。事件语义键独立于本次observedAt/current leaf，避免重复入账和不可变冲突。合格同域RecencyObservation可直接供无日期排序，已核验原生对象更新时间可供provisional活动；不写sentAt/actorVerified/ACK，未知语义仅dirty。
 
-切账户/撤权立即停止余项；已创建的对象不因本地取消/undo/降级自动删除；对话已创建但本地关联失败只修本地。主题语义合并不移动原生Project，模型建议不直接调用E。
+NativeAction的新Project、全站新聊和P内新聊目的地明确。NavigationPlan在点击前生成，委托同步preventDefault、actionId至多派发一次；异步RPC不转移浏览器user activation。未知ACK不自动补href/再click，取消不建假卡。无native anchor且有或无法排除未保存草稿/附件/上传/运行状态时，只提供明确新标签安全链接，不整页卸载、不复制草稿。原生Back/Forward/history.state不改义。
 
-## 5. 存储威胁与恢复
+将来E代理若派发后结果UNKNOWN，应先只读核对，不能盲重试创建；取消不自动删已建P，撤销本地Placement不执行原生删除/移动。各安装/设备无共享账本不承诺全局exactly-once，恢复不重置任务级原生动作预算。
 
-延续B1/B4/B5/F1的同库、scope/epoch、CAS/inverse、人工日志、校验checkpoint/分区根。旧Pro数据保留，不在Free渲染也不被删除。原生更新有独立观察命令与版本，不用旧synthetic INGEST冲突促使全库重建。
+## 5. 持久存储、并发、迁移与恢复
 
-迁移/恢复/配额/源撤权/IDB写入中断分别反例；新reader不理解的格式拒绝，旧reader不能忽略新字段覆盖。源恢复不自动解除revocation；有界备份不营销为无限全聊天镜像。恢复时原生项目/成员需重验，ObservationHint/密度不变成权威时间，native/model执行授权不恢复。
+同库已有B1/B23/native/evidence/shared目录、CAS/operationId/inverse、人工patch/checkpoint/备份、retention、新读字节验证和旧容量限制全部保持。普通freshness到期不是grant撤销或删除，已授权scope内last-known可达但不冒充当前已核验；明确撤权隐藏相关敏感投影，不能因原生源失效删除Pro人工作品。
 
-Free↔Pro切换不删除人工作品；可读取和备份自己的合法资产不强制购买。恢复冲突保留最新人工修改，不自动用旧快照覆盖。云同步未来只同步明确资产，不同步可执行grant/待派发动作。
+native与evidence仍独立提交。native delta与有界pending-evidence continuation/最小admission在同一次native_states/native_operations CAS事务中提交，不能native先commit再另写receipt。evidence稳定operationId幂等完成后标complete；pure-evidence输入复用现有receipt，不空写native。pending受retention保护且有字节/条数上限，超限背压不丢已ACK活动。
 
-## 6. 原生界面与生命周期
+正常worker重启新grant加原子admission/payload digest/未撤source复验可补观察，不必再找丢失RAM receipt；备份恢复/source变更/admission不全则needs-revalidation。观察continuation不包含凭证或可重放原生动作，不能复活send/create、旧授权或模型任务。UI分别表示native新/activity pending，最终HEADER/PAGE/CHECK不伪跨库原子。
 
-只撤自有DOM/样式/属性；原生transcript/composer/model/tools及其状态保持。无安全挂载位时缩小增强，不隐藏整个原生父容器；原生搜索/dot/固定/账户/授权和未知入口不能消失。
+当前数据库版本及下一codec按实际代码核对，保留已完成shared目录和staged HEADER、elapsed deadline、scope-wide foreground及纯解析缓存；不新增第二数据库/事务/调度/loader，不以改hash算法或扩容量换过测。preparing不是空库/READY，生产zero-seed不使用合成bootstrap，6秒实耗时护栏不延长。
 
-受控退出、实际disable/uninstall/re-enable、worker stop/restart、原生导航/重载、真实freeze/resume分别测试。原生可用、布局干净、数据完整、敏感残留与执行停止分别记录；一种PASS不能覆盖另一种。不得自动刷新有草稿页面制造成功。
+坏根/日志/桶、quota、撤权在put前中后、多tab/旧新reader、两仓库间退出均需实际D/S反例。旧reader不支持新schema则拒写，迁移失败保留旧有效根，不清库重建。Free↔Pro及恢复保持identities/placements/aliases/locks/workingSets/snippets/humanRefs/preferences和最新人工优先。B5文件备份是有界人工资产/必要引用，不是无限全部聊天镜像，不携带grant/source授权/pending执行。卸载不能被描述为自动备份，原生ChatGPT数据/功能始终不被修改。
 
-PAIA实际运行共存是Free兼容门槛，数据共享是可选G；只用获准干净构建，不读改对方库、不模仿PAIA视觉/提示词功能，冲突先缩小VAIWL占位。缺真实构建/授权只阻塞对应验收，不创建假的PAIA本体PASS。
+## 6. 原生UI、声明式退出与失败处理
 
-## 7. 发布和例外
+完整v2.7要求不改变：三列适配、5/+12、主页不折叠、连续侧栏/左旧项、上下段/完整H、工作集/片段/搜索、阅读区左上唯一四格返回。header不足不搬到侧栏/rail新增返回，不用小弹板或页面外侧面板残缺版充完整Free。
 
-实际来源、支持账户/版本/平台政策在R0-00/F3定向核验，不以用户同意、只读、竞品上架替代。未来新增云服务/付款/权限/商店提交须明确授权。本轮不重做广泛法律/市场调研，不宣称当前全部平台许可已经取得。
+生产采用扩展origin私有UI frame和同一MountSurface的两个manual surface，共享session/index，不各复制100k。只对唯一已证明reading和纯history列表根添加非私人marker，以浏览器真实popover-open与准确native-open排除条件控制最小CSS visibility/interactivity；禁止HTML inert/hidden/aria-hidden/display、native DOM/handler重写，composer/model/tools/files/account/protectedRegions不入mask。
 
-例外必须记录对象、证据、预期恢复点和可达退路；不能用“暂时UNKNOWN”无限开放严重误藏。Free完整验收按FR矩阵，Pro高阶质量按PR矩阵。
+frame外同树声明式关闭button能在UI/内容脚本失效时释放对应CSS mask。manual不自动ESC/轻点外部，正常running时只处理owned层级ESC，不吞native/IME；无JS不能谎称ESC仍保证可用。原生dialog/menu/权限/Canvas优先，mask和surface同时suspend；隐藏role节点存在不等于打开，两个自有surface不能互判native层。自有mask不使observer自证body消失/反复拆挂；native真实变动先解除mask再复核。
+
+侧栏仅覆盖纯history区域，原生新建/搜索/项目目录/其他入口/footer保留；frame外“显示原生列表”关闭增强恢复尚未发现历史。它不构成第二个工作区返回。未知混合root不能整块mask，但也不能把附在底部的大列表当连续侧栏完成。CSP失败不改宿主策略、不降为page DOM泄露私有cache。
+
+实际stop、worker自然休眠/terminate、刷新/重载、disable、uninstall、re-enable、freeze/bfcache分别测试。退出结果分nativeOperable、privateProjectionAbsent、cleanLayout；仍可手关不使旧私人画面残留通过。正常JS到期清屏不能代替hard-kill行为，frame并不被假定必销毁，管理员禁用unpacked时记NOT_RUN而非绕过。冻结旧像素不承诺瞬时擦除，恢复后先重验grant才发布数据。
+
+无法满足私有退出/原生完整性的profile不发布；保留原生和人工资产，定向修同一mount/provider，不无限增加降级路线或大面积NATIVE_ONLY充成功。完整S生命周期尽早在C2/C5/F3运行，G再确认实际ChatGPT的CSP/原生流程与PAIA/物理IME。
+
+## 7. 工程权限、质量和发布条件
+
+本次GitHub文档整合者不改代码/STATUS/结果、不操作Mac或真实ChatGPT、不干扰Codex。原工程在同目录/同Free分支/PR #16继续，非强制提交，遇并发只整合自己的差异；不创建额外repo/worktree/PR、不要求暂停或reset。最新共享owner成果继承，优先B1.F+B2.F1+C2生产映射闭环，原F1失败与阈值不删除但不无限前置。
+
+离线研发只用独立本地native-shaped/认证fixture与阻断外网的新Profile，不读日常账号/凭证。固定G/U清单和任何真实创建/发送/移动、实际PAIA、费用、merge/发布均按AUTHORITY另行许可，使用任务级预算。法律/平台分发资格和技术可用性分开，不由第三方扩展存在或只读措辞推定允许。
+
+原81项/全部子场景、J1–J4、独立oracle、关键变异与既有回归必须按L/D/S/G/U分账；Web机制probe、类型编译和旧synthetic成绩不代替生产验证。正常支持族须按当前适用层完成P/C/NONE/可信最近活动/原生目标/v2.7闭环，FAULT族才可按预定结果降级。核心数据大面积长期unknown、实际跨端无源、原生损坏或敏感残留不得标FREE-ACCEPTED。发布还需F3/F4的源码对应包、权限/隐私/回退和实际日常质量；本次采纳不是发布许可或新通过结果。

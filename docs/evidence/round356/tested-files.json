@@ -1,0 +1,5 @@
+{
+  "src/host/surface-controller.mjs": "9f3cd903c8dd3b6c1a6d1793eb918e501ed01a27235c5c37bc66065f8ce9c22b",
+  "tests/host/surface-controller.test.mjs": "9fa345432c3458f20eb8a35e2531fac4becc29885c9fc7fd20696cfa004f34b7",
+  "tests/host/surface-dormant-independent.test.mjs": "fa108c185e2b4cf76a2103577c1653503dabf730044be4c45040e2cc1c996700"
+}

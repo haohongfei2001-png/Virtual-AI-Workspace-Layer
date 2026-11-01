@@ -1,0 +1,11 @@
+# Round324 — bounded admission follow-up
+
+Production remains087fca8b1a9c99a8e291d6a8ec95f53d4b256323, pushed and GitHub API confirmed on original Draft PR16 with unchanged base. No source changes or repeated Node regression.
+
+Existing explicit FREE_HOST_SCALE_ADMISSION_PREPARE=1 path, isolated headless10k single-project CPU1, original30-second preparation budget, no trace: FAIL_NOT_READY_AFTER_PREPARATION. Initial audit stopped at7999 refs/revision216; six diagnostic root snapshots over25seconds each had10000 refs and1project, while revision217→234→252→268→283→298. Final full audit stopped at5499 refs/revision298. These counts mean successfully audited pages before revision changed, not missing persisted entities. No accepted timing samples; original immediate failure is not replaced by preparation.
+
+No snapshot-error RPC terminal was observed in this run; invalid-ui-parent-binding/current-entry/save-view errors remain recorded. Do not assume the previous frame-conflict rebind cause still explains these commits. Need correlate remaining publication semantics/source witness refresh with actual scan lifecycle; neither complete cardinality nor nativeChanged=false alone proves a stable/full audit or a redundant publication bug. Capacity eviction was previously disproved and is not being reopened without new evidence.
+
+Source/fixture/manifest unchanged; browser and fixture closed and disposable directory removed. This is an additional bounded failing diagnostic, not scale acceptance. Free remains NOT_RELEASE_READY.
+
+A subsequent versioned1000-row adapter/discovery/surfaceBatch plus admission-Map DOM-double characterization passed3/3. Complete visible pass→owned mask produced39 surface packets carrying2000 claims and0 detached handles; following unchanged masked scan produced0, including after candidate-only scanning. Counts are observed diagnostics, not hardcoded acceptance. The mechanism is current-Project visibility becoming unproven under inherited masking, changing region order and page keys. It supports finite duplicate publication as a concrete hypothesis; it is not actual-browser proof for the10k tail, full IDB reducer validation, or a production fix. Native hidden-descendant safety remains unchanged.

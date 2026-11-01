@@ -1,0 +1,29 @@
+✔ production composition sequences HELLO REFRESH and mount with no page bridge; restart seq is monotonic (2.083291ms)
+✔ native plans require real extension sender and exact current binding, no mutation path (0.412416ms)
+✔ stop cancels pending HELLO; late result cannot create surfaces or listeners (0.23225ms)
+✔ unverified scope and invalid binding fail closed before surface; pagehide tears down live session (0.220875ms)
+✔ pending RPC deadline is six seconds and cannot revive after late response (0.139834ms)
+✔ document renewal and scope revalidation precede UI status with one six-second budget (0.452625ms)
+✔ SPA adapter rebind withdraws old surface and remounts without modifying native draft (0.260042ms)
+✔ same-URL invalidation after replacement HELLO revokes it; old-listener bursts coalesce (0.327292ms)
+✔ pagehide or explicit stop during queued rebind prevents automatic revival (0.209958ms)
+✔ failed replacement stops without self-retry (0.144833ms)
+✔ trusted surface presentation dispatches only the two modes without native plans or writes (0.108458ms)
+✔ presentation rejects wrong sender, extra fields, invalid mode/binding and stale route, expiry or stop (0.574667ms)
+✔ old session presentation cannot act on replacement even with identical binding fields (0.083834ms)
+✔ renewal checks scope before exposing renewed UI and refuses unverified authority (0.124167ms)
+✔ slow scope revalidation consumes the remaining renewal budget (0.202958ms)
+✔ workspace entered bridge uses current private binding and bounded RPC; stopped bridge cannot send (0.154208ms)
+✔ private content selection capture validates and releases one scope-bound ticket (0.433959ms)
+✔ content selection rejects untrusted sender extra fields route mismatch and absent node epoch before reading (0.119583ms)
+✔ content ticket expires on node replacement elapsed six seconds route change or stop (0.296542ms)
+✔ expired queued snippet restore cannot scroll or switch native reading (0.150084ms)
+✔ late old-generation locate completion cannot unlock a restarted authorized client request (4.367125ms)
+ℹ tests 21
+ℹ suites 0
+ℹ pass 21
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 48.611792

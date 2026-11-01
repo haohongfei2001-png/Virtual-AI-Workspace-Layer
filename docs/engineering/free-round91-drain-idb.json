@@ -1,0 +1,45 @@
+{
+  "evidence": "REAL_HEADLESS_IDB_CONTINUATION_DRAIN_SYNTHETIC_AUTHORITY",
+  "authority": "EXPLICIT_TEST_WEAKMAP_NOT_PRODUCTION",
+  "drain": "EXPLICIT_OWNER_API_REAL_IDB",
+  "realChatGPT": "NOT_RUN",
+  "mv3": "NOT_RUN",
+  "sourceHashes": {
+    "tests/host/continuation-drain-idb-browser.mjs": "deac8dce48ef9be138b2dbcd2c078cc0c23fce8bf5c72a7b642b33c4616c43ec",
+    "src/data/native-repository.mjs": "6e8f250819dc5584d3fe2c84408675a048d934d83e01582e8adb5fc584e165b1",
+    "src/data/native-observation-continuation.mjs": "68477fcbe5e46d6b4218d5972c097a17a241e152f466b7b2ee6feaa2f6741d09",
+    "src/data/native-partitions.mjs": "df08b215677fa72bdef9523a327ff26432b076b1f61e39ca39d7ca926a996628",
+    "src/data/native-facts.mjs": "2e3d25c30cec2320962697bf6342e298f4408bdd266fea400f19610e039b6e4c",
+    "src/data/repository.mjs": "093aba679acff36dd2c40063b7bb2124e96cedc25cd1f92cbfe87a69458b737a",
+    "src/data/observed-send-anchor.mjs": "f9dbb9278502a325c2263d4adeb99ea1c0159525d505728fe84fdee2d59980da",
+    "src/data/free-evidence.mjs": "194796386c17ce311e638d5cc35145aa372e16e87ab8c4d5b5cb9bd7f08fea12",
+    "src/data/free-evidence-repository.mjs": "148c6138cc58ede2eaf95534300c16e101765bb3d6a008a9f2e828de238e6389",
+    "src/data/schema.mjs": "fcdfbd7759722e79e2ad089439033b7df13134c7da863fdf1c56d5e00d75847d"
+  },
+  "results": [
+    {
+      "name": "fresh-authority-guard-loss-rolls-back-entire-drain",
+      "status": "PASS",
+      "guardCalls": 7
+    },
+    {
+      "name": "CAS-competition-retry-after-TTL-preserves-original-anchor-and-newer-source",
+      "status": "PASS"
+    },
+    {
+      "name": "evidence-commit-reopen-and-repeat-drain-is-idempotent",
+      "status": "PASS"
+    },
+    {
+      "name": "completion-releases-queue-preserving-native-shared-and-Pro",
+      "status": "PASS"
+    },
+    {
+      "name": "revoked-source-rejected-and-retained-as-small-revalidation-summary",
+      "status": "PASS"
+    }
+  ],
+  "errors": [],
+  "status": "PASS",
+  "sourceChangedDuringRun": false
+}

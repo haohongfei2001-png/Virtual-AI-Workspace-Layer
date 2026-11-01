@@ -1,0 +1,32 @@
+{
+  "sourceHashes": [
+    "54406774ba25da718d281f8c774b06322469565107823e1235428161cc67c0c0",
+    "0dacbbf1bb27203d7ec870ea7f5af59fc92c628c85108d7543d4a294a1778ede"
+  ],
+  "status": "PASS_MECHANISM_ONLY",
+  "evidence": "ISOLATED_EXPERIMENT_NOT_PRODUCT_ACCEPTANCE",
+  "results": [
+    {
+      "name": "native-owned-inherited-visibility",
+      "values": [
+        true,
+        false,
+        false
+      ],
+      "status": "PASS"
+    },
+    {
+      "name": "inert-focus-popover-dom-exception-restoration",
+      "status": "PASS"
+    },
+    {
+      "name": "three-restored-animation-frames",
+      "status": "PASS",
+      "noIntermediatePaintClaim": false
+    }
+  ],
+  "paintAbsence": "NOT_PROVEN",
+  "focusAXPopover": "BEFORE_AFTER_PASS_NOT_TRANSIENT_PROOF",
+  "browserVersion": "156.0.8078.4",
+  "sourceChangedDuringRun": false
+}

@@ -1,0 +1,5 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import {observeHostScaleAdmission} from './fixtures/host-scale-admission-observation.mjs';
+test('fixed diagnostic observation samples growth without claiming completion or moving the deadline',async()=>{let time=100,count=0;const r=await observeHostScaleAdmission({now:()=>time,sleep:async ms=>{time+=ms;},read:async()=>{time+=800;return {inventoryRefs:++count*1000};}});assert.deepEqual(r.rows.map(x=>x.startedAtMs),[0,5000,10000,15000,20000,25000]);assert.equal(r.rows.at(-1).finishedAtMs,25800);assert.equal(r.acceptance,'NOT_ESTABLISHED');assert.equal(r.completion,'NOT_INFERRED_FROM_INVENTORY');});
+test('late event loop never starts another read beyond original window',async()=>{let time=0,reads=0;const r=await observeHostScaleAdmission({now:()=>time,sleep:async()=>{time=30000;},read:async()=>{reads++;return {};}});assert.equal(reads,1);assert.equal(r.rows.length,1);});
+test('backward clock fails instead of renewing observation',async()=>{let time=100;await assert.rejects(observeHostScaleAdmission({now:()=>time,sleep:async()=>{time=0;},read:async()=>({})}),/invalid-observation-clock/);});

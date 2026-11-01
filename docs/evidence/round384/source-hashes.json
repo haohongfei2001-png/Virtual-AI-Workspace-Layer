@@ -1,0 +1,11 @@
+{
+  "src/host/content-session.mjs": "2deacdc8e3ba4a8f2bd8d0d19bd5796d75282957d8336e94e968804de8e9c069",
+  "src/host/surface-controller.mjs": "9e03332fae48957fcdc27c7adb839535b327ac7fdadb5a008ab62ea0453139b8",
+  "src/runtime/host-binding-service.mjs": "09fc71c68c5f85098ad5beb468bc33225da4c2df19c372cbea4c66fda620654b",
+  "src/runtime/host-ui-owner.mjs": "8f5fcd9e30da40e75567943159ba026d87eeb8e6842cbea22d52fbb103aee110",
+  "tests/host/ui-idle-preflight.test.mjs": "0b5aaa51c0a0dcfbf0160687867de7d916619d53c8bbd27c013bbfee11852203",
+  "tests/host/surface-dormant-independent.test.mjs": "09a8b713b302a77ca3663ba945dc450b2cccdad874fe1a52c4e8df98683e8cee",
+  "tests/host/content-dormant-close.test.mjs": "3ffddcd4a31c720a47e973ecbd0d4da1f94693779b72d2d269d8e12228d8b9a9",
+  "tests/host/content-native-prepare-wake.test.mjs": "25bd2e22641cb723674a9a99c62f97b1f9d6368dd023bc71a281b493cac1336f",
+  "tests/host/dormant-close-wake-mv3.mjs": "e6c50049a47aaba4977ab804282e6504d9903bc8afd07b9fa3f5dd68059610b2"
+}

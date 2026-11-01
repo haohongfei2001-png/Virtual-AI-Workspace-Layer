@@ -1,0 +1,11 @@
+# Round366：content/controller 双清空后的释放协调
+
+从b2add4f继续。content私有enterDormant显式启动一次关闭：先准备adapter/identity reader局部token，区分本次关闭RPC与其他sync/track/send。只有内部closing对象可豁免自身工作；任意其他操作永久使本轮失效。等待期间不停止原生监听，wake及重复close拒绝，原始IPC即使deadline先返回仍继续计数。
+
+controller为每次IDLE建立真实双frame ACK promise；settleDormant在同一六秒elapsed预算内等待清空、复核content guard、调用真实HOST_UI_IDLE_RELEASE，并在回包后复核。stop结算等待，重复settle及settling期间resume拒绝。workerbusy但双ACK已齐时保留原frames/四格，可显式重试settle；没有第二次enter或send/create重放。
+
+未齐ACK会阻止fresh wake，故纯清空失败在同route、原快照仍有效、无干扰且activeWork/rawIPC均为零时，沿用现有rebind阅读模式安全替换一次失效frames。独立审查指出等待期间可能新发原生消息，已收紧上述fallback并补两项反例：有新send/rawIPC或adapter pending不得自动重绑，之后settle也不复活旧fallback。绑定过期、干扰或未齐ACK时不假称恢复完成；不绕过双ACK。
+
+独立content21项、controller新增8项通过。完整Node **7092/7092 PASS**；随后增加fallback护栏与2项反例，最终相关 **1804/1804 PASS**，零skip/cancel，不将重叠次数相加或称最后版本另跑全套。J3唯一诊断锚点精确更新为携带内部owner参数的send，原校验保留。最终hash/清单与日志附录，独立复核原阻断已修复。
+
+这是实际关闭与恢复私有调用链，尚无生产自动进入策略或新浏览器证据；下一步需隔离实际frame/MV3运行这条链，证明自发owned DOM mutation不会误阻止正常稳定reading关闭，以及自然worker退出和新授权历史恢复。生产首个发送/LocalSendAnchor不得用loopback historical profile代替。UI-11和完整Free仍NOT_RELEASE_READY。

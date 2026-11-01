@@ -1,0 +1,40 @@
+✔ browser exact headers plus completed request produce submit witness without body read (2.638791ms)
+✔ onBeforeRedirect cannot be completed later (0.252851ms)
+✔ reject completion documentId (0.230758ms)
+✔ reject completion tabId (0.177318ms)
+✔ reject completion statusCode (0.240563ms)
+✔ reject completion fromCache (0.189646ms)
+✔ reject completion method (0.171489ms)
+✔ reject completion frameId (0.262316ms)
+✔ reject completion documentLifecycle (0.226161ms)
+✔ reject completion initiator (0.334504ms)
+✔ duplicate headers, expiry, rewind, document invalidation reject (0.417059ms)
+✔ browser cancellation only reports terminal candidate and requires prior exact headers (0.220222ms)
+✔ success or unknown network failure cannot settle anything (0.241765ms)
+✔ J2 failure has no accepted message; later success holds the actual POST time privately until native reveal (5.649104ms)
+✔ other author and old-branch fixture states do not claim new original self send (5.011832ms)
+✔ native J2 uses real native request and in-place append; no extension ACK or database write (0.916502ms)
+✔ actual J2 fixture server starts and serves native J2 controls (30.007885ms)
+✔ runner requires real expiry, real stopped/restarted worker, original event deduplication and negative readbacks (0.440234ms)
+✔ declared failed operation is immutable and authenticated principal/context scoped (1.137316ms)
+✔ native cancellation aborts a real held HTTP response and leaves exact authenticated terminal readback (21.894734ms)
+✔ old terminal is explicit loopback packaged config and remains private (77.367631ms)
+✔ rapid retry runner neither waits for extension settle nor reloads after failure (0.23201ms)
+✔ fixed authenticated loopback operation readback checks identity and minimizes result (6.612507ms)
+✔ readback rejects operationId mismatch (0.744863ms)
+✔ readback rejects principalId mismatch (0.53656ms)
+✔ readback rejects contextId mismatch (0.506104ms)
+✔ readback rejects acceptanceState mismatch (0.528368ms)
+✔ redirect and non-success response are rejected (0.371821ms)
+✔ redirect and non-success response are rejected (0.525062ms)
+✔ redirect and non-success response are rejected (0.367114ms)
+✔ unknown extra fields and oversized response never escape (1.903562ms)
+✔ accepted operation is never failure authority (0.624172ms)
+ℹ tests 32
+ℹ suites 0
+ℹ pass 32
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 193.215915

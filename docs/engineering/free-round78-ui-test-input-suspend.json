@@ -1,0 +1,758 @@
+{
+  "evidence": "REAL_HEADLESS_MV3_UI_GRANT_FIXED_PROBE_NOT_J1",
+  "liveChatGPT": "NOT_RUN",
+  "renderer": "FIXED_SYNTHETIC_MARKER_AFTER_REAL_GRANT",
+  "sourceHashes": {
+    "src/host/ui-frame-client.mjs": "c15461f28139d345c2d31a05f160f223708a656910c9244ffd8afa3fbeb3c1d7",
+    "src/host/surface-controller.mjs": "a35854135b276a51d207bf12ee590f0af571815b0fb855cea2847bc642ebfd86",
+    "src/navigation/mount-surface.mjs": "d8ed4ee322a55df4a8498c7065f61b6d0ebd709a8c2a2febba142fcc21900c35",
+    "src/runtime/host-ui-owner.mjs": "d0e822865e4bbc4f1c4831bc3020d3078219b861cf3a3fe2c83524a1205c0bee",
+    "src/runtime/host-binding-service.mjs": "7b7b0d6d39a348d9026cd5aa6c30a485757aa92722ed2d57e5682026edcad1bc",
+    "src/host/ui-grants.mjs": "45c94efe75214cca84e16b076ad18b0a23205c0c57f076255cc2c9de84465be7",
+    "src/host/chatgpt-adapter.mjs": "65dfd43aeff3446fea126321f7a97a95fcfc1642828e27e220cf9008aff00f29"
+  },
+  "results": [],
+  "lifecycle": [],
+  "errors": [],
+  "temporaryPackage": "/private/tmp/vaiwl-host-ui-DK1SO7/extension",
+  "status": "FAIL",
+  "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\n0 !== 2\n\n    at file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/host/ui-mv3-browser.mjs:29:71",
+  "ownerMessages": {
+    "messages": [
+      {
+        "type": "HOST_HELLO",
+        "ok": true,
+        "sender": {
+          "id": "olnpjpcbiepkoenpjjkcdngiipkdjkkl",
+          "tab": 79515327,
+          "incognito": false,
+          "frameId": 0,
+          "documentId": "1C01BDA6F66686792F6FA90F4AD055FB",
+          "documentLifecycle": "active",
+          "url": "http://127.0.0.1:55136/"
+        }
+      },
+      {
+        "type": "HOST_REFRESH",
+        "ok": true,
+        "sender": {
+          "id": "olnpjpcbiepkoenpjjkcdngiipkdjkkl",
+          "tab": 79515327,
+          "incognito": false,
+          "frameId": 0,
+          "documentId": "1C01BDA6F66686792F6FA90F4AD055FB",
+          "documentLifecycle": "active",
+          "url": "http://127.0.0.1:55136/"
+        }
+      },
+      {
+        "type": "HOST_UI_MOUNT",
+        "ok": true,
+        "sender": {
+          "id": "olnpjpcbiepkoenpjjkcdngiipkdjkkl",
+          "tab": 79515327,
+          "incognito": false,
+          "frameId": 0,
+          "documentId": "1C01BDA6F66686792F6FA90F4AD055FB",
+          "documentLifecycle": "active",
+          "url": "http://127.0.0.1:55136/"
+        }
+      },
+      {
+        "type": "HOST_UI_CONFIRM",
+        "role": "sidebar",
+        "ok": true,
+        "grant": "sidebar",
+        "sender": {
+          "id": "olnpjpcbiepkoenpjjkcdngiipkdjkkl",
+          "tab": 79515327,
+          "incognito": false,
+          "frameId": 0,
+          "documentId": "1C01BDA6F66686792F6FA90F4AD055FB",
+          "documentLifecycle": "active",
+          "url": "http://127.0.0.1:55136/"
+        }
+      },
+      {
+        "type": "HOST_UI_CONFIRM",
+        "role": "workspace",
+        "ok": true,
+        "grant": "workspace",
+        "sender": {
+          "id": "olnpjpcbiepkoenpjjkcdngiipkdjkkl",
+          "tab": 79515327,
+          "incognito": false,
+          "frameId": 0,
+          "documentId": "1C01BDA6F66686792F6FA90F4AD055FB",
+          "documentLifecycle": "active",
+          "url": "http://127.0.0.1:55136/"
+        }
+      },
+      {
+        "type": "HOST_UI_JOIN",
+        "role": "sidebar",
+        "ok": true,
+        "grant": "sidebar",
+        "sender": {
+          "id": "olnpjpcbiepkoenpjjkcdngiipkdjkkl",
+          "tab": 79515327,
+          "incognito": false,
+          "frameId": 6,
+          "documentId": "36965B3E1C89B60CAF3532D793607004",
+          "documentLifecycle": "active",
+          "url": "chrome-extension://olnpjpcbiepkoenpjjkcdngiipkdjkkl/sidebar.html"
+        }
+      },
+      {
+        "type": "HOST_UI_JOIN",
+        "role": "workspace",
+        "ok": true,
+        "grant": "workspace",
+        "sender": {
+          "id": "olnpjpcbiepkoenpjjkcdngiipkdjkkl",
+          "tab": 79515327,
+          "incognito": false,
+          "frameId": 5,
+          "documentId": "8007BE34493818A17D116A426D6A9784",
+          "documentLifecycle": "active",
+          "url": "chrome-extension://olnpjpcbiepkoenpjjkcdngiipkdjkkl/workspace.html"
+        }
+      },
+      {
+        "type": "HOST_UI_JOIN",
+        "role": "workspace",
+        "ok": false,
+        "sender": {
+          "id": "olnpjpcbiepkoenpjjkcdngiipkdjkkl",
+          "tab": 79515327,
+          "incognito": false,
+          "frameId": 6,
+          "documentId": "36965B3E1C89B60CAF3532D793607004",
+          "documentLifecycle": "active",
+          "url": "chrome-extension://olnpjpcbiepkoenpjjkcdngiipkdjkkl/sidebar.html"
+        },
+        "reason": "ui-authorization-unavailable"
+      },
+      {
+        "type": "HOST_UI_RENEW",
+        "ok": true,
+        "grant": "sidebar",
+        "sender": {
+          "id": "olnpjpcbiepkoenpjjkcdngiipkdjkkl",
+          "tab": 79515327,
+          "incognito": false,
+          "frameId": 6,
+          "documentId": "36965B3E1C89B60CAF3532D793607004",
+          "documentLifecycle": "active",
+          "url": "chrome-extension://olnpjpcbiepkoenpjjkcdngiipkdjkkl/sidebar.html"
+        }
+      },
+      {
+        "type": "HOST_UI_RENEW",
+        "ok": true,
+        "grant": "workspace",
+        "sender": {
+          "id": "olnpjpcbiepkoenpjjkcdngiipkdjkkl",
+          "tab": 79515327,
+          "incognito": false,
+          "frameId": 5,
+          "documentId": "8007BE34493818A17D116A426D6A9784",
+          "documentLifecycle": "active",
+          "url": "chrome-extension://olnpjpcbiepkoenpjjkcdngiipkdjkkl/workspace.html"
+        }
+      },
+      {
+        "type": "HOST_DOCUMENT_RENEW",
+        "ok": true,
+        "sender": {
+          "id": "olnpjpcbiepkoenpjjkcdngiipkdjkkl",
+          "tab": 79515327,
+          "incognito": false,
+          "frameId": 0,
+          "documentId": "1C01BDA6F66686792F6FA90F4AD055FB",
+          "documentLifecycle": "active",
+          "url": "http://127.0.0.1:55136/"
+        }
+      },
+      {
+        "type": "HOST_UI_STATUS",
+        "ok": true,
+        "sender": {
+          "id": "olnpjpcbiepkoenpjjkcdngiipkdjkkl",
+          "tab": 79515327,
+          "incognito": false,
+          "frameId": 0,
+          "documentId": "1C01BDA6F66686792F6FA90F4AD055FB",
+          "documentLifecycle": "active",
+          "url": "http://127.0.0.1:55136/"
+        }
+      },
+      {
+        "type": "HOST_UI_RENEW",
+        "ok": true,
+        "grant": "sidebar",
+        "sender": {
+          "id": "olnpjpcbiepkoenpjjkcdngiipkdjkkl",
+          "tab": 79515327,
+          "incognito": false,
+          "frameId": 6,
+          "documentId": "36965B3E1C89B60CAF3532D793607004",
+          "documentLifecycle": "active",
+          "url": "chrome-extension://olnpjpcbiepkoenpjjkcdngiipkdjkkl/sidebar.html"
+        }
+      },
+      {
+        "type": "HOST_UI_RENEW",
+        "ok": true,
+        "grant": "workspace",
+        "sender": {
+          "id": "olnpjpcbiepkoenpjjkcdngiipkdjkkl",
+          "tab": 79515327,
+          "incognito": false,
+          "frameId": 5,
+          "documentId": "8007BE34493818A17D116A426D6A9784",
+          "documentLifecycle": "active",
+          "url": "chrome-extension://olnpjpcbiepkoenpjjkcdngiipkdjkkl/workspace.html"
+        }
+      },
+      {
+        "type": "HOST_DOCUMENT_RENEW",
+        "ok": true,
+        "sender": {
+          "id": "olnpjpcbiepkoenpjjkcdngiipkdjkkl",
+          "tab": 79515327,
+          "incognito": false,
+          "frameId": 0,
+          "documentId": "1C01BDA6F66686792F6FA90F4AD055FB",
+          "documentLifecycle": "active",
+          "url": "http://127.0.0.1:55136/"
+        }
+      },
+      {
+        "type": "HOST_UI_STATUS",
+        "ok": true,
+        "sender": {
+          "id": "olnpjpcbiepkoenpjjkcdngiipkdjkkl",
+          "tab": 79515327,
+          "incognito": false,
+          "frameId": 0,
+          "documentId": "1C01BDA6F66686792F6FA90F4AD055FB",
+          "documentLifecycle": "active",
+          "url": "http://127.0.0.1:55136/"
+        }
+      }
+    ],
+    "frameReads": [
+      {
+        "request": {
+          "tabId": 79515327,
+          "frameId": 0
+        },
+        "result": {
+          "documentId": "1C01BDA6F66686792F6FA90F4AD055FB",
+          "documentLifecycle": "active",
+          "errorOccurred": false,
+          "frameType": "outermost_frame",
+          "parentFrameId": -1,
+          "url": "http://127.0.0.1:55136/"
+        }
+      },
+      {
+        "request": {
+          "tabId": 79515327,
+          "frameId": 0
+        },
+        "result": {
+          "documentId": "1C01BDA6F66686792F6FA90F4AD055FB",
+          "documentLifecycle": "active",
+          "errorOccurred": false,
+          "frameType": "outermost_frame",
+          "parentFrameId": -1,
+          "url": "http://127.0.0.1:55136/"
+        }
+      },
+      {
+        "request": {
+          "tabId": 79515327,
+          "frameId": 0
+        },
+        "result": {
+          "documentId": "1C01BDA6F66686792F6FA90F4AD055FB",
+          "documentLifecycle": "active",
+          "errorOccurred": false,
+          "frameType": "outermost_frame",
+          "parentFrameId": -1,
+          "url": "http://127.0.0.1:55136/"
+        }
+      },
+      {
+        "request": {
+          "tabId": 79515327,
+          "frameId": 0
+        },
+        "result": {
+          "documentId": "1C01BDA6F66686792F6FA90F4AD055FB",
+          "documentLifecycle": "active",
+          "errorOccurred": false,
+          "frameType": "outermost_frame",
+          "parentFrameId": -1,
+          "url": "http://127.0.0.1:55136/"
+        }
+      },
+      {
+        "request": {
+          "tabId": 79515327,
+          "frameId": 0
+        },
+        "result": {
+          "documentId": "1C01BDA6F66686792F6FA90F4AD055FB",
+          "documentLifecycle": "active",
+          "errorOccurred": false,
+          "frameType": "outermost_frame",
+          "parentFrameId": -1,
+          "url": "http://127.0.0.1:55136/"
+        }
+      },
+      {
+        "request": {
+          "tabId": 79515327,
+          "frameId": 0
+        },
+        "result": {
+          "documentId": "1C01BDA6F66686792F6FA90F4AD055FB",
+          "documentLifecycle": "active",
+          "errorOccurred": false,
+          "frameType": "outermost_frame",
+          "parentFrameId": -1,
+          "url": "http://127.0.0.1:55136/"
+        }
+      },
+      {
+        "request": {
+          "tabId": 79515327,
+          "frameId": 0
+        },
+        "result": {
+          "documentId": "1C01BDA6F66686792F6FA90F4AD055FB",
+          "documentLifecycle": "active",
+          "errorOccurred": false,
+          "frameType": "outermost_frame",
+          "parentFrameId": -1,
+          "url": "http://127.0.0.1:55136/"
+        }
+      },
+      {
+        "request": {
+          "tabId": 79515327,
+          "frameId": 0
+        },
+        "result": {
+          "documentId": "1C01BDA6F66686792F6FA90F4AD055FB",
+          "documentLifecycle": "active",
+          "errorOccurred": false,
+          "frameType": "outermost_frame",
+          "parentFrameId": -1,
+          "url": "http://127.0.0.1:55136/"
+        }
+      },
+      {
+        "request": {
+          "tabId": 79515327,
+          "frameId": 0
+        },
+        "result": {
+          "documentId": "1C01BDA6F66686792F6FA90F4AD055FB",
+          "documentLifecycle": "active",
+          "errorOccurred": false,
+          "frameType": "outermost_frame",
+          "parentFrameId": -1,
+          "url": "http://127.0.0.1:55136/"
+        }
+      },
+      {
+        "request": {
+          "tabId": 79515327,
+          "frameId": 0
+        },
+        "result": {
+          "documentId": "1C01BDA6F66686792F6FA90F4AD055FB",
+          "documentLifecycle": "active",
+          "errorOccurred": false,
+          "frameType": "outermost_frame",
+          "parentFrameId": -1,
+          "url": "http://127.0.0.1:55136/"
+        }
+      },
+      {
+        "request": {
+          "tabId": 79515327,
+          "frameId": 0
+        },
+        "result": {
+          "documentId": "1C01BDA6F66686792F6FA90F4AD055FB",
+          "documentLifecycle": "active",
+          "errorOccurred": false,
+          "frameType": "outermost_frame",
+          "parentFrameId": -1,
+          "url": "http://127.0.0.1:55136/"
+        }
+      },
+      {
+        "request": {
+          "tabId": 79515327,
+          "frameId": 0
+        },
+        "result": {
+          "documentId": "1C01BDA6F66686792F6FA90F4AD055FB",
+          "documentLifecycle": "active",
+          "errorOccurred": false,
+          "frameType": "outermost_frame",
+          "parentFrameId": -1,
+          "url": "http://127.0.0.1:55136/"
+        }
+      },
+      {
+        "request": {
+          "tabId": 79515327,
+          "frameId": 0
+        },
+        "result": {
+          "documentId": "1C01BDA6F66686792F6FA90F4AD055FB",
+          "documentLifecycle": "active",
+          "errorOccurred": false,
+          "frameType": "outermost_frame",
+          "parentFrameId": -1,
+          "url": "http://127.0.0.1:55136/"
+        }
+      },
+      {
+        "request": {
+          "tabId": 79515327,
+          "frameId": 0
+        },
+        "result": {
+          "documentId": "1C01BDA6F66686792F6FA90F4AD055FB",
+          "documentLifecycle": "active",
+          "errorOccurred": false,
+          "frameType": "outermost_frame",
+          "parentFrameId": -1,
+          "url": "http://127.0.0.1:55136/"
+        }
+      },
+      {
+        "request": {
+          "tabId": 79515327,
+          "frameId": 0
+        },
+        "result": {
+          "documentId": "1C01BDA6F66686792F6FA90F4AD055FB",
+          "documentLifecycle": "active",
+          "errorOccurred": false,
+          "frameType": "outermost_frame",
+          "parentFrameId": -1,
+          "url": "http://127.0.0.1:55136/"
+        }
+      },
+      {
+        "request": {
+          "tabId": 79515327,
+          "frameId": 0
+        },
+        "result": {
+          "documentId": "1C01BDA6F66686792F6FA90F4AD055FB",
+          "documentLifecycle": "active",
+          "errorOccurred": false,
+          "frameType": "outermost_frame",
+          "parentFrameId": -1,
+          "url": "http://127.0.0.1:55136/"
+        }
+      },
+      {
+        "request": {
+          "tabId": 79515327,
+          "frameId": 0
+        },
+        "result": {
+          "documentId": "1C01BDA6F66686792F6FA90F4AD055FB",
+          "documentLifecycle": "active",
+          "errorOccurred": false,
+          "frameType": "outermost_frame",
+          "parentFrameId": -1,
+          "url": "http://127.0.0.1:55136/"
+        }
+      },
+      {
+        "request": {
+          "tabId": 79515327,
+          "frameId": 0
+        },
+        "result": {
+          "documentId": "1C01BDA6F66686792F6FA90F4AD055FB",
+          "documentLifecycle": "active",
+          "errorOccurred": false,
+          "frameType": "outermost_frame",
+          "parentFrameId": -1,
+          "url": "http://127.0.0.1:55136/"
+        }
+      },
+      {
+        "request": {
+          "tabId": 79515327,
+          "frameId": 0
+        },
+        "result": {
+          "documentId": "1C01BDA6F66686792F6FA90F4AD055FB",
+          "documentLifecycle": "active",
+          "errorOccurred": false,
+          "frameType": "outermost_frame",
+          "parentFrameId": -1,
+          "url": "http://127.0.0.1:55136/"
+        }
+      },
+      {
+        "request": {
+          "tabId": 79515327,
+          "frameId": 0
+        },
+        "result": {
+          "documentId": "1C01BDA6F66686792F6FA90F4AD055FB",
+          "documentLifecycle": "active",
+          "errorOccurred": false,
+          "frameType": "outermost_frame",
+          "parentFrameId": -1,
+          "url": "http://127.0.0.1:55136/"
+        }
+      },
+      {
+        "request": {
+          "tabId": 79515327,
+          "frameId": 0
+        },
+        "result": {
+          "documentId": "1C01BDA6F66686792F6FA90F4AD055FB",
+          "documentLifecycle": "active",
+          "errorOccurred": false,
+          "frameType": "outermost_frame",
+          "parentFrameId": -1,
+          "url": "http://127.0.0.1:55136/"
+        }
+      },
+      {
+        "request": {
+          "tabId": 79515327,
+          "frameId": 0
+        },
+        "result": {
+          "documentId": "1C01BDA6F66686792F6FA90F4AD055FB",
+          "documentLifecycle": "active",
+          "errorOccurred": false,
+          "frameType": "outermost_frame",
+          "parentFrameId": -1,
+          "url": "http://127.0.0.1:55136/"
+        }
+      },
+      {
+        "request": {
+          "tabId": 79515327,
+          "frameId": 0
+        },
+        "result": {
+          "documentId": "1C01BDA6F66686792F6FA90F4AD055FB",
+          "documentLifecycle": "active",
+          "errorOccurred": false,
+          "frameType": "outermost_frame",
+          "parentFrameId": -1,
+          "url": "http://127.0.0.1:55136/"
+        }
+      },
+      {
+        "request": {
+          "tabId": 79515327,
+          "frameId": 0
+        },
+        "result": {
+          "documentId": "1C01BDA6F66686792F6FA90F4AD055FB",
+          "documentLifecycle": "active",
+          "errorOccurred": false,
+          "frameType": "outermost_frame",
+          "parentFrameId": -1,
+          "url": "http://127.0.0.1:55136/"
+        }
+      },
+      {
+        "request": {
+          "tabId": 79515327,
+          "frameId": 0
+        },
+        "result": {
+          "documentId": "1C01BDA6F66686792F6FA90F4AD055FB",
+          "documentLifecycle": "active",
+          "errorOccurred": false,
+          "frameType": "outermost_frame",
+          "parentFrameId": -1,
+          "url": "http://127.0.0.1:55136/"
+        }
+      },
+      {
+        "request": {
+          "tabId": 79515327,
+          "frameId": 0
+        },
+        "result": {
+          "documentId": "1C01BDA6F66686792F6FA90F4AD055FB",
+          "documentLifecycle": "active",
+          "errorOccurred": false,
+          "frameType": "outermost_frame",
+          "parentFrameId": -1,
+          "url": "http://127.0.0.1:55136/"
+        }
+      },
+      {
+        "request": {
+          "tabId": 79515327,
+          "frameId": 0
+        },
+        "result": {
+          "documentId": "1C01BDA6F66686792F6FA90F4AD055FB",
+          "documentLifecycle": "active",
+          "errorOccurred": false,
+          "frameType": "outermost_frame",
+          "parentFrameId": -1,
+          "url": "http://127.0.0.1:55136/"
+        }
+      },
+      {
+        "request": {
+          "tabId": 79515327,
+          "frameId": 0
+        },
+        "result": {
+          "documentId": "1C01BDA6F66686792F6FA90F4AD055FB",
+          "documentLifecycle": "active",
+          "errorOccurred": false,
+          "frameType": "outermost_frame",
+          "parentFrameId": -1,
+          "url": "http://127.0.0.1:55136/"
+        }
+      },
+      {
+        "request": {
+          "tabId": 79515327,
+          "frameId": 0
+        },
+        "result": {
+          "documentId": "1C01BDA6F66686792F6FA90F4AD055FB",
+          "documentLifecycle": "active",
+          "errorOccurred": false,
+          "frameType": "outermost_frame",
+          "parentFrameId": -1,
+          "url": "http://127.0.0.1:55136/"
+        }
+      },
+      {
+        "request": {
+          "tabId": 79515327,
+          "frameId": 0
+        },
+        "result": {
+          "documentId": "1C01BDA6F66686792F6FA90F4AD055FB",
+          "documentLifecycle": "active",
+          "errorOccurred": false,
+          "frameType": "outermost_frame",
+          "parentFrameId": -1,
+          "url": "http://127.0.0.1:55136/"
+        }
+      },
+      {
+        "request": {
+          "tabId": 79515327,
+          "frameId": 0
+        },
+        "result": {
+          "documentId": "1C01BDA6F66686792F6FA90F4AD055FB",
+          "documentLifecycle": "active",
+          "errorOccurred": false,
+          "frameType": "outermost_frame",
+          "parentFrameId": -1,
+          "url": "http://127.0.0.1:55136/"
+        }
+      },
+      {
+        "request": {
+          "tabId": 79515327,
+          "frameId": 0
+        },
+        "result": {
+          "documentId": "1C01BDA6F66686792F6FA90F4AD055FB",
+          "documentLifecycle": "active",
+          "errorOccurred": false,
+          "frameType": "outermost_frame",
+          "parentFrameId": -1,
+          "url": "http://127.0.0.1:55136/"
+        }
+      },
+      {
+        "request": {
+          "tabId": 79515327,
+          "frameId": 0
+        },
+        "result": {
+          "documentId": "1C01BDA6F66686792F6FA90F4AD055FB",
+          "documentLifecycle": "active",
+          "errorOccurred": false,
+          "frameType": "outermost_frame",
+          "parentFrameId": -1,
+          "url": "http://127.0.0.1:55136/"
+        }
+      }
+    ],
+    "extensionContexts": [
+      {
+        "contextId": "3c06a755-b57b-45cf-b980-2475777a352a",
+        "contextType": "BACKGROUND",
+        "frameId": -1,
+        "incognito": false,
+        "tabId": -1,
+        "windowId": -1
+      },
+      {
+        "contextId": "dc68278f-6d14-4016-b9b0-b0d7d18c8372",
+        "contextType": "TAB",
+        "documentId": "36965B3E1C89B60CAF3532D793607004",
+        "documentOrigin": "chrome-extension://olnpjpcbiepkoenpjjkcdngiipkdjkkl",
+        "documentUrl": "chrome-extension://olnpjpcbiepkoenpjjkcdngiipkdjkkl/sidebar.html",
+        "frameId": 6,
+        "incognito": false,
+        "tabId": 79515327,
+        "windowId": 79515325
+      },
+      {
+        "contextId": "db1465c7-c51f-4cba-bc5c-a1516bb69bae",
+        "contextType": "TAB",
+        "documentId": "8007BE34493818A17D116A426D6A9784",
+        "documentOrigin": "chrome-extension://olnpjpcbiepkoenpjjkcdngiipkdjkkl",
+        "documentUrl": "chrome-extension://olnpjpcbiepkoenpjjkcdngiipkdjkkl/workspace.html",
+        "frameId": 5,
+        "incognito": false,
+        "tabId": 79515327,
+        "windowId": 79515325
+      }
+    ],
+    "frames": [
+      {
+        "documentId": "1C01BDA6F66686792F6FA90F4AD055FB",
+        "documentLifecycle": "active",
+        "errorOccurred": false,
+        "frameId": 0,
+        "frameType": "outermost_frame",
+        "parentFrameId": -1,
+        "processId": 8,
+        "url": "http://127.0.0.1:55136/"
+      }
+    ]
+  },
+  "pageState": {
+    "uiProbe": "mounted"
+  },
+  "sourceChangedDuringRun": false
+}

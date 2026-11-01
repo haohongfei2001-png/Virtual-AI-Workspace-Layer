@@ -1,0 +1,66 @@
+{
+  "evidence": "S_REAL_OLD_HOST_TO_CURRENT_HOST_SAME_EXTENSION_ID",
+  "compatibility": "OLD_HOST_ASSETS_ONLY_NOT_SCHEMA_2_MIGRATION",
+  "realChatGPT": "NOT_RUN",
+  "release": "NOT_RELEASE_READY",
+  "steps": [
+    {
+      "name": "archived-Host-real-backup-UI-preview-and-human-asset-import",
+      "status": "PASS",
+      "assets": {
+        "database": "vaiwl-b1-v1",
+        "version": 3,
+        "assetHash": "5a896a71e82b1986c7c8c982cdd19fd55bfb3ee2f2aaf4ebbffca08b693d70a5",
+        "identities": 1,
+        "snippets": 1,
+        "workspaces": 1,
+        "placements": 1,
+        "workingSet": 1,
+        "humanRefs": 1
+      }
+    }
+  ],
+  "limitations": [
+    "Historical Host already uses schema 3; this route does not prove schema-2 migration",
+    "Synthetic Pro schema compatibility is a separate evidence route"
+  ],
+  "sourceCommit": "7b0e467c36541670b7f61e749e2370e476de1d99",
+  "runnerFixtureHashes": {
+    "historical-host-upgrade.mjs": "ffc6b08324a30663a625273dc362eaa1130f45853e9ad232357f77ce1937c049",
+    "historical-package.mjs": "2dbd70e9ff7e759c0d3c6358bc553296b8d86581ff121656ca3b89a2719c9262",
+    "native-visibility-browser.mjs": "9661985c6ee149033b9653957e1e45d89b45feed6d67b1f8346838d187a9830a",
+    "isolated-browser-cleanup.mjs": "c3d4a053d485efbd86a487ac1e4257849120b30939e63be346ceceaaea2fafb0",
+    "historical-network-guard.mjs": "e38719134f6087c3efbc66044922967262a6c2e585c11a7ee69b5016b22dc416",
+    "fixtures/j4-assets.mjs": "12e97fd7b3b9819039a28b404d071608953ce6bcbb91b4047c7ba8495c029bdd",
+    "fixtures/server.mjs": "dbc6d2e56fd3e2f0cf7d8867389c35c258d9b7937a449fddf5197f6380fde3d5"
+  },
+  "oldSource": {
+    "commit": "a8addaa9e014f22704a459d6ee126e8f80ead571",
+    "archiveHash": "2e62167a777672ae074b18dd95144d76f0a9d2a3823167fbba76a943174b8483",
+    "paths": [
+      "src",
+      "simulator",
+      "extension"
+    ]
+  },
+  "oldBuild": {
+    "archive": "e313dbd6f4326cf761a3794bd0570ee9e69a8924c014d5b664ee2f369cc596d2",
+    "manifest": "6e985c67e5ed22d888161c27bc5c3f992fc42cf664f7bcc3d0b1431550b28bbb"
+  },
+  "currentBuild": {
+    "archive": "1454e1d7b5f662c38f0b2a27c71352a820522ae32184e5b0c3b3db43bfb5e58b",
+    "manifest": "2cf0edf41cb0e2d9aab42505f5acd19737ea1212bc7fd7c23f2004292100ff69"
+  },
+  "browserPrecondition": {
+    "transport": "isolated-loopback-CDP",
+    "noDefaults": true,
+    "headed": true,
+    "focusEmulation": "NOT_ENABLED_BY_PLAYWRIGHT",
+    "source": "Playwright connectOverCDP noDefaults public option; native Chromium capturer is session-owned"
+  },
+  "extensionId": "nhnbiponadilebakifgfangkpmjhpbmp",
+  "updatedSlotHash": "a298d59a96e253688a2c9aa53c68c7dfed2ca16d737d48356dea5e72d8cee4d6",
+  "status": "FAIL",
+  "error": "page.waitForFunction: Timeout 20000ms exceeded.\n    at openCurrent (/home/runner/work/Virtual-AI-Workspace-Layer/Virtual-AI-Workspace-Layer/tests/host/historical-host-upgrade.mjs:10:114)\n    at async file:///home/runner/work/Virtual-AI-Workspace-Layer/Virtual-AI-Workspace-Layer/tests/host/historical-host-upgrade.mjs:16:305"
+}
+

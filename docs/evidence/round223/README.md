@@ -1,0 +1,19 @@
+# Round223: eighteenth-run results and bounded diagnostic candidates
+
+Source: ce31f54ca3fd54d9a82c1a4356e0a6bf140c2399. [CI38689005073](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/actions/runs/38689005073) completed FAIL. Reports are exact isolated native-application fixture results, never private ChatGPT data.
+
+- Full Node4521/4521, zero failures/skips; twelve L mutations pass. All prior journey scopes including C2 warm/cold, J1 nine-step PARTIAL, J2 eight, J3 fifteen, firstsend and immediate failed/cancelled retries pass.
+- New SYS02 thirteen cases pass on actual Chrome156 extension-origin native IndexedDB. Independent review matches all74 reported source hashes to ce31f54 (73 closure modules plus runner). This establishes narrow D test-only composition evidence for real pending count/byte/record capacity, GC/retention/corrupt records, preservation and actual transaction abort after successful put. It does not establish physical disk exhaustion, production Host S or whole-process crash.
+- New UI10 MODERN ordinary and PARTIAL ordinary/long-title contexts pass their layout subcontracts:24 unique cells. Restored-height observations are repeats, not new cells. LEGACY and MODERN long-title fail at420px after a first exact title match resolves hidden. Successful measurements in failed contexts remain observed but unaccepted. Complete v2.7/AX/text readability/profile matrix is not established.
+- J4 fails at the original-history baseline before any native send. Native current body is visible; no extension workspace frames or authenticated worker detail request appear during15s. Budget remains3/12, so exhaustion is not this failure. The actual route/receipt/handshake cause is unproven. Direct debugger/mixed interruption is not reached; earlier real joint-complete evidence is preserved separately.
+- Independent joint IDB ten cases and designated drop-pending mutation, four narrow browser/IDB guard mutations, historical Host/Pro compatibility and visibility-mechanism experiment retain scoped passes.
+
+## Next candidates
+
+- UI title observation filters actual workspace title nodes by browser visibility before selecting the first match, preserving exact text,15s and positive dimensions. It records every exact title candidate and ancestor geometry on failure. This does not claim a product CSS repair or full readability.
+- Scale preparation separates native ingestion from measured actual Host local search/pagination. Full stable read-only exact-ID audits must succeed before and after timing; revision change invalidates samples. An independent ID/title/query oracle requires24 distinct original matches on each of two nonoverlapping pages. Integrated25 lightweight tests pass. No browser scale/load was run; single samples never become p95 or SYS04 acceptance.
+
+Draft / NOT_RELEASE_READY. All81, full UI10/SYS04/SYS05, continuous J4 mixed interruption and G/U remain open. No acceptance threshold changed.
+
+- Separate instrumented J4 baseline mode repeats the same A/B/asset-import/native-current-C preconditions, then exits before any send once history baseline is actually observed. On original15s failure it retains that failure and bounded native navigation/request/receipt/handshake traces. Default formal J4 remains uninstrumented and complete. Instrumented copy hashes are independently checked; source/close/report failures remain failures. Additional trace validation and integrated20/20 targeted pass. The explicit trace setup is inside the cleanup boundary, including before browser startup. This diagnostic mode cannot certify the original package or mixed interruption.
+- Workflow reports now receive the trusted event SHA through FREE_SOURCE_COMMIT; default checkout and the three mandatory jobs remain unchanged. No commit-message or path-based full-suite skipping was introduced.

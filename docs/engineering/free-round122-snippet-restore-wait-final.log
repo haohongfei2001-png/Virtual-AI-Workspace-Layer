@@ -1,0 +1,13 @@
+✔ native reading reveals first and waits for acknowledged body before one scroll (2.361792ms)
+✔ unready proof expires within six seconds without scrolling or reopening (2.582958ms)
+✔ pending proof cannot scroll after stop (0.235125ms)
+✔ pending proof cannot scroll after route (0.16025ms)
+✔ failed native restore is attempted only once even while command remains live (1.012625ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 48.548917

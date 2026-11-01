@@ -1,0 +1,14 @@
+{
+  "evidence": "REAL_BROWSER_SYNTHETIC_SAFE_UPDATE",
+  "physicalIME": "NOT_RUN",
+  "browser": "155.0.8059.40",
+  "checks": [
+    "pointer-target-survives-until-click-latest-update-flushes",
+    "composition-preserves-node-query-and-focus-until-end",
+    "drag-end-flushes-latest-update",
+    "pointer-cancel-does-not-freeze-pending-update",
+    "only-user-workspace-and-history-entry-trigger-calibration",
+    "invalidation-discards-pending-old-scope"
+  ],
+  "fail": 0
+}

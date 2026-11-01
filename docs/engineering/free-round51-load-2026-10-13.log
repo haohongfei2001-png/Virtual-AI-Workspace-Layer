@@ -1,0 +1,14 @@
+✔ bounded shared mutation adapter preserves other Pro assets (196.111458ms)
+✔ bounded shared mutation adapter rolls back all staged writes (121.373208ms)
+✔ shared mutation resolves global event locator before loading bounded references (74.038709ms)
+✔ native shared anchors with directory root preserve Pro assets (130.692583ms)
+✔ native shared anchors with directory root roll back on caller failure (118.77025ms)
+✔ known anchor reconciliation reads shared directory and registers a missing B1 identity (132.266958ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 841.844292

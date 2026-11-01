@@ -1,0 +1,19 @@
+✔ MOCK_IDB actual host binding and two UI grants share one native read preparation (24.984417ms)
+✔ MOCK_IDB UI view denies role/scope spoofing, parent sender and cross-frame grants (4.016375ms)
+✔ MOCK_IDB scope invalidation fences late shared page result and future UI publications (4.039292ms)
+✔ MOCK_IDB cached UI view recalibrates at native source expiry under a still-current new scope grant (6.780584ms)
+✔ MOCK_IDB trusted native plan callback receives only current bounded identities and document binding (4.091458ms)
+✔ MOCK_IDB malformed native plans different-url cannot publish UI payload (3.764625ms)
+✔ MOCK_IDB malformed native plans different-id cannot publish UI payload (4.426375ms)
+✔ MOCK_IDB malformed native plans duplicate cannot publish UI payload (2.665542ms)
+✔ MOCK_IDB malformed native plans oversize cannot publish UI payload (3.068791ms)
+✔ MOCK_IDB malformed native plans unsafe-mode cannot publish UI payload (3.103958ms)
+✔ MOCK_IDB invalidation while trusted native plans await prevents late UI publication (2.464041ms)
+ℹ tests 11
+ℹ suites 0
+ℹ pass 11
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 115.0165

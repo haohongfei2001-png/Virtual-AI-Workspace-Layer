@@ -1,0 +1,47 @@
+{
+  "baseCommit": "fb2849ca5ae51be965a1f66a61bebaf1340fe7dd",
+  "classification": "OFFLINE_IMPLEMENTATION_PARTIAL_HOST_NOT_FULL_FREE",
+  "nodeCommand": "node --test $(rg --files tests | rg '\\.test\\.mjs$')",
+  "node": {
+    "pass": 1469,
+    "fail": 0,
+    "skip": 0
+  },
+  "frameRenderer": {
+    "tests": 1,
+    "DOMAssertions": 21
+  },
+  "hostMV3": {
+    "pass": 2,
+    "privateChatGPT": "NOT_RUN",
+    "uiGrantRendering": "NOT_TESTED"
+  },
+  "sources": {
+    "src/b1/host-document-handshake.mjs": "0e0ebf0b45b997bb2bf09e82c289d1c987de8c064cf756d955f86cdf8f4cae4e",
+    "src/data/native-facts.mjs": "2e3d25c30cec2320962697bf6342e298f4408bdd266fea400f19610e039b6e4c",
+    "src/data/native-repository.mjs": "b1e98b31a3fe3054b1feaf0e1702021a7cb65f5de3734c8e2ce0625a4238a63b",
+    "src/host/chatgpt-adapter.mjs": "44fb724b6ad0bcdf04d5e10cd27403c6d595f618c9bd4cdcd2aa60a1eef0181b",
+    "src/host/contract.mjs": "35129aacf2a7e1fe1812c846379563d60ad74a66b689ad41bc38d76484a97716",
+    "src/host/native-actions.mjs": "39d744d334a597d7310aa4e95b1e04ff2f3358612075d26cd9d73661d8cc5502",
+    "src/host/surface-batch.mjs": "4733a8cecdc3f4664c77da81d12441c9f2bd7cf0c16e55ec93eb94076faa4e5d",
+    "src/host/surface-controller.mjs": "c4e29d3de792cc7546fca070664eecdab4cd1989140df38bff57abb0a6526a9c",
+    "src/host/surface-discovery.mjs": "d6e040237f829679a18113ab0f0690f866f0c583f9da5057dac74fc1c27a43eb",
+    "src/host/ui-grants.mjs": "6b3caf299ef56ab2a452366e0269a280308fc1c9c6feebf669431a1b0813d5ad",
+    "src/host/url-policy.mjs": "fddfafcca2276161e6fd3c908ac896d0dab656fce6cf06aee64f1f442f7ac7e9",
+    "src/navigation/navigation.mjs": "c7d9cbcbff53bf6887146e49fac630bb5cae6f350c0a49437606c9bc2b9c2671",
+    "src/runtime/host-binding-service.mjs": "20c63d8db50233b48707bf5039325dc6f576e71fb0a700764e1a7278da168377",
+    "src/runtime/host-observation-owner.mjs": "12ef88f310262ab01ce12a88d9b6d3356a8b38f7d9c23915cc7af874282b07e1"
+  },
+  "excludedNextSlice": [
+    "src/runtime/host-ui-owner.mjs"
+  ],
+  "remaining": [
+    "real UiGrant/frame/controller transport integration",
+    "J1-J4 full journeys",
+    "message/send metadata and durable continuation",
+    "C1/C2 current context binding",
+    "cross-producer field conflicts and source revocation semantics",
+    "native creation and snippet iframe commands",
+    "G/U and release readiness"
+  ]
+}

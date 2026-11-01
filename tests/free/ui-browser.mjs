@@ -1,0 +1,51 @@
+import { chromium } from '../b1/tooling/node_modules/playwright/index.mjs';
+import { createServer } from '../../simulator/server.mjs';
+import assert from 'node:assert/strict';
+const server=createServer();await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));let browser;
+try{
+ browser=await chromium.launch({headless:true});const page=await browser.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
+ await page.goto(`http://127.0.0.1:${server.address().port}/hf/A/c/T0?mode=page`);
+ await page.waitForFunction(()=>globalThis.HFextension?.status().state==='ACTIVE');
+ await page.evaluate(()=>HFextension.showWorkspace());
+ await page.getByRole('heading',{name:'无项目聊天',exact:true}).last().waitFor();
+ assert.equal(await page.locator('[data-free-list="noProject"]').count()>0,true);
+ assert.equal(await page.getByRole('button',{name:'编辑主题',exact:true}).count(),0);
+ await page.getByRole('button',{name:'查找已知项目与聊天',exact:true}).click();
+ await page.getByRole('searchbox',{name:'已知聊天查找输入'}).fill('');
+ assert.equal(await page.locator('.search-results a[data-ref-id]').count()>0,true);
+ await page.evaluate(()=>HFextension.manage());await page.getByRole('dialog',{name:'工作空间设置'}).waitFor();
+ assert.equal(await page.getByRole('button',{name:'保存派生标题'}).count(),0);
+ await page.getByRole('combobox',{name:'工作空间时间范围'}).selectOption('14');
+ await page.getByRole('button',{name:'保存时间范围',exact:true}).click();
+ await page.waitForFunction(()=>document.querySelector('[data-vaiwl-owned="free-settings"] [role="status"]')?.textContent==='已完成。');
+ await page.getByRole('button',{name:'关闭设置',exact:true}).click();
+ // Native input survives view masking, theme/viewport changes and a lease renewal.
+ await page.evaluate(()=>HF.navigate('/hf/A/c/T0?mode=page'));await page.waitForFunction(()=>HFextension.status().state==='ACTIVE');
+ const composer=page.getByRole('textbox',{name:'消息输入',exact:true});await composer.fill('保留的合成草稿');await composer.press('End');
+ await page.evaluate(()=>HFextension.showWorkspace());await page.keyboard.press('Tab');
+ assert.equal(await page.evaluate(()=>[...document.querySelectorAll('[data-vaiwl-owned]')].some(n=>n.shadowRoot?.activeElement?.tagName==='BUTTON'||n.shadowRoot?.activeElement?.tagName==='A')),true);
+ await page.evaluate(()=>HF.control('variant','dark'));await page.setViewportSize({width:390,height:844});
+ await page.evaluate(()=>{document.documentElement.style.zoom='2';});
+ assert.equal(await page.getByRole('textbox',{name:'消息输入',exact:true}).inputValue(),'保留的合成草稿');
+ await page.evaluate(()=>{document.documentElement.style.zoom='';HF.control('variant','baseline');});await page.setViewportSize({width:1280,height:900});
+ await page.waitForTimeout(21000);assert.equal(await page.getByRole('textbox',{name:'消息输入',exact:true}).inputValue(),'保留的合成草稿');
+
+ const projectLink=page.locator('a[data-native-project-new]').first(),projectId=await projectLink.getAttribute('data-native-project-new');await projectLink.click();
+ assert.equal(await page.evaluate(()=>HF.getView().ref.projectId),projectId);assert.equal(await page.evaluate(()=>HF.getView().ref.temporary),true);
+ await page.waitForFunction(()=>HFextension.status().state==='ACTIVE');
+ await page.getByRole('textbox',{name:'消息输入',exact:true}).fill('新的合成项目聊天');await page.getByRole('button',{name:'发送消息',exact:true}).click();
+ assert.equal(await page.evaluate(()=>HF.getView().ref.temporary),false);assert.equal(await page.evaluate(()=>HF.getView().ref.projectId),projectId);
+ assert.equal(await page.evaluate(()=>location.pathname.includes('/c/new-')),true);
+ await page.waitForFunction(()=>[...document.querySelectorAll('[data-vaiwl-owned]')].some(n=>n.shadowRoot?.textContent.includes('新的合成项目聊天')),{},{timeout:1000}).catch(async e=>{console.log(await page.evaluate(()=>({status:HFextension.status(),html:document.documentElement.dataset,errors:HF.state.errors})));throw e;});
+ assert.equal(await page.evaluate(()=>HF.getView().messages.some(m=>m.role==='user'&&m.text==='新的合成项目聊天')),true);
+ await page.evaluate(()=>HFextension.refresh());await page.waitForFunction(()=>HFextension.status().state==='ACTIVE');
+ assert.equal(await page.locator('a[data-ref-id]').filter({hasText:'新的合成项目聊天'}).count()>0,true);assert.deepEqual(errors,[]);
+ await page.evaluate(()=>HF.navigate('/hf/A/new?mode=page'));await page.waitForFunction(()=>HFextension.status().state==='ACTIVE');
+ assert.equal(await page.evaluate(()=>HF.getView().ref.projectId),null);
+ await page.getByRole('textbox',{name:'消息输入',exact:true}).fill('新的合成无项目聊天');await page.getByRole('button',{name:'发送消息',exact:true}).click();
+ await page.waitForFunction(()=>[...document.querySelectorAll('[data-vaiwl-owned]')].some(n=>n.shadowRoot?.querySelector('[data-free-list="noProject"]')?.textContent.includes('新的合成无项目聊天')),{},{timeout:1000});
+ await page.evaluate(()=>HF.navigate('/hf/unknown/c/T0?mode=page'));await page.waitForFunction(()=>HFextension.status().state==='WAITING');
+ assert.equal(await page.evaluate(()=>[...document.querySelectorAll('[data-vaiwl-owned]')].some(n=>n.shadowRoot?.textContent.includes('新的合成'))),false);
+ assert.deepEqual(errors,[]);
+ console.log(JSON.stringify({evidence:'REAL_BROWSER_SYNTHETIC_UI',browser:browser.version(),checks:['native-free-navigation','no-project-reachable','native-only-search','shared-settings','manual-horizon','project-composer-before-send','user-send-saves','active-project-send-visible-under-1s','active-no-project-send-visible-under-1s','reconnect-restores-reference','keyboard-navigation','dark-narrow-css200-draft','lease21s-draft-preservation','unknown-scope-hides-private-roots'],fail:0}));
+}finally{await browser?.close();await new Promise(resolve=>server.close(resolve));}

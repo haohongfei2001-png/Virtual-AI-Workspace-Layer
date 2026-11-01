@@ -1,0 +1,225 @@
+{
+  "kind": "PUBLIC_CI_FACTS_NOT_RELEASE_ACCEPTANCE",
+  "sourceCommit": "2f9905efd0bdc1e674498fc612dae534ce8a5e44",
+  "run": 39074537965,
+  "url": "https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/actions/runs/39074537965",
+  "conclusion": "failure",
+  "jobs": {
+    "node-contracts": "success",
+    "offline-journeys": "failure",
+    "offline-j4-lifecycle": "success",
+    "offline-durability-compat": "failure"
+  },
+  "failedSteps": [
+    "Formal Host 10k single-project membership sample",
+    "C2 cold passive diagnostic copy (not package acceptance)"
+  ],
+  "formal10k": {
+    "status": "FAIL",
+    "phase": "visible-native-member-progress",
+    "error": "Error: host-scale-member-deadline\n    at Timeout.<anonymous> (file:///home/runner/work/Virtual-AI-Workspace-Layer/Virtual-AI-Workspace-Layer/tests/host/fixtures/host-scale-member-progress.mjs:59:320)\n    at listOnTimeout (node:internal/timers:685:17)\n    at process.processTimers (node:internal/timers:618:7)",
+    "originalDeadlineMs": 30000,
+    "requiredCompleteAudits": 2,
+    "progress": {
+      "stage": "audit",
+      "stageStarted": 35290.314539,
+      "inFlight": true,
+      "frameGeneration": 1,
+      "auditAttempts": 2,
+      "lastTail": {
+        "status": "OBSERVED_TAIL_ONLY",
+        "revision": 222,
+        "total": 10001,
+        "frameGeneration": 1
+      },
+      "audits": [
+        {
+          "status": "PASS_INDEX_AUDIT_ONLY",
+          "revision": 222,
+          "pages": 21,
+          "distinctRefs": 10000,
+          "projectMembership": 10000,
+          "unknownMembership": 0,
+          "missingRefs": 0,
+          "wrongProjectMembership": 0,
+          "elapsedMs": 3104.0269759999974,
+          "frameGeneration": 1
+        }
+      ],
+      "attempts": 182,
+      "stableRevision": 222,
+      "elapsedMs": 29066.946773,
+      "stageElapsedMs": 239.62729399999807
+    },
+    "postFailureInventory": {
+      "acceptance": "NOT_ESTABLISHED",
+      "evidence": "DIAGNOSTIC_ROOT_INVENTORY_ONLY",
+      "status": "POINT_IN_TIME_ROOT_SNAPSHOT",
+      "consistency": "SINGLE_READONLY_TRANSACTION_NOT_INTERVAL_STABILITY",
+      "format": "VERSION_INDEX",
+      "revision": 222,
+      "inventoryRefs": 10000,
+      "inventoryProjects": 1,
+      "sources": 1,
+      "revokedSources": 0,
+      "sourceRevisionMin": 221,
+      "sourceRevisionMax": 221,
+      "continuationWitness": false,
+      "queueState": "NOT_READ"
+    },
+    "inventoryIsAcceptance": false,
+    "sourceChangedDuringRun": false,
+    "fixtureChangedDuringRun": false,
+    "manifestChangedDuringRun": false,
+    "temporaryDirectoryRemoved": true
+  },
+  "failureOnlyDiagnostic": {
+    "acceptance": "NOT_ESTABLISHED",
+    "status": "FAIL",
+    "workerCPU": "CAPTURED",
+    "nativePageCPU": "CAPTURED",
+    "phaseSnapshot": "CAPTURED",
+    "cleanup": {
+      "status": "SUCCEEDED"
+    },
+    "instrumentedPackageUnchanged": true,
+    "progress": {
+      "stage": "audit",
+      "stageStarted": 35581.688685,
+      "inFlight": true,
+      "frameGeneration": 1,
+      "auditAttempts": 2,
+      "lastTail": {
+        "status": "OBSERVED_TAIL_ONLY",
+        "revision": 222,
+        "total": 10001,
+        "frameGeneration": 1
+      },
+      "audits": [
+        {
+          "status": "PASS_INDEX_AUDIT_ONLY",
+          "revision": 222,
+          "pages": 21,
+          "distinctRefs": 10000,
+          "projectMembership": 10000,
+          "unknownMembership": 0,
+          "missingRefs": 0,
+          "wrongProjectMembership": 0,
+          "elapsedMs": 2908.329525000001,
+          "frameGeneration": 1
+        }
+      ],
+      "attempts": 184,
+      "stableRevision": 222,
+      "elapsedMs": 28942.439662999997,
+      "stageElapsedMs": 964.5316579999999
+    },
+    "formalFailurePreserved": true
+  },
+  "j4": {
+    "status": "PARTIAL_J4_NOT_ACCEPTED",
+    "steps": 23,
+    "allStepsPass": true,
+    "peerAutomaticForegroundRecovery": "NOT_ESTABLISHED",
+    "peerRecoveryAuthority": "NEW_NATIVE_REQUEST_AND_FRESH_AUTHENTICATION",
+    "limitations": [
+      "SYS-01 default before-evidence continuous segment has scoped evidence; remaining combinations require separate actual records",
+      "SYS-03 old Host codec before/after-evidence roundtrips and standalone asset upgrades have scoped evidence; re-enable stability and remaining combinations remain open",
+      "Remaining supported-profile matrix and lifecycle surface combinations"
+    ]
+  },
+  "coldPassiveDiagnostic": {
+    "status": "FAIL",
+    "error": "page.waitForFunction: Timeout 20000ms exceeded.\n    at waitMounted (/home/runner/work/Virtual-AI-Workspace-Layer/Virtual-AI-Workspace-Layer/tests/host/context-package-mv3-browser.mjs:33:42)\n    at /home/runner/work/Virtual-AI-Workspace-Layer/Virtual-AI-Workspace-Layer/tests/host/context-package-mv3-browser.mjs:51:14",
+    "formalPackageAcceptance": false,
+    "nativeRequestStarts": [
+      {
+        "at": 1792275559314,
+        "event": "native-request",
+        "path": "/backend-api/conversation/33333333-3333-4333-8333-333333333333"
+      }
+    ],
+    "passiveTrace": [
+      {
+        "seq": 0,
+        "at": 1792275559343,
+        "stage": "listeners-registered"
+      },
+      {
+        "seq": 1,
+        "at": 1792275559416,
+        "stage": "incoming",
+        "type": "HOST_HELLO",
+        "documentId": "45359E4FD11D35159C207DE9475A8CCB"
+      },
+      {
+        "seq": 2,
+        "at": 1792275559419,
+        "stage": "incoming-result",
+        "type": "HOST_HELLO",
+        "state": null,
+        "reason": null,
+        "ok": true
+      },
+      {
+        "seq": 3,
+        "at": 1792275559420,
+        "stage": "incoming",
+        "type": "HOST_REFRESH",
+        "documentId": "45359E4FD11D35159C207DE9475A8CCB"
+      },
+      {
+        "seq": 4,
+        "at": 1792275559421,
+        "stage": "verify-enter",
+        "documentId": "45359E4FD11D35159C207DE9475A8CCB",
+        "hasReceipt": false,
+        "aborted": false
+      },
+      {
+        "seq": 5,
+        "at": 1792275559422,
+        "stage": "incoming-result",
+        "type": "HOST_REFRESH",
+        "state": "ambiguous",
+        "reason": "current-context-unproven",
+        "ok": true
+      }
+    ],
+    "workerAfterFailure": {
+      "kind": "POST_FAILURE_READ_ONLY_CLOSURES",
+      "functions": [
+        {
+          "documents": {
+            "size": 0,
+            "truncated": false,
+            "rows": []
+          },
+          "requests": {
+            "size": 0,
+            "truncated": false,
+            "rows": []
+          },
+          "closedRequests": {
+            "size": 0,
+            "truncated": false,
+            "rows": []
+          },
+          "active": true
+        }
+      ],
+      "truncated": false
+    },
+    "requestBeforeListenerMs": 29,
+    "interpretation": "The sole native GET preceded listener registration; no receipt was captured. HOST_REFRESH correctly refused current-context-unproven. This diagnostic failure is not erased by the separate uninstrumented cold step passing.",
+    "separateUninstrumentedColdStep": "PASS",
+    "separateUninstrumentedColdStartupMode": "COLD_IMMEDIATE_AFTER_LOAD_UNPACKED"
+  },
+  "publicJobLogSHA256": {
+    "durability": "ad12cdef834f123e116bc5750da8dfb395ea03157449c0f62773940d498e3676",
+    "j4": "be46fa06cea5568350fb76a7fa937f98cf91d89487c163d16007b2f337484007",
+    "journeys": "8693a1be7224659aabe02db7c1ea618691d01ef47e85045376f74021b9f8ca79"
+  },
+  "realChatGPT": "NOT_RUN",
+  "release": "NOT_RELEASE_READY"
+}

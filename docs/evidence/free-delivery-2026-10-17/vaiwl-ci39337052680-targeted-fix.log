@@ -1,0 +1,43 @@
+✔ one projection materializes all visible windows anew; primary selection overrides matching window only (1.345125ms)
+✔ invalid windows fail before member access; hidden-group windows never materialize hidden members (0.289125ms)
+✔ combined row windows retain original 64KiB rejection without title clipping (1.149083ms)
+✔ client first shrinks retained windows to paged five, then original bounded split while primary offsets stay fixed (3.014542ms)
+✔ resume windows trigger fresh VIEW; no navigation plan exists before response (0.774ms)
+✔ darwin uses system temp and its explicit browser default (1.479542ms)
+✔ linux uses system temp and its explicit browser default (0.079583ms)
+✔ explicit browser and output are preserved, including spaces and Windows paths (0.074542ms)
+✔ missing or empty explicit browser fails clearly (0.226625ms)
+✔ missing or empty explicit browser fails clearly (0.062209ms)
+✔ missing or empty explicit browser fails clearly (0.081542ms)
+✔ successful execution closes both resources and checks integrity before writing PASS (0.358958ms)
+✔ before-resources failure closes exactly the acquired resources and writes the original failure (0.256ms)
+✔ after-server failure closes exactly the acquired resources and writes the original failure (0.09775ms)
+✔ after-context failure closes exactly the acquired resources and writes the original failure (0.103959ms)
+✔ failure diagnostics do not replace the primary error or prevent cleanup (0.153083ms)
+✔ cleanup errors never skip later resources or integrity (original failure false) (0.157625ms)
+✔ cleanup errors never skip later resources or integrity (original failure true) (0.118416ms)
+✔ source-integrity exception is recorded without suppressing the other check or report (0.092458ms)
+✔ package-integrity exception is recorded without suppressing the other check or report (0.050125ms)
+✔ cleanup, integrity, and report-write errors remain visible with the original failure (0.165584ms)
+✔ a report-write failure after a successful journey is nonzero with a fallback diagnostic (0.063125ms)
+✔ six-case browser journey retains original assertions plus explicit return and focus checks (0.478083ms)
+✔ actual runner shell reports server-open and continues all acquired cleanup (0.623708ms)
+✔ actual runner shell reports guard-open and continues all acquired cleanup (0.447708ms)
+✔ actual runner shell reports guard-close and continues all acquired cleanup (0.326292ms)
+✔ actual runner shell reports mkdtemp and continues all acquired cleanup (0.113417ms)
+✔ actual runner shell reports package and continues all acquired cleanup (0.080666ms)
+✔ actual runner shell reports import and continues all acquired cleanup (0.108ms)
+✔ actual runner shell reports launch and continues all acquired cleanup (0.116459ms)
+✔ actual runner shell reports context-close and continues all acquired cleanup (0.135167ms)
+✔ actual runner shell reports server-close and continues all acquired cleanup (0.131708ms)
+✔ actual runner shell reports source-final and continues all acquired cleanup (0.227667ms)
+✔ actual runner shell reports manifest-final and continues all acquired cleanup (0.115458ms)
+✔ actual runner shell reports write and continues all acquired cleanup (0.116333ms)
+ℹ tests 35
+ℹ suites 0
+ℹ pass 35
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 62.655458

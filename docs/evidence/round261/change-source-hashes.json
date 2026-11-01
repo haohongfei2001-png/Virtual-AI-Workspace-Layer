@@ -1,0 +1,11 @@
+{
+  "baseCommit": "8fe97c936edd0df1a546a8f9a0d80c863830c4e8",
+  "sourceHashes": {
+    "src/host/chatgpt-adapter.mjs": "36cad3ce715511e489be19c7d514299b3737ec0834d82d97598b943cc63872fe",
+    "src/host/surface-discovery.mjs": "bb765bb4d84111cc7af0cedbbc22c5ab06b80878dc4b45e3894c312da3e2a06e",
+    "tests/host/surface-current-project-tail.test.mjs": "ae01b93d8f766b6ae908ff5e712a6e47006d3395afc2787f406d47ca96c1060f",
+    "tests/host/host-browser-bootstrap.test.mjs": "cf57a53cb96d76d4c544c7b413ddd6da0f88c4ea4af579732c90d1aa89f996f8",
+    "tests/host/surface-publication-key.test.mjs": "ebc288cf20526ab9451dba90bf1072dc1e6d59c404f4ed99dc8cb20c01c634a6",
+    "tests/host/experiments/keyboard-boundary/probe-browser.mjs": "65f6f7ab996b77913b7ea68d56cfe5761085849b874ff4a7df270b96b5bcd3a0"
+  }
+}

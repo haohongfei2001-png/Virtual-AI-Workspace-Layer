@@ -1,0 +1,17 @@
+{
+  "baselineHead": "c71d085cc3bb4845e233b4bf2e9ca2292ebaa493",
+  "evidence": "OFFLINE_ONLY_SYNTHETIC_ACK_FIXTURE_NOT_RELEASE_READY",
+  "sourceHashes": {
+    "src/runtime/host-binding-service.mjs": "a25d6acf8012ebe739e0c9acfd9e9552893b55bd2920f31b62fc21233f89c17a",
+    "src/runtime/host-continuation-owner.mjs": "efd6890006e519a3295ffe77679b897ffebe8c596e0a9fe99eeed1ea3f79ace9",
+    "src/runtime/host-worker-runtime.mjs": "0caa59a294e1ae9990e78b0c6808880bbdd5c08b7a2169e8588b534be92c3223",
+    "src/runtime/scope-authority.mjs": "0827852c683dbe6ae4b24ae8f2aa11b36295ab683e8b0aaf7a549a0081362777",
+    "tests/host/continuation-drain-idb-browser.mjs": "308e8805b2ac2ec9f37c257a026911cf13a678b5faf8a675c38200387085b105",
+    "tests/host/continuation-package-mv3-browser.mjs": "3fca0745cb9e2bc6b125bdd03a01cba8c423fe693bc17960c1fa765422303f2a",
+    "tests/host/host-continuation-binding.test.mjs": "3b3ede59470457bc8b050ceec08cdb9ff6fc04158f49d82aea1ec28df8c768d1",
+    "tests/host/host-continuation-owner-review.test.mjs": "48bddaf2b083d7b6d642014dc3df6870657fb64cf1283554380d72ffad1aa5cb",
+    "tests/host/host-continuation-owner.test.mjs": "bd3e9bc16d9dc87f8a361da275b4dac6e0d0ea1db0f47616281ce029a0c57fd7",
+    "tests/host/host-worker-runtime.test.mjs": "534475afe41e69472c8e2cff7f60bd01c8e69e2b0fc40d78da6f895f5b944d98",
+    "tests/host/scope-authority-stop-review.test.mjs": "af74b2939ffcdc481838c2e31264e6957c56270adde8548b4c2735c064bd2c3a"
+  }
+}

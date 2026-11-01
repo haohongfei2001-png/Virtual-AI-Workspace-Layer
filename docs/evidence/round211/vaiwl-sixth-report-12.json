@@ -1,0 +1,266 @@
+{
+  "status": "FAIL",
+  "evidence": "OFFLINE_PACKAGED_MV3",
+  "profile": "LOOPBACK_FIRST_SEND_C3_ONLY",
+  "realChatGPT": "NOT_RUN",
+  "releaseStatus": "NOT_RELEASE_READY",
+  "sourceCommit": null,
+  "sourceHashes": {
+    "extension/worker.mjs": "b1b7a863445266949f31eb174a6af6b89f1a5d012ce6b3a6cfa0d4312decd47b",
+    "src/runtime/host-worker-runtime.mjs": "3fedcc8cedf6ec068375c151d53d250d43eb745e3bd26cf6d8c73f60510f086f",
+    "src/runtime/shared-host-read-budget.mjs": "ee4e09ea97c144fbe30b029b41251ae8e313503bf706e3b4cd9966a24ae27196",
+    "src/data/hash.mjs": "aef21d1842cdc09b33fef973a9d29f15cb7c0c3f773a6a9d31726b83ffee7b21",
+    "src/runtime/browser-first-send.mjs": "609847013c92f984f0c75a4854b57ba2592eb878704d76a21d7c0364033929e6",
+    "src/b1/identity.mjs": "6d7ca616701826733d4936d8a139395ccf1a3111e025ec6b1035d78c1dc05e99",
+    "src/host/first-send-profile.mjs": "cf0d76b36fc980a890246d255448f8b29965b5ff12882689d6884e7336e436ff",
+    "src/runtime/browser-request-context.mjs": "e39a19d61e43beda4aefa66237d053f9f51f2d3988d215632fe040954db4280c",
+    "src/data/request-deadline.mjs": "cda2ebb4158c05eb911fbb84a1af092cf91f461e3a002bef4b4d23f5a70dfdf7",
+    "src/b1/scope-repository.mjs": "08d5c29e4be60c9b94ac6c7dce3e7fb1c5f2e553979c5a8f872a08d7c0c2bb91",
+    "src/data/schema.mjs": "4a15161852c0c0a9dcc3fab10a984c97929ed9157c33fbc97121711cb41740aa",
+    "src/data/free-policy-initialization.mjs": "e0a358b12ea9454f5ee657612e4c83c247ba895b082a362be9186f4b7e898a32",
+    "src/data/known-anchor-key.mjs": "e5d91c902e04440be924ef0506ff688bbbccd83150610f50199b518bcb298df3",
+    "src/data/repository.mjs": "7fcd49c80cb6ee3687dcc898895f387965d6e86cf847a158ff7ba1e2becdbe9e",
+    "src/data/free-time-policy.mjs": "8a75b5bdde8abf8ee07873ecf2aa45a19faccd030b9f03c738b56db6ba9ea17a",
+    "src/navigation/projection.mjs": "36334b5da4bd8e89718bf45b69723f4a657d46797c03c653298aaa3392399f24",
+    "src/data/activity-version-fence.mjs": "4ad8bee9665e2037b1be7eb1c871b024001adb25c8b630115e1a9c1ce97f36fe",
+    "src/data/native-repository.mjs": "cff865baf77bf282bc3825f1ad28d24986d968cb9b262033030682c6103b2256",
+    "src/data/free-evidence-partitions.mjs": "c1cdd10d9c6a6a142759fa7589b55a1607a4518260677abb3145ea00907a0ead",
+    "src/data/free-evidence.mjs": "01daed052b32f3f4b8341acd17af1d15eb52701812c71469e104a55212f308b1",
+    "src/data/observed-send-anchor.mjs": "f9dbb9278502a325c2263d4adeb99ea1c0159525d505728fe84fdee2d59980da",
+    "src/data/free-activity.mjs": "cfb0533b945a3fe577376878b0a25f0cce06ad6882d50ae0511cee283c39d7f5",
+    "src/data/state.mjs": "df0eaff00a7f050c37653f0e740b8fabe19bce571c5e37f4ce437d180984c62a",
+    "src/data/preferences.mjs": "1fb8395c5dfe23d64c91095b71a1c117b9762b3ccec68e262aaf73744b12c9d7",
+    "src/data/native-observation-continuation.mjs": "68477fcbe5e46d6b4218d5972c097a17a241e152f466b7b2ee6feaa2f6741d09",
+    "src/data/native-index-migration.mjs": "69b9275e7a58878aba4eba800eb324140ac84c0730d31dcb4f3a067d29dda6a2",
+    "src/data/native-version-index.mjs": "03089b0dddfa9f948087823af1e1ad7b43fc765a6631c40647e1e4b201cd7211",
+    "src/data/verified-record-cache.mjs": "9b7b3c13abdd37f2b6d4fad48b85707a9815538fd793cad537f8e87b8f08cde0",
+    "src/data/native-partitions.mjs": "4e295e042a2e5e3337dddfe1f5928d0f8e920aaab981a7e2f96fcd00ccff60a9",
+    "src/data/native-facts.mjs": "98dc17aedc9cf675fed8d720a181422956f79fd6784a4040327788a69e8c3c93",
+    "src/data/native-partition-audit.mjs": "3cd490dc6e38459d1562d8b2a8ec277911fe46782cb55840965fb045182f247f",
+    "src/data/audit-record-prefetch.mjs": "5af85b5c8a90e0a1d236fdec784b77ee970f7ea251e18b4be386a34e909d6b7c",
+    "src/data/native-index-writer.mjs": "b24b74a4470602b8196c5ee9559aaa8d5f53454c034b02aeb84b2652532a2808",
+    "src/data/native-index-reader.mjs": "f359a28b189dec9605dad356d3c19d474132fff2ab3a94425367997047c96c4a",
+    "src/data/free-projection.mjs": "fe87590005120f89ab41571fe9bf8ae566918748ab543e0ac172fb63274c8a48",
+    "src/data/free-evidence-repository.mjs": "4ae047f42c3428a04f122f4c3e62de3070e8839063af0312a66bb9fb918a9b9b",
+    "src/data/continuation-evidence-reader.mjs": "38f857ba8b1ba5a31cd12d45f8bdff7cb4b1ec9457f1a1fbffc933abef80ce28",
+    "src/data/evidence-directory-writer.mjs": "9ff0c941904e155c736a29e1d232e4fecf67d7995c5d4b6907a12b0f54102944",
+    "src/data/evidence-ref-directory.mjs": "8a89bf5b8535578881c823077554f177098044214a22fcfaf4be41e65498c867",
+    "src/data/evidence-directory-migration.mjs": "75328ab40b3327d9e9c60c44402d87ea3afc9bd385eeb3ba2f0a14036fc1b135",
+    "src/data/evidence-partition-audit.mjs": "3aadf876de681cc97ef5564119da7a2c691c45a472434d6e8f7080ae02d3aa79",
+    "src/data/evidence-directory-reader.mjs": "7ef90c7a37a82b2ce4562acb6afc56e4ae36d14543c776893664b79869fa895b",
+    "src/data/shared-directory-retention.mjs": "3bc27b2a71994f8f0857056c8309c47107251372f25c021368d3d06248e7cbc9",
+    "src/data/shared-directory-reader.mjs": "e4abac50e4cc282e16469861009a48893a10fd76652c208791834f50678c7672",
+    "src/data/shared-ref-directory.mjs": "9d1f099d7c5e5019ba023b0d84c57779e968a55ad6397d2ee20825e0d471fa44",
+    "src/data/partition-manifest.mjs": "566283402493ada28abc530354c343bc6c561e309d1e6802c981d62584a5e06a",
+    "src/data/cooperate.mjs": "ce494a33280143e1e2a2227a72413da792330311de12642a9a56b13704f2f3b4",
+    "src/data/shared-directory-migration.mjs": "0cd415f9a871b93613c3d9f3e301982cda2d1891dc847d983397f87dc2dcf0df",
+    "src/data/shared-directory-writer.mjs": "4a060d7467d6e55a9fb2d54cd3d7099bc976c2228cf010cc97db03976a8ff8dd",
+    "src/data/shared-partition-audit.mjs": "25d4b77561b36b150ce1524e27e184170f3c1ef493995251a88678908d31f6cf",
+    "src/data/partitioned.mjs": "7c519465670c6693ddd81d17e3d03cd1376bdf21c0e56837d73dd6741a63e792",
+    "src/data/shared-directory-recovery.mjs": "e04870124d9cd873a8af8b3643fd3d2fa5bdb33c69809e7bbf667bb2aa4727cf",
+    "src/data/backup.mjs": "bb0a8639d02e2169ae15e866a464f1531b7e80e40afd7c8a4b35e99d70928396",
+    "src/data/evidence.mjs": "f84032c9a2fc08455480652b60de6fb9394a70e82a7ace8729186ff097b26238",
+    "src/data/known-anchor-backfill.mjs": "dd58e613da9564668fc7963135dd98caccf3bd6930e532864e68d9ff6afd55ca",
+    "src/host/surface-discovery.mjs": "785dedcba626c4c9f338485fbbc3246eb43456a206969a82de669079b371c846",
+    "src/host/bounded-handle-registry.mjs": "ea3a48ed3760741b8d845b4116830cffc611571b6fd01bb9561bd8a63efdee5c",
+    "src/host/contract.mjs": "35129aacf2a7e1fe1812c846379563d60ad74a66b689ad41bc38d76484a97716",
+    "src/host/url-policy.mjs": "fddfafcca2276161e6fd3c908ac896d0dab656fce6cf06aee64f1f442f7ac7e9",
+    "src/runtime/host-binding-service.mjs": "68445f27bf82dc29fc3e1c17ace481b2fe414dfc3d91f039f990e5a02960a8d8",
+    "src/runtime/host-activity-source-admission.mjs": "a3fc35131107ee4b46ba27df801075aadb0c92eddb505153655d25877c9e7d36",
+    "src/runtime/send-ack-admission.mjs": "784141e34d18be3faa6e4cdc725b8f5442f6ea103d68dca00e82d09b64bcdccc",
+    "src/runtime/historical-send-profile.mjs": "b356d5fc7101080ba60910edc0175180924c548269816dd98900f2055195f4c9",
+    "src/host/conversation-metadata.mjs": "744afe2228882a5ebff1ffd8f1294ecd80697d63b44af60640e3ff4d3a63410e",
+    "src/runtime/host-historical-send-owner.mjs": "396799ec76a7160400edf5ac647325af10898a296b574d031598fdf540ac5777",
+    "src/runtime/host-first-send.mjs": "92e1e0ef59139010d19143f20bbab45469d1c9a639ddde0ea9c6158737b1f3f5",
+    "src/host/first-send-causality.mjs": "cd062c0b638408b387bb469f76dac3ea389acd9943bd42c1545ac8f0a08905e6",
+    "src/runtime/first-send-readback.mjs": "4052d39db39d2e5053bb4287cde87fd45ddcce844420099203950ea68a9691f6",
+    "src/runtime/host-current-navigation.mjs": "081db9b2c4d5988f670c0022b107279ffbaaf9cf257b5c07b76ddad01fa90ea7",
+    "src/host/current-navigation-plan.mjs": "c33cfd6af8e7523ac85fe812b59b2e24df109d4e03a3d507b9edab6b53d413ff",
+    "src/runtime/host-send-ack-owner.mjs": "15eb60c425aedb8f28410a2a6876addc41721b277f1beb4e745d998b5ddbb81b",
+    "src/runtime/host-candidate-service.mjs": "0ae6ff996262e89550bc49709e96647c5a738f33ca44409d465b39bf5c5af4fd",
+    "src/host/candidate-presentation.mjs": "d2a89c85c263de8f1572c8fe12e7fc1400bd4201fed7c3adb9aede868cd6cc4a",
+    "src/runtime/host-snippet-service.mjs": "65e7ef0bd4843fad28409495f0187fcf58daa7f5541735152d8836c80a2f0107",
+    "src/runtime/host-backup-service.mjs": "46f7b84d99f1618dd7ffc442c605ac7e72fc1e4999417ddbeb9592cc7df3f0b0",
+    "src/host/backup-transfer.mjs": "69b9c025e80993644ba8b37fdf77ccb9662d4050fae66e847b98b3663f59122a",
+    "src/runtime/host-send-candidates.mjs": "97430ee8cab0f05a6fc952f0db11676353901f2ecd82b32bc42095ce4ceffc9e",
+    "src/host/send-correlator.mjs": "2b495b44c5bf71c1108bc045b4d3562a72846eb7ac7a26de08db38735e3e7845",
+    "src/runtime/current-metadata-reader.mjs": "e507ae813e11cf8ac4d5d5970b94efa0ed0309e4504111188142bd5b6550fe0a",
+    "src/runtime/host-recovery-service.mjs": "ceaf407790fa8f56e7b03795e2f88c1d00465f6d71b4a10f276844c82fe47991",
+    "src/runtime/host-continuation-owner.mjs": "efd6890006e519a3295ffe77679b897ffebe8c596e0a9fe99eeed1ea3f79ace9",
+    "src/runtime/free-read-service.mjs": "d1fcbfd4bb8381ac6bb5c6409e4be9fb95d3f9df3071ce0507446eec04ef6d59",
+    "src/data/free-recovery-status.mjs": "21b871a60c1dfc2c7c67964f30f1852c33ee225a3d9df1271a518e7850e51bb4",
+    "src/runtime/host-view-service.mjs": "e84d5e09aeba61841a25243c55795663dd39817709853e608e8d4aa997091821",
+    "src/runtime/free-project-location.mjs": "45892565ac8896feb97872c59e3b504d0563b6e461c3da49d838c1359991e649",
+    "src/navigation/free-view.mjs": "ef0f8d6b798789539d16bdc3ae1d8cc66ccf5fc32f472b83ca2c475863946aaa",
+    "src/host/frame-resume-state.mjs": "fab35558b08d800722df1d0160b602af541ba3a0aa5a2f49a321a390e35b78c2",
+    "src/runtime/host-auto-time-policy.mjs": "90838ac5e0c95262911bb05289e13abe659662b7ea08255edfce14e7665516f3",
+    "src/runtime/free-working-set-projection.mjs": "b50b973005612c5d9d76cff9a4acd6d6fc23d006dea787d681c534385629ff4f",
+    "src/runtime/free-search-projection.mjs": "8ff12eb3674d3d5fe59371aabf4f82bcba3898ae4c3357493a15ba78a2cdfadf",
+    "src/navigation/search.mjs": "a93da18f3018a6267af7634986fdf7cfca4ed72eeaa6bb982340e9b0031c85d6",
+    "src/runtime/free-view-owner.mjs": "fda3b75a5fcca2d7095a220783563b847f966325ad75760a0fb40629d4860974",
+    "src/data/read-recovery-budget.mjs": "7c7948a740dcc37f9a2a6b25babe8c29cd2d84441299c1429c7e524402cc8c51",
+    "src/data/free-header-loader.mjs": "7817a581a7816d744b39ed8fa37d49eb86da065335e2f46ec190fa9fae18e7cb",
+    "src/data/free-page-loader.mjs": "c4339dfa76cfab89aa1f16b40129ee9f7c779233d5d03ff2134f551a8f9b0d65",
+    "src/data/free-replica.mjs": "11326c574b31ce1fc4c93bf712b812f0d3181f0254ec08ec22e8588836dd81dc",
+    "src/navigation/current-index.mjs": "23f13e4d9556715bb029ad6724b8a3731ba87251d6ddfd8e95939085ebfab21e",
+    "src/runtime/free-frame-projection.mjs": "2411de58fbdb97084f62476007efc2816e9a096854ded5c2bf1a55b3d36a537e",
+    "src/runtime/host-ui-owner.mjs": "f14e79068b0050606a9d39da7e44b3ba7d0b6b021e5ab12dbe9116afc1120c29",
+    "src/host/ui-grants.mjs": "38b648ca69fa08342e93393ea8e75fb660ec7fa3871611b3b8c8e110f92ba1a1",
+    "src/runtime/host-observation-owner.mjs": "69c6f3d41469baccba39252d13f480104ff6c97e39f289042977b76717d60593",
+    "src/host/send-intent-claim.mjs": "1e399b5af40affb0500f744f0c2c8aa5f0dc935cdbbd054dff1e483cda1f971f",
+    "src/host/current-body-claim.mjs": "4e26f9fe6c905d1dbf3a07995168c4fb5dea5e424bff238644da1c067ac03ef5",
+    "src/host/surface-batch.mjs": "4733a8cecdc3f4664c77da81d12441c9f2bd7cf0c16e55ec93eb94076faa4e5d",
+    "src/b1/document-binding-broker.mjs": "1f247c0fa2b3a05c5f2ae11dda39df04de9c79628b7753715bdafcadbc842aec",
+    "src/b1/host-document-handshake.mjs": "fafe938904e635da9964d222fe7dce8cc98cb5eda6501420af464c95b4a9cc6b",
+    "src/runtime/scope-authority.mjs": "57c1a96d78c2e4f299cab0e0cbc4d7f8a53f569d23ea8a07535cb31ebe7a4282",
+    "src/runtime/session-provider.mjs": "b3927b9f11dd704e03927e27dc91fdc4bd01b33d61f008426b73bbb908e2a07b",
+    "src/host/conversation-acceptance.mjs": "92fdfc486bd9614028aacc197b99a26b8ad3ae254e54a980a04b0a1e90153144",
+    "extension/config.mjs": "9f38c623f8ef08e684d9b1b71fd0a49c01b736a41e75efc997117370df175c41",
+    "extension/content-entry.mjs": "f68432d1d4fdd5f50fd1079256d4d5319ae6893fc3e2df44bfc48e36ae22f11f",
+    "src/host/context-association.mjs": "65144892c80bda792c4fd43331fd2bc41b867cbcbecc245dc093859d7c4b316f",
+    "src/host/current-body-discovery.mjs": "b9b702f8d70cf6e4403114ce743754fc78e414e609c06c857829b0ebdf5b8ed6",
+    "src/host/chatgpt-adapter.mjs": "a38e8c1dd3efc106e5b0d5af0d01a5d0513a6a70c7bc354d73518ef4f8d9cb33",
+    "src/host/surface-fragments.mjs": "1fbae58e227c4c3cfbefb991ee1f7c469a9225ac2360940b23b5cfc999555d74",
+    "src/host/native-input-risk.mjs": "9c78a4f1e984fb8e39078d5c8f0ba05427f76a8c6f113f805ce6501bfc1eeb18",
+    "src/host/native-send-intent.mjs": "77086ee9a1ab1e52ae1f6748860b72c15ebb638ad2e9bc742181b4bbfe4c034c",
+    "src/host/native-snippets.mjs": "2e4c039073450d55cda5c09c30b7ceebfc9f0141b30a85c7c7d19a1a1bb2a142",
+    "src/host/native-actions.mjs": "6a586f6724678d8b8095bf62e0adb6b739f5044224c2d3df5ee0a35a9733adfc",
+    "src/host/content-session.mjs": "60ada58e6c464d99baec19b30a1067b70bef552fc6588423735231cc36e30ce5",
+    "src/host/candidate-upgrade.mjs": "df0d6f58a87c794c262fc5fe3421fa08f7b90dfde2b4148caf19b312c031bd7b",
+    "src/host/content-candidates.mjs": "8fa2eb65858bea846f2b78303ae6a3d45e9df959e08cf93c75b2c6d04b3e68dc",
+    "src/host/candidate-page-window.mjs": "b8e741b7f46a9a0468255d56261b3c39d47e27d31d6ca87442ef32ff055d33cc",
+    "src/host/snippet-selection-session.mjs": "00f64ead49305f277ab739db7fc7162d907f2a3d2ec7b30f3e51d4c232d333d8",
+    "src/navigation/mount-surface.mjs": "8431ca3951f3dea8973d779952a318a6aa9f9da71b27232c176dc6046699ac06",
+    "src/host/surface-controller.mjs": "1104db3adea26b75a3f693fd21a0b351cc53d1b166a090a87e54f73060c1ae71",
+    "src/host/frame-appearance.mjs": "b393fb7be24fb0f0834d239d3ede9503f08cbef98f6fd3cc4b64312fac3b5972",
+    "src/host/frame-native-plans.mjs": "49c776435c03ba5188fb71ff89b11cb6f374bb5aad25532fea926f9674ae8d29",
+    "extension/workspace.mjs": "bf2eb026da73b65a5969d2c6d9a187e2350481c19b63f1a97efc93df6419fc64",
+    "src/host/free-frame-client.mjs": "c18836bd9200bbd86569e8dcf832c957c013a37ea064e3de975434e89e53ec55",
+    "src/host/frame-candidate-migration.mjs": "79fd202da8b69ae2abcbbd84659b233fa7992da91a2139fe6b9b57637e601ae8",
+    "src/host/free-frame-candidates.mjs": "348a302e812f2335b2df414d0d16f20b4d8e499a399475539e508e13814cdf10",
+    "src/host/free-frame-snippets.mjs": "1930b02a870c472271766da95204bc46ce943caa51c24d66c2b55cdadae328bf",
+    "src/host/free-frame-backup.mjs": "21aba465d423ebc4ee69d3b3774b7a5a4fbf37c2c8152ff1c8e2610f59b93aa6",
+    "src/host/free-frame-recovery.mjs": "dadb2d02f2603b504471d69072bcec36c0393cabd8c0201c63251e192383b187",
+    "src/navigation/free-recovery.mjs": "20352a2a9a37bfdac9d0889d87efaf80510bf7462df3fba1ceef1e4eac3c0442",
+    "src/host/ui-frame-client.mjs": "b573405b7260c4cd82f83faf88f3769f1a0e1cb6c66c7b7b99c7309ed4581103",
+    "src/navigation/navigation.mjs": "afa3b2a5aadd18dbfa562d3aaa1aec70ca75509bc32f7e0ab9968ecf17f448f2",
+    "src/navigation/icons.mjs": "14195d8a7a21a029278ff6f9bf0bb1add2d679b37666108d80cfadabe312d2fd",
+    "src/navigation/styles.mjs": "5aa096252346204621f00e06b914b5b3f75fa43928706bb8de101cad51d9fd90",
+    "extension/sidebar.mjs": "6151804205b8393cabfff2d4b2e3deaca3a36beac14d07198ca0295d3d4a3ce6",
+    "extension/frame-shell.css": "305e002e7610347fa491671aa45d852dbc8c4ec12096e4279a50a7e3e6c2847f",
+    "extension/workspace.html": "1d8d939f9deca25ae47afb1f5e0cdbffaceb85ea6e6be972edd0dea4bfed8f55",
+    "extension/sidebar.html": "95cfccf90ac7355305faeb6f9aa20f8477b8eb4ed05f8dab8db2580066222c3d"
+  },
+  "fixtureHashes": {
+    "fixtures/server.mjs": "c2d477df5a672f21dc7b89ac97b55f816f8b65c77d5b2feb7a4237a4ed0dd267",
+    "fixtures/first-send.mjs": "6edda936f2a514fe3eeac51b47e9162f33cf3c3934f5516132bbea1563619024",
+    "fixtures/native.mjs": "15f9e9137b8879508d6579df285dfafe4bc0e65edcba49d578ab930e19d10ade",
+    "fixtures/legacy.html": "58aa1363a3925748fd3766ea7fc8077fac3587e178157aa445865caab7d6a357",
+    "fixtures/native.css": "fdaa8a878f36f5c296745815c9128093d7989d4f1d11e3d88f28799134eb84c3"
+  },
+  "scriptHash": "2f434d8d50433e91244a8938459181ee62d591fdf71f132ca7b0975ebe6738f2",
+  "steps": [
+    "cold-home-no-activity",
+    {
+      "name": "native-home-submit-exact-operation-message-new-conversation-ACK",
+      "nativeIds": {
+        "operationId": "1be75a27-a408-446e-bb2c-a0193a55a0e0",
+        "messageId": "36831f86-d633-4561-b7aa-11b942bdb625",
+        "conversationId": "da15ae1f-9bcb-465b-af99-d1f3475acfe7"
+      },
+      "userSendToObservedEvidenceMs": 295
+    }
+  ],
+  "errors": [],
+  "workerExternalNetworkBlocked": true,
+  "budgetSnapshots": [
+    {
+      "phase": "send-0",
+      "at": 1792030483697,
+      "rows": [
+        {
+          "startedAt": 1792030483520,
+          "lastAt": 1792030483687,
+          "requests": 6
+        }
+      ]
+    },
+    {
+      "phase": "final",
+      "at": 1792030513895,
+      "rows": [
+        {
+          "startedAt": 1792030483520,
+          "lastAt": 1792030483697,
+          "requests": 7
+        }
+      ]
+    }
+  ],
+  "error": "page.waitForFunction: Timeout 30000ms exceeded.\n    at /home/runner/work/Virtual-AI-Workspace-Layer/Virtual-AI-Workspace-Layer/tests/host/first-send-package-browser.mjs:25:272",
+  "fixedGetEvidence": {
+    "trace": [
+      {
+        "kind": "auth-shared-purpose",
+        "at": 1792030483043
+      },
+      {
+        "kind": "accounts-shared-purpose",
+        "at": 1792030483049
+      },
+      {
+        "kind": "auth-shared-purpose",
+        "at": 1792030483491
+      },
+      {
+        "kind": "accounts-shared-purpose",
+        "at": 1792030483494
+      },
+      {
+        "kind": "operation-mapping",
+        "at": 1792030483530
+      },
+      {
+        "kind": "auth-shared-purpose",
+        "at": 1792030483589
+      },
+      {
+        "kind": "accounts-shared-purpose",
+        "at": 1792030483614
+      },
+      {
+        "kind": "conversation-detail",
+        "at": 1792030483625
+      },
+      {
+        "kind": "auth-shared-purpose",
+        "at": 1792030483682
+      },
+      {
+        "kind": "accounts-shared-purpose",
+        "at": 1792030483693
+      },
+      {
+        "kind": "conversation-detail",
+        "at": 1792030483701
+      },
+      {
+        "kind": "auth-shared-purpose",
+        "at": 1792030483864
+      },
+      {
+        "kind": "accounts-shared-purpose",
+        "at": 1792030483867
+      }
+    ],
+    "exclusiveCalibrationGETMaxIn30s": 3,
+    "sharedPurposeTypes": [
+      "auth-shared-purpose",
+      "accounts-shared-purpose"
+    ],
+    "classification": "Auth/accounts serve both ordinary subject authentication and calibration; no attribution by adjacency or timing.",
+    "budgetAssertion": "Persisted calibration reservations <=12 per recorded 30-second budget window; each actual calibration GET reserves first. Network trace is independent but shared-purpose requests cannot be individually classified."
+  },
+  "sourceChangedDuringRun": false,
+  "fixtureChangedDuringRun": false
+}

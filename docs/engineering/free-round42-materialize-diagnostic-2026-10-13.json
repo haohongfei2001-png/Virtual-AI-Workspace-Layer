@@ -1,0 +1,527 @@
+{
+  "evidence": "ISOLATED_HEADLESS_COMPUTE_DIAGNOSTIC_NOT_PRODUCT_ACCEPTANCE",
+  "baselineCommit": "02458611c3f38ca59f15f34d56ded5089c4da71b",
+  "baselineHash": "9103bb884d25eddd247ab410bd697a0e639b51469a17e20ba331a59c9bc7e951",
+  "candidateHash": "03089b0dddfa9f948087823af1e1ad7b43fc765a6631c40647e1e4b201cd7211",
+  "runtimeBeforeHash": "9103bb884d25eddd247ab410bd697a0e639b51469a17e20ba331a59c9bc7e951",
+  "runtimeAfterHash": "9103bb884d25eddd247ab410bd697a0e639b51469a17e20ba331a59c9bc7e951",
+  "browser": "156.0.8078.4",
+  "baseline": "import {VerifiedRecordCache} from './verified-record-cache.mjs';\nimport {digest,stable} from './hash.mjs';\nimport {id,exact} from './state.mjs';\nimport {validateNativeManifest,NATIVE_PARTITION_FORMAT,nativeRecord,nativeUnpack} from './native-partitions.mjs';\n\nexport const NATIVE_INDEX_FORMAT='vaiwl-native-version-index-v1';\nconst kinds=['projects','refs'],maxCount=100000;\nexport const nativeIndexBucket=key=>{id(key);return digest(key).slice(0,2);};\nexport const nativeIndexKey=(scope,kind,bucket,revision)=>JSON.stringify([scope,'native-version-index',kind,bucket,revision]);\nconst bucketId=b=>{if(typeof b!=='string'||!/^[0-9a-f]{2}$/.test(b))throw Error('invalid-native-index-bucket');};\nconst version=(v,ceiling)=>{if(!Number.isSafeInteger(v)||v<1||v>ceiling)throw Error('invalid-native-index-version');};\nfunction directory(rows,revision){\n if(!rows||typeof rows!=='object'||Array.isArray(rows))throw Error('invalid-native-index-directory');\n const keys=Object.keys(rows);if(keys.length>256)throw Error('native-index-capacity');let count=0;\n for(const bucket of keys){bucketId(bucket);const entry=rows[bucket];exact(entry,['revision','count']);version(entry.revision,revision);if(!Number.isSafeInteger(entry.count)||entry.count<1||entry.count>maxCount)throw Error('invalid-native-index-count');count+=entry.count;}\n if(count>maxCount)throw Error('native-index-capacity');return count;\n}\n/** Validate small root metadata with the original source/change/size contracts.\n * Directory counts are claims until the requested immutable buckets are checked.\n */\nexport function validateNativeIndexRoot(root,scope){\n exact(root,['format','scopeKey','revision','sources','projects','refs','units','changes']);\n if(root.format!==NATIVE_INDEX_FORMAT)throw Error('invalid-native-index-format');\n for(const kind of kinds)directory(root[kind],root.revision);\n validateNativeManifest({...root,format:NATIVE_PARTITION_FORMAT,projects:{},refs:{}},scope);\n if(stable(root).length>16*1024*1024)throw Error('native-manifest-too-large');return root;\n}\n// Bounded byte-validation cache only: each newly read payload is fully encoded\n// and compared. Scope, physical identity and directory count remain contextual.\n// No facts, IDB records or source permissions survive a read through this cache.\nconst indexPieceValidation=new VerifiedRecordCache({maxEntries:512,maxChars:8*1024*1024});\nexport function verifyNativeIndexPiece(record,root,kind,bucket){\n if(!kinds.includes(kind))throw Error('invalid-native-index-kind');bucketId(bucket);\n const pointer=root[kind][bucket];if(!pointer)throw Error('missing-native-index-pointer');\n if(record?.key!==nativeIndexKey(root.scopeKey,kind,bucket,pointer.revision))throw Error('native-index-key-mismatch');\n const context=JSON.stringify([root.scopeKey,kind,bucket,pointer.revision,pointer.count]);\n return indexPieceValidation.read(record,context,()=>validateIndexPiece(record,root,kind,bucket,pointer));\n}\nfunction validateIndexPiece(record,root,kind,bucket,pointer){\n const payload=nativeUnpack(record);exact(payload,['scopeKey','kind','bucket','revision','versions','ordinals']);\n if(payload.scopeKey!==root.scopeKey||payload.kind!==kind||payload.bucket!==bucket||payload.revision!==pointer.revision)throw Error('native-index-context-mismatch');\n const rows=payload.versions;if(!rows||typeof rows!=='object'||Array.isArray(rows))throw Error('invalid-native-index-rows');\n const keys=Object.keys(rows);if(keys.length!==pointer.count)throw Error('native-index-count-mismatch');\n const ordinals=payload.ordinals,seen=new Set();if(!Array.isArray(ordinals)||ordinals.length!==keys.length||Object.keys(ordinals).length!==keys.length)throw Error('invalid-native-index-order');\n for(let i=0;i<keys.length;i++){const key=keys[i],ordinal=ordinals[i];if(!Object.hasOwn(ordinals,i)||!Number.isSafeInteger(ordinal)||ordinal<0||ordinal>=maxCount||seen.has(ordinal))throw Error('invalid-native-index-order');seen.add(ordinal);if(nativeIndexBucket(key)!==bucket)throw Error('native-index-routing-mismatch');version(rows[key],pointer.revision);}\n if(stable(payload).length>16*1024*1024)throw Error('native-record-too-large');return payload;\n}\n/** Pure migration builder. The owner must publish all pieces and root atomically. */\nexport function buildNativeVersionIndex(manifest,scope){\n validateNativeManifest(manifest,scope);const root={...manifest,format:NATIVE_INDEX_FORMAT,projects:{},refs:{}},records=[];\n for(const kind of kinds){const groups=new Map();let ordinal=0;for(const key of Object.keys(manifest[kind])){const bucket=nativeIndexBucket(key);if(!groups.has(bucket))groups.set(bucket,{versions:{},ordinals:{}});groups.get(bucket).versions[key]=manifest[kind][key];groups.get(bucket).ordinals[key]=ordinal++;}\n  for(const [bucket,{versions,ordinals}] of groups){root[kind][bucket]={revision:root.revision,count:Object.keys(versions).length};const payload={scopeKey:root.scopeKey,kind,bucket,revision:root.revision,versions,ordinals:Object.keys(versions).map(key=>ordinals[key])};records.push(nativeRecord(nativeIndexKey(root.scopeKey,kind,bucket,root.revision),payload));}\n }\n validateNativeIndexRoot(root,scope);return {root,records};\n}\n/** Materialize only after every directory entry has a verified immutable record.\n * Returning the old shape keeps legacy projection logic separate from storage.\n */\nexport function materializeNativeVersionIndex(root,scope,records){\n validateNativeIndexRoot(root,scope);const byKey=new Map();for(const record of records){if(byKey.has(record.key))throw Error('duplicate-native-index-record');byKey.set(record.key,record);}\n const manifest={...root,format:NATIVE_PARTITION_FORMAT,projects:{},refs:{}};let expected=0;\n for(const kind of kinds){const ordered=[];for(const bucket of Object.keys(root[kind])){expected++;const pointer=root[kind][bucket],key=nativeIndexKey(root.scopeKey,kind,bucket,pointer.revision),piece=verifyNativeIndexPiece(byKey.get(key),root,kind,bucket);Object.keys(piece.versions).forEach((key,i)=>ordered.push({key,version:piece.versions[key],ordinal:piece.ordinals[i]}));}\n ordered.sort((a,b)=>a.ordinal-b.ordinal);for(let i=0;i<ordered.length;i++){if(ordered[i].ordinal!==i)throw Error('invalid-native-index-order');manifest[kind][ordered[i].key]=ordered[i].version;}}\n if(byKey.size!==expected)throw Error('unexpected-native-index-record');validateNativeManifest(manifest,scope);return manifest;\n}\n/** Copy-on-write replacement of touched buckets only. Unchanged pointers survive.\n * No caller-provided count is trusted. No deletes: native known refs remain reachable.\n */\nexport function updateNativeVersionIndex(root,scope,revision,updates,records){\n validateNativeIndexRoot(root,scope);version(revision,Number.MAX_SAFE_INTEGER);if(revision!==root.revision+1)throw Error('native-index-revision-conflict');\n exact(updates,['projects','refs']);const next={...root,revision,projects:{...root.projects},refs:{...root.refs}},byKey=new Map(),written=[];\n for(const record of records){if(byKey.has(record.key))throw Error('duplicate-native-index-record');byKey.set(record.key,record);}\n const consumed=new Set();\n for(const kind of kinds){\n  const rows=updates[kind];if(!rows||typeof rows!=='object'||Array.isArray(rows)||Object.keys(rows).length>10000)throw Error('invalid-native-index-updates');\n  const groups=new Map();let nextOrdinal=directory(root[kind],root.revision);\n  for(const key of Object.keys(rows)){\n   if(rows[key]!==revision)throw Error('invalid-native-index-update-version');const bucket=nativeIndexBucket(key);\n   if(!groups.has(bucket)){\n    const pointer=root[kind][bucket];let versions={},ordinals={};\n    if(pointer){const physicalKey=nativeIndexKey(root.scopeKey,kind,bucket,pointer.revision),piece=verifyNativeIndexPiece(byKey.get(physicalKey),root,kind,bucket);versions={...piece.versions};ordinals=Object.fromEntries(Object.keys(piece.versions).map((key,i)=>[key,piece.ordinals[i]]));consumed.add(physicalKey);}\n    groups.set(bucket,{versions,ordinals});\n   }\n   const group=groups.get(bucket);if(!Object.hasOwn(group.versions,key))group.ordinals[key]=nextOrdinal++;group.versions[key]=revision;\n  }\n  for(const [bucket,{versions,ordinals}] of groups){next[kind][bucket]={revision,count:Object.keys(versions).length};written.push(nativeRecord(nativeIndexKey(root.scopeKey,kind,bucket,revision),{scopeKey:root.scopeKey,kind,bucket,revision,versions,ordinals:Object.keys(versions).map(key=>ordinals[key])}));}\n }\n if(consumed.size!==byKey.size)throw Error('unexpected-native-index-record');validateNativeIndexRoot(next,scope);return {root:next,records:written};\n}\n",
+  "candidate": "import {VerifiedRecordCache} from './verified-record-cache.mjs';\nimport {digest,stable} from './hash.mjs';\nimport {id,exact} from './state.mjs';\nimport {validateNativeManifest,NATIVE_PARTITION_FORMAT,nativeRecord,nativeUnpack} from './native-partitions.mjs';\n\nexport const NATIVE_INDEX_FORMAT='vaiwl-native-version-index-v1';\nconst kinds=['projects','refs'],maxCount=100000;\nexport const nativeIndexBucket=key=>{id(key);return digest(key).slice(0,2);};\nexport const nativeIndexKey=(scope,kind,bucket,revision)=>JSON.stringify([scope,'native-version-index',kind,bucket,revision]);\nconst bucketId=b=>{if(typeof b!=='string'||!/^[0-9a-f]{2}$/.test(b))throw Error('invalid-native-index-bucket');};\nconst version=(v,ceiling)=>{if(!Number.isSafeInteger(v)||v<1||v>ceiling)throw Error('invalid-native-index-version');};\nfunction directory(rows,revision){\n if(!rows||typeof rows!=='object'||Array.isArray(rows))throw Error('invalid-native-index-directory');\n const keys=Object.keys(rows);if(keys.length>256)throw Error('native-index-capacity');let count=0;\n for(const bucket of keys){bucketId(bucket);const entry=rows[bucket];exact(entry,['revision','count']);version(entry.revision,revision);if(!Number.isSafeInteger(entry.count)||entry.count<1||entry.count>maxCount)throw Error('invalid-native-index-count');count+=entry.count;}\n if(count>maxCount)throw Error('native-index-capacity');return count;\n}\n/** Validate small root metadata with the original source/change/size contracts.\n * Directory counts are claims until the requested immutable buckets are checked.\n */\nexport function validateNativeIndexRoot(root,scope){\n exact(root,['format','scopeKey','revision','sources','projects','refs','units','changes']);\n if(root.format!==NATIVE_INDEX_FORMAT)throw Error('invalid-native-index-format');\n for(const kind of kinds)directory(root[kind],root.revision);\n validateNativeManifest({...root,format:NATIVE_PARTITION_FORMAT,projects:{},refs:{}},scope);\n if(stable(root).length>16*1024*1024)throw Error('native-manifest-too-large');return root;\n}\n// Bounded byte-validation cache only: each newly read payload is fully encoded\n// and compared. Scope, physical identity and directory count remain contextual.\n// No facts, IDB records or source permissions survive a read through this cache.\nconst indexPieceValidation=new VerifiedRecordCache({maxEntries:512,maxChars:8*1024*1024});\nexport function verifyNativeIndexPiece(record,root,kind,bucket){\n if(!kinds.includes(kind))throw Error('invalid-native-index-kind');bucketId(bucket);\n const pointer=root[kind][bucket];if(!pointer)throw Error('missing-native-index-pointer');\n if(record?.key!==nativeIndexKey(root.scopeKey,kind,bucket,pointer.revision))throw Error('native-index-key-mismatch');\n const context=JSON.stringify([root.scopeKey,kind,bucket,pointer.revision,pointer.count]);\n return indexPieceValidation.read(record,context,()=>validateIndexPiece(record,root,kind,bucket,pointer));\n}\nfunction validateIndexPiece(record,root,kind,bucket,pointer){\n const payload=nativeUnpack(record);exact(payload,['scopeKey','kind','bucket','revision','versions','ordinals']);\n if(payload.scopeKey!==root.scopeKey||payload.kind!==kind||payload.bucket!==bucket||payload.revision!==pointer.revision)throw Error('native-index-context-mismatch');\n const rows=payload.versions;if(!rows||typeof rows!=='object'||Array.isArray(rows))throw Error('invalid-native-index-rows');\n const keys=Object.keys(rows);if(keys.length!==pointer.count)throw Error('native-index-count-mismatch');\n const ordinals=payload.ordinals,seen=new Set();if(!Array.isArray(ordinals)||ordinals.length!==keys.length||Object.keys(ordinals).length!==keys.length)throw Error('invalid-native-index-order');\n for(let i=0;i<keys.length;i++){const key=keys[i],ordinal=ordinals[i];if(!Object.hasOwn(ordinals,i)||!Number.isSafeInteger(ordinal)||ordinal<0||ordinal>=maxCount||seen.has(ordinal))throw Error('invalid-native-index-order');seen.add(ordinal);if(nativeIndexBucket(key)!==bucket)throw Error('native-index-routing-mismatch');version(rows[key],pointer.revision);}\n if(stable(payload).length>16*1024*1024)throw Error('native-record-too-large');return payload;\n}\n/** Pure migration builder. The owner must publish all pieces and root atomically. */\nexport function buildNativeVersionIndex(manifest,scope){\n validateNativeManifest(manifest,scope);const root={...manifest,format:NATIVE_INDEX_FORMAT,projects:{},refs:{}},records=[];\n for(const kind of kinds){const groups=new Map();let ordinal=0;for(const key of Object.keys(manifest[kind])){const bucket=nativeIndexBucket(key);if(!groups.has(bucket))groups.set(bucket,{versions:{},ordinals:{}});groups.get(bucket).versions[key]=manifest[kind][key];groups.get(bucket).ordinals[key]=ordinal++;}\n  for(const [bucket,{versions,ordinals}] of groups){root[kind][bucket]={revision:root.revision,count:Object.keys(versions).length};const payload={scopeKey:root.scopeKey,kind,bucket,revision:root.revision,versions,ordinals:Object.keys(versions).map(key=>ordinals[key])};records.push(nativeRecord(nativeIndexKey(root.scopeKey,kind,bucket,root.revision),payload));}\n }\n validateNativeIndexRoot(root,scope);return {root,records};\n}\n/** Materialize only after every directory entry has a verified immutable record.\n * Returning the old shape keeps legacy projection logic separate from storage.\n */\nexport function materializeNativeVersionIndex(root,scope,records){\n validateNativeIndexRoot(root,scope);const byKey=new Map();for(const record of records){if(byKey.has(record.key))throw Error('duplicate-native-index-record');byKey.set(record.key,record);}\n const manifest={...root,format:NATIVE_PARTITION_FORMAT,projects:{},refs:{}};let expected=0;\n for(const kind of kinds){\n const buckets=Object.keys(root[kind]),count=buckets.reduce((sum,b)=>sum+root[kind][b].count,0),keys=new Array(count),versions=new Array(count);let orderError=false;\n for(const bucket of buckets){expected++;const pointer=root[kind][bucket],physicalKey=nativeIndexKey(root.scopeKey,kind,bucket,pointer.revision),piece=verifyNativeIndexPiece(byKey.get(physicalKey),root,kind,bucket);\n const names=Object.keys(piece.versions);for(let i=0;i<names.length;i++){const ordinal=piece.ordinals[i];if(ordinal>=count||keys[ordinal]!==undefined){orderError=true;continue;}keys[ordinal]=names[i];versions[ordinal]=piece.versions[names[i]];}}\n if(orderError)throw Error('invalid-native-index-order');for(let i=0;i<count;i++){if(keys[i]===undefined)throw Error('invalid-native-index-order');manifest[kind][keys[i]]=versions[i];}}\n\n if(byKey.size!==expected)throw Error('unexpected-native-index-record');validateNativeManifest(manifest,scope);return manifest;\n}\n/** Copy-on-write replacement of touched buckets only. Unchanged pointers survive.\n * No caller-provided count is trusted. No deletes: native known refs remain reachable.\n */\nexport function updateNativeVersionIndex(root,scope,revision,updates,records){\n validateNativeIndexRoot(root,scope);version(revision,Number.MAX_SAFE_INTEGER);if(revision!==root.revision+1)throw Error('native-index-revision-conflict');\n exact(updates,['projects','refs']);const next={...root,revision,projects:{...root.projects},refs:{...root.refs}},byKey=new Map(),written=[];\n for(const record of records){if(byKey.has(record.key))throw Error('duplicate-native-index-record');byKey.set(record.key,record);}\n const consumed=new Set();\n for(const kind of kinds){\n  const rows=updates[kind];if(!rows||typeof rows!=='object'||Array.isArray(rows)||Object.keys(rows).length>10000)throw Error('invalid-native-index-updates');\n  const groups=new Map();let nextOrdinal=directory(root[kind],root.revision);\n  for(const key of Object.keys(rows)){\n   if(rows[key]!==revision)throw Error('invalid-native-index-update-version');const bucket=nativeIndexBucket(key);\n   if(!groups.has(bucket)){\n    const pointer=root[kind][bucket];let versions={},ordinals={};\n    if(pointer){const physicalKey=nativeIndexKey(root.scopeKey,kind,bucket,pointer.revision),piece=verifyNativeIndexPiece(byKey.get(physicalKey),root,kind,bucket);versions={...piece.versions};ordinals=Object.fromEntries(Object.keys(piece.versions).map((key,i)=>[key,piece.ordinals[i]]));consumed.add(physicalKey);}\n    groups.set(bucket,{versions,ordinals});\n   }\n   const group=groups.get(bucket);if(!Object.hasOwn(group.versions,key))group.ordinals[key]=nextOrdinal++;group.versions[key]=revision;\n  }\n  for(const [bucket,{versions,ordinals}] of groups){next[kind][bucket]={revision,count:Object.keys(versions).length};written.push(nativeRecord(nativeIndexKey(root.scopeKey,kind,bucket,revision),{scopeKey:root.scopeKey,kind,bucket,revision,versions,ordinals:Object.keys(versions).map(key=>ordinals[key])}));}\n }\n if(consumed.size!==byKey.size)throw Error('unexpected-native-index-record');validateNativeIndexRoot(next,scope);return {root:next,records:written};\n}\n",
+  "samples": [
+    {
+      "count": 1000,
+      "phase": "cold",
+      "round": 0,
+      "variant": "baseline",
+      "elapsedMs": 6.600000001490116
+    },
+    {
+      "count": 1000,
+      "phase": "cold",
+      "round": 0,
+      "variant": "candidate",
+      "elapsedMs": 6.200000002980232
+    },
+    {
+      "count": 1000,
+      "phase": "cold",
+      "round": 1,
+      "variant": "candidate",
+      "elapsedMs": 6.200000002980232
+    },
+    {
+      "count": 1000,
+      "phase": "cold",
+      "round": 1,
+      "variant": "baseline",
+      "elapsedMs": 6.399999998509884
+    },
+    {
+      "count": 1000,
+      "phase": "cold",
+      "round": 2,
+      "variant": "baseline",
+      "elapsedMs": 6.0999999940395355
+    },
+    {
+      "count": 1000,
+      "phase": "cold",
+      "round": 2,
+      "variant": "candidate",
+      "elapsedMs": 6.100000001490116
+    },
+    {
+      "count": 1000,
+      "phase": "cold",
+      "round": 3,
+      "variant": "candidate",
+      "elapsedMs": 6.300000004470348
+    },
+    {
+      "count": 1000,
+      "phase": "cold",
+      "round": 3,
+      "variant": "baseline",
+      "elapsedMs": 6.5999999940395355
+    },
+    {
+      "count": 1000,
+      "phase": "warm",
+      "round": 0,
+      "variant": "baseline",
+      "elapsedMs": 0.8999999985098839
+    },
+    {
+      "count": 1000,
+      "phase": "warm",
+      "round": 0,
+      "variant": "candidate",
+      "elapsedMs": 0.7999999970197678
+    },
+    {
+      "count": 1000,
+      "phase": "warm",
+      "round": 1,
+      "variant": "candidate",
+      "elapsedMs": 1.3000000044703484
+    },
+    {
+      "count": 1000,
+      "phase": "warm",
+      "round": 1,
+      "variant": "baseline",
+      "elapsedMs": 0.8999999985098839
+    },
+    {
+      "count": 1000,
+      "phase": "warm",
+      "round": 2,
+      "variant": "baseline",
+      "elapsedMs": 0.7999999970197678
+    },
+    {
+      "count": 1000,
+      "phase": "warm",
+      "round": 2,
+      "variant": "candidate",
+      "elapsedMs": 0.8000000044703484
+    },
+    {
+      "count": 1000,
+      "phase": "warm",
+      "round": 3,
+      "variant": "candidate",
+      "elapsedMs": 0.6999999955296516
+    },
+    {
+      "count": 1000,
+      "phase": "warm",
+      "round": 3,
+      "variant": "baseline",
+      "elapsedMs": 0.8000000044703484
+    },
+    {
+      "count": 1000,
+      "phase": "warm",
+      "round": 4,
+      "variant": "baseline",
+      "elapsedMs": 0.6999999955296516
+    },
+    {
+      "count": 1000,
+      "phase": "warm",
+      "round": 4,
+      "variant": "candidate",
+      "elapsedMs": 0.7000000029802322
+    },
+    {
+      "count": 1000,
+      "phase": "warm",
+      "round": 5,
+      "variant": "candidate",
+      "elapsedMs": 0.6000000014901161
+    },
+    {
+      "count": 1000,
+      "phase": "warm",
+      "round": 5,
+      "variant": "baseline",
+      "elapsedMs": 0.7000000029802322
+    },
+    {
+      "count": 1000,
+      "phase": "warm",
+      "round": 6,
+      "variant": "baseline",
+      "elapsedMs": 0.7999999970197678
+    },
+    {
+      "count": 1000,
+      "phase": "warm",
+      "round": 6,
+      "variant": "candidate",
+      "elapsedMs": 0.6000000014901161
+    },
+    {
+      "count": 1000,
+      "phase": "warm",
+      "round": 7,
+      "variant": "candidate",
+      "elapsedMs": 0.6000000014901161
+    },
+    {
+      "count": 1000,
+      "phase": "warm",
+      "round": 7,
+      "variant": "baseline",
+      "elapsedMs": 0.7000000029802322
+    },
+    {
+      "count": 10000,
+      "phase": "cold",
+      "round": 0,
+      "variant": "baseline",
+      "elapsedMs": 43.399999998509884
+    },
+    {
+      "count": 10000,
+      "phase": "cold",
+      "round": 0,
+      "variant": "candidate",
+      "elapsedMs": 42.70000000298023
+    },
+    {
+      "count": 10000,
+      "phase": "cold",
+      "round": 1,
+      "variant": "candidate",
+      "elapsedMs": 39.399999998509884
+    },
+    {
+      "count": 10000,
+      "phase": "cold",
+      "round": 1,
+      "variant": "baseline",
+      "elapsedMs": 40.600000001490116
+    },
+    {
+      "count": 10000,
+      "phase": "cold",
+      "round": 2,
+      "variant": "baseline",
+      "elapsedMs": 39.899999998509884
+    },
+    {
+      "count": 10000,
+      "phase": "cold",
+      "round": 2,
+      "variant": "candidate",
+      "elapsedMs": 38.600000001490116
+    },
+    {
+      "count": 10000,
+      "phase": "cold",
+      "round": 3,
+      "variant": "candidate",
+      "elapsedMs": 39.30000000447035
+    },
+    {
+      "count": 10000,
+      "phase": "cold",
+      "round": 3,
+      "variant": "baseline",
+      "elapsedMs": 39.70000000298023
+    },
+    {
+      "count": 10000,
+      "phase": "warm",
+      "round": 0,
+      "variant": "baseline",
+      "elapsedMs": 4.300000004470348
+    },
+    {
+      "count": 10000,
+      "phase": "warm",
+      "round": 0,
+      "variant": "candidate",
+      "elapsedMs": 3.5
+    },
+    {
+      "count": 10000,
+      "phase": "warm",
+      "round": 1,
+      "variant": "candidate",
+      "elapsedMs": 3.4000000059604645
+    },
+    {
+      "count": 10000,
+      "phase": "warm",
+      "round": 1,
+      "variant": "baseline",
+      "elapsedMs": 7.899999998509884
+    },
+    {
+      "count": 10000,
+      "phase": "warm",
+      "round": 2,
+      "variant": "baseline",
+      "elapsedMs": 4.100000001490116
+    },
+    {
+      "count": 10000,
+      "phase": "warm",
+      "round": 2,
+      "variant": "candidate",
+      "elapsedMs": 3.600000001490116
+    },
+    {
+      "count": 10000,
+      "phase": "warm",
+      "round": 3,
+      "variant": "candidate",
+      "elapsedMs": 3.600000001490116
+    },
+    {
+      "count": 10000,
+      "phase": "warm",
+      "round": 3,
+      "variant": "baseline",
+      "elapsedMs": 4.800000004470348
+    },
+    {
+      "count": 10000,
+      "phase": "warm",
+      "round": 4,
+      "variant": "baseline",
+      "elapsedMs": 4.200000002980232
+    },
+    {
+      "count": 10000,
+      "phase": "warm",
+      "round": 4,
+      "variant": "candidate",
+      "elapsedMs": 3.1999999955296516
+    },
+    {
+      "count": 10000,
+      "phase": "warm",
+      "round": 5,
+      "variant": "candidate",
+      "elapsedMs": 3.2999999970197678
+    },
+    {
+      "count": 10000,
+      "phase": "warm",
+      "round": 5,
+      "variant": "baseline",
+      "elapsedMs": 4.600000001490116
+    },
+    {
+      "count": 10000,
+      "phase": "warm",
+      "round": 6,
+      "variant": "baseline",
+      "elapsedMs": 4.200000002980232
+    },
+    {
+      "count": 10000,
+      "phase": "warm",
+      "round": 6,
+      "variant": "candidate",
+      "elapsedMs": 3.5
+    },
+    {
+      "count": 10000,
+      "phase": "warm",
+      "round": 7,
+      "variant": "candidate",
+      "elapsedMs": 3.4000000059604645
+    },
+    {
+      "count": 10000,
+      "phase": "warm",
+      "round": 7,
+      "variant": "baseline",
+      "elapsedMs": 4.300000004470348
+    },
+    {
+      "count": 100000,
+      "phase": "cold",
+      "round": 0,
+      "variant": "baseline",
+      "elapsedMs": 426.1000000014901
+    },
+    {
+      "count": 100000,
+      "phase": "cold",
+      "round": 0,
+      "variant": "candidate",
+      "elapsedMs": 446.3999999985099
+    },
+    {
+      "count": 100000,
+      "phase": "cold",
+      "round": 1,
+      "variant": "candidate",
+      "elapsedMs": 415.1000000014901
+    },
+    {
+      "count": 100000,
+      "phase": "cold",
+      "round": 1,
+      "variant": "baseline",
+      "elapsedMs": 431.79999999701977
+    },
+    {
+      "count": 100000,
+      "phase": "cold",
+      "round": 2,
+      "variant": "baseline",
+      "elapsedMs": 450.8999999985099
+    },
+    {
+      "count": 100000,
+      "phase": "cold",
+      "round": 2,
+      "variant": "candidate",
+      "elapsedMs": 427.59999999403954
+    },
+    {
+      "count": 100000,
+      "phase": "cold",
+      "round": 3,
+      "variant": "candidate",
+      "elapsedMs": 419.79999999701977
+    },
+    {
+      "count": 100000,
+      "phase": "cold",
+      "round": 3,
+      "variant": "baseline",
+      "elapsedMs": 422.6000000014901
+    },
+    {
+      "count": 100000,
+      "phase": "warm",
+      "round": 0,
+      "variant": "baseline",
+      "elapsedMs": 45
+    },
+    {
+      "count": 100000,
+      "phase": "warm",
+      "round": 0,
+      "variant": "candidate",
+      "elapsedMs": 38
+    },
+    {
+      "count": 100000,
+      "phase": "warm",
+      "round": 1,
+      "variant": "candidate",
+      "elapsedMs": 35.80000000447035
+    },
+    {
+      "count": 100000,
+      "phase": "warm",
+      "round": 1,
+      "variant": "baseline",
+      "elapsedMs": 44.29999999701977
+    },
+    {
+      "count": 100000,
+      "phase": "warm",
+      "round": 2,
+      "variant": "baseline",
+      "elapsedMs": 44.69999999552965
+    },
+    {
+      "count": 100000,
+      "phase": "warm",
+      "round": 2,
+      "variant": "candidate",
+      "elapsedMs": 36.29999999701977
+    },
+    {
+      "count": 100000,
+      "phase": "warm",
+      "round": 3,
+      "variant": "candidate",
+      "elapsedMs": 36.70000000298023
+    },
+    {
+      "count": 100000,
+      "phase": "warm",
+      "round": 3,
+      "variant": "baseline",
+      "elapsedMs": 43.20000000298023
+    },
+    {
+      "count": 100000,
+      "phase": "warm",
+      "round": 4,
+      "variant": "baseline",
+      "elapsedMs": 44.5
+    },
+    {
+      "count": 100000,
+      "phase": "warm",
+      "round": 4,
+      "variant": "candidate",
+      "elapsedMs": 36.20000000298023
+    },
+    {
+      "count": 100000,
+      "phase": "warm",
+      "round": 5,
+      "variant": "candidate",
+      "elapsedMs": 36.69999999552965
+    },
+    {
+      "count": 100000,
+      "phase": "warm",
+      "round": 5,
+      "variant": "baseline",
+      "elapsedMs": 43.5
+    },
+    {
+      "count": 100000,
+      "phase": "warm",
+      "round": 6,
+      "variant": "baseline",
+      "elapsedMs": 44.399999998509884
+    },
+    {
+      "count": 100000,
+      "phase": "warm",
+      "round": 6,
+      "variant": "candidate",
+      "elapsedMs": 36.100000001490116
+    },
+    {
+      "count": 100000,
+      "phase": "warm",
+      "round": 7,
+      "variant": "candidate",
+      "elapsedMs": 36.80000000447035
+    },
+    {
+      "count": 100000,
+      "phase": "warm",
+      "round": 7,
+      "variant": "baseline",
+      "elapsedMs": 44.29999999701977
+    }
+  ],
+  "equivalence": [
+    "full-nondictionary-order-shuffled-buckets:1000",
+    "duplicate:invalid-native-index-order",
+    "gap:invalid-native-index-order",
+    "out-of-bounds:invalid-native-index-order",
+    "missing-piece:native-index-key-mismatch",
+    "tampered-checksum:corrupt-native-record",
+    "full-nondictionary-order-shuffled-buckets:10000",
+    "full-nondictionary-order-shuffled-buckets:100000"
+  ]
+}

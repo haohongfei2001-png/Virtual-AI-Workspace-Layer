@@ -1,0 +1,16 @@
+{
+  "src/data/native-observation-continuation.mjs": "3222a09592efd5c904cc65e036976f2f08bb260a9e639c83bcfddbd025dedee8",
+  "src/data/native-repository.mjs": "bb0478d3295cc965f429b85d16a084740e01cf7fd9d7f66a1388536f81109500",
+  "src/data/continuation-evidence-reader.mjs": "df6058de242ec65cf2c371fedd0cebb0c90da110f76a9d2fc172447be50f82b7",
+  "src/data/free-evidence-repository.mjs": "64d0ea73914e840c1783e7a4a9408584a5523c14c715c6be24d998418679f240",
+  "src/data/free-evidence.mjs": "f0e6e9c36330c9c94e8bed11b06b92acfa0d76725f8afe70af6fee5b0afab680",
+  "src/runtime/host-continuation-owner.mjs": "99aa3f72016d7f0ac69e4dd4101a6e5724125035a68bf864d7fb464772f171b4",
+  "src/runtime/host-observation-owner.mjs": "02c75e9cc44c7ff069f0e334b1eccebd4a2a8815eeeac00c58fb10796428632b",
+  "src/runtime/host-send-ack-owner.mjs": "91fa828cc2710efc1a5dd876e9addf2bf3e29aa301268dc8a8ac59cb42073a12",
+  "src/runtime/host-binding-service.mjs": "56e9b632343c02498571c142e0c685e6e9e0481e0af8d9c5e3cd3d7474a10a5a",
+  "tests/host/joint-observation-fixture.mjs": "98ce52b151d2e52334a8dfab3fac89aaa49294db99a3b5fb3f6cbe2c90fc5b58",
+  "tests/host/joint-observation-owner.test.mjs": "00d3e2881081eb941c8f77e650527e1217765eabee90d809622c5013ec50f8d1",
+  "tests/host/joint-observation-idb-browser.mjs": "0284c0348d00beae09ce408d22ea1bf3c7df5649c09edbb040554f5160614c79",
+  "tests/host/joint-review-regressions.test.mjs": "a571f694c4a892b832fa5c6f3b5d94e866d7eb9b06de3940ca48e3c8fb0e203a",
+  "tests/host/fixtures/native-continuation-v1-reader.mjs": "2c007a59bc0fb0a2aafe99783bbb8a1c55eaf6abcf50e467e021a69e670ec5e6"
+}

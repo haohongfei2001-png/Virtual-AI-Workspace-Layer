@@ -1,0 +1,23 @@
+{
+  "evidence": "REAL_IDB_INDEX_READER_NOT_RUNTIME_MIGRATION",
+  "browser": "156.0.8078.4",
+  "sourceHashes": {
+    "src/data/native-index-reader.mjs": "2402bfb54e0ab30641de1a78ba3d21c1d9777da7f7e8ff3bf015b356a82952d0",
+    "src/data/native-version-index.mjs": "72097de473348ab26bae24721793287e4648da70c1ed3a3ded60e9e3ce727246",
+    "src/data/native-partitions.mjs": "2163be9980e6716bfeca839fff3a016d7b1947577140e56db255535aec9a482b",
+    "src/data/native-repository.mjs": "212cff2a0c5eedad70ae549567239ce7d177cfb79baaf12f5a626826626445ab",
+    "src/data/native-index-writer.mjs": "b24b74a4470602b8196c5ee9559aaa8d5f53454c034b02aeb84b2652532a2808"
+  },
+  "result": {
+    "checks": [
+      "repository-read-header-page-indexed-format",
+      "stale-write-no-format-downgrade",
+      "intact-index-no-old-shadow-replay",
+      "same-transaction-ref-project-dependency",
+      "full-read-equivalence",
+      "missing-index-aborts-transaction"
+    ],
+    "indexReads": 2,
+    "totalReads": 4
+  }
+}

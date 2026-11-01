@@ -1,0 +1,18 @@
+{
+  "src/data/free-projection.mjs": "fe87590005120f89ab41571fe9bf8ae566918748ab543e0ac172fb63274c8a48",
+  "src/host/free-frame-client.mjs": "631f50d8360b131672c250ec7bd045a1c483890c1d769e3cd19b3184ee9db569",
+  "src/navigation/free-recovery.mjs": "20352a2a9a37bfdac9d0889d87efaf80510bf7462df3fba1ceef1e4eac3c0442",
+  "src/navigation/navigation.mjs": "6dfc39acbe9b76b94b4893f98d9a1b37ff3ceae5c5543f5e2b0e2f3a77e1dcbf",
+  "src/runtime/host-binding-service.mjs": "60d58c20e826cb67f8a709691f3192266387e398276649c713bd4e944fcec6f3",
+  "src/runtime/host-view-service.mjs": "4590bcbeb05525090d9bbd88b2876b77e5e9f0536f3f4057343a7ff0d7fdfc79",
+  "tests/free/native-facts.test.mjs": "42f8234331aff16cfa46c64859908ad81ed65be6f3fd0bc9b4775f859cf5930c",
+  "tests/host/frame-projection-renderer.test.mjs": "f36338d1a9b5926654150a4b17ffb988283c6b6b091222da387784d25da9a0b3",
+  "tests/host/free-frame-client.test.mjs": "0977515e3b0920cae8f9fb3bc03973771377c70ec3a973092f23246d6b1d0f3b",
+  "tests/host/host-view-service.test.mjs": "280570a0b598b8ae6ae680246ba3b26be18ff72a175e919556bcd11cf7a015da",
+  "tests/host/working-set-package-mv3-browser.mjs": "a8190109ebd6e4c8a209961ff63ef0af8c3d8cef961eae6cfcfdb58a0e146f02",
+  "src/host/free-frame-recovery.mjs": "dadb2d02f2603b504471d69072bcec36c0393cabd8c0201c63251e192383b187",
+  "src/runtime/host-recovery-service.mjs": "ceaf407790fa8f56e7b03795e2f88c1d00465f6d71b4a10f276844c82fe47991",
+  "tests/host/free-frame-recovery.test.mjs": "46cc6f08a6cc60300ac55818b7da4cd9a617400e7f07b04751b2ab8618435552",
+  "tests/host/host-recovery-service.test.mjs": "f5aafe2fb9d6c3f5d7ea1bcf430f0b948476b677171657cc0ad74d8eb151b6e4",
+  "tests/host/recovery-package-mv3-browser.mjs": "d130894d83eb36e4f4b0011c41688477b0f9cb4e886b6baf627ea702ec362135"
+}

@@ -1,0 +1,40 @@
+✔ native fixture opt-in changes only existing current conversation title, retains identity/membership (0.991656ms)
+✔ default fixtures unchanged and invalid profile/journey/variant/title fail before mutation (0.613436ms)
+✔ missing current fixture C does not invent a native object (0.144157ms)
+✔ opt-in occurs before native history is rendered; route and metadata read the same native map (0.44391ms)
+✔ one Node suite and two independent free browser jobs retain exact event SHA and mandatory outcomes (1.72291ms)
+✔ browser partition neither deletes nor duplicates any pre-existing actual slice (0.355927ms)
+✔ positive profile matrix covers exact independent size/theme/title/height dimensions (2.875178ms)
+✔ configuration uses browser viewport and media only, with no native DOM changes or CSS zoom (7.750984ms)
+✔ unknown profiles, zoom substitutes and modified cells are rejected before browser calls (2.849559ms)
+✔ inherited shell geometry retains original 1px tolerance (0.309717ms)
+✔ shell oracle rejects width overflow (0.348495ms)
+✔ shell oracle rejects height overflow (0.16609ms)
+✔ shell oracle rejects horizontal scroll (0.478662ms)
+✔ shell oracle rejects vertical scroll (0.282336ms)
+✔ shell oracle rejects empty main (0.184899ms)
+✔ shell oracle rejects main above bounds (0.365612ms)
+✔ shell oracle rejects main below bounds (0.243437ms)
+✔ shell oracle rejects frame covers close (0.204839ms)
+✔ shell oracle rejects frame below surface (0.115174ms)
+✔ shell oracle rejects zero viewport (3.601224ms)
+✔ read-only sampler checks geometry without claiming full UI acceptance (0.19232ms)
+✔ preparation never promotes past J3 zoom or deterministic results into new native evidence (0.302456ms)
+✔ height transition observes before, reduced and restored without recreating a page (0.750972ms)
+✔ failed height continuity observation aborts without recovery reload or later success (0.409788ms)
+✔ each profile uses the matching existing fixture and package context proof (2.160549ms)
+✔ sequence has 16 distinct cells and 8 same-page before/reduced/restored triples per profile (0.84126ms)
+✔ long title fits existing native create-project validation without loosening it (0.176536ms)
+✔ runner packages actual source with isolated fixture profiles, source hashes and worker isolation (0.163687ms)
+✔ runner keeps original nodes and File identities and never retries native creation (0.228665ms)
+✔ native candidate cannot claim full v2.7 or physical input acceptance (0.115865ms)
+✔ MODERN and PARTIAL long-title cases start on original C with opt-in native data, not project navigation (0.137828ms)
+✔ theme is observed within each actual frame and final hash failure is recorded (0.162375ms)
+ℹ tests 32
+ℹ suites 0
+ℹ pass 32
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 252.254582

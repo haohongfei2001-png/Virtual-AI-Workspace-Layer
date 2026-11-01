@@ -1,0 +1,14 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ChatGPT — offline reconstruction</title><link rel="stylesheet" href="/native.css"></head><body>
+<aside aria-label="Sidebar"><button id="sidebar-close" aria-label="Close sidebar">Close sidebar</button><nav aria-label="Main navigation"><a href="/" data-testid="create-new-chat-button">New chat</a><button aria-label="Search chats" id="search-button">Search chats</button><button id="new-project">New project</button></nav>
+<section aria-label="Projects"><h2>Projects</h2><a href="/g/g-p-11111111111111111111111111111111/project">Research</a><button class="project-entry">Research</button></section>
+<nav aria-label="Chat history"><h2>Chats</h2><a href="/c/33333333-3333-4333-8333-333333333333">Ordinary conversation</a><a href="/c/44444444-4444-4444-8444-444444444444">Membership not loaded</a></nav>
+<button id="account-button" aria-haspopup="menu">Account</button></aside>
+<main><header><div class="navigation-slot"></div><button id="sidebar-toggle" aria-label="Open sidebar" aria-expanded="false">☰</button><button id="model-button" aria-haspopup="menu">ChatGPT</button><h1>New chat</h1><button id="move-button">Move to project</button></header>
+<section aria-label="Conversation" id="reading"><p>How can I help?</p></section>
+<form id="composer"><label for="prompt-textarea">Message ChatGPT</label><textarea id="prompt-textarea" placeholder="Ask anything"></textarea><!-- J3_EDITOR --><button type="button" id="tools-button">Tools</button><input type="file" aria-label="Add files"><button type="submit">Send</button><output aria-live="polite"></output></form></main>
+<dialog id="search-dialog"><form method="dialog"><label>Search chats<input type="search"></label><button>Close</button></form><div class="results"></div></dialog>
+<dialog id="project-dialog"><form method="dialog"><label>Project name<input name="project-name"></label><button value="cancel">Cancel</button><button value="create">Create</button></form></dialog>
+<dialog id="move-dialog"><form method="dialog"><p>Move to project</p><div class="options"></div><button>Close</button></form></dialog>
+<dialog id="native-dialog"><form method="dialog"><p></p><button>Close</button></form></dialog>
+<!-- J3_PERMISSION -->
+<script type="module" src="/native.mjs"></script></body></html>

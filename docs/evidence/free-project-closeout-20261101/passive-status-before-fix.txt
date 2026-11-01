@@ -1,0 +1,113 @@
+✖ actual BrowserLocal popup reads presentation by default and collects structure only on one explicit click (5.742923ms)
+✖ private presentation reads never invoke native structure collectors or fall back to them (1.28574ms)
+✖ private presentation rejects structural payloads at both ends without collecting a replacement (0.418071ms)
+✖ private presentation discards changed-document replies with no full-layout fallback (0.793657ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 0
+ℹ fail 4
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 39.891564
+
+✖ failing tests:
+
+test at tests/host/local-status-presentation.test.mjs:27:1
+✖ actual BrowserLocal popup reads presentation by default and collects structure only on one explicit click (5.742923ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  1 !== 0
+  
+      at TestContext.<anonymous> (file:///workspace/scratch/c4aa855bd0c2/vaiwl/tests/host/local-status-presentation.test.mjs:29:9)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/host/local-status.test.mjs:5:1
+✖ private presentation reads never invoke native structure collectors or fall back to them (1.28574ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+  + undefined
+  - {
+  -   shape: {
+  -     branches: [],
+  -     counts: [
+  -       1,
+  -       1,
+  -       1,
+  -       1,
+  -       1,
+  -       1,
+  -       1
+  -     ]
+  -   },
+  -   v: 1
+  - }
+  
+      at TestContext.<anonymous> (file:///workspace/scratch/c4aa855bd0c2/vaiwl/tests/host/local-status.test.mjs:14:87)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at node:internal/test_runner/test:1305:31
+      at node:internal/process/task_queues:151:7
+      at AsyncResource.runInAsyncScope (node:async_hooks:227:14)
+      at AsyncResource.runMicrotask (node:internal/process/task_queues:148:8) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: [Object],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at tests/host/local-status.test.mjs:19:1
+✖ private presentation rejects structural payloads at both ends without collecting a replacement (0.418071ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+  + undefined
+  - {
+  -   shape: null,
+  -   v: 1
+  - }
+  
+      at TestContext.<anonymous> (file:///workspace/scratch/c4aa855bd0c2/vaiwl/tests/host/local-status.test.mjs:25:131)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: [Object],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at tests/host/local-status.test.mjs:31:1
+✖ private presentation discards changed-document replies with no full-layout fallback (0.793657ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  1 !== 2
+  
+      at TestContext.<anonymous> (file:///workspace/scratch/c4aa855bd0c2/vaiwl/tests/host/local-status.test.mjs:34:57)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 2,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

@@ -1,0 +1,4 @@
+e39a19d61e43beda4aefa66237d053f9f51f2d3988d215632fe040954db4280c  src/runtime/browser-request-context.mjs
+57c1a96d78c2e4f299cab0e0cbc4d7f8a53f569d23ea8a07535cb31ebe7a4282  src/runtime/scope-authority.mjs
+bd70e6ff5604848cdd2d62bc82ab70cebbcbd100f91d7bd2e60a1e80744f28c3  src/host/content-session.mjs
+74063b1ad4a62c8889f9eb2d37de5e193b9304a3b8867525bd6818c857f13635  extension/content-entry.mjs

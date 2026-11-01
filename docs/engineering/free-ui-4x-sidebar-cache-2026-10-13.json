@@ -1,0 +1,164 @@
+{
+  "evidence": "UI_SYNTHETIC_HEADLESS_CDP4X",
+  "scope": "Existing Free projection/replica/navigation components on synthetic native host; no IndexedDB/broker/source/network acquisition timing and no real-account or physical weak-device certification.",
+  "browser": "156.0.8078.4",
+  "headless": true,
+  "platform": "darwin",
+  "arch": "arm64",
+  "cpu": "Apple M5",
+  "viewport": {
+    "width": 1440,
+    "height": 1000
+  },
+  "sourceHashes": {
+    "src/navigation/current-index.mjs": "909a8c2b6e9fae5db659efe82341788e37240f58d43bff7e94e85c8ac4864a89",
+    "src/navigation/free-editor.mjs": "189c1c0d6355ca53a18ead419d9007f75c82f9504c06955707d33647e6425b6b",
+    "src/navigation/free-recovery.mjs": "49f38d4662a8152eacaca54959d89d20468667ae6041f767735dbb9696b2a685",
+    "src/navigation/free-view.mjs": "2d40a9100eaddfe3f72899a1902f492f5758a805106912f80d71b2c3eec37c38",
+    "src/navigation/icons.mjs": "14195d8a7a21a029278ff6f9bf0bb1add2d679b37666108d80cfadabe312d2fd",
+    "src/navigation/navigation.mjs": "a2c5f2d39647431958898f735dc443d3ef8930bdf5ceccc8ff36f41354c2f8eb",
+    "src/navigation/projection.mjs": "8d4b2d85dceb27b4965cd82842fec37ecdbddedae3e6a1c763720dbec35e3a4b",
+    "src/navigation/search.mjs": "a93da18f3018a6267af7634986fdf7cfca4ed72eeaa6bb982340e9b0031c85d6",
+    "src/navigation/styles.mjs": "3acd56606be4653a1391a7725d21649c376b7ded6d8acb8e5b6f5c0a80c213bc",
+    "src/data/free-replica.mjs": "2af21088e3b9ace96ea33c5c6daaaa9bd66437866c35e5b9ccb6521028aa0636",
+    "src/data/free-activity.mjs": "96a4a46dd7a56777827574f06c851f96b07e5d3f864fd9301bcfe7b231b2ef14",
+    "src/data/free-time-policy.mjs": "08192e4f8b809a3bb7ad759bc30a644bbc11a8b36bfe5cd3f412751f0c7ef64b",
+    "src/data/cooperate.mjs": "ce494a33280143e1e2a2227a72413da792330311de12642a9a56b13704f2f3b4",
+    "simulator/adapter.mjs": "ac64ab9c228fa3939cb1e6f6a8a7ca902e111772ebdab07a28ef6fb7a793870d",
+    "tests/free/ui-performance-browser.mjs": "cada7f78812de8ce2ea4592fff2d63c3381431f99437f616d4749e1347b53cd8"
+  },
+  "sourceChangedDuringRun": false,
+  "results": [
+    {
+      "size": 100000,
+      "distribution": "project-mixed",
+      "projects": 1000,
+      "noProject": 20000,
+      "cpuThrottle": 4,
+      "fixtureGenerationMs": 475.6,
+      "initial": {
+        "assemblyMs": 405.7,
+        "viewAndIndexMs": 733.2,
+        "mountToPaintMs": 382.4,
+        "totalToPaintMs": 1521.8,
+        "ownedDomNodes": 7472
+      },
+      "history": {
+        "samples": 20,
+        "paintP50Ms": 199.3,
+        "paintP95Ms": 244.3,
+        "paintMaxMs": 251.3,
+        "handlerP95Ms": 184.4,
+        "maxOwnedDomNodes": 7475
+      },
+      "search": {
+        "samples": 12,
+        "paintP50Ms": 116.9,
+        "paintP95Ms": 150.4,
+        "paintMaxMs": 150.4,
+        "handlerP95Ms": 130.9,
+        "maxOwnedDomNodes": 1355
+      },
+      "searchOpen": {
+        "samples": 1,
+        "paintP50Ms": 149.7,
+        "paintP95Ms": 149.7,
+        "paintMaxMs": 149.7,
+        "handlerP95Ms": 131.9,
+        "maxOwnedDomNodes": 1355
+      },
+      "longTasks": {
+        "initial": {
+          "count": 3,
+          "totalMs": 719,
+          "maxMs": 342
+        },
+        "interactive": {
+          "count": 33,
+          "totalMs": 5385,
+          "maxMs": 235
+        }
+      },
+      "targets": {
+        "historyP95Under150ms": false,
+        "searchP95Under300ms": true
+      }
+    },
+    {
+      "size": 100000,
+      "distribution": "none-heavy",
+      "projects": 1000,
+      "noProject": 90000,
+      "cpuThrottle": 4,
+      "fixtureGenerationMs": 452,
+      "initial": {
+        "assemblyMs": 406,
+        "viewAndIndexMs": 722.9,
+        "mountToPaintMs": 363.1,
+        "totalToPaintMs": 1492.7,
+        "ownedDomNodes": 7472
+      },
+      "history": {
+        "samples": 20,
+        "paintP50Ms": 200,
+        "paintP95Ms": 242.1,
+        "paintMaxMs": 266.4,
+        "handlerP95Ms": 190.3,
+        "maxOwnedDomNodes": 7475
+      },
+      "search": {
+        "samples": 12,
+        "paintP50Ms": 132.1,
+        "paintP95Ms": 179.2,
+        "paintMaxMs": 179.2,
+        "handlerP95Ms": 165.1,
+        "maxOwnedDomNodes": 1355
+      },
+      "searchOpen": {
+        "samples": 1,
+        "paintP50Ms": 134.2,
+        "paintP95Ms": 134.2,
+        "paintMaxMs": 134.2,
+        "handlerP95Ms": 120.8,
+        "maxOwnedDomNodes": 1355
+      },
+      "longTasks": {
+        "initial": {
+          "count": 3,
+          "totalMs": 710,
+          "maxMs": 329
+        },
+        "interactive": {
+          "count": 33,
+          "totalMs": 5589,
+          "maxMs": 248
+        }
+      },
+      "targets": {
+        "historyP95Under150ms": false,
+        "searchP95Under300ms": true
+      }
+    }
+  ],
+  "errors": [],
+  "pass": 2,
+  "fail": 0,
+  "targetMisses": [
+    {
+      "size": 100000,
+      "distribution": "project-mixed",
+      "targets": {
+        "historyP95Under150ms": false,
+        "searchP95Under300ms": true
+      }
+    },
+    {
+      "size": 100000,
+      "distribution": "none-heavy",
+      "targets": {
+        "historyP95Under150ms": false,
+        "searchP95Under300ms": true
+      }
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "baselineHead": "8cb9b9dbfe2164eda16fc248515407231d90084d",
+  "evidence": "OFFLINE_ONLY_NOT_RELEASE_READY",
+  "sourceHashes": {
+    "src/host/content-session.mjs": "60e63355edb474cd9114b9f0649773f4a4b07b6c713775c2339010f2d75619c7",
+    "src/host/send-correlator.mjs": "2b495b44c5bf71c1108bc045b4d3562a72846eb7ac7a26de08db38735e3e7845",
+    "src/host/surface-controller.mjs": "9ad4cccc419dc0106b7797e382942e9ea20b935a46ea163593be0a6a253ef799",
+    "src/host/ui-frame-client.mjs": "191ba7d054a8b34be11f5c42542b82ce4ac6e8ad0d8f66bac0adda4b600d98b0",
+    "src/runtime/host-binding-service.mjs": "22d1d484ab7a8230e603b0707cfdf01f6ad83ccb1623f7033a6128b83fb2ce25",
+    "src/runtime/scope-authority.mjs": "4a4598d427533c1c5cf41db26dd19571900a6e7f612817c506cac49b1c23b917",
+    "tests/host/content-session.test.mjs": "d22f186df1be7a38c3bfbae825a3139266a01adcbdffe7d52d1bdb3811842be9",
+    "tests/host/host-binding-service.test.mjs": "3d919481b3202639508f99199bccfd62029839234b5f85c833d6f56a283de399",
+    "tests/host/host-view-service.test.mjs": "e5e57b44ec2ef280ae7a526f6bca739c97ecdbc1874be94092e27c3cbc03e000",
+    "tests/host/scope-authority.test.mjs": "24fb7aced414062dfe4fb7e015bde99071b637c6c8897dcf92b242e8d054aa05",
+    "tests/host/scope-renewal-package-mv3-browser.mjs": "8896b08534cb1f29f5707bfb46366ee9942a94974b41901a1df18a130c9959dc",
+    "tests/host/send-correlator.test.mjs": "576026842b9915f8f53b82df67f65fce73b13b3ea7a7a7ac973614f19492861c",
+    "tests/host/surface-controller.test.mjs": "6cc402d38101d60ca5dd113b8e8eab53f7125f946dd0763823eabe843784d2ad",
+    "tests/host/ui-frame-client.test.mjs": "44b36187099d491dd2570992283e35d561c9105f9d21d7dae70a6d57979348f7"
+  }
+}

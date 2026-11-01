@@ -1,0 +1,8 @@
+{
+  "baseCommit": "035d048e9edd369b2c3cad63260684e8cbc2117e",
+  "sha256": {
+    "src/host/isolated-session-reader.mjs": "9b67ea4c3bafe14119f51a93e68d2448c0ad6bd75978d482583843a6429cc5cc",
+    "tests/host/isolated-reader-idle.test.mjs": "5ac0f1ae7cc62add08c5f19d4158568cad2846e46f0a034f71bf91042b71c845",
+    "tests/host/isolated-session-reader.test.mjs": "af92f28503abd7d354be8c18b9e457366eb7cc3d8902c3f4fcb85670d42d3570"
+  }
+}

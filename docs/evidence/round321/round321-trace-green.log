@@ -1,0 +1,11 @@
+✔ cold diagnostic copy keeps original verified; patches only named files and detects alteration (657.320125ms)
+✔ runner preserves immediate cold navigation and collects existing worker only after failure (0.412667ms)
+✔ classic trace rebuild follows instrumented source and rejects stale or forged generated files (613.842084ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1347.085291

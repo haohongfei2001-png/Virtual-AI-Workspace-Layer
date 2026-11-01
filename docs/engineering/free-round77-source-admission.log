@@ -1,0 +1,17 @@
+✔ MOCK_IDB production defaults read an empty scope without seed or any writes (12.867125ms)
+✔ MOCK_IDB owner-admitted native names and UNKNOWN flow through the existing page pipeline (6.679375ms)
+✔ MOCK_IDB old synthetic shared events never acquire production authorship (3.547167ms)
+✔ MOCK_IDB header/page use the same explicit evaluation time for expired native witnesses (3.72775ms)
+✔ MOCK_IDB Free header/page/snapshot do not modify Pro human assets or project them as native cards (3.465375ms)
+✔ MOCK_IDB compatibility snapshot honors the requested native freshness time (1.986875ms)
+✔ MOCK_IDB production rejects persisted synthetic event without altering historical bytes (7.625083ms)
+✔ MOCK_IDB production rejects persisted synthetic hint without altering historical bytes (6.36225ms)
+✔ MOCK_IDB unadmitted synthetic coverage cannot certify an admitted historical anchor (6.772541ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 9
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 104.900916

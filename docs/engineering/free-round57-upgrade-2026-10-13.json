@@ -1,0 +1,169 @@
+{
+  "evidence": "REAL_HEADLESS_MV3_SYNTHETIC_SHARED_DIRECTORY_UPGRADE",
+  "baseline": "/private/tmp/vaiwl-free-delivery-round46-20261013/extension",
+  "candidate": "/private/tmp/vaiwl-free-delivery-round57-20261013/extension",
+  "actualSchemaUpgrade": "NOT_RUN",
+  "realChatGPT": "NOT_RUN",
+  "results": [
+    {
+      "name": "Actual baseline package creates persistent human assets and native facts",
+      "status": "PASS",
+      "extensionId": "dahgkfiefljjllnmcoahhioplbkjipel",
+      "shared": "ed5bc0bac36ed591bc04bcbb2f0c078b16d990914cfbc83cd8bbaa67d1f4fd5b",
+      "sharedRevision": 3,
+      "sharedReadError": null,
+      "sharedFormat": "vaiwl-partitioned-v1",
+      "evidence": "8f7c673b24c5cf5ffec8aae86bfb48ad73e6d0cc955a474579bd8de66c67dc90",
+      "evidenceRevision": 2,
+      "evidenceReadError": null,
+      "evidenceFormat": "vaiwl-free-evidence-directory-v1",
+      "manualTitle": "升级保留Pro人工标题",
+      "workingSet": {
+        "refs": [
+          "T0"
+        ],
+        "current": "T0"
+      },
+      "nativeFacts": "8d88bf0f667a349115f1a9ea9d7bb3d5af2dfed2bcc9203a5f8fd68fed7313f8",
+      "nativeRevision": 2,
+      "nativeFormat": "vaiwl-native-version-index-v1",
+      "nativeReadError": null,
+      "rawStores": {
+        "b23_states": "80eb4a86dc9cc1da598aed54419525f18a6a4531b6434464820edeea428dedf0",
+        "b23_checkpoints": "e892d1ab0c1ee0cf7cd12e0bdb6427f088d567da18bd8ef63ed486f415bbf751",
+        "b23_operations": "a11a3e6b02f2bb0c4c103b746804b8b702ab7b252fa26af252ae31b6bb2d3be6",
+        "refs": "f683d2d1af5d158c850bc74139409effaf9c9aa87cb20288c7271342fe15c568",
+        "native_states": "9bf3556b2776806913ba3e4b555ae2a5b78f51b1d50328527a6cce25a2bef43a",
+        "native_operations": "410bd73eac5b016a38ee315823b256c48068b52575e72947e118f3ece77de8e8"
+      },
+      "nativeRecords": 854
+    },
+    {
+      "name": "Same-path upgrade converts shared directory and preserves native activity human assets and draft DOM",
+      "status": "PASS",
+      "actual": {
+        "extensionId": "dahgkfiefljjllnmcoahhioplbkjipel",
+        "shared": "ed5bc0bac36ed591bc04bcbb2f0c078b16d990914cfbc83cd8bbaa67d1f4fd5b",
+        "sharedRevision": 4,
+        "sharedReadError": null,
+        "sharedFormat": "vaiwl-shared-ref-directory-v1",
+        "evidence": "8f7c673b24c5cf5ffec8aae86bfb48ad73e6d0cc955a474579bd8de66c67dc90",
+        "evidenceRevision": 2,
+        "evidenceReadError": null,
+        "evidenceFormat": "vaiwl-free-evidence-directory-v1",
+        "manualTitle": "升级保留Pro人工标题",
+        "workingSet": {
+          "refs": [
+            "T0"
+          ],
+          "current": "T0"
+        },
+        "nativeFacts": "8d88bf0f667a349115f1a9ea9d7bb3d5af2dfed2bcc9203a5f8fd68fed7313f8",
+        "nativeRevision": 2,
+        "nativeFormat": "vaiwl-native-version-index-v1",
+        "nativeReadError": null,
+        "rawStores": {
+          "b23_states": "4fdc18ed7862e99e7217e6c411a5d7b32749c493b36f5520ca60d124ae5f3475",
+          "b23_checkpoints": "69e6b26f9f13b79ef55ff50e66d431282a4ee1893311bac6d986a86e8cb7b42f",
+          "b23_operations": "ec23ee4ce58a2c46dbca762aad1b85d5fe73f1f0f77e9f61f1004438d87529a1",
+          "refs": "f683d2d1af5d158c850bc74139409effaf9c9aa87cb20288c7271342fe15c568",
+          "native_states": "9bf3556b2776806913ba3e4b555ae2a5b78f51b1d50328527a6cce25a2bef43a",
+          "native_operations": "410bd73eac5b016a38ee315823b256c48068b52575e72947e118f3ece77de8e8"
+        },
+        "nativeRecords": 854
+      },
+      "ui": {
+        "state": "ACTIVE",
+        "reason": ""
+      },
+      "oldDraftDocumentReloaded": false
+    },
+    {
+      "name": "Actual Round46 rollback rejects shared directory and preserves every stored row in six stores",
+      "status": "PASS",
+      "actual": {
+        "extensionId": "dahgkfiefljjllnmcoahhioplbkjipel",
+        "shared": null,
+        "sharedRevision": null,
+        "sharedReadError": "invalid-schema",
+        "sharedFormat": "vaiwl-shared-ref-directory-v1",
+        "evidence": "8f7c673b24c5cf5ffec8aae86bfb48ad73e6d0cc955a474579bd8de66c67dc90",
+        "evidenceRevision": 2,
+        "evidenceReadError": null,
+        "evidenceFormat": "vaiwl-free-evidence-directory-v1",
+        "manualTitle": null,
+        "workingSet": null,
+        "nativeFacts": "8d88bf0f667a349115f1a9ea9d7bb3d5af2dfed2bcc9203a5f8fd68fed7313f8",
+        "nativeRevision": 2,
+        "nativeFormat": "vaiwl-native-version-index-v1",
+        "nativeReadError": null,
+        "rawStores": {
+          "b23_states": "4fdc18ed7862e99e7217e6c411a5d7b32749c493b36f5520ca60d124ae5f3475",
+          "b23_checkpoints": "69e6b26f9f13b79ef55ff50e66d431282a4ee1893311bac6d986a86e8cb7b42f",
+          "b23_operations": "ec23ee4ce58a2c46dbca762aad1b85d5fe73f1f0f77e9f61f1004438d87529a1",
+          "refs": "f683d2d1af5d158c850bc74139409effaf9c9aa87cb20288c7271342fe15c568",
+          "native_states": "9bf3556b2776806913ba3e4b555ae2a5b78f51b1d50328527a6cce25a2bef43a",
+          "native_operations": "410bd73eac5b016a38ee315823b256c48068b52575e72947e118f3ece77de8e8"
+        },
+        "nativeRecords": 854
+      },
+      "ui": {
+        "state": "WAITING",
+        "reason": "invalid-schema"
+      },
+      "oldDraftDocumentReloaded": false
+    },
+    {
+      "name": "Current package restores navigation facts and human assets without rewriting stored data or draft",
+      "status": "PASS",
+      "actual": {
+        "extensionId": "dahgkfiefljjllnmcoahhioplbkjipel",
+        "shared": "ed5bc0bac36ed591bc04bcbb2f0c078b16d990914cfbc83cd8bbaa67d1f4fd5b",
+        "sharedRevision": 4,
+        "sharedReadError": null,
+        "sharedFormat": "vaiwl-shared-ref-directory-v1",
+        "evidence": "8f7c673b24c5cf5ffec8aae86bfb48ad73e6d0cc955a474579bd8de66c67dc90",
+        "evidenceRevision": 2,
+        "evidenceReadError": null,
+        "evidenceFormat": "vaiwl-free-evidence-directory-v1",
+        "manualTitle": "升级保留Pro人工标题",
+        "workingSet": {
+          "refs": [
+            "T0"
+          ],
+          "current": "T0"
+        },
+        "nativeFacts": "8d88bf0f667a349115f1a9ea9d7bb3d5af2dfed2bcc9203a5f8fd68fed7313f8",
+        "nativeRevision": 2,
+        "nativeFormat": "vaiwl-native-version-index-v1",
+        "nativeReadError": null,
+        "rawStores": {
+          "b23_states": "4fdc18ed7862e99e7217e6c411a5d7b32749c493b36f5520ca60d124ae5f3475",
+          "b23_checkpoints": "69e6b26f9f13b79ef55ff50e66d431282a4ee1893311bac6d986a86e8cb7b42f",
+          "b23_operations": "ec23ee4ce58a2c46dbca762aad1b85d5fe73f1f0f77e9f61f1004438d87529a1",
+          "refs": "f683d2d1af5d158c850bc74139409effaf9c9aa87cb20288c7271342fe15c568",
+          "native_states": "9bf3556b2776806913ba3e4b555ae2a5b78f51b1d50328527a6cce25a2bef43a",
+          "native_operations": "410bd73eac5b016a38ee315823b256c48068b52575e72947e118f3ece77de8e8"
+        },
+        "nativeRecords": 854
+      },
+      "ui": {
+        "state": "ACTIVE",
+        "reason": ""
+      },
+      "oldDraftDocumentReloaded": false
+    }
+  ],
+  "pageErrors": [],
+  "browser": "Chrome/155.0.8059.40",
+  "extensionId": "dahgkfiefljjllnmcoahhioplbkjipel",
+  "packageVersions": {
+    "baseline": "0.2.0",
+    "candidate": "0.2.0"
+  },
+  "packageHashes": {
+    "baseline": "baf9acdb6207d147c1f18be3dad2ae4996622634f3b2e4f13ea1d1ec49eaba30",
+    "candidate": "5cd11935b95a1dd284937543c4ec43d4271f580098f6940f86753ccf888598fc"
+  },
+  "testSourceSha256": "d106aca5b90a7f97911c82ebc933eb74ee8b8df833e47589542c2d173577c62b"
+}

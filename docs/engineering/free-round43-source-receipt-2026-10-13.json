@@ -1,0 +1,21 @@
+{
+  "baseHead": "88ff23972b51898206de608dc0cccd61baaa86c2",
+  "sourceHashes": {
+    "src/data/evidence-ref-directory.mjs": "1001abca8b849e7c73390acaa730a1639efc9cc621898ca97f3d538b30832b08",
+    "tests/free/evidence-ref-directory.test.mjs": "de68f0a6fcc7b5c0b6a6cabf8c86c45a3f1e8b896550ffbf75e71da1240c6e1b",
+    "tests/free/evidence-ref-directory-browser.mjs": "a2bf6bee5754b7923bf9ad7c7f5b63173757d4da2fcb24b1022fcd6199818d97"
+  },
+  "fullNode": {
+    "pass": 867,
+    "fail": 0,
+    "skip": 0,
+    "command": "node --test tests/b1/broker.test.mjs tests/b23/*.test.mjs tests/b4/*.test.mjs tests/f1/*.test.mjs tests/hf/*.test.mjs tests/free/*.test.mjs",
+    "logTail": "test theme segment; old children stay parent (1.038334ms)\n✔ current positive observation does not require full old coverage (0.478125ms)\n✔ old snapshot cannot assert no recent input (0.568125ms)\n✔ old child with a coverage gap is unknown, not forcibly historical (0.400292ms)\n✔ visit/update/assistant/edit timestamps never activate (0.066292ms)\n✔ duplicate events idempotent, conflicting times quarantined (0.050917ms)\n✔ scope collision rejected even for same native ID/title (0.1625ms)\n✔ theme scope mismatch rejected (0.060209ms)\n✔ time-zone projection does not mutate source (1.266958ms)\n✔ 120 themes and all 604 references accounted for (11.381792ms)\n✔ cross-Project references aggregate without native mutation (0.888083ms)\n✔ only explicit synthetic origins and paths accepted (1.013792ms)\n✔ impossible calendar instants are unknown rather than normalized into a different day (0.099625ms)\nℹ tests 867\nℹ suites 0\nℹ pass 867\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 18146.824125\n"
+  },
+  "directoryContracts": 22,
+  "realIDBPrimitiveChecks": 5,
+  "runtimeIntegration": "NOT_ENABLED",
+  "actualMigration": "NOT_RUN",
+  "normalSend": "NOT_RUN",
+  "realAccount": "NOT_RUN"
+}

@@ -1,0 +1,9 @@
+{"name":"Free package is synthetic-only and does not request production host access","status":"PASS","productionMatched":false}
+{"name":"Actual MV3 worker renders default Free native names and NONE rows","status":"PASS","boot":"8dffa90d-d6aa-4988-95a8-e5d6e6c39eed"}
+{"name":"Second tab shares persisted native projection without page-origin database access","status":"PASS","workspaceRevision":1}
+{"name":"Native composer, draft, tools, search and unique reading return survive navigation","status":"PASS"}
+{"name":"Stopping actual worker rebinds without losing draft or native persisted projection","status":"PASS","workerBootChanged":true}
+{"name":"Existing native conversation send persists observation through the MV3 queue","status":"PASS","workspaceRevision":2}
+{"name":"Native synthetic new chat becomes a persisted NONE row and accepts shared working-set metadata","status":"PASS"}
+{"name":"Unknown account hides scoped Free cache while preserving native host","status":"PASS"}
+{"name":"No page JavaScript errors","status":"PASS"}

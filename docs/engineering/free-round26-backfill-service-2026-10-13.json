@@ -1,0 +1,25 @@
+{
+  "evidence": "HEADLESS_SYNTHETIC_REAL_IDB_CLIENT",
+  "hashes": {
+    "simulator/service.mjs": "f5540dfa7b337949ca2af6a66e54160d14ce5b127922f385d768e4d33607f732",
+    "src/data/free-runtime-service.mjs": "f32214eaeecf187cfda5c83fbeaca11f2aca6aa6fba956d13b60f93209d49fa5",
+    "src/data/known-anchor-backfill.mjs": "1027f07f7aa015e9ba535b0ad1a532c1a755a0e7d21668250895251f9146422b",
+    "src/data/repository.mjs": "09416d34b9c92bb7518e742985ae81c2f576805fd7f1a387cd5fcccfbfb9a269",
+    "src/b1/scope-repository.mjs": "2415f70ab46da554003eb1732e82dfc0764a7165476cf4ebe914ea2eeebe2c10"
+  },
+  "results": [
+    {
+      "name": "startup B1-only historic anchor automatically becomes reachable UNKNOWN without native evidence",
+      "status": "PASS"
+    },
+    {
+      "name": "completed cursor restarts after broker UPSERT and automatically refreshes with draft and reading intact",
+      "status": "PASS"
+    },
+    {
+      "name": "account switch cancels held old-scope batch and never publishes A anchors into B",
+      "status": "PASS"
+    }
+  ],
+  "errors": []
+}

@@ -1,0 +1,30 @@
+node-contracts	Complete Node contracts including historical writer compatibility	2026-10-19T22:48:23.6071018Z ✖ failing tests:
+node-contracts	Complete Node contracts including historical writer compatibility	2026-10-19T22:48:23.6071233Z
+node-contracts	Complete Node contracts including historical writer compatibility	2026-10-19T22:48:23.6071718Z test at tests/host/frame-row-window-integration.test.mjs:1:1
+node-contracts	Complete Node contracts including historical writer compatibility	2026-10-19T22:48:23.6073071Z ✖ tests/host/frame-row-window-integration.test.mjs (52.671256ms)
+node-contracts	Complete Node contracts including historical writer compatibility	2026-10-19T22:48:23.6073754Z   'test failed'
+node-contracts	Complete Node contracts including historical writer compatibility	2026-10-19T22:48:23.6073969Z
+node-contracts	Complete Node contracts including historical writer compatibility	2026-10-19T22:48:23.6074402Z test at tests/host/snippets-runner-lifecycle.test.mjs:55:1
+node-contracts	Complete Node contracts including historical writer compatibility	2026-10-19T22:48:23.6076038Z ✖ six-case browser journey retains original assertions with only the explicit sole-return observer correction (1.678975ms)
+node-contracts	Complete Node contracts including historical writer compatibility	2026-10-19T22:48:23.6077375Z   AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+node-contracts	Complete Node contracts including historical writer compatibility	2026-10-19T22:48:23.6078111Z   + actual - expected
+node-contracts	Complete Node contracts including historical writer compatibility	2026-10-19T22:48:23.6078726Z
+node-contracts	Complete Node contracts including historical writer compatibility	2026-10-19T22:48:23.6079342Z   + '97f81d31dcd0b932346a37ff3a62aa6d1bb5d1fd50bad22b7f096f2dcc07c96a'
+node-contracts	Complete Node contracts including historical writer compatibility	2026-10-19T22:48:23.6080355Z   - '35ae69a5d220476893f79f0ef215295eae2ffc36f228bf69fe58eecf612aaa0b'
+node-contracts	Complete Node contracts including historical writer compatibility	2026-10-19T22:48:23.6081051Z
+node-contracts	Complete Node contracts including historical writer compatibility	2026-10-19T22:48:23.6082442Z       at TestContext.<anonymous> (file:///home/runner/work/Virtual-AI-Workspace-Layer/Virtual-AI-Workspace-Layer/tests/host/snippets-runner-lifecycle.test.mjs:66:9)
+node-contracts	Complete Node contracts including historical writer compatibility	2026-10-19T22:48:23.6084011Z       at Test.runInAsyncScope (node:async_hooks:227:14)
+node-contracts	Complete Node contracts including historical writer compatibility	2026-10-19T22:48:23.6084759Z       at Test.run (node:internal/test_runner/test:1402:25)
+node-contracts	Complete Node contracts including historical writer compatibility	2026-10-19T22:48:23.6085528Z       at Test.start (node:internal/test_runner/test:1262:17)
+node-contracts	Complete Node contracts including historical writer compatibility	2026-10-19T22:48:23.6086463Z       at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17)
+node-contracts	Complete Node contracts including historical writer compatibility	2026-10-19T22:48:23.6087388Z       at run (node:internal/test_runner/harness:398:12)
+node-contracts	Complete Node contracts including historical writer compatibility	2026-10-19T22:48:23.6088125Z       at test (node:internal/test_runner/harness:407:12)
+node-contracts	Complete Node contracts including historical writer compatibility	2026-10-19T22:48:23.6089757Z       at file:///home/runner/work/Virtual-AI-Workspace-Layer/Virtual-AI-Workspace-Layer/tests/host/snippets-runner-lifecycle.test.mjs:55:1 {
+node-contracts	Complete Node contracts including historical writer compatibility	2026-10-19T22:48:23.6091085Z     generatedMessage: true,
+node-contracts	Complete Node contracts including historical writer compatibility	2026-10-19T22:48:23.6091554Z     code: 'ERR_ASSERTION',
+node-contracts	Complete Node contracts including historical writer compatibility	2026-10-19T22:48:23.6092345Z     actual: '97f81d31dcd0b932346a37ff3a62aa6d1bb5d1fd50bad22b7f096f2dcc07c96a',
+node-contracts	Complete Node contracts including historical writer compatibility	2026-10-19T22:48:23.6093497Z     expected: '35ae69a5d220476893f79f0ef215295eae2ffc36f228bf69fe58eecf612aaa0b',
+node-contracts	Complete Node contracts including historical writer compatibility	2026-10-19T22:48:23.6094347Z     operator: 'strictEqual',
+node-contracts	Complete Node contracts including historical writer compatibility	2026-10-19T22:48:23.6094810Z     diff: 'simple'
+node-contracts	Complete Node contracts including historical writer compatibility	2026-10-19T22:48:23.6095188Z   }
+node-contracts	Complete Node contracts including historical writer compatibility	2026-10-19T22:48:23.6162844Z ##[error]Process completed with exit code 1.

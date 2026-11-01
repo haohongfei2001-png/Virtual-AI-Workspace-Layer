@@ -1,0 +1,21 @@
+{
+  "parent": "414122db34638d562949145af948f241035c9cb8",
+  "sourceHashes": {
+    "src/b1/host-document-handshake.mjs": "670bf4c6c7ac9e2e62093f686abb7c5b70f57a0ee919346e8227a4b51c43eb32",
+    "src/host/chatgpt-adapter.mjs": "65dfd43aeff3446fea126321f7a97a95fcfc1642828e27e220cf9008aff00f29",
+    "src/host/surface-controller.mjs": "a35854135b276a51d207bf12ee590f0af571815b0fb855cea2847bc642ebfd86",
+    "src/host/ui-grants.mjs": "45c94efe75214cca84e16b076ad18b0a23205c0c57f076255cc2c9de84465be7",
+    "src/runtime/host-binding-service.mjs": "7b7b0d6d39a348d9026cd5aa6c30a485757aa92722ed2d57e5682026edcad1bc",
+    "src/runtime/host-ui-owner.mjs": "d0e822865e4bbc4f1c4831bc3020d3078219b861cf3a3fe2c83524a1205c0bee",
+    "tests/host/chatgpt-adapter.test.mjs": "75a4d0d353be38d802d33f822daca4bac3b38f2bbaadd668e4b82d365967c8bc",
+    "tests/host/document-renewal.test.mjs": "27f515c3f608b367c742caac2a204104fcc1f5a58c6ee916ee1801b142abb37c",
+    "tests/host/surface-controller.test.mjs": "edaec4b2fc7121e9f190a5116fdf14e83ca9f389497129299e79b6d9cf09eca6",
+    "tests/host/ui-grants.test.mjs": "8349c684a75f5db6e90d6fe90e0d44fd97fa6563d2f157e70012d7a14d59bdf5",
+    "tests/host/ui-mv3-browser.mjs": "e141f927c81e07be275f3b6892ce312964d4b322512f511ca454b5322ffa459e",
+    "tests/host/ui-owner.test.mjs": "47dfc1e39c70625c7994eca3e778c5c66a9a22d41521c40d6204fb616a5bf55f"
+  },
+  "evidence": "OFFLINE_DOCUMENT_UI_RENEWAL_NOT_COMPLETE_FREE",
+  "tests": 1554,
+  "realChatGPT": "NOT_RUN",
+  "release": "NOT_RELEASE_READY"
+}

@@ -1,0 +1,51 @@
+/** MOCK_IDB and fixed authenticated-provider candidates; no real send ACK or account access. */
+import test from 'node:test';import assert from 'node:assert/strict';
+import {MockIDBFactory} from '../b23/mock-idb.mjs';import {ScopeRepository} from '../../src/b1/scope-repository.mjs';
+import {createHostBindingService} from '../../src/runtime/host-binding-service.mjs';import {createURLPolicy} from '../../src/host/url-policy.mjs';
+const C='33333333-3333-4333-8333-333333333333',url='https://chatgpt.com/c/'+C,sender={id:'ext',tab:{id:1},frameId:0,documentId:'doc',documentLifecycle:'active',url};
+const frame={tabId:1,frameId:0,documentId:'doc',parentDocumentId:null,actualURL:url,documentLifecycle:'active',incognito:false};
+async function setup(){let n=0,time=Date.parse('2026-10-14T00:00:00Z'),principal='A',actual={documentId:'doc',url,documentLifecycle:'active'};const base=new ScopeRepository({indexedDB:new MockIDBFactory(),databaseName:'host-owner'}),profile={id:'legacy',revision:1,sendIntent:{formSelector:'#composer',editorSelector:'#editor',sendButtonSelector:'#send',enterSends:false},currentBody:{rootSelector:'main',conversationIdAttribute:'data-conversation-id',messageSelector:'[data-message-id]',messageIdAttribute:'data-message-id'},urlPolicy:createURLPolicy({profile:{conversationId:s=>s,projectId:({container})=>container}})};
+ const service=createHostBindingService({extensionId:'ext',getFrame:async()=>actual,allowedURL:u=>u===url,repository:base,provider:{read:async()=>({principalId:principal,expiresAt:new Date(time+60000).toISOString(),contexts:[{id:'personal',kind:'personal'}],providerProfile:'session',transport:'worker-fixed-fetch'}),readCurrentConversation:async r=>({principalKey:r.expectedPrincipalKey,contextKey:r.expectedContextKey,expiresAt:new Date(time+60000).toISOString(),providerProfile:'session',transport:'worker-fixed-fetch',metadata:{protocol:'vaiwl-conversation-metadata-candidate/1',conversationId:C,state:'candidate',messages:['m1','m2'].map((messageId,i)=>({messageId,mappingNodeId:'n'+i,role:'user',authorId:'A',selfMatchCandidate:true,rawCreateTime:null,precisionCandidate:'unknown',lineage:null})),gaps:[],coverage:'observed-only'}})},profile:{id:'personal',singlePersonalDefault:true},currentMetadataReadEnabled:true,sendCandidatesEnabled:true,surfaceProfiles:new Map([[profile.id,profile]]),now:()=>time,makeId:()=>`id_${++n}`});
+ async function bind(seq=1){const hello=await service.handle({v:1,type:'HOST_HELLO',clientId:'client',seq},sender),b=hello.binding;assert(b);assert.equal((await service.handle({v:1,type:'HOST_REFRESH',clientId:'client',seq:seq+1,documentToken:b.documentToken,producerToken:b.producerToken,routeEpoch:b.routeEpoch},sender)).state,'verified');return b;}
+ const binding=await bind();return {service,base,binding,bind,profile,setActual:patch=>Object.assign(actual,patch),get scope(){return service.authority.scopeFor(frame);},setPrincipal(p){principal=p;service.invalidate({tabId:1});},advance(ms){time+=ms;}};
+}
+const evidence=paths=>({profileId:'legacy',profileVersion:1,sourceKind:'native-dom',regionEpoch:1,fieldPaths:paths,receiptId:null});
+function proposal(binding,seq=1){const candidate=(entity,id)=>({renderKey:`${entity}:${id}`,entity,nativeTitle:entity==='project'?'同名':'原生标题',titleState:'exact',target:{kind:'resolved',entity,nativeId:id,navigationURL:entity==='project'?`https://chatgpt.com/g/${id}/project`:`https://chatgpt.com/c/${id}`,liveHandle:null},evidence:evidence(['history','href'])});return {protocol:'vaiwl-host-observation/1',documentToken:binding.documentToken,producerToken:binding.producerToken,routeEpoch:binding.routeEpoch,localSeq:seq,profileId:'legacy',profileVersion:1,bodyProofId:null,kind:'surface-delta',payload:{candidates:[candidate('project','p1'),candidate('project','p2'),candidate('conversation','c1')],membershipClaims:[{conversationId:'c1',asserted:'PROJECT',projectId:'p1',upstreamRevision:null,evidence:evidence(['members','current-project-route'])}],coverageClaims:[],detachedHandles:[]}};}
+
+function body(binding,seq=1,regionEpoch=1){return {protocol:'vaiwl-host-observation/1',documentToken:binding.documentToken,producerToken:binding.producerToken,routeEpoch:binding.routeEpoch,localSeq:seq,profileId:'legacy',profileVersion:1,bodyProofId:null,kind:'current-object',payload:{conversationId:C,messageIds:['m1','m2'],association:'explicit-body-id',regionEpoch,evidence:{...evidence(['current-body-explicit-id','current-body-message-ids']),regionEpoch}}};}
+async function fixture(t){const h=await setup();t.after(()=>{h.service.stop();h.base.close();});return h;}
+async function accept(h,p=body(h.binding)){const ack=await h.service.handle(p,sender);assert.equal(ack.state,'accepted',JSON.stringify(ack));assert.equal(typeof ack.bodyProofId,'string');return ack;}
+async function dump(h){const db=await h.base.open();return new Promise((resolve,reject)=>{const names=[...db.objectStoreNames],tx=db.transaction(names),rows={};for(const name of names){rows[name]=[];const q=tx.objectStore(name).openCursor();q.onsuccess=()=>{const cursor=q.result;if(cursor){rows[name].push(cursor.value);cursor.continue();}};}tx.oncomplete=()=>resolve(rows);tx.onabort=()=>reject(tx.error);});}
+
+async function baseline(h){const ack=await accept(h);assert.deepEqual(await h.service.sendCandidates.observe(ack.bodyProofId),[]);return ack.bodyProofId;}
+function intent(h,proof,seq=2){return {protocol:'vaiwl-host-observation/1',documentToken:h.binding.documentToken,producerToken:h.binding.producerToken,routeEpoch:h.binding.routeEpoch,localSeq:seq,profileId:'legacy',profileVersion:1,bodyProofId:proof,kind:'send-candidate',payload:{intentId:'intent-'+seq,conversationId:C,messageId:null,operationId:null,stage:'intent',observedAt:'2026-10-14T00:00:00.000Z',evidence:evidence(['native-send-intent'])}};}
+test('accepted baseline and send intent are RAM-only receipts, not ACK or activity writes',async t=>{const h=await fixture(t),before=await dump(h),proof=await baseline(h),p=intent(h,proof),ack=await h.service.handle(p,sender);assert.equal(ack.state,'accepted',JSON.stringify(ack));assert.deepEqual(Object.keys(ack).sort(),['localSeq','receiptId','state']);assert.match(ack.receiptId,/^intent_/);assert.equal((await h.service.handle(p,sender)).state,'duplicate');assert.deepEqual(await h.service.sendCandidates.observe(proof),[]);assert.deepEqual(await dump(h),before);});
+test('producer sequence cannot be reused across body, send, and surface kinds',async t=>{const h=await fixture(t),proof=await baseline(h);assert.equal((await h.service.handle(intent(h,proof,1),sender)).state,'rejected');assert.equal((await h.service.handle(intent(h,proof,2),sender)).state,'accepted');for(const p of [body(h.binding,2),proposal(h.binding,2)])assert.equal((await h.service.handle(p,sender)).reason,'replayed-host-proposal');});
+test('forged and other producer body proofs are rejected without database writes',async t=>{const h=await fixture(t),proof=await baseline(h),before=await dump(h);const forged=intent(h,'forged-proof');assert.equal((await h.service.handle(forged,sender)).state,'rejected');const wrong=intent(h,proof);wrong.producerToken='other-producer';assert.equal((await h.service.handle(wrong,sender)).state,'rejected');assert.deepEqual(await dump(h),before);});
+test('expired binding or replaced body proof cannot accept a stale intent',async t=>{for(const mode of ['expiry','replace']){const h=await fixture(t),proof=await baseline(h),before=await dump(h);if(mode==='expiry')h.advance(20001);else {const ack=await accept(h,body(h.binding,2,2));await h.service.sendCandidates.observe(ack.bodyProofId);}assert.equal((await h.service.handle(intent(h,proof,3),sender)).state,'rejected');assert.deepEqual(await dump(h),before);}});
+test('page cannot upgrade intent to ACK, attach message identity, or mint a receipt witness',async t=>{for(const patch of [{stage:'native-ack'},{messageId:'m3'},{operationId:'native-op'},{ackWitness:{accepted:true}}]){const h=await fixture(t),proof=await baseline(h),before=await dump(h),p=intent(h,proof);Object.assign(p.payload,patch);assert.equal((await h.service.handle(p,sender)).state,'rejected',JSON.stringify(patch));assert.deepEqual(await dump(h),before);}});
+
+test('sequenced send gap retires causality without replacing proof without storage mutation',async t=>{
+ const h=await fixture(t),proof=await baseline(h),before=await dump(h);
+ const gap={...intent(h,proof,2),kind:'send-gap',payload:{reason:'send-intent-capacity'}};
+ assert.equal((await h.service.handle(gap,sender)).state,'accepted');
+ assert.equal(h.service.observations.isCurrentProof(proof),true);
+ assert.equal((await h.service.handle(gap,sender)).state,'duplicate');
+ assert.equal(await h.service.sendCandidates.pendingIntent(proof,'intent-2'),null);
+ const next=await accept(h,body(h.binding,3));assert.equal(next.bodyProofId,proof);assert.equal(next.bodyEpoch,1);
+ assert.deepEqual(await dump(h),before);
+});
+for(const patch of [{bodyProofId:'forged'},{producerToken:'forged'},{payload:{reason:'other'}},{payload:{reason:'send-intent-capacity',sentAt:'forged'}}])test('send gap rejects invalid authority or shape '+JSON.stringify(patch),async t=>{
+ const h=await fixture(t),proof=await baseline(h);
+ const gap={...intent(h,proof,2),kind:'send-gap',payload:{reason:'send-intent-capacity'},...patch};
+ assert.equal((await h.service.handle(gap,sender)).state,'rejected');assert.equal(h.service.observations.isCurrentProof(proof),true);
+});
+
+test('gap duplicate receipt cannot acknowledge a different body proof',async t=>{
+ const h=await fixture(t),proof=await baseline(h);
+ const gap={...intent(h,proof,2),kind:'send-gap',payload:{reason:'send-intent-capacity'}};
+ assert.equal((await h.service.handle(gap,sender)).state,'accepted');
+ assert.equal((await h.service.handle({...gap,bodyProofId:'different-proof'},sender)).state,'rejected');
+ assert.equal((await h.service.handle(gap,sender)).state,'duplicate');
+ assert.equal(h.service.observations.isCurrentProof(proof),true);
+});

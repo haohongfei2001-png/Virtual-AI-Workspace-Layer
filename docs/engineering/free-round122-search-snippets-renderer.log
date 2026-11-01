@@ -1,0 +1,35 @@
+✔ each matching snippet has a separate preview and current-conversation locate action (3.3315ms)
+✔ locate is bounded single-flight and reports failure without losing native row (0.343584ms)
+✔ other conversation remains a normal native link and never gets locate actions (0.236209ms)
+✔ late locate result cannot overwrite changed query (0.434083ms)
+✔ late locate result cannot overwrite changed route (0.3655ms)
+✔ late locate result cannot overwrite changed scope (0.50825ms)
+✖ late locate result cannot overwrite changed stop (0.230417ms)
+✔ snippet DTO rejects extra authority fields and invalid bounds r=>({...r,anchor:{}}) (0.188875ms)
+✔ snippet DTO rejects extra authority fields and invalid bounds r=>({...r,messageId:'m'}) (0.088084ms)
+✔ snippet DTO rejects extra authority fields and invalid bounds r=>({...r,bodyHash:'a'.repeat(64)}) (0.104833ms)
+✔ snippet DTO rejects extra authority fields and invalid bounds r=>({...r,preview:'x'.repeat(161)}) (0.077958ms)
+✔ snippet DTO rejects extra authority fields and invalid bounds r=>({...r,id:''}) (0.06525ms)
+✔ one hundred snippets of 160 characters fit, one hundred and one rejects (0.867125ms)
+ℹ tests 13
+ℹ suites 0
+ℹ pass 12
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 46.725625
+
+✖ failing tests:
+
+test at tests/host/search-snippets-renderer.test.mjs:42:54
+✖ late locate result cannot overwrite changed stop (0.230417ms)
+  TypeError: Cannot read properties of null (reading 'workspace')
+      at Object.text (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/host/search-snippets-renderer.test.mjs:38:437)
+      at TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/host/search-snippets-renderer.test.mjs:42:621)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)

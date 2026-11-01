@@ -1,0 +1,85 @@
+{
+  "schema": "vaiwl-browser-local-continuity-v1",
+  "baseHead": "28f72da5d56508b63b1e17744001217b5500cfae",
+  "realMacChrome": "NOT_RUN",
+  "internalInterfaces": "DISABLED",
+  "sourceHashes": {
+    "src/host/browser-local-lifecycle.mjs": "2ad946950506907ef4ea23593fb74693da94f95733fe79bed8239b817428eebc",
+    "src/runtime/browser-local-authority.mjs": "3489176670062d247b052b016c41d75c9d18cc3d81f9f708d85329a86b6b36ba",
+    "src/runtime/browser-local-control.mjs": "e4925b22ff34a9c8af43243a140bb97f25a329b8137de049995ddaa94cdebc90",
+    "src/runtime/host-worker-runtime.mjs": "67f8da491f2104b81216cafd5a4ee56768dc2940e4159b87e596e9010c45a54b",
+    "extension/status.mjs": "228ce0ac893dbc2a3663e246b6fc41be14c2ef35fea5b0404ba257684dc2efe1",
+    "extension/README.txt": "0a62c1838a8043eb1aaac3536fc9134b8fcd1e6876cc2214abdfb860dc23acfb"
+  },
+  "targeted": {
+    "passed": 103,
+    "failed": 0,
+    "log": "/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/.git/vaiwl-checkpoints/20261023-browser-local-continuity/targeted-final.txt"
+  },
+  "isolatedMV3": {
+    "status": "PASS",
+    "checks": {
+      "projectAndMembersInFormalUI": true,
+      "nativeOpenPreservesDraft": true,
+      "uniqueReturn": true,
+      "noDatabaseOpened": true,
+      "reloadRediscoversVisibleObjects": true,
+      "replacementDoesNotExposeOldProject": true,
+      "explicitBindingUsesExistingIDBInSeparateNamespace": true,
+      "trustedSameDocumentNavigationRetainsPersonalSpace": true,
+      "tabFocusKeepsBinding": true,
+      "nativeSearchAndUnplannedSpaKeepsBinding": true,
+      "actualWorkerStopped": true,
+      "workerRestartSameDocumentNoConfirmation": true,
+      "workerRecoveryPreservesDraft": true,
+      "accountRiskClearsContinuityAndPrivateProjection": true,
+      "explicitUnlockRestoresKnownProject": true,
+      "refreshLocksButPreservesPersonalCache": true,
+      "browserRestartLocksAndExplicitUnlockRestores": true,
+      "noInternalRequests": true
+    },
+    "report": "/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/.git/vaiwl-checkpoints/20261023-browser-local-continuity/mv3-final.json",
+    "naturalWorkerSleep": "NOT_TESTED",
+    "workerExit": "ACTUAL_FORCED_STOP_AND_RESTART",
+    "realAccountSwitch": "NOT_RUN",
+    "externalVisibleBrowser": "NOT_USED",
+    "localUseObserved": true
+  },
+  "candidate": {
+    "unpacked": "/Users/hhf/Downloads/VAIWL-Browser-Local-Continuity-20261023-r2/extension",
+    "archiveSha256": "e42a62dd5463cff2e5f342fdf44b0a69aa4baa0fbf466795503e6a0767c024ee",
+    "files": 196,
+    "installed": "NOT_CHANGED"
+  },
+  "limits": [
+    "Confirmation is local and is not account authentication.",
+    "Exact surviving document only; no automatic transfer to a refreshed or another tab document.",
+    "Confirmation expires after 12 hours, without sliding renewal.",
+    "Refresh/new document/browser restart use immediate view with old private data locked.",
+    "Risk labels/selectors are revocation hints, not identity proof; silent remote account changes are not detectable.",
+    "No new identity/API/history reads, no automatic account or workspace operations."
+  ],
+  "failuresRetained": [
+    {
+      "report": "vaiwl-browser-local-mv3-T6IqcS/report.json",
+      "cause": "Runner initially required reading-mode return even when workspace presentation had correctly survived."
+    },
+    {
+      "report": "vaiwl-browser-local-mv3-8KV08w/report.json",
+      "cause": "Fresh UI was immediate-only after worker restart; session restoration not yet established."
+    },
+    {
+      "report": "vaiwl-browser-local-mv3-T6WJC3/report.json",
+      "cause": "Bounded diagnostic proved session row, document and live nonce matched. Pre-SPA sender URL was stale."
+    },
+    {
+      "report": "vaiwl-browser-local-mv3-K4s6O4/report.json",
+      "cause": "Private data revoked correctly, but lock/focus notification ordering could leave the immediate view stopped; restart now follows confirmed revocation."
+    },
+    {
+      "report": "vaiwl-browser-local-mv3-T4FgUJ/report.json",
+      "cause": "Asynchronous navigation preparation missed native arrival; use the authority-owned browser route synchronously for exact document clicks."
+    }
+  ],
+  "officialStorageReference": "https://developer.chrome.com/docs/extensions/reference/api/storage#storage_areas"
+}

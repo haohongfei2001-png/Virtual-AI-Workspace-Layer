@@ -1,0 +1,14 @@
+✔ complete visible 1000 to owned mask has finite semantic republication without PROJECT downgrade (90.872833ms)
+ℹ {"evidence":"L_DOM_DOUBLE_CHARACTERIZATION_NOT_A_FIX","visiblePackets":21,"maskRepublication":{"packets":39,"candidates":2001,"claims":2000,"detached":0},"projectMembership":1000}
+✔ a second unchanged masked scan drains without another publication (77.051666ms)
+ℹ {"evidence":"L_DOM_DOUBLE_CHARACTERIZATION_NOT_A_FIX","visiblePackets":21,"maskRepublication":{"packets":39,"candidates":2001,"claims":2000,"detached":0},"projectMembership":1000}
+✔ intervening candidate-only scan does not republish the unchanged masked directory (75.9375ms)
+ℹ {"evidence":"L_DOM_DOUBLE_CHARACTERIZATION_NOT_A_FIX","visiblePackets":21,"maskRepublication":{"packets":39,"candidates":2001,"claims":2000,"detached":0},"projectMembership":1000}
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 295.613917

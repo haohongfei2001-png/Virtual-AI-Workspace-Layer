@@ -1,0 +1,246 @@
+✖ MOCK_IDB coalescing unchanged active rows ACK without renewing persisted source or row witnesses (9.627625ms)
+✖ MOCK_IDB coalescing masked UNKNOWN preserves exact PROJECT witness and fresh producer cannot renew it (2.80575ms)
+✖ MOCK_IDB coalescing revision movement before no-op ACK retries without consuming producer sequence (1.642875ms)
+✖ MOCK_IDB coalescing authority loss during final version fence cannot ACK or persist (1.688125ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 0
+ℹ fail 4
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 65.624667
+
+✖ failing tests:
+
+test at ../../../../../private/tmp/round326-old-owner-coalescing.test.mjs:26:1
+✖ MOCK_IDB coalescing unchanged active rows ACK without renewing persisted source or row witnesses (9.627625ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  ... Skipped lines
+  
+    {
+      format: 'vaiwl-native-facts-v2',
+      membership: {
+        c1: {
+          generation: 'profile_1',
+          id: 'c1',
+  +       observedAt: '1970-01-01T00:00:02.000Z',
+  -       observedAt: '1970-01-01T00:00:01.000Z',
+          projectId: 'p1',
+          sourceId: 'host_dom_0e520eb23fb9704cc1564e93fffc68e0',
+  +       sourceRevision: 2,
+  -       sourceRevision: 1,
+          state: 'PROJECT',
+  +       validUntil: '1970-01-01T00:00:22.000Z'
+  -       validUntil: '1970-01-01T00:00:21.000Z'
+        }
+      },
+      projects: {
+        p1: {
+          availability: 'available',
+  ...
+          nativeUrl: 'https://chatgpt.com/g/p1/project',
+  +       observedAt: '1970-01-01T00:00:02.000Z',
+  -       observedAt: '1970-01-01T00:00:01.000Z',
+          sourceId: 'host_dom_0e520eb23fb9704cc1564e93fffc68e0',
+  +       sourceRevision: 2,
+  +       validUntil: '1970-01-01T00:00:22.000Z'
+  -       sourceRevision: 1,
+  -       validUntil: '1970-01-01T00:00:21.000Z'
+        },
+        p2: {
+          availability: 'available',
+          generation: 'profile_1',
+          id: 'p2',
+  ...
+          nativeUrl: 'https://chatgpt.com/g/p2/project',
+  +       observedAt: '1970-01-01T00:00:02.000Z',
+  -       observedAt: '1970-01-01T00:00:01.000Z',
+          sourceId: 'host_dom_0e520eb23fb9704cc1564e93fffc68e0',
+  +       sourceRevision: 2,
+  +       validUntil: '1970-01-01T00:00:22.000Z'
+  -       sourceRevision: 1,
+  -       validUntil: '1970-01-01T00:00:21.000Z'
+        }
+      },
+      refs: {
+        c1: {
+          availability: 'available',
+  ...
+          nativeUrl: 'https://chatgpt.com/c/c1',
+  +       observedAt: '1970-01-01T00:00:02.000Z',
+  -       observedAt: '1970-01-01T00:00:01.000Z',
+          sourceId: 'host_dom_0e520eb23fb9704cc1564e93fffc68e0',
+  +       sourceRevision: 2,
+  +       validUntil: '1970-01-01T00:00:22.000Z'
+  -       sourceRevision: 1,
+  -       validUntil: '1970-01-01T00:00:21.000Z'
+        }
+      },
+  +   revision: 2,
+  -   revision: 1,
+      scopeKey: '["chatgpt","fixture","personal"]',
+      sources: {
+        host_dom_0e520eb23fb9704cc1564e93fffc68e0: {
+          admission: {
+  +         acceptedAt: '1970-01-01T00:00:02.000Z',
+  -         acceptedAt: '1970-01-01T00:00:01.000Z',
+            evidenceClass: 'surface',
+            profileId: 'coalescing',
+            profileVersion: 1,
+            semanticFingerprint: '41dcb2752f79e57ffc40ff3d05d4021e7b967a9643bd3c39b69ee40b6c98f838'
+          },
+  ...
+          },
+  +       observedAt: '1970-01-01T00:00:02.000Z',
+  -       observedAt: '1970-01-01T00:00:01.000Z',
+          revoked: false,
+  +       sourceRevision: 2,
+  +       validUntil: '1970-01-01T00:00:22.000Z'
+  -       sourceRevision: 1,
+  -       validUntil: '1970-01-01T00:00:21.000Z'
+        }
+      }
+    }
+  
+      at TestContext.<anonymous> (file:///private/tmp/round326-old-owner-coalescing.test.mjs:28:99)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: { format: 'vaiwl-native-facts-v2', scopeKey: '["chatgpt","fixture","personal"]', revision: 2, projects: { p1: [Object], p2: [Object] }, refs: { c1: [Object] }, membership: { c1: [Object] }, sources: { host_dom_0e520eb23fb9704cc1564e93fffc68e0: [Object] } },
+    expected: { format: 'vaiwl-native-facts-v2', scopeKey: '["chatgpt","fixture","personal"]', revision: 1, projects: { p1: [Object], p2: [Object] }, refs: { c1: [Object] }, membership: { c1: [Object] }, sources: { host_dom_0e520eb23fb9704cc1564e93fffc68e0: [Object] } },
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at ../../../../../private/tmp/round326-old-owner-coalescing.test.mjs:31:1
+✖ MOCK_IDB coalescing masked UNKNOWN preserves exact PROJECT witness and fresh producer cannot renew it (2.80575ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  ... Skipped lines
+  
+    {
+      format: 'vaiwl-native-facts-v2',
+      membership: {
+        c1: {
+          generation: 'profile_1',
+  ...
+          nativeUrl: 'https://chatgpt.com/g/p1/project',
+  +       observedAt: '1970-01-01T00:00:02.000Z',
+  -       observedAt: '1970-01-01T00:00:01.000Z',
+          sourceId: 'host_dom_0e520eb23fb9704cc1564e93fffc68e0',
+  +       sourceRevision: 2,
+  +       validUntil: '1970-01-01T00:00:22.000Z'
+  -       sourceRevision: 1,
+  -       validUntil: '1970-01-01T00:00:21.000Z'
+        },
+        p2: {
+          availability: 'available',
+          generation: 'profile_1',
+          id: 'p2',
+  ...
+          nativeUrl: 'https://chatgpt.com/g/p2/project',
+  +       observedAt: '1970-01-01T00:00:02.000Z',
+  -       observedAt: '1970-01-01T00:00:01.000Z',
+          sourceId: 'host_dom_0e520eb23fb9704cc1564e93fffc68e0',
+  +       sourceRevision: 2,
+  +       validUntil: '1970-01-01T00:00:22.000Z'
+  -       sourceRevision: 1,
+  -       validUntil: '1970-01-01T00:00:21.000Z'
+        }
+      },
+      refs: {
+        c1: {
+          availability: 'available',
+  ...
+          nativeUrl: 'https://chatgpt.com/c/c1',
+  +       observedAt: '1970-01-01T00:00:02.000Z',
+  -       observedAt: '1970-01-01T00:00:01.000Z',
+          sourceId: 'host_dom_0e520eb23fb9704cc1564e93fffc68e0',
+  +       sourceRevision: 2,
+  +       validUntil: '1970-01-01T00:00:22.000Z'
+  -       sourceRevision: 1,
+  -       validUntil: '1970-01-01T00:00:21.000Z'
+        }
+      },
+  +   revision: 2,
+  -   revision: 1,
+      scopeKey: '["chatgpt","fixture","personal"]',
+      sources: {
+        host_dom_0e520eb23fb9704cc1564e93fffc68e0: {
+          admission: {
+  +         acceptedAt: '1970-01-01T00:00:02.000Z',
+  -         acceptedAt: '1970-01-01T00:00:01.000Z',
+            evidenceClass: 'surface',
+            profileId: 'coalescing',
+            profileVersion: 1,
+  +         semanticFingerprint: 'cfcb7d9491985518e1423e7ff63c9871befaee08d69bc82c008cc9d1f56c703c'
+  -         semanticFingerprint: '41dcb2752f79e57ffc40ff3d05d4021e7b967a9643bd3c39b69ee40b6c98f838'
+          },
+          channel: 'host-dom',
+          generation: 'profile_1',
+          id: 'host_dom_0e520eb23fb9704cc1564e93fffc68e0',
+          inventory: {
+  ...
+          },
+  +       observedAt: '1970-01-01T00:00:02.000Z',
+  -       observedAt: '1970-01-01T00:00:01.000Z',
+          revoked: false,
+  +       sourceRevision: 2,
+  +       validUntil: '1970-01-01T00:00:22.000Z'
+  -       sourceRevision: 1,
+  -       validUntil: '1970-01-01T00:00:21.000Z'
+        }
+      }
+    }
+  
+      at TestContext.<anonymous> (file:///private/tmp/round326-old-owner-coalescing.test.mjs:34:29)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: { format: 'vaiwl-native-facts-v2', scopeKey: '["chatgpt","fixture","personal"]', revision: 2, projects: { p1: [Object], p2: [Object] }, refs: { c1: [Object] }, membership: { c1: [Object] }, sources: { host_dom_0e520eb23fb9704cc1564e93fffc68e0: [Object] } },
+    expected: { format: 'vaiwl-native-facts-v2', scopeKey: '["chatgpt","fixture","personal"]', revision: 1, projects: { p1: [Object], p2: [Object] }, refs: { c1: [Object] }, membership: { c1: [Object] }, sources: { host_dom_0e520eb23fb9704cc1564e93fffc68e0: [Object] } },
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at ../../../../../private/tmp/round326-old-owner-coalescing.test.mjs:55:1
+✖ MOCK_IDB coalescing revision movement before no-op ACK retries without consuming producer sequence (1.642875ms)
+  AssertionError [ERR_ASSERTION]: {"state":"accepted","localSeq":2,"receiptId":"dom_cb9652354b572d36393355763887418e36d97f76cdb9df2a"}
+  + actual - expected
+  
+  + 'accepted'
+  - 'retry-after'
+  
+      at TestContext.<anonymous> (file:///private/tmp/round326-old-owner-coalescing.test.mjs:57:116)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'accepted',
+    expected: 'retry-after',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at ../../../../../private/tmp/round326-old-owner-coalescing.test.mjs:60:1
+✖ MOCK_IDB coalescing authority loss during final version fence cannot ACK or persist (1.688125ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'accepted'
+  - 'rejected'
+  
+      at TestContext.<anonymous> (file:///private/tmp/round326-old-owner-coalescing.test.mjs:62:106)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'accepted',
+    expected: 'rejected',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

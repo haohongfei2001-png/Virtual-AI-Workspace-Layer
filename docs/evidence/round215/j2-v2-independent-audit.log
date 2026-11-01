@@ -1,0 +1,13 @@
+✔ audit real mount masked childList revokes original worker proof (23.661902ms)
+✔ audit real mount masked message-id revokes original worker proof (4.713391ms)
+✔ audit real mount masked native-hidden revokes original worker proof (5.427549ms)
+✔ audit real mount masked remount revokes original worker proof (3.742828ms)
+✔ audit masked message replacement revokes worker proof before a later ACK read (21.574252ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 171.095023

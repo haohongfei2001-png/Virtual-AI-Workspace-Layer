@@ -1,0 +1,319 @@
+{
+  "evidence": "REAL_HEADLESS_PACKAGED_MV3_OFFLINE_RECOVERY",
+  "fixtureAuthority": "TEST_ONLY_EXTENSION_ORIGIN_IDB_DAMAGE_AND_PRO_ASSET",
+  "realChatGPT": "NOT_RUN",
+  "release": "NOT_RELEASE_READY",
+  "sourceHashes": {
+    "extension/worker.mjs": "b1b7a863445266949f31eb174a6af6b89f1a5d012ce6b3a6cfa0d4312decd47b",
+    "src/runtime/host-worker-runtime.mjs": "0caa59a294e1ae9990e78b0c6808880bbdd5c08b7a2169e8588b534be92c3223",
+    "src/b1/scope-repository.mjs": "08d5c29e4be60c9b94ac6c7dce3e7fb1c5f2e553979c5a8f872a08d7c0c2bb91",
+    "src/data/schema.mjs": "fcdfbd7759722e79e2ad089439033b7df13134c7da863fdf1c56d5e00d75847d",
+    "src/b1/identity.mjs": "6d7ca616701826733d4936d8a139395ccf1a3111e025ec6b1035d78c1dc05e99",
+    "src/data/known-anchor-key.mjs": "e5d91c902e04440be924ef0506ff688bbbccd83150610f50199b518bcb298df3",
+    "src/data/repository.mjs": "093aba679acff36dd2c40063b7bb2124e96cedc25cd1f92cbfe87a69458b737a",
+    "src/data/shared-directory-retention.mjs": "3bc27b2a71994f8f0857056c8309c47107251372f25c021368d3d06248e7cbc9",
+    "src/data/shared-directory-reader.mjs": "e4abac50e4cc282e16469861009a48893a10fd76652c208791834f50678c7672",
+    "src/data/shared-ref-directory.mjs": "9d1f099d7c5e5019ba023b0d84c57779e968a55ad6397d2ee20825e0d471fa44",
+    "src/data/verified-record-cache.mjs": "9b7b3c13abdd37f2b6d4fad48b85707a9815538fd793cad537f8e87b8f08cde0",
+    "src/data/state.mjs": "df0eaff00a7f050c37653f0e740b8fabe19bce571c5e37f4ce437d180984c62a",
+    "src/data/preferences.mjs": "1fb8395c5dfe23d64c91095b71a1c117b9762b3ccec68e262aaf73744b12c9d7",
+    "src/data/free-time-policy.mjs": "08192e4f8b809a3bb7ad759bc30a644bbc11a8b36bfe5cd3f412751f0c7ef64b",
+    "src/navigation/projection.mjs": "36334b5da4bd8e89718bf45b69723f4a657d46797c03c653298aaa3392399f24",
+    "src/data/hash.mjs": "ba845d5f13e7d3db8d8c747d1e711f210717e3a29ea9539a3477bbe8bc38e964",
+    "src/data/partition-manifest.mjs": "e9363342a5b44f14fcf3c12b7a65e0838e3376c250bd6d1e5978915c58ae7ef6",
+    "src/data/cooperate.mjs": "ce494a33280143e1e2a2227a72413da792330311de12642a9a56b13704f2f3b4",
+    "src/data/shared-directory-migration.mjs": "0cd415f9a871b93613c3d9f3e301982cda2d1891dc847d983397f87dc2dcf0df",
+    "src/data/shared-directory-writer.mjs": "4a060d7467d6e55a9fb2d54cd3d7099bc976c2228cf010cc97db03976a8ff8dd",
+    "src/data/shared-partition-audit.mjs": "b52d12777aa3639919e416732a8aac768af2582f71834ee5ced3ef03ceb81b4b",
+    "src/data/partitioned.mjs": "da639429c7a46b05dd4cc380e6ba1d62b118e2622b7a497efe96aa8c96367757",
+    "src/data/shared-directory-recovery.mjs": "e04870124d9cd873a8af8b3643fd3d2fa5bdb33c69809e7bbf667bb2aa4727cf",
+    "src/data/backup.mjs": "bb0a8639d02e2169ae15e866a464f1531b7e80e40afd7c8a4b35e99d70928396",
+    "src/data/evidence.mjs": "f84032c9a2fc08455480652b60de6fb9394a70e82a7ace8729186ff097b26238",
+    "src/data/known-anchor-backfill.mjs": "dd58e613da9564668fc7963135dd98caccf3bd6930e532864e68d9ff6afd55ca",
+    "src/data/free-evidence-repository.mjs": "148c6138cc58ede2eaf95534300c16e101765bb3d6a008a9f2e828de238e6389",
+    "src/data/continuation-evidence-reader.mjs": "38f857ba8b1ba5a31cd12d45f8bdff7cb4b1ec9457f1a1fbffc933abef80ce28",
+    "src/data/native-observation-continuation.mjs": "68477fcbe5e46d6b4218d5972c097a17a241e152f466b7b2ee6feaa2f6741d09",
+    "src/data/free-evidence.mjs": "194796386c17ce311e638d5cc35145aa372e16e87ab8c4d5b5cb9bd7f08fea12",
+    "src/data/observed-send-anchor.mjs": "f9dbb9278502a325c2263d4adeb99ea1c0159525d505728fe84fdee2d59980da",
+    "src/data/free-activity.mjs": "ec2150bb658f248df6e95399ab2d7fb4e9c8ccbf435a1282e840ad43feb5689e",
+    "src/data/native-facts.mjs": "2e3d25c30cec2320962697bf6342e298f4408bdd266fea400f19610e039b6e4c",
+    "src/data/native-partitions.mjs": "df08b215677fa72bdef9523a327ff26432b076b1f61e39ca39d7ca926a996628",
+    "src/data/native-version-index.mjs": "03089b0dddfa9f948087823af1e1ad7b43fc765a6631c40647e1e4b201cd7211",
+    "src/data/evidence-directory-writer.mjs": "9ff0c941904e155c736a29e1d232e4fecf67d7995c5d4b6907a12b0f54102944",
+    "src/data/evidence-ref-directory.mjs": "8a89bf5b8535578881c823077554f177098044214a22fcfaf4be41e65498c867",
+    "src/data/free-evidence-partitions.mjs": "8ee578d98b2ac5f50841646f941957516f890743bdc799a02fb44197281ff8cb",
+    "src/data/evidence-directory-migration.mjs": "77d20d97c1de762b2c252b29fb2353df053bde3ad0c64b5678feb01ab47da4f1",
+    "src/data/evidence-partition-audit.mjs": "125abaa5b15837e66dc03951a4916cbbf1207f4d05c5ce1ed1d7e75c18488b29",
+    "src/data/evidence-directory-reader.mjs": "7ef90c7a37a82b2ce4562acb6afc56e4ae36d14543c776893664b79869fa895b",
+    "src/host/surface-discovery.mjs": "9bf4a2d19845cec7893ab8ba0f2910c2dac888badc1b29dec03426c10b233c74",
+    "src/host/url-policy.mjs": "fddfafcca2276161e6fd3c908ac896d0dab656fce6cf06aee64f1f442f7ac7e9",
+    "src/runtime/host-binding-service.mjs": "60d58c20e826cb67f8a709691f3192266387e398276649c713bd4e944fcec6f3",
+    "src/runtime/host-recovery-service.mjs": "ceaf407790fa8f56e7b03795e2f88c1d00465f6d71b4a10f276844c82fe47991",
+    "src/host/contract.mjs": "35129aacf2a7e1fe1812c846379563d60ad74a66b689ad41bc38d76484a97716",
+    "src/data/request-deadline.mjs": "cda2ebb4158c05eb911fbb84a1af092cf91f461e3a002bef4b4d23f5a70dfdf7",
+    "src/runtime/host-continuation-owner.mjs": "efd6890006e519a3295ffe77679b897ffebe8c596e0a9fe99eeed1ea3f79ace9",
+    "src/runtime/free-read-service.mjs": "53f30ef511da4a283ac753c6fe8a496a1f220ca80c9666124dc3ff4b57e7c0e2",
+    "src/data/free-recovery-status.mjs": "21b871a60c1dfc2c7c67964f30f1852c33ee225a3d9df1271a518e7850e51bb4",
+    "src/data/native-index-reader.mjs": "f359a28b189dec9605dad356d3c19d474132fff2ab3a94425367997047c96c4a",
+    "src/data/free-projection.mjs": "516fad5ee288782350cfb63cf5506e070e737a0d653c128e2866d1cbeb8d07af",
+    "src/runtime/host-view-service.mjs": "4590bcbeb05525090d9bbd88b2876b77e5e9f0536f3f4057343a7ff0d7fdfc79",
+    "src/runtime/free-working-set-projection.mjs": "b50b973005612c5d9d76cff9a4acd6d6fc23d006dea787d681c534385629ff4f",
+    "src/navigation/free-view.mjs": "ef0f8d6b798789539d16bdc3ae1d8cc66ccf5fc32f472b83ca2c475863946aaa",
+    "src/runtime/free-search-projection.mjs": "683ba99108b9fe7e5999ea82eb57002668a97226489d9c8177686a6322d60b0c",
+    "src/navigation/search.mjs": "a93da18f3018a6267af7634986fdf7cfca4ed72eeaa6bb982340e9b0031c85d6",
+    "src/runtime/free-view-owner.mjs": "c815bc04302d9d3d9a96257269b2b7a12daa55965f3ac64c1915d043bc1e09bf",
+    "src/data/read-recovery-budget.mjs": "7c7948a740dcc37f9a2a6b25babe8c29cd2d84441299c1429c7e524402cc8c51",
+    "src/data/free-header-loader.mjs": "76abb31e4f65d87849810f876dc143d6c4f4744770c0caa8f8447add70145d35",
+    "src/data/free-page-loader.mjs": "c4339dfa76cfab89aa1f16b40129ee9f7c779233d5d03ff2134f551a8f9b0d65",
+    "src/data/free-replica.mjs": "5f65439dc9c0c70b68824f6e689488db66af1380e89d8a9efbf8e7880c55630e",
+    "src/navigation/current-index.mjs": "23f13e4d9556715bb029ad6724b8a3731ba87251d6ddfd8e95939085ebfab21e",
+    "src/runtime/free-frame-projection.mjs": "ff42fcb87317baf8f7e2b7e04ca3cb05b0070583cc137f2217c49957773dea8d",
+    "src/runtime/host-ui-owner.mjs": "687d68b75b0bc7b19fd41e30172b49e0a5daa4ceffb2afdf18a3904fe2a4cfa0",
+    "src/host/ui-grants.mjs": "38b648ca69fa08342e93393ea8e75fb660ec7fa3871611b3b8c8e110f92ba1a1",
+    "src/runtime/host-observation-owner.mjs": "359699e9da345fd3e83d664f6dd3f3c872f033f503ce1fddb0a88114a9db7b2e",
+    "src/host/surface-batch.mjs": "4733a8cecdc3f4664c77da81d12441c9f2bd7cf0c16e55ec93eb94076faa4e5d",
+    "src/data/native-repository.mjs": "6e8f250819dc5584d3fe2c84408675a048d934d83e01582e8adb5fc584e165b1",
+    "src/data/native-index-migration.mjs": "5bfc5cac72f135324a2c5033c6a670533e5f606b98d66669db1338b8429add42",
+    "src/data/native-partition-audit.mjs": "fa335cec2a50d7ecdfefdd3e6db5459e18d0c22bdd3478649f55a6654dcc441e",
+    "src/data/native-index-writer.mjs": "b24b74a4470602b8196c5ee9559aaa8d5f53454c034b02aeb84b2652532a2808",
+    "src/b1/document-binding-broker.mjs": "1f247c0fa2b3a05c5f2ae11dda39df04de9c79628b7753715bdafcadbc842aec",
+    "src/b1/host-document-handshake.mjs": "670bf4c6c7ac9e2e62093f686abb7c5b70f57a0ee919346e8227a4b51c43eb32",
+    "src/runtime/scope-authority.mjs": "0827852c683dbe6ae4b24ae8f2aa11b36295ab683e8b0aaf7a549a0081362777",
+    "src/runtime/session-provider.mjs": "6b141bc15867cd10656cc99a90407bcf369ae6e0d6444011d7c8703f958430e2",
+    "src/host/conversation-metadata.mjs": "744afe2228882a5ebff1ffd8f1294ecd80697d63b44af60640e3ff4d3a63410e",
+    "extension/config.mjs": "9f38c623f8ef08e684d9b1b71fd0a49c01b736a41e75efc997117370df175c41",
+    "extension/content-entry.mjs": "d0bef40c2b3aaf144637e65c441b1af4b62a7927cb3c4e554df9090152cc1687",
+    "src/host/content-session.mjs": "60e63355edb474cd9114b9f0649773f4a4b07b6c713775c2339010f2d75619c7",
+    "src/host/chatgpt-adapter.mjs": "cabad1c986938a2fa085d96d690754a7db05caf53f8ee93bed615bc3b499b9b0",
+    "src/host/native-actions.mjs": "39d744d334a597d7310aa4e95b1e04ff2f3358612075d26cd9d73661d8cc5502",
+    "src/navigation/mount-surface.mjs": "e05df208ad0711237d41779addbd2b0447e0fdcd836e564caef1f5831e76f59f",
+    "src/host/surface-controller.mjs": "9ad4cccc419dc0106b7797e382942e9ea20b935a46ea163593be0a6a253ef799",
+    "src/host/frame-native-plans.mjs": "d3fc2e60cd961c77048146235e72353a9a401e2048605f4dfaa4d3df02499746",
+    "extension/workspace.mjs": "bf2eb026da73b65a5969d2c6d9a187e2350481c19b63f1a97efc93df6419fc64",
+    "src/host/free-frame-client.mjs": "631f50d8360b131672c250ec7bd045a1c483890c1d769e3cd19b3184ee9db569",
+    "src/host/free-frame-recovery.mjs": "dadb2d02f2603b504471d69072bcec36c0393cabd8c0201c63251e192383b187",
+    "src/navigation/free-recovery.mjs": "6da71d19e296066a4fcd9f56eb64b8a33127bd4733334f5d3de1e5e84bc3aaac",
+    "src/host/ui-frame-client.mjs": "191ba7d054a8b34be11f5c42542b82ce4ac6e8ad0d8f66bac0adda4b600d98b0",
+    "src/navigation/navigation.mjs": "6dfc39acbe9b76b94b4893f98d9a1b37ff3ceae5c5543f5e2b0e2f3a77e1dcbf",
+    "src/navigation/icons.mjs": "14195d8a7a21a029278ff6f9bf0bb1add2d679b37666108d80cfadabe312d2fd",
+    "src/navigation/styles.mjs": "3acd56606be4653a1391a7725d21649c376b7ded6d8acb8e5b6f5c0a80c213bc",
+    "extension/sidebar.mjs": "6151804205b8393cabfff2d4b2e3deaca3a36beac14d07198ca0295d3d4a3ce6"
+  },
+  "buildManifestHash": "2c920aa57cd87ce1658e878bcf9fdc982f1b2de6d49ffd9c513a8f054db8158d",
+  "scriptHash": "d130894d83eb36e4f4b0011c41688477b0f9cb4e886b6baf627ea702ec362135",
+  "package": {
+    "status": "OFFLINE_HOST_RECONSTRUCTION",
+    "releaseStatus": "NOT_RELEASE_READY",
+    "files": 100,
+    "unpacked": "/private/tmp/vaiwl-recovery-package-JUkJhI/package/extension",
+    "archive": "/private/tmp/vaiwl-recovery-package-JUkJhI/package/vaiwl-free-host-development.zip",
+    "archiveSha256": "62a5b134219e9b8cfcdf454cbe6c7de3667d964038bf9326822f2f56166620e4"
+  },
+  "results": [
+    {
+      "name": "healthy-recovery-status-is-readonly-across-all-IDB-stores",
+      "status": "PASS"
+    },
+    {
+      "name": "damaged-native-root-shows-explicit-recovery-without-auto-write",
+      "status": "PASS"
+    }
+  ],
+  "errors": [],
+  "status": "FAIL",
+  "error": "locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-free-list=\"unknown\"]').locator('a[data-ref-id=\"33333333-3333-4333-8333-333333333333\"]') to be visible\u001b[22m\n\n    at /Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/host/recovery-package-mv3-browser.mjs:21:685",
+  "pages": [
+    {
+      "url": "about:blank",
+      "frames": [
+        {
+          "url": "about:blank",
+          "trace": [],
+          "text": "\n"
+        }
+      ]
+    },
+    {
+      "url": "http://127.0.0.1:55234/",
+      "frames": [
+        {
+          "url": "http://127.0.0.1:55234/",
+          "trace": [],
+          "text": "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nNew chat\nSearch chats\nNew project\nProjects\nResearch\nResearch\nAccount\nChatGPT\nNew chat\nMove to project\nMessage ChatGPT\nToolsSend\n返回原生阅读\n显示原生列表"
+        },
+        {
+          "url": "chrome-extension://llcijnkeecmeefpjmkacmjcfkffebalc/workspace.html",
+          "trace": [
+            {
+              "type": "HOST_UI_RECOVER",
+              "ok": true
+            },
+            {
+              "type": "HOST_UI_VIEW",
+              "ok": true,
+              "state": "preparing"
+            },
+            {
+              "type": "HOST_UI_VIEW",
+              "ok": true,
+              "state": "ready"
+            },
+            {
+              "type": "HOST_UI_VIEW",
+              "ok": true,
+              "state": "ready"
+            },
+            {
+              "type": "HOST_UI_PRESENT",
+              "ok": true
+            },
+            {
+              "type": "HOST_UI_VIEW",
+              "ok": true,
+              "state": "ready"
+            },
+            {
+              "type": "HOST_UI_VIEW",
+              "ok": true,
+              "state": "ready"
+            },
+            {
+              "type": "HOST_UI_RENEW",
+              "ok": true
+            },
+            {
+              "type": "HOST_UI_VIEW",
+              "ok": true,
+              "state": "ready"
+            }
+          ],
+          "text": "\n\n\n\n:host{font:13px/1.55 -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:var(--ink,#202123);--focus:#3877ba}\n*{box-sizing:border-box}[hidden]{display:none!important}button,a,input{font:inherit;color:inherit}button{cursor:pointer;border:0;background:transparent}button:hover,a:hover{background:var(--hover,#eee)}button:disabled{opacity:.35;cursor:default}button:focus-visible,a:focus-visible,input:focus-visible{outline:2px solid var(--focus);outline-offset:2px}a{text-decoration:none}svg{display:block;pointer-events:none}button{transition:background .14s ease} .square{width:34px;height:34px;border-radius:9px;display:inline-grid;place-items:center;flex:none}\n.toolbar{display:flex;align-items:center;gap:1px;color:var(--muted,#6e6e76);font-size:12px;padding:12px 4px 8px}.toolbar strong{font-weight:500;margin-right:auto}.themes{max-height:340px;overflow:auto;scrollbar-width:thin;padding:2px 3px 5px}.group{padding:2px 0}.theme-toggle{display:flex;gap:9px;align-items:center;padding:9px 8px;border-radius:9px;width:100%;text-align:left;font-weight:550;min-width:0}.theme-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.theme-glyph{width:22px;min-height:22px;display:inline-grid;place-items:center;flex:none;color:var(--muted,#6e6e76);font-size:18px;font-weight:400}.children{margin-left:18px;padding-left:7px;border-left:1px solid var(--line,#e8e8e8)}.row{display:block;padding:8px 10px;border-radius:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12px}.row[aria-current=page]{background:var(--hover,#eee)}.row[aria-disabled=true]{opacity:.5}.old{display:grid;margin:6px 0 0 2px;color:var(--muted,#6e6e76);text-align:left}.old svg{transition:transform .16s ease}.old[aria-expanded=true] svg{transform:rotate(90deg)}.old-list{border-left:1px solid var(--line,#e8e8e8);margin:3px 0 0 18px;padding-left:7px}.more{font-size:12px;color:var(--muted,#6e6e76);padding:8px 10px;min-height:34px;border-radius:8px;text-align:left}.current-context{margin-top:8px;border-top:1px solid var(--line,#e8e8e8);padding-top:8px}\n.workspace{height:100%;overflow:auto;padding:32px 56px 36px 32px;background:var(--surface,#fff);scrollbar-width:thin;position:relative;container-type:inline-size}.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(280px,100%),1fr));gap:20px;align-items:start;padding-bottom:28px;max-width:1400px;margin:0 auto}.card{border:1px solid var(--line,#e8e8e8);border-radius:18px;padding:16px 12px 12px;background:var(--surface,#fff);min-width:0}.card-head{display:flex;align-items:center;gap:4px;position:relative;padding:0 4px 9px}.card h2{font-size:15px;line-height:1.5;margin:0;font-weight:600;display:flex;gap:10px;align-items:center;min-width:0;flex:1;letter-spacing:-.015em}.card h2 .theme-glyph{background:var(--bubble,#f4f4f4);width:32px;height:32px;border-radius:9px}.card .row{font-size:13px;padding:9px 12px}.card .members{margin-left:15px;border-left:1px solid var(--line,#e8e8e8);padding-left:8px}.card .old{margin-left:2px}.card .old-list{margin-left:18px}.card .more{padding-left:12px}.card-actions{color:var(--muted,#6e6e76)}.arrows{position:sticky;top:0;float:right;margin-right:-44px;display:grid;gap:6px;z-index:2;background:var(--surface,#fff);border:1px solid var(--line,#e8e8e8);border-radius:12px;padding:2px;box-shadow:0 2px 8px #00000004}.empty{color:var(--muted,#6e6e76);padding:80px 16px;text-align:center;grid-column:1/-1}.empty svg{margin:0 auto 16px}.empty p{margin:6px 0;font-size:13px}.empty strong{font-weight:500;color:var(--ink,#202123)}\n.search{max-width:780px;margin:0 auto;border:1px solid var(--line,#e8e8e8);border-radius:18px;padding:20px;position:relative}.search-top{display:flex;align-items:center;gap:12px;margin-bottom:14px}.search-top strong{font-size:15px;font-weight:550;flex:1}.search input{background:var(--bubble,#f4f4f4);color:inherit;border:1px solid var(--line,#e8e8e8);border-radius:11px;padding:12px 14px;width:100%;outline-offset:2px}.search p{font-size:12px;color:var(--muted,#6e6e76);margin:12px 0 18px}.search-results{border-top:1px solid var(--line,#e8e8e8);padding-top:8px}.search .row{font-size:13px;padding:11px 12px}.search .no-results{padding:28px 12px;text-align:center;color:var(--muted,#6e6e76)}\n.menu{position:absolute;right:4px;top:42px;background:var(--surface,#fff);color:var(--ink,#202123);border:1px solid var(--line,#e8e8e8);border-radius:12px;padding:5px;min-width:156px;box-shadow:0 8px 24px #00000018;z-index:4}.menu button{display:block;width:100%;text-align:left;font-size:13px;padding:9px 12px;border-radius:7px}.card-head:has(.menu){z-index:3}.card:has(.menu){z-index:3}\n:host([data-vaiwl-compact=\"false\"]) .row{padding-top:13px;padding-bottom:13px}@media(max-width:700px){.workspace{padding:20px 48px 24px 16px}.arrows{margin-right:-40px}.cards{gap:14px;grid-template-columns:1fr}.card{border-radius:15px}.search{padding:16px}}@media(prefers-reduced-motion:reduce){button,.old svg{transition:none}}\n\n/* Match the approved v2.7 core; all rules remain within owned shadow roots. */\n:host{font:14px/1.5 -apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC',sans-serif}\n.workspace{padding:24px 70px 36px 24px}.cards{gap:18px;max-width:1148px;margin:0}\n.card{border-radius:13px;padding:0;overflow:visible}.card-head{background:var(--bubble,#f4f4f4);border-bottom:1px solid var(--line,#e5e5e5);border-radius:12px 12px 0 0;min-height:48px;padding:10px 11px 10px 15px;gap:10px}\n.card h2{gap:11px;font-size:15px;line-height:22px;letter-spacing:0}.card h2 .theme-glyph{width:25px;height:25px;border-radius:7px;background:color-mix(in srgb,var(--bubble,#f4f4f4) 88%,var(--ink,#171717) 12%);color:inherit}.card .members{margin:8px 10px 9px 28px;padding-left:9px;border-color:var(--line,#d8d8d8)}\n.row{display:flex;align-items:center;gap:8px;min-width:0}.window-glyph{display:inline-flex;flex:none;color:var(--muted,#646464)}.window-title{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}\n.card .row{overflow:visible;position:relative;font-size:14px;line-height:22px;min-height:36px;padding:7px 6px 7px 9px;gap:8px}.card .row::before{content:\"\";position:absolute;left:-10px;top:18px;width:7px;border-top:1px solid var(--line,#d8d8d8);pointer-events:none}\n.card-actions{width:28px;height:28px;opacity:0}.card:hover .card-actions,.card:focus-within .card-actions{opacity:1}.card .old{width:30px;height:30px;margin:3px 0 0 2px}.card .old-list{margin:3px 0 0 -9px;padding:6px 0 0 9px;border-top:1px solid var(--line,#e5e5e5);border-left:0}.card .more{padding:5px 9px}\n.arrows{margin-right:-46px;background:transparent;border:0;box-shadow:none;padding:0;border-radius:0;top:0}.arrows button{width:32px;height:32px}\n.themes{max-height:340px}.theme-toggle{font-size:14px;min-height:39px;padding:8px}.theme-glyph{width:17px;min-height:17px}.theme-name{flex:1}.theme-disclosure{margin-left:auto}.theme-disclosure svg{width:12px;height:12px}.theme-toggle[aria-expanded=true] .theme-disclosure svg{transform:rotate(90deg)}.children .row{font-size:13px;min-height:34px;padding:5px;gap:6px}.children .window-glyph svg{width:12px;height:12px}\n@media(max-width:760px){.workspace{padding:15px 46px 24px 9px}.arrows{margin-right:-37px}.card-head{padding-left:11px}.card h2{gap:8px}.card-actions{opacity:1}.card{border-radius:13px}}\n@media(pointer:coarse){.card-actions{opacity:1}.card .row{min-height:44px}.old,.arrows button{min-height:40px}}\n.snippet-preview{display:block;font-size:12px;color:var(--muted,#646464);white-space:normal;max-height:3em;overflow:hidden;margin-left:8px;flex:1}.anchor-feedback{font-size:12px;color:var(--muted,#646464);padding:8px}.working-set .row{margin:3px 0}.toolbar .square{width:30px;height:32px}\n时间范围 7天14天30天60天90天无项目聊天暂无已知记录。归属待核对暂无已知记录。\n\n"
+        },
+        {
+          "url": "chrome-extension://llcijnkeecmeefpjmkacmjcfkffebalc/sidebar.html",
+          "trace": [],
+          "text": "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n恢复本地工作空间\n\n原生聊天仍可使用。修复仅在你点击后执行；未经核验的记录保持原样。\n\n选择需要修复的本地记录。\n\n工作集与个人设置\n\n恢复已保存的工作集、人工名称和个人设置。\n\n未发现损坏。\n\n项目与聊天索引\n\n恢复已保存的原生项目与聊天索引，不修改原生聊天。\n\n未发现损坏。\n\n活跃度记录\n\n恢复已保存的活跃度记录，不重发消息或恢复已撤销的授权。\n\n未发现损坏。\n\n返回工作空间"
+        }
+      ]
+    },
+    {
+      "url": "chrome-extension://llcijnkeecmeefpjmkacmjcfkffebalc/workspace.html",
+      "frames": [
+        {
+          "url": "chrome-extension://llcijnkeecmeefpjmkacmjcfkffebalc/workspace.html",
+          "trace": [],
+          "text": "\n\n\n"
+        }
+      ]
+    }
+  ],
+  "afterFailure": {
+    "stores": {
+      "b23_checkpoints": {
+        "[\"chatgpt\",\"principal_b5251fa0aba8e6d9cc5c14d0fb61db814d07c01eea39d1174341557cff7a5dd3\",\"context_342ce0ccae3d4fa425a12ac33fe114e184aa508160b56198309d27e2c808c988\"]": "febbf04ba27be0dcddfc0848ef4bf892eac4d07b26f78ee8e834b863e110b01b"
+      },
+      "b23_operations": {
+        "[\"[\\\"chatgpt\\\",\\\"principal_b5251fa0aba8e6d9cc5c14d0fb61db814d07c01eea39d1174341557cff7a5dd3\\\",\\\"context_342ce0ccae3d4fa425a12ac33fe114e184aa508160b56198309d27e2c808c988\\\"]\",\"fixture_recovery_pro\"]": "e5ae509234bd26c01ae89451ffac26f7883430b5f9b5860e48a94f79afc1a585",
+        "[\"[\\\"chatgpt\\\",\\\"principal_b5251fa0aba8e6d9cc5c14d0fb61db814d07c01eea39d1174341557cff7a5dd3\\\",\\\"context_342ce0ccae3d4fa425a12ac33fe114e184aa508160b56198309d27e2c808c988\\\"]\",\"native_refs_850400a4ce96fbaf43c23b1a7c1c06e2f1c9ffc52207610baacfabd51dfe8061\"]": "b98b8743cdcee53ecf8ce9e1aa01b252fe0c9f628354c0e253d0a346b8757b2e"
+      },
+      "b23_states": {
+        "[\"chatgpt\",\"principal_b5251fa0aba8e6d9cc5c14d0fb61db814d07c01eea39d1174341557cff7a5dd3\",\"context_342ce0ccae3d4fa425a12ac33fe114e184aa508160b56198309d27e2c808c988\"]": "26e07783eb9f6e4c228d22406811c59bb779a8777938138cdccf4484e5d787dd"
+      },
+      "b23_views": {},
+      "native_operations": {
+        "[\"[\\\"chatgpt\\\",\\\"principal_b5251fa0aba8e6d9cc5c14d0fb61db814d07c01eea39d1174341557cff7a5dd3\\\",\\\"context_342ce0ccae3d4fa425a12ac33fe114e184aa508160b56198309d27e2c808c988\\\"]\",\"dc18cb7c-b9a7-4d92-accf-df0a2dec0ee2\"]": "1a9091d45c4f20e09b50b8d513a7eb93c69051f49638ce1e4f4e0ca89de630ca",
+        "[\"[\\\"chatgpt\\\",\\\"principal_b5251fa0aba8e6d9cc5c14d0fb61db814d07c01eea39d1174341557cff7a5dd3\\\",\\\"context_342ce0ccae3d4fa425a12ac33fe114e184aa508160b56198309d27e2c808c988\\\"]\",\"dom_2fadefec0176ed1e79637749645a537185fd0c329db331b2\"]": "d628dc70500ce20b868040f5d22ad23d7ce76e411dd521e1faaa2603f2f8929d",
+        "[\"[\\\"chatgpt\\\",\\\"principal_b5251fa0aba8e6d9cc5c14d0fb61db814d07c01eea39d1174341557cff7a5dd3\\\",\\\"context_342ce0ccae3d4fa425a12ac33fe114e184aa508160b56198309d27e2c808c988\\\"]\",\"native_version_index_v1\"]": "27e07ce2f59b850b43dd78522b19ec00cecb48df62656326def8ceca600a92e3",
+        "[\"chatgpt\",\"principal_b5251fa0aba8e6d9cc5c14d0fb61db814d07c01eea39d1174341557cff7a5dd3\",\"context_342ce0ccae3d4fa425a12ac33fe114e184aa508160b56198309d27e2c808c988\"]": "b28dc3bc4b19753d43f23f3279bc13916e4b32880f64ede8c1b1dff0d65fd5c4"
+      },
+      "native_states": {
+        "[\"[\\\"chatgpt\\\",\\\"principal_b5251fa0aba8e6d9cc5c14d0fb61db814d07c01eea39d1174341557cff7a5dd3\\\",\\\"context_342ce0ccae3d4fa425a12ac33fe114e184aa508160b56198309d27e2c808c988\\\"]\",\"native-checkpoint\"]": "e21f1b7165b35ec5d017c1a633f04f2c0022cd1e488652c5619b5e3a04e408c3",
+        "[\"[\\\"chatgpt\\\",\\\"principal_b5251fa0aba8e6d9cc5c14d0fb61db814d07c01eea39d1174341557cff7a5dd3\\\",\\\"context_342ce0ccae3d4fa425a12ac33fe114e184aa508160b56198309d27e2c808c988\\\"]\",\"native-piece\",\"projects\",\"g-p-11111111111111111111111111111111\",1]": "0ab7f04067d88df0e268fa52dff181dd890361fa8f283fc371beb2c5712a0cb0",
+        "[\"[\\\"chatgpt\\\",\\\"principal_b5251fa0aba8e6d9cc5c14d0fb61db814d07c01eea39d1174341557cff7a5dd3\\\",\\\"context_342ce0ccae3d4fa425a12ac33fe114e184aa508160b56198309d27e2c808c988\\\"]\",\"native-piece\",\"refs\",\"33333333-3333-4333-8333-333333333333\",1]": "93fba13459f7784f99b74ef4812877a3c3ad14bcc30ad664b4ef8875d92a3501",
+        "[\"[\\\"chatgpt\\\",\\\"principal_b5251fa0aba8e6d9cc5c14d0fb61db814d07c01eea39d1174341557cff7a5dd3\\\",\\\"context_342ce0ccae3d4fa425a12ac33fe114e184aa508160b56198309d27e2c808c988\\\"]\",\"native-piece\",\"refs\",\"44444444-4444-4444-8444-444444444444\",1]": "b16a45c47f5dd6db1006f50bfe8b077d2e9cfbd4d00a8f00112dc65b31a56b27",
+        "[\"[\\\"chatgpt\\\",\\\"principal_b5251fa0aba8e6d9cc5c14d0fb61db814d07c01eea39d1174341557cff7a5dd3\\\",\\\"context_342ce0ccae3d4fa425a12ac33fe114e184aa508160b56198309d27e2c808c988\\\"]\",\"native-recovery\"]": "db5f1dec2ec8ae6ef96228d2f85cd6bd2043b63a1c4a0e0a2cfeda03507eae1b",
+        "[\"[\\\"chatgpt\\\",\\\"principal_b5251fa0aba8e6d9cc5c14d0fb61db814d07c01eea39d1174341557cff7a5dd3\\\",\\\"context_342ce0ccae3d4fa425a12ac33fe114e184aa508160b56198309d27e2c808c988\\\"]\",\"native-version-index\",\"projects\",\"aa\",2]": "970436a3e7f48ef3da12c377176b6f7ee47fc043c47184a3823bddc03ec094fb",
+        "[\"[\\\"chatgpt\\\",\\\"principal_b5251fa0aba8e6d9cc5c14d0fb61db814d07c01eea39d1174341557cff7a5dd3\\\",\\\"context_342ce0ccae3d4fa425a12ac33fe114e184aa508160b56198309d27e2c808c988\\\"]\",\"native-version-index\",\"refs\",\"4e\",2]": "bcefe04ea7f0b3fb44598ed810987c4bcdd8c1ec09d10515c4a3e3d9adef5ff6",
+        "[\"[\\\"chatgpt\\\",\\\"principal_b5251fa0aba8e6d9cc5c14d0fb61db814d07c01eea39d1174341557cff7a5dd3\\\",\\\"context_342ce0ccae3d4fa425a12ac33fe114e184aa508160b56198309d27e2c808c988\\\"]\",\"native-version-index\",\"refs\",\"59\",2]": "4d83a7f818d52d64964903bc971e4029f48f5c12b823cab58336534063f5ad53",
+        "[\"chatgpt\",\"principal_b5251fa0aba8e6d9cc5c14d0fb61db814d07c01eea39d1174341557cff7a5dd3\",\"context_342ce0ccae3d4fa425a12ac33fe114e184aa508160b56198309d27e2c808c988\"]": "6f9115adb925c50a8647726d587c2c4eddc3781faf47479b0bedf5349bf782ca"
+      },
+      "operations": {},
+      "refs": {
+        "[\"[\\\"chatgpt\\\",\\\"principal_b5251fa0aba8e6d9cc5c14d0fb61db814d07c01eea39d1174341557cff7a5dd3\\\",\\\"context_342ce0ccae3d4fa425a12ac33fe114e184aa508160b56198309d27e2c808c988\\\"]\",\"33333333-3333-4333-8333-333333333333\"]": "0dd908d5f7ed0a9c2d7174479fa5caf1f06b7ddb65c1b94d04eeb77c04406832",
+        "[\"[\\\"chatgpt\\\",\\\"principal_b5251fa0aba8e6d9cc5c14d0fb61db814d07c01eea39d1174341557cff7a5dd3\\\",\\\"context_342ce0ccae3d4fa425a12ac33fe114e184aa508160b56198309d27e2c808c988\\\"]\",\"44444444-4444-4444-8444-444444444444\"]": "e7caafd7f9b42d18a8fbca6ffe54c8ff914d3cdcb45566d3deb9367cc870962b"
+      }
+    },
+    "pro": "aacbdd2296bca0b774db95352eb307154c068e71972287bfd842481308ad5b4e",
+    "native": {
+      "format": "vaiwl-native-facts-v2",
+      "scopeKey": "[\"chatgpt\",\"principal_b5251fa0aba8e6d9cc5c14d0fb61db814d07c01eea39d1174341557cff7a5dd3\",\"context_342ce0ccae3d4fa425a12ac33fe114e184aa508160b56198309d27e2c808c988\"]",
+      "revision": 3,
+      "projects": {
+        "g-p-11111111111111111111111111111111": {
+          "id": "g-p-11111111111111111111111111111111",
+          "nativeName": "Research",
+          "nativeUrl": "http://127.0.0.1:55234/g/g-p-11111111111111111111111111111111/project",
+          "availability": "available",
+          "sourceId": "host_dom_adf98fa7a43db4a7dd071de746761b52",
+          "generation": "profile_1",
+          "sourceRevision": 1,
+          "observedAt": "2026-10-13T21:29:30.164Z",
+          "validUntil": "2026-10-13T21:30:30.150Z",
+          "nativeAliases": []
+        }
+      },
+      "refs": {
+        "33333333-3333-4333-8333-333333333333": {
+          "id": "33333333-3333-4333-8333-333333333333",
+          "nativeTitle": "Ordinary conversation",
+          "nativeUrl": "http://127.0.0.1:55234/c/33333333-3333-4333-8333-333333333333",
+          "availability": "available",
+          "sourceId": "host_dom_adf98fa7a43db4a7dd071de746761b52",
+          "generation": "profile_1",
+          "sourceRevision": 1,
+          "observedAt": "2026-10-13T21:29:30.164Z",
+          "validUntil": "2026-10-13T21:30:30.150Z",
+          "nativeAliases": []
+        },
+        "44444444-4444-4444-8444-444444444444": {
+          "id": "44444444-4444-4444-8444-444444444444",
+          "nativeTitle": "Membership not loaded",
+          "nativeUrl": "http://127.0.0.1:55234/c/44444444-4444-4444-8444-444444444444",
+          "availability": "available",
+          "sourceId": "host_dom_adf98fa7a43db4a7dd071de746761b52",
+          "generation": "profile_1",
+          "sourceRevision": 1,
+          "observedAt": "2026-10-13T21:29:30.164Z",
+          "validUntil": "2026-10-13T21:30:30.150Z",
+          "nativeAliases": []
+        }
+      },
+      "membership": {},
+      "sources": {
+        "host_dom_adf98fa7a43db4a7dd071de746761b52": {
+          "id": "host_dom_adf98fa7a43db4a7dd071de746761b52",
+          "generation": "profile_1",
+          "sourceRevision": 1,
+          "observedAt": "2026-10-13T21:29:30.164Z",
+          "validUntil": "2026-10-13T21:30:30.150Z",
+          "revoked": true,
+          "channel": "host-dom",
+          "inventory": {
+            "projects": "partial",
+            "conversations": "partial",
+            "cursor": null
+          },
+          "admission": {
+            "profileId": "chatgpt-legacy-reconstruction",
+            "profileVersion": 1,
+            "evidenceClass": "surface",
+            "semanticFingerprint": "bb052109fc84ad693e26d42327ea3906f4b3bf49eb6b157b3c3877109da559ad",
+            "acceptedAt": "2026-10-13T21:29:30.164Z"
+          }
+        }
+      }
+    }
+  },
+  "sourceChangedDuringRun": false,
+  "buildManifestUnchanged": true
+}

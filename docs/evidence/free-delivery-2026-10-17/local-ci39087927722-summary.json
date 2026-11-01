@@ -1,0 +1,63 @@
+{
+  "sourceCommit": "48dd9205d242696fdcd6c5dc09927267725cbd8b",
+  "run": 39087927722,
+  "status": "FAIL_NOT_RELEASE_READY",
+  "jobs": {
+    "node": "PASS",
+    "journeys": "PASS",
+    "j4": "ORIGINAL_GATE_PASS_PARTIAL_NOT_ACCEPTED",
+    "durability": "FAIL"
+  },
+  "formal10k": {
+    "revision": 206,
+    "completeAudits": 2,
+    "correctProjectMembers": 10000,
+    "missing": 0,
+    "unknown": 0,
+    "remainingMsAfterAudits": 819.3147079999981,
+    "failurePhase": "project-card-member-rendering",
+    "measurementStarted": false
+  },
+  "diagnostic10k": {
+    "revision": 205,
+    "completeAudits": 2,
+    "remainingMsAfterAudits": 58.31398900000204,
+    "failurePhase": "return-workspace-local-search",
+    "doesNotOverrideFormalFailure": true
+  },
+  "j4": {
+    "steps": 23,
+    "automaticForeground": "FAIL",
+    "nativeHopRecovery": "PASS",
+    "status": "PARTIAL_J4_NOT_ACCEPTED"
+  },
+  "contextConstraint": "Current J4 is C2-only; fresh roster cannot authorize a peer after worker receipt loss without new valid native request. No cached receipt, cookie or unverified C1/C3 promotion allowed. Failure trace does not yet prove exact rejection order.",
+  "remaining": [
+    "10k end-to-end original deadline",
+    "Peer automatic recovery with legitimate current-context proof",
+    "Real Profile read connection/context evidence",
+    "Physical IME, PAIA, cross-device and remaining Free acceptance"
+  ],
+  "evidence": [
+    {
+      "file": "local-ci39087927722-durability.log.gz",
+      "sha256": "9360d929131f318a08da1e6dda40b743a375ef8430b3f60c14ee5a5c28bd4ae5"
+    },
+    {
+      "file": "local-ci39087927722-formal-10k.json.gz",
+      "sha256": "b7b60ccc2d7eb3d9ef58ddc7384b5cec689977263e9ba7db5978ec52efd506e0"
+    },
+    {
+      "file": "local-ci39087927722-diagnostic-10k.json.gz",
+      "sha256": "fea96ce047b8b84cf40abbf710ef122b70c2f283840591b51314acdc3278d45c"
+    },
+    {
+      "file": "local-ci39087927722-j4.json.gz",
+      "sha256": "f9555cebf315a7b804a7cbf85d757d676bdd9d7cf836e28d076a756c9885ec37"
+    },
+    {
+      "file": "local-ci39087927722-meta.json.gz",
+      "sha256": "9d0ee66b458a5f55dbf8c2723f99a1f918ebcca8728adf929334d9c96e13694c"
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+✔ LEGACY serves native-shaped reconstruction without oracle or initial idless identity (15.969375ms)
+✔ fixed authentication endpoints require server-owned cookie and token and return raw protocol data (7.521125ms)
+✔ idless native activation reveals correct distinct same-name project and members (3.221792ms)
+✔ ordinary NONE has explicit current native menu state; UNKNOWN remains unselected (2.541542ms)
+✔ test-process identity control retains independent roster order without active-context claim (1.728292ms)
+✔ offline acceptance requires explicit test-process control and never comes from append alone (2.331708ms)
+✔ MODERN raw roster is not a current-context proof; native requests carry selected context (18.58675ms)
+✔ MODERN positive metadata remains independent and imperfect (4.109375ms)
+✔ MODERN missing metadata remains independent and imperfect (1.957ms)
+✔ MODERN conflict metadata remains independent and imperfect (1.473042ms)
+✔ MODERN neighbor metadata remains independent and imperfect (1.47625ms)
+✔ PARTIAL positive: 1000 independent objects, only 25 initially exposed (3.066459ms)
+✔ PARTIAL missing: 1000 independent objects, only 25 initially exposed (2.352625ms)
+✔ PARTIAL conflict: 1000 independent objects, only 25 initially exposed (2.395958ms)
+✔ PARTIAL neighbor: 1000 independent objects, only 25 initially exposed (1.686667ms)
+✔ FAULT auth-failure has fixed predeclared behavior (1.255833ms)
+✔ FAULT unsafe-reading has fixed predeclared behavior (0.720417ms)
+✔ FAULT forged-scope has fixed predeclared behavior (1.465959ms)
+✔ FAULT csp has fixed predeclared behavior (0.704625ms)
+✔ FAULT iframe-destroy has fixed predeclared behavior (0.949167ms)
+✔ FAULT stale-response has fixed predeclared behavior (3.590125ms)
+✔ FAULT rate-limit has fixed predeclared behavior (0.909209ms)
+✔ FAULT corrupt has fixed predeclared behavior (1.08375ms)
+✔ FAULT unknown-protocol has fixed predeclared behavior (1.03325ms)
+✔ unsupported profiles and faults fail before binding a server (0.099625ms)
+ℹ tests 25
+ℹ suites 0
+ℹ pass 25
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 98.541167

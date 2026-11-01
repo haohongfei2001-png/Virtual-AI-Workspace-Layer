@@ -1,0 +1,23 @@
+{
+  "baseHead": "02458611c3f38ca59f15f34d56ded5089c4da71b",
+  "sourceHashes": {
+    "src/data/native-index-reader.mjs": "f359a28b189dec9605dad356d3c19d474132fff2ab3a94425367997047c96c4a",
+    "src/data/native-version-index.mjs": "03089b0dddfa9f948087823af1e1ad7b43fc765a6631c40647e1e4b201cd7211",
+    "tests/free/native-index-materialize-diagnostic.mjs": "7805d59f89133615402ab0a5ee442fdfd6c817345f0cc2776aa6b5231969b9af"
+  },
+  "fullNode": {
+    "pass": 845,
+    "fail": 0,
+    "skip": 0,
+    "command": "node --test tests/b1/broker.test.mjs tests/b23/*.test.mjs tests/b4/*.test.mjs tests/f1/*.test.mjs tests/hf/*.test.mjs tests/free/*.test.mjs",
+    "logTail": " latest theme segment; old children stay parent (1.743917ms)\n✔ current positive observation does not require full old coverage (0.601541ms)\n✔ old snapshot cannot assert no recent input (0.70475ms)\n✔ old child with a coverage gap is unknown, not forcibly historical (1.525375ms)\n✔ visit/update/assistant/edit timestamps never activate (0.143125ms)\n✔ duplicate events idempotent, conflicting times quarantined (0.145166ms)\n✔ scope collision rejected even for same native ID/title (0.308208ms)\n✔ theme scope mismatch rejected (0.08725ms)\n✔ time-zone projection does not mutate source (1.019958ms)\n✔ 120 themes and all 604 references accounted for (11.659ms)\n✔ cross-Project references aggregate without native mutation (0.999375ms)\n✔ only explicit synthetic origins and paths accepted (0.377375ms)\n✔ impossible calendar instants are unknown rather than normalized into a different day (0.240041ms)\nℹ tests 845\nℹ suites 0\nℹ pass 845\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 18097.115166\n"
+  },
+  "normal100kMs": [
+    1441.6,
+    1495.7,
+    1361.2
+  ],
+  "oneSecondTarget": "FAIL",
+  "endToEndImprovement": "NOT_PROVEN",
+  "realAccount": "NOT_RUN"
+}

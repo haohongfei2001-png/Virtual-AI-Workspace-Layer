@@ -1,0 +1,134 @@
+{
+  "evidence": "REAL_HEADLESS_MV3_EVIDENCE_DIRECTORY_UPGRADE",
+  "baseline": "/private/tmp/vaiwl-free-delivery-round42-20261013/extension",
+  "candidate": "/private/tmp/vaiwl-free-delivery-round46-20261013/extension",
+  "actualSchemaUpgrade": "NOT_RUN",
+  "realChatGPT": "NOT_RUN",
+  "results": [
+    {
+      "name": "Actual baseline package creates persistent human assets and native facts",
+      "status": "PASS",
+      "extensionId": "cgkbkpfdpkocpimhmngandjpecjfelej",
+      "shared": "63c7e92ee2aded529670aa946857b3e80910ce1578de1d49fda8c9bfdb4f26ea",
+      "evidence": "8f7c673b24c5cf5ffec8aae86bfb48ad73e6d0cc955a474579bd8de66c67dc90",
+      "evidenceRevision": 1,
+      "evidenceReadError": null,
+      "evidenceFormat": "vaiwl-free-evidence-partitions-v1",
+      "manualTitle": "升级保留Pro人工标题",
+      "workingSet": {
+        "refs": [
+          "T0"
+        ],
+        "current": "T0"
+      },
+      "nativeFacts": "3ce36d6368fe87381a03425b9110f06a977a00d6f556ca5d2698b142222e91aa",
+      "nativeRevision": 2,
+      "nativeFormat": "vaiwl-native-version-index-v1",
+      "nativeReadError": null,
+      "rawNative": "b805cd1852b07cbb9673421db5fa011b2c12f65dd517df2c877e1f0be7df5710",
+      "nativeRecords": 853
+    },
+    {
+      "name": "Same-path upgrade migrates evidence directory and preserves observations Pro assets and untouched draft",
+      "status": "PASS",
+      "actual": {
+        "extensionId": "cgkbkpfdpkocpimhmngandjpecjfelej",
+        "shared": "63c7e92ee2aded529670aa946857b3e80910ce1578de1d49fda8c9bfdb4f26ea",
+        "evidence": "8f7c673b24c5cf5ffec8aae86bfb48ad73e6d0cc955a474579bd8de66c67dc90",
+        "evidenceRevision": 2,
+        "evidenceReadError": null,
+        "evidenceFormat": "vaiwl-free-evidence-directory-v1",
+        "manualTitle": "升级保留Pro人工标题",
+        "workingSet": {
+          "refs": [
+            "T0"
+          ],
+          "current": "T0"
+        },
+        "nativeFacts": "3ce36d6368fe87381a03425b9110f06a977a00d6f556ca5d2698b142222e91aa",
+        "nativeRevision": 2,
+        "nativeFormat": "vaiwl-native-version-index-v1",
+        "nativeReadError": null,
+        "rawNative": "ae95e7c8284eb80c9e5cc69087095ed7144319f62a218d67b250dce2a741c00e",
+        "nativeRecords": 854
+      },
+      "ui": {
+        "state": "ACTIVE",
+        "reason": ""
+      },
+      "oldDraftDocumentReloaded": false
+    },
+    {
+      "name": "Actual older package rejects directory evidence root and leaves all stored bytes intact",
+      "status": "PASS",
+      "actual": {
+        "extensionId": "cgkbkpfdpkocpimhmngandjpecjfelej",
+        "shared": "63c7e92ee2aded529670aa946857b3e80910ce1578de1d49fda8c9bfdb4f26ea",
+        "evidence": null,
+        "evidenceRevision": null,
+        "evidenceReadError": "invalid-free-evidence-schema",
+        "evidenceFormat": "vaiwl-free-evidence-directory-v1",
+        "manualTitle": "升级保留Pro人工标题",
+        "workingSet": {
+          "refs": [
+            "T0"
+          ],
+          "current": "T0"
+        },
+        "nativeFacts": "3ce36d6368fe87381a03425b9110f06a977a00d6f556ca5d2698b142222e91aa",
+        "nativeRevision": 2,
+        "nativeFormat": "vaiwl-native-version-index-v1",
+        "nativeReadError": null,
+        "rawNative": "ae95e7c8284eb80c9e5cc69087095ed7144319f62a218d67b250dce2a741c00e",
+        "nativeRecords": 854
+      },
+      "ui": {
+        "state": "WAITING",
+        "reason": "invalid-free-evidence-schema"
+      },
+      "oldDraftDocumentReloaded": false
+    },
+    {
+      "name": "Reloading indexed package restores navigation without rewriting native storage or refreshing draft",
+      "status": "PASS",
+      "actual": {
+        "extensionId": "cgkbkpfdpkocpimhmngandjpecjfelej",
+        "shared": "63c7e92ee2aded529670aa946857b3e80910ce1578de1d49fda8c9bfdb4f26ea",
+        "evidence": "8f7c673b24c5cf5ffec8aae86bfb48ad73e6d0cc955a474579bd8de66c67dc90",
+        "evidenceRevision": 2,
+        "evidenceReadError": null,
+        "evidenceFormat": "vaiwl-free-evidence-directory-v1",
+        "manualTitle": "升级保留Pro人工标题",
+        "workingSet": {
+          "refs": [
+            "T0"
+          ],
+          "current": "T0"
+        },
+        "nativeFacts": "3ce36d6368fe87381a03425b9110f06a977a00d6f556ca5d2698b142222e91aa",
+        "nativeRevision": 2,
+        "nativeFormat": "vaiwl-native-version-index-v1",
+        "nativeReadError": null,
+        "rawNative": "ae95e7c8284eb80c9e5cc69087095ed7144319f62a218d67b250dce2a741c00e",
+        "nativeRecords": 854
+      },
+      "ui": {
+        "state": "ACTIVE",
+        "reason": ""
+      },
+      "oldDraftDocumentReloaded": false
+    }
+  ],
+  "pageErrors": [],
+  "browser": "Chrome/155.0.8059.40",
+  "extensionId": "cgkbkpfdpkocpimhmngandjpecjfelej",
+  "packageVersions": {
+    "baseline": "0.2.0",
+    "candidate": "0.2.0"
+  },
+  "packageHashes": {
+    "baseline": "2c26cfaa5a8a3db000270e8896a6f842b80684999e031dde27bafb997b454932",
+    "candidate": "baf9acdb6207d147c1f18be3dad2ae4996622634f3b2e4f13ea1d1ec49eaba30"
+  },
+  "testSourceSha256": "24a6db8d8ad8d5ab6ea73eefaa3397e43c66c683eacf94eed11b247ff1c85ec2"
+}

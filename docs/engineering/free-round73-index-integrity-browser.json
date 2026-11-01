@@ -1,0 +1,102 @@
+{
+  "evidence": "REAL_HEADLESS_CHROME_IDB_INDEX_INTEGRITY",
+  "realChatGPT": "NOT_RUN",
+  "mv3": "NOT_RUN",
+  "sourceHashes": {
+    "src/data/free-evidence-partitions.mjs": "8ee578d98b2ac5f50841646f941957516f890743bdc799a02fb44197281ff8cb",
+    "src/data/free-evidence-repository.mjs": "3d1450c34760f282ca45ebe5d310ea7cb12a21c0f451d9b25822ecc582f822ff",
+    "src/data/evidence-directory-migration.mjs": "77d20d97c1de762b2c252b29fb2353df053bde3ad0c64b5678feb01ab47da4f1",
+    "src/data/evidence-directory-writer.mjs": "9ff0c941904e155c736a29e1d232e4fecf67d7995c5d4b6907a12b0f54102944",
+    "src/data/evidence-partition-audit.mjs": "125abaa5b15837e66dc03951a4916cbbf1207f4d05c5ce1ed1d7e75c18488b29",
+    "src/data/evidence-ref-directory.mjs": "8a89bf5b8535578881c823077554f177098044214a22fcfaf4be41e65498c867",
+    "tests/free/evidence-index-integrity-browser.mjs": "7d0c028e9e85d497ce79d4f908db552d98adec04f42b2f2b4f958ee768ec2e82"
+  },
+  "results": [
+    {
+      "format": "partition",
+      "mode": "seal",
+      "status": "PASS",
+      "revision": 2,
+      "factsPreserved": true,
+      "indexVersionsPreserved": true,
+      "bucketVersionsPreserved": false,
+      "sourcesRevoked": false
+    },
+    {
+      "format": "partition",
+      "mode": "wrong-target",
+      "status": "PASS",
+      "reason": "free-evidence-index-content-mismatch",
+      "allEightStoresUnchanged": true
+    },
+    {
+      "format": "partition",
+      "mode": "missing-locator",
+      "status": "PASS",
+      "reason": "free-evidence-index-content-mismatch",
+      "allEightStoresUnchanged": true
+    },
+    {
+      "format": "partition",
+      "mode": "recover-good",
+      "status": "PASS",
+      "revision": 2,
+      "factsPreserved": true,
+      "indexVersionsPreserved": true,
+      "bucketVersionsPreserved": false,
+      "sourcesRevoked": true
+    },
+    {
+      "format": "partition",
+      "mode": "recover-bad",
+      "status": "PASS",
+      "reason": "free-evidence-index-content-mismatch",
+      "allEightStoresUnchanged": true
+    },
+    {
+      "format": "directory",
+      "mode": "seal",
+      "status": "PASS",
+      "revision": 3,
+      "factsPreserved": true,
+      "indexVersionsPreserved": true,
+      "bucketVersionsPreserved": true,
+      "sourcesRevoked": false
+    },
+    {
+      "format": "directory",
+      "mode": "wrong-target",
+      "status": "PASS",
+      "reason": "free-evidence-index-content-mismatch",
+      "allEightStoresUnchanged": true
+    },
+    {
+      "format": "directory",
+      "mode": "missing-locator",
+      "status": "PASS",
+      "reason": "free-evidence-index-content-mismatch",
+      "allEightStoresUnchanged": true
+    },
+    {
+      "format": "directory",
+      "mode": "recover-good",
+      "status": "PASS",
+      "revision": 3,
+      "factsPreserved": true,
+      "indexVersionsPreserved": true,
+      "bucketVersionsPreserved": true,
+      "sourcesRevoked": true
+    },
+    {
+      "format": "directory",
+      "mode": "recover-bad",
+      "status": "PASS",
+      "reason": "free-evidence-index-content-mismatch",
+      "allEightStoresUnchanged": true
+    }
+  ],
+  "pageErrors": [],
+  "browser": "156.0.8078.4",
+  "sourceChangedDuringRun": false,
+  "result": "PASS"
+}

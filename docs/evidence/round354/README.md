@@ -1,0 +1,11 @@
+# Round354：保全开发分支与未完成操作的局部空闲检查
+
+从65c0e388fc927e455237e54cbd642eff780c04cd继续。用户确认整理结束后，现场复核正式开发分支已恢复；整理stash42c887720b672c53c2a29232685d848d2a0bc319、既有副本和本轮未提交成果均保留，未重复切分支或应用stash。GitHub PR16仍open/draft，base保持docs/vaiwl-v28-core-mechanisms-20261012。
+
+服务入口同步计数覆盖请求等待和发送观察链的后台交接。备份transfer、恢复plan和未完成访问阻止局部idle；不为休眠清除用户确认中的工作。view准备即使已返回preparing、被取消或达到原deadline，仍计数底层未settle读取；重试与native写入等待同样阻止idle。没有改变6秒/30秒预算、授权、数据库结构或原生操作。
+
+这些只提供内部调度快照，尚未提供同producer原子冻结/关闭许可。UI-11自然休眠与fresh grant恢复未通过；本轮不运行浏览器，不将Node结果当作MV3验收。完整Free、100k和真实profile等继续NOT_RELEASE_READY。
+
+审查补充：原备份/恢复局部predicate会在deadline返回、底层withScope仍未结束时误报idle。14项独立反例修复前失败；新增scopeWork全Promise计数后两服务相关67/67通过。最终组合回归 **518/518 Node PASS**，无skip/cancel；原始失败和最终日志保存在本目录。
+
+后续接线前的具体缺口：view入口withScope、直接version/repository调用，以及HOST_REFRESH外层和continuation内层deadline后的底层Promise，尚不全由本轮计数覆盖。独立审查确认现有wrapper兼容，但本轮isIdle不得作为整体无在途工作证明，更不得直接驱动自动关闭。继续补齐这些边界后才接同producer原子冻结与实际UI-11。

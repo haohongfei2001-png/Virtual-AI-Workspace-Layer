@@ -1,0 +1,14 @@
+✔ owner human rename and undo keep directory root/checkpoint and all other Pro assets (265.173792ms)
+✔ owner directory commands use cross-connection CAS and unchanged receipt replay (118.815ms)
+✔ owner quota failure after staging piece rolls back every store (107.342417ms)
+✔ owner guard failure after staging piece rolls back every store (101.2515ms)
+✔ owner metadata-only preferences and source revocation retain directory pointers and Pro content (156.892ms)
+✔ owner ingest resolves existing global event ID collision and persists valid fresh evidence (170.716625ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 979.518583

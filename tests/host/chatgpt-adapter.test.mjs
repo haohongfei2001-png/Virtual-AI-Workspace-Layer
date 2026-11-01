@@ -1,0 +1,851 @@
+import {installTreeWalkerDouble} from './tree-walker-double.mjs';
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {createChatGPTAdapter} from '../../src/host/chatgpt-adapter.mjs';
+import {createHostIngestionPassOwner} from '../../src/runtime/host-ingestion-pass-owner.mjs';
+import {LEGACY_SURFACE_PROFILE} from '../../src/host/surface-discovery.mjs';
+import {createURLPolicy} from '../../src/host/url-policy.mjs';
+const C='33333333-3333-4333-8333-333333333333';
+// Minimal visible directory DOM for discovery; these remain offline doubles.
+function visibleDirectoryNode(document,parentElement=null){return {ownerDocument:document,parentElement,style:{display:'block',visibility:'visible'},getClientRects:()=>[{}],getAttribute:()=>null};}
+function fixture(options={}){
+ let observer,clock=0;const listeners=new Map(),emitted=[],rebind=[];
+ const node=(x,y,width,height)=>({textContent:'',children:[],contains:()=>false,querySelectorAll:()=>[],getBoundingClientRect:()=>({x,y,width,height}),isConnected:true});
+ const history=node(0,50,200,500),reading=node(220,70,700,400),header=node(220,0,700,60),composer=node(220,480,700,90),slot=node(220,0,40,40);
+ const selectors=new Map([['aside nav[aria-label="Chat history"]',[history]],['main > header',[header]],['main > section[aria-label="Conversation"]',[reading]],['main > form#composer',[composer]],['main > header > .navigation-slot',[slot]]]);
+ const documentListeners=new Map();
+ const document={addEventListener:(t,f)=>documentListeners.set(t,f),removeEventListener:t=>documentListeners.delete(t),location:{href:`https://chatgpt.com/c/${C}`},documentElement:{dataset:{}},querySelectorAll:s=>selectors.get(s)??[],querySelector:()=>null,defaultView:{getComputedStyle:n=>n.style??{display:'block',visibility:'visible'},crypto,MutationObserver:class{constructor(cb){observer=this;this.cb=cb;}observe(){}disconnect(){this.closed=true;}},addEventListener:(t,f)=>listeners.set(t,f),removeEventListener:t=>listeners.delete(t)}};
+ installTreeWalkerDouble(document);
+ const binding={documentToken:'doc',producerToken:'producer',browserDocumentId:'browser-doc',routeEpoch:4,origin:'https://chatgpt.com',expiresAt:new Date(100000).toISOString()};
+ const adapter=createChatGPTAdapter({document,profile:{...LEGACY_SURFACE_PROFILE,currentBody:undefined},now:()=>clock,onRebindNeeded:v=>rebind.push(v),...options});
+ return {adapter,document,documentListeners,binding,emitted,rebind,selectors,reading,composer,slot,setTime:v=>clock=v,trigger:()=>observer.cb([]),observer:()=>observer,start:(emit,extra={})=>adapter.start({binding,...extra,emit:emit??(async p=>{emitted.push(p);return {state:'accepted',localSeq:p.localSeq,receiptId:'r'};})})};
+}
+const tick=async()=>{await Promise.resolve();await Promise.resolve();await Promise.resolve();};
+test('formal context remains unbound without owner body proof; bounded proposals carry no scope',async()=>{const f=fixture(),context=await f.start();await tick();assert.equal(context.body.state,'unbound');assert.equal(context.route.conversationId,C);assert.equal(f.emitted.length,1);assert.equal(f.emitted[0].bodyProofId,null);assert.equal(f.emitted[0].routeEpoch,4);assert.equal(Object.hasOwn(f.emitted[0],'scope'),false);assert.deepEqual(f.emitted[0].payload.coverageClaims,[]);f.adapter.stop();});
+test('legacy inspect fields refer to native nodes without mutation',async()=>{const f=fixture();await f.start();const result=f.adapter.inspect();assert.equal(result.ok,true);assert.equal(result.reading,f.reading);assert.equal(result.composer,f.composer);assert.equal(result.navigationSlot,f.slot);assert.equal(result.viewMask,'declarative-css');assert.deepEqual(result.historyMaskRoots,[result.history]);f.adapter.stop();});
+test('ambiguous boundaries, occupied return slot and overlap reject mounting',async()=>{const f=fixture();await f.start();f.slot.textContent='native title';f.slot.childNodes=[{nodeType:3,textContent:'native title'}];assert.equal(f.adapter.inspect().ok,true);assert.equal(f.adapter.inspect().roles.return.available,false);f.slot.textContent='';f.slot.childNodes=[];f.selectors.set('main > form#composer',[f.composer,f.composer]);assert.equal(f.adapter.inspect().ok,false);f.selectors.set('main > form#composer',[f.composer]);f.composer.getBoundingClientRect=()=>({x:220,y:100,width:700,height:90});assert.equal(f.adapter.inspect().ok,false);f.adapter.stop();});
+test('route change stops producer and requests owner rebind without minting epoch',async()=>{const f=fixture();await f.start();await tick();f.document.location.href='https://chatgpt.com/';f.trigger();await tick();assert.equal(f.emitted.length,1);assert.equal(f.rebind.length,1);assert.equal(f.observer().closed,true);assert.equal(f.adapter.inspect().ok,false);assert.deepEqual(await f.adapter.dispatchNative({}),{state:'blocked',reason:'stale-host-binding'});});
+test('mutation bursts coalesce and late acknowledgement after stop cannot emit',async()=>{const f=fixture();let finish;await f.start(p=>{f.emitted.push(p);return new Promise(r=>finish=r);});for(let i=0;i<100;i++)f.trigger();await tick();assert.equal(f.emitted.length,1);f.adapter.stop();finish({state:'retry-after',delayMs:0});await tick();assert.equal(f.emitted.length,1);});
+test('expiry rejects reads and actions; unsupported snippets and actions are explicit',async()=>{const f=fixture();await f.start();assert.equal(f.adapter.selectedSnippet({}),null);assert.equal((await f.adapter.activateNative('new-chat',{})).state,'blocked');assert.equal(f.adapter.restoreSnippet({},{}).ok,false);f.setTime(100000);await assert.rejects(f.adapter.readLoaded({},new AbortController().signal),/stale-host-binding/);assert.equal((await f.adapter.dispatchNative({})).state,'blocked');f.adapter.stop();});
+test('fresh start uses owner epoch and old pending callback cannot affect new producer',async()=>{const f=fixture();let resolve;await f.start(()=>new Promise(r=>resolve=r));f.binding.routeEpoch=9;await f.start();await tick();resolve({state:'accepted'});await tick();assert.equal(f.emitted.length,1);assert.equal(f.emitted[0].routeEpoch,9);f.adapter.stop();});
+test('safe ordinary href navigation is planned, never assigned by adapter',async()=>{const f=fixture();await f.start();const url=`https://chatgpt.com/c/44444444-4444-4444-8444-444444444444`;const plan=f.adapter.planNavigation({kind:'resolved',entity:'conversation',nativeId:'44444444-4444-4444-8444-444444444444',navigationURL:url,liveHandle:null});assert.equal(plan.mode,'href');assert.equal(plan.disposition,'new-tab-preserve-current');assert.ok(f.adapter.planKey(plan));assert.equal(f.adapter.nativeHref(url),url);assert.equal(f.adapter.nativeHref('https://evil.test/c/x'),null);assert.equal(f.adapter.currentURL(),`https://chatgpt.com/c/${C}`);f.adapter.stop();});
+
+function retryClock(){let time=0,next=0;const timers=new Map(),issues=[];return {timers,issues,options:{elapsedNow:()=>time,scheduleRetry:(fn,ms)=>{const id=++next;timers.set(id,{fn,at:time+ms});return id;},cancelRetry:id=>timers.delete(id),onObservationIssue:i=>issues.push(i)},async advance(ms){time+=ms;for(const [id,t] of [...timers])if(t.at<=time){timers.delete(id);await t.fn();}await tick();}};}
+test('explicit retry-after retains proposal identity and sequence then accepted suppresses duplicate surface',async()=>{const c=retryClock(),f=fixture(c.options),calls=[];await f.start(async p=>{calls.push(p);return calls.length===1?{state:'retry-after',localSeq:p.localSeq,delayMs:50}:{state:'accepted',localSeq:p.localSeq,receiptId:'ok'};});await tick();assert.equal(c.timers.size,1);f.trigger();await c.advance(50);assert.equal(calls.length,2);assert.equal(calls[0],calls[1]);f.trigger();await tick();assert.equal(calls.length,2);assert.equal(c.timers.size,0);f.adapter.stop();});
+test('retry budget is monotonic six seconds and stop clears timer',async()=>{const c=retryClock(),f=fixture(c.options);let calls=0;await f.start(async p=>{calls++;return {state:'retry-after',localSeq:p.localSeq,delayMs:50};});await tick();await c.advance(6000);assert.equal(calls,1);assert.equal(c.timers.size,0);assert.equal(c.issues.at(-1).reason,'host-observation-retry-budget');f.trigger();await tick();assert.equal(calls,1);await f.start(async p=>({state:'retry-after',localSeq:p.localSeq,delayMs:50}));await tick();assert.equal(c.timers.size,1);f.adapter.stop();assert.equal(c.timers.size,0);});
+test('rejected or unknown ACK reports once and never mutation-replays identical proposal',async()=>{for(const mode of ['rejected','unknown','throw']){const c=retryClock(),f=fixture(c.options);let calls=0;await f.start(async p=>{calls++;if(mode==='throw')throw Error('lost');return {state:mode,localSeq:p.localSeq};});await tick();for(let i=0;i<10;i++)f.trigger();await tick();assert.equal(calls,1);assert.equal(c.timers.size,0);assert.equal(c.issues.length,1);f.adapter.stop();}});
+test('retry observes route invalidation before any second emission',async()=>{const c=retryClock(),f=fixture(c.options);let calls=0;await f.start(async p=>{calls++;return {state:'retry-after',localSeq:p.localSeq,delayMs:50};});await tick();f.document.location.href='https://chatgpt.com/';await c.advance(50);assert.equal(calls,1);assert.equal(f.rebind.length,1);assert.equal(c.timers.size,0);});
+test('binding renewal preserves observer, producer sequence and existing navigation plan',async()=>{
+ const f=fixture();await f.start();await tick();const observer=f.observer();
+ const target={kind:'resolved',entity:'conversation',nativeId:C,navigationURL:`https://chatgpt.com/c/${C}`,liveHandle:null};
+ const plan=f.adapter.planNavigation(target),key=f.adapter.planKey(plan);
+ const before=(await f.adapter.readLoaded({},new AbortController().signal))[0];f.setTime(90000);
+ assert.equal(f.adapter.updateBinding({...f.binding,expiresAt:new Date(110000).toISOString()}),true);
+ f.setTime(105000);const after=(await f.adapter.readLoaded({},new AbortController().signal))[0];
+ assert.equal(after.localSeq,before.localSeq+1);assert.equal(after.producerToken,before.producerToken);assert.equal(after.routeEpoch,before.routeEpoch);assert.equal(f.observer(),observer);assert.notEqual(observer.closed,true);assert.equal(f.adapter.planKey(plan),key);
+ f.trigger();await tick();assert.equal(f.emitted.length,1);f.adapter.stop();
+});
+test('binding renewal rejects every changed identity, excess lifetime and stale owner',async()=>{
+ for(const patch of [{documentToken:'other'},{producerToken:'other'},{browserDocumentId:'other'},{routeEpoch:5},{origin:'https://other.test'},{expiresAt:new Date(20001).toISOString()},{expiresAt:new Date(0).toISOString()},{scope:'forged'}]){const f=fixture();await f.start();assert.throws(()=>f.adapter.updateBinding({...f.binding,expiresAt:new Date(20000).toISOString(),...patch}),/invalid-host-binding-renewal/);f.adapter.stop();}
+ for(const change of [f=>f.setTime(100000),f=>f.adapter.stop(),f=>{f.document.location.href='https://chatgpt.com/';}]){const f=fixture();await f.start();change(f);assert.throws(()=>f.adapter.updateBinding({...f.binding,expiresAt:new Date(120000).toISOString()}),/stale-host-binding|host-rebind-required/);}
+});
+
+const settle=async()=>{for(let i=0;i<35;i++)await Promise.resolve();};
+function bodyFixture(options={}){const f=fixture({profile:LEGACY_SURFACE_PROFILE,...options}),root=f.reading;root.ownerDocument=f.document;root.parentElement=null;root.attrs={'data-conversation-id':C};root.style={display:'block',visibility:'visible'};root.getAttribute=k=>root.attrs[k]??null;root.getClientRects=()=>[{}];f.document.defaultView.getComputedStyle=n=>n.style;const makeMessage=id=>({ownerDocument:f.document,isConnected:true,parentElement:root,style:{display:'block',visibility:'visible'},getClientRects:()=>[{}],getAttribute:key=>key==='data-message-id'?id:null,get textContent(){throw Error('message-body-read');},get value(){throw Error('draft-read');}});root.children=[makeMessage('M1')];root.querySelectorAll=selector=>selector==='[data-message-id]'?root.children:[];root.contains=n=>{for(let current=n;current;current=current.parentNode??current.parentElement)if(current===root)return true;return false;};f.selectors.set('main > #reading',[root]);return {...f,makeMessage};}
+test('configured body and surface share a monotonic producer queue with body first and independent dedupe',async()=>{const f=bodyFixture();await f.start();await settle();assert.deepEqual(f.emitted.map(p=>p.kind),['current-observation','surface-delta']);const [body,surface]=f.emitted;assert(body.localSeq<surface.localSeq);assert.equal(body.producerToken,surface.producerToken);assert.equal(body.payload.body.association,'explicit-body-id');assert.deepEqual(body.payload.body.messageIds,['M1']);assert.equal(body.bodyProofId,null);for(let i=0;i<20;i++)f.trigger();await settle();assert.equal(f.emitted.length,2);f.adapter.stop();});
+test('body hidden unproven and restored remount emit fresh epochs without reading message text',async()=>{const f=bodyFixture();await f.start();await settle();f.reading.hidden=true;f.trigger();await settle();let bodies=f.emitted.filter(p=>p.kind==='current-observation');assert.equal(bodies.at(-1).payload.body.association,'unproven');assert.deepEqual(bodies.at(-1).payload.body.evidence.fieldPaths,['current-body-unproven']);f.reading.hidden=false;f.trigger();await settle();bodies=f.emitted.filter(p=>p.kind==='current-observation');assert.equal(bodies.at(-1).payload.body.association,'explicit-body-id');assert(bodies.at(-1).payload.body.regionEpoch>bodies.at(-2).payload.body.regionEpoch);const replacement={...f.reading};replacement.children=[];replacement.querySelectorAll=()=>[];f.selectors.set('main > #reading',[replacement]);f.trigger();await settle();bodies=f.emitted.filter(p=>p.kind==='current-observation');assert.deepEqual(bodies.at(-1).payload.body.messageIds,[]);assert(bodies.at(-1).payload.body.regionEpoch>bodies.at(-2).payload.body.regionEpoch);f.adapter.stop();});
+test('renewal rechecks body while same surface stays deduplicated and message additions are fresh',async()=>{const f=bodyFixture();await f.start();await settle();const seq=f.emitted.at(-1).localSeq;f.adapter.updateBinding({...f.binding,expiresAt:new Date(20000).toISOString()});await settle();assert.equal(f.emitted.filter(p=>p.kind==='surface-delta').length,1);assert.equal(f.emitted.filter(p=>p.kind==='current-observation').length,2);assert(f.emitted.at(-1).localSeq>seq);f.reading.children.push(f.makeMessage('M2'));f.trigger();await settle();assert.deepEqual(f.emitted.at(-1).payload.body.messageIds,['M1','M2']);f.adapter.stop();});
+test('pending body blocks surface concurrently and route stop discards its late acknowledgement',async()=>{const f=bodyFixture();let resolve;await f.start(p=>{f.emitted.push(p);return new Promise(r=>resolve=r);});await settle();assert.equal(f.emitted.length,1);assert.equal(f.emitted[0].kind,'current-observation');f.trigger();await settle();assert.equal(f.emitted.length,1);f.document.location.href='https://chatgpt.com/';f.trigger();resolve({state:'accepted',localSeq:f.emitted[0].localSeq});await settle();assert.equal(f.emitted.length,1);assert.equal(f.rebind.length,1);});
+test('rejected body candidate does not starve the independent initial surface observation',async()=>{const f=bodyFixture();await f.start(async p=>{f.emitted.push(p);return {state:p.kind==='current-observation'?'rejected':'accepted',localSeq:p.localSeq};});await settle();assert.deepEqual(f.emitted.map(p=>p.kind),['current-observation','surface-delta']);f.adapter.stop();});
+
+// Passive trusted gestures below are explicit unit doubles, not browser/physical gesture evidence.
+function sendFixture(options={}){const f=bodyFixture(options),editor={tagName:'TEXTAREA'},button={tagName:'BUTTON',type:'submit'};for(const node of [f.composer,editor,button])Object.assign(node,{ownerDocument:f.document,isConnected:true,parentElement:null,style:{display:'block',visibility:'visible'},getClientRects:()=>[{}],getAttribute:()=>null,matches:()=>false});f.composer.tagName='FORM';editor.form=button.form=f.composer;editor.parentElement=button.parentElement=f.composer;f.composer.contains=n=>n===editor||n===button;editor.contains=button.contains=()=>false;for(const n of [editor,button])for(const key of ['value','textContent','files'])Object.defineProperty(n,key,{get(){throw Error('private-native-content-read');}});f.selectors.set('#prompt-textarea',[editor]);f.selectors.set('main > form#composer > button[type="submit"]',[button]);return {...f,editor,button,click(){f.documentListeners.get('click')?.({type:'click',isTrusted:true,target:button,button:0,detail:1});}};}
+function bodyAck(p){return {state:'accepted',localSeq:p.localSeq,receiptId:'unit-receipt',...(p.kind==='current-observation'?{bodyProofId:'accepted-body-proof',bodyEpoch:7}:{})};}
+test('trusted send queues exact intent-only candidate with accepted owner proof and shared sequence',async()=>{const f=sendFixture();await f.start(async p=>{f.emitted.push(p);return bodyAck(p);});await settle();f.click();await settle();assert.deepEqual(f.emitted.map(p=>p.kind),['current-observation','surface-delta','send-candidate']);const candidate=f.emitted.at(-1);assert.equal(candidate.bodyProofId,'accepted-body-proof');assert.equal(candidate.producerToken,f.binding.producerToken);assert.equal(candidate.routeEpoch,f.binding.routeEpoch);assert(candidate.localSeq>f.emitted.at(-2).localSeq);assert.deepEqual(Object.keys(candidate.payload).sort(),['conversationId','evidence','intentId','messageId','observedAt','operationId','stage']);assert.equal(candidate.payload.conversationId,C);assert.equal(candidate.payload.stage,'intent');assert.equal(candidate.payload.messageId,null);assert.equal(candidate.payload.operationId,null);assert.deepEqual(candidate.payload.evidence.fieldPaths,['native-send-intent']);assert.equal(candidate.payload.evidence.sourceKind,'native-dom');assert.equal(candidate.payload.evidence.receiptId,null);assert.equal(candidate.payload.ackWitness,undefined);f.trigger();await settle();assert.equal(f.emitted.filter(p=>p.kind==='send-candidate').length,1);f.adapter.stop();});
+test('click before accepted body proof is never backfilled into a later send',async()=>{const f=sendFixture();let release;await f.start(p=>{f.emitted.push(p);return p.kind==='current-observation'?new Promise(r=>release=()=>r(bodyAck(p))):Promise.resolve(bodyAck(p));});await settle();f.click();release();await settle();assert.equal(f.emitted.filter(p=>p.kind==='send-candidate').length,0);f.adapter.stop();});
+test('send queue overflow emits one loss barrier before a fresh body, never replays omitted intents',async()=>{const f=sendFixture();let release;await f.start(p=>{f.emitted.push(p);if(p.kind==='surface-delta')return new Promise(r=>release=()=>r(bodyAck(p)));return Promise.resolve(bodyAck(p));});await settle();assert.deepEqual(f.emitted.map(p=>p.kind),['current-observation','surface-delta']);for(let i=0;i<33;i++)f.click();await settle();assert.equal(f.emitted.length,2);release();for(let i=0;i<8;i++)await settle();assert.equal(f.emitted.filter(p=>p.kind==='send-candidate').length,0);assert.equal(f.emitted.filter(p=>p.kind==='send-gap').length,1);const gap=f.emitted.findIndex(p=>p.kind==='send-gap');assert.equal(f.emitted[gap+1].kind,'current-observation');assert(f.emitted.every((p,i)=>!i||p.localSeq>f.emitted[i-1].localSeq));f.click();await settle();assert.equal(f.emitted.filter(p=>p.kind==='send-candidate').length,1);f.adapter.stop();});
+for(const mode of ['remount','hidden','conversation','route','stop'])test('queued intent is discarded after '+mode,async()=>{const f=sendFixture();let release;await f.start(p=>{f.emitted.push(p);return p.kind==='surface-delta'?new Promise(r=>release=()=>r(bodyAck(p))):Promise.resolve(bodyAck(p));});await settle();f.click();if(mode==='remount'){const replacement={...f.reading};f.selectors.set('main > #reading',[replacement]);}else if(mode==='hidden')f.reading.hidden=true;else if(mode==='conversation')f.reading.attrs['data-conversation-id']='44444444-4444-4444-8444-444444444444';else if(mode==='route')f.document.location.href='https://chatgpt.com/';else f.adapter.stop();f.trigger();release();await settle();assert.equal(f.emitted.filter(p=>p.kind==='send-candidate').length,0);f.adapter.stop();});
+test('generic accepted observation receipt cannot substitute for a body proof',async()=>{const f=sendFixture();await f.start();await settle();f.click();await settle();assert.equal(f.emitted.filter(p=>p.kind==='send-candidate').length,0);f.adapter.stop();});
+
+test('normal message append preserves captured intent before the next body observation, without upgrading to ACK',async()=>{const f=sendFixture();let release;await f.start(p=>{f.emitted.push(p);return p.kind==='surface-delta'?new Promise(r=>release=()=>r(bodyAck(p))):Promise.resolve(bodyAck(p));});await settle();f.click();f.reading.children.push(f.makeMessage('M2'));f.trigger();release();await settle();const sends=f.emitted.filter(p=>p.kind==='send-candidate');assert.equal(sends.length,1);assert.equal(sends[0].bodyProofId,'accepted-body-proof');assert.equal(sends[0].payload.stage,'intent');assert.equal(sends[0].payload.messageId,null);assert.equal(sends[0].payload.operationId,null);const appended=f.emitted.find(p=>p.kind==='current-observation'&&p.payload.body.messageIds.includes('M2'));assert(appended);assert(sends[0].localSeq<appended.localSeq);f.adapter.stop();});
+
+// The DOM module never receives an inferred body authority from the adapter.
+test('snippet composition exposes only freshly acknowledged body identity and revokes on route or stop',async()=>{
+ let config,stops=0;const f=bodyFixture({snippetsFactory:c=>{config=c;return {stop:()=>stops++,selectedSnippet:()=>config.proof(),restoreSnippet:()=>({ok:config.guard()&&config.current()!==null})};}});
+ let release;await f.start(p=>p.kind==='current-observation'?new Promise(r=>release=()=>r(bodyAck(p))):Promise.resolve(bodyAck(p)));await settle();
+ assert.equal(config.current(),null);assert.equal(config.proof(),null);release();await settle();
+ assert.deepEqual(config.proof(),{bodyProofId:'accepted-body-proof',conversationId:C,regionEpoch:1,messageIds:['M1']});
+ assert.equal(f.adapter.selectedSnippet({}).conversationId,C);
+ f.reading.children.push(f.makeMessage('M2'));assert.equal(config.proof(),null);assert.equal(config.current(),null);
+ f.trigger();await settle();release();await settle();assert.deepEqual(config.proof().messageIds,['M1','M2']);
+ f.document.location.href='https://chatgpt.com/';assert.equal(config.proof(),null);assert.equal(stops,1);assert.equal(f.adapter.selectedSnippet({}),null);assert.equal(f.adapter.restoreSnippet({},{}).ok,false);
+});
+test('snippet body callbacks expire and a prior generation stays revoked after restart',async()=>{
+ const configs=[];const f=bodyFixture({snippetsFactory:c=>{configs.push(c);return {stop(){},selectedSnippet:()=>null,restoreSnippet:()=>({ok:false})};}});
+ await f.start(bodyAck);await settle();const old=configs[0];assert(old.proof());f.setTime(100000);assert.equal(old.proof(),null);
+ f.setTime(0);await f.start(bodyAck);await settle();assert.equal(old.proof(),null);assert(configs[1].proof());f.adapter.stop();assert.equal(configs[1].proof(),null);
+});
+test('document renewal cannot extend a snippet proof before the new body acknowledgement',async()=>{
+ let config;const f=bodyFixture({snippetsFactory:c=>{config=c;return {stop(){},selectedSnippet:()=>null,restoreSnippet:()=>({ok:false})};}});
+ let hold=false,release;await f.start(p=>hold&&p.kind==='current-observation'?new Promise(r=>release=()=>r(bodyAck(p))):Promise.resolve(bodyAck(p)));await settle();assert(config.proof());
+ f.setTime(90000);hold=true;f.adapter.updateBinding({...f.binding,expiresAt:new Date(110000).toISOString()});await settle();
+ f.setTime(100000);assert.equal(config.guard(),true);assert.equal(config.proof(),null);release();await settle();assert(config.proof());f.adapter.stop();
+});
+
+test('adapter forwards native dispatch hook with real discovered node and stops safely inside hook',async()=>{
+ for(const stopInHook of [false,true]){
+  let f,event,cancelEvent,clicks=0;f=fixture({onNativeDispatchCancelled:value=>{cancelEvent=value;},inputRisk:()=>({state:'clear',flags:[]}),authorize:()=>true,onNativeDispatch:value=>{event=value;if(stopInHook)f.adapter.stop();}});
+  const root={...visibleDirectoryNode(f.document),isConnected:true,contains:n=>n===button,querySelectorAll:()=>[button]},button={tagName:'BUTTON',textContent:'Same',isConnected:true,ownerDocument:f.document,...visibleDirectoryNode(f.document,root),parentNode:root,getAttribute:()=>null,getClientRects:()=>[{}],matches:()=>false,click:()=>clicks++};
+  f.selectors.set(LEGACY_SURFACE_PROFILE.regions.projects,[root]);await f.start();await tick();const proposals=await f.adapter.readLoaded(null),target=proposals.find(p=>p.kind==='surface-delta').payload.candidates[0].target,plan=f.adapter.planNavigation(target);
+  assert.equal(plan.mode,'native-control');const command={actionId:'action',uiGrantId:'grant',mountId:'mount',planRevision:plan.planRevision,targetKey:f.adapter.planKey(plan)},result=await f.adapter.dispatchNative(command);
+  assert.equal(cancelEvent,stopInHook?event:undefined);assert.equal(event.node,button);assert.equal(event.plan,plan);assert.equal(event.originalURL,f.document.location.href);assert.equal(clicks,stopInHook?0:1);assert.equal(result.state,stopInHook?'unconfirmed':'dispatched');f.adapter.stop();
+ }
+});
+
+test('candidate identity proxy uses live discovery and rejects route, replacement and restart tokens',async()=>{
+ const f=fixture(),root={...visibleDirectoryNode(f.document),isConnected:true,contains:n=>n===button,querySelectorAll:()=>[button]};let button={tagName:'BUTTON',textContent:'Same',isConnected:true,ownerDocument:f.document,...visibleDirectoryNode(f.document,root),parentNode:root,getAttribute:()=>null,click(){}};
+ f.selectors.set(LEGACY_SURFACE_PROFILE.regions.projects,[root]);assert.equal(f.adapter.captureCandidateIdentity({}),null);await f.start();
+ const handle=()=>f.emitted.at(-1).payload.candidates[0].target.control;await tick();const h=handle(),token=f.adapter.captureCandidateIdentity(h);assert.ok(token);assert.equal(f.adapter.matchesCandidateIdentity(token,h),true);assert.equal(f.adapter.matchesCandidateIdentity({},h),false);
+ button={...button};const proposals=await f.adapter.readLoaded(null),replacement=proposals[0].payload.candidates[0].target.control;assert.equal(f.adapter.matchesCandidateIdentity(token,replacement),false);
+ const next=f.adapter.captureCandidateIdentity(replacement);f.document.location.href='https://chatgpt.com/';assert.equal(f.adapter.matchesCandidateIdentity(next,replacement),false);assert.equal(f.adapter.captureCandidateIdentity(replacement),null);
+ await f.start();assert.equal(f.adapter.matchesCandidateIdentity(next,replacement),false);f.adapter.stop();assert.equal(f.adapter.matchesCandidateIdentity(next,replacement),false);
+});
+
+test('adapter drains all 256 long-title observations in bounded packets without cycling',async()=>{
+ const f=fixture(),nodes=[],root={...visibleDirectoryNode(f.document),isConnected:true,contains:n=>nodes.includes(n),querySelectorAll:()=>nodes};
+ for(let i=0;i<256;i++){const id='11111111-1111-4111-8111-'+i.toString(16).padStart(12,'0');nodes.push({tagName:'A',textContent:'长'.repeat(200),isConnected:true,ownerDocument:f.document,...visibleDirectoryNode(f.document,root),parentNode:root,getAttribute:k=>k==='href'?'https://chatgpt.com/c/'+id:null});}
+ f.selectors.set(LEGACY_SURFACE_PROFILE.regions.history,[root]);await f.start();for(let i=0;i<100;i++)await tick();
+ assert(f.emitted.length>1);assert.equal(new Set(f.emitted.flatMap(p=>p.payload.candidates.map(c=>c.renderKey))).size,256);assert(f.emitted.every(p=>new TextEncoder().encode(JSON.stringify(p)).length<=65536));assert(f.emitted.every((p,i)=>!i||p.localSeq>f.emitted[i-1].localSeq));
+ const count=f.emitted.length;f.trigger();for(let i=0;i<30;i++)await tick();assert.equal(f.emitted.length,count);const loaded=await f.adapter.readLoaded(null);assert(loaded.length>1);assert.equal(new Set(loaded.flatMap(p=>p.payload.candidates.map(c=>c.renderKey))).size,256);f.adapter.stop();
+});
+
+test('duplicate native history controls reach owner reduction as one conversation fact',async()=>{
+ const {surfaceBatch}=await import('../../src/host/surface-batch.mjs');const f=fixture(),nodes=[],root={...visibleDirectoryNode(f.document),isConnected:true,contains:n=>nodes.includes(n),querySelectorAll:()=>nodes},id='77777777-7777-4777-8777-777777777777';
+ for(let i=0;i<2;i++)nodes.push({tagName:'A',textContent:'Native duplicate',isConnected:true,ownerDocument:f.document,...visibleDirectoryNode(f.document,root),parentNode:root,getAttribute:k=>k==='href'?'https://chatgpt.com/c/'+id:null});
+ f.selectors.set(LEGACY_SURFACE_PROFILE.regions.history,[root]);await f.start();for(let i=0;i<10;i++)await tick();assert.equal(f.emitted.length,1);const p=f.emitted[0];assert.equal(p.payload.candidates.length,2);assert.notEqual(p.payload.candidates[0].target.liveHandle.id,p.payload.candidates[1].target.liveHandle.id);
+ const batch=surfaceBatch(p,{scope:{verified:true,provider:'chatgpt',accountId:'test',organizationId:'personal'},binding:f.binding,profile:LEGACY_SURFACE_PROFILE,urlPolicy:createURLPolicy(),sourceRevision:1,observedAt:'2026-10-14T00:00:00Z',validUntil:'2026-10-14T00:01:00Z'});assert.equal(batch.refs.length,1);assert.equal(batch.refs[0].id,id);f.adapter.stop();
+});
+
+test('finite producer pass reaches 1000 loaded conversations and detects a tail rename without cycling',async()=>{
+ const f=fixture(),nodes=[],root={...visibleDirectoryNode(f.document),isConnected:true,contains:n=>nodes.includes(n),querySelectorAll:()=>nodes};
+ for(let i=0;i<1000;i++){const id='11111111-1111-4111-8111-'+i.toString(16).padStart(12,'0');nodes.push({tagName:'A',textContent:'Native '+i,isConnected:true,ownerDocument:f.document,...visibleDirectoryNode(f.document,root),parentNode:root,getAttribute:k=>k==='href'?'https://chatgpt.com/c/'+id:null});}
+ f.selectors.set(LEGACY_SURFACE_PROFILE.regions.history,[root]);await f.start();for(let i=0;i<150;i++)await tick();
+ assert.equal(new Set(f.emitted.flatMap(p=>p.payload.candidates.map(c=>c.renderKey))).size,1000);assert(f.emitted.every(p=>p.payload.candidates.length<=256&&new TextEncoder().encode(JSON.stringify(p)).length<=65536));
+ const count=f.emitted.length;f.trigger();for(let i=0;i<150;i++)await tick();assert.equal(f.emitted.length,count);
+ nodes[999].textContent='Renamed tail';f.trigger();for(let i=0;i<150;i++)await tick();assert(f.emitted.slice(count).some(p=>p.payload.candidates.some(c=>c.nativeTitle==='Renamed tail')));
+ const changed=f.emitted.length;f.trigger();for(let i=0;i<150;i++)await tick();assert.equal(f.emitted.length,changed);assert(f.emitted.every((p,i)=>!i||p.localSeq>f.emitted[i-1].localSeq));f.adapter.stop();
+});
+for(const mode of ['stop','root-replaced'])test('pending multi-page scan handles '+mode+' without emitting old tail',async()=>{
+ const f=fixture();let nodes=[],root={...visibleDirectoryNode(f.document),isConnected:true,contains:n=>nodes.includes(n),querySelectorAll:()=>[...nodes]};
+ for(let i=0;i<600;i++){const id='22222222-2222-4222-8222-'+i.toString(16).padStart(12,'0');nodes.push({tagName:'A',textContent:'Old '+i,isConnected:true,ownerDocument:f.document,...visibleDirectoryNode(f.document,root),parentNode:root,getAttribute:k=>k==='href'?'https://chatgpt.com/c/'+id:null});}
+ f.selectors.set(LEGACY_SURFACE_PROFILE.regions.history,[root]);let release;
+ await f.start(p=>{f.emitted.push(p);return f.emitted.length===1?new Promise(r=>release=()=>r({state:'accepted',localSeq:p.localSeq})):Promise.resolve({state:'accepted',localSeq:p.localSeq});});await tick();
+ if(mode==='stop')f.adapter.stop();else{root.isConnected=false;root={...visibleDirectoryNode(f.document),isConnected:true,contains:n=>nodes.includes(n),querySelectorAll:()=>[...nodes]};nodes=[{...nodes[599],textContent:'Replacement tail',parentNode:root,parentElement:root}];f.selectors.set(LEGACY_SURFACE_PROFILE.regions.history,[root]);f.trigger();}
+ release();for(let i=0;i<100;i++)await tick();
+ if(mode==='stop')assert.equal(f.emitted.length,1);else{assert(f.emitted.slice(1).some(p=>p.payload.candidates.some(c=>c.nativeTitle==='Replacement tail')));assert(f.emitted.slice(1).every(p=>p.payload.candidates.every(c=>!c.nativeTitle.startsWith('Old '))));}f.adapter.stop();
+});
+
+test('continuous assistant text mutations do not starve loaded directory pages or hide body-ID changes',async t=>{
+ const f=bodyFixture(),nodes=[],root={...visibleDirectoryNode(f.document),isConnected:true,contains:n=>nodes.includes(n),querySelectorAll:()=>[...nodes]};
+ for(let i=0;i<1000;i++){const id='55555555-5555-4555-8555-'+i.toString(16).padStart(12,'0');nodes.push({tagName:'A',textContent:'Native '+i,isConnected:true,ownerDocument:f.document,...visibleDirectoryNode(f.document,root),parentNode:root,getAttribute:k=>k==='href'?'https://chatgpt.com/c/'+id:null});}
+ f.selectors.set(LEGACY_SURFACE_PROFILE.regions.history,[root]);
+ t.after(()=>f.adapter.stop());
+ let directoryVisits=0,directoryWalkers=0;const createWalker=f.document.createTreeWalker;
+ f.document.createTreeWalker=(r,what)=>{const walker=createWalker(r,what);if(r!==root)return walker;directoryWalkers++;return {nextNode(){const n=walker.nextNode();if(n)directoryVisits++;return n;}};};
+ const textNode={nodeType:3,parentNode:f.reading.children[0],parentElement:f.reading.children[0]};let surfaceCount=0;
+ await f.start(p=>{f.emitted.push(p);if(p.kind==='surface-delta'){surfaceCount++;f.observer().cb([{type:'characterData',target:textNode}]);}return Promise.resolve(bodyAck(p));});for(let i=0;i<150;i++)await tick();
+ t.diagnostic(JSON.stringify({directoryVisits,directoryWalkers,surfaceCount,uniqueIDs:new Set(f.emitted.filter(p=>p.kind==='surface-delta').flatMap(p=>p.payload.candidates.map(c=>c.renderKey))).size}));
+ assert.equal(new Set(f.emitted.filter(p=>p.kind==='surface-delta').flatMap(p=>p.payload.candidates.map(c=>c.renderKey))).size,1000);assert(surfaceCount<30);
+ const before=f.emitted.length;for(let i=0;i<20;i++)f.observer().cb([{type:'characterData',target:textNode}]);for(let i=0;i<100;i++)await tick();assert.equal(f.emitted.length,before);
+ const message=f.makeMessage('M2');f.reading.children.push(message);f.observer().cb([{type:'childList',target:f.reading,addedNodes:[message],removedNodes:[]}]);await settle();assert(f.emitted.some(p=>p.kind==='current-observation'&&p.payload.body.messageIds.includes('M2')));f.adapter.stop();
+});
+
+test('content candidate listing reaches native IDless tail through bounded adapter pages',async()=>{
+ const {createContentCandidates}=await import('../../src/host/content-candidates.mjs');let clicks=0;const f=fixture({inputRisk:()=>({state:'clear',flags:[]}),authorize:()=>true}),nodes=[],root={...visibleDirectoryNode(f.document),isConnected:true,contains:n=>nodes.includes(n),querySelectorAll:()=>[...nodes]};
+ for(let i=0;i<605;i++)nodes.push({tagName:'BUTTON',textContent:'Candidate '+i,isConnected:true,ownerDocument:f.document,...visibleDirectoryNode(f.document,root),parentNode:root,getAttribute:()=>null,getClientRects:()=>[{}],matches:()=>false,click:()=>{assert.equal(i,604);clicks++;}});
+ f.selectors.set(LEGACY_SURFACE_PROFILE.regions.projects,[root]);await f.start();const owner=createContentCandidates({adapter:f.adapter,current:()=>true,showReading:()=>true,now:()=>0});
+ const tail=await owner.listPage(576);assert.equal(tail.total,605);assert.equal(tail.items.length,29);assert.equal(tail.nextOffset,null);assert.equal(tail.items.at(-1).nativeTitle,'Candidate 604');
+ const result=await owner.activate({candidate:tail.items.at(-1),actionId:'tail-action',uiGrantId:'grant',mountId:'mount',expiresAt:new Date(6000).toISOString()});assert.equal(result.state,'dispatched');assert.equal(clicks,1);owner.stop();f.adapter.stop();
+});
+test('both loaded iterators reject stop, abort and elapsed budget between pages',async()=>{
+ for(const method of ['loadedPages','loadedCandidatePages'])for(const mode of ['stop','abort','deadline']){let elapsed=0;const f=fixture({elapsedNow:()=>elapsed}),nodes=[],root={...visibleDirectoryNode(f.document),isConnected:true,contains:n=>nodes.includes(n),querySelectorAll:()=>nodes};for(let i=0;i<300;i++)nodes.push({tagName:'BUTTON',textContent:'Candidate '+i,isConnected:true,ownerDocument:f.document,...visibleDirectoryNode(f.document,root),parentNode:root,getAttribute:()=>null});f.selectors.set(LEGACY_SURFACE_PROFILE.regions.projects,[root]);await f.start();const controller=new AbortController(),iterator=f.adapter[method](controller.signal);assert.equal((await iterator.next()).done,false);if(mode==='stop')f.adapter.stop();if(mode==='abort')controller.abort();if(mode==='deadline')elapsed=6000;await assert.rejects(iterator.next(),/stale-host-loaded-read/);f.adapter.stop();}
+});
+
+test('popover toggle rescans deferred native changes and stop removes its listener',async()=>{
+ const f=fixture(),button={tagName:'BUTTON',textContent:'Before',isConnected:true,ownerDocument:f.document,getAttribute:()=>null},root={...visibleDirectoryNode(f.document),isConnected:true,contains:n=>n===button,querySelectorAll:()=>[button]};button.parentNode=root;Object.assign(button,visibleDirectoryNode(f.document,root));f.selectors.set(LEGACY_SURFACE_PROFILE.regions.projects,[root]);await f.start();await settle();assert.equal(f.emitted.at(-1).payload.candidates[0].nativeTitle,'Before');
+ button.textContent='Changed while masked';const toggle=f.documentListeners.get('toggle');assert.equal(typeof toggle,'function');toggle();await settle();assert.equal(f.emitted.at(-1).payload.candidates[0].nativeTitle,'Changed while masked');const count=f.emitted.length;toggle();await settle();assert.equal(f.emitted.length,count);f.adapter.stop();assert.equal(f.documentListeners.has('toggle'),false);toggle();await settle();assert.equal(f.emitted.length,count);
+});
+
+test('exact owned shell moves do not rescan native sources; mixed and forged records still do',async()=>{
+ const owned={},forged={getAttribute:()=> 'copied-owned-marker'},changes=[];
+ const f=fixture({isOwnedSurface:n=>n===owned,onSurfaceChange:records=>changes.push(records)}),button={tagName:'BUTTON',textContent:'Before',isConnected:true,ownerDocument:f.document,getAttribute:()=>null};
+ const root={...visibleDirectoryNode(f.document),isConnected:true,contains:n=>n===button,querySelectorAll:()=>[button]};button.parentNode=root;Object.assign(button,visibleDirectoryNode(f.document,root));f.selectors.set(LEGACY_SURFACE_PROFILE.regions.projects,[root]);
+ await f.start();await settle();const count=f.emitted.length;
+ button.textContent='Native change not yet signalled';
+ for(let i=0;i<4;i++)f.observer().cb([{type:'childList',target:root,addedNodes:i%2?[owned]:[],removedNodes:i%2?[]:[owned]}]);
+ await settle();assert.equal(f.emitted.length,count);assert.equal(changes.length,0);
+ f.observer().cb([{type:'childList',target:root,addedNodes:[owned,button],removedNodes:[]}]);await settle();assert.equal(f.emitted.at(-1).payload.candidates[0].nativeTitle,button.textContent);assert.equal(changes.length,1);
+ button.textContent='Forged marker cannot hide native change';f.observer().cb([{type:'childList',target:root,addedNodes:[forged],removedNodes:[]}]);await settle();assert.equal(f.emitted.at(-1).payload.candidates[0].nativeTitle,button.textContent);assert.equal(changes.length,2);
+ button.textContent='Attributes remain observed';f.observer().cb([{type:'attributes',target:root,attributeName:'class'}]);await settle();assert.equal(f.emitted.at(-1).payload.candidates[0].nativeTitle,button.textContent);assert.equal(changes.length,3);f.adapter.stop();
+});
+
+test('trusted native preparation refreshes restored reading proof before later send, never creates intent itself',async()=>{
+ const f=sendFixture();await f.start(p=>{f.emitted.push(p);return bodyAck(p);});await settle();f.reading.hidden=true;f.trigger();await settle();assert.equal(f.emitted.filter(p=>p.kind==='current-observation').at(-1).payload.body.association,'unproven');
+ f.reading.hidden=false;f.documentListeners.get('pointerdown')({type:'pointerdown',isTrusted:true,target:f.button,button:0});await settle();assert.equal(f.emitted.filter(p=>p.kind==='current-observation').at(-1).payload.body.association,'explicit-body-id');assert.equal(f.emitted.filter(p=>p.kind==='send-candidate').length,0);
+ f.click();await settle();assert.equal(f.emitted.filter(p=>p.kind==='send-candidate').length,1);f.adapter.stop();assert.equal(f.documentListeners.has('pointerdown'),false);
+});
+test('binding renewal cannot make an expired body proof eligible for a trusted send',async()=>{
+ const f=sendFixture();let hold=false,release;await f.start(p=>{f.emitted.push(p);return hold&&p.kind==='current-observation'?new Promise(r=>release=()=>r(bodyAck(p))):Promise.resolve(bodyAck(p));});await settle();f.setTime(90000);hold=true;f.adapter.updateBinding({...f.binding,expiresAt:new Date(110000).toISOString()});await settle();f.setTime(100000);f.click();release();await settle();assert.equal(f.emitted.filter(p=>p.kind==='send-candidate').length,0);f.adapter.stop();
+});
+
+test('queued send expires with the proof captured at the gesture even when transport is renewed',async()=>{
+ const f=sendFixture();let release;await f.start(p=>{f.emitted.push(p);return p.kind==='surface-delta'?new Promise(r=>release=()=>r(bodyAck(p))):Promise.resolve(bodyAck(p));});await settle();f.setTime(90000);f.click();f.adapter.updateBinding({...f.binding,expiresAt:new Date(110000).toISOString()});f.setTime(100000);release();await settle();assert.equal(f.emitted.filter(p=>p.kind==='send-candidate').length,0);f.adapter.stop();
+});
+
+
+test('both loaded iterators recheck expiry and cancellation before declaring their final packet complete',async()=>{
+ for(const method of ['loadedPages','loadedCandidatePages'])for(const mode of ['stop','abort','deadline']){
+  let elapsed=0;const f=fixture({elapsedNow:()=>elapsed});await f.start();
+  const controller=new AbortController(),iterator=f.adapter[method](controller.signal);
+  assert.equal((await iterator.next()).done,false);
+  if(mode==='stop')f.adapter.stop();if(mode==='abort')controller.abort();if(mode==='deadline')elapsed=6000;
+  await assert.rejects(iterator.next(),/stale-host-loaded-read/);f.adapter.stop();
+ }
+});
+
+
+test('candidate scan rejects directory mutation before identity cleanup or publishing mixed pages',async()=>{
+ const {createContentCandidates}=await import('../../src/host/content-candidates.mjs');
+ for(const count of [1,300]){
+  const f=fixture(),nodes=[],root={...visibleDirectoryNode(f.document),isConnected:true,contains:n=>nodes.includes(n),querySelectorAll:()=>nodes};
+  for(let i=0;i<count;i++)nodes.push({tagName:'BUTTON',textContent:'Candidate '+i,isConnected:true,ownerDocument:f.document,...visibleDirectoryNode(f.document,root),parentNode:root,getAttribute:()=>null});
+  f.selectors.set(LEGACY_SURFACE_PROFILE.regions.projects,[root]);await f.start();await tick();
+  let scans=0,upgrades=0,changed=false;
+  const adapter={...f.adapter,async *loadedCandidatePages(){for await(const packet of f.adapter.loadedCandidatePages()){yield packet;if(!changed){changed=true;nodes[0].textContent='Renamed';f.trigger();}}}};
+  const owner=createContentCandidates({adapter,current:()=>true,showReading:()=>true,onScan:()=>scans++,isUpgraded:()=>{upgrades++;return false;}});
+  await assert.rejects(owner.listPage(),/stale-host-loaded-read/);assert.equal(scans,0);assert.equal(upgrades,0);
+  const page=await owner.listPage();assert.equal(page.total,count);assert.equal(page.items[0].nativeTitle,'Renamed');assert.equal(scans,1);assert.equal(upgrades,count);
+  owner.stop();f.adapter.stop();
+ }
+});
+
+test('loaded candidate snapshot remains usable during unrelated body text changes',async()=>{
+ const f=fixture();await f.start();await tick();const iterator=f.adapter.loadedPages();assert.equal((await iterator.next()).done,false);
+ f.observer().cb([{type:'characterData',target:{parentNode:f.reading}}]);
+ assert.equal((await iterator.next()).done,true);f.adapter.stop();
+});
+
+
+test('directory mutation requests native surrender before scanning while unrelated body text does not',async()=>{
+ const changes=[],f=fixture({onSurfaceChange:records=>changes.push(records)});await f.start();await tick();
+ f.observer().cb([{type:'characterData',target:{parentNode:f.reading}}]);await tick();assert.equal(changes.length,0);
+ const records=[{type:'characterData',target:f.selectors.get(LEGACY_SURFACE_PROFILE.regions.history)[0]}];const callback=f.observer().cb;callback(records);assert.equal(changes.length,1);assert.deepEqual(changes[0],records);f.adapter.stop();callback(records);assert.equal(changes.length,1);
+});
+
+for(const mode of ['plan-expiry','late-authorization'])test('adapter native action uses monotonic '+mode+' despite wall clock rollback',async()=>{
+ let elapsed=100,authorizations=0,clicks=0;const f=fixture({elapsedNow:()=>elapsed,inputRisk:()=>({state:'clear',flags:[]}),authorize:async()=>{if(++authorizations===2&&mode==='late-authorization'){elapsed=6100;f.setTime(2000);}return true;}});
+ const root={...visibleDirectoryNode(f.document),isConnected:true,contains:n=>n===button,querySelectorAll:()=>[button]},button={tagName:'BUTTON',textContent:'Same',isConnected:true,ownerDocument:f.document,...visibleDirectoryNode(f.document,root),parentNode:root,getAttribute:()=>null,getClientRects:()=>[{}],matches:()=>false,click:()=>clicks++};
+ f.setTime(5000);f.selectors.set(LEGACY_SURFACE_PROFILE.regions.projects,[root]);await f.start();await tick();const proposals=await f.adapter.readLoaded(null),target=proposals.find(p=>p.kind==='surface-delta').payload.candidates[0].target,plan=f.adapter.planNavigation(target);
+ assert.equal(plan.mode,'native-control');if(mode==='plan-expiry'){elapsed=30100;f.setTime(2000);}
+ const command={actionId:'deadline',uiGrantId:'grant',mountId:'mount',planRevision:plan.planRevision,targetKey:f.adapter.planKey(plan)};
+ assert.equal((await f.adapter.dispatchNative(command)).reason,'stale-navigation-plan');assert.equal(clicks,0);assert.equal((await f.adapter.dispatchNative(command)).reason,'action-already-used');f.adapter.stop();
+});
+
+const currentConversationTarget=()=>({kind:'resolved',entity:'conversation',nativeId:C,navigationURL:`https://chatgpt.com/c/${C}`,liveHandle:null});
+test('production default body proof enables same-target only after exact current owner ACK',async()=>{
+ const f=bodyFixture();let release;await f.start(p=>p.kind==='current-observation'?new Promise(resolve=>release=()=>resolve(bodyAck(p))):Promise.resolve(bodyAck(p)));await settle();
+ assert.notEqual(f.adapter.planNavigation(currentConversationTarget()).mode,'same-target');release();await settle();const plan=f.adapter.planNavigation(currentConversationTarget());assert.equal(plan.mode,'same-target');assert.equal(plan.bodyProofId,'accepted-body-proof');assert(f.adapter.planKey(plan));f.adapter.stop();assert.equal(f.adapter.planNavigation(currentConversationTarget()).mode,'unavailable');
+});
+for(const patch of [{bodyEpoch:undefined},{bodyEpoch:-1},{bodyEpoch:1.5},{bodyEpoch:NaN},{bodyEpoch:Number.MAX_SAFE_INTEGER+1},{bodyProofId:undefined},{state:'rejected'}])test('production default same-target rejects incomplete or rejected body ACK '+JSON.stringify(patch),async()=>{
+ const f=bodyFixture();await f.start(async p=>({...bodyAck(p),...patch}));await settle();assert.notEqual(f.adapter.planNavigation(currentConversationTarget()).mode,'same-target');f.adapter.stop();
+});
+test('production default does not infer body proof from route or body discovery alone',async()=>{
+ const f=bodyFixture();await f.start();await settle();assert.notEqual(f.adapter.planNavigation(currentConversationTarget()).mode,'same-target');f.adapter.stop();
+});
+for(const change of ['message-ids','same-id-root-replacement','hidden-body'])test('current URL alone cannot retain same-target after '+change,async()=>{
+ const f=bodyFixture();await f.start(async p=>bodyAck(p));await settle();assert.equal(f.adapter.planNavigation(currentConversationTarget()).mode,'same-target');
+ if(change==='message-ids')f.reading.children.push(f.makeMessage('M2'));
+ if(change==='same-id-root-replacement'){const replacement={...f.reading};f.selectors.set('main > #reading',[replacement]);}
+ if(change==='hidden-body')f.reading.hidden=true;
+ assert.equal(f.adapter.currentURL(),currentConversationTarget().navigationURL);assert.notEqual(f.adapter.planNavigation(currentConversationTarget()).mode,'same-target');f.adapter.stop();
+});
+test('binding renewal does not extend original same-target ACK lifetime before a new accepted observation',async()=>{
+ const f=bodyFixture();let accepted=false;await f.start(async p=>{if(p.kind==='current-observation'){if(accepted)return {state:'rejected',localSeq:p.localSeq};accepted=true;}return bodyAck(p);});await settle();assert.equal(f.adapter.planNavigation(currentConversationTarget()).mode,'same-target');
+ f.setTime(99999);assert(f.adapter.updateBinding({...f.binding,expiresAt:new Date(119999).toISOString()}));f.setTime(100000);assert.notEqual(f.adapter.planNavigation(currentConversationTarget()).mode,'same-target');await settle();assert.notEqual(f.adapter.planNavigation(currentConversationTarget()).mode,'same-target');f.adapter.stop();
+});
+for(const change of ['stop','body-replacement','new-generation'])test('delayed owner ACK cannot promote stale same-target after '+change,async()=>{
+ const f=bodyFixture();let release,first=true;await f.start(p=>{if(p.kind==='current-observation'&&first){first=false;return new Promise(resolve=>release=()=>resolve(bodyAck(p)));}return Promise.resolve({state:'rejected',localSeq:p.localSeq});});await settle();
+ if(change==='stop')f.adapter.stop();
+ if(change==='body-replacement')f.selectors.set('main > #reading',[{...f.reading}]);
+ if(change==='new-generation'){f.adapter.stop();await f.start();}
+ release();await settle();assert.notEqual(f.adapter.planNavigation(currentConversationTarget()).mode,'same-target');f.adapter.stop();
+});
+test('same-target dispatch rechecks production body fingerprint after authorization yields',async()=>{
+ let authorizeResolve;const f=bodyFixture({authorize:()=>new Promise(resolve=>authorizeResolve=resolve)});await f.start(async p=>bodyAck(p));await settle();const plan=f.adapter.planNavigation(currentConversationTarget());assert.equal(plan.mode,'same-target');
+ const pending=f.adapter.dispatchNative({actionId:'current-action',uiGrantId:'grant',mountId:'mount',planRevision:plan.planRevision,targetKey:f.adapter.planKey(plan)});await settle();f.reading.children.push(f.makeMessage('M2'));authorizeResolve(true);assert.equal((await pending).state,'blocked');f.adapter.stop();
+});
+test('explicit bodyProof override remains available to existing integrations',async()=>{
+ const f=bodyFixture({bodyProof:()=>({conversationId:C,bodyProofId:'explicit-proof',bodyEpoch:9})});await f.start();await settle();const plan=f.adapter.planNavigation(currentConversationTarget());assert.equal(plan.mode,'same-target');assert.equal(plan.bodyProofId,'explicit-proof');f.adapter.stop();
+});
+test('owned reading presentation mask does not publish inherited-hidden messages as an empty body or renew proof',async()=>{
+ let masked=false;const f=fixture({profile:LEGACY_SURFACE_PROFILE,isOwnedMask:n=>masked&&n===f.reading});
+ const message={ownerDocument:f.document,isConnected:true,parentElement:f.reading,style:{display:'block',visibility:'visible'},getClientRects:()=>[{}],getAttribute:k=>k==='data-message-id'?'m1':null};
+ Object.assign(f.reading,{ownerDocument:f.document,parentElement:null,style:{display:'block',visibility:'visible'},getClientRects:()=>[{}],getAttribute:k=>k==='data-conversation-id'?C:null,querySelectorAll:()=>[message],contains:n=>n===message});
+ f.selectors.set('main > #reading',[f.reading]);
+ await f.start(async p=>{f.emitted.push(p);return {state:'accepted',localSeq:p.localSeq,receiptId:'r',...(p.kind==='current-observation'?{bodyProofId:'proof',bodyEpoch:1}:{})};});
+ for(let i=0;i<10;i++)await tick();
+ assert.deepEqual(f.emitted.filter(p=>p.kind==='current-observation').map(p=>p.payload.body.messageIds),[['m1']]);
+ masked=true;f.reading.style.visibility=message.style.visibility='hidden';f.trigger();for(let i=0;i<10;i++)await tick();
+ assert.deepEqual(f.emitted.filter(p=>p.kind==='current-observation').map(p=>p.payload.body.messageIds),[['m1']]);
+ masked=false;f.reading.style.visibility=message.style.visibility='visible';f.trigger();for(let i=0;i<10;i++)await tick();
+ assert.equal(f.emitted.filter(p=>p.kind==='current-observation').length,1);
+ message.style.visibility='hidden';f.trigger();for(let i=0;i<10;i++)await tick();
+ assert.deepEqual(f.emitted.filter(p=>p.kind==='current-observation').at(-1).payload.body.messageIds,[],'native hidden change still invalidates current messages');
+ f.adapter.stop();
+});
+test('masked binding renewal emits no body proof and native remount cannot inherit the old body epoch',async()=>{
+ let masked=false;const f=bodyFixture({isOwnedMask:n=>masked&&n===f.reading});await f.start(p=>{f.emitted.push(p);return bodyAck(p);});await settle();const initial=f.emitted.find(p=>p.kind==='current-observation');masked=true;f.reading.style.visibility='hidden';f.reading.children[0].style.visibility='hidden';f.setTime(90000);f.adapter.updateBinding({...f.binding,expiresAt:new Date(110000).toISOString()});await settle();assert.equal(f.emitted.filter(p=>p.kind==='current-observation').length,1);
+ const replacement={...f.reading,style:{display:'block',visibility:'visible'},children:[]};replacement.querySelectorAll=()=>[];f.selectors.set('main > #reading',[replacement]);f.trigger();await settle();const latest=f.emitted.filter(p=>p.kind==='current-observation').at(-1);assert(latest.payload.body.regionEpoch>initial.payload.body.regionEpoch);assert.deepEqual(latest.payload.body.messageIds,[]);f.adapter.stop();
+});
+test('route change under owned presentation mask stops producer rather than retaining current authority',async()=>{
+ let masked=false;const f=bodyFixture({isOwnedMask:n=>masked&&n===f.reading});await f.start(p=>{f.emitted.push(p);return bodyAck(p);});await settle();masked=true;f.reading.style.visibility='hidden';f.reading.children[0].style.visibility='hidden';const count=f.emitted.length;f.document.location.href='https://chatgpt.com/';f.trigger();await settle();assert.equal(f.rebind.length,1);assert.equal(f.emitted.length,count);assert.equal(f.adapter.inspect().ok,false);
+});
+test('message replacement while masked is observed freshly on release, never cached as old IDs',async()=>{
+ let masked=false;const f=bodyFixture({isOwnedMask:n=>masked&&n===f.reading});await f.start(p=>{f.emitted.push(p);return bodyAck(p);});await settle();masked=true;f.reading.style.visibility='hidden';f.reading.children=[f.makeMessage('M2')];f.reading.children[0].style.visibility='hidden';f.trigger();await settle();assert.equal(f.emitted.filter(p=>p.kind==='current-observation').length,1);masked=false;f.reading.style.visibility=f.reading.children[0].style.visibility='visible';f.trigger();await settle();assert.deepEqual(f.emitted.filter(p=>p.kind==='current-observation').at(-1).payload.body.messageIds,['M2']);f.adapter.stop();
+});
+for(const mutation of ['childList','data-message-id'])test('masked native body '+mutation+' synchronously surrenders before publishing fresh body',async()=>{
+ let masked=false,released=0;const f=bodyFixture({isOwnedMask:n=>masked&&n===f.reading,onSurfaceChange:records=>{if(!records.length)return;released++;masked=false;f.reading.style.visibility='visible';for(const n of f.reading.children)n.style.visibility='visible';}});
+ await f.start(p=>{f.emitted.push(p);return bodyAck(p);});await settle();const initial=f.emitted.find(p=>p.kind==='current-observation');masked=true;f.reading.style.visibility='hidden';const old=f.reading.children[0],next=f.makeMessage('M2');next.style.visibility='hidden';f.reading.children=[next];
+ const record=mutation==='childList'?{type:'childList',target:f.reading,addedNodes:[next],removedNodes:[old]}:{type:'attributes',attributeName:'data-message-id',target:next};
+ f.observer().cb([record]);assert.equal(masked,false);assert.equal(released,1);await settle();const latest=f.emitted.filter(p=>p.kind==='current-observation').at(-1);assert.notEqual(latest,initial);assert.deepEqual(latest.payload.body.messageIds,['M2']);f.adapter.stop();
+});
+
+test('masked current body text-only streaming preserves presentation and original body proof',async t=>{
+ let masked=false;const changes=[];
+ const f=bodyFixture({isOwnedMask:n=>masked&&n===f.reading,onSurfaceChange:records=>changes.push(records)});t.after(()=>f.adapter.stop());
+ await f.start(p=>{f.emitted.push(p);return bodyAck(p);});await settle();
+ const initial=f.emitted.length,text={nodeType:3,parentNode:f.reading.children[0],parentElement:f.reading.children[0]};
+ masked=true;f.reading.style.visibility='hidden';
+ f.observer().cb([{type:'characterData',target:text}]);await settle();
+ assert.deepEqual(changes,[],'text alone must not surrender the workspace');
+ assert.equal(f.emitted.length,initial,'hidden text cannot renew the accepted body proof');
+ // A mixed batch must still release the mask for native identity changes.
+ const identity={type:'attributes',attributeName:'data-message-id',target:f.reading.children[0]};
+ f.observer().cb([{type:'characterData',target:text},identity]);assert.equal(changes.length,1);assert.deepEqual(changes[0],[identity]);
+});
+
+for(const source of ['header','directory'])test('mixed native '+source+' title and body token surrender only relevant records',async t=>{
+ const changes=[],f=bodyFixture({onSurfaceChange:records=>changes.push(records)});t.after(()=>f.adapter.stop());
+ const d=sys05Directory(f),heading={...visibleDirectoryNode(f.document),isConnected:true,textContent:'Current title',contains:n=>n===heading};
+ heading.parentElement={...visibleDirectoryNode(f.document),isConnected:true};
+ f.selectors.set(LEGACY_SURFACE_PROFILE.currentConversationHeader,[heading]);
+ await f.start(p=>{f.emitted.push(p);return bodyAck(p);});await settle();
+ const token={type:'characterData',target:{nodeType:3,parentNode:f.reading.children[0],parentElement:f.reading.children[0]}},title={type:'characterData',target:source==='header'?heading:d.nodes[0]};
+ title.target.textContent='Native updated title';f.observer().cb([token,title]);
+ assert.deepEqual(changes,[[title]]);await settle();
+ assert(f.emitted.some(p=>p.payload?.candidates?.some(c=>c.nativeTitle==='Native updated title')||p.payload?.surface?.candidates?.some(c=>c.nativeTitle==='Native updated title')));
+});
+
+// SYS05 deterministic mechanism probe only: no browser timings or real-S claim.
+function sys05Directory(f,size=32){
+ const nodes=[],root={...visibleDirectoryNode(f.document),isConnected:true,contains:n=>{for(let current=n;current;current=current.parentNode??current.parentElement)if(current===root)return true;return false;},querySelectorAll:()=>nodes};
+ for(let i=0;i<size;i++)nodes.push({tagName:'A',textContent:'Native '+i,isConnected:true,...visibleDirectoryNode(f.document,root),parentNode:root,getAttribute:k=>k==='href'?'https://chatgpt.com/c/55555555-5555-4555-8555-'+i.toString(16).padStart(12,'0'):null});
+ f.selectors.set(LEGACY_SURFACE_PROFILE.regions.history,[root]);
+ let visits=0,walkers=0;const original=f.document.createTreeWalker;
+ f.document.createTreeWalker=(r,what)=>{const walker=original(r,what);if(r!==root)return walker;walkers++;return {nextNode(){const n=walker.nextNode();if(n)visits++;return n;}};};
+ return {nodes,root,counts:()=>({visits,walkers})};
+}
+for(const faithful of [false,true])test('SYS05 settled token scan characterization '+(faithful?'recursive':'direct-child'),async t=>{
+ const f=bodyFixture();t.after(()=>f.adapter.stop());if(!faithful)f.reading.contains=n=>f.reading.children.includes(n);
+ const d=sys05Directory(f),message=f.reading.children[0],text={nodeType:3,parentNode:message,parentElement:message};
+ await f.start(p=>{f.emitted.push(p);return Promise.resolve(bodyAck(p));});await settle();const before=d.counts(),emitted=f.emitted.length;
+ for(let i=0;i<3;i++){f.observer().cb([{type:'characterData',target:text}]);await settle();}
+ const after=d.counts();t.diagnostic(JSON.stringify({faithful,before,after,extraVisits:after.visits-before.visits,extraWalkers:after.walkers-before.walkers,extraPackets:f.emitted.length-emitted}));
+ assert.equal(after.visits-before.visits,0);assert.equal(f.emitted.length,emitted);
+ // Same-ID assistant token changes preserve the accepted body ID set; ACK ID additions must still be observed.
+ const ack=f.makeMessage('USER-ACK');f.reading.children.push(ack);f.observer().cb([{type:'childList',target:f.reading,addedNodes:[ack],removedNodes:[]}]);await settle();
+ assert.deepEqual(f.emitted.filter(p=>p.kind==='current-observation').at(-1).payload.body.messageIds,['M1','USER-ACK']);
+ d.nodes[31].textContent='Native title updated';f.observer().cb([{type:'characterData',target:{nodeType:3,parentNode:d.nodes[31],parentElement:d.nodes[31]}}]);await settle();
+ assert(f.emitted.filter(p=>p.kind==='surface-delta').some(p=>p.payload.candidates.some(c=>c.nativeTitle==='Native title updated')));
+ f.reading.hidden=true;f.observer().cb([{type:'attributes',attributeName:'hidden',target:f.reading}]);await settle();assert.equal(f.emitted.filter(p=>p.kind==='current-observation').at(-1).payload.body.association,'unproven');
+});
+test('SYS05 settled assistant token-only changes must not traverse directory',async t=>{
+ const f=bodyFixture();t.after(()=>f.adapter.stop());const d=sys05Directory(f),message=f.reading.children[0],text={nodeType:3,parentNode:message,parentElement:message};
+ await f.start();await settle();const before=d.counts();f.observer().cb([{type:'characterData',target:text}]);await settle();const after=d.counts();
+ assert.equal(after.visits-before.visits,0,'body-only characterData must not start a directory traversal');
+});
+
+for(const renew of [false,true])test('renewal continuity 1000 directory '+(renew?'same-identity renewals':'no renewal control'),async t=>{
+ const f=bodyFixture(),d=sys05Directory(f,1000);t.after(()=>f.adapter.stop());f.binding.expiresAt=new Date(20000).toISOString();
+ let packets=0,renewals=0;let shouldRenew=renew;
+ await f.start(p=>{f.emitted.push(p);if(p.kind==='surface-delta'){packets++;if(shouldRenew&&packets%2===0){renewals++;f.setTime(renewals*10000);assert.equal(f.adapter.updateBinding({...f.binding,expiresAt:new Date(renewals*10000+20000).toISOString()}),true);}}return Promise.resolve(bodyAck(p));});
+ for(let i=0;i<150;i++)await tick();
+ const distinct=()=>new Set(f.emitted.filter(p=>p.kind==='surface-delta').flatMap(p=>p.payload.candidates.map(c=>c.renderKey))).size;
+ const snapshot={renew,distinctIDs:distinct(),...d.counts(),packets,renewals};t.diagnostic(JSON.stringify(snapshot));
+ // Stop synthetic renewal injection and drain: a continuation should recover, proving no missing fixture IDs.
+ shouldRenew=false;for(let i=0;i<150;i++)await tick();assert.equal(distinct(),1000,'all fixture IDs remain discoverable once renewal injection stops');
+ assert.equal(snapshot.distinctIDs,1000,'legal same-identity renewal must preserve an in-flight directory traversal');
+ assert.equal(packets,snapshot.packets,'renewal during the final fragment must not queue another complete pass');assert.deepEqual(d.counts(),{visits:snapshot.visits,walkers:snapshot.walkers},'finished finite pass remains idle');
+});
+
+for(const change of ['title','body','route'])test('renewal continuity conservative '+change+' invalidation',async t=>{
+ const f=bodyFixture(),d=sys05Directory(f,32);t.after(()=>f.adapter.stop());f.binding.expiresAt=new Date(20000).toISOString();
+ await f.start(p=>{f.emitted.push(p);return Promise.resolve(bodyAck(p));});await settle();f.setTime(10000);f.adapter.updateBinding({...f.binding,expiresAt:new Date(30000).toISOString()});await settle();const before=d.counts(),count=f.emitted.length;
+ if(change==='title'){d.nodes[31].textContent='Changed after renewal';f.observer().cb([{type:'characterData',target:{nodeType:3,parentNode:d.nodes[31],parentElement:d.nodes[31]}}]);await settle();assert(d.counts().visits>before.visits);assert(f.emitted.slice(count).some(p=>p.kind==='surface-delta'&&p.payload.candidates.some(c=>c.nativeTitle==='Changed after renewal')));}
+ if(change==='body'){const next=f.makeMessage('USER-ACK-RENEWED');f.reading.children.push(next);f.observer().cb([{type:'childList',target:f.reading,addedNodes:[next],removedNodes:[]}]);await settle();assert.deepEqual(f.emitted.filter(p=>p.kind==='current-observation').at(-1).payload.body.messageIds,['M1','USER-ACK-RENEWED']);f.reading.hidden=true;f.observer().cb([{type:'attributes',attributeName:'hidden',target:f.reading}]);await settle();assert.equal(f.emitted.filter(p=>p.kind==='current-observation').at(-1).payload.body.association,'unproven');}
+ if(change==='route'){f.document.location.href='https://chatgpt.com/';f.trigger();await settle();assert.equal(f.rebind.length,1);assert.equal(f.emitted.length,count);assert.equal(f.adapter.inspect().ok,false);}
+});
+
+test('renewal continuity must not mask pending native title invalidation',async t=>{
+ const f=bodyFixture(),d=sys05Directory(f,1000);t.after(()=>f.adapter.stop());f.binding.expiresAt=new Date(20000).toISOString();let changed=false;
+ await f.start(p=>{f.emitted.push(p);if(p.kind==='surface-delta'&&!changed){changed=true;d.nodes[0].textContent='Changed before renewal';f.observer().cb([{type:'characterData',target:{nodeType:3,parentNode:d.nodes[0],parentElement:d.nodes[0]}}]);f.setTime(10000);assert(f.adapter.updateBinding({...f.binding,expiresAt:new Date(30000).toISOString()}));}return Promise.resolve(bodyAck(p));});
+ for(let i=0;i<150;i++)await tick();const candidates=f.emitted.filter(p=>p.kind==='surface-delta').flatMap(p=>p.payload.candidates);assert.equal(new Set(candidates.map(c=>c.renderKey)).size,1000);assert(candidates.some(c=>c.nativeTitle==='Changed before renewal'));
+});
+for(const method of ['loadedPages','loadedCandidatePages'])test('renewal continuity preserves only navigation candidate '+method+' iterator',async t=>{
+ const f=fixture(),d=sys05Directory(f,300);t.after(()=>f.adapter.stop());f.binding.expiresAt=new Date(20000).toISOString();
+ if(method==='loadedCandidatePages'){f.selectors.set(LEGACY_SURFACE_PROFILE.regions.projects,[d.root]);for(const node of d.nodes){node.tagName='BUTTON';node.getAttribute=()=>null;}}
+ await f.start();for(let i=0;i<30;i++)await tick();const iterator=f.adapter[method](new AbortController().signal);assert.equal((await iterator.next()).done,false);
+ f.setTime(10000);assert(f.adapter.updateBinding({...f.binding,expiresAt:new Date(30000).toISOString()}));
+ if(method==='loadedPages')await assert.rejects(iterator.next(),/stale-host-loaded-read/);
+ else {const next=await iterator.next();assert.equal(next.done,false);assert(next.value.payload.candidates.length>0);await iterator.return();}
+});
+
+
+test('toggle event cannot opt into private renewal cursor preservation',async t=>{
+ const f=bodyFixture(),d=sys05Directory(f,1000);t.after(()=>f.adapter.stop());let changed=false;
+ await f.start(p=>{f.emitted.push(p);if(p.kind==='surface-delta'&&!changed){changed=true;d.nodes[0].textContent='Real native title after toggle';f.documentListeners.get('toggle')({type:'toggle',preserveProducerCursor:true});}return Promise.resolve(bodyAck(p));});
+ for(let i=0;i<150;i++)await tick();assert(f.emitted.filter(p=>p.kind==='surface-delta').some(p=>p.payload.candidates.some(c=>c.nativeTitle==='Real native title after toggle')));
+});
+
+for(const size of [1000,2100])test('idle renewal handle churn '+size+' resolved directory',async t=>{
+ const f=bodyFixture(),d=sys05Directory(f,size);t.after(()=>f.adapter.stop());f.binding.expiresAt=new Date(20000).toISOString();
+ const drain=async()=>{for(let i=0;i<300;i++)await tick();};
+ await f.start(p=>{f.emitted.push(p);return Promise.resolve(bodyAck(p));});await drain();
+ const surfaces=()=>f.emitted.filter(p=>p.kind==='surface-delta'),initial=surfaces(),initialNodes=d.counts(),stableCount=f.emitted.length;
+ await drain();assert.equal(f.emitted.length,stableCount,'baseline fully drained');
+ const initialMap=new Map(initial.flatMap(p=>p.payload.candidates).map(c=>[c.renderKey,c]));assert.equal(initialMap.size,size);
+ f.setTime(10000);assert(f.adapter.updateBinding({...f.binding,expiresAt:new Date(30000).toISOString()}));await drain();const renewed=surfaces().slice(initial.length),renewedMap=new Map(renewed.flatMap(p=>p.payload.candidates).map(c=>[c.renderKey,c]));
+ const semantic=c=>JSON.stringify({...c,target:{...c.target,liveHandle:null}});let semanticChanges=0,handleChanges=0;
+ for(const [id,c]of renewedMap){const old=initialMap.get(id);if(semantic(c)!==semantic(old))semanticChanges++;if(JSON.stringify(c.target.liveHandle)!==JSON.stringify(old.target.liveHandle))handleChanges++;}
+ t.diagnostic(JSON.stringify({size,initialPackets:initial.length,renewPackets:renewed.length,renewDistinctIDs:renewedMap.size,extraVisits:d.counts().visits-initialNodes.visits,extraWalkers:d.counts().walkers-initialNodes.walkers,semanticChanges,handleChanges,detached:renewed.reduce((sum,p)=>sum+p.payload.detachedHandles.length,0)}));
+ const firstRenewalEnd=surfaces().length;f.setTime(20000);assert(f.adapter.updateBinding({...f.binding,expiresAt:new Date(40000).toISOString()}));await drain();const secondRenewed=surfaces().slice(firstRenewalEnd);
+ t.diagnostic(JSON.stringify({size,secondRenewPackets:secondRenewed.length,secondRenewDistinctIDs:new Set(secondRenewed.flatMap(p=>p.payload.candidates.map(c=>c.renderKey))).size}));
+ // Genuine title/body evidence remains observed after this idle pass.
+ const beforeChange=f.emitted.length;d.nodes[size-1].textContent='Genuine changed title';f.observer().cb([{type:'characterData',target:{nodeType:3,parentNode:d.nodes[size-1],parentElement:d.nodes[size-1]}}]);await drain();assert(f.emitted.slice(beforeChange).some(p=>p.kind==='surface-delta'&&p.payload.candidates.some(c=>c.nativeTitle==='Genuine changed title')));
+ const added=f.makeMessage('GENUINE-USER-ACK');f.reading.children.push(added);f.observer().cb([{type:'childList',target:f.reading,addedNodes:[added],removedNodes:[]}]);await drain();assert(f.emitted.filter(p=>p.kind==='current-observation').at(-1).payload.body.messageIds.includes('GENUINE-USER-ACK'));
+ assert.equal(semanticChanges,0,'idle renewal has no genuine candidate field changes beyond handles');assert.equal(renewed.length,0,'unchanged resolved directory should not replay solely due to idle renewal handle churn');assert.equal(secondRenewed.length,0,'a second idle renewal remains publication-stable');
+});
+
+test('private pass registration precedes first body and terminal end waits for final surface ACK',async t=>{
+ const f=bodyFixture(),events=[];t.after(()=>f.adapter.stop());let register,ack;
+ const started=f.start(p=>{events.push(p.kind);f.emitted.push(p);return p.kind==='surface-delta'?new Promise(resolve=>ack=()=>resolve(bodyAck(p))):Promise.resolve(bodyAck(p));},{ingestionPass:m=>{events.push(m.phase);return m.phase==='start'?new Promise(resolve=>register=()=>resolve({ok:true})):Promise.resolve({ok:true});}});
+ await settle();assert.deepEqual(events,['start']);register();await started;await settle();assert.deepEqual(events,['start','current-observation','surface-delta']);assert.equal(f.emitted[0].payload.body.messageIds[0],'M1');assert.equal(f.emitted[0].passSeq,undefined);ack();await settle();assert.deepEqual(events,['start','current-observation','surface-delta','end']);
+});
+test('empty and entirely deduplicated finite passes terminate without treating a pending packet as drained',async t=>{
+ const f=fixture(),events=[];t.after(()=>f.adapter.stop());await f.start(null,{ingestionPass:async m=>{events.push(m);return {ok:true};}});await settle();assert.deepEqual(events.map(m=>m.phase),['start','end']);assert.equal(f.emitted.length,1);
+ f.setTime(10000);f.adapter.updateBinding({...f.binding,expiresAt:new Date(30000).toISOString()});await settle();assert.deepEqual(events.map(m=>m.phase),['start','end','start','end']);assert.equal(events[2].passSeq,events[0].passSeq+1);assert.equal(f.emitted.length,1);
+});
+for(const mode of ['reject','throw','wrong-sequence'])test('surface ACK '+mode+' cancels scheduling without claiming pass completion',async t=>{
+ const f=fixture(),events=[];sys05Directory(f,1000);t.after(()=>f.adapter.stop());await f.start(p=>{f.emitted.push(p);if(mode==='throw')throw Error('lost');return {state:mode==='reject'?'rejected':'accepted',localSeq:p.localSeq+(mode==='wrong-sequence'?1:0)};},{ingestionPass:async m=>{events.push(m);return {ok:true};}});for(let i=0;i<100;i++)await tick();assert.deepEqual(events.map(m=>m.phase),['start','cancel']);assert(f.emitted.length>1);
+});
+for(const mode of ['reject','throw'])test('scheduling start '+mode+' degrades once without false registration or terminal end',async t=>{
+ const f=fixture(),events=[];sys05Directory(f,1000);t.after(()=>f.adapter.stop());await f.start(null,{ingestionPass:async m=>{events.push(m);if(m.phase==='start'&&mode==='throw')throw Error('lost');return {ok:false};}});for(let i=0;i<100;i++)await tick();assert.deepEqual(events.map(m=>m.phase),['start','cancel']);assert(f.emitted.length>1);
+});
+test('stop during delayed registration cancels same pass and ignores late ACK before any packet',async()=>{
+ const f=fixture(),events=[];let release;const started=f.start(null,{ingestionPass:m=>{events.push(m);return m.phase==='start'?new Promise(resolve=>release=()=>resolve({ok:true})):Promise.resolve({ok:true});}}),rejected=assert.rejects(started,/stale-host-binding/);await settle();f.adapter.stop();release();await rejected;await settle();assert.deepEqual(events.map(m=>m.phase),['start','cancel']);assert.equal(events[0].passSeq,events[1].passSeq);assert.equal(f.emitted.length,0);
+});
+test('real directory restart retains old scheduling pass while successor start is delayed',async t=>{
+ const f=fixture(),d=sys05Directory(f,1000),events=[];t.after(()=>f.adapter.stop());let firstAck,nextStart,active=null;
+ await f.start(p=>{f.emitted.push(p);if(f.emitted.length===1)return new Promise(resolve=>firstAck=()=>resolve(bodyAck(p)));return Promise.resolve(bodyAck(p));},{ingestionPass:m=>{events.push(m);if(m.phase==='start'&&m.passSeq===2)return new Promise(resolve=>nextStart=()=>{active=2;resolve({ok:true});});active=m.phase==='start'?m.passSeq:null;return Promise.resolve({ok:true});}});await settle();assert.equal(active,1);
+ d.nodes[0].textContent='Changed midpass';f.observer().cb([{type:'characterData',target:{nodeType:3,parentNode:d.nodes[0],parentElement:d.nodes[0]}}]);firstAck();await settle();assert(nextStart);assert.deepEqual(events.map(m=>m.phase),['start','start']);assert.equal(active,1,'old validated pass bridges the async successor validation gap');assert.equal(f.emitted.length,1);nextStart();for(let i=0;i<100;i++)await tick();assert.equal(active,null);assert.deepEqual(events.map(m=>m.phase),['start','start','end']);assert.equal(events.at(-1).passSeq,2);assert(f.emitted.some(p=>p.payload.candidates.some(c=>c.nativeTitle==='Changed midpass')));
+});
+// Real scheduling owner; only DOM, browser frame and authority are offline doubles.
+function adapterPassOwner(f){
+ let holdFrame=false,releaseFrame;const events=[],sender={id:'extension',tab:{id:1,incognito:false},frameId:0,documentId:'browser-doc',documentLifecycle:'active',url:f.document.location.href};
+ const frame={documentId:sender.documentId,url:sender.url,documentLifecycle:'active'},grant={id:'grant',scopeEpoch:1},scope={key:'offline-scope'};
+ const bound=m=>m.documentToken===f.binding.documentToken&&m.producerToken===f.binding.producerToken&&m.routeEpoch===f.binding.routeEpoch;
+ const owner=createHostIngestionPassOwner({profiles:new Map([[LEGACY_SURFACE_PROFILE.id,LEGACY_SURFACE_PROFILE]]),handshake:{verify:async m=>bound(m),isBound:bound,matchesFrame:(m,s,actual)=>bound(m)&&actual===frame},authority:{peek:()=>({state:'verified',grant}),scopeFor:()=>scope},getFrame:async()=>{if(holdFrame){holdFrame=false;return new Promise(resolve=>releaseFrame=()=>resolve(frame));}return frame;},now:()=>0,elapsedNow:()=>0});
+ const send=m=>owner.handle({v:1,type:'HOST_INGESTION_PASS',documentToken:f.binding.documentToken,producerToken:f.binding.producerToken,routeEpoch:f.binding.routeEpoch,...m},sender);
+ return {owner,events,send,holdNextFrame:()=>holdFrame=true,get releaseFrame(){return releaseFrame;},ingestionPass:m=>{events.push(m);return send(m);}};
+}
+async function interruptedDirectoryBody(t){
+ const f=bodyFixture(),directory=sys05Directory(f,1000),h=adapterPassOwner(f);let surfaceAck,bodyAckRelease,nextSurfaceHold=false,nextSurfaceAck;
+ const emit=p=>{f.emitted.push(p);if(p.kind==='surface-delta'&&nextSurfaceHold){nextSurfaceHold=false;return new Promise(resolve=>nextSurfaceAck=()=>resolve(bodyAck(p)));}if(p.kind==='surface-delta'&&!surfaceAck)return new Promise(resolve=>surfaceAck=()=>resolve(bodyAck(p)));if(p.kind==='current-observation'&&p.payload.body.messageIds.includes('M2'))return new Promise(resolve=>bodyAckRelease=state=>resolve({...bodyAck(p),state:state??'accepted'}));return Promise.resolve(bodyAck(p));};
+ t.after(async()=>{surfaceAck?.();bodyAckRelease?.();nextSurfaceAck?.();await f.adapter.stop();h.owner.stop();});
+ await f.start(emit,{ingestionPass:h.ingestionPass});await settle();assert(surfaceAck);assert(h.owner.isPending('offline-scope'));
+ directory.nodes[0].textContent='Changed during active pass';f.reading.children.push(f.makeMessage('M2'));
+ f.observer().cb([{type:'characterData',target:{nodeType:3,parentElement:directory.nodes[0],parentNode:directory.nodes[0]}},{type:'childList',target:f.reading,addedNodes:[f.reading.children.at(-1)],removedNodes:[]}]);surfaceAck();await settle();
+ assert(bodyAckRelease);assert.deepEqual(h.events.map(m=>[m.phase,m.passSeq]),[['start',1]],'current body must precede successor registration');assert(h.owner.isPending('offline-scope'));
+ return {f,h,release:bodyAckRelease,holdNextSurface:()=>nextSurfaceHold=true,get nextSurfaceAck(){return nextSurfaceAck;}};
+}
+for(const late of ['accepted','rejected'])test('real pass owner releases immediately when stopped before successor registration; late body '+late,async t=>{
+ const {f,h,release}=await interruptedDirectoryBody(t),count=f.emitted.length;
+ assert.equal(await f.adapter.stop(),true);assert.equal(h.owner.isPending('offline-scope'),false);assert.equal(h.owner.isIdle(),true);
+ assert.deepEqual(h.events.map(m=>[m.phase,m.passSeq]),[['start',1],['cancel',1]]);
+ release(late);await settle();assert.equal(h.owner.isIdle(),true);assert.equal(f.emitted.length,count);assert.equal(h.events.length,2);
+});
+for(const state of ['rejected','unknown'])test('real pass remains pending when priority body fails before directory replacement: '+state,async t=>{
+ const suspended=await interruptedDirectoryBody(t),{f,h,release}=suspended;suspended.holdNextSurface();release(state);for(let i=0;i<100;i++)await tick();assert(suspended.nextSurfaceAck);
+ assert.deepEqual(h.events.map(m=>[m.phase,m.passSeq]),[['start',1],['start',2]],'unrelated failed body must not create a false directory drain gap');assert(h.owner.isPending('offline-scope'));
+ assert.equal(await f.adapter.stop(),true);assert.equal(h.owner.isPending('offline-scope'),false);assert.equal(h.events.at(-1).phase,'cancel');assert.equal(h.events.at(-1).passSeq,2);suspended.nextSurfaceAck();await settle();assert.equal(h.owner.isIdle(),true);
+});
+test('real pass successor replaces old scheduling ownership without a cancel/start gap',async t=>{
+ const {f,h,release}=await interruptedDirectoryBody(t);
+ h.holdNextFrame();release();await settle();assert(h.releaseFrame);assert(h.owner.isPending('offline-scope'),'old pass remains pending until successor validates');assert.deepEqual(h.events.map(m=>[m.phase,m.passSeq]),[['start',1],['start',2]]);h.releaseFrame();for(let i=0;i<180;i++)await tick();
+ assert.deepEqual(h.events.map(m=>[m.phase,m.passSeq]),[['start',1],['start',2],['end',2]]);assert.equal(h.owner.isIdle(),true);
+ const next={...h.events[1],passSeq:3};assert.equal((await h.send(next)).ok,true);assert(h.owner.isPending('offline-scope'));
+ assert.equal((await h.send({...h.events[0],phase:'cancel'})).ok,false);assert(h.owner.isPending('offline-scope'),'old terminal cannot cancel a newer validated pass');
+ await h.send({...next,phase:'cancel'});assert.equal(h.owner.isIdle(),true);
+});
+for(const restart of [false,true])test('real pass owner fences late successor registration after stop; new generation '+restart,async t=>{
+ const {f,h,release}=await interruptedDirectoryBody(t);h.holdNextFrame();release();await settle();assert(h.releaseFrame);assert(h.owner.isPending('offline-scope'));
+ assert.equal(await f.adapter.stop(),true);assert.equal(h.owner.isPending('offline-scope'),false);assert.deepEqual(h.events.map(m=>[m.phase,m.passSeq]),[['start',1],['start',2],['cancel',2]]);
+ let newSurfaceAck;if(restart){await f.start(p=>p.kind==='surface-delta'&&!newSurfaceAck?new Promise(resolve=>newSurfaceAck=()=>resolve(bodyAck(p))):Promise.resolve(bodyAck(p)),{ingestionPass:h.ingestionPass});await settle();assert(newSurfaceAck);assert(h.owner.isPending('offline-scope'));}
+ h.releaseFrame();await settle();assert.equal(h.owner.isPending('offline-scope'),restart);
+ if(restart){assert.equal(h.events.at(-1).passSeq,3);newSurfaceAck();for(let i=0;i<180;i++)await tick();}
+ assert.equal(h.owner.isIdle(),true);assert.equal(h.events.filter(m=>m.phase==='cancel'&&m.passSeq===3).length,0,'old continuation cannot cancel the new generation');
+});
+for(const initialUnproven of [false,true])test('current visible body reaches owner before a successor directory registration can hide it: '+initialUnproven,async t=>{
+ let masked=false,release;const events=[];
+ const f=bodyFixture({isOwnedMask:n=>masked&&n===f.reading});t.after(()=>f.adapter.stop());
+ if(initialUnproven){delete f.reading.attrs['data-conversation-id'];f.reading.children=[];}
+ await f.start(p=>{f.emitted.push(p);events.push(p.kind==='current-observation'?p.payload.body.messageIds.join(','):p.kind);return Promise.resolve(bodyAck(p));},{ingestionPass:m=>{
+  events.push(m.phase+':'+m.passSeq);
+  if(m.phase==='start'&&m.passSeq===2)return new Promise(resolve=>release=()=>resolve({ok:true}));
+  return Promise.resolve({ok:true});
+ }});await settle();
+ const old=f.reading.children[0],next=f.makeMessage('M2');f.reading.attrs['data-conversation-id']=C;f.reading.children=[next];
+ f.observer().cb([{type:'childList',target:f.reading,addedNodes:[next],removedNodes:old?[old]:[]}]);
+ f.documentListeners.get('toggle')({target:{},oldState:'closed',newState:'open'});
+ await settle();assert.equal(typeof release,'function');
+ // The user returns while registration is still waiting. Never scan hidden
+ // content or reuse an old proof to fill the missing current observation.
+ masked=true;f.reading.style.visibility=next.style.visibility='hidden';release();await settle();
+ const bodies=f.emitted.filter(p=>p.kind==='current-observation').map(p=>p.payload.body.messageIds);
+ assert.deepEqual(bodies,[initialUnproven?[]:['M1'],['M2']]);
+ assert(events.indexOf('M2')<events.indexOf('start:2'));
+ for(let i=0;i<10;i++){f.trigger();await settle();}
+ assert.equal(f.emitted.filter(p=>p.kind==='current-observation').length,2,'mask cannot refresh or duplicate the admitted body');
+ assert(f.emitted.every((p,i)=>!i||p.localSeq>f.emitted[i-1].localSeq));
+});
+test('same producer renewal retains the finite pass and a reused adapter starts without cancellation gap',async t=>{
+ const f=fixture(),d=sys05Directory(f,1000),events=[];t.after(()=>f.adapter.stop());let packets=0;
+ const ingestionPass=async m=>{events.push(m);return {ok:true};};await f.start(p=>{f.emitted.push(p);if(++packets===2){f.setTime(10000);f.adapter.updateBinding({...f.binding,expiresAt:new Date(30000).toISOString()});}return Promise.resolve(bodyAck(p));},{ingestionPass});for(let i=0;i<100;i++)await tick();assert.deepEqual(events.map(m=>m.phase),['start','end']);assert.equal(new Set(f.emitted.flatMap(p=>p.payload.candidates.map(c=>c.renderKey))).size,1000);
+ d.nodes[0].textContent='Changed before restart';f.observer().cb([{type:'characterData',target:{nodeType:3,parentNode:d.nodes[0],parentElement:d.nodes[0]}}]);f.adapter.stop();events.length=0;await f.start(null,{ingestionPass});for(let i=0;i<100;i++)await tick();assert.deepEqual(events.map(m=>m.phase),['start','end']);
+});
+
+const explicitLayout={header:'#native-header',reading:'#native-reading',composer:'#native-composer',navigationSlot:'#native-return-slot'};
+function layoutFixture(){
+ const profile={...LEGACY_SURFACE_PROFILE,currentBody:undefined,nativeLayout:{...explicitLayout}},f=fixture({profile});
+ for(const [old,key] of [['main > header','header'],['main > section[aria-label="Conversation"]','reading'],['main > form#composer','composer'],['main > header > .navigation-slot','navigationSlot']]){f.selectors.set(explicitLayout[key],f.selectors.get(old));f.selectors.delete(old);}
+ f.selectors.get(explicitLayout.header)[0].contains=n=>n===f.slot;
+ for(const nodes of f.selectors.values())for(const n of nodes)n.ownerDocument=f.document;
+ f.document.defaultView.innerWidth=1000;f.document.defaultView.innerHeight=600;f.document.elementFromPoint=()=>f.slot;
+ return {...f,profile};
+}
+test('explicit native layout binds the same production inspection and continuity path',async()=>{
+ const f=layoutFixture();await f.start();const result=f.adapter.inspect();assert.equal(result.ok,true);assert.equal(result.reading,f.reading);assert.equal(result.composer,f.composer);assert.equal(result.navigationSlot,f.slot);assert.equal(f.adapter.isSameNativeRegions(result),true);
+ f.profile.nativeLayout.reading='#changed';assert.equal(f.adapter.inspect().ok,true,'package layout is snapshotted');
+ f.selectors.set(explicitLayout.reading,[{...f.reading}]);assert.equal(f.adapter.isSameNativeRegions(result),false);assert(f.adapter.inspect().regionEpoch>result.regionEpoch);f.adapter.stop();
+});
+for(const kind of ['replacement','missing','ambiguous'])test('current boundary distinguishes '+kind+' without accepting a stale inspection',async t=>{
+ const f=layoutFixture();t.after(()=>f.adapter.stop());await f.start();const first=f.adapter.inspect();assert.equal(first.ok,true);
+ if(kind==='replacement')f.selectors.set(explicitLayout.reading,[{...f.reading}]);
+ if(kind==='missing')f.selectors.delete(explicitLayout.reading);
+ if(kind==='ambiguous')f.selectors.set(explicitLayout.reading,[f.reading,{...f.reading}]);
+ const next=f.adapter.inspectStructure(first);assert.equal(next.ok,false);assert.equal(next.boundaryKey,'reading');
+ assert.equal(next.reason,kind==='replacement'?'region-identity-changed':'missing-or-ambiguous-native-boundary');
+ assert.equal(f.adapter.isSameNativeRegions(first),false);
+ if(kind==='replacement')assert(f.adapter.inspect().regionEpoch>first.regionEpoch);
+});
+for(const kind of ['missing','ambiguous','occupied','overlap','bad-selector','outside-header','slot-is-header','slot-in-composer','slot-in-reading'])test('explicit layout preserves boundary refusal: '+kind,async()=>{
+ const f=layoutFixture();await f.start();
+ if(kind==='missing')f.selectors.delete(explicitLayout.composer);
+ if(kind==='ambiguous')f.selectors.set(explicitLayout.composer,[f.composer,f.composer]);
+ if(kind==='occupied'){f.slot.textContent='native control';f.slot.childNodes=[{nodeType:3,textContent:'native control'}];}
+ if(kind==='outside-header')f.selectors.get(explicitLayout.header)[0].contains=()=>false;
+ if(kind==='slot-is-header')f.selectors.set(explicitLayout.navigationSlot,f.selectors.get(explicitLayout.header));
+ if(kind==='slot-in-composer')f.composer.contains=n=>n===f.slot;
+ if(kind==='slot-in-reading')f.reading.contains=n=>n===f.slot;
+ if(kind==='overlap')f.composer.getBoundingClientRect=()=>({x:220,y:100,width:700,height:90});
+ if(kind==='bad-selector')f.document.querySelectorAll=()=>{throw Error('invalid selector');};
+ const result=f.adapter.inspect(),optional=['occupied','outside-header','slot-is-header','slot-in-composer','slot-in-reading'].includes(kind);assert.equal(result.ok,optional);if(optional){assert.equal(result.returnSlot,null);assert.equal(result.roles.return.available,false);}f.adapter.stop();
+});
+for(const nativeLayout of [null,{}, {...explicitLayout,extra:'#other'},{...explicitLayout,composer:''},{...explicitLayout,reading:42},{...explicitLayout,viewportFocus:'native-scroll-region'},{...explicitLayout,readingViewport:'#viewport',viewportFocus:'unknown'},{...explicitLayout,readingViewport:'#viewport',viewportFocus:'native-scroll-region'}])test('invalid explicit native layout cannot fall back to legacy '+JSON.stringify(nativeLayout),()=>{
+ assert.throws(()=>fixture({profile:{...LEGACY_SURFACE_PROFILE,nativeLayout}}),/invalid-native-layout-profile/);
+});
+
+test('return slot reparenting retires only the return entry',async()=>{
+ const f=layoutFixture();await f.start();const first=f.adapter.inspect();assert.equal(first.ok,true);assert.equal(f.adapter.isSameNativeRegions(first),true);
+ f.selectors.get(explicitLayout.header)[0].contains=()=>false;f.composer.contains=n=>n===f.slot;
+ assert.equal(f.adapter.isSameNativeRegions(first),true);assert.equal(f.adapter.isReturnSlotCurrent(first),false);assert.equal(f.adapter.inspect().ok,true);assert.equal(f.adapter.inspect().roles.return.available,false);f.adapter.stop();
+});
+
+function viewportFixture(){
+ const profile={...LEGACY_SURFACE_PROFILE,currentBody:undefined,nativeLayout:{...explicitLayout,readingViewport:'#native-viewport'}},f=fixture({profile});
+ for(const [old,key] of [['main > header','header'],['main > section[aria-label="Conversation"]','reading'],['main > form#composer','composer'],['main > header > .navigation-slot','navigationSlot']]){f.selectors.set(explicitLayout[key],f.selectors.get(old));f.selectors.delete(old);}
+ const header=f.selectors.get(explicitLayout.header)[0];header.contains=n=>n===f.slot;
+ const viewport={isConnected:true,ownerDocument:f.document,children:[f.reading,f.composer],contains:n=>n===f.reading||n===f.composer,getBoundingClientRect:()=>({x:220,y:60,width:700,height:510})};
+ f.reading.parentElement=f.composer.parentElement=viewport;f.selectors.set('#native-viewport',[viewport]);
+ for(const nodes of f.selectors.values())for(const n of nodes)n.ownerDocument=f.document;
+ f.document.defaultView.innerWidth=1000;f.document.defaultView.innerHeight=600;
+ f.document.elementFromPoint=()=>f.slot;
+ return {...f,viewport,header};
+}
+test('scrolling content uses an independent viewport above protected footer without masking the viewport',async()=>{
+ const f=viewportFixture();await f.start();f.reading.getBoundingClientRect=()=>({x:220,y:-6029,width:700,height:1282});
+ const first=f.adapter.inspect();assert.equal(first.ok,true);assert.deepEqual(first.readingRect,{x:220,y:60,width:700,height:420});assert.equal(first.reading,f.reading);assert.equal(first.readingViewport,f.viewport);assert.equal(f.adapter.isSameNativeRegions(first),true);
+ f.composer.getBoundingClientRect=()=>({x:220,y:400,width:700,height:170});assert.deepEqual(f.adapter.inspect().readingRect,{x:220,y:60,width:700,height:340});
+ const replacement={...f.viewport};f.selectors.set('#native-viewport',[replacement]);assert.equal(f.adapter.isSameNativeRegions(first),false);f.adapter.stop();
+});
+for(const kind of ['missing','ambiguous','extra-child','reading-reparented','footer-reparented','viewport-is-reading','viewport-has-header','nonfinite','no-reading-space','footer-outside','viewport-detached','text-sibling','foreign-reading','detached-footer','panned-viewport','zoomed-viewport'])test('viewport profile rejects unsafe native structure: '+kind,async()=>{
+ const f=viewportFixture();await f.start();
+ if(kind==='missing')f.selectors.delete('#native-viewport');
+ if(kind==='ambiguous')f.selectors.set('#native-viewport',[f.viewport,f.viewport]);
+ if(kind==='extra-child')f.viewport.children.push({});
+ if(kind==='reading-reparented')f.reading.parentElement=null;
+ if(kind==='footer-reparented')f.composer.parentElement=null;
+ if(kind==='viewport-is-reading')f.selectors.set('#native-viewport',[f.reading]);
+ if(kind==='viewport-has-header')f.viewport.contains=()=>true;
+ if(kind==='nonfinite')f.viewport.getBoundingClientRect=()=>({x:NaN,y:60,width:700,height:510});
+ if(kind==='no-reading-space')f.composer.getBoundingClientRect=()=>({x:220,y:20,width:700,height:550});
+ if(kind==='footer-outside')f.composer.getBoundingClientRect=()=>({x:930,y:480,width:60,height:90});
+ if(kind==='viewport-detached')f.viewport.isConnected=false;
+ if(kind==='text-sibling')f.viewport.childNodes=[{nodeType:3,textContent:'Native status'}];
+ if(kind==='foreign-reading')f.reading.ownerDocument={};
+ if(kind==='detached-footer')f.composer.isConnected=false;
+ if(kind==='panned-viewport')f.document.defaultView.visualViewport={scale:1,offsetLeft:10,offsetTop:0};
+ if(kind==='zoomed-viewport')f.document.defaultView.visualViewport={scale:2,offsetLeft:0,offsetTop:0};
+ assert.equal(f.adapter.inspect().ok,false);f.adapter.stop();
+});
+test('viewport topology changes invalidate continuity even with identical nodes',async()=>{
+ const f=viewportFixture();await f.start();const first=f.adapter.inspect();assert.equal(first.ok,true);f.viewport.children.push({});assert.equal(f.adapter.isSameNativeRegions(first),false);f.adapter.stop();
+});
+
+test('return rectangle performs one fresh identity and geometry proof, and rejects replacement',async t=>{
+ const f=layoutFixture();t.after(()=>f.adapter.stop());await f.start();const first=f.adapter.inspect();
+ let reads=0;const measure=f.slot.getBoundingClientRect.bind(f.slot);f.slot.getBoundingClientRect=()=>{reads++;return measure();};
+ assert.equal(f.adapter.isReturnSlotCurrent(first),true);const proofReads=reads;assert(proofReads>0);
+ reads=0;assert(f.adapter.getReturnControlRect(first));assert.equal(reads,proofReads,'rectangle must not repeat the same paint/geometry proof');
+ f.selectors.set(explicitLayout.composer,[{...f.composer}]);assert.equal(f.adapter.getReturnControlRect(first),null,'equal geometry cannot substitute a replaced native composer');
+});
+
+test('explicit slot moved over composer rejects inspection and dormant geometry without reviving adapter',async()=>{
+ const f=layoutFixture();await f.start();const first=f.adapter.inspect();assert.equal(first.ok,true);assert.equal(f.adapter.isReturnSlotCurrent(first),true);
+ f.slot.getBoundingClientRect=()=>({x:220,y:490,width:40,height:40});assert.equal(f.adapter.inspect().ok,true);assert.equal(f.adapter.inspect().roles.return.available,false);f.adapter.stop();assert.equal(f.adapter.isReturnSlotCurrent(first),false);
+ f.slot.getBoundingClientRect=()=>({x:220,y:0,width:40,height:40});assert.equal(f.adapter.isReturnSlotCurrent(first),true);assert.equal(f.adapter.inspect().ok,false,'presentation geometry cannot revive stopped binding');
+});
+
+test('preauthorization adapter observes bounded current metadata without transport or privileged subsystems',async()=>{
+ const c=retryClock();let snippets=0,passes=0;const f=fixture({...c.options,snippetsFactory:()=>{snippets++;throw Error('not permitted');}});f.binding.expiresAt=new Date(20000).toISOString();
+ await f.start(()=>assert.fail('preauth emit'),{phase:'observation',ingestionPass:()=>{passes++;}});await tick();
+ assert.equal(f.adapter.observationStatus().state,'observing');assert.ok(f.adapter.observationStatus().bytes>0);assert.ok(f.adapter.observationStatus().bytes<=65536);
+ assert.equal(snippets,0);assert.equal(passes,0);assert.equal(f.adapter.inspect().ok,false);assert.equal(f.adapter.prepareIdle(),null);assert.equal(f.adapter.prepareRecovery(),null);
+ assert.equal((await f.adapter.dispatchNative({})).state,'blocked');assert.equal(f.adapter.planNavigation({}).mode,'unavailable');await assert.rejects(f.adapter.readLoaded({}),/stale-host-binding/);
+ assert.throws(()=>f.adapter.updateBinding(f.binding),/stale-host-binding/);assert.equal(f.adapter.captureCandidateIdentity({}),null);
+ f.adapter.stop();assert.deepEqual(f.adapter.observationStatus(),{state:'stopped',candidates:0,messageIds:0,bytes:0});assert.equal(c.timers.size,0);
+});
+test('preauth mutation observation survives absent identity but expires on both clocks with active RAM cleanup',async()=>{
+ for(const clock of ['timer','wall','elapsed','route']){
+  const c=retryClock(),f=fixture(c.options);f.binding.expiresAt=new Date(20000).toISOString();await f.start(undefined,{phase:'observation'});await tick();
+  for(let i=0;i<100;i++)f.trigger();await tick();assert.equal(f.emitted.length,0);assert.equal(f.adapter.observationStatus().state,'observing');
+  if(clock==='timer')await c.advance(20000);else if(clock==='wall')f.setTime(20000);else if(clock==='elapsed'){c.options.elapsedNow=()=>20000;await c.advance(20000);}else f.document.location.href='https://chatgpt.com/';
+  assert.equal(f.adapter.observationStatus().bytes,0);assert.equal(f.observer().closed,true);assert.equal(c.timers.size,0);f.adapter.stop();
+ }
+});
+test('verified restart rescans current metadata and discards preauth snapshot and queued pump',async()=>{
+ const f=fixture();f.binding.expiresAt=new Date(20000).toISOString();await f.start(undefined,{phase:'observation'});await tick();f.trigger();
+ await f.start();await tick();assert.equal(f.adapter.observationStatus().bytes,0);assert.equal(f.emitted.length,1);assert.equal(f.emitted[0].localSeq,1);assert.equal(f.adapter.inspect().ok,true);f.adapter.stop();
+});
+
+test('preauth RAM includes current chat metadata, is bounded, and does not read message body or draft',async()=>{
+ const f=bodyFixture();f.binding.expiresAt=new Date(20000).toISOString();const d=sys05Directory(f,300);
+ await f.start(undefined,{phase:'observation'});await tick();const first=f.adapter.observationStatus();assert(first.candidates>0);assert(first.candidates<=256);assert(first.candidates+first.messageIds<=256);assert(first.bytes<=65536);assert.equal(f.emitted.length,0);
+ d.nodes.length=1;f.trigger();await tick();const next=f.adapter.observationStatus();assert.equal(next.candidates,1);assert.equal(next.messageIds,1);assert(next.bytes<first.bytes);assert.equal(f.adapter.selectedSnippet({}),null);f.adapter.stop();
+});
+
+test('preauth finite scan continues past container-only first page without fetching or retaining actionable handles',async()=>{
+ const c=retryClock(),f=fixture(c.options);f.binding.expiresAt=new Date(20000).toISOString();const d=sys05Directory(f,1),link=d.nodes[0];
+ d.nodes.splice(0,1,...Array.from({length:300},()=>({...link,tagName:'DIV',textContent:'',getAttribute:()=>null})),link);
+ await f.start(undefined,{phase:'observation'});await tick();assert.equal(f.adapter.observationStatus().candidates,0);
+ await c.advance(0);assert.equal(f.adapter.observationStatus().candidates,1);assert.equal(f.emitted.length,0);assert.equal(f.adapter.resolveLoadedTargets([{}])[0],null);
+ f.adapter.stop();assert.equal(c.timers.size,0);
+});
+
+test('late cancelled preauth continuation cannot detach the new authorized retry timer',async()=>{
+ const c=retryClock(),f=fixture(c.options);f.binding.expiresAt=new Date(20000).toISOString();const d=sys05Directory(f,1),link=d.nodes[0];
+ d.nodes.splice(0,1,...Array.from({length:300},()=>({...link,tagName:'DIV',textContent:'',getAttribute:()=>null})),link);
+ await f.start(undefined,{phase:'observation'});await tick();const old=[...c.timers.values()].find(t=>t.at===0);assert(old);
+ await f.start(async p=>({state:'retry-after',localSeq:p.localSeq,delayMs:50}));await tick();assert.equal(c.timers.size,1);
+ old.fn();f.adapter.stop();assert.equal(c.timers.size,0,'old callback must not clear ownership of the new retry timer');
+});
+
+test('preauth cursor does not retain or read an unobserved raw heading fingerprint',async()=>{
+ const f=bodyFixture();f.binding.expiresAt=new Date(20000).toISOString();sys05Directory(f,1);
+ const hidden={...visibleDirectoryNode(f.document),isConnected:true,getClientRects:()=>[],get textContent(){throw Error('unobserved-heading-fingerprint');}};
+ f.selectors.set(LEGACY_SURFACE_PROFILE.currentConversationHeader,[hidden]);
+ await f.start(undefined,{phase:'observation'});await tick();assert.equal(f.adapter.observationStatus().candidates,1);assert.equal(f.adapter.observationStatus().messageIds,1);f.adapter.stop();
+});
+
+for(const state of ['accepted','duplicate'])test('retry round trip cannot accept '+state+' beyond the original six-second window',async t=>{
+ let elapsed=0,retry,release,snippet;const issues=[],calls=[];
+ const f=bodyFixture({snippetsFactory:c=>(snippet=c,{stop(){}}),elapsedNow:()=>elapsed,scheduleRetry:fn=>(retry=fn,1),cancelRetry:()=>{},onObservationIssue:value=>issues.push(value)});t.after(()=>f.adapter.stop());
+ await f.start((p,budget)=>{calls.push({p,budget});if(calls.length===1){elapsed=5900;return Promise.resolve({state:'retry-after',localSeq:p.localSeq,delayMs:50});}return new Promise(resolve=>release=()=>resolve({...bodyAck(p),state}));});await settle();
+ elapsed=5950;const pending=retry();await settle();assert.equal(calls.length,2);assert.equal(calls[0].p,calls[1].p);
+ elapsed=6050;release();await pending;await settle();
+ assert.equal(issues.at(-1)?.reason,'host-observation-retry-budget');
+ assert.equal(calls.filter(c=>c.p.kind==='current-observation').length,2,'late body ACK cannot replay the proposal');
+ assert.equal(snippet.proof(),null,'late response cannot establish body authority');
+ assert.equal(calls[1].budget.deadlineAt,6000,'retry retains original absolute deadline');
+});
+
+for(const mode of ['clock-regressed-before-retry','nonfinite-clock-after-reply'])test('observation shared deadline fails closed for '+mode,async t=>{
+ let elapsed=0,retry,release,snippet;const calls=[],issues=[];
+ const f=bodyFixture({snippetsFactory:c=>(snippet=c,{stop(){}}),elapsedNow:()=>elapsed,scheduleRetry:fn=>(retry=fn,1),cancelRetry:()=>{},onObservationIssue:value=>issues.push(value)});t.after(()=>f.adapter.stop());
+ await f.start((p,budget)=>{calls.push({p,budget});if(calls.length===1){elapsed=5900;return Promise.resolve({state:'retry-after',localSeq:p.localSeq,delayMs:50});}return new Promise(resolve=>release=()=>resolve(bodyAck(p)));});await settle();
+ elapsed=mode==='clock-regressed-before-retry'?5800:5950;const pending=retry();await settle();
+ if(mode==='nonfinite-clock-after-reply'){elapsed=NaN;release();}await pending;await settle();
+ assert.equal(calls.filter(c=>c.p.kind==='current-observation').length,mode==='clock-regressed-before-retry'?1:2);
+ assert.equal(issues[0]?.reason,'host-observation-retry-budget');assert.equal(snippet.proof(),null);
+});
+
+
+test('explicit directory backpressure yields to a new native intent and current body without renewing its budget',async t=>{
+ const c=retryClock(),f=sendFixture(c.options),calls=[];let allowDirectory=false;
+ t.after(()=>f.adapter.stop());
+ await f.start(async(p,budget)=>{calls.push({p,budget});return p.kind==='surface-delta'&&!allowDirectory?{state:'retry-after',localSeq:p.localSeq,delayMs:50}:bodyAck(p);});await settle();
+ const first=calls.find(x=>x.p.kind==='surface-delta');assert(first);
+ f.click();f.reading.children.push(f.makeMessage('M2'));f.trigger();await settle();
+ const intent=calls.find(x=>x.p.kind==='send-candidate'),body=calls.find(x=>x.p.kind==='current-observation'&&x.p.payload.body.messageIds.includes('M2'));
+ assert(intent,'directory retry must not block an already captured native intent');assert(body,'new body must run before a refused directory retry');
+ assert(intent.p.localSeq<body.p.localSeq);assert.equal(intent.p.payload.stage,'intent');
+ allowDirectory=true;await c.advance(50);await settle();
+ const resumed=calls.filter(x=>x.p.kind==='surface-delta').at(-1);
+ assert(resumed.p.localSeq>body.p.localSeq,'do not replay the old sequence after a higher-priority accepted proposal');
+ assert.deepEqual(resumed.p.payload,first.p.payload);assert.equal(resumed.budget.deadlineAt,first.budget.deadlineAt);
+ assert.equal(c.issues.length,0);assert.equal(c.timers.size,0);
+});
+
+for(const expired of [false,true])test('priority overtaking reobserves invalidated titles with the original directory deadline '+expired,async t=>{
+ const c=retryClock(),f=sendFixture(c.options),d=sys05Directory(f,2),calls=[];t.after(()=>f.adapter.stop());
+ const link=d.nodes[0];link.getAttribute=k=>k==='href'?'https://chatgpt.com/c/'+C:null;link.textContent='A';let accept=false;
+ await f.start(async(p,budget)=>{calls.push({p,budget});return p.kind==='surface-delta'&&!accept?{state:'retry-after',localSeq:p.localSeq,delayMs:50}:bodyAck(p);});await settle();
+ const original=calls.find(x=>x.p.kind==='surface-delta');assert(original.p.payload.candidates.some(v=>v.nativeTitle==='A'));
+ link.textContent='B';const message=f.makeMessage('M2');f.reading.children.push(message);
+ f.observer().cb([{type:'characterData',target:{nodeType:3,parentElement:link,parentNode:link}},{type:'childList',target:f.reading,addedNodes:[message],removedNodes:[]}]);await settle();
+ const current=calls.find(x=>x.p.kind==='current-observation'&&x.p.payload.body.messageIds.includes('M2'));assert(current);assert(current.p.payload.surface.candidates.some(v=>v.nativeTitle==='B'));
+ const boundary=calls.length;
+ if(expired){
+  for(let i=0;i<3;i++){link.textContent='B'+i;f.observer().cb([{type:'characterData',target:{nodeType:3,parentElement:link,parentNode:link}}]);await settle();await c.advance(1000);await settle();}
+  accept=true;await c.advance(3000);await settle();assert(c.issues.some(x=>x.reason==='host-observation-retry-budget'));
+  assert(calls.filter(x=>x.p.kind==='surface-delta').every(x=>x.budget.deadlineAt===original.budget.deadlineAt));
+  const count=calls.length;await c.advance(50);await settle();assert.equal(calls.length,count,'exhausted directory does not restart itself');
+ }else{accept=true;await c.advance(50);await settle();}
+ for(const x of calls.slice(boundary).filter(x=>x.p.kind==='surface-delta')){assert(!x.p.payload.candidates.some(v=>v.target.nativeId===C&&v.nativeTitle==='A'));assert(x.p.localSeq>current.p.localSeq);assert.equal(x.budget.deadlineAt,original.budget.deadlineAt);}
+ assert.equal(c.timers.size,0);
+});
+
+test('paused directory cannot be revived by an old timer after stop and a new producer',async t=>{
+ const c=retryClock(),f=sendFixture(c.options),calls=[];t.after(()=>f.adapter.stop());
+ await f.start(async p=>{calls.push(p);return p.kind==='surface-delta'?{state:'retry-after',localSeq:p.localSeq,delayMs:50}:bodyAck(p);});await settle();
+ const stale=[...c.timers.values()][0].fn;assert.equal(f.adapter.prepareIdle(),null);await f.adapter.stop();assert.equal(c.timers.size,0);
+ f.binding.producerToken='new-producer';await f.start(async p=>{calls.push(p);return bodyAck(p);});await settle();const count=calls.length;stale();await settle();assert.equal(calls.length,count);assert.equal(c.timers.size,0);
+});
+
+test('priority retry and parked directory timers remain serial and preserve both original deadlines',async t=>{
+ const c=retryClock(),f=bodyFixture(c.options),calls=[];let directoryReady=false,release;
+ t.after(()=>f.adapter.stop());await f.start(async(p,budget)=>{calls.push({p,budget});if(p.kind==='surface-delta'&&!directoryReady)return {state:'retry-after',localSeq:p.localSeq,delayMs:50};if(p.kind==='current-observation'&&p.payload.body.messageIds.includes('M2'))return new Promise(r=>release=()=>r(bodyAck(p)));return bodyAck(p);});await settle();
+ f.reading.children.push(f.makeMessage('M2'));f.trigger();await settle();assert(release);const count=calls.length;directoryReady=true;await c.advance(50);await settle();assert.equal(calls.length,count,'timer must not send concurrently with current-body RPC');release();await settle();assert.equal(calls.at(-1).p.kind,'surface-delta');assert.equal(calls.at(-1).budget.deadlineAt,6000);assert.equal(c.timers.size,0);
+});
+
+test('an invalidated refused directory already covered by accepted facts retires before the next real change',async t=>{
+ const c=retryClock(),f=bodyFixture(c.options),d=sys05Directory(f,1),calls=[];let refuse=false;t.after(()=>f.adapter.stop());
+ await f.start(async(p,budget)=>{calls.push({p,budget});return p.kind==='surface-delta'&&refuse?{state:'retry-after',localSeq:p.localSeq,delayMs:50}:bodyAck(p);});await settle();
+ const mutate=title=>{d.nodes[0].textContent=title;f.observer().cb([{type:'characterData',target:{nodeType:3,parentElement:d.nodes[0],parentNode:d.nodes[0]}}]);};
+ refuse=true;mutate('B');await settle();assert(calls.some(x=>x.p.kind==='surface-delta'&&x.p.payload.candidates.some(v=>v.nativeTitle==='B')));
+ mutate('Native 0');f.reading.children.push(f.makeMessage('M2'));f.trigger();await settle();await c.advance(50);await settle();
+ assert(f.adapter.prepareIdle(),'accepted unchanged directory must not leave a parked attempt with no timer');
+ refuse=false;await c.advance(6000);mutate('C');await settle();assert(calls.some(x=>x.p.kind==='surface-delta'&&x.p.payload.candidates.some(v=>v.nativeTitle==='C')));assert.equal(c.issues.length,0);
+});
+
+for(const failure of ['rejected','unknown'])test('send gap '+failure+' stays fail closed without replaying loss or native intent',async()=>{
+ const f=sendFixture();let release;
+ await f.start(p=>{f.emitted.push(p);if(p.kind==='surface-delta')return new Promise(r=>release=()=>r(bodyAck(p)));if(p.kind==='send-gap'){if(failure==='unknown')throw Error('lost-reply');return Promise.resolve({state:'rejected',localSeq:p.localSeq});}return Promise.resolve(bodyAck(p));});
+ await settle();for(let i=0;i<33;i++)f.click();release();for(let i=0;i<8;i++)await settle();
+ for(let i=0;i<10;i++){f.click();f.trigger();await settle();}
+ assert.equal(f.emitted.filter(p=>p.kind==='send-gap').length,1);
+ assert.equal(f.emitted.filter(p=>p.kind==='send-candidate').length,0);
+ assert.equal(f.emitted.filter(p=>p.kind==='current-observation').length,1);
+ f.adapter.stop();
+});
+
+test('full but not overflowing send queue retains all 32 intents in order',async()=>{
+ const f=sendFixture();let release;
+ await f.start(p=>{f.emitted.push(p);if(p.kind==='surface-delta')return new Promise(r=>release=()=>r(bodyAck(p)));return Promise.resolve(bodyAck(p));});
+ await settle();for(let i=0;i<32;i++)f.click();release();for(let i=0;i<8;i++)await settle();
+ const sends=f.emitted.filter(p=>p.kind==='send-candidate');assert.equal(sends.length,32);
+ assert.equal(new Set(sends.map(p=>p.payload.intentId)).size,32);
+ assert.equal(f.emitted.filter(p=>p.kind==='send-gap').length,0);f.adapter.stop();
+});
+
+test('late gap acknowledgement cannot unlock a replacement producer before its own body acknowledgement',async()=>{
+ const f=sendFixture();let releaseSurface,releaseGap,releaseBody;const next=[];
+ await f.start(p=>{f.emitted.push(p);if(p.kind==='surface-delta')return new Promise(r=>releaseSurface=()=>r(bodyAck(p)));if(p.kind==='send-gap')return new Promise(r=>releaseGap=()=>r(bodyAck(p)));return Promise.resolve(bodyAck(p));});
+ await settle();for(let i=0;i<33;i++)f.click();releaseSurface();await settle();assert.equal(typeof releaseGap,'function');
+ await f.start(p=>{next.push(p);if(p.kind==='current-observation')return new Promise(r=>releaseBody=()=>r(bodyAck(p)));return Promise.resolve(bodyAck(p));},{binding:{...f.binding,producerToken:'replacement',routeEpoch:5}});
+ await settle();releaseGap();await settle();f.click();await settle();assert.deepEqual(next.map(p=>p.kind),['current-observation']);
+ releaseBody();await settle();f.click();await settle();assert.equal(next.filter(p=>p.kind==='send-candidate').length,1);
+ assert(next.every(p=>p.producerToken==='replacement'&&p.routeEpoch===5));f.adapter.stop();
+});
+
+test('observed header gap policy is accepted only with its explicit safe layout',()=>{
+ const nativeLayout={...explicitLayout,returnPlacement:'header-gap',returnHitRoot:'#hit',headerLayout:'transparent-containers',gapPolicy:'first-empty-header-gap'};
+ assert.doesNotThrow(()=>fixture({profile:{...LEGACY_SURFACE_PROFILE,nativeLayout}}));
+ for(const patch of [{gapPolicy:'unknown'},{headerLayout:undefined},{returnPlacement:undefined}])assert.throws(()=>fixture({profile:{...LEGACY_SURFACE_PROFILE,nativeLayout:{...nativeLayout,...patch}}}),/invalid-native-layout-profile|invalid-native-return-placement/);
+});
+
+for(const outcome of ['visible-read','refused','retired','binding-renewed'])test('late masked body identity requires a current native-reading receipt: '+outcome,async t=>{
+ let masked=false,probes=0,reads=0,f;
+ f=bodyFixture({isOwnedMask:n=>masked&&n===f.reading,withNativeReading:read=>{
+  probes++;if(outcome==='refused'||outcome==='binding-renewed'&&probes>1)return null;
+  masked=false;f.reading.style.visibility='visible';for(const node of f.reading.children)node.style.visibility='visible';
+  try{reads++;const result=read();if(outcome==='retired')f.adapter.stop();if(outcome==='binding-renewed'){f.setTime(90000);f.adapter.updateBinding({...f.binding,expiresAt:new Date(110000).toISOString()});}return result;}
+  finally{masked=true;f.reading.style.visibility='hidden';for(const node of f.reading.children)node.style.visibility='hidden';}
+ }});t.after(()=>f.adapter.stop());
+ f.reading.attrs={};f.reading.children=[];
+ await f.start(p=>{f.emitted.push(p);return bodyAck(p);});await settle();
+ assert.equal(f.emitted.filter(p=>p.kind==='current-observation').length,1);
+ assert.equal(f.emitted.find(p=>p.kind==='current-observation').payload.body.association,'unproven');
+ masked=true;f.reading.style.visibility='hidden';f.reading.attrs['data-conversation-id']=C;
+ const message=f.makeMessage('late-message');message.style.visibility='hidden';f.reading.children=[message];
+ f.observer().cb([{type:'attributes',attributeName:'data-conversation-id',target:f.reading},{type:'childList',target:f.reading,addedNodes:[message],removedNodes:[]}]);await settle();
+ const fresh=()=>f.emitted.filter(p=>p.kind==='current-observation'&&p.payload.body.association==='explicit-body-id');
+ assert.equal(fresh().length,outcome==='visible-read'?1:0);
+ assert(probes>0);assert.equal(reads,outcome==='refused'?0:1);
+ if(outcome!=='visible-read')return;
+ assert.deepEqual(fresh()[0].payload.body.messageIds,['late-message']);assert.equal(fresh()[0].bodyProofId,null);
+ assert.equal(probes,1);assert.equal(masked,true);
+ const before=f.emitted.length,text={nodeType:3,parentNode:message,parentElement:message};
+ for(let i=0;i<20;i++){f.observer().cb([{type:'characterData',target:text},{type:'childList',target:message,addedNodes:[text],removedNodes:[{nodeType:8}]}]);await settle();}
+ assert.equal(probes,1,'streaming text must not open repeated native-reading windows');assert.equal(f.emitted.length,before);
+ f.setTime(90000);f.adapter.updateBinding({...f.binding,expiresAt:new Date(110000).toISOString()});await settle();
+ assert.equal(probes,2,'binding renewal still requires a fresh visible read');assert.equal(fresh().length,2);
+ delete f.reading.attrs['data-conversation-id'];f.observer().cb([{type:'attributes',attributeName:'data-conversation-id',target:f.reading}]);await settle();
+ assert.equal(probes,3);assert.equal(f.emitted.filter(p=>p.kind==='current-observation').at(-1).payload.body.association,'unproven','newly unproven identity must invalidate the old body through the normal ACK path');
+});
+
+test('a rejected first masked body scan is consumed until another identity change',async t=>{
+ let masked=true,probes=0,f;
+ f=bodyFixture({isOwnedMask:n=>masked&&n===f.reading,withNativeReading:read=>{
+  probes++;masked=false;f.reading.style.visibility='visible';for(const n of f.reading.children)n.style.visibility='visible';
+  try{return read();}finally{masked=true;f.reading.style.visibility='hidden';for(const n of f.reading.children)n.style.visibility='hidden';}
+ }});t.after(()=>f.adapter.stop());f.reading.style.visibility=f.reading.children[0].style.visibility='hidden';
+ await f.start(p=>{f.emitted.push(p);return p.kind==='current-observation'?{state:'rejected',localSeq:p.localSeq}:bodyAck(p);});await settle();
+ assert.equal(probes,1);const count=f.emitted.filter(p=>p.kind==='current-observation').length;assert.equal(count,1);
+ const text={nodeType:3,parentElement:f.reading.children[0]};
+ for(let i=0;i<20;i++){f.observer().cb([{type:'characterData',target:text},{type:'childList',target:text.parentElement,addedNodes:[text],removedNodes:[{nodeType:3}]}]);await settle();}
+ assert.equal(probes,1,'a missing successful ACK is not another pending scan');assert.equal(f.emitted.filter(p=>p.kind==='current-observation').length,count);
+ const old=f.reading.children[0],next=f.makeMessage('next-identity');next.style.visibility='hidden';f.reading.children=[next];
+ f.observer().cb([{type:'childList',target:f.reading,addedNodes:[next],removedNodes:[old]}]);await settle();
+ assert.equal(probes,2);assert.deepEqual(f.emitted.filter(p=>p.kind==='current-observation').at(-1).payload.body.messageIds,['next-identity']);
+});

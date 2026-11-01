@@ -1,0 +1,82 @@
+{
+  "evidence": "REAL_HEADLESS_TEST_ONLY_MV3_OFFLINE_METADATA_CANDIDATES",
+  "productionPackage": "NOT_TESTED",
+  "productionACK": "NOT_TESTED_DOM_IS_NOT_ACK",
+  "realChatGPT": "NOT_RUN",
+  "sourceHashes": {
+    "tests/host/current-metadata-mv3-browser.mjs": "c8c4c2899b457a52375935de77bad3a0f7c148f3c85647a16b012cf2f09d83ec",
+    "tests/host/fixtures/server.mjs": "7a54227f01947f465616f7cba6ff57931d753313c6f3afb4381559e0d7eadaa1",
+    "src/runtime/session-provider.mjs": "6b141bc15867cd10656cc99a90407bcf369ae6e0d6444011d7c8703f958430e2",
+    "src/runtime/current-metadata-reader.mjs": "eef34958a8f01051ea186cbe1856f29ff32ccba7f4de2916900fca8afb1608ec",
+    "src/host/conversation-metadata.mjs": "744afe2228882a5ebff1ffd8f1294ecd80697d63b44af60640e3ff4d3a63410e",
+    "src/runtime/host-binding-service.mjs": "43939fe4f26c1202814649212006dca562858e00e57474c4effd6ba15f030d7a",
+    "src/runtime/host-observation-owner.mjs": "0c58488896f0ea515eeb9bf1a50f1ba2502db80f09b0df49f7e1f6d36bd09bad",
+    "src/runtime/scope-authority.mjs": "0827852c683dbe6ae4b24ae8f2aa11b36295ab683e8b0aaf7a549a0081362777",
+    "src/host/chatgpt-adapter.mjs": "eb2e35e4b440cc7257c28999a168ec004197c0f6ea80ef73ff3d8fd2c867b5a8",
+    "src/host/current-body-claim.mjs": "4e26f9fe6c905d1dbf3a07995168c4fb5dea5e424bff238644da1c067ac03ef5",
+    "src/host/current-body-discovery.mjs": "b292deacac1ec33f6726b849564c19b2d28c67c2f82ee9ff0cc7d256c2cc94ee",
+    "src/host/surface-discovery.mjs": "be7511b85212e4dc26c0ce0c7441892c3faa03fbca1e0ede1b76eb9a87feb244",
+    "src/data/native-repository.mjs": "6e8f250819dc5584d3fe2c84408675a048d934d83e01582e8adb5fc584e165b1"
+  },
+  "results": [
+    {
+      "name": "default-disabled-owner-does-not-fetch-conversation",
+      "status": "PASS"
+    },
+    {
+      "name": "actual-adapter-proof-fixed-authenticated-GET-filtered-candidates-zero-eight-store-writes",
+      "status": "PASS",
+      "messageCount": 2,
+      "notACK": true
+    },
+    {
+      "name": "in-flight-route-change-rejects-late-metadata",
+      "status": "PASS"
+    },
+    {
+      "name": "in-flight-scope-revocation-rejects-late-metadata",
+      "status": "PASS"
+    },
+    {
+      "name": "service-stop-aborts-in-flight-and-future-metadata",
+      "status": "PASS"
+    }
+  ],
+  "errors": [],
+  "temporaryPackage": "/private/tmp/vaiwl-current-metadata-J81cVr/extension",
+  "fixture": {
+    "fixtureId": "chatgpt-host-legacy-reconstruction-v1",
+    "profile": "LEGACY",
+    "reconstruction": true,
+    "source": "VA-HOST/1.1 structure reconstruction; not a real DOM snapshot",
+    "sourceCommit": null,
+    "sourceBlob": null,
+    "fixtureHash": "c0a5c27049f273153ac38d805dd1eeea9a24698117f29451ce1866a7417911b1",
+    "expectedWorldFile": "tests/host/expected/legacy.mjs",
+    "oracleHash": "32b9e3f30c9f5b4be23b859a07477e5f36db0dc8440032d1077ecc2713a8d8db",
+    "supportedCapabilities": [
+      "principal",
+      "personal-context-candidate",
+      "project-identity",
+      "idless-native-control",
+      "conversation-identity",
+      "native-move-menu",
+      "native-navigation",
+      "native-search",
+      "native-create",
+      "independent-regions",
+      "draft-preservation"
+    ]
+  },
+  "requests": {
+    "/c/33333333-3333-4333-8333-333333333333": 3,
+    "/native.css": 3,
+    "/native.mjs": 3,
+    "/native/route": 3,
+    "/api/auth/session": 7,
+    "/backend-api/accounts/check/v4-2023-04-27": 7,
+    "/backend-api/conversation/33333333-3333-4333-8333-333333333333": 4
+  },
+  "status": "PASS",
+  "sourceChangedDuringRun": false
+}

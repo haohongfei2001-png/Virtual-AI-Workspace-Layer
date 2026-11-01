@@ -1,0 +1,30 @@
+{
+  "specRevision": "VA-HOST/1.1 FINAL",
+  "sourceCommit": "a6624f49f6cb1ab588b45d9f4bfd5f2b6ed7bbc2",
+  "workingChanges": true,
+  "sourceHashes": {
+    "src/b1/document-binding-broker.mjs": "1f247c0fa2b3a05c5f2ae11dda39df04de9c79628b7753715bdafcadbc842aec",
+    "src/b1/host-document-handshake.mjs": "a45d7cfc597df3703257c23c890425371fc983a6652e80a13de9750ebcb04ea4",
+    "src/host/contract.mjs": "35129aacf2a7e1fe1812c846379563d60ad74a66b689ad41bc38d76484a97716",
+    "src/host/url-policy.mjs": "fddfafcca2276161e6fd3c908ac896d0dab656fce6cf06aee64f1f442f7ac7e9",
+    "src/host/surface-discovery.mjs": "4f1ad9d5646c4404859fc17422bb4a446dcbb0f736da4f63bb9b04b8a0111734",
+    "src/navigation/mount-surface.mjs": "d8ed4ee322a55df4a8498c7065f61b6d0ebd709a8c2a2febba142fcc21900c35",
+    "src/runtime/scope-authority.mjs": "c6fc292e19358bed4f3baff08966fe6e67e36d21ae8e7e5bfb50408903d1447d",
+    "src/runtime/session-provider.mjs": "7b362cf5e0fd6ea0ea259c2f7b61bdc29faf5f65b0355d28e8df337ed8b46e95",
+    "src/runtime/host-binding-service.mjs": "10d574d30ec6336bda283472a9ceb448aba677f477d9c0c65ed7b87aacdff9e5"
+  },
+  "fullNode": {
+    "pass": 1366,
+    "fail": 0,
+    "skip": 0,
+    "command": "node --test $(rg --files tests | rg '\\.test\\.mjs$' | rg -v 'native-actions.test.mjs')",
+    "scope": "All existing and Host foundation tests; next uncommitted native-actions slice excluded"
+  },
+  "limits": [
+    "Initial Host foundation only; no complete ChatGPTHostAdapter/UI/reducer integration",
+    "C3 offline reconstruction only; C1/C2 and isolated provider not implemented",
+    "Browser DOM discovery is not authenticated source admission",
+    "Static MV3 frame disable/uninstall privacy FAIL retained; active test timer is not UiGrant or hard-kill proof",
+    "J1-J4 and complete 81 acceptance NOT_RUN; real ChatGPT/PAIA/physical IME NOT_RUN"
+  ]
+}

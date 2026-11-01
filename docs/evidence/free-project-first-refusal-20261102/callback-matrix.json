@@ -1,0 +1,686 @@
+{
+  "schema": "project-wrapper-callback-browser-v1",
+  "realChatGPT": "NOT_RUN",
+  "results": [
+    {
+      "depth": 9,
+      "detail": "wrapper-seam",
+      "oldMissingContext": true,
+      "oldReason": "native-flow-wrapper-paint",
+      "newReason": "native-flow-wrapper-paint",
+      "oldDetail": "wrapper-seam",
+      "oldPhase": "walk",
+      "oldVisited": 13,
+      "newVisited": 13,
+      "refused": true,
+      "contextMatched": true,
+      "revoked": true,
+      "coverage": "complete",
+      "rows": 13,
+      "localValid": true,
+      "localState": "COMPLETE",
+      "localLimit": "none",
+      "localNodes": 3,
+      "privateLeak": false,
+      "mutations": 0,
+      "unchanged": true,
+      "variants": [
+        {
+          "reason": "native-flow-wrapper-paint",
+          "refused": true
+        },
+        {
+          "reason": "native-flow-wrapper-paint",
+          "refused": true
+        },
+        {
+          "reason": "native-flow-wrapper-paint",
+          "refused": true
+        },
+        {
+          "reason": "native-flow-wrapper-paint",
+          "refused": true
+        }
+      ]
+    },
+    {
+      "depth": 9,
+      "detail": "wrapper-visibility",
+      "oldMissingContext": true,
+      "oldReason": "native-flow-wrapper-paint",
+      "newReason": "native-flow-wrapper-paint",
+      "oldDetail": "wrapper-visibility",
+      "oldPhase": "walk",
+      "oldVisited": 13,
+      "newVisited": 13,
+      "refused": true,
+      "contextMatched": true,
+      "revoked": true,
+      "coverage": "complete",
+      "rows": 13,
+      "localValid": true,
+      "localState": "COMPLETE",
+      "localLimit": "none",
+      "localNodes": 3,
+      "privateLeak": false,
+      "mutations": 0,
+      "unchanged": true,
+      "variants": [
+        {
+          "reason": "native-flow-wrapper-paint",
+          "refused": true
+        },
+        {
+          "reason": "native-flow-wrapper-paint",
+          "refused": true
+        },
+        {
+          "reason": "native-flow-wrapper-paint",
+          "refused": true
+        },
+        {
+          "reason": "native-flow-wrapper-paint",
+          "refused": true
+        }
+      ]
+    },
+    {
+      "depth": 9,
+      "detail": "wrapper-effect",
+      "oldMissingContext": true,
+      "oldReason": "native-flow-wrapper-paint",
+      "newReason": "native-flow-wrapper-paint",
+      "oldDetail": "wrapper-effect",
+      "oldPhase": "walk",
+      "oldVisited": 13,
+      "newVisited": 13,
+      "refused": true,
+      "contextMatched": true,
+      "revoked": true,
+      "coverage": "complete",
+      "rows": 13,
+      "localValid": true,
+      "localState": "COMPLETE",
+      "localLimit": "none",
+      "localNodes": 3,
+      "privateLeak": false,
+      "mutations": 0,
+      "unchanged": true,
+      "variants": [
+        {
+          "reason": "native-flow-wrapper-paint",
+          "refused": true
+        },
+        {
+          "reason": "native-flow-wrapper-paint",
+          "refused": true
+        },
+        {
+          "reason": "native-flow-wrapper-paint",
+          "refused": true
+        },
+        {
+          "reason": "native-flow-wrapper-paint",
+          "refused": true
+        }
+      ]
+    },
+    {
+      "depth": 9,
+      "detail": "wrapper-pseudo",
+      "oldMissingContext": true,
+      "oldReason": "native-flow-wrapper-paint",
+      "newReason": "native-flow-wrapper-paint",
+      "oldDetail": "wrapper-pseudo",
+      "oldPhase": "walk",
+      "oldVisited": 13,
+      "newVisited": 13,
+      "refused": true,
+      "contextMatched": true,
+      "revoked": true,
+      "coverage": "complete",
+      "rows": 13,
+      "localValid": true,
+      "localState": "COMPLETE",
+      "localLimit": "none",
+      "localNodes": 3,
+      "privateLeak": false,
+      "mutations": 0,
+      "unchanged": true,
+      "variants": [
+        {
+          "reason": "native-flow-wrapper-paint",
+          "refused": true
+        },
+        {
+          "reason": "native-flow-wrapper-paint",
+          "refused": true
+        },
+        {
+          "reason": "native-flow-wrapper-paint",
+          "refused": true
+        },
+        {
+          "reason": "native-flow-wrapper-paint",
+          "refused": true
+        }
+      ]
+    },
+    {
+      "depth": 16,
+      "detail": "wrapper-seam",
+      "oldMissingContext": true,
+      "oldReason": "native-flow-wrapper-paint",
+      "newReason": "native-flow-wrapper-paint",
+      "oldDetail": "wrapper-seam",
+      "oldPhase": "walk",
+      "oldVisited": 20,
+      "newVisited": 20,
+      "refused": true,
+      "contextMatched": true,
+      "revoked": true,
+      "coverage": "complete",
+      "rows": 20,
+      "localValid": true,
+      "localState": "COMPLETE",
+      "localLimit": "none",
+      "localNodes": 3,
+      "privateLeak": false,
+      "mutations": 0,
+      "unchanged": true,
+      "variants": [
+        {
+          "reason": "native-flow-wrapper-paint",
+          "refused": true
+        },
+        {
+          "reason": "native-flow-wrapper-paint",
+          "refused": true
+        },
+        {
+          "reason": "native-flow-wrapper-paint",
+          "refused": true
+        },
+        {
+          "reason": "native-flow-wrapper-paint",
+          "refused": true
+        }
+      ]
+    },
+    {
+      "depth": 16,
+      "detail": "wrapper-visibility",
+      "oldMissingContext": true,
+      "oldReason": "native-flow-wrapper-paint",
+      "newReason": "native-flow-wrapper-paint",
+      "oldDetail": "wrapper-visibility",
+      "oldPhase": "walk",
+      "oldVisited": 20,
+      "newVisited": 20,
+      "refused": true,
+      "contextMatched": true,
+      "revoked": true,
+      "coverage": "complete",
+      "rows": 20,
+      "localValid": true,
+      "localState": "COMPLETE",
+      "localLimit": "none",
+      "localNodes": 3,
+      "privateLeak": false,
+      "mutations": 0,
+      "unchanged": true,
+      "variants": [
+        {
+          "reason": "native-flow-wrapper-paint",
+          "refused": true
+        },
+        {
+          "reason": "native-flow-wrapper-paint",
+          "refused": true
+        },
+        {
+          "reason": "native-flow-wrapper-paint",
+          "refused": true
+        },
+        {
+          "reason": "native-flow-wrapper-paint",
+          "refused": true
+        }
+      ]
+    },
+    {
+      "depth": 16,
+      "detail": "wrapper-effect",
+      "oldMissingContext": true,
+      "oldReason": "native-flow-wrapper-paint",
+      "newReason": "native-flow-wrapper-paint",
+      "oldDetail": "wrapper-effect",
+      "oldPhase": "walk",
+      "oldVisited": 20,
+      "newVisited": 20,
+      "refused": true,
+      "contextMatched": true,
+      "revoked": true,
+      "coverage": "complete",
+      "rows": 20,
+      "localValid": true,
+      "localState": "COMPLETE",
+      "localLimit": "none",
+      "localNodes": 3,
+      "privateLeak": false,
+      "mutations": 0,
+      "unchanged": true,
+      "variants": [
+        {
+          "reason": "native-flow-wrapper-paint",
+          "refused": true
+        },
+        {
+          "reason": "native-flow-wrapper-paint",
+          "refused": true
+        },
+        {
+          "reason": "native-flow-wrapper-paint",
+          "refused": true
+        },
+        {
+          "reason": "native-flow-wrapper-paint",
+          "refused": true
+        }
+      ]
+    },
+    {
+      "depth": 16,
+      "detail": "wrapper-pseudo",
+      "oldMissingContext": true,
+      "oldReason": "native-flow-wrapper-paint",
+      "newReason": "native-flow-wrapper-paint",
+      "oldDetail": "wrapper-pseudo",
+      "oldPhase": "walk",
+      "oldVisited": 20,
+      "newVisited": 20,
+      "refused": true,
+      "contextMatched": true,
+      "revoked": true,
+      "coverage": "complete",
+      "rows": 20,
+      "localValid": true,
+      "localState": "COMPLETE",
+      "localLimit": "none",
+      "localNodes": 3,
+      "privateLeak": false,
+      "mutations": 0,
+      "unchanged": true,
+      "variants": [
+        {
+          "reason": "native-flow-wrapper-paint",
+          "refused": true
+        },
+        {
+          "reason": "native-flow-wrapper-paint",
+          "refused": true
+        },
+        {
+          "reason": "native-flow-wrapper-paint",
+          "refused": true
+        },
+        {
+          "reason": "native-flow-wrapper-paint",
+          "refused": true
+        }
+      ]
+    },
+    {
+      "depth": 24,
+      "detail": "wrapper-seam",
+      "oldMissingContext": true,
+      "oldReason": "native-flow-wrapper-paint",
+      "newReason": "native-flow-wrapper-paint",
+      "oldDetail": "wrapper-seam",
+      "oldPhase": "walk",
+      "oldVisited": 28,
+      "newVisited": 28,
+      "refused": true,
+      "contextMatched": true,
+      "revoked": true,
+      "coverage": "partial",
+      "rows": 20,
+      "localValid": true,
+      "localState": "PARTIAL",
+      "localLimit": "baseline",
+      "localNodes": 3,
+      "privateLeak": false,
+      "mutations": 0,
+      "unchanged": true,
+      "variants": [
+        {
+          "reason": "native-flow-wrapper-paint",
+          "refused": true
+        },
+        {
+          "reason": "native-flow-wrapper-paint",
+          "refused": true
+        },
+        {
+          "reason": "native-flow-wrapper-paint",
+          "refused": true
+        },
+        {
+          "reason": "native-flow-wrapper-paint",
+          "refused": true
+        }
+      ]
+    },
+    {
+      "depth": 24,
+      "detail": "wrapper-visibility",
+      "oldMissingContext": true,
+      "oldReason": "native-flow-wrapper-paint",
+      "newReason": "native-flow-wrapper-paint",
+      "oldDetail": "wrapper-visibility",
+      "oldPhase": "walk",
+      "oldVisited": 28,
+      "newVisited": 28,
+      "refused": true,
+      "contextMatched": true,
+      "revoked": true,
+      "coverage": "partial",
+      "rows": 20,
+      "localValid": true,
+      "localState": "PARTIAL",
+      "localLimit": "baseline",
+      "localNodes": 3,
+      "privateLeak": false,
+      "mutations": 0,
+      "unchanged": true,
+      "variants": [
+        {
+          "reason": "native-flow-wrapper-paint",
+          "refused": true
+        },
+        {
+          "reason": "native-flow-wrapper-paint",
+          "refused": true
+        },
+        {
+          "reason": "native-flow-wrapper-paint",
+          "refused": true
+        },
+        {
+          "reason": "native-flow-wrapper-paint",
+          "refused": true
+        }
+      ]
+    },
+    {
+      "depth": 24,
+      "detail": "wrapper-effect",
+      "oldMissingContext": true,
+      "oldReason": "native-flow-wrapper-paint",
+      "newReason": "native-flow-wrapper-paint",
+      "oldDetail": "wrapper-effect",
+      "oldPhase": "walk",
+      "oldVisited": 28,
+      "newVisited": 28,
+      "refused": true,
+      "contextMatched": true,
+      "revoked": true,
+      "coverage": "partial",
+      "rows": 20,
+      "localValid": true,
+      "localState": "PARTIAL",
+      "localLimit": "baseline",
+      "localNodes": 3,
+      "privateLeak": false,
+      "mutations": 0,
+      "unchanged": true,
+      "variants": [
+        {
+          "reason": "native-flow-wrapper-paint",
+          "refused": true
+        },
+        {
+          "reason": "native-flow-wrapper-paint",
+          "refused": true
+        },
+        {
+          "reason": "native-flow-wrapper-paint",
+          "refused": true
+        },
+        {
+          "reason": "native-flow-wrapper-paint",
+          "refused": true
+        }
+      ]
+    },
+    {
+      "depth": 24,
+      "detail": "wrapper-pseudo",
+      "oldMissingContext": true,
+      "oldReason": "native-flow-wrapper-paint",
+      "newReason": "native-flow-wrapper-paint",
+      "oldDetail": "wrapper-pseudo",
+      "oldPhase": "walk",
+      "oldVisited": 28,
+      "newVisited": 28,
+      "refused": true,
+      "contextMatched": true,
+      "revoked": true,
+      "coverage": "partial",
+      "rows": 20,
+      "localValid": true,
+      "localState": "PARTIAL",
+      "localLimit": "baseline",
+      "localNodes": 3,
+      "privateLeak": false,
+      "mutations": 0,
+      "unchanged": true,
+      "variants": [
+        {
+          "reason": "native-flow-wrapper-paint",
+          "refused": true
+        },
+        {
+          "reason": "native-flow-wrapper-paint",
+          "refused": true
+        },
+        {
+          "reason": "native-flow-wrapper-paint",
+          "refused": true
+        },
+        {
+          "reason": "native-flow-wrapper-paint",
+          "refused": true
+        }
+      ]
+    },
+    {
+      "depth": 40,
+      "detail": "wrapper-seam",
+      "oldMissingContext": true,
+      "oldReason": "native-flow-wrapper-paint",
+      "newReason": "native-flow-wrapper-paint",
+      "oldDetail": "wrapper-seam",
+      "oldPhase": "walk",
+      "oldVisited": 44,
+      "newVisited": 44,
+      "refused": true,
+      "contextMatched": true,
+      "revoked": true,
+      "coverage": "partial",
+      "rows": 20,
+      "localValid": true,
+      "localState": "PARTIAL",
+      "localLimit": "baseline",
+      "localNodes": 3,
+      "privateLeak": false,
+      "mutations": 0,
+      "unchanged": true,
+      "variants": [
+        {
+          "reason": "native-flow-wrapper-paint",
+          "refused": true
+        },
+        {
+          "reason": "native-flow-wrapper-paint",
+          "refused": true
+        },
+        {
+          "reason": "native-flow-wrapper-paint",
+          "refused": true
+        },
+        {
+          "reason": "native-flow-wrapper-paint",
+          "refused": true
+        }
+      ]
+    },
+    {
+      "depth": 40,
+      "detail": "wrapper-visibility",
+      "oldMissingContext": true,
+      "oldReason": "native-flow-wrapper-paint",
+      "newReason": "native-flow-wrapper-paint",
+      "oldDetail": "wrapper-visibility",
+      "oldPhase": "walk",
+      "oldVisited": 44,
+      "newVisited": 44,
+      "refused": true,
+      "contextMatched": true,
+      "revoked": true,
+      "coverage": "partial",
+      "rows": 20,
+      "localValid": true,
+      "localState": "PARTIAL",
+      "localLimit": "baseline",
+      "localNodes": 3,
+      "privateLeak": false,
+      "mutations": 0,
+      "unchanged": true,
+      "variants": [
+        {
+          "reason": "native-flow-wrapper-paint",
+          "refused": true
+        },
+        {
+          "reason": "native-flow-wrapper-paint",
+          "refused": true
+        },
+        {
+          "reason": "native-flow-wrapper-paint",
+          "refused": true
+        },
+        {
+          "reason": "native-flow-wrapper-paint",
+          "refused": true
+        }
+      ]
+    },
+    {
+      "depth": 40,
+      "detail": "wrapper-effect",
+      "oldMissingContext": true,
+      "oldReason": "native-flow-wrapper-paint",
+      "newReason": "native-flow-wrapper-paint",
+      "oldDetail": "wrapper-effect",
+      "oldPhase": "walk",
+      "oldVisited": 44,
+      "newVisited": 44,
+      "refused": true,
+      "contextMatched": true,
+      "revoked": true,
+      "coverage": "partial",
+      "rows": 20,
+      "localValid": true,
+      "localState": "PARTIAL",
+      "localLimit": "baseline",
+      "localNodes": 3,
+      "privateLeak": false,
+      "mutations": 0,
+      "unchanged": true,
+      "variants": [
+        {
+          "reason": "native-flow-wrapper-paint",
+          "refused": true
+        },
+        {
+          "reason": "native-flow-wrapper-paint",
+          "refused": true
+        },
+        {
+          "reason": "native-flow-wrapper-paint",
+          "refused": true
+        },
+        {
+          "reason": "native-flow-wrapper-paint",
+          "refused": true
+        }
+      ]
+    },
+    {
+      "depth": 40,
+      "detail": "wrapper-pseudo",
+      "oldMissingContext": true,
+      "oldReason": "native-flow-wrapper-paint",
+      "newReason": "native-flow-wrapper-paint",
+      "oldDetail": "wrapper-pseudo",
+      "oldPhase": "walk",
+      "oldVisited": 44,
+      "newVisited": 44,
+      "refused": true,
+      "contextMatched": true,
+      "revoked": true,
+      "coverage": "partial",
+      "rows": 20,
+      "localValid": true,
+      "localState": "PARTIAL",
+      "localLimit": "baseline",
+      "localNodes": 3,
+      "privateLeak": false,
+      "mutations": 0,
+      "unchanged": true,
+      "variants": [
+        {
+          "reason": "native-flow-wrapper-paint",
+          "refused": true
+        },
+        {
+          "reason": "native-flow-wrapper-paint",
+          "refused": true
+        },
+        {
+          "reason": "native-flow-wrapper-paint",
+          "refused": true
+        },
+        {
+          "reason": "native-flow-wrapper-paint",
+          "refused": true
+        }
+      ]
+    }
+  ],
+  "capacity": {
+    "oldReason": "native-flow-capacity",
+    "newReason": "native-flow-capacity",
+    "oldReads": 1,
+    "newReads": 1,
+    "scopedReport": null,
+    "scopedContext": "native-flow-capacity",
+    "scopedLocal": "NO_MATCH",
+    "oldCapacity": {
+      "reason": "native-flow-capacity",
+      "detail": "node-capacity",
+      "visited": 129
+    },
+    "newCapacity": {
+      "reason": "native-flow-capacity",
+      "detail": "node-capacity",
+      "visited": 129
+    }
+  },
+  "status": "PASS",
+  "redMissingContext": 16,
+  "greenExactContext": 16,
+  "callbackIsolation": 64,
+  "browser": "156.0.8078.4"
+}

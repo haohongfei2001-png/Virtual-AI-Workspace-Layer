@@ -1,0 +1,237 @@
+{
+  "evidence": "ISOLATED_HEADLESS_ACTIVITY_COMPUTE_DIAGNOSTIC_NOT_PRODUCT_ACCEPTANCE",
+  "browser": "156.0.8078.4",
+  "baseHash": "96a4a46dd7a56777827574f06c851f96b07e5d3f864fd9301bcfe7b231b2ef14",
+  "candidateHash": "368d2e253363e9411023dfa60a29b05ef8fad437226653f86411b6e8c08bc01e",
+  "candidate": "import { instant, localDay } from '../navigation/projection.mjs';\nimport { freeSegmentFor } from './free-time-policy.mjs';\nfunction active(row,sources,clock) {\n  const source=sources[row.sourceId];\n  return !!source&&!source.revoked&&!row.revoked&&\n    (source.validUntil===undefined||instant(source.validUntil)>clock)&&\n    (row.validUntil===undefined||instant(row.validUntil)>clock)&&\n    (row.generation===undefined||row.generation===source.generation)&&\n    (row.sourceRevision===undefined||row.sourceRevision<=source.sourceRevision)&&\n    instant(row.observedAt)!==null&&instant(row.observedAt)<=clock;\n}\nfunction interval(row) {\n  if(['second','millisecond'].includes(row.precision)&&instant(row.sentAt)!==null)return [row.sentAt,row.sentAt];\n  const r=row.candidateInterval??row.sentInterval;\n  return r&&instant(r.from)!==null&&instant(r.through)!==null&&instant(r.from)<=instant(r.through)?[r.from,r.through]:null;\n}\nfunction covered(rows,from,now,sources,clock) {\n  const parts=[];\n  for(const c of rows){\n    if(!active(c,sources,clock)||c.completeness!=='complete'||c.branches!=='all')continue;\n    const a=instant(c.from),b=instant(c.through);\n    if(a===null||b===null||a>b||b>instant(c.observedAt))continue;\n    let spans=[[a,b]];\n    for(const g of c.gaps??[]){const l=instant(g.from),r=instant(g.through);if(l===null||r===null||l>r){spans=[];break;}spans=spans.flatMap(([x,y])=>r<x||l>y?[[x,y]]:[[x,Math.min(y,l-1)],[Math.max(x,r+1),y]].filter(([x,y])=>x<=y));}\n    parts.push(...spans);\n  }\n  parts.sort((a,b)=>a[0]-b[0]);let reach=instant(from);\n  for(const [a,b] of parts){if(a>reach)return false;reach=Math.max(reach,b);if(reach>=instant(now))return true;}\n  return false;\n}\nconst index=(rows,key)=>{const m=new Map();for(const r of Object.values(rows??{})){if(!m.has(r[key]))m.set(r[key],[]);m.get(r[key]).push(r);}return m;};\n/** All inputs belong to a privileged, scope-checked ingestion path. No evidence is mutated. */\nexport function projectFreeActivity(snapshot,evidence,session,now) {\n  if(!snapshot?.scope||evidence.scopeKey!==snapshot.scope)throw Error('cross-scope-free-activity');\n  const clock=instant(now);if(clock===null)throw Error('invalid-clock');\n  const sources=evidence.sources??{},events=index(evidence.events,'conversationId'),hints=index(evidence.hints,'conversationId'),coverage=index(evidence.coverage,'conversationId');\n  const decision=(id)=>{\n    const base={objectKey:id,evidenceRevision:evidence.evidenceRevision??0,basis:'undated',candidateDay:null,candidateTime:null,segment:null,reason:'no-valid-activity',nextCheck:null,validUntil:null};\n    const seen=new Map(),bad=new Set();\n    for(const e of events.get(id)??[]){\n      if(!active(e,sources,clock)||e.actorVerified!==true||e.actorScopeKey!==snapshot.scope||e.role!=='user'||e.kind!=='new-send'||e.sendState!=='committed'||!e.messageId||!e.branchId)continue;\n      const key=JSON.stringify([e.branchId,e.messageId]),r=interval(e);\n      if(!r||instant(r[1])>clock||instant(r[1])>instant(e.observedAt)){bad.add(key);continue;}\n      if(seen.has(key)&&JSON.stringify(seen.get(key))!==JSON.stringify(r))bad.add(key);else seen.set(key,r);\n    }\n    const positives=[...seen].filter(([key])=>!bad.has(key)).map(([,r])=>r).sort((a,b)=>instant(b[1])-instant(a[1]));\n    const latest=positives[0];let result=base;\n    if(latest){\n      const lo=freeSegmentFor(latest[0],session),hi=freeSegmentFor(latest[1],session),same=lo===hi&&lo!==null;\n      const complete=!bad.size&&covered(coverage.get(id)??[],latest[1],now,sources,clock);\n      result={...base,basis:same&&(hi===0||complete)?(latest[0]===latest[1]?'exact':'interval'):'provisional',candidateDay:localDay(latest[1],session.Z),candidateTime:latest[1],segment:hi,\n        reason:!same?'interval-crosses-window':hi===0?'positive-send':complete?'covered-history':'historical-anchor-incomplete',sentInterval:{from:latest[0],through:latest[1]}};\n    }\n    for(const h of hints.get(id)??[]){\n      if(!active(h,sources,clock)||!h.eventKey||instant(h.validUntil)===null)continue;\n      const self=h.hintType==='local-confirmed-send'&&h.actorVerified===true&&h.actorScopeKey===snapshot.scope;\n      if(!self&&!(h.hintType==='native-activity'&&h.semanticsVerified===true))continue;\n      const r=interval(h),at=r?.[1]??(self?h.observedAt:null);\n      if(!at||instant(at)>clock||instant(at)>instant(h.observedAt))continue;\n      const candidateDay=localDay(at,session.Z);\n      if(result.candidateTime!==null&&instant(at)<=instant(result.candidateTime))continue;\n      result={...base,basis:'provisional',candidateDay,candidateTime:at,segment:freeSegmentFor(at,session),reason:self?'confirmed-send-observation':'native-activity-hint',validUntil:h.validUntil,nextCheck:h.validUntil};\n    }\n    if(bad.size&&result.basis==='undated')result={...result,reason:'conflicting-send-evidence'};\n    return result;\n  };\n  const refs=snapshot.refs.map(r=>{if(r.scope!==snapshot.scope)throw Error('cross-scope-free-ref');const activityDecision=decision(r.id);return {...r,activityDecision,activity:activityDecision};});\n  return aggregateFreeActivity({...snapshot,refs,viewSession:session});\n}\n/** Aggregate already verified row decisions without trusting page-level send labels. */\nexport function aggregateFreeActivity(snapshot) {\n  const timeCache=new Map();\n  const cachedInstant=value=>{if(typeof value!=='string')return instant(value);if(timeCache.has(value))return timeCache.get(value);const parsed=instant(value);if(timeCache.size<256)timeCache.set(value,parsed);return parsed;};\n  const refs=snapshot.refs;\n  for(const row of refs)if(row.scope!==snapshot.scope||!row.activityDecision)throw Error('invalid-free-row-decision');\n  const emptyDecision=id=>({objectKey:id,evidenceRevision:snapshot.evidenceRevision??refs[0]?.activityDecision.evidenceRevision??0,basis:'undated',candidateDay:null,candidateTime:null,segment:null,reason:'no-valid-activity',nextCheck:null,validUntil:null});\n  const byId=new Map(refs.map(r=>[r.id,r]));\n  // ISO validation/parsing is O(rows), not O(sort comparisons). This cache lives\n  // for exactly one projection, so expiry, scope and evidence changes cannot reuse it.\n  const sortKeys=new Map();\n  const rememberKey=row=>{const d=row.activityDecision;sortKeys.set(row,[Number(d.candidateDay===null),cachedInstant(d.candidateTime)??0]);};\n  for(const row of refs)rememberKey(row);\n  // Returning zero preserves the native input order for equal or undated activity.\n  const order=(a,b)=>{const x=sortKeys.get(a),y=sortKeys.get(b);return x[0]-y[0]||y[1]-x[1];};\n  const resolve=rows=>rows.map(r=>byId.get(typeof r==='string'?r:r.id)).filter(Boolean).sort(order);\n  const projects=snapshot.projects.map(p=>{\n    if(p.scope!==snapshot.scope)throw Error('cross-scope-free-project');\n    const members=resolve(p.members),dated=members.filter(r=>r.activityDecision.candidateDay!==null),latest=dated[0]?.activityDecision;\n    let activityDecision=latest?{...latest,objectKey:p.key??p.id}:{...emptyDecision(p.id),objectKey:p.key??p.id};\n    // Empty Projects and inventory discovery do not constitute sends. Unknown members cannot erase a positive recent send.\n    if(!latest)activityDecision={...activityDecision,basis:'undated',candidateDay:null,candidateTime:null,segment:null,reason:'no-member-activity'};\n    else if(latest.segment!==0&&(p.membershipComplete!==true||members.some(r=>!['exact','interval'].includes(r.activityDecision.basis))))activityDecision={...activityDecision,basis:'provisional',reason:'incomplete-member-activity'};\n    const segment=activityDecision.segment;\n    const card={...p,members,activityDecision,activity:activityDecision,segment,\n      current:members.filter(r=>r.activityDecision.segment===segment&&segment!==null),\n      old:members.filter(r=>segment!==null&&r.activityDecision.segment!==null&&r.activityDecision.segment>segment),\n      unknown:members.filter(r=>r.activityDecision.segment===null)};\n    rememberKey(card);return card;\n  }).sort(order);\n  return {...snapshot,refs,projects,noProject:resolve(snapshot.noProject),unknown:resolve(snapshot.unknown)};\n}\n/** A duplicate poll of an event cannot renew its observation anchor or expiration. */\nexport function mergeFreeObservationHints(existing,incoming) {\n  const result=structuredClone(existing??{}),keys=new Set(Object.values(result).map(h=>JSON.stringify([h.sourceId,h.eventKey])));\n  for(const h of incoming){const key=JSON.stringify([h.sourceId,h.eventKey]);if(keys.has(key))continue;if(!h.id||Object.hasOwn(result,h.id))throw Error('hint-id-conflict');result[h.id]=structuredClone(h);keys.add(key);}\n  return result;\n}\n",
+  "result": {
+    "equivalence": [
+      "strict-dates-offsets-invalid-null",
+      "stable-ties",
+      "capacity-full-then-invalid-null",
+      "highRepeat",
+      "partialRepeat",
+      "allUnique"
+    ],
+    "rows": 100000,
+    "cacheCapacity": 256,
+    "results": [
+      {
+        "distribution": "highRepeat",
+        "round": 0,
+        "variant": "baseline",
+        "elapsedMs": 39.19999999925494
+      },
+      {
+        "distribution": "highRepeat",
+        "round": 0,
+        "variant": "candidate",
+        "elapsedMs": 24.600000001490116
+      },
+      {
+        "distribution": "highRepeat",
+        "round": 1,
+        "variant": "candidate",
+        "elapsedMs": 25.699999999254942
+      },
+      {
+        "distribution": "highRepeat",
+        "round": 1,
+        "variant": "baseline",
+        "elapsedMs": 40.30000000074506
+      },
+      {
+        "distribution": "highRepeat",
+        "round": 2,
+        "variant": "baseline",
+        "elapsedMs": 40.80000000074506
+      },
+      {
+        "distribution": "highRepeat",
+        "round": 2,
+        "variant": "candidate",
+        "elapsedMs": 31.5
+      },
+      {
+        "distribution": "highRepeat",
+        "round": 3,
+        "variant": "candidate",
+        "elapsedMs": 28.599999997764826
+      },
+      {
+        "distribution": "highRepeat",
+        "round": 3,
+        "variant": "baseline",
+        "elapsedMs": 47.70000000298023
+      },
+      {
+        "distribution": "highRepeat",
+        "round": 4,
+        "variant": "baseline",
+        "elapsedMs": 42.29999999701977
+      },
+      {
+        "distribution": "highRepeat",
+        "round": 4,
+        "variant": "candidate",
+        "elapsedMs": 26.400000002235174
+      },
+      {
+        "distribution": "highRepeat",
+        "round": 5,
+        "variant": "candidate",
+        "elapsedMs": 28
+      },
+      {
+        "distribution": "highRepeat",
+        "round": 5,
+        "variant": "baseline",
+        "elapsedMs": 43.19999999925494
+      },
+      {
+        "distribution": "partialRepeat",
+        "round": 0,
+        "variant": "baseline",
+        "elapsedMs": 68
+      },
+      {
+        "distribution": "partialRepeat",
+        "round": 0,
+        "variant": "candidate",
+        "elapsedMs": 58
+      },
+      {
+        "distribution": "partialRepeat",
+        "round": 1,
+        "variant": "candidate",
+        "elapsedMs": 58.399999998509884
+      },
+      {
+        "distribution": "partialRepeat",
+        "round": 1,
+        "variant": "baseline",
+        "elapsedMs": 69.19999999925494
+      },
+      {
+        "distribution": "partialRepeat",
+        "round": 2,
+        "variant": "baseline",
+        "elapsedMs": 75.69999999925494
+      },
+      {
+        "distribution": "partialRepeat",
+        "round": 2,
+        "variant": "candidate",
+        "elapsedMs": 65.89999999850988
+      },
+      {
+        "distribution": "partialRepeat",
+        "round": 3,
+        "variant": "candidate",
+        "elapsedMs": 70.30000000074506
+      },
+      {
+        "distribution": "partialRepeat",
+        "round": 3,
+        "variant": "baseline",
+        "elapsedMs": 71.89999999850988
+      },
+      {
+        "distribution": "partialRepeat",
+        "round": 4,
+        "variant": "baseline",
+        "elapsedMs": 72.39999999850988
+      },
+      {
+        "distribution": "partialRepeat",
+        "round": 4,
+        "variant": "candidate",
+        "elapsedMs": 65.90000000223517
+      },
+      {
+        "distribution": "partialRepeat",
+        "round": 5,
+        "variant": "candidate",
+        "elapsedMs": 64.89999999850988
+      },
+      {
+        "distribution": "partialRepeat",
+        "round": 5,
+        "variant": "baseline",
+        "elapsedMs": 73.89999999850988
+      },
+      {
+        "distribution": "allUnique",
+        "round": 0,
+        "variant": "baseline",
+        "elapsedMs": 52.19999999925494
+      },
+      {
+        "distribution": "allUnique",
+        "round": 0,
+        "variant": "candidate",
+        "elapsedMs": 52.80000000074506
+      },
+      {
+        "distribution": "allUnique",
+        "round": 1,
+        "variant": "candidate",
+        "elapsedMs": 51.79999999701977
+      },
+      {
+        "distribution": "allUnique",
+        "round": 1,
+        "variant": "baseline",
+        "elapsedMs": 53
+      },
+      {
+        "distribution": "allUnique",
+        "round": 2,
+        "variant": "baseline",
+        "elapsedMs": 49.900000002235174
+      },
+      {
+        "distribution": "allUnique",
+        "round": 2,
+        "variant": "candidate",
+        "elapsedMs": 52.5
+      },
+      {
+        "distribution": "allUnique",
+        "round": 3,
+        "variant": "candidate",
+        "elapsedMs": 57.899999998509884
+      },
+      {
+        "distribution": "allUnique",
+        "round": 3,
+        "variant": "baseline",
+        "elapsedMs": 52.69999999925494
+      },
+      {
+        "distribution": "allUnique",
+        "round": 4,
+        "variant": "baseline",
+        "elapsedMs": 55.30000000074506
+      },
+      {
+        "distribution": "allUnique",
+        "round": 4,
+        "variant": "candidate",
+        "elapsedMs": 52.80000000074506
+      },
+      {
+        "distribution": "allUnique",
+        "round": 5,
+        "variant": "candidate",
+        "elapsedMs": 50.899999998509884
+      },
+      {
+        "distribution": "allUnique",
+        "round": 5,
+        "variant": "baseline",
+        "elapsedMs": 50
+      }
+    ]
+  }
+}

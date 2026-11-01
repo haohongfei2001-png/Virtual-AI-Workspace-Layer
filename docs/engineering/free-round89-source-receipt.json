@@ -1,0 +1,15 @@
+{
+  "baselineHead": "0c8e678db813c30da0dd410530f2f59fecbdc078",
+  "evidence": "OFFLINE_ONLY_NOT_RELEASE_READY",
+  "sourceHashes": {
+    "simulator/build.mjs": "22137d297a5e53c9f3d4b499165a519f21685be7088429c360531e208d1d3821",
+    "src/data/free-activity.mjs": "ec2150bb658f248df6e95399ab2d7fb4e9c8ccbf435a1282e840ad43feb5689e",
+    "src/data/free-evidence-repository.mjs": "7af5996ec173de633581f29fed8e15768588fb866023b500ed791e15b66cd5c5",
+    "src/data/free-evidence.mjs": "969ee529b2e4b62143ef9df887fea0abaf4e5d1b5bc0ffff1bdcba1d00de2fba",
+    "src/data/observed-send-anchor.mjs": "f9dbb9278502a325c2263d4adeb99ea1c0159525d505728fe84fdee2d59980da",
+    "tests/free/activity.test.mjs": "e3a0e874f0d8890b209765f6b76eff98061b17e7b9c9e8109f8a87bbd7f0fa32",
+    "tests/host/observed-anchor-idb-browser.mjs": "873dd99703e9221566dbd266c6c548dcce67c94ff50d6eccc83082f55eaee955",
+    "tests/host/observed-anchor-repository.test.mjs": "7c0bc0195cce61536e2ad27da572d848e3c74bbb304561e9d0794a4e347e5da9",
+    "tests/host/observed-send-anchor.test.mjs": "dc2ea2a9d1f979bb333291f45197db3a667a93a722ea155a9c3d7d874cb09fe4"
+  }
+}

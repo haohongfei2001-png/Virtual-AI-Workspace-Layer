@@ -1,0 +1,521 @@
+✖ existing v3 rejects refs:missing without modifying or caching it (1.112875ms)
+✖ existing v3 rejects refs:key without modifying or caching it (0.2325ms)
+✖ existing v3 rejects refs:auto without modifying or caching it (0.431542ms)
+✖ existing v3 rejects operations:missing without modifying or caching it (0.151875ms)
+✖ existing v3 rejects operations:key without modifying or caching it (0.132458ms)
+✖ existing v3 rejects operations:auto without modifying or caching it (0.100875ms)
+✖ existing v3 rejects b23_states:missing without modifying or caching it (0.082125ms)
+✖ existing v3 rejects b23_states:key without modifying or caching it (0.082708ms)
+✖ existing v3 rejects b23_states:auto without modifying or caching it (0.123125ms)
+✖ existing v3 rejects b23_operations:missing without modifying or caching it (0.125084ms)
+✖ existing v3 rejects b23_operations:key without modifying or caching it (0.109625ms)
+✖ existing v3 rejects b23_operations:auto without modifying or caching it (0.110791ms)
+✖ existing v3 rejects b23_checkpoints:missing without modifying or caching it (0.103708ms)
+✖ existing v3 rejects b23_checkpoints:key without modifying or caching it (0.077083ms)
+✖ existing v3 rejects b23_checkpoints:auto without modifying or caching it (0.075917ms)
+✖ existing v3 rejects b23_views:missing without modifying or caching it (0.082958ms)
+✖ existing v3 rejects b23_views:key without modifying or caching it (0.07125ms)
+✖ existing v3 rejects b23_views:auto without modifying or caching it (0.092792ms)
+✖ existing v3 rejects native_states:missing without modifying or caching it (0.087375ms)
+✖ existing v3 rejects native_states:key without modifying or caching it (0.065333ms)
+✖ existing v3 rejects native_states:auto without modifying or caching it (0.076375ms)
+✖ existing v3 rejects native_operations:missing without modifying or caching it (0.06525ms)
+✖ existing v3 rejects native_operations:key without modifying or caching it (0.066625ms)
+✖ existing v3 rejects native_operations:auto without modifying or caching it (0.288958ms)
+✖ existing v3 rejects refs:index-missing without modifying or caching it (0.096292ms)
+✖ existing v3 rejects refs:index-path without modifying or caching it (0.0755ms)
+✖ existing v3 rejects refs:index-array without modifying or caching it (0.076834ms)
+✖ existing v3 rejects refs:index-unique without modifying or caching it (0.072625ms)
+✖ existing v3 rejects refs:index-multi without modifying or caching it (0.062791ms)
+✖ existing v3 rejects b23_operations:index-missing without modifying or caching it (0.068625ms)
+✖ existing v3 rejects b23_operations:index-path without modifying or caching it (0.065542ms)
+✖ existing v3 rejects b23_operations:index-array without modifying or caching it (0.058958ms)
+✖ existing v3 rejects b23_operations:index-unique without modifying or caching it (0.056084ms)
+✖ existing v3 rejects b23_operations:index-multi without modifying or caching it (0.073833ms)
+✔ valid existing v3 retains extra stores and shares a checked connection (0.417833ms)
+ℹ tests 35
+ℹ suites 0
+ℹ pass 1
+ℹ fail 34
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 50.161667
+
+✖ failing tests:
+
+test at tests/free/current-schema.test.mjs:24:227
+✖ existing v3 rejects refs:missing without modifying or caching it (1.112875ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/free/current-schema.test.mjs:26:6)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /invalid-schema/,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tests/free/current-schema.test.mjs:24:227
+✖ existing v3 rejects refs:key without modifying or caching it (0.2325ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/free/current-schema.test.mjs:26:6)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /invalid-schema/,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tests/free/current-schema.test.mjs:24:227
+✖ existing v3 rejects refs:auto without modifying or caching it (0.431542ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/free/current-schema.test.mjs:26:6)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /invalid-schema/,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tests/free/current-schema.test.mjs:24:227
+✖ existing v3 rejects operations:missing without modifying or caching it (0.151875ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/free/current-schema.test.mjs:26:6)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /invalid-schema/,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tests/free/current-schema.test.mjs:24:227
+✖ existing v3 rejects operations:key without modifying or caching it (0.132458ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/free/current-schema.test.mjs:26:6)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /invalid-schema/,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tests/free/current-schema.test.mjs:24:227
+✖ existing v3 rejects operations:auto without modifying or caching it (0.100875ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/free/current-schema.test.mjs:26:6)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /invalid-schema/,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tests/free/current-schema.test.mjs:24:227
+✖ existing v3 rejects b23_states:missing without modifying or caching it (0.082125ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/free/current-schema.test.mjs:26:6)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /invalid-schema/,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tests/free/current-schema.test.mjs:24:227
+✖ existing v3 rejects b23_states:key without modifying or caching it (0.082708ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/free/current-schema.test.mjs:26:6)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /invalid-schema/,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tests/free/current-schema.test.mjs:24:227
+✖ existing v3 rejects b23_states:auto without modifying or caching it (0.123125ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/free/current-schema.test.mjs:26:6)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /invalid-schema/,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tests/free/current-schema.test.mjs:24:227
+✖ existing v3 rejects b23_operations:missing without modifying or caching it (0.125084ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/free/current-schema.test.mjs:26:6)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /invalid-schema/,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tests/free/current-schema.test.mjs:24:227
+✖ existing v3 rejects b23_operations:key without modifying or caching it (0.109625ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/free/current-schema.test.mjs:26:6)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /invalid-schema/,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tests/free/current-schema.test.mjs:24:227
+✖ existing v3 rejects b23_operations:auto without modifying or caching it (0.110791ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/free/current-schema.test.mjs:26:6)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /invalid-schema/,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tests/free/current-schema.test.mjs:24:227
+✖ existing v3 rejects b23_checkpoints:missing without modifying or caching it (0.103708ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/free/current-schema.test.mjs:26:6)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /invalid-schema/,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tests/free/current-schema.test.mjs:24:227
+✖ existing v3 rejects b23_checkpoints:key without modifying or caching it (0.077083ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/free/current-schema.test.mjs:26:6)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /invalid-schema/,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tests/free/current-schema.test.mjs:24:227
+✖ existing v3 rejects b23_checkpoints:auto without modifying or caching it (0.075917ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/free/current-schema.test.mjs:26:6)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /invalid-schema/,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tests/free/current-schema.test.mjs:24:227
+✖ existing v3 rejects b23_views:missing without modifying or caching it (0.082958ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/free/current-schema.test.mjs:26:6)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /invalid-schema/,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tests/free/current-schema.test.mjs:24:227
+✖ existing v3 rejects b23_views:key without modifying or caching it (0.07125ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/free/current-schema.test.mjs:26:6)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /invalid-schema/,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tests/free/current-schema.test.mjs:24:227
+✖ existing v3 rejects b23_views:auto without modifying or caching it (0.092792ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/free/current-schema.test.mjs:26:6)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /invalid-schema/,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tests/free/current-schema.test.mjs:24:227
+✖ existing v3 rejects native_states:missing without modifying or caching it (0.087375ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/free/current-schema.test.mjs:26:6)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /invalid-schema/,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tests/free/current-schema.test.mjs:24:227
+✖ existing v3 rejects native_states:key without modifying or caching it (0.065333ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/free/current-schema.test.mjs:26:6)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /invalid-schema/,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tests/free/current-schema.test.mjs:24:227
+✖ existing v3 rejects native_states:auto without modifying or caching it (0.076375ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/free/current-schema.test.mjs:26:6)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /invalid-schema/,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tests/free/current-schema.test.mjs:24:227
+✖ existing v3 rejects native_operations:missing without modifying or caching it (0.06525ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/free/current-schema.test.mjs:26:6)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /invalid-schema/,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tests/free/current-schema.test.mjs:24:227
+✖ existing v3 rejects native_operations:key without modifying or caching it (0.066625ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/free/current-schema.test.mjs:26:6)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /invalid-schema/,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tests/free/current-schema.test.mjs:24:227
+✖ existing v3 rejects native_operations:auto without modifying or caching it (0.288958ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/free/current-schema.test.mjs:26:6)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /invalid-schema/,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tests/free/current-schema.test.mjs:24:227
+✖ existing v3 rejects refs:index-missing without modifying or caching it (0.096292ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/free/current-schema.test.mjs:26:6)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /invalid-schema/,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tests/free/current-schema.test.mjs:24:227
+✖ existing v3 rejects refs:index-path without modifying or caching it (0.0755ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/free/current-schema.test.mjs:26:6)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /invalid-schema/,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tests/free/current-schema.test.mjs:24:227
+✖ existing v3 rejects refs:index-array without modifying or caching it (0.076834ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/free/current-schema.test.mjs:26:6)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /invalid-schema/,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tests/free/current-schema.test.mjs:24:227
+✖ existing v3 rejects refs:index-unique without modifying or caching it (0.072625ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/free/current-schema.test.mjs:26:6)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /invalid-schema/,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tests/free/current-schema.test.mjs:24:227
+✖ existing v3 rejects refs:index-multi without modifying or caching it (0.062791ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/free/current-schema.test.mjs:26:6)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /invalid-schema/,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tests/free/current-schema.test.mjs:24:227
+✖ existing v3 rejects b23_operations:index-missing without modifying or caching it (0.068625ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/free/current-schema.test.mjs:26:6)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /invalid-schema/,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tests/free/current-schema.test.mjs:24:227
+✖ existing v3 rejects b23_operations:index-path without modifying or caching it (0.065542ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/free/current-schema.test.mjs:26:6)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /invalid-schema/,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tests/free/current-schema.test.mjs:24:227
+✖ existing v3 rejects b23_operations:index-array without modifying or caching it (0.058958ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/free/current-schema.test.mjs:26:6)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /invalid-schema/,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tests/free/current-schema.test.mjs:24:227
+✖ existing v3 rejects b23_operations:index-unique without modifying or caching it (0.056084ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/free/current-schema.test.mjs:26:6)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /invalid-schema/,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tests/free/current-schema.test.mjs:24:227
+✖ existing v3 rejects b23_operations:index-multi without modifying or caching it (0.073833ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/free/current-schema.test.mjs:26:6)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /invalid-schema/,
+    operator: 'rejects',
+    diff: 'simple'
+  }

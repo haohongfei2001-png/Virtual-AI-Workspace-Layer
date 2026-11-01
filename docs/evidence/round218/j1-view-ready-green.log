@@ -1,0 +1,15 @@
+✔ a mounted frame is not evidence of its first completed VIEW (0.88865ms)
+✔ a wrong real offset is returned immediately to the original assertion, never polled away (0.173752ms)
+✔ missing view times out and detached view cannot establish current readiness (0.560886ms)
+✔ native Back observation retains exact offset assertion and does not replay navigation (5.506207ms)
+✔ only read-only observation follows a genuinely detached iframe (0.937734ms)
+✔ non-detachment errors and actual parent closure fail immediately (0.52979ms)
+✔ missing or permanently unready replacement never becomes pass (0.341675ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 7
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 94.871015

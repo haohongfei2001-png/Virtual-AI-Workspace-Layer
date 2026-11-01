@@ -1,0 +1,5511 @@
+{
+  "sourceCommit": "544942b79d5bb1c16e4f88c55419b86c9b3b7ac7",
+  "requirement": "SYS-04 / original F1",
+  "status": "PARTIAL_SYS04_NOT_ACCEPTED",
+  "acceptance": "NOT_ESTABLISHED",
+  "realChatGPT": "NOT_RUN",
+  "scenario": {
+    "size": 1000,
+    "distribution": "single-project",
+    "cpuRate": 1,
+    "longTitles": true,
+    "profile": "LEGACY_LOOPBACK_RECONSTRUCTION",
+    "throttleScope": "NATIVE_PAGE_RENDERER_ONLY_NOT_WORKER_OR_PHYSICAL_DEVICE",
+    "rpcBudgetMs": 6000,
+    "acceptance": "NOT_ESTABLISHED"
+  },
+  "expected": {
+    "conversations": 1000,
+    "grouped": 1000,
+    "nativeNone": 0,
+    "projects": 1,
+    "first": "60000000-0000-4000-8000-000000000000",
+    "last": "60000000-0000-4000-8000-0000000003e7",
+    "membershipProof": "Only actually observed native membership is assertable; no bulk NONE/coverage grant."
+  },
+  "remaining": [
+    "F1 navigation p95 <150ms and search first screen <300ms across repeated samples",
+    "F1 qualified activity evidence to UI <1000ms; SYS-05 token/ACK/title contention",
+    "Full admitted Host index cardinality at 1k/10k/100k, not just native fixture size",
+    "Shared owner/index and bounded DTOs across both surfaces and multiple tabs",
+    "First-schema preparing observed without false empty-library presentation",
+    "Scope-wide 30s/12 request/2 retry budget across tabs and worker restart",
+    "Physical weak device and real ChatGPT G/U; renderer 4x is not worker throttling"
+  ],
+  "ingestion": [
+    {
+      "scaleBasis": "NATIVE_WORLD_NOT_PROVEN_ADMITTED_AT_SAMPLE",
+      "tab": 0,
+      "coldProfile": true,
+      "initialSurfacesMs": 3219.543196,
+      "nativeHistoryLinks": 1000,
+      "surfaces": [
+        "chrome-extension://kplligaiiplnigfikmeinfghhkcklhgd/workspace.html",
+        "chrome-extension://kplligaiiplnigfikmeinfghhkcklhgd/sidebar.html"
+      ],
+      "nativeGeometry": {
+        "aside": {
+          "count": 1,
+          "x": 0,
+          "y": 0,
+          "width": 260,
+          "height": 900,
+          "scrollHeight": 900,
+          "clientHeight": 900,
+          "display": "flex",
+          "overflowY": "visible",
+          "minHeight": "auto"
+        },
+        "projects": {
+          "count": 1,
+          "x": 16,
+          "y": 162,
+          "width": 228,
+          "height": 130.21875,
+          "scrollHeight": 130,
+          "clientHeight": 130,
+          "display": "flex",
+          "overflowY": "auto",
+          "minHeight": "0px"
+        },
+        "history": {
+          "count": 1,
+          "x": 16,
+          "y": 312.21875,
+          "width": 228,
+          "height": 513.78125,
+          "scrollHeight": 108039,
+          "clientHeight": 514,
+          "display": "flex",
+          "overflowY": "auto",
+          "minHeight": "0px"
+        },
+        "header": {
+          "count": 1,
+          "x": 260,
+          "y": 0,
+          "width": 1180,
+          "height": 64,
+          "scrollHeight": 64,
+          "clientHeight": 64,
+          "display": "flex",
+          "overflowY": "visible",
+          "minHeight": "auto"
+        },
+        "reading": {
+          "count": 1,
+          "x": 260,
+          "y": 64,
+          "width": 1180,
+          "height": 646,
+          "scrollHeight": 646,
+          "clientHeight": 646,
+          "display": "block",
+          "overflowY": "auto",
+          "minHeight": "auto"
+        },
+        "composer": {
+          "count": 1,
+          "x": 480,
+          "y": 726,
+          "width": 740,
+          "height": 158,
+          "scrollHeight": 156,
+          "clientHeight": 156,
+          "display": "block",
+          "overflowY": "visible",
+          "minHeight": "auto"
+        },
+        "returnSlot": {
+          "count": 1,
+          "x": 268,
+          "y": 12,
+          "width": 48,
+          "height": 40,
+          "scrollHeight": 40,
+          "clientHeight": 40,
+          "display": "block",
+          "overflowY": "visible",
+          "minHeight": "auto"
+        }
+      }
+    },
+    {
+      "scaleBasis": "NATIVE_WORLD_NOT_PROVEN_ADMITTED_AT_SAMPLE",
+      "tab": 1,
+      "coldProfile": false,
+      "initialSurfacesMs": 2963.8662750000003,
+      "nativeHistoryLinks": 1000,
+      "surfaces": [
+        "chrome-extension://kplligaiiplnigfikmeinfghhkcklhgd/workspace.html",
+        "chrome-extension://kplligaiiplnigfikmeinfghhkcklhgd/sidebar.html"
+      ],
+      "nativeGeometry": {
+        "aside": {
+          "count": 1,
+          "x": 0,
+          "y": 0,
+          "width": 260,
+          "height": 900,
+          "scrollHeight": 900,
+          "clientHeight": 900,
+          "display": "flex",
+          "overflowY": "visible",
+          "minHeight": "auto"
+        },
+        "projects": {
+          "count": 1,
+          "x": 16,
+          "y": 162,
+          "width": 228,
+          "height": 130.21875,
+          "scrollHeight": 130,
+          "clientHeight": 130,
+          "display": "flex",
+          "overflowY": "auto",
+          "minHeight": "0px"
+        },
+        "history": {
+          "count": 1,
+          "x": 16,
+          "y": 312.21875,
+          "width": 228,
+          "height": 513.78125,
+          "scrollHeight": 108039,
+          "clientHeight": 514,
+          "display": "flex",
+          "overflowY": "auto",
+          "minHeight": "0px"
+        },
+        "header": {
+          "count": 1,
+          "x": 260,
+          "y": 0,
+          "width": 1180,
+          "height": 64,
+          "scrollHeight": 64,
+          "clientHeight": 64,
+          "display": "flex",
+          "overflowY": "visible",
+          "minHeight": "auto"
+        },
+        "reading": {
+          "count": 1,
+          "x": 260,
+          "y": 64,
+          "width": 1180,
+          "height": 646,
+          "scrollHeight": 646,
+          "clientHeight": 646,
+          "display": "block",
+          "overflowY": "auto",
+          "minHeight": "auto"
+        },
+        "composer": {
+          "count": 1,
+          "x": 480,
+          "y": 726,
+          "width": 740,
+          "height": 158,
+          "scrollHeight": 156,
+          "clientHeight": 156,
+          "display": "block",
+          "overflowY": "visible",
+          "minHeight": "auto"
+        },
+        "returnSlot": {
+          "count": 1,
+          "x": 268,
+          "y": 12,
+          "width": 48,
+          "height": 40,
+          "scrollHeight": 40,
+          "clientHeight": 40,
+          "display": "block",
+          "overflowY": "visible",
+          "minHeight": "auto"
+        }
+      }
+    }
+  ],
+  "errors": [],
+  "rpc": [
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_JOIN",
+      "requestAt": 1792105937501,
+      "at": 1792105937570,
+      "elapsedMs": 68.39999999996508,
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_JOIN",
+      "requestAt": 1792105937504,
+      "at": 1792105937571,
+      "elapsedMs": 67,
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_RESUME",
+      "requestAt": 1792105937571,
+      "at": 1792105937587,
+      "elapsedMs": 16,
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_RESUME",
+      "requestAt": 1792105937572,
+      "at": 1792105937589,
+      "elapsedMs": 17.599999999976717,
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105937589,
+      "at": 1792105937617,
+      "elapsedMs": 28.79999999998836,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105937590,
+      "at": 1792105937618,
+      "elapsedMs": 28.599999999976717,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105937668,
+      "at": 1792105937694,
+      "elapsedMs": 26.599999999976717,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105937669,
+      "at": 1792105937695,
+      "elapsedMs": 26.20000000001164,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105937745,
+      "at": 1792105937821,
+      "elapsedMs": 76.5,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105937745,
+      "at": 1792105937821,
+      "elapsedMs": 76.40000000002328,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105937872,
+      "at": 1792105937897,
+      "elapsedMs": 25.20000000001164,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105937872,
+      "at": 1792105937900,
+      "elapsedMs": 28.399999999965075,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105937947,
+      "at": 1792105937969,
+      "elapsedMs": 21.70000000001164,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105937951,
+      "at": 1792105937970,
+      "elapsedMs": 19,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105938019,
+      "at": 1792105938023,
+      "elapsedMs": 4.100000000034925,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105938020,
+      "at": 1792105938024,
+      "elapsedMs": 3.699999999953434,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105938074,
+      "at": 1792105938122,
+      "elapsedMs": 48.199999999953434,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105938074,
+      "at": 1792105938122,
+      "elapsedMs": 48.40000000002328,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105938172,
+      "at": 1792105938220,
+      "elapsedMs": 47.79999999998836,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105938173,
+      "at": 1792105938221,
+      "elapsedMs": 48.20000000001164,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105938271,
+      "at": 1792105938320,
+      "elapsedMs": 49.09999999997672,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105938271,
+      "at": 1792105938321,
+      "elapsedMs": 49.5,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105938370,
+      "at": 1792105938418,
+      "elapsedMs": 48.20000000001164,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105938371,
+      "at": 1792105938419,
+      "elapsedMs": 47.40000000002328,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105938469,
+      "at": 1792105938494,
+      "elapsedMs": 25.099999999976717,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105938469,
+      "at": 1792105938494,
+      "elapsedMs": 25.400000000023283,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105938544,
+      "at": 1792105938602,
+      "elapsedMs": 57.59999999997672,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105938544,
+      "at": 1792105938602,
+      "elapsedMs": 57.399999999965075,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105938652,
+      "at": 1792105938711,
+      "elapsedMs": 58.90000000002328,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105938652,
+      "at": 1792105938713,
+      "elapsedMs": 61.20000000001164,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105938761,
+      "at": 1792105938819,
+      "elapsedMs": 57.90000000002328,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105938764,
+      "at": 1792105938819,
+      "elapsedMs": 55.29999999998836,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105938869,
+      "at": 1792105938931,
+      "elapsedMs": 61.70000000001164,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105938869,
+      "at": 1792105938931,
+      "elapsedMs": 61.79999999998836,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105938981,
+      "at": 1792105939010,
+      "elapsedMs": 29.099999999976717,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105938981,
+      "at": 1792105939011,
+      "elapsedMs": 29.199999999953434,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105939061,
+      "at": 1792105939154,
+      "elapsedMs": 93.60000000003492,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105939061,
+      "at": 1792105939155,
+      "elapsedMs": 93.89999999996508,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105939205,
+      "at": 1792105939268,
+      "elapsedMs": 63.20000000001164,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105939205,
+      "at": 1792105939268,
+      "elapsedMs": 63.40000000002328,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105939318,
+      "at": 1792105939390,
+      "elapsedMs": 71.39999999996508,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105939318,
+      "at": 1792105939390,
+      "elapsedMs": 71.29999999998836,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105939440,
+      "at": 1792105939501,
+      "elapsedMs": 61.40000000002328,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105939440,
+      "at": 1792105939502,
+      "elapsedMs": 61.699999999953434,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105939551,
+      "at": 1792105939582,
+      "elapsedMs": 31,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105939552,
+      "at": 1792105939583,
+      "elapsedMs": 30.900000000023283,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105939633,
+      "at": 1792105939673,
+      "elapsedMs": 40.59999999997672,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105939633,
+      "at": 1792105939674,
+      "elapsedMs": 41.29999999998836,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105939724,
+      "at": 1792105939748,
+      "elapsedMs": 24.5,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105939724,
+      "at": 1792105939749,
+      "elapsedMs": 24.099999999976717,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105939798,
+      "at": 1792105939946,
+      "elapsedMs": 147.5,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105939799,
+      "at": 1792105939946,
+      "elapsedMs": 147.20000000001164,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105939996,
+      "at": 1792105940017,
+      "elapsedMs": 20.800000000046566,
+      "state": "ready",
+      "ok": true,
+      "groupCount": 1
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105939996,
+      "at": 1792105940040,
+      "elapsedMs": 44,
+      "state": "ready",
+      "ok": true,
+      "groupCount": 1
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_CANDIDATES",
+      "requestAt": 1792105940039,
+      "at": 1792105940064,
+      "elapsedMs": 25,
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105940039,
+      "at": 1792105940069,
+      "elapsedMs": 29.899999999965075,
+      "state": "ready",
+      "ok": true,
+      "groupCount": 1
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_CANDIDATES",
+      "requestAt": 1792105940061,
+      "at": 1792105940081,
+      "elapsedMs": 20.20000000001164,
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105940061,
+      "at": 1792105940087,
+      "elapsedMs": 26,
+      "state": "ready",
+      "ok": true,
+      "groupCount": 1
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_CANDIDATES",
+      "requestAt": 1792105940075,
+      "at": 1792105940091,
+      "elapsedMs": 16.399999999965075,
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_CANDIDATES",
+      "requestAt": 1792105940091,
+      "at": 1792105940100,
+      "elapsedMs": 8.599999999976717,
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_SAVE_VIEW",
+      "requestAt": 1792105940139,
+      "at": 1792105940185,
+      "elapsedMs": 46.100000000034925,
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_SAVE_VIEW",
+      "requestAt": 1792105940157,
+      "at": 1792105940185,
+      "elapsedMs": 28.5,
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105940418,
+      "at": 1792105940482,
+      "elapsedMs": 63.70000000001164,
+      "state": "ready",
+      "ok": true,
+      "groupCount": 1
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105940418,
+      "at": 1792105940530,
+      "elapsedMs": 111.79999999998836,
+      "state": "ready",
+      "ok": true,
+      "groupCount": 1
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_CANDIDATES",
+      "requestAt": 1792105940486,
+      "at": 1792105940554,
+      "elapsedMs": 68.09999999997672,
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_CANDIDATES",
+      "requestAt": 1792105940539,
+      "at": 1792105940611,
+      "elapsedMs": 71.79999999998836,
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_JOIN",
+      "requestAt": 1792105940555,
+      "at": 1792105940615,
+      "elapsedMs": 59.5,
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_JOIN",
+      "requestAt": 1792105940564,
+      "at": 1792105940620,
+      "elapsedMs": 56.29999999998836,
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105940607,
+      "at": 1792105940654,
+      "elapsedMs": 47.20000000001164,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105940607,
+      "at": 1792105940660,
+      "elapsedMs": 52.5,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_RESUME",
+      "requestAt": 1792105940615,
+      "at": 1792105940660,
+      "elapsedMs": 44.399999999965075,
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_RESUME",
+      "requestAt": 1792105940622,
+      "at": 1792105940660,
+      "elapsedMs": 38.100000000034925,
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105940660,
+      "at": 1792105940725,
+      "elapsedMs": 65.29999999998836,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105940661,
+      "at": 1792105940726,
+      "elapsedMs": 65,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105940704,
+      "at": 1792105940727,
+      "elapsedMs": 22.600000000034925,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105940710,
+      "at": 1792105940727,
+      "elapsedMs": 17.099999999976717,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105940776,
+      "at": 1792105940839,
+      "elapsedMs": 63.399999999965075,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105940776,
+      "at": 1792105940839,
+      "elapsedMs": 63.09999999997672,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105940777,
+      "at": 1792105940839,
+      "elapsedMs": 62.40000000002328,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105940777,
+      "at": 1792105940840,
+      "elapsedMs": 62.5,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105940890,
+      "at": 1792105940930,
+      "elapsedMs": 40.70000000001164,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105940890,
+      "at": 1792105940931,
+      "elapsedMs": 40.79999999998836,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105940890,
+      "at": 1792105940931,
+      "elapsedMs": 41,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105940890,
+      "at": 1792105940931,
+      "elapsedMs": 41.09999999997672,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105940981,
+      "at": 1792105941033,
+      "elapsedMs": 52.40000000002328,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105940982,
+      "at": 1792105941038,
+      "elapsedMs": 56.5,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105940982,
+      "at": 1792105941038,
+      "elapsedMs": 56.5,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105940982,
+      "at": 1792105941038,
+      "elapsedMs": 56.5,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105941083,
+      "at": 1792105941121,
+      "elapsedMs": 37.70000000001164,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105941088,
+      "at": 1792105941121,
+      "elapsedMs": 33,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105941088,
+      "at": 1792105941123,
+      "elapsedMs": 34.600000000034925,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105941088,
+      "at": 1792105941123,
+      "elapsedMs": 34.699999999953434,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105941171,
+      "at": 1792105941187,
+      "elapsedMs": 15.5,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105941172,
+      "at": 1792105941188,
+      "elapsedMs": 15.799999999988358,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105941173,
+      "at": 1792105941188,
+      "elapsedMs": 14.700000000011642,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105941174,
+      "at": 1792105941188,
+      "elapsedMs": 14,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105941237,
+      "at": 1792105941280,
+      "elapsedMs": 43.29999999998836,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105941238,
+      "at": 1792105941280,
+      "elapsedMs": 42.5,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105941238,
+      "at": 1792105941283,
+      "elapsedMs": 44.59999999997672,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105941238,
+      "at": 1792105941283,
+      "elapsedMs": 44.600000000034925,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105941331,
+      "at": 1792105941393,
+      "elapsedMs": 61.5,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105941331,
+      "at": 1792105941394,
+      "elapsedMs": 62.40000000002328,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105941333,
+      "at": 1792105941396,
+      "elapsedMs": 63.600000000034925,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105941333,
+      "at": 1792105941402,
+      "elapsedMs": 68.69999999995343,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105941444,
+      "at": 1792105941490,
+      "elapsedMs": 46.40000000002328,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105941444,
+      "at": 1792105941490,
+      "elapsedMs": 46.20000000001164,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105941447,
+      "at": 1792105941492,
+      "elapsedMs": 45.100000000034925,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105941452,
+      "at": 1792105941492,
+      "elapsedMs": 40.29999999998836,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105941540,
+      "at": 1792105941583,
+      "elapsedMs": 43.100000000034925,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105941541,
+      "at": 1792105941588,
+      "elapsedMs": 47.09999999997672,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105941542,
+      "at": 1792105941590,
+      "elapsedMs": 47.70000000001164,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105941543,
+      "at": 1792105941590,
+      "elapsedMs": 47.800000000046566,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105941634,
+      "at": 1792105941660,
+      "elapsedMs": 26.399999999965075,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105941638,
+      "at": 1792105941661,
+      "elapsedMs": 22.29999999998836,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105941640,
+      "at": 1792105941661,
+      "elapsedMs": 20.600000000034925,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105941641,
+      "at": 1792105941661,
+      "elapsedMs": 20.20000000001164,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105941710,
+      "at": 1792105941757,
+      "elapsedMs": 46.40000000002328,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105941711,
+      "at": 1792105941757,
+      "elapsedMs": 46.20000000001164,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105941711,
+      "at": 1792105941758,
+      "elapsedMs": 46.399999999965075,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105941711,
+      "at": 1792105941758,
+      "elapsedMs": 46.29999999998836,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105941807,
+      "at": 1792105941842,
+      "elapsedMs": 34.90000000002328,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105941808,
+      "at": 1792105941844,
+      "elapsedMs": 36.20000000001164,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105941808,
+      "at": 1792105941844,
+      "elapsedMs": 36.20000000001164,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105941808,
+      "at": 1792105941844,
+      "elapsedMs": 36.09999999997672,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105941892,
+      "at": 1792105941941,
+      "elapsedMs": 48.90000000002328,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105941894,
+      "at": 1792105941942,
+      "elapsedMs": 47.59999999997672,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105941894,
+      "at": 1792105941942,
+      "elapsedMs": 47.5,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105941894,
+      "at": 1792105941942,
+      "elapsedMs": 47.399999999965075,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105941991,
+      "at": 1792105942043,
+      "elapsedMs": 51.29999999998836,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105941992,
+      "at": 1792105942043,
+      "elapsedMs": 51,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105941992,
+      "at": 1792105942043,
+      "elapsedMs": 51.29999999998836,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105941992,
+      "at": 1792105942045,
+      "elapsedMs": 52.59999999997672,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105942093,
+      "at": 1792105942107,
+      "elapsedMs": 14.5,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105942093,
+      "at": 1792105942108,
+      "elapsedMs": 15.200000000011642,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105942094,
+      "at": 1792105942108,
+      "elapsedMs": 14.800000000046566,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105942095,
+      "at": 1792105942109,
+      "elapsedMs": 13.899999999965075,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105942158,
+      "at": 1792105942201,
+      "elapsedMs": 43.20000000001164,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105942159,
+      "at": 1792105942201,
+      "elapsedMs": 42.90000000002328,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105942159,
+      "at": 1792105942202,
+      "elapsedMs": 42.90000000002328,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105942159,
+      "at": 1792105942202,
+      "elapsedMs": 43.100000000034925,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105942252,
+      "at": 1792105942307,
+      "elapsedMs": 55.09999999997672,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105942252,
+      "at": 1792105942307,
+      "elapsedMs": 55.20000000001164,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105942252,
+      "at": 1792105942307,
+      "elapsedMs": 55.20000000001164,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105942253,
+      "at": 1792105942308,
+      "elapsedMs": 55.20000000001164,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105942357,
+      "at": 1792105942405,
+      "elapsedMs": 48.20000000001164,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105942357,
+      "at": 1792105942405,
+      "elapsedMs": 48.399999999965075,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105942357,
+      "at": 1792105942405,
+      "elapsedMs": 48.20000000001164,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105942358,
+      "at": 1792105942406,
+      "elapsedMs": 47.399999999965075,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105942455,
+      "at": 1792105942506,
+      "elapsedMs": 50.399999999965075,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105942456,
+      "at": 1792105942506,
+      "elapsedMs": 50.79999999998836,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105942456,
+      "at": 1792105942508,
+      "elapsedMs": 52.100000000034925,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105942456,
+      "at": 1792105942508,
+      "elapsedMs": 52.09999999997672,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105942556,
+      "at": 1792105942572,
+      "elapsedMs": 15.699999999953434,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105942557,
+      "at": 1792105942572,
+      "elapsedMs": 15.5,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105942558,
+      "at": 1792105942572,
+      "elapsedMs": 14.200000000011642,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105942558,
+      "at": 1792105942573,
+      "elapsedMs": 15.5,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105942622,
+      "at": 1792105943029,
+      "elapsedMs": 406.79999999998836,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105942622,
+      "at": 1792105943029,
+      "elapsedMs": 406.6000000000349,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105942623,
+      "at": 1792105943029,
+      "elapsedMs": 406.5,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105942624,
+      "at": 1792105943030,
+      "elapsedMs": 406,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105943079,
+      "at": 1792105943104,
+      "elapsedMs": 25.100000000034925,
+      "state": "ready",
+      "ok": true,
+      "groupCount": 1
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105943079,
+      "at": 1792105943113,
+      "elapsedMs": 34.09999999997672,
+      "state": "ready",
+      "ok": true,
+      "groupCount": 1
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105943080,
+      "at": 1792105943124,
+      "elapsedMs": 44.399999999965075,
+      "state": "ready",
+      "ok": true,
+      "groupCount": 1
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105943079,
+      "at": 1792105943132,
+      "elapsedMs": 52.600000000034925,
+      "state": "ready",
+      "ok": true,
+      "groupCount": 1
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_CANDIDATES",
+      "requestAt": 1792105943109,
+      "at": 1792105943138,
+      "elapsedMs": 29,
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105943109,
+      "at": 1792105943146,
+      "elapsedMs": 37.300000000046566,
+      "state": "ready",
+      "ok": true,
+      "groupCount": 1
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_CANDIDATES",
+      "requestAt": 1792105943122,
+      "at": 1792105943161,
+      "elapsedMs": 38.29999999998836,
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105943122,
+      "at": 1792105943168,
+      "elapsedMs": 45.5,
+      "state": "ready",
+      "ok": true,
+      "groupCount": 1
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_CANDIDATES",
+      "requestAt": 1792105943131,
+      "at": 1792105943173,
+      "elapsedMs": 42.29999999998836,
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_CANDIDATES",
+      "requestAt": 1792105943137,
+      "at": 1792105943174,
+      "elapsedMs": 37.70000000001164,
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105943137,
+      "at": 1792105943179,
+      "elapsedMs": 42.70000000001164,
+      "state": "ready",
+      "ok": true,
+      "groupCount": 1
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105943131,
+      "at": 1792105943184,
+      "elapsedMs": 52.199999999953434,
+      "state": "ready",
+      "ok": true,
+      "groupCount": 1
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_CANDIDATES",
+      "requestAt": 1792105943150,
+      "at": 1792105943189,
+      "elapsedMs": 39.199999999953434,
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_CANDIDATES",
+      "requestAt": 1792105943173,
+      "at": 1792105943190,
+      "elapsedMs": 17.300000000046566,
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_CANDIDATES",
+      "requestAt": 1792105943183,
+      "at": 1792105943197,
+      "elapsedMs": 13.699999999953434,
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_CANDIDATES",
+      "requestAt": 1792105943187,
+      "at": 1792105943204,
+      "elapsedMs": 16.5,
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_SAVE_VIEW",
+      "requestAt": 1792105943219,
+      "at": 1792105943228,
+      "elapsedMs": 9.099999999976717,
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_SAVE_VIEW",
+      "requestAt": 1792105943236,
+      "at": 1792105943243,
+      "elapsedMs": 6.399999999965075,
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105943752,
+      "at": 1792105943843,
+      "elapsedMs": 91.20000000001164,
+      "state": "ready",
+      "ok": true,
+      "groupCount": 1
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105943753,
+      "at": 1792105943855,
+      "elapsedMs": 102.79999999998836,
+      "state": "ready",
+      "ok": true,
+      "groupCount": 1
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_JOIN",
+      "requestAt": 1792105943866,
+      "at": 1792105943880,
+      "elapsedMs": 13.200000000011642,
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_JOIN",
+      "requestAt": 1792105943868,
+      "at": 1792105943880,
+      "elapsedMs": 12.600000000034925,
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_CANDIDATES",
+      "requestAt": 1792105943847,
+      "at": 1792105943885,
+      "elapsedMs": 37.899999999965075,
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_CANDIDATES",
+      "requestAt": 1792105943863,
+      "at": 1792105943890,
+      "elapsedMs": 27.099999999976717,
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_RESUME",
+      "requestAt": 1792105943880,
+      "at": 1792105943892,
+      "elapsedMs": 12.200000000011642,
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_RESUME",
+      "requestAt": 1792105943881,
+      "at": 1792105943893,
+      "elapsedMs": 11.799999999988358,
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105943893,
+      "at": 1792105943898,
+      "elapsedMs": 4.900000000023283,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105943893,
+      "at": 1792105943898,
+      "elapsedMs": 4.800000000046566,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105943950,
+      "at": 1792105944003,
+      "elapsedMs": 52.59999999997672,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105943950,
+      "at": 1792105944003,
+      "elapsedMs": 52.70000000001164,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105944054,
+      "at": 1792105944103,
+      "elapsedMs": 49.20000000001164,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105944054,
+      "at": 1792105944109,
+      "elapsedMs": 55.40000000002328,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105944002,
+      "at": 1792105944114,
+      "elapsedMs": 111.59999999997672,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105944002,
+      "at": 1792105944122,
+      "elapsedMs": 120,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105944153,
+      "at": 1792105944221,
+      "elapsedMs": 67.70000000001164,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105944159,
+      "at": 1792105944224,
+      "elapsedMs": 64.79999999998836,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105944164,
+      "at": 1792105944224,
+      "elapsedMs": 60.5,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105944173,
+      "at": 1792105944233,
+      "elapsedMs": 60.70000000001164,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105944271,
+      "at": 1792105944320,
+      "elapsedMs": 48.699999999953434,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105944274,
+      "at": 1792105944321,
+      "elapsedMs": 46.09999999997672,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105944275,
+      "at": 1792105944321,
+      "elapsedMs": 46.09999999997672,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105944284,
+      "at": 1792105944321,
+      "elapsedMs": 37.600000000034925,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105944370,
+      "at": 1792105944419,
+      "elapsedMs": 48.399999999965075,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105944371,
+      "at": 1792105944419,
+      "elapsedMs": 48.20000000001164,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105944371,
+      "at": 1792105944419,
+      "elapsedMs": 48.29999999998836,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105944372,
+      "at": 1792105944419,
+      "elapsedMs": 47.79999999998836,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105944469,
+      "at": 1792105944524,
+      "elapsedMs": 55.20000000001164,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105944469,
+      "at": 1792105944525,
+      "elapsedMs": 55.600000000034925,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105944469,
+      "at": 1792105944525,
+      "elapsedMs": 55.59999999997672,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105944470,
+      "at": 1792105944525,
+      "elapsedMs": 55.5,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105944575,
+      "at": 1792105944635,
+      "elapsedMs": 60.800000000046566,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105944575,
+      "at": 1792105944636,
+      "elapsedMs": 60.79999999998836,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105944575,
+      "at": 1792105944636,
+      "elapsedMs": 60.90000000002328,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105944575,
+      "at": 1792105944639,
+      "elapsedMs": 63.79999999998836,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105944686,
+      "at": 1792105944764,
+      "elapsedMs": 77.79999999998836,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105944686,
+      "at": 1792105944765,
+      "elapsedMs": 79,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105944686,
+      "at": 1792105944766,
+      "elapsedMs": 79.39999999996508,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105944689,
+      "at": 1792105944766,
+      "elapsedMs": 76.70000000001164,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105944814,
+      "at": 1792105944854,
+      "elapsedMs": 40.199999999953434,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105944816,
+      "at": 1792105944866,
+      "elapsedMs": 50.40000000002328,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105944816,
+      "at": 1792105944868,
+      "elapsedMs": 51.70000000001164,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105944816,
+      "at": 1792105944868,
+      "elapsedMs": 51.59999999997672,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105944905,
+      "at": 1792105944941,
+      "elapsedMs": 36.800000000046566,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105944916,
+      "at": 1792105944943,
+      "elapsedMs": 26.199999999953434,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105944918,
+      "at": 1792105944943,
+      "elapsedMs": 25,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105944918,
+      "at": 1792105944943,
+      "elapsedMs": 25,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105944992,
+      "at": 1792105945071,
+      "elapsedMs": 79.60000000003492,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105944993,
+      "at": 1792105945073,
+      "elapsedMs": 79.70000000001164,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105944993,
+      "at": 1792105945073,
+      "elapsedMs": 79.70000000001164,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105944993,
+      "at": 1792105945074,
+      "elapsedMs": 80.59999999997672,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105945122,
+      "at": 1792105945181,
+      "elapsedMs": 59.59999999997672,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105945123,
+      "at": 1792105945182,
+      "elapsedMs": 59,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105945123,
+      "at": 1792105945182,
+      "elapsedMs": 59.100000000034925,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105945124,
+      "at": 1792105945182,
+      "elapsedMs": 58.29999999998836,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105945232,
+      "at": 1792105945289,
+      "elapsedMs": 57.5,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105945232,
+      "at": 1792105945289,
+      "elapsedMs": 57.29999999998836,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105945232,
+      "at": 1792105945290,
+      "elapsedMs": 57.09999999997672,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105945233,
+      "at": 1792105945290,
+      "elapsedMs": 57,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105945339,
+      "at": 1792105945395,
+      "elapsedMs": 55.5,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105945340,
+      "at": 1792105945396,
+      "elapsedMs": 56.100000000034925,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105945340,
+      "at": 1792105945396,
+      "elapsedMs": 56.5,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105945340,
+      "at": 1792105945397,
+      "elapsedMs": 56.59999999997672,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105945445,
+      "at": 1792105945491,
+      "elapsedMs": 45.5,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105945446,
+      "at": 1792105945491,
+      "elapsedMs": 45,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105945447,
+      "at": 1792105945493,
+      "elapsedMs": 46.100000000034925,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105945447,
+      "at": 1792105945493,
+      "elapsedMs": 46.20000000001164,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105945541,
+      "at": 1792105945605,
+      "elapsedMs": 64.40000000002328,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105945543,
+      "at": 1792105945606,
+      "elapsedMs": 63,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105945543,
+      "at": 1792105945606,
+      "elapsedMs": 63.40000000002328,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105945544,
+      "at": 1792105945607,
+      "elapsedMs": 62.90000000002328,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105945656,
+      "at": 1792105945721,
+      "elapsedMs": 64.79999999998836,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105945656,
+      "at": 1792105945721,
+      "elapsedMs": 64.5,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105945657,
+      "at": 1792105945723,
+      "elapsedMs": 66.09999999997672,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105945657,
+      "at": 1792105945729,
+      "elapsedMs": 72.29999999998836,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105945771,
+      "at": 1792105945839,
+      "elapsedMs": 68.5,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105945771,
+      "at": 1792105945840,
+      "elapsedMs": 69.39999999996508,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105945773,
+      "at": 1792105945853,
+      "elapsedMs": 80.20000000001164,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105945780,
+      "at": 1792105945855,
+      "elapsedMs": 75.5,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105945890,
+      "at": 1792105945942,
+      "elapsedMs": 51.59999999997672,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105945891,
+      "at": 1792105945942,
+      "elapsedMs": 51.70000000001164,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105945904,
+      "at": 1792105945943,
+      "elapsedMs": 38.59999999997672,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105945905,
+      "at": 1792105945943,
+      "elapsedMs": 37.29999999998836,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105945992,
+      "at": 1792105946023,
+      "elapsedMs": 30.399999999965075,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105945993,
+      "at": 1792105946023,
+      "elapsedMs": 30.400000000023283,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105945993,
+      "at": 1792105946023,
+      "elapsedMs": 30.399999999965075,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105945993,
+      "at": 1792105946024,
+      "elapsedMs": 30.899999999965075,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105946074,
+      "at": 1792105946095,
+      "elapsedMs": 20.599999999976717,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105946074,
+      "at": 1792105946095,
+      "elapsedMs": 21.100000000034925,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105946074,
+      "at": 1792105946098,
+      "elapsedMs": 23.599999999976717,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105946074,
+      "at": 1792105946098,
+      "elapsedMs": 24,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105946145,
+      "at": 1792105946181,
+      "elapsedMs": 35.79999999998836,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105946146,
+      "at": 1792105946182,
+      "elapsedMs": 36.5,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105946148,
+      "at": 1792105946186,
+      "elapsedMs": 37.40000000002328,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105946149,
+      "at": 1792105946186,
+      "elapsedMs": 37.79999999998836,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105946232,
+      "at": 1792105946241,
+      "elapsedMs": 9.800000000046566,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105946232,
+      "at": 1792105946245,
+      "elapsedMs": 13.100000000034925,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105946236,
+      "at": 1792105946261,
+      "elapsedMs": 25.099999999976717,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105946237,
+      "at": 1792105946262,
+      "elapsedMs": 25.399999999965075,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105946292,
+      "at": 1792105946346,
+      "elapsedMs": 53.899999999965075,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105946296,
+      "at": 1792105946346,
+      "elapsedMs": 50.20000000001164,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105946311,
+      "at": 1792105946346,
+      "elapsedMs": 35.20000000001164,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105946312,
+      "at": 1792105946346,
+      "elapsedMs": 34,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105946396,
+      "at": 1792105946453,
+      "elapsedMs": 57.29999999998836,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105946396,
+      "at": 1792105946453,
+      "elapsedMs": 57.09999999997672,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105946396,
+      "at": 1792105946454,
+      "elapsedMs": 57.399999999965075,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105946397,
+      "at": 1792105946456,
+      "elapsedMs": 59.600000000034925,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105946503,
+      "at": 1792105946561,
+      "elapsedMs": 57.399999999965075,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105946504,
+      "at": 1792105946561,
+      "elapsedMs": 57.29999999998836,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105946504,
+      "at": 1792105946562,
+      "elapsedMs": 58.20000000001164,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105946506,
+      "at": 1792105946562,
+      "elapsedMs": 55.90000000002328,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105946611,
+      "at": 1792105946666,
+      "elapsedMs": 54.59999999997672,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105946611,
+      "at": 1792105946666,
+      "elapsedMs": 54.899999999965075,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105946612,
+      "at": 1792105946667,
+      "elapsedMs": 54.79999999998836,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105946613,
+      "at": 1792105946667,
+      "elapsedMs": 54.90000000002328,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105946716,
+      "at": 1792105946789,
+      "elapsedMs": 73.20000000001164,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105946717,
+      "at": 1792105946790,
+      "elapsedMs": 72.89999999996508,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105946718,
+      "at": 1792105946790,
+      "elapsedMs": 72.59999999997672,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105946718,
+      "at": 1792105946790,
+      "elapsedMs": 72.70000000001164,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105946840,
+      "at": 1792105946914,
+      "elapsedMs": 74.70000000001164,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105946840,
+      "at": 1792105946915,
+      "elapsedMs": 74.89999999996508,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105946840,
+      "at": 1792105946915,
+      "elapsedMs": 75.20000000001164,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105946840,
+      "at": 1792105946916,
+      "elapsedMs": 75.39999999996508,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105946965,
+      "at": 1792105947024,
+      "elapsedMs": 59.79999999998836,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105946966,
+      "at": 1792105947027,
+      "elapsedMs": 61.600000000034925,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105946966,
+      "at": 1792105947027,
+      "elapsedMs": 61.70000000001164,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105946967,
+      "at": 1792105947035,
+      "elapsedMs": 68.40000000002328,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105947075,
+      "at": 1792105947134,
+      "elapsedMs": 59,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105947077,
+      "at": 1792105947141,
+      "elapsedMs": 63.40000000002328,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105947078,
+      "at": 1792105947143,
+      "elapsedMs": 65,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105947085,
+      "at": 1792105947143,
+      "elapsedMs": 57.5,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105947184,
+      "at": 1792105947212,
+      "elapsedMs": 28.300000000046566,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105947191,
+      "at": 1792105947213,
+      "elapsedMs": 22.29999999998836,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105947193,
+      "at": 1792105947213,
+      "elapsedMs": 20.5,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105947193,
+      "at": 1792105947213,
+      "elapsedMs": 20.29999999998836,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105947263,
+      "at": 1792105947331,
+      "elapsedMs": 68.5,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105947264,
+      "at": 1792105947332,
+      "elapsedMs": 68.20000000001164,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105947264,
+      "at": 1792105947332,
+      "elapsedMs": 68.60000000003492,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105947264,
+      "at": 1792105947332,
+      "elapsedMs": 68.70000000001164,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105947382,
+      "at": 1792105947447,
+      "elapsedMs": 65.90000000002328,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105947382,
+      "at": 1792105947450,
+      "elapsedMs": 68.39999999996508,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105947382,
+      "at": 1792105947459,
+      "elapsedMs": 76.29999999998836,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105947383,
+      "at": 1792105947464,
+      "elapsedMs": 81.60000000003492,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105947498,
+      "at": 1792105947556,
+      "elapsedMs": 58.5,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105947501,
+      "at": 1792105947560,
+      "elapsedMs": 59.70000000001164,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_RENEW",
+      "requestAt": 1792105947541,
+      "at": 1792105947572,
+      "elapsedMs": 30.79999999998836,
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_RENEW",
+      "requestAt": 1792105947544,
+      "at": 1792105947574,
+      "elapsedMs": 30.29999999998836,
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105947509,
+      "at": 1792105947575,
+      "elapsedMs": 65.70000000001164,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105947515,
+      "at": 1792105947576,
+      "elapsedMs": 61.70000000001164,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105947607,
+      "at": 1792105947674,
+      "elapsedMs": 66.90000000002328,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105947611,
+      "at": 1792105947675,
+      "elapsedMs": 64.39999999996508,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105947625,
+      "at": 1792105947682,
+      "elapsedMs": 56.70000000001164,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105947626,
+      "at": 1792105947684,
+      "elapsedMs": 57.29999999998836,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105947724,
+      "at": 1792105947752,
+      "elapsedMs": 28.400000000023283,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105947725,
+      "at": 1792105947753,
+      "elapsedMs": 27.400000000023283,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105947732,
+      "at": 1792105947753,
+      "elapsedMs": 21.100000000034925,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105947734,
+      "at": 1792105947753,
+      "elapsedMs": 19.400000000023283,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105947803,
+      "at": 1792105947862,
+      "elapsedMs": 59.20000000001164,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105947803,
+      "at": 1792105947862,
+      "elapsedMs": 58.79999999998836,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105947803,
+      "at": 1792105947863,
+      "elapsedMs": 59.40000000002328,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105947804,
+      "at": 1792105947863,
+      "elapsedMs": 59.600000000034925,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105947912,
+      "at": 1792105947973,
+      "elapsedMs": 61.20000000001164,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105947912,
+      "at": 1792105947974,
+      "elapsedMs": 61.600000000034925,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105947913,
+      "at": 1792105947981,
+      "elapsedMs": 67.29999999998836,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105947914,
+      "at": 1792105947986,
+      "elapsedMs": 72,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105948024,
+      "at": 1792105948076,
+      "elapsedMs": 52.20000000001164,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105948024,
+      "at": 1792105948077,
+      "elapsedMs": 52.40000000002328,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105948031,
+      "at": 1792105948077,
+      "elapsedMs": 45.70000000001164,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105948036,
+      "at": 1792105948077,
+      "elapsedMs": 41.199999999953434,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105948126,
+      "at": 1792105948198,
+      "elapsedMs": 71.70000000001164,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105948127,
+      "at": 1792105948199,
+      "elapsedMs": 72.29999999998836,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105948127,
+      "at": 1792105948200,
+      "elapsedMs": 72.40000000002328,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105948127,
+      "at": 1792105948200,
+      "elapsedMs": 72.70000000001164,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105948248,
+      "at": 1792105948279,
+      "elapsedMs": 30.400000000023283,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105948249,
+      "at": 1792105948279,
+      "elapsedMs": 29.599999999976717,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105948250,
+      "at": 1792105948279,
+      "elapsedMs": 29.70000000001164,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105948250,
+      "at": 1792105948280,
+      "elapsedMs": 29.199999999953434,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105948329,
+      "at": 1792105948390,
+      "elapsedMs": 60.79999999998836,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105948329,
+      "at": 1792105948390,
+      "elapsedMs": 60.90000000002328,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105948330,
+      "at": 1792105948391,
+      "elapsedMs": 61,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105948330,
+      "at": 1792105948391,
+      "elapsedMs": 61.5,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105948440,
+      "at": 1792105948496,
+      "elapsedMs": 56.100000000034925,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105948440,
+      "at": 1792105948504,
+      "elapsedMs": 63.399999999965075,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105948441,
+      "at": 1792105948507,
+      "elapsedMs": 65.89999999996508,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105948441,
+      "at": 1792105948509,
+      "elapsedMs": 67.69999999995343,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105948547,
+      "at": 1792105948602,
+      "elapsedMs": 55.29999999998836,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105948554,
+      "at": 1792105948602,
+      "elapsedMs": 48.5,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105948557,
+      "at": 1792105948603,
+      "elapsedMs": 45.600000000034925,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105948559,
+      "at": 1792105948603,
+      "elapsedMs": 43.399999999965075,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105948653,
+      "at": 1792105948703,
+      "elapsedMs": 50.20000000001164,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105948653,
+      "at": 1792105948703,
+      "elapsedMs": 50.40000000002328,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105948653,
+      "at": 1792105948703,
+      "elapsedMs": 50.5,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105948653,
+      "at": 1792105948704,
+      "elapsedMs": 50.40000000002328,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105948753,
+      "at": 1792105948781,
+      "elapsedMs": 28.29999999998836,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105948753,
+      "at": 1792105948781,
+      "elapsedMs": 28.100000000034925,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105948754,
+      "at": 1792105948782,
+      "elapsedMs": 28.400000000023283,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105948754,
+      "at": 1792105948782,
+      "elapsedMs": 28.399999999965075,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105948831,
+      "at": 1792105948910,
+      "elapsedMs": 78.09999999997672,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105948832,
+      "at": 1792105948910,
+      "elapsedMs": 78.29999999998836,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105948832,
+      "at": 1792105948910,
+      "elapsedMs": 78.09999999997672,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105948832,
+      "at": 1792105948911,
+      "elapsedMs": 78.20000000001164,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105948960,
+      "at": 1792105949031,
+      "elapsedMs": 70.59999999997672,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105948960,
+      "at": 1792105949031,
+      "elapsedMs": 70.80000000004657,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105948961,
+      "at": 1792105949031,
+      "elapsedMs": 70.5,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105948961,
+      "at": 1792105949031,
+      "elapsedMs": 70.5,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105949081,
+      "at": 1792105949132,
+      "elapsedMs": 51.5,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105949081,
+      "at": 1792105949133,
+      "elapsedMs": 51.5,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105949081,
+      "at": 1792105949136,
+      "elapsedMs": 54.29999999998836,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105949081,
+      "at": 1792105949145,
+      "elapsedMs": 63.20000000001164,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105949183,
+      "at": 1792105949238,
+      "elapsedMs": 55.70000000001164,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105949183,
+      "at": 1792105949245,
+      "elapsedMs": 62.20000000001164,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105949186,
+      "at": 1792105949247,
+      "elapsedMs": 61.5,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105949195,
+      "at": 1792105949249,
+      "elapsedMs": 53.70000000001164,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105949289,
+      "at": 1792105949314,
+      "elapsedMs": 25.5,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105949296,
+      "at": 1792105949314,
+      "elapsedMs": 18.79999999998836,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105949298,
+      "at": 1792105949315,
+      "elapsedMs": 17,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105949299,
+      "at": 1792105949315,
+      "elapsedMs": 16,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105949364,
+      "at": 1792105949422,
+      "elapsedMs": 57.699999999953434,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105949365,
+      "at": 1792105949422,
+      "elapsedMs": 57.800000000046566,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105949365,
+      "at": 1792105949423,
+      "elapsedMs": 57.90000000002328,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105949365,
+      "at": 1792105949424,
+      "elapsedMs": 58.600000000034925,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105949472,
+      "at": 1792105949538,
+      "elapsedMs": 65.69999999995343,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105949473,
+      "at": 1792105949538,
+      "elapsedMs": 65.80000000004657,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105949473,
+      "at": 1792105949539,
+      "elapsedMs": 65.40000000002328,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105949474,
+      "at": 1792105949539,
+      "elapsedMs": 65.29999999998836,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105949588,
+      "at": 1792105949657,
+      "elapsedMs": 69.10000000003492,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105949589,
+      "at": 1792105949658,
+      "elapsedMs": 68.60000000003492,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105949589,
+      "at": 1792105949658,
+      "elapsedMs": 68.70000000001164,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105949589,
+      "at": 1792105949658,
+      "elapsedMs": 68.59999999997672,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105949708,
+      "at": 1792105949770,
+      "elapsedMs": 62.100000000034925,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105949708,
+      "at": 1792105949770,
+      "elapsedMs": 62.399999999965075,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105949708,
+      "at": 1792105949771,
+      "elapsedMs": 62.5,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105949708,
+      "at": 1792105949771,
+      "elapsedMs": 62.600000000034925,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105949820,
+      "at": 1792105949850,
+      "elapsedMs": 29.400000000023283,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105949822,
+      "at": 1792105949850,
+      "elapsedMs": 28.29999999998836,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105949822,
+      "at": 1792105949850,
+      "elapsedMs": 28.5,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105949822,
+      "at": 1792105949850,
+      "elapsedMs": 28.5,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105949900,
+      "at": 1792105949960,
+      "elapsedMs": 60.100000000034925,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105949900,
+      "at": 1792105949967,
+      "elapsedMs": 67.29999999998836,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105949901,
+      "at": 1792105949971,
+      "elapsedMs": 70.5,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105949901,
+      "at": 1792105949971,
+      "elapsedMs": 70.59999999997672,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105950010,
+      "at": 1792105950070,
+      "elapsedMs": 60.20000000001164,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105950017,
+      "at": 1792105950074,
+      "elapsedMs": 56.199999999953434,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105950021,
+      "at": 1792105950074,
+      "elapsedMs": 52.899999999965075,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105950022,
+      "at": 1792105950075,
+      "elapsedMs": 53.09999999997672,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105950121,
+      "at": 1792105950173,
+      "elapsedMs": 52.90000000002328,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105950124,
+      "at": 1792105950175,
+      "elapsedMs": 51.09999999997672,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105950125,
+      "at": 1792105950175,
+      "elapsedMs": 50.70000000001164,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105950125,
+      "at": 1792105950176,
+      "elapsedMs": 50.70000000001164,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105950224,
+      "at": 1792105950277,
+      "elapsedMs": 53.100000000034925,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105950225,
+      "at": 1792105950277,
+      "elapsedMs": 52.40000000002328,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105950226,
+      "at": 1792105950278,
+      "elapsedMs": 52.20000000001164,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105950226,
+      "at": 1792105950278,
+      "elapsedMs": 52.199999999953434,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105950327,
+      "at": 1792105950704,
+      "elapsedMs": 377.20000000001164,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105950328,
+      "at": 1792105950748,
+      "elapsedMs": 420.0999999999767,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105950328,
+      "at": 1792105950768,
+      "elapsedMs": 439.29999999998836,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105950328,
+      "at": 1792105950782,
+      "elapsedMs": 453.9000000000233,
+      "state": "preparing",
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105950755,
+      "at": 1792105950817,
+      "elapsedMs": 62.100000000034925,
+      "state": "ready",
+      "ok": true,
+      "groupCount": 1
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105950798,
+      "at": 1792105950830,
+      "elapsedMs": 31.899999999965075,
+      "state": "ready",
+      "ok": true,
+      "groupCount": 1
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_CANDIDATES",
+      "requestAt": 1792105950828,
+      "at": 1792105950863,
+      "elapsedMs": 35,
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105950828,
+      "at": 1792105950867,
+      "elapsedMs": 38.29999999998836,
+      "state": "ready",
+      "ok": true,
+      "groupCount": 1
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_CANDIDATES",
+      "requestAt": 1792105950835,
+      "at": 1792105950877,
+      "elapsedMs": 41.09999999997672,
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105950836,
+      "at": 1792105950889,
+      "elapsedMs": 53.5,
+      "state": "ready",
+      "ok": true,
+      "groupCount": 1
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105950837,
+      "at": 1792105950892,
+      "elapsedMs": 55.59999999997672,
+      "state": "ready",
+      "ok": true,
+      "groupCount": 1
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105950836,
+      "at": 1792105950899,
+      "elapsedMs": 63.5,
+      "state": "ready",
+      "ok": true,
+      "groupCount": 1
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_CANDIDATES",
+      "requestAt": 1792105950876,
+      "at": 1792105950903,
+      "elapsedMs": 26.79999999998836,
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_CANDIDATES",
+      "requestAt": 1792105950892,
+      "at": 1792105950913,
+      "elapsedMs": 21.599999999976717,
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105950892,
+      "at": 1792105950924,
+      "elapsedMs": 32.399999999965075,
+      "state": "ready",
+      "ok": true,
+      "groupCount": 1
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_CANDIDATES",
+      "requestAt": 1792105950901,
+      "at": 1792105950928,
+      "elapsedMs": 26.79999999998836,
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_CANDIDATES",
+      "requestAt": 1792105950899,
+      "at": 1792105950931,
+      "elapsedMs": 31.79999999998836,
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105950899,
+      "at": 1792105950934,
+      "elapsedMs": 35.20000000001164,
+      "state": "ready",
+      "ok": true,
+      "groupCount": 1
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_SAVE_VIEW",
+      "requestAt": 1792105950931,
+      "at": 1792105950941,
+      "elapsedMs": 10.099999999976717,
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_CANDIDATES",
+      "requestAt": 1792105950927,
+      "at": 1792105950941,
+      "elapsedMs": 13.700000000011642,
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_SAVE_VIEW",
+      "requestAt": 1792105950941,
+      "at": 1792105950946,
+      "elapsedMs": 4.900000000023283,
+      "ok": true
+    },
+    {
+      "tab": 0,
+      "role": "/workspace.html",
+      "type": "HOST_UI_CANDIDATES",
+      "requestAt": 1792105950940,
+      "at": 1792105950951,
+      "elapsedMs": 10.699999999953434,
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_PRESENT",
+      "requestAt": 1792105950960,
+      "at": 1792105950967,
+      "elapsedMs": 7.100000000034925,
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105950966,
+      "at": 1792105950985,
+      "elapsedMs": 19,
+      "state": "ready",
+      "ok": true,
+      "groupCount": 1
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105950966,
+      "at": 1792105950998,
+      "elapsedMs": 31.699999999953434,
+      "state": "ready",
+      "ok": true,
+      "groupCount": 1
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_CANDIDATES",
+      "requestAt": 1792105950994,
+      "at": 1792105951022,
+      "elapsedMs": 28.100000000034925,
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_CANDIDATES",
+      "requestAt": 1792105950999,
+      "at": 1792105951023,
+      "elapsedMs": 24.300000000046566,
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105950994,
+      "at": 1792105951059,
+      "elapsedMs": 64.20000000001164,
+      "state": "ready",
+      "ok": true,
+      "groupCount": 1
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105950999,
+      "at": 1792105951068,
+      "elapsedMs": 68.70000000001164,
+      "state": "ready",
+      "ok": true,
+      "groupCount": 1
+    },
+    {
+      "tab": 1,
+      "role": "/sidebar.html",
+      "type": "HOST_UI_CANDIDATES",
+      "requestAt": 1792105951070,
+      "at": 1792105951091,
+      "elapsedMs": 21.29999999998836,
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_SAVE_VIEW",
+      "requestAt": 1792105951182,
+      "at": 1792105951201,
+      "elapsedMs": 18.79999999998836,
+      "ok": true
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105951256,
+      "at": 1792105951276,
+      "elapsedMs": 19.800000000046566,
+      "state": "ready",
+      "ok": true,
+      "groupCount": 1
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105951305,
+      "at": 1792105951341,
+      "elapsedMs": 35.79999999998836,
+      "state": "ready",
+      "ok": true,
+      "groupCount": 1
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_VIEW",
+      "requestAt": 1792105951424,
+      "at": 1792105951461,
+      "elapsedMs": 37.79999999998836,
+      "state": "ready",
+      "ok": true,
+      "groupCount": 1
+    },
+    {
+      "tab": 1,
+      "role": "/workspace.html",
+      "type": "HOST_UI_SAVE_VIEW",
+      "requestAt": 1792105951577,
+      "at": 1792105951584,
+      "elapsedMs": 7.2000000000116415,
+      "ok": true
+    }
+  ],
+  "rpcTraceDropped": 0,
+  "fixtureSourceHashes": {
+    "host-scale-package-browser.mjs": "20d11487267c829134d4f40800654cbb8443d84dfa6b797101b0ed01d9e8ca55",
+    "host-scale-trace.mjs": "0ae11cceb7a2a08ca9566a1101d8199e79b7b5d04bcff1eddc22ac8b800a4a58",
+    "isolated-browser-cleanup.mjs": "c3d4a053d485efbd86a487ac1e4257849120b30939e63be346ceceaaea2fafb0",
+    "observe-current-frame.mjs": "10aa74b86691b0132339dbd988b75ef7cc0f3fc03551b05a0a5faabda8eb49f8",
+    "fixtures/host-scale-cleanup.mjs": "80a1d8fbd169b09284ab9bff6aaf014d810ccbf249d572f28cdbe9899ae3ba99",
+    "fixtures/host-scale-audit.mjs": "b58afe9de8afc690a11467e7fb90ecb629cce0bf689648fc173bdb3e594cd738",
+    "fixtures/host-scale-member-progress.mjs": "0e8df4af97c2c35142ee8966850f11e438acc0d0c5932e020385db5a58b4e278",
+    "fixtures/host-scale-surfaces.mjs": "1ac2069837d9029dbb90088ee7406303448827c76da56610a61e3ca9e9f02ec1",
+    "fixtures/host-scale-progress.mjs": "60bad6d34120fdcb562aa4010396ceef79204f93ab711a8ca393a97d4c41674e",
+    "fixtures/host-scale-progress-sampler.mjs": "895d14317df1cefbe1e77cb6113443a9f0bf689f4361d6789519b4f424e21c9e",
+    "fixtures/host-scale-measurement.mjs": "aaa5bed051b7188ccf8d0d37963bef73a71c6b2cc15729156d2d049ddf50adb0",
+    "fixtures/host-scale-ui-oracle.mjs": "a5cda63b18536cc23956e5af1f69baf89506b95aa427dbc67d2b9e867c37e4ba",
+    "fixtures/host-scale-native-tail.mjs": "d23ad20b9a30c9ee0934ba80ebe6dea4b3cc038aa2d6714665df27e1d574e664",
+    "fixtures/host-scale-world.mjs": "78ec698b2998440beeb1f11530b973cfd954feba1be5557a63ce0f4d16b7e5c3",
+    "fixtures/host-scale-plan.mjs": "d44f5f342a4a4dacb5dd88a280399242c48db78178056386def76f9e1a770576",
+    "fixtures/host-scale-server.mjs": "e6e1b63bc3909f3eaa787d6d22356c2eb8be0051f68d842c20088b591c6c047c",
+    "fixtures/legacy.html": "58aa1363a3925748fd3766ea7fc8077fac3587e178157aa445865caab7d6a357",
+    "fixtures/native.mjs": "15f9e9137b8879508d6579df285dfafe4bc0e65edcba49d578ab930e19d10ade",
+    "fixtures/native.css": "fdaa8a878f36f5c296745815c9128093d7989d4f1d11e3d88f28799134eb84c3"
+  },
+  "package": {
+    "status": "OFFLINE_HOST_RECONSTRUCTION",
+    "releaseStatus": "NOT_RELEASE_READY",
+    "files": 157,
+    "unpacked": "/tmp/vaiwl-host-scale-8SESsq/package/extension",
+    "archive": "/tmp/vaiwl-host-scale-8SESsq/package/vaiwl-free-host-development.zip",
+    "archiveSha256": "7d28853ad2336306bc63233f554eca54eae01e65f46050f3584e4032cbe5915a"
+  },
+  "sourceHashes": {
+    "extension/worker.mjs": "9d631c76a3a6eb760ad487880e690276658aec45e687f86be96734eb1ef25ea8",
+    "extension/browser-bootstrap.mjs": "278850152bf6c3ebfc600af290ea8fb23256997d8e7bcd93b7e7ba1c496425bd",
+    "src/runtime/host-browser-bootstrap.mjs": "ccaed6c288493ac0f0705b4a325b6f7ad5ee3b125231599113795d67ef7fa05c",
+    "src/runtime/browser-request-context.mjs": "ecf8c27a3931e9ff2364d1748de00186fd721c443c5e2203b0c4604b98ed814a",
+    "src/b1/identity.mjs": "6d7ca616701826733d4936d8a139395ccf1a3111e025ec6b1035d78c1dc05e99",
+    "src/data/request-deadline.mjs": "cda2ebb4158c05eb911fbb84a1af092cf91f461e3a002bef4b4d23f5a70dfdf7",
+    "extension/config.mjs": "9f38c623f8ef08e684d9b1b71fd0a49c01b736a41e75efc997117370df175c41",
+    "src/runtime/host-worker-runtime.mjs": "54015d2c05f32cb279c9ff45075160d4ad9c1968d11ca4cda817947bc2db2be5",
+    "src/runtime/browser-old-send-terminal.mjs": "c310a6cc46fcd6f9a8718f8a087dc10719a41affd9a56ecf8cbf4be9720123c3",
+    "src/host/old-send-terminal-profile.mjs": "a43986f8e54b15c98e9dc3535a9e0bb08820ad2132f0eb0fdf72ace97b227b0f",
+    "src/runtime/shared-host-read-budget.mjs": "ee4e09ea97c144fbe30b029b41251ae8e313503bf706e3b4cd9966a24ae27196",
+    "src/data/hash.mjs": "aef21d1842cdc09b33fef973a9d29f15cb7c0c3f773a6a9d31726b83ffee7b21",
+    "src/runtime/browser-first-send.mjs": "609847013c92f984f0c75a4854b57ba2592eb878704d76a21d7c0364033929e6",
+    "src/host/first-send-profile.mjs": "cf0d76b36fc980a890246d255448f8b29965b5ff12882689d6884e7336e436ff",
+    "src/b1/scope-repository.mjs": "08d5c29e4be60c9b94ac6c7dce3e7fb1c5f2e553979c5a8f872a08d7c0c2bb91",
+    "src/data/schema.mjs": "4a15161852c0c0a9dcc3fab10a984c97929ed9157c33fbc97121711cb41740aa",
+    "src/data/free-policy-initialization.mjs": "e0a358b12ea9454f5ee657612e4c83c247ba895b082a362be9186f4b7e898a32",
+    "src/data/known-anchor-key.mjs": "e5d91c902e04440be924ef0506ff688bbbccd83150610f50199b518bcb298df3",
+    "src/data/repository.mjs": "afae2c733965935e87cab5238d3b011cdb92545662d198c14e9042f8ae77dd0b",
+    "src/data/free-time-policy.mjs": "8a75b5bdde8abf8ee07873ecf2aa45a19faccd030b9f03c738b56db6ba9ea17a",
+    "src/navigation/projection.mjs": "36334b5da4bd8e89718bf45b69723f4a657d46797c03c653298aaa3392399f24",
+    "src/data/activity-version-fence.mjs": "4ad8bee9665e2037b1be7eb1c871b024001adb25c8b630115e1a9c1ce97f36fe",
+    "src/data/native-repository.mjs": "f6be3b60ad147ea9d4b6ee280b3578f35e0f66ac24f7ab5cf476cc7d92a3ed6a",
+    "src/data/continuation-evidence-reader.mjs": "df6058de242ec65cf2c371fedd0cebb0c90da110f76a9d2fc172447be50f82b7",
+    "src/data/free-evidence-partitions.mjs": "c1cdd10d9c6a6a142759fa7589b55a1607a4518260677abb3145ea00907a0ead",
+    "src/data/free-evidence.mjs": "f0e6e9c36330c9c94e8bed11b06b92acfa0d76725f8afe70af6fee5b0afab680",
+    "src/data/observed-send-anchor.mjs": "f9dbb9278502a325c2263d4adeb99ea1c0159525d505728fe84fdee2d59980da",
+    "src/data/free-activity.mjs": "2d961ee56aaddada429ba684cf08ba1aa4a4886204f2d3a43d3b52843da7de46",
+    "src/data/state.mjs": "df0eaff00a7f050c37653f0e740b8fabe19bce571c5e37f4ce437d180984c62a",
+    "src/data/preferences.mjs": "1fb8395c5dfe23d64c91095b71a1c117b9762b3ccec68e262aaf73744b12c9d7",
+    "src/data/evidence-ref-directory.mjs": "8a89bf5b8535578881c823077554f177098044214a22fcfaf4be41e65498c867",
+    "src/data/verified-record-cache.mjs": "9b7b3c13abdd37f2b6d4fad48b85707a9815538fd793cad537f8e87b8f08cde0",
+    "src/data/native-observation-continuation.mjs": "3222a09592efd5c904cc65e036976f2f08bb260a9e639c83bcfddbd025dedee8",
+    "src/data/native-facts.mjs": "98dc17aedc9cf675fed8d720a181422956f79fd6784a4040327788a69e8c3c93",
+    "src/data/native-partitions.mjs": "4e295e042a2e5e3337dddfe1f5928d0f8e920aaab981a7e2f96fcd00ccff60a9",
+    "src/data/native-version-index.mjs": "03089b0dddfa9f948087823af1e1ad7b43fc765a6631c40647e1e4b201cd7211",
+    "src/data/native-index-migration.mjs": "69b9275e7a58878aba4eba800eb324140ac84c0730d31dcb4f3a067d29dda6a2",
+    "src/data/native-partition-audit.mjs": "3cd490dc6e38459d1562d8b2a8ec277911fe46782cb55840965fb045182f247f",
+    "src/data/audit-record-prefetch.mjs": "5af85b5c8a90e0a1d236fdec784b77ee970f7ea251e18b4be386a34e909d6b7c",
+    "src/data/native-index-writer.mjs": "b24b74a4470602b8196c5ee9559aaa8d5f53454c034b02aeb84b2652532a2808",
+    "src/data/native-index-reader.mjs": "f359a28b189dec9605dad356d3c19d474132fff2ab3a94425367997047c96c4a",
+    "src/data/free-projection.mjs": "fe87590005120f89ab41571fe9bf8ae566918748ab543e0ac172fb63274c8a48",
+    "src/data/free-evidence-repository.mjs": "64d0ea73914e840c1783e7a4a9408584a5523c14c715c6be24d998418679f240",
+    "src/data/evidence-directory-writer.mjs": "9ff0c941904e155c736a29e1d232e4fecf67d7995c5d4b6907a12b0f54102944",
+    "src/data/evidence-directory-migration.mjs": "75328ab40b3327d9e9c60c44402d87ea3afc9bd385eeb3ba2f0a14036fc1b135",
+    "src/data/evidence-partition-audit.mjs": "3aadf876de681cc97ef5564119da7a2c691c45a472434d6e8f7080ae02d3aa79",
+    "src/data/evidence-directory-reader.mjs": "7ef90c7a37a82b2ce4562acb6afc56e4ae36d14543c776893664b79869fa895b",
+    "src/data/shared-directory-retention.mjs": "3bc27b2a71994f8f0857056c8309c47107251372f25c021368d3d06248e7cbc9",
+    "src/data/shared-directory-reader.mjs": "e4abac50e4cc282e16469861009a48893a10fd76652c208791834f50678c7672",
+    "src/data/shared-ref-directory.mjs": "9d1f099d7c5e5019ba023b0d84c57779e968a55ad6397d2ee20825e0d471fa44",
+    "src/data/partition-manifest.mjs": "566283402493ada28abc530354c343bc6c561e309d1e6802c981d62584a5e06a",
+    "src/data/cooperate.mjs": "ce494a33280143e1e2a2227a72413da792330311de12642a9a56b13704f2f3b4",
+    "src/data/shared-directory-migration.mjs": "0cd415f9a871b93613c3d9f3e301982cda2d1891dc847d983397f87dc2dcf0df",
+    "src/data/shared-directory-writer.mjs": "4a060d7467d6e55a9fb2d54cd3d7099bc976c2228cf010cc97db03976a8ff8dd",
+    "src/data/shared-partition-audit.mjs": "25d4b77561b36b150ce1524e27e184170f3c1ef493995251a88678908d31f6cf",
+    "src/data/partitioned.mjs": "c73c99a9e301b25ee71635eaa9cd0fcf88ae45e24e56c5acd615e33de947b643",
+    "src/data/shared-directory-recovery.mjs": "e04870124d9cd873a8af8b3643fd3d2fa5bdb33c69809e7bbf667bb2aa4727cf",
+    "src/data/backup.mjs": "bb0a8639d02e2169ae15e866a464f1531b7e80e40afd7c8a4b35e99d70928396",
+    "src/data/evidence.mjs": "f84032c9a2fc08455480652b60de6fb9394a70e82a7ace8729186ff097b26238",
+    "src/data/known-anchor-backfill.mjs": "dd58e613da9564668fc7963135dd98caccf3bd6930e532864e68d9ff6afd55ca",
+    "src/host/surface-discovery.mjs": "785dedcba626c4c9f338485fbbc3246eb43456a206969a82de669079b371c846",
+    "src/host/bounded-handle-registry.mjs": "ea3a48ed3760741b8d845b4116830cffc611571b6fd01bb9561bd8a63efdee5c",
+    "src/host/contract.mjs": "35129aacf2a7e1fe1812c846379563d60ad74a66b689ad41bc38d76484a97716",
+    "src/host/url-policy.mjs": "fddfafcca2276161e6fd3c908ac896d0dab656fce6cf06aee64f1f442f7ac7e9",
+    "src/runtime/host-binding-service.mjs": "0b208517b32933e4fb7daab1a03d769fd3e7aa251863e8d5bc92bfedc268021e",
+    "src/runtime/host-ingestion-pass-owner.mjs": "ca3463525fd403938f006e3cb67a836fcbd35614179ac832ecd76dbccd4345dc",
+    "src/runtime/host-old-send-terminal.mjs": "6fcc2912af6cbf6cc9e5cba3cf21025d8fffb51fa703a2807ba3e9f25dccead6",
+    "src/runtime/old-send-terminal-readback.mjs": "c090d556d487b58771ae56ed408547c37e893e7a78e26838a47a528fbd459fce",
+    "src/runtime/host-activity-source-admission.mjs": "a3fc35131107ee4b46ba27df801075aadb0c92eddb505153655d25877c9e7d36",
+    "src/runtime/send-ack-admission.mjs": "784141e34d18be3faa6e4cdc725b8f5442f6ea103d68dca00e82d09b64bcdccc",
+    "src/runtime/historical-send-profile.mjs": "b356d5fc7101080ba60910edc0175180924c548269816dd98900f2055195f4c9",
+    "src/host/conversation-metadata.mjs": "744afe2228882a5ebff1ffd8f1294ecd80697d63b44af60640e3ff4d3a63410e",
+    "src/runtime/host-historical-send-owner.mjs": "396799ec76a7160400edf5ac647325af10898a296b574d031598fdf540ac5777",
+    "src/runtime/host-first-send.mjs": "92e1e0ef59139010d19143f20bbab45469d1c9a639ddde0ea9c6158737b1f3f5",
+    "src/host/first-send-causality.mjs": "cd062c0b638408b387bb469f76dac3ea389acd9943bd42c1545ac8f0a08905e6",
+    "src/runtime/first-send-readback.mjs": "4052d39db39d2e5053bb4287cde87fd45ddcce844420099203950ea68a9691f6",
+    "src/runtime/host-current-navigation.mjs": "081db9b2c4d5988f670c0022b107279ffbaaf9cf257b5c07b76ddad01fa90ea7",
+    "src/host/current-navigation-plan.mjs": "c33cfd6af8e7523ac85fe812b59b2e24df109d4e03a3d507b9edab6b53d413ff",
+    "src/runtime/host-send-ack-owner.mjs": "91fa828cc2710efc1a5dd876e9addf2bf3e29aa301268dc8a8ac59cb42073a12",
+    "src/runtime/host-candidate-service.mjs": "0ae6ff996262e89550bc49709e96647c5a738f33ca44409d465b39bf5c5af4fd",
+    "src/host/candidate-presentation.mjs": "d2a89c85c263de8f1572c8fe12e7fc1400bd4201fed7c3adb9aede868cd6cc4a",
+    "src/runtime/host-snippet-service.mjs": "65e7ef0bd4843fad28409495f0187fcf58daa7f5541735152d8836c80a2f0107",
+    "src/runtime/host-backup-service.mjs": "46f7b84d99f1618dd7ffc442c605ac7e72fc1e4999417ddbeb9592cc7df3f0b0",
+    "src/host/backup-transfer.mjs": "69b9c025e80993644ba8b37fdf77ccb9662d4050fae66e847b98b3663f59122a",
+    "src/runtime/host-send-candidates.mjs": "7149e95aee63d3fd4946d7538b0ff58daf2e5b614d663341673c2eb802ed0fa4",
+    "src/host/send-correlator.mjs": "b3f2090a3c5bf0e3d467de761bc79e2423c94e1e7b1e399918026d2c4575ff0c",
+    "src/runtime/current-metadata-reader.mjs": "e507ae813e11cf8ac4d5d5970b94efa0ed0309e4504111188142bd5b6550fe0a",
+    "src/runtime/host-recovery-service.mjs": "ceaf407790fa8f56e7b03795e2f88c1d00465f6d71b4a10f276844c82fe47991",
+    "src/runtime/host-continuation-owner.mjs": "a2c252fba8d39217af8aae6ceccfe93a3b99a6f9460994718dedafe0555db7d9",
+    "src/runtime/free-read-service.mjs": "d1fcbfd4bb8381ac6bb5c6409e4be9fb95d3f9df3071ce0507446eec04ef6d59",
+    "src/data/free-recovery-status.mjs": "21b871a60c1dfc2c7c67964f30f1852c33ee225a3d9df1271a518e7850e51bb4",
+    "src/runtime/host-view-service.mjs": "911f2c1ba36ed303790070f33d8e5eb4520b50527d5991d9bd42ba0a2a872db3",
+    "src/runtime/free-project-location.mjs": "45892565ac8896feb97872c59e3b504d0563b6e461c3da49d838c1359991e649",
+    "src/navigation/free-view.mjs": "ef0f8d6b798789539d16bdc3ae1d8cc66ccf5fc32f472b83ca2c475863946aaa",
+    "src/host/frame-resume-state.mjs": "fab35558b08d800722df1d0160b602af541ba3a0aa5a2f49a321a390e35b78c2",
+    "src/runtime/host-auto-time-policy.mjs": "90838ac5e0c95262911bb05289e13abe659662b7ea08255edfce14e7665516f3",
+    "src/runtime/free-working-set-projection.mjs": "b50b973005612c5d9d76cff9a4acd6d6fc23d006dea787d681c534385629ff4f",
+    "src/runtime/free-search-projection.mjs": "8ff12eb3674d3d5fe59371aabf4f82bcba3898ae4c3357493a15ba78a2cdfadf",
+    "src/navigation/search.mjs": "a93da18f3018a6267af7634986fdf7cfca4ed72eeaa6bb982340e9b0031c85d6",
+    "src/runtime/free-view-owner.mjs": "fda3b75a5fcca2d7095a220783563b847f966325ad75760a0fb40629d4860974",
+    "src/data/read-recovery-budget.mjs": "7c7948a740dcc37f9a2a6b25babe8c29cd2d84441299c1429c7e524402cc8c51",
+    "src/data/free-header-loader.mjs": "7817a581a7816d744b39ed8fa37d49eb86da065335e2f46ec190fa9fae18e7cb",
+    "src/data/free-page-loader.mjs": "c4339dfa76cfab89aa1f16b40129ee9f7c779233d5d03ff2134f551a8f9b0d65",
+    "src/data/free-replica.mjs": "11326c574b31ce1fc4c93bf712b812f0d3181f0254ec08ec22e8588836dd81dc",
+    "src/navigation/current-index.mjs": "23f13e4d9556715bb029ad6724b8a3731ba87251d6ddfd8e95939085ebfab21e",
+    "src/runtime/free-frame-projection.mjs": "2411de58fbdb97084f62476007efc2816e9a096854ded5c2bf1a55b3d36a537e",
+    "src/runtime/host-ui-owner.mjs": "e764efeba758fa29a1e2ee00e71ab2034f7a9c7ef78f305ca5b892f77f61a03a",
+    "src/host/ui-grants.mjs": "27b39c6a0ccae66e6bb3ce08e91b24c75a738cfe53fb307eff6c9907f5b660a8",
+    "src/runtime/host-observation-owner.mjs": "b4f67c087525ca3658550da57c7fc528d7b091d03e9a224a83e3a6fa8edfb7b9",
+    "src/runtime/native-source-incarnation.mjs": "75d8d86a6b71d6c2e24dd7158a37a63fcda6cb02d77552d8c3ccf8b60354a638",
+    "src/host/current-observation-batch.mjs": "f7fcd583d0811a8b71d72dc5bac4ba4c57eae16e552076aa08d5a50f42b45151",
+    "src/host/send-intent-claim.mjs": "1e399b5af40affb0500f744f0c2c8aa5f0dc935cdbbd054dff1e483cda1f971f",
+    "src/host/current-body-claim.mjs": "4e26f9fe6c905d1dbf3a07995168c4fb5dea5e424bff238644da1c067ac03ef5",
+    "src/host/surface-batch.mjs": "4733a8cecdc3f4664c77da81d12441c9f2bd7cf0c16e55ec93eb94076faa4e5d",
+    "src/b1/document-binding-broker.mjs": "1f247c0fa2b3a05c5f2ae11dda39df04de9c79628b7753715bdafcadbc842aec",
+    "src/b1/host-document-handshake.mjs": "fafe938904e635da9964d222fe7dce8cc98cb5eda6501420af464c95b4a9cc6b",
+    "src/runtime/scope-authority.mjs": "57c1a96d78c2e4f299cab0e0cbc4d7f8a53f569d23ea8a07535cb31ebe7a4282",
+    "src/runtime/session-provider.mjs": "b3927b9f11dd704e03927e27dc91fdc4bd01b33d61f008426b73bbb908e2a07b",
+    "src/host/conversation-acceptance.mjs": "92fdfc486bd9614028aacc197b99a26b8ad3ae254e54a980a04b0a1e90153144",
+    "extension/content-entry.mjs": "d3313550a8c5f4dbf3419233563ad7568f4b78a369a32e72d31171c54cb3e575",
+    "src/host/context-association.mjs": "65144892c80bda792c4fd43331fd2bc41b867cbcbecc245dc093859d7c4b316f",
+    "src/host/current-body-discovery.mjs": "8076eb9c238826b1f6ee3416a65d13cadf0edf5864d4d6256a40de0a6e76bb1c",
+    "src/host/chatgpt-adapter.mjs": "0d2a283bbc3763c8344fa56afd4f02aed95104eba7aba684d28ef88df7350560",
+    "src/host/surface-fragments.mjs": "1fbae58e227c4c3cfbefb991ee1f7c469a9225ac2360940b23b5cfc999555d74",
+    "src/host/native-input-risk.mjs": "9c78a4f1e984fb8e39078d5c8f0ba05427f76a8c6f113f805ce6501bfc1eeb18",
+    "src/host/native-send-intent.mjs": "ee67e74a089c8078a4b780467c6366f22176dada81de0d3dec9450be7e0ee744",
+    "src/host/native-snippets.mjs": "2e4c039073450d55cda5c09c30b7ceebfc9f0141b30a85c7c7d19a1a1bb2a142",
+    "src/host/native-actions.mjs": "6a586f6724678d8b8095bf62e0adb6b739f5044224c2d3df5ee0a35a9733adfc",
+    "src/host/content-session.mjs": "e48c497e1fa3ee8f68afdef4ace3cc10fad45a10b6a1692db9648f0bcf9ccbd1",
+    "src/host/candidate-upgrade.mjs": "df0d6f58a87c794c262fc5fe3421fa08f7b90dfde2b4148caf19b312c031bd7b",
+    "src/host/content-candidates.mjs": "8fa2eb65858bea846f2b78303ae6a3d45e9df959e08cf93c75b2c6d04b3e68dc",
+    "src/host/candidate-page-window.mjs": "b8e741b7f46a9a0468255d56261b3c39d47e27d31d6ca87442ef32ff055d33cc",
+    "src/host/snippet-selection-session.mjs": "00f64ead49305f277ab739db7fc7162d907f2a3d2ec7b30f3e51d4c232d333d8",
+    "src/navigation/mount-surface.mjs": "8431ca3951f3dea8973d779952a318a6aa9f9da71b27232c176dc6046699ac06",
+    "src/host/surface-controller.mjs": "1104db3adea26b75a3f693fd21a0b351cc53d1b166a090a87e54f73060c1ae71",
+    "src/host/frame-appearance.mjs": "b393fb7be24fb0f0834d239d3ede9503f08cbef98f6fd3cc4b64312fac3b5972",
+    "src/host/frame-native-plans.mjs": "49c776435c03ba5188fb71ff89b11cb6f374bb5aad25532fea926f9674ae8d29",
+    "extension/workspace.mjs": "bf2eb026da73b65a5969d2c6d9a187e2350481c19b63f1a97efc93df6419fc64",
+    "src/host/free-frame-client.mjs": "1c9ffbaaae4077084714ddd7d504b75404d911d660ce7d69b933a5586e136ec5",
+    "src/host/frame-candidate-migration.mjs": "79fd202da8b69ae2abcbbd84659b233fa7992da91a2139fe6b9b57637e601ae8",
+    "src/host/free-frame-candidates.mjs": "348a302e812f2335b2df414d0d16f20b4d8e499a399475539e508e13814cdf10",
+    "src/host/free-frame-snippets.mjs": "1930b02a870c472271766da95204bc46ce943caa51c24d66c2b55cdadae328bf",
+    "src/host/free-frame-backup.mjs": "21aba465d423ebc4ee69d3b3774b7a5a4fbf37c2c8152ff1c8e2610f59b93aa6",
+    "src/host/free-frame-recovery.mjs": "dadb2d02f2603b504471d69072bcec36c0393cabd8c0201c63251e192383b187",
+    "src/navigation/free-recovery.mjs": "20352a2a9a37bfdac9d0889d87efaf80510bf7462df3fba1ceef1e4eac3c0442",
+    "src/host/ui-frame-client.mjs": "b573405b7260c4cd82f83faf88f3769f1a0e1cb6c66c7b7b99c7309ed4581103",
+    "src/navigation/navigation.mjs": "b600f8c77cbc6be97e6c2c762821991ffae41e8891cbc68403dc43dfeb4c5c83",
+    "src/navigation/icons.mjs": "14195d8a7a21a029278ff6f9bf0bb1add2d679b37666108d80cfadabe312d2fd",
+    "src/navigation/styles.mjs": "72850d9805a8dc725d36145cef30a59d24c6dd3f10504528f1e5c68e716d61c8",
+    "extension/sidebar.mjs": "6151804205b8393cabfff2d4b2e3deaca3a36beac14d07198ca0295d3d4a3ce6",
+    "extension/frame-shell.css": "305e002e7610347fa491671aa45d852dbc8c4ec12096e4279a50a7e3e6c2847f",
+    "extension/workspace.html": "1d8d939f9deca25ae47afb1f5e0cdbffaceb85ea6e6be972edd0dea4bfed8f55",
+    "extension/sidebar.html": "95cfccf90ac7355305faeb6f9aa20f8477b8eb4ed05f8dab8db2580066222c3d"
+  },
+  "buildManifestHash": "5348e8c21d66e4257d4de8ae9d781a91747788b3f5a28a280497ac938cd5c547",
+  "workerNetworkPolicy": "PACKAGED_EXACT_ORIGIN_CONNECT_SRC",
+  "browserVersion": "156.0.8078.4",
+  "phase": "post-measurement-audit",
+  "surfaceWait": [
+    {
+      "phase": "return-workspace-local-search",
+      "kind": "surface-observation",
+      "remainingMs": 23463.802727000002,
+      "openSurfaces": 2,
+      "roles": [
+        {
+          "role": "workspace",
+          "present": true,
+          "attached": true
+        },
+        {
+          "role": "sidebar",
+          "present": true,
+          "attached": true
+        }
+      ],
+      "workspaceVisible": false,
+      "stable": true
+    },
+    {
+      "phase": "return-workspace-local-search",
+      "kind": "surface-observation",
+      "remainingMs": 23410.06287,
+      "openSurfaces": 2,
+      "roles": [
+        {
+          "role": "workspace",
+          "present": true,
+          "attached": true
+        },
+        {
+          "role": "sidebar",
+          "present": true,
+          "attached": true
+        }
+      ],
+      "workspaceVisible": false,
+      "stable": true
+    },
+    {
+      "phase": "return-workspace-local-search",
+      "kind": "surface-observation",
+      "remainingMs": 23355.676221,
+      "openSurfaces": 2,
+      "roles": [
+        {
+          "role": "workspace",
+          "present": true,
+          "attached": true
+        },
+        {
+          "role": "sidebar",
+          "present": true,
+          "attached": true
+        }
+      ],
+      "workspaceVisible": false,
+      "stable": true
+    },
+    {
+      "phase": "return-workspace-local-search",
+      "kind": "surface-observation",
+      "remainingMs": 23299.723299,
+      "openSurfaces": 2,
+      "roles": [
+        {
+          "role": "workspace",
+          "present": true,
+          "attached": true
+        },
+        {
+          "role": "sidebar",
+          "present": true,
+          "attached": true
+        }
+      ],
+      "workspaceVisible": false,
+      "stable": true
+    },
+    {
+      "phase": "return-workspace-local-search",
+      "kind": "surface-observation",
+      "remainingMs": 23245.136992,
+      "openSurfaces": 2,
+      "roles": [
+        {
+          "role": "workspace",
+          "present": true,
+          "attached": true
+        },
+        {
+          "role": "sidebar",
+          "present": true,
+          "attached": true
+        }
+      ],
+      "workspaceVisible": false,
+      "stable": true
+    },
+    {
+      "phase": "return-workspace-local-search",
+      "kind": "surface-observation",
+      "remainingMs": 23192.451653,
+      "openSurfaces": 2,
+      "roles": [
+        {
+          "role": "workspace",
+          "present": true,
+          "attached": true
+        },
+        {
+          "role": "sidebar",
+          "present": true,
+          "attached": true
+        }
+      ],
+      "workspaceVisible": false,
+      "stable": true
+    },
+    {
+      "phase": "return-workspace-local-search",
+      "kind": "surface-observation",
+      "remainingMs": 23139.110034,
+      "openSurfaces": 2,
+      "roles": [
+        {
+          "role": "workspace",
+          "present": true,
+          "attached": true
+        },
+        {
+          "role": "sidebar",
+          "present": true,
+          "attached": true
+        }
+      ],
+      "workspaceVisible": false,
+      "stable": true
+    },
+    {
+      "phase": "return-workspace-local-search",
+      "kind": "surface-observation",
+      "remainingMs": 23084.17763,
+      "openSurfaces": 2,
+      "roles": [
+        {
+          "role": "workspace",
+          "present": true,
+          "attached": true
+        },
+        {
+          "role": "sidebar",
+          "present": true,
+          "attached": true
+        }
+      ],
+      "workspaceVisible": false,
+      "stable": true
+    },
+    {
+      "phase": "return-workspace-local-search",
+      "kind": "surface-observation",
+      "remainingMs": 23030.72472,
+      "openSurfaces": 2,
+      "roles": [
+        {
+          "role": "workspace",
+          "present": true,
+          "attached": true
+        },
+        {
+          "role": "sidebar",
+          "present": true,
+          "attached": true
+        }
+      ],
+      "workspaceVisible": false,
+      "stable": true
+    },
+    {
+      "phase": "return-workspace-local-search",
+      "kind": "surface-observation",
+      "remainingMs": 22974.476593,
+      "openSurfaces": 2,
+      "roles": [
+        {
+          "role": "workspace",
+          "present": true,
+          "attached": true
+        },
+        {
+          "role": "sidebar",
+          "present": true,
+          "attached": true
+        }
+      ],
+      "workspaceVisible": false,
+      "stable": true
+    },
+    {
+      "phase": "return-workspace-local-search",
+      "kind": "surface-observation",
+      "remainingMs": 22920.882279,
+      "openSurfaces": 2,
+      "roles": [
+        {
+          "role": "workspace",
+          "present": true,
+          "attached": true
+        },
+        {
+          "role": "sidebar",
+          "present": true,
+          "attached": true
+        }
+      ],
+      "workspaceVisible": false,
+      "stable": true
+    },
+    {
+      "phase": "return-workspace-local-search",
+      "kind": "surface-observation",
+      "remainingMs": 22865.563555,
+      "openSurfaces": 2,
+      "roles": [
+        {
+          "role": "workspace",
+          "present": true,
+          "attached": true
+        },
+        {
+          "role": "sidebar",
+          "present": true,
+          "attached": true
+        }
+      ],
+      "workspaceVisible": false,
+      "stable": true
+    },
+    {
+      "phase": "return-workspace-local-search",
+      "kind": "surface-observation",
+      "remainingMs": 22811.768128000003,
+      "openSurfaces": 2,
+      "roles": [
+        {
+          "role": "workspace",
+          "present": true,
+          "attached": true
+        },
+        {
+          "role": "sidebar",
+          "present": true,
+          "attached": true
+        }
+      ],
+      "workspaceVisible": false,
+      "stable": true
+    },
+    {
+      "phase": "return-workspace-local-search",
+      "kind": "surface-observation",
+      "remainingMs": 22756.749789,
+      "openSurfaces": 2,
+      "roles": [
+        {
+          "role": "workspace",
+          "present": true,
+          "attached": true
+        },
+        {
+          "role": "sidebar",
+          "present": true,
+          "attached": true
+        }
+      ],
+      "workspaceVisible": false,
+      "stable": true
+    },
+    {
+      "phase": "return-workspace-local-search",
+      "kind": "surface-observation",
+      "remainingMs": 22703.431525,
+      "openSurfaces": 2,
+      "roles": [
+        {
+          "role": "workspace",
+          "present": true,
+          "attached": true
+        },
+        {
+          "role": "sidebar",
+          "present": true,
+          "attached": true
+        }
+      ],
+      "workspaceVisible": false,
+      "stable": true
+    },
+    {
+      "phase": "return-workspace-local-search",
+      "kind": "surface-observation",
+      "remainingMs": 22642.642942,
+      "openSurfaces": 2,
+      "roles": [
+        {
+          "role": "workspace",
+          "present": true,
+          "attached": true
+        },
+        {
+          "role": "sidebar",
+          "present": true,
+          "attached": true
+        }
+      ],
+      "workspaceVisible": true,
+      "stable": true
+    }
+  ],
+  "ingestionNativeTailReachability": "PASS",
+  "nativeProjectMembersRendered": 1000,
+  "nativeMemberProgress": {
+    "status": "OBSERVED_TAIL_ONLY",
+    "revision": 65,
+    "attempts": 16,
+    "remainingMs": 27410.05991,
+    "acceptance": "NOT_ESTABLISHED",
+    "scenario": "VISIBLE_NATIVE_READING_BEFORE_RETURN_NOT_IMMEDIATE_RETURN"
+  },
+  "ingestionObservationMs": 14233.182870999999,
+  "indexAuditRealm": "chrome-extension://kplligaiiplnigfikmeinfghhkcklhgd/workspace.html",
+  "measurementStarted": true,
+  "measurement": {
+    "status": "MEASURED_AT_STABLE_ADMITTED_INDEX",
+    "performanceAcceptance": "NOT_ESTABLISHED",
+    "samples": {
+      "localExactTailSearchMs": 35.838848000001235,
+      "localBroadSearchFirstScreenMs": 85.12009300000136,
+      "localNextPageMs": 121.11155800000051,
+      "firstPageRefs": 24,
+      "secondPageRefs": 24,
+      "kind": "HOST_LOCAL_SEARCH_AND_PAGINATION_SINGLE_SAMPLES_NOT_P95",
+      "coverage": "TWO_CORRECT_PAGES_NOT_FULL_SEARCH_COVERAGE_OR_ORDER_CERTIFICATION",
+      "timing": "PLAYWRIGHT_WALL_CLOCK_INCLUDING_AUTOMATION_OVERHEAD"
+    },
+    "before": {
+      "status": "PASS_INDEX_AUDIT_ONLY",
+      "requestedRefs": 1000,
+      "distinctRefs": 1000,
+      "distinctProjects": 1,
+      "missingRefs": 0,
+      "unexpectedRefs": 0,
+      "duplicateRefs": 0,
+      "projectMembership": 1000,
+      "nativeNoneObserved": 0,
+      "unknownMembership": 0,
+      "wrongProjectMembership": 0,
+      "wrongNoneMembership": 0,
+      "pages": 3,
+      "revision": 105,
+      "scopeSelection": "READ_ONLY_EXISTING_ROOT_NOT_A_WRITE_GRANT",
+      "performanceAcceptance": "NOT_ESTABLISHED"
+    },
+    "after": {
+      "status": "PASS_INDEX_AUDIT_ONLY",
+      "requestedRefs": 1000,
+      "distinctRefs": 1000,
+      "distinctProjects": 1,
+      "missingRefs": 0,
+      "unexpectedRefs": 0,
+      "duplicateRefs": 0,
+      "projectMembership": 1000,
+      "nativeNoneObserved": 0,
+      "unknownMembership": 0,
+      "wrongProjectMembership": 0,
+      "wrongNoneMembership": 0,
+      "pages": 3,
+      "revision": 105,
+      "scopeSelection": "READ_ONLY_EXISTING_ROOT_NOT_A_WRITE_GRANT",
+      "performanceAcceptance": "NOT_ESTABLISHED"
+    },
+    "revision": 105
+  },
+  "indexAudit": {
+    "status": "PASS_INDEX_AUDIT_ONLY",
+    "requestedRefs": 1000,
+    "distinctRefs": 1000,
+    "distinctProjects": 1,
+    "missingRefs": 0,
+    "unexpectedRefs": 0,
+    "duplicateRefs": 0,
+    "projectMembership": 1000,
+    "nativeNoneObserved": 0,
+    "unknownMembership": 0,
+    "wrongProjectMembership": 0,
+    "wrongNoneMembership": 0,
+    "pages": 3,
+    "revision": 105,
+    "scopeSelection": "READ_ONLY_EXISTING_ROOT_NOT_A_WRITE_GRANT",
+    "performanceAcceptance": "NOT_ESTABLISHED"
+  },
+  "indexAuditTiming": "BEFORE_AND_AFTER_MEASUREMENT_SAME_REVISION_REQUIRED",
+  "nativeNoneTruth": 0,
+  "admittedNone": 0,
+  "admittedUnknown": 0,
+  "firstSchemaPreparing": "OBSERVED_NOT_CERTIFIED",
+  "rpcObservation": {
+    "scope": "INGESTION_AND_MEASUREMENT_DIAGNOSTIC",
+    "count": 467,
+    "maxMs": 453.9000000000233,
+    "over6000": 0
+  },
+  "fixture": {
+    "nativeConversations": 1000,
+    "nativeProjects": 1,
+    "requests": {
+      "/": 2,
+      "/native.css": 2,
+      "/native.mjs": 2,
+      "/native/route": 4,
+      "/api/auth/session": 4,
+      "/backend-api/accounts/check/v4-2023-04-27": 4,
+      "/native/action": 3,
+      "/backend-api/conversations": 1
+    },
+    "actions": {
+      "search": 1,
+      "navigate": 2
+    }
+  },
+  "sourceChangedDuringRun": false,
+  "fixtureChangedDuringRun": false,
+  "manifestChangedDuringRun": false,
+  "temporaryDirectoryRemoved": true
+}

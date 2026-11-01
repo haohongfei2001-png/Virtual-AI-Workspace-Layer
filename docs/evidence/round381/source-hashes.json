@@ -1,0 +1,5 @@
+{
+  "src/navigation/navigation.mjs": "70cde36dffcc5940c9aa8986e7219ee8e3865a12b3de1dd5054a72054ab67f58",
+  "tests/host/frame-pagination-recovery.test.mjs": "95029c31391844cde5c01c14577ce5e569157977bccb8a184c6b1e28dc836d0f",
+  "tests/host/frame-pagination-deferred-request.test.mjs": "dcb3b2b5cad37c865d0d9c20ef1fbc8cdf8ab2f42bbdfbe08cdb8114b07cdda3"
+}

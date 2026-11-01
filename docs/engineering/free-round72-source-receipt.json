@@ -1,0 +1,10 @@
+{
+  "baseCommit": "a3d8f13",
+  "files": {
+    "src/data/evidence-partition-audit.mjs": "2d3e61ce1e242caa2a90b4250a2050698752dc0a7c5c19c4e08d6e392e5c4b57",
+    "src/data/evidence-directory-migration.mjs": "af93c5fb074490dce607a5d85e8e4573ed582efe065e702586204270c4e51d40",
+    "simulator/build.mjs": "23943c73d5c12ec7f3455127b539131da0742ebb25dc20d92f21a127b42afb71",
+    "tests/free/evidence-partition-audit.test.mjs": "7e9ce3d3d1716dd00f5adc744aa497037340670a5c8f25d81010080066a3ad18",
+    "tests/free/evidence-audit-browser.mjs": "ec1c81262f97d648ef66576cf3aa9f4eae482d3a6dd0658f6e59c2661a7a3aa1"
+  }
+}

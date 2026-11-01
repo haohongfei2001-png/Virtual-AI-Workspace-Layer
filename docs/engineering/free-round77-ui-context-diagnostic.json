@@ -1,0 +1,369 @@
+{
+  "evidence": "REAL_HEADLESS_MV3_UI_GRANT_FIXED_PROBE_NOT_J1",
+  "liveChatGPT": "NOT_RUN",
+  "renderer": "FIXED_SYNTHETIC_MARKER_AFTER_REAL_GRANT",
+  "sourceHashes": {
+    "src/host/ui-frame-client.mjs": "5ff0440e703740978c3fcc3af88567b932738a3f2b25fcdefca888561315c3db",
+    "src/host/surface-controller.mjs": "c4e29d3de792cc7546fca070664eecdab4cd1989140df38bff57abb0a6526a9c",
+    "src/navigation/mount-surface.mjs": "d8ed4ee322a55df4a8498c7065f61b6d0ebd709a8c2a2febba142fcc21900c35",
+    "src/runtime/host-ui-owner.mjs": "80edc6c4b8f9e9f82528a1bfbac3c28dfb155be97d1d1d5efbfddfee967d5184",
+    "src/runtime/host-binding-service.mjs": "0ee3fd2de1fab49b127385c4eca8b287e6d0482bbea1b8ede152c3b55001e3f1",
+    "src/host/ui-grants.mjs": "94c21a1d79e65c1b798e7ddaae6d2bf01bc48d5215e30aeb8c733ab0ffa9d4ff",
+    "src/host/chatgpt-adapter.mjs": "44fb724b6ad0bcdf04d5e10cd27403c6d595f618c9bd4cdcd2aa60a1eef0181b"
+  },
+  "results": [],
+  "lifecycle": [],
+  "errors": [],
+  "temporaryPackage": "/private/tmp/vaiwl-host-ui-cS1j0r/extension",
+  "status": "FAIL",
+  "error": "page.waitForFunction: Timeout 10000ms exceeded.\n    at /Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/host/ui-mv3-browser.mjs:28:399",
+  "ownerMessages": {
+    "messages": [
+      {
+        "type": "HOST_HELLO",
+        "ok": true,
+        "sender": {
+          "id": "fhnfoikobjngkdcapcfcekajhebommcd",
+          "tab": 523852600,
+          "incognito": false,
+          "frameId": 0,
+          "documentId": "ABFDFA03733EFA68C3A0D978995CC1F9",
+          "documentLifecycle": "active",
+          "url": "http://127.0.0.1:50992/"
+        }
+      },
+      {
+        "type": "HOST_REFRESH",
+        "ok": true,
+        "sender": {
+          "id": "fhnfoikobjngkdcapcfcekajhebommcd",
+          "tab": 523852600,
+          "incognito": false,
+          "frameId": 0,
+          "documentId": "ABFDFA03733EFA68C3A0D978995CC1F9",
+          "documentLifecycle": "active",
+          "url": "http://127.0.0.1:50992/"
+        }
+      },
+      {
+        "type": "HOST_UI_MOUNT",
+        "ok": true,
+        "sender": {
+          "id": "fhnfoikobjngkdcapcfcekajhebommcd",
+          "tab": 523852600,
+          "incognito": false,
+          "frameId": 0,
+          "documentId": "ABFDFA03733EFA68C3A0D978995CC1F9",
+          "documentLifecycle": "active",
+          "url": "http://127.0.0.1:50992/"
+        }
+      },
+      {
+        "type": "HOST_UI_CONFIRM",
+        "role": "workspace",
+        "ok": false,
+        "sender": {
+          "id": "fhnfoikobjngkdcapcfcekajhebommcd",
+          "tab": 523852600,
+          "incognito": false,
+          "frameId": 0,
+          "documentId": "ABFDFA03733EFA68C3A0D978995CC1F9",
+          "documentLifecycle": "active",
+          "url": "http://127.0.0.1:50992/"
+        },
+        "reason": "ui-authorization-unavailable"
+      },
+      {
+        "type": "HOST_UI_JOIN",
+        "role": "workspace",
+        "ok": false,
+        "sender": {
+          "id": "fhnfoikobjngkdcapcfcekajhebommcd",
+          "tab": 523852600,
+          "incognito": false,
+          "frameId": 5,
+          "documentId": "87547199B025E9D83904797097136D65",
+          "documentLifecycle": "active",
+          "url": "chrome-extension://fhnfoikobjngkdcapcfcekajhebommcd/workspace.html"
+        },
+        "reason": "ui-authorization-unavailable"
+      },
+      {
+        "type": "HOST_UI_CONFIRM",
+        "role": "sidebar",
+        "ok": false,
+        "sender": {
+          "id": "fhnfoikobjngkdcapcfcekajhebommcd",
+          "tab": 523852600,
+          "incognito": false,
+          "frameId": 0,
+          "documentId": "ABFDFA03733EFA68C3A0D978995CC1F9",
+          "documentLifecycle": "active",
+          "url": "http://127.0.0.1:50992/"
+        },
+        "reason": "ui-authorization-unavailable"
+      },
+      {
+        "type": "HOST_UI_JOIN",
+        "role": "sidebar",
+        "ok": false,
+        "sender": {
+          "id": "fhnfoikobjngkdcapcfcekajhebommcd",
+          "tab": 523852600,
+          "incognito": false,
+          "frameId": 6,
+          "documentId": "43B4DB6183E77B34CD04FFBE9BDA9406",
+          "documentLifecycle": "active",
+          "url": "chrome-extension://fhnfoikobjngkdcapcfcekajhebommcd/sidebar.html"
+        },
+        "reason": "ui-authorization-unavailable"
+      }
+    ],
+    "frameReads": [
+      {
+        "request": {
+          "tabId": 523852600,
+          "frameId": 0
+        },
+        "result": {
+          "documentId": "ABFDFA03733EFA68C3A0D978995CC1F9",
+          "documentLifecycle": "active",
+          "errorOccurred": false,
+          "frameType": "outermost_frame",
+          "parentFrameId": -1,
+          "url": "http://127.0.0.1:50992/"
+        }
+      },
+      {
+        "request": {
+          "tabId": 523852600,
+          "frameId": 0
+        },
+        "result": {
+          "documentId": "ABFDFA03733EFA68C3A0D978995CC1F9",
+          "documentLifecycle": "active",
+          "errorOccurred": false,
+          "frameType": "outermost_frame",
+          "parentFrameId": -1,
+          "url": "http://127.0.0.1:50992/"
+        }
+      },
+      {
+        "request": {
+          "tabId": 523852600,
+          "frameId": 0
+        },
+        "result": {
+          "documentId": "ABFDFA03733EFA68C3A0D978995CC1F9",
+          "documentLifecycle": "active",
+          "errorOccurred": false,
+          "frameType": "outermost_frame",
+          "parentFrameId": -1,
+          "url": "http://127.0.0.1:50992/"
+        }
+      },
+      {
+        "request": {
+          "tabId": 523852600,
+          "frameId": 0
+        },
+        "result": {
+          "documentId": "ABFDFA03733EFA68C3A0D978995CC1F9",
+          "documentLifecycle": "active",
+          "errorOccurred": false,
+          "frameType": "outermost_frame",
+          "parentFrameId": -1,
+          "url": "http://127.0.0.1:50992/"
+        }
+      },
+      {
+        "request": {
+          "tabId": 523852600,
+          "frameId": 0
+        },
+        "result": {
+          "documentId": "ABFDFA03733EFA68C3A0D978995CC1F9",
+          "documentLifecycle": "active",
+          "errorOccurred": false,
+          "frameType": "outermost_frame",
+          "parentFrameId": -1,
+          "url": "http://127.0.0.1:50992/"
+        }
+      },
+      {
+        "request": {
+          "tabId": 523852600,
+          "frameId": 0
+        },
+        "result": {
+          "documentId": "ABFDFA03733EFA68C3A0D978995CC1F9",
+          "documentLifecycle": "active",
+          "errorOccurred": false,
+          "frameType": "outermost_frame",
+          "parentFrameId": -1,
+          "url": "http://127.0.0.1:50992/"
+        }
+      },
+      {
+        "request": {
+          "tabId": 523852600,
+          "frameId": 0
+        },
+        "result": {
+          "documentId": "ABFDFA03733EFA68C3A0D978995CC1F9",
+          "documentLifecycle": "active",
+          "errorOccurred": false,
+          "frameType": "outermost_frame",
+          "parentFrameId": -1,
+          "url": "http://127.0.0.1:50992/"
+        }
+      },
+      {
+        "request": {
+          "tabId": 523852600,
+          "frameId": 0
+        },
+        "result": {
+          "documentId": "ABFDFA03733EFA68C3A0D978995CC1F9",
+          "documentLifecycle": "active",
+          "errorOccurred": false,
+          "frameType": "outermost_frame",
+          "parentFrameId": -1,
+          "url": "http://127.0.0.1:50992/"
+        }
+      },
+      {
+        "request": {
+          "tabId": 523852600,
+          "frameId": 0
+        },
+        "result": {
+          "documentId": "ABFDFA03733EFA68C3A0D978995CC1F9",
+          "documentLifecycle": "active",
+          "errorOccurred": false,
+          "frameType": "outermost_frame",
+          "parentFrameId": -1,
+          "url": "http://127.0.0.1:50992/"
+        }
+      },
+      {
+        "request": {
+          "tabId": 523852600,
+          "frameId": 0
+        },
+        "result": {
+          "documentId": "ABFDFA03733EFA68C3A0D978995CC1F9",
+          "documentLifecycle": "active",
+          "errorOccurred": false,
+          "frameType": "outermost_frame",
+          "parentFrameId": -1,
+          "url": "http://127.0.0.1:50992/"
+        }
+      },
+      {
+        "request": {
+          "tabId": 523852600,
+          "frameId": 0
+        },
+        "result": {
+          "documentId": "ABFDFA03733EFA68C3A0D978995CC1F9",
+          "documentLifecycle": "active",
+          "errorOccurred": false,
+          "frameType": "outermost_frame",
+          "parentFrameId": -1,
+          "url": "http://127.0.0.1:50992/"
+        }
+      },
+      {
+        "request": {
+          "tabId": 523852600,
+          "frameId": 0
+        },
+        "result": {
+          "documentId": "ABFDFA03733EFA68C3A0D978995CC1F9",
+          "documentLifecycle": "active",
+          "errorOccurred": false,
+          "frameType": "outermost_frame",
+          "parentFrameId": -1,
+          "url": "http://127.0.0.1:50992/"
+        }
+      },
+      {
+        "request": {
+          "tabId": 523852600,
+          "frameId": 5
+        },
+        "result": null
+      },
+      {
+        "request": {
+          "tabId": 523852600,
+          "frameId": 0
+        },
+        "result": {
+          "documentId": "ABFDFA03733EFA68C3A0D978995CC1F9",
+          "documentLifecycle": "active",
+          "errorOccurred": false,
+          "frameType": "outermost_frame",
+          "parentFrameId": -1,
+          "url": "http://127.0.0.1:50992/"
+        }
+      },
+      {
+        "request": {
+          "tabId": 523852600,
+          "frameId": 6
+        },
+        "result": null
+      }
+    ],
+    "extensionContexts": [
+      {
+        "contextId": "302036af-96b1-42c6-8677-15c5e62dd095",
+        "contextType": "BACKGROUND",
+        "frameId": -1,
+        "incognito": false,
+        "tabId": -1,
+        "windowId": -1
+      },
+      {
+        "contextId": "1b06ecc7-41fa-41a8-9f87-01c13b836d5e",
+        "contextType": "TAB",
+        "documentId": "87547199B025E9D83904797097136D65",
+        "documentOrigin": "chrome-extension://fhnfoikobjngkdcapcfcekajhebommcd",
+        "documentUrl": "chrome-extension://fhnfoikobjngkdcapcfcekajhebommcd/workspace.html",
+        "frameId": 5,
+        "incognito": false,
+        "tabId": 523852600,
+        "windowId": 523852598
+      },
+      {
+        "contextId": "246807a1-2cb8-4b97-9143-c87e44986b7e",
+        "contextType": "TAB",
+        "documentId": "43B4DB6183E77B34CD04FFBE9BDA9406",
+        "documentOrigin": "chrome-extension://fhnfoikobjngkdcapcfcekajhebommcd",
+        "documentUrl": "chrome-extension://fhnfoikobjngkdcapcfcekajhebommcd/sidebar.html",
+        "frameId": 6,
+        "incognito": false,
+        "tabId": 523852600,
+        "windowId": 523852598
+      }
+    ],
+    "frames": [
+      {
+        "documentId": "ABFDFA03733EFA68C3A0D978995CC1F9",
+        "documentLifecycle": "active",
+        "errorOccurred": false,
+        "frameId": 0,
+        "frameType": "outermost_frame",
+        "parentFrameId": -1,
+        "processId": 8,
+        "url": "http://127.0.0.1:50992/"
+      }
+    ]
+  },
+  "pageState": {
+    "uiProbe": "mounted"
+  },
+  "sourceChangedDuringRun": false
+}

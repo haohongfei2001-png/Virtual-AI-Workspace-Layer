@@ -1,0 +1,61 @@
+{
+  "baseline": "64b926e3ce2d07ad1f6f3bcd16a36f006746f3a4",
+  "kind": "fresh-reconstruction-evidence-not-lost-candidate-logs",
+  "artifacts": [
+    {
+      "file": "full-node.log.gz",
+      "uncompressedSha256": "340f47355ef97063c5e98dd9fbd9458bdf73a17134bba4522ddcbb7d191e2bed",
+      "bytes": 889203
+    },
+    {
+      "file": "inputs-before.json.gz",
+      "uncompressedSha256": "35bd7beebc625b972a263853d1e7a6558cc04229a51c055c2b3eff7300242721",
+      "bytes": 137878
+    },
+    {
+      "file": "inputs-after.json.gz",
+      "uncompressedSha256": "35bd7beebc625b972a263853d1e7a6558cc04229a51c055c2b3eff7300242721",
+      "bytes": 137878
+    },
+    {
+      "file": "guards.json.gz",
+      "uncompressedSha256": "e6b8700078d5d816853f6b1904f3721cade84b83d2c707e0a9e190ee4722ee03",
+      "bytes": 31381
+    },
+    {
+      "file": "package-report.json.gz",
+      "uncompressedSha256": "08d8fb18686ee8ea22120c606c5b64045fca6db2d04785d9c14cbe20ef2c0458",
+      "bytes": 411
+    },
+    {
+      "file": "ci-contracts.log.gz",
+      "uncompressedSha256": "0391e2f94244284868f0c83b672a860570116bf817b5248e4dba9e64dbbbe04e",
+      "bytes": 3331
+    },
+    {
+      "file": "journeys.log.gz",
+      "uncompressedSha256": "95fd795e9933a42ea81ed90dee93468d4d8ebbab27c02a945f17b4c56161c926",
+      "bytes": 50463
+    },
+    {
+      "file": "sys05.log.gz",
+      "uncompressedSha256": "fc2a7e64da1f88d15261c6eea2b2d18978f5fdb8e56c25607a248703fe879fce",
+      "bytes": 10683
+    },
+    {
+      "file": "ui-first.log.gz",
+      "uncompressedSha256": "b97e3ce0355a52732cdf93fdca7918cf5e5db108b46696fc2d4364e54a868aba",
+      "bytes": 4017
+    },
+    {
+      "file": "b5.log.gz",
+      "uncompressedSha256": "e12621cfa31b2a45f7b35c2b3512334b5f418ce497dfc388980d69b347b5ad84",
+      "bytes": 15673
+    },
+    {
+      "file": "j2-report-shape.log.gz",
+      "uncompressedSha256": "d1474d6149e99d7cf0344f4339dcf8593ff081f033ef77ddcbcf1c423d7edf6a",
+      "bytes": 3221
+    }
+  ]
+}

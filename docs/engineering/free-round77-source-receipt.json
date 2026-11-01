@@ -1,0 +1,30 @@
+{
+  "evidence": "OFFLINE_IMPLEMENTATION_CHECKPOINT_NOT_FREE_DELIVERY",
+  "parent": "e2ae316ecb584863059c137c0a9509b1c6583f93",
+  "sourceHashes": {
+    "simulator/build.mjs": "ac99bcb9eab7d00ca567bbd4f0e146a92258abbe3589f75b3bfeefd82283b486",
+    "simulator/server.mjs": "3ec4fa62ad2057ff60077a781594f85c97b8f5ab0965e8726d2f609a80ffbc42",
+    "simulator/service.mjs": "48cc67831c86b33b778f0c0eb38ce03e217d01bb04f5cd422521e4fc6987377d",
+    "src/host/surface-controller.mjs": "d4898875cdf0160e7c655a4d3ae593ec7d3b44eb19ae49c76027e02a8717f3da",
+    "src/host/ui-frame-client.mjs": "c15461f28139d345c2d31a05f160f223708a656910c9244ffd8afa3fbeb3c1d7",
+    "src/host/ui-grants.mjs": "095790e5508d775889a96301cd034fa5d3a00c87e1413daead54f3d1216ffaba",
+    "src/runtime/free-read-service.mjs": "bbbac4e82b3ccce93037bd4959426dcac32534767889c25b4ae5b0b14e9701b3",
+    "src/runtime/free-view-owner.mjs": "1ad338e1e2ac112a12ad1dda77472baccbbbb6dcc0a6ddd62420f0c0c4e8449a",
+    "src/runtime/host-binding-service.mjs": "033c8cbed58ba72231c43dbb9e8ebf1edc5af17bbb5834b62cbc3737e90d8486",
+    "src/runtime/host-ui-owner.mjs": "fcaa243424e69e76de4c2f419ac5be0f8f60091848cc2936078e63cdec329d16",
+    "tests/free/mv3-browser.mjs": "491ba50c4f6dd4e356f069acbcb25a77dbd330187632ca353823d8a6d46437ca",
+    "tests/free/synthetic-module-http.test.mjs": "c07a328c2795306f8420eab35768eed0b1e394b612f04fba7d454aa580279a2e",
+    "tests/host/free-read-service.test.mjs": "72852db46b9bf00b1d57fb895011bdfa52c6d2726c9513dfe976d8f2ad7d7a04",
+    "tests/host/free-view-owner.test.mjs": "64b9d7cd4c80c3cb79dda83521db7e34f85e43eb1d0131ff247d4b467a87f71a",
+    "tests/host/host-read-binding.test.mjs": "2933e231fa7420c20dd5797a1d0f305230513d4d7e32fd3dac64a2d5f3fb124d",
+    "tests/host/surface-controller.test.mjs": "22a7542f5588451b28c157a5a57b69be08440024f84a6519d6745ce361a5f43f",
+    "tests/host/ui-frame-client.test.mjs": "0f2199968841b8850faff06a2888dca8629d4e525062638bdbf62c7975890938",
+    "tests/host/ui-grants.test.mjs": "98910d06397bb486cad356d32ccb15e02a20d13fdc17d1997f0593192bbf87ec",
+    "tests/host/ui-mv3-browser.mjs": "c2cb1fa26b9c3a98d4fa6dc6dd8b76e67b333fb9e149f1d56a2ea75b2caefb92",
+    "tests/host/ui-owner.test.mjs": "e6765f67611510e899c81978f44cb6c21fa1416538b604345b4e94f746cc265b"
+  },
+  "realChatGPT": "NOT_RUN",
+  "hardKillFrozenJS": "NOT_RUN",
+  "fullJ1J4": "NOT_RUN",
+  "release": "NOT_RELEASE_READY"
+}

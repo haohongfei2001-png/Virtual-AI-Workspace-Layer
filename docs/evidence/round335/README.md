@@ -1,0 +1,11 @@
+# Round335 — current MODERN J3 and live-page historical update
+
+Current production source remains 2f97056 (runtime last changed in803dcbf). One formal immediate-load MODERN J3 run completes **16/16 PASS**, terminal exit0, no page errors, unchanged source/fixture/script/UI06 helper/build hashes. Original15-second initial condition and all original16 journey assertions remain. It is one sample, not proof that the earlier cold-start failures are resolved. The failure-only diagnostic collector did not run because this sample passed. No repeat was launched merely to accumulate passes.
+
+UI-13 historical same-ID schema3→4→3→4 asset protection already passed in Round312; that result is not relabeled as new work. The current difference under implementation preserves the old native document during the existing first update, to verify original editor/draft continuity and private frame cleanup before any subsequent native document navigation. All original eight-store, schema and old-owner refusal assertions must remain. Actual outcome will be recorded after the new run terminates.
+
+Free remains NOT_RELEASE_READY; no real account, real native writes, physical permission dialog/IME or PAIA acceptance is inferred.
+
+Actual headless historical update now **PASS**, terminal exit0: all original **5/5 stages** plus the live-page oracle passed. The original document, textarea, URL and draft survive actual disable/same-ID replacement/enable; pagehide remains0, old private frames detach, layout/masks clear automatically, and native typing appends to the same draft without reload or manual close. Eight-store raw rows remain exactly equal at the original checkpoints; six human asset classes keep the same digest; archived open/listContinuations/invalidate each reject with VersionError. Restored current owner reopens UI. Loaded worker bytes match each package; sourceUnchanged=true and the disposable network guard closed. No selection/IME/general private-content detection claim. Independent review found no blocker.
+
+Only runner/helper/evidence changed. Targeted historical contracts were run after the browser process terminated; their exact totals are retained in the attached log. Round333 full6431 is not re-counted as a new full run.

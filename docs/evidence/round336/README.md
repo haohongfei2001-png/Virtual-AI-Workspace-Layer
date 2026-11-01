@@ -1,0 +1,13 @@
+# Round336 — shared directory construction and before-evidence recovery coverage
+
+Base HEAD5a7ac14. Private shared-directory constructors now certify freshly constructed records after input verification and routing, avoiding duplicate checksum/routing work. Cold database reads and changed bytes retain checksum, scope/generation, bucket routing, revision, ordinal, units and capacity validation. Hash algorithm/schema/CAS/permissions remain unchanged. Independent review found no blocker.
+
+Independent construction suite: baseline13/14, optimized14/14. Actual instrumented routing count for512refs1024→512, update64refs223→64. These counts are algorithm evidence, not browser speed or acceptance. Shared-directory suites120/120; complete Node6453/6453 PASS, no skips/failures.
+
+Uninstrumented original100k single-project CPU1 browser runs before and after the change both FAIL at the original30-second member deadline. Diagnostic snapshots18470refs/revision452 and19381refs/revision468 are point-in-time inventories, not stable audits or measured throughput. Source/fixture/build remain unchanged during each run; disposable guard closed and temporary directory removed. No deadline/capacity relaxation or preparation wait.
+
+Added explicit J4 BEFORE_EVIDENCE codec mode: actual archived package must reject all three old-owner entries, retain all eight stores, and keep the evidence receipt absent before current-package restoration/new grant. Recovery must apply one matching receipt and keep it stable on reread. Existing after-evidence mode and default budgets remain. Targeted78/78 and full Node above pass; independent review found no blocker.
+
+Actual new-mode attempt FAIL after5 passed steps, in the existing pure-evidence disable/re-enable prerequisite, before the new codec boundary. Re-enable/reload failed to obtain a fresh grant within the original timeout; no private frames remained. Last diagnostic budget9/12 requests and attempts[1,2], so global budget exhaustion is not established. Native send was accepted once and native document survived disable. The new codec boundary is therefore UNVERIFIED, not passed. Original Round316 default23/23 evidence remains historical scoped PASS; this current failure is retained and stability remains unresolved. Source hashes/build remained unchanged. No rerun merely to accumulate passes.
+
+Free remains NOT_RELEASE_READY. Quiet C2 recovery, cold-start stability, scale, full81/profile/J4 and G/U remain open. No real private account/native service writes/PAIA/paid API/deploy used. External cleanup stash42c8877 and unrelated duplicate files retained.

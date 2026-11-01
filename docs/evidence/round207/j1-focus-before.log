@@ -1,0 +1,143 @@
+✔ same document/scope and accepted current Project upgrades only matching node, never same name (52.247357ms)
+✔ cancel cannot suppress the clicked candidate (15.328076ms)
+✔ scope cannot suppress the clicked candidate (1.368665ms)
+✔ document cannot suppress the clicked candidate (6.640509ms)
+✔ node cannot suppress the clicked candidate (6.70767ms)
+✔ unacknowledged cannot suppress the clicked candidate (1.112138ms)
+✔ candidate stays visible before ACK and upgrades after accepted current-project observation (7.37077ms)
+✔ duplicate ACK is accepted and stale rebind callback cannot replace current session (1.454374ms)
+✔ pending pointerdown trusted=false interruption and listener cleanup (5.384994ms)
+✔ pending pointerdown trusted=true interruption and listener cleanup (0.833298ms)
+✔ pending keydown trusted=false interruption and listener cleanup (0.66925ms)
+✔ pending keydown trusted=true interruption and listener cleanup (6.248287ms)
+✔ six-second pending expiry removes hooks and cannot suppress after route ACK (0.998447ms)
+✔ stop clears pending listeners/timer and old rebind cannot revive it (0.750052ms)
+✔ pagehide clears pending listeners/timer and old rebind cannot revive it (0.801389ms)
+✔ confirmed same-session upgrade outlives correlation timer but still checks every node identity (0.978907ms)
+✔ pending replacement popstate P-Q-P cannot reuse original action correlation (2.534604ms)
+✔ pending replacement hashchange P-Q-P cannot reuse original action correlation (0.54342ms)
+✔ same P repeated route events preserve pending relation then confirmation removes route listeners (13.087626ms)
+✔ stop removes pending route listeners while replacement handshake is blocked (0.96064ms)
+✔ active dispatch display migrates only original workspace after explicit workspace return (1.845585ms)
+✔ active dispatch display migrates only original sidebar after explicit workspace return (5.536743ms)
+✔ trusted top native gesture cancels focus transfer but retains migration identity (1.011636ms)
+✔ cancelled dispatch saves no migration display even if matching Project later appears (1.048912ms)
+✔ rebuilt candidate node rejects focus before any further LIST on workspace return (5.068708ms)
+✔ scan discards missing identity migration and removes its trusted gesture listener safely (1.104947ms)
+✔ explicit display null is rejected rather than silently downgraded to legacy activation (0.387244ms)
+✔ migration return outside its time window cannot focus at 31000 (0.813767ms)
+✔ migration return outside its time window cannot focus at 500 (5.181558ms)
+✔ learned exact node survives P to C to P with fresh producers but no repeated presentation action (13.091691ms)
+✔ learned identity permanently discarded on scope (1.785203ms)
+✔ learned identity permanently discarded on document (5.365766ms)
+✔ learned identity permanently discarded on identity (1.018297ms)
+✔ learned identity permanently discarded on absent (8.504441ms)
+✔ learned identity permanently discarded on stop (0.776252ms)
+✔ learned identity permanently discarded on pagehide (0.913518ms)
+✔ replacement handshake cannot expose learned candidates before verified session readiness (1.009624ms)
+✔ learned registry stores at most 32 identities without evicting into stale replay (136.090281ms)
+✔ ordinary P to C and native Back keep new authorized surfaces in reading (1.882861ms)
+✔ same URL authorization recovery retains explicit presentation workspace (0.57003ms)
+✔ same URL authorization recovery retains explicit presentation reading (4.582935ms)
+✔ same URL body invalidation and trusted worker invalidation preserve workspace (0.793117ms)
+✔ same URL body invalidation and trusted worker invalidation preserve reading (1.26594ms)
+✔ Back route followed by same URL body invalidation never reopens workspace (0.707317ms)
+✔ failed streaming scan cannot prune an already learned native identity (5.525757ms)
+✔ pending upgrade changed during streaming scan rejects transaction: gesture (0.852346ms)
+✔ pending upgrade changed during streaming scan rejects transaction: expiry (0.66943ms)
+✔ current Project ACK arriving after last packet invalidates scan; next scan alone upgrades (0.662189ms)
+✔ streaming predicted exclusion is discarded before commit on silent-expiry (9.29298ms)
+✔ streaming predicted exclusion is discarded before commit on identity-loss (1.93503ms)
+✖ immediate authenticated return retains pending identity: {"type":"pointerdown","button":0} (11.75255ms)
+✖ immediate authenticated return retains pending identity: {"type":"keydown","key":"Enter","repeat":false,"isComposing":false} (1.123295ms)
+✖ immediate authenticated return retains pending identity: {"type":"keydown","key":" ","repeat":false,"isComposing":false} (5.347498ms)
+✔ pending return exemption rejects native target (1.890793ms)
+✔ pending return exemption rejects forged return (5.450353ms)
+✔ pending return exemption rejects composed native target (1.240372ms)
+✔ pending return exemption rejects Tab (0.651002ms)
+✔ pending return exemption rejects repeat (1.263576ms)
+✔ pending return exemption rejects composing (1.329606ms)
+✔ pending return exemption rejects IME keyCode (0.727698ms)
+✔ pending return exemption rejects secondary pointer (6.978339ms)
+✔ pending return exemption rejects prevented (0.839556ms)
+✔ pending return exemption rejects shiftKey (0.995963ms)
+✔ pending return exemption rejects ctrlKey (1.337648ms)
+✔ pending return exemption rejects altKey (0.804423ms)
+✔ pending return exemption rejects metaKey (0.750763ms)
+✔ authenticated return during streamed scan preserves transaction through commit (1.009122ms)
+✔ return target cannot exempt an unready replacement handshake (37.294797ms)
+✔ repeated authenticated return does not extend six-second identity deadline (5.661402ms)
+✔ authenticated return cannot carry pending identity across scope replacement (0.803132ms)
+ℹ tests 70
+ℹ suites 0
+ℹ pass 67
+ℹ fail 3
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 895.656429
+
+✖ failing tests:
+
+test at tests/host/content-candidate-upgrade.test.mjs:169:37
+✖ immediate authenticated return retains pending identity: {"type":"pointerdown","button":0} (11.75255ms)
+  AssertionError [ERR_ASSERTION]: trusted early return must actually focus its originating frame
+  + actual - expected
+  
+  + []
+  - [
+  -   'workspace'
+  - ]
+  
+      at TestContext.<anonymous> (file:///tmp/vaiwl-j1-focus/tests/host/content-candidate-upgrade.test.mjs:181:10)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [],
+    expected: [ 'workspace' ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at tests/host/content-candidate-upgrade.test.mjs:169:37
+✖ immediate authenticated return retains pending identity: {"type":"keydown","key":"Enter","repeat":false,"isComposing":false} (1.123295ms)
+  AssertionError [ERR_ASSERTION]: trusted early return must actually focus its originating frame
+  + actual - expected
+  
+  + []
+  - [
+  -   'workspace'
+  - ]
+  
+      at TestContext.<anonymous> (file:///tmp/vaiwl-j1-focus/tests/host/content-candidate-upgrade.test.mjs:181:10)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [],
+    expected: [ 'workspace' ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at tests/host/content-candidate-upgrade.test.mjs:169:37
+✖ immediate authenticated return retains pending identity: {"type":"keydown","key":" ","repeat":false,"isComposing":false} (5.347498ms)
+  AssertionError [ERR_ASSERTION]: trusted early return must actually focus its originating frame
+  + actual - expected
+  
+  + []
+  - [
+  -   'workspace'
+  - ]
+  
+      at TestContext.<anonymous> (file:///tmp/vaiwl-j1-focus/tests/host/content-candidate-upgrade.test.mjs:181:10)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [],
+    expected: [ 'workspace' ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }

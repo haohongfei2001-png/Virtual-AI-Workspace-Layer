@@ -1,0 +1,70 @@
+{
+  "schema": "vaiwl-directory-idle-drain-evidence-v1",
+  "baseHead": "0494586aab1f77961151f52a3d47f1b426fd2b1d",
+  "task": "B2.F1/C6/F3 actual directory transport work retained across bounded caller cancellation",
+  "sourceHashes": {
+    "src/runtime/host-observation-owner.mjs": "15976a36ec67b8d03618d56dd1e7d162d6adb97a5a3ddab262689d3067ff6650",
+    "src/runtime/session-provider.mjs": "36c0e349071c006a3239c08b1b8dfd7f431c3be2ad7982a73f94c861a5c42398",
+    "tests/host/directory-provider.test.mjs": "05f9c2651a5d6dff49d99ae3c017cd17af4aa94c185c1bfc5fae7020c991da50",
+    "docs/specs/chatgpt-host/CONTEXT_RECOVERY_NO_RECEIPT.md": "90cf597f1425e005767ddbbb76dfb7c471e51836986fdf649d962db7ef93569d"
+  },
+  "rootCause": "Directory provider abort/deadline race settled the owner await while ignored transport continued; owner/service incorrectly reported idle. Guards already prevented late publication.",
+  "change": "Existing owner track callback now counts the actual directory authentication chain through settlement; no new scheduler, counter store, permission, deadline or request.",
+  "validation": {
+    "beforeFix": {
+      "tests": 2,
+      "failed": 2,
+      "evidence": "pre-fix-reproduction.txt (summary of actual tool output)"
+    },
+    "targetedRegression": {
+      "passed": 125,
+      "failed": 0,
+      "skipped": 0,
+      "log": "regression.log",
+      "newCases": 2
+    },
+    "builds": [
+      {
+        "name": "default",
+        "files": 190,
+        "verified": {
+          "status": "HOST_IMPLEMENTATION_UNVERIFIED",
+          "releaseStatus": "NOT_RELEASE_READY",
+          "files": 191
+        }
+      },
+      {
+        "name": "observed",
+        "files": 190,
+        "verified": {
+          "status": "HOST_IMPLEMENTATION_UNVERIFIED",
+          "releaseStatus": "NOT_RELEASE_READY",
+          "files": 191
+        }
+      }
+    ],
+    "dotWiring": {
+      "comment": "https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16#issuecomment-6343825969",
+      "patchSha256": "b8de08b029d5f311c98b61f573c4b11fa8dacb9ebdce2872934f0e65d605b4ff",
+      "passed": 35,
+      "failed": 0,
+      "skipped": 0,
+      "log": "context-recovery.log",
+      "scope": "Existing isolated recovery behavior tests; document patch context only, not new production recovery implementation."
+    },
+    "review": {
+      "mainWriterDiffReview": "completed",
+      "independentRuntimeReview": "NOT_COMPLETED_USAGE_LIMIT",
+      "automaticRetry": false
+    }
+  },
+  "boundaries": {
+    "realAccountRequests": 0,
+    "productionEnabled": false,
+    "installedPackageUpdated": false,
+    "consumedBatchesReused": false,
+    "realDailyAcceptance": "NOT_RUN",
+    "historicalCompatibilityRerun": false
+  },
+  "checkpoint": ".git/vaiwl-checkpoints/20261023-directory-idle-drain"
+}

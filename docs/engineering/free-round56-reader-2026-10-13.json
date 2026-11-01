@@ -1,0 +1,25 @@
+{
+  "evidence": "REAL_IDB_SHARED_DIRECTORY_OWNER_READS",
+  "browser": "156.0.8078.4",
+  "sourceHashes": {
+    "src/data/shared-directory-reader.mjs": "0adff92a10b4109b43973f912a6025daaff4995f0fa8d1cd15a14431acc9f8bc",
+    "src/data/shared-ref-directory.mjs": "5fc522a2f93f0923b0b5839e8b964103c0edc96de45d7f6c295023a5e269f099",
+    "src/data/partitioned.mjs": "da639429c7a46b05dd4cc380e6ba1d62b118e2622b7a497efe96aa8c96367757",
+    "src/data/partition-manifest.mjs": "e9363342a5b44f14fcf3c12b7a65e0838e3376c250bd6d1e5978915c58ae7ef6",
+    "src/data/repository.mjs": "093aba679acff36dd2c40063b7bb2124e96cedc25cd1f92cbfe87a69458b737a",
+    "tests/free/shared-directory-reader-browser.mjs": "679f8adda2f6e038f499f2dc4d0ea741e7c3926d14ee11bfc2cd9125dda9780a",
+    "tests/free/shared-directory-read-contracts.mjs": "a7878ce8918063f474aedc5eb24adbe6f9f3e7eac854c650ebbeb4b795bea0d8"
+  },
+  "result": {
+    "checks": [
+      "owner-full-header-page-partial-human-backup-equivalent",
+      "revision-guard-and-other-scope-fences",
+      "stale-write-and-old-checkpoint-recovery-refuse-without-mutations",
+      "missing-and-cross-generation-bucket-refused",
+      "existing-piece-integrity-remains-required",
+      "orphan-human-ref-refused-and-directory-checkpoint-gated"
+    ],
+    "refs": 604,
+    "artifactBoundary": "READ_ONLY_OWNER_NO_MIGRATION_OR_WRITE_CERTIFICATION"
+  }
+}

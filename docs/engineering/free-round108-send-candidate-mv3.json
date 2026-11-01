@@ -1,0 +1,82 @@
+{
+  "evidence": "REAL_HEADLESS_TEST_ONLY_MV3_OFFLINE_SEND_CANDIDATES",
+  "productionPackage": "NOT_TESTED",
+  "productionACK": "NOT_TESTED_DOM_IS_NOT_ACK",
+  "realChatGPT": "NOT_RUN",
+  "sourceHashes": {
+    "tests/host/send-candidate-mv3-browser.mjs": "c5d38fc3b1ef282f3a650637a4f17251b992c7729c00267394513c4f95ac7959",
+    "tests/host/fixtures/server.mjs": "36151eecc3ec3562c12a61670d263bf7ffd72b1ec0ba16c055af4cb19a6ee3e7",
+    "src/runtime/session-provider.mjs": "6b141bc15867cd10656cc99a90407bcf369ae6e0d6444011d7c8703f958430e2",
+    "src/host/send-intent-claim.mjs": "1e399b5af40affb0500f744f0c2c8aa5f0dc935cdbbd054dff1e483cda1f971f",
+    "src/host/native-send-intent.mjs": "7e4586991dd4888fb3969113d77e7c4c5816cc5e702fece31fe077031864278a",
+    "src/host/send-correlator.mjs": "2b495b44c5bf71c1108bc045b4d3562a72846eb7ac7a26de08db38735e3e7845",
+    "src/runtime/host-send-candidates.mjs": "7a5c4cae0aa89403bcc2427454780ece38e139bb1cd73fd445387e30ca8efcc0",
+    "src/runtime/current-metadata-reader.mjs": "eef34958a8f01051ea186cbe1856f29ff32ccba7f4de2916900fca8afb1608ec",
+    "src/host/conversation-metadata.mjs": "744afe2228882a5ebff1ffd8f1294ecd80697d63b44af60640e3ff4d3a63410e",
+    "src/runtime/host-binding-service.mjs": "c9d1f20b3005a52ba399aa60287e259c3fd8ce17a8d668cfa79015636496f9fa",
+    "src/runtime/host-observation-owner.mjs": "dad644527ec62c1940c7109843540cbf4ea281cb83a6ec8c5c52eb0b9467455e",
+    "src/runtime/scope-authority.mjs": "0827852c683dbe6ae4b24ae8f2aa11b36295ab683e8b0aaf7a549a0081362777",
+    "src/host/chatgpt-adapter.mjs": "75e57bf0bd1419ab9901dabcf7c2851f010772fb89e05f228f523652bcec3d4c",
+    "src/host/current-body-claim.mjs": "4e26f9fe6c905d1dbf3a07995168c4fb5dea5e424bff238644da1c067ac03ef5",
+    "src/host/current-body-discovery.mjs": "b9b702f8d70cf6e4403114ce743754fc78e414e609c06c857829b0ebdf5b8ed6",
+    "src/host/surface-discovery.mjs": "1a452fecdc4363d101c64e47922e7a5ee56eb34e68f279c953d1eefaab1b03ff",
+    "src/data/native-repository.mjs": "6e8f250819dc5584d3fe2c84408675a048d934d83e01582e8adb5fc584e165b1"
+  },
+  "results": [
+    {
+      "name": "default-disabled-owner-no-detail-fetch",
+      "status": "PASS"
+    },
+    {
+      "name": "real-native-click-without-new-message-is-only-intent-no-correlation",
+      "status": "PASS"
+    },
+    {
+      "name": "real-click-plus-explicit-fixture-metadata-and-DOM-append-correlates-without-ACK-or-eight-store-write",
+      "status": "PASS",
+      "fixtureMutation": "test process append metadata plus DOM ID; no real message sent"
+    },
+    {
+      "name": "body-and-intent-claims-never-invoke-native-writer",
+      "status": "PASS"
+    }
+  ],
+  "errors": [],
+  "temporaryPackage": "/private/tmp/vaiwl-send-candidate-rOAmvL/extension",
+  "fixture": {
+    "fixtureId": "chatgpt-host-legacy-reconstruction-v1",
+    "profile": "LEGACY",
+    "reconstruction": true,
+    "source": "VA-HOST/1.1 structure reconstruction; not a real DOM snapshot",
+    "sourceCommit": null,
+    "sourceBlob": null,
+    "fixtureHash": "74a46d4996864667a05363e1add6f33382a2161efed79863fefdcbc5dd45cfde",
+    "expectedWorldFile": "tests/host/expected/legacy.mjs",
+    "oracleHash": "32b9e3f30c9f5b4be23b859a07477e5f36db0dc8440032d1077ecc2713a8d8db",
+    "supportedCapabilities": [
+      "principal",
+      "personal-context-candidate",
+      "project-identity",
+      "idless-native-control",
+      "conversation-identity",
+      "native-move-menu",
+      "native-navigation",
+      "native-search",
+      "native-create",
+      "independent-regions",
+      "draft-preservation"
+    ]
+  },
+  "requests": {
+    "/c/33333333-3333-4333-8333-333333333333": 1,
+    "/native.css": 1,
+    "/native.mjs": 1,
+    "/native/route": 1,
+    "/api/auth/session": 4,
+    "/backend-api/accounts/check/v4-2023-04-27": 4,
+    "/backend-api/conversation/33333333-3333-4333-8333-333333333333": 3,
+    "/native/action": 2
+  },
+  "status": "PASS",
+  "sourceChangedDuringRun": false
+}

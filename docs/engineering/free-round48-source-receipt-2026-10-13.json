@@ -1,0 +1,23 @@
+{
+  "baseHead": "5f64d2d4117871a81d5184b2f656030109de3dee",
+  "boundary": "SHARED_DIRECTORY_PRIMITIVE_NOT_RUNTIME",
+  "sourceHashes": {
+    "src/data/shared-ref-directory.mjs": "4d5fa1aa203e9da1711d0d297c91d99d44f81f0dcc2f61b2a91e3db2aea4172d",
+    "tests/free/shared-ref-directory.test.mjs": "90f5ee5de5f9208e073149305c2b3d80c932181a38753e246e0afa6645ea2ac7",
+    "tests/free/shared-ref-directory-browser.mjs": "f162d0ee90782be62decd60d0fa7bbc1de9dc675201a26fe2b68205843bf1c4a"
+  },
+  "fullNode": {
+    "pass": 957,
+    "fail": 0,
+    "skip": 0,
+    "command": "node --test tests/b1/broker.test.mjs tests/b23/*.test.mjs tests/b4/*.test.mjs tests/f1/*.test.mjs tests/hf/*.test.mjs tests/free/*.test.mjs"
+  },
+  "realIndexedDB": {
+    "pass": 6,
+    "refs": 100000,
+    "buckets": 256
+  },
+  "MV3": "NOT_RUN_RUNTIME_UNCHANGED",
+  "performance": "NOT_RUN_RUNTIME_UNCHANGED_LAST_ROUND47_MIXED_100K_FAIL",
+  "package": "UNCHANGED_ROUND46_SYNTHETIC_ONLY_NOT_RELEASE_READY"
+}

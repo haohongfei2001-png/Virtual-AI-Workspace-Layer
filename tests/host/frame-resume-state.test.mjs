@@ -1,0 +1,29 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {validateFrameResumeView as view,validateResumeQuery as query} from '../../src/host/frame-resume-state.mjs';
+const fixture=()=>({segment:7,oldOpen:['p:7'],sidebarOpen:['p'],capacities:[['p:7',17]],scroll:12.5,sidebarScroll:4,sidebarVisible:true});
+test('layout roundtrip is detached exact data, preserving frozen historical segment',()=>{const v=fixture(),copy=view(v);assert.deepEqual(copy,v);v.oldOpen.push('other');v.capacities[0][1]=29;assert.deepEqual(copy.oldOpen,['p:7']);assert.equal(copy.capacities[0][1],17);});
+for(const patch of [{scope:'A'},{grant:'g'},{freeSession:{}},{body:'secret'},{title:'title'},{url:'https://x'},{segment:-1},{segment:1e6+1},{oldOpen:['x','x']},{sidebarOpen:['bad\nkey']},{capacities:[['x',0]]},{capacities:[['x',1],['x',2]]},{scroll:Infinity},{sidebarScroll:1e8+1},{sidebarVisible:1}])test('layout rejects unsupported or invalid '+JSON.stringify(patch),()=>assert.throws(()=>view({...fixture(),...patch}),/invalid-frame-resume/));
+test('arrays are dense own data and never invoke getters or iterators',()=>{let reads=0;const v=fixture();Object.defineProperty(v.oldOpen,'0',{get(){reads++;return 'x';}});assert.throws(()=>view(v));assert.equal(reads,0);const sparse=fixture();sparse.oldOpen=new Array(2);assert.throws(()=>view(sparse));const custom=fixture();custom.capacities[Symbol.iterator]=function*(){throw Error('iterator');};assert.throws(()=>view(custom));});
+test('layout bounds count, key length and UTF8 byte size',()=>{for(const oldOpen of [Array.from({length:257},(_,i)=>String(i)),['x'.repeat(513)],Array.from({length:100},(_,i)=>i+'中'.repeat(150))])assert.throws(()=>view({...fixture(),oldOpen}));assert(view({...fixture(),oldOpen:Array.from({length:256},(_,i)=>String(i)),scroll:1e8}));});
+test('query preserves supported optional fields and valid pagination independently of role',()=>{for(const q of [{},{segment:1e6,offset:1e6,limit:24},{groupId:'p',list:'old',rowOffset:1e6,rowLimit:200},{list:'noProject',rowLimit:197},{search:{query:'文本',projectId:null,offset:24,limit:12}},{workingSet:{offset:0,limit:24}}])assert.deepEqual(query(q),q);const input={search:{query:'x'}};const clone=query(input);input.search.query='y';assert.equal(clone.search.query,'x');});
+for(const q of [{role:'workspace'},{scope:'A'},{viewSession:{}},{search:{query:'x'},workingSet:{}},{list:'current'},{groupId:'p'},{groupId:'p',list:'noProject'},{rowLimit:6},{rowLimit:201},{limit:0},{offset:1e6+1},{search:{query:'x'.repeat(201)}},{search:{query:'x',scope:'A'}},{workingSet:{limit:25}},{search:{query:'x',projectId:''}}])test('query rejects illegal shape '+JSON.stringify(q),()=>assert.throws(()=>query(q),/invalid-frame-resume/));
+test('query refuses getters, undefined fields and hidden properties without evaluation',()=>{let n=0;assert.throws(()=>query({get search(){n++;return {query:'x'};}}));assert.equal(n,0);assert.throws(()=>query({search:undefined}));assert.throws(()=>query(Object.defineProperty({},'segment',{value:0})));});
+test('sidebar choices preserve explicit close without treating legacy open rows as automatic',()=>{
+ const legacy=fixture();assert.deepEqual(view(legacy),legacy);
+ const chosen={...legacy,sidebarChoices:[['p',false],['other',true]]};assert.deepEqual(view(chosen),chosen);
+ for(const sidebarChoices of [null,[['p',false],['p',true]],[['p',0]],[['p']],[['bad\nkey',true]],Array.from({length:257},(_,i)=>['p'+i,true])])assert.throws(()=>view({...legacy,sidebarChoices}),/invalid-frame-resume/);
+});
+
+test('durable role layout restores the selected group page and only open row windows',async()=>{
+ const {queryForFrameResume}=await import('../../src/host/frame-resume-state.mjs');
+ const row=(id,list,offset=8)=>['frame-row:'+JSON.stringify([id,list,17,1,offset]),17];
+ const layout={...fixture(),sidebarOpen:['p'],oldOpen:['home:p'],capacities:[['frame-page:[8,8]',1],row('p','current'),row('p','old'),row('q','current'),row('prior','current',0)]};
+ const workspace=queryForFrameResume(layout,'workspace');assert.equal(workspace.offset,8);assert.deepEqual(workspace.rowWindows.map(w=>[w.groupId,w.list]),[['p','current'],['p','old'],['q','current']]);
+ const sidebar=queryForFrameResume(layout,'sidebar');assert.deepEqual(sidebar.rowWindows,[{groupId:'p',list:'current',rowOffset:17,rowLimit:17,paged:true}]);
+});
+
+test('inventory disclosure stores two independent bounded choices without changing legacy layouts',()=>{
+ const v={...fixture(),inventoryChoices:[['home',false],['side',true]]},copy=view(v);assert.deepEqual(copy,v);v.inventoryChoices[0][1]=true;assert.equal(copy.inventoryChoices[0][1],false);
+ for(const inventoryChoices of [[['home',true],['home',false]],[['project',true]],[['home',0]],null])assert.throws(()=>view({...fixture(),inventoryChoices}));
+});

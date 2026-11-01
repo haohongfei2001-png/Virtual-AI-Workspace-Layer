@@ -1,0 +1,34 @@
+✔ owner registration and both UiGrant ACKs gate initial dual-surface show (1.595041ms)
+✔ origin, original contentWindow, connectedness and public join shape are mandatory (0.603042ms)
+✔ exactly one four-grid return exists only in reading and opens workspace (0.190209ms)
+✔ native portal surrenders both surfaces without automatically taking focus back (0.125875ms)
+✔ route or region replacement disposes owned UI and stops adapter (0.1745ms)
+✔ grant expiry and explicit revoke remove return and dispose both surfaces (0.184917ms)
+✔ late registration or grant ACK after stop never shows stale surfaces (0.253792ms)
+✔ owner denial and stale region during registration dispose without show (0.082291ms)
+✔ both early JOINs drain only after owner ACK, with one pending nonce per role (0.129875ms)
+✔ cached JOIN cannot survive stop or changed original WindowProxy before register ACK (0.170792ms)
+✔ early forged source/origin cannot occupy cache ahead of legitimate JOIN (0.08325ms)
+✔ owned-frame public SUSPEND remains effective while registration is pending (0.065583ms)
+✔ trusted session renewal extends binding/grants in place without new JOIN or return/draft mutations (0.311792ms)
+✔ session renewal rejects changed binding/scope/UI/role and overlong lifetime (0.431917ms)
+✔ six-second session deadline releases UI and late ACK cannot renew or resurrect it (0.09175ms)
+✔ stop, route and region changes fence pending session renewal (0.181375ms)
+✔ native input surrender creates one return without reopening masks or changing draft (0.38625ms)
+✔ native portal removes return then restores only the entry; invalid slot never receives it (0.065583ms)
+✔ late native surrender after pagehide, expiry or stop cannot restore return (0.145042ms)
+✔ short scope-clipped grants renew before their hard expiry (0.10125ms)
+✔ only trusted return-button entry notifies owner after synchronous successful show (0.083458ms)
+✔ notification failures never prevent native return and stale or blocked buttons cannot notify (0.130291ms)
+✔ session renewal and programmatic workspace presentation never notify entry (0.07725ms)
+✔ reading guard is tied to one explicit reading intent and never revives after workspace return (0.0985ms)
+✔ native surrender and suspension invalidate prior reading intent permanently (0.083ms)
+✔ successful in-place session renewal preserves a reading guard and stop invalidates it (0.094167ms)
+ℹ tests 26
+ℹ suites 0
+ℹ pass 26
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 44.780917

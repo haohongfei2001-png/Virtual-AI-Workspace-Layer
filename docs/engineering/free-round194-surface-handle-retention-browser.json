@@ -1,0 +1,44 @@
+{
+  "evidence": "WEB_MECHANISM_ONLY_REAL_HEADLESS_CHROME",
+  "scope": "Actual DOM TreeWalker and bounded registry mechanism; not MV3, authenticated production profile, end-to-end 100k performance or latency-budget acceptance",
+  "realChatGPT": "NOT_RUN",
+  "scriptHash": "f59765bc961c813bcd25b3cd6aea84a6c4b1807256315cfbd1f78a1465e8393b",
+  "sourceHashes": {
+    "src/host/surface-discovery.mjs": "f796e5b539a236415687837b9955600954f6892c32351f41148daaacb8f93294",
+    "src/host/bounded-handle-registry.mjs": "ea3a48ed3760741b8d845b4116830cffc611571b6fd01bb9561bd8a63efdee5c",
+    "src/host/contract.mjs": "35129aacf2a7e1fe1812c846379563d60ad74a66b689ad41bc38d76484a97716",
+    "src/host/url-policy.mjs": "fddfafcca2276161e6fd3c908ac896d0dab656fce6cf06aee64f1f442f7ac7e9",
+    "src/b1/identity.mjs": "6d7ca616701826733d4936d8a139395ccf1a3111e025ec6b1035d78c1dc05e99"
+  },
+  "results": [
+    {
+      "name": "actual-100k-DOM-paging-bounded-records-and-pinned-original-control",
+      "status": "PASS",
+      "controls": 100000,
+      "pages": 391,
+      "stats": {
+        "records": 2048,
+        "pinned": 1,
+        "owners": 1,
+        "detached": 0,
+        "lookupComplete": false
+      }
+    },
+    {
+      "name": "elapsed-expiry-releases-retention-and-capacity-churn-invalidates-old-handle",
+      "status": "PASS"
+    },
+    {
+      "name": "evicted-duplicate-remains-ambiguous-original-revisit-is-fresh-and-invalidate-fences-pin",
+      "status": "PASS"
+    }
+  ],
+  "blockedExternal": [
+    "https://example.com"
+  ],
+  "externalBlocked": true,
+  "browserVersion": "155.0.8059.40",
+  "status": "PASS",
+  "sourceChangedDuringRun": false,
+  "scriptChangedDuringRun": false
+}

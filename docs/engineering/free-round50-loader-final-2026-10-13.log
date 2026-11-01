@@ -1,0 +1,11 @@
+✔ bounded shared mutation adapter preserves other Pro assets (155.342583ms)
+✔ bounded shared mutation adapter rolls back all staged writes (129.080541ms)
+✔ shared mutation resolves global event locator before loading bounded references (68.560167ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 405.538167

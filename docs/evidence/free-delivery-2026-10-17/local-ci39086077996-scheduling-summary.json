@@ -1,0 +1,152 @@
+{
+  "baseCommit": "19b938a074d89e2e66086828a17221671dc4a15d",
+  "status": "LOCAL_CANDIDATE_NOT_RELEASE_READY",
+  "fixes": [
+    "Hidden documents pause only subsequent surface directory packets; cursor and original pass deadlines retained; body/send eligible.",
+    "Consume armed foreground after successful mount and dormant wake through original scope verification and single-flight gate."
+  ],
+  "rootCauseLimits": "Reproduced independent scheduling defects; neither is proven to explain the Linux deadline or automatic peer failure.",
+  "node": {
+    "pass": 8227,
+    "fail": 0,
+    "skip": 0,
+    "wallSeconds": 108.44942741602426,
+    "inputsUnchanged": true,
+    "priorAnchorFailureRetained": true
+  },
+  "guards": {
+    "killed": 12,
+    "inputUnchanged": true
+  },
+  "local10k": {
+    "revision": 203,
+    "projectMembers": 10000,
+    "unknown": 0,
+    "completeStableAudits": 2,
+    "remainingMs": 12932.683791000003,
+    "navigationReturn": "PASS",
+    "ingestionObservationMs": 48611.494834,
+    "concurrentNodeRegression": true,
+    "performanceAcceptance": "NOT_ESTABLISHED"
+  },
+  "independentComparison": {
+    "baselineMs": 17119.855042,
+    "directoryOnlyCandidateMs": 18391.325125,
+    "baselineRevision": 216,
+    "candidateRevision": 207,
+    "bothComplete": true,
+    "speedupEstablished": false,
+    "runsPerVariant": 1
+  },
+  "j4": {
+    "steps": 23,
+    "status": "PARTIAL_J4_NOT_ACCEPTED",
+    "automaticForeground": "FAIL",
+    "freshNativeHop": "PASS",
+    "sourceUnchanged": true
+  },
+  "remaining": [
+    "Linux 10k original deadline stability",
+    "Peer automatic foreground recovery after worker memory loss",
+    "Authorized real Profile context read connection",
+    "Physical IME, actual PAIA, cross-device and remaining acceptance"
+  ],
+  "evidenceFiles": [
+    {
+      "file": "local-ci39086077996-durability.log.gz",
+      "sha256": "be1b765b6211a5db1801cba536b0693aa725d11cf102a39ff9082e98e0866246"
+    },
+    {
+      "file": "local-ci39086077996-formal-scale-1.json.gz",
+      "sha256": "45165f658ece4ceca0d8fa66c39d32c5fc43bf7f06188724b3654b8191678626"
+    },
+    {
+      "file": "local-ci39086077996-formal-scale-2.json.gz",
+      "sha256": "e9027f2bdb46c2c304cfcd333d95172d64e1f4227bc98b31b88965b79a4c9ce5"
+    },
+    {
+      "file": "local-ci39086077996-hidden-directory-10k.json.gz",
+      "sha256": "5991dcd8b9d6b6e8ee0041747c3b6beab6255c4cf86c76186fdd408d84fe9b17"
+    },
+    {
+      "file": "local-ci39086077996-hidden-directory-baseline-10k.json.gz",
+      "sha256": "f684f7defa37c268f03dab274624c426eee79cc4eda8449c6e68aa24063d9631"
+    },
+    {
+      "file": "local-ci39086077996-hidden-directory-baseline-control.json.gz",
+      "sha256": "15c6fff16e373b7c815a665e0a5a66ffb306260ebd1d22672e95d9ff5ca7056b"
+    },
+    {
+      "file": "local-ci39086077996-hidden-directory-green.tap.gz",
+      "sha256": "9df3d83243cf792844ccfdb80fa0b30adf7ad1e9900348af0bb5a34821a75fb0"
+    },
+    {
+      "file": "local-ci39086077996-hidden-directory-red.tap.gz",
+      "sha256": "f03bd7f7baf7fd367c6fdb2cbf6201abb897b452f17e9991d4d26d93878ab770"
+    },
+    {
+      "file": "local-ci39086077996-hidden-directory-targeted.tap.gz",
+      "sha256": "22a2eb455a08ea50637185d7ad8361df2a8aca688e4c7ef05df4719ab8123d3b"
+    },
+    {
+      "file": "local-ci39086077996-j4-formal-1.json.gz",
+      "sha256": "b7171db6b817ecf055e00fd81d0c10258eb9ffb346fd41506f433eae1c25ef54"
+    },
+    {
+      "file": "local-ci39086077996-journeys-formal-1.json.gz",
+      "sha256": "023b52f33fa2a8e29dfac459832d9d40de63098865ed22b839d89e1e725d83bd"
+    },
+    {
+      "file": "local-ci39086077996-mount-foreground-red.tap.gz",
+      "sha256": "00ea55d255a6a8e117c6c013acea992df8259c6ed661828eda37af4f83fb60ac"
+    },
+    {
+      "file": "local-ci39086077996-mount-foreground-targeted.tap.gz",
+      "sha256": "9dde9badcfcad5cae19a5a2bf217b45cdcde99ea64688e56fc6fb2b9c9e177ab"
+    },
+    {
+      "file": "local-ci39086077996-scheduling-final-10k.json.gz",
+      "sha256": "858b98b1718a12172c017cc9d12188adb7432ce57b575d4d0a4a5eb13c6ec492"
+    },
+    {
+      "file": "local-ci39086077996-scheduling-full-node-anchor-fail-integrity.json.gz",
+      "sha256": "916405fe947a90c3b0e6dcfc8f8741a42b6fedf77b013e237b4ec2509cd33bb9"
+    },
+    {
+      "file": "local-ci39086077996-scheduling-full-node-anchor-fail.tap.gz",
+      "sha256": "3f19a5e675441266e775e26e52e4665c4d4bb83d3979a2c24d26a29cd381aac7"
+    },
+    {
+      "file": "local-ci39086077996-scheduling-full-node-integrity.json.gz",
+      "sha256": "7fd1bc32f548263eb32523af3ba56579d0219adc2afff56468e3f6fd51a4624b"
+    },
+    {
+      "file": "local-ci39086077996-scheduling-full-node.tap.gz",
+      "sha256": "f3c2a1972cbeb4e0caf02f5d80f93b7a3f1974f2aba0ef2e36a32f9d08197a09"
+    },
+    {
+      "file": "local-ci39086077996-scheduling-guards.json.gz",
+      "sha256": "553a5f6e4b6d745db96547a8f2898f92e4acfdf50628843c4d823a7521cdffc0"
+    },
+    {
+      "file": "local-ci39086077996-scheduling-j4.json.gz",
+      "sha256": "4faf6d4d7f3bf9dcb32684b248f9aa4d90cf502b47eafa02349a6745332b9b27"
+    },
+    {
+      "file": "local-ci39086077996-scheduling-targeted-green.tap.gz",
+      "sha256": "3608d0fa8b1e300f2a9a7c6bdf735cd7246758bc241f3232e8af6493b4df1f16"
+    },
+    {
+      "file": "local-ci39086077996-scheduling-targeted-original-expectations-fail.tap.gz",
+      "sha256": "f8bbc7a22899bab698473cc651a2a7a1987aabdf05483a6f32f2e27ee8779ef8"
+    },
+    {
+      "file": "local-ci39086077996-scheduling-trace-anchor-green.tap.gz",
+      "sha256": "81e79039ac3d28e1b4a798feff2dcd4f6da14931185b4c1630680bdd00f1fd3d"
+    },
+    {
+      "file": "local-ci39086077996-wake-foreground-red.tap.gz",
+      "sha256": "eda5a72f5c18ae6974894fc91a2bab2b4d3de658e5cdf82d5e48413cf1bc5fe8"
+    }
+  ]
+}

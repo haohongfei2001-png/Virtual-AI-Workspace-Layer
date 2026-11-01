@@ -1,0 +1,283 @@
+{
+  "sourceCommit": "6122340b8efdbedb35b286c914daf139c02d0a4f",
+  "scope": "L only: exact queued-callback fence regression mutation evidence",
+  "baseline": {
+    "exit": 0,
+    "tests": 75,
+    "pass": 75,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "durationMs": 1328.097,
+    "failedTests": [],
+    "logSHA256": "37de004a2997e93472141b60648c9a65d4564191aa4847e93c12319b10a915ad"
+  },
+  "mutants": [
+    {
+      "id": "native-index-unguarded-success",
+      "sourceFile": "src/data/native-index-reader.mjs",
+      "sourceSHA256": "c4acbc5899a8ff2cdc745270592fd04812e0bd3570a318cda353df5d2e3584f7",
+      "replacement": {
+        "from": "if(!checkOwner()||failed)return;",
+        "to": "if(failed)return;"
+      },
+      "status": "KILLED",
+      "exit": 1,
+      "tests": 75,
+      "pass": 54,
+      "fail": 21,
+      "cancelled": 0,
+      "skipped": 0,
+      "durationMs": 1210.698,
+      "failedTests": [
+        "native-indexed obsolete missing: guard loss during live bucket callback aborts owner",
+        "native-indexed obsolete missing: throw loss during live bucket callback aborts owner",
+        "native-indexed obsolete checksum: guard loss during live bucket callback aborts owner",
+        "native-indexed obsolete checksum: throw loss during live bucket callback aborts owner",
+        "native-indexed obsolete key: guard loss during live bucket callback aborts owner",
+        "native-indexed obsolete key: throw loss during live bucket callback aborts owner",
+        "native-indexed obsolete schema: guard loss during live bucket callback aborts owner",
+        "native-indexed obsolete schema: throw loss during live bucket callback aborts owner",
+        "independent multi-bucket: tolerated first corruption cannot silence later valid guard loss",
+        "independent multi-bucket: tolerated first corruption cannot silence later missing guard loss",
+        "independent multi-bucket: tolerated first corruption cannot silence later corrupt guard loss",
+        "native-indexed abandoned old reader: first corrupt then valid/guard",
+        "native-indexed abandoned old reader: first corrupt then valid/throw",
+        "native-indexed abandoned old reader: first corrupt then missing/guard",
+        "native-indexed abandoned old reader: first corrupt then missing/throw",
+        "native-indexed abandoned old reader: first corrupt then checksum/guard",
+        "native-indexed abandoned old reader: first corrupt then checksum/throw",
+        "native queued success after data failure still checks owner: revoked=false",
+        "native queued success after data failure still checks owner: revoked=true",
+        "native queued error after data failure still checks owner: revoked=false",
+        "native queued error after data failure still checks owner: revoked=true"
+      ],
+      "logSHA256": "252a7c7961fe9bc96906e61fcfdc253645b5c5a698f09d9a5ebdd61580a7a5a1"
+    },
+    {
+      "id": "native-index-failed-before-guard",
+      "sourceFile": "src/data/native-index-reader.mjs",
+      "sourceSHA256": "c4acbc5899a8ff2cdc745270592fd04812e0bd3570a318cda353df5d2e3584f7",
+      "replacement": {
+        "from": "if(!checkOwner()||failed)return;",
+        "to": "if(failed||!checkOwner())return;"
+      },
+      "status": "KILLED",
+      "exit": 1,
+      "tests": 75,
+      "pass": 64,
+      "fail": 11,
+      "cancelled": 0,
+      "skipped": 0,
+      "durationMs": 1195.336,
+      "failedTests": [
+        "independent multi-bucket: tolerated first corruption cannot silence later valid guard loss",
+        "independent multi-bucket: tolerated first corruption cannot silence later missing guard loss",
+        "independent multi-bucket: tolerated first corruption cannot silence later corrupt guard loss",
+        "native-indexed abandoned old reader: first corrupt then valid/guard",
+        "native-indexed abandoned old reader: first corrupt then valid/throw",
+        "native-indexed abandoned old reader: first corrupt then missing/guard",
+        "native-indexed abandoned old reader: first corrupt then missing/throw",
+        "native-indexed abandoned old reader: first corrupt then checksum/guard",
+        "native-indexed abandoned old reader: first corrupt then checksum/throw",
+        "native queued success after data failure still checks owner: revoked=false",
+        "native queued success after data failure still checks owner: revoked=true"
+      ],
+      "logSHA256": "bb412bf104af359d45a7537d3897ce94d2e200863ebb621e09446e57bcd7e2e1"
+    },
+    {
+      "id": "native-index-unguarded-error",
+      "sourceFile": "src/data/native-index-reader.mjs",
+      "sourceSHA256": "c4acbc5899a8ff2cdc745270592fd04812e0bd3570a318cda353df5d2e3584f7",
+      "replacement": {
+        "from": "if(checkOwner())reject(request.error",
+        "to": "reject(request.error"
+      },
+      "status": "KILLED",
+      "exit": 1,
+      "tests": 75,
+      "pass": 73,
+      "fail": 2,
+      "cancelled": 0,
+      "skipped": 0,
+      "durationMs": 1326.462,
+      "failedTests": [
+        "native queued error after data failure still checks owner: revoked=false",
+        "native queued error after data failure still checks owner: revoked=true"
+      ],
+      "logSHA256": "42f61f93a3af054140d6adbd98ec6ec2b02c1e3968baeadb95cfae1b46196a5d"
+    },
+    {
+      "id": "shared-directory-unguarded-success",
+      "sourceFile": "src/data/shared-directory-reader.mjs",
+      "sourceSHA256": "f9da81166b291f7888cfa5a189448d16f206ec70bd467a2b8d3338eac6506ca0",
+      "replacement": {
+        "from": "if(!checkOwner()||failed)return;",
+        "to": "if(failed)return;"
+      },
+      "status": "KILLED",
+      "exit": 1,
+      "tests": 75,
+      "pass": 57,
+      "fail": 18,
+      "cancelled": 0,
+      "skipped": 0,
+      "durationMs": 1191.981,
+      "failedTests": [
+        "shared-command obsolete missing: guard loss during live bucket callback aborts owner",
+        "shared-command obsolete missing: throw loss during live bucket callback aborts owner",
+        "shared-command obsolete checksum: guard loss during live bucket callback aborts owner",
+        "shared-command obsolete checksum: throw loss during live bucket callback aborts owner",
+        "shared-command obsolete key: guard loss during live bucket callback aborts owner",
+        "shared-command obsolete key: throw loss during live bucket callback aborts owner",
+        "shared-command obsolete schema: guard loss during live bucket callback aborts owner",
+        "shared-command obsolete schema: throw loss during live bucket callback aborts owner",
+        "shared-command abandoned old reader: first corrupt then valid/guard",
+        "shared-command abandoned old reader: first corrupt then valid/throw",
+        "shared-command abandoned old reader: first corrupt then missing/guard",
+        "shared-command abandoned old reader: first corrupt then missing/throw",
+        "shared-command abandoned old reader: first corrupt then checksum/guard",
+        "shared-command abandoned old reader: first corrupt then checksum/throw",
+        "shared queued success after data failure still checks owner: revoked=false",
+        "shared queued success after data failure still checks owner: revoked=true",
+        "shared queued error after data failure still checks owner: revoked=false",
+        "shared queued error after data failure still checks owner: revoked=true"
+      ],
+      "logSHA256": "f2bb4d38827addbd793aec11ad718c7a3682560bb798200161a9c85515e49614"
+    },
+    {
+      "id": "shared-directory-failed-before-guard",
+      "sourceFile": "src/data/shared-directory-reader.mjs",
+      "sourceSHA256": "f9da81166b291f7888cfa5a189448d16f206ec70bd467a2b8d3338eac6506ca0",
+      "replacement": {
+        "from": "if(!checkOwner()||failed)return;",
+        "to": "if(failed||!checkOwner())return;"
+      },
+      "status": "KILLED",
+      "exit": 1,
+      "tests": 75,
+      "pass": 67,
+      "fail": 8,
+      "cancelled": 0,
+      "skipped": 0,
+      "durationMs": 1122.272,
+      "failedTests": [
+        "shared-command abandoned old reader: first corrupt then valid/guard",
+        "shared-command abandoned old reader: first corrupt then valid/throw",
+        "shared-command abandoned old reader: first corrupt then missing/guard",
+        "shared-command abandoned old reader: first corrupt then missing/throw",
+        "shared-command abandoned old reader: first corrupt then checksum/guard",
+        "shared-command abandoned old reader: first corrupt then checksum/throw",
+        "shared queued success after data failure still checks owner: revoked=false",
+        "shared queued success after data failure still checks owner: revoked=true"
+      ],
+      "logSHA256": "74c03e86e78ac157523da059d273ce67f840d913892c501db05952cca1ebd957"
+    },
+    {
+      "id": "shared-directory-unguarded-error",
+      "sourceFile": "src/data/shared-directory-reader.mjs",
+      "sourceSHA256": "f9da81166b291f7888cfa5a189448d16f206ec70bd467a2b8d3338eac6506ca0",
+      "replacement": {
+        "from": "if(checkOwner())reject(request.error",
+        "to": "reject(request.error"
+      },
+      "status": "KILLED",
+      "exit": 1,
+      "tests": 75,
+      "pass": 73,
+      "fail": 2,
+      "cancelled": 0,
+      "skipped": 0,
+      "durationMs": 1330.294,
+      "failedTests": [
+        "shared queued error after data failure still checks owner: revoked=false",
+        "shared queued error after data failure still checks owner: revoked=true"
+      ],
+      "logSHA256": "d352d2abf985ff08b5f066979ee131027092cf81a2240fb704c31f27dc1f648d"
+    },
+    {
+      "id": "native-no-owner-wiring",
+      "sourceFile": "src/data/native-index-writer.mjs",
+      "sourceSHA256": "8997d4b49ec05252e462ee91e36f3e76ec7433283eff2e725024d28d00e1a74d",
+      "replacement": {
+        "from": "createNativeIndexReader(store,old,scope,()=>{},{check,fail})",
+        "to": "createNativeIndexReader(store,old,scope,()=>{})"
+      },
+      "status": "KILLED",
+      "exit": 1,
+      "tests": 75,
+      "pass": 58,
+      "fail": 17,
+      "cancelled": 0,
+      "skipped": 0,
+      "durationMs": 1239.364,
+      "failedTests": [
+        "native-indexed obsolete missing: guard loss during live bucket callback aborts owner",
+        "native-indexed obsolete missing: throw loss during live bucket callback aborts owner",
+        "native-indexed obsolete checksum: guard loss during live bucket callback aborts owner",
+        "native-indexed obsolete checksum: throw loss during live bucket callback aborts owner",
+        "native-indexed obsolete key: guard loss during live bucket callback aborts owner",
+        "native-indexed obsolete key: throw loss during live bucket callback aborts owner",
+        "native-indexed obsolete schema: guard loss during live bucket callback aborts owner",
+        "native-indexed obsolete schema: throw loss during live bucket callback aborts owner",
+        "independent multi-bucket: tolerated first corruption cannot silence later valid guard loss",
+        "independent multi-bucket: tolerated first corruption cannot silence later missing guard loss",
+        "independent multi-bucket: tolerated first corruption cannot silence later corrupt guard loss",
+        "native-indexed abandoned old reader: first corrupt then valid/guard",
+        "native-indexed abandoned old reader: first corrupt then valid/throw",
+        "native-indexed abandoned old reader: first corrupt then missing/guard",
+        "native-indexed abandoned old reader: first corrupt then missing/throw",
+        "native-indexed abandoned old reader: first corrupt then checksum/guard",
+        "native-indexed abandoned old reader: first corrupt then checksum/throw"
+      ],
+      "logSHA256": "7b2d0ba6fea0cb1dacb8d4f7e48fbeeca22626d1e6da6563e54c9f2463265c1b"
+    },
+    {
+      "id": "shared-no-owner-wiring",
+      "sourceFile": "src/data/shared-directory-retention.mjs",
+      "sourceSHA256": "3e90e8d91485b2ab2bfdb91f326b1fa693ab978f6a105e0ceffd18dbd3968cb5",
+      "replacement": {
+        "from": "createSharedDirectoryReader(store,old,scope,()=>{},{check,fail})",
+        "to": "createSharedDirectoryReader(store,old,scope,()=>{})"
+      },
+      "status": "KILLED",
+      "exit": 1,
+      "tests": 75,
+      "pass": 61,
+      "fail": 14,
+      "cancelled": 0,
+      "skipped": 0,
+      "durationMs": 1305.803,
+      "failedTests": [
+        "shared-command obsolete missing: guard loss during live bucket callback aborts owner",
+        "shared-command obsolete missing: throw loss during live bucket callback aborts owner",
+        "shared-command obsolete checksum: guard loss during live bucket callback aborts owner",
+        "shared-command obsolete checksum: throw loss during live bucket callback aborts owner",
+        "shared-command obsolete key: guard loss during live bucket callback aborts owner",
+        "shared-command obsolete key: throw loss during live bucket callback aborts owner",
+        "shared-command obsolete schema: guard loss during live bucket callback aborts owner",
+        "shared-command obsolete schema: throw loss during live bucket callback aborts owner",
+        "shared-command abandoned old reader: first corrupt then valid/guard",
+        "shared-command abandoned old reader: first corrupt then valid/throw",
+        "shared-command abandoned old reader: first corrupt then missing/guard",
+        "shared-command abandoned old reader: first corrupt then missing/throw",
+        "shared-command abandoned old reader: first corrupt then checksum/guard",
+        "shared-command abandoned old reader: first corrupt then checksum/throw"
+      ],
+      "logSHA256": "d13d6b35e8d2b123efd7f8ce87eb1e77688dc58515c1684e34a4f8021e0f2703"
+    }
+  ],
+  "testFiles": {
+    "tests/free/obsolete-bucket-authority-fence.test.mjs": "3e8db74ab54090ed6868270a234d0930df13fa8fba0ca0fd4d47e62409ee8865",
+    "tests/free/obsolete-bucket-independent-multi.test.mjs": "9bb5129b1743bf5a11f03ae00a470419d5d6eda61f25317dfaf621f1e961514b",
+    "tests/free/obsolete-bucket-queued-callback.test.mjs": "35a6465535648a7372d641e90a0c2a76b32790d6e31c60da26bf50423ce229b4",
+    "tests/free/obsolete-bucket-reader-guard.test.mjs": "2efc7dac31ad89c736bf0843314a79757aa20b2be26d3fc1a74ca29c3179ccd2"
+  },
+  "reproduction": {
+    "method": "Use an isolated copy of the pinned source with the exact four test files. Execute the baseline once, then apply exactly one listed replacement at a time, execute the same 75 tests and restore the original source before the next mutant.",
+    "command": "node --test --test-reporter=tap --test-concurrency=1 tests/free/obsolete-bucket-authority-fence.test.mjs tests/free/obsolete-bucket-independent-multi.test.mjs tests/free/obsolete-bucket-queued-callback.test.mjs tests/free/obsolete-bucket-reader-guard.test.mjs",
+    "killRequirement": "Baseline exit0/pass75; each mutant exit1 with 75 real tests, fail>0 and zero cancelled/skipped. Source parser/setup errors and timeouts do not count as kills.",
+    "originalTwelveGuards": "Separate unchanged suite; this additional eight-mutant set does not replace it."
+  },
+  "productionUnchanged": true
+}

@@ -1,0 +1,28 @@
+{
+  "sourceCommit": "3eaac1439f027d5f651d106513fffc8d25374a2b",
+  "sourceClean": true,
+  "SHA256": {
+    "tests/host/evidence-revalidation-fixture.mjs": "eb47a512c82ccaf7472769d1b9c8f3ccebbccc514edd256bb1b456b700c9506f",
+    "tests/host/j4-evidence-recovery.mjs": "8af981159110e67e54ee1dd9cd44ee8a62c8d4c8b0dc89039f0286f7a7813230",
+    "tests/host/existing-source-pending-repair-oracle.mjs": "da719681a98fca2d4f79cb0911a1e11f08797af8c68a35c159681922efa94fa8",
+    "tests/b23/mock-idb.mjs": "f45f7d387ff82223f8d64b36f31727f86030182a1b705426a4540b17c5d10e0a",
+    "src/host/chatgpt-adapter.mjs": "0d2a283bbc3763c8344fa56afd4f02aed95104eba7aba684d28ef88df7350560",
+    "src/host/current-observation-batch.mjs": "f7fcd583d0811a8b71d72dc5bac4ba4c57eae16e552076aa08d5a50f42b45151",
+    "src/host/free-frame-recovery.mjs": "dadb2d02f2603b504471d69072bcec36c0393cabd8c0201c63251e192383b187",
+    "src/runtime/host-binding-service.mjs": "0b208517b32933e4fb7daab1a03d769fd3e7aa251863e8d5bc92bfedc268021e",
+    "src/runtime/shared-host-read-budget.mjs": "ee4e09ea97c144fbe30b029b41251ae8e313503bf706e3b4cd9966a24ae27196",
+    "src/runtime/session-provider.mjs": "b3927b9f11dd704e03927e27dc91fdc4bd01b33d61f008426b73bbb908e2a07b",
+    "src/runtime/current-metadata-reader.mjs": "e507ae813e11cf8ac4d5d5970b94efa0ed0309e4504111188142bd5b6550fe0a",
+    "src/runtime/host-send-candidates.mjs": "7149e95aee63d3fd4946d7538b0ff58daf2e5b614d663341673c2eb802ed0fa4",
+    "src/runtime/host-send-ack-owner.mjs": "7e4362115828c9b68ff3a34923587c2711e6df854d119b9b3d3a1d91b5830fc5",
+    "src/runtime/host-observation-owner.mjs": "b4f67c087525ca3658550da57c7fc528d7b091d03e9a224a83e3a6fa8edfb7b9",
+    "src/runtime/host-continuation-owner.mjs": "a2c252fba8d39217af8aae6ceccfe93a3b99a6f9460994718dedafe0555db7d9",
+    "src/runtime/native-source-incarnation.mjs": "75d8d86a6b71d6c2e24dd7158a37a63fcda6cb02d77552d8c3ccf8b60354a638",
+    "src/data/native-repository.mjs": "f6be3b60ad147ea9d4b6ee280b3578f35e0f66ac24f7ab5cf476cc7d92a3ed6a",
+    "src/data/free-evidence-repository.mjs": "64d0ea73914e840c1783e7a4a9408584a5523c14c715c6be24d998418679f240",
+    "src/data/free-recovery-status.mjs": "21b871a60c1dfc2c7c67964f30f1852c33ee225a3d9df1271a518e7850e51bb4",
+    "src/data/native-observation-continuation.mjs": "3222a09592efd5c904cc65e036976f2f08bb260a9e639c83bcfddbd025dedee8",
+    "src/b1/scope-repository.mjs": "08d5c29e4be60c9b94ac6c7dce3e7fb1c5f2e553979c5a8f872a08d7c0c2bb91",
+    "tests/host/fixtures/j4-interruption.mjs": "8652707dbf653dea03a894ab3ff8191cb3ea863cd732950f3365cc169fcb3d99"
+  }
+}

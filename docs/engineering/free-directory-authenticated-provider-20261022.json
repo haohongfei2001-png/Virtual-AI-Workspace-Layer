@@ -1,0 +1,141 @@
+{
+  "schema": "vaiwl-directory-authenticated-provider-evidence-v1",
+  "baseHead": "980764ebd8a92768fd565f980125cf0f18312581",
+  "task": "B2.F1 fixed first-page authenticated provider to existing private owner; no production registration",
+  "sourceHashes": {
+    "src/runtime/session-provider.mjs": "f097d0bf08fcad9154ff379e2d1fc061827ab4e419cc2cfe1a826853cc4d3c2b",
+    "src/runtime/host-observation-owner.mjs": "c6f3602106540257356105e5113ef7bd5892482167501cd5616f5c8bd5f2b879",
+    "tests/host/directory-provider.test.mjs": "071e20ede480ac448994ce6975d2ed8c630b4742c93801c1a93caee418f8848f",
+    "tests/host/fixtures/directory-owner.mjs": "0eb0f69ed32edb0e1fa7ed50a2076faf5127dca4e739b9a7c08882a598ec886a",
+    "tests/host/directory-owner-idb-browser.mjs": "13ccd152fca7f621ff312ec37292c0e8a72b0ae110150f21ba05513a842d6dd9"
+  },
+  "implementation": {
+    "source": "Existing session-provider transport and identity parsers",
+    "sequence": [
+      "session",
+      "canonical roster",
+      "one fixed directory first page",
+      "new session",
+      "new canonical roster"
+    ],
+    "getLimitPerCall": 5,
+    "deadlineMs": 6000,
+    "automaticRetries": 0,
+    "concurrencyPerDirectoryProvider": 1,
+    "maxDecodedBytesPerSuccessfulCall": 3670016,
+    "sharedBudget": "Existing persistent per-scope/per-origin 12 GET / 30 seconds; charged before each GET, never refunded; first session only charges directory:path attempt.",
+    "privateResult": "Opaque object with WeakMap proof for exact owner context. No token or payload in serializable result.",
+    "freshness": "Shortest original/final session expiry caps private proof, owner validUntil and CAS guard.",
+    "unsupportedSemantics": [
+      "PROJECT membership",
+      "NONE",
+      "activity time",
+      "send ACK",
+      "complete history"
+    ],
+    "defaultEnabled": false,
+    "productionProfileRegistered": false,
+    "newRpc": false,
+    "newScanner": false,
+    "installedPackageUpdated": false
+  },
+  "validation": {
+    "firstCombinedRegression": {
+      "passed": 274,
+      "failed": 0,
+      "skipped": 0,
+      "log": "regression.log",
+      "scope": "Affected identity, metadata, durable budget, directory owner and continuation/lifecycle paths before final credential-expiry tightening."
+    },
+    "finalCredentialRegression": {
+      "passed": 93,
+      "failed": 0,
+      "skipped": 0,
+      "log": "final-credential-tests.log",
+      "scope": "Affected directory/session/budget subset after final credential-expiry tightening; includes 20 new provider cases, not additive coverage."
+    },
+    "browser": {
+      "status": "PASS",
+      "evidence": "S_ISOLATED_BROWSER_IDB",
+      "realAccount": "NOT_RUN",
+      "productionProviderRegistered": false,
+      "externalRequests": 0,
+      "result": {
+        "sameCanonicalSource": true,
+        "membershipPreserved": true,
+        "unknownRemainsUnknown": true,
+        "reopenedIndexedDB": true,
+        "absenceDidNotDelete": true,
+        "otherScopeEmpty": true,
+        "coverageGapPreserved": true,
+        "authenticatedFixture": {
+          "privateProviderToOwner": true,
+          "reopenedIndexedDB": true,
+          "sharedBudgetSurvivedProviderAndDatabaseReopen": true,
+          "noPartialCommitOnBudgetFailure": true
+        }
+      },
+      "fixtureHttpRequests": 12
+    },
+    "builds": [
+      {
+        "kind": "default",
+        "sourceCount": 191,
+        "verification": {
+          "status": "HOST_IMPLEMENTATION_UNVERIFIED",
+          "releaseStatus": "NOT_RELEASE_READY",
+          "files": 191
+        },
+        "directoryProviderRegistered": false,
+        "realAccountRequests": 0
+      },
+      {
+        "kind": "observed",
+        "sourceCount": 191,
+        "verification": {
+          "status": "HOST_IMPLEMENTATION_UNVERIFIED",
+          "releaseStatus": "NOT_RELEASE_READY",
+          "files": 191
+        },
+        "directoryProviderRegistered": false,
+        "realAccountRequests": 0
+      }
+    ],
+    "review": {
+      "mode": "independent-read-only",
+      "reviewer": "witness_block_review",
+      "blockingFindingsRemaining": 0,
+      "closedFindings": [
+        "Pass authoritative scope keys and authentication providerProfile to the private reader.",
+        "Cap validUntil and subsequent CAS guard by the shortest new credential expiry."
+      ],
+      "confirmed": [
+        "Fixed first-page request and five GET authentication chain.",
+        "Existing durable read budget reserved before each request.",
+        "No proof on error, cancellation or late transport completion.",
+        "No production registration or installed-package change.",
+        "No ACK or membership semantic widening."
+      ],
+      "realRequests": 0
+    },
+    "ci": "NOT_RUN_FOR_THIS_INTERMEDIATE_CHANGE"
+  },
+  "evidenceBoundary": {
+    "newRealAccountRequests": 0,
+    "newRealAccountProof": "NOT_RUN",
+    "priorSourceV3": "Historical CONDITIONAL GO retained; does not attest this new provider implementation.",
+    "browserKind": "New headless context, local HTTP authentication fixture, actual IndexedDB; not MV3 or browser C2 certification.",
+    "consumedBatchesPreserved": 7
+  },
+  "remaining": [
+    "Concrete permitted production profile and continuing read scope before enablement.",
+    "Shared scheduler/source registration, positive membership/NONE and credible native recent activity.",
+    "Home/Project/refresh/sleep scope continuity and consolidated personal J1-J4 with an installable candidate.",
+    "Minimum compatible reader/rollback package for host-metadata before real persistence."
+  ],
+  "preservation": {
+    "originalUntrackedFiles": 2258,
+    "stashes": 3
+  },
+  "checkpoint": ".git/vaiwl-checkpoints/20261022-directory-authenticated-provider/"
+}

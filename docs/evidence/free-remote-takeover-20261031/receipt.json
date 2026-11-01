@@ -1,0 +1,295 @@
+{
+  "schema": "vaiwl-free-remote-takeover/1",
+  "baseCommit": "2c9b043ce3c65a4b92c6f8f83b59fb416f63132a",
+  "branch": "codex/vaiwl-free-first-20261013",
+  "pullRequest": 16,
+  "handoffReadyComment": 6544226609,
+  "writerAcceptedComment": 6544395306,
+  "changes": [
+    "current private native boundary diagnostic; no ancestor mutation",
+    "false-only unavailable native snippet restriction across owner/frame/search",
+    "accurate local asset and lifecycle build guidance"
+  ],
+  "verification": {
+    "node": "24.22.1",
+    "localRunner": "node --test-isolation=none --test",
+    "preFix": {
+      "snippetAssertions": {
+        "pass": 0,
+        "fail": 15
+      },
+      "boundaryAssertions": {
+        "pass": 0,
+        "fail": 5
+      }
+    },
+    "focusedAfterFix": {
+      "pass": 21,
+      "fail": 0,
+      "skipped": 0
+    },
+    "affectedContracts": {
+      "files": 15,
+      "pass": 1061,
+      "fail": 0,
+      "skipped": 0
+    },
+    "afterNullStateGuard": {
+      "pass": 3,
+      "fail": 0,
+      "skipped": 0
+    },
+    "independentReview": {
+      "hostDiagnostic": "PASS_NO_BLOCKER",
+      "snippetDisplayCapability": "PASS_NO_BLOCKER"
+    },
+    "packagedJourney": {
+      "status": "PASS",
+      "command": "node tests/host/browser-local-mv3.mjs --flow-only --nested-home",
+      "evidence": "ISOLATED_MV3_FORMAL_UI_LOCAL_SESSION_AND_PERSONAL",
+      "browserVersion": "156.0.8078.4",
+      "checks": {
+        "projectFooter": {
+          "y": 118,
+          "bottom": 158,
+          "height": 40,
+          "viewport": 158,
+          "panel": 158
+        },
+        "projectFormalFlowInputReturn": true,
+        "firstNativeKeyboardToolGesture": true,
+        "firstNativeToolGesture": true,
+        "nativeManagementAvailabilityKeepsFormalNavigation": {
+          "trustedExpansion": true,
+          "inertRestoresRows": true,
+          "unblockedKeepsIntent": true,
+          "responsiveClippingRestoresRows": true,
+          "nativeCollapseRestoresChoice": true,
+          "workspaceAndDraftUnchanged": true
+        },
+        "homeFooter": {
+          "y": 61,
+          "bottom": 101,
+          "height": 40,
+          "viewport": 128,
+          "panel": 101
+        },
+        "flatHomeMember": {
+          "sameNativeParent": true,
+          "height": 0,
+          "explicitFlowRow": true
+        },
+        "nestedHomeContainer": {
+          "member": true,
+          "formNotPatched": true,
+          "nativePlate": "rgb(242, 242, 242)",
+          "formParent": "nested-home-form-wrap"
+        },
+        "nestedHomeNarrow": {
+          "inputFits": true,
+          "plateFits": true,
+          "workspaceFits": true,
+          "nativeClick": true,
+          "nativeInputFocus": true
+        },
+        "retainedHomeMember": {
+          "sameParents": true,
+          "nativeClick": true,
+          "inlineGraphicRetained": true,
+          "hiddenUntouched": true,
+          "workspaceVisible": true
+        },
+        "sameDocumentHeaderReplacement": {
+          "newFrames": true,
+          "freshView": true,
+          "workspaceAndSidebarRestored": true,
+          "explicitLayoutRestored": true,
+          "originalEditorAndDraft": true
+        },
+        "homeFormalFlowInputReturn": true,
+        "conversationFooter": {
+          "y": 92,
+          "bottom": 132,
+          "height": 40,
+          "viewport": 132,
+          "panel": 132
+        },
+        "nativeScrollRegion": {
+          "originalTabStop": true,
+          "flowRoot": true
+        },
+        "conversationFormalFlowInputReturn": true,
+        "hiddenViewportMarker": {
+          "sameNode": true,
+          "empty": true,
+          "hidden": true,
+          "zeroHeight": true,
+          "retainedRow": true,
+          "beforeFooter": true
+        },
+        "afterUnlock": {
+          "ok": true,
+          "exists": true,
+          "mode": "personal"
+        },
+        "nativeNavScrollChain": true,
+        "localSidebarFailurePreservesWorkspace": true,
+        "nativePartitionReplacementRejoinsSidebarOnly": true,
+        "beforeMember": {
+          "ok": true,
+          "exists": true,
+          "mode": "personal"
+        },
+        "afterMember": {
+          "ok": true,
+          "exists": true,
+          "mode": "personal"
+        },
+        "navigationTrace": [
+          {
+            "type": "history",
+            "documentId": "3E6141114DEAC8A53367501210F2170D"
+          }
+        ],
+        "nativeListChoiceAcrossFreshDocumentBinding": true,
+        "sameDocumentProjectMemberReadingReturn": true,
+        "returnPaint": {
+          "box": {
+            "x": 24,
+            "y": 24,
+            "width": 356,
+            "height": 140,
+            "top": 24,
+            "right": 380,
+            "bottom": 164,
+            "left": 24
+          },
+          "viewport": [
+            1140,
+            654
+          ],
+          "scroll": 0,
+          "visible": true,
+          "hit": true
+        },
+        "narrowFlowStructure": {
+          "workspaces": 1,
+          "headers": 1,
+          "composers": 1,
+          "roots": [
+            {
+              "x": 260,
+              "y": 0,
+              "width": 460,
+              "height": 900,
+              "top": 0,
+              "right": 720,
+              "bottom": 900,
+              "left": 260
+            }
+          ],
+          "height": 900
+        },
+        "persistedNativeNav": [
+          {
+            "segment": 0,
+            "oldOpen": [],
+            "sidebarOpen": [],
+            "capacities": [],
+            "scroll": 0,
+            "sidebarScroll": 0,
+            "sidebarVisible": true,
+            "inventoryChoices": [],
+            "sidebarChoices": [
+              [
+                "g-p-11111111111111111111111111111111",
+                false
+              ]
+            ],
+            "freeSession": {
+              "H": 30,
+              "T": 20757,
+              "Z": "America/Chicago",
+              "policyRevision": 0
+            },
+            "sidebarViewport": {
+              "owner": "native-nav",
+              "scroll": 100
+            }
+          }
+        ],
+        "workerRecoveryKeepsPersonalAndUserExpansion": true,
+        "newDocumentLocksAndConfirmedPrivateObjectAndLayoutRestore": true,
+        "privateScopeRevokeClearsPriorProject": true,
+        "actualIsolatedUninstallRestoresNativeGeometryDraftAndInput": true,
+        "actualIsolatedUninstallRestoresNativeReadingPosition": true,
+        "noInternalRequests": true
+      },
+      "browserErrors": [],
+      "externalWorkerNetwork": "BLOCKED_BY_EXISTING_GUARD",
+      "sourceCount": 206,
+      "sourcesEqualFinalBrowserLocalPackage": true,
+      "sourceHashesDigest": "caa3ce878b3851f7c7846f83d03eff8b670770a7fa3d5ca858bd08d37d6e477e",
+      "rawReportSha256": "7a092ff3afcc9601e989282e3b6915cb3385568123b54aec3e10c88d3d5dccc3"
+    },
+    "package": {
+      "files": 205,
+      "sha256": "5eb2d7a4ca3c565a53a3208405ae386ed7ad112f5e330bf1fc9a04ddc8fd7c5e",
+      "verify": "PASS",
+      "releaseStatus": "NOT_RELEASE_READY"
+    },
+    "visualReview": {
+      "viewed": [
+        "flow-home.png",
+        "flow-journey-return.png",
+        "flow-home-narrow.png"
+      ],
+      "scope": "fixture geometry only; missing CJK font in this environment; not full visual acceptance"
+    },
+    "environmentFailures": [
+      "Default Node child isolation failed before assertions; original CI isolation unchanged",
+      "sandbox loopback binding EPERM; isolated runner executed with granted escalation",
+      "existing Chromium153 had no Extensions.loadUnpacked; not a product failure",
+      "Playwright CDN returned truncated archive; exact pinned full CfT156.0.8078.4 verified from official Google Storage before successful run"
+    ]
+  },
+  "changedImplementationHashes": {
+    "extension/README.txt": "48ac79fd611f2ecff03b85b9aa7e195a69e7b5f89d5351e0ecd913207c506e09",
+    "extension/build.mjs": "455f08a4bc72f80b107dde5208a51a3417da2d52c76f3bddc685879ea9ad1d3e",
+    "src/host/chatgpt-adapter.mjs": "cfebc7bc10126d366dd2f2b7d79919a4bd2941542c6f21ce98d383796a41ac92",
+    "src/host/content-session.mjs": "2725fa39ff0407712a19a75e716346cccdcd37c1f46a5558767fadca9e0bd978",
+    "src/host/free-frame-client.mjs": "1b02b8401bc87710de76f1620711c6683b2d8867fb2d073d8efe8f85ea03d911",
+    "src/host/local-status.mjs": "bf641001cfaf2994afd8631509af2c4d5d553d5528c7203de8e199783eadf379",
+    "src/host/surface-controller.mjs": "8d7be07c3ec6dc4907e8e92a588c2edd3528445fdfb6feded92299ff0bba4617",
+    "src/navigation/navigation.mjs": "5c96d9e251ea774dcda359c63df4f41f2465dff035fe4589aa71218a0b6d1d91",
+    "src/runtime/host-binding-service.mjs": "f7698618c2f2abdd04e6a74ebc794b452ff1c44d7621919febc68382ac9fbfee",
+    "src/runtime/host-view-service.mjs": "5ed1b2948d442d22c6eb3fb20946d8695f8155e42449b40c0b03243fd0a8edcc"
+  },
+  "retainedGates": {
+    "projectNoneSource": "NEEDS_REAL_STRUCTURE",
+    "newSnippetCaptureLocate": "PRODUCTION_DISABLED_NEEDS_REAL_STRUCTURE",
+    "realMacContinuity": "PARTIAL_FROM_HANDOFF_NOT_RUN_THIS_BATCH",
+    "personalAssets": "NEEDS_ORIGINAL_PROFILE_AND_OWNER_CONFIRMATION",
+    "sameTabBrowserAgent": "P0_CONDITIONAL_HOST_INTEROP",
+    "free": "NOT_ACCEPTED",
+    "release": "NOT_RELEASE_READY"
+  },
+  "baselineCI": {
+    "runId": 41204058082,
+    "success": 42,
+    "repeated": false
+  },
+  "candidateCI": "record exact final commit and run in PR after push; no inherited PASS",
+  "localLogSha256": {
+    "vaiwl-free-snippet-red-direct.log": "d20188e644243fcb748cbb585edf85cf41d1fcd77af9e74f38f2641d0125e80c",
+    "vaiwl-free-boundary-red.log": "efeedc5c5cb093126afff97cd60116601f069030eb7449ccf3a9af34f496c8ab",
+    "vaiwl-free-fixes-green.log": "a9ab479d2bbc147116e3eecd69c87d8216ba79f85358fe85ffd3973915cee5e0",
+    "vaiwl-free-targeted.log": "a267357880b1a669d2611ebe00476bd6a4fcaa7ceca288ffe5e09c3221d16e0c",
+    "vaiwl-free-boundary-final.log": "7e6e7271b0843d82810db02439618a16c7367fa13077970893a20fbf85e1bc91",
+    "vaiwl-free-mv3.log": "3d5a9eb20f3373d066ad8ba44971ae9a9951f40d6df87338f80b8a0a51b3729c",
+    "vaiwl-free-mv3-native.log": "34e808cf320e989f41feed5b4c8d37a0fbd3c47ddcecf295d6ad556d0808ef36",
+    "vaiwl-free-mv3-pinned.log": "0a87e7716634683def42cfa87d5a6e806a7c9427b771ac11728dd9d37a412f7f",
+    "vaiwl-free-browser-install.log": "454032370743b03e3ed6074074fa0639747d2c2113096ebf8fe793d761d98507",
+    "vaiwl-free-package-final.log": "80c31e9b2c16e993fd3ca1dd1258cae763ba0b2bd6383ff9b3b8ddf942144c27"
+  }
+}

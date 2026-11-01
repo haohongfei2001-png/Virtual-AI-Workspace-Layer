@@ -1,0 +1,384 @@
+{
+  "evidence": "UI_SYNTHETIC_HEADLESS_CDP4X",
+  "scope": "Existing Free projection/replica/navigation components on synthetic native host; no IndexedDB/broker/source/network acquisition timing and no real-account or physical weak-device certification.",
+  "browser": "156.0.8078.4",
+  "headless": true,
+  "platform": "darwin",
+  "arch": "arm64",
+  "cpu": "Apple M5",
+  "viewport": {
+    "width": 1440,
+    "height": 1000
+  },
+  "sourceHashes": {
+    "src/navigation/current-index.mjs": "909a8c2b6e9fae5db659efe82341788e37240f58d43bff7e94e85c8ac4864a89",
+    "src/navigation/free-editor.mjs": "189c1c0d6355ca53a18ead419d9007f75c82f9504c06955707d33647e6425b6b",
+    "src/navigation/free-recovery.mjs": "49f38d4662a8152eacaca54959d89d20468667ae6041f767735dbb9696b2a685",
+    "src/navigation/free-view.mjs": "2d40a9100eaddfe3f72899a1902f492f5758a805106912f80d71b2c3eec37c38",
+    "src/navigation/icons.mjs": "14195d8a7a21a029278ff6f9bf0bb1add2d679b37666108d80cfadabe312d2fd",
+    "src/navigation/navigation.mjs": "2a2257f58533cc4b1f34e8ffaf5419a22f3f450eafa172078fd1c4b6c60f34cf",
+    "src/navigation/projection.mjs": "8d4b2d85dceb27b4965cd82842fec37ecdbddedae3e6a1c763720dbec35e3a4b",
+    "src/navigation/search.mjs": "a93da18f3018a6267af7634986fdf7cfca4ed72eeaa6bb982340e9b0031c85d6",
+    "src/navigation/styles.mjs": "3acd56606be4653a1391a7725d21649c376b7ded6d8acb8e5b6f5c0a80c213bc",
+    "src/data/free-replica.mjs": "b2a3a72d5b9c7181230d1a3637e21e5c8dc15c36ab9881f8ca3baa4bdac5086f",
+    "src/data/free-activity.mjs": "96a4a46dd7a56777827574f06c851f96b07e5d3f864fd9301bcfe7b231b2ef14",
+    "src/data/free-time-policy.mjs": "08192e4f8b809a3bb7ad759bc30a644bbc11a8b36bfe5cd3f412751f0c7ef64b",
+    "src/data/cooperate.mjs": "ce494a33280143e1e2a2227a72413da792330311de12642a9a56b13704f2f3b4",
+    "simulator/adapter.mjs": "ac64ab9c228fa3939cb1e6f6a8a7ca902e111772ebdab07a28ef6fb7a793870d",
+    "tests/free/ui-performance-browser.mjs": "cd3faa6eaafd6780d62cd83c1a66723cc504b28e0ded7c2dd4a0cbce37fe0351"
+  },
+  "sourceChangedDuringRun": false,
+  "results": [
+    {
+      "size": 1000,
+      "distribution": "project-mixed",
+      "projects": 10,
+      "noProject": 200,
+      "cpuThrottle": 4,
+      "fixtureGenerationMs": 7.1,
+      "initial": {
+        "assemblyMs": 12.3,
+        "viewAndIndexMs": 6.5,
+        "mountToPaintMs": 49.4,
+        "totalToPaintMs": 68.9,
+        "ownedDomNodes": 212
+      },
+      "history": {
+        "samples": 20,
+        "paintP50Ms": 33.3,
+        "paintP95Ms": 34.5,
+        "paintMaxMs": 34.6,
+        "handlerP95Ms": 9.7,
+        "maxOwnedDomNodes": 215
+      },
+      "search": {
+        "samples": 12,
+        "paintP50Ms": 33.1,
+        "paintP95Ms": 34.2,
+        "paintMaxMs": 34.2,
+        "handlerP95Ms": 2.8,
+        "maxOwnedDomNodes": 200
+      },
+      "searchOpen": {
+        "samples": 1,
+        "paintP50Ms": 33.7,
+        "paintP95Ms": 33.7,
+        "paintMaxMs": 33.7,
+        "handlerP95Ms": 13,
+        "maxOwnedDomNodes": 200
+      },
+      "longTasks": {
+        "initial": {
+          "count": 0,
+          "totalMs": 0,
+          "maxMs": 0
+        },
+        "interactive": {
+          "count": 0,
+          "totalMs": 0,
+          "maxMs": 0
+        }
+      },
+      "targets": {
+        "historyP95Under150ms": true,
+        "searchP95Under300ms": true
+      }
+    },
+    {
+      "size": 1000,
+      "distribution": "none-heavy",
+      "projects": 10,
+      "noProject": 900,
+      "cpuThrottle": 4,
+      "fixtureGenerationMs": 5.5,
+      "initial": {
+        "assemblyMs": 9.3,
+        "viewAndIndexMs": 5.9,
+        "mountToPaintMs": 37.6,
+        "totalToPaintMs": 53.5,
+        "ownedDomNodes": 212
+      },
+      "history": {
+        "samples": 20,
+        "paintP50Ms": 33.5,
+        "paintP95Ms": 34.3,
+        "paintMaxMs": 34.9,
+        "handlerP95Ms": 7.2,
+        "maxOwnedDomNodes": 215
+      },
+      "search": {
+        "samples": 12,
+        "paintP50Ms": 33.1,
+        "paintP95Ms": 34.4,
+        "paintMaxMs": 34.4,
+        "handlerP95Ms": 1.9,
+        "maxOwnedDomNodes": 200
+      },
+      "searchOpen": {
+        "samples": 1,
+        "paintP50Ms": 33.9,
+        "paintP95Ms": 33.9,
+        "paintMaxMs": 33.9,
+        "handlerP95Ms": 10.2,
+        "maxOwnedDomNodes": 200
+      },
+      "longTasks": {
+        "initial": {
+          "count": 0,
+          "totalMs": 0,
+          "maxMs": 0
+        },
+        "interactive": {
+          "count": 0,
+          "totalMs": 0,
+          "maxMs": 0
+        }
+      },
+      "targets": {
+        "historyP95Under150ms": true,
+        "searchP95Under300ms": true
+      }
+    },
+    {
+      "size": 10000,
+      "distribution": "project-mixed",
+      "projects": 100,
+      "noProject": 2000,
+      "cpuThrottle": 4,
+      "fixtureGenerationMs": 45.1,
+      "initial": {
+        "assemblyMs": 41.4,
+        "viewAndIndexMs": 57.6,
+        "mountToPaintMs": 83.6,
+        "totalToPaintMs": 183.2,
+        "ownedDomNodes": 872
+      },
+      "history": {
+        "samples": 20,
+        "paintP50Ms": 33.5,
+        "paintP95Ms": 39.9,
+        "paintMaxMs": 42.6,
+        "handlerP95Ms": 21.9,
+        "maxOwnedDomNodes": 875
+      },
+      "search": {
+        "samples": 12,
+        "paintP50Ms": 33.1,
+        "paintP95Ms": 34.4,
+        "paintMaxMs": 34.4,
+        "handlerP95Ms": 15,
+        "maxOwnedDomNodes": 305
+      },
+      "searchOpen": {
+        "samples": 1,
+        "paintP50Ms": 33.3,
+        "paintP95Ms": 33.3,
+        "paintMaxMs": 33.3,
+        "handlerP95Ms": 22.4,
+        "maxOwnedDomNodes": 305
+      },
+      "longTasks": {
+        "initial": {
+          "count": 2,
+          "totalMs": 138,
+          "maxMs": 73
+        },
+        "interactive": {
+          "count": 0,
+          "totalMs": 0,
+          "maxMs": 0
+        }
+      },
+      "targets": {
+        "historyP95Under150ms": true,
+        "searchP95Under300ms": true
+      }
+    },
+    {
+      "size": 10000,
+      "distribution": "none-heavy",
+      "projects": 100,
+      "noProject": 9000,
+      "cpuThrottle": 4,
+      "fixtureGenerationMs": 45.1,
+      "initial": {
+        "assemblyMs": 42.4,
+        "viewAndIndexMs": 55.7,
+        "mountToPaintMs": 71.9,
+        "totalToPaintMs": 170.6,
+        "ownedDomNodes": 872
+      },
+      "history": {
+        "samples": 20,
+        "paintP50Ms": 33.6,
+        "paintP95Ms": 45.7,
+        "paintMaxMs": 46.4,
+        "handlerP95Ms": 24.7,
+        "maxOwnedDomNodes": 875
+      },
+      "search": {
+        "samples": 12,
+        "paintP50Ms": 33.2,
+        "paintP95Ms": 34.3,
+        "paintMaxMs": 34.3,
+        "handlerP95Ms": 14.1,
+        "maxOwnedDomNodes": 305
+      },
+      "searchOpen": {
+        "samples": 1,
+        "paintP50Ms": 33.6,
+        "paintP95Ms": 33.6,
+        "paintMaxMs": 33.6,
+        "handlerP95Ms": 23,
+        "maxOwnedDomNodes": 305
+      },
+      "longTasks": {
+        "initial": {
+          "count": 2,
+          "totalMs": 128,
+          "maxMs": 66
+        },
+        "interactive": {
+          "count": 0,
+          "totalMs": 0,
+          "maxMs": 0
+        }
+      },
+      "targets": {
+        "historyP95Under150ms": true,
+        "searchP95Under300ms": true
+      }
+    },
+    {
+      "size": 100000,
+      "distribution": "project-mixed",
+      "projects": 1000,
+      "noProject": 20000,
+      "cpuThrottle": 4,
+      "fixtureGenerationMs": 442.7,
+      "initial": {
+        "assemblyMs": 411.1,
+        "viewAndIndexMs": 730.4,
+        "mountToPaintMs": 393.1,
+        "totalToPaintMs": 1535.6,
+        "ownedDomNodes": 7472
+      },
+      "history": {
+        "samples": 20,
+        "paintP50Ms": 214.9,
+        "paintP95Ms": 251.2,
+        "paintMaxMs": 253.6,
+        "handlerP95Ms": 193.8,
+        "maxOwnedDomNodes": 7475
+      },
+      "search": {
+        "samples": 12,
+        "paintP50Ms": 117.2,
+        "paintP95Ms": 152.3,
+        "paintMaxMs": 152.3,
+        "handlerP95Ms": 144.3,
+        "maxOwnedDomNodes": 1355
+      },
+      "searchOpen": {
+        "samples": 1,
+        "paintP50Ms": 166.9,
+        "paintP95Ms": 166.9,
+        "paintMaxMs": 166.9,
+        "handlerP95Ms": 146.3,
+        "maxOwnedDomNodes": 1355
+      },
+      "longTasks": {
+        "initial": {
+          "count": 4,
+          "totalMs": 1197,
+          "maxMs": 461
+        },
+        "interactive": {
+          "count": 33,
+          "totalMs": 5649,
+          "maxMs": 241
+        }
+      },
+      "targets": {
+        "historyP95Under150ms": false,
+        "searchP95Under300ms": true
+      }
+    },
+    {
+      "size": 100000,
+      "distribution": "none-heavy",
+      "projects": 1000,
+      "noProject": 90000,
+      "cpuThrottle": 4,
+      "fixtureGenerationMs": 460.4,
+      "initial": {
+        "assemblyMs": 420.3,
+        "viewAndIndexMs": 649.7,
+        "mountToPaintMs": 387,
+        "totalToPaintMs": 1457.5,
+        "ownedDomNodes": 7472
+      },
+      "history": {
+        "samples": 20,
+        "paintP50Ms": 231.3,
+        "paintP95Ms": 270.1,
+        "paintMaxMs": 272.3,
+        "handlerP95Ms": 224.5,
+        "maxOwnedDomNodes": 7475
+      },
+      "search": {
+        "samples": 12,
+        "paintP50Ms": 116.9,
+        "paintP95Ms": 151.6,
+        "paintMaxMs": 151.6,
+        "handlerP95Ms": 131.1,
+        "maxOwnedDomNodes": 1355
+      },
+      "searchOpen": {
+        "samples": 1,
+        "paintP50Ms": 166.1,
+        "paintP95Ms": 166.1,
+        "paintMaxMs": 166.1,
+        "handlerP95Ms": 143.5,
+        "maxOwnedDomNodes": 1355
+      },
+      "longTasks": {
+        "initial": {
+          "count": 5,
+          "totalMs": 1430,
+          "maxMs": 480
+        },
+        "interactive": {
+          "count": 33,
+          "totalMs": 5986,
+          "maxMs": 266
+        }
+      },
+      "targets": {
+        "historyP95Under150ms": false,
+        "searchP95Under300ms": true
+      }
+    }
+  ],
+  "errors": [],
+  "pass": 6,
+  "fail": 0,
+  "targetMisses": [
+    {
+      "size": 100000,
+      "distribution": "project-mixed",
+      "targets": {
+        "historyP95Under150ms": false,
+        "searchP95Under300ms": true
+      }
+    },
+    {
+      "size": 100000,
+      "distribution": "none-heavy",
+      "targets": {
+        "historyP95Under150ms": false,
+        "searchP95Under300ms": true
+      }
+    }
+  ]
+}

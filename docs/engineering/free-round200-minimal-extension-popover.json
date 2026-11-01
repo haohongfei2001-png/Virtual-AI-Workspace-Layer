@@ -1,0 +1,245 @@
+{
+  "evidence": "MINIMAL_MV3_MECHANISM_NOT_PRODUCT_ACCEPTANCE",
+  "productAcceptance": "NOT_CERTIFIED",
+  "scope": "Temporary static extension with no VAIWL renderer, broker or production code; formal reading immediate exit FAIL remains independent.",
+  "scriptHash": "a7c1b8d2581d5bea204b0ba40ddb7486e0347dba6150836497529ab426bec778",
+  "sourceHashes": {
+    "manifest.json": "c621e589e8cd6590773e2cf1734928558eb2594e7a1c988c253b61d774e28f79",
+    "worker.js": "e69b1a1801e3390fbfb8f2aa904df7b0fd2ae201fcf160c9445b7c805ddcdfc8",
+    "child.html": "896c3bf28f56800fb40d228397fc4608ff9ea9abe25d7987b2491b2acfe606bc",
+    "child.js": "90c87350b6114a7519d930578278285aadbf307d1981c02bfd88f23ca0d7de60"
+  },
+  "extension": "/private/tmp/manual-extension-popover-KAwC1A/extension",
+  "cases": [
+    {
+      "popover": true,
+      "mode": "FRESH_PAGE_IMMEDIATE_NO_ADDED_WAIT",
+      "iframeTargets": [
+        {
+          "type": "iframe",
+          "url": "chrome-extension://ehlmnhilpceehndjlefnnihiejldegfe/child.html",
+          "targetId": "8BE26B74B3F62166876C90961893645A"
+        },
+        {
+          "type": "iframe",
+          "url": "chrome-extension://ehlmnhilpceehndjlefnnihiejldegfe/child.html",
+          "targetId": "B514318E44FB35136B96AA6A493540C3"
+        }
+      ],
+      "oopifConfirmed": true,
+      "classification": "EXTENSION_IFRAME_TARGET_CONFIRMED",
+      "before": {
+        "rect": {
+          "x": 50,
+          "y": 80,
+          "width": 120,
+          "height": 40,
+          "top": 80,
+          "right": 170,
+          "bottom": 120,
+          "left": 50
+        },
+        "hit": "target"
+      },
+      "clicked": 1,
+      "childEvents": [
+        {
+          "type": "pointerdown",
+          "target": "BUTTON",
+          "id": "target",
+          "trusted": true,
+          "epochMs": 1792021782271.5
+        },
+        {
+          "type": "mousedown",
+          "target": "BUTTON",
+          "id": "target",
+          "trusted": true,
+          "epochMs": 1792021782271.5
+        },
+        {
+          "type": "pointerup",
+          "target": "BUTTON",
+          "id": "target",
+          "trusted": true,
+          "epochMs": 1792021782271.5999
+        },
+        {
+          "type": "mouseup",
+          "target": "BUTTON",
+          "id": "target",
+          "trusted": true,
+          "epochMs": 1792021782271.5999
+        },
+        {
+          "type": "click",
+          "target": "BUTTON",
+          "id": "target",
+          "trusted": true,
+          "epochMs": 1792021782271.5999
+        }
+      ],
+      "parentEvents": [
+        {
+          "type": "pointerdown",
+          "target": "BUTTON",
+          "id": "close",
+          "trusted": true,
+          "epochMs": 1792021782238.4
+        },
+        {
+          "type": "mousedown",
+          "target": "BUTTON",
+          "id": "close",
+          "trusted": true,
+          "epochMs": 1792021782238.5
+        },
+        {
+          "type": "pointerup",
+          "target": "BUTTON",
+          "id": "close",
+          "trusted": true,
+          "epochMs": 1792021782238.5999
+        },
+        {
+          "type": "mouseup",
+          "target": "BUTTON",
+          "id": "close",
+          "trusted": true,
+          "epochMs": 1792021782238.5999
+        },
+        {
+          "type": "click",
+          "target": "BUTTON",
+          "id": "close",
+          "trusted": true,
+          "epochMs": 1792021782238.7
+        }
+      ],
+      "state": {
+        "workspaceOpen": false,
+        "sidebarOpen": true
+      },
+      "status": "OBSERVED_SUCCESS_NOT_PRODUCT_ACCEPTANCE",
+      "screenshot": "/private/tmp/manual-extension-popover-KAwC1A/popover.png"
+    },
+    {
+      "popover": false,
+      "mode": "FRESH_PAGE_IMMEDIATE_NO_ADDED_WAIT",
+      "iframeTargets": [
+        {
+          "type": "iframe",
+          "url": "chrome-extension://ehlmnhilpceehndjlefnnihiejldegfe/child.html",
+          "targetId": "09BDFDE99C6621CAA262E656116247CD"
+        },
+        {
+          "type": "iframe",
+          "url": "chrome-extension://ehlmnhilpceehndjlefnnihiejldegfe/child.html",
+          "targetId": "FD7A63767B67B41312058C14519A2D56"
+        }
+      ],
+      "oopifConfirmed": true,
+      "classification": "EXTENSION_IFRAME_TARGET_CONFIRMED",
+      "before": {
+        "rect": {
+          "x": 50,
+          "y": 80,
+          "width": 120,
+          "height": 40,
+          "top": 80,
+          "right": 170,
+          "bottom": 120,
+          "left": 50
+        },
+        "hit": "target"
+      },
+      "clicked": 1,
+      "childEvents": [
+        {
+          "type": "pointerdown",
+          "target": "BUTTON",
+          "id": "target",
+          "trusted": true,
+          "epochMs": 1792021782437
+        },
+        {
+          "type": "mousedown",
+          "target": "BUTTON",
+          "id": "target",
+          "trusted": true,
+          "epochMs": 1792021782437.1
+        },
+        {
+          "type": "pointerup",
+          "target": "BUTTON",
+          "id": "target",
+          "trusted": true,
+          "epochMs": 1792021782437.2
+        },
+        {
+          "type": "mouseup",
+          "target": "BUTTON",
+          "id": "target",
+          "trusted": true,
+          "epochMs": 1792021782437.2
+        },
+        {
+          "type": "click",
+          "target": "BUTTON",
+          "id": "target",
+          "trusted": true,
+          "epochMs": 1792021782437.2
+        }
+      ],
+      "parentEvents": [
+        {
+          "type": "pointerdown",
+          "target": "BUTTON",
+          "id": "close",
+          "trusted": true,
+          "epochMs": 1792021782403.9001
+        },
+        {
+          "type": "mousedown",
+          "target": "BUTTON",
+          "id": "close",
+          "trusted": true,
+          "epochMs": 1792021782404
+        },
+        {
+          "type": "pointerup",
+          "target": "BUTTON",
+          "id": "close",
+          "trusted": true,
+          "epochMs": 1792021782404
+        },
+        {
+          "type": "mouseup",
+          "target": "BUTTON",
+          "id": "close",
+          "trusted": true,
+          "epochMs": 1792021782404
+        },
+        {
+          "type": "click",
+          "target": "BUTTON",
+          "id": "close",
+          "trusted": true,
+          "epochMs": 1792021782404
+        }
+      ],
+      "state": {
+        "workspaceOpen": false,
+        "sidebarOpen": true
+      },
+      "status": "OBSERVED_SUCCESS_NOT_PRODUCT_ACCEPTANCE",
+      "screenshot": "/private/tmp/manual-extension-popover-KAwC1A/plain.png"
+    }
+  ],
+  "blockedExternal": [],
+  "workerNetworkBlocked": true,
+  "browserVersion": "155.0.8059.40",
+  "status": "MECHANISM_CASES_SUCCEEDED_NOT_CERTIFIED",
+  "scriptChangedDuringRun": false,
+  "fixtureSourceChangedDuringRun": false
+}

@@ -1,0 +1,67 @@
+{
+  "specRevision": "VA-HOST/1.1",
+  "evidence": "HEADLESS_NATIVE_RECONSTRUCTION_ONLY",
+  "manifest": {
+    "fixtureId": "chatgpt-host-legacy-reconstruction-v1",
+    "profile": "LEGACY",
+    "reconstruction": true,
+    "source": "VA-HOST/1.1 structure reconstruction; not a real DOM snapshot",
+    "sourceCommit": null,
+    "sourceBlob": null,
+    "fixtureHash": "f10dca8da0a61162c3c3e619c9872f76335a4d123ab8e533300e66f23bb2b40f",
+    "expectedWorldFile": "tests/host/expected/legacy.mjs",
+    "oracleHash": "32b9e3f30c9f5b4be23b859a07477e5f36db0dc8440032d1077ecc2713a8d8db",
+    "supportedCapabilities": [
+      "principal",
+      "personal-context-candidate",
+      "project-identity",
+      "idless-native-control",
+      "conversation-identity",
+      "native-move-menu",
+      "native-navigation",
+      "native-search",
+      "native-create",
+      "independent-regions",
+      "draft-preservation"
+    ]
+  },
+  "realChatGPT": "NOT_RUN",
+  "productionAdapter": "NOT_RUN",
+  "results": [
+    {
+      "name": "idless-activation-native-navigation-back-draft",
+      "status": "PASS"
+    },
+    {
+      "name": "explicit-none-and-unknown-native-menu",
+      "status": "PASS"
+    },
+    {
+      "name": "native-search-model-and-single-send-handler",
+      "status": "PASS"
+    }
+  ],
+  "pageErrors": [],
+  "browser": "155.0.8059.40",
+  "status": "PASS",
+  "snapshot": {
+    "actions": {
+      "open-project-button": 1,
+      "navigate": 4,
+      "search": 1,
+      "model": 1,
+      "send-intent": 1
+    },
+    "requests": {
+      "/": 1,
+      "/native.css": 1,
+      "/native.mjs": 1,
+      "/native/route": 7,
+      "/native/action": 8,
+      "/native/move-menu": 2,
+      "/backend-api/conversations": 1
+    },
+    "projectCount": 2,
+    "conversationCount": 4
+  }
+}

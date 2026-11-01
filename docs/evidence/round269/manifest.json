@@ -1,0 +1,16 @@
+{
+  "base": "033c80372d47c65f1f1d713bf9b30e954fbff4fb",
+  "files": {
+    "tests/host/joint-observation-fixture.mjs": "121748d653a33bd33896272f57ccb8ddacb40f482ef1f78d1e25e161ad4e81f5",
+    "tests/host/sys02-completion-repair-cases.mjs": "74e7c0cec85fa88575993d7e580659db521fa7e5fd437ae316ae3d2f07f4f5d3",
+    "tests/host/sys02-pending-idb-browser.mjs": "8d57524552e17f2780ff50aad1877d5b5d564b11e672674255a925f6a080b25b",
+    "tests/host/sys02-pending-idb-report.test.mjs": "cf7c76d5b4857d2ae6063e74366b99596b59a3f06bbf3a86eeb1e6a0a550a5f9"
+  },
+  "artifacts": {
+    "README.md": "974407a73c89acb3338f79ab0c190b925769161ee0cfe812a2c585052a0502d0",
+    "affected-owner-tests.log.gz": "e8853c8f16bb358e2dfd900bfa5926f50b5b3b901dc18fa7533f42b37808682b",
+    "native-idb.json.gz": "18d87a9e002b70e9b81d09bece916f0e75d621e8ce12303fd5a8425bb8bbc736",
+    "node.log.gz": "9ef7eb65646daf26d86eda39d2129378054317cedbb67c96e05f569bdbf90c10",
+    "report-tests.log.gz": "0a158032659be6b12aeab5acfe514332bd79f7a830aad665387fe215f3a9bffe"
+  }
+}

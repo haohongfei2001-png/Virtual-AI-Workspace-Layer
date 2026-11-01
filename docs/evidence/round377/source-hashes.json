@@ -1,0 +1,8 @@
+{
+  "src/host/chatgpt-adapter.mjs": "854ae03a8557433b0283b2daa79876d2f6f04b9994ac2c7f022ed5f71bd3d3a1",
+  "tests/host/adapter-idle-preparation.test.mjs": "d0760465b2f4169cab45702b0c7a1b8bf55a527de28a0d64e9f3fa3feaa829bd",
+  "tests/host/prepare-same-body-owner.test.mjs": "3b1bd728ce6204409e88415f142e2bebd35f6f1f716237929c320aa05b44a58d",
+  "tests/host/host-scale-trace.mjs": "90864d8441d138f419913046c4e3bbeea826f84ca60f5638157a3688e00051ca",
+  "tests/host/host-scale-trace.test.mjs": "21d87c547ed9717de14a2904f2ee775f65359961ba1101a0031e511b87e00cb0",
+  "tests/host/native-prepare-wake-mv3.mjs": "e87cb37c3abce14cba4fdb2b52a2a584d08e5f6658a6feff27b93bdb760cb00c"
+}

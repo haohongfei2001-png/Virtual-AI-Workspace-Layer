@@ -1,0 +1,13 @@
+✔ persisted pagehide revokes old mount and adapter; pageshow starts fresh HELLO REFRESH (2.379458ms)
+✔ late pre-suspension HELLO never publishes mount after restored new handshake (0.416083ms)
+✔ nonpersisted pagehide and explicit stop never automatically restart (0.360541ms)
+✔ duplicate persisted pageshow during handshake and after success cannot start twice (0.276958ms)
+✔ nonpersisted pageshow cannot resume cached session (0.124292ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 49.603

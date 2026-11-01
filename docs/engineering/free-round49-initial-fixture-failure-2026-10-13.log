@@ -1,0 +1,14 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+page.evaluate: DataError: Failed to execute 'put' on 'IDBObjectStore': Evaluating the object store's key path yielded a value that is not a valid key.
+    at eval (eval at evaluate (:370:30), <anonymous>:9:196)
+    at new Promise (<anonymous>)
+    at eval (eval at evaluate (:370:30), <anonymous>:9:8)
+    at async <anonymous>:396:30
+    at /Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/free/shared-directory-reader-browser.mjs:11:25 {
+  log: []
+}
+
+Node.js v26.8.2

@@ -1,0 +1,7 @@
+{
+  "baseCommit": "ea4c3c3",
+  "files": {
+    "src/data/free-runtime-service.mjs": "1b3df03cdf1ae6820fd3b84f8a067e069b16befc9191616fd81c6e2b0fe7650f",
+    "tests/free/known-anchor-scope-priority.test.mjs": "f837d86264f151fbb6ca3b16f9b26fd05f42500532d80da174644ba9fb48c850"
+  }
+}

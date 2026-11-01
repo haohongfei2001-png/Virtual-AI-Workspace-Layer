@@ -1,0 +1,191 @@
+✖ migration rejects events wrong-target without changing any store (7.979583ms)
+✖ migration rejects events missing-locator without changing any store (1.649ms)
+✖ migration rejects coverage wrong-target without changing any store (1.353792ms)
+✖ migration rejects coverage missing-locator without changing any store (1.185208ms)
+✖ migration rejects hints wrong-target without changing any store (1.445833ms)
+✖ migration rejects hints missing-locator without changing any store (0.865125ms)
+✖ migration rejects hintEvents wrong-target without changing any store (1.153416ms)
+✖ migration rejects hintEvents missing-locator without changing any store (0.827333ms)
+✖ indexed incremental event write cannot duplicate an ID through wrong-target (1.789375ms)
+✖ indexed incremental event write cannot duplicate an ID through missing-locator (1.714375ms)
+✔ intact indexes migrate with complete facts preserved (1.713875ms)
+ℹ tests 11
+ℹ suites 0
+ℹ pass 1
+ℹ fail 10
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 68.912083
+
+✖ failing tests:
+
+test at tests/free/evidence-index-integrity.test.mjs:30:121
+✖ migration rejects events wrong-target without changing any store (7.979583ms)
+  AssertionError [ERR_ASSERTION]: migration must reject an index that does not correspond to actual piece evidence
+  
+  true !== false
+  
+      at TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/free/evidence-index-integrity.test.mjs:32:168)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/free/evidence-index-integrity.test.mjs:30:121
+✖ migration rejects events missing-locator without changing any store (1.649ms)
+  AssertionError [ERR_ASSERTION]: migration must reject an index that does not correspond to actual piece evidence
+  
+  true !== false
+  
+      at TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/free/evidence-index-integrity.test.mjs:32:168)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/free/evidence-index-integrity.test.mjs:30:121
+✖ migration rejects coverage wrong-target without changing any store (1.353792ms)
+  AssertionError [ERR_ASSERTION]: migration must reject an index that does not correspond to actual piece evidence
+  
+  true !== false
+  
+      at TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/free/evidence-index-integrity.test.mjs:32:168)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/free/evidence-index-integrity.test.mjs:30:121
+✖ migration rejects coverage missing-locator without changing any store (1.185208ms)
+  AssertionError [ERR_ASSERTION]: migration must reject an index that does not correspond to actual piece evidence
+  
+  true !== false
+  
+      at TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/free/evidence-index-integrity.test.mjs:32:168)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/free/evidence-index-integrity.test.mjs:30:121
+✖ migration rejects hints wrong-target without changing any store (1.445833ms)
+  AssertionError [ERR_ASSERTION]: migration must reject an index that does not correspond to actual piece evidence
+  
+  true !== false
+  
+      at TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/free/evidence-index-integrity.test.mjs:32:168)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/free/evidence-index-integrity.test.mjs:30:121
+✖ migration rejects hints missing-locator without changing any store (0.865125ms)
+  AssertionError [ERR_ASSERTION]: migration must reject an index that does not correspond to actual piece evidence
+  
+  true !== false
+  
+      at TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/free/evidence-index-integrity.test.mjs:32:168)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/free/evidence-index-integrity.test.mjs:30:121
+✖ migration rejects hintEvents wrong-target without changing any store (1.153416ms)
+  AssertionError [ERR_ASSERTION]: migration must reject an index that does not correspond to actual piece evidence
+  
+  true !== false
+  
+      at TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/free/evidence-index-integrity.test.mjs:32:168)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/free/evidence-index-integrity.test.mjs:30:121
+✖ migration rejects hintEvents missing-locator without changing any store (0.827333ms)
+  AssertionError [ERR_ASSERTION]: migration must reject an index that does not correspond to actual piece evidence
+  
+  true !== false
+  
+      at TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/free/evidence-index-integrity.test.mjs:32:168)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/free/evidence-index-integrity.test.mjs:34:54
+✖ indexed incremental event write cannot duplicate an ID through wrong-target (1.789375ms)
+  AssertionError [ERR_ASSERTION]: wrong or missing locator must not authorize a second global event ID
+  
+  true !== false
+  
+      at TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/free/evidence-index-integrity.test.mjs:36:351)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/free/evidence-index-integrity.test.mjs:34:54
+✖ indexed incremental event write cannot duplicate an ID through missing-locator (1.714375ms)
+  AssertionError [ERR_ASSERTION]: wrong or missing locator must not authorize a second global event ID
+  
+  true !== false
+  
+      at TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/free/evidence-index-integrity.test.mjs:36:351)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

@@ -1,0 +1,135 @@
+{
+  "kind": "EXISTING_PRODUCT_UI_OFFLINE_INSTANCE",
+  "origin": "http://127.0.0.1:65008",
+  "package": "/private/tmp/vaiwl-existing-ui-AA7EV2/package/extension",
+  "syntheticHost": true,
+  "realChatGPT": false,
+  "checks": [
+    "actual-extension-workspace-and-sidebar-mounted",
+    "synthetic-native-projects-and-chats-rendered",
+    "six-project-three-column-approved-metrics",
+    "sidebar-expand-and-collapse",
+    "formal-search-open-type-close",
+    "workset-add-remove-return",
+    "native-chat-navigation-and-workspace-return",
+    "formal-settings-open-close",
+    "native-reading-and-return-preserve-draft",
+    "dark-theme-after-native-reentry",
+    "narrow-reflow-with-native-input-retained"
+  ],
+  "geometry": {
+    "cards": [
+      {
+        "x": 24,
+        "y": 24,
+        "width": 346,
+        "height": 282
+      },
+      {
+        "x": 388,
+        "y": 24,
+        "width": 346,
+        "height": 176
+      },
+      {
+        "x": 752,
+        "y": 24,
+        "width": 346,
+        "height": 140
+      },
+      {
+        "x": 24,
+        "y": 324,
+        "width": 346,
+        "height": 212
+      },
+      {
+        "x": 388,
+        "y": 218,
+        "width": 346,
+        "height": 140
+      },
+      {
+        "x": 752,
+        "y": 182,
+        "width": 346,
+        "height": 104
+      }
+    ],
+    "padding": "24px",
+    "font": "14px",
+    "radius": "13px",
+    "header": "rgb(244, 244, 244)",
+    "width": 1168,
+    "scrollWidth": 1168
+  },
+  "narrow": {
+    "width": 628,
+    "scrollWidth": 628,
+    "cardWidth": 573,
+    "available": 573,
+    "columns": 1
+  },
+  "verify": "OFFLINE_HOST_RECONSTRUCTION",
+  "extensionId": "pebnmbacmkjhacnedpfioechmkiafmak",
+  "baseHead": "14a05a84abdefb2dd7e011cc2499b25290cd484d",
+  "evidence": "ACTUAL_PACKAGED_MV3_WITH_SYNTHETIC_LOCAL_HOST",
+  "approvedOriginal": "design/approved/v2.7/VAIWL_v2.7/prototype-v2.7.html",
+  "approvedOriginalSha256": "81fa9779e4bc98b6b67c348f72a32ee1fd99519833994af9ed95716126f7da4e",
+  "scope": "Owned product UI restored against retained v2.7; native header/composer and independent exit retained under Host section 7. Not whole-screen pixel identity, production admission or personal acceptance.",
+  "nodeRegression": {
+    "passed": 356,
+    "failed": 0,
+    "skipped": 0
+  },
+  "screenshots": {
+    "desktop-light.png": "eb827c534f42bf46ba7f808a8db02b017604491b8273a3e749b8242674bad87a",
+    "desktop-dark.png": "2fd92371024ffc509510daf07685e747b8549165ff72a543a01e7c3bc30a0d01",
+    "narrow.png": "541bb3218cffc9d66f84ee52b32449ebddf0b48c53d42d9b5bdf5aeb74820b38",
+    "existing-ui.png": "aa30e9ba4a22c26a9135316683f80c76b5ae954154080d572c1c1801be05d12f"
+  },
+  "review": "writer source diff and actual image review; no independent review claimed",
+  "currentSourceHashesMatch": true,
+  "sourcePaths": 191,
+  "shellRegression": [
+    {
+      "name": "packaged-HTML-real-client-and-grant-have-bounded-initial-shells",
+      "status": "PASS"
+    },
+    {
+      "name": "native-fixture-candidate-page-and-sidebar-toolbar-fit-bounded-shell",
+      "status": "PASS"
+    },
+    {
+      "name": "history-container-scrolls-without-document-scroll",
+      "status": "PASS",
+      "evidence": "MECHANISM_ONLY_LOCAL_TALL_DOM_PROBE"
+    },
+    {
+      "name": "本地数据恢复-real-open-empty-navigation-and-scrollable-owned-root",
+      "status": "PASS",
+      "evidence": "REAL_PANEL_OPEN_PLUS_MECHANISM_ONLY_LOCAL_TALL_DOM_PROBE",
+      "nativeWrite": "NONE"
+    },
+    {
+      "name": "备份与导入-real-open-empty-navigation-and-scrollable-owned-root",
+      "status": "PASS",
+      "evidence": "REAL_PANEL_OPEN_PLUS_MECHANISM_ONLY_LOCAL_TALL_DOM_PROBE",
+      "nativeWrite": "NONE"
+    },
+    {
+      "name": "已保存片段-real-open-empty-navigation-and-scrollable-owned-root",
+      "status": "PASS",
+      "evidence": "REAL_PANEL_OPEN_PLUS_MECHANISM_ONLY_LOCAL_TALL_DOM_PROBE",
+      "nativeWrite": "NONE"
+    }
+  ],
+  "defaultPackage": {
+    "status": "HOST_IMPLEMENTATION_UNVERIFIED",
+    "releaseStatus": "NOT_RELEASE_READY",
+    "files": 191,
+    "unpacked": "/private/tmp/vaiwl-restoration-default-20261023/extension",
+    "archive": "/private/tmp/vaiwl-restoration-default-20261023/vaiwl-free-host-development.zip",
+    "archiveSha256": "83eb2efa74d9516310b7d593ad9c01bdbf23730a8e7f1d282ad1c8ce8f021b64"
+  }
+}

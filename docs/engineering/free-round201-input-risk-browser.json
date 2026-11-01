@@ -1,0 +1,141 @@
+{
+  "evidence": "WEB_MECHANISM_ONLY",
+  "mv3": "NOT_TESTED",
+  "realChatGPT": "NOT_TESTED",
+  "scriptHash": "ceeb29df62847b6928cfddfb122581f3e0671b1f9952d3b70c2aa8b6ae2174ef",
+  "sourceHash": "9c78a4f1e984fb8e39078d5c8f0ba05427f76a8c6f113f805ce6501bfc1eeb18",
+  "fixtureHash": "ed5f8311c59b88c626751c2b22daf3455c811b4a62994d7a3f836eb5a031a5ce",
+  "results": [
+    {
+      "name": "both-empty-plain-active",
+      "status": "PASS",
+      "result": {
+        "state": "clear",
+        "flags": []
+      },
+      "readerDidNotWrite": true,
+      "originalNodesPreserved": true,
+      "emptyFileInput": true
+    },
+    {
+      "name": "rich-only-with-no-file",
+      "status": "PASS",
+      "result": {
+        "state": "unsaved",
+        "flags": [
+          "composer"
+        ]
+      },
+      "readerDidNotWrite": true,
+      "originalNodesPreserved": true,
+      "emptyFileInput": true
+    },
+    {
+      "name": "both-truly-empty-rich-active",
+      "status": "PASS",
+      "result": {
+        "state": "clear",
+        "flags": []
+      },
+      "readerDidNotWrite": true,
+      "originalNodesPreserved": true,
+      "emptyFileInput": true
+    },
+    {
+      "name": "hidden-plain-draft-with-empty-active-rich",
+      "status": "PASS",
+      "result": {
+        "state": "unsaved",
+        "flags": [
+          "composer"
+        ]
+      },
+      "readerDidNotWrite": true,
+      "originalNodesPreserved": true,
+      "emptyFileInput": true
+    },
+    {
+      "name": "both-cleared-after-switches",
+      "status": "PASS",
+      "result": {
+        "state": "clear",
+        "flags": []
+      },
+      "readerDidNotWrite": true,
+      "originalNodesPreserved": true,
+      "emptyFileInput": true
+    },
+    {
+      "name": "empty-rich-BR-structure",
+      "status": "PASS",
+      "result": {
+        "state": "unsaved",
+        "flags": [
+          "composer"
+        ]
+      },
+      "readerDidNotWrite": true,
+      "originalNodesPreserved": true,
+      "emptyFileInput": true
+    },
+    {
+      "name": "rich-NBSP-is-draft",
+      "status": "PASS",
+      "result": {
+        "state": "unsaved",
+        "flags": [
+          "composer"
+        ]
+      },
+      "readerDidNotWrite": true,
+      "originalNodesPreserved": true,
+      "emptyFileInput": true
+    },
+    {
+      "name": "undeclared-sibling-editor-fails-closed",
+      "status": "PASS",
+      "result": {
+        "state": "unknown",
+        "flags": []
+      },
+      "readerDidNotWrite": true,
+      "originalNodesPreserved": true,
+      "emptyFileInput": true
+    },
+    {
+      "name": "declared-empty-boundary-restored",
+      "status": "PASS",
+      "result": {
+        "state": "clear",
+        "flags": []
+      },
+      "readerDidNotWrite": true,
+      "originalNodesPreserved": true,
+      "emptyFileInput": true
+    }
+  ],
+  "status": "PASS",
+  "externalNetworkBlocked": true,
+  "trustedInputEvents": {
+    "switches": [
+      true,
+      true,
+      true,
+      true,
+      true
+    ],
+    "plain": [
+      true,
+      true
+    ],
+    "rich": [
+      true,
+      true,
+      true,
+      true
+    ]
+  },
+  "browserVersion": "155.0.8059.40",
+  "sourceChangedDuringRun": false,
+  "scriptChangedDuringRun": false
+}

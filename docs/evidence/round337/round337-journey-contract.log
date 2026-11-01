@@ -1,0 +1,16 @@
+✔ portable J4 assets cover all manual asset classes without authority or evidence (2.452834ms)
+✔ same asset bundle cannot be restored into other authenticated context (0.271958ms)
+✔ J4 native context switch is opt-in authenticated roster-validated service (19.282792ms)
+✔ continuous segment never claims missing atomic/schema/profile acceptance (0.10225ms)
+✔ runner uses production file import and actual lifecycle APIs without business-state injection or synthetic grants (1.421667ms)
+✔ repair fault touches only checksum of an existing production root and remains explicit (0.578792ms)
+✔ repaired UNKNOWN route uses stable identity and never expects revoked native title (0.132625ms)
+✔ recovered link oracle requires the original route, enabled UNKNOWN identity and redacted title (0.566125ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 93.091167

@@ -1,0 +1,23 @@
+{
+  "evidence": "REAL_HEADLESS_DOM_SYNTHETIC_PREPARED_100K_WORKING_SET",
+  "measurement": "INSTRUMENTED_RENDER_DIAGNOSTIC_NOT_LATENCY_CERTIFICATION",
+  "browser": "156.0.8078.4",
+  "sourceHashes": {
+    "src/navigation/navigation.mjs": "bd50f3251e625e44eaf4edd87b8cb087a36ce18b7d2e7cf6b88ed76ee008498e",
+    "src/navigation/current-index.mjs": "c0ad9e1fca5f689539280e1bd95efceb75572cdcf1a06a371211647856813f82",
+    "src/navigation/free-view.mjs": "fddb77eb09bbb889edd1630686c5dd611025a205f8d0218168cf1df0c9520399"
+  },
+  "checks": {
+    "order": true,
+    "duplicateURLIds": true,
+    "missing": true,
+    "unknown": true,
+    "renamed": true,
+    "nativePreserved": true,
+    "scopeIsolated": true
+  },
+  "refs": 100000,
+  "workingSet": 1000,
+  "findComparisons": 0,
+  "renderMs": 13.100000001490116
+}

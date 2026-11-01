@@ -1,0 +1,13 @@
+# Round375：原生准备事件接入休眠会话的reading恢复
+
+基线88d01949ba6eb56d9ed42665ab0fe373f1dc1ff9，原正式开发分支。前轮实际恢复验收后，继续生产接线。
+
+原生send observer已能在可信focusin/pointerdown、唯一可见form/editor/button且非composition/modifier条件下发onPrepare，原adapter只schedule，过期时不能恢复会话。新增adapter onNativePrepare将捕获producer送入content；仅当前文档、同producer、已休眠且静稳时复用fresh HELLO/REFRESH同scope握手，以resumeDormant第二参mode=reading恢复。普通awake继续原schedule；明确恢复单飞同步返回true时不额外schedule使恢复token失效。回调前后adapter generation/stop/route边界保留，callback同步退役不能再扫描旧producer。
+
+可信准备不是send/body授权：不读正文/草稿、不重放手势、不续binding或旧body proof、不发workspaceEntered、不自动打开workspace。旧四格返回仍默认workspace。ACK不全的恢复复用既有reading rebind，busy/rawIPC仍不能越过既有护栏。
+
+独立测试与审查发现HELLO已替换binding而REFRESH未返回时，旧observer重复准备错误返回false，可能触发旧scan中断恢复。新增反例实际8PASS/1FAIL；修复为仅wakePending期间保存原producer，精确同producer重复准备合并，foreign document/route/producer继续false；finally清除该临时身份。它只用于合并准备事件，绝不作为发包或发送授权。
+
+最终相关L **73/73 PASS**，最终完整Node **7159/7159 PASS**，零skip/cancel。早期完整7158不作为最终次数累加。独立测试包含reading-only、新HELLO/REFRESH、scope变化退出、adapter/reader busy、重复单飞与握手窗口；adapter验证过期prepare可提出恢复但不续旧body、普通scan保持、同步stop不再派发。
+
+本轮无新的实际Chrome结果，此接线仅L验证。生产自动enterDormant仍未启用：立即click/Enter可早于新body ACK，已聚焦后的Enter也可能没有prepare，禁止用事后body补baseline或重放旧手势。不能将这个提前恢复机会当作完整休眠首发保障、UI11或Free交付；后续须实际原生聚焦→reading恢复S及剩余因果闭环。完整Free NOT_RELEASE_READY。

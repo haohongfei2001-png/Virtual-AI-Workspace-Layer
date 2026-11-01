@@ -1,0 +1,29 @@
+✔ frozen-revision pages prove exact 1k ID set while dependency projects count once (7.851146ms)
+✔ native-sized world cannot hide a 25-ref admitted index (0.415246ms)
+✔ same cardinality with foreign IDs or duplicate page entries fails exact-set audit (8.001833ms)
+✔ revision changes at final check or during page read are explicitly unstable (1.718352ms)
+✔ single-project requires every actual member claim and exact project identity (7.548209ms)
+✔ invalid paging rejects; browser adapter cannot upgrade schema or open write transactions (6.457924ms)
+✔ audit is evaluated only in the current exact extension frame and freezes cursor keys (1.044816ms)
+✔ scale cleanup continues after browser failure and preserves live directory (2.336876ms)
+✔ scale cleanup removes only owned output even when verification throws (0.518852ms)
+✔ scale cleanup is safe before browser or directory creation (0.329237ms)
+✔ native scale service owns 1k world and authenticates project-mixed (81.591853ms)
+✔ native scale service owns 1k world and authenticates none-heavy (38.483122ms)
+✔ native scale service owns 1k world and authenticates single-project (39.671405ms)
+✔ matrix retains every scale, distribution and CPU boundary without claiming acceptance (0.531301ms)
+✔ default runner writes NOT_RUN without importing browser or allocating native scale (78.841804ms)
+✔ runner is guarded, preserves transport, and does not seed authority or replace production deadline (1.072618ms)
+✔ independent native world cardinality project-mixed (6.613708ms)
+✔ independent native world cardinality none-heavy (2.12707ms)
+✔ independent native world cardinality single-project (1.310157ms)
+✔ all required scales preserve six-second production RPC budget and exact CPU boundary (0.351881ms)
+✔ unsupported sizes/rates/distribution reject instead of quietly reducing load (0.365372ms)
+ℹ tests 21
+ℹ suites 0
+ℹ pass 21
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 447.247969

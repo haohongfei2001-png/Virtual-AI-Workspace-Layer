@@ -1,0 +1,8 @@
+{
+  "status": "HOST_IMPLEMENTATION_UNVERIFIED",
+  "releaseStatus": "NOT_RELEASE_READY",
+  "files": 118,
+  "unpacked": "/private/tmp/vaiwl-free-round127-host-package/extension",
+  "archive": "/private/tmp/vaiwl-free-round127-host-package/vaiwl-free-host-development.zip",
+  "archiveSha256": "349b2aab61f13cb77b3f7356fc9eb0fc451d5909e4935ad06f2d838e22b616f7"
+}

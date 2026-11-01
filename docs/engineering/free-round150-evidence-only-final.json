@@ -1,0 +1,91 @@
+{
+  "evidence": "REAL_HEADLESS_TEST_ONLY_MV3_OFFLINE_ACK_PIPELINE",
+  "productionPackage": "NOT_TESTED",
+  "productionACK": "NOT_TESTED_DOM_IS_NOT_ACK",
+  "realChatGPT": "NOT_RUN",
+  "sourceHashes": {
+    "tests/host/send-ack-mv3-browser.mjs": "503ae9d98f8a11f531eb9b5e3ad8426fe699d37ca1ba2e64faf3f03bc8910b80",
+    "tests/host/fixtures/server.mjs": "2082ae88f66d0da2fbfbbec05eb8d6fc17beff5418f88249872b0d5abb166244",
+    "src/runtime/session-provider.mjs": "ea3bed1f9ca9ac11cd71968a8197b3c2aeba439c5df3aea459790f0a3cd6d554",
+    "src/runtime/host-send-ack-owner.mjs": "15eb60c425aedb8f28410a2a6876addc41721b277f1beb4e745d998b5ddbb81b",
+    "src/runtime/host-continuation-owner.mjs": "efd6890006e519a3295ffe77679b897ffebe8c596e0a9fe99eeed1ea3f79ace9",
+    "src/host/conversation-acceptance.mjs": "92fdfc486bd9614028aacc197b99a26b8ad3ae254e54a980a04b0a1e90153144",
+    "src/runtime/send-ack-admission.mjs": "784141e34d18be3faa6e4cdc725b8f5442f6ea103d68dca00e82d09b64bcdccc",
+    "src/host/send-intent-claim.mjs": "1e399b5af40affb0500f744f0c2c8aa5f0dc935cdbbd054dff1e483cda1f971f",
+    "src/host/native-send-intent.mjs": "7e4586991dd4888fb3969113d77e7c4c5816cc5e702fece31fe077031864278a",
+    "src/host/send-correlator.mjs": "2b495b44c5bf71c1108bc045b4d3562a72846eb7ac7a26de08db38735e3e7845",
+    "src/runtime/host-send-candidates.mjs": "358ccb016e94acad2ac958eec7a9d2217ef9406b8e90e7e34519b2841d0ee328",
+    "src/runtime/current-metadata-reader.mjs": "9139cfd624bb2c8b01f061fd785fc469a73299da12fb0bb307d3a8ac8f735453",
+    "src/host/conversation-metadata.mjs": "744afe2228882a5ebff1ffd8f1294ecd80697d63b44af60640e3ff4d3a63410e",
+    "src/runtime/host-binding-service.mjs": "d52d22d41cb0af65b1c2a63bf41e1374f6f412b05ffee632f6113d9fa83675a8",
+    "src/runtime/host-observation-owner.mjs": "dad644527ec62c1940c7109843540cbf4ea281cb83a6ec8c5c52eb0b9467455e",
+    "src/runtime/scope-authority.mjs": "f483fb43288571401229ca3e5aad37a49ff2461bd1636efe60a104db60481db6",
+    "src/host/chatgpt-adapter.mjs": "a8796508f20ded805a6657775e97f58c057b131a5ecbc5dfbf3d92a57b3a0dd0",
+    "src/host/current-body-claim.mjs": "4e26f9fe6c905d1dbf3a07995168c4fb5dea5e424bff238644da1c067ac03ef5",
+    "src/host/current-body-discovery.mjs": "b9b702f8d70cf6e4403114ce743754fc78e414e609c06c857829b0ebdf5b8ed6",
+    "src/host/surface-discovery.mjs": "460007ec3c260ca989471f911d2157d3f7d86339a5d6d41cbd4acd7f5c31d233",
+    "src/data/native-repository.mjs": "cff865baf77bf282bc3825f1ad28d24986d968cb9b262033030682c6103b2256"
+  },
+  "results": [
+    {
+      "name": "default-disabled-owner-no-detail-fetch",
+      "status": "PASS"
+    },
+    {
+      "name": "real-native-click-without-new-message-is-only-intent-no-correlation",
+      "status": "PASS"
+    },
+    {
+      "name": "real-click-plus-explicit-fixture-metadata-and-DOM-append-correlates-without-ACK-or-eight-store-write",
+      "status": "PASS",
+      "fixtureMutation": "test process append metadata plus DOM ID; no real message sent"
+    },
+    {
+      "name": "automatic-ACK-writes-evidence-once-without-native-revision-or-continuation",
+      "status": "PASS",
+      "trigger": "owner finite wakeup; no new DOM mutation or test observe call before commit"
+    },
+    {
+      "name": "body-and-intent-claims-never-invoke-native-writer",
+      "status": "PASS"
+    }
+  ],
+  "errors": [],
+  "temporaryPackage": "/private/tmp/vaiwl-send-candidate-HerOFD/extension",
+  "fixture": {
+    "fixtureId": "chatgpt-host-legacy-reconstruction-v1",
+    "profile": "LEGACY",
+    "reconstruction": true,
+    "source": "VA-HOST/1.1 structure reconstruction; not a real DOM snapshot",
+    "sourceCommit": null,
+    "sourceBlob": null,
+    "fixtureHash": "b6ff2df4bb333f6e38331226aab045e0ad9255c3fb16dd72e87aa221b531402c",
+    "expectedWorldFile": "tests/host/expected/legacy.mjs",
+    "oracleHash": "32b9e3f30c9f5b4be23b859a07477e5f36db0dc8440032d1077ecc2713a8d8db",
+    "supportedCapabilities": [
+      "principal",
+      "personal-context-candidate",
+      "project-identity",
+      "idless-native-control",
+      "conversation-identity",
+      "native-move-menu",
+      "native-navigation",
+      "native-search",
+      "native-create",
+      "independent-regions",
+      "draft-preservation"
+    ]
+  },
+  "requests": {
+    "/c/33333333-3333-4333-8333-333333333333": 1,
+    "/native.css": 1,
+    "/native.mjs": 1,
+    "/native/route": 1,
+    "/api/auth/session": 5,
+    "/backend-api/accounts/check/v4-2023-04-27": 5,
+    "/backend-api/conversation/33333333-3333-4333-8333-333333333333": 4,
+    "/native/action": 2
+  },
+  "status": "PASS",
+  "sourceChangedDuringRun": false
+}

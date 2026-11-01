@@ -1,0 +1,136 @@
+{
+  "evidence": "MINIMAL_MV3_MECHANISM_NOT_PRODUCT_ACCEPTANCE",
+  "productAcceptance": "NOT_CERTIFIED",
+  "scope": "Temporary static extension with no VAIWL renderer, broker or production code; formal reading immediate exit FAIL remains independent.",
+  "scriptHash": "f6f5463741789346b21a250e45cc8b89764575e3aa7b792b095cfbb40770b026",
+  "sourceHashes": {
+    "manifest.json": "c621e589e8cd6590773e2cf1734928558eb2594e7a1c988c253b61d774e28f79",
+    "worker.js": "e69b1a1801e3390fbfb8f2aa904df7b0fd2ae201fcf160c9445b7c805ddcdfc8",
+    "child.html": "896c3bf28f56800fb40d228397fc4608ff9ea9abe25d7987b2491b2acfe606bc",
+    "child.js": "90c87350b6114a7519d930578278285aadbf307d1981c02bfd88f23ca0d7de60"
+  },
+  "mountMode": "production",
+  "mountSourceHash": "bf018042ed0e057abaaaa2e17f0a55725e6e7812b75915bef858f1d3f49ba0b9",
+  "extension": "/private/tmp/manual-extension-popover-vKF4Tj/extension",
+  "cases": [
+    {
+      "popover": true,
+      "mode": "FRESH_PAGE_IMMEDIATE_NO_ADDED_WAIT",
+      "iframeTargets": [
+        {
+          "type": "iframe",
+          "url": "chrome-extension://kilnpecpgcmgnjgbjgnkjiiaffgbdnam/child.html",
+          "targetId": "44B446A327720310A609A6B8FE2BC771"
+        },
+        {
+          "type": "iframe",
+          "url": "chrome-extension://kilnpecpgcmgnjgbjgnkjiiaffgbdnam/child.html",
+          "targetId": "058C9603FBE83EA768A503D813689D02"
+        }
+      ],
+      "oopifConfirmed": true,
+      "classification": "EXTENSION_IFRAME_TARGET_CONFIRMED",
+      "before": {
+        "rect": {
+          "x": 50,
+          "y": 80,
+          "width": 120,
+          "height": 40,
+          "top": 80,
+          "right": 170,
+          "bottom": 120,
+          "left": 50
+        },
+        "hit": "target"
+      },
+      "clicked": 1,
+      "childEvents": [
+        {
+          "type": "pointerdown",
+          "target": "BUTTON",
+          "id": "target",
+          "trusted": true,
+          "epochMs": 1792021872996.2
+        },
+        {
+          "type": "mousedown",
+          "target": "BUTTON",
+          "id": "target",
+          "trusted": true,
+          "epochMs": 1792021872996.2998
+        },
+        {
+          "type": "pointerup",
+          "target": "BUTTON",
+          "id": "target",
+          "trusted": true,
+          "epochMs": 1792021872996.4
+        },
+        {
+          "type": "mouseup",
+          "target": "BUTTON",
+          "id": "target",
+          "trusted": true,
+          "epochMs": 1792021872996.4
+        },
+        {
+          "type": "click",
+          "target": "BUTTON",
+          "id": "target",
+          "trusted": true,
+          "epochMs": 1792021872996.4
+        }
+      ],
+      "parentEvents": [
+        {
+          "type": "pointerdown",
+          "target": "BUTTON",
+          "id": "",
+          "trusted": true,
+          "epochMs": 1792021872958.2
+        },
+        {
+          "type": "mousedown",
+          "target": "BUTTON",
+          "id": "",
+          "trusted": true,
+          "epochMs": 1792021872958.3
+        },
+        {
+          "type": "pointerup",
+          "target": "BUTTON",
+          "id": "",
+          "trusted": true,
+          "epochMs": 1792021872958.3
+        },
+        {
+          "type": "mouseup",
+          "target": "BUTTON",
+          "id": "",
+          "trusted": true,
+          "epochMs": 1792021872958.3
+        },
+        {
+          "type": "click",
+          "target": "BUTTON",
+          "id": "",
+          "trusted": true,
+          "epochMs": 1792021872958.3
+        }
+      ],
+      "state": {
+        "workspaceOpen": false,
+        "sidebarOpen": true
+      },
+      "status": "OBSERVED_SUCCESS_NOT_PRODUCT_ACCEPTANCE",
+      "screenshot": "/private/tmp/manual-extension-popover-vKF4Tj/popover.png"
+    }
+  ],
+  "blockedExternal": [],
+  "workerNetworkBlocked": true,
+  "browserVersion": "155.0.8059.40",
+  "status": "MECHANISM_CASES_SUCCEEDED_NOT_CERTIFIED",
+  "scriptChangedDuringRun": false,
+  "mountSourceChangedDuringRun": false,
+  "fixtureSourceChangedDuringRun": false
+}

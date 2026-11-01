@@ -1,0 +1,82 @@
+{
+  "schema": "vaiwl-late-response-cleanup-evidence-v1",
+  "baseHead": "0ff3dd812492c0e600d2edd132b8830358b29ce6",
+  "task": "C6/F3 late cancelled response cleanup and existing source diagnostic compatibility",
+  "sourceHashes": {
+    "src/runtime/session-provider.mjs": "1964e5e9aa55f1a2211c909919f55723dc437e57fc5c5546c104da2f7eeb90b5",
+    "tests/host/session-provider-idle.test.mjs": "acfd73a259ce9f937a1ad2830c106f9a5459686dcecab821331c4a81b4c45534",
+    "tests/host/fault-unknown-trace.mjs": "e6b018048ca7d0cefe361c613991b565d5b6034cb29198412d5c9b62495021e9",
+    "tests/host/j4-read-budget-trace.mjs": "c9b147ebc7dca7122e401b0240e03a85308d14c17c4399cfb7e5c80dde50fd68"
+  },
+  "finding": {
+    "source": "dot independent source review of 0ff3dd81 received in this thread; primary writer reproduced before editing",
+    "cause": "A fetch that resolves after abort/deadline fails the post-fetch check before readSessionJSON, leaving its unread body uncancelled. The actual chain then drains early.",
+    "fix": "On post-fetch check failure, await unread response body cancellation, suppress cleanup error and retain original check failure. Actual provider work stays counted through cleanup; caller deadline remains bounded."
+  },
+  "traceRepair": {
+    "cause": "Two existing diagnostic transforms still expected pre-directory provider source: budget declaration, request ordinal, catch and inner-chain wrapper anchors.",
+    "fix": "Update only exact unique anchors to current source, preserving request ordinal, inner-chain accounting, original schema exception branch and parser rejection. No new trace stages or broader acceptance."
+  },
+  "validation": {
+    "lateBodyBefore": {
+      "passed": 3,
+      "failed": 2,
+      "log": "late-body-before-final.log"
+    },
+    "faultTraceBefore": {
+      "passed": 53,
+      "failed": 4,
+      "log": "before.log"
+    },
+    "j4TraceBefore": {
+      "passed": 2,
+      "failed": 2,
+      "log": "j4-before.log"
+    },
+    "combined": {
+      "passed": 181,
+      "failed": 0,
+      "skipped": 0,
+      "log": "regression.log"
+    },
+    "finalRealStreamUnit": {
+      "passed": 5,
+      "failed": 0,
+      "skipped": 0,
+      "log": "stream-regression.log",
+      "note": "Strengthened the two late-response cases from a controlled body double to actual Response/ReadableStream with deferred cancellation; same product source. Counts not additive."
+    },
+    "builds": [
+      {
+        "name": "default",
+        "result": {
+          "status": "HOST_IMPLEMENTATION_UNVERIFIED",
+          "releaseStatus": "NOT_RELEASE_READY",
+          "files": 191
+        }
+      },
+      {
+        "name": "observed",
+        "result": {
+          "status": "HOST_IMPLEMENTATION_UNVERIFIED",
+          "releaseStatus": "NOT_RELEASE_READY",
+          "files": 191
+        }
+      }
+    ],
+    "review": "Root cause independently identified by dot; final fix and trace changes reviewed by primary writer. No independent runtime rerun yet."
+  },
+  "developmentFailuresPreserved": [
+    "trace-regression.log records an intermediate test-instrumentation syntax typo, corrected before final regression."
+  ],
+  "boundaries": {
+    "productionEnabled": false,
+    "realAccountRequests": 0,
+    "newWitnessBatch": false,
+    "installedPackageUpdated": false,
+    "historicalFaultRootCause": "NOT_ESTABLISHED",
+    "fullJ4": "NOT_ESTABLISHED",
+    "realDailyAcceptance": "NOT_RUN"
+  },
+  "checkpoint": ".git/vaiwl-checkpoints/20261023-source-trace-compat"
+}

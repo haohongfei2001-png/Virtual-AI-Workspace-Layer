@@ -1,0 +1,37 @@
+{
+  "baseline": "19c2a153ef8913b334efe5f864d1d5426df633d6",
+  "priorRun": 39524930473,
+  "classification": "fresh synthetic offline next-batch engineering; no live account data",
+  "artifacts": [
+    {
+      "file": "prior-run.json.gz",
+      "bytes": 17026,
+      "uncompressedSha256": "f3f333f521e9a4259643745efae99dd5af0ecf85730e67add47048b32f0575f8"
+    },
+    {
+      "file": "prior-jobs.json.gz",
+      "bytes": 83835,
+      "uncompressedSha256": "904ea11470b819c781e8c707a283695708deb5d4657003d1b2925d99dca8b72a"
+    },
+    {
+      "file": "combined-targeted.log.gz",
+      "bytes": 28406,
+      "uncompressedSha256": "cb42c3c119f79eeffb37405fdf1d961da0f198fe40092cd9a678520c965d0abd"
+    },
+    {
+      "file": "full-node-interrupted.log.gz",
+      "bytes": 149881,
+      "uncompressedSha256": "86d114df5d400ebaf5fc2f01d4fdd7ed66a25205990df9459fd1bcfea524927f"
+    },
+    {
+      "file": "inputs-before.json.gz",
+      "bytes": 140386,
+      "uncompressedSha256": "337e07a24a0e989af971ef95b27a43c65b6a44e2d3949bcf86434c9f34648633"
+    },
+    {
+      "file": "inputs-after-interruption.json.gz",
+      "bytes": 140386,
+      "uncompressedSha256": "337e07a24a0e989af971ef95b27a43c65b6a44e2d3949bcf86434c9f34648633"
+    }
+  ]
+}

@@ -1,0 +1,208 @@
+{
+  "baseline": "e1b0bfd6ae76a5aa5e6948edc71b0487a1a371af",
+  "rawEvidence": [
+    {
+      "file": "local-ci39083660931-durability.log.gz",
+      "originalBytes": 4914452,
+      "sha256": "9b4579403aa2f1ad71d69641514340ec9a1cd0a7a77e89ef3348f137d16f32c6"
+    },
+    {
+      "file": "local-ci39083660931-j4.log.gz",
+      "originalBytes": 659483,
+      "sha256": "d615f207f234852bf4e35763e762562a043f646bac9abdb66fd106fa54658273"
+    },
+    {
+      "file": "local-ci39083660931-durability-3.json.gz",
+      "originalBytes": 67558,
+      "sha256": "3c2e73fb8b331052f1a098ca0b57dfd916ef30cb4ac7587ba120f01af818eb6b"
+    },
+    {
+      "file": "local-ci39083660931-durability-4.json.gz",
+      "originalBytes": 1748205,
+      "sha256": "583ecd1f59c507765fa02735f40f8f7a8eb9d7687d9215ebc70b7bcaaa47dac7"
+    },
+    {
+      "file": "local-ci39083660931-j4-1.json.gz",
+      "originalBytes": 70754,
+      "sha256": "0c6898d862577a13c592b6d5fcd263739b45b17d3386acdd9c1f5a84f34cdd2a"
+    },
+    {
+      "file": "local-ci39083660931-j4-local.json.gz",
+      "originalBytes": 93103,
+      "sha256": "2e0ec62a851adee302361d421e8c57bd6ec9a754c63cc65348a2a7ccc2785625"
+    },
+    {
+      "file": "local-ci39083660931-snippets-mv3.json.gz",
+      "originalBytes": 23464,
+      "sha256": "0d8d157aa84b4fb10837cd5c599edcbd19fe39cb85adce002f5f55e192234949"
+    },
+    {
+      "file": "local-ci39083660931-snippets-selection-diagnostic.json.gz",
+      "originalBytes": 23457,
+      "sha256": "81c372d6d633656f7b7e791735f4ff1240283dfa54f9d4beea0a7400e036b54e"
+    },
+    {
+      "file": "local-ci39083660931-snippets-bridge-diagnostic.json.gz",
+      "originalBytes": 23622,
+      "sha256": "62426cfffcdca9ed56b33321afe07e15c5ef5fc51fe38d6ff5da8ef04756a281"
+    },
+    {
+      "file": "local-ci39083660931-snippets-capture-diagnostic.json.gz",
+      "originalBytes": 24182,
+      "sha256": "7f5d9ddaf12515bfdbf1e1d7c23449fbc9c398c5439f2af6136ef96faefe7bb9"
+    },
+    {
+      "file": "local-ci39083660931-snippets-proof-diagnostic.json.gz",
+      "originalBytes": 25264,
+      "sha256": "2b03628fc68ff3c83d208b3cea50b809c93b76c92095123f208738fc2ea73410"
+    },
+    {
+      "file": "local-ci39083660931-snippets-pump-diagnostic.json.gz",
+      "originalBytes": 26155,
+      "sha256": "df1883e133eecc55adec038a728bed62c8390196b390638142553537b60ab425"
+    },
+    {
+      "file": "local-ci39083660931-snippets-ack-diagnostic.json.gz",
+      "originalBytes": 24344,
+      "sha256": "517d0f00effed023b07c62bb3434ba81d246d6ea2879af423f0ca6a93d206f63"
+    },
+    {
+      "file": "local-ci39083660931-snippets-exception-diagnostic.json.gz",
+      "originalBytes": 23730,
+      "sha256": "31a10d611b538db04cf44bc367a03a7144363dde1c4b768e90dca8abf179ea84"
+    },
+    {
+      "file": "local-ci39083660931-snippets-worker-exception-diagnostic.json.gz",
+      "originalBytes": 26335,
+      "sha256": "98cabeeb8f8f76cbf636cce3922c1e3af4312f98cfd020b7544f2f1c460c5aed"
+    },
+    {
+      "file": "local-ci39083660931-snippets-fixed.json.gz",
+      "originalBytes": 25213,
+      "sha256": "15f37b701dab77ef7d61c771f18f956ae6057a8e53d5fb48b566a83e9ad06c00"
+    },
+    {
+      "file": "local-ci39083660931-targeted-fix.tap.gz",
+      "originalBytes": 30049,
+      "sha256": "f605d4b747291f1f9faa655d5e5e2b4031a5491c3363d51692beb2ba41e1ce3c"
+    },
+    {
+      "file": "local-ci39083660931-snippets-guarded.tap.gz",
+      "originalBytes": 19028,
+      "sha256": "11171e91f4af0f7168741e1e991323a80990e2ed6476854db841a69c0b7258ad"
+    },
+    {
+      "file": "local-ci39083660931-disabled-send-red.tap.gz",
+      "originalBytes": 1791,
+      "sha256": "42bcd4bedbd23f4ddc279993232b877eff501da37d358f3274e11ca2695c5693"
+    },
+    {
+      "file": "local-ci39083660931-disabled-send-green.tap.gz",
+      "originalBytes": 1137,
+      "sha256": "3c13cfa36b72ada7b4e40b74e46a532aa3a39307a05a04d14407a242a7b05368"
+    },
+    {
+      "file": "local-ci39083660931-full-node.tap.gz",
+      "originalBytes": 755196,
+      "sha256": "3b23c3badca0b7a0cefc3b587bcd2efa249a50eececb817520a6835baa496981"
+    },
+    {
+      "file": "local-ci39083660931-full-node-integrity.json.gz",
+      "originalBytes": 126027,
+      "sha256": "09918efe2c2966434de6a270d61ca678910e4e07697fef3079deb1201c45a2c7"
+    },
+    {
+      "file": "local-ci39083660931-final-targeted.tap.gz",
+      "originalBytes": 5035,
+      "sha256": "06088e93e1937479c6ddef9edaf61722bcf3bc0aea28c0ba7ad4741bfcd6cc03"
+    },
+    {
+      "file": "local-ci39083660931-guard-mutations.json.gz",
+      "originalBytes": 32005,
+      "sha256": "afa5782072b96579e6319d1c327bf61e922ae295f7d1187a2aa136454ebc80d1"
+    },
+    {
+      "file": "local-ci39083660931-final-full-node.tap.gz",
+      "originalBytes": 749610,
+      "sha256": "2817fb9a6925cd1049bc2e7a6f532d08adbdfc341c2c389cfcacfd50fefa9dc3"
+    },
+    {
+      "file": "local-ci39083660931-final-full-node-integrity.json.gz",
+      "originalBytes": 126029,
+      "sha256": "7259c8b23cbf73145b81204069c9c31e04f99731a3bd4df7dff59206ccdbf23e"
+    }
+  ],
+  "diagnostics": "snippets-*diagnostic are synthetic-only observations, not acceptance; exception-diagnostic patched unexecuted module and is inconclusive; worker-exception-diagnostic rebuilt instrumented classic worker and confirmed disabled consumer exception. Formal original failures preserved.",
+  "status": "NOT_RELEASE_READY",
+  "realHost": {
+    "profileConfirmed": true,
+    "existingChatGPTTabsPresent": true,
+    "domMetadataRead": "TIMEOUT",
+    "contextVerification": "NOT_RUN",
+    "privateContentSaved": false,
+    "permissionExpansion": false
+  },
+  "gates": {
+    "linux10k": "FAIL_SECOND_COMPLETE_AUDIT_DEADLINE",
+    "linuxJ4": "FAIL_PEER_SCOPE_AFTER_NATIVE_HOP",
+    "localJ4": "PARTIAL_23_STEPS_NOT_AUTOMATIC_FOREGROUND",
+    "snippets": "PASS_6_ORIGINAL_BROWSER_SCENARIOS",
+    "fullFree": "NOT_RELEASE_READY"
+  },
+  "fix": {
+    "file": "src/runtime/host-binding-service.mjs",
+    "sha256": "5ecc99d7c9c5d1924432491169771ffc185721fa8d05d906a4e9c40acdbc6830",
+    "rootCause": "disabled send correlation throws in current-observation native-delta callback; unchanged title plus added message rejected before updated body proof can be acknowledged",
+    "change": "guard both automatic observe calls by existing sendCandidatesEnabled; enabled failures unchanged",
+    "independentOriginal": {
+      "pass": 3,
+      "fail": 1
+    },
+    "independentCandidate": {
+      "pass": 4,
+      "fail": 0
+    },
+    "affectedContracts": 343,
+    "snippetInputsMatchCurrentFiles": true,
+    "provenance": "Formal snippet report sourceHashes and runnerSourceHashes authoritative. J4 report is original e1b0bfd, not this candidate."
+  },
+  "validationScheduling": {
+    "J4": "already separate runner/job/profile/output; retained",
+    "cacheUploadEnabled": false,
+    "artifactUploadEnabled": false,
+    "baselineFullNodeSeconds": 85.51,
+    "firstCandidateFullNodeSeconds": 95.86,
+    "firstCandidateFullNode": "8212 PASS, 1 FAIL missing new CI step in exact expected list; corrected and retained",
+    "speedupClaim": false,
+    "finalFullNodeSeconds": 100.88
+  },
+  "finalFullNode": {
+    "exitCode": 0,
+    "elapsedSeconds": 100.93578854203224,
+    "inputsUnchanged": true,
+    "testFiles": 550,
+    "pass": 8214,
+    "fail": 0,
+    "skip": 0,
+    "cancel": 0
+  },
+  "guardMutations": {
+    "killed": 12,
+    "total": 12,
+    "inputsUnchanged": true
+  },
+  "next10kObservation": {
+    "window": "CPU diagnostic sampled during ingestion, not during final failing audit",
+    "workerTenSecondsApproxMs": {
+      "idle": 2530,
+      "GC": 996,
+      "stable": 702,
+      "strictJSON": 540,
+      "IDBget": 509,
+      "sha256": 508,
+      "IDBput": 432
+    },
+    "retainedTrace": "left truncated; 122 aggregate and 251 producer drops; no complete duration attribution",
+    "candidateReproduction": "same-scope two-tab repeated 56-ref packets: 20 no-change publications in retained tail; measure required reread/validation, do not skip authority or fresh byte checks"
+  }
+}

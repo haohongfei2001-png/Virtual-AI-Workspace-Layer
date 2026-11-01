@@ -1,0 +1,206 @@
+✔ actual lifecycle composition sends bounded VIEW without role and keeps one renderer across grant renewal (3.488166ms)
+✔ preparing is not empty; bounded retry eventually publishes owner page (1.252959ms)
+✔ page query strips role and installs synchronous href plans before returning DTO (1.229333ms)
+✔ oversize responses halve bounded limit then rowLimit within the same finite read (0.545791ms)
+✔ disconnect stops navigation synchronously and late ready never renders (0.312959ms)
+✔ VIEW RPC is limited to six seconds (0.259333ms)
+✔ preparing total budget does not restart with renewed grant (1.657875ms)
+✔ invalidation bursts coalesce to one follow-up and retain current query and renderer (1.361667ms)
+✔ queued notification is discarded on scope rejection and late old port response (0.63525ms)
+✔ burst and renew during preparation retain the original thirty-second budget (3.2985ms)
+✔ owner current URL drives adapter matching and is erased on clear or legacy page (0.433125ms)
+✔ malformed owner current fails closed null (0.15925ms)
+✔ malformed owner current fails closed {"nativeUrl":"https://evil.test/","refId":null,"projectId":null} (0.12175ms)
+✔ malformed owner current fails closed {"nativeUrl":"https://chatgpt.com/","refId":22,"projectId":null} (0.126458ms)
+✔ malformed owner current fails closed {"nativeUrl":"https://chatgpt.com/","refId":null,"projectId":null,"title":"private"} (0.119375ms)
+✔ presentation bridge sends current grant and self echo does not erase typed search (0.299709ms)
+✔ shared presentation revisions and identical intent do not repeatedly reset search (0.282792ms)
+✔ presentation denial reports once without retry or stopping authorized frame (0.266375ms)
+✔ late presentation reply after stop cannot present or refresh (0.200792ms)
+✔ late presentation reply after scope-change cannot present or refresh (0.325583ms)
+✔ working set query survives renewal and shared close clears it (0.304209ms)
+✔ working set oversize refines bounded rows without changing offset (0.185834ms)
+✔ simultaneous search and working set is rejected before privileged read (0.263333ms)
+✔ manual horizon writes once using current revision and relocates before refreshing (2.403958ms)
+✔ automatic mode keeps frozen horizon and history query while writing only the selection (1.177917ms)
+✔ automatic selection rejects a response which changes the frozen horizon (0.74525ms)
+✔ another frame horizon change relocates existing date interval before publishing (0.491083ms)
+✔ denied horizon never retries or changes query; late success after stop cannot publish (2.5555ms)
+✔ current ref cannot mismatch owner current identity (0.222959ms)
+✔ working-set mutation uses fresh private operation identity and resets only working-set page (0.364583ms)
+✔ working-set mutation excludes concurrent horizon/working writes and coalesces dirty signals (0.202167ms)
+✔ working-set rejects caller authority fields and CAS denial never replays (0.11325ms)
+✔ working-set committed response does not report success when follow-up read fails or frame stops (0.285875ms)
+✔ working-set update preserves current search and six-second request deadline (0.221833ms)
+✔ horizon in flight excludes working-set writes; successful working-set add preserves search (0.231791ms)
+✔ explicit recovery invalidates navigation but keeps grant and attaches it to recovery requests (0.275875ms)
+✔ storage read corruption enters recovery while protocol and permission failures stop lifecycle (1.871375ms)
+✔ grant renew and data-changed bursts preserve recovery panel without VIEW reads or stale painting (0.369666ms)
+✔ recovery resume rereads preserved query and keeps existing renderer (1.021792ms)
+✔ stop or scope replacement clears recovery and fences delayed replies and resume (1.467667ms)
+✔ committed workset follow-up corruption still opens recovery after write mutex clears (0.249333ms)
+✔ committed horizon follow-up corruption still opens recovery after write mutex clears (0.222541ms)
+✔ closing panel during repair leaves one resumed query and rejects late repair reply (0.17075ms)
+✔ backup opens once, attaches current authority, and preserves panel through grant renewal (0.276458ms)
+✔ backup return reuses renderer and query while late export gets bounded owner cleanup (0.197334ms)
+✔ scope change clears backup and denies late chunks without resuming old private view (0.157125ms)
+✔ backup allocation arriving after client deadline is closed under the still-current grant (0.3ms)
+✔ backup allocation is also closed when an overdue reply beats a delayed timer callback (0.160208ms)
+✔ project and conversation plans with identical IDs remain separate and revoke together (0.193542ms)
+✔ project navigation rejects wrong-entity (0.153417ms)
+✔ project navigation rejects wrong-url (0.130583ms)
+✔ project navigation rejects unknown-project (0.122208ms)
+✔ project navigation rejects both-ids (0.127208ms)
+✔ project navigation rejects same-tab (0.115792ms)
+✔ project navigation rejects duplicate (0.143875ms)
+✔ oversize search refines its own page and preserves query, project and history: true (0.19425ms)
+✔ oversize search refines its own page and preserves query, project and history: false (0.111792ms)
+✔ permanently oversize search stops after bounded refinement without publishing a partial page (0.307042ms)
+✔ real search projection with long Unicode native titles remains reachable through smaller pages (5.127208ms)
+✔ safe current entry alone sends frozen authority and adopts returned session before a current-page read (9.570292ms)
+✔ safe current entry does not run for sidebar history search working set or expired grant (0.648833ms)
+✔ late current entry response cannot overwrite stopped disconnected changed-scope or later history view (0.620417ms)
+✔ current entry and horizon changes share a single mutation mutex in both directions (0.241ms)
+✔ malformed current-entry responses never change session or trigger projection reads (0.798334ms)
+✔ current-entry RPC expires at six seconds and a late success cannot publish (0.211208ms)
+✔ snippet panel uses current route and owner authority, prepares view before list and restores original query (0.398458ms)
+✔ scope replacement clears snippet panel and rejects late selected-asset reply (0.312917ms)
+✔ search locate uses only current owner-issued saved asset and bounded authority (1.198ms)
+✔ search locate rejects duplicate and late query reply (0.62225ms)
+✔ search locate rejects duplicate and late stop reply (0.172833ms)
+✔ search locate rejects duplicate and late disconnect reply (0.159542ms)
+✔ search locate rejects duplicate and late scope reply (1.772666ms)
+✔ search locate rejects duplicate and late deadline reply (0.156083ms)
+✔ resume GET precedes initial VIEW and restores bounded query and layout (0.352084ms)
+✔ resume late GET after account clear or stop cannot restore private layout or publish (0.507875ms)
+✔ layout save strips freeSession, coalesces 100ms and does not repeat acknowledged state (0.662875ms)
+✔ old SAVE reply cannot mark a replacement grant layout already saved (2.893625ms)
+✔ invalid resume query or layout falls back atomically without exposing extra fields (0.672084ms)
+✔ same layout after query change saves again with exact expectedQuery (0.26575ms)
+✔ queued old layout and interim old renderer cannot attach to pending new query (0.152458ms)
+✔ explicit workspace renderer exit clears lifecycle and emits one exact EXIT instead of SUSPEND (0.110917ms)
+✔ explicit sidebar renderer exit clears lifecycle and emits one exact EXIT instead of SUSPEND (0.073167ms)
+✔ explicit workspace exit fences a pending VIEW reply and old invalidation callback (0.178042ms)
+✔ explicit sidebar exit fences a pending VIEW reply and old invalidation callback (0.13525ms)
+✔ native dispatch drains presentation under the same deadline: saved (0.383333ms)
+✔ native dispatch drains presentation under the same deadline: rejected (0.137209ms)
+✔ native dispatch drains presentation under the same deadline: timeout (0.241ms)
+✔ native dispatch drains presentation under the same deadline: revoked (0.132209ms)
+✔ native dispatch drains presentation under the same deadline: inflight (0.1615ms)
+✔ layout changes during the first save must be acknowledged before native dispatch (0.240875ms)
+✔ same-target current plan is issued with frame grant and dispatch uses only owner tuple (0.134584ms)
+✔ same-target projection rejects no-current (0.164167ms)
+✔ same-target projection rejects different-current-id (0.1255ms)
+✔ same-target projection rejects different-current-url (0.134625ms)
+✔ same-target projection rejects different-target-id (0.134083ms)
+✔ same-target projection rejects extra-plan (0.137292ms)
+✔ same-target projection rejects extra-target (0.1265ms)
+✔ same-target projection rejects bad-epoch (0.1215ms)
+✔ same-target projection rejects missing-proof (0.147125ms)
+✔ same-target projection rejects project (0.14025ms)
+✔ current dispatch rejects unissued tuple without sending an owner request (0.116917ms)
+✔ current dispatch does not turn unconfirmed reply into success {"ok":true,"state":"dispatched"} (0.141542ms)
+✔ current dispatch does not turn unconfirmed reply into success {"ok":true} (0.098708ms)
+✔ current dispatch does not turn unconfirmed reply into success {"ok":false,"state":"already-current"} (0.0945ms)
+✔ current dispatch does not turn unconfirmed reply into success {"state":"already-current"} (0.099875ms)
+✔ current dispatch does not turn unconfirmed reply into success null (0.096875ms)
+✔ late same-target success remains fenced after stop (0.195167ms)
+✔ late same-target success remains fenced after scope-change (0.282042ms)
+✔ late same-target success remains fenced after expired (0.1945ms)
+✔ late same-target success remains fenced after deadline (0.274709ms)
+✔ ordinary href plan remains browser-default-only and cannot use current dispatch (0.452333ms)
+✔ trusted return lifecycle preserves resumed nonzero query and scroll in an unchanged current session (1.949083ms)
+✔ trusted return lifecycle resets nonzero page only when current session fields change (2.105042ms)
+✔ late unchanged current-entry response cannot overwrite newer current-page intent (0.4195ms)
+✔ pending VIEW blocks old native tuple until the newest response settles (0.339541ms)
+✔ dispatch coalesces role VIEW and releases safely at success (0.317875ms)
+✔ dispatch coalesces role VIEW and releases safely at failure (0.228958ms)
+✔ dispatch coalesces role VIEW and releases safely at timeout (0.266ms)
+✔ dispatch coalesces role VIEW and releases safely at disconnect (0.206584ms)
+✔ dispatch coalesces role VIEW and releases safely at scope-change (0.252667ms)
+✔ dispatch coalesces role VIEW and releases safely at renew (0.259334ms)
+✔ dispatch scheduling is per role and old VIEW completion cannot unlock its newer generation (0.325292ms)
+✔ actual native authorization survives queued VIEW but never scope revocation false (1.695875ms)
+✔ actual native authorization survives queued VIEW but never scope revocation true (4.893458ms)
+✔ search-only project receives its own native plan outside the current card page (0.283542ms)
+✔ search project rejects snippets (0.169667ms)
+✔ search project rejects membership (0.113709ms)
+✔ search project rejects duplicate (0.100791ms)
+✔ search project rejects conflict (0.104209ms)
+✔ search project rejects foreign-url (0.130833ms)
+✔ search project rejects wrong-id (0.116416ms)
+✔ backup return focuses only the fresh workspace unless user intent or lifetime intervenes (0.9325ms)
+✔ recovery return focuses only the fresh workspace unless user intent or lifetime intervenes (0.978542ms)
+✔ snippets return focuses only the fresh workspace unless user intent or lifetime intervenes (0.884542ms)
+✖ settled failed resume save is retried only by explicit navigation: denied (1.7995ms)
+✖ settled failed resume save is retried only by explicit navigation: throw (0.553625ms)
+✖ returning to last saved layout cancels obsolete queued save but supersedes an in-flight save (0.470292ms)
+ℹ tests 137
+ℹ suites 0
+ℹ pass 134
+ℹ fail 3
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 176.5005
+
+✖ failing tests:
+
+test at tests/host/free-frame-client.test.mjs:445:41
+✖ settled failed resume save is retried only by explicit navigation: denied (1.7995ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+
+  + 'already-current'
+  - 'blocked'
+
+      at TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/host/free-frame-client.test.mjs:450:9)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'already-current',
+    expected: 'blocked',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/host/free-frame-client.test.mjs:445:41
+✖ settled failed resume save is retried only by explicit navigation: throw (0.553625ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+
+  + 'already-current'
+  - 'blocked'
+
+      at TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/host/free-frame-client.test.mjs:450:9)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'already-current',
+    expected: 'blocked',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/host/free-frame-client.test.mjs:454:1
+✖ returning to last saved layout cancels obsolete queued save but supersedes an in-flight save (0.470292ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+
+    [
+      10,
+  +   50
+    ]
+
+      at TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/host/free-frame-client.test.mjs:458:85)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ 10, 50 ],
+    expected: [ 10 ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }

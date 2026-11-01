@@ -1,0 +1,22 @@
+✔ HEADER starts context and evidence reads concurrently after native bootstrap (285.475417ms)
+✔ HEADER waits for the other read after context rejects (193.58075ms)
+✔ HEADER waits for the other read after evidence rejects (214.807958ms)
+✔ both failures choose original context-first error order regardless of timing (161.725458ms)
+✔ account change while independent reads are pending prevents header publication (206.981042ms)
+✔ cold native bootstrap and shared registration finish before either parallel header read starts (177.206875ms)
+✔ undo human backup restore retains scoped UNKNOWN and reverses only human assets (monolithic) (919.263542ms)
+✔ undo human backup restore retains scoped UNKNOWN and reverses only human assets (partitioned) (687.997208ms)
+✔ retaining a restored reference does not bypass later nativeTitle conflict (0.150875ms)
+✔ retaining a restored reference does not bypass later available conflict (0.056041ms)
+✔ undo restored human assets preserves known UNKNOWN identity in warm and cold projection (751.186417ms)
+✔ omitted entries count as existing inventory; removing only a tombstone forces rebuild (0.152791ms)
+✔ same-sized reference replacement still requests the new row and bypasses empty-plan reuse (0.071792ms)
+✔ authoritative removal of a visible reference still rebuilds a zero-page replica (0.046625ms)
+ℹ tests 14
+ℹ suites 0
+ℹ pass 14
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1660.495417

@@ -1,0 +1,123 @@
+✖ actual host composition admits configured historical owner source into provisional old activity and real frame hasOlder (21.834998ms)
+✖ actual host composition admits matching codec1 ACK profile but never treats it as codec2 (1.767767ms)
+✔ default host composition without configured profiles rejects persisted host and synthetic labels (0.565403ms)
+✔ host projection refuses mismatched id (0.889092ms)
+✔ host projection refuses mismatched generation (0.777463ms)
+✔ host projection refuses mismatched profileId (0.661858ms)
+✔ host projection refuses mismatched profileVersion (0.586204ms)
+✔ host projection refuses mismatched codecVersion (0.554096ms)
+✔ host projection refuses mismatched channel (0.687928ms)
+✔ host projection refuses mismatched revoked (0.528377ms)
+✖ unadmitted legacy synthetic coverage cannot certify admitted historical positive (0.658133ms)
+✖ expired source freshness does not erase strict event; source revocation still does (0.819266ms)
+ℹ tests 12
+ℹ suites 0
+ℹ pass 8
+ℹ fail 4
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 172.65396
+
+✖ failing tests:
+
+test at tests/host/host-activity-source-admission.test.mjs:13:1
+✖ actual host composition admits configured historical owner source into provisional old activity and real frame hasOlder (21.834998ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'undated'
+  - 'provisional'
+  
+      at TestContext.<anonymous> (file:///tmp/vaiwl-history-projection-fix/tests/host/host-activity-source-admission.test.mjs:13:179)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.start (node:internal/test_runner/test:1242:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'undated',
+    expected: 'provisional',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/host/host-activity-source-admission.test.mjs:14:1
+✖ actual host composition admits matching codec1 ACK profile but never treats it as codec2 (1.767767ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+  + {}
+  - {
+  -   host_ack_7fcd720d259c45f66623e0e80d266b5b: {
+  -     channel: 'host-evidence',
+  -     codecVersion: 1,
+  -     generation: 'profile_1',
+  -     id: 'host_ack_7fcd720d259c45f66623e0e80d266b5b',
+  -     observedAt: '2026-10-15T12:00:00Z',
+  -     profileId: 'offline-ack',
+  -     profileVersion: 1,
+  -     revoked: false,
+  -     sourceRevision: 1,
+  -     validUntil: '2026-10-15T12:01:00Z'
+  -   }
+  - }
+  
+      at TestContext.<anonymous> (file:///tmp/vaiwl-history-projection-fix/tests/host/host-activity-source-admission.test.mjs:14:146)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+      at Test.postRun (node:internal/test_runner/test:1522:19)
+      at Test.run (node:internal/test_runner/test:1447:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: {},
+    expected: { host_ack_7fcd720d259c45f66623e0e80d266b5b: { id: 'host_ack_7fcd720d259c45f66623e0e80d266b5b', generation: 'profile_1', sourceRevision: 1, observedAt: '2026-10-15T12:00:00Z', validUntil: '2026-10-15T12:01:00Z', channel: 'host-evidence', codecVersion: 1, profileId: 'offline-ack', profileVersion: 1, revoked: false } },
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at tests/host/host-activity-source-admission.test.mjs:17:1
+✖ unadmitted legacy synthetic coverage cannot certify admitted historical positive (0.658133ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'undated'
+  - 'provisional'
+  
+      at TestContext.<anonymous> (file:///tmp/vaiwl-history-projection-fix/tests/host/host-activity-source-admission.test.mjs:17:388)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+      at Test.postRun (node:internal/test_runner/test:1522:19)
+      at Test.run (node:internal/test_runner/test:1447:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'undated',
+    expected: 'provisional',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/host/host-activity-source-admission.test.mjs:18:1
+✖ expired source freshness does not erase strict event; source revocation still does (0.819266ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  null !== 1
+  
+      at TestContext.<anonymous> (file:///tmp/vaiwl-history-projection-fix/tests/host/host-activity-source-admission.test.mjs:18:182)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+      at Test.postRun (node:internal/test_runner/test:1522:19)
+      at Test.run (node:internal/test_runner/test:1447:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: null,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

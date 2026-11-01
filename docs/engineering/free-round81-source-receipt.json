@@ -1,0 +1,27 @@
+{
+  "parent": "87079361dd64d522d66f07da42f310a4181cc5b2",
+  "sourceHashes": {
+    "simulator/package.mjs": "404f9a13a2a83f85705be6683f36d69cf20401b6fa49ae50f0bc2df7d0903412",
+    "src/host/content-session.mjs": "8f48b03781a672c4d49c1fc296da58aff15910074fccbdc0482eea78ee582688",
+    "src/runtime/host-worker-runtime.mjs": "bd510bce5d90f4795700fd83955eee81c98a77a3ddc2a65643d223ba1607511e",
+    "src/runtime/host-ui-owner.mjs": "11d631a8ff41617aa761fe97aeea801a1de24a23c78241dc7cfc6df844641a93",
+    "tests/host/content-session.test.mjs": "b0c1eed68e3175164cbe6f24893fbbb91b71079ec31316094de2314d4fdc968a",
+    "tests/host/host-worker-runtime.test.mjs": "e9411a8047ae6df924b15d272fe28c81211bc77fc9d0bac292e04b3e2c3e9aa9",
+    "tests/host/host-binding-service.test.mjs": "b4cbc575a83401ba8a5dd595539721c321e4da0ef80509caa724e6987a49c64f",
+    "tests/host/package.test.mjs": "f76b8d55a8adfc4a41f57bc0a8476b018ccbc3527f3c1c3e14fb1c55191942da",
+    "tests/host/package-mv3-browser.mjs": "49c1a14c4b4c7bdf03c7c89ecdca6cc73c0f59ed5fc4487f4a02e84eca40420c",
+    "extension/worker.mjs": "b1b7a863445266949f31eb174a6af6b89f1a5d012ce6b3a6cfa0d4312decd47b",
+    "extension/content-entry.mjs": "d0bef40c2b3aaf144637e65c441b1af4b62a7927cb3c4e554df9090152cc1687",
+    "extension/workspace.mjs": "bf2eb026da73b65a5969d2c6d9a187e2350481c19b63f1a97efc93df6419fc64",
+    "extension/sidebar.mjs": "6151804205b8393cabfff2d4b2e3deaca3a36beac14d07198ca0295d3d4a3ce6",
+    "extension/build.mjs": "3c311ed1f84c6d32e72fb51d3943140fa62cb6097d3007dcc8611b6a17d3a666",
+    "extension/package.mjs": "8fe447b7f4862b0298be5d042df31aefb45f94b78de085f9a2323aa5dd17bf23",
+    "extension/sidebar.html": "89957069504f1a8cf4025dee7f5ed890830bc72db0212f6bcac4ef16212c194a",
+    "extension/workspace.html": "edf1c04873e1a3ffdbd1aca4865f3d0cbc0ff8389687b9a759824ab5e7a0e486",
+    "extension/config.mjs": "9f38c623f8ef08e684d9b1b71fd0a49c01b736a41e75efc997117370df175c41"
+  },
+  "nodeTests": 1659,
+  "evidence": "PACKAGED_HOST_OFFLINE_SPA_LOOP",
+  "realChatGPT": "NOT_RUN",
+  "release": "NOT_RELEASE_READY"
+}

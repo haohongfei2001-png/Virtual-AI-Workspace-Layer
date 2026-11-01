@@ -1,0 +1,45 @@
+{
+  "evidence": "REAL_IDB_DIRECTORY_MIGRATION_WRITE_RECOVERY_SYNTHETIC",
+  "browser": "156.0.8078.4",
+  "sourceHashes": {
+    "src/data/evidence-directory-reader.mjs": "b94684c7e3824a0b6bc832d308cda077e37aca1c77c0517591a3df13cd6449e1",
+    "src/data/evidence-ref-directory.mjs": "1001abca8b849e7c73390acaa730a1639efc9cc621898ca97f3d538b30832b08",
+    "src/data/free-evidence-repository.mjs": "6752c6a8896b62e6a247b4c9fc14ee72a1b2233f3f6271754cc83c7c99996981",
+    "src/data/free-evidence-partitions.mjs": "dbecbc2418d79c84c8e7efd8b07db98794b5355989865c891dc551a84b5df4d5",
+    "tests/free/evidence-directory-contracts.mjs": "bf1bd3cf8f75d9ccc51e2d200fe3face08cf6dc788cb72d7318cd738537a94f9",
+    "tests/free/evidence-directory-write-browser.mjs": "7f060c5af2f2bff5979b027639afd0d8afde89b10eb7ed91e1286991dd8c4ff4",
+    "src/data/evidence-directory-writer.mjs": "0656a92e6016dcfc07f04c0014a3ea01e4fbe95dd74a4848900ae1f688747062",
+    "src/data/evidence-directory-migration.mjs": "5ba7a597c10a814d135f54339f307b597511319627047de907aa3e817f45290d",
+    "src/data/free-recovery-status.mjs": "50e3ab800c17ab190dbdc9c33d2630a7d8806889fe6c126c67068ace09a282e5"
+  },
+  "results": [
+    {
+      "name": "two-connection-migration-CAS-preserves-evidence",
+      "status": "PASS"
+    },
+    {
+      "name": "directory-write-CAS",
+      "status": "PASS"
+    },
+    {
+      "name": "quota-atomic-rollback",
+      "status": "PASS"
+    },
+    {
+      "name": "revoke-atomic-rollback",
+      "status": "PASS"
+    },
+    {
+      "name": "version-size-pairing-and-current-shadow-GC",
+      "status": "PASS"
+    },
+    {
+      "name": "full-directory-recovery-revokes-sources",
+      "status": "PASS"
+    },
+    {
+      "name": "Pro-account-isolation-and-reopen",
+      "status": "PASS"
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "base": "67152498cdf6edfc1299bacdf390bfd6392ec7a3",
+  "productChanges": false,
+  "files": {
+    "tests/host/experiments/keyboard-boundary/probe-browser.mjs": "71b05e571dfd0ec97a9c8623438ac4bdf02e5b8d23b7f3012e8acd22e80cf1b7",
+    "tests/host/fixtures/server.mjs": "921573e4b2c9068be8f53e6768cf446f7a88eb33232ce1b2e0a63774b9e907ac",
+    "tests/host/fixture-j3-layout.test.mjs": "91656dd7976e3254df7e880a8492f9a8cda8c66747ad86f93c5ef382f6cb3821",
+    "tests/host/j3-package-journey.mjs": "bb1eb297d5323ab695b34bc44b96f367ba23648d5be876b2c515c9f6f8966038",
+    "tests/host/sys02-completion-repair-cases.mjs": "5829ae8275a4a114ad43aa63a93f30e543943a16a74cdb667104ccfaab892eea",
+    "tests/host/sys02-completion-repair-cases.test.mjs": "795037abe8a73245a7c08d8598ca2b05bb08f86f3d36fbca79bb5c298e0705b0",
+    "tests/host/sys02-pending-idb-browser.mjs": "da5585307953c9380e3d7cba069ca85662f10fc6f956e090286d3a3d706026d5",
+    "tests/host/sys02-pending-idb-report.test.mjs": "81b7a26426251735dd6ebc62d5a35d5e2a88527f2539c27323a8900ef738d541"
+  },
+  "artifacts": {
+    "README.md": "1192ed0cefadc90afc52b783849cd802cc638398eb4450e2ea24814b92c256d9",
+    "completion-repair-idb.json.gz": "7cbba88d8e3c6c7f898f0db43e96b96c221ba89b429cfc9d71c81fcd66f39ed6",
+    "completion-repair-node.log.gz": "16f190cb9c56201ad45cb64e51fe9f1b29a56797d755d10f5c37ecafeb528a47",
+    "completion-repair-scaffold-first.log.gz": "c8aa80a12c0787c57f9612978c95ad753b41029996b91d07bf4d4f01e6460d50",
+    "completion-repair-scaffold-second.log.gz": "fc3d09713767d85db7297443dcd3db9b8aff31c432dd0aa1f4e4208072618c9f",
+    "completion-repair-scaffold-third.log.gz": "28739deed78090103c0d5f1fb3b561c4356bf57b6e670f6e527ec8c0cb61ce86",
+    "j3-app-root-end.png": "14a10363fb4cd44a9d3ed057de7a92ef6d4fb89917ff5e1c41616b5544f65faa",
+    "j3-app-root.json.gz": "ccb8ddc076562bdf8cfd2889a560343241ecd6af9505344f79eb9e9205c48a05",
+    "keyboard-matrix.json.gz": "b0800848f4d2062086cb0501e8ee3f7cb31c153867f22e857492863a22e97c74",
+    "node.log.gz": "ec5a3f391c9831a7f105af5f54c2a289d2e5ba780790aee6842a338901816205",
+    "targeted.log.gz": "512852e032b3800cc506c946eb1fe5a54e1842789ca9049f869f688ee72dfbf4"
+  }
+}

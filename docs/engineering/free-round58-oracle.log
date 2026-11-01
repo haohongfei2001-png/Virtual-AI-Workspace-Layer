@@ -1,0 +1,16 @@
+✔ SHA256 matches published empty and abc vectors (0.431042ms)
+✔ padding boundary lengths and multi-block lengths match independent crypto (2.074917ms)
+✔ Chinese astral and unpaired surrogates preserve TextEncoder UTF8 replacement semantics (0.200875ms)
+✔ large ASCII and mixed Unicode payloads match crypto and sequential calls do not share state (15.211541ms)
+✔ supported TextEncoder input coercions and thrown conversions remain unchanged (0.343083ms)
+✔ deterministic pseudo-random UTF16 and varied block lengths match crypto (5.962583ms)
+✔ stable key ordering and digest remain byte-compatible including sparse-array legacy semantics (0.161167ms)
+✔ stable and digest retain non-JSON rejection and do not invoke toJSON hooks (0.602541ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 64.727333

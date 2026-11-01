@@ -1,0 +1,44 @@
+[{"name":"explicit-open-has-panel-focus","pass":true},{"name":"status-completion-keeps-panel-focus","pass":true},{"name":"refresh-keeps-back-focus","pass":true},{"name":"refresh-completion-keeps-back-focus","pass":true},{"name":"late-check-never-steals-outside-focus","pass":true},{"name":"stop-preserves-outside-focus","pass":true},{"name":"checks-never-repair","pass":true},{"name":"backup-open-has-panel-focus","pass":true},{"name":"backup-invalidation-does-not-steal-focus","pass":true},{"name":"snippets-open-has-panel-focus","pass":false},{"name":"snippets-completion-keeps-focus","pass":false},{"name":"snippets-invalidation-keeps-back-focus","pass":false},{"name":"snippet-refresh-never-steals-outside-focus","pass":true},{"name":"draft-unchanged","pass":true}]
+✖ recovery and backup keep keyboard focus within an explicit local operation (673.456042ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 826.998458
+
+✖ failing tests:
+
+test at tests/host/recovery-panel-focus-browser.mjs:8:1
+✖ recovery and backup keep keyboard focus within an explicit local operation (673.456042ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+
+  + [
+  +   {
+  +     name: 'snippets-open-has-panel-focus',
+  +     pass: false
+  +   },
+  +   {
+  +     name: 'snippets-completion-keeps-focus',
+  +     pass: false
+  +   },
+  +   {
+  +     name: 'snippets-invalidation-keeps-back-focus',
+  +     pass: false
+  +   }
+  + ]
+  - []
+
+      at TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/host/recovery-panel-focus-browser.mjs:47:46)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ { name: 'snippets-open-has-panel-focus', pass: false }, { name: 'snippets-completion-keeps-focus', pass: false }, { name: 'snippets-invalidation-keeps-back-focus', pass: false } ],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }

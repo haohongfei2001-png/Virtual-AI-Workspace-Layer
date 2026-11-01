@@ -1,0 +1,691 @@
+{
+  "kind": "MANIFEST_VERIFIER_BOUNDARY_VALIDATION_NOT_BROWSER_ACCEPTANCE",
+  "baseCommit": "23385f1f960061385e883365bb421120bf8e222e",
+  "originalPatchSha256": "2cdc7919048601a8d29dab150eb6409591ce94818b7ea8e98794f133f10ac76e",
+  "revisedPatchSha256": "e25cd2e10bf864a366a0b1224101d6655b51d33b6cc37d4f7d967526813ca48c",
+  "findings": [
+    "Rehashed manifests could expose worker bootstrap entry",
+    "Ambiguous dot/backslash/encoded declarations were not rejected by the old verifier; this is not a claim each form is a Chromium exploit"
+  ],
+  "repair": [
+    "Verify manifest execution/permission/public-resource shape independently of builder",
+    "Protect all src/runtime plus worker/classic-runtime/browser-bootstrap",
+    "Conservatively reject ambiguous paths; retain canonical, leading-slash and single-encoded public closure"
+  ],
+  "files": {
+    "extension/package.mjs": "d232c496f57910cd27a2137cd73cd2c6aaa27f5c82250fbda1e0a788357b5302",
+    "extension/package-manifest-boundary.mjs": "bf0bac293fe80de35c6865ef8905bf03f8811cddac579e240d0fe334fcc0aeff",
+    "tests/host/package-manifest-boundary.test.mjs": "8ffbe860973d85a8b0765f5f45411f3fe0d62c47cfe80218e7d3cbf970bf9996"
+  },
+  "independentTargeted": {
+    "tests": 308,
+    "pass": 308,
+    "fail": 0,
+    "skip": 0,
+    "durationMs": 4797.954149,
+    "logSha256": "0bb9314a3551e82b15a4e601e1c9d915125222d26a27cce86df7dd9fe24442c0"
+  },
+  "independentProperties": {
+    "privatePathsRejected": 810,
+    "publicPathsAccepted": 240,
+    "rehashedPrivilegeExpansionsRejected": 13
+  },
+  "packageProfiles": {
+    "sourceCommit": "23385f1f960061385e883365bb421120bf8e222e",
+    "profiles": 37,
+    "allByteEqual": true,
+    "results": [
+      {
+        "i": 0,
+        "options": {},
+        "zipSha256": "f32f92491c026b1c966e8d05e63c71fa5be21b67997b8967dc8f93b1d0410ac2",
+        "identical": true,
+        "files": 167,
+        "privateNoReceipt": true
+      },
+      {
+        "i": 1,
+        "options": {
+          "offlineOrigin": "http://127.0.0.1:43210",
+          "offlineSnippets": false,
+          "offlineHistory": false,
+          "offlineContext": false,
+          "offlineProjectContext": false,
+          "offlineFirstSend": false,
+          "offlineExistingSend": false,
+          "offlineOldSendTerminal": false
+        },
+        "zipSha256": "a6fc02bf8ef386f4119d41546b6401db2a0b20e8c320026c16750918874ca2cd",
+        "identical": true,
+        "files": 167,
+        "privateNoReceipt": true
+      },
+      {
+        "i": 2,
+        "options": {
+          "offlineOrigin": "http://127.0.0.1:43210",
+          "offlineSnippets": true,
+          "offlineHistory": false,
+          "offlineContext": false,
+          "offlineProjectContext": false,
+          "offlineFirstSend": false,
+          "offlineExistingSend": false,
+          "offlineOldSendTerminal": false
+        },
+        "zipSha256": "d261b52a5e6bc4d0a54fab35f160212d7dbe023cc0314287fd91a829f7f8b0ff",
+        "identical": true,
+        "files": 167,
+        "privateNoReceipt": true
+      },
+      {
+        "i": 3,
+        "options": {
+          "offlineOrigin": "http://127.0.0.1:43210",
+          "offlineSnippets": false,
+          "offlineHistory": true,
+          "offlineContext": false,
+          "offlineProjectContext": false,
+          "offlineFirstSend": false,
+          "offlineExistingSend": false,
+          "offlineOldSendTerminal": false
+        },
+        "zipSha256": "ff7a58e5f409c7f08147a69068da851222d28894971ef41c7cba9dd33ac168cf",
+        "identical": true,
+        "files": 167,
+        "privateNoReceipt": true
+      },
+      {
+        "i": 4,
+        "options": {
+          "offlineOrigin": "http://127.0.0.1:43210",
+          "offlineSnippets": true,
+          "offlineHistory": true,
+          "offlineContext": false,
+          "offlineProjectContext": false,
+          "offlineFirstSend": false,
+          "offlineExistingSend": false,
+          "offlineOldSendTerminal": false
+        },
+        "zipSha256": "5704ea40f12cdd9b9a18deb71abd645ab1294937afdf5b56a0aeb8e7ae92e823",
+        "identical": true,
+        "files": 167,
+        "privateNoReceipt": true
+      },
+      {
+        "i": 5,
+        "options": {
+          "offlineOrigin": "http://127.0.0.1:43210",
+          "offlineSnippets": false,
+          "offlineHistory": false,
+          "offlineContext": true,
+          "offlineProjectContext": false,
+          "offlineFirstSend": false,
+          "offlineExistingSend": false,
+          "offlineOldSendTerminal": false
+        },
+        "zipSha256": "29bbc5f3f91ab19ca6b731123a716b2ae15fdbc2fcaf61116f3a48155c014041",
+        "identical": true,
+        "files": 167,
+        "privateNoReceipt": true
+      },
+      {
+        "i": 6,
+        "options": {
+          "offlineOrigin": "http://127.0.0.1:43210",
+          "offlineSnippets": true,
+          "offlineHistory": false,
+          "offlineContext": true,
+          "offlineProjectContext": false,
+          "offlineFirstSend": false,
+          "offlineExistingSend": false,
+          "offlineOldSendTerminal": false
+        },
+        "zipSha256": "39463d1492d77929cfbf15e75b77045b481e3d781bbb88f3730213ad56e9fd09",
+        "identical": true,
+        "files": 167,
+        "privateNoReceipt": true
+      },
+      {
+        "i": 7,
+        "options": {
+          "offlineOrigin": "http://127.0.0.1:43210",
+          "offlineSnippets": false,
+          "offlineHistory": true,
+          "offlineContext": true,
+          "offlineProjectContext": false,
+          "offlineFirstSend": false,
+          "offlineExistingSend": false,
+          "offlineOldSendTerminal": false
+        },
+        "zipSha256": "7a5e35fcacae3044923f15adee354d4c188eb011e120baca3cc9ef84f80cddcf",
+        "identical": true,
+        "files": 167,
+        "privateNoReceipt": true
+      },
+      {
+        "i": 8,
+        "options": {
+          "offlineOrigin": "http://127.0.0.1:43210",
+          "offlineSnippets": true,
+          "offlineHistory": true,
+          "offlineContext": true,
+          "offlineProjectContext": false,
+          "offlineFirstSend": false,
+          "offlineExistingSend": false,
+          "offlineOldSendTerminal": false
+        },
+        "zipSha256": "e889125d6baec9c39f0eedeb4e1ebf37dc562161d0afb36924f53339cc25209c",
+        "identical": true,
+        "files": 167,
+        "privateNoReceipt": true
+      },
+      {
+        "i": 9,
+        "options": {
+          "offlineOrigin": "http://127.0.0.1:43210",
+          "offlineSnippets": false,
+          "offlineHistory": false,
+          "offlineContext": true,
+          "offlineProjectContext": true,
+          "offlineFirstSend": false,
+          "offlineExistingSend": false,
+          "offlineOldSendTerminal": false
+        },
+        "zipSha256": "ce89b6ced1dc7cd1866aaa745b1a04a98be3834973bb216440f5df08bca3b886",
+        "identical": true,
+        "files": 167,
+        "privateNoReceipt": true
+      },
+      {
+        "i": 10,
+        "options": {
+          "offlineOrigin": "http://127.0.0.1:43210",
+          "offlineSnippets": true,
+          "offlineHistory": false,
+          "offlineContext": true,
+          "offlineProjectContext": true,
+          "offlineFirstSend": false,
+          "offlineExistingSend": false,
+          "offlineOldSendTerminal": false
+        },
+        "zipSha256": "2e403fe05a2fdc81735632b07a84358498f632e07963ef6992797d3f89136f1f",
+        "identical": true,
+        "files": 167,
+        "privateNoReceipt": true
+      },
+      {
+        "i": 11,
+        "options": {
+          "offlineOrigin": "http://127.0.0.1:43210",
+          "offlineSnippets": false,
+          "offlineHistory": true,
+          "offlineContext": true,
+          "offlineProjectContext": true,
+          "offlineFirstSend": false,
+          "offlineExistingSend": false,
+          "offlineOldSendTerminal": false
+        },
+        "zipSha256": "8df08ce4bec84f32dba8d03275a6f1ea3b8b12de57216ad2aca8bae5c2f2bd74",
+        "identical": true,
+        "files": 167,
+        "privateNoReceipt": true
+      },
+      {
+        "i": 12,
+        "options": {
+          "offlineOrigin": "http://127.0.0.1:43210",
+          "offlineSnippets": true,
+          "offlineHistory": true,
+          "offlineContext": true,
+          "offlineProjectContext": true,
+          "offlineFirstSend": false,
+          "offlineExistingSend": false,
+          "offlineOldSendTerminal": false
+        },
+        "zipSha256": "09a4abea7bb689532ecbe21ceff75afe2e93042b27719fc6a46059df6a7fde28",
+        "identical": true,
+        "files": 167,
+        "privateNoReceipt": true
+      },
+      {
+        "i": 13,
+        "options": {
+          "offlineOrigin": "http://127.0.0.1:43210",
+          "offlineSnippets": false,
+          "offlineHistory": false,
+          "offlineContext": false,
+          "offlineProjectContext": false,
+          "offlineFirstSend": true,
+          "offlineExistingSend": false,
+          "offlineOldSendTerminal": false
+        },
+        "zipSha256": "a25ddec5b5cb688d2409f37e4b3cd0b3ad976a146c828fc1aad7e0e99baa161b",
+        "identical": true,
+        "files": 167,
+        "privateNoReceipt": true
+      },
+      {
+        "i": 14,
+        "options": {
+          "offlineOrigin": "http://127.0.0.1:43210",
+          "offlineSnippets": true,
+          "offlineHistory": false,
+          "offlineContext": false,
+          "offlineProjectContext": false,
+          "offlineFirstSend": true,
+          "offlineExistingSend": false,
+          "offlineOldSendTerminal": false
+        },
+        "zipSha256": "a84f9892713fc5a5c317719d3b3b4b78528ea066432c48d496307c1ccf543676",
+        "identical": true,
+        "files": 167,
+        "privateNoReceipt": true
+      },
+      {
+        "i": 15,
+        "options": {
+          "offlineOrigin": "http://127.0.0.1:43210",
+          "offlineSnippets": false,
+          "offlineHistory": true,
+          "offlineContext": false,
+          "offlineProjectContext": false,
+          "offlineFirstSend": true,
+          "offlineExistingSend": false,
+          "offlineOldSendTerminal": false
+        },
+        "zipSha256": "2a229c2cb50c4872000a5a8c43a296601973f42d90d9777075d5a5721cbb9b7e",
+        "identical": true,
+        "files": 167,
+        "privateNoReceipt": true
+      },
+      {
+        "i": 16,
+        "options": {
+          "offlineOrigin": "http://127.0.0.1:43210",
+          "offlineSnippets": true,
+          "offlineHistory": true,
+          "offlineContext": false,
+          "offlineProjectContext": false,
+          "offlineFirstSend": true,
+          "offlineExistingSend": false,
+          "offlineOldSendTerminal": false
+        },
+        "zipSha256": "7a2edcb6708529b0ba76f3dec23129f42fd08faae94d683a47ebafdec6817cf4",
+        "identical": true,
+        "files": 167,
+        "privateNoReceipt": true
+      },
+      {
+        "i": 17,
+        "options": {
+          "offlineOrigin": "http://127.0.0.1:43210",
+          "offlineSnippets": false,
+          "offlineHistory": false,
+          "offlineContext": true,
+          "offlineProjectContext": false,
+          "offlineFirstSend": false,
+          "offlineExistingSend": true,
+          "offlineOldSendTerminal": false
+        },
+        "zipSha256": "c338d19eada378ec7232796719e149c7b6706b2d27266f4714d5310612be620e",
+        "identical": true,
+        "files": 167,
+        "privateNoReceipt": true
+      },
+      {
+        "i": 18,
+        "options": {
+          "offlineOrigin": "http://127.0.0.1:43210",
+          "offlineSnippets": true,
+          "offlineHistory": false,
+          "offlineContext": true,
+          "offlineProjectContext": false,
+          "offlineFirstSend": false,
+          "offlineExistingSend": true,
+          "offlineOldSendTerminal": false
+        },
+        "zipSha256": "c8aa75cf6efd4d2cf5ab23ab94505fd8ec1e61cbd64c86092fe1cc1a450c5a6f",
+        "identical": true,
+        "files": 167,
+        "privateNoReceipt": true
+      },
+      {
+        "i": 19,
+        "options": {
+          "offlineOrigin": "http://127.0.0.1:43210",
+          "offlineSnippets": false,
+          "offlineHistory": true,
+          "offlineContext": true,
+          "offlineProjectContext": false,
+          "offlineFirstSend": false,
+          "offlineExistingSend": true,
+          "offlineOldSendTerminal": false
+        },
+        "zipSha256": "41145c46cc11d36b3c601d2a69eed7c3a6c11a1237177625fb3bf87056399939",
+        "identical": true,
+        "files": 167,
+        "privateNoReceipt": true
+      },
+      {
+        "i": 20,
+        "options": {
+          "offlineOrigin": "http://127.0.0.1:43210",
+          "offlineSnippets": true,
+          "offlineHistory": true,
+          "offlineContext": true,
+          "offlineProjectContext": false,
+          "offlineFirstSend": false,
+          "offlineExistingSend": true,
+          "offlineOldSendTerminal": false
+        },
+        "zipSha256": "905e08f11779a381a0aaae68503bfe3293a78085782ed966ad09bb533b085621",
+        "identical": true,
+        "files": 167,
+        "privateNoReceipt": true
+      },
+      {
+        "i": 21,
+        "options": {
+          "offlineOrigin": "http://127.0.0.1:43210",
+          "offlineSnippets": false,
+          "offlineHistory": false,
+          "offlineContext": true,
+          "offlineProjectContext": true,
+          "offlineFirstSend": false,
+          "offlineExistingSend": true,
+          "offlineOldSendTerminal": false
+        },
+        "zipSha256": "41cc5c82bb4c76ac0faabaa8cc9f043726d5d2b5c160d50790e0236a0ce2187f",
+        "identical": true,
+        "files": 167,
+        "privateNoReceipt": true
+      },
+      {
+        "i": 22,
+        "options": {
+          "offlineOrigin": "http://127.0.0.1:43210",
+          "offlineSnippets": true,
+          "offlineHistory": false,
+          "offlineContext": true,
+          "offlineProjectContext": true,
+          "offlineFirstSend": false,
+          "offlineExistingSend": true,
+          "offlineOldSendTerminal": false
+        },
+        "zipSha256": "f8415daab13b0d1c832084fe9b59caee813965acb70177a36606b2976ee2e5a7",
+        "identical": true,
+        "files": 167,
+        "privateNoReceipt": true
+      },
+      {
+        "i": 23,
+        "options": {
+          "offlineOrigin": "http://127.0.0.1:43210",
+          "offlineSnippets": false,
+          "offlineHistory": true,
+          "offlineContext": true,
+          "offlineProjectContext": true,
+          "offlineFirstSend": false,
+          "offlineExistingSend": true,
+          "offlineOldSendTerminal": false
+        },
+        "zipSha256": "88b79721aa249aad8dc0b934e048edadd338ccaf572b9d1b6cd7848d281206e0",
+        "identical": true,
+        "files": 167,
+        "privateNoReceipt": true
+      },
+      {
+        "i": 24,
+        "options": {
+          "offlineOrigin": "http://127.0.0.1:43210",
+          "offlineSnippets": true,
+          "offlineHistory": true,
+          "offlineContext": true,
+          "offlineProjectContext": true,
+          "offlineFirstSend": false,
+          "offlineExistingSend": true,
+          "offlineOldSendTerminal": false
+        },
+        "zipSha256": "bb604bee83c835f11b020f7a70866a67e46f2b870711bbad723ed2216df8d64b",
+        "identical": true,
+        "files": 167,
+        "privateNoReceipt": true
+      },
+      {
+        "i": 25,
+        "options": {
+          "offlineOrigin": "http://127.0.0.1:43210",
+          "offlineSnippets": false,
+          "offlineHistory": false,
+          "offlineContext": false,
+          "offlineProjectContext": false,
+          "offlineFirstSend": true,
+          "offlineExistingSend": false,
+          "offlineOldSendTerminal": true
+        },
+        "zipSha256": "7ef8661b4a1cd251dd3b9da9ada7d56fa34e3ead7588531652d666c9f66721b1",
+        "identical": true,
+        "files": 167,
+        "privateNoReceipt": true
+      },
+      {
+        "i": 26,
+        "options": {
+          "offlineOrigin": "http://127.0.0.1:43210",
+          "offlineSnippets": true,
+          "offlineHistory": false,
+          "offlineContext": false,
+          "offlineProjectContext": false,
+          "offlineFirstSend": true,
+          "offlineExistingSend": false,
+          "offlineOldSendTerminal": true
+        },
+        "zipSha256": "343751d866c855e8b1f4fc332449bd1e1fcdcc6424c8b51ec1f8886898ec37f1",
+        "identical": true,
+        "files": 167,
+        "privateNoReceipt": true
+      },
+      {
+        "i": 27,
+        "options": {
+          "offlineOrigin": "http://127.0.0.1:43210",
+          "offlineSnippets": false,
+          "offlineHistory": true,
+          "offlineContext": false,
+          "offlineProjectContext": false,
+          "offlineFirstSend": true,
+          "offlineExistingSend": false,
+          "offlineOldSendTerminal": true
+        },
+        "zipSha256": "e389ab0c62a1d60cd4d3f8698d9b9b79e8fc1028a869bf6e6a2f0b7315cad65f",
+        "identical": true,
+        "files": 167,
+        "privateNoReceipt": true
+      },
+      {
+        "i": 28,
+        "options": {
+          "offlineOrigin": "http://127.0.0.1:43210",
+          "offlineSnippets": true,
+          "offlineHistory": true,
+          "offlineContext": false,
+          "offlineProjectContext": false,
+          "offlineFirstSend": true,
+          "offlineExistingSend": false,
+          "offlineOldSendTerminal": true
+        },
+        "zipSha256": "60a2024e518ae348471563474edb21e96640abab87a2d36a0423690b76dd2546",
+        "identical": true,
+        "files": 167,
+        "privateNoReceipt": true
+      },
+      {
+        "i": 29,
+        "options": {
+          "offlineOrigin": "http://127.0.0.1:43210",
+          "offlineSnippets": false,
+          "offlineHistory": false,
+          "offlineContext": true,
+          "offlineProjectContext": false,
+          "offlineFirstSend": false,
+          "offlineExistingSend": true,
+          "offlineOldSendTerminal": true
+        },
+        "zipSha256": "31c77d4797ad5e1d42d3b29fc4763cc2a76a688fc8bfdfd3fce2bf515d27b6ae",
+        "identical": true,
+        "files": 167,
+        "privateNoReceipt": true
+      },
+      {
+        "i": 30,
+        "options": {
+          "offlineOrigin": "http://127.0.0.1:43210",
+          "offlineSnippets": true,
+          "offlineHistory": false,
+          "offlineContext": true,
+          "offlineProjectContext": false,
+          "offlineFirstSend": false,
+          "offlineExistingSend": true,
+          "offlineOldSendTerminal": true
+        },
+        "zipSha256": "345d80cd495b995809fb39d463cb9d991fecfa9f21f6c34d218b03d90ea873ba",
+        "identical": true,
+        "files": 167,
+        "privateNoReceipt": true
+      },
+      {
+        "i": 31,
+        "options": {
+          "offlineOrigin": "http://127.0.0.1:43210",
+          "offlineSnippets": false,
+          "offlineHistory": true,
+          "offlineContext": true,
+          "offlineProjectContext": false,
+          "offlineFirstSend": false,
+          "offlineExistingSend": true,
+          "offlineOldSendTerminal": true
+        },
+        "zipSha256": "425f95f1b933e9fc16e97201d5e14b500d7a9c8ea0d95f356208943aabb0de19",
+        "identical": true,
+        "files": 167,
+        "privateNoReceipt": true
+      },
+      {
+        "i": 32,
+        "options": {
+          "offlineOrigin": "http://127.0.0.1:43210",
+          "offlineSnippets": true,
+          "offlineHistory": true,
+          "offlineContext": true,
+          "offlineProjectContext": false,
+          "offlineFirstSend": false,
+          "offlineExistingSend": true,
+          "offlineOldSendTerminal": true
+        },
+        "zipSha256": "5e23be02bb33562b337034fd5da6d0dfaac763b03981d6d98185abe1ccf0c42b",
+        "identical": true,
+        "files": 167,
+        "privateNoReceipt": true
+      },
+      {
+        "i": 33,
+        "options": {
+          "offlineOrigin": "http://127.0.0.1:43210",
+          "offlineSnippets": false,
+          "offlineHistory": false,
+          "offlineContext": true,
+          "offlineProjectContext": true,
+          "offlineFirstSend": false,
+          "offlineExistingSend": true,
+          "offlineOldSendTerminal": true
+        },
+        "zipSha256": "a5da88e1c7be041dd1225ba8cb3dd2432e22713674b59aec0cfa590ec533eb48",
+        "identical": true,
+        "files": 167,
+        "privateNoReceipt": true
+      },
+      {
+        "i": 34,
+        "options": {
+          "offlineOrigin": "http://127.0.0.1:43210",
+          "offlineSnippets": true,
+          "offlineHistory": false,
+          "offlineContext": true,
+          "offlineProjectContext": true,
+          "offlineFirstSend": false,
+          "offlineExistingSend": true,
+          "offlineOldSendTerminal": true
+        },
+        "zipSha256": "d46191db568ddea92c21d530a69e99b10c2dec9d104d1a035876111603d85204",
+        "identical": true,
+        "files": 167,
+        "privateNoReceipt": true
+      },
+      {
+        "i": 35,
+        "options": {
+          "offlineOrigin": "http://127.0.0.1:43210",
+          "offlineSnippets": false,
+          "offlineHistory": true,
+          "offlineContext": true,
+          "offlineProjectContext": true,
+          "offlineFirstSend": false,
+          "offlineExistingSend": true,
+          "offlineOldSendTerminal": true
+        },
+        "zipSha256": "4a323197f04b6e69b376bfe1aa5c1f41f8db60a89b9f508e07977a3c109a0fd1",
+        "identical": true,
+        "files": 167,
+        "privateNoReceipt": true
+      },
+      {
+        "i": 36,
+        "options": {
+          "offlineOrigin": "http://127.0.0.1:43210",
+          "offlineSnippets": true,
+          "offlineHistory": true,
+          "offlineContext": true,
+          "offlineProjectContext": true,
+          "offlineFirstSend": false,
+          "offlineExistingSend": true,
+          "offlineOldSendTerminal": true
+        },
+        "zipSha256": "f3f747358743db75b2ea5658b3d733cec74fd7e61f67eb86d4f374aef55e5968",
+        "identical": true,
+        "files": 167,
+        "privateNoReceipt": true
+      }
+    ],
+    "finalVerifierRecheck": {
+      "profiles": 37,
+      "allAccepted": true,
+      "allZipByteEqual": true
+    }
+  },
+  "profileParityScope": "Verifier-only patch against fixed 23385 source; later J4 runtime changes are not claimed byte-identical",
+  "chromiumSources": [
+    "https://raw.githubusercontent.com/chromium/chromium/main/extensions/common/manifest_handlers/web_accessible_resources_info.cc",
+    "https://raw.githubusercontent.com/chromium/chromium/main/extensions/common/url_pattern.cc"
+  ],
+  "browser": "NOT_RUN",
+  "realChatGPT": "NOT_RUN",
+  "release": "NOT_RELEASE_READY",
+  "integratedFrozenBatch": {
+    "fullNode": {
+      "tests": 8026,
+      "pass": 8026,
+      "fail": 0,
+      "skip": 0,
+      "durationMs": 162043.952489,
+      "logSha256": "ba5234ca96c709624af9287a6ec9963be6da949125b73b3f8d418c067e072543"
+    },
+    "guardMutations": {
+      "selected": 12,
+      "killed": 12,
+      "inputUnchanged": true,
+      "reportSha256": "e1a7356cd8ff1c9ba5955ea7258e08526f431e1b20a1f63ec07a55b199576c99"
+    },
+    "sourceTestsExtensionWorkflowUnchangedDuringRun": true,
+    "combinedTree": "Manifest verifier + retained history v2; no Native GC hint candidate"
+  }
+}

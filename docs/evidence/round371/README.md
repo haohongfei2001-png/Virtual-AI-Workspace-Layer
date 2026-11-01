@@ -1,0 +1,13 @@
+# Round371：被在途任务打断的缺ACK关闭可显式恢复
+
+从866a1a2继续。此前missing frame ACK且存在raw native IPC/adapter工作时，关闭正确拒绝自动rebind，但任务后来结束后controller仍dormantReady=false，onWake始终拒绝，形成无效返回入口。
+
+content仅在本次真正进入controller关闭且同一live会话缺ACK时记录RAM incompleteClose。后续可信onWake保留全部quiet/identity/route/upgrade/rawIPC/activeWork边界，取得adapter.prepareRecovery与identity reader静稳token后前后复核workRevision，才在同一同步栈单次调用既有rebind(reading)。不补造ACK、不复用旧frame授权、不清在途计数、不重新发送。任务drain本身不会自动恢复；忙时的点击不排队。完整或晚到双ACK仍走既有保留原frame的fresh授权路径。
+
+这个异常恢复会替换旧owned frame，重新HELLO/REFRESH后恢复原生reading及唯一四格；需要再一次明确点击进入workspace，不把失败关闭当作正常无损frame恢复。沿用既有rebind而不重建native editor/草稿，后者仍待此故障场景的实际Chrome断言。
+
+仅该缺ACK重建携带旧scope的RAM expectedScope约束（包括原quiet缺ACK fallback）。新REFRESH后、adapter/controller创建前精确比对；scope改变硬失败，不进入context-recovery重试。普通route/context rebind规则不变。
+
+独立新增7项，旧源码28项中24PASS/4FAIL；rawIPC/adapter pending × same/changed scope四反例转绿，验证busy不reset、drain不自恢复、多次显式wake仅一组HELLO→REFRESH、同scope reading重建、异scope不建新controller、原生intent次数不增加、非failedclose不制造恢复及完整ACK原路径。相关53/53 PASS；最终完整Node **7121/7121 PASS，零skip**。独立最终只读复核无新增阻断，source hashes固定。
+
+本轮只记录L/Mock路径，不新增真实MV3缺ACK故障注入成绩，不把Round370的正常双ACK浏览器路径移作该故障的S认证。下一步补实际缺ACK+干扰后显式重建的隔离Chrome验证。生产自动休眠/首发、完整UI-11/81/G/U与Free仍NOT_RELEASE_READY。

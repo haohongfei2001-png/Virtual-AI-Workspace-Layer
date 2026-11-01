@@ -1,0 +1,6 @@
+{
+  "src/host/current-body-discovery.mjs": "b9b702f8d70cf6e4403114ce743754fc78e414e609c06c857829b0ebdf5b8ed6",
+  "src/runtime/host-observation-owner.mjs": "a7653e57df3d79ff1610f35170b5a2eeb6c2470a2f5ec37d0e6b9166b25888d6",
+  "tests/host/current-body-continuity.test.mjs": "9da3ae78d7f8a4c0e44fb23f16e21895d986250a1c4864a716ccba1a764b21b9",
+  "tests/host/current-body-mv3-browser.mjs": "cf3621d56196d91440a4d073f8ace3922edf828f2aec2579dd137c5514c78b0f"
+}

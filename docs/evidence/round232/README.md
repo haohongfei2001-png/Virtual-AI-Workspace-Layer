@@ -1,0 +1,19 @@
+# Round232: implemented continuous J4 segment passes; begin admitted1k baseline
+
+Actual source c71f977c358381c9ff13a61a973cfb8b5bc39174, [CI27](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/actions/runs/38707680423).
+
+The formal packaged continuous J4 runner completes all19 implemented steps with errors[]. These include distinct authenticated tab contexts, real UI asset import, native acceptance/evidence interruption, authenticated historical recovery, mixed native-title+ACK atomic pending, actual worker stop/fresh-grant same-operation recovery, idempotent reread, independent peer native navigation, real checksum repair, revoked-title UNKNOWN retention, disable/re-enable, fresh native-source revalidation, actual uninstall, and subsequent native navigation/model/editor operation.
+
+The actual post-repair record preserves the old profile_1 source as revoked and selects a new _r1/profile_1_recovery_1 source for current333. The human-asset digest remains unchanged. Independent review matches all152 production-source and18 runner/fixture SHA256 hashes to the exact official commit, verifies sourceChanged=false and manifestUnchanged=true, and confirms the19-step outcomes. This narrow S evidence covers the current-ref source, predecessor generation/revoked state and asset preservation. It does not independently compare every unobserved ref/member/alias or old pending payload; those rejection boundaries have separate L counterexamples.
+
+Automatic foreground recovery still times out and is explicitly preserved in diagnostics. The subsequent two genuine native navigation hops establish independent C2 authority and are not relabeled automatic recovery. The runner remains PARTIAL_J4_NOT_ACCEPTED: its present continuous segment does not cover the full profile/failure/codec matrix or all81 acceptance items. Real ChatGPT remains NOT_RUN and the Draft remains NOT_RELEASE_READY.
+
+Node4625/4625 and the complete durability/compat job pass. Other scoped journeys, J2 continuous/fast retry, J3 and48 layout cells pass. The sole failing CI step is the unchanged20-second pristine immediate-cold regression; the instrumented cold copy and separate safety/navigation-recovery case pass this run. Immediate cold support remains intermittent and unresolved.
+
+## First real scale baseline candidate
+
+With the implemented functional segment now completed, the approved next step runs the existing formal Host scale runner for exactly1000 native objects, project-mixed distribution and renderer1x. It opens both surfaces in two tabs, collects through genuine native DOM/Host observation, and may time only after a full stable-revision read-only exact-ID admission audit. The post-measurement audit must match the same revision/set/member totals. Actual local exact-tail search and two24-row pages retain their independent ID/title/query oracle. No extension database seed or synthetic grant is used.
+
+The one new CI step remains on the same standard Ubuntu job and exact event SHA, with a5-minute outer failure limit. Success requires the existing exit2/PARTIAL_SYS04_NOT_ACCEPTED plus MEASURED_AT_STABLE_ADMITTED_INDEX and report sourceCommit matching GITHUB_SHA. It is a single diagnostic timing sample including automation overhead, not p95 or SYS04/F1 acceptance. Incomplete admission, unstable revision, wrong UI results or setup failures remain failures. The existing full Node and all browser gates, including immediate cold, remain mandatory. No10k/100k or storm load is started by this change. Forty lightweight scale/partition contracts pass; actual1k results await this candidate's CI.
+
+Still executable follow-ups include larger admitted scale/repeated timing/shared-owner budgets/preparing, SYS05 native token/ACK/title storms, broader UI/failure/profile cases and evidence-source repair. They are not mislabeled G/U-only gaps.

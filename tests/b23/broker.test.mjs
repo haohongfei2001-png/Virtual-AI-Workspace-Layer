@@ -22,6 +22,14 @@ test('B23 delayed snapshot never returns previous account data at unchanged URL'
  h.setScope({verified:true,provider:'synthetic_fixture',accountId:'B',organizationId:'test_org'});release.resolve();
  const result=await pending;assert.equal(result.reason,'stale-after-workspace');assert.equal('snapshot'in result,false);
 });
+test('Free snapshot rejects page-supplied source authority and account changes during read',async()=>{
+ const entered=deferred(),release=deferred(),h=setup({freeSnapshot:async()=>{entered.resolve();await release.promise;return {syntheticSecret:'A'};}});await h.bind();
+ assert.equal((await h.call('B23_FREE_SNAPSHOT',{scope:'B'})).reason,'invalid-request');
+ assert.equal((await h.call('B23_FREE_SNAPSHOT',{channel:'production'})).reason,'invalid-request');
+ const pending=h.call('B23_FREE_SNAPSHOT');await entered.promise;
+ h.setScope({verified:true,provider:'synthetic_fixture',accountId:'B',organizationId:'test_org'});release.resolve();
+ const result=await pending;assert.equal(result.reason,'stale-after-workspace');assert.equal('snapshot'in result,false);
+});
 test('B23 browser invalidation aborts pending mutation and rejects result',async()=>{
  const entered=deferred(),release=deferred();let committed=false,signal;
  const h=setup({command:async(_s,_m,options)=>{signal=options.signal;entered.resolve();await release.promise;if(options.guard()&&!signal.aborted)committed=true;return {ok:committed};}});await h.bind();

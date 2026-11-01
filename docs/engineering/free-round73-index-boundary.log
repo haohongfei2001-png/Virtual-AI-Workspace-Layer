@@ -1,0 +1,41 @@
+✔ migration rejects events wrong-target without changing any store (6.541ms)
+✔ migration rejects events missing-locator without changing any store (1.687333ms)
+✔ migration rejects coverage wrong-target without changing any store (1.425791ms)
+✔ migration rejects coverage missing-locator without changing any store (1.361375ms)
+✔ migration rejects hints wrong-target without changing any store (2.067375ms)
+✔ migration rejects hints missing-locator without changing any store (1.294417ms)
+✔ migration rejects hintEvents wrong-target without changing any store (1.678458ms)
+✔ migration rejects hintEvents missing-locator without changing any store (1.49875ms)
+✔ indexed incremental event write cannot duplicate an ID through wrong-target (4.044625ms)
+✔ indexed incremental event write cannot duplicate an ID through missing-locator (2.653083ms)
+✔ intact indexes migrate with complete facts preserved (2.694ms)
+✔ unbound legacy partition rejects events wrong-target atomically (1.634416ms)
+✔ unbound legacy partition rejects events missing-locator atomically (1.562625ms)
+✔ unbound legacy partition rejects coverage wrong-target atomically (2.269125ms)
+✔ unbound legacy partition rejects coverage missing-locator atomically (1.102667ms)
+✔ unbound legacy partition rejects hints wrong-target atomically (1.454167ms)
+✔ unbound legacy partition rejects hints missing-locator atomically (1.394ms)
+✔ unbound legacy partition rejects hintEvents wrong-target atomically (2.010083ms)
+✔ unbound legacy partition rejects hintEvents missing-locator atomically (1.222833ms)
+✔ unbound legacy directory rejects events wrong-target atomically (1.847833ms)
+✔ unbound legacy directory rejects events missing-locator atomically (2.355125ms)
+✔ unbound legacy directory rejects coverage wrong-target atomically (2.105166ms)
+✔ unbound legacy directory rejects coverage missing-locator atomically (2.142542ms)
+✔ unbound legacy directory rejects hints wrong-target atomically (2.531084ms)
+✔ unbound legacy directory rejects hints missing-locator atomically (1.880667ms)
+✔ unbound legacy directory rejects hintEvents wrong-target atomically (2.653833ms)
+✔ unbound legacy directory rejects hintEvents missing-locator atomically (2.25225ms)
+✔ valid legacy directory refuses writes until sealed, preserves bucket versions and then accepts new evidence (4.556584ms)
+✔ partition root rejects explicit indexChecksums null (1.461042ms)
+✔ partition root rejects explicit indexChecksums false (0.976958ms)
+✔ directory root rejects explicit indexChecksums null (1.584792ms)
+✔ directory root rejects explicit indexChecksums false (0.861167ms)
+✔ legacy directory sealing rejects a newly oversized root without modifying any store (559.90925ms)
+ℹ tests 33
+ℹ suites 0
+ℹ pass 33
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 767.546166

@@ -1,0 +1,80 @@
+{
+  "evidence": "REAL_HEADLESS_MV3_UI_GRANT_FIXED_PROBE_NOT_J1",
+  "liveChatGPT": "NOT_RUN",
+  "renderer": "FIXED_SYNTHETIC_MARKER_AFTER_REAL_GRANT",
+  "sourceHashes": {
+    "src/host/ui-frame-client.mjs": "5ff0440e703740978c3fcc3af88567b932738a3f2b25fcdefca888561315c3db",
+    "src/host/surface-controller.mjs": "c4e29d3de792cc7546fca070664eecdab4cd1989140df38bff57abb0a6526a9c",
+    "src/navigation/mount-surface.mjs": "d8ed4ee322a55df4a8498c7065f61b6d0ebd709a8c2a2febba142fcc21900c35",
+    "src/runtime/host-ui-owner.mjs": "bb1052c12a0300eeff2fbd711b7a1486a169334426bf6ed319d72bf105bda312",
+    "src/runtime/host-binding-service.mjs": "8fe07a34d2da9b4ddefb5aa019df477174dffaf426f74e49d14310296215da82",
+    "src/host/ui-grants.mjs": "095790e5508d775889a96301cd034fa5d3a00c87e1413daead54f3d1216ffaba",
+    "src/host/chatgpt-adapter.mjs": "44fb724b6ad0bcdf04d5e10cd27403c6d595f618c9bd4cdcd2aa60a1eef0181b"
+  },
+  "results": [
+    {
+      "name": "real-dual-role-grants-foreign-WAR-denied-native-input-manual-return-dialog",
+      "status": "PASS"
+    }
+  ],
+  "lifecycle": [
+    {
+      "operation": "disconnect",
+      "jsMode": "NORMAL_JS_PORT_DISCONNECT",
+      "draft": true,
+      "readingVisible": false,
+      "popoverCount": 2,
+      "frames": [
+        {
+          "privateVisible": false,
+          "cleared": "ui-port-disconnected"
+        },
+        {
+          "privateVisible": false,
+          "cleared": "ui-port-disconnected"
+        }
+      ],
+      "status": "FAIL"
+    },
+    {
+      "operation": "disable",
+      "jsMode": "ACTUAL_EXTENSION_LIFECYCLE_NOT_PROCESS_HARD_KILL",
+      "draft": true,
+      "readingVisible": true,
+      "popoverCount": 0,
+      "frames": [
+        {
+          "privateVisible": false,
+          "cleared": "ui-port-disconnected"
+        },
+        {
+          "privateVisible": false,
+          "cleared": "ui-port-disconnected"
+        }
+      ],
+      "status": "PASS"
+    },
+    {
+      "operation": "uninstall",
+      "jsMode": "ACTUAL_EXTENSION_LIFECYCLE_NOT_PROCESS_HARD_KILL",
+      "draft": true,
+      "readingVisible": true,
+      "popoverCount": 0,
+      "frames": [
+        {
+          "privateVisible": false,
+          "cleared": "ui-port-disconnected"
+        },
+        {
+          "privateVisible": false,
+          "cleared": "ui-port-disconnected"
+        }
+      ],
+      "status": "PASS"
+    }
+  ],
+  "errors": [],
+  "temporaryPackage": "/private/tmp/vaiwl-host-ui-wDl9l8/extension",
+  "status": "FAIL",
+  "sourceChangedDuringRun": false
+}

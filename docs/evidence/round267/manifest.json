@@ -1,0 +1,26 @@
+{
+  "base": "fad7326a91ee2ef6984c94ea1d6812914bdb6e4e",
+  "files": {
+    "src/host/free-frame-client.mjs": "c683c96518a1acf2874e288bf6677f7fc96effd5fc93ebe8ddb24fee7ce76f2b",
+    "src/navigation/navigation.mjs": "9281ce20c79cd885b1667bed90aaf75e175ced61a7a83bfa922f92c18f37ca45",
+    "src/runtime/current-metadata-reader.mjs": "12e3abad157d770effdc00cbb46315a326cef5137d4716c33121131b32cbdeb4",
+    "src/runtime/host-binding-service.mjs": "4012546dd79f43bb9b2cf64c4ff792b632a2bdc9359840c280e63f03403770f2",
+    "src/runtime/host-observation-owner.mjs": "ee2a408ccf27d57f56b81004c9074993d1c602b977af9860407502b8dec75472",
+    "src/runtime/host-entry-calibration.mjs": "25e59ade903d92af3bd70f8e7d205c8ac2d054ca6cabcaad5da41a7def1393c6",
+    "tests/host/current-metadata-reader.test.mjs": "916a077d656e0e617ce2858dee139e9ba53b92ef272ace9596e683cdc0793a3d",
+    "tests/host/current-body-owner.test.mjs": "3e472f08f04bee86d5f5048a74a111ba16980f85a1f97e0106beed120cf32c09",
+    "tests/host/entry-calibration.test.mjs": "3c4574ce95c88d355b5f874b35e94059357b0081708db54585eb5f6b7390bece",
+    "tests/host/free-frame-calibration-entry.test.mjs": "50d35590496c287a96409496d4a2ba84a2db8ed04eeede9d8fade0d1d5f5b050",
+    "tests/host/navigation-frame-calibration-entry.test.mjs": "12b6fd5a712de5b943501a92bdc5c798813b7f9c01816fd02c7dd615bf9413ba"
+  },
+  "artifacts": {
+    "README.md": "3a92f63519829a0c45325bc2513fcff5a365945fda52d5f0e6cddd5f8c18202a",
+    "j2-fast.json.gz": "668f27a478c2c06a60937357e20dec7d6b134065444959922f36da626b8fc988",
+    "node-final.log.gz": "280b2f7fdd2fffe7dba7dad9257719e219a90632bdbb42149b94e46f0f118384",
+    "node-initial.log.gz": "971a28cb8ae1f97011fddaa490948b566b1751d7e0e3687e09dabf0745baf8c4",
+    "owner-final.log.gz": "1f63fa910ead5a9d87a962235878899c60c14a1cf3029c718fe9196646222e6b",
+    "owner-fixture-initial.log.gz": "becf84307f792b8006924452de148b2888ea3afc20594ce5a12eb88b72a7957b",
+    "reader-final.log.gz": "8ec890f3343273526dda74494d00eadd636aa73dc9c63e84509bb5d5a3c985d9",
+    "reader-initial.log.gz": "a8f2518ab7bc102ea7a27a11c5655a29f9528accc759569a9a7846a930842a8c"
+  }
+}

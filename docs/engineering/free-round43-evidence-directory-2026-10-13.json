@@ -1,0 +1,24 @@
+{
+  "evidence": "REAL_IDB_EVIDENCE_DIRECTORY_PRIMITIVE_NOT_RUNTIME_MIGRATION",
+  "browser": "156.0.8078.4",
+  "sourceHashes": {
+    "src/data/evidence-ref-directory.mjs": "1001abca8b849e7c73390acaa730a1639efc9cc621898ca97f3d538b30832b08",
+    "src/data/free-evidence-partitions.mjs": "5f4f4cb66130b787e8503ee3f5b1aba081f4ffb5a5b06feee382588fbbbe96de",
+    "src/data/free-evidence.mjs": "cef8880f69556f8ea9c9c1333f16a3c6d7d4d7fc198430aabac99aabf0b3d624",
+    "src/data/hash.mjs": "8fcd95aca608fb4d4ef94855e0d101ce3d560e830733f96d9ec88068a81eaab3",
+    "src/data/schema.mjs": "9db57336e5d79ec002ef6308100d18008140292bcf1385899524b0a6972ebad6"
+  },
+  "result": {
+    "checks": [
+      "100k-real-idb-version-size-order-roundtrip",
+      "atomic-abort-preserves-pieces-root-marker",
+      "one-bucket-update-version-size-binding",
+      "prior-directory-retained",
+      "100001-capacity-rejected"
+    ],
+    "refs": 100000,
+    "buckets": 256,
+    "updatedBuckets": 1,
+    "updatedBucketRows": 395
+  }
+}

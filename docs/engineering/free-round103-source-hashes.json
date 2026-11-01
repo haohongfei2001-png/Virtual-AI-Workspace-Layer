@@ -1,0 +1,6 @@
+{
+  "src/data/native-facts.mjs": "b907f43aaab816fb903354cd89cc84ed53aa0030b772f5e7b5faddb89282f6b8",
+  "src/data/native-partition-audit.mjs": "34547be7c95b0ee8fb960c0beb43c3f57f0ffd91afa7e65d09d454885fb15daf",
+  "src/data/native-partitions.mjs": "e36246ece21bd61081625425e3b7d220f3e8bf325e19674125fc6194500649ed",
+  "tests/free/native-facts-measure.test.mjs": "aedd28bdf7b2c4439c4f7f80ff28de034c848ed9aa5cbfbfacfe13dcbc3dde74"
+}

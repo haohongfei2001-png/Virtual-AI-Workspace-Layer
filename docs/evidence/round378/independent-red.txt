@@ -1,0 +1,76 @@
+✖ reader rejection preserves same-proof one-second cooldown (1.836875ms)
+✖ three thrown reads exhaust the same proof while a genuinely new proof has its own budget (0.436791ms)
+✔ failed append retires prior baseline and intent; later complete read establishes only a fresh baseline (2.288583ms)
+✔ concurrent retry after failure stays singleflight and revoked completion grants no baseline (0.569416ms)
+✖ reader failure cannot erase used intent IDs when the same binding later establishes a fresh baseline (0.640375ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 2
+ℹ fail 3
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 44.671292
+
+✖ failing tests:
+
+test at tests/host/send-candidate-read-failure-budget.test.mjs:15:1
+✖ reader rejection preserves same-proof one-second cooldown (1.836875ms)
+  AssertionError [ERR_ASSERTION]: a thrown read must not reset cooldown
+  
+  6 !== 1
+  
+      at TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/host/send-candidate-read-failure-budget.test.mjs:17:46)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 6,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/host/send-candidate-read-failure-budget.test.mjs:21:1
+✖ three thrown reads exhaust the same proof while a genuinely new proof has its own budget (0.436791ms)
+  AssertionError [ERR_ASSERTION]: exceptions cannot replenish the three-attempt budget
+  
+  6 !== 3
+  
+      at TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/host/send-candidate-read-failure-budget.test.mjs:23:79)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 6,
+    expected: 3,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/host/send-candidate-read-failure-budget.test.mjs:36:1
+✖ reader failure cannot erase used intent IDs when the same binding later establishes a fresh baseline (0.640375ms)
+  AssertionError [ERR_ASSERTION]: failure clears pending correlation but must retain replay ledger
+  + actual - expected
+  
+  + {
+  +   conversationId: 'C',
+  +   intentId: 'already_used',
+  +   messageId: null,
+  +   observedAt: '1970-01-01T00:00:02.000Z',
+  +   operationId: null,
+  +   protocol: 'vaiwl-send-candidate/1',
+  +   stage: 'intent'
+  + }
+  - null
+  
+      at TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/host/send-candidate-read-failure-budget.test.mjs:40:9)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: { protocol: 'vaiwl-send-candidate/1', intentId: 'already_used', conversationId: 'C', messageId: null, operationId: null, stage: 'intent', observedAt: '1970-01-01T00:00:02.000Z' },
+    expected: null,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

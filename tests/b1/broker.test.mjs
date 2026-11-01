@@ -41,7 +41,10 @@ test('B1: sender identity is independent of page-supplied scope and exact envelo
  assert.equal((await h.broker.handle({...h.request('BIND',1),scope:'other'},a)).reason,'invalid-request');
  assert.equal((await h.broker.handle(h.request('BIND',1),{...a,frameId:1})).reason,'invalid-sender');
  assert.equal((await h.broker.handle(h.request('BIND',1),{...a,id:'bad'})).reason,'invalid-sender');
- assert.equal((await h.broker.handle(h.request('BIND',1),a)).ok,true);
+ const bound=await h.broker.handle(h.request('BIND',1),a);
+ assert.equal(bound.ok,true);
+ assert.equal(bound.scope,'["synthetic_fixture","A","test_org"]');
+ assert.equal(bound.documentId,'doc_A');
 });
 test('B1: new browser-confirmed document supersedes old lease without waiting',async()=>{
  const h=mk(),a=fixture(),b=fixture('doc_B','B');
@@ -182,4 +185,22 @@ test('B1: a same-document SPA route change never exposes old async reads',async(
  assert.equal(Object.hasOwn(result,'record'),false);
  const switched=await broker.handle({v:1,type:'BIND',clientId:'client_A',seq:3},sender);
  assert(switched.ok,'browser-confirmed SPA B must accept stale sender.url A');
+});
+
+test('worker notification target revalidates document, lease lifetime and account',async()=>{
+ const h=mk(),sender=fixture();
+ const first=await h.broker.handle(h.request('BIND',1),sender);
+ assert.deepEqual(await h.broker.notificationTarget(first.leaseId),{tabId:17,documentId:'doc_A'});
+ assert.equal(await h.broker.notificationTarget('unknown'),null);
+ h.current.set(17,{url:urls.B,documentId:'doc_A',documentLifecycle:'active'});
+ assert.equal(await h.broker.notificationTarget(first.leaseId),null);
+ assert.equal(h.broker.debug().active,0);
+ const second=await h.broker.handle(h.request('BIND',2),fixture('doc_A','B'));
+ h.tick(20001);assert.equal(await h.broker.notificationTarget(second.leaseId),null);
+});
+
+test('ordinary heartbeat remains usable after notification deadline integration',async()=>{
+ const h=mk(),sender=fixture(),bound=await h.broker.handle(h.request('BIND',1),sender);
+ const current=await h.broker.handle(h.request('CHECK',2,bound.leaseId),sender);
+ assert.equal(current.ok,true);assert.equal(current.type,'CURRENT');
 });

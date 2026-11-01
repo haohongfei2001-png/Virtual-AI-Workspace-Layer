@@ -1,0 +1,186 @@
+{
+  "classification": "REAL_HEADLESS_DOM_SYNTHETIC_TRANSPORT_VIRTUAL_CLOCK",
+  "realChatGPT": "NOT_RUN",
+  "scope": "HF account A, isolated browser context",
+  "sourceHashes": {
+    "simulator/client.mjs": "060ed2c235f84ad607629495c095716271d3e532363f308eabeb54a6d71e87a5",
+    "src/data/request-deadline.mjs": "cda2ebb4158c05eb911fbb84a1af092cf91f461e3a002bef4b4d23f5a70dfdf7",
+    "src/data/read-recovery-budget.mjs": "63833ec7dda096d6db1318af012c9f823d4e61fa8bb570c90010b4e28302bf92",
+    "src/data/free-header-loader.mjs": "76abb31e4f65d87849810f876dc143d6c4f4744770c0caa8f8447add70145d35",
+    "tests/free/read-recovery-budget-browser.mjs": "18fd0c3544fd043dbcd7562d63dbeb4090c09aceae5a4554d16910b6c5cbdc92"
+  },
+  "timeout": {
+    "elapsed": 31000,
+    "state": {
+      "state": "WAITING",
+      "reason": "read-budget-exhausted"
+    },
+    "trace": [
+      {
+        "type": "BIND",
+        "at": 0
+      },
+      {
+        "type": "BIND",
+        "at": 6090
+      },
+      {
+        "type": "BIND",
+        "at": 12270
+      },
+      {
+        "type": "BIND",
+        "at": 18630
+      },
+      {
+        "type": "BIND",
+        "at": 25630
+      }
+    ],
+    "invalidations": 1,
+    "invalidationTimes": [
+      30000
+    ],
+    "started": 0,
+    "text": "工作空间加载超时，原生聊天仍可使用。重新连接派生工作空间",
+    "sameInput": true,
+    "draft": "总读取超时期间仍未提交的草稿",
+    "connected": true
+  },
+  "afterLate": {
+    "state": {
+      "state": "WAITING",
+      "reason": "read-budget-exhausted"
+    },
+    "requests": 5,
+    "sameInput": true,
+    "draft": "总读取超时期间仍未提交的草稿"
+  },
+  "manual": {
+    "state": {
+      "state": "ACTIVE",
+      "mode": "reading",
+      "scope": "[\"hf_synthetic_only\",\"A\",\"fixture_org\"]"
+    },
+    "sameInput": true,
+    "draft": "总读取超时期间仍未提交的草稿",
+    "connected": true,
+    "elapsed": 400,
+    "current": "T0",
+    "feedback": false
+  },
+  "settingsTimeout": {
+    "state": {
+      "state": "WAITING",
+      "reason": "read-budget-exhausted"
+    },
+    "text": "工作空间加载超时，原生聊天仍可使用。重新连接派生工作空间",
+    "dialogHidden": true,
+    "fileName": "pending.json",
+    "sameInput": true,
+    "draft": "总读取超时期间仍未提交的草稿",
+    "requests": 16
+  },
+  "settingsResumed": {
+    "state": {
+      "state": "ACTIVE",
+      "mode": "reading",
+      "scope": "[\"hf_synthetic_only\",\"A\",\"fixture_org\"]"
+    },
+    "sameDialog": false,
+    "open": false,
+    "connected": false,
+    "sameFile": false,
+    "fileName": "pending.json",
+    "sameInput": true,
+    "draft": "总读取超时期间仍未提交的草稿"
+  },
+  "result": "FAIL",
+  "failure": "AssertionError [ERR_ASSERTION]: same-scope reconnect must resume original settings dialog\n    at file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/free/read-recovery-budget-browser.mjs:47:60",
+  "debug": {
+    "status": {
+      "state": "ACTIVE",
+      "mode": "reading",
+      "scope": "[\"hf_synthetic_only\",\"A\",\"fixture_org\"]"
+    },
+    "trace": [
+      {
+        "type": "BIND",
+        "at": 0
+      },
+      {
+        "type": "BIND",
+        "at": 6090
+      },
+      {
+        "type": "BIND",
+        "at": 12270
+      },
+      {
+        "type": "BIND",
+        "at": 18630
+      },
+      {
+        "type": "BIND",
+        "at": 25630
+      },
+      {
+        "type": "BIND",
+        "at": 43000
+      },
+      {
+        "type": "B23_FREE_HEADER",
+        "at": 43100
+      },
+      {
+        "type": "B23_FREE_HEADER",
+        "at": 43150
+      },
+      {
+        "type": "B23_FREE_HEADER",
+        "at": 43200
+      },
+      {
+        "type": "B23_FREE_PAGE",
+        "at": 43200
+      },
+      {
+        "type": "CHECK",
+        "at": 43350
+      },
+      {
+        "type": "BIND",
+        "at": 43400
+      },
+      {
+        "type": "BIND",
+        "at": 49490
+      },
+      {
+        "type": "BIND",
+        "at": 55670
+      },
+      {
+        "type": "BIND",
+        "at": 62030
+      },
+      {
+        "type": "BIND",
+        "at": 69030
+      },
+      {
+        "type": "BIND",
+        "at": 86400
+      },
+      {
+        "type": "B23_FREE_HEADER",
+        "at": 86400
+      },
+      {
+        "type": "CHECK",
+        "at": 86450
+      }
+    ],
+    "text": "VAIWL TEST HOST · 全部内容均为合成测试控制台◎新聊天搜索聊天文件库项目城市观察 · 固定在项目中新建聊天 城市观察材料与方法在项目中新建聊天 材料与方法固定方法比较聊天从哪里开始资料整理方法比较一次新的讨论一次新的讨论一次新的讨论一次新的讨论一次新的讨论一次新的讨论一次新的讨论一次新的讨论一次新的讨论从哪里开始资料整理方法比较一次新的讨论从哪里开始资料整理方法比较一次新的讨论从哪里开始资料整理方法比较一次新的讨论从哪里开始ASynthetic A测试身份 · 无真实账户ChatGPT 分享请帮助我梳理这个合成研究问题，区分已经知道的事实和仍需要验证的判断。编辑消息可以先把问题分成观察、证据和判断三部分。保留尚未解释的例外，再比较不同方法。下面的交互组件用于检查宿主自身的局部状态；它不是模型生成内容。重新生成分支对话比较两种方法 · 合成可交互回复50工具■ChatGPT 高仿真测试宿主 · 非 OpenAI 服务 · 不连接任何模型"
+  }
+}

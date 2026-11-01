@@ -1,0 +1,122 @@
+{
+  "evidence": "REAL_HEADLESS_MV3_NATIVE_INDEX_FORMAT_UPGRADE",
+  "baseline": "/private/tmp/vaiwl-free-delivery-round35-20261013/extension",
+  "candidate": "/private/tmp/vaiwl-free-delivery-round40-integrated-20261013/extension",
+  "actualSchemaUpgrade": "NOT_RUN",
+  "realChatGPT": "NOT_RUN",
+  "results": [
+    {
+      "name": "Actual baseline package creates persistent human assets and native facts",
+      "status": "PASS",
+      "extensionId": "laclmfjkibjppgnjllhachoohfmhidbp",
+      "shared": "953cb561ddff8e616572692e049f1608be1b721bf7617a56fc66e030ad6efe61",
+      "evidence": "93a2dc859443ad7fd34439bffa19dd331138cd728bb60dfc45b6019a0c9488a8",
+      "manualTitle": "升级保留Pro人工标题",
+      "workingSet": {
+        "refs": [
+          "T0"
+        ],
+        "current": "T0"
+      },
+      "nativeFacts": "cc25aeb060dd5da19a7de5313973e3b70434adeed6e9bd98d468c7d53eb334fb",
+      "nativeRevision": 1,
+      "nativeFormat": "vaiwl-native-partitions-v1",
+      "nativeReadError": null,
+      "rawNative": "13dee9d2b485dbca8104d0f9cd0c7271e16578eb43e82e25814a09fc4ae3c336",
+      "nativeRecords": 608
+    },
+    {
+      "name": "Same-path upgrade migrates native format and preserves facts, Pro assets and untouched draft",
+      "status": "PASS",
+      "actual": {
+        "extensionId": "laclmfjkibjppgnjllhachoohfmhidbp",
+        "shared": "953cb561ddff8e616572692e049f1608be1b721bf7617a56fc66e030ad6efe61",
+        "evidence": "93a2dc859443ad7fd34439bffa19dd331138cd728bb60dfc45b6019a0c9488a8",
+        "manualTitle": "升级保留Pro人工标题",
+        "workingSet": {
+          "refs": [
+            "T0"
+          ],
+          "current": "T0"
+        },
+        "nativeFacts": "cc25aeb060dd5da19a7de5313973e3b70434adeed6e9bd98d468c7d53eb334fb",
+        "nativeRevision": 2,
+        "nativeFormat": "vaiwl-native-version-index-v1",
+        "nativeReadError": null,
+        "rawNative": "1590a89069191a2f1bfcebd6f3d28ea174ff3c5c334cdd478c51305ceb22a934",
+        "nativeRecords": 849
+      },
+      "ui": {
+        "state": "ACTIVE",
+        "reason": ""
+      },
+      "oldDraftDocumentReloaded": false
+    },
+    {
+      "name": "Actual older package rejects indexed native root and leaves all stored bytes intact",
+      "status": "PASS",
+      "actual": {
+        "extensionId": "laclmfjkibjppgnjllhachoohfmhidbp",
+        "shared": "953cb561ddff8e616572692e049f1608be1b721bf7617a56fc66e030ad6efe61",
+        "evidence": "93a2dc859443ad7fd34439bffa19dd331138cd728bb60dfc45b6019a0c9488a8",
+        "manualTitle": "升级保留Pro人工标题",
+        "workingSet": {
+          "refs": [
+            "T0"
+          ],
+          "current": "T0"
+        },
+        "nativeFacts": null,
+        "nativeRevision": null,
+        "nativeFormat": "vaiwl-native-version-index-v1",
+        "nativeReadError": "invalid-native-schema",
+        "rawNative": "1590a89069191a2f1bfcebd6f3d28ea174ff3c5c334cdd478c51305ceb22a934",
+        "nativeRecords": 849
+      },
+      "ui": {
+        "state": "WAITING",
+        "reason": "invalid-native-schema"
+      },
+      "oldDraftDocumentReloaded": false
+    },
+    {
+      "name": "Reloading indexed package restores navigation without rewriting native storage or refreshing draft",
+      "status": "PASS",
+      "actual": {
+        "extensionId": "laclmfjkibjppgnjllhachoohfmhidbp",
+        "shared": "953cb561ddff8e616572692e049f1608be1b721bf7617a56fc66e030ad6efe61",
+        "evidence": "93a2dc859443ad7fd34439bffa19dd331138cd728bb60dfc45b6019a0c9488a8",
+        "manualTitle": "升级保留Pro人工标题",
+        "workingSet": {
+          "refs": [
+            "T0"
+          ],
+          "current": "T0"
+        },
+        "nativeFacts": "cc25aeb060dd5da19a7de5313973e3b70434adeed6e9bd98d468c7d53eb334fb",
+        "nativeRevision": 2,
+        "nativeFormat": "vaiwl-native-version-index-v1",
+        "nativeReadError": null,
+        "rawNative": "1590a89069191a2f1bfcebd6f3d28ea174ff3c5c334cdd478c51305ceb22a934",
+        "nativeRecords": 849
+      },
+      "ui": {
+        "state": "ACTIVE",
+        "reason": ""
+      },
+      "oldDraftDocumentReloaded": false
+    }
+  ],
+  "pageErrors": [],
+  "browser": "Chrome/155.0.8059.40",
+  "extensionId": "laclmfjkibjppgnjllhachoohfmhidbp",
+  "packageVersions": {
+    "baseline": "0.2.0",
+    "candidate": "0.2.0"
+  },
+  "packageHashes": {
+    "baseline": "edf6bd2d5e466da6414e0eb69428027d90cb777aec3a45fe43b88c6c55dddb56",
+    "candidate": "ad9b0d5ef971ff69a203b1f1d2615f7df96e3c3fe486da2171bae8d5d6cc447a"
+  },
+  "testSourceSha256": "1099ca4a181ee52ffc930fc36b0d069c22f52711d2cae17ce012cddf45d827d1"
+}

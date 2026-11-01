@@ -1,0 +1,355 @@
+{
+  "classification": "DIAGNOSTIC_NOT_PRODUCT_CERTIFICATION",
+  "baselineHash": "ba845d5f13e7d3db8d8c747d1e711f210717e3a29ea9539a3477bbe8bc38e964",
+  "candidateHash": "8afdc594c582c879190ff715fefbd22bb1d1738f4440e54ac386a0a78ca5edff",
+  "baselineSource": "/** Deterministic JSON and SHA-256 for local corruption checks, not authentication. */\nexport function stable(value) {\n  if(['function','symbol','bigint','undefined'].includes(typeof value))throw Error('non-json-value');\n  if(value&&typeof value==='object'&&!Array.isArray(value)&&![Object.prototype,null].includes(Object.getPrototypeOf(value)))throw Error('non-json-object');\n  if (Array.isArray(value)) return '[' + value.map(stable).join(',') + ']';\n  if (value && typeof value === 'object') return '{' + Object.keys(value).sort().map(k => JSON.stringify(k) + ':' + stable(value[k])).join(',') + '}';\n  if (value === undefined || (typeof value === 'number' && !Number.isFinite(value))) throw Error('non-json-value');\n  return JSON.stringify(value);\n}\nconst K = [0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2];\nconst encoder = new TextEncoder();\nconst hexBytes = Array.from({length:256},(_,n)=>n.toString(16).padStart(2,'0'));\nconst rotate = (x,n)=>(x>>>n)|(x<<(32-n));\nexport function sha256(text) {\n  const bytes = encoder.encode(text), length = Math.ceil((bytes.length + 9) / 64) * 64;\n  const data = new Uint8Array(length); data.set(bytes); data[bytes.length] = 128;\n  const dv = new DataView(data.buffer); dv.setUint32(length-8, Math.floor(bytes.length / 0x20000000)); dv.setUint32(length-4, bytes.length * 8 >>> 0);\n\n  const H = [0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19], w = new Int32Array(64), r = rotate;\n  for (let p=0;p<length;p+=64) {\n    for(let i=0;i<16;i++)w[i]=dv.getInt32(p+i*4);\n    for(let i=16;i<64;i++){const x=w[i-15],y=w[i-2];w[i]=(r(x,7)^r(x,18)^(x>>>3))+w[i-16]+(r(y,17)^r(y,19)^(y>>>10))+w[i-7];}\n    let a=H[0],b=H[1],c=H[2],d=H[3],e=H[4],f=H[5],g=H[6],h=H[7];\n    for(let i=0;i<64;i++){const t1=(h+(r(e,6)^r(e,11)^r(e,25))+((e&f)^(~e&g))+K[i]+w[i])|0,t2=((r(a,2)^r(a,13)^r(a,22))+((a&b)^(a&c)^(b&c)))|0;h=g;g=f;f=e;e=(d+t1)|0;d=c;c=b;b=a;a=(t1+t2)|0;}\n    H[0]=(H[0]+a)|0;H[1]=(H[1]+b)|0;H[2]=(H[2]+c)|0;H[3]=(H[3]+d)|0;\n    H[4]=(H[4]+e)|0;H[5]=(H[5]+f)|0;H[6]=(H[6]+g)|0;H[7]=(H[7]+h)|0;\n  }\n  let result='';\n  for(const word of H)result+=hexBytes[word>>>24]+hexBytes[(word>>>16)&255]+hexBytes[(word>>>8)&255]+hexBytes[word&255];\n  return result;\n}\nexport function digest(value) { return sha256(stable(value)); }\n",
+  "candidateSource": "const keyEncodings=new Map();\nfunction encodedKey(key){if(key.length>64)return JSON.stringify(key);const old=keyEncodings.get(key);if(old!==undefined)return old;const encoded=JSON.stringify(key);if(keyEncodings.size<256)keyEncodings.set(key,encoded);return encoded;}\n/** Deterministic JSON and SHA-256 for local corruption checks, not authentication. */\nexport function stable(value) {\n  if(['function','symbol','bigint','undefined'].includes(typeof value))throw Error('non-json-value');\n  if(value&&typeof value==='object'&&!Array.isArray(value)&&![Object.prototype,null].includes(Object.getPrototypeOf(value)))throw Error('non-json-object');\n  if (Array.isArray(value)) return '[' + value.map(stable).join(',') + ']';\n  if (value && typeof value === 'object') return '{' + Object.keys(value).sort().map(k => encodedKey(k) + ':' + stable(value[k])).join(',') + '}';\n  if (value === undefined || (typeof value === 'number' && !Number.isFinite(value))) throw Error('non-json-value');\n  return JSON.stringify(value);\n}\nconst K = [0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2];\nconst encoder = new TextEncoder();\nconst hexBytes = Array.from({length:256},(_,n)=>n.toString(16).padStart(2,'0'));\nconst rotate = (x,n)=>(x>>>n)|(x<<(32-n));\nexport function sha256(text) {\n  const bytes = encoder.encode(text), length = Math.ceil((bytes.length + 9) / 64) * 64;\n  const data = new Uint8Array(length); data.set(bytes); data[bytes.length] = 128;\n  const dv = new DataView(data.buffer); dv.setUint32(length-8, Math.floor(bytes.length / 0x20000000)); dv.setUint32(length-4, bytes.length * 8 >>> 0);\n\n  const H = [0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19], w = new Int32Array(64), r = rotate;\n  for (let p=0;p<length;p+=64) {\n    for(let i=0;i<16;i++)w[i]=dv.getInt32(p+i*4);\n    for(let i=16;i<64;i++){const x=w[i-15],y=w[i-2];w[i]=(r(x,7)^r(x,18)^(x>>>3))+w[i-16]+(r(y,17)^r(y,19)^(y>>>10))+w[i-7];}\n    let a=H[0],b=H[1],c=H[2],d=H[3],e=H[4],f=H[5],g=H[6],h=H[7];\n    for(let i=0;i<64;i++){const t1=(h+(r(e,6)^r(e,11)^r(e,25))+((e&f)^(~e&g))+K[i]+w[i])|0,t2=((r(a,2)^r(a,13)^r(a,22))+((a&b)^(a&c)^(b&c)))|0;h=g;g=f;f=e;e=(d+t1)|0;d=c;c=b;b=a;a=(t1+t2)|0;}\n    H[0]=(H[0]+a)|0;H[1]=(H[1]+b)|0;H[2]=(H[2]+c)|0;H[3]=(H[3]+d)|0;\n    H[4]=(H[4]+e)|0;H[5]=(H[5]+f)|0;H[6]=(H[6]+g)|0;H[7]=(H[7]+h)|0;\n  }\n  let result='';\n  for(const word of H)result+=hexBytes[word>>>24]+hexBytes[(word>>>16)&255]+hexBytes[(word>>>8)&255]+hexBytes[word&255];\n  return result;\n}\nexport function digest(value) { return sha256(stable(value)); }\n",
+  "runtimeBeforeHash": "ba845d5f13e7d3db8d8c747d1e711f210717e3a29ea9539a3477bbe8bc38e964",
+  "runtimeAfterHash": "ba845d5f13e7d3db8d8c747d1e711f210717e3a29ea9539a3477bbe8bc38e964",
+  "equivalence": [
+    "escaping",
+    "numbers",
+    "sparse",
+    "invalid",
+    "hook",
+    "getter"
+  ],
+  "samples": [
+    {
+      "scenario": "pieces",
+      "variant": "baseline",
+      "sample": 0,
+      "ms": 100.79999999701977,
+      "length": 25144450
+    },
+    {
+      "scenario": "pieces",
+      "variant": "candidate",
+      "sample": 0,
+      "ms": 85.59999999403954,
+      "length": 25144450
+    },
+    {
+      "scenario": "pieces",
+      "variant": "candidate",
+      "sample": 1,
+      "ms": 85.90000000596046,
+      "length": 25144450
+    },
+    {
+      "scenario": "pieces",
+      "variant": "baseline",
+      "sample": 1,
+      "ms": 100.5,
+      "length": 25144450
+    },
+    {
+      "scenario": "pieces",
+      "variant": "baseline",
+      "sample": 2,
+      "ms": 101.29999999701977,
+      "length": 25144450
+    },
+    {
+      "scenario": "pieces",
+      "variant": "candidate",
+      "sample": 2,
+      "ms": 92.90000000596046,
+      "length": 25144450
+    },
+    {
+      "scenario": "pieces",
+      "variant": "candidate",
+      "sample": 3,
+      "ms": 91.8999999910593,
+      "length": 25144450
+    },
+    {
+      "scenario": "pieces",
+      "variant": "baseline",
+      "sample": 3,
+      "ms": 104.1000000089407,
+      "length": 25144450
+    },
+    {
+      "scenario": "pieces",
+      "variant": "baseline",
+      "sample": 4,
+      "ms": 101,
+      "length": 25144450
+    },
+    {
+      "scenario": "pieces",
+      "variant": "candidate",
+      "sample": 4,
+      "ms": 90.8999999910593,
+      "length": 25144450
+    },
+    {
+      "scenario": "pieces",
+      "variant": "candidate",
+      "sample": 5,
+      "ms": 91.6000000089407,
+      "length": 25144450
+    },
+    {
+      "scenario": "pieces",
+      "variant": "baseline",
+      "sample": 5,
+      "ms": 103.79999999701977,
+      "length": 25144450
+    },
+    {
+      "scenario": "pieces",
+      "variant": "baseline",
+      "sample": 6,
+      "ms": 100.29999999701977,
+      "length": 25144450
+    },
+    {
+      "scenario": "pieces",
+      "variant": "candidate",
+      "sample": 6,
+      "ms": 84.6000000089407,
+      "length": 25144450
+    },
+    {
+      "scenario": "pieces",
+      "variant": "candidate",
+      "sample": 7,
+      "ms": 85.79999999701977,
+      "length": 25144450
+    },
+    {
+      "scenario": "pieces",
+      "variant": "baseline",
+      "sample": 7,
+      "ms": 107.29999999701977,
+      "length": 25144450
+    },
+    {
+      "scenario": "versions",
+      "variant": "baseline",
+      "sample": 0,
+      "ms": 13.600000008940697,
+      "length": 1477786
+    },
+    {
+      "scenario": "versions",
+      "variant": "candidate",
+      "sample": 0,
+      "ms": 17.19999998807907,
+      "length": 1477786
+    },
+    {
+      "scenario": "versions",
+      "variant": "candidate",
+      "sample": 1,
+      "ms": 15.100000008940697,
+      "length": 1477786
+    },
+    {
+      "scenario": "versions",
+      "variant": "baseline",
+      "sample": 1,
+      "ms": 14,
+      "length": 1477786
+    },
+    {
+      "scenario": "versions",
+      "variant": "baseline",
+      "sample": 2,
+      "ms": 21.099999994039536,
+      "length": 1477786
+    },
+    {
+      "scenario": "versions",
+      "variant": "candidate",
+      "sample": 2,
+      "ms": 21,
+      "length": 1477786
+    },
+    {
+      "scenario": "versions",
+      "variant": "candidate",
+      "sample": 3,
+      "ms": 15.100000008940697,
+      "length": 1477786
+    },
+    {
+      "scenario": "versions",
+      "variant": "baseline",
+      "sample": 3,
+      "ms": 15.099999994039536,
+      "length": 1477786
+    },
+    {
+      "scenario": "versions",
+      "variant": "baseline",
+      "sample": 4,
+      "ms": 13.599999994039536,
+      "length": 1477786
+    },
+    {
+      "scenario": "versions",
+      "variant": "candidate",
+      "sample": 4,
+      "ms": 15.300000011920929,
+      "length": 1477786
+    },
+    {
+      "scenario": "versions",
+      "variant": "candidate",
+      "sample": 5,
+      "ms": 16.19999998807907,
+      "length": 1477786
+    },
+    {
+      "scenario": "versions",
+      "variant": "baseline",
+      "sample": 5,
+      "ms": 13.900000005960464,
+      "length": 1477786
+    },
+    {
+      "scenario": "versions",
+      "variant": "baseline",
+      "sample": 6,
+      "ms": 13.599999994039536,
+      "length": 1477786
+    },
+    {
+      "scenario": "versions",
+      "variant": "candidate",
+      "sample": 6,
+      "ms": 16.600000008940697,
+      "length": 1477786
+    },
+    {
+      "scenario": "versions",
+      "variant": "candidate",
+      "sample": 7,
+      "ms": 15.700000002980232,
+      "length": 1477786
+    },
+    {
+      "scenario": "versions",
+      "variant": "baseline",
+      "sample": 7,
+      "ms": 15.299999997019768,
+      "length": 1477786
+    },
+    {
+      "scenario": "dictionary-first-pieces",
+      "variant": "baseline",
+      "sample": 0,
+      "ms": 103.80000001192093,
+      "length": 25144450
+    },
+    {
+      "scenario": "dictionary-first-pieces",
+      "variant": "candidate",
+      "sample": 0,
+      "ms": 108,
+      "length": 25144450
+    },
+    {
+      "scenario": "dictionary-first-pieces",
+      "variant": "candidate",
+      "sample": 1,
+      "ms": 110.19999998807907,
+      "length": 25144450
+    },
+    {
+      "scenario": "dictionary-first-pieces",
+      "variant": "baseline",
+      "sample": 1,
+      "ms": 107.70000000298023,
+      "length": 25144450
+    },
+    {
+      "scenario": "dictionary-first-pieces",
+      "variant": "baseline",
+      "sample": 2,
+      "ms": 103.29999999701977,
+      "length": 25144450
+    },
+    {
+      "scenario": "dictionary-first-pieces",
+      "variant": "candidate",
+      "sample": 2,
+      "ms": 106.30000001192093,
+      "length": 25144450
+    },
+    {
+      "scenario": "dictionary-first-pieces",
+      "variant": "candidate",
+      "sample": 3,
+      "ms": 109.8999999910593,
+      "length": 25144450
+    },
+    {
+      "scenario": "dictionary-first-pieces",
+      "variant": "baseline",
+      "sample": 3,
+      "ms": 105.20000000298023,
+      "length": 25144450
+    },
+    {
+      "scenario": "dictionary-first-pieces",
+      "variant": "baseline",
+      "sample": 4,
+      "ms": 104.70000000298023,
+      "length": 25144450
+    },
+    {
+      "scenario": "dictionary-first-pieces",
+      "variant": "candidate",
+      "sample": 4,
+      "ms": 108.3999999910593,
+      "length": 25144450
+    },
+    {
+      "scenario": "dictionary-first-pieces",
+      "variant": "candidate",
+      "sample": 5,
+      "ms": 105.20000000298023,
+      "length": 25144450
+    },
+    {
+      "scenario": "dictionary-first-pieces",
+      "variant": "baseline",
+      "sample": 5,
+      "ms": 102.29999999701977,
+      "length": 25144450
+    },
+    {
+      "scenario": "dictionary-first-pieces",
+      "variant": "baseline",
+      "sample": 6,
+      "ms": 101.5,
+      "length": 25144450
+    },
+    {
+      "scenario": "dictionary-first-pieces",
+      "variant": "candidate",
+      "sample": 6,
+      "ms": 109.90000000596046,
+      "length": 25144450
+    },
+    {
+      "scenario": "dictionary-first-pieces",
+      "variant": "candidate",
+      "sample": 7,
+      "ms": 110.70000000298023,
+      "length": 25144450
+    },
+    {
+      "scenario": "dictionary-first-pieces",
+      "variant": "baseline",
+      "sample": 7,
+      "ms": 105.20000000298023,
+      "length": 25144450
+    }
+  ]
+}

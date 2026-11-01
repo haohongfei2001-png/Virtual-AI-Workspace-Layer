@@ -1,0 +1,52 @@
+{
+  "evidence": "REAL_BROWSER_INDEXEDDB_SYNTHETIC_ONLY",
+  "realChatGPT": "NOT_RUN",
+  "mv3": "NOT_RUN",
+  "navigationLatency": "NOT_RUN",
+  "browser": "156.0.8078.4",
+  "headless": true,
+  "results": [
+    {
+      "name": "root corruption recovery invalidates source and preserves reference",
+      "evidence": "REAL_BROWSER_INDEXEDDB_SYNTHETIC_ONLY",
+      "status": "PASS"
+    }
+  ],
+  "sourceHashes": {
+    "src/data/backup.mjs": "bb0a8639d02e2169ae15e866a464f1531b7e80e40afd7c8a4b35e99d70928396",
+    "src/data/cooperate.mjs": "ce494a33280143e1e2a2227a72413da792330311de12642a9a56b13704f2f3b4",
+    "src/data/evidence.mjs": "f84032c9a2fc08455480652b60de6fb9394a70e82a7ace8729186ff097b26238",
+    "src/data/free-activity.mjs": "c421b8d6bb1b906a4f20336c0549b3495928fd514e4499c3fd075996a58f0ab0",
+    "src/data/free-calibration.mjs": "eeb1fcb85b1f729810fdc19473ce6bb5e5dd22e9cad88a2fbcd871b4a3ea0561",
+    "src/data/free-projection.mjs": "bf63dd527eae2bea4a15948e99c239d23992d194808559ce16dcde0fae5d5aeb",
+    "src/data/free-time-policy.mjs": "d05f4988dbf2b76577314a59eea19aaded9e69d21a4bfd523a38de91fc64927f",
+    "src/data/hash.mjs": "1c30ed33f7f01d364680f67dc2fd2ee69f10b7be7a7afd03b5d7911275be25b7",
+    "src/data/native-facts.mjs": "1c2420d187323ceda71598a1bf2b9d0fecc9b270ada21202326026f28a5c89d0",
+    "src/data/native-partitions.mjs": "7fd8c2a1d1718c7c46cc0cfb5f3a95da125443fa11631ff4463ac6cba5482a18",
+    "src/data/native-repository.mjs": "fe3bde12d057ee0d111336df811bee68d7faac0afbac20e486b16c34e3c20458",
+    "src/data/partitioned.mjs": "25d3756bf4e3e45342541140efd6d6eac8d381380c90baf57098560ddd18d63d",
+    "src/data/preferences.mjs": "1fb8395c5dfe23d64c91095b71a1c117b9762b3ccec68e262aaf73744b12c9d7",
+    "src/data/replica.mjs": "a79882d912cae17ca5777a2ac5a8f8ff0d4d4b11585cdcbe4671628de098befc",
+    "src/data/repository.mjs": "a8f6504650db363c4092c8ac4332e3515e1d4ccc1e6b893ea4bd468b8b37a6cc",
+    "src/data/schema.mjs": "9db57336e5d79ec002ef6308100d18008140292bcf1385899524b0a6972ebad6",
+    "src/data/state.mjs": "e306bdd92ec89299e0507ab411ebbd683e3e8146535eb7179d019d4416a72af9",
+    "src/b1/document-binding-broker.mjs": "90e053d372f85bc33b74623fdcc6dc2506ea1c2cc95d8614e4b394e510afccd7",
+    "src/b1/identity.mjs": "6d7ca616701826733d4936d8a139395ccf1a3111e025ec6b1035d78c1dc05e99",
+    "src/b1/scope-repository.mjs": "387fe0586e8c9492e0b2c1eae7dc86a13c3f6b97eb52c2e520333d7a5aa855f4",
+    "tests/free/activity.test.mjs": "5cf9c0906ca05e0fef34fc7088f3499041d581136ca11cc53e464e67723f89ef",
+    "tests/free/browser-contracts.mjs": "4037559147ba5826b3c1e087eb6bd22845e85f4de8f192571e4f493eb606ac51",
+    "tests/free/calibration.test.mjs": "c31509f6df1c07029dcfb468e101640e9f54c4504ee3c89a4d47cf594075b7e5",
+    "tests/free/migration.test.mjs": "91b951d6c3a3f06a3b1ab58b9400149a3101d8c25fd9cff9334dc5b7bd71e120",
+    "tests/free/native-browser.mjs": "bd685d8cfb26d0e4dd7a6a081489a7cf440a6effc1fc9dae616a5825ade0dd74",
+    "tests/free/native-facts.test.mjs": "40c36f7cc25ae9e9c5f2811fea2be0dd67dd60ae71ba9bd5fbf8edd79e10b6ee",
+    "tests/free/native-partitions.test.mjs": "7232552e78daf2c6c4c612726a04da73843e02586f7dbe9a26ea9c8bd3d92e9e",
+    "tests/free/native-repository.test.mjs": "01f222e070905e2e7556bf1d2a333968417ff1d467a27dee710dca433491e681",
+    "tests/free/partition-adversarial.test.mjs": "2227f0d037e2641cf98d7a0b9ea44f26afe9caac60e4deb7c5749d442ef2f1b6",
+    "tests/free/partition-browser-contracts.mjs": "8ca6d1ce8e0601eade413295856096327b0007c9a3450fe4c7a8346c122a4674",
+    "tests/free/partition-browser.mjs": "ddc1858d7c77a3ed24e9722b0663c723116c7310dc48535c78cd6d795dd5ac6f",
+    "tests/free/policy.test.mjs": "1a3790580f83eb2a9eab5d2fc5e9d089e594f701c93d8c4bbce29edecdf73b56",
+    "tests/free/service.test.mjs": "166676a4de9de68b27e3b20ff448a94cca786200f025727360f44a883d7f8abc",
+    "tests/free/ui-browser.mjs": "e13c00021041f2b7e030d7d523848123d075de1f256e0343161c8873e9f0ee57",
+    "tests/free/ui-projection.test.mjs": "8961366591112d36e6ebd862b904a2ef96b8e1db3e2ca0d8959cc6fd8692f05f"
+  }
+}

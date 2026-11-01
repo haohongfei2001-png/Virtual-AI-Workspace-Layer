@@ -1,0 +1,11 @@
+{
+  "report": "/private/tmp/round323-read-error-browser-final.json",
+  "diagnosticOnly": true,
+  "performanceClaim": false,
+  "concurrentNodeSession": 20312,
+  "browserSession": 86836,
+  "browserExitCode": 0,
+  "functionalStepsPassed": 4,
+  "scope": "workspace explicit retry once; sidebar terminal exit; two real renewals; no observed ordinary notification",
+  "rawReportsUnmodified": true
+}

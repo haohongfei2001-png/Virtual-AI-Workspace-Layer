@@ -1,0 +1,27 @@
+✔ actual host composition admits configured historical owner source into provisional old activity and real frame hasOlder (17.304239ms)
+✔ actual host composition admits matching codec1 ACK profile but never treats it as codec2 (1.129905ms)
+✔ default host composition without configured profiles rejects persisted host and synthetic labels (0.574107ms)
+✔ host projection refuses mismatched id (0.574237ms)
+✔ host projection refuses mismatched generation (0.720588ms)
+✔ host projection refuses mismatched profileId (0.593535ms)
+✔ host projection refuses mismatched profileVersion (0.5838ms)
+✔ host projection refuses mismatched codecVersion (0.539704ms)
+✔ host projection refuses mismatched channel (0.466404ms)
+✔ host projection refuses mismatched revoked (0.714358ms)
+✔ unadmitted legacy synthetic coverage cannot certify admitted historical positive (0.812506ms)
+✔ expired source freshness does not erase strict event; source revocation still does (0.460464ms)
+✔ INDEPENDENT synthetic shared coverage source ID collision must not inherit host codec2 authority (1.124356ms)
+✔ INDEPENDENT admission rejects invalid or non-ChatGPT scopes and coercible owner fields (0.302927ms)
+✔ INDEPENDENT host profile cannot be enabled by mutable caller config after composition (0.182285ms)
+✔ INDEPENDENT scoped row author and source generation still gate activity after source admission (0.467776ms)
+✔ INDEPENDENT codec1 durable ACK remains provisional past source TTL and calibration deadline (0.910073ms)
+✔ INDEPENDENT same message original time conflict survives source admission (1.279641ms)
+✔ INDEPENDENT exact copied host profile in shared store or absent store cannot self-authorize (0.550551ms)
+ℹ tests 19
+ℹ suites 0
+ℹ pass 19
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 153.739113

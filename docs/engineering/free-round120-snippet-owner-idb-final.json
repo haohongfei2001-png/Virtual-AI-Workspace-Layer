@@ -1,0 +1,39 @@
+{
+  "evidence": "REAL_HEADLESS_CHROME_INDEXEDDB_SNIPPET_OWNER",
+  "authority": "TEST_ONLY_UI_AND_SELECTION_BRIDGE_DOUBLES",
+  "realSelection": "NOT_RUN",
+  "productionFrames": "NOT_RUN",
+  "sourceHashes": {
+    "tests/host/snippet-owner-idb-browser.mjs": "11ce5d0aa97a7bf51fe749e062d1eecd9539777d7c6a2c486f632dd2e04c0f05",
+    "src/runtime/host-snippet-service.mjs": "0d8261997f115d0fe2fdc41084ecfbe7e02e17c029f87cdf435034e9df57cd40",
+    "src/data/repository.mjs": "7fcd49c80cb6ee3687dcc898895f387965d6e86cf847a158ff7ba1e2becdbe9e",
+    "src/data/preferences.mjs": "1fb8395c5dfe23d64c91095b71a1c117b9762b3ccec68e262aaf73744b12c9d7",
+    "src/data/state.mjs": "df0eaff00a7f050c37653f0e740b8fabe19bce571c5e37f4ce437d180984c62a",
+    "src/data/backup.mjs": "bb0a8639d02e2169ae15e866a464f1531b7e80e40afd7c8a4b35e99d70928396",
+    "src/data/native-repository.mjs": "cff865baf77bf282bc3825f1ad28d24986d968cb9b262033030682c6103b2256",
+    "src/data/schema.mjs": "4a15161852c0c0a9dcc3fab10a984c97929ed9157c33fbc97121711cb41740aa",
+    "src/b1/scope-repository.mjs": "08d5c29e4be60c9b94ac6c7dce3e7fb1c5f2e553979c5a8f872a08d7c0c2bb91",
+    "src/data/hash.mjs": "a2eb9e315c79d9594d625b0d7f114261bd7acc066c7e18ffe27169ab1e57a72d"
+  },
+  "results": [
+    {
+      "name": "save-legacy-anchor-preserves-manual-native-and-other-scope",
+      "status": "PASS"
+    },
+    {
+      "name": "second-connection-CAS-conflict-does-not-write-or-notify",
+      "status": "PASS"
+    },
+    {
+      "name": "remove-only-target-retains-older-manual-snippet",
+      "status": "PASS"
+    },
+    {
+      "name": "manual-backup-and-explicit-restore-preserve-old-anchor-format",
+      "status": "PASS"
+    }
+  ],
+  "pageErrors": [],
+  "sourceChangedDuringRun": false,
+  "status": "PASS"
+}

@@ -1,0 +1,11 @@
+{
+  "baseCommit": "9e07906",
+  "files": {
+    "simulator/client.mjs": "761c1ca8e789eb71abeb47799682b205b3145ac8d1642f8074fb6fc5fa9c5a56",
+    "simulator/build.mjs": "4b079114eb0aa0b405d82c3bed7a1d3460d8285f92ac7e44ee12771f8756f382",
+    "src/data/read-recovery-budget.mjs": "7c7948a740dcc37f9a2a6b25babe8c29cd2d84441299c1429c7e524402cc8c51",
+    "tests/free/read-recovery-budget.test.mjs": "f0aa49ac2d6d584d768d4046a211320cba76c11962b729b7ef651715312a8dab",
+    "tests/free/read-recovery-budget-browser.mjs": "cdabfe4bcfabeaeeac724a7367f8093cccc9c082ee8c7dedb686fed69bc2b578",
+    "tests/free/native-partition-audit-size.test.mjs": "707d772e9fe9ac05f4f5855b4b24262f65c434cf9678c66ae7a5ebeb73e2955c"
+  }
+}

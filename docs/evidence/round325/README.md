@@ -1,0 +1,13 @@
+# Round325 — coalesce witnessed native repeats without losing freshness or candidates
+
+Baseline1bce7165505784a873bf6dbc039a6495b62ae486 was confirmed on original development branch/PR16. Root owns production integration; independent reviewer owns the new coalescing tests. No schema/hash/authority/budget change.
+
+Ordinary surface proposals can reuse unchanged native facts only when their source and every observed row still have active witnesses, inventory matches and no generation/source revalidation is needed. Existing version and authorization fences run before accepting; freshness is checked again after asynchronous fencing. Repeats preserve all persisted timestamps/receipts/facts and consume only the current in-memory producer sequence. Expired/new/changed/revoked observations use existing CAS. UNKNOWN cannot refresh prior PROJECT membership. Combined native/evidence commits remain unchanged.
+
+A purely resolved no-op no longer issues a data-changed notification, avoiding redraw on every repeated directory fragment. IDless controls or detached handles still notify the live candidate UI even if persistence coalesces. This distinction was discovered by independent review and two red tests; it is not a blanket suppression of native UI updates.
+
+Independent NativeRepository+MockIDB suite17/17 PASS, including old-module red baseline, async-row-expiry red→green, and candidate-notification red→green. Mock handshake/scope are explicit; this is not an actual Chrome authorization proof. Full Node6322/6322 PASS, zero skips, exit0. Independent final review found no blocker. Historical red log names326 are the reviewer's original filenames; this checkpoint isRound325.
+
+First actual uninstrumented headless10k single-project CPU1 run reached complete before/after audits at revision214 but search pagination failed because its button was continuously detached; FAIL is preserved. After notification correction, the original immediate run (no admission preparation, no trace, unchanged deadlines) reached complete10000 refs/10000 PROJECT membership before/after at the same revision211. Exact tail search84.57ms, broad first page184.30ms, next page222.65ms; these are single Playwright wall-clock samples, not p95. Both24-row pages passed the independent oracle. Native member navigation and unique return passed with original document/editor preserved. Final status remainsPARTIAL_SYS04_NOT_ACCEPTED (expected exit2), not full F1 acceptance. Sources/fixture/manifest unchanged; isolated profile/browser and fixture cleaned, temporary directory removed.
+
+Free remains NOT_RELEASE_READY. Other distributions/100k/p95, complete81/profile/J1–J4 and G/U remain open. No private ChatGPT/PAIA/native write/paid service/deployment access.

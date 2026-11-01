@@ -1,0 +1,141 @@
+✖ version fence rejects a historical BOOT without relabeling its observed fingerprint (8.201625ms)
+✖ version fence rejects a stale registered manifest even with a matching BOOT (1.708899ms)
+✖ version fence never accepts ready without a current BOOT (0.746546ms)
+✖ version fence verifier refuses old BOOT bytes even after their inventory hash is rewritten (254.546232ms)
+✖ version fence actual BOOT sender and registered manifest carry one build (98.097108ms)
+✖ version fence content bootstrap cannot import a different-generation module graph (98.483507ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 0
+ℹ fail 6
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 498.649258
+
+✖ failing tests:
+
+test at tests/host/local-status-presentation.test.mjs:32:1
+✖ version fence rejects a historical BOOT without relabeling its observed fingerprint (8.201625ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /runtime-build-mismatch/. Input:
+  
+  '本次状态码：ready'
+  
+      at TestContext.<anonymous> (file:///workspace/scratch/8d07260fb60e/vaiwl/tests/host/local-status-presentation.test.mjs:35:9)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '本次状态码：ready',
+    expected: /runtime-build-mismatch/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at tests/host/local-status-presentation.test.mjs:42:1
+✖ version fence rejects a stale registered manifest even with a matching BOOT (1.708899ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /runtime-registration-mismatch/. Input:
+  
+  '本次状态码：ready'
+  
+      at TestContext.<anonymous> (file:///workspace/scratch/8d07260fb60e/vaiwl/tests/host/local-status-presentation.test.mjs:44:9)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '本次状态码：ready',
+    expected: /runtime-registration-mismatch/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at tests/host/local-status-presentation.test.mjs:46:1
+✖ version fence never accepts ready without a current BOOT (0.746546ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /runtime-build-unverified/. Input:
+  
+  '本次状态码：ready'
+  
+      at TestContext.<anonymous> (file:///workspace/scratch/8d07260fb60e/vaiwl/tests/host/local-status-presentation.test.mjs:48:9)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '本次状态码：ready',
+    expected: /runtime-build-unverified/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at tests/host/runtime-build-package.test.mjs:12:1
+✖ version fence verifier refuses old BOOT bytes even after their inventory hash is rewritten (254.546232ms)
+  AssertionError [ERR_ASSERTION]: Missing expected exception.
+      at TestContext.<anonymous> (file:///workspace/scratch/8d07260fb60e/vaiwl/tests/host/runtime-build-package.test.mjs:15:9)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /build|fingerprint|content/,
+    operator: 'throws',
+    diff: 'simple'
+  }
+
+test at tests/host/runtime-build-package.test.mjs:17:1
+✖ version fence actual BOOT sender and registered manifest carry one build (98.097108ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + undefined
+  - '26a6145413a9db5acdfdc57e7643bea119c33fd5623216d1b437727ec2eaea30'
+  
+      at TestContext.<anonymous> (file:///workspace/scratch/8d07260fb60e/vaiwl/tests/host/runtime-build-package.test.mjs:19:46)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: '26a6145413a9db5acdfdc57e7643bea119c33fd5623216d1b437727ec2eaea30',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/host/runtime-build-package.test.mjs:21:1
+✖ version fence content bootstrap cannot import a different-generation module graph (98.483507ms)
+  AssertionError [ERR_ASSERTION]: The input was expected to not match the regular expression /import\(runtime\.getURL\('extension\/content-entry\.mjs'\)\)/. Input:
+  
+  '// Passive startup receipt survives a failed module import. Only our private\n' +
+    '// status page may read it; no DOM, title, URL, identity or storage is returned.\n' +
+    '(() => {\n' +
+    ' const runtime=chrome.runtime,build="26a6145413a9db5acdfdc57e7643bea119c33fd5623216d1b437727ec2eaea30";\n' +
+    " let stage='module-loading';\n" +
+    ' const listener=(message,sender,reply)=>{\n' +
+    "  if(!message||Object.getPrototypeOf(message)!==Object.prototype||Reflect.ownKeys(message).length!==2||message.v!==1||message.type!=='HOST_LOCAL_BOOT'||sender?.id!==runtime.id||sender?.url!==runtime.getURL('status.html')||sender.tab!==undefined)return;\n" +
+    '  reply({v:1,stage,build});\n' +
+    ' };\n' +
+    ' runtime.onMessage.addListener(listener);\n' +
+    " window.addEventListener('pagehide',event=>{if(!event.persisted)runtime.onMessage.removeListener(listener);});\n" +
+    " document.documentElement.dataset.vaiwlBoot='loading';\n" +
+    " void import(runtime.getURL('extension/content-entry.mjs')).then(()=>{\n" +
+    "  stage='module-loaded';document.documentElement.dataset.vaiwlBoot='loaded';\n" +
+    " },()=>{stage='module-load-failed';document.documentElement.dataset.vaiwlBoot='module-load-failed';});\n" +
+    '})();\n'
+  
+      at TestContext.<anonymous> (file:///workspace/scratch/8d07260fb60e/vaiwl/tests/host/runtime-build-package.test.mjs:23:9)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: `// Passive startup receipt survives a failed module import. Only our private\n// status page may read it; no DOM, title, URL, identity or storage is returned.\n(() => {\n const runtime=chrome.runtime,build="26a6145413a9db5acdfdc57e7643bea119c33fd5623216d1b437727ec2eaea30";\n let stage='module-loading';\n const listener=(message,sender,reply)=>{\n  if(!message||Object.getPrototypeOf(message)!==Object.prototype||Reflect.ownKeys(message).length!==2||message.v!==1||message.type!=='HOST_LOCAL_BOOT'||sender?.id!==runtime.id||sender?.url!==runtime.getURL('status.html')||sender.tab!==undefined)return;\n  reply({v:1,stage,build});\n };\n runtime.onMessage.addListener(listener);\n...`,
+    expected: /import\(runtime\.getURL\('extension\/content-entry\.mjs'\)\)/,
+    operator: 'doesNotMatch',
+    diff: 'simple'
+  }

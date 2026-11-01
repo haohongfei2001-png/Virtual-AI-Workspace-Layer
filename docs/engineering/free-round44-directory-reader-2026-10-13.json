@@ -1,0 +1,38 @@
+{
+  "evidence": "REAL_IDB_DIRECTORY_READ_INTEGRATION_NOT_MIGRATION",
+  "browser": "156.0.8078.4",
+  "sourceHashes": {
+    "src/data/evidence-directory-reader.mjs": "b94684c7e3824a0b6bc832d308cda077e37aca1c77c0517591a3df13cd6449e1",
+    "src/data/evidence-ref-directory.mjs": "1001abca8b849e7c73390acaa730a1639efc9cc621898ca97f3d538b30832b08",
+    "src/data/free-evidence-repository.mjs": "9b1ce7dd4209bc0553c877f1038215df0ab43aae96da942db9ddf18d1eb1da7a",
+    "src/data/free-evidence-partitions.mjs": "dbecbc2418d79c84c8e7efd8b07db98794b5355989865c891dc551a84b5df4d5",
+    "tests/free/evidence-directory-contracts.mjs": "a1ece5307054f2628a4bf489930874fef4d596de1ce85c8d1b1fb13a2b4e7e86",
+    "tests/free/evidence-directory-reader-browser.mjs": "1908daec9042d19c44ce965bf2e4f25f858db2cef11c2ef3aa5a4c4fbe802b17"
+  },
+  "results": [
+    {
+      "name": "repository indexed full, metadata, explicit and offset reads retain evidence",
+      "status": "PASS"
+    },
+    {
+      "name": "indexed writes and old shadow recovery refuse format downgrade",
+      "status": "PASS"
+    },
+    {
+      "name": "indexed metadata still checks marker, requested revision and guard",
+      "status": "PASS"
+    },
+    {
+      "name": "missing directory bucket aborts page full read and compatible header",
+      "status": "PASS"
+    },
+    {
+      "name": "signed evidence with mismatched directory size remains rejected",
+      "status": "PASS"
+    },
+    {
+      "name": "every global index ref is verified even when a different row would be requested",
+      "status": "PASS"
+    }
+  ]
+}

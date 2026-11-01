@@ -1,0 +1,444 @@
+{
+  "evidence": "MINIMAL_MV3_MECHANISM_NOT_PRODUCT_ACCEPTANCE",
+  "productAcceptance": "NOT_CERTIFIED",
+  "scope": "Temporary static extension with no VAIWL renderer, broker or production code; formal reading immediate exit FAIL remains independent.",
+  "scriptHash": "20d190e2011beb3a91f58419f09c51cebd68d3f9686e0f46a43133ef9d7b9cfb",
+  "sourceHashes": {
+    "manifest.json": "c621e589e8cd6590773e2cf1734928558eb2594e7a1c988c253b61d774e28f79",
+    "worker.js": "e69b1a1801e3390fbfb8f2aa904df7b0fd2ae201fcf160c9445b7c805ddcdfc8",
+    "child.html": "896c3bf28f56800fb40d228397fc4608ff9ea9abe25d7987b2491b2acfe606bc",
+    "child.js": "0032f76c81a1240b9019deeb5b6bbfe503e67d6780eaca56a02643a00d7a5519"
+  },
+  "mountMode": "production-cycle",
+  "closedLayout": "retain",
+  "mountSourceHash": "bf018042ed0e057abaaaa2e17f0a55725e6e7812b75915bef858f1d3f49ba0b9",
+  "extension": "/private/tmp/manual-extension-popover-bvtrME/extension",
+  "cases": [
+    {
+      "popover": true,
+      "mode": "FRESH_PAGE_IMMEDIATE_NO_ADDED_WAIT",
+      "iframeTargets": [
+        {
+          "type": "iframe",
+          "url": "chrome-extension://nejljfjonghhbkedndaeikfhofhnjcca/child.html",
+          "targetId": "2848746E83292C9C880100FC7F006A7A"
+        },
+        {
+          "type": "iframe",
+          "url": "chrome-extension://nejljfjonghhbkedndaeikfhofhnjcca/child.html",
+          "targetId": "F975CC7848FC8CEF30F0D8B32B216A81"
+        }
+      ],
+      "oopifConfirmed": true,
+      "classification": "EXTENSION_IFRAME_TARGET_CONFIRMED",
+      "layoutInjection": "EXPERIMENT_ONLY_OWNED_CLOSED_LAYOUT_RETAINED_NOT_ACCEPTANCE",
+      "afterNativeInput": {
+        "open": 0,
+        "editorSame": true,
+        "draft": "NATIVE_CYCLE_DRAFT"
+      },
+      "closedState": {
+        "owned": [
+          {
+            "surface": {
+              "tag": "SECTION",
+              "id": "va_a8e30a505c244de3b60b0d8861fa9f84_workspace",
+              "rect": {
+                "x": 300,
+                "y": 50,
+                "width": 500,
+                "height": 400,
+                "top": 50,
+                "right": 800,
+                "bottom": 450,
+                "left": 300
+              },
+              "visibility": "hidden",
+              "interactivity": "inert",
+              "display": "flex"
+            },
+            "frame": {
+              "tag": "IFRAME",
+              "id": "",
+              "rect": {
+                "x": 300,
+                "y": 75,
+                "width": 500,
+                "height": 375,
+                "top": 75,
+                "right": 800,
+                "bottom": 450,
+                "left": 300
+              },
+              "visibility": "hidden",
+              "interactivity": "inert",
+              "display": "block"
+            },
+            "open": false
+          },
+          {
+            "surface": {
+              "tag": "SECTION",
+              "id": "va_a8e30a505c244de3b60b0d8861fa9f84_sidebar",
+              "rect": {
+                "x": 20,
+                "y": 180,
+                "width": 240,
+                "height": 400,
+                "top": 180,
+                "right": 260,
+                "bottom": 580,
+                "left": 20
+              },
+              "visibility": "hidden",
+              "interactivity": "inert",
+              "display": "flex"
+            },
+            "frame": {
+              "tag": "IFRAME",
+              "id": "",
+              "rect": {
+                "x": 20,
+                "y": 205,
+                "width": 240,
+                "height": 375,
+                "top": 205,
+                "right": 260,
+                "bottom": 580,
+                "left": 20
+              },
+              "visibility": "hidden",
+              "interactivity": "inert",
+              "display": "block"
+            },
+            "open": false
+          }
+        ],
+        "native": [
+          {
+            "control": {
+              "tag": "TEXTAREA",
+              "id": "",
+              "rect": {
+                "x": 300,
+                "y": 600,
+                "width": 182,
+                "height": 36,
+                "top": 600,
+                "right": 482,
+                "bottom": 636,
+                "left": 300
+              },
+              "visibility": "visible",
+              "interactivity": "auto",
+              "display": "inline-block"
+            },
+            "hits": [
+              {
+                "tag": "TEXTAREA",
+                "id": "",
+                "owned": false
+              },
+              {
+                "tag": "FORM",
+                "id": "composer",
+                "owned": false
+              },
+              {
+                "tag": "HTML",
+                "id": "",
+                "owned": false
+              }
+            ]
+          },
+          {
+            "control": {
+              "tag": "BUTTON",
+              "id": "native-history-entry",
+              "rect": {
+                "x": 122.0625,
+                "y": 182,
+                "width": 133.078125,
+                "height": 21,
+                "top": 182,
+                "right": 255.140625,
+                "bottom": 203,
+                "left": 122.0625
+              },
+              "visibility": "visible",
+              "interactivity": "auto",
+              "display": "inline-block"
+            },
+            "hits": [
+              {
+                "tag": "BUTTON",
+                "id": "native-history-entry",
+                "owned": false
+              },
+              {
+                "tag": "NAV",
+                "id": "history",
+                "owned": false
+              },
+              {
+                "tag": "HTML",
+                "id": "",
+                "owned": false
+              }
+            ]
+          }
+        ]
+      },
+      "closedNativeOperable": {
+        "historyClicks": 1,
+        "draft": "NATIVE_CYCLE_DRAFT_RETAINED",
+        "editorSame": true
+      },
+      "afterNativeReturn": {
+        "open": 2,
+        "draft": "NATIVE_CYCLE_DRAFT_RETAINED"
+      },
+      "before": {
+        "rect": {
+          "x": 50,
+          "y": 80,
+          "width": 120,
+          "height": 40,
+          "top": 80,
+          "right": 170,
+          "bottom": 120,
+          "left": 50
+        },
+        "hit": "target"
+      },
+      "clicked": 1,
+      "childEvents": [
+        {
+          "type": "pointerdown",
+          "target": "BUTTON",
+          "id": "target",
+          "trusted": true,
+          "epochMs": 1792022463677.2
+        },
+        {
+          "type": "mousedown",
+          "target": "BUTTON",
+          "id": "target",
+          "trusted": true,
+          "epochMs": 1792022463677.3
+        },
+        {
+          "type": "pointerup",
+          "target": "BUTTON",
+          "id": "target",
+          "trusted": true,
+          "epochMs": 1792022463677.4
+        },
+        {
+          "type": "mouseup",
+          "target": "BUTTON",
+          "id": "target",
+          "trusted": true,
+          "epochMs": 1792022463677.4
+        },
+        {
+          "type": "click",
+          "target": "BUTTON",
+          "id": "target",
+          "trusted": true,
+          "epochMs": 1792022463677.4
+        }
+      ],
+      "parentEvents": [
+        {
+          "type": "input",
+          "target": "TEXTAREA",
+          "id": "",
+          "trusted": true,
+          "epochMs": 1792022463542
+        },
+        {
+          "type": "input",
+          "target": "TEXTAREA",
+          "id": "",
+          "trusted": true,
+          "epochMs": 1792022463547.8
+        },
+        {
+          "type": "input",
+          "target": "TEXTAREA",
+          "id": "",
+          "trusted": true,
+          "epochMs": 1792022463548.3
+        },
+        {
+          "type": "input",
+          "target": "TEXTAREA",
+          "id": "",
+          "trusted": true,
+          "epochMs": 1792022463548.7
+        },
+        {
+          "type": "input",
+          "target": "TEXTAREA",
+          "id": "",
+          "trusted": true,
+          "epochMs": 1792022463548.9
+        },
+        {
+          "type": "input",
+          "target": "TEXTAREA",
+          "id": "",
+          "trusted": true,
+          "epochMs": 1792022463549.1
+        },
+        {
+          "type": "input",
+          "target": "TEXTAREA",
+          "id": "",
+          "trusted": true,
+          "epochMs": 1792022463549.4
+        },
+        {
+          "type": "input",
+          "target": "TEXTAREA",
+          "id": "",
+          "trusted": true,
+          "epochMs": 1792022463549.6
+        },
+        {
+          "type": "input",
+          "target": "TEXTAREA",
+          "id": "",
+          "trusted": true,
+          "epochMs": 1792022463549.9
+        },
+        {
+          "type": "input",
+          "target": "TEXTAREA",
+          "id": "",
+          "trusted": true,
+          "epochMs": 1792022463550.2
+        },
+        {
+          "type": "pointerdown",
+          "target": "BUTTON",
+          "id": "native-history-entry",
+          "trusted": true,
+          "epochMs": 1792022463575.6
+        },
+        {
+          "type": "mousedown",
+          "target": "BUTTON",
+          "id": "native-history-entry",
+          "trusted": true,
+          "epochMs": 1792022463575.7
+        },
+        {
+          "type": "pointerup",
+          "target": "BUTTON",
+          "id": "native-history-entry",
+          "trusted": true,
+          "epochMs": 1792022463575.8
+        },
+        {
+          "type": "mouseup",
+          "target": "BUTTON",
+          "id": "native-history-entry",
+          "trusted": true,
+          "epochMs": 1792022463575.8
+        },
+        {
+          "type": "click",
+          "target": "BUTTON",
+          "id": "native-history-entry",
+          "trusted": true,
+          "epochMs": 1792022463575.8
+        },
+        {
+          "type": "pointerdown",
+          "target": "BUTTON",
+          "id": "native-return",
+          "trusted": true,
+          "epochMs": 1792022463607.3
+        },
+        {
+          "type": "mousedown",
+          "target": "BUTTON",
+          "id": "native-return",
+          "trusted": true,
+          "epochMs": 1792022463607.4
+        },
+        {
+          "type": "pointerup",
+          "target": "BUTTON",
+          "id": "native-return",
+          "trusted": true,
+          "epochMs": 1792022463607.5
+        },
+        {
+          "type": "mouseup",
+          "target": "BUTTON",
+          "id": "native-return",
+          "trusted": true,
+          "epochMs": 1792022463607.5
+        },
+        {
+          "type": "click",
+          "target": "BUTTON",
+          "id": "native-return",
+          "trusted": true,
+          "epochMs": 1792022463607.5
+        },
+        {
+          "type": "pointerdown",
+          "target": "BUTTON",
+          "id": "",
+          "trusted": true,
+          "epochMs": 1792022463643.5
+        },
+        {
+          "type": "mousedown",
+          "target": "BUTTON",
+          "id": "",
+          "trusted": true,
+          "epochMs": 1792022463643.6
+        },
+        {
+          "type": "pointerup",
+          "target": "BUTTON",
+          "id": "",
+          "trusted": true,
+          "epochMs": 1792022463643.6
+        },
+        {
+          "type": "mouseup",
+          "target": "BUTTON",
+          "id": "",
+          "trusted": true,
+          "epochMs": 1792022463643.6
+        },
+        {
+          "type": "click",
+          "target": "BUTTON",
+          "id": "",
+          "trusted": true,
+          "epochMs": 1792022463643.6
+        }
+      ],
+      "state": {
+        "workspaceOpen": false,
+        "sidebarOpen": true
+      },
+      "status": "OBSERVED_SUCCESS_NOT_PRODUCT_ACCEPTANCE",
+      "screenshot": "/private/tmp/manual-extension-popover-bvtrME/popover.png"
+    }
+  ],
+  "blockedExternal": [],
+  "workerNetworkBlocked": true,
+  "browserVersion": "155.0.8059.40",
+  "status": "MECHANISM_CASES_SUCCEEDED_NOT_CERTIFIED",
+  "scriptChangedDuringRun": false,
+  "mountSourceChangedDuringRun": false,
+  "fixtureSourceChangedDuringRun": false
+}

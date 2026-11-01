@@ -1,0 +1,18 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+page.evaluate: Error: untrusted-evidence-channel
+    at WorkspaceRepository.allowEvidence (chrome-extension://maijdelaejkbfmgkgkobpbnkihnoomfh/src/data/repository.mjs:47:111)
+    at PartitionedState.initialize (chrome-extension://maijdelaejkbfmgkgkobpbnkihnoomfh/src/data/partitioned.mjs:137:83)
+    at PartitionedState.migrate (chrome-extension://maijdelaejkbfmgkgkobpbnkihnoomfh/src/data/partitioned.mjs:135:338)
+    at async eval (eval at evaluate (:370:30), <anonymous>:7:33)
+    at async <anonymous>:396:30
+    at inspect (/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/free/shared-directory-upgrade-browser.mjs:20:182)
+    at async file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/free/shared-directory-upgrade-browser.mjs:39:108
+    at async run (/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/free/shared-directory-upgrade-browser.mjs:17:75)
+    at async file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/free/shared-directory-upgrade-browser.mjs:39:13 {
+  log: []
+}
+
+Node.js v26.8.2

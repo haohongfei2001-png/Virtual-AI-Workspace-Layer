@@ -1,0 +1,61 @@
+{
+  "schema": "vaiwl-context-idle-drain-evidence-v1",
+  "baseHead": "29a862575c9334a84572022c7f95e47fd2f157eb",
+  "task": "C2/C6/F3 actual browser association work remains nonidle until settlement",
+  "sourceHashes": {
+    "src/runtime/browser-request-context.mjs": "689ee6ea95184456be52b872a0778f04abfc6e75922991ca9ac0daa3019093aa",
+    "src/runtime/host-binding-service.mjs": "4e658254ad180ba842931182b8749eadaf2b730923ea3c4dd26c78bfb39d798e",
+    "tests/host/browser-context-idle.test.mjs": "4d7e5fa3ee259efa9e3674d04fe84f66dd9de012856a6af055f2d9fe3d29d1b0",
+    "tests/runtime/context-recovery/binding-integration.test.mjs": "3ed2982f2474f60aea37b2d0e643c5510bc53ff94b488756e1a89621b435044e",
+    "docs/specs/chatgpt-host/CONTEXT_RECOVERY_NO_RECEIPT.md": "a7c3e638d907f91bcc57310984bc7cd582287563c1ee962ead0c43c273ee0749"
+  },
+  "rootCause": "The context observer had no idle signal. The service could finish a bounded recovery caller and report idle while associatePage or a browser frame lookup was still pending, including after revocation.",
+  "change": "Count actual browser operations and chains, expose a local idle signal, and include that optional owner capability in service idle checks. Preserve caller deadlines, receipt guards, stop behavior, and passive waiting without active browser work. Individual operations stay counted when Promise.all rejects before a sibling settles.",
+  "validation": {
+    "preFix": {
+      "failed": 2,
+      "passed": 0,
+      "log": "before.log"
+    },
+    "targetedRegression": {
+      "passed": 270,
+      "failed": 0,
+      "skipped": 0,
+      "log": "regression.log",
+      "newTests": 4
+    },
+    "builds": [
+      {
+        "name": "default",
+        "result": {
+          "status": "HOST_IMPLEMENTATION_UNVERIFIED",
+          "releaseStatus": "NOT_RELEASE_READY",
+          "files": 191
+        }
+      },
+      {
+        "name": "observed",
+        "result": {
+          "status": "HOST_IMPLEMENTATION_UNVERIFIED",
+          "releaseStatus": "NOT_RELEASE_READY",
+          "files": 191
+        }
+      }
+    ],
+    "review": "Main writer diff review only for this change. No new independent runtime review performed."
+  },
+  "priorIndependentReview": {
+    "head": "a218d58de0498d5e8e648b0be1dc4831bca0485f",
+    "source": "dot message received during this checkpoint",
+    "scope": "Independent source-only review reported no newly confirmed blocker; not runtime verification. The directory lock is per provider instance, not global across provider replacements. Does not review this checkpoint or 29a86257."
+  },
+  "boundaries": {
+    "productionEnabled": false,
+    "realAccountRequests": 0,
+    "newWitnessBatch": false,
+    "installedPackageUpdated": false,
+    "receiptSemanticsChanged": false,
+    "realDailyAcceptance": "NOT_RUN"
+  },
+  "checkpoint": ".git/vaiwl-checkpoints/20261023-context-idle-drain"
+}

@@ -1,0 +1,14 @@
+✔ cold staged requests perform one atomic preparation each then return a full warm header preserving all facts (648.049666ms)
+✔ legacy unflagged header still completes all preparation in one response (418.627375ms)
+✔ staged migration failure returns its reason without a partial header or retry (313.13275ms)
+✔ account changes after an atomic stage cannot publish prior scope preparation (54.942167ms)
+✔ malformed staged and SNAPSHOT staged messages are rejected before writes (28.951708ms)
+✔ legacy directory is integrity-sealed once despite an older migration receipt (529.681708ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2046.581375

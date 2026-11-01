@@ -1,0 +1,13 @@
+{
+  "baselineHead": "7c18f9a021849adb3080f7b115799e8aa2972e2b",
+  "evidence": "OFFLINE_ONLY_NOT_RELEASE_READY",
+  "sourceHashes": {
+    "simulator/build.mjs": "88a5f3d450f69e23b07d3787276df7234ee4c67577e97d3b4f0a5ad7e712d575",
+    "src/data/native-index-migration.mjs": "5bfc5cac72f135324a2c5033c6a670533e5f606b98d66669db1338b8429add42",
+    "src/data/native-observation-continuation.mjs": "8e452661150d5702881b034b0a214a70789e033d0d1c3d3c76bc55a189d061ce",
+    "src/data/native-repository.mjs": "3be67df4089eafa3484d6682d5eeb1fcf3a7fda3a70d1e8a2e0c891e063543a3",
+    "tests/host/native-continuation-idb-browser.mjs": "c37a11de12e296248abd3598432ccb3ad0ade0e4148a08072372d5ca939249b0",
+    "tests/host/native-continuation-repository.test.mjs": "c02f8914194cf337351aa8c03f5733514cfc1d8d0e2ededd42e74dbc2647e2a1",
+    "tests/host/native-observation-continuation.test.mjs": "464ce6dbfe26972cf341709a2c34c66ba27a54857b74018016c0fc0aba4da3ea"
+  }
+}

@@ -1,0 +1,7 @@
+# Round274 — Natural mixed-project membership in the actual Free UI
+
+Base e3a439a. Test-only implementation, production unchanged. The earlier100k partial-admission failure remains at Round273. UNKNOWN in mixed history is not a parser failure: the native initial history links expose no membership. The new journey opens exactly one native Project, without injecting extension facts or opening other Projects.
+
+Actual isolated headless packaged MV3 PASS_PARTIAL_MIXED_MEMBER_JOURNEY: stable read-only index audit contains all1000 refs and10 Projects, exactly80 observed first-Project members,720 unseen other-Project members UNKNOWN and200 native-truth ungrouped refs UNKNOWN. No invented NONE, missing, duplicate, unexpected or wrong-membership refs. Member observation and return share the original30s absolute deadline; RPC6s remains unchanged. Free Project card uses its native name, and searches for first/last observed members plus an unseen Project member preserve exact native titles and URLs. Native composer node identity remains unchanged; only one native navigation occurred.
+
+Source/fixture/build integrity retained; browser errors empty. Eight independent local contracts pass, including the server-backed discovery fixture and exact-index oracle mutations. This covers local/synthetic reconstructed Host mapping, not real ChatGPT, full F1, all profiles, full81, or Free acceptance. No full Node rerun is claimed for this test-only checkpoint; prior full result remains Round273. The independent J4 after-evidence work continues separately.

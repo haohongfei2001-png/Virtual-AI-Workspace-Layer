@@ -1,0 +1,73 @@
+{
+  "evidence": "REAL_HEADLESS_CHROME_IDB_EVIDENCE_BATCH_AUDIT",
+  "realChatGPT": "NOT_RUN",
+  "mv3": "NOT_RUN",
+  "sourceHashes": {
+    "src/data/audit-record-prefetch.mjs": "5af85b5c8a90e0a1d236fdec784b77ee970f7ea251e18b4be386a34e909d6b7c",
+    "src/data/evidence-partition-audit.mjs": "60e4faf0a4897582155dff5640b9325ce0dacd80170c0c03a92bbfed2026bb09",
+    "src/data/evidence-directory-migration.mjs": "45fa6845f6c4eb715b46d259517e3ce1d31ca3e00b13f260c24c05b1286de905",
+    "src/data/free-evidence-partitions.mjs": "b8be20fcf0a2447594a86233b15e1726fbde923ab26dcc21c0b9f3f4a3ba1ac7",
+    "src/data/free-evidence-repository.mjs": "66f118ba5d4cf9f3b2badbb8f258c330272ce27c93929a8748a41158a237c768",
+    "src/data/free-evidence.mjs": "194796386c17ce311e638d5cc35145aa372e16e87ab8c4d5b5cb9bd7f08fea12",
+    "src/data/evidence-ref-directory.mjs": "8a89bf5b8535578881c823077554f177098044214a22fcfaf4be41e65498c867",
+    "src/data/hash.mjs": "3d5e80f093baf140cf5362972a56d2635ead2791daadeacd7e5207ae35a4dc03",
+    "src/data/schema.mjs": "4a15161852c0c0a9dcc3fab10a984c97929ed9157c33fbc97121711cb41740aa",
+    "src/b1/scope-repository.mjs": "08d5c29e4be60c9b94ac6c7dce3e7fb1c5f2e553979c5a8f872a08d7c0c2bb91",
+    "tests/free/evidence-audit-browser.mjs": "7cf494c73c5a32ed5214ffe2f5200769c20736a22c59ddd15c1108f049301c67"
+  },
+  "results": [
+    {
+      "status": "PASS",
+      "mode": "success",
+      "refs": 5001,
+      "prefetch": {
+        "keyPages": 11,
+        "valuePages": 12,
+        "maxPage": 512
+      },
+      "result": {
+        "ok": true,
+        "revision": 3,
+        "operationId": "audit_success"
+      },
+      "allStoresUnchanged": false,
+      "completeFactsPreserved": true
+    },
+    {
+      "status": "PASS",
+      "mode": "checksum",
+      "refs": 5001,
+      "prefetch": {
+        "keyPages": 11,
+        "valuePages": 12,
+        "maxPage": 512
+      },
+      "result": {
+        "ok": false,
+        "reason": "corrupt-free-evidence-record"
+      },
+      "allStoresUnchanged": true,
+      "completeFactsPreserved": false
+    },
+    {
+      "status": "PASS",
+      "mode": "abort",
+      "refs": 5001,
+      "prefetch": {
+        "keyPages": 11,
+        "valuePages": 12,
+        "maxPage": 512
+      },
+      "result": {
+        "ok": false,
+        "reason": "stale-binding"
+      },
+      "secondBatchReached": true,
+      "allStoresUnchanged": true,
+      "completeFactsPreserved": false
+    }
+  ],
+  "pageErrors": [],
+  "browser": "155.0.8059.40",
+  "sourceChangedDuringRun": false
+}

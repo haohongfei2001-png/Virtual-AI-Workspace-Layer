@@ -1,0 +1,36 @@
+{
+  "evidence": "HEADLESS_CHROME_SYNTHETIC_SERVICE_REAL_IDB",
+  "browser": "154.0.8037.99",
+  "results": [
+    {
+      "availability": "unavailable",
+      "status": {
+        "state": "ACTIVE",
+        "mode": "reading",
+        "scope": "[\"hf_synthetic_only\",\"A\",\"fixture_org\"]"
+      },
+      "sameRefs": true,
+      "sameTTL": true,
+      "sameTime": true,
+      "unknownLinks": 2,
+      "draftRetained": true,
+      "readingRetained": true
+    },
+    {
+      "availability": "available",
+      "status": {
+        "state": "ACTIVE",
+        "mode": "reading",
+        "scope": "[\"hf_synthetic_only\",\"A\",\"fixture_org\"]"
+      },
+      "sameRefs": true,
+      "sameTTL": true,
+      "sameTime": true,
+      "unknownLinks": 0,
+      "draftRetained": true,
+      "readingRetained": true
+    }
+  ],
+  "errors": [],
+  "fail": 0
+}

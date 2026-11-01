@@ -1,0 +1,23 @@
+✔ application owns first-send mapping and distinct exact IDs; duplicate operations cannot create again (2.666193ms)
+✔ native fixture source declares IDs and sends headers without extension APIs (0.451671ms)
+✔ actual FIRST_SEND server entry starts with its native submit profile (43.635076ms)
+✔ explicit first-send package is loopback-only with browser observer and authenticated ACK configuration (80.68688ms)
+✔ production or C2-only profile cannot silently enable home causal source (0.82858ms)
+✔ combined explicit offline history and first-send package preserves both private owners and source admission (53.087568ms)
+✔ atomic shared 12-request cap survives competing instances and reopened repository (13.159766ms)
+✔ two retries persist across instance replacement, independently of other operation identities (1.280472ms)
+✔ window continuation never renews at 30 seconds; only later foreground work starts another (1.402261ms)
+✔ rollback, storage failure and pre-abort fail closed without resetting counters (2.176835ms)
+✔ scope and source domains partition counters without storing raw operation IDs (3.580232ms)
+✔ operation GETs and all auth/account/detail GETs consume the same persisted cap (14.866ms)
+✔ failed network requests are never refunded and provider reconstruction does not reset retries (2.385509ms)
+✔ mapping-to-metadata continuation refuses a fresh window after rollover before any auth GET (3.69819ms)
+✔ corrupted persisted counter cannot silently reopen budget (1.47759ms)
+ℹ tests 15
+ℹ suites 0
+ℹ pass 15
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 235.294896

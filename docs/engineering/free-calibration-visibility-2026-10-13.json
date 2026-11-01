@@ -1,0 +1,28 @@
+{
+  "sourceCalls": 1,
+  "evidence": "REAL_BROWSER_SYNTHETIC_PAGE_ONLY",
+  "browser": "156.0.8078.4",
+  "thresholdMs": 1000,
+  "elapsedMs": 200.09999999962747,
+  "evidenceRevision": 1,
+  "requestsAfterRelease": [
+    {
+      "type": "B23_FREE_HEADER",
+      "elapsedMs": 66.80000000074506
+    },
+    {
+      "type": "B23_FREE_PAGE",
+      "elapsedMs": 129.59999999962747
+    },
+    {
+      "type": "CHECK",
+      "elapsedMs": 157.59999999962747
+    },
+    {
+      "type": "CHECK",
+      "elapsedMs": 187
+    }
+  ],
+  "eventPersisted": true,
+  "pass": true
+}

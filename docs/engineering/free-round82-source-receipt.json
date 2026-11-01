@@ -1,0 +1,20 @@
+{
+  "parent": "c4fe9c774a6247b4be59a9ff549379021d74d14f",
+  "sourceHashes": {
+    "src/host/free-frame-client.mjs": "fadf7150ef80a546f7e4910d806ccf54dad528b170f43ac443da1ebc6ad90551",
+    "src/host/surface-controller.mjs": "570b2172e5100ba0b26d637776bd9e6fa75625deac8ec0617d789834d14f76bc",
+    "src/navigation/mount-surface.mjs": "f630af0df6bd8403a0a6ae736c484cf57d8aef8bb246f733352b8ea533aa6f0b",
+    "src/navigation/navigation.mjs": "076f73b96a38bdb6c2e805b994f736a4734c24e4a10961d25b7037390e53b42d",
+    "src/runtime/host-view-service.mjs": "56986b6ec9ef166cbe1c71146b1147392f97c459c4defe2209e0635529def323",
+    "tests/host/frame-projection-renderer.test.mjs": "079201465279fb2a1344f691975f1e2a86dff9bb2dbfe5642f1e44228d7057e7",
+    "tests/host/free-frame-client.test.mjs": "d2c6dca0a294a4cca37cdc2993c1feaeb50249b76816ee2916bfcf4abd1a82a7",
+    "tests/host/host-view-service.test.mjs": "8a33aafa279cecb234b6298f06ccf163c3e71fff03dae0f6757fc25004559a04",
+    "tests/host/package-mv3-browser.mjs": "da30f5df125aa75d01888719a4be6eb73eb5de86176fab62005b2f21a17fefe9",
+    "tests/host/surface-controller.test.mjs": "63f83c1572508e9e7acd2bac7f717214a1515ac96628db0fdc33b2f01b093cc7",
+    "tests/host/mount-surrender.test.mjs": "715b584eb4916f0ba322a849044a5990e9ee6365b92419a5e1ebf4124ca68bb9"
+  },
+  "nodeTests": 1672,
+  "evidence": "PACKAGED_OFFLINE_CURRENT_CHAT_AND_NATIVE_READING_RETURN",
+  "realChatGPT": "NOT_RUN",
+  "release": "NOT_RELEASE_READY"
+}

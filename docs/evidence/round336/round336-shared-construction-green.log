@@ -1,0 +1,23 @@
+✔ construction routes each incoming ref once; warm fresh clones do not reroute untouched members (11.952791ms)
+ℹ {"refs":512,"updates":64,"buildRoutingCalls":512,"updateRoutingCalls":64}
+✔ default materialization and delete/reinsert keep insertion ordinal semantics (2.419292ms)
+✔ fresh cold record rejects unresigned-bytes (4.145458ms)
+✔ fresh cold record rejects checksum (3.756625ms)
+✔ fresh cold record rejects version (4.096291ms)
+✔ fresh cold record rejects ordinal-ceiling (3.926375ms)
+✔ fresh cold record rejects ordinal-duplicate (5.646375ms)
+✔ fresh cold record rejects scope (3.717625ms)
+✔ fresh cold record rejects generation (3.683792ms)
+✔ fresh cold record rejects bucket (3.7935ms)
+✔ fresh cold record rejects route (3.43275ms)
+✔ fresh cold record rejects units (3.578708ms)
+✔ fresh cold record rejects pointer-revision (3.613458ms)
+✔ cold genuine fresh bytes route every member then cached reads still bind mutated bytes (3.150125ms)
+ℹ tests 14
+ℹ suites 0
+ℹ pass 14
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 102.3345

@@ -1,0 +1,31 @@
+✔ same version but stale resources requires actual runtime reload (0.912086ms)
+✔ already re-read exact manifest does not cause extra reload (0.163987ms)
+✔ reload failure or still-old manifest cannot proceed to asset acceptance (0.584351ms)
+✔ replacement runtime may be transiently absent, but success requires later exact manifest (0.338852ms)
+✖ Chrome manifest object key order is not a semantic stale-manifest signal (0.672305ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 4
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 80.387299
+
+✖ failing tests:
+
+test at tests/host/historical-host-runtime.test.mjs:7:1
+✖ Chrome manifest object key order is not a semantic stale-manifest signal (0.672305ms)
+  AssertionError [ERR_ASSERTION]: key ordering must not request reload
+      at reload (file:///tmp/vaiwl-free-takeover/tests/host/historical-host-runtime.test.mjs:7:486)
+      at ensureUpdatedRuntime (file:///tmp/vaiwl-free-takeover/tests/host/historical-host-runtime.mjs:6:54)
+      at async TestContext.<anonymous> (file:///tmp/vaiwl-free-takeover/tests/host/historical-host-runtime.test.mjs:7:405)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: undefined,
+    operator: 'fail',
+    diff: 'simple'
+  }

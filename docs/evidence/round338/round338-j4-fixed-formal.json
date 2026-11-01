@@ -1,0 +1,3078 @@
+{
+  "specRevision": "VA-HOST/1.1 FINAL",
+  "profile": "MODERN_C2_CONVERSATION_GET_OFFLINE",
+  "evidence": "S_CONTINUOUS_REAL_PACKAGED_MV3_J4_SEGMENT",
+  "sourceCommit": null,
+  "sourceHashes": {
+    "extension/worker.mjs": "9d631c76a3a6eb760ad487880e690276658aec45e687f86be96734eb1ef25ea8",
+    "extension/browser-bootstrap.mjs": "278850152bf6c3ebfc600af290ea8fb23256997d8e7bcd93b7e7ba1c496425bd",
+    "src/runtime/host-browser-bootstrap.mjs": "aec7f38b48501f3e27259603364560fff55e1be5552b6bf9ed08993e47360332",
+    "src/runtime/browser-request-context.mjs": "9a0d8c4ea53065967fc68a731224c47fd2db1c3e8df2f3c9b881ded72b0e56d2",
+    "src/b1/identity.mjs": "6d7ca616701826733d4936d8a139395ccf1a3111e025ec6b1035d78c1dc05e99",
+    "src/data/request-deadline.mjs": "cda2ebb4158c05eb911fbb84a1af092cf91f461e3a002bef4b4d23f5a70dfdf7",
+    "extension/config.mjs": "9f38c623f8ef08e684d9b1b71fd0a49c01b736a41e75efc997117370df175c41",
+    "src/runtime/host-worker-runtime.mjs": "a6a2b147df9a217c1b366c48b8a817e2e5bb773e234420d8cdeb6340be26f36c",
+    "src/runtime/browser-old-send-terminal.mjs": "c310a6cc46fcd6f9a8718f8a087dc10719a41affd9a56ecf8cbf4be9720123c3",
+    "src/host/old-send-terminal-profile.mjs": "a43986f8e54b15c98e9dc3535a9e0bb08820ad2132f0eb0fdf72ace97b227b0f",
+    "src/runtime/shared-host-read-budget.mjs": "ee4e09ea97c144fbe30b029b41251ae8e313503bf706e3b4cd9966a24ae27196",
+    "src/data/hash.mjs": "aef21d1842cdc09b33fef973a9d29f15cb7c0c3f773a6a9d31726b83ffee7b21",
+    "src/runtime/browser-first-send.mjs": "609847013c92f984f0c75a4854b57ba2592eb878704d76a21d7c0364033929e6",
+    "src/host/first-send-profile.mjs": "cf0d76b36fc980a890246d255448f8b29965b5ff12882689d6884e7336e436ff",
+    "src/b1/scope-repository.mjs": "08d5c29e4be60c9b94ac6c7dce3e7fb1c5f2e553979c5a8f872a08d7c0c2bb91",
+    "src/data/schema.mjs": "3b3053fef20deb617fcc7a8cff8401424c7b5537373908974eff7143efb0f2ab",
+    "src/data/free-policy-initialization.mjs": "e0a358b12ea9454f5ee657612e4c83c247ba895b082a362be9186f4b7e898a32",
+    "src/data/known-anchor-key.mjs": "e5d91c902e04440be924ef0506ff688bbbccd83150610f50199b518bcb298df3",
+    "src/data/repository.mjs": "afae2c733965935e87cab5238d3b011cdb92545662d198c14e9042f8ae77dd0b",
+    "src/data/free-time-policy.mjs": "8a75b5bdde8abf8ee07873ecf2aa45a19faccd030b9f03c738b56db6ba9ea17a",
+    "src/navigation/projection.mjs": "36334b5da4bd8e89718bf45b69723f4a657d46797c03c653298aaa3392399f24",
+    "src/data/activity-version-fence.mjs": "4ad8bee9665e2037b1be7eb1c871b024001adb25c8b630115e1a9c1ce97f36fe",
+    "src/data/native-repository.mjs": "f6be3b60ad147ea9d4b6ee280b3578f35e0f66ac24f7ab5cf476cc7d92a3ed6a",
+    "src/data/continuation-evidence-reader.mjs": "df6058de242ec65cf2c371fedd0cebb0c90da110f76a9d2fc172447be50f82b7",
+    "src/data/free-evidence-partitions.mjs": "c1cdd10d9c6a6a142759fa7589b55a1607a4518260677abb3145ea00907a0ead",
+    "src/data/free-evidence.mjs": "f0e6e9c36330c9c94e8bed11b06b92acfa0d76725f8afe70af6fee5b0afab680",
+    "src/data/observed-send-anchor.mjs": "f9dbb9278502a325c2263d4adeb99ea1c0159525d505728fe84fdee2d59980da",
+    "src/data/free-activity.mjs": "2d961ee56aaddada429ba684cf08ba1aa4a4886204f2d3a43d3b52843da7de46",
+    "src/data/state.mjs": "df0eaff00a7f050c37653f0e740b8fabe19bce571c5e37f4ce437d180984c62a",
+    "src/data/preferences.mjs": "1fb8395c5dfe23d64c91095b71a1c117b9762b3ccec68e262aaf73744b12c9d7",
+    "src/data/evidence-ref-directory.mjs": "8a89bf5b8535578881c823077554f177098044214a22fcfaf4be41e65498c867",
+    "src/data/verified-record-cache.mjs": "9b7b3c13abdd37f2b6d4fad48b85707a9815538fd793cad537f8e87b8f08cde0",
+    "src/data/native-observation-continuation.mjs": "3222a09592efd5c904cc65e036976f2f08bb260a9e639c83bcfddbd025dedee8",
+    "src/data/native-facts.mjs": "98dc17aedc9cf675fed8d720a181422956f79fd6784a4040327788a69e8c3c93",
+    "src/data/native-partitions.mjs": "4e295e042a2e5e3337dddfe1f5928d0f8e920aaab981a7e2f96fcd00ccff60a9",
+    "src/data/native-version-index.mjs": "03089b0dddfa9f948087823af1e1ad7b43fc765a6631c40647e1e4b201cd7211",
+    "src/data/native-index-migration.mjs": "69b9275e7a58878aba4eba800eb324140ac84c0730d31dcb4f3a067d29dda6a2",
+    "src/data/native-partition-audit.mjs": "3cd490dc6e38459d1562d8b2a8ec277911fe46782cb55840965fb045182f247f",
+    "src/data/audit-record-prefetch.mjs": "5af85b5c8a90e0a1d236fdec784b77ee970f7ea251e18b4be386a34e909d6b7c",
+    "src/data/native-index-writer.mjs": "b24b74a4470602b8196c5ee9559aaa8d5f53454c034b02aeb84b2652532a2808",
+    "src/data/native-index-reader.mjs": "f359a28b189dec9605dad356d3c19d474132fff2ab3a94425367997047c96c4a",
+    "src/data/free-projection.mjs": "fe87590005120f89ab41571fe9bf8ae566918748ab543e0ac172fb63274c8a48",
+    "src/data/free-evidence-repository.mjs": "64d0ea73914e840c1783e7a4a9408584a5523c14c715c6be24d998418679f240",
+    "src/data/evidence-directory-writer.mjs": "9ff0c941904e155c736a29e1d232e4fecf67d7995c5d4b6907a12b0f54102944",
+    "src/data/evidence-directory-migration.mjs": "75328ab40b3327d9e9c60c44402d87ea3afc9bd385eeb3ba2f0a14036fc1b135",
+    "src/data/evidence-partition-audit.mjs": "3aadf876de681cc97ef5564119da7a2c691c45a472434d6e8f7080ae02d3aa79",
+    "src/data/evidence-directory-reader.mjs": "7ef90c7a37a82b2ce4562acb6afc56e4ae36d14543c776893664b79869fa895b",
+    "src/data/shared-directory-retention.mjs": "3bc27b2a71994f8f0857056c8309c47107251372f25c021368d3d06248e7cbc9",
+    "src/data/shared-directory-reader.mjs": "e4abac50e4cc282e16469861009a48893a10fd76652c208791834f50678c7672",
+    "src/data/shared-ref-directory.mjs": "e3a330928ccd885074b43e4af0d9bb2bd1c3d2ef708f6a6c724999b31f9092fb",
+    "src/data/partition-manifest.mjs": "566283402493ada28abc530354c343bc6c561e309d1e6802c981d62584a5e06a",
+    "src/data/cooperate.mjs": "ce494a33280143e1e2a2227a72413da792330311de12642a9a56b13704f2f3b4",
+    "src/data/shared-directory-migration.mjs": "0cd415f9a871b93613c3d9f3e301982cda2d1891dc847d983397f87dc2dcf0df",
+    "src/data/shared-directory-writer.mjs": "1cab28c05f64e6762e8c16466f2b2b9fcfcdec03e2080cc6fa33bf0ad16ebd36",
+    "src/data/shared-partition-audit.mjs": "25d4b77561b36b150ce1524e27e184170f3c1ef493995251a88678908d31f6cf",
+    "src/data/partitioned.mjs": "7d4055334a8312fc214c4ecd237111782c41fffb3c823414e9ac9f70a5e3962d",
+    "src/data/shared-directory-recovery.mjs": "e04870124d9cd873a8af8b3643fd3d2fa5bdb33c69809e7bbf667bb2aa4727cf",
+    "src/data/backup.mjs": "bb0a8639d02e2169ae15e866a464f1531b7e80e40afd7c8a4b35e99d70928396",
+    "src/data/evidence.mjs": "f84032c9a2fc08455480652b60de6fb9394a70e82a7ace8729186ff097b26238",
+    "src/data/known-anchor-backfill.mjs": "dd58e613da9564668fc7963135dd98caccf3bd6930e532864e68d9ff6afd55ca",
+    "src/host/surface-discovery.mjs": "dd66ab4f8192073ae2ac127d1b9bd2df59d4f483a504b2be30bf99c0681c44de",
+    "src/host/bounded-handle-registry.mjs": "ea3a48ed3760741b8d845b4116830cffc611571b6fd01bb9561bd8a63efdee5c",
+    "src/host/contract.mjs": "35129aacf2a7e1fe1812c846379563d60ad74a66b689ad41bc38d76484a97716",
+    "src/host/url-policy.mjs": "fddfafcca2276161e6fd3c908ac896d0dab656fce6cf06aee64f1f442f7ac7e9",
+    "src/runtime/host-binding-service.mjs": "00a28aee5280a63b3f651533486e48c403883ccd6f35257840e00146f6211c94",
+    "src/runtime/isolated-session-owner.mjs": "8c3ef00c36a387c6664e3f24910ba317f7d3a7b9d2216f70f9823d7700c0061c",
+    "src/runtime/host-entry-calibration.mjs": "25e59ade903d92af3bd70f8e7d205c8ac2d054ca6cabcaad5da41a7def1393c6",
+    "src/runtime/host-ingestion-pass-owner.mjs": "ca3463525fd403938f006e3cb67a836fcbd35614179ac832ecd76dbccd4345dc",
+    "src/runtime/host-old-send-terminal.mjs": "6fcc2912af6cbf6cc9e5cba3cf21025d8fffb51fa703a2807ba3e9f25dccead6",
+    "src/runtime/old-send-terminal-readback.mjs": "c090d556d487b58771ae56ed408547c37e893e7a78e26838a47a528fbd459fce",
+    "src/runtime/host-activity-source-admission.mjs": "2832d39f8dad1c0868606aede14063edc7ed75df403f2c4eda6ab956d8fd6e14",
+    "src/runtime/evidence-source-incarnation.mjs": "001633d4fa680ef18f8aba3b6d4d585fad4436d69263b45396b1851ad61b3920",
+    "src/runtime/send-ack-admission.mjs": "25c9033baee468e771b8f1d6d74764e619bcda669b2eaf658985e4208b349696",
+    "src/runtime/historical-send-profile.mjs": "b356d5fc7101080ba60910edc0175180924c548269816dd98900f2055195f4c9",
+    "src/host/conversation-metadata.mjs": "744afe2228882a5ebff1ffd8f1294ecd80697d63b44af60640e3ff4d3a63410e",
+    "src/runtime/host-historical-send-owner.mjs": "dd0901b6c0739146db14371fab1284c37ab43fa0e106406d51e7c7e308b76bce",
+    "src/runtime/host-first-send.mjs": "92e1e0ef59139010d19143f20bbab45469d1c9a639ddde0ea9c6158737b1f3f5",
+    "src/host/first-send-causality.mjs": "cd062c0b638408b387bb469f76dac3ea389acd9943bd42c1545ac8f0a08905e6",
+    "src/runtime/first-send-readback.mjs": "4052d39db39d2e5053bb4287cde87fd45ddcce844420099203950ea68a9691f6",
+    "src/runtime/host-current-navigation.mjs": "081db9b2c4d5988f670c0022b107279ffbaaf9cf257b5c07b76ddad01fa90ea7",
+    "src/host/current-navigation-plan.mjs": "c33cfd6af8e7523ac85fe812b59b2e24df109d4e03a3d507b9edab6b53d413ff",
+    "src/runtime/host-send-ack-owner.mjs": "7e4362115828c9b68ff3a34923587c2711e6df854d119b9b3d3a1d91b5830fc5",
+    "src/runtime/host-candidate-service.mjs": "0ae6ff996262e89550bc49709e96647c5a738f33ca44409d465b39bf5c5af4fd",
+    "src/host/candidate-presentation.mjs": "d2a89c85c263de8f1572c8fe12e7fc1400bd4201fed7c3adb9aede868cd6cc4a",
+    "src/runtime/host-snippet-service.mjs": "15c63959f85f73e6be7eb194c4534120bcfabe23ec17746b6b063977bdb75cae",
+    "src/runtime/host-backup-service.mjs": "46f7b84d99f1618dd7ffc442c605ac7e72fc1e4999417ddbeb9592cc7df3f0b0",
+    "src/host/backup-transfer.mjs": "69b9c025e80993644ba8b37fdf77ccb9662d4050fae66e847b98b3663f59122a",
+    "src/runtime/host-send-candidates.mjs": "7149e95aee63d3fd4946d7538b0ff58daf2e5b614d663341673c2eb802ed0fa4",
+    "src/host/send-correlator.mjs": "b3f2090a3c5bf0e3d467de761bc79e2423c94e1e7b1e399918026d2c4575ff0c",
+    "src/runtime/current-metadata-reader.mjs": "00b34846fa89cbae0138858ef6e3180d5ed23de2c7c96a90013ca1a431386667",
+    "src/runtime/host-recovery-service.mjs": "ceaf407790fa8f56e7b03795e2f88c1d00465f6d71b4a10f276844c82fe47991",
+    "src/runtime/host-continuation-owner.mjs": "a2c252fba8d39217af8aae6ceccfe93a3b99a6f9460994718dedafe0555db7d9",
+    "src/runtime/free-read-service.mjs": "3ab29a0e6cdb27bfee3f0e4334f6b075caffa3815ff4d015003f3d4185a072d1",
+    "src/data/free-recovery-status.mjs": "21b871a60c1dfc2c7c67964f30f1852c33ee225a3d9df1271a518e7850e51bb4",
+    "src/runtime/host-view-service.mjs": "fda1f0e2feb684519e05ced7c5f97dbec75b4006348d948788d0bfffe2c2c976",
+    "src/runtime/free-project-location.mjs": "45892565ac8896feb97872c59e3b504d0563b6e461c3da49d838c1359991e649",
+    "src/navigation/free-view.mjs": "ef0f8d6b798789539d16bdc3ae1d8cc66ccf5fc32f472b83ca2c475863946aaa",
+    "src/host/frame-resume-state.mjs": "fab35558b08d800722df1d0160b602af541ba3a0aa5a2f49a321a390e35b78c2",
+    "src/runtime/host-auto-time-policy.mjs": "90838ac5e0c95262911bb05289e13abe659662b7ea08255edfce14e7665516f3",
+    "src/runtime/free-working-set-projection.mjs": "b50b973005612c5d9d76cff9a4acd6d6fc23d006dea787d681c534385629ff4f",
+    "src/runtime/free-search-projection.mjs": "8ff12eb3674d3d5fe59371aabf4f82bcba3898ae4c3357493a15ba78a2cdfadf",
+    "src/navigation/search.mjs": "a93da18f3018a6267af7634986fdf7cfca4ed72eeaa6bb982340e9b0031c85d6",
+    "src/runtime/free-view-owner.mjs": "fda3b75a5fcca2d7095a220783563b847f966325ad75760a0fb40629d4860974",
+    "src/data/read-recovery-budget.mjs": "7c7948a740dcc37f9a2a6b25babe8c29cd2d84441299c1429c7e524402cc8c51",
+    "src/data/free-header-loader.mjs": "7817a581a7816d744b39ed8fa37d49eb86da065335e2f46ec190fa9fae18e7cb",
+    "src/data/free-page-loader.mjs": "c4339dfa76cfab89aa1f16b40129ee9f7c779233d5d03ff2134f551a8f9b0d65",
+    "src/data/free-replica.mjs": "11326c574b31ce1fc4c93bf712b812f0d3181f0254ec08ec22e8588836dd81dc",
+    "src/navigation/current-index.mjs": "23f13e4d9556715bb029ad6724b8a3731ba87251d6ddfd8e95939085ebfab21e",
+    "src/runtime/free-frame-projection.mjs": "2411de58fbdb97084f62476007efc2816e9a096854ded5c2bf1a55b3d36a537e",
+    "src/runtime/host-ui-owner.mjs": "d402f0730886bd5f7c9604692f186a441b7bb6c0a3c8e136d949740641ad14cc",
+    "src/host/ui-grants.mjs": "391215f92dcb238f329c302b1a90476776d47a4e981727458b7278f113d71330",
+    "src/runtime/host-observation-owner.mjs": "3d1efc7925ebeeea4ece278152f2ed1551df896e0873d875f12eeef18785ada5",
+    "src/runtime/native-source-incarnation.mjs": "75d8d86a6b71d6c2e24dd7158a37a63fcda6cb02d77552d8c3ccf8b60354a638",
+    "src/host/current-observation-batch.mjs": "f7fcd583d0811a8b71d72dc5bac4ba4c57eae16e552076aa08d5a50f42b45151",
+    "src/host/send-intent-claim.mjs": "1e399b5af40affb0500f744f0c2c8aa5f0dc935cdbbd054dff1e483cda1f971f",
+    "src/host/current-body-claim.mjs": "4e26f9fe6c905d1dbf3a07995168c4fb5dea5e424bff238644da1c067ac03ef5",
+    "src/host/surface-batch.mjs": "4733a8cecdc3f4664c77da81d12441c9f2bd7cf0c16e55ec93eb94076faa4e5d",
+    "src/b1/document-binding-broker.mjs": "1f247c0fa2b3a05c5f2ae11dda39df04de9c79628b7753715bdafcadbc842aec",
+    "src/b1/host-document-handshake.mjs": "fafe938904e635da9964d222fe7dce8cc98cb5eda6501420af464c95b4a9cc6b",
+    "src/runtime/scope-authority.mjs": "bd7d63ca6002558465e0470f3e89ee9baf208f436a2e9b346397a68416fa4797",
+    "src/runtime/session-provider.mjs": "4c4d34417d696c4b4b0e8ec888a9fb05ddcc343b7fe83186b984d49aeb58b2ed",
+    "src/host/session-identity.mjs": "74a8a68a511fc066b458ff3101f60537dd0432d0b6eecc74cbfa6bc55df8027b",
+    "src/host/conversation-acceptance.mjs": "92fdfc486bd9614028aacc197b99a26b8ad3ae254e54a980a04b0a1e90153144",
+    "extension/content-entry.mjs": "8233b94a09afa4974f649253bb0bdbf235a76adb07561016a2e9462ff442c449",
+    "src/host/isolated-session-reader.mjs": "37cbc10e7751661da036c55a9a061ac4bbd9ff90267b5c053f857b51e439c15f",
+    "src/host/context-association.mjs": "71ae44f569c0c1aab915d4fc47885fb977d6817a4e101f3e5fd33f9fd807a150",
+    "src/host/project-context-association.mjs": "46c098890d73b560ca5b7666eb48eb057f8390184e8d5d73ba70871e10029577",
+    "src/host/current-body-discovery.mjs": "8076eb9c238826b1f6ee3416a65d13cadf0edf5864d4d6256a40de0a6e76bb1c",
+    "src/host/chatgpt-adapter.mjs": "94cf02559e6b0dccb643e29884519f51cff7967bb0865a9abac17d28e8a977be",
+    "src/host/surface-fragments.mjs": "1fbae58e227c4c3cfbefb991ee1f7c469a9225ac2360940b23b5cfc999555d74",
+    "src/host/native-input-risk.mjs": "9c78a4f1e984fb8e39078d5c8f0ba05427f76a8c6f113f805ce6501bfc1eeb18",
+    "src/host/native-send-intent.mjs": "ee67e74a089c8078a4b780467c6366f22176dada81de0d3dec9450be7e0ee744",
+    "src/host/native-snippets.mjs": "2e4c039073450d55cda5c09c30b7ceebfc9f0141b30a85c7c7d19a1a1bb2a142",
+    "src/host/native-actions.mjs": "6a586f6724678d8b8095bf62e0adb6b739f5044224c2d3df5ee0a35a9733adfc",
+    "src/host/content-session.mjs": "1f8437b7e7a7b510849bfe644215e2484da24c6562ab8ff4f986d31359bd2544",
+    "src/host/candidate-upgrade.mjs": "480569f2a94916408f5cb00a830f61a9d150624b4416642660879790ee85ef5a",
+    "src/host/content-candidates.mjs": "8fa2eb65858bea846f2b78303ae6a3d45e9df959e08cf93c75b2c6d04b3e68dc",
+    "src/host/candidate-page-window.mjs": "b8e741b7f46a9a0468255d56261b3c39d47e27d31d6ca87442ef32ff055d33cc",
+    "src/host/snippet-capture-wait.mjs": "8d97f82660a0fb30ebf9e904f2d9f46ba25c932e3f3efaa7895b5ad6d5f7210c",
+    "src/host/snippet-selection-session.mjs": "00f64ead49305f277ab739db7fc7162d907f2a3d2ec7b30f3e51d4c232d333d8",
+    "src/navigation/mount-surface.mjs": "e68f756ef29b7c0a355283c9aa8b58f6e72cfece5ce2b15df25bbd79d15e92b3",
+    "src/host/surface-controller.mjs": "c868d98eb87f504906a4857f665c2c0170e876b68c8bbe06f56d282a8c78f0f7",
+    "src/host/frame-appearance.mjs": "b393fb7be24fb0f0834d239d3ede9503f08cbef98f6fd3cc4b64312fac3b5972",
+    "src/host/frame-native-plans.mjs": "49c776435c03ba5188fb71ff89b11cb6f374bb5aad25532fea926f9674ae8d29",
+    "extension/workspace.mjs": "bf2eb026da73b65a5969d2c6d9a187e2350481c19b63f1a97efc93df6419fc64",
+    "src/host/free-frame-client.mjs": "3d6dc49fafb56c1751f1c999580ac45d0cfd5ca6da6239f28478e82920047f52",
+    "src/host/free-frame-read-error.mjs": "a9b79c25aeabe0ad52be21fccb9e827b603be151b42dbafeb96b665771f72265",
+    "src/host/frame-candidate-migration.mjs": "1ad0ad8ee057e342316bc515b993795fc222dcaa08d1ff694ba6087b926407be",
+    "src/host/free-frame-candidates.mjs": "348a302e812f2335b2df414d0d16f20b4d8e499a399475539e508e13814cdf10",
+    "src/host/free-frame-snippets.mjs": "b790b7cfcde3fcbe8bce0b35b1b80dc2e865d9c5d629f5786fd1433888f2835d",
+    "src/host/free-frame-backup.mjs": "21aba465d423ebc4ee69d3b3774b7a5a4fbf37c2c8152ff1c8e2610f59b93aa6",
+    "src/host/free-frame-recovery.mjs": "dadb2d02f2603b504471d69072bcec36c0393cabd8c0201c63251e192383b187",
+    "src/navigation/free-recovery.mjs": "20352a2a9a37bfdac9d0889d87efaf80510bf7462df3fba1ceef1e4eac3c0442",
+    "src/host/ui-frame-client.mjs": "60a0bedadfa3383b173d10fc7cc6d59215a8fcbe55c0ece64bc76232b34d7131",
+    "src/navigation/navigation.mjs": "9281ce20c79cd885b1667bed90aaf75e175ced61a7a83bfa922f92c18f37ca45",
+    "src/navigation/icons.mjs": "14195d8a7a21a029278ff6f9bf0bb1add2d679b37666108d80cfadabe312d2fd",
+    "src/navigation/styles.mjs": "e15970f643be6c8f49be5df8813ca363b700dd419bb9a9600f0376b878564510",
+    "extension/sidebar.mjs": "6151804205b8393cabfff2d4b2e3deaca3a36beac14d07198ca0295d3d4a3ce6",
+    "extension/frame-shell.css": "a3205009cc2bc0d58a373a37224f27661885ba8949a1006318c5ba8919d6a901",
+    "extension/workspace.html": "1d8d939f9deca25ae47afb1f5e0cdbffaceb85ea6e6be972edd0dea4bfed8f55",
+    "extension/sidebar.html": "95cfccf90ac7355305faeb6f9aa20f8477b8eb4ed05f8dab8db2580066222c3d",
+    "extension/build.mjs": "8f586cc6de0adc9f197a39cdc45ab87b5f749018ddd7da93e72925b300e20133",
+    "extension/classic-worker-build.mjs": "a1b7820183314219e0401722693c3cbaf54fcf6236d4c13867cc15f15ede0485",
+    "extension/tooling/package.json": "eae0628aefa50bf39eab0053f7ff0abb687f30c84607220e4ff0dae7b8e664d1",
+    "extension/tooling/package-lock.json": "4609d990146911013da85142a111efcd9209a26f3d51ce56a83d5d6a3bb58180"
+  },
+  "runnerFixtureHashes": {
+    "j4-lifecycle-order-trace.mjs": "4f89412729a0bea6aef4a24328fd0a6524f95c6675039754736de76f728270f2",
+    "j3-failure-inspection.mjs": "7e2c0a47e9d9d9ef79d35ffb324780f34b5989e54da3adeb59966697601fdc74",
+    "j3-failure-closures.mjs": "0fa764b3484266c57da55dc206038e9db25cb499028fe7827a28a91d46a52640",
+    "background-auxiliary-page.mjs": "915a3b64b210d88d91fdc8600530aa2bc72db6b8640c27874fd2964db98ab957",
+    "j4-read-budget-trace.mjs": "6d8622679c23bd475b033a3f267f9e45ae0400fd2a1132e4d4445f3ef1ee2be1",
+    "loaded-worker-bytes.mjs": "826f89bc7d58000cd666dcb2b876495861251bcf4b348bc1b752e13362cb6e03",
+    "j4-natural-entry-recovery.mjs": "00d39c472cc41bcee8322e3e2fffbf1adf8aa1c59bf2dbd7001eb31456231677",
+    "j4-codec-roundtrip.mjs": "b45319ca3accaab51e49ca6cb02c3884573586a2b55da1f386151b5b25063741",
+    "historical-host-runtime.mjs": "93fdc018e64c30d85c437d82e4d15784d3ed99d1d0c8f255b3759fd747cbeaf0",
+    "historical-package.mjs": "2dbd70e9ff7e759c0d3c6358bc553296b8d86581ff121656ca3b89a2719c9262",
+    "fixtures/budget-expiry-wait.mjs": "841533629b045b434cc3eb2ff0748a444d436943980841f755e74c59aab4cca1",
+    "expected/modern.mjs": "2a309caf7b7b65ff8ed60c33386b923a172783c64f0331151db4614d04e86a9d",
+    "j4-debugger-transport.mjs": "b1bdd75e2ac693957e852867881dda6e03f43a947e1c6bc2bf3f8cb22b5ddb92",
+    "j4-report-cleanup.mjs": "d5484b4cff48f9988b3a7f0729b5bb591baa836c57d62a504236c810c470c1c7",
+    "cold-context-trace.mjs": "b27122c83e22b8483b74949745e892c38d95847d2188c139b99ebeada7116800",
+    "j4-package-journey.mjs": "8bd89b11974cd3605bc5c8bfbbe3ea68618e8ef67d9320bb167d12a4ba182961",
+    "j4-evidence-interruption.mjs": "1644b8f411fca747795f6a237660dd4600e88679325ac24ca9d0a51721c0f56e",
+    "j4-evidence-recovery.mjs": "e253db8313724c178e8624fe6cdd03d493e9b69a381aa0b713c63c756d08e424",
+    "j4-joint-interruption.mjs": "f2315c494b48a1d6c7f913f7b9fdd39b6713ff375a82821bd53e7f5f134ac83d",
+    "fixtures/j4-interruption.mjs": "8652707dbf653dea03a894ab3ff8191cb3ea863cd732950f3365cc169fcb3d99",
+    "native-visibility-browser.mjs": "660c37d04cde8bf2a2be89ec4bc54b6201379896883d49bebc2f23b133d7adf3",
+    "isolated-browser-cleanup.mjs": "c3d4a053d485efbd86a487ac1e4257849120b30939e63be346ceceaaea2fafb0",
+    "historical-network-guard.mjs": "e38719134f6087c3efbc66044922967262a6c2e585c11a7ee69b5016b22dc416",
+    "fixtures/variants-server.mjs": "64457e1ac0cc7e48cea5245f2caca3823f226ae5ea2f67f2b69417c299377d4a",
+    "fixtures/variants-native.mjs": "c01da72fc0bf024d2c252f42ee9f400c5bed81b97d7c7a58d98820d33d2cb9e5",
+    "fixtures/j4-native-context.mjs": "305a693443a8091644ae60cccba9750408891c0238e624e8a17b5ceb9372ffe0",
+    "fixtures/j4-assets.mjs": "12e97fd7b3b9819039a28b404d071608953ce6bcbb91b4047c7ba8495c029bdd",
+    "fixtures/native.mjs": "15f9e9137b8879508d6579df285dfafe4bc0e65edcba49d578ab930e19d10ade",
+    "fixtures/legacy.html": "58aa1363a3925748fd3766ea7fc8077fac3587e178157aa445865caab7d6a357",
+    "fixtures/native.css": "fdaa8a878f36f5c296745815c9128093d7989d4f1d11e3d88f28799134eb84c3"
+  },
+  "buildManifestHash": "c17d473b45604766ee43fccc89d8f6d4a82cfdab6c007995109ec507b5835185",
+  "fixture": {
+    "journey": "J4",
+    "nativeCurrentRefresh": false,
+    "interruption": true,
+    "fixtureId": "chatgpt-host-modern-reconstruction-v1",
+    "profile": "MODERN",
+    "variant": "positive",
+    "fault": null,
+    "reconstruction": true,
+    "source": "VA-HOST/1.1 structure reconstruction, not real captured DOM",
+    "sourceCommit": null,
+    "sourceBlob": null,
+    "fixtureHash": "089059341a5f529745fca78f389d66e8702c2fe678a2c673bafedc74279fbf3d",
+    "expectedWorldFile": "tests/host/expected/modern.mjs",
+    "oracleHash": "2a309caf7b7b65ff8ed60c33386b923a172783c64f0331151db4614d04e86a9d",
+    "exposedFields": [
+      "loaded navigation links",
+      "current object metadata",
+      "native selected menu",
+      "fixed session",
+      "fixed account roster"
+    ],
+    "supportedCapabilities": [
+      "native-navigation",
+      "native-search",
+      "native-create",
+      "partial-observed-list",
+      "current-message-metadata",
+      "native-move-menu"
+    ]
+  },
+  "realChatGPT": "NOT_RUN",
+  "release": "NOT_RELEASE_READY",
+  "limitations": [
+    "SYS-01 default before-evidence continuous segment has scoped evidence; remaining combinations require separate actual records",
+    "SYS-03 old Host codec before/after-evidence roundtrips and standalone asset upgrades have scoped evidence; re-enable stability and remaining combinations remain open",
+    "Remaining supported-profile matrix and lifecycle surface combinations"
+  ],
+  "steps": [
+    {
+      "name": "two-native-tabs-authenticated-C2-team-context-not-first-roster-entry",
+      "status": "PASS"
+    },
+    {
+      "name": "native-account-menu-switch-personal-A-retains-team-B-with-distinct-authenticated-contexts",
+      "status": "PASS"
+    },
+    {
+      "name": "real-backup-preview-and-explicit-import-human-assets-isolated-to-personal-scope",
+      "status": "PASS",
+      "assetDigest": "06538b6dee4ecdad4ca53663abd23083e205816ee66a446aaa353c8f57c11589",
+      "counts": {
+        "identities": 1,
+        "workspaces": 1,
+        "placements": 1,
+        "snippets": 1,
+        "workingSet": 1,
+        "humanRefs": 1
+      },
+      "previewReadOnly": true
+    },
+    {
+      "name": "native-send-accepted-authenticated-detail-held-before-evidence",
+      "status": "PASS",
+      "messageId": "c98b9372-84a8-4f7d-9232-1f790e8efde5",
+      "originalSendAt": "2026-10-16T20:23:02.049Z",
+      "nativeAccepts": 1,
+      "heldAuthenticatedResponses": 1,
+      "evidenceEventsForNewMessage": 0,
+      "scope": "[\"chatgpt\",\"principal_b5251fa0aba8e6d9cc5c14d0fb61db814d07c01eea39d1174341557cff7a5dd3\",\"context_342ce0ccae3d4fa425a12ac33fe114e184aa508160b56198309d27e2c808c988\"]",
+      "boundary": "PURE_EVIDENCE_INTERRUPTION_NOT_SYS01_MIXED"
+    },
+    {
+      "name": "actual-disable-between-native-acceptance-and-evidence-preserves-native-document",
+      "status": "PASS",
+      "nativeAccepts": 1,
+      "privateProjection": {
+        "absent": true,
+        "frames": [
+          {
+            "detached": true,
+            "privatePresent": false
+          },
+          {
+            "detached": true,
+            "privatePresent": false
+          },
+          {
+            "detached": true,
+            "privatePresent": false
+          },
+          {
+            "detached": true,
+            "privatePresent": false
+          }
+        ]
+      },
+      "oldAuthorizationDiscarded": true
+    },
+    {
+      "name": "new-grant-C4-original-send-recovers-pure-evidence-without-replaying-native-send",
+      "status": "PASS",
+      "event": {
+        "conversationId": "44444444-4444-4444-8444-444444444444",
+        "messageId": "c98b9372-84a8-4f7d-9232-1f790e8efde5",
+        "branchId": "lineage_1a6ae7564d9e8fe4de98b923b551fea3cd581afa8ae2adbb1d5c546507f29ea8",
+        "role": "user",
+        "kind": "new-send",
+        "sendState": "committed",
+        "sentAt": "2026-10-16T20:23:02.049Z",
+        "precision": "millisecond",
+        "id": "history_f9f6b8f9f7ed8da6988286decdc1a960d2b993b50ff69e67",
+        "sourceId": "host_history_7da0d3a1ea89a310b72f4fd11c851236",
+        "generation": "profile_1",
+        "sourceRevision": 2,
+        "observedAt": "2026-10-16T20:23:02.231Z",
+        "actorVerified": true,
+        "actorScopeKey": "[\"chatgpt\",\"principal_b5251fa0aba8e6d9cc5c14d0fb61db814d07c01eea39d1174341557cff7a5dd3\",\"context_342ce0ccae3d4fa425a12ac33fe114e184aa508160b56198309d27e2c808c988\"]",
+        "revoked": false
+      },
+      "source": {
+        "id": "host_history_7da0d3a1ea89a310b72f4fd11c851236",
+        "generation": "profile_1",
+        "sourceRevision": 2,
+        "observedAt": "2026-10-16T20:23:02.231Z",
+        "validUntil": "2026-10-16T20:24:02.231Z",
+        "channel": "host-evidence",
+        "codecVersion": 2,
+        "profileId": "offline-original-send-v1",
+        "profileVersion": 1,
+        "revoked": false
+      },
+      "nativeAccepts": 1,
+      "recoveryAuthority": "AUTHENTICATED_HISTORICAL_ORIGINAL_SEND_NOT_DURABLE_ACK"
+    },
+    {
+      "name": "second-new-grant-authenticated-read-preserves-single-original-event-and-context-isolation",
+      "status": "PASS",
+      "eventId": "history_f9f6b8f9f7ed8da6988286decdc1a960d2b993b50ff69e67",
+      "nativeAccepts": 1,
+      "budgetBefore": {
+        "startedAt": 1792182181236,
+        "requests": 12
+      },
+      "waitedForFormalBudgetMs": 28816,
+      "budgetWindowMs": 30000,
+      "authenticatedReadsBefore": 2,
+      "authenticatedReadsAfter": 3,
+      "teamEventsForMessage": 0
+    },
+    {
+      "name": "same-J4-native-send-renames-current-C-and-authenticated-ACK-commits-real-joint-pending",
+      "status": "PASS",
+      "messageId": "13c5d134-d8dc-493d-bc13-37198fe04c31",
+      "nativeTitle": "J4 native jointly renamed conversation",
+      "nativeOperationId": "dom_371b12fe3c7a5da1dfc44d1927d496e5ccf45a5f6b974d26",
+      "payloadDigest": "fe9b80c8f8d12c16b684fd55473566b588fcb163c147ed75a1e928829cbe7428",
+      "nativeWitness": {
+        "sourceId": "host_dom_adf98fa7a43db4a7dd071de746761b52",
+        "generation": "profile_1",
+        "profileId": "chatgpt-legacy-reconstruction",
+        "profileVersion": 1,
+        "sourceRevision": 4,
+        "semanticFingerprint": "661184800019f03dd38e917fbe3ea5b33cab26adbcacb5abaf753a11892ab527"
+      },
+      "ackAdmission": {
+        "scopeKey": "[\"chatgpt\",\"principal_b5251fa0aba8e6d9cc5c14d0fb61db814d07c01eea39d1174341557cff7a5dd3\",\"context_342ce0ccae3d4fa425a12ac33fe114e184aa508160b56198309d27e2c808c988\"]",
+        "sourceId": "host_ack_7cdf19dddda0789eb57739ce1730dcf1",
+        "generation": "profile_1",
+        "profileId": "loopback-existing-send-ack",
+        "profileVersion": 1,
+        "evidenceClass": "observed-self-send",
+        "semanticFingerprint": "1a8da7fa9d906fb4c03f9980e7618bbd30c5f96234f2235d51e4b73b81f84134",
+        "acceptedAt": "2026-10-16T20:24:04.431Z"
+      },
+      "pauseBoundary": "UNMODIFIED_PRODUCTION_DRAIN_BEFORE_EVIDENCE_APPLY",
+      "breakpointBoundary": "evidence-repository-continuation-entry",
+      "waitedForFormalBudgetMs": 29006
+    },
+    {
+      "name": "actual-archived-v1-Host-reader-refuses-current-v2-with-original-assets-and-receipts",
+      "status": "PASS",
+      "refusal": "VersionError",
+      "refusals": {
+        "open": "VersionError",
+        "listContinuations": "VersionError",
+        "invalidate": "VersionError"
+      },
+      "databaseVersion": 4,
+      "allTablesDigest": "fa4f880f5c5cb079f74212c1388185cdd36a5c8719267123b051d995948fd999",
+      "nativeRecordHash": "47b7b2cbae71cbc658003b172db64519c841e90db969a16642426bff9186a6df",
+      "evidenceReceiptHash": null,
+      "evidenceReceiptAbsent": true,
+      "originalRecordsUnchanged": true,
+      "boundary": "BEFORE_EVIDENCE",
+      "archive": {
+        "commit": "a8addaa9e014f22704a459d6ee126e8f80ead571",
+        "archiveHash": "2e62167a777672ae074b18dd95144d76f0a9d2a3823167fbba76a943174b8483",
+        "paths": [
+          "src",
+          "simulator",
+          "extension"
+        ]
+      },
+      "oldManifestHash": "4ae577e2ad8b8a18a5d78dab6cb22838d702a61db310b764a58527fe036e8f96",
+      "extensionId": "eadjdpjfpceippcombfamfbbcdokejkp",
+      "runtimeUpdate": {
+        "before": {
+          "manifest_version": 3,
+          "version": "0.3.0",
+          "permissions": [
+            "webNavigation"
+          ],
+          "host_permissions": [
+            "http://127.0.0.1/*"
+          ],
+          "background": {
+            "service_worker": "extension/worker.mjs",
+            "type": "module"
+          },
+          "content_scripts": [
+            {
+              "all_frames": false,
+              "js": [
+                "content.js"
+              ],
+              "matches": [
+                "http://127.0.0.1/*"
+              ],
+              "run_at": "document_idle"
+            }
+          ],
+          "web_accessible_resources": [
+            {
+              "matches": [
+                "http://127.0.0.1/*"
+              ],
+              "resources": [
+                "extension/config.mjs",
+                "extension/content-entry.mjs",
+                "extension/sidebar.mjs",
+                "extension/workspace.mjs",
+                "sidebar.html",
+                "src/b1/identity.mjs",
+                "src/data/cooperate.mjs",
+                "src/data/free-time-policy.mjs",
+                "src/data/read-recovery-budget.mjs",
+                "src/data/request-deadline.mjs",
+                "src/host/backup-transfer.mjs",
+                "src/host/chatgpt-adapter.mjs",
+                "src/host/content-session.mjs",
+                "src/host/contract.mjs",
+                "src/host/current-body-discovery.mjs",
+                "src/host/frame-native-plans.mjs",
+                "src/host/free-frame-backup.mjs",
+                "src/host/free-frame-client.mjs",
+                "src/host/free-frame-recovery.mjs",
+                "src/host/native-actions.mjs",
+                "src/host/native-send-intent.mjs",
+                "src/host/surface-controller.mjs",
+                "src/host/surface-discovery.mjs",
+                "src/host/ui-frame-client.mjs",
+                "src/host/url-policy.mjs",
+                "src/navigation/current-index.mjs",
+                "src/navigation/free-recovery.mjs",
+                "src/navigation/free-view.mjs",
+                "src/navigation/icons.mjs",
+                "src/navigation/mount-surface.mjs",
+                "src/navigation/navigation.mjs",
+                "src/navigation/projection.mjs",
+                "src/navigation/search.mjs",
+                "src/navigation/styles.mjs",
+                "workspace.html"
+              ]
+            }
+          ],
+          "content_security_policy": {
+            "extension_pages": "script-src 'self'; object-src 'none'; connect-src http://127.0.0.1:52137"
+          }
+        },
+        "reloadRequested": false,
+        "after": {
+          "manifest_version": 3,
+          "version": "0.3.0",
+          "permissions": [
+            "webNavigation"
+          ],
+          "host_permissions": [
+            "http://127.0.0.1/*"
+          ],
+          "background": {
+            "service_worker": "extension/worker.mjs",
+            "type": "module"
+          },
+          "content_scripts": [
+            {
+              "all_frames": false,
+              "js": [
+                "content.js"
+              ],
+              "matches": [
+                "http://127.0.0.1/*"
+              ],
+              "run_at": "document_idle"
+            }
+          ],
+          "web_accessible_resources": [
+            {
+              "matches": [
+                "http://127.0.0.1/*"
+              ],
+              "resources": [
+                "extension/config.mjs",
+                "extension/content-entry.mjs",
+                "extension/sidebar.mjs",
+                "extension/workspace.mjs",
+                "sidebar.html",
+                "src/b1/identity.mjs",
+                "src/data/cooperate.mjs",
+                "src/data/free-time-policy.mjs",
+                "src/data/read-recovery-budget.mjs",
+                "src/data/request-deadline.mjs",
+                "src/host/backup-transfer.mjs",
+                "src/host/chatgpt-adapter.mjs",
+                "src/host/content-session.mjs",
+                "src/host/contract.mjs",
+                "src/host/current-body-discovery.mjs",
+                "src/host/frame-native-plans.mjs",
+                "src/host/free-frame-backup.mjs",
+                "src/host/free-frame-client.mjs",
+                "src/host/free-frame-recovery.mjs",
+                "src/host/native-actions.mjs",
+                "src/host/native-send-intent.mjs",
+                "src/host/surface-controller.mjs",
+                "src/host/surface-discovery.mjs",
+                "src/host/ui-frame-client.mjs",
+                "src/host/url-policy.mjs",
+                "src/navigation/current-index.mjs",
+                "src/navigation/free-recovery.mjs",
+                "src/navigation/free-view.mjs",
+                "src/navigation/icons.mjs",
+                "src/navigation/mount-surface.mjs",
+                "src/navigation/navigation.mjs",
+                "src/navigation/projection.mjs",
+                "src/navigation/search.mjs",
+                "src/navigation/styles.mjs",
+                "workspace.html"
+              ]
+            }
+          ],
+          "content_security_policy": {
+            "extension_pages": "script-src 'self'; object-src 'none'; connect-src http://127.0.0.1:52137"
+          }
+        },
+        "matchesExpected": true,
+        "loadedWorker": {
+          "targetUrl": "chrome-extension://eadjdpjfpceippcombfamfbbcdokejkp/extension/worker.mjs",
+          "scripts": [
+            {
+              "url": "chrome-extension://eadjdpjfpceippcombfamfbbcdokejkp/extension/worker.mjs",
+              "expectedSha256": "b1b7a863445266949f31eb174a6af6b89f1a5d012ce6b3a6cfa0d4312decd47b",
+              "loadedSha256": "b1b7a863445266949f31eb174a6af6b89f1a5d012ce6b3a6cfa0d4312decd47b"
+            },
+            {
+              "url": "chrome-extension://eadjdpjfpceippcombfamfbbcdokejkp/src/data/schema.mjs",
+              "expectedSha256": "fcdfbd7759722e79e2ad089439033b7df13134c7da863fdf1c56d5e00d75847d",
+              "loadedSha256": "fcdfbd7759722e79e2ad089439033b7df13134c7da863fdf1c56d5e00d75847d"
+            },
+            {
+              "url": "chrome-extension://eadjdpjfpceippcombfamfbbcdokejkp/src/b1/scope-repository.mjs",
+              "expectedSha256": "08d5c29e4be60c9b94ac6c7dce3e7fb1c5f2e553979c5a8f872a08d7c0c2bb91",
+              "loadedSha256": "08d5c29e4be60c9b94ac6c7dce3e7fb1c5f2e553979c5a8f872a08d7c0c2bb91"
+            }
+          ]
+        }
+      },
+      "coverage": "ACTUAL_ARCHIVED_OWNER_DATABASE_VERSION_FENCE"
+    },
+    {
+      "name": "current-Host-package-restored-same-extension-ID-before-fresh-grant",
+      "status": "PASS",
+      "extensionId": "eadjdpjfpceippcombfamfbbcdokejkp",
+      "currentDigest": "9814e050e136f9a4c8064b14cd6b369bbd6df5de02bbc9675f2c734775003a58",
+      "runtimeUpdate": {
+        "before": {
+          "manifest_version": 3,
+          "version": "0.3.0",
+          "permissions": [
+            "webNavigation",
+            "webRequest"
+          ],
+          "host_permissions": [
+            "http://127.0.0.1/*"
+          ],
+          "background": {
+            "service_worker": "extension/worker.mjs"
+          },
+          "content_scripts": [
+            {
+              "all_frames": false,
+              "js": [
+                "content.js"
+              ],
+              "matches": [
+                "http://127.0.0.1/*"
+              ],
+              "run_at": "document_idle"
+            }
+          ],
+          "web_accessible_resources": [
+            {
+              "matches": [
+                "http://127.0.0.1/*"
+              ],
+              "resources": [
+                "extension/config.mjs",
+                "extension/content-entry.mjs",
+                "extension/sidebar.mjs",
+                "extension/workspace.mjs",
+                "sidebar.html",
+                "src/b1/identity.mjs",
+                "src/data/cooperate.mjs",
+                "src/data/free-time-policy.mjs",
+                "src/data/hash.mjs",
+                "src/data/read-recovery-budget.mjs",
+                "src/data/request-deadline.mjs",
+                "src/host/backup-transfer.mjs",
+                "src/host/bounded-handle-registry.mjs",
+                "src/host/candidate-page-window.mjs",
+                "src/host/candidate-presentation.mjs",
+                "src/host/candidate-upgrade.mjs",
+                "src/host/chatgpt-adapter.mjs",
+                "src/host/content-candidates.mjs",
+                "src/host/content-session.mjs",
+                "src/host/context-association.mjs",
+                "src/host/contract.mjs",
+                "src/host/current-body-discovery.mjs",
+                "src/host/current-navigation-plan.mjs",
+                "src/host/current-observation-batch.mjs",
+                "src/host/first-send-profile.mjs",
+                "src/host/frame-appearance.mjs",
+                "src/host/frame-candidate-migration.mjs",
+                "src/host/frame-native-plans.mjs",
+                "src/host/frame-resume-state.mjs",
+                "src/host/free-frame-backup.mjs",
+                "src/host/free-frame-candidates.mjs",
+                "src/host/free-frame-client.mjs",
+                "src/host/free-frame-read-error.mjs",
+                "src/host/free-frame-recovery.mjs",
+                "src/host/free-frame-snippets.mjs",
+                "src/host/isolated-session-reader.mjs",
+                "src/host/native-actions.mjs",
+                "src/host/native-input-risk.mjs",
+                "src/host/native-send-intent.mjs",
+                "src/host/native-snippets.mjs",
+                "src/host/old-send-terminal-profile.mjs",
+                "src/host/project-context-association.mjs",
+                "src/host/session-identity.mjs",
+                "src/host/snippet-capture-wait.mjs",
+                "src/host/snippet-selection-session.mjs",
+                "src/host/surface-controller.mjs",
+                "src/host/surface-discovery.mjs",
+                "src/host/surface-fragments.mjs",
+                "src/host/ui-frame-client.mjs",
+                "src/host/url-policy.mjs",
+                "src/navigation/current-index.mjs",
+                "src/navigation/free-recovery.mjs",
+                "src/navigation/free-view.mjs",
+                "src/navigation/icons.mjs",
+                "src/navigation/mount-surface.mjs",
+                "src/navigation/navigation.mjs",
+                "src/navigation/projection.mjs",
+                "src/navigation/search.mjs",
+                "src/navigation/styles.mjs",
+                "workspace.html"
+              ]
+            }
+          ],
+          "content_security_policy": {
+            "extension_pages": "script-src 'self'; object-src 'none'; connect-src http://127.0.0.1:52137"
+          }
+        },
+        "reloadRequested": false,
+        "after": {
+          "manifest_version": 3,
+          "version": "0.3.0",
+          "permissions": [
+            "webNavigation",
+            "webRequest"
+          ],
+          "host_permissions": [
+            "http://127.0.0.1/*"
+          ],
+          "background": {
+            "service_worker": "extension/worker.mjs"
+          },
+          "content_scripts": [
+            {
+              "all_frames": false,
+              "js": [
+                "content.js"
+              ],
+              "matches": [
+                "http://127.0.0.1/*"
+              ],
+              "run_at": "document_idle"
+            }
+          ],
+          "web_accessible_resources": [
+            {
+              "matches": [
+                "http://127.0.0.1/*"
+              ],
+              "resources": [
+                "extension/config.mjs",
+                "extension/content-entry.mjs",
+                "extension/sidebar.mjs",
+                "extension/workspace.mjs",
+                "sidebar.html",
+                "src/b1/identity.mjs",
+                "src/data/cooperate.mjs",
+                "src/data/free-time-policy.mjs",
+                "src/data/hash.mjs",
+                "src/data/read-recovery-budget.mjs",
+                "src/data/request-deadline.mjs",
+                "src/host/backup-transfer.mjs",
+                "src/host/bounded-handle-registry.mjs",
+                "src/host/candidate-page-window.mjs",
+                "src/host/candidate-presentation.mjs",
+                "src/host/candidate-upgrade.mjs",
+                "src/host/chatgpt-adapter.mjs",
+                "src/host/content-candidates.mjs",
+                "src/host/content-session.mjs",
+                "src/host/context-association.mjs",
+                "src/host/contract.mjs",
+                "src/host/current-body-discovery.mjs",
+                "src/host/current-navigation-plan.mjs",
+                "src/host/current-observation-batch.mjs",
+                "src/host/first-send-profile.mjs",
+                "src/host/frame-appearance.mjs",
+                "src/host/frame-candidate-migration.mjs",
+                "src/host/frame-native-plans.mjs",
+                "src/host/frame-resume-state.mjs",
+                "src/host/free-frame-backup.mjs",
+                "src/host/free-frame-candidates.mjs",
+                "src/host/free-frame-client.mjs",
+                "src/host/free-frame-read-error.mjs",
+                "src/host/free-frame-recovery.mjs",
+                "src/host/free-frame-snippets.mjs",
+                "src/host/isolated-session-reader.mjs",
+                "src/host/native-actions.mjs",
+                "src/host/native-input-risk.mjs",
+                "src/host/native-send-intent.mjs",
+                "src/host/native-snippets.mjs",
+                "src/host/old-send-terminal-profile.mjs",
+                "src/host/project-context-association.mjs",
+                "src/host/session-identity.mjs",
+                "src/host/snippet-capture-wait.mjs",
+                "src/host/snippet-selection-session.mjs",
+                "src/host/surface-controller.mjs",
+                "src/host/surface-discovery.mjs",
+                "src/host/surface-fragments.mjs",
+                "src/host/ui-frame-client.mjs",
+                "src/host/url-policy.mjs",
+                "src/navigation/current-index.mjs",
+                "src/navigation/free-recovery.mjs",
+                "src/navigation/free-view.mjs",
+                "src/navigation/icons.mjs",
+                "src/navigation/mount-surface.mjs",
+                "src/navigation/navigation.mjs",
+                "src/navigation/projection.mjs",
+                "src/navigation/search.mjs",
+                "src/navigation/styles.mjs",
+                "workspace.html"
+              ]
+            }
+          ],
+          "content_security_policy": {
+            "extension_pages": "script-src 'self'; object-src 'none'; connect-src http://127.0.0.1:52137"
+          }
+        },
+        "matchesExpected": true,
+        "loadedWorker": {
+          "targetUrl": "chrome-extension://eadjdpjfpceippcombfamfbbcdokejkp/extension/worker.mjs",
+          "scripts": [
+            {
+              "url": "chrome-extension://eadjdpjfpceippcombfamfbbcdokejkp/extension/worker.mjs",
+              "expectedSha256": "bd12301a0b0ebbbf1cdb107723b33fd97bd6aba66dc2923b7a7070ccabdaea23",
+              "loadedSha256": "bd12301a0b0ebbbf1cdb107723b33fd97bd6aba66dc2923b7a7070ccabdaea23"
+            },
+            {
+              "url": "chrome-extension://eadjdpjfpceippcombfamfbbcdokejkp/extension/classic-runtime.js",
+              "expectedSha256": "d125ed49f22950d72a4b59c76a9015a1a8491356a3d331e5bf2f58164346776d",
+              "loadedSha256": "d125ed49f22950d72a4b59c76a9015a1a8491356a3d331e5bf2f58164346776d"
+            }
+          ]
+        }
+      },
+      "authorityRestored": false
+    },
+    {
+      "name": "same-J4-real-worker-stop-recovers-native-title-and-one-original-ACK-without-send-replay",
+      "status": "PASS",
+      "nativeOperationId": "dom_371b12fe3c7a5da1dfc44d1927d496e5ccf45a5f6b974d26",
+      "eventKey": "send_f0942b77a7aa4d48b0814f8466ec27d1a9c3f341933e2557",
+      "firstObservedAt": "2026-10-16T20:24:04.431Z",
+      "workerStopConfirmed": true,
+      "evidenceCommittedBeforeStop": false,
+      "originalACKUnchanged": null,
+      "evidenceReceipt": {
+        "key": "[\"[\\\"[\\\\\\\"chatgpt\\\\\\\",\\\\\\\"principal_b5251fa0aba8e6d9cc5c14d0fb61db814d07c01eea39d1174341557cff7a5dd3\\\\\\\",\\\\\\\"context_342ce0ccae3d4fa425a12ac33fe114e184aa508160b56198309d27e2c808c988\\\\\\\"]\\\",\\\"free-evidence\\\"]\",\"joint_ack_2e0e012d2e1824d07e2c291db7a74a078c87030e5e4ed05b\"]",
+        "payload": {
+          "fingerprint": "4326b4ef9395dd2e2c0f669127f642973eb2fbe5f270fe87f0fe8978221f35a6",
+          "revision": 5,
+          "operationId": "joint_ack_2e0e012d2e1824d07e2c291db7a74a078c87030e5e4ed05b",
+          "kind": "OBSERVE_HOST_CONTINUATION"
+        },
+        "checksum": "52648ceda1a987c8d800fca98dae3050bad3bc0e4e815541540151db7ed63748"
+      },
+      "continuationState": "complete",
+      "assetDigest": "06538b6dee4ecdad4ca53663abd23083e205816ee66a446aaa353c8f57c11589"
+    },
+    {
+      "name": "same-J4-joint-recovery-second-load-is-idempotent-and-peer-context-isolated",
+      "status": "PASS",
+      "nativeOperationId": "dom_371b12fe3c7a5da1dfc44d1927d496e5ccf45a5f6b974d26",
+      "nativeAccepts": 2
+    },
+    {
+      "name": "codec-peer-explicit-empty-draft-native-context-switch-establishes-fresh-team-context",
+      "status": "PASS",
+      "nativeContextAction": "Switch to Team",
+      "nativeURL": "http://127.0.0.1:52137/c/33333333-3333-4333-8333-333333333333",
+      "draftWasEmpty": true,
+      "selectedFiles": 0,
+      "assetDigest": "a8ed54788d0db70e514032f5eeded878b8e5a9fccfee2b1245b2c105468fb4e7",
+      "automaticReattachment": "NOT_ESTABLISHED"
+    },
+    {
+      "name": "codec-native-personal-preference-restored-with-fresh-primary-grant",
+      "status": "PASS",
+      "nativeContextAction": "Switch to Personal",
+      "nativeURL": "http://127.0.0.1:52137/c/33333333-3333-4333-8333-333333333333",
+      "draftWasEmpty": true,
+      "selectedFiles": 0,
+      "assetDigest": "06538b6dee4ecdad4ca53663abd23083e205816ee66a446aaa353c8f57c11589"
+    },
+    {
+      "name": "same-J4-existing-evidence-checksum-fault-real-UI-repair-revokes-activity-and-preserves-draft-assets",
+      "status": "PASS",
+      "boundary": "EVIDENCE_ROOT_REPAIR_SLICE_NOT_FULL_J4",
+      "fault": {
+        "authority": "TEST_ONLY_EXISTING_EVIDENCE_ROOT_CHECKSUM_FAULT",
+        "beforeRootDigest": "b0353c038ff529a82f354af0f929189d1312a128b2a02a825f7f95b1181af4cf",
+        "afterRootDigest": "762969e370285332d18e471a3c3bb4c9d39bb2c1c542d5d6bb077a705982eb83",
+        "payloadUnchanged": true,
+        "changedFields": [
+          "checksum"
+        ],
+        "revision": 5
+      },
+      "projection": {
+        "at": 1792182273175,
+        "scope": "[\"chatgpt\",\"principal_b5251fa0aba8e6d9cc5c14d0fb61db814d07c01eea39d1174341557cff7a5dd3\",\"context_342ce0ccae3d4fa425a12ac33fe114e184aa508160b56198309d27e2c808c988\"]",
+        "evidenceRevision": "6:6",
+        "currentRef": "44444444-4444-4444-8444-444444444444",
+        "currentRefRoute": "44444444-4444-4444-8444-444444444444",
+        "currentSegment": null
+      },
+      "oldSources": [
+        {
+          "id": "host_history_7da0d3a1ea89a310b72f4fd11c851236",
+          "generation": "profile_1",
+          "revoked": true
+        },
+        {
+          "id": "host_ack_7cdf19dddda0789eb57739ce1730dcf1",
+          "generation": "profile_1",
+          "revoked": true
+        }
+      ],
+      "oldEvents": 3,
+      "oldACKs": 1,
+      "continuationDigest": "52aa1eb61236ddede56a8572714a2921a4ac1db583cf0e5aaf23130ecf991525",
+      "preRepairContinuationStates": [
+        "complete"
+      ],
+      "continuationCoverage": "COMPLETED_RECEIPT_BYTES_ONLY; PENDING_REPAIR_TO_NEEDS_REVALIDATION_NOT_COVERED",
+      "assetDigest": "06538b6dee4ecdad4ca53663abd23083e205816ee66a446aaa353c8f57c11589",
+      "nativeSends": 2
+    },
+    {
+      "name": "same-J4-fresh-authenticated-current-body-history-restores-production-activity-only",
+      "status": "PASS",
+      "boundary": "EVIDENCE_ROOT_REPAIR_SLICE_NOT_FULL_J4",
+      "budget": {
+        "checksumValid": true,
+        "startedAt": 1792182271633,
+        "lastAt": 1792182272291,
+        "requests": 12,
+        "attemptCounts": [
+          1,
+          3
+        ]
+      },
+      "waitedForFormalBudgetMs": 28416.87225,
+      "currentBody": {
+        "conversationId": "44444444-4444-4444-8444-444444444444",
+        "messageIds": [
+          "j4_original_old",
+          "c98b9372-84a8-4f7d-9232-1f790e8efde5",
+          "13c5d134-d8dc-493d-bc13-37198fe04c31"
+        ]
+      },
+      "projection": {
+        "at": 1792182302267,
+        "scope": "[\"chatgpt\",\"principal_b5251fa0aba8e6d9cc5c14d0fb61db814d07c01eea39d1174341557cff7a5dd3\",\"context_342ce0ccae3d4fa425a12ac33fe114e184aa508160b56198309d27e2c808c988\"]",
+        "evidenceRevision": "6:7",
+        "currentRef": "44444444-4444-4444-8444-444444444444",
+        "currentRefRoute": "44444444-4444-4444-8444-444444444444",
+        "currentSegment": 0
+      },
+      "witnesses": [
+        {
+          "id": "history_cc48281e681c4176a8dd5fae4647f31d44ea004a1c9bacf3",
+          "messageId": "j4_original_old",
+          "sourceId": "host_history_7da0d3a1ea89a310b72f4fd11c851236_r1",
+          "generation": "profile_1_recovery_1",
+          "sentAt": "2026-07-18T20:22:59.786Z",
+          "precision": "millisecond"
+        },
+        {
+          "id": "history_4bec0fe0367cb449a7454ff8a5e11227b0f842f7f243ce33",
+          "messageId": "c98b9372-84a8-4f7d-9232-1f790e8efde5",
+          "sourceId": "host_history_7da0d3a1ea89a310b72f4fd11c851236_r1",
+          "generation": "profile_1_recovery_1",
+          "sentAt": "2026-10-16T20:23:02.049Z",
+          "precision": "millisecond"
+        },
+        {
+          "id": "history_8f9b16776e8b4340e70cdeb42dbe1e6db8c6905affe0b93f",
+          "messageId": "13c5d134-d8dc-493d-bc13-37198fe04c31",
+          "sourceId": "host_history_7da0d3a1ea89a310b72f4fd11c851236_r1",
+          "generation": "profile_1_recovery_1",
+          "sentAt": "2026-10-16T20:24:04.415Z",
+          "precision": "millisecond"
+        }
+      ],
+      "oldACKsUnchanged": true,
+      "oldACKsStillRevoked": true,
+      "newGrant": true,
+      "nativeSends": 2,
+      "subsetBoundary": "UNCHANGED_FIXTURE_RENDERS_ALL_CURRENT_CONVERSATION_MESSAGES; UNLOADED_BRANCH_NEGATIVE_NOT_RUN"
+    },
+    {
+      "name": "same-J4-one-genuine-new-native-send-creates-successor-ACK-with-old-anchors-still-revoked",
+      "status": "PASS",
+      "boundary": "EVIDENCE_ROOT_REPAIR_SLICE_NOT_FULL_J4",
+      "budget": {
+        "checksumValid": true,
+        "startedAt": 1792182301651,
+        "lastAt": 1792182302268,
+        "requests": 12,
+        "attemptCounts": [
+          3,
+          1
+        ]
+      },
+      "waitedForFormalBudgetMs": 29364.488832999996,
+      "messageId": "9c803521-0985-4da3-a618-b5fbd0388ee7",
+      "originalSendAt": "2026-10-16T20:25:31.795Z",
+      "anchor": {
+        "id": "send_eafa74cfc18feee35ce9d751fa11fd4a8d91888d0aa42c6c",
+        "messageId": "9c803521-0985-4da3-a618-b5fbd0388ee7",
+        "sourceId": "host_ack_7cdf19dddda0789eb57739ce1730dcf1_r1",
+        "generation": "profile_1_recovery_1",
+        "firstObservedAt": "2026-10-16T20:25:31.810Z",
+        "candidateInterval": {
+          "from": "2026-10-16T20:25:31.781Z",
+          "through": "2026-10-16T20:25:31.810Z"
+        },
+        "calibrationDueAt": "2026-10-16T20:26:31.810Z",
+        "ackWitness": {
+          "kind": "authenticated-message-readback",
+          "profileId": "loopback-existing-send-ack",
+          "profileVersion": 1,
+          "semanticFingerprint": "01e7520dda95ee0c1b7cf09d4e7769907dde1e521c781e3abfb23bf5f72d1022"
+        }
+      },
+      "source": {
+        "id": "host_ack_7cdf19dddda0789eb57739ce1730dcf1_r1",
+        "generation": "profile_1_recovery_1",
+        "revoked": false,
+        "codecVersion": 1,
+        "profileId": "loopback-existing-send-ack",
+        "profileVersion": 1
+      },
+      "projection": {
+        "at": 1792182331946,
+        "scope": "[\"chatgpt\",\"principal_b5251fa0aba8e6d9cc5c14d0fb61db814d07c01eea39d1174341557cff7a5dd3\",\"context_342ce0ccae3d4fa425a12ac33fe114e184aa508160b56198309d27e2c808c988\"]",
+        "evidenceRevision": "6:9",
+        "currentRef": "44444444-4444-4444-8444-444444444444",
+        "currentRefRoute": "44444444-4444-4444-8444-444444444444",
+        "currentSegment": 0
+      },
+      "originalMessageIds": [
+        "c98b9372-84a8-4f7d-9232-1f790e8efde5",
+        "13c5d134-d8dc-493d-bc13-37198fe04c31"
+      ],
+      "nativeSends": 3,
+      "actualNewSends": 1,
+      "activityProjection": "REAL_HOST_UI_VIEW_CURRENT_REF_SEGMENT; ACK_AND_AUTHENTICATED_ORIGINAL_COEXIST"
+    },
+    {
+      "name": "same-J4-real-rebind-authenticated-reread-preserves-witness-bytes-origin-budget-and-context-isolation",
+      "status": "PASS",
+      "boundary": "EVIDENCE_ROOT_REPAIR_SLICE_NOT_FULL_J4",
+      "budget": {
+        "checksumValid": true,
+        "startedAt": 1792182331799,
+        "lastAt": 1792182331890,
+        "requests": 6,
+        "attemptCounts": [
+          2
+        ]
+      },
+      "waitedForFormalBudgetMs": 29801.76458399999,
+      "projection": {
+        "at": 1792182362018,
+        "scope": "[\"chatgpt\",\"principal_b5251fa0aba8e6d9cc5c14d0fb61db814d07c01eea39d1174341557cff7a5dd3\",\"context_342ce0ccae3d4fa425a12ac33fe114e184aa508160b56198309d27e2c808c988\"]",
+        "evidenceRevision": "6:9",
+        "currentRef": "44444444-4444-4444-8444-444444444444",
+        "currentRefRoute": "44444444-4444-4444-8444-444444444444",
+        "currentSegment": 0
+      },
+      "nativeSends": 3,
+      "messageIds": [
+        "c98b9372-84a8-4f7d-9232-1f790e8efde5",
+        "13c5d134-d8dc-493d-bc13-37198fe04c31",
+        "9c803521-0985-4da3-a618-b5fbd0388ee7"
+      ],
+      "freshACKUnchanged": true,
+      "evidenceByteIdentity": true,
+      "oldSourcesStillRevoked": true,
+      "teamEvidenceUnchanged": true,
+      "budgetObservations": [
+        {
+          "checksumValid": true,
+          "startedAt": 1792182271633,
+          "lastAt": 1792182272291,
+          "requests": 12,
+          "attemptCounts": [
+            1,
+            3
+          ]
+        },
+        {
+          "checksumValid": true,
+          "startedAt": 1792182301651,
+          "lastAt": 1792182302268,
+          "requests": 12,
+          "attemptCounts": [
+            3,
+            1
+          ]
+        },
+        {
+          "checksumValid": true,
+          "startedAt": 1792182331799,
+          "lastAt": 1792182331890,
+          "requests": 6,
+          "attemptCounts": [
+            2
+          ]
+        },
+        {
+          "checksumValid": true,
+          "startedAt": 1792182361896,
+          "lastAt": 1792182361920,
+          "requests": 3,
+          "attemptCounts": [
+            1
+          ]
+        }
+      ],
+      "requestDeadlineMs": 6000,
+      "sendCycleMs": 30000,
+      "maxReadAttempts": 3,
+      "maxGETsPerWindow": 12,
+      "missingInitialACKSourceContinuation": "NOT_COVERED"
+    },
+    {
+      "name": "healthy-production-recovery-inspection-preserves-imported-Pro-assets",
+      "status": "PASS",
+      "assetDigest": "06538b6dee4ecdad4ca53663abd23083e205816ee66a446aaa353c8f57c11589",
+      "damagedRepair": "NOT_RUN"
+    },
+    {
+      "name": "explicit-native-root-checksum-fault-and-real-UI-repair-preserve-assets-draft-and-revoke-source",
+      "status": "PASS",
+      "fault": {
+        "authority": "TEST_ONLY_CHECKSUM_FAULT",
+        "beforeRootDigest": "fe62d1b4fa4a2463470bb8956d0259111e1431ffbe366e409b4d356181bb7053",
+        "afterRootDigest": "3f6addfe536e172011b80d7d903c5ee6c2c83feff728ea40b93bcd40ce55cc10",
+        "payloadUnchanged": true,
+        "changedFields": [
+          "checksum"
+        ]
+      },
+      "repaired": {
+        "refs": 4,
+        "sources": 1,
+        "allSourcesRevoked": true,
+        "sourceStates": {
+          "host_dom_adf98fa7a43db4a7dd071de746761b52": {
+            "generation": "profile_1",
+            "revoked": true
+          }
+        },
+        "currentRefSource": "host_dom_adf98fa7a43db4a7dd071de746761b52"
+      },
+      "assetDigest": "06538b6dee4ecdad4ca53663abd23083e205816ee66a446aaa353c8f57c11589"
+    },
+    {
+      "name": "recovered-UNKNOWN-route-retains-identity-and-hides-revoked-titles",
+      "status": "PASS",
+      "link": {
+        "id": "33333333-3333-4333-8333-333333333333",
+        "href": "http://127.0.0.1:52137/c/33333333-3333-4333-8333-333333333333",
+        "disabled": null,
+        "text": "名称暂不可用"
+      },
+      "oldTitleRestoration": "not authorized; old source remains revoked"
+    },
+    {
+      "name": "actual-target-management-disable-clears-both-tabs-private-projection-and-keeps-original-native-editor",
+      "status": "PASS",
+      "private": {
+        "absent": true,
+        "frames": [
+          {
+            "detached": true,
+            "privatePresent": false
+          },
+          {
+            "detached": true,
+            "privatePresent": false
+          }
+        ]
+      },
+      "native": {
+        "sameDocument": true,
+        "sameEditor": true,
+        "draft": "J4_CONTINUOUS_NATIVE_DRAFT_DISABLED",
+        "focused": true,
+        "pageHides": 0,
+        "openOwned": 0,
+        "readingVisible": "visible",
+        "historyVisible": "visible"
+      }
+    },
+    {
+      "name": "reenable-without-page-refresh-does-not-resurrect-old-private-projection-or-change-assets",
+      "status": "PASS",
+      "native": {
+        "sameDocument": true,
+        "sameEditor": true,
+        "draft": "J4_CONTINUOUS_NATIVE_DRAFT_DISABLED_REENABLED",
+        "focused": true,
+        "pageHides": 0,
+        "openOwned": 0,
+        "readingVisible": "visible",
+        "historyVisible": "visible"
+      },
+      "assetDigest": "06538b6dee4ecdad4ca53663abd23083e205816ee66a446aaa353c8f57c11589"
+    },
+    {
+      "name": "fresh-native-observation-after-repair-revalidates-current-ref-with-old-sources-still-revoked",
+      "status": "PASS",
+      "revalidated": {
+        "refs": 4,
+        "sources": 2,
+        "allSourcesRevoked": false,
+        "sourceStates": {
+          "host_dom_adf98fa7a43db4a7dd071de746761b52": {
+            "generation": "profile_1",
+            "revoked": true
+          },
+          "host_dom_adf98fa7a43db4a7dd071de746761b52_r1": {
+            "generation": "profile_1_recovery_1",
+            "revoked": false
+          }
+        },
+        "currentRefSource": "host_dom_adf98fa7a43db4a7dd071de746761b52_r1"
+      },
+      "assetDigest": "06538b6dee4ecdad4ca53663abd23083e205816ee66a446aaa353c8f57c11589"
+    },
+    {
+      "name": "actual-uninstall-keeps-original-native-document-operable-without-private-projection",
+      "status": "PASS",
+      "private": {
+        "absent": true,
+        "frames": [
+          {
+            "detached": true,
+            "privatePresent": false
+          },
+          {
+            "detached": true,
+            "privatePresent": false
+          }
+        ]
+      },
+      "native": {
+        "sameDocument": true,
+        "sameEditor": true,
+        "draft": "J4_UNINSTALL_NATIVE_DRAFT_UNINSTALLED",
+        "focused": true,
+        "pageHides": 0,
+        "openOwned": 0,
+        "readingVisible": "visible",
+        "historyVisible": "visible"
+      },
+      "extensionDatabaseRetention": "NOT_PROMISED_OR_ASSERTED"
+    },
+    {
+      "name": "subsequent-native-navigation-model-and-editor-operate-after-uninstall",
+      "status": "PASS"
+    }
+  ],
+  "errors": [],
+  "browserPrecondition": {
+    "transport": "isolated-loopback-CDP",
+    "noDefaults": true,
+    "headed": false,
+    "focusEmulation": "NOT_ENABLED_BY_PLAYWRIGHT",
+    "source": "Playwright connectOverCDP noDefaults public option; native Chromium capturer is session-owned"
+  },
+  "auxiliaryObserver": "BACKGROUND_EXACT_TARGET_WITH_NATIVE_SURFACE_INVARIANCE",
+  "auxiliarySurfaceChecks": [
+    {
+      "kind": "open",
+      "before": [
+        {
+          "generation": "6ba91745-74da-4da0-bc5a-765e1e7f3ebf",
+          "visibility": "visible",
+          "focused": true,
+          "events": {
+            "count": 2,
+            "recent": [
+              {
+                "type": "focus",
+                "visibility": "visible",
+                "focused": true
+              },
+              {
+                "type": "blur",
+                "visibility": "visible",
+                "focused": true
+              }
+            ]
+          }
+        },
+        {
+          "generation": "83f42d6d-128a-45cb-a6ca-fa0a34b3a99f",
+          "visibility": "visible",
+          "focused": true,
+          "events": {
+            "count": 1,
+            "recent": [
+              {
+                "type": "focus",
+                "visibility": "visible",
+                "focused": true
+              }
+            ]
+          }
+        },
+        {
+          "generation": "4e19dd84-88c2-4e1e-bec3-66cec56e5b3f",
+          "visibility": "hidden",
+          "focused": false,
+          "events": {
+            "count": 3,
+            "recent": [
+              {
+                "type": "focus",
+                "visibility": "visible",
+                "focused": true
+              },
+              {
+                "type": "blur",
+                "visibility": "visible",
+                "focused": false
+              },
+              {
+                "type": "visibilitychange",
+                "visibility": "hidden",
+                "focused": false
+              }
+            ]
+          }
+        },
+        {
+          "generation": "685df9b7-bc77-4906-8c0e-c5745d868855",
+          "visibility": "hidden",
+          "focused": false,
+          "events": {
+            "count": 1,
+            "recent": [
+              {
+                "type": "visibilitychange",
+                "visibility": "hidden",
+                "focused": false
+              }
+            ]
+          }
+        }
+      ],
+      "after": [
+        {
+          "generation": "6ba91745-74da-4da0-bc5a-765e1e7f3ebf",
+          "visibility": "visible",
+          "focused": true,
+          "events": {
+            "count": 2,
+            "recent": [
+              {
+                "type": "focus",
+                "visibility": "visible",
+                "focused": true
+              },
+              {
+                "type": "blur",
+                "visibility": "visible",
+                "focused": true
+              }
+            ]
+          }
+        },
+        {
+          "generation": "83f42d6d-128a-45cb-a6ca-fa0a34b3a99f",
+          "visibility": "visible",
+          "focused": true,
+          "events": {
+            "count": 1,
+            "recent": [
+              {
+                "type": "focus",
+                "visibility": "visible",
+                "focused": true
+              }
+            ]
+          }
+        },
+        {
+          "generation": "4e19dd84-88c2-4e1e-bec3-66cec56e5b3f",
+          "visibility": "hidden",
+          "focused": false,
+          "events": {
+            "count": 3,
+            "recent": [
+              {
+                "type": "focus",
+                "visibility": "visible",
+                "focused": true
+              },
+              {
+                "type": "blur",
+                "visibility": "visible",
+                "focused": false
+              },
+              {
+                "type": "visibilitychange",
+                "visibility": "hidden",
+                "focused": false
+              }
+            ]
+          }
+        },
+        {
+          "generation": "685df9b7-bc77-4906-8c0e-c5745d868855",
+          "visibility": "hidden",
+          "focused": false,
+          "events": {
+            "count": 1,
+            "recent": [
+              {
+                "type": "visibilitychange",
+                "visibility": "hidden",
+                "focused": false
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "kind": "open",
+      "before": [
+        {
+          "generation": "6ba91745-74da-4da0-bc5a-765e1e7f3ebf",
+          "visibility": "visible",
+          "focused": true,
+          "events": {
+            "count": 2,
+            "recent": [
+              {
+                "type": "focus",
+                "visibility": "visible",
+                "focused": true
+              },
+              {
+                "type": "blur",
+                "visibility": "visible",
+                "focused": true
+              }
+            ]
+          }
+        },
+        {
+          "generation": "83f42d6d-128a-45cb-a6ca-fa0a34b3a99f",
+          "visibility": "visible",
+          "focused": true,
+          "events": {
+            "count": 1,
+            "recent": [
+              {
+                "type": "focus",
+                "visibility": "visible",
+                "focused": true
+              }
+            ]
+          }
+        },
+        {
+          "generation": "4e19dd84-88c2-4e1e-bec3-66cec56e5b3f",
+          "visibility": "hidden",
+          "focused": false,
+          "events": {
+            "count": 3,
+            "recent": [
+              {
+                "type": "focus",
+                "visibility": "visible",
+                "focused": true
+              },
+              {
+                "type": "blur",
+                "visibility": "visible",
+                "focused": false
+              },
+              {
+                "type": "visibilitychange",
+                "visibility": "hidden",
+                "focused": false
+              }
+            ]
+          }
+        },
+        {
+          "generation": "685df9b7-bc77-4906-8c0e-c5745d868855",
+          "visibility": "hidden",
+          "focused": false,
+          "events": {
+            "count": 1,
+            "recent": [
+              {
+                "type": "visibilitychange",
+                "visibility": "hidden",
+                "focused": false
+              }
+            ]
+          }
+        }
+      ],
+      "after": [
+        {
+          "generation": "6ba91745-74da-4da0-bc5a-765e1e7f3ebf",
+          "visibility": "visible",
+          "focused": true,
+          "events": {
+            "count": 2,
+            "recent": [
+              {
+                "type": "focus",
+                "visibility": "visible",
+                "focused": true
+              },
+              {
+                "type": "blur",
+                "visibility": "visible",
+                "focused": true
+              }
+            ]
+          }
+        },
+        {
+          "generation": "83f42d6d-128a-45cb-a6ca-fa0a34b3a99f",
+          "visibility": "visible",
+          "focused": true,
+          "events": {
+            "count": 1,
+            "recent": [
+              {
+                "type": "focus",
+                "visibility": "visible",
+                "focused": true
+              }
+            ]
+          }
+        },
+        {
+          "generation": "4e19dd84-88c2-4e1e-bec3-66cec56e5b3f",
+          "visibility": "hidden",
+          "focused": false,
+          "events": {
+            "count": 3,
+            "recent": [
+              {
+                "type": "focus",
+                "visibility": "visible",
+                "focused": true
+              },
+              {
+                "type": "blur",
+                "visibility": "visible",
+                "focused": false
+              },
+              {
+                "type": "visibilitychange",
+                "visibility": "hidden",
+                "focused": false
+              }
+            ]
+          }
+        },
+        {
+          "generation": "685df9b7-bc77-4906-8c0e-c5745d868855",
+          "visibility": "hidden",
+          "focused": false,
+          "events": {
+            "count": 1,
+            "recent": [
+              {
+                "type": "visibilitychange",
+                "visibility": "hidden",
+                "focused": false
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "kind": "close",
+      "before": [
+        {
+          "generation": "6ba91745-74da-4da0-bc5a-765e1e7f3ebf",
+          "visibility": "visible",
+          "focused": true,
+          "events": {
+            "count": 3,
+            "recent": [
+              {
+                "type": "focus",
+                "visibility": "visible",
+                "focused": true
+              },
+              {
+                "type": "blur",
+                "visibility": "visible",
+                "focused": true
+              },
+              {
+                "type": "focus",
+                "visibility": "visible",
+                "focused": true
+              }
+            ]
+          }
+        },
+        {
+          "generation": "e64614ce-6ff6-4cb8-8a3f-deb07016509b",
+          "visibility": "visible",
+          "focused": false,
+          "events": {
+            "count": 0,
+            "recent": []
+          }
+        },
+        {
+          "generation": "4e19dd84-88c2-4e1e-bec3-66cec56e5b3f",
+          "visibility": "hidden",
+          "focused": false,
+          "events": {
+            "count": 3,
+            "recent": [
+              {
+                "type": "focus",
+                "visibility": "visible",
+                "focused": true
+              },
+              {
+                "type": "blur",
+                "visibility": "visible",
+                "focused": false
+              },
+              {
+                "type": "visibilitychange",
+                "visibility": "hidden",
+                "focused": false
+              }
+            ]
+          }
+        },
+        {
+          "generation": "685df9b7-bc77-4906-8c0e-c5745d868855",
+          "visibility": "hidden",
+          "focused": false,
+          "events": {
+            "count": 1,
+            "recent": [
+              {
+                "type": "visibilitychange",
+                "visibility": "hidden",
+                "focused": false
+              }
+            ]
+          }
+        }
+      ],
+      "after": [
+        {
+          "generation": "6ba91745-74da-4da0-bc5a-765e1e7f3ebf",
+          "visibility": "visible",
+          "focused": true,
+          "events": {
+            "count": 3,
+            "recent": [
+              {
+                "type": "focus",
+                "visibility": "visible",
+                "focused": true
+              },
+              {
+                "type": "blur",
+                "visibility": "visible",
+                "focused": true
+              },
+              {
+                "type": "focus",
+                "visibility": "visible",
+                "focused": true
+              }
+            ]
+          }
+        },
+        {
+          "generation": "e64614ce-6ff6-4cb8-8a3f-deb07016509b",
+          "visibility": "visible",
+          "focused": false,
+          "events": {
+            "count": 0,
+            "recent": []
+          }
+        },
+        {
+          "generation": "4e19dd84-88c2-4e1e-bec3-66cec56e5b3f",
+          "visibility": "hidden",
+          "focused": false,
+          "events": {
+            "count": 3,
+            "recent": [
+              {
+                "type": "focus",
+                "visibility": "visible",
+                "focused": true
+              },
+              {
+                "type": "blur",
+                "visibility": "visible",
+                "focused": false
+              },
+              {
+                "type": "visibilitychange",
+                "visibility": "hidden",
+                "focused": false
+              }
+            ]
+          }
+        },
+        {
+          "generation": "685df9b7-bc77-4906-8c0e-c5745d868855",
+          "visibility": "hidden",
+          "focused": false,
+          "events": {
+            "count": 1,
+            "recent": [
+              {
+                "type": "visibilitychange",
+                "visibility": "hidden",
+                "focused": false
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "kind": "open",
+      "before": [
+        {
+          "generation": "6da5b067-1d4b-4924-8edf-b8cc7bdea26b",
+          "visibility": "visible",
+          "focused": true,
+          "events": {
+            "count": 1,
+            "recent": [
+              {
+                "type": "focus",
+                "visibility": "visible",
+                "focused": true
+              }
+            ]
+          }
+        },
+        {
+          "generation": "3f2cd212-400b-4ccd-ba97-f76b6d6ee750",
+          "visibility": "visible",
+          "focused": false,
+          "events": {
+            "count": 0,
+            "recent": []
+          }
+        },
+        {
+          "generation": "4e19dd84-88c2-4e1e-bec3-66cec56e5b3f",
+          "visibility": "hidden",
+          "focused": false,
+          "events": {
+            "count": 3,
+            "recent": [
+              {
+                "type": "focus",
+                "visibility": "visible",
+                "focused": true
+              },
+              {
+                "type": "blur",
+                "visibility": "visible",
+                "focused": false
+              },
+              {
+                "type": "visibilitychange",
+                "visibility": "hidden",
+                "focused": false
+              }
+            ]
+          }
+        }
+      ],
+      "after": [
+        {
+          "generation": "6da5b067-1d4b-4924-8edf-b8cc7bdea26b",
+          "visibility": "visible",
+          "focused": true,
+          "events": {
+            "count": 1,
+            "recent": [
+              {
+                "type": "focus",
+                "visibility": "visible",
+                "focused": true
+              }
+            ]
+          }
+        },
+        {
+          "generation": "3f2cd212-400b-4ccd-ba97-f76b6d6ee750",
+          "visibility": "visible",
+          "focused": false,
+          "events": {
+            "count": 0,
+            "recent": []
+          }
+        },
+        {
+          "generation": "4e19dd84-88c2-4e1e-bec3-66cec56e5b3f",
+          "visibility": "hidden",
+          "focused": false,
+          "events": {
+            "count": 3,
+            "recent": [
+              {
+                "type": "focus",
+                "visibility": "visible",
+                "focused": true
+              },
+              {
+                "type": "blur",
+                "visibility": "visible",
+                "focused": false
+              },
+              {
+                "type": "visibilitychange",
+                "visibility": "hidden",
+                "focused": false
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "kind": "close",
+      "before": [
+        {
+          "generation": "a6836cf0-f13f-47f3-92ce-095950a86497",
+          "visibility": "visible",
+          "focused": true,
+          "events": {
+            "count": 1,
+            "recent": [
+              {
+                "type": "focus",
+                "visibility": "visible",
+                "focused": true
+              }
+            ]
+          }
+        },
+        {
+          "generation": "e227c828-a31b-4224-9737-a7a014f29178",
+          "visibility": "hidden",
+          "focused": false,
+          "events": {
+            "count": 3,
+            "recent": [
+              {
+                "type": "focus",
+                "visibility": "visible",
+                "focused": true
+              },
+              {
+                "type": "blur",
+                "visibility": "visible",
+                "focused": false
+              },
+              {
+                "type": "visibilitychange",
+                "visibility": "hidden",
+                "focused": false
+              }
+            ]
+          }
+        }
+      ],
+      "after": [
+        {
+          "generation": "a6836cf0-f13f-47f3-92ce-095950a86497",
+          "visibility": "visible",
+          "focused": true,
+          "events": {
+            "count": 1,
+            "recent": [
+              {
+                "type": "focus",
+                "visibility": "visible",
+                "focused": true
+              }
+            ]
+          }
+        },
+        {
+          "generation": "e227c828-a31b-4224-9737-a7a014f29178",
+          "visibility": "hidden",
+          "focused": false,
+          "events": {
+            "count": 3,
+            "recent": [
+              {
+                "type": "focus",
+                "visibility": "visible",
+                "focused": true
+              },
+              {
+                "type": "blur",
+                "visibility": "visible",
+                "focused": false
+              },
+              {
+                "type": "visibilitychange",
+                "visibility": "hidden",
+                "focused": false
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "kind": "open",
+      "before": [
+        {
+          "generation": "a6836cf0-f13f-47f3-92ce-095950a86497",
+          "visibility": "hidden",
+          "focused": false,
+          "events": {
+            "count": 3,
+            "recent": [
+              {
+                "type": "focus",
+                "visibility": "visible",
+                "focused": true
+              },
+              {
+                "type": "blur",
+                "visibility": "visible",
+                "focused": false
+              },
+              {
+                "type": "visibilitychange",
+                "visibility": "hidden",
+                "focused": false
+              }
+            ]
+          }
+        },
+        {
+          "generation": "e227c828-a31b-4224-9737-a7a014f29178",
+          "visibility": "hidden",
+          "focused": false,
+          "events": {
+            "count": 3,
+            "recent": [
+              {
+                "type": "focus",
+                "visibility": "visible",
+                "focused": true
+              },
+              {
+                "type": "blur",
+                "visibility": "visible",
+                "focused": false
+              },
+              {
+                "type": "visibilitychange",
+                "visibility": "hidden",
+                "focused": false
+              }
+            ]
+          }
+        }
+      ],
+      "after": [
+        {
+          "generation": "a6836cf0-f13f-47f3-92ce-095950a86497",
+          "visibility": "hidden",
+          "focused": false,
+          "events": {
+            "count": 3,
+            "recent": [
+              {
+                "type": "focus",
+                "visibility": "visible",
+                "focused": true
+              },
+              {
+                "type": "blur",
+                "visibility": "visible",
+                "focused": false
+              },
+              {
+                "type": "visibilitychange",
+                "visibility": "hidden",
+                "focused": false
+              }
+            ]
+          }
+        },
+        {
+          "generation": "e227c828-a31b-4224-9737-a7a014f29178",
+          "visibility": "hidden",
+          "focused": false,
+          "events": {
+            "count": 3,
+            "recent": [
+              {
+                "type": "focus",
+                "visibility": "visible",
+                "focused": true
+              },
+              {
+                "type": "blur",
+                "visibility": "visible",
+                "focused": false
+              },
+              {
+                "type": "visibilitychange",
+                "visibility": "hidden",
+                "focused": false
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "kind": "close",
+      "before": [
+        {
+          "generation": "32779e97-ce58-4856-9301-aa54ab45e1c5",
+          "visibility": "visible",
+          "focused": true,
+          "events": {
+            "count": 2,
+            "recent": [
+              {
+                "type": "focus",
+                "visibility": "visible",
+                "focused": true
+              },
+              {
+                "type": "blur",
+                "visibility": "visible",
+                "focused": true
+              }
+            ]
+          }
+        },
+        {
+          "generation": "9f2c3c3d-4f9e-4d55-839d-0a4bb81815c4",
+          "visibility": "visible",
+          "focused": true,
+          "events": {
+            "count": 3,
+            "recent": [
+              {
+                "type": "focus",
+                "visibility": "visible",
+                "focused": true
+              },
+              {
+                "type": "blur",
+                "visibility": "visible",
+                "focused": false
+              },
+              {
+                "type": "focus",
+                "visibility": "visible",
+                "focused": true
+              }
+            ]
+          }
+        },
+        {
+          "generation": "0aa36a36-574d-4ce7-9d04-f6185892cbc7",
+          "visibility": "hidden",
+          "focused": false,
+          "events": {
+            "count": 7,
+            "recent": [
+              {
+                "type": "focus",
+                "visibility": "visible",
+                "focused": true
+              },
+              {
+                "type": "blur",
+                "visibility": "visible",
+                "focused": false
+              },
+              {
+                "type": "visibilitychange",
+                "visibility": "hidden",
+                "focused": false
+              },
+              {
+                "type": "visibilitychange",
+                "visibility": "visible",
+                "focused": false
+              },
+              {
+                "type": "focus",
+                "visibility": "visible",
+                "focused": true
+              },
+              {
+                "type": "blur",
+                "visibility": "visible",
+                "focused": false
+              },
+              {
+                "type": "visibilitychange",
+                "visibility": "hidden",
+                "focused": false
+              }
+            ]
+          }
+        }
+      ],
+      "after": [
+        {
+          "generation": "32779e97-ce58-4856-9301-aa54ab45e1c5",
+          "visibility": "visible",
+          "focused": true,
+          "events": {
+            "count": 2,
+            "recent": [
+              {
+                "type": "focus",
+                "visibility": "visible",
+                "focused": true
+              },
+              {
+                "type": "blur",
+                "visibility": "visible",
+                "focused": true
+              }
+            ]
+          }
+        },
+        {
+          "generation": "9f2c3c3d-4f9e-4d55-839d-0a4bb81815c4",
+          "visibility": "visible",
+          "focused": true,
+          "events": {
+            "count": 3,
+            "recent": [
+              {
+                "type": "focus",
+                "visibility": "visible",
+                "focused": true
+              },
+              {
+                "type": "blur",
+                "visibility": "visible",
+                "focused": false
+              },
+              {
+                "type": "focus",
+                "visibility": "visible",
+                "focused": true
+              }
+            ]
+          }
+        },
+        {
+          "generation": "0aa36a36-574d-4ce7-9d04-f6185892cbc7",
+          "visibility": "hidden",
+          "focused": false,
+          "events": {
+            "count": 7,
+            "recent": [
+              {
+                "type": "focus",
+                "visibility": "visible",
+                "focused": true
+              },
+              {
+                "type": "blur",
+                "visibility": "visible",
+                "focused": false
+              },
+              {
+                "type": "visibilitychange",
+                "visibility": "hidden",
+                "focused": false
+              },
+              {
+                "type": "visibilitychange",
+                "visibility": "visible",
+                "focused": false
+              },
+              {
+                "type": "focus",
+                "visibility": "visible",
+                "focused": true
+              },
+              {
+                "type": "blur",
+                "visibility": "visible",
+                "focused": false
+              },
+              {
+                "type": "visibilitychange",
+                "visibility": "hidden",
+                "focused": false
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "kind": "open",
+      "before": [
+        {
+          "generation": "32779e97-ce58-4856-9301-aa54ab45e1c5",
+          "visibility": "visible",
+          "focused": true,
+          "events": {
+            "count": 3,
+            "recent": [
+              {
+                "type": "focus",
+                "visibility": "visible",
+                "focused": true
+              },
+              {
+                "type": "blur",
+                "visibility": "visible",
+                "focused": true
+              },
+              {
+                "type": "focus",
+                "visibility": "visible",
+                "focused": true
+              }
+            ]
+          }
+        },
+        {
+          "generation": "0aa36a36-574d-4ce7-9d04-f6185892cbc7",
+          "visibility": "hidden",
+          "focused": false,
+          "events": {
+            "count": 7,
+            "recent": [
+              {
+                "type": "focus",
+                "visibility": "visible",
+                "focused": true
+              },
+              {
+                "type": "blur",
+                "visibility": "visible",
+                "focused": false
+              },
+              {
+                "type": "visibilitychange",
+                "visibility": "hidden",
+                "focused": false
+              },
+              {
+                "type": "visibilitychange",
+                "visibility": "visible",
+                "focused": false
+              },
+              {
+                "type": "focus",
+                "visibility": "visible",
+                "focused": true
+              },
+              {
+                "type": "blur",
+                "visibility": "visible",
+                "focused": false
+              },
+              {
+                "type": "visibilitychange",
+                "visibility": "hidden",
+                "focused": false
+              }
+            ]
+          }
+        }
+      ],
+      "after": [
+        {
+          "generation": "32779e97-ce58-4856-9301-aa54ab45e1c5",
+          "visibility": "visible",
+          "focused": true,
+          "events": {
+            "count": 3,
+            "recent": [
+              {
+                "type": "focus",
+                "visibility": "visible",
+                "focused": true
+              },
+              {
+                "type": "blur",
+                "visibility": "visible",
+                "focused": true
+              },
+              {
+                "type": "focus",
+                "visibility": "visible",
+                "focused": true
+              }
+            ]
+          }
+        },
+        {
+          "generation": "0aa36a36-574d-4ce7-9d04-f6185892cbc7",
+          "visibility": "hidden",
+          "focused": false,
+          "events": {
+            "count": 7,
+            "recent": [
+              {
+                "type": "focus",
+                "visibility": "visible",
+                "focused": true
+              },
+              {
+                "type": "blur",
+                "visibility": "visible",
+                "focused": false
+              },
+              {
+                "type": "visibilitychange",
+                "visibility": "hidden",
+                "focused": false
+              },
+              {
+                "type": "visibilitychange",
+                "visibility": "visible",
+                "focused": false
+              },
+              {
+                "type": "focus",
+                "visibility": "visible",
+                "focused": true
+              },
+              {
+                "type": "blur",
+                "visibility": "visible",
+                "focused": false
+              },
+              {
+                "type": "visibilitychange",
+                "visibility": "hidden",
+                "focused": false
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "kind": "close",
+      "before": [
+        {
+          "generation": "a3a4a31b-a57e-4e9e-b83f-8918cc15ef82",
+          "visibility": "visible",
+          "focused": true,
+          "events": {
+            "count": 1,
+            "recent": [
+              {
+                "type": "focus",
+                "visibility": "visible",
+                "focused": true
+              }
+            ]
+          }
+        },
+        {
+          "generation": "2d679a84-e75f-4b5c-96dd-a5d933dcd752",
+          "visibility": "visible",
+          "focused": false,
+          "events": {
+            "count": 0,
+            "recent": []
+          }
+        },
+        {
+          "generation": "0aa36a36-574d-4ce7-9d04-f6185892cbc7",
+          "visibility": "hidden",
+          "focused": false,
+          "events": {
+            "count": 7,
+            "recent": [
+              {
+                "type": "focus",
+                "visibility": "visible",
+                "focused": true
+              },
+              {
+                "type": "blur",
+                "visibility": "visible",
+                "focused": false
+              },
+              {
+                "type": "visibilitychange",
+                "visibility": "hidden",
+                "focused": false
+              },
+              {
+                "type": "visibilitychange",
+                "visibility": "visible",
+                "focused": false
+              },
+              {
+                "type": "focus",
+                "visibility": "visible",
+                "focused": true
+              },
+              {
+                "type": "blur",
+                "visibility": "visible",
+                "focused": false
+              },
+              {
+                "type": "visibilitychange",
+                "visibility": "hidden",
+                "focused": false
+              }
+            ]
+          }
+        }
+      ],
+      "after": [
+        {
+          "generation": "a3a4a31b-a57e-4e9e-b83f-8918cc15ef82",
+          "visibility": "visible",
+          "focused": true,
+          "events": {
+            "count": 1,
+            "recent": [
+              {
+                "type": "focus",
+                "visibility": "visible",
+                "focused": true
+              }
+            ]
+          }
+        },
+        {
+          "generation": "2d679a84-e75f-4b5c-96dd-a5d933dcd752",
+          "visibility": "visible",
+          "focused": false,
+          "events": {
+            "count": 0,
+            "recent": []
+          }
+        },
+        {
+          "generation": "0aa36a36-574d-4ce7-9d04-f6185892cbc7",
+          "visibility": "hidden",
+          "focused": false,
+          "events": {
+            "count": 7,
+            "recent": [
+              {
+                "type": "focus",
+                "visibility": "visible",
+                "focused": true
+              },
+              {
+                "type": "blur",
+                "visibility": "visible",
+                "focused": false
+              },
+              {
+                "type": "visibilitychange",
+                "visibility": "hidden",
+                "focused": false
+              },
+              {
+                "type": "visibilitychange",
+                "visibility": "visible",
+                "focused": false
+              },
+              {
+                "type": "focus",
+                "visibility": "visible",
+                "focused": true
+              },
+              {
+                "type": "blur",
+                "visibility": "visible",
+                "focused": false
+              },
+              {
+                "type": "visibilitychange",
+                "visibility": "hidden",
+                "focused": false
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "continuationScenario": "DEFAULT_STOP_AT_FAILURE",
+  "preparationScenario": "DEFAULT_J4",
+  "interruptionDiagnostics": [
+    {
+      "stage": "baseline-current-body-visible-before-observation",
+      "at": 1792182181948,
+      "requests": {
+        "accepts": 0,
+        "held": false,
+        "pending": 0,
+        "rowCount": 1,
+        "reads": [
+          {
+            "authenticatedWorker": false,
+            "held": false,
+            "receivedAt": 1792182181925,
+            "finishedAt": 1792182181925
+          }
+        ]
+      },
+      "native": {
+        "visibility": "visible",
+        "focused": true,
+        "readingVisibility": "visible",
+        "readingConversationMatches": true,
+        "ownedPopovers": 0,
+        "messageNodes": 2
+      },
+      "budget": {
+        "present": true,
+        "checksumValid": true,
+        "startedAt": 1792182181236,
+        "lastAt": 1792182181949,
+        "requests": 5,
+        "attemptCounts": [
+          1,
+          1
+        ],
+        "windowMs": 30000,
+        "requestLimit": 12
+      },
+      "frames": [
+        {
+          "scopeKnown": false,
+          "grantPresent": false
+        }
+      ],
+      "scopeLifecycle": null
+    },
+    {
+      "stage": "baseline-before-native-send",
+      "at": 1792182181997,
+      "requests": {
+        "accepts": 0,
+        "held": false,
+        "pending": 0,
+        "rowCount": 1,
+        "reads": [
+          {
+            "authenticatedWorker": false,
+            "held": false,
+            "receivedAt": 1792182181925,
+            "finishedAt": 1792182181925
+          },
+          {
+            "authenticatedWorker": true,
+            "held": false,
+            "receivedAt": 1792182181957,
+            "finishedAt": 1792182181957
+          }
+        ]
+      },
+      "native": {
+        "visibility": "visible",
+        "focused": true,
+        "readingVisibility": "visible",
+        "readingConversationMatches": true,
+        "ownedPopovers": 0,
+        "messageNodes": 2
+      },
+      "budget": {
+        "present": true,
+        "checksumValid": true,
+        "startedAt": 1792182181236,
+        "lastAt": 1792182181952,
+        "requests": 6,
+        "attemptCounts": [
+          1,
+          1
+        ],
+        "windowMs": 30000,
+        "requestLimit": 12
+      },
+      "frames": [
+        {
+          "scopeKnown": false,
+          "grantPresent": true
+        }
+      ],
+      "scopeLifecycle": null
+    }
+  ],
+  "codecScenario": "BEFORE_EVIDENCE",
+  "jointInterruptionBoundary": "BEFORE_EVIDENCE_APPLY",
+  "jointDiagnostics": [
+    {
+      "stage": "joint-before-native-send",
+      "at": 1792182244325,
+      "breakpoint": {
+        "targetId": "52C25600797561A1888C14EC4488A9D2",
+        "lineNumber": 11182,
+        "locations": [
+          {
+            "scriptId": "6",
+            "lineNumber": 11182,
+            "columnNumber": 46
+          }
+        ],
+        "repositoryBoundary": {
+          "kind": "evidence-repository-continuation-entry",
+          "breakpointId": "4:5122:30:6",
+          "location": {
+            "scriptId": "6",
+            "lineNumber": 5122,
+            "columnNumber": 30
+          }
+        },
+        "transport": "independent-flattened-CDP",
+        "lifecycle": [
+          {
+            "at": 1792182244230,
+            "method": "Debugger.paused",
+            "hitBreakpoints": []
+          },
+          {
+            "at": 1792182244272,
+            "method": "controlPauseVerified"
+          },
+          {
+            "at": 1792182244274,
+            "method": "Debugger.resumed"
+          },
+          {
+            "at": 1792182244324,
+            "method": "controlResumeVerified"
+          }
+        ],
+        "detached": false,
+        "failure": null,
+        "scripts": [
+          {
+            "scriptId": "6",
+            "url": "chrome-extension://eadjdpjfpceippcombfamfbbcdokejkp/extension/classic-runtime.js"
+          }
+        ],
+        "resolutions": [],
+        "paused": null
+      },
+      "nativeAccepts": 1,
+      "authenticatedReads": [
+        {
+          "authenticatedWorker": false,
+          "held": false,
+          "receivedAt": 1792182181925,
+          "finishedAt": 1792182181925
+        },
+        {
+          "authenticatedWorker": true,
+          "held": false,
+          "receivedAt": 1792182181957,
+          "finishedAt": 1792182181957
+        },
+        {
+          "authenticatedWorker": true,
+          "held": true,
+          "receivedAt": 1792182182056,
+          "finishedAt": null
+        },
+        {
+          "authenticatedWorker": false,
+          "held": false,
+          "receivedAt": 1792182182154,
+          "finishedAt": 1792182182154
+        },
+        {
+          "authenticatedWorker": true,
+          "held": false,
+          "receivedAt": 1792182182229,
+          "finishedAt": 1792182182229
+        },
+        {
+          "authenticatedWorker": false,
+          "held": false,
+          "receivedAt": 1792182211293,
+          "finishedAt": 1792182211293
+        },
+        {
+          "authenticatedWorker": true,
+          "held": false,
+          "receivedAt": 1792182211367,
+          "finishedAt": 1792182211367
+        },
+        {
+          "authenticatedWorker": true,
+          "held": false,
+          "receivedAt": 1792182211739,
+          "finishedAt": 1792182211739
+        },
+        {
+          "authenticatedWorker": false,
+          "held": false,
+          "receivedAt": 1792182211856,
+          "finishedAt": 1792182211856
+        },
+        {
+          "authenticatedWorker": true,
+          "held": false,
+          "receivedAt": 1792182211900,
+          "finishedAt": 1792182211900
+        },
+        {
+          "authenticatedWorker": false,
+          "held": false,
+          "receivedAt": 1792182241494,
+          "finishedAt": 1792182241494
+        },
+        {
+          "authenticatedWorker": true,
+          "held": false,
+          "receivedAt": 1792182241536,
+          "finishedAt": 1792182241536
+        }
+      ],
+      "nativeRequests": [
+        {
+          "path": "/backend-api/conversation/33333333-3333-4333-8333-333333333333",
+          "context": "account-host-team"
+        },
+        {
+          "path": "/backend-api/conversation/33333333-3333-4333-8333-333333333333",
+          "context": "account-host-team"
+        },
+        {
+          "path": "/backend-api/conversation/33333333-3333-4333-8333-333333333333",
+          "context": "account-host-team"
+        },
+        {
+          "path": "/backend-api/conversation/33333333-3333-4333-8333-333333333333",
+          "context": "account-host-team"
+        },
+        {
+          "path": "/backend-api/conversation/33333333-3333-4333-8333-333333333333",
+          "context": "account-host-team"
+        },
+        {
+          "path": "/backend-api/conversation/33333333-3333-4333-8333-333333333333",
+          "context": "account-host-personal"
+        },
+        {
+          "path": "/backend-api/conversation/33333333-3333-4333-8333-333333333333",
+          "context": "account-host-personal"
+        },
+        {
+          "path": "/backend-api/conversations",
+          "context": "account-host-personal"
+        },
+        {
+          "path": "/backend-api/conversation/44444444-4444-4444-8444-444444444444",
+          "context": "account-host-personal"
+        },
+        {
+          "path": "/backend-api/conversation/44444444-4444-4444-8444-444444444444",
+          "context": "account-host-personal"
+        },
+        {
+          "path": "/backend-api/conversation/44444444-4444-4444-8444-444444444444",
+          "context": "account-host-personal"
+        },
+        {
+          "path": "/backend-api/conversation/44444444-4444-4444-8444-444444444444",
+          "context": "account-host-personal"
+        },
+        {
+          "path": "/backend-api/conversation/44444444-4444-4444-8444-444444444444",
+          "context": "account-host-personal"
+        },
+        {
+          "path": "/backend-api/conversation/44444444-4444-4444-8444-444444444444",
+          "context": "account-host-personal"
+        },
+        {
+          "path": "/backend-api/conversation/44444444-4444-4444-8444-444444444444",
+          "context": "account-host-personal"
+        },
+        {
+          "path": "/backend-api/conversation/33333333-3333-4333-8333-333333333333",
+          "context": "account-host-team"
+        },
+        {
+          "path": "/backend-api/conversation/33333333-3333-4333-8333-333333333333",
+          "context": "account-host-team"
+        },
+        {
+          "path": "/backend-api/conversation/44444444-4444-4444-8444-444444444444",
+          "context": "account-host-personal"
+        },
+        {
+          "path": "/backend-api/conversation/44444444-4444-4444-8444-444444444444",
+          "context": "account-host-personal"
+        },
+        {
+          "path": "/backend-api/conversation/44444444-4444-4444-8444-444444444444",
+          "context": "account-host-personal"
+        },
+        {
+          "path": "/backend-api/conversation/33333333-3333-4333-8333-333333333333",
+          "context": "account-host-personal"
+        },
+        {
+          "path": "/backend-api/conversation/33333333-3333-4333-8333-333333333333",
+          "context": "account-host-personal"
+        },
+        {
+          "path": "/backend-api/conversations",
+          "context": "account-host-personal"
+        },
+        {
+          "path": "/backend-api/conversation/44444444-4444-4444-8444-444444444444",
+          "context": "account-host-personal"
+        },
+        {
+          "path": "/backend-api/conversation/44444444-4444-4444-8444-444444444444",
+          "context": "account-host-personal"
+        }
+      ],
+      "presentation": {
+        "at": 1792182244325,
+        "native": {
+          "reason": null,
+          "url": "http://127.0.0.1:52137/c/44444444-4444-4444-8444-444444444444",
+          "readyState": "complete",
+          "state": null,
+          "visibility": "visible",
+          "focused": true,
+          "ownedPopovers": 0,
+          "returnButtonPresent": true
+        },
+        "frames": [
+          {
+            "url": "http://127.0.0.1:52137/c/44444444-4444-4444-8444-444444444444",
+            "detached": false
+          },
+          {
+            "url": "chrome-extension://eadjdpjfpceippcombfamfbbcdokejkp/workspace.html",
+            "detached": false,
+            "grantPresent": true,
+            "scope": "[\"chatgpt\",\"principal_b5251fa0aba8e6d9cc5c14d0fb61db814d07c01eea39d1174341557cff7a5dd3\",\"context_342ce0ccae3d4fa425a12ac33fe114e184aa508160b56198309d27e2c808c98",
+            "currentRef": "44444444-4444-4444-8444-444444444444",
+            "readyState": "complete",
+            "rpc": [
+              {
+                "at": 1792182241548,
+                "reason": null,
+                "scope": null,
+                "currentRef": null,
+                "type": "HOST_UI_JOIN",
+                "routeEpoch": null,
+                "ok": true,
+                "state": null,
+                "hasGrant": true,
+                "grantExpiresAt": null
+              },
+              {
+                "at": 1792182241550,
+                "reason": null,
+                "scope": null,
+                "currentRef": null,
+                "type": "HOST_UI_SURFACE_STATE_GET",
+                "routeEpoch": null,
+                "ok": true,
+                "state": null,
+                "hasGrant": false,
+                "grantExpiresAt": null
+              },
+              {
+                "at": 1792182241550,
+                "reason": null,
+                "scope": null,
+                "currentRef": null,
+                "type": "HOST_UI_RESUME",
+                "routeEpoch": null,
+                "ok": true,
+                "state": null,
+                "hasGrant": false,
+                "grantExpiresAt": null
+              },
+              {
+                "at": 1792182241552,
+                "reason": null,
+                "scope": null,
+                "currentRef": null,
+                "type": "HOST_UI_VIEW",
+                "routeEpoch": null,
+                "ok": true,
+                "state": "preparing",
+                "hasGrant": false,
+                "grantExpiresAt": null
+              },
+              {
+                "at": 1792182241608,
+                "reason": null,
+                "scope": "[\"chatgpt\",\"principal_b5251fa0aba8e6d9cc5c14d0fb61db814d07c01eea39d1174341557cff7a5dd3\",\"context_342ce0ccae3d4fa425a12ac33fe114e184aa508160b56198309d27e2c808c98",
+                "currentRef": "44444444-4444-4444-8444-444444444444",
+                "type": "HOST_UI_VIEW",
+                "routeEpoch": null,
+                "ok": true,
+                "state": "ready",
+                "hasGrant": false,
+                "grantExpiresAt": null
+              },
+              {
+                "at": 1792182241612,
+                "reason": null,
+                "scope": null,
+                "currentRef": null,
+                "type": "HOST_UI_CANDIDATES",
+                "routeEpoch": null,
+                "ok": true,
+                "state": null,
+                "hasGrant": false,
+                "grantExpiresAt": null
+              },
+              {
+                "at": 1792182241743,
+                "reason": null,
+                "scope": null,
+                "currentRef": null,
+                "type": "HOST_UI_SAVE_VIEW",
+                "routeEpoch": null,
+                "ok": true,
+                "state": null,
+                "hasGrant": false,
+                "grantExpiresAt": null
+              }
+            ]
+          },
+          {
+            "url": "chrome-extension://eadjdpjfpceippcombfamfbbcdokejkp/sidebar.html",
+            "detached": false
+          }
+        ],
+        "truncated": true
+      },
+      "durable": {
+        "ref": {
+          "id": "44444444-4444-4444-8444-444444444444",
+          "nativeTitle": "Membership not loaded",
+          "nativeUrl": "http://127.0.0.1:52137/c/44444444-4444-4444-8444-444444444444",
+          "availability": "available",
+          "sourceId": "host_dom_adf98fa7a43db4a7dd071de746761b52",
+          "generation": "profile_1",
+          "sourceRevision": 3,
+          "observedAt": "2026-10-16T20:23:01.966Z",
+          "validUntil": "2026-10-16T20:24:01.919Z",
+          "nativeAliases": []
+        },
+        "nativeSources": {
+          "host_dom_adf98fa7a43db4a7dd071de746761b52": {
+            "id": "host_dom_adf98fa7a43db4a7dd071de746761b52",
+            "generation": "profile_1",
+            "sourceRevision": 3,
+            "observedAt": "2026-10-16T20:23:01.966Z",
+            "validUntil": "2026-10-16T20:24:01.919Z",
+            "revoked": false,
+            "channel": "host-dom",
+            "inventory": {
+              "projects": "partial",
+              "conversations": "partial",
+              "cursor": null
+            },
+            "admission": {
+              "profileId": "chatgpt-legacy-reconstruction",
+              "profileVersion": 1,
+              "evidenceClass": "surface",
+              "semanticFingerprint": "57c94737e4ca2d073bbb014f18b6bc17be049875ad247ffae23d2962ed198d7f",
+              "acceptedAt": "2026-10-16T20:23:01.966Z"
+            }
+          }
+        },
+        "pending": [],
+        "evidence": {
+          "format": "vaiwl-free-evidence-v2",
+          "scopeKey": "[\"chatgpt\",\"principal_b5251fa0aba8e6d9cc5c14d0fb61db814d07c01eea39d1174341557cff7a5dd3\",\"context_342ce0ccae3d4fa425a12ac33fe114e184aa508160b56198309d27e2c808c988\"]",
+          "revision": 3,
+          "sources": {
+            "host_history_7da0d3a1ea89a310b72f4fd11c851236": {
+              "id": "host_history_7da0d3a1ea89a310b72f4fd11c851236",
+              "generation": "profile_1",
+              "sourceRevision": 2,
+              "observedAt": "2026-10-16T20:23:02.231Z",
+              "validUntil": "2026-10-16T20:24:02.231Z",
+              "channel": "host-evidence",
+              "codecVersion": 2,
+              "profileId": "offline-original-send-v1",
+              "profileVersion": 1,
+              "revoked": false
+            }
+          },
+          "events": {
+            "history_a79a8e366bd80f4b6f2096b7ea271e24db3bd8b8fa207550": {
+              "conversationId": "44444444-4444-4444-8444-444444444444",
+              "messageId": "j4_original_old",
+              "branchId": "lineage_af1ef31a7a727e6bdc88506ea3d87c707c294779d3f14c84db20bd3fbbf26f42",
+              "role": "user",
+              "kind": "new-send",
+              "sendState": "committed",
+              "sentAt": "2026-07-18T20:22:59.786Z",
+              "precision": "millisecond",
+              "id": "history_a79a8e366bd80f4b6f2096b7ea271e24db3bd8b8fa207550",
+              "sourceId": "host_history_7da0d3a1ea89a310b72f4fd11c851236",
+              "generation": "profile_1",
+              "sourceRevision": 1,
+              "observedAt": "2026-10-16T20:23:01.958Z",
+              "actorVerified": true,
+              "actorScopeKey": "[\"chatgpt\",\"principal_b5251fa0aba8e6d9cc5c14d0fb61db814d07c01eea39d1174341557cff7a5dd3\",\"context_342ce0ccae3d4fa425a12ac33fe114e184aa508160b56198309d27e2c808c988\"]",
+              "revoked": false
+            },
+            "history_f9f6b8f9f7ed8da6988286decdc1a960d2b993b50ff69e67": {
+              "conversationId": "44444444-4444-4444-8444-444444444444",
+              "messageId": "c98b9372-84a8-4f7d-9232-1f790e8efde5",
+              "branchId": "lineage_1a6ae7564d9e8fe4de98b923b551fea3cd581afa8ae2adbb1d5c546507f29ea8",
+              "role": "user",
+              "kind": "new-send",
+              "sendState": "committed",
+              "sentAt": "2026-10-16T20:23:02.049Z",
+              "precision": "millisecond",
+              "id": "history_f9f6b8f9f7ed8da6988286decdc1a960d2b993b50ff69e67",
+              "sourceId": "host_history_7da0d3a1ea89a310b72f4fd11c851236",
+              "generation": "profile_1",
+              "sourceRevision": 2,
+              "observedAt": "2026-10-16T20:23:02.231Z",
+              "actorVerified": true,
+              "actorScopeKey": "[\"chatgpt\",\"principal_b5251fa0aba8e6d9cc5c14d0fb61db814d07c01eea39d1174341557cff7a5dd3\",\"context_342ce0ccae3d4fa425a12ac33fe114e184aa508160b56198309d27e2c808c988\"]",
+              "revoked": false
+            }
+          },
+          "hints": {},
+          "coverage": {}
+        },
+        "receipts": []
+      },
+      "budget": {
+        "checksumValid": true,
+        "key": "host-read-budget:fa3a10d7670c868ee160fb282e1128aa661fcbdb24ed6965961661846572e592",
+        "protocol": "vaiwl-host-read-budget/1",
+        "startedAt": 1792182241517,
+        "lastAt": 1792182241526,
+        "requests": 3,
+        "attempts": [
+          {
+            "key": "796d9c7661da8ad33aa235f864144174e81ce78433512e42198f42be82c3d770",
+            "count": 1
+          }
+        ]
+      }
+    }
+  ],
+  "evidenceRecovery": {
+    "boundary": "EVIDENCE_ROOT_REPAIR_SLICE_NOT_FULL_J4",
+    "additionalNativeSends": 1,
+    "messageId": "9c803521-0985-4da3-a618-b5fbd0388ee7"
+  },
+  "browserVersion": "155.0.8059.80",
+  "status": "PARTIAL_J4_NOT_ACCEPTED",
+  "nativeActions": {
+    "account": 5,
+    "context-switch": 5,
+    "model": 11,
+    "navigate": 8,
+    "send-intent": 3,
+    "search": 4
+  },
+  "sourceChangedDuringRun": false,
+  "buildManifestUnchanged": true
+}

@@ -1,0 +1,8 @@
+{
+  "src/host/chatgpt-adapter.mjs": "eecede08f53f941610a9ac81268a53d852aa820d3e97eb7080c76eb402147c04",
+  "src/host/surface-discovery.mjs": "f3b22bb130c3941f4b6523e3603ab0e5e226d9c252864bd7ff7dfab2dfee66c4",
+  "tests/host/priority-owned-mask-continuation.test.mjs": "52e7c07b6e0523916ddf0e0bd3314faa420939b75f080f143c51ee085a493797",
+  "tests/host/fixtures/priority-owned-mask.mjs": "35f4b317eefce29b2da7f1bb453c7b961554ddfdeac983fafc31927c69186168",
+  "tests/host/surface-owned-cursor.test.mjs": "092c5730099c2807e61999c3b4835eae7595ccfcc33ebe29791f064a6728c7c0",
+  "tests/host/owned-mask-persistent-history.test.mjs": "1e50dcb4503b1ddc62948f8a4e37e6454727fce0d3edc910d08551483a95d346"
+}

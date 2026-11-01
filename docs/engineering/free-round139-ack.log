@@ -1,0 +1,25 @@
+✔ explicit offline ACK profile prepares frozen fixed interval without authority or sentAt (3.232917ms)
+✔ readback proofId mismatch rejects (0.170791ms)
+✔ readback conversationId mismatch rejects (0.072ms)
+✔ readback bodyEpoch mismatch rejects (0.058041ms)
+✔ readback principalKey mismatch rejects (0.069667ms)
+✔ readback contextKey mismatch rejects (0.05625ms)
+✔ readback providerProfile mismatch rejects (0.064208ms)
+✔ readback transport mismatch rejects (0.31325ms)
+✔ no profile ACK default and generic accepted strings cannot imply permission (0.272167ms)
+✔ role or selfMatch alone is not ACK and other authors cannot pass (0.259292ms)
+✔ lineage is complete and fixed to exact mapping node with independently checked digest (0.625292ms)
+✔ time interval is exact candidate intent, bounded inclusive 30s with future expiry (0.345042ms)
+✔ semantic witness does not change when local observation time changes (0.069125ms)
+✔ all exact records and nested arrays reject accessors without executing them (0.38375ms)
+✔ extra authority fields, symbols, sparse arrays, wrong prototypes and caller mutation fail safely (0.149417ms)
+✔ scope key must canonically bind the same ChatGPT principal and account context (0.129917ms)
+✔ standalone ACK profile validation copies and deeply freezes configuration without authority (0.225583ms)
+ℹ tests 17
+ℹ suites 0
+ℹ pass 17
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 49.787333

@@ -1,0 +1,29 @@
+{
+  "evidence": "HEADLESS_SYNTHETIC_REAL_IDB_CLIENT",
+  "hashes": {
+    "simulator/service.mjs": "f5540dfa7b337949ca2af6a66e54160d14ce5b127922f385d768e4d33607f732",
+    "src/data/free-runtime-service.mjs": "ba0bcdf9558d52fe14780ceff5282fd8d22d1526457d880d0f0dd72c84b3bd0d",
+    "src/data/known-anchor-backfill.mjs": "ac37f09dcd992c454c142f11a9e3f3897c3c785908f5a27f8de8ec422b0031df",
+    "src/data/repository.mjs": "09416d34b9c92bb7518e742985ae81c2f576805fd7f1a387cd5fcccfbfb9a269",
+    "src/b1/scope-repository.mjs": "2415f70ab46da554003eb1732e82dfc0764a7165476cf4ebe914ea2eeebe2c10"
+  },
+  "results": [
+    {
+      "name": "startup B1-only historic anchor automatically becomes reachable UNKNOWN without native evidence",
+      "status": "PASS"
+    },
+    {
+      "name": "completed cursor restarts after broker UPSERT and automatically refreshes with draft and reading intact",
+      "status": "PASS"
+    },
+    {
+      "name": "foreground read aborts held real IDB backfill transaction then quiet resume preserves Pro and composer",
+      "status": "PASS"
+    },
+    {
+      "name": "account switch cancels held old-scope batch and never publishes A anchors into B",
+      "status": "PASS"
+    }
+  ],
+  "errors": []
+}

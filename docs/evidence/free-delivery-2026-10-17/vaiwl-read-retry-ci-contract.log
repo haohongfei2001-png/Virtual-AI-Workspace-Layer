@@ -1,0 +1,34 @@
+✔ reports receive the same trusted event commit as the default checkout (0.403334ms)
+✔ one Node suite and three independent free browser jobs retain exact event SHA and mandatory outcomes (0.454583ms)
+✔ browser partition neither deletes nor duplicates any pre-existing actual slice (0.172667ms)
+✔ next Host scale baseline is explicit 10k single-project only and cannot satisfy full performance acceptance (0.085125ms)
+✔ explicit user deferral disables scale invocation without weakening retained acceptance (0.060917ms)
+✔ formal single-project timing gate excludes temporary progress observation (0.387292ms)
+✔ formal scale run excludes completed temporary instrumentation and retains strict measurement gate (0.107334ms)
+✔ one uninstrumented native stream candidate keeps exact SHA and narrow acceptance (0.123792ms)
+✔ separate work diagnostic cannot replace original stream correctness or certify F1 (0.106584ms)
+✔ single-project sample requires every admitted reference to have native project membership before and after timing (0.110292ms)
+✔ withdrawn development probe stays machine-readable NOT_RUN without altering original acceptance gates (0.13825ms)
+✔ J4 diagnostic runs only after formal failure and cannot replace or forgive it (0.098375ms)
+✔ stale native failure requires normal proof and precise old-guard mutation on identical sources (0.065583ms)
+✔ 10k CPU sampling runs separately only after formal failure and cannot substitute diagnostic evidence (0.108958ms)
+✔ only failure-only dual CPU step opts into through-return clocks and both package hash closures (0.08225ms)
+✔ actual combined workflow gate rejects missing CPU, clock, source, cleanup or bounded trace evidence (1.520375ms)
+✔ snippet journey runs in existing isolated job and publishes only its text result (0.042625ms)
+✔ temporary Project journey shares existing runner and text evidence without uploads (0.065792ms)
+✔ preauthorization observation shares existing challenge job without new profile sharing or uploads (0.033459ms)
+✔ observed Project actual package and masked-data checks share existing isolated runner (0.039541ms)
+✔ normal push retains all four jobs and every existing journey step (0.178083ms)
+✔ manual startup diagnostic selects one existing runner and one browser command only (0.12375ms)
+✔ diagnostic rejects unknown input, private repositories, other repos and other branches (0.0705ms)
+✔ manual transport diagnostic runs the unchanged expiry command and gate without unrelated matrix work (0.10675ms)
+✔ existing SYS05 diagnostic requires actual peer backpressure and undelivered-fragment recovery without claiming overflow (0.14675ms)
+✔ manual popup geometry diagnostic selects only the existing native navigation journey (0.075084ms)
+ℹ tests 26
+ℹ suites 0
+ℹ pass 26
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 56.271625

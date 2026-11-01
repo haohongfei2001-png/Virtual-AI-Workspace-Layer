@@ -1,0 +1,33 @@
+{
+  "baseHead": "0600133fb88ae1e133062173a1b31d02a4f05ebd",
+  "git": "UNCOMMITTED_CONTINUATION_OF_ROUND49",
+  "boundary": "BOUNDED_SHARED_MUTATION_ADAPTER_NOT_PUBLIC_WRITER",
+  "sourceHashes": {
+    "src/data/shared-directory-writer.mjs": "8b2fd950abe60c8ca00d4ceaaf4680b44ad9741c3fb35cc578613668d253bf6e",
+    "src/data/shared-ref-directory.mjs": "5fc522a2f93f0923b0b5839e8b964103c0edc96de45d7f6c295023a5e269f099",
+    "src/data/partitioned.mjs": "72eeed6b4533d148fa637cfcf7a32561e560fd90f3e7a5092571f6a15e1ff19e",
+    "src/data/partition-manifest.mjs": "e9363342a5b44f14fcf3c12b7a65e0838e3376c250bd6d1e5978915c58ae7ef6",
+    "simulator/build.mjs": "e68b7b169db5bd45a5ec830d7376f9439ca6217431cc7c290a4d050071552c80",
+    "tests/free/shared-directory-metadata.test.mjs": "936f81d75f9c853a0b548b4259ff8c7567f2c8f0fb288830b22cca65bbc9675a",
+    "tests/free/shared-directory-writer.test.mjs": "0d01abe8467c7d49b11df360d600d74b3dd636feb78a3069ef471e171cceb238",
+    "tests/free/shared-directory-mutation-load.test.mjs": "00c7340cfea571dfad8324534f53b008be05ac250940923da0d8d6530269fae7"
+  },
+  "fullNode": {
+    "pass": 1014,
+    "fail": 0,
+    "skip": 0
+  },
+  "afterFullRun": "Only loader test strengthened to require exact evidence-id-conflict; final targeted 3/3 PASS; production unchanged",
+  "realIDB": "NOT_RUN_APPROVAL_REVIEW_LIMIT",
+  "MV3": "NOT_RUN_APPROVAL_REVIEW_LIMIT",
+  "publicMutation": "STILL_REFUSED_FOR_DIRECTORY_ROOT",
+  "remaining": [
+    "owner CAS and authority integration",
+    "migration",
+    "checkpoint and inverse recovery",
+    "known anchor integration",
+    "real IDB and MV3",
+    "mixed100k performance"
+  ],
+  "releaseReady": false
+}

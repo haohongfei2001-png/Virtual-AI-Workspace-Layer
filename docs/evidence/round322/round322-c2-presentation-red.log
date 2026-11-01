@@ -1,0 +1,134 @@
+✖ C2 changed route restores reading only after fresh HELLO REFRESH and mount (3.023542ms)
+✖ C2 same route preserves reading through repeated pending (0.440125ms)
+✔ C2 same route preserves workspace through repeated pending (0.216292ms)
+✔ C2 pending stop prevents late READY revival (0.150417ms)
+✖ C2 pending pagehide prevents late READY revival (0.185084ms)
+✖ C2 pending persisted-pagehide prevents late READY revival (0.13775ms)
+✖ C2 repeated READY never restarts already active presentation or handshake (0.2685ms)
+✖ C2 READY burst shares one pending fresh authorization attempt (0.490458ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 2
+ℹ fail 6
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 54.27125
+
+✖ failing tests:
+
+test at tests/host/content-session.test.mjs:176:1
+✖ C2 changed route restores reading only after fresh HELLO REFRESH and mount (3.023542ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    [
+      'workspace',
+  +   'workspace'
+  -   'reading'
+    ]
+  
+      at TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/host/content-session.test.mjs:179:215)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ 'workspace', 'workspace' ],
+    expected: [ 'workspace', 'reading' ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at tests/host/content-session.test.mjs:182:43
+✖ C2 same route preserves reading through repeated pending (0.440125ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    [
+      'workspace',
+  +   'workspace'
+  -   'reading'
+    ]
+  
+      at TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/host/content-session.test.mjs:183:193)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ 'workspace', 'workspace' ],
+    expected: [ 'workspace', 'reading' ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at tests/host/content-session.test.mjs:185:60
+✖ C2 pending pagehide prevents late READY revival (0.185084ms)
+  AssertionError [ERR_ASSERTION]: pending document must retain its lifecycle revocation listener
+  + actual - expected
+  
+  + 'undefined'
+  - 'function'
+  
+      at TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/host/content-session.test.mjs:188:48)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'undefined',
+    expected: 'function',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/host/content-session.test.mjs:185:60
+✖ C2 pending persisted-pagehide prevents late READY revival (0.13775ms)
+  AssertionError [ERR_ASSERTION]: pending document must retain its lifecycle revocation listener
+  + actual - expected
+  
+  + 'undefined'
+  - 'function'
+  
+      at TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/host/content-session.test.mjs:188:48)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'undefined',
+    expected: 'function',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/host/content-session.test.mjs:192:1
+✖ C2 repeated READY never restarts already active presentation or handshake (0.2685ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  9 !== 3
+  
+      at TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/host/content-session.test.mjs:193:179)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 9,
+    expected: 3,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/host/content-session.test.mjs:195:1
+✖ C2 READY burst shares one pending fresh authorization attempt (0.490458ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  3 !== 2
+  
+      at TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/host/content-session.test.mjs:198:111)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 3,
+    expected: 2,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

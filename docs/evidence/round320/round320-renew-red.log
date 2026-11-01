@@ -1,0 +1,101 @@
+✔ workspace: closed ordinary hints coalesce; reopening starts exactly one fresh view without calibration (3.061542ms)
+✔ sidebar: closed ordinary hints coalesce; reopening starts exactly one fresh view without calibration (0.496458ms)
+✔ workspace: in-flight completion after close does not chain dirty reads (0.411458ms)
+✔ sidebar: in-flight completion after close does not chain dirty reads (0.349417ms)
+✔ surface visible while document hidden retains dirty work until genuine document return (0.665417ms)
+✔ unknown GET state preserves preexisting visibility fallback and ordinary hints (0.28225ms)
+✔ malformed old and replayed surface revisions cannot release a closed surface (0.390875ms)
+✔ late GET lower revision cannot overwrite newer private-port state and never blocks bootstrap (0.219333ms)
+✔ same-mount grant renewal preserves surface revision high-water mark (0.351583ms)
+✔ clear fences old GET and old port so neither can affect a new grant (0.346333ms)
+✔ closed backup conflict invalidation is not suppressed (0.233167ms)
+✔ closed recovery conflict invalidation is not suppressed (0.229541ms)
+✔ closed snippets conflict invalidation is not suppressed (0.186167ms)
+✔ explicit projection requests remain available on closed surfaces (0.199167ms)
+✔ known closed GET state cannot suppress authorized initial bootstrap (0.10825ms)
+✖ workspace: same-grant renewal while surface hidden refreshes authority and hint without starting VIEW (0.459625ms)
+✖ workspace: same-grant renewal while document hidden refreshes authority and hint without starting VIEW (0.176458ms)
+✖ sidebar: same-grant renewal while surface hidden refreshes authority and hint without starting VIEW (0.168875ms)
+✖ sidebar: same-grant renewal while document hidden refreshes authority and hint without starting VIEW (0.223958ms)
+✔ workspace: visible same-grant renewal retains normal fresh VIEW (0.188541ms)
+✔ sidebar: visible same-grant renewal retains normal fresh VIEW (0.512ms)
+✔ closed surface still clears immediately on expiry (0.187583ms)
+✔ closed surface still clears immediately on disconnect (0.424875ms)
+ℹ tests 23
+ℹ suites 0
+ℹ pass 19
+ℹ fail 4
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 55.393417
+
+✖ failing tests:
+
+test at tests/host/free-frame-surface-refresh.test.mjs:65:86
+✖ workspace: same-grant renewal while surface hidden refreshes authority and hint without starting VIEW (0.459625ms)
+  AssertionError [ERR_ASSERTION]: authority renewal is not an explicit projection request
+  
+  2 !== 1
+  
+      at TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/host/free-frame-surface-refresh.test.mjs:73:9)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/host/free-frame-surface-refresh.test.mjs:65:86
+✖ workspace: same-grant renewal while document hidden refreshes authority and hint without starting VIEW (0.176458ms)
+  AssertionError [ERR_ASSERTION]: authority renewal is not an explicit projection request
+  
+  2 !== 1
+  
+      at TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/host/free-frame-surface-refresh.test.mjs:73:9)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/host/free-frame-surface-refresh.test.mjs:65:86
+✖ sidebar: same-grant renewal while surface hidden refreshes authority and hint without starting VIEW (0.168875ms)
+  AssertionError [ERR_ASSERTION]: authority renewal is not an explicit projection request
+  
+  2 !== 1
+  
+      at TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/host/free-frame-surface-refresh.test.mjs:73:9)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/host/free-frame-surface-refresh.test.mjs:65:86
+✖ sidebar: same-grant renewal while document hidden refreshes authority and hint without starting VIEW (0.223958ms)
+  AssertionError [ERR_ASSERTION]: authority renewal is not an explicit projection request
+  
+  2 !== 1
+  
+      at TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/host/free-frame-surface-refresh.test.mjs:73:9)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

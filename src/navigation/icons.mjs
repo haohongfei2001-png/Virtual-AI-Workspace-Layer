@@ -3,3 +3,6 @@ export const iconPaths={collection:'M4 7l8-4 8 4-8 4zM4 11l8 4 8-4M4 15l8 4 8-4'
 export const iconNames={collection:'集合',research:'研究',briefcase:'工作',keyboard:'输入',book:'阅读',pen:'写作',globe:'探索',code:'开发',layout:'界面'};
 export function defaultIcon(name){return /论文|研究|数值|科研/.test(name)?'research':/秋招|面试|岗位|工作|协作/.test(name)?'briefcase':/输入法/.test(name)?'keyboard':/阅读|书|课程/.test(name)?'book':/写作|创作/.test(name)?'pen':/旅行|英语/.test(name)?'globe':/界面|网站|作品|设计/.test(name)?'layout':/算法|编程/.test(name)?'code':'collection';}
 export function svgIcon(kind){return '<svg aria-hidden="true" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="'+iconPaths[kind]+'"/></svg>';}
+
+/** The approved v2.7 reading-to-workspace control, shared by both transports. */
+export const workspaceReturnIcon='<svg aria-hidden="true" focusable="false" style="pointer-events:none" viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="7" height="7" rx="1.3"/><rect x="14" y="3" width="7" height="7" rx="1.3"/><rect x="3" y="14" width="7" height="7" rx="1.3"/><rect x="14" y="14" width="7" height="7" rx="1.3"/></svg>';

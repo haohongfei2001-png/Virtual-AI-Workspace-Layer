@@ -1,0 +1,110 @@
+{
+  "classification": "REAL_HEADLESS_DOM_SYNTHETIC_TRANSPORT_VIRTUAL_CLOCK",
+  "realChatGPT": "NOT_RUN",
+  "scope": "HF account A, isolated browser context",
+  "sourceHashes": {
+    "simulator/client.mjs": "761c1ca8e789eb71abeb47799682b205b3145ac8d1642f8074fb6fc5fa9c5a56",
+    "src/data/request-deadline.mjs": "cda2ebb4158c05eb911fbb84a1af092cf91f461e3a002bef4b4d23f5a70dfdf7",
+    "src/data/read-recovery-budget.mjs": "7c7948a740dcc37f9a2a6b25babe8c29cd2d84441299c1429c7e524402cc8c51",
+    "src/data/free-header-loader.mjs": "76abb31e4f65d87849810f876dc143d6c4f4744770c0caa8f8447add70145d35",
+    "tests/free/read-recovery-budget-browser.mjs": "cdabfe4bcfabeaeeac724a7367f8093cccc9c082ee8c7dedb686fed69bc2b578"
+  },
+  "timeout": {
+    "elapsed": 31000,
+    "state": {
+      "state": "WAITING",
+      "reason": "read-budget-exhausted"
+    },
+    "trace": [
+      {
+        "type": "BIND",
+        "at": 1
+      },
+      {
+        "type": "BIND",
+        "at": 6091
+      },
+      {
+        "type": "BIND",
+        "at": 12271
+      },
+      {
+        "type": "BIND",
+        "at": 18631
+      },
+      {
+        "type": "BIND",
+        "at": 25631
+      }
+    ],
+    "invalidations": 1,
+    "invalidationTimes": [
+      30001
+    ],
+    "started": 1,
+    "text": "工作空间加载超时，原生聊天仍可使用。重新连接派生工作空间",
+    "sameInput": true,
+    "draft": "总读取超时期间仍未提交的草稿",
+    "connected": true
+  },
+  "afterLate": {
+    "state": {
+      "state": "WAITING",
+      "reason": "read-budget-exhausted"
+    },
+    "requests": 5,
+    "sameInput": true,
+    "draft": "总读取超时期间仍未提交的草稿"
+  },
+  "manual": {
+    "state": {
+      "state": "ACTIVE",
+      "mode": "reading",
+      "scope": "[\"hf_synthetic_only\",\"A\",\"fixture_org\"]"
+    },
+    "sameInput": true,
+    "draft": "总读取超时期间仍未提交的草稿",
+    "connected": true,
+    "elapsed": 400,
+    "current": "T0",
+    "feedback": false
+  },
+  "settingsTimeout": {
+    "state": {
+      "state": "WAITING",
+      "reason": "read-budget-exhausted"
+    },
+    "text": "工作空间加载超时，原生聊天仍可使用。重新连接派生工作空间",
+    "dialogHidden": true,
+    "fileName": "pending.json",
+    "sameInput": true,
+    "draft": "总读取超时期间仍未提交的草稿",
+    "requests": 16
+  },
+  "settingsResumed": {
+    "state": {
+      "state": "NATIVE_LAYER",
+      "mode": "reading",
+      "scope": "[\"hf_synthetic_only\",\"A\",\"fixture_org\"]"
+    },
+    "sameDialog": true,
+    "open": true,
+    "connected": true,
+    "sameFile": true,
+    "fileName": "pending.json",
+    "sameInput": true,
+    "draft": "总读取超时期间仍未提交的草稿"
+  },
+  "afterSettingsClose": {
+    "state": {
+      "state": "ACTIVE",
+      "mode": "reading",
+      "scope": "[\"hf_synthetic_only\",\"A\",\"fixture_org\"]"
+    },
+    "dialogRemoved": true,
+    "sameInput": true,
+    "draft": "总读取超时期间仍未提交的草稿"
+  },
+  "sourceChangedDuringRun": false,
+  "result": "PASS"
+}

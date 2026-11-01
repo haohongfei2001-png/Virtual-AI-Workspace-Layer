@@ -1,0 +1,46 @@
+✔ workspace: hidden ordinary hints coalesce without reads; visible starts one fresh read (2.792458ms)
+✔ sidebar: hidden ordinary hints coalesce without reads; visible starts one fresh read (0.511333ms)
+✔ workspace: hidden in-flight completion does not chain queued dirty reads (0.5195ms)
+✔ sidebar: hidden in-flight completion does not chain queued dirty reads (0.404417ms)
+✔ hidden queued hints cannot revive after disconnect (0.316708ms)
+✔ hidden queued hints cannot revive after stop (0.493292ms)
+✔ hidden queued hints cannot revive after expiry (0.162208ms)
+✔ hidden backup conflict invalidation remains immediate (0.307125ms)
+✔ hidden recovery conflict invalidation remains immediate (0.246209ms)
+✔ hidden snippets conflict invalidation remains immediate (0.323542ms)
+✔ explicit projection request remains available while document is hidden (0.202541ms)
+✔ initial bootstrap still performs its authorized read in an initially hidden document (0.108083ms)
+✔ late in-flight result cannot publish or restart hidden work after disconnect (0.235542ms)
+✔ late in-flight result cannot publish or restart hidden work after stop (0.192375ms)
+✔ late in-flight result cannot publish or restart hidden work after expiry (0.618625ms)
+✔ workspace: closed ordinary hints coalesce; reopening starts exactly one fresh view without calibration (2.84125ms)
+✔ sidebar: closed ordinary hints coalesce; reopening starts exactly one fresh view without calibration (0.506417ms)
+✔ workspace: in-flight completion after close does not chain dirty reads (0.398292ms)
+✔ sidebar: in-flight completion after close does not chain dirty reads (0.337541ms)
+✔ surface visible while document hidden retains dirty work until genuine document return (0.340709ms)
+✔ unknown GET state preserves preexisting visibility fallback and ordinary hints (0.264666ms)
+✔ malformed old and replayed surface revisions cannot release a closed surface (0.364667ms)
+✔ late GET lower revision cannot overwrite newer private-port state and never blocks bootstrap (0.201875ms)
+✔ same-mount grant renewal preserves surface revision high-water mark (0.479584ms)
+✔ clear fences old GET and old port so neither can affect a new grant (0.475334ms)
+✔ closed backup conflict invalidation is not suppressed (0.278083ms)
+✔ closed recovery conflict invalidation is not suppressed (0.665667ms)
+✔ closed snippets conflict invalidation is not suppressed (0.241042ms)
+✔ explicit projection requests remain available on closed surfaces (0.226542ms)
+✔ known closed GET state cannot suppress authorized initial bootstrap (0.126416ms)
+✔ workspace: same-grant renewal while surface hidden refreshes authority and hint without starting VIEW (0.211792ms)
+✔ workspace: same-grant renewal while document hidden refreshes authority and hint without starting VIEW (0.163709ms)
+✔ sidebar: same-grant renewal while surface hidden refreshes authority and hint without starting VIEW (0.165291ms)
+✔ sidebar: same-grant renewal while document hidden refreshes authority and hint without starting VIEW (0.158583ms)
+✔ workspace: visible same-grant renewal retains normal fresh VIEW (0.523666ms)
+✔ sidebar: visible same-grant renewal retains normal fresh VIEW (0.199208ms)
+✔ closed surface still clears immediately on expiry (0.161542ms)
+✔ closed surface still clears immediately on disconnect (0.120625ms)
+ℹ tests 38
+ℹ suites 0
+ℹ pass 38
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 53.702

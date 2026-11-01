@@ -1,0 +1,17 @@
+{
+  "baselineHead": "fd79df08fbf9011f2b47b39e1078bf7eb1f5576c",
+  "evidence": "OFFLINE_ONLY_NOT_RELEASE_READY",
+  "sourceHashes": {
+    "simulator/build.mjs": "d034d73544d64f84412d0054fdb3cd638f9fd3df099b82a82ed6e9e3cf23d23d",
+    "src/data/continuation-evidence-reader.mjs": "38f857ba8b1ba5a31cd12d45f8bdff7cb4b1ec9457f1a1fbffc933abef80ce28",
+    "src/data/free-evidence-repository.mjs": "148c6138cc58ede2eaf95534300c16e101765bb3d6a008a9f2e828de238e6389",
+    "src/data/free-evidence.mjs": "194796386c17ce311e638d5cc35145aa372e16e87ab8c4d5b5cb9bd7f08fea12",
+    "src/data/native-observation-continuation.mjs": "68477fcbe5e46d6b4218d5972c097a17a241e152f466b7b2ee6feaa2f6741d09",
+    "src/data/native-repository.mjs": "6e8f250819dc5584d3fe2c84408675a048d934d83e01582e8adb5fc584e165b1",
+    "tests/host/continuation-drain-idb-browser.mjs": "deac8dce48ef9be138b2dbcd2c078cc0c23fce8bf5c72a7b642b33c4616c43ec",
+    "tests/host/continuation-evidence-repository.test.mjs": "aafc03f116d7c31398cb614820b250038baf532a1d09c5916f0b183c37957965",
+    "tests/host/continuation-historical-evidence.test.mjs": "10a59a36ad844a2817da3acd23fb9e48734d53f89152b2f448b17cbece881a66",
+    "tests/host/native-continuation-repository.test.mjs": "6a7db0126064a9281170a8729c00711f7aa78fe0d4fc5259fc4d5ab942993027",
+    "tests/host/native-observation-continuation.test.mjs": "81b04bcb77cc8bb24f5f9593ac5ff7956c3b426a24b5dd25832935a6c4ced987"
+  }
+}

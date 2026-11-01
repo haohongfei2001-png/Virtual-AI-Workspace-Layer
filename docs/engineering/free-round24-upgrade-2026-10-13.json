@@ -1,0 +1,148 @@
+{
+  "evidence": "REAL_HEADLESS_MV3_SAME_SCHEMA_PACKAGE_REPLACEMENT",
+  "baseline": "/private/tmp/vaiwl-free-delivery-round23-20261013/extension",
+  "candidate": "/private/tmp/vaiwl-free-delivery-round24-20261013/extension",
+  "actualSchemaUpgrade": "NOT_RUN",
+  "realChatGPT": "NOT_RUN",
+  "results": [
+    {
+      "name": "Committed Round23 package creates persistent human assets and Free facts",
+      "status": "PASS",
+      "extensionId": "eohodgglgfnhacjefikemhifhmbjknfp",
+      "manifestVersion": "0.2.0",
+      "databaseVersion": 3,
+      "shared": "c06575ba41535efa577a69f1397a4b7e89a1df665e5d3db31df93e1661947b94",
+      "native": "f16cead849754d6efa8d19342c01657608da22c211875e70bc233269f259f5c6",
+      "evidence": "93a2dc859443ad7fd34439bffa19dd331138cd728bb60dfc45b6019a0c9488a8",
+      "manualTitle": "升级保留Pro人工标题",
+      "workingSet": {
+        "refs": [
+          "T0"
+        ],
+        "current": "T0"
+      },
+      "nativeRefCount": 604
+    },
+    {
+      "name": "Actual baseline reader rejects simulated future-schema database without deleting its marker",
+      "status": "PASS",
+      "readerVersion": 3,
+      "createdVersion": 4,
+      "rejection": "VersionError",
+      "markerRetained": true
+    },
+    {
+      "name": "Same-directory candidate package replacement preserves ID, database and untouched draft document",
+      "status": "PASS",
+      "extensionId": "eohodgglgfnhacjefikemhifhmbjknfp",
+      "manifestVersion": "0.2.0",
+      "databaseVersion": 3,
+      "sharedNativeEvidenceDigestsUnchanged": true,
+      "oldDraftDocumentReloaded": false
+    },
+    {
+      "name": "Rollback to actual Round23 package reader retains compatible schema and all assets",
+      "status": "PASS",
+      "extensionId": "eohodgglgfnhacjefikemhifhmbjknfp",
+      "manifestVersion": "0.2.0",
+      "databaseVersion": 3,
+      "sharedNativeEvidenceDigestsUnchanged": true,
+      "oldDraftDocumentReloaded": false
+    }
+  ],
+  "pageErrors": [],
+  "browser": "Chrome/154.0.8037.99",
+  "extensionId": "eohodgglgfnhacjefikemhifhmbjknfp",
+  "packageVersions": {
+    "baseline": "0.2.0",
+    "candidate": "0.2.0"
+  },
+  "packageHashes": {
+    "baseline": "6e8aa504a22af0e2f828adbfdbe30101b781bdc9dc105c28e41a724ee3f31f59",
+    "candidate": "6610b42f1553817be89f491822f5767f29ce373d639c0b644883ebd29e1f5df2"
+  },
+  "reloadExtensionInfo": [
+    {
+      "canUploadAsAccountExtension": false,
+      "commands": [],
+      "dependentExtensions": [],
+      "description": "",
+      "disableReasons": {
+        "blockedByPolicy": false,
+        "corruptInstall": false,
+        "custodianApprovalRequired": false,
+        "parentDisabledPermissions": false,
+        "publishedInStoreRequired": false,
+        "reloading": true,
+        "suspiciousInstall": false,
+        "unsupportedDeveloperExtension": false,
+        "unsupportedManifestVersion": false,
+        "updateRequired": false
+      },
+      "errorCollection": {
+        "isActive": true,
+        "isEnabled": true
+      },
+      "fileAccess": {
+        "isActive": true,
+        "isEnabled": true
+      },
+      "fileAccessPendingChange": false,
+      "homePage": {
+        "specified": false,
+        "url": ""
+      },
+      "iconUrl": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAACVElEQVR4nOyaz6tpURTHF44yYeAOvO4zwEBKeUXJgDpJ/AFvbqxMdf+I5x/wD7yB8YtI6RQyYMCIxAylXKlHyc939rr36NZ97sQ6bafOp3Zrtfcu63v2j7W3tgAymUzmu8lk+iW7olye4bGZy0U6nU4vhUJhZngPvi9XPoG2eJVF/BDev7zWgmc8sdgFeJs2WkVkAh59zn/FsxE0ji6AN7oA3ugCeKML4I3mBQhAgCAIYDab4Xg8wuFw+LKvxWIBg8EAu90OLpcL3P3bQEA6nYZgMIhB5XK5m/1Y8Pl8HgUUi0VoNBpwLyRTqFqtomUBut3um/3i8TgGz758q9UCCkgEzGYz2Gw26CeTyZv9IpEI2slkAufzGSggW8SdTgetz+f7b7vNZgO73Y6+MmIUkAmoVCpo2WL2+/2f2pWR2e/3MBgMgAoyAdvtFhaLBfqJROJTeygUQtvv94ES0jwgSRJaj8eDi1XB4XCA1WpFv1QqASWkAprNJi5O+bIN4XD4Wp9KpdCu12tYLpdACakAtj2Ox2P0RVG81gcCAbTtdhuoIT9KKIvZ6XRihna5XJgfmLharQbUkGTij4xGI8zILOhYLAZerxfrp9Mp7kDUqHKY6/V6aKPR6DUv1Ot1UANVBJTLZbRs91EOeUqio0YVAavVCovCcDgEtVDtPvDxsKaMiBoYstns/YdyjuhXSt7oAnijC+CNLoA3ugDe6AJ4wwTMQbvMmQAJtItkZK8+ZOcVtAd77PFi6na7f+V/zX4bjcZv8PbowwqPDZvyf+Tgf7LnNv8AAAD//6dbhTEAAAAGSURBVAMAQ/+757gEqPgAAAAASUVORK5CYII=",
+      "id": "eohodgglgfnhacjefikemhifhmbjknfp",
+      "incognitoAccess": {
+        "isActive": false,
+        "isEnabled": true
+      },
+      "incognitoAccessPendingChange": false,
+      "installWarnings": [],
+      "isAffectedByMV2Deprecation": false,
+      "isCommandRegistrationHandledExternally": false,
+      "location": "UNPACKED",
+      "manifestErrors": [],
+      "manifestHomePageUrl": "",
+      "mustRemainInstalled": false,
+      "name": "VAIWL High-Fidelity Host — synthetic only",
+      "offlineEnabled": false,
+      "path": "/private/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-upgrade-kVxpxg/extension",
+      "permissions": {
+        "runtimeHostPermissions": {
+          "hasAllHosts": false,
+          "hostAccess": "ON_ALL_SITES",
+          "hosts": [
+            {
+              "granted": true,
+              "host": "http://127.0.0.1/*"
+            }
+          ]
+        },
+        "simplePermissions": [
+          {
+            "message": "读取您的浏览记录",
+            "submessages": []
+          }
+        ]
+      },
+      "prettifiedPath": "/private/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-upgrade-kVxpxg/extension",
+      "runtimeErrors": [],
+      "runtimeWarnings": [],
+      "showAccessRequestsInToolbar": true,
+      "showSafeBrowsingAllowlistWarning": false,
+      "state": "DISABLED",
+      "type": "EXTENSION",
+      "updateUrl": "",
+      "userMayModify": true,
+      "userScriptsAccess": {
+        "isActive": false,
+        "isEnabled": false
+      },
+      "version": "0.2.0",
+      "views": [],
+      "webStoreUrl": ""
+    }
+  ]
+}

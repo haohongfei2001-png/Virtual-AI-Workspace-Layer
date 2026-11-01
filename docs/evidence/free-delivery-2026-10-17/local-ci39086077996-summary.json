@@ -1,0 +1,61 @@
+{
+  "sourceCommit": "f29443acfa8157fd5b314367cec41952ba96f261",
+  "run": 39086077996,
+  "status": "FAIL_NOT_RELEASE_READY",
+  "jobs": {
+    "node": "PASS",
+    "journeys": "PASS",
+    "j4": "PASS_ORIGINAL_GATE_PARTIAL_NOT_ACCEPTED",
+    "durability": "FAIL_FORMAL_10K"
+  },
+  "snippets": {
+    "linuxSixCases": "PASS",
+    "localSixCases": "PASS",
+    "exactProductionAndRunnerHashesMatch": true
+  },
+  "formal10k": {
+    "deadlineTailRevision": 310,
+    "deadlineTailState": "PENDING_MEMBER",
+    "completeAudits": 0,
+    "afterFailureInventory": {
+      "revision": 311,
+      "refs": 10000
+    },
+    "warning": "after-failure inventory does not prove deadline completion"
+  },
+  "diagnostic10k": {
+    "revision": 209,
+    "firstFullAuditMs": 3081.18164,
+    "secondFullAudit": "IN_FLIGHT_AT_DEADLINE",
+    "doesNotOverrideFormalFailure": true
+  },
+  "j4": {
+    "steps": 23,
+    "status": "PARTIAL_J4_NOT_ACCEPTED",
+    "automaticForeground": "FAIL",
+    "newNativeHopRecovery": "PASS"
+  },
+  "nextInvestigation": "Do not attribute revision difference to no-op rescans. Distinguish changed record semantics and fragment boundaries using controlled reproduction; no root cause established.",
+  "rawEvidence": [
+    {
+      "file": "local-ci39086077996-durability.log.gz",
+      "sha256": "24e8920597b95106ba54262c2a7d5830dae7ff7f6230e3004344769a76578e32"
+    },
+    {
+      "file": "local-ci39086077996-formal-scale-1.json.gz",
+      "sha256": "ad54b07b9c61c427edd5093b934c6db1bfbdfcabd4d5672fe67bdd7fc40ca497"
+    },
+    {
+      "file": "local-ci39086077996-formal-scale-2.json.gz",
+      "sha256": "abc0f094e8a7857b35cb238e314436e911577f4c6f70f789c08ab0c4e1574190"
+    },
+    {
+      "file": "local-ci39086077996-j4-formal-1.json.gz",
+      "sha256": "2e14595cf30b1c9f46fb9de6533d7e4e44aba1df71716947851845ef02f44664"
+    },
+    {
+      "file": "local-ci39086077996-journeys-formal-1.json.gz",
+      "sha256": "13de06e00cc5987e65c59c8ac1e223d429d531655cdffd22de4f35d1654c67d4"
+    }
+  ]
+}

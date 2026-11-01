@@ -1,0 +1,8 @@
+{
+  "base": "f1245c87c03a9ed5f408d03cc144820a9f1b9eca",
+  "files": {
+    "src/host/surface-controller.mjs": "8a40189d7d1b9aa48e1b6262563903e2c24a4557587ee8fe72dd84d63a237adc",
+    "tests/host/surface-dormant-entry.test.mjs": "ece90c37526f1514cc0f3812755354c9aad18392d745db5b006edc3bb576e8fd",
+    "tests/host/historical-worker-restart.test.mjs": "ec5257317b831fdcdb496cc218943005598bbd53e8edf1b3b684db9a2b061b3c"
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "parent": "c5e99da57dc1b085e8544f747526efa7fba2c0db",
+  "sourceHashes": {
+    "src/host/content-session.mjs": "40c089e311cbb0ea96afdfc627d381568de4f4486144871b698e95994f150556",
+    "src/host/free-frame-client.mjs": "7c99df59b932abc6a3aceed2ee72ceb7b7649b7b23c3abb0d0f3bf7dd87e25ec",
+    "src/navigation/navigation.mjs": "1dd34fb977ec8528dd3906e664cf55a27d513de0ac7036bb1280b374b6adff3c",
+    "src/runtime/host-binding-service.mjs": "fed7801633552fe4595d5eea0c6a0ad87ecb9562a1be43881285617fafba96b3",
+    "src/runtime/host-ui-owner.mjs": "5285af0b8323cbaf7a67a12c93ca556f54cb9cb048912a59dce8f051501987b6",
+    "src/runtime/host-view-service.mjs": "8915b6d07a9b3c6e323a174782ef20f76b8c6aee42c75576d8cb8b2849391ccc",
+    "src/runtime/host-worker-runtime.mjs": "108c0867b285b45793a77af52458a496bbd5333036c5a910dfad6bca0c3c02a2",
+    "tests/host/content-session.test.mjs": "edf23d34796de961f6bffb7e5d24367231d209082ab108df2c3e1c8c9f0fe6d3",
+    "tests/host/frame-projection-renderer.test.mjs": "1dccf51772ff234e30757166a10e36ca4f5e7c40f8b8cd39ef9b4a31a5845028",
+    "tests/host/free-frame-client.test.mjs": "cc4a57222e17b1669498f7e3c372e7c01527cb305fbc927c755b9139c2ab8c13",
+    "tests/host/host-view-service.test.mjs": "326938d0b0d26458809c1a2249471dfd01424d564da878288323f12310913ae9",
+    "tests/host/package-mv3-browser.mjs": "8417d924c2191d3ef3c072a889543d20dca08745980af6011b12c93349a165be",
+    "tests/host/ui-owner.test.mjs": "88d834db548f74070997a58aa88461d90bd967df2bdb2ae8af235188dd1fe5d5",
+    "src/runtime/free-search-projection.mjs": "683ba99108b9fe7e5999ea82eb57002668a97226489d9c8177686a6322d60b0c",
+    "tests/host/free-search-projection.test.mjs": "a86fddd194209ae07c65599455cd0d6314bc759c7240087e3167d96ca9fdfdf1"
+  },
+  "nodeTests": 1697,
+  "evidence": "PACKAGED_OFFLINE_OWNER_SEARCH_SHARED_PRESENTATION",
+  "postBrowserChange": "Renderer accepts bounded search limit 1..24, with full Node regression; no browser rerun for this validator-only change.",
+  "realChatGPT": "NOT_RUN",
+  "release": "NOT_RELEASE_READY"
+}

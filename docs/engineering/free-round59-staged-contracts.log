@@ -1,0 +1,27 @@
+✔ four increasing stages then exact final reply, without exposing preparations (0.857042ms)
+✔ warm and skipped monotonic stages are permitted (0.07825ms)
+✔ reject malformed preparation unknown (0.196125ms)
+✔ reject malformed preparation scope (0.205333ms)
+✔ reject malformed preparation extra-header (0.193667ms)
+✔ reject malformed preparation extra-preparation (0.090125ms)
+✔ reject malformed preparation null (0.042792ms)
+✔ reject malformed preparation missing-scope (0.064791ms)
+✔ repeat or regression never becomes an unbounded retry native-index,native-index (0.103125ms)
+✔ repeat or regression never becomes an unbounded retry shared-directory,native-bootstrap (0.2455ms)
+✔ transport failure and rejected response are propagated without another request (0.114792ms)
+✔ guard invalidation before or after awaited load prevents publication (0.1285ms)
+✔ scope changes between steps and wrong final scope are rejected (0.165875ms)
+✔ first awaited response cannot replace the captured scope even with matching new-scope header (0.054292ms)
+✔ cold staged requests perform one atomic preparation each then return a full warm header preserving all facts (731.113542ms)
+✔ legacy unflagged header still completes all preparation in one response (451.093333ms)
+✔ staged migration failure returns its reason without a partial header or retry (348.957583ms)
+✔ account changes after an atomic stage cannot publish prior scope preparation (65.062875ms)
+✔ malformed staged and SNAPSHOT staged messages are rejected before writes (33.623541ms)
+ℹ tests 19
+ℹ suites 0
+ℹ pass 19
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1697.62225

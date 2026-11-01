@@ -1,0 +1,24 @@
+{
+  "kind": "WEB_MECHANISM_ONLY",
+  "evidence": "REAL_SHADOW_DOM_PRODUCTION_NAVIGATION_RENDERER_SYNTHETIC_PROJECTION",
+  "MV3": "NOT_RUN",
+  "realChatGPT": "NOT_RUN",
+  "zoom": "HOST_FONT_SCALE_NOT_BROWSER_ZOOM",
+  "checks": [],
+  "sourceBefore": {
+    "extension/frame-shell.css": "305e002e7610347fa491671aa45d852dbc8c4ec12096e4279a50a7e3e6c2847f",
+    "src/navigation/navigation.mjs": "9281ce20c79cd885b1667bed90aaf75e175ced61a7a83bfa922f92c18f37ca45",
+    "src/navigation/styles.mjs": "72850d9805a8dc725d36145cef30a59d24c6dd3f10504528f1e5c68e716d61c8",
+    "tests/host/settings-layout-browser.mjs": "25c25c3106d83b6d4940a69097abbf4151d2d7a207cf3f6866b773db5aea37b2"
+  },
+  "browser": "155.0.8059.80",
+  "ok": false,
+  "error": "page.evaluate: TypeError: Failed to fetch dynamically imported module: http://127.0.0.1:51824/src/navigation/navigation.mjs\n    at /Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/host/settings-layout-browser.mjs:15:14",
+  "sourceAfter": {
+    "extension/frame-shell.css": "305e002e7610347fa491671aa45d852dbc8c4ec12096e4279a50a7e3e6c2847f",
+    "src/navigation/navigation.mjs": "9281ce20c79cd885b1667bed90aaf75e175ced61a7a83bfa922f92c18f37ca45",
+    "src/navigation/styles.mjs": "72850d9805a8dc725d36145cef30a59d24c6dd3f10504528f1e5c68e716d61c8",
+    "tests/host/settings-layout-browser.mjs": "25c25c3106d83b6d4940a69097abbf4151d2d7a207cf3f6866b773db5aea37b2"
+  },
+  "sourceStable": true
+}

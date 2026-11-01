@@ -1,0 +1,41 @@
+{
+  "kind": "REAL_BFCACHE_NAVIGATION_SYNTHETIC_AUTHORITY",
+  "actualBFCacheResidency": "HIT",
+  "sourceBefore": "4079f274e3b7bba6b382a170190d4aefef2e5abbe9149335e06a9afdb5f5baf7",
+  "browser": "155.0.8059.40",
+  "result": {
+    "suspended": {
+      "adapterStops": 1,
+      "listeners": 0,
+      "canShow": false
+    },
+    "resumed": {
+      "mounts": 2,
+      "hellos": 2,
+      "refreshes": 2,
+      "canShow": true
+    },
+    "finalHellos": 2,
+    "draftPreserved": true,
+    "events": [
+      {
+        "kind": "hide",
+        "persisted": true,
+        "adapterStops": 1,
+        "listeners": 0,
+        "canShow": false
+      },
+      {
+        "kind": "show",
+        "persisted": true
+      },
+      {
+        "kind": "show",
+        "persisted": true
+      }
+    ]
+  },
+  "ok": true,
+  "sourceAfter": "4079f274e3b7bba6b382a170190d4aefef2e5abbe9149335e06a9afdb5f5baf7",
+  "sourceStable": true
+}

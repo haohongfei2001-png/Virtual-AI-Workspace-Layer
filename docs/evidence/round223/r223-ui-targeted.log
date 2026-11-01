@@ -1,0 +1,44 @@
+✔ reports receive the same trusted event commit as the default checkout (0.784223ms)
+✔ one Node suite and two independent free browser jobs retain exact event SHA and mandatory outcomes (0.858676ms)
+✔ browser partition neither deletes nor duplicates any pre-existing actual slice (0.309437ms)
+✔ positive profile matrix covers exact independent size/theme/title/height dimensions (1.971154ms)
+✔ configuration uses browser viewport and media only, with no native DOM changes or CSS zoom (6.979541ms)
+✔ unknown profiles, zoom substitutes and modified cells are rejected before browser calls (1.939897ms)
+✔ inherited shell geometry retains original 1px tolerance (0.227994ms)
+✔ shell oracle rejects width overflow (0.55006ms)
+✔ shell oracle rejects height overflow (0.125149ms)
+✔ shell oracle rejects horizontal scroll (0.463139ms)
+✔ shell oracle rejects vertical scroll (0.303668ms)
+✔ shell oracle rejects empty main (0.171759ms)
+✔ shell oracle rejects main above bounds (0.224519ms)
+✔ shell oracle rejects main below bounds (0.14546ms)
+✔ shell oracle rejects frame covers close (0.13273ms)
+✔ shell oracle rejects frame below surface (0.105299ms)
+✔ shell oracle rejects zero viewport (3.155982ms)
+✔ read-only sampler checks geometry without claiming full UI acceptance (0.321525ms)
+✔ preparation never promotes past J3 zoom or deterministic results into new native evidence (0.329376ms)
+✔ height transition observes before, reduced and restored without recreating a page (0.866858ms)
+✔ failed height continuity observation aborts without recovery reload or later success (0.526755ms)
+✔ each profile uses the matching existing fixture and package context proof (2.155733ms)
+✔ sequence has 16 distinct cells and 8 same-page before/reduced/restored triples per profile (0.96781ms)
+✔ long title fits existing native create-project validation without loosening it (0.178269ms)
+✔ runner packages actual source with isolated fixture profiles, source hashes and worker isolation (0.199942ms)
+✔ runner keeps original nodes and File identities and never retries native creation (0.249857ms)
+✔ native candidate cannot claim full v2.7 or physical input acceptance (0.116556ms)
+✔ MODERN and PARTIAL long-title cases start on original C with opt-in native data, not project navigation (0.115204ms)
+✔ theme is observed within each actual frame and final hash failure is recorded (0.100622ms)
+✔ long-title diagnostics and helper hash survive failure without relaxing shell checks (0.215065ms)
+✔ red reproduction: first exact hidden title shadows a later actual visible title (1.138227ms)
+✔ visible filter precedes first and selects real positive-width title without changing deadline (0.85501ms)
+✔ all hidden titles remain FAIL with candidate geometry attached (0.181344ms)
+✔ no matching actual title remains FAIL (0.175715ms)
+✔ zero area, missing and nonfinite text boxes cannot pass even when locator says visible (1.181383ms)
+✔ original positive text box remains accepted (0.100842ms)
+ℹ tests 36
+ℹ suites 0
+ℹ pass 36
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 170.796833

@@ -1,0 +1,97 @@
+{
+  "kind": "LOCAL_SYNTHETIC_OWNER_AUTHORITY_REGRESSION_NOT_BROWSER_ACCEPTANCE",
+  "baseCommit": "742968e224f0abc31dcf81c818e6573b4554b078",
+  "node": "v24.19.0",
+  "platform": "linux",
+  "problem": "A tolerated corrupt obsolete bucket could set a reader failed flag before another queued response; the later response then returned before observing owner revocation, permitting an in-progress transaction to commit.",
+  "fix": {
+    "readerBoundary": "Optional owner guard runs at every queued success/error callback entry, before the failed early return. Owner-check exceptions abort the owning transaction independently of tolerated obsolete-data validation failures.",
+    "callers": "Only Native and Shared obsolete-retention readers supply the original owner check/fail pair. Other reader callers preserve the existing contract.",
+    "preserved": [
+      "fresh current/prior/root/piece full validation",
+      "pure obsolete corruption remains conservative retention with authorized write/replay",
+      "all six Native/Shared stores roll back on precommit loss",
+      "true postcommit stale-after-commit/committed:true",
+      "per-delete immediate guard",
+      "original 6s/30s deadlines and profile/permission boundaries"
+    ]
+  },
+  "files": {
+    "src/data/native-index-writer.mjs": "8997d4b49ec05252e462ee91e36f3e76ec7433283eff2e725024d28d00e1a74d",
+    "src/data/native-index-reader.mjs": "c4acbc5899a8ff2cdc745270592fd04812e0bd3570a318cda353df5d2e3584f7",
+    "src/data/shared-directory-retention.mjs": "3e90e8d91485b2ab2bfdb91f326b1fa693ab978f6a105e0ceffd18dbd3968cb5",
+    "src/data/shared-directory-reader.mjs": "f9da81166b291f7888cfa5a189448d16f206ec70bd467a2b8d3338eac6506ca0",
+    "tests/free/obsolete-bucket-authority-fence.test.mjs": "3e8db74ab54090ed6868270a234d0930df13fa8fba0ca0fd4d47e62409ee8865",
+    "tests/free/obsolete-bucket-independent-multi.test.mjs": "9bb5129b1743bf5a11f03ae00a470419d5d6eda61f25317dfaf621f1e961514b",
+    "tests/free/obsolete-bucket-queued-callback.test.mjs": "35a6465535648a7372d641e90a0c2a76b32790d6e31c60da26bf50423ce229b4",
+    "tests/free/obsolete-bucket-reader-guard.test.mjs": "2efc7dac31ad89c736bf0843314a79757aa20b2be26d3fc1a74ca29c3179ccd2"
+  },
+  "focused": {
+    "tests": 75,
+    "pass": 75,
+    "fail": 0,
+    "skipped": 0,
+    "cancelled": 0,
+    "durationMs": 464.957825,
+    "coverage": {
+      "singleBucketOwnerAndPostcommit": 40,
+      "independentQueuedMultiBucket": 3,
+      "twoOwnerMultiBucket": 24,
+      "readerSuccessAndErrorCallbacks": 8
+    }
+  },
+  "baseline742": {
+    "tests": 75,
+    "pass": 36,
+    "fail": 39,
+    "interpretation": "Original production bytes; includes new callback-boundary contract counterexamples."
+  },
+  "firstWrapperCandidate": {
+    "tests": 75,
+    "pass": 52,
+    "fail": 23,
+    "interpretation": "Unpublished single-failure wrapper left already queued callbacks unguarded after a prior corrupt bucket. Independent three-case owner counterexample required the final reader-boundary fix."
+  },
+  "independentFinalReview": {
+    "tests": 75,
+    "pass": 75,
+    "fail": 0,
+    "skipped": 0,
+    "cancelled": 0,
+    "durationMs": 497.7,
+    "scope": "Four production diffs reviewed and the frozen 75-test set independently executed."
+  },
+  "fullNode": {
+    "tests": 8169,
+    "pass": 8169,
+    "fail": 0,
+    "skipped": 0,
+    "cancelled": 0,
+    "durationMs": 183274.328139,
+    "exitCode": 0
+  },
+  "originalGuardMutations": {
+    "selected": 12,
+    "killed": 12,
+    "inputUnchanged": true,
+    "exitCode": 0
+  },
+  "frozenInput": {
+    "files": 1104,
+    "allSHA256UnchangedAfterFullAndMutations": true
+  },
+  "evidenceSHA256": {
+    "focused": "7e06c3f68459d918effe796e24b5f3f40d7966818cae312f2028e0f38093bef1",
+    "baseline": "e479a214ea3e161ed97615851c22ca45aeffd9b5fa1463d6120c4368d1568dd2",
+    "firstWrapper": "88049edf789d77d74ca860fb1a7894fb00db13bdd058335caf84331f813823d9",
+    "independentReview": "de9b59d71e9b787118d0a087318dc1dde94cf31e16874a7bcb64cfcddb1d59a0",
+    "fullNode": "22117fdfee157ae428ef1a802d31476c21fa3b51fea0e2de3f6429bc3cf8fa11",
+    "guardMutations": "6ab979bddcd92fe94253584b457b6397990d70bb1bec195019a43cd6064675bc",
+    "productionPatch": "e7df75d79c3d19021a3637247e53e393892de882ee16beef98e1ef32ee680c76"
+  },
+  "evidenceLevel": "L: real repository owners with MockIDB; no browser durability or performance claim",
+  "newCommitCI": "PENDING",
+  "realChatGPT": "NOT_RUN",
+  "crossEnvironment10k": "NOT_ESTABLISHED_BY_THIS_LOCAL_BATCH",
+  "release": "NOT_RELEASE_READY"
+}

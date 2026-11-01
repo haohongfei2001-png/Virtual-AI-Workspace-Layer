@@ -1,0 +1,21 @@
+{
+  "base": "a1ffd8607f89dadbcd9368af56fc354e97a20f29",
+  "files": {
+    "src/runtime/host-binding-service.mjs": "2221eb858e6915322ec82c1412f52d693faa82e569f6086632866a1d2e897dc7",
+    "src/runtime/host-observation-owner.mjs": "653753f5f3c08ee941661384e1ff9443ba137f6e8de76769fb9f5785e004f042",
+    "src/runtime/host-view-service.mjs": "724d10b3aeeed25fb1d2fdf5fbd49f7544875162409f466680c5e0704f77fa12",
+    "tests/host/host-view-service.test.mjs": "b1eea87e8c6059d99990199aab6cd8fc93a5b672539e8b9e2acf501c180aa3c3",
+    "tests/host/observation-foreground-yield.test.mjs": "4d4cee31b8380484b479616b0f944239d598ed1c35080f51ac66a9bc54659692",
+    "tests/host/host-scale-trace.mjs": "0c231e325268dea02bbf3be1097263e7313caee551e2e6242a810f7321e61e0a"
+  },
+  "artifacts": {
+    "README.md": "288f2767f9a53885d925a06c4643cdb2a6e1a76dbb1527c507d8197edb2e168e",
+    "node-final.log.gz": "b1f44830311a9f624734119733391f44fdcc48b58463dbb885e0c13a3282f5ab",
+    "node-initial.log.gz": "c550e0db729a4092fc03a0ef47edc8079a2be7285d41a8acc72f7c5e79af56e5",
+    "partial-before.log.gz": "075b90ac2311dce30fbfe6924a6af0571e5e79413e7d4d9771084b25e105b2b9",
+    "scale-10k-before-cleanup.json.gz": "a4f07d20b02dee19d522a8ec40ebef14e2dcbfe25b4557562621ad0d8934b318",
+    "scale-1k.json.gz": "cb8e717dc434e358dfcea3dcc716bcd73e790c4e721d494ba9d94dfea0ef5045",
+    "trace-contract.log.gz": "f32985156e83c86b83453a42e6a01bf8ada3103322092efa05df67feb66a4969",
+    "window-regressions.log.gz": "f477452abc118e4bbc2a5eb545c81363db7ea6dc3c1e7e1c763d827497f54a47"
+  }
+}

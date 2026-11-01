@@ -1,0 +1,20 @@
+✔ same version but stale resources requires actual runtime reload (0.937031ms)
+✔ already re-read exact manifest does not cause extra reload (0.178479ms)
+✔ reload failure or still-old manifest cannot proceed to asset acceptance (0.632232ms)
+✔ replacement runtime may be transiently absent, but success requires later exact manifest (0.333532ms)
+✔ only two exact historical product snapshots are admitted (1.269652ms)
+✔ same-path replacement requires confirmed disable and exact copied bytes (14.186192ms)
+✔ Host history runner keeps real backup UI, original scope/database, and same disabled slot (1.468753ms)
+✔ portable Pro compatibility input contains all human asset classes and no success evidence (6.673223ms)
+✔ Pro schema runner uses frozen real build and genuine old-reader refusal without moving databases (2.026162ms)
+✔ actual Host inspector empty manual subset is JSON digestible before importing assets (0.919114ms)
+✔ archived Host backup uses its actual direct entry rather than a later settings menu (5.165191ms)
+✔ old worker proxy probe retains exact positive proxy evidence and diagnoses earlier test-route interception (0.684ms)
+ℹ tests 12
+ℹ suites 0
+ℹ pass 12
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 106.921447

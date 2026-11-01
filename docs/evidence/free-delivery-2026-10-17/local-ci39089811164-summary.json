@@ -1,0 +1,118 @@
+{
+  "sourceCommit": "f3af526bec213caf4df9edc4e4b60af7920ac5fe",
+  "run": 39089811164,
+  "conclusion": "success",
+  "formal10k": {
+    "status": "PARTIAL_SYS04_NOT_ACCEPTED",
+    "nativeMemberProgress": {
+      "status": "OBSERVED_COMPLETE_INDEX",
+      "revision": 206,
+      "audit": {
+        "status": "PASS_INDEX_AUDIT_ONLY",
+        "requestedRefs": 10000,
+        "distinctRefs": 10000,
+        "distinctProjects": 1,
+        "missingRefs": 0,
+        "unexpectedRefs": 0,
+        "duplicateRefs": 0,
+        "projectMembership": 10000,
+        "nativeNoneObserved": 0,
+        "unknownMembership": 0,
+        "wrongProjectMembership": 0,
+        "wrongNoneMembership": 0,
+        "pages": 21,
+        "revision": 206,
+        "scopeSelection": "READ_ONLY_EXISTING_ROOT_NOT_A_WRITE_GRANT",
+        "performanceAcceptance": "NOT_ESTABLISHED"
+      },
+      "stableSamples": 2,
+      "attempts": 107,
+      "remainingMs": 8387.631044000002,
+      "acceptance": "NOT_ESTABLISHED",
+      "scenario": "VISIBLE_NATIVE_READING_BEFORE_RETURN_NOT_IMMEDIATE_RETURN"
+    },
+    "ingestionObservationMs": 26947.915020999997,
+    "measurement": {
+      "status": "MEASURED_AT_STABLE_ADMITTED_INDEX",
+      "performanceAcceptance": "NOT_ESTABLISHED",
+      "samples": {
+        "localExactTailSearchMs": 90.08477700000003,
+        "localBroadSearchFirstScreenMs": 195.56980399999884,
+        "localNextPageMs": 217.73677199999656,
+        "firstPageRefs": 24,
+        "secondPageRefs": 24,
+        "kind": "HOST_LOCAL_SEARCH_AND_PAGINATION_SINGLE_SAMPLES_NOT_P95",
+        "coverage": "TWO_CORRECT_PAGES_NOT_FULL_SEARCH_COVERAGE_OR_ORDER_CERTIFICATION",
+        "timing": "PLAYWRIGHT_WALL_CLOCK_INCLUDING_AUTOMATION_OVERHEAD"
+      },
+      "before": {
+        "status": "PASS_INDEX_AUDIT_ONLY",
+        "requestedRefs": 10000,
+        "distinctRefs": 10000,
+        "distinctProjects": 1,
+        "missingRefs": 0,
+        "unexpectedRefs": 0,
+        "duplicateRefs": 0,
+        "projectMembership": 10000,
+        "nativeNoneObserved": 0,
+        "unknownMembership": 0,
+        "wrongProjectMembership": 0,
+        "wrongNoneMembership": 0,
+        "pages": 21,
+        "revision": 206,
+        "scopeSelection": "READ_ONLY_EXISTING_ROOT_NOT_A_WRITE_GRANT",
+        "performanceAcceptance": "NOT_ESTABLISHED"
+      },
+      "after": {
+        "status": "PASS_INDEX_AUDIT_ONLY",
+        "requestedRefs": 10000,
+        "distinctRefs": 10000,
+        "distinctProjects": 1,
+        "missingRefs": 0,
+        "unexpectedRefs": 0,
+        "duplicateRefs": 0,
+        "projectMembership": 10000,
+        "nativeNoneObserved": 0,
+        "unknownMembership": 0,
+        "wrongProjectMembership": 0,
+        "wrongNoneMembership": 0,
+        "pages": 21,
+        "revision": 206,
+        "scopeSelection": "READ_ONLY_EXISTING_ROOT_NOT_A_WRITE_GRANT",
+        "performanceAcceptance": "NOT_ESTABLISHED"
+      },
+      "revision": 206
+    },
+    "projectCardNavigation": {
+      "status": "PASS_NATIVE_MEMBER_AND_UNIQUE_RETURN",
+      "mode": "HREF_NEW_TAB_PRESERVE_CURRENT",
+      "targetId": "60000000-0000-4000-8000-000000000000",
+      "nativeTitle": "原生压力聊天 000000 · 长中文标题与 English mixed 内容用于尾部原名检索及实际可达验证，不代表真实聊天。",
+      "originalDocumentAndEditorPreserved": true,
+      "measurement": "SEPARATE_CORRECTNESS_AFTER_STABLE_INDEX_TIMING"
+    },
+    "sourceChangedDuringRun": false,
+    "fixtureChangedDuringRun": false,
+    "manifestChangedDuringRun": false,
+    "temporaryDirectoryRemoved": true
+  },
+  "J4": {
+    "status": "PARTIAL_J4_NOT_ACCEPTED",
+    "steps": 23,
+    "automaticForegroundRecovery": "NOT_ESTABLISHED",
+    "foregroundFailure": "J4-peer-current-scope-timeout"
+  },
+  "limits": [
+    "One valid Linux full-journey sample, not stability/p95/full F1.",
+    "Current uncommitted page-selection candidate is not included.",
+    "Original failures remain retained.",
+    "C2-only peer automatic context recovery and real Profile/IME/PAIA/cross-device gates remain open."
+  ],
+  "rawSHA256": {
+    "local-ci39089811164-durability.log.gz": "f1fd76d66ee21e2d6e51e4bf20be26fc16d0bb92dfa87aa3491a35a6c0d06678",
+    "local-ci39089811164-durability-report-6.json.gz": "27b538260b8539f634df8b4c2e053396f697d14cf6a72776744e9fd55d45c587",
+    "local-ci39089811164-j4.log.gz": "bb0dec7a81bdd13f8c0499bdc1cad2bb518d8a25974119095c02013cc4c41c80",
+    "local-ci39089811164-j4-report-1.json.gz": "907b51ae239647d3b1d7f7ae0046c0cddaae1b90b52dd10780d06a2a647c55bf",
+    "local-ci39089811164-live.json.gz": "03909e311b17c2f161527650272b4de9a2488d08ab7ca23e2688fd47fa3dbf60"
+  }
+}

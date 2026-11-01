@@ -1,0 +1,18 @@
+{
+  "parent": "d8b6d94c6a5a50a8b6b36f02d953324fd49e2156",
+  "sourceHashes": {
+    "src/host/free-frame-client.mjs": "c2ab51f662ca5e152e3f6034ef80f354277e2b502a47c0381500e020bba1d01b",
+    "src/navigation/navigation.mjs": "7f4a32094843351bd6f98b12701b8d4c449186c5978fb8d39aa9df4c7af2aee8",
+    "src/runtime/host-view-service.mjs": "44cefe6ded44ab92b782ab94482be4072e4230e88ad0b6af460fef94337f5be7",
+    "tests/host/frame-projection-renderer.test.mjs": "0c98463f93303f7e448a741a98f5043eca8a74208331b2585d9cd9d55299d022",
+    "tests/host/free-frame-client.test.mjs": "fbdd6d9070d4b3bf091c305f6b41207b7c682287649417d851f180ca359966f2",
+    "tests/host/host-view-service.test.mjs": "d7c7c8cf761eafef7adc0e50e41d7aeab7194d26c99abfd3521cc1cc4e68a2be",
+    "tests/host/package-mv3-browser.mjs": "e3996af5d65d646920eb0551c3c4caec8814b8f73f84214b158f801789d62d83",
+    "src/runtime/free-working-set-projection.mjs": "b50b973005612c5d9d76cff9a4acd6d6fc23d006dea787d681c534385629ff4f",
+    "tests/host/free-working-set-projection.test.mjs": "28fe3158bbbfb484a61ac9d2773564e402c048cd5aec4dc6de85d5adeda1dfb6"
+  },
+  "nodeTests": 1712,
+  "evidence": "PACKAGED_OFFLINE_OWNER_WORKING_SET",
+  "realChatGPT": "NOT_RUN",
+  "release": "NOT_RELEASE_READY"
+}

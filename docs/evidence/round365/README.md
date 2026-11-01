@@ -1,0 +1,9 @@
+# Round365：worker 原子空闲挂载释放
+
+从6e65e33继续；中断后确认原工作区四个修改保留，旧测试进程已结束，不重启同一测试任务。新增HOST_UI_IDLE_RELEASE，复用原UI RELEASE鉴权/撤销路径；不是可转交或可重放的空闲许可。消息仍只含原v/type/binding/mountId字段，私有releaseGuard由worker composition提供，不从message读函数或授权标记。
+
+UI owner在所有浏览器await完成后、同步revokeMount之前核验原mount身份、完整binding和URL，仅允许自己的一个activeWork/inFlight且无pending JOIN。service guard只排除当前一个requests及当前UI handler；其他后台、refresh、owner实际底层工作均须结束。前后quiet复核与原check防止同步重入绕过。busy保留挂载与view，正常HOST_UI_RELEASE的用户退出行为不受此条件限制。
+
+独立实际组合9项涵盖鉴权成功、伪sender/binding/schema、跨tab请求，以及公开deadline已返回但raw getFrame/nativeRepository.apply仍pending的窗口；底层settle后可重新请求。root追加5项UI guard测试，包括浏览器await时序、pending JOIN、异常与同步重入validate；独立审查通过。最终相关 **1493/1493 Node PASS**，零skip/cancel。保存最终source hash和文件清单；没有重复全套或新浏览器结果。
+
+content的自动收束协调尚未调用本RPC，双frame清空后释放及真实自然退出闭环需继续接线，不能把worker端原子释放称为UI-11通过。已有历史strict恢复可在新授权后从当前body/固定metadata恢复原始UserSendEvent，但当前仅fixture-original-self-send/1的loopback profile支持，不能充当生产首个发送/LocalSendAnchor证明。自动生产休眠仍未打开，完整Free继续NOT_RELEASE_READY。

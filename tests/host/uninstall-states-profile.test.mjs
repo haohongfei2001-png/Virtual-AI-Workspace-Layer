@@ -1,0 +1,11 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {readFile} from 'node:fs/promises';
+import {disableStatesProfile} from './disable-states-profile.mjs';import {modernExpectedWorld} from './expected/modern.mjs';
+test('uninstall matrix reuses independently verified explicit Team options and unchanged LEGACY default',()=>{
+ const legacy=disableStatesProfile();assert.equal(legacy.profile,'LEGACY');assert.deepEqual(legacy.packageOptions,{});
+ const modern=disableStatesProfile('MODERN');assert.equal(modern.contextId,modernExpectedWorld.selectedContext);assert.notEqual(modern.contextId,modernExpectedWorld.accountRoster[0]);assert.equal(modern.entryPath,'/c/'+modern.conversationId);assert.deepEqual(modern.packageOptions,{offlineContext:true,offlineProjectContext:true});
+});
+test('uninstall runner preserves four original states and all original lifecycle privacy/navigation guards',async()=>{
+ const source=await readFile(new URL('./uninstall-states-package-mv3-browser.mjs',import.meta.url),'utf8');
+ for(const token of ["FREE_UNINSTALL_PROFILE??'LEGACY'","createVariantHostFixtureServer({profile:'MODERN'})",'...selected.packageOptions',"['both-open','workspace-only','sidebar-only','both-closed']",'timeout:15000','nativeRequestStart','selected.scopeKey','r.context===selected.contextId',"await cdp.send('Extensions.uninstall',{id:extensionId})",'oldFrames.filter(f=>!f.isDetached()).length','positive.privateProjectionAbsent,false',"closed CSS must not fool private DOM detector",'naturalUninstall.openOwned,0','value.visibility,\'visible\'','value.htmlInert,false','native.sameDocument,true','native.sameEditor,true','native.editorConnected,true','native.focused,true','native.pageHides,0',"native.draft,'UNINSTALL_STATES_DRAFT_AFTER_UNINSTALL'",'afterNavigation.draft,native.draft','afterNavigation.pageHides,0','afterNavigation.openOwned,0','beforeNavigate,1','manualCloseUsed:false','fixtureChangedDuringRun','sourceChangedDuringRun','buildManifestUnchanged'])assert(source.includes(token),token);
+ assert(source.includes("if(selected.modern)await context.addInitScript"),'LEGACY load behavior unchanged');assert(!source.includes('waitForEvent(\'serviceworker\''));assert(!source.includes('setSelectedContext('));
+});

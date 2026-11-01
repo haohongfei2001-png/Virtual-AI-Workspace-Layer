@@ -1,0 +1,19 @@
+{
+  "sourceCommit": "b954abc2a0841e1576c106d07fa2e8f4efb1e287",
+  "run": "https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/actions/runs/38666470613",
+  "node": {
+    "job": 116199456313,
+    "tests": 4054,
+    "pass": 4054,
+    "fail": 0,
+    "durationMs": 107094.971372
+  },
+  "mutations": {
+    "selected": 12,
+    "killed": 12,
+    "pass": true
+  },
+  "browserJob": 116199456658,
+  "workflow": "FAIL",
+  "boundary": "Node/guard contracts and source-scoped browser slices, not full release acceptance"
+}

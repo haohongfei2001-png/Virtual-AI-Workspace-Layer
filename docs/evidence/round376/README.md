@@ -1,0 +1,11 @@
+# Round376：真实原生编辑器点击恢复休眠reading
+
+基线5c3edfa340927b7caa67ca1e34f8145bd93c6d4d；正式开发分支已跟踪工作区干净。本轮仅新增离线runner/证据，不改生产代码。
+
+新隔离headless Chrome、本地LEGACY fixture、拒外网guard；临时解包仅content-entry测试入口暴露boolean prepareIdle与显式enterDormant，未修改timer/grant/producer/adapter/controller。正式archive不带该插桩。显式双ACK关闭后，独立附着两个frame确认main.childElementCount均0，再全部detach，进入原60秒仅Target发现事件观察窗；无worker附着、无强制停止或窗口内轮询。
+
+最终单次 **4项子检查PASS**、exit2：原worker在观察窗销毁，新worker恢复；真实Input pointer点击原生编辑器，原始两frame内重新出现fixture内容，保持同document/editor/frames、原草稿与编辑器焦点，open0、唯一四格返回。点击前安装仅计数的被动owned beforetoggle observer，在reading恢复期间开事件为0；随后用户真实点击四格，两个surface正常显示Research且计数恰为2，形成正对照。nativeActions={}，没有原生发送/创建。
+
+sourceChangedDuringRun=false、runnerChangedDuringRun=false、buildManifestUnchanged=true。源码与最终runner hash重新核对一致。独立审查通过。首次较弱oracle的4PASS报告与精确runner也保留；最终增加清空独立读和短暂打开反例后另跑，不将两轮数字相加。
+
+证据 S_INSTRUMENTED_MV3_NATIVE_PREPARE_READING_WAKE / LEGACY_OFFLINE，仍naturalWorkerSleep=NOT_ESTABLISHED：记录非强制worker销毁，不断言Chrome内部休眠原因。显式enterDormant为测试入口，生产自动进入未启用；本次是已聚焦editor的真实pointer路径，未单独认证keyboard focus分支、立即send/Enter的baseline建立、整个UI11、81项/G/U或真实ChatGPT。Free NOT_RELEASE_READY。

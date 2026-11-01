@@ -1,0 +1,22 @@
+{
+  "historicalSHA": "531c146",
+  "evidence": "EXACT_OLD_WRITER_IN_MEMORY_MOCK_IDB",
+  "results": [
+    {
+      "name": "completed marker survives old undo but missing B1 anchor is repaired",
+      "status": "PASS"
+    },
+    {
+      "name": "completed marker detects historical B1-only insert",
+      "status": "PASS"
+    },
+    {
+      "name": "equal-count shared replacement from legal old restore and undo is detected",
+      "status": "PASS"
+    },
+    {
+      "name": "partial cursor detects old undo before its saved position",
+      "status": "PASS"
+    }
+  ]
+}

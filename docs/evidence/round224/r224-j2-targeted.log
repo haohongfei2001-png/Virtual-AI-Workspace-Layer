@@ -1,0 +1,19 @@
+✔ full J2 uses approved exact terminal profile and consecutive native retry without reload or timing workaround (1.069914ms)
+✔ continuous J2 preserves real deadline, worker restart, original-time and negative evidence requirements (0.279812ms)
+✔ passive bounded J2 trace includes v2 body rather than dropping joint observations (0.164508ms)
+✔ actual packaged triple profile retains history, exact terminal and shared budget composition (118.31343ms)
+✔ J2 failure has no accepted message; later success holds the actual POST time privately until native reveal (5.484314ms)
+✔ other author and old-branch fixture states do not claim new original self send (3.921216ms)
+✔ native J2 uses real native request and in-place append; no extension ACK or database write (0.633316ms)
+✔ actual J2 fixture server starts and serves native J2 controls (46.354388ms)
+✔ runner requires real expiry, real stopped/restarted worker, original event deduplication and negative readbacks (0.634868ms)
+✔ declared failed operation is immutable and authenticated principal/context scoped (0.63605ms)
+✔ native cancellation aborts a real held HTTP response and leaves exact authenticated terminal readback (33.539634ms)
+ℹ tests 11
+ℹ suites 0
+ℹ pass 11
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 249.017836

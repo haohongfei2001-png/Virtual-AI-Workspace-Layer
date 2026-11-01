@@ -1,0 +1,57 @@
+{
+  "evidence": "REAL_BROWSER_INDEXEDDB_DOM_WITH_SIMULATED_PAGE_BYTE_LIMIT",
+  "actual16MiBBoundary": "NOT_TESTED_BY_THIS_FIXTURE",
+  "fixtureByteBudget": 30000,
+  "browser": "156.0.8078.4",
+  "results": [
+    {
+      "scenario": "native-page-too-large",
+      "calls": 63,
+      "successfulPages": 32,
+      "refs": 604,
+      "reachableRefs": 603,
+      "tombstones": [
+        "T401"
+      ],
+      "projects": 2,
+      "pass": true,
+      "checks": [
+        "smaller-byte-budget-splits",
+        "all-known-refs-reachable",
+        "project-and-ref-order-preserved",
+        "no-duplicate-refs",
+        "native-draft-retained"
+      ]
+    },
+    {
+      "scenario": "free-evidence-page-too-large",
+      "calls": 63,
+      "successfulPages": 32,
+      "refs": 604,
+      "reachableRefs": 603,
+      "tombstones": [
+        "T401"
+      ],
+      "projects": 2,
+      "pass": true,
+      "checks": [
+        "smaller-byte-budget-splits",
+        "all-known-refs-reachable",
+        "project-and-ref-order-preserved",
+        "no-duplicate-refs",
+        "native-draft-retained"
+      ]
+    },
+    {
+      "scenario": "single-item",
+      "calls": 10,
+      "pass": true,
+      "checks": [
+        "explicit-single-item-failure",
+        "no-retry-loop-after-heartbeat-period",
+        "native-draft-retained"
+      ]
+    }
+  ],
+  "fail": 0
+}

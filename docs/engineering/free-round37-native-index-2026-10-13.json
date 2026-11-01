@@ -1,0 +1,25 @@
+{
+  "evidence": "REAL_IDB_NATIVE_INDEX_PRIMITIVE_NOT_RUNTIME_INTEGRATED",
+  "browser": "156.0.8078.4",
+  "sourceHashes": {
+    "src/data/native-version-index.mjs": "72097de473348ab26bae24721793287e4648da70c1ed3a3ded60e9e3ce727246",
+    "src/data/native-partitions.mjs": "71145bc7150abe2f87f502517e5c7d11102b219c07ef0f7a98ca0555675cc8cc",
+    "src/data/hash.mjs": "8fcd95aca608fb4d4ef94855e0d101ce3d560e830733f96d9ec88068a81eaab3",
+    "src/data/schema.mjs": "9db57336e5d79ec002ef6308100d18008140292bcf1385899524b0a6972ebad6"
+  },
+  "result": {
+    "checks": [
+      "100k-real-idb-roundtrip",
+      "atomic-abort-root-pieces-marker",
+      "one-bucket-update",
+      "prior-pieces-retained",
+      "capacity-100001-rejected"
+    ],
+    "refs": 100000,
+    "buckets": 257,
+    "updatedBuckets": 1,
+    "updatedBucketRows": 395,
+    "buildMs": 403.79999999701977,
+    "updateComputeMs": 2.399999998509884
+  }
+}

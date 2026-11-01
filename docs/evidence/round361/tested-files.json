@@ -1,0 +1,8 @@
+{
+  "baseCommit": "0bdc0abb41f5564ed62ad89e49556cc70d5154dc",
+  "sha256": {
+    "src/host/ui-frame-client.mjs": "7ee9218fe396c539cefe56e8d1b4cd65ea8a7de3b2656b2f6515cb1b519815f1",
+    "tests/host/ui-dormant-wake.test.mjs": "25b04338f89f4adefc27ea92b29ac8b3753a0f13562d1f0c1570ff9534f94602",
+    "tests/host/ui-idle-ack-browser.mjs": "705183fa5c2adf34a1ca1ebd0c95c884270393bc6a77829fbe042d269cfaa7ba"
+  }
+}

@@ -1,0 +1,42 @@
+✖ construction routes each incoming ref once; warm fresh clones do not reroute untouched members (24.062667ms)
+ℹ {"refs":512,"updates":64,"buildRoutingCalls":1024,"updateRoutingCalls":223}
+✔ default materialization and delete/reinsert keep insertion ordinal semantics (9.804834ms)
+✔ fresh cold record rejects unresigned-bytes (18.574792ms)
+✔ fresh cold record rejects checksum (18.07675ms)
+✔ fresh cold record rejects version (17.622459ms)
+✔ fresh cold record rejects ordinal-ceiling (17.117542ms)
+✔ fresh cold record rejects ordinal-duplicate (17.030708ms)
+✔ fresh cold record rejects scope (18.657083ms)
+✔ fresh cold record rejects generation (19.866459ms)
+✔ fresh cold record rejects bucket (20.394833ms)
+✔ fresh cold record rejects route (19.297208ms)
+✔ fresh cold record rejects units (20.598334ms)
+✔ fresh cold record rejects pointer-revision (19.886458ms)
+✔ cold genuine fresh bytes route every member then cached reads still bind mutated bytes (18.830125ms)
+ℹ tests 14
+ℹ suites 0
+ℹ pass 13
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 299.895875
+
+✖ failing tests:
+
+test at tests/free/shared-directory-construction-validation.test.mjs:20:1
+✖ construction routes each incoming ref once; warm fresh clones do not reroute untouched members (24.062667ms)
+  AssertionError [ERR_ASSERTION]: construction must reuse validated routing
+  
+  1024 !== 512
+  
+      at TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/free/shared-directory-construction-validation.test.mjs:25:9)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1024,
+    expected: 512,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

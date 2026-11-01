@@ -1,0 +1,11 @@
+{
+  "status": "SYNTHETIC_ONLY",
+  "releaseStatus": "NOT_RELEASE_READY",
+  "files": 40,
+  "workerModules": 33,
+  "unpacked": "/private/tmp/vaiwl-free-delivery-round20-20261013/extension",
+  "archive": "/private/tmp/vaiwl-free-delivery-round20-20261013/vaiwl-free-synthetic-only.zip",
+  "archiveSha256": "7e5a4f9c8f8ec4ea9136993b7ed474a69ed188794cf7f25bce2a024b81477b49",
+  "sourceManifestSha256": "7eb42fcd91d6f6ffd7fe4bb88eca921ebd3495bd36fa2072fb71d4e0dfc6fb68"
+}
+

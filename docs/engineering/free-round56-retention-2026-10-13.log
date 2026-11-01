@@ -1,0 +1,18 @@
+✔ repeated reference writes retain only current/checkpoint versions and keep journals (17.028ms)
+✔ A B A updates retire old untouched B pieces without deleting retained A version (4.406667ms)
+✔ GC retains undo inverse and checkpoint human recovery (9.859125ms)
+✔ corrupt obsolete checkpoint bucket grants no deletion authority (3.204292ms)
+✔ abort after GC delete request rolls back root checkpoint receipt and reclaimed pieces (3.755083ms)
+✔ A directory retention leaves B roots pieces checkpoints and history untouched (5.178125ms)
+✔ same bucket untouched ref remains reachable while obsolete neighbour versions retire (8.457458ms)
+✔ cross-generation obsolete checkpoint cannot authorize deletion (2.234084ms)
+✔ missing newly current bucket causes retention verification to abort entire owner write (2.310458ms)
+✔ guard denial in old-checkpoint callback aborts rather than treating authority loss as corrupt checkpoint (1.466666ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 10
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 105.349625

@@ -1,0 +1,1411 @@
+{
+  "evidence": "REAL_HEADLESS_PACKAGED_MV3_OFFLINE_SNIPPETS",
+  "fixture": "Synthetic message/body/branch nodes appended only to existing offline conversation root",
+  "productionSnippetProfile": "DISABLED_NOT_CERTIFIED",
+  "realChatGPT": "NOT_RUN",
+  "release": "NOT_RELEASE_READY",
+  "status": "PASS",
+  "results": [
+    {
+      "name": "actual-native-selection-explicit-sidebar-save-and-legacy-list",
+      "status": "PASS"
+    },
+    {
+      "name": "saved-snippet-text-search-preserves-native-title-and-exact-preview",
+      "status": "PASS"
+    },
+    {
+      "name": "current-conversation-search-snippet-locates-native-reading-with-draft-preserved",
+      "status": "PASS"
+    },
+    {
+      "name": "locate-verified-anchor-in-native-reading-with-draft-preserved",
+      "status": "PASS"
+    },
+    {
+      "name": "edited-native-body-rejects-old-hash-and-offers-native-search",
+      "status": "PASS"
+    },
+    {
+      "name": "remove-only-manual-snippet-preserves-native-input",
+      "status": "PASS"
+    }
+  ],
+  "errors": [],
+  "transport": [
+    {
+      "type": "HOST_UI_VIEW",
+      "ok": true,
+      "state": "preparing"
+    },
+    {
+      "type": "HOST_UI_VIEW",
+      "ok": true,
+      "state": "ready"
+    },
+    {
+      "type": "HOST_UI_VIEW",
+      "ok": true,
+      "state": "ready"
+    },
+    {
+      "type": "HOST_UI_CALIBRATION_ENTRY",
+      "ok": false,
+      "state": "unavailable"
+    },
+    {
+      "type": "HOST_UI_CANDIDATES",
+      "ok": false,
+      "state": "blocked"
+    },
+    {
+      "type": "HOST_UI_CANDIDATES",
+      "ok": false,
+      "state": "blocked"
+    },
+    {
+      "type": "HOST_UI_CANDIDATES",
+      "ok": true
+    },
+    {
+      "type": "HOST_UI_CANDIDATES",
+      "ok": true
+    },
+    {
+      "type": "HOST_UI_VIEW",
+      "ok": true,
+      "state": "ready"
+    },
+    {
+      "type": "HOST_UI_VIEW",
+      "ok": true,
+      "state": "ready"
+    },
+    {
+      "type": "HOST_UI_CANDIDATES",
+      "ok": true
+    },
+    {
+      "type": "HOST_UI_CANDIDATES",
+      "ok": true
+    },
+    {
+      "type": "HOST_UI_CURRENT_ENTRY",
+      "ok": true
+    },
+    {
+      "type": "HOST_UI_VIEW",
+      "ok": true,
+      "state": "ready"
+    },
+    {
+      "type": "HOST_UI_CANDIDATES",
+      "ok": true
+    },
+    {
+      "type": "HOST_UI_SAVE_VIEW",
+      "ok": true
+    },
+    {
+      "type": "HOST_UI_SAVE_VIEW",
+      "ok": true
+    },
+    {
+      "type": "HOST_UI_VIEW",
+      "ok": true,
+      "state": "ready"
+    },
+    {
+      "type": "HOST_UI_SNIPPET_LIST",
+      "ok": true
+    },
+    {
+      "type": "HOST_UI_SNIPPET",
+      "action": "save",
+      "ok": true
+    },
+    {
+      "type": "HOST_UI_VIEW",
+      "ok": true,
+      "state": "preparing"
+    },
+    {
+      "type": "HOST_UI_VIEW",
+      "ok": true,
+      "state": "ready"
+    },
+    {
+      "type": "HOST_UI_SNIPPET_LIST",
+      "ok": true
+    },
+    {
+      "type": "HOST_UI_VIEW",
+      "ok": true,
+      "state": "ready"
+    },
+    {
+      "type": "HOST_UI_CANDIDATES",
+      "ok": true
+    },
+    {
+      "type": "HOST_UI_PRESENT",
+      "ok": true
+    },
+    {
+      "type": "HOST_UI_VIEW",
+      "ok": true,
+      "state": "ready"
+    },
+    {
+      "type": "HOST_UI_VIEW",
+      "ok": true,
+      "state": "ready"
+    },
+    {
+      "type": "HOST_UI_CANDIDATES",
+      "ok": true
+    },
+    {
+      "type": "HOST_UI_VIEW",
+      "ok": true,
+      "state": "ready"
+    },
+    {
+      "type": "HOST_UI_CANDIDATES",
+      "ok": true
+    },
+    {
+      "type": "HOST_UI_VIEW",
+      "ok": true,
+      "state": "ready"
+    },
+    {
+      "type": "HOST_UI_CANDIDATES",
+      "ok": true
+    },
+    {
+      "type": "HOST_UI_VIEW",
+      "ok": true,
+      "state": "ready"
+    },
+    {
+      "type": "HOST_UI_SNIPPET",
+      "action": "locate",
+      "ok": true
+    },
+    {
+      "type": "HOST_UI_CALIBRATION_ENTRY",
+      "ok": false,
+      "state": "unavailable"
+    },
+    {
+      "type": "HOST_UI_CURRENT_ENTRY",
+      "ok": false,
+      "reason": "free-current-entry-unavailable"
+    },
+    {
+      "type": "HOST_UI_VIEW",
+      "ok": true,
+      "state": "ready"
+    },
+    {
+      "type": "HOST_UI_VIEW",
+      "ok": true,
+      "state": "ready"
+    },
+    {
+      "type": "HOST_UI_PRESENT",
+      "ok": true
+    },
+    {
+      "type": "HOST_UI_CANDIDATES",
+      "ok": true
+    },
+    {
+      "type": "HOST_UI_CANDIDATES",
+      "ok": true
+    },
+    {
+      "type": "HOST_UI_VIEW",
+      "ok": true,
+      "state": "ready"
+    },
+    {
+      "type": "HOST_UI_CANDIDATES",
+      "ok": true
+    },
+    {
+      "type": "HOST_UI_VIEW",
+      "ok": true,
+      "state": "ready"
+    },
+    {
+      "type": "HOST_UI_VIEW",
+      "ok": true,
+      "state": "ready"
+    },
+    {
+      "type": "HOST_UI_CANDIDATES",
+      "ok": true
+    },
+    {
+      "type": "HOST_UI_CANDIDATES",
+      "ok": true
+    },
+    {
+      "type": "HOST_UI_VIEW",
+      "ok": true,
+      "state": "ready"
+    },
+    {
+      "type": "HOST_UI_SNIPPET_LIST",
+      "ok": true
+    },
+    {
+      "type": "HOST_UI_SAVE_VIEW",
+      "ok": true
+    },
+    {
+      "type": "HOST_UI_SNIPPET",
+      "action": "locate",
+      "ok": true
+    },
+    {
+      "type": "HOST_UI_SNIPPET",
+      "action": "locate",
+      "ok": false,
+      "reason": "snippet-unavailable"
+    },
+    {
+      "type": "HOST_UI_SNIPPET",
+      "action": "remove",
+      "ok": true
+    },
+    {
+      "type": "HOST_UI_VIEW",
+      "ok": true,
+      "state": "preparing"
+    },
+    {
+      "type": "HOST_UI_VIEW",
+      "ok": true,
+      "state": "ready"
+    },
+    {
+      "type": "HOST_UI_SNIPPET_LIST",
+      "ok": true
+    }
+  ],
+  "sourceChangedDuringRun": false,
+  "buildManifestUnchanged": true,
+  "networkGuard": {
+    "mode": "DISPOSABLE_CHROME_REJECT_PROXY",
+    "closed": true,
+    "denied": 20,
+    "counts": {
+      "CONNECT www.google.com": 9,
+      "CONNECT www.gstatic.com": 1,
+      "CONNECT accounts.google.com": 2,
+      "CONNECT update.googleapis.com": 2,
+      "CONNECT content-autofill.googleapis.com": 5,
+      "CONNECT android.clients.google.com": 1
+    }
+  },
+  "package": {
+    "status": "OFFLINE_HOST_RECONSTRUCTION",
+    "releaseStatus": "NOT_RELEASE_READY",
+    "files": 184,
+    "unpacked": "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-snippets-package-m7oj0H/package/extension",
+    "archive": "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-snippets-package-m7oj0H/package/vaiwl-free-host-development.zip",
+    "archiveSha256": "0b331cabe8b95a7e5a483381a339feeb644031a748f3239d57704c5f869ee1b6"
+  },
+  "sourceHashes": {
+    "extension/worker.mjs": "0b80790a6af44952f12d782e55ffa45008778580e1daf5aa447a4b3e2a264009",
+    "extension/browser-bootstrap.mjs": "961284ccdf807fa799b81c512607808d9a143ca6070f98aaedf28e26e87fc554",
+    "src/runtime/host-browser-bootstrap.mjs": "5a7e89e900643d7c8e9c1d5f1b4573e4d6d6bf11dfe9fc296e12a62ed38e36e3",
+    "src/runtime/browser-request-context.mjs": "46c6a3bb7d6344422f158b27d5d5dd0887cb44195f257336a6f6310fd7e9522c",
+    "src/host/url-policy.mjs": "fddfafcca2276161e6fd3c908ac896d0dab656fce6cf06aee64f1f442f7ac7e9",
+    "src/b1/identity.mjs": "6d7ca616701826733d4936d8a139395ccf1a3111e025ec6b1035d78c1dc05e99",
+    "src/data/request-deadline.mjs": "cda2ebb4158c05eb911fbb84a1af092cf91f461e3a002bef4b4d23f5a70dfdf7",
+    "extension/config.mjs": "9f38c623f8ef08e684d9b1b71fd0a49c01b736a41e75efc997117370df175c41",
+    "src/runtime/host-worker-runtime.mjs": "fbedb5ad082fc3e95cca9ee92801bfdd46ac94828b6476ec91e7f9d46386b080",
+    "src/runtime/browser-old-send-terminal.mjs": "0ac8c767e1112f053d979ae411662cf1db17fc26501ea35e41ca8b4186514393",
+    "src/host/old-send-terminal-profile.mjs": "a43986f8e54b15c98e9dc3535a9e0bb08820ad2132f0eb0fdf72ace97b227b0f",
+    "src/runtime/shared-host-read-budget.mjs": "ee4e09ea97c144fbe30b029b41251ae8e313503bf706e3b4cd9966a24ae27196",
+    "src/data/hash.mjs": "aef21d1842cdc09b33fef973a9d29f15cb7c0c3f773a6a9d31726b83ffee7b21",
+    "src/runtime/browser-first-send.mjs": "609847013c92f984f0c75a4854b57ba2592eb878704d76a21d7c0364033929e6",
+    "src/host/first-send-profile.mjs": "cf0d76b36fc980a890246d255448f8b29965b5ff12882689d6884e7336e436ff",
+    "src/b1/scope-repository.mjs": "08d5c29e4be60c9b94ac6c7dce3e7fb1c5f2e553979c5a8f872a08d7c0c2bb91",
+    "src/data/schema.mjs": "3b3053fef20deb617fcc7a8cff8401424c7b5537373908974eff7143efb0f2ab",
+    "src/data/free-policy-initialization.mjs": "e0a358b12ea9454f5ee657612e4c83c247ba895b082a362be9186f4b7e898a32",
+    "src/data/known-anchor-key.mjs": "e5d91c902e04440be924ef0506ff688bbbccd83150610f50199b518bcb298df3",
+    "src/data/repository.mjs": "afae2c733965935e87cab5238d3b011cdb92545662d198c14e9042f8ae77dd0b",
+    "src/data/free-time-policy.mjs": "8a75b5bdde8abf8ee07873ecf2aa45a19faccd030b9f03c738b56db6ba9ea17a",
+    "src/navigation/projection.mjs": "36334b5da4bd8e89718bf45b69723f4a657d46797c03c653298aaa3392399f24",
+    "src/data/activity-version-fence.mjs": "4ad8bee9665e2037b1be7eb1c871b024001adb25c8b630115e1a9c1ce97f36fe",
+    "src/data/native-repository.mjs": "e1be6cfa881f15a32c988d8ffc35bba5cb27b79f8ee144f204c92b21814f1228",
+    "src/data/continuation-evidence-reader.mjs": "df6058de242ec65cf2c371fedd0cebb0c90da110f76a9d2fc172447be50f82b7",
+    "src/data/free-evidence-partitions.mjs": "c1cdd10d9c6a6a142759fa7589b55a1607a4518260677abb3145ea00907a0ead",
+    "src/data/free-evidence.mjs": "f0e6e9c36330c9c94e8bed11b06b92acfa0d76725f8afe70af6fee5b0afab680",
+    "src/data/observed-send-anchor.mjs": "f9dbb9278502a325c2263d4adeb99ea1c0159525d505728fe84fdee2d59980da",
+    "src/data/free-activity.mjs": "2d961ee56aaddada429ba684cf08ba1aa4a4886204f2d3a43d3b52843da7de46",
+    "src/data/state.mjs": "df0eaff00a7f050c37653f0e740b8fabe19bce571c5e37f4ce437d180984c62a",
+    "src/data/preferences.mjs": "1fb8395c5dfe23d64c91095b71a1c117b9762b3ccec68e262aaf73744b12c9d7",
+    "src/data/evidence-ref-directory.mjs": "8a89bf5b8535578881c823077554f177098044214a22fcfaf4be41e65498c867",
+    "src/data/verified-record-cache.mjs": "9b7b3c13abdd37f2b6d4fad48b85707a9815538fd793cad537f8e87b8f08cde0",
+    "src/data/native-observation-continuation.mjs": "3222a09592efd5c904cc65e036976f2f08bb260a9e639c83bcfddbd025dedee8",
+    "src/data/native-facts.mjs": "98dc17aedc9cf675fed8d720a181422956f79fd6784a4040327788a69e8c3c93",
+    "src/data/native-partitions.mjs": "47ed02c63eff94900b0b4de16844df020488ff7b4675a433ff31faa5b6e89510",
+    "src/data/native-version-index.mjs": "e6d79fd5ff6c1091469c6a50f2981efa8a82dbf3e6b1b29eaccaa667b31a87d1",
+    "src/data/capture-json-snapshot.mjs": "d082508f8186c38c71e83e0cc8653501fcf6afde67e941b8ce8803f04106ade8",
+    "src/data/native-index-migration.mjs": "69b9275e7a58878aba4eba800eb324140ac84c0730d31dcb4f3a067d29dda6a2",
+    "src/data/native-partition-audit.mjs": "3cd490dc6e38459d1562d8b2a8ec277911fe46782cb55840965fb045182f247f",
+    "src/data/audit-record-prefetch.mjs": "5af85b5c8a90e0a1d236fdec784b77ee970f7ea251e18b4be386a34e909d6b7c",
+    "src/data/native-index-writer.mjs": "8997d4b49ec05252e462ee91e36f3e76ec7433283eff2e725024d28d00e1a74d",
+    "src/data/native-index-reader.mjs": "f04cbd728a930d9b6c780ee9a59642fab3f28420de0e02a9aec5c769f420fc64",
+    "src/data/free-projection.mjs": "fe87590005120f89ab41571fe9bf8ae566918748ab543e0ac172fb63274c8a48",
+    "src/data/free-evidence-repository.mjs": "64d0ea73914e840c1783e7a4a9408584a5523c14c715c6be24d998418679f240",
+    "src/data/evidence-directory-writer.mjs": "9ff0c941904e155c736a29e1d232e4fecf67d7995c5d4b6907a12b0f54102944",
+    "src/data/evidence-directory-migration.mjs": "75328ab40b3327d9e9c60c44402d87ea3afc9bd385eeb3ba2f0a14036fc1b135",
+    "src/data/evidence-partition-audit.mjs": "3aadf876de681cc97ef5564119da7a2c691c45a472434d6e8f7080ae02d3aa79",
+    "src/data/evidence-directory-reader.mjs": "7ef90c7a37a82b2ce4562acb6afc56e4ae36d14543c776893664b79869fa895b",
+    "src/data/shared-directory-retention.mjs": "3e90e8d91485b2ab2bfdb91f326b1fa693ab978f6a105e0ceffd18dbd3968cb5",
+    "src/data/shared-directory-reader.mjs": "23d34f68b0dedce591ef2b99bb539a7eb56efff619d6c80ec959290f500672d7",
+    "src/data/shared-ref-directory.mjs": "995be9ccc613720e97b807d8a98ed80a336ec79ebb13b4521316548848f10626",
+    "src/data/partition-manifest.mjs": "566283402493ada28abc530354c343bc6c561e309d1e6802c981d62584a5e06a",
+    "src/data/cooperate.mjs": "ce494a33280143e1e2a2227a72413da792330311de12642a9a56b13704f2f3b4",
+    "src/data/shared-directory-migration.mjs": "0cd415f9a871b93613c3d9f3e301982cda2d1891dc847d983397f87dc2dcf0df",
+    "src/data/shared-directory-writer.mjs": "9e933860ea5b331ee78f3df09431b65925e3930e22ee55b11b692c9c764bf1b8",
+    "src/data/shared-partition-audit.mjs": "25d4b77561b36b150ce1524e27e184170f3c1ef493995251a88678908d31f6cf",
+    "src/data/partitioned.mjs": "4b66c51d98ddf85bcba4121ff0257a35f9df64b7cfcf9ff2ec7f5d865094a710",
+    "src/data/shared-directory-recovery.mjs": "e04870124d9cd873a8af8b3643fd3d2fa5bdb33c69809e7bbf667bb2aa4727cf",
+    "src/data/backup.mjs": "bb0a8639d02e2169ae15e866a464f1531b7e80e40afd7c8a4b35e99d70928396",
+    "src/data/evidence.mjs": "f84032c9a2fc08455480652b60de6fb9394a70e82a7ace8729186ff097b26238",
+    "src/data/known-anchor-backfill.mjs": "dd58e613da9564668fc7963135dd98caccf3bd6930e532864e68d9ff6afd55ca",
+    "src/host/chatgpt-observed-profile.mjs": "3c4774adb195d40f26518d79e43efb8b969d5621e9db165e0705847a2399550a",
+    "src/host/native-surface-boundary.mjs": "da860ef75e1fbb560cd7155589576cdc5283df21fef366fb3e6ef33984daaa6a",
+    "src/host/current-body-discovery.mjs": "b6c78564eb4470b85cf316e5d737182b854aad2b2e4e1d56a24750c91c503fe0",
+    "src/host/surface-discovery.mjs": "cc3e6947b242b3a205f6d61d2e4d50a032fb946ed3ad4607b3d35bf52ed61af4",
+    "src/host/bounded-handle-registry.mjs": "ea3a48ed3760741b8d845b4116830cffc611571b6fd01bb9561bd8a63efdee5c",
+    "src/host/contract.mjs": "35129aacf2a7e1fe1812c846379563d60ad74a66b689ad41bc38d76484a97716",
+    "src/runtime/host-binding-service.mjs": "5ecc99d7c9c5d1924432491169771ffc185721fa8d05d906a4e9c40acdbc6830",
+    "src/runtime/context-recovery/no-receipt-recovery.mjs": "14d2382c12f250de8386837a1b0845e60f7c1f1297245dbc8e4ee67d87ec2513",
+    "src/runtime/isolated-session-owner.mjs": "8c3ef00c36a387c6664e3f24910ba317f7d3a7b9d2216f70f9823d7700c0061c",
+    "src/runtime/host-entry-calibration.mjs": "25e59ade903d92af3bd70f8e7d205c8ac2d054ca6cabcaad5da41a7def1393c6",
+    "src/runtime/host-ingestion-pass-owner.mjs": "42716372e8f9d57f33d1a75d27c9fae1016d868cdd1eb87b90c712e8b3981347",
+    "src/runtime/host-old-send-terminal.mjs": "69d794d01b2ef6f60a9b466a8583a3d020a28906c8bda1381557af57e6b36a29",
+    "src/runtime/old-send-terminal-readback.mjs": "c090d556d487b58771ae56ed408547c37e893e7a78e26838a47a528fbd459fce",
+    "src/runtime/host-activity-source-admission.mjs": "2832d39f8dad1c0868606aede14063edc7ed75df403f2c4eda6ab956d8fd6e14",
+    "src/runtime/evidence-source-incarnation.mjs": "001633d4fa680ef18f8aba3b6d4d585fad4436d69263b45396b1851ad61b3920",
+    "src/runtime/send-ack-admission.mjs": "25c9033baee468e771b8f1d6d74764e619bcda669b2eaf658985e4208b349696",
+    "src/runtime/historical-send-profile.mjs": "b356d5fc7101080ba60910edc0175180924c548269816dd98900f2055195f4c9",
+    "src/host/conversation-metadata.mjs": "7b15c94caf597dde10373550ff1330deeee43b969453d1bfdc04c75da021e5c9",
+    "src/runtime/host-historical-send-owner.mjs": "dd0901b6c0739146db14371fab1284c37ab43fa0e106406d51e7c7e308b76bce",
+    "src/runtime/host-first-send.mjs": "44b175a4c7f41f903b19275c84d5f1269dd179eb7c1775a87ca81fa97cbac816",
+    "src/host/first-send-causality.mjs": "cd062c0b638408b387bb469f76dac3ea389acd9943bd42c1545ac8f0a08905e6",
+    "src/runtime/first-send-readback.mjs": "4052d39db39d2e5053bb4287cde87fd45ddcce844420099203950ea68a9691f6",
+    "src/runtime/host-current-navigation.mjs": "081db9b2c4d5988f670c0022b107279ffbaaf9cf257b5c07b76ddad01fa90ea7",
+    "src/host/current-navigation-plan.mjs": "c33cfd6af8e7523ac85fe812b59b2e24df109d4e03a3d507b9edab6b53d413ff",
+    "src/runtime/host-send-ack-owner.mjs": "7e4362115828c9b68ff3a34923587c2711e6df854d119b9b3d3a1d91b5830fc5",
+    "src/runtime/host-candidate-service.mjs": "0ae6ff996262e89550bc49709e96647c5a738f33ca44409d465b39bf5c5af4fd",
+    "src/host/candidate-presentation.mjs": "d2a89c85c263de8f1572c8fe12e7fc1400bd4201fed7c3adb9aede868cd6cc4a",
+    "src/runtime/host-snippet-service.mjs": "15c63959f85f73e6be7eb194c4534120bcfabe23ec17746b6b063977bdb75cae",
+    "src/runtime/host-backup-service.mjs": "e683314620f68e590704e61bac86d5bb86929b30dc357527e45c2166a0d7075d",
+    "src/host/backup-transfer.mjs": "69b9c025e80993644ba8b37fdf77ccb9662d4050fae66e847b98b3663f59122a",
+    "src/runtime/host-send-candidates.mjs": "9b7655ee312baaeb6b923eb6c2ffb221e1c43c66dc95716e2f1383f4b8a32298",
+    "src/host/send-correlator.mjs": "fa3c6edda97e65a3ded253dcbb636e995cd524b66e81363968c22efa0e11f964",
+    "src/runtime/current-metadata-reader.mjs": "1cdba18251ba98ae0b8aa159170bfd77675fce1cbfaa8ff0429c5d623050726c",
+    "src/runtime/host-recovery-service.mjs": "11aa3af786c19f2ccc1de9ec4f8354ac691a88484b788cf9f438d2e0a5913de4",
+    "src/runtime/host-continuation-owner.mjs": "f4d2dd6393d36fe7708beb9020571a4c11f63459dc4f3075ffbfa982e5e65630",
+    "src/runtime/free-read-service.mjs": "3ab29a0e6cdb27bfee3f0e4334f6b075caffa3815ff4d015003f3d4185a072d1",
+    "src/data/free-recovery-status.mjs": "21b871a60c1dfc2c7c67964f30f1852c33ee225a3d9df1271a518e7850e51bb4",
+    "src/runtime/host-view-service.mjs": "06de1c8b8e3019f7017517dcf27812b598eb0194b71ae4f38a44995d57289395",
+    "src/runtime/free-project-location.mjs": "45892565ac8896feb97872c59e3b504d0563b6e461c3da49d838c1359991e649",
+    "src/navigation/free-view.mjs": "ef0f8d6b798789539d16bdc3ae1d8cc66ccf5fc32f472b83ca2c475863946aaa",
+    "src/host/frame-resume-state.mjs": "bf810daee6201c00681d742edb62480b161635448aacbe8d32c23539212988db",
+    "src/host/frame-row-windows.mjs": "5ff48b95d0e45aba9ca779f08b5c0c4a9a4056826ffcc94d47a8c03323d42b3b",
+    "src/runtime/host-auto-time-policy.mjs": "90838ac5e0c95262911bb05289e13abe659662b7ea08255edfce14e7665516f3",
+    "src/runtime/free-working-set-projection.mjs": "b50b973005612c5d9d76cff9a4acd6d6fc23d006dea787d681c534385629ff4f",
+    "src/runtime/free-search-projection.mjs": "354fd7098b8bd695fb281f6641388127347306e63186057c9b0604f92fc224dd",
+    "src/navigation/search.mjs": "36fe6eda63bd85ff203a306a78309a91979dd9705b2cdb2b64c1f764c2e2b8d0",
+    "src/runtime/free-view-owner.mjs": "fda3b75a5fcca2d7095a220783563b847f966325ad75760a0fb40629d4860974",
+    "src/data/read-recovery-budget.mjs": "7c7948a740dcc37f9a2a6b25babe8c29cd2d84441299c1429c7e524402cc8c51",
+    "src/data/free-header-loader.mjs": "7817a581a7816d744b39ed8fa37d49eb86da065335e2f46ec190fa9fae18e7cb",
+    "src/data/free-page-loader.mjs": "c4339dfa76cfab89aa1f16b40129ee9f7c779233d5d03ff2134f551a8f9b0d65",
+    "src/data/free-replica.mjs": "11326c574b31ce1fc4c93bf712b812f0d3181f0254ec08ec22e8588836dd81dc",
+    "src/navigation/current-index.mjs": "23f13e4d9556715bb029ad6724b8a3731ba87251d6ddfd8e95939085ebfab21e",
+    "src/runtime/free-frame-projection.mjs": "a8de327a846dd292c4c09c224d6769a8802e87c67984a51bd29eab9b4634075c",
+    "src/runtime/host-ui-owner.mjs": "8f5fcd9e30da40e75567943159ba026d87eeb8e6842cbea22d52fbb103aee110",
+    "src/host/ui-grants.mjs": "391215f92dcb238f329c302b1a90476776d47a4e981727458b7278f113d71330",
+    "src/runtime/host-observation-owner.mjs": "3b23b073ad652a52b7777dc46ee603d967e72afc4ef462295410d09eb6a77c87",
+    "src/runtime/native-source-incarnation.mjs": "75d8d86a6b71d6c2e24dd7158a37a63fcda6cb02d77552d8c3ccf8b60354a638",
+    "src/host/current-observation-batch.mjs": "f7fcd583d0811a8b71d72dc5bac4ba4c57eae16e552076aa08d5a50f42b45151",
+    "src/host/send-intent-claim.mjs": "1e399b5af40affb0500f744f0c2c8aa5f0dc935cdbbd054dff1e483cda1f971f",
+    "src/host/current-body-claim.mjs": "e082ed353a0bb81c7762a65ffa258a375391ca3194618f2a9888fee0c357e13a",
+    "src/host/surface-batch.mjs": "4733a8cecdc3f4664c77da81d12441c9f2bd7cf0c16e55ec93eb94076faa4e5d",
+    "src/b1/document-binding-broker.mjs": "1f247c0fa2b3a05c5f2ae11dda39df04de9c79628b7753715bdafcadbc842aec",
+    "src/b1/host-document-handshake.mjs": "fafe938904e635da9964d222fe7dce8cc98cb5eda6501420af464c95b4a9cc6b",
+    "src/runtime/scope-authority.mjs": "539155b05656783946d284a50d6b76dbe1aa48bc5f98600825017a7ce1fce04c",
+    "src/runtime/session-provider.mjs": "35dd6efaf6ddd2230eaa7cae7da5f0be4a6b13822357130e596490ba1f42c799",
+    "src/host/session-identity.mjs": "019f0f9da61cd0fa911dda747dd52a6b328876582e4a70a7ddf1c3daaade347d",
+    "src/host/conversation-acceptance.mjs": "92fdfc486bd9614028aacc197b99a26b8ad3ae254e54a980a04b0a1e90153144",
+    "extension/content-entry.mjs": "7aba207dad1b6979a38a92d655047f6101fe221dcaee0fefc025e58bcb9e56f9",
+    "src/host/loopback-project-association-profile.mjs": "31cd5af21c95337f732c6ca4f0971d0c8ad9642d678f0e77f650094e076adc71",
+    "src/host/temporary-native-navigation.mjs": "b778ec2c049636d022e8883f6a185cc0325634fd40a8ed2ce206f95f91064388",
+    "src/host/local-status.mjs": "8b42de228a85e76760d9474c3a92a331f1d612a3e45c1112e25c98983bb2a79d",
+    "src/host/isolated-session-reader.mjs": "20a84db698f7f7992595b2413f55700b467e858064158292db961f4786642840",
+    "src/host/context-association.mjs": "e589ecda593fb2ae08d0e0a28e9f002e31b90c754bfa2e2de65cb403ab885ff0",
+    "src/host/project-context-association.mjs": "46c098890d73b560ca5b7666eb48eb057f8390184e8d5d73ba70871e10029577",
+    "src/host/chatgpt-adapter.mjs": "67dbd02eff53264421ae4b4d24c2606c10392116fb0e1482e44e3a102466ab0a",
+    "src/host/native-project-surface.mjs": "8751d9b248bba8dac316d40997ca0938dd57aa56173e228a1704ffbaf69f4a15",
+    "src/host/native-return-gap.mjs": "1b837b5af6ca015780121388fc009d8e878ef453e97f818164ec3c984fd7698c",
+    "src/host/native-history-list.mjs": "24cedfafbfb3f5c2ea5ee0116b3a24aa18d1b96e20612b4257e9351953f7ee65",
+    "src/host/native-return-slot.mjs": "a2c19a6d7e082a8ff82ab8f8c5c4b5adaa4188f21b8c31ab95dfd5826b97f803",
+    "src/host/surface-fragments.mjs": "1fbae58e227c4c3cfbefb991ee1f7c469a9225ac2360940b23b5cfc999555d74",
+    "src/host/native-input-risk.mjs": "ff4407f492fec8c4677ecab8eb2ca69f1b5fb1bfaeb39f38213030b16ba1b0b5",
+    "src/host/native-send-intent.mjs": "f1d32ff506e8a289d6b6a46ae91043ea1d49c666265418af6a80a384caf53d30",
+    "src/host/native-snippets.mjs": "2e4c039073450d55cda5c09c30b7ceebfc9f0141b30a85c7c7d19a1a1bb2a142",
+    "src/host/native-actions.mjs": "fd8369de4ee00629ad90d8046b6166410e0b257e59eafcb6547f6c5fbf3981be",
+    "src/host/content-session.mjs": "371f237b0fecb10a12543ec283e9ef6e6722e63777882bc01c4aeb9d4f19b8c4",
+    "src/host/candidate-upgrade.mjs": "480569f2a94916408f5cb00a830f61a9d150624b4416642660879790ee85ef5a",
+    "src/host/content-candidates.mjs": "8fa2eb65858bea846f2b78303ae6a3d45e9df959e08cf93c75b2c6d04b3e68dc",
+    "src/host/candidate-page-window.mjs": "b8e741b7f46a9a0468255d56261b3c39d47e27d31d6ca87442ef32ff055d33cc",
+    "src/host/snippet-capture-wait.mjs": "8d97f82660a0fb30ebf9e904f2d9f46ba25c932e3f3efaa7895b5ad6d5f7210c",
+    "src/host/snippet-selection-session.mjs": "00f64ead49305f277ab739db7fc7162d907f2a3d2ec7b30f3e51d4c232d333d8",
+    "src/navigation/mount-surface.mjs": "b25ab416c7e76beb0eebe34c811f9241f3d848c3dc5d85640a456d19c0e0d311",
+    "src/host/surface-controller.mjs": "33079a20bc2ea4c1963a158ae899e0fbeef21a0e730be1082ea62b9b8d74becd",
+    "src/host/frame-appearance.mjs": "b393fb7be24fb0f0834d239d3ede9503f08cbef98f6fd3cc4b64312fac3b5972",
+    "src/host/frame-native-plans.mjs": "49c776435c03ba5188fb71ff89b11cb6f374bb5aad25532fea926f9674ae8d29",
+    "extension/workspace.mjs": "bf2eb026da73b65a5969d2c6d9a187e2350481c19b63f1a97efc93df6419fc64",
+    "src/host/free-frame-client.mjs": "1039437fdbbf8385a77330b07f5baa0b3dcd175a0cdd78f0450c17ff06e3a28c",
+    "src/host/free-frame-read-error.mjs": "a9b79c25aeabe0ad52be21fccb9e827b603be151b42dbafeb96b665771f72265",
+    "src/host/frame-candidate-migration.mjs": "1ad0ad8ee057e342316bc515b993795fc222dcaa08d1ff694ba6087b926407be",
+    "src/host/free-frame-candidates.mjs": "4dd038d00bd7b5fd047a4defe488ec49236106e9075df28059eb5673ee9f1665",
+    "src/host/free-frame-snippets.mjs": "7ed2789f82ac09bdac36cd4722c29ecb799a7a89c70739903dc8a2546ddfab61",
+    "src/host/local-panel-focus.mjs": "ce29e6b1c542dbe2be000a517ffaa56a1fca21088219973326808025cb64cdfa",
+    "src/host/free-frame-backup.mjs": "433e747331d90eeb3af8b2de0efb29d1603d1a45759bfa1b0dbb1f0ac524d552",
+    "src/host/free-frame-recovery.mjs": "471aa5717a31dcf8e3deac9b767b0b747fae53198090b08eff47923171bd91ca",
+    "src/navigation/free-recovery.mjs": "20352a2a9a37bfdac9d0889d87efaf80510bf7462df3fba1ceef1e4eac3c0442",
+    "src/host/ui-frame-client.mjs": "7ee9218fe396c539cefe56e8d1b4cd65ea8a7de3b2656b2f6515cb1b519815f1",
+    "src/navigation/navigation.mjs": "1dca184d2bc6c53e23eda7d5a63822f7607a6a5c2a4fedae050209a11ab99941",
+    "src/navigation/icons.mjs": "14195d8a7a21a029278ff6f9bf0bb1add2d679b37666108d80cfadabe312d2fd",
+    "src/navigation/styles.mjs": "be040fff4e0f768da9c708a2ace2a52c86039dd47363ecb5f5dda1da848a1107",
+    "extension/sidebar.mjs": "6151804205b8393cabfff2d4b2e3deaca3a36beac14d07198ca0295d3d4a3ce6",
+    "extension/status.mjs": "f03ecaf280ceb4e967dac9ae8e55db3404981b7e836e77947a3ebb466897f591",
+    "extension/temporary-navigation.mjs": "a62ae7b41b83de18880faebf42b59f0a45999d28a8f506344b3e19dceb459db2",
+    "extension/temporary-content-entry.mjs": "d13222e0bf8be8c629408ea388c0a8dfcc9d5c57c32a0deb78d64f0776018624",
+    "extension/frame-shell.css": "471ebf615b50b5adac417d7ad6205cf0ec1e2da82372eb8b42705151809829f4",
+    "extension/workspace.html": "1d8d939f9deca25ae47afb1f5e0cdbffaceb85ea6e6be972edd0dea4bfed8f55",
+    "extension/sidebar.html": "95cfccf90ac7355305faeb6f9aa20f8477b8eb4ed05f8dab8db2580066222c3d",
+    "extension/status.html": "4540871802f6daf6b35f8b1767dee7f7bb586cf8a29ae147b659c587ad76205b",
+    "extension/status.css": "bc01e7292382621af7066a117fba9b4cd6a720960e073098ecb96eb1ed313799",
+    "extension/build.mjs": "39b884d826f6c2f68ffb86d99033b9ccaf2e54540100a16a1bee278542232dbf",
+    "extension/classic-worker-build.mjs": "87275509401785d49ce134d0780a06e587dc8d303eacf91aab7a22752c3007b5",
+    "extension/tooling/package.json": "eae0628aefa50bf39eab0053f7ff0abb687f30c84607220e4ff0dae7b8e664d1",
+    "extension/tooling/package-lock.json": "4609d990146911013da85142a111efcd9209a26f3d51ce56a83d5d6a3bb58180"
+  },
+  "buildManifestHash": "828e56894ef63c2cda42aa1d849e1bd4b00aa1fe15690feee6be2ac9257e3219",
+  "runnerSourceHashes": {
+    "tests/host/snippets-package-mv3-browser.mjs": "980dd186c6a457f804ec169d5ed9ba03236c8953b190fce658cc68f1a39e79c4",
+    "tests/host/snippets-presentation-probe.mjs": "2ed87d16f8d31a9855a3c2ffede208171a9c4c6881a0d5b7bacc6a8aebc81306",
+    "tests/host/snippets-runner-lifecycle.mjs": "eaf927f21f92d316dcde607f1f990aef5692f2c652be7df48f07d7f96a3c553f",
+    "tests/host/isolated-browser-cleanup.mjs": "c3d4a053d485efbd86a487ac1e4257849120b30939e63be346ceceaaea2fafb0",
+    "tests/host/historical-network-guard.mjs": "e38719134f6087c3efbc66044922967262a6c2e585c11a7ee69b5016b22dc416"
+  },
+  "scriptHash": "980dd186c6a457f804ec169d5ed9ba03236c8953b190fce658cc68f1a39e79c4",
+  "presentationDiagnostic": {
+    "kind": "PASSIVE_PRESENTATION_DIAGNOSTIC_NOT_ACCEPTANCE",
+    "initial": {
+      "surfaces": [
+        {
+          "node": 1,
+          "connected": true,
+          "open": false,
+          "buttons": [
+            {
+              "node": 2,
+              "target": 1,
+              "action": "hide"
+            }
+          ]
+        },
+        {
+          "node": 3,
+          "connected": true,
+          "open": false,
+          "buttons": [
+            {
+              "node": 4,
+              "target": 3,
+              "action": "hide"
+            }
+          ]
+        }
+      ],
+      "returns": [
+        {
+          "node": 5,
+          "connected": true,
+          "visible": true
+        }
+      ],
+      "readingVisible": true
+    },
+    "events": [
+      {
+        "type": "pointerdown",
+        "trusted": true,
+        "at": 435.2000000476837,
+        "target": 5,
+        "oldState": null,
+        "newState": null,
+        "defaultPrevented": false,
+        "snapshot": {
+          "surfaces": [
+            {
+              "node": 1,
+              "connected": true,
+              "open": false,
+              "buttons": [
+                {
+                  "node": 2,
+                  "target": 1,
+                  "action": "hide"
+                }
+              ]
+            },
+            {
+              "node": 3,
+              "connected": true,
+              "open": false,
+              "buttons": [
+                {
+                  "node": 4,
+                  "target": 3,
+                  "action": "hide"
+                }
+              ]
+            }
+          ],
+          "returns": [
+            {
+              "node": 5,
+              "connected": true,
+              "visible": true
+            }
+          ],
+          "readingVisible": true
+        }
+      },
+      {
+        "type": "pointerup",
+        "trusted": true,
+        "at": 435.7000000476837,
+        "target": 5,
+        "oldState": null,
+        "newState": null,
+        "defaultPrevented": false,
+        "snapshot": {
+          "surfaces": [
+            {
+              "node": 1,
+              "connected": true,
+              "open": false,
+              "buttons": [
+                {
+                  "node": 2,
+                  "target": 1,
+                  "action": "hide"
+                }
+              ]
+            },
+            {
+              "node": 3,
+              "connected": true,
+              "open": false,
+              "buttons": [
+                {
+                  "node": 4,
+                  "target": 3,
+                  "action": "hide"
+                }
+              ]
+            }
+          ],
+          "returns": [
+            {
+              "node": 5,
+              "connected": true,
+              "visible": true
+            }
+          ],
+          "readingVisible": true
+        }
+      },
+      {
+        "type": "click",
+        "trusted": true,
+        "at": 435.7000000476837,
+        "target": 5,
+        "oldState": null,
+        "newState": null,
+        "defaultPrevented": false,
+        "snapshot": {
+          "surfaces": [
+            {
+              "node": 1,
+              "connected": true,
+              "open": false,
+              "buttons": [
+                {
+                  "node": 2,
+                  "target": 1,
+                  "action": "hide"
+                }
+              ]
+            },
+            {
+              "node": 3,
+              "connected": true,
+              "open": false,
+              "buttons": [
+                {
+                  "node": 4,
+                  "target": 3,
+                  "action": "hide"
+                }
+              ]
+            }
+          ],
+          "returns": [
+            {
+              "node": 5,
+              "connected": true,
+              "visible": true
+            }
+          ],
+          "readingVisible": true
+        }
+      },
+      {
+        "type": "beforetoggle",
+        "trusted": true,
+        "at": 435.8000000715256,
+        "target": 1,
+        "oldState": "closed",
+        "newState": "open",
+        "defaultPrevented": false,
+        "snapshot": {
+          "surfaces": [
+            {
+              "node": 1,
+              "connected": true,
+              "open": false,
+              "buttons": [
+                {
+                  "node": 2,
+                  "target": 1,
+                  "action": "hide"
+                }
+              ]
+            },
+            {
+              "node": 3,
+              "connected": true,
+              "open": false,
+              "buttons": [
+                {
+                  "node": 4,
+                  "target": 3,
+                  "action": "hide"
+                }
+              ]
+            }
+          ],
+          "returns": [
+            {
+              "node": 5,
+              "connected": true,
+              "visible": true
+            }
+          ],
+          "readingVisible": true
+        }
+      },
+      {
+        "type": "beforetoggle",
+        "trusted": true,
+        "at": 436,
+        "target": 3,
+        "oldState": "closed",
+        "newState": "open",
+        "defaultPrevented": false,
+        "snapshot": {
+          "surfaces": [
+            {
+              "node": 1,
+              "connected": true,
+              "open": true,
+              "buttons": [
+                {
+                  "node": 2,
+                  "target": 1,
+                  "action": "hide"
+                }
+              ]
+            },
+            {
+              "node": 3,
+              "connected": true,
+              "open": false,
+              "buttons": [
+                {
+                  "node": 4,
+                  "target": 3,
+                  "action": "hide"
+                }
+              ]
+            }
+          ],
+          "returns": [
+            {
+              "node": 5,
+              "connected": true,
+              "visible": true
+            }
+          ],
+          "readingVisible": false
+        }
+      },
+      {
+        "type": "toggle",
+        "trusted": true,
+        "at": 465.5,
+        "target": 1,
+        "oldState": "closed",
+        "newState": "open",
+        "defaultPrevented": false,
+        "snapshot": {
+          "surfaces": [
+            {
+              "node": 1,
+              "connected": true,
+              "open": true,
+              "buttons": [
+                {
+                  "node": 2,
+                  "target": 1,
+                  "action": "hide"
+                }
+              ]
+            },
+            {
+              "node": 3,
+              "connected": true,
+              "open": true,
+              "buttons": [
+                {
+                  "node": 4,
+                  "target": 3,
+                  "action": "hide"
+                }
+              ]
+            }
+          ],
+          "returns": [],
+          "readingVisible": false
+        }
+      },
+      {
+        "type": "toggle",
+        "trusted": true,
+        "at": 465.5,
+        "target": 3,
+        "oldState": "closed",
+        "newState": "open",
+        "defaultPrevented": false,
+        "snapshot": {
+          "surfaces": [
+            {
+              "node": 1,
+              "connected": true,
+              "open": true,
+              "buttons": [
+                {
+                  "node": 2,
+                  "target": 1,
+                  "action": "hide"
+                }
+              ]
+            },
+            {
+              "node": 3,
+              "connected": true,
+              "open": true,
+              "buttons": [
+                {
+                  "node": 4,
+                  "target": 3,
+                  "action": "hide"
+                }
+              ]
+            }
+          ],
+          "returns": [],
+          "readingVisible": false
+        }
+      },
+      {
+        "type": "beforetoggle",
+        "trusted": true,
+        "at": 467.3000000715256,
+        "target": 1,
+        "oldState": "open",
+        "newState": "closed",
+        "defaultPrevented": false,
+        "snapshot": {
+          "surfaces": [
+            {
+              "node": 1,
+              "connected": true,
+              "open": true,
+              "buttons": [
+                {
+                  "node": 2,
+                  "target": 1,
+                  "action": "hide"
+                }
+              ]
+            },
+            {
+              "node": 3,
+              "connected": true,
+              "open": true,
+              "buttons": [
+                {
+                  "node": 4,
+                  "target": 3,
+                  "action": "hide"
+                }
+              ]
+            }
+          ],
+          "returns": [],
+          "readingVisible": false
+        }
+      },
+      {
+        "type": "beforetoggle",
+        "trusted": true,
+        "at": 467.60000002384186,
+        "target": 1,
+        "oldState": "closed",
+        "newState": "open",
+        "defaultPrevented": false,
+        "snapshot": {
+          "surfaces": [
+            {
+              "node": 1,
+              "connected": true,
+              "open": false,
+              "buttons": [
+                {
+                  "node": 2,
+                  "target": 1,
+                  "action": "hide"
+                }
+              ]
+            },
+            {
+              "node": 3,
+              "connected": true,
+              "open": true,
+              "buttons": [
+                {
+                  "node": 4,
+                  "target": 3,
+                  "action": "hide"
+                }
+              ]
+            }
+          ],
+          "returns": [],
+          "readingVisible": true
+        }
+      },
+      {
+        "type": "beforetoggle",
+        "trusted": true,
+        "at": 468.89999997615814,
+        "target": 1,
+        "oldState": "open",
+        "newState": "closed",
+        "defaultPrevented": false,
+        "snapshot": {
+          "surfaces": [
+            {
+              "node": 1,
+              "connected": true,
+              "open": true,
+              "buttons": [
+                {
+                  "node": 2,
+                  "target": 1,
+                  "action": "hide"
+                }
+              ]
+            },
+            {
+              "node": 3,
+              "connected": true,
+              "open": true,
+              "buttons": [
+                {
+                  "node": 4,
+                  "target": 3,
+                  "action": "hide"
+                }
+              ]
+            }
+          ],
+          "returns": [],
+          "readingVisible": false
+        }
+      },
+      {
+        "type": "beforetoggle",
+        "trusted": true,
+        "at": 469.10000002384186,
+        "target": 1,
+        "oldState": "closed",
+        "newState": "open",
+        "defaultPrevented": false,
+        "snapshot": {
+          "surfaces": [
+            {
+              "node": 1,
+              "connected": true,
+              "open": false,
+              "buttons": [
+                {
+                  "node": 2,
+                  "target": 1,
+                  "action": "hide"
+                }
+              ]
+            },
+            {
+              "node": 3,
+              "connected": true,
+              "open": true,
+              "buttons": [
+                {
+                  "node": 4,
+                  "target": 3,
+                  "action": "hide"
+                }
+              ]
+            }
+          ],
+          "returns": [],
+          "readingVisible": true
+        }
+      },
+      {
+        "type": "toggle",
+        "trusted": true,
+        "at": 469.8000000715256,
+        "target": 1,
+        "oldState": "open",
+        "newState": "open",
+        "defaultPrevented": false,
+        "snapshot": {
+          "surfaces": [
+            {
+              "node": 1,
+              "connected": true,
+              "open": true,
+              "buttons": [
+                {
+                  "node": 2,
+                  "target": 1,
+                  "action": "hide"
+                }
+              ]
+            },
+            {
+              "node": 3,
+              "connected": true,
+              "open": true,
+              "buttons": [
+                {
+                  "node": 4,
+                  "target": 3,
+                  "action": "hide"
+                }
+              ]
+            }
+          ],
+          "returns": [],
+          "readingVisible": false
+        }
+      },
+      {
+        "type": "beforetoggle",
+        "trusted": true,
+        "at": 504.8000000715256,
+        "target": 1,
+        "oldState": "open",
+        "newState": "closed",
+        "defaultPrevented": false,
+        "snapshot": {
+          "surfaces": [
+            {
+              "node": 1,
+              "connected": true,
+              "open": true,
+              "buttons": [
+                {
+                  "node": 2,
+                  "target": 1,
+                  "action": "hide"
+                }
+              ]
+            },
+            {
+              "node": 3,
+              "connected": true,
+              "open": true,
+              "buttons": [
+                {
+                  "node": 4,
+                  "target": 3,
+                  "action": "hide"
+                }
+              ]
+            }
+          ],
+          "returns": [],
+          "readingVisible": false
+        }
+      },
+      {
+        "type": "beforetoggle",
+        "trusted": true,
+        "at": 505.2000000476837,
+        "target": 1,
+        "oldState": "closed",
+        "newState": "open",
+        "defaultPrevented": false,
+        "snapshot": {
+          "surfaces": [
+            {
+              "node": 1,
+              "connected": true,
+              "open": false,
+              "buttons": [
+                {
+                  "node": 2,
+                  "target": 1,
+                  "action": "hide"
+                }
+              ]
+            },
+            {
+              "node": 3,
+              "connected": true,
+              "open": true,
+              "buttons": [
+                {
+                  "node": 4,
+                  "target": 3,
+                  "action": "hide"
+                }
+              ]
+            }
+          ],
+          "returns": [],
+          "readingVisible": true
+        }
+      },
+      {
+        "type": "toggle",
+        "trusted": true,
+        "at": 505.8000000715256,
+        "target": 1,
+        "oldState": "open",
+        "newState": "open",
+        "defaultPrevented": false,
+        "snapshot": {
+          "surfaces": [
+            {
+              "node": 1,
+              "connected": true,
+              "open": true,
+              "buttons": [
+                {
+                  "node": 2,
+                  "target": 1,
+                  "action": "hide"
+                }
+              ]
+            },
+            {
+              "node": 3,
+              "connected": true,
+              "open": true,
+              "buttons": [
+                {
+                  "node": 4,
+                  "target": 3,
+                  "action": "hide"
+                }
+              ]
+            }
+          ],
+          "returns": [],
+          "readingVisible": false
+        }
+      },
+      {
+        "type": "pointerdown",
+        "trusted": true,
+        "at": 553.8000000715256,
+        "target": 2,
+        "oldState": null,
+        "newState": null,
+        "defaultPrevented": false,
+        "snapshot": {
+          "surfaces": [
+            {
+              "node": 1,
+              "connected": true,
+              "open": true,
+              "buttons": [
+                {
+                  "node": 2,
+                  "target": 1,
+                  "action": "hide"
+                }
+              ]
+            },
+            {
+              "node": 3,
+              "connected": true,
+              "open": true,
+              "buttons": [
+                {
+                  "node": 4,
+                  "target": 3,
+                  "action": "hide"
+                }
+              ]
+            }
+          ],
+          "returns": [],
+          "readingVisible": false
+        }
+      },
+      {
+        "type": "pointerup",
+        "trusted": true,
+        "at": 553.8999999761581,
+        "target": 2,
+        "oldState": null,
+        "newState": null,
+        "defaultPrevented": false,
+        "snapshot": {
+          "surfaces": [
+            {
+              "node": 1,
+              "connected": true,
+              "open": true,
+              "buttons": [
+                {
+                  "node": 2,
+                  "target": 1,
+                  "action": "hide"
+                }
+              ]
+            },
+            {
+              "node": 3,
+              "connected": true,
+              "open": true,
+              "buttons": [
+                {
+                  "node": 4,
+                  "target": 3,
+                  "action": "hide"
+                }
+              ]
+            }
+          ],
+          "returns": [],
+          "readingVisible": false
+        }
+      },
+      {
+        "type": "click",
+        "trusted": true,
+        "at": 553.8999999761581,
+        "target": 2,
+        "oldState": null,
+        "newState": null,
+        "defaultPrevented": false,
+        "snapshot": {
+          "surfaces": [
+            {
+              "node": 1,
+              "connected": true,
+              "open": true,
+              "buttons": [
+                {
+                  "node": 2,
+                  "target": 1,
+                  "action": "hide"
+                }
+              ]
+            },
+            {
+              "node": 3,
+              "connected": true,
+              "open": true,
+              "buttons": [
+                {
+                  "node": 4,
+                  "target": 3,
+                  "action": "hide"
+                }
+              ]
+            }
+          ],
+          "returns": [],
+          "readingVisible": false
+        }
+      },
+      {
+        "type": "beforetoggle",
+        "trusted": true,
+        "at": 553.8999999761581,
+        "target": 1,
+        "oldState": "open",
+        "newState": "closed",
+        "defaultPrevented": false,
+        "snapshot": {
+          "surfaces": [
+            {
+              "node": 1,
+              "connected": true,
+              "open": true,
+              "buttons": [
+                {
+                  "node": 2,
+                  "target": 1,
+                  "action": "hide"
+                }
+              ]
+            },
+            {
+              "node": 3,
+              "connected": true,
+              "open": true,
+              "buttons": [
+                {
+                  "node": 4,
+                  "target": 3,
+                  "action": "hide"
+                }
+              ]
+            }
+          ],
+          "returns": [],
+          "readingVisible": false
+        }
+      },
+      {
+        "type": "toggle",
+        "trusted": true,
+        "at": 568.3000000715256,
+        "target": 1,
+        "oldState": "open",
+        "newState": "closed",
+        "defaultPrevented": false,
+        "snapshot": {
+          "surfaces": [
+            {
+              "node": 1,
+              "connected": true,
+              "open": false,
+              "buttons": [
+                {
+                  "node": 2,
+                  "target": 1,
+                  "action": "hide"
+                }
+              ]
+            },
+            {
+              "node": 3,
+              "connected": true,
+              "open": true,
+              "buttons": [
+                {
+                  "node": 4,
+                  "target": 3,
+                  "action": "hide"
+                }
+              ]
+            }
+          ],
+          "returns": [
+            {
+              "node": 6,
+              "connected": true,
+              "visible": true
+            }
+          ],
+          "readingVisible": true
+        }
+      }
+    ],
+    "dropped": 0,
+    "final": {
+      "surfaces": [
+        {
+          "node": 1,
+          "connected": true,
+          "open": false,
+          "buttons": [
+            {
+              "node": 2,
+              "target": 1,
+              "action": "hide"
+            }
+          ]
+        },
+        {
+          "node": 3,
+          "connected": true,
+          "open": true,
+          "buttons": [
+            {
+              "node": 4,
+              "target": 3,
+              "action": "hide"
+            }
+          ]
+        }
+      ],
+      "returns": [
+        {
+          "node": 6,
+          "connected": true,
+          "visible": true
+        }
+      ],
+      "readingVisible": true
+    }
+  },
+  "savedScreenshot": "/private/tmp/vaiwl-panel-snippets-final-saved.png"
+}

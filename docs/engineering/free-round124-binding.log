@@ -1,0 +1,23 @@
+✔ actual broker HELLO → fixed provider → strict BIND; no seeded account or storage read (2.68975ms)
+✔ no valid HELLO or extra authority fields cannot trigger fixed authentication (0.126334ms)
+✔ MOCK service only accepted observations notify; duplicate and rejected carry no new data hint (7.718291ms)
+✔ MOCK accepted other-scope observation never notifies prior-scope frame (1.48825ms)
+✔ MOCK expired document binding suppresses dirty hint even if UI grant was renewed (0.555583ms)
+✔ MOCK accepted SPA observation uses current verified frame scope rather than stale sender URL (0.840875ms)
+✔ MOCK SPA actual route authorizes both UI roles and status despite original sender URL (1.277ms)
+✔ MOCK SPA grants reject subsequent actual document replacement (0.709042ms)
+✔ MOCK SPA grants reject subsequent actual url replacement (0.495334ms)
+✔ MOCK near-deadline revalidation identity-change rejects existing UI authorization (1.870875ms)
+✔ MOCK near-deadline revalidation provider-timeout rejects existing UI authorization (0.985875ms)
+✔ MOCK HOST_REFRESH rejects interleaved A/B/A actual-frame snapshot before provider authentication (0.3365ms)
+✔ MOCK whole HOST_REFRESH deadline includes hanging first frame verification and prevents late provider call (0.291584ms)
+✔ MOCK whole HOST_REFRESH deadline revokes its unpublished grant when final frame verification hangs (0.18725ms)
+✔ MOCK timed-out old refresh cannot revoke replacement grant or revive itself on late frame reply (0.273709ms)
+ℹ tests 15
+ℹ suites 0
+ℹ pass 15
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 74.72625

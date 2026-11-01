@@ -1,0 +1,11 @@
+# Round280 — Actual in-flight old transaction and concurrent owner upgrade
+
+Base b166840. No production changes. Extend the existing installed synthetic MV3 schema runner with a real IndexedDB concurrency case, explicitly copying all eight stores from its verified synthetic database into a version3 fixture. This is a seeded historical-schema mechanism case, not a captured old Host installation.
+
+An existing raw v3 readwrite transaction stays active through bounded request callbacks. The real versionchange event calls close, preventing new transactions with InvalidStateError, but accepted old writes finish in the existing request callback. Actual observed sequence: versionchange -> old write queued -> old transaction complete -> owners0/1/2 open. All three current owners remain unpublished before old commit and open the same version4 database afterward. Complete eight-store content matches exactly the seed plus only the two intended old-transaction writes. The old reopen(3) rejects with VersionError.
+
+The new owner observes committed revision3. Stale revision CAS returns exact revision-conflict and changes nothing; current revision CAS succeeds at revision4, with a durable receipt and no changes to unrelated records. Scope selection is exact, never the first matching title or fallback account. Artificial transaction retention is bounded by five seconds/10000 reads and aborts on exhaustion; actual run used two reads. No scope authority, native send or real account is fabricated.
+
+Final actual isolated Chrome installed synthetic MV3: **5/5 PASS**, zero page errors, sourceChangedDuringRun=false. The original four schema/native-editor steps also pass in that same run. Source syntax checks pass. No full Node suite repeated for this test-only addition; Round279 5469/5469 is its own prior result. No change to production database engine, plan, branch or remote.
+
+This supplements, rather than replaces, actual archived-owner VersionError and codec roundtrip evidence in Round279. Full original schema3 Host asset migration, full SYS03/J4/profile81, cold/reenable reliability,100k and G/U remain open. Free NOT_RELEASE_READY. Continue the existing unresolved progressive admission/100k task without repeating stale-cursor recovery work.

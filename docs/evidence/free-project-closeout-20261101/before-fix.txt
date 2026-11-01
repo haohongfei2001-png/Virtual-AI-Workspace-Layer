@@ -1,0 +1,227 @@
+Before-fix counterexamples; historical failures are retained.
+
+
+### diagnostic-red.log
+✖ current boundary diagnostics are fixed private categories and preserve legacy layout compatibility (8.18268ms)
+✖ flow preflight refusal waits for a native change, then re-proves and registers once (2.739561ms)
+✖ Project rejection retains only the current check stage and clears on recovery (4.857356ms)
+✖ a previous route cannot expose its Project refusal as the current presentation (0.991195ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 0
+ℹ fail 4
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 56.83095
+
+✖ failing tests:
+
+test at tests/host/local-status.test.mjs:240:1
+✖ current boundary diagnostics are fixed private categories and preserve legacy layout compatibility (8.18268ms)
+  AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+  
+    assert(validLayoutShape({...shape,presentation:{...presentation,boundary:projectBoundary}}))
+  
+      at TestContext.<anonymous> (file:///workspace/scratch/c4aa855bd0c2/vaiwl/tests/host/local-status.test.mjs:248:2)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at tests/host/surface-controller.test.mjs:56:1
+✖ flow preflight refusal waits for a native change, then re-proves and registers once (2.739561ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + undefined
+  - 'surface-native-flow-wrapper-paint'
+  
+      at TestContext.<anonymous> (file:///workspace/scratch/c4aa855bd0c2/vaiwl/tests/host/surface-controller.test.mjs:61:9)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: 'surface-native-flow-wrapper-paint',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/host/surface-geometry-controller.test.mjs:46:1
+✖ Project rejection retains only the current check stage and clears on recovery (4.857356ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    {
+      key: null,
+      phase: 'presentation',
+  -   projectStage: 'geometry-overflow',
+      reason: 'unsafe-native-geometry'
+    }
+  
+      at TestContext.<anonymous> (file:///workspace/scratch/c4aa855bd0c2/vaiwl/tests/host/surface-geometry-controller.test.mjs:49:9)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [Object],
+    expected: [Object],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at tests/host/surface-geometry-controller.test.mjs:65:1
+✖ a previous route cannot expose its Project refusal as the current presentation (0.991195ms)
+  AssertionError [ERR_ASSERTION]: passive URL check must invalidate before the route event runs
+  + actual - expected
+  
+  + {
+  +   attempt: 'show-returned',
+  +   boundary: {
+  +     key: null,
+  +     phase: 'presentation',
+  +     reason: 'unsafe-native-project-layout'
+  +   },
+  +   desiredMode: 'workspace',
+  +   frames: 2,
+  +   geometryPaused: true,
+  +   grants: 2,
+  +   layoutGeometry: [],
+  +   layoutRefusal: null,
+  +   mode: 'suspended',
+  +   registered: true,
+  +   returnPresent: false,
+  +   sidebar: null,
+  +   transitions: [],
+  +   workspace: null
+  + }
+  - null
+  
+      at TestContext.<anonymous> (file:///workspace/scratch/c4aa855bd0c2/vaiwl/tests/host/surface-geometry-controller.test.mjs:69:9)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [Object],
+    expected: null,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+### stale-lifecycle-red.log
+✖ recovered initial Project refusal cannot mask later authority revocation (11.81316ms)
+✖ recovered same-frame Project refusal cannot mask later authority revocation (2.642996ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 0
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 52.366302
+
+✖ failing tests:
+
+test at tests/host/content-region-recovery.test.mjs:29:35
+✖ recovered initial Project refusal cannot mask later authority revocation (11.81316ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'surface-unsafe-native-project-layout'
+  - 'surface-ui-authority-revoked'
+              ^
+  
+      at TestContext.<anonymous> (file:///workspace/scratch/c4aa855bd0c2/vaiwl/tests/host/content-region-recovery.test.mjs:38:9)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'surface-unsafe-native-project-layout',
+    expected: 'surface-ui-authority-revoked',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/host/content-region-recovery.test.mjs:29:35
+✖ recovered same-frame Project refusal cannot mask later authority revocation (2.642996ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'surface-unsafe-native-project-layout'
+  - 'surface-ui-authority-revoked'
+              ^
+  
+      at TestContext.<anonymous> (file:///workspace/scratch/c4aa855bd0c2/vaiwl/tests/host/content-region-recovery.test.mjs:38:9)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'surface-unsafe-native-project-layout',
+    expected: 'surface-ui-authority-revoked',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+### terminal-stage-red.log
+✖ unknown start exception reports a fixed current stage before terminal cleanup (5.471604ms)
+✖ unknown mount exception reports a fixed current stage before terminal cleanup (1.029833ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 0
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 37.231524
+
+✖ failing tests:
+
+test at tests/host/surface-controller.test.mjs:93:38
+✖ unknown start exception reports a fixed current stage before terminal cleanup (5.471604ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+  + []
+  - [
+  -   'surface-start-failed'
+  - ]
+  
+      at TestContext.<anonymous> (file:///workspace/scratch/c4aa855bd0c2/vaiwl/tests/host/surface-controller.test.mjs:99:9)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [],
+    expected: [Array],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at tests/host/surface-controller.test.mjs:93:38
+✖ unknown mount exception reports a fixed current stage before terminal cleanup (1.029833ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+  + []
+  - [
+  -   'surface-mount-unavailable'
+  - ]
+  
+      at TestContext.<anonymous> (file:///workspace/scratch/c4aa855bd0c2/vaiwl/tests/host/surface-controller.test.mjs:99:9)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [],
+    expected: [Array],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }

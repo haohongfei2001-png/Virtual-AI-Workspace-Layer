@@ -11,6 +11,14 @@ export const urlOK = x => {
     !!u.hostname && !u.username && !u.password && !u.hash; } catch { return false; }
 };
 export function normalizedScope(input) {
+  // A local namespace is not a server principal. Issuance still belongs to the
+  // privileged owner; accepting this data shape is never an authorization.
+  if (isRecord(input) && input.kind === 'browser-local') {
+    if (!['session','personal'].includes(input.storage) || !tokenOK(input.spaceId) ||
+        Object.keys(input).some(k=>!['kind','storage','spaceId','key'].includes(k))) return null;
+    return Object.freeze({kind:'browser-local',storage:input.storage,spaceId:input.spaceId,
+      key:JSON.stringify(['vaiwl-local-v1','browser-local',input.storage,input.spaceId])});
+  }
   if (!isRecord(input) || input.verified !== true ||
       typeof input.provider !== 'string' || !tokenOK(input.provider) ||
       !tokenOK(input.accountId) || !tokenOK(input.organizationId)) return null;

@@ -1,0 +1,71 @@
+{
+  "evidence": "REAL_HEADLESS_MV3_EXTENSION_IDB_OFFLINE_RECONSTRUCTION",
+  "privateChatGPT": "NOT_RUN",
+  "uiGrantRendering": "NOT_TESTED",
+  "provider": "REAL_FIXED_FETCH_SESSION_PROVIDER_LOOPBACK",
+  "sourceHashes": {
+    "src/runtime/host-binding-service.mjs": "20c63d8db50233b48707bf5039325dc6f576e71fb0a700764e1a7278da168377",
+    "src/runtime/host-observation-owner.mjs": "1d63e23e34456fa7b78b244173b06fd6c06b75119849e66d652b84b0e68d0189",
+    "src/runtime/session-provider.mjs": "7b362cf5e0fd6ea0ea259c2f7b61bdc29faf5f65b0355d28e8df337ed8b46e95",
+    "src/host/chatgpt-adapter.mjs": "44fb724b6ad0bcdf04d5e10cd27403c6d595f618c9bd4cdcd2aa60a1eef0181b",
+    "src/host/surface-batch.mjs": "4733a8cecdc3f4664c77da81d12441c9f2bd7cf0c16e55ec93eb94076faa4e5d",
+    "src/data/native-repository.mjs": "934dfef1e75cb38d6608f146899db86f115b2a74b46c8992b2863ec6642129e9"
+  },
+  "results": [
+    {
+      "name": "real-sender-fixed-session-native-IDB-unknown-not-none-forgery-rejected",
+      "status": "PASS"
+    }
+  ],
+  "errors": [],
+  "temporaryPackage": "/private/tmp/vaiwl-host-observation-KeRprR/extension",
+  "initial": {
+    "hostAuth": "verified",
+    "hostObservation": "accepted",
+    "hostObservationReason": "",
+    "hostForgery": "rejected"
+  },
+  "status": "FAIL",
+  "error": "AssertionError [ERR_ASSERTION]: Got unwanted rejection.\nActual message: \"second-project-not-persisted\"\n    at async file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/host/observation-mv3-browser.mjs:34:2",
+  "failureDOM": {
+    "hostAuth": "verified",
+    "hostObservation": "accepted",
+    "hostObservationReason": "",
+    "hostForgery": "rejected"
+  },
+  "workerMessages": [
+    {
+      "kind": "HOST_HELLO"
+    },
+    {
+      "kind": "HOST_REFRESH",
+      "state": "verified"
+    },
+    {
+      "kind": "surface-delta",
+      "state": "accepted"
+    },
+    {
+      "kind": "surface-delta",
+      "state": "rejected",
+      "reason": "invalid-host-observation"
+    },
+    {
+      "kind": "HOST_HELLO"
+    },
+    {
+      "kind": "HOST_REFRESH",
+      "state": "verified"
+    },
+    {
+      "kind": "surface-delta",
+      "state": "accepted"
+    },
+    {
+      "kind": "surface-delta",
+      "state": "rejected",
+      "reason": "invalid-host-observation"
+    }
+  ],
+  "sourceChangedDuringRun": false
+}

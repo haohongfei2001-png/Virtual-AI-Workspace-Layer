@@ -1,0 +1,13 @@
+# Round282 — Coalesce obsolete surface version checks without renewing preparation
+
+Base1048b99. Both UI roles could capture the same ready snapshot and await its version; after the first response began a refresh, the second obsolete response began it again. The underlying owner deduplicated header loading, but the service generation and absolute preparation deadline restarted. An independent MockIDB red test observes the second timer at30100ms after the original30000ms deadline, while header count remains one.
+
+The existing handle now captures preparation generation and rechecks generation, pending state and published snapshot identity immediately after the awaited version. A superseded response returns preparing; it cannot re-begin preparation or deliver the old page. Delivery finally retains the captured generation/window guard, so it cannot release a newer window. No time budget, retry count or native authorization changed.
+
+Four independent cases cover the deadline race, each surface revoked during the version await, and a new real native publication after the first refresh completes. The latter is still read by a fresh RPC and shown in both surfaces; coalescing does not hide subsequent changes. All89 view cases pass. Final complete Node suite5478/5478 PASS, zero skip. Independent read-only review found no blocker.
+
+Actual uninstrumented isolated headless installed Host100k legacy fixture: initial dual surfaces in3.08s/3.69s and native tail/return PASS. Strict premeasurement cardinality fails at278/100000 refs,1000 Projects,99722 missing; zero duplicate/unexpected refs. The runner refuses timing with NOT_RUN_INDEX_NOT_READY; this is FAIL, not scale acceptance. All278 memberships are UNKNOWN as independently unproven. Browser errors empty, source/fixture stable. No comparison to Round281 diagnostic extended observation is a throughput benchmark.
+
+Round281 normal push timed out within45s; no force or remote/base change. Keep both local checkpoints and normal push after this checkpoint. Continuing scope: publication-driven read/write alternation remains a measured throughput limitation, not solved by this narrow race fix; preserve the formal100k failure and continue other Free tasks too. Full81/profile matrix, cold/reenable reliability, realG/U and release acceptance remain open. Free NOT_RELEASE_READY.
+
+Final sync: next normal push failed low-speed transport; GitHub API confirms remote remains c56342d with original Draft/base. Local code checkpoints are safe; do not force-push. Continue independent cold-start work while remote transport is unavailable.

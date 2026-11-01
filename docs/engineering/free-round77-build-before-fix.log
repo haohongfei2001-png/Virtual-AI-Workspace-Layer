@@ -1,0 +1,58 @@
+✖ offline synthetic ZIP is byte-reproducible across output paths and filesystem timestamps (34.042583ms)
+✖ ZIP extracts matching hashed bundle, source manifest and explicit unsupported-production boundary (17.403167ms)
+✖ offline verifier rejects missing transitive worker module and changed bundled bytes (17.15375ms)
+✔ MV3 build deterministic, scoped and CSP-safe (26.572625ms)
+✔ opaque browser bundle compiles the same actual navigation and broker modules (4.980833ms)
+✔ actual Node HTTP host serves app and rejects unsafe/unrelated paths (17.864958ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 3
+ℹ fail 3
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 111.326833
+
+✖ failing tests:
+
+test at tests/free/package.test.mjs:17:1
+✖ offline synthetic ZIP is byte-reproducible across output paths and filesystem timestamps (34.042583ms)
+  Error: missing-static-import:src/runtime/free-read-service.mjs
+      at visit (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/simulator/package.mjs:19:30)
+      at visit (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/simulator/package.mjs:20:207)
+      at visit (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/simulator/package.mjs:20:207)
+      at closure (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/simulator/package.mjs:21:30)
+      at verifyUnpacked (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/simulator/package.mjs:41:20)
+      at packageSynthetic (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/simulator/package.mjs:61:17)
+      at TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/free/package.test.mjs:19:11)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+
+test at tests/free/package.test.mjs:25:1
+✖ ZIP extracts matching hashed bundle, source manifest and explicit unsupported-production boundary (17.403167ms)
+  Error: missing-static-import:src/runtime/free-read-service.mjs
+      at visit (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/simulator/package.mjs:19:30)
+      at visit (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/simulator/package.mjs:20:207)
+      at visit (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/simulator/package.mjs:20:207)
+      at closure (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/simulator/package.mjs:21:30)
+      at verifyUnpacked (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/simulator/package.mjs:41:20)
+      at packageSynthetic (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/simulator/package.mjs:61:17)
+      at TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/free/package.test.mjs:27:16)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+
+test at tests/free/package.test.mjs:37:1
+✖ offline verifier rejects missing transitive worker module and changed bundled bytes (17.15375ms)
+  Error: missing-static-import:src/runtime/free-read-service.mjs
+      at visit (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/simulator/package.mjs:19:30)
+      at visit (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/simulator/package.mjs:20:207)
+      at visit (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/simulator/package.mjs:20:207)
+      at closure (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/simulator/package.mjs:21:30)
+      at verifyUnpacked (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/simulator/package.mjs:41:20)
+      at packageSynthetic (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/simulator/package.mjs:61:17)
+      at TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/free/package.test.mjs:39:16)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)

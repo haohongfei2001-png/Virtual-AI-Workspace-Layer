@@ -1,0 +1,23 @@
+✔ native reading reveals first and waits for acknowledged body before one scroll (2.487791ms)
+✔ unready proof expires within six seconds without scrolling or reopening (2.462292ms)
+✔ pending proof cannot scroll after stop (0.245042ms)
+✔ pending proof cannot scroll after route (0.182875ms)
+✔ failed native restore is attempted only once even while command remains live (0.797375ms)
+✔ native modal cancels pending proof even when ACK becomes ready, and closing cannot revive scroll (0.200417ms)
+✔ trusted pointerdown cancels pending restore and removes all temporary handlers (0.142625ms)
+✔ trusted focusin cancels pending restore and removes all temporary handlers (0.098208ms)
+✔ trusted keydown cancels pending restore and removes all temporary handlers (0.119125ms)
+✔ trusted wheel cancels pending restore and removes all temporary handlers (0.136292ms)
+✔ trusted beforetoggle cancels pending restore and removes all temporary handlers (0.111625ms)
+✔ untrusted events and closing toggle do not cancel; success removes handlers (0.1605ms)
+✔ elapsed clock rollback rejects while wall deadline is still valid (0.105792ms)
+✔ expired reading guard terminates command permanently even if reading becomes valid again (0.083083ms)
+✔ stop removes pending handlers immediately and replacement restore aborts old command once (0.110167ms)
+ℹ tests 15
+ℹ suites 0
+ℹ pass 15
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 48.926917

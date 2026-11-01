@@ -1,0 +1,136 @@
+{
+  "evidence": "L_REAL_BINDING_PROVIDER_BUDGET_WITH_MOCK_IDB_AND_RESPONSES_NOT_S",
+  "budgetKey": "host-read-budget:554370140c09ca7d4eaab22716de3bf1044f8eda330dd503c95e41a1070c9b05",
+  "scopeKey": "[\"chatgpt\",\"principal_2a37ab62f5da3f388a871be58fb2b1e218ed7a15aef852ba15a581e6d0f97da1\",\"context_aa4bd412ec8ca4162353de991267f9de2f0c14d9ad2538acc953c882bf0f5c55\"]",
+  "initial": {
+    "key": "host-read-budget:554370140c09ca7d4eaab22716de3bf1044f8eda330dd503c95e41a1070c9b05",
+    "protocol": "vaiwl-host-read-budget/1",
+    "startedAt": 1792022400000,
+    "lastAt": 1792022400000,
+    "requests": 3,
+    "attempts": [
+      {
+        "key": "7ed6fb5071c58e0c5276f792e17be5ffaca05b498ffe99a82412c00a554abfaa",
+        "count": 1
+      }
+    ]
+  },
+  "afterFirst": {
+    "key": "host-read-budget:554370140c09ca7d4eaab22716de3bf1044f8eda330dd503c95e41a1070c9b05",
+    "protocol": "vaiwl-host-read-budget/1",
+    "startedAt": 1792022400000,
+    "lastAt": 1792022400000,
+    "requests": 6,
+    "attempts": [
+      {
+        "key": "7ed6fb5071c58e0c5276f792e17be5ffaca05b498ffe99a82412c00a554abfaa",
+        "count": 2
+      }
+    ]
+  },
+  "afterSecond": {
+    "key": "host-read-budget:554370140c09ca7d4eaab22716de3bf1044f8eda330dd503c95e41a1070c9b05",
+    "protocol": "vaiwl-host-read-budget/1",
+    "startedAt": 1792022400000,
+    "lastAt": 1792022400000,
+    "requests": 9,
+    "attempts": [
+      {
+        "key": "7ed6fb5071c58e0c5276f792e17be5ffaca05b498ffe99a82412c00a554abfaa",
+        "count": 3
+      }
+    ]
+  },
+  "pendingEvidence": {
+    "operationId": "dom_af53d8f44d4ca3ca2b6e302d8620756c70dd6943417ce2b7",
+    "ACKSourceExistedBeforeSecond": true,
+    "firstMessageId": "m2",
+    "secondMessageId": "m3",
+    "state": "pending-evidence"
+  },
+  "fourthAttemptRejectedBeforeNetwork": true,
+  "reconstructedProviderAndBudgetStillReject": true,
+  "Team": {
+    "differentContextKey": true,
+    "key": "host-read-budget:2bf1262f8940a1639ccfadcc66c426f6415822d6df5bd4109a2d280503b9592a",
+    "payload": {
+      "key": "host-read-budget:2bf1262f8940a1639ccfadcc66c426f6415822d6df5bd4109a2d280503b9592a",
+      "protocol": "vaiwl-host-read-budget/1",
+      "startedAt": 1792022400000,
+      "lastAt": 1792022400000,
+      "requests": 3,
+      "attempts": [
+        {
+          "key": "7ed6fb5071c58e0c5276f792e17be5ffaca05b498ffe99a82412c00a554abfaa",
+          "count": 1
+        }
+      ]
+    },
+    "PersonalUnchanged": true
+  },
+  "waitOrClockAdvance": false,
+  "providerAuthCallsIncludingInitialUnscopedBinding": 5,
+  "GETs": 14,
+  "fetchLedger": [
+    {
+      "url": "http://127.0.0.1:3210/api/auth/session",
+      "method": "GET"
+    },
+    {
+      "url": "http://127.0.0.1:3210/backend-api/accounts/check/v4-2023-04-27",
+      "method": "GET"
+    },
+    {
+      "url": "http://127.0.0.1:3210/api/auth/session",
+      "method": "GET"
+    },
+    {
+      "url": "http://127.0.0.1:3210/backend-api/accounts/check/v4-2023-04-27",
+      "method": "GET"
+    },
+    {
+      "url": "http://127.0.0.1:3210/backend-api/conversation/11111111-1111-4111-8111-111111111111",
+      "method": "GET"
+    },
+    {
+      "url": "http://127.0.0.1:3210/api/auth/session",
+      "method": "GET"
+    },
+    {
+      "url": "http://127.0.0.1:3210/backend-api/accounts/check/v4-2023-04-27",
+      "method": "GET"
+    },
+    {
+      "url": "http://127.0.0.1:3210/backend-api/conversation/11111111-1111-4111-8111-111111111111",
+      "method": "GET"
+    },
+    {
+      "url": "http://127.0.0.1:3210/api/auth/session",
+      "method": "GET"
+    },
+    {
+      "url": "http://127.0.0.1:3210/backend-api/accounts/check/v4-2023-04-27",
+      "method": "GET"
+    },
+    {
+      "url": "http://127.0.0.1:3210/backend-api/conversation/11111111-1111-4111-8111-111111111111",
+      "method": "GET"
+    },
+    {
+      "url": "http://127.0.0.1:3210/api/auth/session",
+      "method": "GET"
+    },
+    {
+      "url": "http://127.0.0.1:3210/backend-api/accounts/check/v4-2023-04-27",
+      "method": "GET"
+    },
+    {
+      "url": "http://127.0.0.1:3210/backend-api/conversation/11111111-1111-4111-8111-111111111111",
+      "method": "GET"
+    }
+  ],
+  "PersonalCurrentGETs": 9,
+  "initialUnscopedBindingGETs": 2,
+  "TeamCurrentGETs": 3,
+  "unchangedOriginalFixture": true
+}

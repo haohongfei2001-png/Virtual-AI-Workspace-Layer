@@ -1,0 +1,51 @@
+{
+  "evidence": "REAL_HEADLESS_TEST_ONLY_MV3_CURRENT_BODY_DOM_ASSOCIATION",
+  "productionPackage": "NOT_TESTED",
+  "productionACK": "NOT_TESTED_DOM_IS_NOT_ACK",
+  "realChatGPT": "NOT_RUN",
+  "sourceHashes": {
+    "tests/host/current-body-mv3-browser.mjs": "174ed764276f9e0c6259e426b3be67c601feea3ac53a6f0c93debb5db1e83b36",
+    "src/runtime/host-binding-service.mjs": "f3986563f5b9524ddd295f7ff0b0583418f75a2434c6e21602a5edbddc327a6f",
+    "src/runtime/host-observation-owner.mjs": "96710b8e453b41a6a8d22ef1adc722ce3f821b9fd33d59a8e7ece8499c97e44e",
+    "src/runtime/scope-authority.mjs": "0827852c683dbe6ae4b24ae8f2aa11b36295ab683e8b0aaf7a549a0081362777",
+    "src/host/chatgpt-adapter.mjs": "eb2e35e4b440cc7257c28999a168ec004197c0f6ea80ef73ff3d8fd2c867b5a8",
+    "src/host/current-body-claim.mjs": "4e26f9fe6c905d1dbf3a07995168c4fb5dea5e424bff238644da1c067ac03ef5",
+    "src/host/current-body-discovery.mjs": "b292deacac1ec33f6726b849564c19b2d28c67c2f82ee9ff0cc7d256c2cc94ee",
+    "src/host/surface-discovery.mjs": "be7511b85212e4dc26c0ce0c7441892c3faa03fbca1e0ede1b76eb9a87feb244",
+    "src/data/native-repository.mjs": "6e8f250819dc5584d3fe2c84408675a048d934d83e01582e8adb5fc584e165b1"
+  },
+  "results": [
+    {
+      "name": "actual-content-adapter-Chrome-sender-owner-RAM-DOM-proof",
+      "status": "PASS"
+    },
+    {
+      "name": "root-remount-new-message-ID-replaces-old-proof",
+      "status": "PASS"
+    },
+    {
+      "name": "hidden-root-unproven-clears-proof-restored-visible-root-needs-new-proof",
+      "status": "PASS"
+    },
+    {
+      "name": "actual-route-change-rejects-old-current-proof",
+      "status": "PASS"
+    },
+    {
+      "name": "privileged-scope-revocation-denies-current-proof-without-replaying-provider-grant",
+      "status": "PASS",
+      "scopeAction": "test-process calls real authority.invalidateAll; not page authority"
+    },
+    {
+      "name": "accepted-body-claims-never-invoke-native-storage-writer",
+      "status": "PASS",
+      "evidenceRepository": "not composed; DOM branch is RAM only",
+      "surfaceStorage": "surface proposals may independently persist native facts"
+    }
+  ],
+  "errors": [],
+  "temporaryPackage": "/private/tmp/vaiwl-current-body-lb1YbN/extension",
+  "bodyAccepted": 5,
+  "status": "PASS",
+  "sourceChangedDuringRun": false
+}

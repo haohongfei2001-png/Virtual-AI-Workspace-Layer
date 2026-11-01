@@ -1,0 +1,203 @@
+{
+  "schema": "vaiwl-free-project-search-layout-v1",
+  "baseline": "37fe4b2c724faff5f829a25b4b702ee63218c262",
+  "tasks": [
+    "C4",
+    "C5"
+  ],
+  "defect": "Unbroken native project title pushes project-search close control outside a 420px workspace.",
+  "before": {
+    "status": "FAIL_CONFIRMED",
+    "projectSearch": [
+      {
+        "scale": 1,
+        "workspace": {
+          "x": 0,
+          "y": 0,
+          "width": 420,
+          "height": 800,
+          "top": 0,
+          "right": 420,
+          "bottom": 800,
+          "left": 0
+        },
+        "title": {
+          "x": 26,
+          "y": 71.75,
+          "width": 2278.765625,
+          "height": 22.5,
+          "top": 71.75,
+          "right": 2304.765625,
+          "bottom": 94.25,
+          "left": 26
+        },
+        "close": {
+          "x": 2316.765625,
+          "y": 66,
+          "width": 34,
+          "height": 34,
+          "top": 66,
+          "right": 2350.765625,
+          "bottom": 100,
+          "left": 2316.765625
+        },
+        "width": 420,
+        "scrollWidth": 2351,
+        "fullTitle": true,
+        "focusReturned": true
+      },
+      {
+        "scale": 2,
+        "workspace": {
+          "x": 0,
+          "y": 0,
+          "width": 420,
+          "height": 800,
+          "top": 0,
+          "right": 420,
+          "bottom": 800,
+          "left": 0
+        },
+        "title": {
+          "x": 26,
+          "y": 74,
+          "width": 4354.640625,
+          "height": 45,
+          "top": 74,
+          "right": 4380.640625,
+          "bottom": 119,
+          "left": 26
+        },
+        "close": {
+          "x": 4392.640625,
+          "y": 79.5,
+          "width": 34,
+          "height": 34,
+          "top": 79.5,
+          "right": 4426.640625,
+          "bottom": 113.5,
+          "left": 4392.640625
+        },
+        "width": 420,
+        "scrollWidth": 4427,
+        "fullTitle": true,
+        "focusReturned": true
+      }
+    ],
+    "error": "AssertionError [ERR_ASSERTION]: project search title must wrap without pushing the close control outside the workspace\n    at file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/host/frame-theme-menu-layout-browser.mjs:70:2"
+  },
+  "implementation": "Reuse existing search header: shrinkable wrapping title, three-line visual limit with complete text/title hint; close control does not shrink. No data/identity/route changes.",
+  "validation": {
+    "kind": "WEB_MECHANISM_ONLY_NOT_MV3",
+    "browser": "156.0.8078.47",
+    "menuLayoutCases": 8,
+    "projectSearch": [
+      {
+        "scale": 1,
+        "workspace": {
+          "x": 0,
+          "y": 0,
+          "width": 420,
+          "height": 800,
+          "top": 0,
+          "right": 420,
+          "bottom": 800,
+          "left": 0
+        },
+        "title": {
+          "x": 26,
+          "y": 66,
+          "width": 285,
+          "height": 67.5,
+          "top": 66,
+          "right": 311,
+          "bottom": 133.5,
+          "left": 26
+        },
+        "close": {
+          "x": 323,
+          "y": 82.75,
+          "width": 34,
+          "height": 34,
+          "top": 82.75,
+          "right": 357,
+          "bottom": 116.75,
+          "left": 323
+        },
+        "width": 420,
+        "scrollWidth": 420,
+        "titleHint": true,
+        "lineHeight": 22.5,
+        "fullTitle": true,
+        "focusReturned": true
+      },
+      {
+        "scale": 2,
+        "workspace": {
+          "x": 0,
+          "y": 0,
+          "width": 420,
+          "height": 800,
+          "top": 0,
+          "right": 420,
+          "bottom": 800,
+          "left": 0
+        },
+        "title": {
+          "x": 26,
+          "y": 74,
+          "width": 285,
+          "height": 135,
+          "top": 74,
+          "right": 311,
+          "bottom": 209,
+          "left": 26
+        },
+        "close": {
+          "x": 323,
+          "y": 124.5,
+          "width": 34,
+          "height": 34,
+          "top": 124.5,
+          "right": 357,
+          "bottom": 158.5,
+          "left": 323
+        },
+        "width": 420,
+        "scrollWidth": 420,
+        "titleHint": true,
+        "lineHeight": 45,
+        "fullTitle": true,
+        "focusReturned": true
+      }
+    ],
+    "sourceStable": true,
+    "hashes": {
+      "extension/frame-shell.css": "471ebf615b50b5adac417d7ad6205cf0ec1e2da82372eb8b42705151809829f4",
+      "src/navigation/navigation.mjs": "003651ff652d8c7fd9a8504d4acda262fe77d47b24933573d4108b661bb75f9e",
+      "src/navigation/styles.mjs": "81e076b00f9ae87ab71c6f6d27ee9a3788ecb98ee0d9bc3cde260158eefd23d0",
+      "tests/host/frame-theme-menu-layout-browser.mjs": "d4a57e3d7279e7b38453cd7412953066bbd65842555e22e39b58848e8d5b4764"
+    },
+    "targetedNode": {
+      "pass": 24,
+      "fail": 0,
+      "skip": 0
+    },
+    "build": {
+      "status": "HOST_IMPLEMENTATION_UNVERIFIED",
+      "releaseStatus": "NOT_RELEASE_READY",
+      "files": 191,
+      "unpacked": "/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/.git/vaiwl-checkpoints/20261023-resume-search-layout/final-package/extension",
+      "archive": "/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/.git/vaiwl-checkpoints/20261023-resume-search-layout/final-package/vaiwl-free-host-development.zip",
+      "archiveSha256": "a77c8d85ebf28d1b8dd7fc62b04161862b13784023e449bebe2f78ab7325b3bd"
+    },
+    "visualReview": "Writer viewed final 420px double-font project search screenshot; title and close control visible.",
+    "independentReview": "NOT_RUN_WRITER_DIFF_REVIEW_ONLY"
+  },
+  "limits": [
+    "No real account requests, source-v3 retest or live install.",
+    "Synthetic projection and headless DOM are not personal daily-use or physical zoom/IME acceptance.",
+    "Production data source remains disabled."
+  ],
+  "checkpoint": ".git/vaiwl-checkpoints/20261023-resume-search-layout"
+}

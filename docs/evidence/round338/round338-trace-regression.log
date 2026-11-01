@@ -1,0 +1,36 @@
+✔ lifecycle order trace exact anchors src/runtime/browser-request-context.mjs (1.407667ms)
+✔ lifecycle order trace exact anchors src/runtime/host-browser-bootstrap.mjs (0.23925ms)
+✔ recorder bounds events and records only short hash rather than native request ID (1.373709ms)
+✔ diagnostic package verifies formal source first and recompiles both classic worker chunks (335.563375ms)
+✔ runner diagnostic retains full original journey and rereads current worker after failure/restart (0.218291ms)
+✔ new commit diagnostics preserve exact API call and never refresh retained request clocks (0.213875ms)
+✔ follow-up control flow natural=false continue=false helperFails=false (0.984417ms)
+✔ follow-up control flow natural=false continue=false helperFails=true (0.225541ms)
+✔ follow-up control flow natural=false continue=true helperFails=false (0.195667ms)
+✔ follow-up control flow natural=false continue=true helperFails=true (0.486375ms)
+✔ follow-up control flow natural=true continue=false helperFails=false (0.249459ms)
+✔ follow-up control flow natural=true continue=false helperFails=true (0.296042ms)
+✔ follow-up control flow natural=true continue=true helperFails=false (0.245875ms)
+✔ follow-up control flow natural=true continue=true helperFails=true (0.200792ms)
+✔ actual early config guard {} (0.284083ms)
+✔ actual early config guard {"FREE_J4_CONTINUE_AFTER_NATURAL_ENTRY":"1"} (0.378458ms)
+✔ actual early config guard {"FREE_J4_CONTINUE_AFTER_NATURAL_ENTRY":"1","FREE_J4_NATURAL_ENTRY_RECOVERY":"0"} (0.197958ms)
+✔ actual early config guard {"FREE_J4_CONTINUE_AFTER_NATURAL_ENTRY":"1","FREE_J4_NATURAL_ENTRY_RECOVERY":"1"} (0.161875ms)
+✔ actual early config guard {"FREE_J4_CONTINUE_AFTER_NATURAL_ENTRY":"1","FREE_J4_NATURAL_ENTRY_RECOVERY":"1","FREE_J4_AFTER_EVIDENCE":"1"} (0.17575ms)
+✔ actual early config guard {"FREE_J4_CONTINUE_AFTER_NATURAL_ENTRY":"1","FREE_J4_NATURAL_ENTRY_RECOVERY":"1","FREE_J4_SCOPE_TRACE":"1"} (0.159042ms)
+✔ successful later steps retain original failed step and actual final status/exit remains FAIL/1 (0.41075ms)
+✔ independent continuation oracle catches mutation that omits recording original failure (0.449167ms)
+✔ passive trace preserves browser ordering, never replies, redacts payload and detaches (1.31875ms)
+✔ instrumented J4 copy is opt-in and verifies changed package separately (1.091875ms)
+✔ diagnostic mode returns after actual baseline before any native send or mixed stage (0.322542ms)
+✔ default formal path does not start diagnostic listeners and v2 body is reduced (0.175542ms)
+✔ trace setup is inside cleanup boundary and debugger helper is source-hashed (0.25725ms)
+✔ hash inventory assertion is order-independent but does not accept filenames outside the inventory (0.4795ms)
+ℹ tests 28
+ℹ suites 0
+ℹ pass 28
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 380.87

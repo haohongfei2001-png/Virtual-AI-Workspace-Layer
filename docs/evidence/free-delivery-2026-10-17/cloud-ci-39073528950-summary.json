@@ -1,0 +1,99 @@
+{
+  "kind": "PUBLIC_CI_FACTS_NOT_RELEASE_ACCEPTANCE",
+  "sourceCommit": "9a9ea59fa48000a25b55e243a1a400adcab5a573",
+  "run": 39073528950,
+  "url": "https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/actions/runs/39073528950",
+  "conclusion": "failure",
+  "jobs": {
+    "node-contracts": "success",
+    "offline-journeys": "success",
+    "offline-j4-lifecycle": "success",
+    "offline-durability-compat": "failure"
+  },
+  "failedSteps": [
+    "Formal Host 10k single-project membership sample"
+  ],
+  "formal10k": {
+    "status": "FAIL",
+    "phase": "visible-native-member-progress",
+    "error": "Error: host-scale-member-deadline\n    at Timeout.<anonymous> (file:///home/runner/work/Virtual-AI-Workspace-Layer/Virtual-AI-Workspace-Layer/tests/host/fixtures/host-scale-member-progress.mjs:59:320)\n    at listOnTimeout (node:internal/timers:685:17)\n    at process.processTimers (node:internal/timers:618:7)",
+    "originalDeadlineMs": 30000,
+    "requiredCompleteAudits": 2,
+    "progress": {
+      "stage": "native-before",
+      "stageStarted": 35556.466773,
+      "inFlight": true,
+      "frameGeneration": 1,
+      "auditAttempts": 0,
+      "lastTail": {
+        "status": "OBSERVED_TAIL_ONLY",
+        "revision": 179,
+        "total": 8071,
+        "frameGeneration": 1
+      },
+      "audits": [],
+      "attempts": 147,
+      "stableRevision": null,
+      "elapsedMs": 29051.846224999998,
+      "stageElapsedMs": 0.9112759999989066
+    },
+    "postFailureInventory": {
+      "acceptance": "NOT_ESTABLISHED",
+      "evidence": "DIAGNOSTIC_ROOT_INVENTORY_ONLY",
+      "status": "POINT_IN_TIME_ROOT_SNAPSHOT",
+      "consistency": "SINGLE_READONLY_TRANSACTION_NOT_INTERVAL_STABILITY",
+      "format": "VERSION_INDEX",
+      "revision": 180,
+      "inventoryRefs": 8125,
+      "inventoryProjects": 1,
+      "sources": 1,
+      "revokedSources": 0,
+      "sourceRevisionMin": 179,
+      "sourceRevisionMax": 179,
+      "continuationWitness": false,
+      "queueState": "NOT_READ"
+    },
+    "inventoryIsAcceptance": false,
+    "sourceChangedDuringRun": false,
+    "fixtureChangedDuringRun": false,
+    "manifestChangedDuringRun": false,
+    "temporaryDirectoryRemoved": true
+  },
+  "failureOnlyDiagnostic": {
+    "acceptance": "NOT_ESTABLISHED",
+    "status": "FAIL",
+    "workerCPU": "CAPTURED",
+    "nativePageCPU": "CAPTURED",
+    "phaseSnapshot": "CAPTURED",
+    "cleanup": {
+      "status": "SUCCEEDED"
+    },
+    "instrumentedPackageUnchanged": true,
+    "formalFailurePreserved": true
+  },
+  "j4": {
+    "status": "PARTIAL_J4_NOT_ACCEPTED",
+    "steps": 23,
+    "allStepsPass": true,
+    "peerAutomaticForegroundRecovery": "NOT_ESTABLISHED",
+    "peerRecoveryAuthority": "NEW_NATIVE_REQUEST_AND_FRESH_AUTHENTICATION",
+    "limitations": [
+      "SYS-01 default before-evidence continuous segment has scoped evidence; remaining combinations require separate actual records",
+      "SYS-03 old Host codec before/after-evidence roundtrips and standalone asset upgrades have scoped evidence; re-enable stability and remaining combinations remain open",
+      "Remaining supported-profile matrix and lifecycle surface combinations"
+    ]
+  },
+  "coldPassiveDiagnostic": {
+    "status": "PASS",
+    "formalPackageAcceptance": false,
+    "earlier23385FailurePreserved": true,
+    "meaning": "This independent run passed; the earlier pre-listener missed-request failure remains a recorded open timing case"
+  },
+  "publicJobLogSHA256": {
+    "durability": "126a93061f750bbbc90be98431e77740868857ad2dbb8beaaa5ce0bb2406d85e",
+    "j4": "a584c4bf288becdcb253c1e3d4e5d9d6befb59de1500b80b07e95c71c2d4439f",
+    "journeys": "793554173a13906be0f093ec8a4c574e6923af0382fdf0112282026bb5c6bb86"
+  },
+  "realChatGPT": "NOT_RUN",
+  "release": "NOT_RELEASE_READY"
+}

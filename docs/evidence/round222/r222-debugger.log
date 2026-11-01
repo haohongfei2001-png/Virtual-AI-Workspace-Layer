@@ -1,0 +1,33 @@
+✔ silent root and nested commands share one bounded deadline and close rejects all work (7.606567ms)
+✔ debugger budget cannot extend the existing20-second boundary (0.657442ms)
+✔ only exact existing loopback browser endpoint accepted (0.403239ms)
+✔ standard flattened wire routes concurrent root and multiple sessions without ID collisions (2.941649ms)
+✔ wrong response session fails closed and detachment rejects only its outstanding session (0.889703ms)
+✔ transport closure rejects pending root and nested requests and cannot send again (1.067701ms)
+✔ debugger verifies actual worker bytes and executable call, activates unconditional breakpoint without evaluation (8.770563ms)
+✔ debugger rejects missing call before native send and detaches (3.198316ms)
+✔ debugger rejects moved call before native send and detaches (2.544679ms)
+✔ debugger rejects different actual worker source before native send and detaches (2.147671ms)
+✔ debugger rejects unrelated breakpoint (2.255564ms)
+✔ debugger rejects wrong callsite (1.408785ms)
+✔ native rename POST persists consistent route, list and authenticated detail titles (49.697041ms)
+✔ continuous mixed runner requires real pending before interruption and idempotent authenticated reread (8.899938ms)
+✔ return checks actual mounted state and clicks only a visible native return button (0.917575ms)
+✔ current grant reader rejects missing, detached, replaced, wrong-scope and stale-grant frames (0.951175ms)
+✔ readiness retries transient absence within unchanged poll boundary before breakpoint installation (101.505589ms)
+✔ readiness diagnosis is bounded read-only data and distinguishes absent versus unready frame (1.322455ms)
+✔ real V8 executable call breakpoint fires before actual continuation evidence apply (109.309654ms)
+✔ worker lifecycle target mismatch is rejected before debugger attachment (0.462809ms)
+✔ resumed pause cannot serve as interruption evidence and actual target detach fails immediately (1.417368ms)
+✔ isolated launch uses dynamic loopback endpoint and no fake visibility flags (0.74208ms)
+✔ debug endpoint parser rejects unrelated hosts paths ports and injection (0.392221ms)
+✔ public noDefaults prevents initial focus emulation rather than attempting a separate-session override (4.348692ms)
+✔ historical test-only network guard is exact opt-in and cannot accept arbitrary launch args (0.560285ms)
+ℹ tests 25
+ℹ suites 0
+ℹ pass 25
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 393.472221

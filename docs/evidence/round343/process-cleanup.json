@@ -1,0 +1,9 @@
+{
+  "report": "round343-j4-before-native-recovery.json",
+  "reportStatus": "FAIL",
+  "reportPassSteps": 11,
+  "reportCompleted": true,
+  "processExitCode": 143,
+  "action": "SIGTERM to exact verified test PID after report completion and absent network handles; no other process targeted",
+  "note": "Post-report Node liveness remains an engineering issue; does not change report failure"
+}

@@ -1,0 +1,35 @@
+✔ directory recovery restores latest human title revokes sources invalidates old receipts and replays once (437.181583ms)
+✔ directory recovery rejects missing checkpoint-bucket without changing any store (190.500791ms)
+✔ directory recovery rejects missing untouched-piece without changing any store (183.176875ms)
+✔ directory recovery rejects missing event-locator without changing any store (220.731041ms)
+✔ intact indexed root and damagedHash conflict cannot be replaced (257.682667ms)
+✖ directory recovery quota during staged piece write atomically rolls back (191.845167ms)
+✔ directory recovery guard during staged piece write atomically rolls back (272.378042ms)
+✔ recovering A leaves B state and source authority unchanged (293.020708ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 7
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2111.106041
+
+✖ failing tests:
+
+test at tests/free/shared-directory-recovery.test.mjs:21:37
+✖ directory recovery quota during staged piece write atomically rolls back (191.845167ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  true !== false
+  
+      at TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/free/shared-directory-recovery.test.mjs:21:806)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

@@ -1,0 +1,50 @@
+import {chromium} from '../b1/tooling/node_modules/playwright/index.mjs';
+import {createServer} from '../../simulator/server.mjs';
+import assert from 'node:assert/strict';
+import {writeFile} from 'node:fs/promises';
+const server=createServer();await new Promise(r=>server.listen(0,'127.0.0.1',r));let browser;
+const checks=[];
+try{
+ browser=await chromium.launch({headless:true});const page=await browser.newPage();
+ await page.goto(`http://127.0.0.1:${server.address().port}/hf/A/c/T0?mode=native`);await page.waitForFunction(()=>globalThis.HF);
+ await page.evaluate(async()=>{
+  const {createNavigation}=await import('/src/navigation/navigation.mjs'),{createAdapter}=await import('/simulator/adapter.mjs');
+  const scope='safe_update_scope',entries=[],adapter=createAdapter(),refs=[{id:'T100',scope,nativeTitle:'按住目标',nativeUrl:location.origin+'/hf/A/c/T100',membership:'NONE',activity:{segment:0}},{id:'T300',scope,nativeTitle:'较早对象',nativeUrl:location.origin+'/hf/A/c/T300',membership:'NONE',activity:{segment:1}}];
+  const snapshot={scope,viewMode:'free',revision:1,refs,projects:[],noProject:refs,unknown:[],preferences:{},viewSession:{H:30,T:20737,Z:'Asia/Shanghai'}};
+  const navigation=createNavigation({document,adapter,onCalibrationEntry:e=>entries.push(e)});
+  const update=title=>navigation.update({...snapshot,revision:++snapshot.revision,refs:[{...refs[0],nativeTitle:title},refs[1]],noProject:[{...refs[0],nativeTitle:title},refs[1]]},'2026-10-11T04:00:00Z','Asia/Shanghai');
+  navigation.update(snapshot,'2026-10-11T04:00:00Z','Asia/Shanghai');navigation.showWorkspace();globalThis.safeUpdate={navigation,update,entries,snapshot,refs};
+ });
+ const target=()=>page.locator('[data-ref-id="T100"]').last();
+ const box=await target().boundingBox();await page.mouse.move(box.x+12,box.y+12);await page.mouse.down();
+ await page.evaluate(()=>{safeUpdate.original=safeUpdate.navigation.roots().workspace.shadow.querySelector('[data-ref-id="T100"]');safeUpdate.update('中间版本');safeUpdate.update('最终版本');});
+ assert.equal(await page.evaluate(()=>safeUpdate.original.isConnected),true);assert.equal(await target().textContent(),'按住目标');
+ await page.mouse.up();await page.waitForFunction(()=>location.pathname==='/hf/A/c/T100');await page.waitForFunction(()=>safeUpdate.navigation.roots().workspace.shadow.querySelector('[data-ref-id="T100"]')?.textContent==='最终版本');
+ checks.push('pointer-target-survives-until-click-latest-update-flushes');
+ await page.evaluate(()=>safeUpdate.navigation.showWorkspace());
+ await page.getByRole('button',{name:'查找已知项目与聊天',exact:true}).click();
+ const input=page.getByRole('searchbox',{name:'已知聊天查找输入'});await input.fill('最终');
+ await input.evaluate(n=>{globalThis.composingInput=n;n.dispatchEvent(new CompositionEvent('compositionstart',{bubbles:true,composed:true,data:'中'}));safeUpdate.update('最终第二版');safeUpdate.update('最终第三版');});
+ assert.equal(await page.evaluate(()=>composingInput.isConnected),true);assert.equal(await input.inputValue(),'最终');
+ await input.evaluate(n=>n.dispatchEvent(new CompositionEvent('compositionend',{bubbles:true,composed:true,data:'最终'})));
+ await page.waitForFunction(()=>safeUpdate.navigation.roots().workspace.shadow.querySelector('[data-ref-id="T100"]')?.textContent==='最终第三版');
+ assert.equal(await input.inputValue(),'最终');assert.equal(await input.evaluate(n=>n.getRootNode().activeElement===n),true);checks.push('composition-preserves-node-query-and-focus-until-end');
+ await page.getByRole('button',{name:'关闭派生查找',exact:true}).click();
+ await target().evaluate(n=>{globalThis.dragTarget=n;n.dispatchEvent(new DragEvent('dragstart',{bubbles:true,composed:true}));safeUpdate.update('拖动后最新');});assert.equal(await page.evaluate(()=>dragTarget.isConnected),true);
+ await target().evaluate(n=>n.dispatchEvent(new DragEvent('dragend',{bubbles:true,composed:true})));await page.waitForFunction(()=>safeUpdate.navigation.roots().workspace.shadow.querySelector('[data-ref-id="T100"]')?.textContent==='拖动后最新');checks.push('drag-end-flushes-latest-update');
+ await target().evaluate(n=>{n.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,composed:true,pointerId:42}));safeUpdate.update('取消后最新');n.dispatchEvent(new PointerEvent('pointercancel',{bubbles:true,composed:true,pointerId:42}));});await page.waitForFunction(()=>safeUpdate.navigation.roots().workspace.shadow.querySelector('[data-ref-id="T100"]')?.textContent==='取消后最新');checks.push('pointer-cancel-does-not-freeze-pending-update');
+ const initialEntries=await page.evaluate(()=>safeUpdate.entries.length);await page.evaluate(()=>safeUpdate.update('纯后台更新'));await page.waitForTimeout(30);assert.equal(await page.evaluate(()=>safeUpdate.entries.length),initialEntries);
+ await page.getByRole('button',{name:'较早的30日',exact:true}).click();assert.deepEqual(await page.evaluate(()=>safeUpdate.entries.at(-1)),{kind:'history',objectIds:['T300']});
+ await page.getByRole('button',{name:'较近的30日',exact:true}).click();assert.deepEqual(await page.evaluate(()=>safeUpdate.entries.at(-1)),{kind:'foreground',objectIds:['inventory']});checks.push('only-user-workspace-and-history-entry-trigger-calibration');
+ // The single native return control survives a renderer scope replacement.
+ await page.evaluate(()=>{
+  const {navigation,snapshot,refs}=safeUpdate;globalThis.persistentReturn=navigation.roots().back;
+  const scope='replacement_scope',nextRefs=refs.map(ref=>({...ref,scope}));
+  navigation.update({...snapshot,scope,refs:nextRefs,noProject:nextRefs},'2026-10-11T04:00:00Z','Asia/Shanghai');navigation.enterReading();
+ });
+ assert.equal(await page.evaluate(()=>safeUpdate.navigation.roots().back===persistentReturn&&persistentReturn.isConnected),true);
+ await page.getByRole('button',{name:'返回工作区',exact:true}).click();assert.equal(await page.evaluate(()=>safeUpdate.navigation.view().mode),'workspace');checks.push('same-native-return-works-across-scope-replacement');
+ await page.evaluate(()=>safeUpdate.navigation.update(safeUpdate.snapshot,'2026-10-11T04:00:00Z','Asia/Shanghai'));
+ await target().evaluate(n=>{const prior=n.textContent;n.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,composed:true,pointerId:43}));safeUpdate.update('绝不能显示的旧scope');if(!n.isConnected||n.textContent!==prior)throw Error('same-scope-pointer-update-not-pending');safeUpdate.navigation.invalidate('scope-changed');document.dispatchEvent(new PointerEvent('pointerup',{bubbles:true,composed:true,pointerId:43}));});await page.waitForTimeout(30);assert.equal(await page.evaluate(()=>safeUpdate.navigation.roots()),null);checks.push('invalidation-discards-pending-old-scope');
+ const report={evidence:'REAL_BROWSER_SYNTHETIC_SAFE_UPDATE',physicalIME:'NOT_RUN',browser:browser.version(),checks,fail:0};await writeFile('/private/tmp/free-safe-update.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report));
+}finally{await browser?.close();await new Promise(r=>server.close(r));}

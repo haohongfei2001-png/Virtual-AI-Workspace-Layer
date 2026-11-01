@@ -1,0 +1,43 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {readFile} from 'node:fs/promises';
+import {collectJ4ContentLifecycle} from './j4-content-lifecycle-collector.mjs';
+const id='a'.repeat(32),origin='chrome-extension://'+id,trace={rows:[],sequence:0,dropped:0};
+function fixture({contexts=[{id:1,origin,auxData:{isDefault:false,frameId:'top'}}],hold=null,delay=0,late=false,value=trace,evaluate=null}={}){
+ const methods=[],listeners=new Map();let detached=0,resolveAcquire;
+ const session={on:(n,f)=>listeners.set(n,f),off:(n)=>listeners.delete(n),detach:async()=>{detached++;},send:async(method,args)=>{methods.push([method,args]);if(method===hold)return new Promise(()=>{});if(delay)await new Promise(r=>setTimeout(r,delay));if(method==='Runtime.enable'){for(const context of contexts)listeners.get('Runtime.executionContextCreated')?.({context});return {}; }if(method==='Page.getFrameTree')return {frameTree:{frame:{id:'top'}}};if(method==='Runtime.evaluate')return evaluate?evaluate(args.contextId):{result:{value}};throw Error('forbidden-method');}};
+ const page={peer:true},context={newCDPSession:target=>{assert.equal(target,page);return late?new Promise(r=>{resolveAcquire=r;}):Promise.resolve(session);}};
+ return {context,page,methods,get detached(){return detached;},resolve:()=>resolveAcquire(session)};
+}
+test('collector reads only the unique existing top-frame extension isolated world',async()=>{const f=fixture({contexts:[{id:8,origin,auxData:{isDefault:false,frameId:'child'}},{id:9,origin,auxData:{isDefault:true,frameId:'top'}},{id:2,name:origin,auxData:{isDefault:false,frameId:'top'}}]});const result=await collectJ4ContentLifecycle({...f,extensionId:id});assert.deepEqual(result.content,{trace});assert.deepEqual(f.methods.map(x=>x[0]),['Runtime.enable','Page.getFrameTree','Runtime.evaluate']);assert.equal(f.methods[2][1].contextId,2);assert.equal(f.methods[2][1].expression,'globalThis.__vaiwlJ4ContentLifecycle ?? null');assert.equal(f.detached,1);});
+for(const contexts of [[],[{id:1,origin,auxData:{isDefault:false,frameId:'child'}}],[1,2,3,4,5].map(id=>({id,origin,auxData:{isDefault:false,frameId:'top'}}))])test('unavailable or ambiguous world never falls back to MAIN',async()=>{const f=fixture({contexts});const result=await collectJ4ContentLifecycle({...f,extensionId:id});assert(result.content.unavailable);assert(!f.methods.some(x=>x[0]==='Runtime.evaluate'));assert.equal(f.detached,1);});
+for(const hold of ['Runtime.enable','Page.getFrameTree','Runtime.evaluate'])test('single deadline closes a stalled '+hold,async()=>{const f=fixture({hold});const at=performance.now();const result=await collectJ4ContentLifecycle({...f,extensionId:id,timeoutMs:20});assert(result.timedOut);assert(performance.now()-at<150);assert.equal(f.detached,1);});
+test('elapsed earlier stages consume the same deadline rather than receiving new budgets',async()=>{const f=fixture({delay:20});const result=await collectJ4ContentLifecycle({...f,extensionId:id,timeoutMs:30});assert(result.timedOut);await new Promise(r=>setTimeout(r,40));assert.deepEqual(f.methods.map(x=>x[0]),['Runtime.enable','Page.getFrameTree']);assert.equal(f.detached,1);});
+test('late acquired session detaches and never enables Runtime',async()=>{const f=fixture({late:true});const result=await collectJ4ContentLifecycle({...f,extensionId:id,timeoutMs:10});assert(result.timedOut);f.resolve();await new Promise(r=>setImmediate(r));assert.equal(f.detached,1);assert.equal(f.methods.length,0);});
+test('worker and content share deadline and malformed content is not exported',async()=>{const f=fixture({value:{...trace,secret:'PRIVATE'}});const result=await collectJ4ContentLifecycle({...f,extensionId:id,worker:{evaluate:()=>new Promise(()=>{})},timeoutMs:15});assert(result.timedOut);assert(!JSON.stringify(result).includes('PRIVATE'));assert.equal(f.detached,1);});
+test('runner gates peer capture and includes collector in source hashes',async()=>{const source=await readFile(new URL('./j4-package-journey.mjs',import.meta.url),'utf8');assert(source.includes("files=['j4-content-lifecycle-collector.mjs'"));assert(source.includes('lifecycleOrderTrace?capturePeerLifecycle:null'));assert(source.includes('if(!lifecycleOrderTrace)return;'));assert(source.includes('if(snapshots.length>=16)return;'));assert(source.includes('context,page:peerPage,extensionId:id'));});
+
+const validRow=()=>({stage:'begin',sequence:1,document:null,run:1,epoch:1,routeEpoch:null,enabled:true,ready:false,scopePresent:false,readyPending:false,resumeAllowed:true,active:false,associationPending:false});
+test('normal completed collector accepts exact nonempty trace',async()=>{const value={sequence:1,dropped:0,rows:[validRow()]},f=fixture({value});const result=await collectJ4ContentLifecycle({...f,extensionId:id});assert.equal(result.timedOut,undefined);assert.deepEqual(result.content,{trace:value});assert.notEqual(result.content.trace,value);assert.notEqual(result.content.trace.rows[0],value.rows[0]);});
+for(const [name,mutate]of [
+ ['extra top-level secret',v=>{v.secret='PRIVATE';}],
+ ['extra row secret',v=>{v.rows[0].secret='PRIVATE';}],
+ ['missing boolean',v=>{delete v.rows[0].ready;}],
+ ['wrong boolean',v=>{v.rows[0].ready='PRIVATE';}],
+ ['unknown stage',v=>{v.rows[0].stage='PRIVATE';}],
+ ['raw document',v=>{v.rows[0].document='PRIVATE';}],
+ ['negative generation',v=>{v.rows[0].run=-1;}],
+ ['unsafe sequence',v=>{v.sequence=Number.MAX_SAFE_INTEGER+1;}],
+ ['negative dropped',v=>{v.dropped=-1;v.sequence=0;}],
+ ['out-of-order row',v=>{v.rows[0].sequence=2;}],
+ ['sparse rows',v=>{delete v.rows[0];}],
+ ['oversized ring',v=>{v.rows=Array.from({length:193},(_,i)=>({...validRow(),sequence:i+1}));v.sequence=193;}]
+])test('normal completed collector rejects '+name,async()=>{const value={sequence:1,dropped:0,rows:[validRow()]};mutate(value);const f=fixture({value});const result=await collectJ4ContentLifecycle({...f,extensionId:id});assert.equal(result.timedOut,undefined);assert.deepEqual(result.content,{unavailable:true});assert(!JSON.stringify(result).includes('PRIVATE'));assert.equal(f.detached,1);});
+
+const realms=n=>Array.from({length:n},(_,i)=>({id:i+1,origin,auxData:{isDefault:false,frameId:'top'}}));
+test('two matching realms retain independent sequences without selecting or merging an owner',async()=>{
+ const first={rows:[validRow()],sequence:1,dropped:0},second={rows:[{...validRow(),sequence:10,run:9}],sequence:10,dropped:9};
+ const f=fixture({contexts:[...realms(2),{id:99,origin,auxData:{isDefault:false,frameId:'child'}},{id:100,origin:'https://example.test',auxData:{isDefault:false,frameId:'top'}}],evaluate:id=>({result:{value:id===1?first:second}})});
+ const result=await collectJ4ContentLifecycle({...f,extensionId:id});assert.deepEqual(result.content,{ambiguous:true,contexts:[{contextId:1,content:{trace:first}},{contextId:2,content:{trace:second}}]});assert.deepEqual(f.methods.filter(x=>x[0]==='Runtime.evaluate').map(x=>x[1].contextId),[1,2]);assert.equal(f.detached,1);
+});
+test('closed realm does not discard another matching realm snapshot',async()=>{const f=fixture({contexts:realms(2),evaluate:id=>{if(id===1)throw Error('context-closed-private-message');return {result:{value:trace}};}});const result=await collectJ4ContentLifecycle({...f,extensionId:id});assert.deepEqual(result.content,{ambiguous:true,contexts:[{contextId:1,content:{unavailable:true}},{contextId:2,content:{trace}}]});assert(!JSON.stringify(result).includes('private'));});
+test('four realms share one deadline and retain completed snapshots when another stalls',async()=>{let resolveLate;const f=fixture({contexts:realms(4),evaluate:id=>id===2?new Promise(resolve=>{resolveLate=resolve;}):{result:{value:trace}}});const at=performance.now(),result=await collectJ4ContentLifecycle({...f,extensionId:id,timeoutMs:20});assert(result.timedOut);assert(performance.now()-at<150);assert.equal(result.content.ambiguous,true);assert.equal(result.content.contexts.length,4);assert.deepEqual(result.content.contexts.map(r=>!!r.content.trace),[true,false,true,true]);assert.equal(f.methods.filter(x=>x[0]==='Runtime.evaluate').length,4);assert.equal(f.detached,1);const before=JSON.stringify(result);resolveLate({result:{value:trace}});await new Promise(r=>setImmediate(r));assert.equal(JSON.stringify(result),before,'late evaluation must not mutate finalized evidence');});
+test('more than four matching realms are never evaluated',async()=>{const f=fixture({contexts:realms(5)});const result=await collectJ4ContentLifecycle({...f,extensionId:id});assert.deepEqual(result.content,{unavailable:true,matchingContexts:5});assert(!f.methods.some(x=>x[0]==='Runtime.evaluate'));});

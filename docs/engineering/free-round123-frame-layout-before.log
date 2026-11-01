@@ -1,0 +1,86 @@
+{
+  "kind": "SYNTHETIC_FRAME_DOM_LAYOUT",
+  "checks": [
+    {
+      "width": 320,
+      "zoom": 1,
+      "results": [
+        {
+          "mode": "search",
+          "workspaceWidth": 320,
+          "workspaceScroll": 1329,
+          "sectionWidth": 263,
+          "sectionScroll": 1319,
+          "previewTextWidth": 1303.125,
+          "previewWidth": 231,
+          "previewWraps": false
+        },
+        {
+          "mode": "workingSet",
+          "workspaceWidth": 320,
+          "workspaceScroll": 320,
+          "sectionWidth": 263,
+          "sectionScroll": 263
+        }
+      ]
+    },
+    {
+      "width": 640,
+      "zoom": 2,
+      "results": [
+        {
+          "mode": "search",
+          "workspaceWidth": 320,
+          "workspaceScroll": 1329,
+          "sectionWidth": 263,
+          "sectionScroll": 1319,
+          "previewTextWidth": 2606.25,
+          "previewWidth": 462,
+          "previewWraps": false
+        },
+        {
+          "mode": "workingSet",
+          "workspaceWidth": 320,
+          "workspaceScroll": 320,
+          "sectionWidth": 263,
+          "sectionScroll": 263
+        }
+      ]
+    },
+    {
+      "width": 1000,
+      "zoom": 2,
+      "results": [
+        {
+          "mode": "search",
+          "workspaceWidth": 500,
+          "workspaceScroll": 1348,
+          "sectionWidth": 404,
+          "sectionScroll": 1323,
+          "previewTextWidth": 2606.25,
+          "previewWidth": 728,
+          "previewWraps": false
+        },
+        {
+          "mode": "workingSet",
+          "workspaceWidth": 500,
+          "workspaceScroll": 500,
+          "sectionWidth": 404,
+          "sectionScroll": 404
+        }
+      ]
+    }
+  ],
+  "sourceBefore": {
+    "src/navigation/navigation.mjs": "9954c1c6585333be702903881487b0fd45486bdbf6596bc44283ae9acd2824dc",
+    "src/navigation/styles.mjs": "3acd56606be4653a1391a7725d21649c376b7ded6d8acb8e5b6f5c0a80c213bc"
+  },
+  "browser": "155.0.8059.40",
+  "ok": false,
+  "error": "AssertionError [ERR_ASSERTION]: workspace overflow 320/1/search\n    at file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/host/frame-text-layout-browser.mjs:15:64\n    at runNextTicks (node:internal/process/task_queues:65:5)\n    at process.processImmediate (node:internal/timers:541:9)",
+  "sourceAfter": {
+    "src/navigation/navigation.mjs": "9954c1c6585333be702903881487b0fd45486bdbf6596bc44283ae9acd2824dc",
+    "src/navigation/styles.mjs": "3acd56606be4653a1391a7725d21649c376b7ded6d8acb8e5b6f5c0a80c213bc"
+  },
+  "sourceStable": true
+}

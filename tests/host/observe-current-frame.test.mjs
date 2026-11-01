@@ -1,0 +1,6 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {observeCurrentFrame} from './observe-current-frame.mjs';
+const f=()=>({detached:false,isDetached(){return this.detached;}});
+function clock(){let t=0;return {now:()=>t,pause:async ms=>{t+=ms;},timeout:200,parentAlive:()=>true};}
+test('only read-only observation follows a genuinely detached iframe',async()=>{const first=f(),second=f();let current=first,reads=0;assert.equal(await observeCurrentFrame(()=>current,async frame=>{reads++;if(frame===first){first.detached=true;current=second;throw Error('frame-closed');}return true;},clock()),second);assert.equal(reads,2);});
+test('non-detachment errors and actual parent closure fail immediately',async()=>{const frame=f();await assert.rejects(observeCurrentFrame(()=>frame,async()=>{throw Error('real-oracle-failure');},clock()),/real-oracle-failure/);await assert.rejects(observeCurrentFrame(()=>frame,async()=>true,{...clock(),parentAlive:()=>false}),/native-parent-closed/);});
+test('missing or permanently unready replacement never becomes pass',async()=>{await assert.rejects(observeCurrentFrame(()=>null,async()=>true,clock()),/observation-timeout/);const frame=f();await assert.rejects(observeCurrentFrame(()=>frame,async()=>false,clock()),/observation-timeout/);});

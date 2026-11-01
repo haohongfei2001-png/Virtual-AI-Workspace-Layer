@@ -1,0 +1,102 @@
+{
+  "kind": "RETENTION_REQUEST_PIPELINE_VALIDATION",
+  "baseCommit": "14f5e94165ad6e98474ac918001ff91257adf1d6",
+  "scope": "Queue independent retained/current shared-directory bucket reads after old checkpoint validation; delete only after both full validators and live guard",
+  "acceptance": "MECHANISM_ONLY_NOT_10K_TIMING",
+  "sourceHashes": {
+    "src/data/shared-directory-retention.mjs": "106b94a9c150909a5c0fd702b2ced95666f83cae3cc88c0cdda94062478bf4c8",
+    "tests/free/shared-retention-parallel-read.test.mjs": "61e720454f440d4827f1ad3a574151fbcc5962ac761f1b8c6d976f6b1d479879"
+  },
+  "baselineCounterexample": {
+    "tests": 25,
+    "pass": 8,
+    "fail": 17,
+    "failureMeaning": "Exact request-order assertions: current read was not queued until retained read returned. Not seventeen separate authority defects.",
+    "logSHA256": "4e369738b0c1110153c5a6f96aea4b0953a6806c5fa013f997238e6bb512dda8"
+  },
+  "candidateDelayedReadCases": {
+    "tests": 25,
+    "pass": 25,
+    "fail": 0,
+    "durationMs": 114.696959,
+    "logSHA256": "27c23b61d0d3d9f7d64754fa7fb05da0e3d5b35a4bca5f1e3a4cd05746ee8a5a"
+  },
+  "combinedPortableAndRouting": {
+    "tests": 42,
+    "pass": 42,
+    "fail": 0,
+    "durationMs": 325.761478,
+    "logSHA256": "72e9673597b686c55fd8abde10b6308d6973acbdbf704dbb58ee9783bcd9e178"
+  },
+  "frozenFullNode": {
+    "command": "node --test --test-concurrency=2 --test-reporter=tap $(find tests -name '*.test.mjs' -not -path '*/node_modules/*' | sort)",
+    "tests": 7733,
+    "pass": 7733,
+    "fail": 0,
+    "skipped": 0,
+    "cancelled": 0,
+    "durationMs": 184718.553118,
+    "logSHA256": "52a92436b46003dbc8c8aa8c8ee806d4cade68ba2d6bd2cd1c13199af8f40142",
+    "freezeSHA256": "47754868c51333052740bc1bd497a1dece36b7e58b6aec5c4c9057bf53d4be08",
+    "sourceTestFixtureWorkflowUnchanged": true
+  },
+  "guardMutations": {
+    "selected": 12,
+    "killed": 12,
+    "pass": true,
+    "inputUnchanged": true,
+    "reportSHA256": "e87f1cdb50e3b62ac703a23522d9a3d4abefb0a76dd911e40c8d3a4dd2e7a042"
+  },
+  "mechanismCount": {
+    "fixture": "1080 references, 20 owner batches of 54; MockIDB request counts, not timing",
+    "oldBucketReads": 677,
+    "retainedBucketReads": 677,
+    "differentCurrentPointerReads": 138,
+    "samePointerReuse": 539,
+    "differentCurrentBranchesPerGCBatch": [
+      1,
+      2,
+      8,
+      8,
+      8,
+      4,
+      9,
+      5,
+      8,
+      9,
+      6,
+      7,
+      13,
+      10,
+      7,
+      11,
+      10,
+      12
+    ],
+    "readOrValidationCountReduction": 0,
+    "claim": "Only remove one dependency barrier from each different-pointer branch; no throughput claim"
+  },
+  "independentReview": {
+    "status": "CLEAN",
+    "tests": 42,
+    "pass": 42,
+    "fail": 0,
+    "skipped": 0,
+    "logSHA256": "a3435c911f59fcb7305f5bcd04013e23256db2193e5f92c07f24725b2fd3a221",
+    "fixedProductionSHA256": "106b94a9c150909a5c0fd702b2ced95666f83cae3cc88c0cdda94062478bf4c8",
+    "fixedTestSHA256": "61e720454f440d4827f1ad3a574151fbcc5962ac761f1b8c6d976f6b1d479879",
+    "fixedPatchSHA256": "6854e3db29a9ebea3eb04ba12e373ef1364b3c2c40cf534ceb834d855974f086"
+  },
+  "preservedBoundaries": [
+    "old checkpoint and bucket fully verified before deletion authority",
+    "fresh current bucket read, including newly put bucket; missing current still aborts whole owner write",
+    "same-pointer reuse requires revision/count/units and nondecreasing current ordinal ceiling",
+    "null absent pointer is distinct from unfinished read",
+    "retained/current failures and guard loss cannot authorize deletion",
+    "all deletions stay in original owner readwrite transaction; existing rollback and journals unchanged",
+    "original 30-second 10k and two complete stable audits unchanged"
+  ],
+  "realBrowserCandidate": "NOT_RUN_YET",
+  "realChatGPT": "NOT_RUN",
+  "release": "NOT_RELEASE_READY"
+}

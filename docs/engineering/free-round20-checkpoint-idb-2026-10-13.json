@@ -1,0 +1,23 @@
+{
+  "evidence": "REAL_BROWSER_INDEXEDDB_SYNTHETIC_CHECKPOINT_ENVELOPE",
+  "headless": true,
+  "browser": "156.0.8078.4",
+  "sourceHashes": {
+    "src/data/partitioned.mjs": "1dd7614ab18f05aaffac2497a0a2fdc60be4b42f20c42354001318c8aa6b8692",
+    "src/data/repository.mjs": "3aefaccfba424105bb0d14ab6430eae9a930011f102894eb3a55e2a2a2367071",
+    "tests/f1/checkpoint-envelope-cases.mjs": "56c8e23c3826d952a3c27529672e483649a36597656d793b91a06a39c40f53e3"
+  },
+  "sourceChangedDuringRun": false,
+  "results": [
+    {
+      "name": "IDB synchronously clones verified old checkpoint before impure reducer mutations",
+      "status": "PASS"
+    },
+    {
+      "name": "IDB abort after provisional checkpoint put preserves both prior committed records",
+      "status": "PASS"
+    }
+  ],
+  "pass": 2,
+  "fail": 0
+}

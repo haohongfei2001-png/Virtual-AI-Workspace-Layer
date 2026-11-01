@@ -1,0 +1,8 @@
+{
+  "base": "bc0d636b27e4f2972a1c44171b869706e9aa5052",
+  "files": {
+    "src/host/surface-controller.mjs": "39de5afce59aef5e970944d9c8b25bf7baef52b0c66c98b059790b6c20a6ad80",
+    "tests/host/surface-dormant-entry.test.mjs": "c3cbf148871ca0ac8d844f602c2c9a7e12cc2e9f9c15602e1cfad46e0edd81a6",
+    "tests/host/dormant-native-surrender-mv3.mjs": "ee8e301725fd4f67be25a69c05d4b2ef3e5b99aa1f77a15c3ba9272ca939e356"
+  }
+}

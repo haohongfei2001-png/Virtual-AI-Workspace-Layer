@@ -1,0 +1,9 @@
+# Round360：双frame待命清空回执
+
+从4709ac1继续。生产frame客户端兼容旧两字段IDLE，并接受带requestId的精确待命请求。撤销旧权限、清根后等待旧onGrant渲染完全settle，再清除可能迟到的私有写入，复核epoch/active后向精确parent origin发送局部ACK。onClear重入、重启及旧listener不能生成旧ACK。controller只接受两原frame实际window/origin/role/requestId匹配的回执，dormantReady仅在两者齐全且原文档/frame仍有效时为true；重复消息不增加确认。
+
+独立frame8项、controller7项与原回归最终26文件 **420/420 Node PASS**，零skip/cancel，独立只读审查通过。首次一项旧消息shape预期失败，精确加入同requestId断言后通过；原日志保留。
+
+新增隔离headless Chrome实际跨源frame机制验证：3项PASS，旧render未settle无ACK、首frame清除晚写且不认证第二frame、两frame最终精确回执与空私有根。真实postMessage、iframe source/origin与DOM，运行时固定runtime授权fixture；证据严格 **WEB_MECHANISM_ONLY**，非MV3/正常生产profile/自然worker退出。Chrome155.0.8059.80，无pageerror，源码/runner哈希未漂移。未使用日常浏览器或真实账户。
+
+继续保留UI-11缺口：发送前既有baseline不能用fresh HELLO后的读取补造；现有first-send仅loopback且跨bind关联在worker RAM，old-terminal依赖已接受intent。仅暂存手势不足以证明休眠首个发送，不放宽过期body proof/作用域/预算。因此未启用自动关闭或声称全Free完成。本轮优先补实际frame清空闭环，跨进程关闭与新授权发送仍待实施。完整Free继续NOT_RELEASE_READY。

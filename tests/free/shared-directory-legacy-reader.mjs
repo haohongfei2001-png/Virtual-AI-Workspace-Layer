@@ -1,0 +1,23 @@
+/** Actual older package code with mock IDB; NOT an MV3/browser upgrade test. */
+import {pathToFileURL} from 'node:url';
+import {resolve} from 'node:path';
+import {readFile,writeFile} from 'node:fs/promises';
+import {createHash} from 'node:crypto';
+import assert from 'node:assert/strict';
+import {MockIDBFactory} from '../b23/mock-idb.mjs';
+import {ScopeRepository} from '../../src/b1/scope-repository.mjs';
+import {WorkspaceRepository} from '../../src/data/repository.mjs';
+import {normalizedScope} from '../../src/b1/identity.mjs';
+import {scopeOf} from '../../simulator/data.mjs';
+import {persistentSeed,syntheticEvidenceGate} from '../../simulator/persistent-seed.mjs';
+import {digest} from '../../src/data/hash.mjs';
+if(!process.argv[2]||!process.argv[3])throw Error('Provide old package extension directory and report path');
+const oldPath=resolve(process.argv[2],'src/data/repository.mjs'),{WorkspaceRepository:OldRepository}=await import(pathToFileURL(oldPath)),scope=normalizedScope(scopeOf('A')),base=new ScopeRepository({indexedDB:new MockIDBFactory(),databaseName:'old-package-shared-directory'}),owner=new WorkspaceRepository({baseRepository:base,evidenceGate:syntheticEvidenceGate});
+const seed=persistentSeed(scope,'https://vaiwl-hf.test');assert((await owner.initializePartitioned(scope,seed)).ok);assert((await owner.migrateSharedDirectory(scope,{operationId:'explicit_migration',expectedRevision:1})).ok);
+const db=await base.open(),snapshot=()=>new Promise((resolve,reject)=>{const names=['b23_states','b23_checkpoints','b23_operations','refs'],tx=db.transaction(names),rows=names.map(()=>[]);names.forEach((name,i)=>{const q=tx.objectStore(name).openCursor();q.onsuccess=()=>{if(q.result){rows[i].push(q.result.value);q.result.continue();}};});tx.oncomplete=()=>resolve(rows);tx.onabort=()=>reject(tx.error);});
+const before=await snapshot(),old=new OldRepository({baseRepository:base,evidenceGate:syntheticEvidenceGate});let readError;
+try{await old.read(scope);}catch(e){readError=e.message;}assert(readError,'old read must reject');
+const status=await old.recoveryStatus(scope);assert.equal(status.recoverable,false);const root=before[0].find(row=>row.key===scope.key),recovery=await old.recover(scope,{operationId:'old_recover',damagedHash:digest(root)});assert.equal(recovery.ok,false);assert.equal(digest(await snapshot()),digest(before),'old package must leave all four stores unchanged');
+const state=(await owner.read(scope)).state;assert.deepEqual({...state,revision:seed.revision},seed);
+const files=['src/data/shared-directory-migration.mjs','src/data/repository.mjs','src/data/partitioned.mjs','tests/free/shared-directory-legacy-reader.mjs'],sourceHashes=Object.fromEntries(await Promise.all(files.map(async f=>[f,createHash('sha256').update(await readFile(f)).digest('hex')])));
+const report={evidence:'ACTUAL_OLD_PACKAGE_CODE_WITH_MOCK_IDB_NOT_MV3',oldRepositoryPath:oldPath,oldRepositorySha256:createHash('sha256').update(await readFile(oldPath)).digest('hex'),sourceHashes,readError,status,recovery,unchangedAllStores:true,newReaderFactsPreserved:true};await writeFile(process.argv[3],JSON.stringify(report,null,2)+'\n');console.log(JSON.stringify(report));base.close();

@@ -1,0 +1,9 @@
+# Round308 — Real Shift/middle navigation and bounded read-phase diagnosis
+
+Source03d8204; production unchanged. Existing original native navigation runner now includes Shift and middle-click defaults in addition to Meta, with actual correct conversation URL/body/title, exactly one new page, zero delegated RPC/native handler increment and unchanged original document/editor/draft. Actual isolated headless MV3 **7/7 PASS**, source/script stable. Relevant dispatch/frame contracts56/56PASS. This fills those specific UI-03 browser-default scenarios; it is not whole UI-03/profile/G certification.
+
+Existing test-only instrumented package now records a single fixed-schema replica-terminal with cumulative header/pages/assemble/snapshot/index/version offsets per refresh. Original package and production source remain untouched, ring1024/128KiB unchanged.37/37 targeted trace contracts pass, including success/error identity/cancel/fast path/null/unreached stages/strong anchors/privacy. Initial test-double oracle failure is retained separately.
+
+One diagnostic 10k singleProject run still fails original member deadline. Source/fixture/manifest stable; temporary directory removed. Retained15.662s tail, worker producerDropped1115, combined dropped105.40 successful refreshes: median phase differences header43.25ms, pages349.55ms, assemble10.3ms, snapshot0.7ms, index7.4ms, version2.4ms. Pages total14.890s crosses concurrent owners; it is not wall-clock/CPU proportion. Stage includes plan/request creation and split pages. The next necessary distinction is native.page vs shared/evidence reads vs projection/DTO. Do not remove evaluatedAt, visibility, TTL or membership-witness checks based on this diagnosis.
+
+Production retains Round3065973/5973 baseline; no fresh whole-suite claim. Normal push retry of previous checkpoint timed out; local commits retained. Full81/profile/scale/cold/J4/G/U remain open. Free NOT_RELEASE_READY.

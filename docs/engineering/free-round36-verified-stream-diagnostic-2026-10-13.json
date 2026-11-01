@@ -1,0 +1,242 @@
+{
+  "evidence": "ISOLATED_HEADLESS_CACHE_STREAM_DIAGNOSTIC_NOT_PRODUCT_ACCEPTANCE",
+  "baselineCommit": "315db11",
+  "baseHash": "9b7b3c13abdd37f2b6d4fad48b85707a9815538fd793cad537f8e87b8f08cde0",
+  "candidateHash": "600c79375a575ed274a4c450b0d2889c2c2366e6009553fd18e6fbdc2c0111f1",
+  "runtimeBeforeHash": "9b7b3c13abdd37f2b6d4fad48b85707a9815538fd793cad537f8e87b8f08cde0",
+  "runtimeAfterHash": "9b7b3c13abdd37f2b6d4fad48b85707a9815538fd793cad537f8e87b8f08cde0",
+  "browser": "156.0.8078.4",
+  "candidate": "/** Cache validation, never facts: every IDB read must match all payload bytes again. */\nfunction strictJSON(value,onKeys=null,fields=null,counts=null){\n // Invalid count tables remain unset until the original integrity/schema check completes.\n if(onKeys&&(value===null||typeof value!=='object'||Array.isArray(value)))onKeys=null;\n const type=typeof value;\n // NumberToString is the same finite-number representation JSON uses, including\n // negative zero. Avoid one native JSON call and one temporary array per scalar.\n if(type==='number'){if(!Number.isFinite(value))throw Error('non-json-value');return String(value);}\n if(type==='string'||type==='boolean'||value===null)return JSON.stringify(value);\n if(type!=='object')throw Error('non-json-value');\n if(Array.isArray(value)){\n  let encoded='[';\n  for(let index=0;index<value.length;index++)encoded+=(index?',':'')+strictJSON(value[index]);\n  return encoded+']';\n }\n if(![Object.prototype,null].includes(Object.getPrototypeOf(value)))throw Error('non-json-object');\n // Never invoke toJSON or iterators. Preserve every key/value in read order;\n // building the string directly avoids a 100k-element intermediate map/join.\n let encoded='{',separator='';const keys=Object.keys(value);if(onKeys)onKeys(keys.length);\n for(const key of keys){const capture=fields?.has(key)?size=>{counts[key]=size;}:null;encoded+=separator+JSON.stringify(key)+':'+strictJSON(value[key],capture);separator=',';}\n return encoded+'}';\n}\nexport class VerifiedRecordCache{\n #entries=new Map();#chars=0;\n constructor({maxEntries=2,maxChars=8*1024*1024}={}){\n  if(!Number.isSafeInteger(maxEntries)||maxEntries<0||!Number.isSafeInteger(maxChars)||maxChars<0)throw Error('invalid-validation-cache-budget');\n  this.maxEntries=maxEntries;this.maxChars=maxChars;\n }\n // Count requested top-level maps during the mandatory full-byte traversal.\n // No extra key arrays or retained metadata; each result belongs to this read.\n readWithCounts(row,context,verify,fields){\n  if(!Array.isArray(fields)||fields.length>4||fields.some(field=>typeof field!=='string'||!field.length||field.length>64))throw Error('invalid-cache-count-fields');\n  const counts=Object.create(null),payload=this.#read(row,context,verify,new Set(fields),counts);\n  if(fields.some(field=>!Object.hasOwn(counts,field)))throw Error('invalid-cache-count-table');\n  return {payload,counts};\n }\n read(row,context,verify){return this.#read(row,context,verify);}\n #read(row,context,verify,fields=null,counts=null){\n  let initialKey,initialChecksum;\n  if(!row||typeof (initialKey=row.key)!=='string'||typeof (initialChecksum=row.checksum)!=='string'||typeof context!=='string'||typeof verify!=='function')throw Error('invalid-validation-cache-record');\n  const hint=this.#entries.get(JSON.stringify([context,initialKey]));\n  const encoded=hint&&hint.checksum===initialChecksum?streamJSON(row.payload,hint.encoded,fields,counts):strictJSON(row.payload,null,fields,counts),key=JSON.stringify([context,row.key]),prior=this.#entries.get(key);\n  if(prior&&prior.checksum===row.checksum&&prior.encoded===encoded){this.#entries.delete(key);this.#entries.set(key,prior);return row.payload;}\n  // No checksum-only or revision-only shortcut: corrupted bytes or a new schema\n  // always reenter the original checksum and contextual validation functions.\n  verify(row.payload,row);\n  if(prior){this.#entries.delete(key);this.#chars-=prior.encoded.length;}\n  if(this.maxEntries&&encoded.length<=this.maxChars){\n   while(this.#entries.size&&(this.#entries.size>=this.maxEntries||this.#chars+encoded.length>this.maxChars)){\n    const oldest=this.#entries.keys().next().value;this.#chars-=this.#entries.get(oldest).encoded.length;this.#entries.delete(oldest);\n   }\n   this.#entries.set(key,{encoded,checksum:row.checksum});this.#chars+=encoded.length;\n  }\n  return row.payload;\n }\n}\n\nfunction streamJSON(value,prior,fields,counts){\n let offset=0,captured=null;\n const append=token=>{if(captured!==null)captured+=token;else if(!prior.startsWith(token,offset))captured=prior.slice(0,offset)+token;offset+=token.length;};\n function visit(value,onKeys=null,fields=null,counts=null){\n  if(onKeys&&(value===null||typeof value!=='object'||Array.isArray(value)))onKeys=null;\n  const type=typeof value;\n  if(type==='number'){if(!Number.isFinite(value))throw Error('non-json-value');append(String(value));return;}\n  if(type==='string'||type==='boolean'||value===null){append(JSON.stringify(value));return;}\n  if(type!=='object')throw Error('non-json-value');\n  if(Array.isArray(value)){append('[');for(let index=0;index<value.length;index++){if(index)append(',');visit(value[index]);}append(']');return;}\n  if(![Object.prototype,null].includes(Object.getPrototypeOf(value)))throw Error('non-json-object');\n  append('{');let separator='';const keys=Object.keys(value);if(onKeys)onKeys(keys.length);\n  for(const key of keys){const capture=fields?.has(key)?size=>{counts[key]=size;}:null;append(separator+JSON.stringify(key)+':');visit(value[key],capture);separator=',';}append('}');\n }\n visit(value,null,fields,counts);return captured!==null?captured:offset===prior.length?prior:prior.slice(0,offset);\n}",
+  "result": {
+    "checks": [
+      "same",
+      "mismatch",
+      "long",
+      "short",
+      "non-json",
+      "key-switch",
+      "checksum-miss",
+      "same-middle-tamper",
+      "mixed-middle-tamper",
+      "unique-middle-tamper"
+    ],
+    "timings": [
+      {
+        "distribution": "same",
+        "round": 0,
+        "variant": "baseline",
+        "elapsedMs": 42.70000000298023
+      },
+      {
+        "distribution": "same",
+        "round": 0,
+        "variant": "candidate",
+        "elapsedMs": 32.5
+      },
+      {
+        "distribution": "same",
+        "round": 1,
+        "variant": "candidate",
+        "elapsedMs": 31.099999994039536
+      },
+      {
+        "distribution": "same",
+        "round": 1,
+        "variant": "baseline",
+        "elapsedMs": 52.900000005960464
+      },
+      {
+        "distribution": "same",
+        "round": 2,
+        "variant": "baseline",
+        "elapsedMs": 38.599999994039536
+      },
+      {
+        "distribution": "same",
+        "round": 2,
+        "variant": "candidate",
+        "elapsedMs": 36.80000000447035
+      },
+      {
+        "distribution": "same",
+        "round": 3,
+        "variant": "candidate",
+        "elapsedMs": 30.19999999552965
+      },
+      {
+        "distribution": "same",
+        "round": 3,
+        "variant": "baseline",
+        "elapsedMs": 35.100000001490116
+      },
+      {
+        "distribution": "same",
+        "round": 4,
+        "variant": "baseline",
+        "elapsedMs": 36.20000000298023
+      },
+      {
+        "distribution": "same",
+        "round": 4,
+        "variant": "candidate",
+        "elapsedMs": 34.79999999701977
+      },
+      {
+        "distribution": "same",
+        "round": 5,
+        "variant": "candidate",
+        "elapsedMs": 36.20000000298023
+      },
+      {
+        "distribution": "same",
+        "round": 5,
+        "variant": "baseline",
+        "elapsedMs": 38.79999999701977
+      },
+      {
+        "distribution": "mixed",
+        "round": 0,
+        "variant": "baseline",
+        "elapsedMs": 51.5
+      },
+      {
+        "distribution": "mixed",
+        "round": 0,
+        "variant": "candidate",
+        "elapsedMs": 42.600000001490116
+      },
+      {
+        "distribution": "mixed",
+        "round": 1,
+        "variant": "candidate",
+        "elapsedMs": 40.5
+      },
+      {
+        "distribution": "mixed",
+        "round": 1,
+        "variant": "baseline",
+        "elapsedMs": 43
+      },
+      {
+        "distribution": "mixed",
+        "round": 2,
+        "variant": "baseline",
+        "elapsedMs": 40.599999994039536
+      },
+      {
+        "distribution": "mixed",
+        "round": 2,
+        "variant": "candidate",
+        "elapsedMs": 35.20000000298023
+      },
+      {
+        "distribution": "mixed",
+        "round": 3,
+        "variant": "candidate",
+        "elapsedMs": 39.70000000298023
+      },
+      {
+        "distribution": "mixed",
+        "round": 3,
+        "variant": "baseline",
+        "elapsedMs": 50.79999999701977
+      },
+      {
+        "distribution": "mixed",
+        "round": 4,
+        "variant": "baseline",
+        "elapsedMs": 55.5
+      },
+      {
+        "distribution": "mixed",
+        "round": 4,
+        "variant": "candidate",
+        "elapsedMs": 43
+      },
+      {
+        "distribution": "mixed",
+        "round": 5,
+        "variant": "candidate",
+        "elapsedMs": 42.29999999701977
+      },
+      {
+        "distribution": "mixed",
+        "round": 5,
+        "variant": "baseline",
+        "elapsedMs": 48.900000005960464
+      },
+      {
+        "distribution": "unique",
+        "round": 0,
+        "variant": "baseline",
+        "elapsedMs": 56.599999994039536
+      },
+      {
+        "distribution": "unique",
+        "round": 0,
+        "variant": "candidate",
+        "elapsedMs": 44.30000000447035
+      },
+      {
+        "distribution": "unique",
+        "round": 1,
+        "variant": "candidate",
+        "elapsedMs": 44.399999998509884
+      },
+      {
+        "distribution": "unique",
+        "round": 1,
+        "variant": "baseline",
+        "elapsedMs": 71.70000000298023
+      },
+      {
+        "distribution": "unique",
+        "round": 2,
+        "variant": "baseline",
+        "elapsedMs": 55.79999999701977
+      },
+      {
+        "distribution": "unique",
+        "round": 2,
+        "variant": "candidate",
+        "elapsedMs": 53.29999999701977
+      },
+      {
+        "distribution": "unique",
+        "round": 3,
+        "variant": "candidate",
+        "elapsedMs": 42.600000001490116
+      },
+      {
+        "distribution": "unique",
+        "round": 3,
+        "variant": "baseline",
+        "elapsedMs": 48.20000000298023
+      },
+      {
+        "distribution": "unique",
+        "round": 4,
+        "variant": "baseline",
+        "elapsedMs": 47.399999998509884
+      },
+      {
+        "distribution": "unique",
+        "round": 4,
+        "variant": "candidate",
+        "elapsedMs": 47.29999999701977
+      },
+      {
+        "distribution": "unique",
+        "round": 5,
+        "variant": "candidate",
+        "elapsedMs": 42.30000000447035
+      },
+      {
+        "distribution": "unique",
+        "round": 5,
+        "variant": "baseline",
+        "elapsedMs": 53.399999998509884
+      }
+    ]
+  }
+}

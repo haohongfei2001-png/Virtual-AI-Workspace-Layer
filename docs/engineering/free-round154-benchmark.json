@@ -1,0 +1,9 @@
+{
+  "evidence": "NODE_5000_PIECE_HASH_AND_VALIDATION_NOT_F1",
+  "samples": 20,
+  "identicalValidation": true,
+  "beforeMedianMs": 32.15625,
+  "afterMedianMs": 30.884416999999985,
+  "baselineCommit": "268b566",
+  "sourceSHA256": "98dc17aedc9cf675fed8d720a181422956f79fd6784a4040327788a69e8c3c93"
+}

@@ -1,0 +1,54 @@
+{
+  "evidence": "REAL_HEADLESS_OFFLINE_RECONSTRUCTION",
+  "authorization": "OWNER_CALLBACK_TEST_DOUBLE_NOT_UIGRANT",
+  "liveChatGPT": "NOT_RUN",
+  "fixture": {
+    "fixtureId": "chatgpt-host-legacy-reconstruction-v1",
+    "profile": "LEGACY",
+    "reconstruction": true,
+    "source": "VA-HOST/1.1 structure reconstruction; not a real DOM snapshot",
+    "sourceCommit": null,
+    "sourceBlob": null,
+    "fixtureHash": "bd8cdf343bcdb38fa32e13ca7b5a7db1de5f49ca5bbd4d726b74e113d4225233",
+    "expectedWorldFile": "tests/host/expected/legacy.mjs",
+    "oracleHash": "32b9e3f30c9f5b4be23b859a07477e5f36db0dc8440032d1077ecc2713a8d8db",
+    "supportedCapabilities": [
+      "principal",
+      "personal-context-candidate",
+      "project-identity",
+      "idless-native-control",
+      "conversation-identity",
+      "native-move-menu",
+      "native-navigation",
+      "native-search",
+      "native-create",
+      "independent-regions",
+      "draft-preservation"
+    ]
+  },
+  "sourceHashes": {
+    "src/host/chatgpt-adapter.mjs": "1904fc025ab007d710154c65ffc68d9969f41747c1cd78ff9929c38acec83864",
+    "src/host/surface-discovery.mjs": "4f1ad9d5646c4404859fc17422bb4a446dcbb0f736da4f63bb9b04b8a0111734",
+    "src/host/url-policy.mjs": "fddfafcca2276161e6fd3c908ac896d0dab656fce6cf06aee64f1f442f7ac7e9",
+    "src/host/native-actions.mjs": "39d744d334a597d7310aa4e95b1e04ff2f3358612075d26cd9d73661d8cc5502",
+    "src/host/contract.mjs": "35129aacf2a7e1fe1812c846379563d60ad74a66b689ad41bc38d76484a97716",
+    "src/b1/identity.mjs": "6d7ca616701826733d4936d8a139395ccf1a3111e025ec6b1035d78c1dc05e99"
+  },
+  "results": [
+    {
+      "name": "real-surface-same-name-idless-native-inspection",
+      "status": "PASS"
+    },
+    {
+      "name": "one-native-control-route-rebind-stop-draft-preserved",
+      "status": "PASS"
+    },
+    {
+      "name": "owner-rebind-discovers-exact-project-member",
+      "status": "PASS"
+    }
+  ],
+  "errors": [],
+  "status": "PASS",
+  "sourceChangedDuringRun": false
+}

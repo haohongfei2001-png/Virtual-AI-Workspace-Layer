@@ -1,0 +1,12 @@
+{
+  "base": "9279d1c2f597da2f4631624fe043229b413159e7",
+  "command": "node --test --test-concurrency=2 $(find tests -name '*.test.mjs' -not -path '*/node_modules/*' | sort)",
+  "tests": 4044,
+  "pass": 4044,
+  "fail": 0,
+  "skipped": 0,
+  "durationMs": 118323.336059,
+  "logSha256": "baf2461464e8c2246108d18d5c5488f4cb77db175eb9410041b9909da097eb91",
+  "S": "Pending next CI",
+  "release": "NOT_RELEASE_READY"
+}

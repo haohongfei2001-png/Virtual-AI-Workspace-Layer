@@ -1,0 +1,407 @@
+{
+  "schema": "vaiwl-context-recovery-validation-v2",
+  "generatedAtUTC": "2026-10-17T20:39:33.626740+00:00",
+  "classification": "L_DETERMINISTIC_OWNER_AND_SERVICE_INTEGRATION",
+  "integrationBaseSHA": "3276ab8b1b71d4851672322756355ba70f079342",
+  "originalProCommit": "462ff1b2fb7b7fe4103b1b63f4e5f13e4babb013",
+  "originalProDelivery": {
+    "schema": "vaiwl-context-recovery-validation-v1",
+    "generatedAtUTC": "2026-10-17T20:14:30.473986+00:00",
+    "branch": "codex/pro-context-recovery-20261018",
+    "claimedBaseSHA": "3c8a33dae36ca0de11841570ac6fb44d4331dd5a",
+    "validatedFreeBaseSHA": "8f146ea99297d6f82739b5792d704577fa65416e",
+    "classification": "L_DETERMINISTIC_OWNER_AND_SERVICE_INTEGRATION",
+    "realChatGPT": "NOT_RUN",
+    "realProfileG": "BLOCKED",
+    "formalFreeIntegration": "NOT_APPLIED_BY_THIS_DELIVERY",
+    "fullFreeCIForThisCommit": "NOT_RUN_WORKFLOW_ONLY_SUBSCRIBES_TO_FREE_PUSH",
+    "privateDataOrCredentialsUsed": false,
+    "original15SecondOracleChanged": false,
+    "dependencies": {
+      "node": "v24.19.0",
+      "esbuild": "0.25.12",
+      "newRuntimeDependencies": []
+    },
+    "sourceHashes": {
+      "src/runtime/context-recovery/no-receipt-recovery.mjs": "be57c48808b07079b8e352afc9b2d490ffc57bf9b6176ef78671c2a126f425b1",
+      "tests/runtime/context-recovery/fixture.mjs": "112b75de574f6e613ff3c1dd7004b035f30683ea893fc85a4a27e351a661f4be",
+      "tests/runtime/context-recovery/no-receipt-recovery.test.mjs": "6d0c24ebc6ce3bb2ebe3ede5e0a29d1830d4a988e3717e54456d81b459e0788f",
+      "tests/runtime/context-recovery/binding-integration.test.mjs": "7edaa445a9d8b8f6061a1e6355a857b85230961fce2b5124ff7d3c00fe16b369"
+    },
+    "originalBindingServiceSha256": "09fc71c68c5f85098ad5beb468bc33225da4c2df19c372cbea4c66fda620654b",
+    "temporaryWiredBindingServiceSha256": "7257d1e2457c4326c2794a3453447bbb08b1defd1b3312fbbeec7742ae05229c",
+    "wiringPatchSha256": "a41fca670920bc4f48d4394395b7e7a895b79b2c07da1cc30fe8b6cc6a1f4ddb",
+    "runs": [
+      {
+        "id": "specialist-unintegrated",
+        "classification": "L",
+        "sourceMode": "documented diff applied only to a temporary source copy",
+        "argv": [
+          "node",
+          "--test",
+          "--experimental-test-isolation=none",
+          "--test-reporter=tap",
+          "tests/runtime/context-recovery/binding-integration.test.mjs",
+          "tests/runtime/context-recovery/no-receipt-recovery.test.mjs"
+        ],
+        "exitCode": 0,
+        "result": {
+          "tests": 64,
+          "suites": 0,
+          "pass": 64,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0,
+          "todo": 0
+        },
+        "durationMs": 868.371142,
+        "completedAtUTC": "2026-10-17T20:13:52.807346+00:00",
+        "rawTapSha256": "0cb8f0bd900494ace64cfac716a91438e93073bd82d710adeda47b56adb1d007"
+      },
+      {
+        "id": "specialist-integrated",
+        "classification": "L",
+        "sourceMode": "full reverse-check accepts already integrated temporary source copy",
+        "argv": [
+          "node",
+          "--test",
+          "--experimental-test-isolation=none",
+          "--test-reporter=tap",
+          "tests/runtime/context-recovery/binding-integration.test.mjs",
+          "tests/runtime/context-recovery/no-receipt-recovery.test.mjs"
+        ],
+        "exitCode": 0,
+        "result": {
+          "tests": 64,
+          "suites": 0,
+          "pass": 64,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0,
+          "todo": 0
+        },
+        "durationMs": 917.967947,
+        "completedAtUTC": "2026-10-17T20:13:52.863345+00:00",
+        "rawTapSha256": "4af05b6c72da91209778c96c488eb5c169112c3fd9046aaaf066810cb7c4934c"
+      },
+      {
+        "id": "affected-existing-regressions",
+        "classification": "L",
+        "sourceMode": "temporary source with the exact documented wiring",
+        "argv": [
+          "node",
+          "--test",
+          "--experimental-test-isolation=none",
+          "--test-reporter=tap",
+          "tests/host/browser-request-context.test.mjs",
+          "tests/host/browser-request-context-pending-epoch.test.mjs",
+          "tests/host/scope-authority.test.mjs",
+          "tests/host/scope-authority-boundaries.test.mjs",
+          "tests/host/scope-authority-stop-review.test.mjs",
+          "tests/host/scope-authority-idle.test.mjs",
+          "tests/host/host-binding-service.test.mjs",
+          "tests/host/host-binding-idle.test.mjs",
+          "tests/host/host-view-service.test.mjs",
+          "tests/host/host-view-idle.test.mjs",
+          "tests/host/ui-grants.test.mjs",
+          "tests/host/scope-transport-recovery.test.mjs",
+          "tests/host/content-foreground-document-recovery.test.mjs",
+          "tests/host/context-transport-expiry-contract.test.mjs",
+          "tests/host/content-session-recovery.test.mjs",
+          "tests/host/j4-evidence-recovery.test.mjs",
+          "tests/host/j4-recovery-contract.test.mjs"
+        ],
+        "exitCode": 0,
+        "result": {
+          "tests": 400,
+          "suites": 0,
+          "pass": 400,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0,
+          "todo": 0
+        },
+        "durationMs": 4704.15805,
+        "completedAtUTC": "2026-10-17T20:10:59.573486+00:00",
+        "rawTapSha256": "5af183436afb3b1f1229239676692938f7c2f2f1af65492380cfaf92f2e61158"
+      },
+      {
+        "id": "build-and-package-boundaries",
+        "classification": "L",
+        "sourceMode": "temporary source with the exact documented wiring",
+        "argv": [
+          "node",
+          "--test",
+          "--experimental-test-isolation=none",
+          "--test-reporter=tap",
+          "tests/host/classic-worker-build.test.mjs",
+          "tests/host/package.test.mjs"
+        ],
+        "exitCode": 0,
+        "result": {
+          "tests": 31,
+          "suites": 0,
+          "pass": 31,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0,
+          "todo": 0
+        },
+        "durationMs": 4709.048431,
+        "completedAtUTC": "2026-10-17T20:10:56.617522+00:00",
+        "rawTapSha256": "ba1466e0cbc35609f95e113f161058c4e2d194766234fb0adc1640d45aff0fa5"
+      }
+    ],
+    "countingRule": "The two 64-case specialist runs are the same 53 policy + 11 integration cases in different wiring states, not 128 distinct tests. Existing regressions and build tests are current candidate runs, not historical Free full-suite claims. Durations are diagnostics, not performance acceptance.",
+    "priorUnsuccessfulSetupAttempts": [
+      {
+        "id": "adjacent-initial-setup-fail",
+        "result": {
+          "tests": 383,
+          "pass": 381,
+          "fail": 2,
+          "cancelled": 0,
+          "skipped": 0
+        },
+        "reason": "The first temporary validation copy omitted tracked workflow and simulator dependencies; 381 passed and 2 failed. The copy was completed without editing production or test assertions.",
+        "rawTapSha256": "fa2f8f2914cddaeb9b72e54499e4714637a3d6908cdbdb369384f77521c0ccb5"
+      },
+      {
+        "id": "build-initial-setup-fail",
+        "result": {
+          "tests": 2,
+          "pass": 0,
+          "fail": 2,
+          "cancelled": 0,
+          "skipped": 0
+        },
+        "reason": "The first temporary validation copy omitted simulator/package.mjs; both test files failed during import. The missing tracked dependency was copied before the successful run.",
+        "rawTapSha256": "d9edfd12ca6a37f33c2d413c4c2deb758873066a6a5401b0ac42f13ffe035ece"
+      },
+      {
+        "id": "adjacent-sandbox-fail",
+        "result": {
+          "tests": 399,
+          "pass": 396,
+          "fail": 3,
+          "cancelled": 0,
+          "skipped": 0
+        },
+        "reason": "All dependencies were present; 396 passed and 3 synthetic loopback fixture tests failed with listen EPERM. The same complete suite passed with authorized loopback access, without changes to assertions.",
+        "rawTapSha256": "58743b13099c05cc371bf3881f352039aef7547c4d78a5702f28e3f95379ac7c"
+      }
+    ],
+    "independentReviewFixes": [
+      "Do not join or claim cleanup ownership of an external pending authority; do not consume B evidence if that race appears during preflight.",
+      "Route a policy-owned pending flight through the same policy so each subscriber retains independent cancellation.",
+      "Accept only fully unintegrated or fully integrated wiring in integration-test preparation; conflicting or partial patches fail."
+    ],
+    "remainingBoundaries": [
+      "C2 with no distinguishable new trusted signal must wait or reject; no source of current selection is invented.",
+      "Only dot may integrate the exact existing-file diff into the Free branch.",
+      "No real browser, real account, ChatGPT Profile or G acceptance was executed.",
+      "Production C1 is not implemented in the current authority; offline C2/C3 tests do not enable a production profile."
+    ]
+  },
+  "realChatGPT": "NOT_RUN",
+  "realProfileG": "BLOCKED",
+  "privateDataOrCredentialsUsed": false,
+  "original15SecondOracleChanged": false,
+  "sourceHashes": {
+    "src/runtime/host-binding-service.mjs": "d3ba9903e1b30ec4543c4d3c4c85b3d1c4fa41f3c15d5aef2459384356ba2d5e",
+    "src/runtime/context-recovery/no-receipt-recovery.mjs": "14d2382c12f250de8386837a1b0845e60f7c1f1297245dbc8e4ee67d87ec2513",
+    "tests/runtime/context-recovery/fixture.mjs": "22601c476229a296c82dcb3006d077ddb27d7c82cd5b7a0f522217211fa70546",
+    "tests/runtime/context-recovery/no-receipt-recovery.test.mjs": "6d0c24ebc6ce3bb2ebe3ede5e0a29d1830d4a988e3717e54456d81b459e0788f",
+    "tests/runtime/context-recovery/binding-integration.test.mjs": "83b269c28fa29821b8014cf741783cb0f5eea3c30df9e9a4b0c3b074e2de0c45",
+    "tests/runtime/context-recovery/delivery-confirmation.test.mjs": "138c38a2e3c6651032379cddba2b82f5b05d83b361173f423dbf815e7bfb411d",
+    "tests/runtime/context-recovery/subscriber-boundaries.test.mjs": "6c136d2589c7fd2892887e94be5e83e2ca7517ffab55055f17185f4421e14bf6",
+    "tests/host/host-identity-fallback.test.mjs": "997e39afb7a0fca780c9e6c27825f629f4c04df7283306a02400480ed81008c7"
+  },
+  "wiringPatchSHA256": "02ea832012db671c9f8dc27fc5aeaf5c73ecb4380b06563a3c89cd77f767ab4e",
+  "currentRuns": [
+    {
+      "id": "merged-specialist-and-independent-regressions",
+      "tests": 104,
+      "pass": 104,
+      "fail": 0,
+      "skip": 0,
+      "cancelled": 0,
+      "durationMs": 799.209455,
+      "command": "node --test --experimental-test-isolation=none --test-reporter=tap tests/runtime/context-recovery/*.test.mjs",
+      "tapSHA256": "4543f8c40a0ce32a6bbe74c706edb4fb5b6da4c96bb422559ed53007879e8c0d"
+    },
+    {
+      "id": "affected-existing-regressions-and-package",
+      "tests": 436,
+      "pass": 436,
+      "fail": 0,
+      "skip": 0,
+      "cancelled": 0,
+      "durationMs": 6044.423223,
+      "tapSHA256": "3a36bd5c3fb054e5c95ce5db54d280057ea450aa18d4c97d8aa209842f973b7b"
+    }
+  ],
+  "independentReview": {
+    "status": "PASS_AFTER_REPRODUCED_FIXES",
+    "tests": 40,
+    "pass": 40,
+    "productionServiceSHA256": "d3ba9903e1b30ec4543c4d3c4c85b3d1c4fa41f3c15d5aef2459384356ba2d5e",
+    "policySHA256": "14d2382c12f250de8386837a1b0845e60f7c1f1297245dbc8e4ee67d87ec2513",
+    "forwardWiringOracleTests": 2,
+    "reviewRecordSHA256": "228ef4347aa3448b1c2257d4f149d1a1b943b0aa0c4482230932c8c9500659b0"
+  },
+  "regressionAttribution": {
+    "sharedGrantCleanup": "Reproduced in unintegrated Free 3276ab8 and original Pro wiring; inherited service bug.",
+    "prematureBReceiptRefund": "Original Pro policy cleared consumption before actual service delivery.",
+    "pendingDeliveryBypass": "Same-owner refresh repeated identity after policy resolved but before service final checks.",
+    "outerDeadlineGap": "Original final internal work marked producer verified before the outer deadline; 3/16 microtask positions reproduced retry."
+  },
+  "fullNode": {
+    "status": "PASS",
+    "tests": 7708,
+    "pass": 7708,
+    "fail": 0,
+    "skip": 0,
+    "cancelled": 0,
+    "durationMs": 168881.293233,
+    "command": "node --test --test-concurrency=2 --test-reporter=tap $(find tests -name '*.test.mjs' -not -path '*/node_modules/*' | sort)",
+    "tapSHA256": "963f1e38cb96a7ca08b395518d7a152a24e9603131834be428e048d71a554f46",
+    "frozenInputsSHA256": "e1885b224abfadc887396821b75fe646d73124fcf0e6f2260c2beaa1fbbda7b1",
+    "inputsUnchanged": true,
+    "boundary": "Runnable source/tests/workflow were frozen; this results JSON and explanatory documentation are updated afterward."
+  },
+  "guardMutations": {
+    "status": "PASS",
+    "selected": 12,
+    "killed": 12,
+    "inputUnchanged": true,
+    "reportSHA256": "2e5d0ea5dac4cc55b87ae37e9537a52b32d973cc6a444eb2a76901925d660ba9",
+    "logSHA256": "2d85d285f1bbf4e50bcb86ea96dac0859995c7a30687955d2dab455ba6f56394",
+    "sourceHashScope": "src/tests/simulator excluding dependency node_modules directories",
+    "inputHashes": {
+      "src": "4ba3d3ae6eb6031ea66662a3c932cb714985ffd100c56aa3065278b249b9bbad",
+      "tests": "721f8376b93bce8ccee4734a1e91ebfc4eaae579a49c84212239816d1c0869cb",
+      "simulator": "ac28ff64c62b94b96eb21eb8b51489548b37c8c13d9214171cacf64975711ef6"
+    },
+    "results": [
+      {
+        "id": "origin",
+        "status": "KILLED",
+        "sourceHash": "fddfafcca2276161e6fd3c908ac896d0dab656fce6cf06aee64f1f442f7ac7e9",
+        "testHash": "9b8fd742d87bd3f3b6798f1bedd4a3ce150964faa4226e503cb278ff1520f9a5"
+      },
+      {
+        "id": "missing-as-null",
+        "status": "KILLED",
+        "sourceHash": "4733a8cecdc3f4664c77da81d12441c9f2bd7cf0c16e55ec93eb94076faa4e5d",
+        "testHash": "1dea1df4e0189055122d08e521edf3b9c6bb5d863e655d7b0c085aabdb4a006a"
+      },
+      {
+        "id": "merge-by-name",
+        "status": "KILLED",
+        "sourceHash": "4733a8cecdc3f4664c77da81d12441c9f2bd7cf0c16e55ec93eb94076faa4e5d",
+        "testHash": "1dea1df4e0189055122d08e521edf3b9c6bb5d863e655d7b0c085aabdb4a006a"
+      },
+      {
+        "id": "old-epoch",
+        "status": "KILLED",
+        "sourceHash": "4733a8cecdc3f4664c77da81d12441c9f2bd7cf0c16e55ec93eb94076faa4e5d",
+        "testHash": "1dea1df4e0189055122d08e521edf3b9c6bb5d863e655d7b0c085aabdb4a006a"
+      },
+      {
+        "id": "self-certified-receipt",
+        "status": "KILLED",
+        "sourceHash": "4733a8cecdc3f4664c77da81d12441c9f2bd7cf0c16e55ec93eb94076faa4e5d",
+        "testHash": "1dea1df4e0189055122d08e521edf3b9c6bb5d863e655d7b0c085aabdb4a006a"
+      },
+      {
+        "id": "pre-ack-send",
+        "status": "KILLED",
+        "sourceHash": "92fdfc486bd9614028aacc197b99a26b8ad3ae254e54a980a04b0a1e90153144",
+        "testHash": "3a9b6a5beddd5ba186ba9434c680b9ff39d006719560bf2610981b4657b3d247"
+      },
+      {
+        "id": "current-leaf-key",
+        "status": "KILLED",
+        "sourceHash": "7e4362115828c9b68ff3a34923587c2711e6df854d119b9b3d3a1d91b5830fc5",
+        "testHash": "c390112749cd8c21b1ec6746290ef3de13a5aa19b6328452624d19e4af6236d1"
+      },
+      {
+        "id": "poll-renews-anchor",
+        "status": "KILLED",
+        "sourceHash": "2d961ee56aaddada429ba684cf08ba1aa4a4886204f2d3a43d3b52843da7de46",
+        "testHash": "7c0bc0195cce61536e2ad27da572d848e3c74bbb304561e9d0794a4e347e5da9"
+      },
+      {
+        "id": "auto-popover",
+        "status": "KILLED",
+        "sourceHash": "18bfa6a33bc28d084285c9c615219aa06aa33784e9e04466e035b6e7e56d833f",
+        "testHash": "e6fa0c8ba60b0bd7821b0a38869441603fc31c82240d2c842bbfc07da6f31a44"
+      },
+      {
+        "id": "remove-background-inert",
+        "status": "KILLED",
+        "sourceHash": "18bfa6a33bc28d084285c9c615219aa06aa33784e9e04466e035b6e7e56d833f",
+        "testHash": "e6fa0c8ba60b0bd7821b0a38869441603fc31c82240d2c842bbfc07da6f31a44"
+      },
+      {
+        "id": "async-prevent-default",
+        "status": "KILLED",
+        "sourceHash": "70cde36dffcc5940c9aa8986e7219ee8e3865a12b3de1dd5054a72054ab67f58",
+        "testHash": "134a3c5505a0a9615218498cbed7c2b79b8a115540b1e5fa9a968ec53e73121e"
+      },
+      {
+        "id": "post-commit-continuation",
+        "status": "KILLED",
+        "sourceHash": "82fc7cfdc288231e933fe2d51d745324cb601606eda88a1f00fbd9b1601b66d6",
+        "testHash": "3d06aa7c68fea88f2e7d5ff2a3f6bb5a1e9f3aafdc86c9ebb8fc2a6c4d4b2ae0"
+      }
+    ]
+  },
+  "browserAcceptance": "NOT_ESTABLISHED",
+  "release": "NOT_RELEASE_READY",
+  "publicationParent": "47899a5ec83233b94c7fc4c2afe8ff7093b4c9aa",
+  "publicationParentProduction": "Identical to integration base 3276ab8; intervening commit contains diagnostic tests/workflow and evidence only.",
+  "intermediateRuns": {
+    "intermediateContractRun": {
+      "tests": 7686,
+      "pass": 7684,
+      "fail": 2,
+      "skip": 0,
+      "durationMs": 169694.003162,
+      "sha256": "ed51dce86e673012a0db5bf1963a1cfdb396437e662c30e1f39619348294c230"
+    },
+    "frozenFileFailureRun": {
+      "tests": 7663,
+      "pass": 7661,
+      "fail": 2,
+      "skip": 0,
+      "durationMs": 189798.343369,
+      "sha256": "3743b6022c25a6d6b7e7a9f6098e76214e5cfd05fb2510348ee6f4411d1937a0",
+      "failures": [
+        "tests/host/native-continuation-repository.test.mjs",
+        "tests/host/sys02-pending-faults.test.mjs"
+      ],
+      "observed": "File-level test failed only; reporter recorded no assertion, exit-code or signal cause. Do not infer OOM or production defect."
+    },
+    "focusedReproduction": {
+      "tests": 47,
+      "pass": 47,
+      "fail": 0,
+      "skip": 0,
+      "durationMs": 31295.26446,
+      "sha256": "08372c4fbabff85566b79844e183476b1a82d5f371bc3db56a2f0194cd3f91cb",
+      "command": "node --test --test-concurrency=1 --test-reporter=tap tests/host/native-continuation-repository.test.mjs tests/host/sys02-pending-faults.test.mjs"
+    },
+    "currentFullRun": "PASS_7708_ON_SAME_FROZEN_BYTES_WITH_ORIGINAL_CONCURRENCY_2"
+  },
+  "contractCompatibility": {
+    "tests": 30,
+    "pass": 30,
+    "fail": 0,
+    "skip": 0,
+    "tapSHA256": "7de27e9099196044238dbfda085bac0b384332c812e3b5c52bd4bba15873cc6b",
+    "identityBoundary": "Keep an actual successful isolated identity reply unable to authorize when C2 disappears after policy admission; separately require no initial C2 to perform zero primary/isolated identity reads.",
+    "diagnosticBoundary": "Execute the actual catch block: failed diagnostic readers cannot replace the original FAIL, stack, same-object member progress, exit 1 or 30-second gate."
+  }
+}

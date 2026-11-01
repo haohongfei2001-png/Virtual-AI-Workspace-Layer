@@ -1,0 +1,14 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+page.evaluate: Error: recovery replay unchanged {"actual":{"b23_states":"10f850af521bde253372bc419426985b888e8cbddcceebc145059bd04d698e7d","b23_checkpoints":"524e3e30ba621fb8988ba7872f11fd3c37ac733f20d7d9682861bef21abc98a6","b23_operations":"e30715e56579f2bc97958f190b6cc20c668c729c85504f9d36454c9f407e3425","refs":"1b4f5bb1e508eaecc0ef700fdbbebc045b9c31a08db69e5dd4c9ff8885d2f025","native_states":"0eb9c83c22fb6d29b50a1e16269dffdfcd2de978c2a12fb73b48a250a23e92b1","native_operations":"fcb14e5b78477df33cd80fce6e3d57b5614aa84c8f7deda6e754692819782ac9"},"expected":{"b23_states":"267b2f9baad7cf65beb0a6c83c7eb137d6b4eb50db22555d14bb67a495b01399","b23_checkpoints":"524e3e30ba621fb8988ba7872f11fd3c37ac733f20d7d9682861bef21abc98a6","b23_operations":"e30715e56579f2bc97958f190b6cc20c668c729c85504f9d36454c9f407e3425","refs":"1b4f5bb1e508eaecc0ef700fdbbebc045b9c31a08db69e5dd4c9ff8885d2f025","native_states":"0eb9c83c22fb6d29b50a1e16269dffdfcd2de978c2a12fb73b48a250a23e92b1","native_operations":"fcb14e5b78477df33cd80fce6e3d57b5614aa84c8f7deda6e754692819782ac9"}}
+    at check (http://127.0.0.1:64851/tests/free/shared-directory-lifecycle-contracts.mjs:11:34)
+    at equal (http://127.0.0.1:64851/tests/free/shared-directory-lifecycle-contracts.mjs:11:60)
+    at Module.runSharedLifecycleContracts (http://127.0.0.1:64851/tests/free/shared-directory-lifecycle-contracts.mjs:43:213)
+    at async <anonymous>:396:30
+    at /Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/free/shared-directory-lifecycle-browser.mjs:19:29 {
+  log: []
+}
+
+Node.js v26.8.2

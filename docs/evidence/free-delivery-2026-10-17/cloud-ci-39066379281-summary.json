@@ -1,0 +1,315 @@
+{
+  "sourceCommit": "3276ab8b1b71d4851672322756355ba70f079342",
+  "workflowRun": "https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/actions/runs/39066379281",
+  "conclusion": "failure",
+  "jobs": [
+    {
+      "id": 117494820716,
+      "name": "offline-j4-lifecycle",
+      "conclusion": "success"
+    },
+    {
+      "id": 117494820835,
+      "name": "node-contracts",
+      "conclusion": "success"
+    },
+    {
+      "id": 117494820857,
+      "name": "offline-durability-compat",
+      "conclusion": "failure",
+      "failedSteps": [
+        "Formal Host 10k single-project membership sample"
+      ]
+    },
+    {
+      "id": 117494820891,
+      "name": "offline-journeys",
+      "conclusion": "success"
+    }
+  ],
+  "logSHA256": {
+    "durability": "8f2472d8d98a4d0e76c9576f43bea09d0453485c27cbb379593eabb4a46b372b",
+    "journeys": "4621177b85b1db2a0dc488251fd0eff4e4d85b5cf73ad9c7d85afab6dec14c2b"
+  },
+  "formal10k": {
+    "status": "FAIL",
+    "acceptance": "NOT_ESTABLISHED",
+    "phase": "visible-native-member-progress",
+    "nativeMemberProgressDiagnostic": {
+      "stage": "tail-read",
+      "stageStarted": 36231.924211,
+      "inFlight": true,
+      "frameGeneration": 1,
+      "auditAttempts": 0,
+      "lastTail": {
+        "status": "OBSERVED_TAIL_ONLY",
+        "revision": 203,
+        "total": 6121,
+        "frameGeneration": 1
+      },
+      "audits": [],
+      "attempts": 145,
+      "stableRevision": null,
+      "elapsedMs": 29122.514531,
+      "stageElapsedMs": 53.90432900000451
+    },
+    "nativeIndexProgress": {
+      "acceptance": "NOT_ESTABLISHED",
+      "evidence": "DIAGNOSTIC_ROOT_INVENTORY_ONLY",
+      "status": "POINT_IN_TIME_ROOT_SNAPSHOT",
+      "consistency": "SINGLE_READONLY_TRANSACTION_NOT_INTERVAL_STABILITY",
+      "format": "VERSION_INDEX",
+      "revision": 205,
+      "inventoryRefs": 6230,
+      "inventoryProjects": 1,
+      "sources": 1,
+      "revokedSources": 0,
+      "sourceRevisionMin": 204,
+      "sourceRevisionMax": 204,
+      "continuationWitness": false,
+      "queueState": "NOT_READ"
+    },
+    "sourceChangedDuringRun": false,
+    "fixtureChangedDuringRun": false,
+    "manifestChangedDuringRun": false,
+    "temporaryDirectoryRemoved": true
+  },
+  "transportPositive": {
+    "status": "PASS_NARROW_OFFLINE_TRANSPORT_EXPIRY",
+    "phase": "foreground-recovered",
+    "mutation": null,
+    "results": [
+      {
+        "name": "initial-team-projection-native-reading-and-unsent-draft",
+        "status": "PASS"
+      },
+      {
+        "name": "real-dormant-document-lease-expires-with-live-C2-no-renewal-or-native-GET",
+        "status": "PASS",
+        "bindingExpiresAt": 1792268607380,
+        "waitedMs": 19887,
+        "receiptAgeMs": 30203
+      },
+      {
+        "name": "foreground-expired-transport-fresh-same-Team-grant-and-VIEW-reading-preserved",
+        "status": "PASS",
+        "focusedAt": 1792268607386,
+        "newGrant": true,
+        "actualPostFocusVIEW": true,
+        "scopeKey": "[\"chatgpt\",\"principal_b5251fa0aba8e6d9cc5c14d0fb61db814d07c01eea39d1174341557cff7a5dd3\",\"context_c0f0405eaff152760a78ad3d6d6ce3118aa3e4b7fa7961ec9ceca6ece1a1cfee\"]",
+        "sameWorker": true,
+        "nativeGETCount": 1
+      },
+      {
+        "name": "new-projection-same-nonfirst-team-no-personal-writes",
+        "status": "PASS"
+      }
+    ],
+    "requests": [
+      {
+        "at": 1792268577218,
+        "status": 200,
+        "method": "GET",
+        "resourceType": "fetch"
+      }
+    ],
+    "nativeRequestStarts": [
+      1792268577183
+    ],
+    "transportOwner": {
+      "workerClosed": false,
+      "focusedAt": 1792268607386,
+      "observationEndedAt": 1792268607876
+    },
+    "foregroundFocusIsolation": {
+      "nativeHeadingClicked": true,
+      "composerFocused": false
+    },
+    "transport": [
+      {
+        "type": "HOST_HELLO",
+        "requestedAt": 1792268577226,
+        "receivedAt": 1792268577229,
+        "ok": true,
+        "state": null,
+        "reason": null,
+        "bindingExpiresAt": 1792268597229
+      },
+      {
+        "type": "HOST_REFRESH",
+        "requestedAt": 1792268577229,
+        "receivedAt": 1792268577263,
+        "ok": true,
+        "state": "verified",
+        "reason": null,
+        "bindingExpiresAt": null
+      },
+      {
+        "type": "HOST_DOCUMENT_RENEW",
+        "requestedAt": 1792268587378,
+        "receivedAt": 1792268587380,
+        "ok": true,
+        "state": null,
+        "reason": null,
+        "bindingExpiresAt": 1792268607380
+      },
+      {
+        "type": "HOST_REFRESH",
+        "requestedAt": 1792268587380,
+        "receivedAt": 1792268587383,
+        "ok": true,
+        "state": "verified",
+        "reason": null,
+        "bindingExpiresAt": null
+      },
+      {
+        "type": "HOST_FOCUS",
+        "requestedAt": 1792268607397,
+        "receivedAt": 1792268607423,
+        "ok": false,
+        "state": null,
+        "reason": "invalid-host-document",
+        "bindingExpiresAt": null
+      },
+      {
+        "type": "HOST_HELLO",
+        "requestedAt": 1792268607424,
+        "receivedAt": 1792268607432,
+        "ok": true,
+        "state": null,
+        "reason": null,
+        "bindingExpiresAt": 1792268627431
+      },
+      {
+        "type": "HOST_REFRESH",
+        "requestedAt": 1792268607432,
+        "receivedAt": 1792268607447,
+        "ok": true,
+        "state": "verified",
+        "reason": null,
+        "bindingExpiresAt": null
+      }
+    ],
+    "foregroundRecovery": {
+      "focusedAt": 1792268607386,
+      "newGrant": true,
+      "actualPostFocusVIEW": true,
+      "scopeKey": "[\"chatgpt\",\"principal_b5251fa0aba8e6d9cc5c14d0fb61db814d07c01eea39d1174341557cff7a5dd3\",\"context_c0f0405eaff152760a78ad3d6d6ce3118aa3e4b7fa7961ec9ceca6ece1a1cfee\"]",
+      "sameWorker": true,
+      "nativeGETCount": 1
+    },
+    "browserPrecondition": {
+      "transport": "isolated-loopback-CDP",
+      "noDefaults": true,
+      "headed": false,
+      "focusEmulation": "NOT_ENABLED_BY_PLAYWRIGHT",
+      "source": "Playwright connectOverCDP noDefaults public option; native Chromium capturer is session-owned"
+    },
+    "sourceChangedDuringRun": false,
+    "errors": []
+  },
+  "transportMutant": {
+    "status": "FAIL",
+    "phase": "await-fresh-foreground-grant-and-VIEW",
+    "mutation": "REMOVE_EXACT_FOREGROUND_INVALID_DOCUMENT_RECOVERY",
+    "results": [
+      {
+        "name": "initial-team-projection-native-reading-and-unsent-draft",
+        "status": "PASS"
+      },
+      {
+        "name": "real-dormant-document-lease-expires-with-live-C2-no-renewal-or-native-GET",
+        "status": "PASS",
+        "bindingExpiresAt": 1792268629780,
+        "waitedMs": 19349,
+        "receiptAgeMs": 20079
+      }
+    ],
+    "requests": [
+      {
+        "at": 1792268609760,
+        "status": 200,
+        "method": "GET",
+        "resourceType": "fetch"
+      }
+    ],
+    "nativeRequestStarts": [
+      1792268609710
+    ],
+    "transportOwner": {
+      "workerClosed": false,
+      "focusedAt": 1792268629789,
+      "observationEndedAt": 1792268644819
+    },
+    "foregroundFocusIsolation": {
+      "nativeHeadingClicked": true,
+      "composerFocused": false
+    },
+    "transport": [
+      {
+        "type": "HOST_HELLO",
+        "requestedAt": 1792268609779,
+        "receivedAt": 1792268609781,
+        "ok": true,
+        "state": null,
+        "reason": null,
+        "bindingExpiresAt": 1792268629780
+      },
+      {
+        "type": "HOST_REFRESH",
+        "requestedAt": 1792268609781,
+        "receivedAt": 1792268609824,
+        "ok": true,
+        "state": "verified",
+        "reason": null,
+        "bindingExpiresAt": null
+      },
+      {
+        "type": "HOST_FOCUS",
+        "requestedAt": 1792268629802,
+        "receivedAt": 1792268629828,
+        "ok": false,
+        "state": null,
+        "reason": "invalid-host-document",
+        "bindingExpiresAt": null
+      }
+    ],
+    "browserPrecondition": {
+      "transport": "isolated-loopback-CDP",
+      "noDefaults": true,
+      "headed": false,
+      "focusEmulation": "NOT_ENABLED_BY_PLAYWRIGHT",
+      "source": "Playwright connectOverCDP noDefaults public option; native Chromium capturer is session-owned"
+    },
+    "sourceChangedDuringRun": false,
+    "errors": [],
+    "mutationVerdict": "KILLED_EXACT_ORIGINAL_FOREGROUND_BRANCH",
+    "reason": "Actual post-focus invalid-host-document; no fresh HELLO; same original worker; original 15-second fresh-grant/VIEW deadline failed. The strict CI step succeeded."
+  },
+  "coldRecovery": {
+    "status": "PASS",
+    "coldBoundary": {
+      "initialProjection": "PASS",
+      "missingReceiptSafety": "NOT_COVERED_THIS_RUN",
+      "immediateColdSupport": "NOT_ESTABLISHED_BY_THIS_RECOVERY_CASE",
+      "nativeBeforeNavigation": [
+        {
+          "path": "/backend-api/conversation/33333333-3333-4333-8333-333333333333",
+          "context": "account-host-team"
+        }
+      ],
+      "nativeNavigationRecovery": "NOT_COVERED_THIS_RUN"
+    },
+    "sourceChangedDuringRun": false
+  },
+  "workerCPU": {
+    "kind": "DIAGNOSTIC_ONLY_HOST_SCALE_WORKER_CPU",
+    "status": "CAPTURED",
+    "acceptance": "NOT_ESTABLISHED",
+    "requestedSampleMs": 10000,
+    "observedSampleMs": 10039.727524000002,
+    "samples": 9033,
+    "inferenceLimit": "Worker CPU does not measure native renderer or extension-frame audit CPU. Endpoint counts across CI runs are not a controlled speed comparison."
+  },
+  "release": "NOT_RELEASE_READY"
+}

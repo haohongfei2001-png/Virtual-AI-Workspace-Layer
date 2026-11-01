@@ -1,0 +1,13 @@
+# Round367：隔离实际MV3显式关闭与四格恢复
+
+从9e6f8dc继续，产品源未修改。新增dormant-close-wake-mv3 runner，沿用原本地fixture、全外网阻断、独立headless Chrome和raw CDP。先packageHost验证原包，只在临时unpacked content-entry增加isolated-world私有入口；最终版本仅暴露boolean准备/显式关闭，校验顶层frame、extensionId、唯一context以及MAIN不可见。原zip/manifest代表补丁前包，单独核验加载包唯一差异及每个其余文件hash；未改worker、grant、producer、产品期限或计时器。
+
+最终一次运行 **3项命名检查PASS**：
+
+- 现有content.enterDormant经真实双frame清空ACK完成worker guarded release。
+- 所有相关调试session断开，60,000ms窗口只记录Target事件；原worker exact target在30,002ms被销毁，窗口无对应crash事件。未调用stop/terminate、未冻结页面，worker始终未被debugger附着。
+- 真实Input四格点击后新worker target出现，原document/editor/草稿/双iframe节点保留，双surface重新打开；递归实际Shadow DOM核对workspace/sidebar都显示fixture项目Research。
+
+报告状态UNFORCED_WORKER_DESTRUCTION_AND_WAKE_OBSERVED，退出码2为保留未接受边界；naturalWorkerSleep继续NOT_ESTABLISHED，targetDestroyed原因不冒充已证明。证据属于S_INSTRUMENTED_MV3_EXPLICIT_CLOSE_WAKE / LEGACY_OFFLINE，测试显式触发不是生产自动进入，也未验证休眠期间首个发送或完整UI-11。原Round348 NOT_ESTABLISHED不改写，完整Free仍NOT_RELEASE_READY。
+
+所有中间结果保留：首跑较窄关闭/返回观察通过；补强后的两次initial dual-surface超时诊断显示合法native-reading、双iframe和唯一四格，修正测试为先真实点击进入；其后内容断言只读main.textContent而漏掉Shadow DOM，修正为递归且跳过style/script、要求有布局的Research文本。没有降低关闭/授权/内容断言，没有把失败折算成额外通过次数。各版本runner逐字节重建并对照当次runnerHash验证后保存，最终源/manifest/runner均无漂移。隔离浏览器和服务均由原cleanup流程关闭。本轮没有无关全套Node重跑。
