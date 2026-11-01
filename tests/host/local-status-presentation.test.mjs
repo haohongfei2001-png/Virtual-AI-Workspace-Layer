@@ -3,13 +3,15 @@ import {projectSurfaceFailureReasons} from '../../src/host/native-project-surfac
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
+import {registeredHostBuild} from '../../extension/runtime-build.mjs';
 import {initializationFailureStates,readActiveLocalStatus,readActiveLocalLayout,readLocalBoot,validLocalPipeline,createSidebarSnapshot} from '../../src/host/local-status.mjs';
 const source=readFileSync(new URL('../../extension/status.mjs',import.meta.url),'utf8');
 const html=readFileSync(new URL('../../extension/status.html',import.meta.url),'utf8');
-const importLine="import {requestLocalReconnect} from '../src/host/local-reconnect.mjs';\nimport {HOST_CONFIG} from './config.mjs';\nimport {readActiveLocalStatus,readActiveLocalLayout,readLocalBoot,validLocalPipeline,createSidebarSnapshot,createMainMountSnapshot} from '../src/host/local-status.mjs';\nimport {HISTORY_DIAGNOSTIC_BATCH,validHistoryStructureReport,runHistoryDiagnosticOnce,sidebarStructureCoverage} from '../src/host/history-structure-diagnostic.mjs';\n";
+const importLine="import {requestLocalReconnect} from '../src/host/local-reconnect.mjs';\nimport {HOST_CONFIG} from './config.mjs';\nimport {readActiveLocalStatus,readActiveLocalLayout,readLocalBoot,validLocalPipeline,createSidebarSnapshot,createMainMountSnapshot} from '../src/host/local-status.mjs';\nimport {HISTORY_DIAGNOSTIC_BATCH,validHistoryStructureReport,runHistoryDiagnosticOnce,sidebarStructureCoverage} from '../src/host/history-structure-diagnostic.mjs';\nimport {HOST_BUILD,registeredHostBuild} from './runtime-build.mjs';\n";
 assert(source.startsWith(importLine),'execute actual popup body after its exact imports');
 const AsyncFunction=Object.getPrototypeOf(async function(){}).constructor;
-async function render(initial,browserLocal=false,localState={ok:true},boot=null,trustedTarget=false,layouts={},environment={}){
+async function render(initial,browserLocal=false,localState={ok:true},boot=undefined,trustedTarget=false,layouts={},environment={}){
+ if(boot===undefined)boot={v:1,stage:'module-loaded',build:'a'.repeat(64)};
  let current=initial;const calls=[],node={textContent:''};
  const chrome={tabs:{query:async args=>{calls.push(['query',args]);return [{id:7,get title(){throw Error('PRIVATE_TITLE');},get url(){throw Error('PRIVATE_URL');}}];},sendMessage:async(...args)=>{calls.push(['send',...args]);if(environment.reply)return environment.reply(args,current);return args[1]?.type==='HOST_LOCAL_LAYOUT'?{v:1,shape:layouts.full??null}:args[1]?.type==='HOST_LOCAL_PRESENTATION'?{v:1,shape:layouts.presentation??null}:args[1]?.type==='HOST_LOCAL_BOOT'?boot:args[1]?.type==='HOST_LOCAL_RECONNECT'?{v:1,ok:true}:current;}}};
  let frameReads=0;
@@ -21,14 +23,32 @@ async function render(initial,browserLocal=false,localState={ok:true},boot=null,
  const find=(nodes,id)=>{for(const e of nodes){if(e.id===id)return e;const nested=find(e.children??[],id);if(nested)return nested;}return null;};
  const byId=id=>id==='status'?node:find(elements,id);
  const document={getElementById:byId,body:{append:e=>{const old=elements.indexOf(e);if(old>=0)elements.splice(old,1);elements.push(e);}},createElement:make};
- chrome.runtime={sendMessage:async message=>{calls.push(['control',message]);return localState;}};
- await new AsyncFunction('requestLocalReconnect','HOST_CONFIG','readActiveLocalStatus','readActiveLocalLayout','readLocalBoot','validLocalPipeline','createSidebarSnapshot','chrome','document',source.slice(importLine.length))(requestLocalReconnect,{browserLocal},readActiveLocalStatus,readActiveLocalLayout,environment.realBoot?readLocalBoot:async()=>boot,validLocalPipeline,createSidebarSnapshot,chrome,document);
+ chrome.runtime={getManifest:()=>({version_name:environment.registeredBuild??'a'.repeat(64)}),sendMessage:async message=>{calls.push(['control',message]);return localState;}};
+ await new AsyncFunction('requestLocalReconnect','HOST_CONFIG','readActiveLocalStatus','readActiveLocalLayout','readLocalBoot','validLocalPipeline','createSidebarSnapshot','chrome','document','HOST_BUILD','registeredHostBuild',source.slice(importLine.length))(requestLocalReconnect,{browserLocal},readActiveLocalStatus,readActiveLocalLayout,environment.realBoot?readLocalBoot:async()=>boot,validLocalPipeline,createSidebarSnapshot,chrome,document,'a'.repeat(64),registeredHostBuild);
  return {calls,node,elements,byId,frameReads,change:value=>{current=value;}};
 }
 const drain=async()=>{for(let i=0;i<30;i++)await Promise.resolve();};
 const summaryIds=['runtime-build','boot-stage','status-code','mount-stage'];
 const currentFrame={documentId:'document',url:'https://chatgpt.com/',documentLifecycle:'active'};
 const currentBoot={v:1,stage:'module-loaded',build:'a'.repeat(64)};
+test('version fence rejects a historical BOOT without relabeling its observed fingerprint',async()=>{
+ const old={v:1,stage:'module-loaded',build:'e287d27625cbeadbfdb3bf4410fe16011e0ae73c68bdf436b1071a38b50279cf'};
+ const f=await render({v:1,state:'ready'},true,{ok:true,mode:'personal',exists:true},old,true,{presentation:presentationShape({mode:'workspace',attempt:'show-returned'})},{realBoot:true});
+ assert.match(f.byId('status-code').textContent,/runtime-build-mismatch/);
+ assert(f.byId('runtime-build').textContent.includes(old.build));
+ assert.doesNotMatch(f.node.textContent,/增强界面已连接/);assert.doesNotMatch(f.byId('mount-stage').textContent,/show-returned/);
+ assert(!f.byId('read-sidebar-structure'));assert(!f.calls.some(c=>c[0]==='control'));
+ const [unlock,lock]=f.elements.filter(e=>e.tag==='button');assert(unlock.disabled);unlock.listeners.click();await drain();assert(!f.calls.some(c=>c[0]==='control'));
+ lock.listeners.click();await drain();assert(unlock.disabled);assert.deepEqual(f.calls.filter(c=>c[0]==='control').map(c=>c[1].action),['lock']);
+});
+test('version fence rejects a stale registered manifest even with a matching BOOT',async()=>{
+ const f=await render({v:1,state:'ready'},true,{ok:true},currentBoot,true,{presentation:presentationShape()},{realBoot:true,registeredBuild:'b'.repeat(64)});
+ assert.match(f.byId('status-code').textContent,/runtime-registration-mismatch/);assert(!f.calls.some(c=>c[0]==='control'));
+});
+test('version fence never accepts ready without a current BOOT',async()=>{
+ const f=await render({v:1,state:'ready'},true,{ok:true},null,true,{presentation:presentationShape()},{realBoot:true});
+ assert.match(f.byId('status-code').textContent,/runtime-build-unverified/);assert(!f.calls.some(c=>c[0]==='control'));assert(!f.byId('read-sidebar-structure'));
+});
 function presentationShape(patch={}){
  const navigation={phase:'accepted',roots:[1,1,0],firstOutside:[],firstClip:[],memberShape:[],headingShape:[],memberReject:Array(7).fill(0),rejected:Array(11).fill(0),matched:0,visible:0,titles:0,association:0,candidates:0,claims:0};
  const delivery={pages:0,resolvedProjects:0,resolvedChats:0,acceptedPackets:0,acceptedProjects:0,acceptedChats:0,rejectedPackets:0,capped:false};
@@ -75,8 +95,8 @@ test('snapshot invalidation latches an observed route change even if the final l
 for(const stage of ['module-loading','module-load-failed'])test('fixed summary keeps independent BOOT when STATUS receiver is missing: '+stage,async()=>{
  const boot={...currentBoot,stage};
  const f=await render(null,true,{ok:true},boot,true,{}, {realBoot:true,reply:args=>{if(args[1].type==='HOST_LOCAL_STATUS')throw Error('Could not establish connection. Receiving end does not exist.');if(args[1].type==='HOST_LOCAL_BOOT')return boot;assert.fail('unexpected request');}});
- assert.match(f.byId('status-code').textContent,/unavailable.*receiver-unavailable/);assert(f.byId('runtime-build').textContent.includes(boot.build));assert(f.byId('boot-stage').textContent.includes(stage));
- assert.match(f.byId('mount-stage').textContent,/未取得/);assert.equal(f.calls.filter(c=>c[0]==='send').length,2);
+ assert.match(f.byId('status-code').textContent,/runtime-build-unverified.*receiver-unavailable/);assert(f.byId('runtime-build').textContent.includes(boot.build));assert(f.byId('boot-stage').textContent.includes(stage));
+ assert.match(f.byId('mount-stage').textContent,/未采用/);assert.equal(f.calls.filter(c=>c[0]==='send').length,2);
 });
 for(const [label,boot] of [['missing',null],['bad stage',{...currentBoot,stage:'PRIVATE_STAGE'}],['bad fingerprint',{...currentBoot,build:'PRIVATE_BUILD'}],['extra private field',{...currentBoot,title:'PRIVATE_TITLE'}]])test('fixed summary rejects '+label+' BOOT without inferring disk version',async()=>{
  const f=await render({v:1,state:'ready'},true,{ok:true},boot,true,{}, {realBoot:true});
@@ -103,7 +123,7 @@ test('snapshot invalidation has a bounded final check and ignores its late old-d
  const before=summaryIds.map(id=>f.byId(id).textContent);finish(currentFrame);await drain();assert.deepEqual(summaryIds.map(id=>f.byId(id).textContent),before);
 });
 test('actual BrowserLocal popup reads presentation by default and collects structure only on one explicit click',async()=>{
- const f=await render({v:1,state:'reading'},true,{ok:true,mode:'locked',exists:true},null,true,{presentation:{counts:[1,1,1,1,1,1,1],branches:[]}});
+ const f=await render({v:1,state:'reading'},true,{ok:true,mode:'locked',exists:true},currentBoot,true,{presentation:{counts:[1,1,1,1,1,1,1],branches:[]}});
  assert.equal(f.calls.filter(c=>c[0]==='send'&&c[2].type==='HOST_LOCAL_LAYOUT').length,0);
  assert.equal(f.calls.filter(c=>c[0]==='send'&&c[2].type==='HOST_LOCAL_PRESENTATION').length,1);
  assert.equal(f.calls.filter(c=>c[0]==='send'&&c[2].type==='HOST_LOCAL_HISTORY_STRUCTURE').length,0);
@@ -199,13 +219,13 @@ test('existing current-document build receipt is in the fixed summary without ne
  assert.match(html,/不代表产品验收通过/);assert.equal(f.calls.length,2);
 });
 test('missing runtime receipt does not infer activated build from disk or user Reload',async()=>{
- const f=await render({v:1,state:'authorization-failed'});await drain();
+ const f=await render({v:1,state:'authorization-failed'},false,{ok:true},null);await drain();
  assert.match(f.byId('runtime-build').textContent,/未核实.*不能用磁盘文件推定运行版本/);
  assert.equal(f.calls.length,2);
 });
 
 test('real popup offers one explicit reconnect only for document-bound transport failure',async()=>{
- const f=await render({v:1,state:'hello-transport-unavailable'},true,{ok:true},null,true);
+ const f=await render({v:1,state:'hello-transport-unavailable'},true,{ok:true},currentBoot,true);
  const button=f.elements.find(e=>e.id==='reconnect');assert(button);assert(!f.calls.some(c=>c[0]==='send'&&c[2].type==='HOST_LOCAL_RECONNECT'));
  await button.listeners.click();await button.listeners.click();
  const sent=f.calls.filter(c=>c[0]==='send'&&c[2].type==='HOST_LOCAL_RECONNECT');assert.equal(sent.length,1);assert.deepEqual(sent[0].slice(1),[7,{v:1,type:'HOST_LOCAL_RECONNECT',url:'https://chatgpt.com/'},{documentId:'document'}]);

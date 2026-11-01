@@ -2,6 +2,7 @@ import {requestLocalReconnect} from '../src/host/local-reconnect.mjs';
 import {HOST_CONFIG} from './config.mjs';
 import {readActiveLocalStatus,readActiveLocalLayout,readLocalBoot,validLocalPipeline,createSidebarSnapshot,createMainMountSnapshot} from '../src/host/local-status.mjs';
 import {HISTORY_DIAGNOSTIC_BATCH,validHistoryStructureReport,runHistoryDiagnosticOnce,sidebarStructureCoverage} from '../src/host/history-structure-diagnostic.mjs';
+import {HOST_BUILD,registeredHostBuild} from './runtime-build.mjs';
 const messages={'foreground-failed':'本次检查：前台会话复核未通过，旧空间保持锁定，原生页面可用。','layout-failed':'本次检查：页面布局尚未满足安全挂载条件，增强界面未启动。原生页面和草稿保持不变；无需重新确认账号或重装扩展。','hello-failed':'本次检查：内容脚本已启动，但与扩展后台的初始连接未完成。旧数据未解锁。','adapter-failed':'本次检查：原生页面适配未完成，增强界面未启动。原生页面保持可用。','authorization-failed':'本次检查：工作空间授权阶段未完成，旧私人数据保持锁定。','surface-failed':'本次检查：工作空间界面挂载未完成，原生页面保持可用。',reading:'本次检查：已连接，当前保留原生阅读或输入。可使用页面顶部的四格“返回工作空间”入口展开 VAIWL。',suspended:'本次检查：已连接，增强界面正在为原生弹层或交互让位。结束当前原生操作后，可使用四格入口返回；私人空间状态见下方。','frame-blocked':'本次检查：界面框架被替换，VAIWL 已安全退出，原生页面仍可使用。若正在使用浏览器自动控制，请结束控制后重新打开页面，无需重装扩展。旧本地资料仍需按页面提示确认后恢复。',ready:'本次检查：增强界面已连接。',dormant:'本次检查：增强界面已休眠，原生 ChatGPT 仍可使用。',connecting:'本次检查：正在连接工作空间，原生 ChatGPT 仍可使用。',waiting:'本次检查：暂时无法验证工作空间，正在等待新的上下文证据。原生 ChatGPT 仍可使用。','verification-required':'本次检查：服务端要求浏览器验证，增强界面已停止连接。请查看原生 ChatGPT 页面；若出现验证请手动完成，没有验证页则无需反复刷新。',unavailable:'本次检查：此标签页尚未接入增强界面。请确认这是受支持的 ChatGPT 页面；原生页面仍可使用。'};
 let localFailure=null,localTarget=null,bootTarget=null;let state=await readActiveLocalStatus({tabs:chrome.tabs,webNavigation:chrome.webNavigation,onTarget:t=>{localTarget=t;},onProbeTarget:t=>{bootTarget=t;},onFailure:code=>{localFailure=code;}});
 let snapshotFailure=localFailure==='document-changed'?'document-changed':null;
@@ -31,6 +32,15 @@ if(bootTarget&&chrome.webNavigation){
  }catch{snapshotFailure??='document-query-failed';}finally{clearTimeout(timer);}
  if(snapshotFailure){state='unavailable';localFailure=snapshotFailure;localTarget=null;boot=null;shape=null;}
 }
+// Disk popup resources can be newer than Chrome's cached static script. Keep
+// the actual BOOT value, but accept no state or action across build identities.
+const registeredBuild=registeredHostBuild(chrome.runtime);
+const versionFailure=!HOST_CONFIG.browserLocal||snapshotFailure?null:
+ boot&&boot.build!==HOST_BUILD?'runtime-build-mismatch':
+ registeredBuild!==HOST_BUILD?'runtime-registration-mismatch':
+ !boot||boot.stage!=='module-loaded'?'runtime-build-unverified':null;
+const runtimeVerified=!HOST_CONFIG.browserLocal||(!snapshotFailure&&!versionFailure);
+if(versionFailure){state=versionFailure;shape=null;localTarget=null;}
 const bootReceipt=Promise.resolve(boot);
 const layoutRegionNames={header:'原生标题栏',reading:'独立阅读区',composer:'原生输入区',navigationSlot:'返回入口区域',historyList:'原生历史列表',returnHitRoot:'页面内容容器',readingViewport:'阅读滚动区域'};
 const missing=/^layout-(missing|ambiguous)-(header|reading|composer|navigationSlot|historyList|returnHitRoot|readingViewport)$/.exec(state);
@@ -38,7 +48,7 @@ const layoutMessage=missing?'本次检查：布局未就绪，'+layoutRegionName
 const initializationLabels={preparation:'会话初始化',candidates:'导航候选初始化',snippets:'片段初始化',navigation:'原生导航初始化',surface:'界面承载初始化',controller:'界面控制器初始化'};
 const initialization=/^initialization-(preparation|candidates|snippets|navigation|surface|controller)-failed$/.exec(state);
 const initializationMessage=initialization?'本次检查：已通过本次工作空间授权检查，但'+initializationLabels[initialization[1]]+'未完成。这不是账号确认提示；无需重复确认或重装扩展。原生页面保持可用。':null;
-document.getElementById('status').textContent=messages[state]??initializationMessage??layoutMessage??(state.startsWith('foreground-')?'本次检查：前台连续性检查未通过，私人界面已撤回，原生页面保持可用。':null)??(state.startsWith('hello-')?'本次检查：初始文档连接未完成。旧数据保持锁定；原生页面保持可用。':null)??(state.startsWith('surface-')?'本次检查：增强界面暂不可用，原生页面保持可用；本地空间状态见下方。':'本次检查：状态不可用。');
+document.getElementById('status').textContent=versionFailure?'本次检查：运行版本未核实或不一致，本次状态与挂载回执未采用。请保留当前回执；不会自动重载或重试。':messages[state]??initializationMessage??layoutMessage??(state.startsWith('foreground-')?'本次检查：前台连续性检查未通过，私人界面已撤回，原生页面保持可用。':null)??(state.startsWith('hello-')?'本次检查：初始文档连接未完成。旧数据保持锁定；原生页面保持可用。':null)??(state.startsWith('surface-')?'本次检查：增强界面暂不可用，原生页面保持可用；本地空间状态见下方。':'本次检查：状态不可用。');
 if(state==='unavailable')document.getElementById('status').textContent+=' 本地检查：'+({timeout:'查询超时。','tab-unavailable':'当前标签不可用。','invalid-reply':'未取得有效本地回复。','transport-error':'内容脚本通信不可用。','tab-query-failed':'当前标签查询失败。','document-query-failed':'当前文档查询失败。','document-unavailable':'当前文档尚未激活。','document-changed':'检查期间文档发生变化；未将旧回复用于新页面。','receiver-unavailable':'本次发送时内容脚本接收端不存在。','receiver-disconnected':'接收端在回复前断开。','tab-closed':'本次发送时标签已关闭。'}[localFailure]??'内容脚本已响应，但会话不可用。');
 const diagnostics=document.getElementById('diagnostic-details');
 document.getElementById('status-code').textContent='本次状态码：'+state+(localFailure?'；本地检查：'+localFailure:'');
@@ -46,7 +56,7 @@ const invalidSnapshot=snapshotFailure==='document-changed'?'文档已变化，�
 document.getElementById('runtime-build').textContent=boot?'运行指纹：'+boot.build:'运行指纹：未核实。'+(invalidSnapshot??'未取得当前文档启动回执；不能用磁盘文件推定运行版本。');
 document.getElementById('boot-stage').textContent='启动阶段：'+(boot?.stage??(invalidSnapshot??'未核实（无有效启动回执）。'));
 const presentation=shape?.presentation;
-let mountText=invalidSnapshot??(!shape?'未取得当前文档回执。':!Object.hasOwn(shape,'presentation')?'本次回执未提供挂载阶段。':presentation===null?'presentation=null（控制器未就绪）。':null);
+let mountText=invalidSnapshot??(versionFailure?'运行版本未核实或不一致，未采用挂载回执。':null)??(!shape?'未取得当前文档回执。':!Object.hasOwn(shape,'presentation')?'本次回执未提供挂载阶段。':presentation===null?'presentation=null（控制器未就绪）。':null);
 if(mountText===null){
  const field=key=>!Object.hasOwn(presentation,key)?'未提供':presentation[key]===null?'null':presentation[key];
  const boundary=field('boundary');
@@ -55,6 +65,7 @@ if(mountText===null){
 }
 document.getElementById('mount-stage').textContent='挂载诊断：'+mountText;
 if(boot){const note=document.createElement('pre');note.textContent='当前文档启动（无内容） '+JSON.stringify(boot);diagnostics.append(note);}
+if(HOST_CONFIG.browserLocal){const note=document.createElement('pre');note.textContent='运行版本绑定（无内容） '+JSON.stringify({expected:HOST_BUILD,registered:registeredBuild,verified:runtimeVerified});diagnostics.append(note);}
 if(needsLayout){
  if(shape){
  if(HOST_CONFIG.mainMountDiagnostic){
@@ -98,9 +109,9 @@ if(HOST_CONFIG.browserLocal){
    result.textContent=r?.ok===true&&typeof r.exists==='boolean'&&r.mode==='personal'?'当前文档的本地空间已解锁；本次无需重复确认。':r?.ok===true&&typeof r.exists==='boolean'&&r.mode==='locked'?(r.exists?'旧私人数据已锁定；当前仅显示即时视图。恢复旧资料需要本人确认当前账号与工作空间。':'当前仅显示即时视图；本人确认后才绑定并保存本地个人空间。'):'当前文档的本地绑定状态未能确认；不会据此解锁旧数据。';
   }catch{result.textContent='当前文档的本地绑定状态未能确认；不会据此解锁旧数据。';}finally{clearTimeout(timer);}
  }
- const unlock=document.createElement('button');unlock.textContent='确认当前账号与工作空间，解锁本地空间';unlock.disabled=state==='frame-blocked';document.body.append(unlock);
+ const unlock=document.createElement('button');unlock.textContent='确认当前账号与工作空间，解锁本地空间';unlock.disabled=!runtimeVerified||state==='frame-blocked';document.body.append(unlock);
  const lock=document.createElement('button');lock.textContent='锁定本地空间';document.body.append(lock);
- const perform=async action=>{pipelineCurrent=false;unlock.disabled=true;lock.disabled=true;try{const r=await chrome.runtime.sendMessage({v:1,type:'HOST_LOCAL_SPACE',action});result.textContent=r?.ok?(action==='unlock'?'本地空间已绑定到当前文档。':'旧数据已锁定；关闭面板后可继续即时查看。'):'未能绑定；原生页面与旧数据保持不变。';}catch{result.textContent='连接不可用，未解锁旧数据。';}finally{unlock.disabled=state==='frame-blocked';lock.disabled=false;}};
+ const perform=async action=>{if(action==='unlock'&&(!runtimeVerified||state==='frame-blocked'))return;pipelineCurrent=false;unlock.disabled=true;lock.disabled=true;try{const r=await chrome.runtime.sendMessage({v:1,type:'HOST_LOCAL_SPACE',action});result.textContent=r?.ok?(action==='unlock'?'本地空间已绑定到当前文档。':'旧数据已锁定；关闭面板后可继续即时查看。'):'未能绑定；原生页面与旧数据保持不变。';}catch{result.textContent='连接不可用，未解锁旧数据。';}finally{unlock.disabled=!runtimeVerified||state==='frame-blocked';lock.disabled=false;}};
  unlock.addEventListener('click',()=>void perform('unlock'));lock.addEventListener('click',()=>void perform('lock'));
  // Independent optional read: slow storage must not delay binding status or
  // buttons, and its late result must not overwrite a new confirmation/lock.
@@ -109,7 +120,7 @@ if(HOST_CONFIG.browserLocal){
    if(pipelineCurrent&&r?.ok===true&&validLocalPipeline(r.pipeline)){const trace=document.createElement('pre');trace.textContent='本地库、工作空间回复与框架回执（仅数量/版本；rendered仅证明节点已建立，不代表可见） '+JSON.stringify(r.pipeline);diagnostics.append(trace);}
   },()=>{}).finally(()=>clearTimeout(timer));
  }
- if(!HOST_CONFIG.mainMountDiagnostic&&chrome.storage?.local&&globalThis.navigator?.locks){
+ if(runtimeVerified&&!HOST_CONFIG.mainMountDiagnostic&&chrome.storage?.local&&globalThis.navigator?.locks){
  const diagnostic=document.createElement('details'),summary=document.createElement('summary');summary.textContent='本次匿名近期列表诊断（一次性）';diagnostic.append(summary);
  const explain=document.createElement('p');explain.textContent='仅本首页，最多6秒；记录行类别、标记是否存在、位置及匿名节点变化。不读取标题、聊天ID、正文或凭据，不解锁旧库、不刷新、不联网。已消费后只显示原报告。';diagnostic.append(explain);
  const run=document.createElement('button');run.textContent='执行一次匿名列表观察';const report=document.createElement('pre');report.id='history-structure-report';diagnostic.append(run,report);diagnostics.append(diagnostic);

@@ -1,0 +1,69 @@
+✔ F1 indexed projection is identical to accepted pre-optimization across evidence edge cases (3630.007943ms)
+✔ historical 531c146 writer: completed marker survives old undo but missing B1 anchor is repaired (26.567883ms)
+✔ historical 531c146 writer: completed marker detects historical B1-only insert (2.265788ms)
+✔ historical 531c146 writer: equal-count shared replacement from legal old restore and undo is detected (7.498693ms)
+✔ historical 531c146 writer: partial cursor detects old undo before its saved position (9.99517ms)
+✔ constructed native buckets preserve exact old bytes while avoiding first-read duplicate routing (95.942009ms)
+ℹ {"oldFirstReadRouting":513,"newFirstReadRouting":0,"oldUpdatedReadRouting":4,"newUpdatedReadRouting":0}
+✔ constructed warm rejects bytes (19.363514ms)
+✔ constructed warm rejects checksum (15.462008ms)
+✔ constructed warm rejects ordinal (15.814069ms)
+✔ constructed warm rejects duplicate-ordinal (10.024233ms)
+✔ constructed warm rejects count (12.284594ms)
+✔ constructed warm rejects scope (34.695581ms)
+✔ constructed warm rejects kind (28.922851ms)
+✔ constructed warm rejects routing (12.428011ms)
+✔ constructed warm rejects version (50.594968ms)
+✔ cold rejects bytes (14.782834ms)
+✔ cold rejects checksum (18.628625ms)
+✔ cold rejects ordinal (10.924327ms)
+✔ cold rejects duplicate-ordinal (22.997997ms)
+✔ cold rejects count (16.970243ms)
+✔ cold rejects scope (13.667761ms)
+✔ cold rejects kind (15.056086ms)
+✔ cold rejects routing (62.032149ms)
+✔ cold rejects version (16.177227ms)
+✔ cold genuine reads still fully route; corrupted checksum is not blessed by construction (30.613502ms)
+✔ construction cache eviction falls back to complete validation without losing corrupt-byte refusal (43.801419ms)
+✔ accessor cannot replace verified old routing before a constructed bucket is certified (23.404997ms)
+✔ wrong-route accessor snapshot is fully verified before construction (16.518828ms)
+✔ synchronous shared writer validates original root once, preserving all output bytes and delta window (98.457946ms)
+ℹ {"oldWriterValidationCalls":2,"newWriterValidationCalls":1,"changeRows":64,"changeRefs":4096}
+✔ invalid root negative-units rejects before any write (16.173912ms)
+✔ invalid root invalid-change-id rejects before any write (10.079066ms)
+✔ invalid root too-many-changes rejects before any write (11.26744ms)
+✔ invalid root invalid-preference rejects before any write (8.715529ms)
+✔ invalid root schema rejects before any write (11.99708ms)
+✔ public sharedMutationManifest retains independent root validation (10.663529ms)
+✔ external legacy callback mutation units is rejected after callback returns (16.838029ms)
+✔ external legacy callback mutation changes is rejected after callback returns (20.942086ms)
+✔ external legacy callback mutation scope is rejected after callback returns (10.277616ms)
+✔ patch getter cannot mutate root between the remaining validation and publication (7.938257ms)
+✔ known-bucket retention preserves exact deletion set with no lookup rerouting (60.195439ms)
+ℹ {"oldRoutingCalls":4,"currentRoutingCalls":0,"deleted":2}
+✔ fresh prior-missing aborts retention transaction without deletion (7.486094ms)
+✔ fresh prior-corrupt aborts retention transaction without deletion (7.625604ms)
+✔ fresh next-missing aborts retention transaction without deletion (11.247594ms)
+✔ fresh next-corrupt aborts retention transaction without deletion (7.892102ms)
+✔ actual archived owner is version fenced before any writer, evidence=false (287.585601ms)
+✔ actual archived owner is version fenced before any writer, evidence=true (124.708376ms)
+✔ only pinned historical product snapshots are admitted (4.932963ms)
+✔ same-path replacement requires confirmed disable and exact copied bytes (34.944355ms)
+✔ Host history runner keeps real backup UI, original scope/database, and same disabled slot (2.115472ms)
+✔ portable Pro compatibility input contains all human asset classes and no success evidence (19.180047ms)
+✔ Pro schema runner uses frozen real build and genuine old-reader refusal without moving databases (6.166058ms)
+✔ actual Host inspector empty manual subset is JSON digestible before importing assets (8.036025ms)
+✔ archived Host backup uses its actual direct entry rather than a later settings menu (10.414052ms)
+✔ old worker proxy probe retains exact positive proxy evidence and diagnoses earlier test-route interception (2.956921ms)
+✔ SYS03 L/D actual archived Host v1 rejects v2 before Evidence without mutating storage (194.390295ms)
+ℹ {"evidence":"L_D_ARCHIVED_MODULE_MOCK_IDB","afterEvidence":false,"evidenceReceiptReused":false,"historicalCommit":"a8addaa9e014f22704a459d6ee126e8f80ead571","archiveHash":"2e62167a777672ae074b18dd95144d76f0a9d2a3823167fbba76a943174b8483","historicalValidator":"REJECTED_V2","historicalRepository":"REJECTED_V2","historicalTerminalWriters":{"markContinuationComplete":"REJECTED_V2","markContinuationNeedsRevalidation":"REJECTED_V2"},"allHistoricalWriters":"NOT_ESTABLISHED","storageUnchanged":true,"currentRecovery":"COMPLETE_ONCE","actualMV3":"NOT_RUN"}
+✔ SYS03 L/D actual archived Host v1 rejects v2 after committed Evidence before completion without mutating storage (154.63487ms)
+ℹ {"evidence":"L_D_ARCHIVED_MODULE_MOCK_IDB","afterEvidence":true,"evidenceReceiptReused":true,"historicalCommit":"a8addaa9e014f22704a459d6ee126e8f80ead571","archiveHash":"2e62167a777672ae074b18dd95144d76f0a9d2a3823167fbba76a943174b8483","historicalValidator":"REJECTED_V2","historicalRepository":"REJECTED_V2","historicalTerminalWriters":{"markContinuationComplete":"REJECTED_V2","markContinuationNeedsRevalidation":"REJECTED_V2"},"allHistoricalWriters":"NOT_ESTABLISHED","storageUnchanged":true,"currentRecovery":"COMPLETE_ONCE","actualMV3":"NOT_RUN"}
+ℹ tests 56
+ℹ suites 0
+ℹ pass 56
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3733.67854

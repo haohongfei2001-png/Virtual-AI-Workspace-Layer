@@ -1,4 +1,5 @@
-import {compileClassicWorker,compileTemporaryContent} from './classic-worker-build.mjs';
+import {packagedBrowserLocalFingerprint} from './build-fingerprint.mjs';
+import {compileClassicWorker,compileTemporaryContent,compileBrowserLocalContent} from './classic-worker-build.mjs';
 import {assertHostManifestBoundary,hostPublicResourceTarget} from './package-manifest-boundary.mjs';
 import {OFFLINE_HISTORY_PROFILE} from '../src/runtime/historical-send-profile.mjs';
 import {buildHost} from './build.mjs';
@@ -60,6 +61,11 @@ export function verifyHost(unpacked){
  }
  for(const name of ['workspace.html','sidebar.html','extension/content-entry.mjs','extension/workspace.mjs','extension/sidebar.mjs'])requirePublic(name);
  if(info.temporaryReadOnly&&readFileSync(join(root,'content.js'),'utf8')!==compileTemporaryContent(root))throw Error('host-package-temporary-content-build-mismatch');
+ if(info.browserLocal){
+  const fingerprint=packagedBrowserLocalFingerprint(root);
+  if(manifest.version_name!==fingerprint||!readFileSync(join(root,'extension/runtime-build.mjs'),'utf8').includes('export const HOST_BUILD='+JSON.stringify(fingerprint)+';'))throw Error('host-package-build-fingerprint-mismatch');
+  if(readFileSync(join(root,'content.js'),'utf8')!==compileBrowserLocalContent(root))throw Error('host-package-content-build-mismatch');
+ }
  const compiled=compileClassicWorker(root);
  if(readFileSync(join(root,'extension/worker.mjs'),'utf8')!==compiled.entry||readFileSync(join(root,'extension/classic-runtime.js'),'utf8')!==compiled.runtime)throw Error('host-package-worker-build-mismatch');
  return {status:info.status,releaseStatus:info.releaseStatus,files:expected.length+1};

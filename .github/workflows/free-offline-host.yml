@@ -197,6 +197,11 @@ jobs:
         run: |
           node tests/host/local-status-package-browser.mjs "$RUNNER_TEMP/local-status.json"
           node tests/host/browser-local-mv3.mjs --sidebar-capture-only
+      - name: Original BrowserLocal same ID update and one completed reload
+        if: ${{ !cancelled() && github.event_name == 'push' }}
+        run: |
+          trap 'test ! -f "$RUNNER_TEMP/runtime-version-upgrade.json" || cat "$RUNNER_TEMP/runtime-version-upgrade.json"' EXIT
+          FREE_SOURCE_COMMIT="$GITHUB_SHA" node tests/host/runtime-version-upgrade.mjs "$RUNNER_TEMP/runtime-version-upgrade.json"
       - name: Temporary native navigation (isolated MV3, no authentication)
         if: ${{ !cancelled() && (github.event_name == 'push' || inputs.diagnostic == 'temporary-navigation-appearance') }}
         run: node tests/host/temporary-navigation-package-browser.mjs "$RUNNER_TEMP/temporary-navigation.json"

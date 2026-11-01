@@ -1,4 +1,5 @@
-import {compileClassicWorker,compileTemporaryContent} from './classic-worker-build.mjs';
+import {browserLocalFingerprint} from './build-fingerprint.mjs';
+import {compileClassicWorker,compileTemporaryContent,compileBrowserLocalContent} from './classic-worker-build.mjs';
 import {OFFLINE_HISTORY_PROFILE} from '../src/runtime/historical-send-profile.mjs';
 import {readFileSync,writeFileSync,mkdirSync,existsSync} from 'node:fs';
 import {resolve,dirname,relative,sep} from 'node:path';
@@ -31,9 +32,12 @@ export function buildHost(output,{offlineOrigin=null,offlineSnippets=false,offli
  const match=offlineOrigin===null?'https://chatgpt.com/*':'http://127.0.0.1/*';
  const manifest={manifest_version:3,name:'VAIWL Free Host — development',version:'0.3.0',action:{default_popup:'status.html'},minimum_chrome_version:'120',permissions:browserLocal?['webNavigation','storage']:observedChatGPTContext||offlineContext||offlineFirstSend?['webNavigation','webRequest']:['webNavigation'],host_permissions:[match],background:{service_worker:'extension/worker.mjs'},content_scripts:[{matches:[match],js:['content.js'],run_at:'document_idle',all_frames:false}],web_accessible_resources:[{resources:['workspace.html','sidebar.html',...publicModules.keys()].sort(),matches:[match]}],content_security_policy:{extension_pages:`script-src 'self'; object-src 'none'; connect-src ${browserLocal?"'none'":origin}`}};
  const bootstrap=readFileSync(resolve(root,'extension/content-bootstrap.js'),'utf8');
- const contentFingerprint=hash(JSON.stringify([...modules].sort(([a],[b])=>a.localeCompare(b))));
+ if(bootstrap.split("/* build-content-fingerprint */ 'source'").length!==2||modules.get('extension/runtime-build.mjs').split("/* build-runtime-fingerprint */ 'source'").length!==2)throw Error('invalid-host-build-fingerprint-marker');
+ const contentFingerprint=browserLocal?browserLocalFingerprint(modules,bootstrap):hash(JSON.stringify([...modules].sort(([a],[b])=>a.localeCompare(b))));
+ if(browserLocal)manifest.version_name=contentFingerprint;
  const files=new Map(modules);files.set('content.js',bootstrap.replace("/* build-content-fingerprint */ 'source'",JSON.stringify(contentFingerprint)));
 
+ if(browserLocal){files.set('extension/runtime-build.mjs',modules.get('extension/runtime-build.mjs').replace("/* build-runtime-fingerprint */ 'source'",JSON.stringify(contentFingerprint)));files.set('extension/worker-source.mjs',modules.get('extension/worker.mjs'));files.set('extension/content-bootstrap.js',bootstrap);}
  const sources=closure(entries);sources.set('extension/content-bootstrap.js',bootstrap);
  for(const shellPath of ['extension/frame-shell.css','extension/frame-bootstrap.js']){const shell=readFileSync(resolve(root,shellPath),'utf8');files.set(shellPath,shellPath.endsWith('frame-bootstrap.js')?shell.replace("/* build-parent-origin */ 'https://chatgpt.com'",JSON.stringify(origin)):shell);sources.set(shellPath,shell);}
  for(const role of ['workspace','sidebar']){const path='extension/'+role+'.html',source=readFileSync(resolve(root,path),'utf8');files.set(role+'.html',source);sources.set(path,source);}
@@ -44,10 +48,11 @@ export function buildHost(output,{offlineOrigin=null,offlineSnippets=false,offli
  const kind=browserLocal?'Browser-Local 个人候选（即时内存／明确确认后本地保存；未通过真实日用验收）':temporaryReadOnly?'临时只读导航（无身份核验、无数据库）':observedChatGPTContext?'专用 Profile 观察候选（真实验收未完成）':offlineOrigin===null?'默认安全关闭包（不会接入完整增强界面）':'离线测试包（仅本地夹具）';
  files.set('README.txt','本包类别：'+kind+'\n\n'+support+'\n--- Build details ---\n'+files.get('README.txt'));
  mkdirSync(out,{recursive:true});for(const [path,source]of files){mkdirSync(dirname(resolve(out,path)),{recursive:true});writeFileSync(resolve(out,path),source);}
+ if(browserLocal){const source=compileBrowserLocalContent(out);files.set('content.js',source);writeFileSync(resolve(out,'content.js'),source);}
  if(temporaryReadOnly){const source=compileTemporaryContent(out);files.set('content.js',source);writeFileSync(resolve(out,'content.js'),source);}
  const bundles=compileClassicWorker(out);
  for(const [path,source]of [['extension/worker.mjs',bundles.entry],['extension/classic-runtime.js',bundles.runtime]]){files.set(path,source);writeFileSync(resolve(out,path),source);}
- for(const path of ['extension/build.mjs','extension/classic-worker-build.mjs','extension/tooling/package.json','extension/tooling/package-lock.json'])sources.set(path,readFileSync(resolve(root,path),'utf8'));
+ for(const path of ['extension/build.mjs','extension/build-fingerprint.mjs','extension/classic-worker-build.mjs','extension/tooling/package.json','extension/tooling/package-lock.json'])sources.set(path,readFileSync(resolve(root,path),'utf8'));
  const info={schema:'vaiwl-host-build-v1',status:offlineOrigin===null?'HOST_IMPLEMENTATION_UNVERIFIED':'OFFLINE_HOST_RECONSTRUCTION',releaseStatus:'NOT_RELEASE_READY',realChatGPT:'NOT_RUN',origin,...(mainMountDiagnostic?{mainMountDiagnostic:true}:{}),...(browserLocal?{browserLocal:true}:{}),...(temporaryReadOnly?{temporaryReadOnly:true}:{}),...(observedChatGPTContext?{observedChatGPTContext:true}:{}),...(offlineOldSendTerminal?{offlineOldSendTerminal:true}:{}),...(offlineExistingSend?{offlineExistingSend:true}:{}),...(offlineHistory?{offlineHistory:true}:{}),...(offlineFirstSend?{offlineFirstSend:true}:{}),...(offlineContext?{offlineContext:true}:{}),...(offlineProjectContext?{offlineProjectContext:true}:{}),...(offlineObservedProjectLayout?{offlineObservedProjectLayout:true}:{}),...(offlineSnippets?{offlineSnippets:true}:{}),contextSelection:browserLocal?'BROWSER_LOCAL_SESSION_NO_SERVER_IDENTITY':temporaryReadOnly?'TEMPORARY_DOCUMENT_NAVIGATION_NO_SCOPE':observedChatGPTContext?'OBSERVED_C2_CANDIDATE_NOT_VERIFIED':offlineProjectContext?'EXPLICIT_OFFLINE_C2_PROJECT_CONVERSATION':offlineContext?'EXPLICIT_OFFLINE_C2_CONVERSATION':offlineOrigin===null?'UNVERIFIED_FAIL_CLOSED':'EXPLICIT_OFFLINE_C3',sourceHashes:Object.fromEntries([...sources].map(([path,source])=>[path,hash(source)])),files:Object.fromEntries([...files].map(([path,source])=>[path,hash(source)]))};
  writeFileSync(resolve(out,'build-manifest.json'),json(info));return info;
 }

@@ -14,6 +14,10 @@ import {createChatGPTAdapter} from '../src/host/chatgpt-adapter.mjs';
 import {LEGACY_SURFACE_PROFILE} from '../src/host/surface-discovery.mjs';
 import {createHostContentSession} from '../src/host/content-session.mjs';
 import {HOST_CONFIG} from './config.mjs';
+import {runtimeBuildMatches} from './runtime-build.mjs';
+// The legacy dynamic bootstrap must not start new code against an old loaded
+// registration. BrowserLocal's formal path is a single compiled static script.
+if(HOST_CONFIG.browserLocal&&!runtimeBuildMatches(chrome.runtime))throw Error('runtime-build-mismatch');
 if(window===window.top&&location.origin===HOST_CONFIG.origin&&HOST_CONFIG.temporaryReadOnly===true){
  const stop=installTemporaryNativeNavigation({document,runtime:chrome.runtime,origin:HOST_CONFIG.origin,profile:selectHostSurfaceProfile(HOST_CONFIG.surfaceProfile)});
  window.addEventListener('pagehide',event=>{if(!event.persisted)stop();});

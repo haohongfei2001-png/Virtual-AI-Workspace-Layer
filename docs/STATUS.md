@@ -1,5 +1,19 @@
 # VAIWL实际状态：渐进积累工程已接线，真实来源逐项待准入
 
+## 2026-11-01 真实运行版本不一致：静态执行图与登记版本绑定
+
+已接管 PR16 HEAD `653ab73e1a5fcc51857a3ae87fcdfe9bf9fc515b` 及评论6556559797、6557176212、6557372557。真实Mac205正式文件/2957全目录哈希正确、同ID单次Reload动作已派发，新Project文档却返回旧 `e287d27625cbeadbfdb3bf4410fe16011e0ae73c68bdf436b1071a38b50279cf`，而653预期是 `26a6145413a9db5acdfdc57e7643bea119c33fd5623216d1b437727ec2eaea30`。真实boot/status/mount三字段仍NOT_READ；本批不补造、不追加Project DOM检查。
+
+**SOURCE_FIXED / OFFLINE_PASS：** 旧指纹已逐字节定位到正式 `5593e02eb81b1fc8fda3a12dc945d0280cf67d60` 的content.js，SHA256为212407e9…；原653实际发送者为16deb3fa…，其闭包常量是26a614…，不是旧值。隔离Chrome使用两个原正式包确定复现：只覆盖磁盘时，新文档保留旧静态bootstrap，却加载新dynamic content-entry及新popup；原popup甚至接受ready/show-returned。完成一次真实Reload并证旧Worker关闭/同ID启用后，新文档指纹及实际脚本SHA正确。干净205文件和2957文件原子交换均一致；2752额外文件为明确标注的合成哨兵，不冒充Mac真实清单，也不认定额外文件为根因。
+
+正式BrowserLocal现改为自包含静态content.js，BOOT与内容执行图不可在运行时拆成不同代次；manifest.version_name、runtime模块和BOOT共用身份。旧dynamic入口、Worker、workspace/sidebar均在副作用前核验登记版本。popup只有自身/登记/当前文档BOOT一致且module-loaded才接受状态，真实旧指纹继续显示并明确拒绝，禁用解锁/重连/结构操作。原documentId/URL/lifecycle跨通道核验保留，变化后不得接受旧时态回复。验包从包内重算闭包、重编译content与Worker逐字节核对，拒绝重填清单哈希的旧入口；BOOT模板占位必须唯一，保留源文件不得公开WAR。
+
+修前6项版本反例、独审4项frame/WAR反例及1项模板反例均先RED，修后相关 **316/316**；正式同ID升级基准2/2复现、修复2/2通过；既有nested Project连续旅程 **36项记录PASS**，护栏变异 **12/12 KILLED**。全量Node首轮12103通过、10项缺历史Git对象失败；补齐原始历史后这些8文件 **56/56 PASS**，首轮结果保留，完整同SHA CI继续作为冻结正式门。三位只读独审无剩余确定性阻断。精确证据见 [本批说明](evidence/free-runtime-consistency-20261101/README.md) 与 [receipt.json](evidence/free-runtime-consistency-20261101/receipt.json)。
+
+最终正式包208文件/208生产输入；运行指纹 `f6fc3d01276442ef1b956af81ce7b56313c7a39fd43ae717f7db2f4dc99ff430`，content.js SHA256 `d80427f8374bbbdaa0106a6d935a307e543183048e92a20858b6b4a61c74e29c`，ZIP SHA256 `16d778f68beaca0b301c147e198858c7372388d73a90a39f86580a8a12c8fdd6`。运行指纹覆盖模块闭包及BOOT模板，不宣称覆盖整个ZIP。冻结SHA及同SHA CI最终结果记PR交接，不为结果补写再次移动候选。
+
+**Mac因果仍有唯一最小缺口：报告Reload之后、创建新文档之前，该ID实际激活的登记代次是否已更新。** 隔离正确Reload可切换，不据此宣称Mac点击失败或浏览器缺陷。按[一次性最小复验](evidence/free-runtime-consistency-20261101/HANDOFF.md)，先核对自有登记身份，再新文档BOOT；指纹不符立即停止，只有正确才读原三项挂载状态。未改Project布局/paint/grant生产逻辑，未操作原Chrome/Profile、其他扩展或私人数据；36/36额度不变。Project挂载NOT_VERIFIED、新候选Mac NOT_RUN、FREE_NOT_ACCEPTED / NOT_RELEASE_READY；继续Draft，不merge、部署或发布。
+
 ## 2026-11-01 固定诊断摘要：结束对 Mac AX 折叠详情的依赖
 
 依用户本轮限定修复指令，先核对 PR16 冻结 HEAD `30d4cba74854f1a5dfe1e23e6295047cba602976`、本页/AUTHORITY/唯一计划和[隔离回执6555803640](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16#issuecomment-6555803640)。该回执证明旧折叠详情阻碍 Mac AX 字段读取，不能证明 Project 的真实挂载拒绝原因。本批直接修复产品自有状态页，不再修 Mac 展开工具或重选挂载方案。

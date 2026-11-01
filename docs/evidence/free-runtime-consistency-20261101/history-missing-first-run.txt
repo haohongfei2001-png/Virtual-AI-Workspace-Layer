@@ -1,0 +1,209 @@
+First complete run: tests 12113, pass 12103, fail 10, cancelled/skipped/todo 0.
+These failures occurred before the isolated checkout fetched its exact archived Git objects. No tests were skipped or relaxed. Original output follows.
+
+✖ failing tests:
+
+test at tests/f1/equivalence.test.mjs:10:1
+✖ F1 indexed projection is identical to accepted pre-optimization across evidence edge cases (8.093612ms)
+  Error: Command failed: git show 38ea47dbd85a51951c3b5dbd283d2b088288b3f4:src/data/evidence.mjs
+  fatal: path 'src/data/evidence.mjs' exists on disk, but not in '38ea47dbd85a51951c3b5dbd283d2b088288b3f4'
+  
+      at genericNodeError (node:internal/errors:986:15)
+      at wrappedFn (node:internal/errors:540:14)
+      at checkExecSyncError (node:child_process:943:11)
+      at execFileSync (node:child_process:979:15)
+      at TestContext.<anonymous> (file:///workspace/scratch/8d07260fb60e/vaiwl/tests/f1/equivalence.test.mjs:12:21)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    status: 128,
+    signal: null,
+    output: [ null, '', "fatal: path 'src/data/evidence.mjs' exists on disk, but not in '38ea47dbd85a51951c3b5dbd283d2b088288b3f4'\n" ],
+    pid: 14380,
+    stdout: '',
+    stderr: "fatal: path 'src/data/evidence.mjs' exists on disk, but not in '38ea47dbd85a51951c3b5dbd283d2b088288b3f4'\n"
+  }
+
+test at tests/free/known-anchor-rollback.test.mjs:1:1
+✖ tests/free/known-anchor-rollback.test.mjs (66.304952ms)
+  'test failed'
+
+test at tests/free/native-index-construction-validation.test.mjs:8:1
+✖ constructed native buckets preserve exact old bytes while avoiding first-read duplicate routing (5.472708ms)
+  Error: Command failed: git show 1bcc4edf9e636ae03dd84e323f6c94b8a7573086:src/data/native-version-index.mjs
+  fatal: path 'src/data/native-version-index.mjs' exists on disk, but not in '1bcc4edf9e636ae03dd84e323f6c94b8a7573086'
+  
+      at genericNodeError (node:internal/errors:986:15)
+      at wrappedFn (node:internal/errors:540:14)
+      at checkExecSyncError (node:child_process:943:11)
+      at execFileSync (node:child_process:979:15)
+      at measured (file:///workspace/scratch/8d07260fb60e/vaiwl/tests/free/native-index-construction-validation.test.mjs:4:51)
+      at TestContext.<anonymous> (file:///workspace/scratch/8d07260fb60e/vaiwl/tests/free/native-index-construction-validation.test.mjs:9:18)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    status: 128,
+    signal: null,
+    output: [ null, '', "fatal: path 'src/data/native-version-index.mjs' exists on disk, but not in '1bcc4edf9e636ae03dd84e323f6c94b8a7573086'\n" ],
+    pid: 14804,
+    stdout: '',
+    stderr: "fatal: path 'src/data/native-version-index.mjs' exists on disk, but not in '1bcc4edf9e636ae03dd84e323f6c94b8a7573086'\n"
+  }
+
+test at tests/free/shared-mutation-root-validation.test.mjs:33:1
+✖ synchronous shared writer validates original root once, preserving all output bytes and delta window (5.641171ms)
+  Error: Command failed: git show 8d89ebad91dfa87d34b9b7a20be7a624eba652d9:src/data/shared-directory-writer.mjs
+  fatal: path 'src/data/shared-directory-writer.mjs' exists on disk, but not in '8d89ebad91dfa87d34b9b7a20be7a624eba652d9'
+  
+      at genericNodeError (node:internal/errors:986:15)
+      at wrappedFn (node:internal/errors:540:14)
+      at checkExecSyncError (node:child_process:943:11)
+      at execFileSync (node:child_process:979:15)
+      at measured (file:///workspace/scratch/8d07260fb60e/vaiwl/tests/free/shared-mutation-root-validation.test.mjs:13:17)
+      at TestContext.<anonymous> (file:///workspace/scratch/8d07260fb60e/vaiwl/tests/free/shared-mutation-root-validation.test.mjs:34:18)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    status: 128,
+    signal: null,
+    output: [ null, '', "fatal: path 'src/data/shared-directory-writer.mjs' exists on disk, but not in '8d89ebad91dfa87d34b9b7a20be7a624eba652d9'\n" ],
+    pid: 15355,
+    stdout: '',
+    stderr: "fatal: path 'src/data/shared-directory-writer.mjs' exists on disk, but not in '8d89ebad91dfa87d34b9b7a20be7a624eba652d9'\n"
+  }
+
+test at tests/free/shared-retention-bucket-routing.test.mjs:42:1
+✖ known-bucket retention preserves exact deletion set with no lookup rerouting (10.591109ms)
+  Error: Command failed: git show 388fca4be0337d304f5bc830b37169cf2f5d04ab:src/data/shared-directory-retention.mjs
+  fatal: path 'src/data/shared-directory-retention.mjs' exists on disk, but not in '388fca4be0337d304f5bc830b37169cf2f5d04ab'
+  
+      at genericNodeError (node:internal/errors:986:15)
+      at wrappedFn (node:internal/errors:540:14)
+      at checkExecSyncError (node:child_process:943:11)
+      at execFileSync (node:child_process:979:15)
+      at measured (file:///workspace/scratch/8d07260fb60e/vaiwl/tests/free/shared-retention-bucket-routing.test.mjs:20:17)
+      at async TestContext.<anonymous> (file:///workspace/scratch/8d07260fb60e/vaiwl/tests/free/shared-retention-bucket-routing.test.mjs:43:32)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    status: 128,
+    signal: null,
+    output: [ null, '', "fatal: path 'src/data/shared-directory-retention.mjs' exists on disk, but not in '388fca4be0337d304f5bc830b37169cf2f5d04ab'\n" ],
+    pid: 15392,
+    stdout: '',
+    stderr: "fatal: path 'src/data/shared-directory-retention.mjs' exists on disk, but not in '388fca4be0337d304f5bc830b37169cf2f5d04ab'\n"
+  }
+
+test at tests/host/archived-owner-version-fence.test.mjs:14:41
+✖ actual archived owner is version fenced before any writer, evidence=false (10.696769ms)
+  Error: Command failed: git rev-parse a8addaa9e014f22704a459d6ee126e8f80ead571^{commit}
+  fatal: ambiguous argument 'a8addaa9e014f22704a459d6ee126e8f80ead571^{commit}': unknown revision or path not in the working tree.
+  Use '--' to separate paths from revisions, like this:
+  'git <command> [<revision>...] -- [<file>...]'
+  
+      at genericNodeError (node:internal/errors:986:15)
+      at wrappedFn (node:internal/errors:540:14)
+      at checkExecSyncError (node:child_process:943:11)
+      at execFileSync (node:child_process:979:15)
+      at historicalSource (file:///workspace/scratch/8d07260fb60e/vaiwl/tests/host/historical-package.mjs:9:15)
+      at TestContext.<anonymous> (file:///workspace/scratch/8d07260fb60e/vaiwl/tests/host/archived-owner-version-fence.test.mjs:16:8)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    status: 128,
+    signal: null,
+    output: [ null, 'a8addaa9e014f22704a459d6ee126e8f80ead571^{commit}\n', "fatal: ambiguous argument 'a8addaa9e014f22704a459d6ee126e8f80ead571^{commit}': unknown revision or path not in the working tree.\nUse '--' to separate paths from revisions, like this:\n'git <command> [<revision>...] -- [<file>...]'\n" ],
+    pid: 15572,
+    stdout: 'a8addaa9e014f22704a459d6ee126e8f80ead571^{commit}\n',
+    stderr: "fatal: ambiguous argument 'a8addaa9e014f22704a459d6ee126e8f80ead571^{commit}': unknown revision or path not in the working tree.\nUse '--' to separate paths from revisions, like this:\n'git <command> [<revision>...] -- [<file>...]'\n"
+  }
+
+test at tests/host/archived-owner-version-fence.test.mjs:14:41
+✖ actual archived owner is version fenced before any writer, evidence=true (6.044179ms)
+  Error: Command failed: git rev-parse a8addaa9e014f22704a459d6ee126e8f80ead571^{commit}
+  fatal: ambiguous argument 'a8addaa9e014f22704a459d6ee126e8f80ead571^{commit}': unknown revision or path not in the working tree.
+  Use '--' to separate paths from revisions, like this:
+  'git <command> [<revision>...] -- [<file>...]'
+  
+      at genericNodeError (node:internal/errors:986:15)
+      at wrappedFn (node:internal/errors:540:14)
+      at checkExecSyncError (node:child_process:943:11)
+      at execFileSync (node:child_process:979:15)
+      at historicalSource (file:///workspace/scratch/8d07260fb60e/vaiwl/tests/host/historical-package.mjs:9:15)
+      at TestContext.<anonymous> (file:///workspace/scratch/8d07260fb60e/vaiwl/tests/host/archived-owner-version-fence.test.mjs:16:8)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    status: 128,
+    signal: null,
+    output: [ null, 'a8addaa9e014f22704a459d6ee126e8f80ead571^{commit}\n', "fatal: ambiguous argument 'a8addaa9e014f22704a459d6ee126e8f80ead571^{commit}': unknown revision or path not in the working tree.\nUse '--' to separate paths from revisions, like this:\n'git <command> [<revision>...] -- [<file>...]'\n" ],
+    pid: 15573,
+    stdout: 'a8addaa9e014f22704a459d6ee126e8f80ead571^{commit}\n',
+    stderr: "fatal: ambiguous argument 'a8addaa9e014f22704a459d6ee126e8f80ead571^{commit}': unknown revision or path not in the working tree.\nUse '--' to separate paths from revisions, like this:\n'git <command> [<revision>...] -- [<file>...]'\n"
+  }
+
+test at tests/host/historical-package.test.mjs:8:1
+✖ archived Host backup uses its actual direct entry rather than a later settings menu (5.214628ms)
+  Error: Command failed: git show a8addaa9e014f22704a459d6ee126e8f80ead571:src/navigation/navigation.mjs
+  fatal: path 'src/navigation/navigation.mjs' exists on disk, but not in 'a8addaa9e014f22704a459d6ee126e8f80ead571'
+  
+      at genericNodeError (node:internal/errors:986:15)
+      at wrappedFn (node:internal/errors:540:14)
+      at checkExecSyncError (node:child_process:943:11)
+      at execFileSync (node:child_process:979:15)
+      at TestContext.<anonymous> (file:///workspace/scratch/8d07260fb60e/vaiwl/tests/host/historical-package.test.mjs:8:209)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    status: 128,
+    signal: null,
+    output: [ null, '', "fatal: path 'src/navigation/navigation.mjs' exists on disk, but not in 'a8addaa9e014f22704a459d6ee126e8f80ead571'\n" ],
+    pid: 17011,
+    stdout: '',
+    stderr: "fatal: path 'src/navigation/navigation.mjs' exists on disk, but not in 'a8addaa9e014f22704a459d6ee126e8f80ead571'\n"
+  }
+
+test at tests/host/sys03-archived-v1-continuation.test.mjs:16:41
+✖ SYS03 L/D actual archived Host v1 rejects v2 before Evidence without mutating storage (11.40001ms)
+  Error: Command failed: git rev-parse a8addaa9e014f22704a459d6ee126e8f80ead571^{commit}
+  fatal: ambiguous argument 'a8addaa9e014f22704a459d6ee126e8f80ead571^{commit}': unknown revision or path not in the working tree.
+  Use '--' to separate paths from revisions, like this:
+  'git <command> [<revision>...] -- [<file>...]'
+  
+      at genericNodeError (node:internal/errors:986:15)
+      at wrappedFn (node:internal/errors:540:14)
+      at checkExecSyncError (node:child_process:943:11)
+      at execFileSync (node:child_process:979:15)
+      at historicalSource (file:///workspace/scratch/8d07260fb60e/vaiwl/tests/host/historical-package.mjs:9:15)
+      at TestContext.<anonymous> (file:///workspace/scratch/8d07260fb60e/vaiwl/tests/host/sys03-archived-v1-continuation.test.mjs:18:56)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    status: 128,
+    signal: null,
+    output: [ null, 'a8addaa9e014f22704a459d6ee126e8f80ead571^{commit}\n', "fatal: ambiguous argument 'a8addaa9e014f22704a459d6ee126e8f80ead571^{commit}': unknown revision or path not in the working tree.\nUse '--' to separate paths from revisions, like this:\n'git <command> [<revision>...] -- [<file>...]'\n" ],
+    pid: 20259,
+    stdout: 'a8addaa9e014f22704a459d6ee126e8f80ead571^{commit}\n',
+    stderr: "fatal: ambiguous argument 'a8addaa9e014f22704a459d6ee126e8f80ead571^{commit}': unknown revision or path not in the working tree.\nUse '--' to separate paths from revisions, like this:\n'git <command> [<revision>...] -- [<file>...]'\n"
+  }
+
+test at tests/host/sys03-archived-v1-continuation.test.mjs:16:41
+✖ SYS03 L/D actual archived Host v1 rejects v2 after committed Evidence before completion without mutating storage (5.570385ms)
+  Error: Command failed: git rev-parse a8addaa9e014f22704a459d6ee126e8f80ead571^{commit}
+  fatal: ambiguous argument 'a8addaa9e014f22704a459d6ee126e8f80ead571^{commit}': unknown revision or path not in the working tree.
+  Use '--' to separate paths from revisions, like this:
+  'git <command> [<revision>...] -- [<file>...]'
+  
+      at genericNodeError (node:internal/errors:986:15)
+      at wrappedFn (node:internal/errors:540:14)
+      at checkExecSyncError (node:child_process:943:11)
+      at execFileSync (node:child_process:979:15)
+      at historicalSource (file:///workspace/scratch/8d07260fb60e/vaiwl/tests/host/historical-package.mjs:9:15)
+      at TestContext.<anonymous> (file:///workspace/scratch/8d07260fb60e/vaiwl/tests/host/sys03-archived-v1-continuation.test.mjs:18:56)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    status: 128,
+    signal: null,
+    output: [ null, 'a8addaa9e014f22704a459d6ee126e8f80ead571^{commit}\n', "fatal: ambiguous argument 'a8addaa9e014f22704a459d6ee126e8f80ead571^{commit}': unknown revision or path not in the working tree.\nUse '--' to separate paths from revisions, like this:\n'git <command> [<revision>...] -- [<file>...]'\n" ],
+    pid: 20260,
+    stdout: 'a8addaa9e014f22704a459d6ee126e8f80ead571^{commit}\n',
+    stderr: "fatal: ambiguous argument 'a8addaa9e014f22704a459d6ee126e8f80ead571^{commit}': unknown revision or path not in the working tree.\nUse '--' to separate paths from revisions, like this:\n'git <command> [<revision>...] -- [<file>...]'\n"
+  }

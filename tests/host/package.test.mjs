@@ -41,7 +41,9 @@ test('one-shot main mount diagnostics require an explicit Browser-Local package 
  assert.equal(ordinary.mainMountDiagnostic,undefined);assert.equal(enabled.mainMountDiagnostic,true);
  assert.equal((await import(pathToFileURL(join(plain,'extension/config.mjs')))).HOST_CONFIG.mainMountDiagnostic,undefined);
  assert.equal((await import(pathToFileURL(join(diagnostic,'extension/config.mjs')))).HOST_CONFIG.mainMountDiagnostic,true);
- assert.deepEqual(json(join(plain,'manifest.json')),json(join(diagnostic,'manifest.json')));
+ const plainManifest=json(join(plain,'manifest.json')),diagnosticManifest=json(join(diagnostic,'manifest.json'));
+ assert.notEqual(plainManifest.version_name,diagnosticManifest.version_name,'different runtime configurations have different registered identities');
+ assert.deepEqual({...plainManifest,version_name:null},{...diagnosticManifest,version_name:null});
  assert.equal(verifyHost(diagnostic).status,'HOST_IMPLEMENTATION_UNVERIFIED');
  assert.throws(()=>buildHost(join(dir,'unbound'),{mainMountDiagnostic:true}),/main-mount-diagnostic-browser-local-only/);
  assert.throws(()=>buildHost(join(dir,'mistyped'),{browserLocal:true,mainMountDiagnostic:'true'}),/main-mount-diagnostic-browser-local-only/);

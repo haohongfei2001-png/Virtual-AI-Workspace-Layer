@@ -1,0 +1,84 @@
+✖ version fence frame workspace rejects a different registered generation before any ready or start (1.666203ms)
+✖ version fence frame sidebar rejects a different registered generation before any ready or start (0.242226ms)
+✖ version fence private build source cannot become a public resource: extension/worker-source.mjs (364.826121ms)
+✖ version fence private build source cannot become a public resource: extension/content-bootstrap.js (255.633542ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 0
+ℹ fail 4
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 654.119498
+
+✖ failing tests:
+
+test at tests/host/runtime-build-package.test.mjs:27:43
+✖ version fence frame workspace rejects a different registered generation before any ready or start (1.666203ms)
+  AssertionError [ERR_ASSERTION]: Missing expected exception.
+      at TestContext.<anonymous> (file:///workspace/scratch/8d07260fb60e/vaiwl/tests/host/runtime-build-package.test.mjs:30:9)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /runtime-build-mismatch/,
+    operator: 'throws',
+    diff: 'simple'
+  }
+
+test at tests/host/runtime-build-package.test.mjs:27:43
+✖ version fence frame sidebar rejects a different registered generation before any ready or start (0.242226ms)
+  AssertionError [ERR_ASSERTION]: Missing expected exception.
+      at TestContext.<anonymous> (file:///workspace/scratch/8d07260fb60e/vaiwl/tests/host/runtime-build-package.test.mjs:30:9)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /runtime-build-mismatch/,
+    operator: 'throws',
+    diff: 'simple'
+  }
+
+test at tests/host/runtime-build-package.test.mjs:32:84
+✖ version fence private build source cannot become a public resource: extension/worker-source.mjs (364.826121ms)
+  AssertionError [ERR_ASSERTION]: Missing expected exception.
+      at TestContext.<anonymous> (file:///workspace/scratch/8d07260fb60e/vaiwl/tests/host/runtime-build-package.test.mjs:34:9)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /invalid-host-package-public-boundary/,
+    operator: 'throws',
+    diff: 'simple'
+  }
+
+test at tests/host/runtime-build-package.test.mjs:32:84
+✖ version fence private build source cannot become a public resource: extension/content-bootstrap.js (255.633542ms)
+  AssertionError [ERR_ASSERTION]: Missing expected exception.
+      at TestContext.<anonymous> (file:///workspace/scratch/8d07260fb60e/vaiwl/tests/host/runtime-build-package.test.mjs:34:9)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /invalid-host-package-public-boundary/,
+    operator: 'throws',
+    diff: 'simple'
+  }
