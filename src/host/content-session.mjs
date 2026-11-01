@@ -13,16 +13,19 @@ import {exactHostRecord} from './contract.mjs';
 import {tokenOK} from '../b1/identity.mjs';
 import {withRequestDeadline} from '../data/request-deadline.mjs';
 import {createMainMountDiagnosticSlot} from './native-flow-diagnostic.mjs';
+import {createProjectWrapperDiagnosticSlot} from './project-wrapper-diagnostic.mjs';
 
 /** Isolated content composition. The entry must restrict supported hosts; this
  * module never exposes its runtime bridge or authority on the page window. */
-export function createHostContentSession({document:doc,runtime,origin=doc?.location?.origin,adapterFactory=createChatGPTAdapter,prepareDocument=null,identityReader=null,contextRecovery=false,localReconnect=false,automaticDormancy=false,mainMountDiagnostic=false,surfaceFactory=createFlowMountSurface,controllerFactory=createSurfaceController,plansFactory=createFrameNativePlans,now=Date.now,elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout,makeId=()=>crypto.randomUUID()}={}){
+export function createHostContentSession({document:doc,runtime,origin=doc?.location?.origin,adapterFactory=createChatGPTAdapter,prepareDocument=null,identityReader=null,contextRecovery=false,localReconnect=false,automaticDormancy=false,mainMountDiagnostic=false,projectWrapperDiagnostic=false,surfaceFactory=createFlowMountSurface,controllerFactory=createSurfaceController,plansFactory=createFrameNativePlans,now=Date.now,elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout,makeId=()=>crypto.randomUUID()}={}){
  if(prepareDocument!==null&&typeof prepareDocument!=='function')throw Error('invalid-document-readiness');
  if(typeof localReconnect!=='boolean')throw Error('invalid-local-reconnect');
  if(typeof automaticDormancy!=='boolean')throw Error('invalid-automatic-dormancy');
  if(typeof mainMountDiagnostic!=='boolean')throw Error('invalid-mount-diagnostic');
+ if(typeof projectWrapperDiagnostic!=='boolean'||projectWrapperDiagnostic&&mainMountDiagnostic)throw Error('invalid-wrapper-diagnostic');
  if(!doc?.defaultView||new URL(origin).origin!==origin||doc.location.origin!==origin||!['http:','https:'].includes(new URL(origin).protocol)||!tokenOK(runtime?.id)||typeof runtime.sendMessage!=='function'||typeof runtime.getURL!=='function'||!runtime.onMessage?.addListener)throw Error('invalid-content-session');
  const mountDiagnostic=createMainMountDiagnosticSlot({document:doc,enabled:mainMountDiagnostic});
+ const wrapperDiagnostic=createProjectWrapperDiagnosticSlot({document:doc,enabled:projectWrapperDiagnostic,now,elapsedNow,schedule,cancel,makeId});
  const isolatedReader=identityReader??createIsolatedSessionReader({origin,now,elapsedNow});if(typeof isolatedReader?.read!=='function')throw Error('invalid-identity-reader');
  const upgrade=createCandidateUpgrade({now});let upgradeIdentity=null,upgradeDisplay=null,upgradeTimer=null;
  // Learned identities are document-local facts, never reusable handles or grants.
@@ -324,6 +327,9 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
  async function recoverRoute(){return null;}
  async function begin(rebinding=false,initialMode='workspace',recovery=null,preference=null){
   transportWait=null;reset();const s={run:epoch,initialMode,sidebarPreference:preference,url:doc.location.href,abort:new AbortController(),binding:null,controller:null,adapter:null,listener:()=>{},pagehide,plans:null,rebinding,ready:false,recoveryDenied:false,snippets:null,snippetRef:null,snippetScopeGrant:null,identityChallenges:new Map(),identityPending:false,identityAuthority:0};current=s;doc.defaultView.addEventListener('pagehide',s.pagehide);
+  // Only the separately built diagnostic candidate pauses here. No native
+  // inspection, HELLO, grant or mount can precede its explicit private consent.
+  if(projectWrapperDiagnostic&&!await wrapperDiagnostic.wait({generation:s,isCurrent:()=>enabled&&live(s),abortSignal:s.abort.signal}))return null;
   let foregroundArmed=doc.visibilityState==='hidden',foregroundPending=false;
   s.blur=()=>{foregroundArmed=true;};
   s.focus=()=>{
@@ -531,7 +537,7 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
    startupPhase='initialization-navigation';reportStartup(startupPhase);
    s.plans=plansFactory({adapter,showNativeReading:()=>s.adapter?.hasNativeLayer?.()!==true&&s.controller?.showNativeReading?.()===true,captureIntent:()=>s.controller?.intentGuard?.()??(()=>false),showReading:()=>s.adapter?.hasNativeLayer?.()!==true&&s.controller?.showReading()===true,now,elapsedNow,schedule,cancel,bindingCurrent:()=>live(s)&&Date.parse(s.binding.expiresAt)>now()&&(s.controller?.isNativeStructureCurrent?.()??adapter.inspect().ok)?s.binding.documentToken+':'+s.binding.producerToken+':'+s.binding.routeEpoch:false});
    startupPhase='initialization-surface';reportStartup(startupPhase);
-   surface=surfaceFactory({document:doc,createFrameURL:({role})=>runtime.getURL(role+'.html'),hasNativeLayer:()=>adapter.hasNativeLayer(),takeMountDiagnostic:()=>mountDiagnostic.take(()=>live(s))});
+   surface=surfaceFactory({document:doc,createFrameURL:({role})=>runtime.getURL(role+'.html'),hasNativeLayer:()=>adapter.hasNativeLayer(),takeMountDiagnostic:()=>mountDiagnostic.take(()=>live(s)),takeWrapperDiagnostic:inspection=>live(s)&&bindingOK(s.binding)?wrapperDiagnostic.take(s,inspection):null});
    const bridge={
     workspaceEstablished:({binding,mountId})=>{
      if(!enabled||!live(s)||!s.ready||s.recoveryDenied||!bindingOK(binding,s.binding)||!tokenOK(mountId)||typeof s.scopeKey!=='string'||!s.scopeKey)return false;
@@ -731,5 +737,5 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
   void contextReady();return true;
  }
  function localStatus(){if(frameReplaced)return 'frame-blocked';if(!enabled&&transportWait&&doc.location.href===transportWait.url){if(recoveryWindow())return 'hello-transport-unavailable';return recoveryBlocked;}if(recoveryBlocked&&startupFailure?.url===doc.location.href)return recoveryBlocked;if(!enabled&&!contextResumeAllowed&&!observation&&startupFailure?.url===doc.location.href)return startupFailure.state;if(!enabled)return contextResumeAllowed||observation?(verificationWaitURL===doc.location.href?'verification-required':'waiting'):'unavailable';if(!current||!live(current))return 'unavailable';if(!current.ready)return 'connecting';const state=current.controller?.localStatus?.()??'unavailable';return ['unavailable','surface-controller-absent'].includes(state)&&startupFailure?.url===doc.location.href?startupFailure.state:state;}
- return Object.freeze({localStatus,reconnect,recoverLayout,recoverRoute,localLayoutStatus:()=>{const layout=startupFailure?.url===doc.location.href&&localStatus().startsWith('layout-')?startupFailure.shape:current&&live(current)&&current.adapter?.navigationSummary?{navigation:current.adapter.navigationSummary(),...(current.adapter.deliverySummary?{delivery:current.adapter.deliverySummary()}:{} ),presentation:current.controller?.presentationSnapshot?.()??null}:null;const mainMountCheck=mountDiagnostic.read();return mainMountCheck?{...(layout??{}),mainMountCheck}:layout;},start,stop,contextPending,contextReady,prepareIdle,enterDormant,isOwnedMask:node=>!!current&&live(current)&&current.surface?.isMasked?.(node)===true,showWorkspace:()=>sync(()=>current?.controller?.showWorkspace()??false),showReading:()=>sync(()=>current?.controller?.showReading()??false)});
+ return Object.freeze({projectWrapperTicket:wrapperDiagnostic.ticket,authorizeProjectWrapper:wrapperDiagnostic.authorize,projectWrapperResult:wrapperDiagnostic.result,readProjectWrapper:wrapperDiagnostic.read,localStatus,reconnect,recoverLayout,recoverRoute,localLayoutStatus:()=>{const layout=startupFailure?.url===doc.location.href&&localStatus().startsWith('layout-')?startupFailure.shape:current&&live(current)&&current.adapter?.navigationSummary?{navigation:current.adapter.navigationSummary(),...(current.adapter.deliverySummary?{delivery:current.adapter.deliverySummary()}:{} ),presentation:current.controller?.presentationSnapshot?.()??null}:null;const mainMountCheck=mountDiagnostic.read();return mainMountCheck?{...(layout??{}),mainMountCheck}:layout;},start,stop,contextPending,contextReady,prepareIdle,enterDormant,isOwnedMask:node=>!!current&&live(current)&&current.surface?.isMasked?.(node)===true,showWorkspace:()=>sync(()=>current?.controller?.showWorkspace()??false),showReading:()=>sync(()=>current?.controller?.showReading()??false)});
 }

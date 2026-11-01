@@ -1,5 +1,11 @@
 # VAIWL 唯一开发计划：Free 完整交付 → Pro 智能增强
 
+## 2026-11-02 原 C2/C5/F4：首次正式 wrapper 拒绝的单一诊断候选
+
+沿原唯一计划执行用户限定首拒接线：同步传递真实document/inspection/root/node和原seam引用，独立默认关闭许可，3节点白名单，原128/16/24/8ms与全部身份/授权/布局保护不变。不得据总reason猜改wrapper合同，不手工二次预检、恢复DOM投影/Proxy或扩大常驻诊断。
+
+本批离线、真实隔离MV3和独审已完成，精确证据见[本批回执](evidence/free-project-first-refusal-20261102/receipt.json)；同SHA完整42-job CI及冻结候选在原PR16交接。下一项真实依赖是用户另行明确授权后的单次Project首拒JSON；原36/36和Project1/1不续期。本轮保持LIVE_NOT_AUTHORIZED，不推进未知布局修复或宣称Free验收完成。
+
 2026-11-01依最新实机旧指纹回执，原C2/C5/F3优先处理运行版本一致性：正式包重建定位旧BOOT源，使用同ID真实更新/单次Reload反例修复静态内容执行图与登记版本绑定、popup错误接受及验包缺口。新旧版本不混用，文档变化不接受旧回复；先RED后GREEN、实际包、独审及同SHA CI后冻结原PR16单一候选。Mac仅一次性核对自有登记身份与新文档BOOT，完整指纹正确才恢复状态/挂载验收；其真实拒绝继续由Pro修复。36/36结构额度不增加，不动原Chrome/Profile，不猜改Project布局，不另立计划或发布。具体已完成结果与仍缺的登记运行事实见STATUS首节及evidence/free-runtime-consistency-20261101。
 
 2026-11-01用户限定最高优先项沿原C2/C5/F3直接修复产品诊断：自有status.html提供默认可访问的固定运行指纹/启动阶段/状态码/已有挂载拒绝摘要，结束Mac AX折叠详情依赖；跨通道身份变化不得留下旧成功值。保留原安全通道、隐私白名单与挂载/授权条件，不扩Project DOM读取或整体视觉，不复做已有模块。定向反例、实际打包MV3和同SHA CI后仅冻结原PR16一个候选，Codex只作同ID更新后专用Project标签的最小状态验收，源码拒绝继续由远程唯一writer修复。具体完成证据见STATUS及evidence/free-status-summary-20261101；本项不新增开发路线。

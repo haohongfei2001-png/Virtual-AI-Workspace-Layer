@@ -85,6 +85,8 @@ jobs:
           fi
           fi
           node tests/host/document-flow-browser.mjs
+          node tests/host/project-wrapper-callback-browser.mjs "$RUNNER_TEMP/project-wrapper-callback.json"
+          node tests/host/project-wrapper-diagnostic-mv3.mjs
           node tests/host/native-invisible-controls-browser.mjs
           node tests/host/native-clipped-controls-browser.mjs
           node tests/host/nested-home-flow-browser.mjs

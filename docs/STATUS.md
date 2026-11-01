@@ -1,5 +1,15 @@
 # VAIWL实际状态：渐进积累工程已接线，真实来源逐项待准入
 
+## 2026-11-02 Project 首次 wrapper 拒绝诊断候选（未授权实机）
+
+继承用户确认的 Mac 登记/运行指纹已恢复事实；真实 Project 仍拒绝 `surface-native-flow-wrapper-paint`，具体 wrapper detail/node 未取得。本批没有推断或修订布局合同。Mac 离线交接目录远程不可访问，按正式源码独立接线。
+
+已完成原同步 `onDiagnostic(report, context)` 接线、回调后引用撤销、独立默认关闭的 Project 一次授权门及严格脱敏 JSON。新门绑定同一 document/session，先写独立 spent bit，再接受首次正式预检；其他拒绝/接受、部分、异常、超时或路由换代均不重试。原 128/16/24/8ms 和 wrapper/paint/identity/grant/frame/epoch 保护保留，旧 36/36 和 Project 1/1 不续期。
+
+本地定向 Node 675/675；固定父 SHA 的16个缺回调反例均复现，新16格实际上下文通过；64个消费者隔离变体含32次异常、128节点边界对照通过。实际专用 MV3 10项、普通连续 MV3 36项通过；独立只读复审无剩余提交阻断。完整同 SHA CI 由本次包含提交的42个 push jobs 与PR交接记录绑定，不能用首页30条结果代替。详见 [本批完整证据](evidence/free-project-first-refusal-20261102/README.md)。
+
+本轮不访问/操作真实 Mac Chrome，不合并/发布；真实取证 NOT_RUN / LIVE_NOT_AUTHORIZED。完整同 SHA CI 成功后候选状态为 DIAGNOSTIC_CODE_READY / LIVE_NOT_AUTHORIZED，不能标记 SOURCE_FIXED / FREE_ACCEPTED。未来最小实机操作仅见 [待授权交接](evidence/free-project-first-refusal-20261102/HANDOFF.md)。
+
 ## 2026-11-01 真实运行版本不一致：静态执行图与登记版本绑定
 
 已接管 PR16 HEAD `653ab73e1a5fcc51857a3ae87fcdfe9bf9fc515b` 及评论6556559797、6557176212、6557372557。真实Mac205正式文件/2957全目录哈希正确、同ID单次Reload动作已派发，新Project文档却返回旧 `e287d27625cbeadbfdb3bf4410fe16011e0ae73c68bdf436b1071a38b50279cf`，而653预期是 `26a6145413a9db5acdfdc57e7643bea119c33fd5623216d1b437727ec2eaea30`。真实boot/status/mount三字段仍NOT_READ；本批不补造、不追加Project DOM检查。

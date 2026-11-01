@@ -1,0 +1,220 @@
+{
+  "schema": "project-wrapper-diagnostic-mv3-v1",
+  "status": "PASS",
+  "realChatGPT": "NOT_RUN",
+  "liveAuthorization": "NOT_AUTHORIZED",
+  "checks": {
+    "defaultOffWithoutNativeStartup": true,
+    "firstFormalWrapperRefusal": true,
+    "cachedReadsOnly": true,
+    "independentPermitConsumed": true,
+    "nativeDOMAndDraftPreserved": true,
+    "strictAnonymousJSON": true,
+    "actualJSONDownload": true,
+    "sameDocumentRouteABAInvalidates": true,
+    "reloadCannotReplay": true,
+    "noPrivateNetwork": true
+  },
+  "browser": "156.0.8078.4",
+  "snapshot": {
+    "schema": "vaiwl-project-wrapper-snapshot-v1",
+    "build": "624de347158e2a90821f88943e2b82b79c777e2d4294731e84bf13d719f7e113",
+    "route": "project",
+    "documentBinding": "verified-at-capture-not-account-identity",
+    "report": {
+      "schema": "project-wrapper-first-refusal-v1",
+      "state": "COMPLETE",
+      "reason": "native-flow-wrapper-paint",
+      "detail": "wrapper-seam",
+      "phase": "walk",
+      "limit": "none",
+      "baseline": {
+        "schema": "main-mount-check-v1",
+        "outcome": "refused",
+        "reason": "native-flow-wrapper-paint",
+        "kind": "project",
+        "phase": "walk",
+        "detail": "wrapper-seam",
+        "visited": 2,
+        "coverage": "complete",
+        "limit": "none",
+        "elapsedMs": 1,
+        "root": 0,
+        "rejected": 1,
+        "landmarks": [
+          2,
+          3,
+          4
+        ],
+        "rows": [
+          [
+            -1,
+            0,
+            "DIV",
+            "absent",
+            3,
+            [
+              341,
+              52,
+              1060,
+              832
+            ]
+          ],
+          [
+            0,
+            0,
+            "DIV",
+            "absent",
+            65,
+            [
+              341,
+              52,
+              1060,
+              349
+            ]
+          ],
+          [
+            -1,
+            0,
+            "DIV",
+            "tabpanel",
+            5,
+            [
+              361,
+              252,
+              1020,
+              129
+            ]
+          ],
+          [
+            -1,
+            0,
+            "FORM",
+            "absent",
+            41,
+            [
+              361,
+              132,
+              1020,
+              52
+            ]
+          ],
+          [
+            -1,
+            1,
+            "HEADER",
+            "absent",
+            49,
+            [
+              0,
+              0,
+              1400,
+              52
+            ]
+          ]
+        ]
+      },
+      "nodes": [
+        [
+          0,
+          "DIV",
+          false,
+          false,
+          [
+            341,
+            52,
+            1060,
+            349
+          ],
+          {
+            "display": "flex",
+            "visibility": "visible",
+            "opacity": "one",
+            "zoom": "one",
+            "overflowX": "visible",
+            "overflowY": "visible",
+            "position": "static",
+            "transform": "none",
+            "translate": "none",
+            "rotate": "none",
+            "scale": "none",
+            "filter": "none",
+            "backdropFilter": "none",
+            "clipPath": "none",
+            "maskImage": "none",
+            "contain": "none",
+            "scrollSnapType": "none",
+            "before": "none",
+            "after": "none"
+          }
+        ],
+        [
+          1,
+          "DIV",
+          true,
+          false,
+          [
+            341,
+            52,
+            1060,
+            832
+          ],
+          {
+            "display": "block",
+            "visibility": "visible",
+            "opacity": "one",
+            "zoom": "one",
+            "overflowX": "auto",
+            "overflowY": "auto",
+            "position": "relative",
+            "transform": "none",
+            "translate": "none",
+            "rotate": "none",
+            "scale": "none",
+            "filter": "none",
+            "backdropFilter": "none",
+            "clipPath": "none",
+            "maskImage": "none",
+            "contain": "none",
+            "scrollSnapType": "none",
+            "before": "none",
+            "after": "none"
+          }
+        ],
+        [
+          2,
+          "DIV",
+          false,
+          false,
+          [
+            341,
+            52,
+            1060,
+            832
+          ],
+          {
+            "display": "block",
+            "visibility": "visible",
+            "opacity": "one",
+            "zoom": "one",
+            "overflowX": "visible",
+            "overflowY": "visible",
+            "position": "relative",
+            "transform": "none",
+            "translate": "none",
+            "rotate": "none",
+            "scale": "none",
+            "filter": "none",
+            "backdropFilter": "none",
+            "clipPath": "none",
+            "maskImage": "none",
+            "contain": "none",
+            "scrollSnapType": "none",
+            "before": "none",
+            "after": "none"
+          }
+        ]
+      ]
+    }
+  }
+}

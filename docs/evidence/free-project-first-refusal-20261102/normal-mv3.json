@@ -1,0 +1,234 @@
+{
+  "status": "PASS",
+  "evidence": "ISOLATED_MV3_FORMAL_UI_LOCAL_SESSION_AND_PERSONAL",
+  "realChatGPT": "NOT_RUN",
+  "checks": {
+    "projectFooter": {
+      "y": 118,
+      "bottom": 158,
+      "height": 40,
+      "viewport": 158,
+      "panel": 158
+    },
+    "projectFormalFlowInputReturn": true,
+    "firstNativeKeyboardToolGesture": true,
+    "firstNativeToolGesture": true,
+    "nativeManagementAvailabilityKeepsFormalNavigation": {
+      "trustedExpansion": true,
+      "inertRestoresRows": true,
+      "unblockedKeepsIntent": true,
+      "responsiveClippingRestoresRows": true,
+      "nativeCollapseRestoresChoice": true,
+      "workspaceAndDraftUnchanged": true
+    },
+    "homeFooter": {
+      "y": 61,
+      "bottom": 101,
+      "height": 40,
+      "viewport": 128,
+      "panel": 101
+    },
+    "flatHomeMember": {
+      "sameNativeParent": true,
+      "height": 0,
+      "explicitFlowRow": true
+    },
+    "nestedHomeContainer": {
+      "member": true,
+      "formNotPatched": true,
+      "nativePlate": "rgb(242, 242, 242)",
+      "formParent": "nested-home-form-wrap"
+    },
+    "nestedHomeNarrow": {
+      "inputFits": true,
+      "plateFits": true,
+      "workspaceFits": true,
+      "nativeClick": true,
+      "nativeInputFocus": true
+    },
+    "retainedHomeMember": {
+      "sameParents": true,
+      "nativeClick": true,
+      "inlineGraphicRetained": true,
+      "hiddenUntouched": true,
+      "workspaceVisible": true
+    },
+    "sameDocumentHeaderReplacement": {
+      "newFrames": true,
+      "freshView": true,
+      "workspaceAndSidebarRestored": true,
+      "explicitLayoutRestored": true,
+      "originalEditorAndDraft": true
+    },
+    "homeFormalFlowInputReturn": true,
+    "conversationFooter": {
+      "y": 92,
+      "bottom": 132,
+      "height": 40,
+      "viewport": 132,
+      "panel": 132
+    },
+    "nativeScrollRegion": {
+      "originalTabStop": true,
+      "flowRoot": true
+    },
+    "conversationFormalFlowInputReturn": true,
+    "hiddenViewportMarker": {
+      "sameNode": true,
+      "empty": true,
+      "hidden": true,
+      "zeroHeight": true,
+      "retainedRow": true,
+      "beforeFooter": true
+    },
+    "privatePresentationWithoutStructure": {
+      "types": [
+        "HOST_LOCAL_STATUS",
+        "HOST_LOCAL_BOOT",
+        "HOST_LOCAL_PRESENTATION"
+      ],
+      "registered": true,
+      "frames": 2,
+      "hasStructure": false,
+      "hasExport": false,
+      "explicitCaptureAvailable": true
+    },
+    "defaultAccessibleProjectSummary": {
+      "detailsClosed": true,
+      "fields": [
+        {
+          "id": "runtime-build",
+          "count": 1,
+          "text": "运行指纹：018395149cfef7b84288bc04d89d85f076a96ecd2f12fc85fd261cbcea7f9e56",
+          "outsideDetails": true,
+          "visible": true,
+          "insideSummary": true
+        },
+        {
+          "id": "boot-stage",
+          "count": 1,
+          "text": "启动阶段：module-loaded",
+          "outsideDetails": true,
+          "visible": true,
+          "insideSummary": true
+        },
+        {
+          "id": "status-code",
+          "count": 1,
+          "text": "本次状态码：ready",
+          "outsideDetails": true,
+          "visible": true,
+          "insideSummary": true
+        },
+        {
+          "id": "mount-stage",
+          "count": 1,
+          "text": "挂载诊断：mode=workspace；attempt=show-returned；boundary=null；mountFailure=null；layoutRefusal=null",
+          "outsideDetails": true,
+          "visible": true,
+          "insideSummary": true
+        }
+      ],
+      "accessibility": "CHROMIUM_STATIC_TEXT_DEFAULT_VISIBLE"
+    },
+    "afterUnlock": {
+      "ok": true,
+      "exists": true,
+      "mode": "personal"
+    },
+    "nativeNavScrollChain": true,
+    "localSidebarFailurePreservesWorkspace": true,
+    "nativePartitionReplacementRejoinsSidebarOnly": true,
+    "beforeMember": {
+      "ok": true,
+      "exists": true,
+      "mode": "personal"
+    },
+    "afterMember": {
+      "ok": true,
+      "exists": true,
+      "mode": "personal"
+    },
+    "navigationTrace": [
+      {
+        "type": "history",
+        "documentId": "23E586C5F105C14020CD2B01B94FB2CD"
+      }
+    ],
+    "nativeListChoiceAcrossFreshDocumentBinding": true,
+    "sameDocumentProjectMemberReadingReturn": true,
+    "returnPaint": {
+      "box": {
+        "x": 24,
+        "y": 24,
+        "width": 356,
+        "height": 140,
+        "top": 24,
+        "right": 380,
+        "bottom": 164,
+        "left": 24
+      },
+      "viewport": [
+        1140,
+        654
+      ],
+      "scroll": 0,
+      "visible": true,
+      "hit": true
+    },
+    "narrowFlowStructure": {
+      "workspaces": 1,
+      "headers": 1,
+      "composers": 1,
+      "roots": [
+        {
+          "x": 260,
+          "y": 0,
+          "width": 460,
+          "height": 900,
+          "top": 0,
+          "right": 720,
+          "bottom": 900,
+          "left": 260
+        }
+      ],
+      "height": 900
+    },
+    "persistedNativeNav": [
+      {
+        "segment": 0,
+        "oldOpen": [],
+        "sidebarOpen": [],
+        "capacities": [],
+        "scroll": 0,
+        "sidebarScroll": 0,
+        "sidebarVisible": true,
+        "inventoryChoices": [],
+        "freeSession": {
+          "H": 30,
+          "T": 20759,
+          "Z": "Asia/Saigon",
+          "policyRevision": 0
+        },
+        "sidebarChoices": [
+          [
+            "g-p-11111111111111111111111111111111",
+            false
+          ]
+        ],
+        "sidebarViewport": {
+          "owner": "native-nav",
+          "scroll": 100
+        }
+      }
+    ],
+    "workerRecoveryKeepsPersonalAndUserExpansion": true,
+    "newDocumentLocksAndConfirmedPrivateObjectAndLayoutRestore": true,
+    "privateScopeRevokeClearsPriorProject": true,
+    "actualIsolatedUninstallRestoresNativeGeometryDraftAndInput": true,
+    "actualIsolatedUninstallRestoresNativeReadingPosition": true,
+    "noInternalRequests": true
+  },
+  "browserVersion": "156.0.8078.4",
+  "scope": "normal BrowserLocal --flow-only --nested-home; 36 recorded checks, not 36 new live permits"
+}

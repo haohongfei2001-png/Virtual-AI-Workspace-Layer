@@ -22,6 +22,16 @@ test('main preflight receipt is optional, single-use and removed from status aft
  const old=write;f.document.location.href+='c/next';assert.equal(f.client.localLayoutStatus(),null);f.adapterOptions.onRebindNeeded();await drain();old(report);assert.equal(write,null);assert.equal(f.client.localLayoutStatus(),null);f.client.stop();
  let disabled;const normal=fixture({surfaceFactory:o=>{disabled=o.takeMountDiagnostic();return {};}});await normal.client.start();assert.equal(disabled,null);normal.client.stop();
 });
+test('Project diagnostic waits before HELLO, resumes original grants once, and rejects expired binding/new generation',async()=>{
+ const window=new EventTarget();window.navigation=new EventTarget();
+ const document={location:{origin:'https://chatgpt.com',href:'https://chatgpt.com/g/g-p-11111111111111111111111111111111/project'},defaultView:window,visibilityState:'visible'};
+ let take;const f=fixture({document,projectWrapperDiagnostic:true,makeId:()=> '11111111-2222-4333-8444-555555555555',surfaceFactory:options=>{take=options.takeWrapperDiagnostic;return {};}});
+ const first=f.client.start();await drain();assert.equal(f.calls.length,0);assert.equal(take,undefined);
+ const ticket=f.client.projectWrapperTicket();assert(ticket);assert.equal(f.client.authorizeProjectWrapper(ticket),true);await first;
+ assert.deepEqual(f.calls.slice(0,3).map(m=>m.type),['HOST_HELLO','HOST_REFRESH','HOST_UI_MOUNT']);
+ await f.advance(20001);assert.equal(take({ok:true}),null,'existing expired binding cannot authorize diagnostics');
+ const hellos=f.calls.filter(m=>m.type==='HOST_HELLO').length;await f.client.start();assert.equal(f.calls.filter(m=>m.type==='HOST_HELLO').length,hellos,'new generation cannot reuse the permit');assert.equal(f.client.projectWrapperTicket(),null);f.client.stop();
+});
 test('production composition sequences HELLO REFRESH and mount with no page bridge; restart seq is monotonic',async()=>{
  const f=fixture();assert.deepEqual(await f.client.start(),{id:'mount'});assert.deepEqual(f.calls.slice(0,3).map(m=>m.type),['HOST_HELLO','HOST_REFRESH','HOST_UI_MOUNT']);assert.equal(f.client.showReading(),true);assert.equal(f.client.showWorkspace(),true);assert.equal(f.context.binding.documentToken,'doc');assert.equal(f.document.defaultView.client,undefined);
  f.client.stop();assert.equal(f.listeners.size,0);assert.equal(f.events.size,0);assert.equal(f.client.showWorkspace(),false);await f.client.start();assert.deepEqual(f.calls.filter(m=>m.seq).map(m=>m.seq),[1,2,3,4]);f.client.stop();

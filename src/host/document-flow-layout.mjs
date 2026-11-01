@@ -128,9 +128,26 @@ export function isSameNativeLayout(plan) {
  }catch{return false;}
 }
 
-export function captureNativeBaseline({document:doc,inspection,isOwnedSurface=()=>false,onRefused=()=>{},onDiagnostic=null}={}) {
+export function captureNativeBaseline({document:doc,inspection,isOwnedSurface=()=>false,onRefused=()=>{},onDiagnostic=null,diagnosticScope='all'}={}) {
  const evidence={kind:'unknown',phase:'inspection',detail:'inspection',node:null,root:null,visited:0};
- const diagnose=reason=>{if(typeof onDiagnostic==='function')try{onDiagnostic(snapshotMainMountCheck({document:doc,inspection,reason,...evidence}));}catch{}};
+ const diagnose=reason=>{
+  if(typeof onDiagnostic!=='function')return;
+  // Synchronous, internal-only first decision. Never reconstruct these nodes
+  // from the bounded anonymous report. Consumers must not retain references.
+  let references=null;
+  try{
+   references={document:doc,inspection,root:evidence.root,node:evidence.node,flowSeamShells:inspection?.flowSeam?.shells};
+   const context={reason,detail:evidence.detail,phase:evidence.phase,kind:evidence.kind,startedAt:doc.defaultView.performance.now()};
+   for(const key of Object.keys(references))Object.defineProperty(context,key,{enumerable:true,get:()=>references?.[key]??null});
+   Object.freeze(context);
+   let report=null;
+   if(diagnosticScope==='all'||diagnosticScope==='project-wrapper'&&reason==='native-flow-wrapper-paint'&&evidence.kind==='project')try{report=snapshotMainMountCheck({document:doc,inspection,reason,...evidence});}catch{}
+   onDiagnostic(report,context);
+  }catch{}finally{
+   // A retained context object cannot extend the native-reference lifetime.
+   references=null;
+  }
+ };
  const refuse=(reason,detail=evidence.detail,node=evidence.node)=>{evidence.detail=detail;evidence.node=node;try{onRefused(reason);}catch{}diagnose(reason);return null;};
  try {
   if (!inspection?.ok) return refuse('native-flow-inspection');

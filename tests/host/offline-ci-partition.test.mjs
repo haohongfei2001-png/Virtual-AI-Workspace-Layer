@@ -324,3 +324,8 @@ test('delivery blockers dispatch retains both original failed cases without repe
   assert.deepEqual(new Function('github','inputs','fromJSON','return '+expression)(event,input,JSON.parse),wanted);
  }
 });
+
+test('first-wrapper diagnostics run inside the existing isolated flow gate',()=>{
+ assert(jobs['offline-journeys'].includes('node tests/host/project-wrapper-callback-browser.mjs'));
+ assert(jobs['offline-journeys'].includes('node tests/host/project-wrapper-diagnostic-mv3.mjs'));
+});

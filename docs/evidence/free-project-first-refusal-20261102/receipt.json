@@ -1,0 +1,244 @@
+{
+  "schema": "vaiwl-first-wrapper-engineering-receipt-v1",
+  "sourceParent": "1903b00f774b4fd7f3d15b3669878c32e2c7a9c8",
+  "candidateBinding": "containing Git commit; exact SHA and push CI recorded in PR16 without moving the candidate",
+  "scope": "DIAGNOSTIC_ONLY",
+  "liveStatus": "LIVE_NOT_AUTHORIZED",
+  "macHandoff": "NOT_ACCESSIBLE_FROM_REMOTE; independently implemented from formal source and user instruction",
+  "localNode": {
+    "files": 13,
+    "tests": 675,
+    "pass": 675,
+    "fail": 0,
+    "results": [
+      {
+        "file": "tests/host/native-flow-diagnostic.test.mjs",
+        "exit": 0,
+        "tests": 7,
+        "pass": 7,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0
+      },
+      {
+        "file": "tests/host/project-wrapper-diagnostic.test.mjs",
+        "exit": 0,
+        "tests": 18,
+        "pass": 18,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0
+      },
+      {
+        "file": "tests/host/project-wrapper-package.test.mjs",
+        "exit": 0,
+        "tests": 1,
+        "pass": 1,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0
+      },
+      {
+        "file": "tests/host/content-session.test.mjs",
+        "exit": 0,
+        "tests": 141,
+        "pass": 141,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0
+      },
+      {
+        "file": "tests/host/content-session-recovery.test.mjs",
+        "exit": 0,
+        "tests": 21,
+        "pass": 21,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0
+      },
+      {
+        "file": "tests/host/content-session-start-recovery.test.mjs",
+        "exit": 0,
+        "tests": 7,
+        "pass": 7,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0
+      },
+      {
+        "file": "tests/host/local-status.test.mjs",
+        "exit": 0,
+        "tests": 122,
+        "pass": 122,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0
+      },
+      {
+        "file": "tests/host/local-status-lifecycle.test.mjs",
+        "exit": 0,
+        "tests": 16,
+        "pass": 16,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0
+      },
+      {
+        "file": "tests/host/local-status-presentation.test.mjs",
+        "exit": 0,
+        "tests": 92,
+        "pass": 92,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0
+      },
+      {
+        "file": "tests/host/runtime-build-package.test.mjs",
+        "exit": 0,
+        "tests": 8,
+        "pass": 8,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0
+      },
+      {
+        "file": "tests/host/package.test.mjs",
+        "exit": 0,
+        "tests": 23,
+        "pass": 23,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0
+      },
+      {
+        "file": "tests/host/package-manifest-boundary.test.mjs",
+        "exit": 0,
+        "tests": 175,
+        "pass": 175,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0
+      },
+      {
+        "file": "tests/host/offline-ci-partition.test.mjs",
+        "exit": 0,
+        "tests": 44,
+        "pass": 44,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0
+      }
+    ]
+  },
+  "redGreen": {
+    "fixedParentMissingSecondContext": 16,
+    "currentExactContext": 16,
+    "depths": [
+      9,
+      16,
+      24,
+      40
+    ],
+    "details": [
+      "wrapper-seam",
+      "wrapper-visibility",
+      "wrapper-effect",
+      "wrapper-pseudo"
+    ],
+    "consumerIsolationVariants": 64,
+    "actualThrowingVariants": 32,
+    "capacity": {
+      "oldReason": "native-flow-capacity",
+      "newReason": "native-flow-capacity",
+      "oldReads": 1,
+      "newReads": 1,
+      "scopedReport": null,
+      "scopedContext": "native-flow-capacity",
+      "scopedLocal": "NO_MATCH",
+      "oldCapacity": {
+        "reason": "native-flow-capacity",
+        "detail": "node-capacity",
+        "visited": 129
+      },
+      "newCapacity": {
+        "reason": "native-flow-capacity",
+        "detail": "node-capacity",
+        "visited": 129
+      }
+    }
+  },
+  "mv3": {
+    "diagnosticChecks": 10,
+    "normalJourneyChecks": 36,
+    "realChatGPT": "NOT_RUN"
+  },
+  "independentReview": {
+    "result": "PASS_NO_REMAINING_SOURCE_BLOCKER",
+    "mode": "independent read-only source review; no test execution claimed",
+    "productionHashAlgorithm": "SHA256 of ordered UTF8(path)+NUL+bytes+NUL",
+    "productionPaths": [
+      "extension/build.mjs",
+      "extension/content-entry.mjs",
+      "extension/package.mjs",
+      "extension/status.mjs",
+      "src/host/content-session.mjs",
+      "src/host/document-flow-layout.mjs",
+      "src/host/native-flow-diagnostic.mjs",
+      "src/host/project-wrapper-diagnostic-channel.mjs",
+      "src/host/project-wrapper-diagnostic.mjs",
+      "src/navigation/flow-mount-surface.mjs"
+    ],
+    "productionHash": "d78a8bdea98fcb37f2003121cb8082e82aac0f64940e36220b811748cac93804",
+    "closedFindings": [
+      "callback could freeze mutable context and make cleanup throw; replaced by frozen revocable getters",
+      "delayed authorize reply across A-B-A; final cached report revalidation wins"
+    ]
+  },
+  "productionDiagnosticPackage": {
+    "files": 210,
+    "archiveSha256": "39dbecf586c8f390e623632d409dfd51f17fa60cec65aad86f6bee6d6237e336",
+    "runtimeBuild": "78eb96f530fac97a2a8928663c0bd24568f9f684bda6e92a1edfa5cae501f902",
+    "sourceInputs": 210,
+    "activation": "OFF_UNTIL_SEPARATE_LIVE_AUTHORIZATION"
+  },
+  "priorLocalFailures": [
+    {
+      "kind": "fixture",
+      "case": "display:contents transform produced no wrapper-effect",
+      "resolution": "declared flex shell used for visibility/effect/pseudo; production unchanged"
+    },
+    {
+      "kind": "test-oracle",
+      "case": "new generation counted legitimate HOST_UI_RELEASE as new handshake",
+      "resolution": "assert no second HOST_HELLO; revoke retained"
+    },
+    {
+      "kind": "test-harness",
+      "case": "popup exact import prefix omitted new private diagnostic imports",
+      "resolution": "prefix updated; existing presentation assertions retained"
+    }
+  ],
+  "ci": {
+    "expectedEvent": "push",
+    "expectedJobs": 42,
+    "result": "read exact containing commit Actions; do not infer 42 jobs from first-page 30",
+    "addedCommands": [
+      "tests/host/project-wrapper-callback-browser.mjs",
+      "tests/host/project-wrapper-diagnostic-mv3.mjs"
+    ]
+  },
+  "limits": {
+    "walk": 128,
+    "originalPathDepth": 16,
+    "originalReportRows": 24,
+    "sharedDiagnosticBudgetMs": 8,
+    "localNodeLimit": 3,
+    "waitingMs": 60000,
+    "authorizedMs": 30000,
+    "durablePermit": "vaiwl-project-first-wrapper-refusal-20261102-v1",
+    "persistedValue": {
+      "spent": true
+    },
+    "automaticRetry": false
+  }
+}

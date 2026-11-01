@@ -1,3 +1,5 @@
+import {PROJECT_WRAPPER_DIAGNOSTIC_BATCH,validProjectWrapperReport,isProjectDiagnosticURL} from '../src/host/project-wrapper-diagnostic.mjs';
+import {runProjectWrapperDiagnosticOnce,readProjectWrapperDiagnostic} from '../src/host/project-wrapper-diagnostic-channel.mjs';
 import {requestLocalReconnect} from '../src/host/local-reconnect.mjs';
 import {HOST_CONFIG} from './config.mjs';
 import {readActiveLocalStatus,readActiveLocalLayout,readLocalBoot,validLocalPipeline,createSidebarSnapshot,createMainMountSnapshot} from '../src/host/local-status.mjs';
@@ -76,7 +78,7 @@ if(needsLayout){
   });diagnostics.append(save);}
  }
  const note=document.createElement('pre');note.id='local-layout-shape';note.textContent=(shape.navigation?'导航末页及本代累计接收（无内容；累计不是去重库存） ':'布局类别（无内容） ')+JSON.stringify(shape);diagnostics.append(note);}
- if(passive&&localTarget){
+ if(passive&&localTarget&&!HOST_CONFIG.projectWrapperDiagnostic){
   // Opening the status page reads cached presentation only. Native structure
   // collection remains a separate explicit, one-shot action on this document.
   const capture=document.createElement('button');capture.id='read-sidebar-structure';capture.textContent='读取一次匿名侧栏结构';diagnostics.append(capture);
@@ -120,7 +122,7 @@ if(HOST_CONFIG.browserLocal){
    if(pipelineCurrent&&r?.ok===true&&validLocalPipeline(r.pipeline)){const trace=document.createElement('pre');trace.textContent='本地库、工作空间回复与框架回执（仅数量/版本；rendered仅证明节点已建立，不代表可见） '+JSON.stringify(r.pipeline);diagnostics.append(trace);}
   },()=>{}).finally(()=>clearTimeout(timer));
  }
- if(runtimeVerified&&!HOST_CONFIG.mainMountDiagnostic&&chrome.storage?.local&&globalThis.navigator?.locks){
+ if(runtimeVerified&&!HOST_CONFIG.mainMountDiagnostic&&!HOST_CONFIG.projectWrapperDiagnostic&&chrome.storage?.local&&globalThis.navigator?.locks){
  const diagnostic=document.createElement('details'),summary=document.createElement('summary');summary.textContent='本次匿名近期列表诊断（一次性）';diagnostic.append(summary);
  const explain=document.createElement('p');explain.textContent='仅本首页，最多6秒；记录行类别、标记是否存在、位置及匿名节点变化。不读取标题、聊天ID、正文或凭据，不解锁旧库、不刷新、不联网。已消费后只显示原报告。';diagnostic.append(explain);
  const run=document.createElement('button');run.textContent='执行一次匿名列表观察';const report=document.createElement('pre');report.id='history-structure-report';diagnostic.append(run,report);diagnostics.append(diagnostic);
@@ -128,6 +130,27 @@ if(HOST_CONFIG.browserLocal){
  if(saved!==undefined){run.disabled=true;report.textContent=JSON.stringify({state:'spent',report:validHistoryStructureReport(saved?.report)?saved.report:null});}
  run.addEventListener('click',async()=>{run.disabled=true;report.textContent='正在进行一次只读观察…';try{report.textContent=JSON.stringify(await runHistoryDiagnosticOnce({chrome,locks:navigator.locks}));}catch{report.textContent='诊断不可用；不自动重试。';}});
  }
+}
+
+if(HOST_CONFIG.projectWrapperDiagnostic){
+ const note=document.createElement('p');note.id='project-wrapper-permission';note.textContent='Project 首次拒绝取证默认关闭。仅在另行获得本次实机授权后执行一次；不会重用此前已消费的检查额度。';diagnostics.append(note);
+ const output=document.createElement('pre');output.id='project-wrapper-report';diagnostics.append(output);
+ const publish=report=>{
+  if(!validProjectWrapperReport(report)){output.textContent='未取得可交付报告；本次不重试。';return;}
+  const snapshot={schema:'vaiwl-project-wrapper-snapshot-v1',build:HOST_BUILD,route:'project',documentBinding:'verified-at-capture-not-account-identity',report};
+  output.textContent=JSON.stringify(snapshot);
+  if(document.getElementById('save-project-wrapper-report'))return;
+  const save=document.createElement('button');save.id='save-project-wrapper-report';save.textContent='保存本次脱敏 JSON';save.addEventListener('click',()=>{
+   const url=URL.createObjectURL(new Blob([JSON.stringify(snapshot,null,2)+'\n'],{type:'application/json'})),a=document.createElement('a');a.href=url;a.download='vaiwl-project-first-wrapper-refusal.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+  });diagnostics.append(save);
+ };
+ if(runtimeVerified&&bootTarget&&isProjectDiagnosticURL(bootTarget.url)&&navigator.locks){
+  const target={tabId:bootTarget.tabId,documentId:bootTarget.documentId,url:bootTarget.url};
+  let spent=true;try{spent=(await chrome.storage.local.get(PROJECT_WRAPPER_DIAGNOSTIC_BATCH))[PROJECT_WRAPPER_DIAGNOSTIC_BATCH]!==undefined;}catch{}
+  const run=document.createElement('button');run.id='authorize-project-wrapper';run.textContent='已获授权：执行一次 Project 首拒取证';run.disabled=spent;diagnostics.append(run);
+  if(spent){output.textContent='本批许可已消费；不会再次采集。';const report=await readProjectWrapperDiagnostic({chrome,target});if(report)publish(report);}
+  run.addEventListener('click',async()=>{if(run.disabled)return;run.disabled=true;output.textContent='本次许可已开始消费，等待首次正式预检；成功、部分、失败或超时均不重试。';publish(await runProjectWrapperDiagnosticOnce({chrome,locks:navigator.locks,target}));});
+ }else output.textContent='当前文档、运行版本或 Project 范围未满足条件；未授权、未采集。';
 }
 
 // Keep optional engineering details after the local-data controls.
