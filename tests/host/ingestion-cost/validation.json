@@ -1,0 +1,267 @@
+{
+  "kind": "L_ONLY_INGESTION_WRITE_CHARACTERIZATION_NOT_OPTIMIZATION",
+  "testBaseline": "e1b0bfd6ae76a5aa5e6948edc71b0487a1a371af",
+  "deliveryBase": "48dd9205d242696fdcd6c5dc09927267725cbd8b",
+  "sourceDrift": "Used discovery/split/owner/repository modules unchanged. New adapter/content-session scheduling changes retained in delivery base, not simulated by this probe.",
+  "sourceSha256": {
+    "tests/host/ingestion-cost/README.md": "fa53255162a2ae9313c54c3b95724bc5f2edf81138b4c6a6e2395689efec25fc",
+    "tests/host/ingestion-cost/diagnostic.mjs": "db568da5499c0147bc78581690efb5ca4f3b71dfcf18dc5e8bfc5fc9fb3e2ad2",
+    "tests/host/ingestion-cost/fixture.mjs": "71f16097fd6113cb53b87175b937d82d865ff6d0ca6903c5bb1e79cb0eac70f1",
+    "tests/host/ingestion-cost/mutations.mjs": "3297efe067162190f664bbb53aba18e2464f18f3de7501b2ff97dd5d1f560633",
+    "tests/host/ingestion-cost/write-causes.test.mjs": "427bb6d36903d1862b02d33d8e33f9f7cac04df4dfcc62d45e94296a0895ef6f"
+  },
+  "ownerInputSha256": {
+    "src/host/surface-discovery.mjs": "4797d08c9ae413c600ced9b401b89f85439a9154607f726975a60da747cde4f6",
+    "src/host/surface-fragments.mjs": "1fbae58e227c4c3cfbefb991ee1f7c469a9225ac2360940b23b5cfc999555d74",
+    "src/runtime/host-observation-owner.mjs": "3b23b073ad652a52b7777dc46ee603d967e72afc4ef462295410d09eb6a77c87",
+    "src/runtime/native-source-incarnation.mjs": "75d8d86a6b71d6c2e24dd7158a37a63fcda6cb02d77552d8c3ccf8b60354a638",
+    "src/data/native-repository.mjs": "f92db173be2963592a52c6bac7b5eae964312af24951403f7dfa656e345731a3",
+    "src/data/repository.mjs": "afae2c733965935e87cab5238d3b011cdb92545662d198c14e9042f8ae77dd0b",
+    "tests/host/fixtures/host-scale-world.mjs": "78ec698b2998440beeb1f11530b973cfd954feba1be5557a63ce0f4d16b7e5c3"
+  },
+  "checks": [
+    {
+      "name": "new",
+      "outputSha256": "1ad4b17b6f5b6b75397d850a12bd7df2cdc6ecc84306c72ff234d9ed38898433",
+      "tests": 12,
+      "pass": 12,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0
+    },
+    {
+      "name": "related",
+      "outputSha256": "2aa59708a1d3bf35c0cc13620c346e9cbe158c508781263254d10030b5cfc3f4",
+      "tests": 60,
+      "pass": 60,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0
+    }
+  ],
+  "coverage": "12 new tests are included in related60; not72 distinct tests.",
+  "commands": [
+    "node --test tests/host/ingestion-cost/write-causes.test.mjs",
+    "node --test tests/host/observation-owner-coalescing.test.mjs tests/host/observation-owner.test.mjs tests/host/surface-fragments.test.mjs tests/host/surface-member-priority.test.mjs tests/host/ingestion-cost/write-causes.test.mjs",
+    "node tests/host/ingestion-cost/diagnostic.mjs /tmp/ingestion-causes.json",
+    "node tests/host/ingestion-cost/mutations.mjs /tmp/ingestion-mutants.json"
+  ],
+  "diagnostic": {
+    "kind": "L_ONLY_FIRST_OBSERVATION_ORDER_NOT_CI_CAUSE",
+    "node": "v24.19.0",
+    "scope": "Actual discovery, UTF8 splitter, HostObservationOwner, NativeRepository and WorkspaceRepository; DOM, scope/handshake, clock and IDB are synthetic. No measured latency, browser schedule or deadline inference.",
+    "cells": [
+      {
+        "historyPackets": 0,
+        "revision": 21,
+        "refs": 1000,
+        "projectMembership": 1000,
+        "total": {
+          "packets": 20,
+          "applyCalls": 20,
+          "successfulApplies": 20,
+          "readwriteTransactions": 25,
+          "readonlyTransactions": 24,
+          "versionFences": 0,
+          "bytes": 1139024,
+          "reasons": {
+            "projects:new": 1,
+            "refs:new": 1000,
+            "membership:new": 1000,
+            "projects:unchanged-active": 19
+          }
+        },
+        "phases": {
+          "history": {
+            "packets": 0,
+            "applyCalls": 0,
+            "successfulApplies": 0,
+            "readwriteTransactions": 0,
+            "readonlyTransactions": 0,
+            "versionFences": 0,
+            "bytes": 0,
+            "reasons": {}
+          },
+          "members": {
+            "packets": 20,
+            "applyCalls": 20,
+            "successfulApplies": 20,
+            "readwriteTransactions": 25,
+            "readonlyTransactions": 24,
+            "versionFences": 0,
+            "bytes": 1139024,
+            "reasons": {
+              "projects:new": 1,
+              "refs:new": 1000,
+              "membership:new": 1000,
+              "projects:unchanged-active": 19
+            }
+          }
+        }
+      },
+      {
+        "historyPackets": 2,
+        "revision": 23,
+        "refs": 1000,
+        "projectMembership": 1000,
+        "total": {
+          "packets": 22,
+          "applyCalls": 22,
+          "successfulApplies": 22,
+          "readwriteTransactions": 27,
+          "readonlyTransactions": 26,
+          "versionFences": 0,
+          "bytes": 1281738,
+          "reasons": {
+            "projects:new": 1,
+            "refs:new": 1000,
+            "projects:unchanged-active": 20,
+            "refs:unchanged-active": 120,
+            "membership:new": 1000
+          }
+        },
+        "phases": {
+          "history": {
+            "packets": 2,
+            "applyCalls": 2,
+            "successfulApplies": 2,
+            "readwriteTransactions": 7,
+            "readonlyTransactions": 6,
+            "versionFences": 0,
+            "bytes": 130169,
+            "reasons": {
+              "projects:new": 1,
+              "refs:new": 120
+            }
+          },
+          "members": {
+            "packets": 20,
+            "applyCalls": 20,
+            "successfulApplies": 20,
+            "readwriteTransactions": 20,
+            "readonlyTransactions": 20,
+            "versionFences": 0,
+            "bytes": 1151569,
+            "reasons": {
+              "projects:unchanged-active": 20,
+              "refs:unchanged-active": 120,
+              "membership:new": 1000,
+              "refs:new": 880
+            }
+          }
+        }
+      },
+      {
+        "historyPackets": 4,
+        "revision": 25,
+        "refs": 1000,
+        "projectMembership": 1000,
+        "total": {
+          "packets": 24,
+          "applyCalls": 24,
+          "successfulApplies": 24,
+          "readwriteTransactions": 29,
+          "readonlyTransactions": 28,
+          "versionFences": 0,
+          "bytes": 1411370,
+          "reasons": {
+            "projects:new": 1,
+            "refs:new": 1000,
+            "projects:unchanged-active": 20,
+            "refs:unchanged-active": 240,
+            "membership:new": 1000
+          }
+        },
+        "phases": {
+          "history": {
+            "packets": 4,
+            "applyCalls": 4,
+            "successfulApplies": 4,
+            "readwriteTransactions": 9,
+            "readonlyTransactions": 8,
+            "versionFences": 0,
+            "bytes": 259799,
+            "reasons": {
+              "projects:new": 1,
+              "refs:new": 240
+            }
+          },
+          "members": {
+            "packets": 20,
+            "applyCalls": 20,
+            "successfulApplies": 20,
+            "readwriteTransactions": 20,
+            "readonlyTransactions": 20,
+            "versionFences": 0,
+            "bytes": 1151571,
+            "reasons": {
+              "projects:unchanged-active": 20,
+              "refs:unchanged-active": 240,
+              "membership:new": 1000,
+              "refs:new": 760
+            }
+          }
+        }
+      }
+    ],
+    "conclusion": "Earlier history observations and later first PROJECT membership are different semantic work. Equal final 1000-row inventories can require 20,22,24 successful apply calls and revisions21,23,25. Initial index migration accounts for one extra revision; transaction totals also include Shared preparation/migration. Do not label extra writes as no-op rescans without exact input evidence.",
+    "acceptance": "NOT_ESTABLISHED"
+  },
+  "mutations": {
+    "kind": "L_ONLY_TARGETED_MUTATION_CHECKS",
+    "reports": [
+      {
+        "name": "disable-noop",
+        "status": "KILLED",
+        "selectedTests": 1,
+        "failedTests": 1
+      },
+      {
+        "name": "ignore-semantic-change",
+        "status": "KILLED",
+        "selectedTests": 1,
+        "failedTests": 1
+      },
+      {
+        "name": "ignore-witness-expiry",
+        "status": "KILLED",
+        "selectedTests": 1,
+        "failedTests": 1
+      },
+      {
+        "name": "reuse-revoked-incarnation",
+        "status": "KILLED",
+        "selectedTests": 1,
+        "failedTests": 1
+      },
+      {
+        "name": "ignore-revision-fence",
+        "status": "KILLED",
+        "selectedTests": 1,
+        "failedTests": 1
+      },
+      {
+        "name": "eager-prefix-probe",
+        "status": "KILLED",
+        "selectedTests": 1,
+        "failedTests": 1
+      }
+    ]
+  },
+  "independentReview": {
+    "status": "NO_BLOCKER_FOUND",
+    "originalTests": 10,
+    "addedControls": 2,
+    "reviewed": "lazy iterator and actual owner/Shared path; optional counting wrappers, receiver binding, uninstrumented facts/settlement equivalence, six precise mutations",
+    "finalAssertionStrengthening": "counts replaced by exact scale ID sets and required Project membership; final related60 and diagnostic re-run passed"
+  },
+  "withdrawnExploratoryResult": "Early eager iterator collection sampled unsubmitted later history pages and introduced artificial detached-handle traffic. Excluded from final table; lazy iterator corrected and precise eager-prefix mutation killed.",
+  "productionModified": false,
+  "sharedOwnerPatch": false,
+  "formalBrowser": "NOT_RUN",
+  "formalCI": "NOT_RUN",
+  "fullNodeSuite": "NOT_RUN",
+  "latencyEvidence": "NOT_MEASURED",
+  "actualCIRootCause": "NOT_ESTABLISHED",
+  "acceptance": "NOT_ESTABLISHED"
+}
