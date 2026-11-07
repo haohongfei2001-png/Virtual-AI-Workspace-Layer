@@ -1,0 +1,76 @@
+{
+  "status": "PASS",
+  "contract": "VAIWL-PRO/1.0",
+  "sample": "c_beta",
+  "fixtureOnly": true,
+  "trace": [
+    {
+      "step": "legal-NONE-in-Free",
+      "revision": 0
+    },
+    {
+      "step": "manual-topic-created",
+      "revision": 3
+    },
+    {
+      "step": "fixture-AI-suggestion-reviewed",
+      "adapter": "fixture-rules",
+      "operationId": "pro_27c6e346a62840a5bd8f149d04b57a74",
+      "revision": 4
+    },
+    {
+      "step": "manual-correction-and-hard-exclusion",
+      "revision": 6
+    },
+    {
+      "step": "atomic-undo",
+      "revision": 7
+    },
+    {
+      "step": "conflicting-inverse-zero-write",
+      "originalUnrelatedTitleConflict": "ready",
+      "beforeDigest": "1d1b50f7180e7bea25785e1385f9a577e69814a0a61ff13cfed87a1ea1e0d82f",
+      "revision": 9
+    },
+    {
+      "step": "separate-reviewed-compensation",
+      "revision": 12
+    },
+    {
+      "step": "Series-and-explicit-return",
+      "revision": 13
+    },
+    {
+      "step": "split-merge-with-explicit-conflict-resolution",
+      "revision": 19
+    },
+    {
+      "step": "Free-Pro-switch",
+      "revision": 19
+    },
+    {
+      "step": "restart-and-ordered-recovery",
+      "journalRecords": 22,
+      "revision": 19
+    }
+  ],
+  "finalDigest": "9350b5844a8a8793f87a7d89486c791f9b2eae8cebb8dd99e8040d838d06dee3",
+  "backupDigest": "efb21d69a15a9aa30c8c61754cf860bc588943058bea08e21d8eacec37056866",
+  "realModelCalls": 0,
+  "realUserData": false,
+  "nativeWritesByPro": 0,
+  "browserVersion": "153.0.8010.0",
+  "realIndexedDB": true,
+  "browserProcessRestart": true,
+  "originalFreeRenderer": true,
+  "originalNativeStateUnchanged": true,
+  "composerIdentityPreserved": true,
+  "dataOnlyBackupRestore": true,
+  "networkRequestsOutsideLoopback": [],
+  "uncaughtErrors": [],
+  "device": {
+    "platform": "linux",
+    "arch": "x64",
+    "node": "v24.22.1"
+  }
+}

@@ -1,0 +1,282 @@
+{
+  "format": "vaiwl-pro-development-performance/1",
+  "recordedAt": "2026-10-31T13:07:56.554Z",
+  "status": "PASS_DEVELOPMENT_TARGETS",
+  "baselineGitHead": "f317b26ea6ed7d1cc249c4bfc0ad90a619d29417",
+  "sourceDigests": {
+    "src/pro/domain/index.mjs": "cb54dfa89333452a37814542557fa48158511612ce776d3594c6d097df21107b",
+    "src/pro/domain/schema.mjs": "a78bc00a4f369804546ebc6d28058cba3e69db302aa49ab10ff46ae9ddcfa1ec",
+    "src/pro/projection/project.mjs": "d09304d0fd7b02ded37a0fe6cce8da321abb0abc8ef07605d60b973c9b2a091d",
+    "src/pro/integration/same-db-store.mjs": "2bc787c8df2d24df7a823a3a3d86e1d614432b0a6e289c13b548bad8f5e3c6c0",
+    "src/data/hash.mjs": "aef21d1842cdc09b33fef973a9d29f15cb7c0c3f773a6a9d31726b83ffee7b21",
+    "src/data/native-repository.mjs": "f4f84f7e30ef92ebef2a785d192cb6d2226490a2cccc110c77ad1695effc1e87",
+    "src/data/free-time-policy.mjs": "8a75b5bdde8abf8ee07873ecf2aa45a19faccd030b9f03c738b56db6ba9ea17a",
+    "tests/b23/mock-idb.mjs": "f45f7d387ff82223f8d64b36f31727f86030182a1b705426a4540b17c5d10e0a",
+    "tests/pro/performance.mjs": "7d356a8de57cc8b3a451985bf28fdbf70dbddbd675eedc463374b74c001182bd"
+  },
+  "changedDuringMeasurement": [],
+  "priorObservations": [
+    {
+      "recordedAt": "2026-10-31T12:52:55.916Z",
+      "status": "TARGETS_NOT_MET",
+      "sourceDigests": {
+        "src/pro/domain/index.mjs": "cb54dfa89333452a37814542557fa48158511612ce776d3594c6d097df21107b",
+        "src/pro/domain/schema.mjs": "52d7442f64d1fcc7d37403d2f306422339681756b4409186de0ba528e033171e",
+        "src/pro/projection/project.mjs": "d09304d0fd7b02ded37a0fe6cce8da321abb0abc8ef07605d60b973c9b2a091d",
+        "src/pro/integration/same-db-store.mjs": "ee2363c7b233305193cf192193dbee7d672121d82b76430b3e84279595c6fb6b",
+        "src/data/hash.mjs": "aef21d1842cdc09b33fef973a9d29f15cb7c0c3f773a6a9d31726b83ffee7b21",
+        "src/data/native-repository.mjs": "f4f84f7e30ef92ebef2a785d192cb6d2226490a2cccc110c77ad1695effc1e87",
+        "tests/b23/mock-idb.mjs": "f45f7d387ff82223f8d64b36f31727f86030182a1b705426a4540b17c5d10e0a",
+        "tests/pro/performance.mjs": "479f5bf1252145ad875d1451e3899238cf7995dd3b418960568ed1da71759ff8"
+      },
+      "p95Milliseconds": {
+        "manualReducerFeedback": 61.875,
+        "cachedFreeProSwitchProjection": 16.216,
+        "mockIDBCompleteChain": 517.665
+      }
+    },
+    {
+      "recordedAt": "2026-10-31T12:56:01.686Z",
+      "status": "PASS_DEVELOPMENT_TARGETS",
+      "sourceDigests": {
+        "src/pro/domain/index.mjs": "cb54dfa89333452a37814542557fa48158511612ce776d3594c6d097df21107b",
+        "src/pro/domain/schema.mjs": "a78bc00a4f369804546ebc6d28058cba3e69db302aa49ab10ff46ae9ddcfa1ec",
+        "src/pro/projection/project.mjs": "d09304d0fd7b02ded37a0fe6cce8da321abb0abc8ef07605d60b973c9b2a091d",
+        "src/pro/integration/same-db-store.mjs": "ee2363c7b233305193cf192193dbee7d672121d82b76430b3e84279595c6fb6b",
+        "src/data/hash.mjs": "aef21d1842cdc09b33fef973a9d29f15cb7c0c3f773a6a9d31726b83ffee7b21",
+        "src/data/native-repository.mjs": "f4f84f7e30ef92ebef2a785d192cb6d2226490a2cccc110c77ad1695effc1e87",
+        "tests/b23/mock-idb.mjs": "f45f7d387ff82223f8d64b36f31727f86030182a1b705426a4540b17c5d10e0a",
+        "tests/pro/performance.mjs": "642e9572b4e6c83f9ee81ef1fcfb139166612c9120c18751f302d2a02b9fdf92"
+      },
+      "p95Milliseconds": {
+        "manualReducerFeedback": 54.406,
+        "cachedFreeProSwitchProjection": 15.317,
+        "mockIDBCompleteChain": 498.201
+      }
+    },
+    {
+      "recordedAt": "2026-10-31T13:02:53.722Z",
+      "status": "TARGETS_NOT_MET",
+      "sourceDigests": {
+        "src/pro/domain/index.mjs": "cb54dfa89333452a37814542557fa48158511612ce776d3594c6d097df21107b",
+        "src/pro/domain/schema.mjs": "a78bc00a4f369804546ebc6d28058cba3e69db302aa49ab10ff46ae9ddcfa1ec",
+        "src/pro/projection/project.mjs": "d09304d0fd7b02ded37a0fe6cce8da321abb0abc8ef07605d60b973c9b2a091d",
+        "src/pro/integration/same-db-store.mjs": "ee2363c7b233305193cf192193dbee7d672121d82b76430b3e84279595c6fb6b",
+        "src/data/hash.mjs": "aef21d1842cdc09b33fef973a9d29f15cb7c0c3f773a6a9d31726b83ffee7b21",
+        "src/data/native-repository.mjs": "f4f84f7e30ef92ebef2a785d192cb6d2226490a2cccc110c77ad1695effc1e87",
+        "src/data/free-time-policy.mjs": "8a75b5bdde8abf8ee07873ecf2aa45a19faccd030b9f03c738b56db6ba9ea17a",
+        "tests/b23/mock-idb.mjs": "f45f7d387ff82223f8d64b36f31727f86030182a1b705426a4540b17c5d10e0a",
+        "tests/pro/performance.mjs": "7d356a8de57cc8b3a451985bf28fdbf70dbddbd675eedc463374b74c001182bd"
+      },
+      "p95Milliseconds": {
+        "manualReducerFeedback": 73.882,
+        "cachedFreeProSwitchProjection": 17.593,
+        "mockIDBCompleteChain": 546.951
+      }
+    }
+  ],
+  "environment": {
+    "runtime": "v24.22.1",
+    "v8": "13.6.233.17-node.58",
+    "platform": "linux",
+    "release": "6.18.57",
+    "architecture": "x64",
+    "cpuModel": "AMD EPYC 9V74 80-Core Processor",
+    "logicalCpuCount": 9,
+    "totalMemoryGiB": 10,
+    "storage": "MockIDBFactory in-process serial transaction double"
+  },
+  "dataset": {
+    "synthetic": true,
+    "realUserData": false,
+    "positiveNoneRefs": 1000,
+    "topics": 100,
+    "placements": 1000,
+    "derivedTitles": 1000,
+    "refsPerTopic": 10,
+    "initialOverlayBytes": 636446,
+    "projectedCardLimit": 24,
+    "projectedRowsPerCard": 5,
+    "projectedVisibleRows": 120,
+    "viewSession": {
+      "H": 30,
+      "T": 20757,
+      "Z": "Asia/Shanghai",
+      "policyRevision": 0,
+      "TUnit": "local-calendar-day"
+    },
+    "setup": "one direct synthetic checkpoint plus one real NativeRepository synthetic batch"
+  },
+  "measurements": {
+    "manualReducerFeedback": {
+      "coldFirstInvocationMs": 71.696,
+      "warmupInvocations": 5,
+      "sampleCount": 30,
+      "minMs": 43.738,
+      "medianMs": 46.322,
+      "p95Ms": 73.345,
+      "maxMs": 75.578,
+      "targetP95Ms": 100,
+      "met": true,
+      "rawSampleMs": [
+        50.898,
+        45.928,
+        48.168,
+        48.814,
+        75.578,
+        46.241,
+        45.904,
+        47.319,
+        46.457,
+        46.171,
+        43.793,
+        45.357,
+        46.19,
+        45.446,
+        44.474,
+        45.356,
+        46.837,
+        47.412,
+        45.635,
+        55.931,
+        73.345,
+        65.606,
+        46.322,
+        46.572,
+        45.912,
+        43.738,
+        46.71,
+        44.395,
+        46.268,
+        47.115
+      ]
+    },
+    "cachedFreeProSwitchProjection": {
+      "coldFirstInvocationMs": 22.29,
+      "warmupInvocations": 5,
+      "sampleCount": 30,
+      "minMs": 11.373,
+      "medianMs": 14.115,
+      "p95Ms": 16.036,
+      "maxMs": 16.139,
+      "targetP95Ms": 150,
+      "met": true,
+      "rawSampleMs": [
+        14.583,
+        14.115,
+        14.741,
+        14.372,
+        14.151,
+        16.036,
+        16.139,
+        14.36,
+        14.208,
+        15.704,
+        13.597,
+        14.622,
+        14.503,
+        13.333,
+        14.441,
+        13.726,
+        13.217,
+        12.072,
+        11.723,
+        13.222,
+        11.876,
+        12.187,
+        12.47,
+        12.145,
+        12.14,
+        15.914,
+        14.829,
+        11.67,
+        11.373,
+        12.971
+      ]
+    },
+    "mockIDBCompleteChain": {
+      "coldFirstInvocationMs": 352.21,
+      "warmupInvocations": 5,
+      "sampleCount": 30,
+      "minMs": 324.479,
+      "medianMs": 354.105,
+      "p95Ms": 423.229,
+      "maxMs": 423.959,
+      "targetP95Ms": 500,
+      "met": true,
+      "rawSampleMs": [
+        353.783,
+        336.124,
+        346.733,
+        354.105,
+        324.479,
+        328.688,
+        357.801,
+        347.9,
+        366.151,
+        423.959,
+        345.13,
+        360.476,
+        353.411,
+        337.749,
+        343.428,
+        353.681,
+        331.732,
+        332.725,
+        346.115,
+        356.964,
+        405.572,
+        414.056,
+        372.761,
+        368.377,
+        423.229,
+        359.466,
+        354.594,
+        363.999,
+        356.242,
+        343.982
+      ]
+    }
+  },
+  "mockIDBPhaseMilliseconds": {
+    "nativeSnapshot": {
+      "median": 45.718,
+      "p95": 53.401
+    },
+    "initialOverlayRead": {
+      "median": 58.113,
+      "p95": 84.023
+    },
+    "domainPlannerWithinTransaction": {
+      "median": 63.217,
+      "p95": 73.059
+    },
+    "transactionIncludingPlanner": {
+      "median": 176.071,
+      "p95": 209.185
+    },
+    "readback": {
+      "median": 56.876,
+      "p95": 62.443
+    },
+    "projection": {
+      "median": 15.652,
+      "p95": 18.554
+    }
+  },
+  "definitions": {
+    "cold": "First measured invocation in this process after module import and fixture construction; not cold disk or browser start.",
+    "warm": "Five unrecorded warmup invocations followed by recorded samples; no forced GC; elapsed wall time includes assertions and normal GC.",
+    "manualReducerFeedback": "Validated reducer on 1000 approved synthetic refs and a full 100-topic overlay, including clone and output validation.",
+    "cachedFreeProSwitchProjection": "Native mode then Pro mode using cached authorized metadata and the actual Free DTO. Existing activity aggregation reused; no DOM/layout.",
+    "mockIDBCompleteChain": "NativeRepository snapshot -> same-IDB overlay+journal read -> original native/evidence fence in transaction -> real domain plan/inverse -> overlay+checkpoint+journal commit -> readback -> bounded Pro projection. Journal grows across samples.",
+    "phases": "Warm-sample phase diagnostics. domainPlannerWithinTransaction is included in transactionIncludingPlanner, not additive; per-phase p95 values must not be summed.",
+    "p95": "Nearest-rank order statistic ceil(0.95*n), milliseconds."
+  },
+  "limits": [
+    "Synthetic Node development measurement only.",
+    "MockIDB does not establish physical disk durability, browser scheduling, MV3 lifecycle, real-host responsiveness or user-perceived DOM paint.",
+    "The 1000-reference/100-topic fixture does not qualify deferred 10k/100k scale.",
+    "No provider network, personal browser, production source, credentials or real user data used."
+  ]
+}

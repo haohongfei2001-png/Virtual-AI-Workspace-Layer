@@ -1,0 +1,77 @@
+diff --git a/src/runtime/host-binding-service.mjs b/src/runtime/host-binding-service.mjs
+--- a/src/runtime/host-binding-service.mjs
++++ b/src/runtime/host-binding-service.mjs
+@@ -38,7 +38,8 @@
+ import {exactHostRecord} from '../host/contract.mjs';
+ import {tokenOK} from '../b1/identity.mjs';
+ /** Zero-seed identity composition. Existing repository/broker owners remain unchanged. */
+-export function createHostBindingService({extensionId,getFrame,getContexts=null,allowedURL,provider,profile,contextObserver=null,isolatedIdentityDispatch=null,identityOrigin=null,repository,surfaceProfiles=null,currentMetadataReadEnabled=false,sendCandidatesEnabled=false,sendAckProfile=null,historicalSendProfile=null,nativeActivityProfile=null,firstSendOrigin=null,oldSendTerminalOrigin=null,readBudget=null,uiURL=null,uiURLs=null,workspaceRepository=null,freeEvidenceRepository=null,prepareNavigation=null,readNativeManagement=null,openLocalData=null,navigationURLPolicy=null,candidateBridge=null,dispatchCurrent=null,presentSurface=null,selectionBridge=null,freeRuntime=null,now=Date.now,makeId=()=>crypto.randomUUID(),elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout}={}){
++export function createHostBindingService({extensionId,getFrame,getContexts=null,allowedURL,provider,profile,contextObserver=null,isolatedIdentityDispatch=null,identityOrigin=null,repository,surfaceProfiles=null,currentMetadataReadEnabled=false,sendCandidatesEnabled=false,sendAckProfile=null,historicalSendProfile=null,nativeActivityProfile=null,firstSendOrigin=null,oldSendTerminalOrigin=null,readBudget=null,uiURL=null,uiURLs=null,workspaceRepository=null,freeEvidenceRepository=null,prepareNavigation=null,readNativeManagement=null,openLocalData=null,navigationURLPolicy=null,candidateBridge=null,dispatchCurrent=null,presentSurface=null,selectionBridge=null,freeRuntime=null,proServiceFactory=null,now=Date.now,makeId=()=>crypto.randomUUID(),elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout}={}){
++ if(proServiceFactory!==null&&typeof proServiceFactory!=='function')throw Error('invalid-pro-service-factory');
+  const browserLocal=profile?.id==='browser-local-session';
+  if(browserLocal&&(contextObserver||currentMetadataReadEnabled||sendCandidatesEnabled||sendAckProfile||historicalSendProfile||nativeActivityProfile||firstSendOrigin||oldSendTerminalOrigin))throw Error('local-mode-network-source-forbidden');
+  const localMemory=browserLocal?createBrowserLocalMemory({clock:()=>new Date(now()).toISOString()}):null;
+@@ -69,8 +70,10 @@
+  const asFrame=(doc,sender)=>({tabId:doc.tabId,frameId:0,documentId:doc.documentId,parentDocumentId:null,actualURL:doc.url,documentLifecycle:'active',incognito:sender.tab?.incognito===true});
+ 
+  const ingestionPasses=surfaceProfiles?createHostIngestionPassOwner({handshake,authority,getFrame,profiles:surfaceProfiles,now,elapsedNow,schedule,cancel}):null;
+- let recovery=null,backup=null;
+- const ui=uiURL||uiURLs?createHostUiOwner({extensionId,uiURL,uiURLs,getFrame,getContexts,handshake,authority,onRevokeMount:id=>views?.revokeMount(id),onRevokeDocument:id=>{recovery?.revokeDocument(id);backup?.revokeDocument(id);},now,makeId,elapsedNow,schedule,cancel}):null;
++ let recovery=null,backup=null,pro=null;
++ // Packaged composition only. A default Free worker imports no Pro module.
++ const proLifecycle=(method,...args)=>{try{const value=pro?.[method](...args);if(value instanceof Promise){value.catch(()=>{});return false;}return value;}catch{return false;}};
++ const ui=uiURL||uiURLs?createHostUiOwner({extensionId,uiURL,uiURLs,getFrame,getContexts,handshake,authority,onRevokeMount:id=>{proLifecycle('revokeMount',id);views?.revokeMount(id);},onRevokeDocument:id=>{proLifecycle('revokeDocument',id);recovery?.revokeDocument(id);backup?.revokeDocument(id);},now,makeId,elapsedNow,schedule,cancel}):null;
+  const nativeActivityAttempts=new Set();
+  const activityProfile=nativeActivityProfile===null?null:validateNativeActivityProfile(nativeActivityProfile);
+  if(activityProfile&&(activityProfile.semantics!=='native-object-update'||activityProfile.id===LOCAL_USE_PROFILE.id||!freeEvidenceRepository||typeof provider.withNativeActivity!=='function'||surfaceProfiles?.has(activityProfile.id)))throw Error('invalid-native-activity-composition');
+@@ -115,6 +118,14 @@
+  const snippets=assetUi&&views&&(selectionBridge||browserLocal)?createHostSnippetService({ui:assetUi,workspaceRepository,resolveView:views.resolveSnippetView,selectionBridge,onChanged:scopeKey=>{views.refreshScope(scopeKey);ui.notifyScope?.(scopeKey);},elapsedNow,schedule,cancel,makeId}):null;
+  recovery=assetUi&&readService&&['read','recoveryStatus','recover'].every(name=>typeof workspaceRepository?.[name]==='function')?createHostRecoveryService({ui:assetUi,readService,workspaceRepository,onRecovered:scopeKey=>{views?.refreshScope(scopeKey);ui.notifyScope?.(scopeKey);},elapsedNow,schedule,cancel}):null;
+  backup=assetUi&&['exportBackup','previewRestore','restoreBackup'].every(name=>typeof workspaceRepository?.[name]==='function')?createHostBackupService({ui:assetUi,workspaceRepository,onRestored:scopeKey=>{views?.refreshScope(scopeKey);ui.notifyScope?.(scopeKey);},elapsedNow,schedule,cancel,makeId}):null;
++ if(proServiceFactory!==null){
++  if(!ui)throw Error('pro-service-ui-required');
++  const candidate=proServiceFactory(Object.freeze({ui,assetUi,repository,workspaceRepository,freeEvidenceRepository,nativeRepository,readService,views,browserLocal,now,elapsedNow,schedule,cancel}));
++  const methods=['handle','revokeDocument','revokeMount','revokeTab','stop','isIdle'];
++  if(candidate instanceof Promise){candidate.catch(()=>{});throw Error('invalid-pro-service-interface');}
++  if(!candidate||![Object.prototype,null].includes(Object.getPrototypeOf(candidate))||methods.some(name=>typeof Object.getOwnPropertyDescriptor(candidate,name)?.value!=='function'))throw Error('invalid-pro-service-interface');
++  pro=Object.freeze(Object.fromEntries(methods.map(name=>[name,Object.getOwnPropertyDescriptor(candidate,name).value.bind(candidate)])));
++ }
+  const commands={};if(readService)for(const name of ['snapshot','command','undo','history','saveView','exportBackup','previewRestore','restoreBackup','recoveryStatus','recover'])if(typeof workspaceRepository[name]==='function')commands[name]=workspaceRepository[name].bind(workspaceRepository);
+  const broker=createDocumentBindingBroker({extensionId,getFrame,allowedURL,repository,workspaceRepository:readService?{...readService,...commands}:workspaceRepository,freeRuntime,now,makeId,hostHandshake:handshake,resolveScope:({currentFrame,sender})=>authority.scopeFor(asFrame(currentFrame,sender))});
+  // Claims last only through concurrent service delivery, not the grant lifetime.
+@@ -153,6 +164,7 @@
+    if(!handshake.matchesFrame(message,sender,actual)||!await handshake.verify(message,sender))return {ok:false};
+    const frame=asFrame({tabId:sender.tab.id,documentId:actual.documentId,url:actual.url},sender);return {ok:candidates?.authorize(message.command,frame)===true||currentNavigation?.authorize(message.command,frame)===true};
+   }
++  if(message?.type==='HOST_UI_PRO'){try{return pro?await pro.handle(message,sender):{ok:false,reason:'pro-unavailable'};}catch{return {ok:false,reason:'pro-unavailable'};}}
+   if(message?.type==='HOST_UI_CANCEL_NAVIGATION')return currentNavigation?currentNavigation.cancelAction(message,sender):{ok:false,state:'blocked'};
+   if(['HOST_UI_DISPATCH_CURRENT','HOST_UI_DISPATCH_NATIVE'].includes(message?.type))return currentNavigation?currentNavigation.handle(message,sender):{ok:false,state:'blocked'};
+   if(['HOST_UI_CANDIDATES','HOST_UI_ACTIVATE_CANDIDATE'].includes(message?.type))return candidates?candidates.handle(message,sender):{ok:false,state:'blocked'};
+@@ -252,7 +264,7 @@
+   if(!attempt.completed&&attempt.frame)firstSend?.invalidateTab(attempt.frame.tabId);
+   if(focus&&!attempt.completed&&attempt.frame&&attempt.resolution?.state==='verified'&&authority.peek(attempt.frame).grant===attempt.resolution.grant)authority.invalidate(attempt.frame.documentId);releaseResolution(attempt);}
+  }
+- function invalidate({tabId,frameId=0,documentId,firstSendNavigation=null,preserveViewDocumentId=null,localNavigation=null}={}){contextRecovery?.invalidate({tabId,documentId});oldSendTerminal?.invalidateTab(tabId);if(firstSendNavigation)firstSend?.navigate({tabId,...firstSendNavigation});else firstSend?.invalidateTab(tabId);broker.invalidate({tabId,frameId});if(documentId){ingestionPasses?.invalidateDocument(documentId);observations?.invalidateDocument(documentId);authority.invalidate(documentId);ui?.revokeDocument(documentId);views?.revokeDocument(documentId);}else{ingestionPasses?.invalidateTab(tabId);observations?.invalidateTab(tabId);authority.invalidateTab(tabId,browserLocal?localNavigation:null);ui?.revokeTab(tabId);views?.revokeTab(tabId,{preserveDocumentId:preserveViewDocumentId});}}
++ function invalidate({tabId,frameId=0,documentId,firstSendNavigation=null,preserveViewDocumentId=null,localNavigation=null}={}){if(documentId)proLifecycle('revokeDocument',documentId);else proLifecycle('revokeTab',tabId);contextRecovery?.invalidate({tabId,documentId});oldSendTerminal?.invalidateTab(tabId);if(firstSendNavigation)firstSend?.navigate({tabId,...firstSendNavigation});else firstSend?.invalidateTab(tabId);broker.invalidate({tabId,frameId});if(documentId){ingestionPasses?.invalidateDocument(documentId);observations?.invalidateDocument(documentId);authority.invalidate(documentId);ui?.revokeDocument(documentId);views?.revokeDocument(documentId);}else{ingestionPasses?.invalidateTab(tabId);observations?.invalidateTab(tabId);authority.invalidateTab(tabId,browserLocal?localNavigation:null);ui?.revokeTab(tabId);views?.revokeTab(tabId,{preserveDocumentId:preserveViewDocumentId});}}
+  async function acceptLocalArrival(frame){
+   if(!browserLocal||!recordLocalUse)return false;
+   const arrival=authority.takeArrival(frame),scope=authority.scopeFor(frame),grant=authority.peek(frame).grant,route=navigationURLPolicy?.parse(frame.actualURL);
+@@ -260,8 +272,8 @@
+   const guard=()=>serviceActive&&authority.peek(frame).grant===grant&&now()<arrival.until;
+   try{await recordLocalUse({scope,conversationId:route.conversationId,actionId:arrival.actionId,guard});return guard();}catch{return false;}
+  }
+- function tabClosed(tabId){contextRecovery?.forgetTab(tabId);ingestionPasses?.invalidateTab(tabId);oldSendTerminal?.invalidateTab(tabId);firstSend?.invalidateTab(tabId);observations?.invalidateTab(tabId);broker.tabClosed(tabId);authority.invalidateTab(tabId);ui?.revokeTab(tabId);views?.revokeTab(tabId);}
+- function stop(){if(!serviceActive)return;serviceActive=false;contextRecovery?.stop();identityOwner?.stop();entryCalibration?.stop();ingestionPasses?.stop();currentNavigation?.stop();candidates?.stop();views?.stop();snippets?.stop();oldSendTerminal?.stop();firstSend?.stop();sendCandidates?.stop();ackOwner?.stop();historyOwner?.stop();nativeActivity?.stop();localUse?.stop();for(const attempt of nativeActivityAttempts)attempt.abort.abort();currentMetadata?.stop();observations?.stop();recovery?.stop();backup?.stop();for(const attempt of refreshAttempts){attempt.active=false;attempt.abort.abort();}refreshAttempts.clear();authority.invalidateAll();localMemory?.stop();}
++ function tabClosed(tabId){proLifecycle('revokeTab',tabId);contextRecovery?.forgetTab(tabId);ingestionPasses?.invalidateTab(tabId);oldSendTerminal?.invalidateTab(tabId);firstSend?.invalidateTab(tabId);observations?.invalidateTab(tabId);broker.tabClosed(tabId);authority.invalidateTab(tabId);ui?.revokeTab(tabId);views?.revokeTab(tabId);}
++ function stop(){if(!serviceActive)return;serviceActive=false;proLifecycle('stop');contextRecovery?.stop();identityOwner?.stop();entryCalibration?.stop();ingestionPasses?.stop();currentNavigation?.stop();candidates?.stop();views?.stop();snippets?.stop();oldSendTerminal?.stop();firstSend?.stop();sendCandidates?.stop();ackOwner?.stop();historyOwner?.stop();nativeActivity?.stop();localUse?.stop();for(const attempt of nativeActivityAttempts)attempt.abort.abort();currentMetadata?.stop();observations?.stop();recovery?.stop();backup?.stop();for(const attempt of refreshAttempts){attempt.active=false;attempt.abort.abort();}refreshAttempts.clear();authority.invalidateAll();localMemory?.stop();}
+  // Internal worker composition only; no page RPC exposes metadata or accepts proof IDs.
+  const consumeNativeActivity=(proof,frame)=>track('background',async()=>{
+   const started=elapsedNow(),abort=new AbortController();let active=true,used=false;
+@@ -296,6 +308,7 @@
+   return quiet()&&ownersIdle(true)&&quiet();
+  }
+  function ownersIdle(excludeUi=false){
++  if(pro!==null&&proLifecycle('isIdle')!==true)return false;
+   return [authority,contextRecovery,...(typeof contextObserver?.isIdle==='function'?[contextObserver]:[]),continuations,nativeActivity,localUse,...(excludeUi?[]:[ui]),observations,ingestionPasses,currentMetadata,sendCandidates,firstSend,oldSendTerminal,backup,recovery,snippets,views].every(owner=>owner===null||owner.isIdle?.()===true);
+  }
+  return Object.freeze({isIdle,consumeNativeActivity,activityAdmission:(scope,request)=>nativeActivity?.gate(scope,request)??localUse?.gate(scope,request)??null,oldSendTerminal,firstSend,ackAdmission:(scope,request)=>ackOwner?.gate(scope,request)??historyOwner?.gate(scope,request)??null,sendCandidates,readCurrentMetadata,stop,connectPort:port=>serviceActive&&(ui?.connectPort(port)??false),handle,invalidate,acceptLocalArrival,tabClosed,broker,handshake,authority,nativeRepository,observations,continuations,readService,ui,views});
