@@ -1,0 +1,208 @@
+{
+  "kind": "UNINTEGRATED_HELPER_DELIVERY_NOT_ACCEPTANCE",
+  "testBaseline": "e1b0bfd6ae76a5aa5e6948edc71b0487a1a371af",
+  "deliveryBase": "19b938a074d89e2e66086828a17221671dc4a15d",
+  "freshHeadCheck": "2026-10-18T01:33:00Z",
+  "sourceDrift": "e1b0bfd to 19b938a leaves all three proposed index owners unchanged; later Free source/docs retained in delivery tree.",
+  "sourceSha256": {
+    "src/data/native-index-page.mjs": "a920019f03fff020c016e8b5394fe3c4b3884ca0800f7f2e27f498e79a84c7f8",
+    "tests/free/index-audit-cost/README.md": "430d928510f89002b27671698999a18994ba10d52c81f00dd5396686fbcc945b",
+    "tests/free/index-audit-cost/fixture.mjs": "0c32c473e0177c3d83d745052bd895c8e2edfc74c9c40e2ffa019621e924e1b5",
+    "tests/free/index-audit-cost/independent-boundary.test.mjs": "b919882b06d92d7c8f3b700f11820d45bc1e2d8f167fb246092defbd1b8bc2fc",
+    "tests/free/index-audit-cost/integration.patch": "6f70ca3593a46a9e673663646dcae0718f8b1ae8950cd6bb81a784a3b441a9a3",
+    "tests/free/index-audit-cost/mutations.mjs": "6fd87f07974daf8bbfb2334c199a67208b27f4757eef3d2680cca8e63702da55",
+    "tests/free/index-audit-cost/owner-integration.test.mjs": "7fb592cb5e53f3bf9583b02573dcab5f7dcd78e3aa95ae95a6fd2d31b28c34dd",
+    "tests/free/index-audit-cost/page-selection.test.mjs": "b0b0dff5d98b3a8fb38ef42ae284bc364e03242d2187f0d154fe3e837adf187d",
+    "tests/free/index-audit-cost/selection-benchmark.mjs": "d125f569cdd19aa2b85e00f49a8542545cfb0e0c65ae0ca2b3a1d2b5d8591264",
+    "tests/free/index-audit-cost/snapshot-boundary.test.mjs": "93bcec3e7cb21e297c51082c5e4b43c4dd356d7e5945ca2eeb2b278dacdd9b57"
+  },
+  "ownerBaselineSha256": {
+    "src/data/native-index-reader.mjs": "c4acbc5899a8ff2cdc745270592fd04812e0bd3570a318cda353df5d2e3584f7",
+    "src/data/native-repository.mjs": "f92db173be2963592a52c6bac7b5eae964312af24951403f7dfa656e345731a3",
+    "src/data/native-version-index.mjs": "ad66796b5211612a23ab724602252fcce0d2ff758f1ab34a780ebbba35e1e798"
+  },
+  "checks": [
+    {
+      "name": "new-unintegrated",
+      "tests": 77,
+      "pass": 77,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "outputSha256": "914e4a275839954f0b46c8d1c067de67126d0555db266c16bcf3e1c4fd9de52d"
+    },
+    {
+      "name": "new-integrated",
+      "tests": 77,
+      "pass": 77,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "outputSha256": "b3ebdee348afbe0c20957005ac65528d6bb1d7653cc46eb69e440d22ad4e08d2"
+    },
+    {
+      "name": "affected-integrated",
+      "tests": 232,
+      "pass": 232,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "outputSha256": "1e21e41fdaf926770d873c5d75eec14989de764eab1af3085652e00b92003d98"
+    }
+  ],
+  "commands": [
+    "node --test --experimental-test-isolation=none tests/free/index-audit-cost/*.test.mjs",
+    "node --test --experimental-test-isolation=none tests/free/native-index-reader.test.mjs tests/free/native-version-index.test.mjs tests/free/native-index-snapshot.test.mjs tests/free/native-index-construction-validation.test.mjs tests/free/native-index-write.test.mjs tests/free/native-index-runtime.test.mjs tests/free/page-parallel-read.test.mjs tests/free/page-wire-limit.test.mjs tests/free/native-manifest-validation.test.mjs tests/free/root-validation-snapshot.test.mjs tests/free/index-audit-cost/*.test.mjs",
+    "node tests/free/index-audit-cost/mutations.mjs /tmp/index-page-mutations.json",
+    "node tests/free/index-audit-cost/selection-benchmark.mjs /tmp/index-page-selection.json"
+  ],
+  "benchmark": {
+    "kind": "PURE_SELECTION_COMPUTE_NOT_BROWSER_OR_AUDIT_ACCEPTANCE",
+    "node": "v24.19.0",
+    "count": 10000,
+    "buckets": 257,
+    "scope": "Already freshly verified immutable snapshots; IDB, bucket byte validation, fact reads, broker and UI are outside timed work. Both paths independently visit every bucket and global ordinal on every page. No cross-page cache.",
+    "samples": [
+      {
+        "pair": 0,
+        "variant": "baseline",
+        "pages": 42,
+        "elapsedMs": 256.24006099999997
+      },
+      {
+        "pair": 0,
+        "variant": "candidate",
+        "pages": 42,
+        "elapsedMs": 57.04420700000003
+      },
+      {
+        "pair": 1,
+        "variant": "candidate",
+        "pages": 42,
+        "elapsedMs": 56.829386
+      },
+      {
+        "pair": 1,
+        "variant": "baseline",
+        "pages": 42,
+        "elapsedMs": 269.585745
+      },
+      {
+        "pair": 2,
+        "variant": "baseline",
+        "pages": 42,
+        "elapsedMs": 267.91063299999996
+      },
+      {
+        "pair": 2,
+        "variant": "candidate",
+        "pages": 42,
+        "elapsedMs": 60.70409300000006
+      }
+    ],
+    "medianMs": {
+      "baseline": 267.91063299999996,
+      "candidate": 57.04420700000003
+    },
+    "selectionDigest": "dedad4f4b039fffc8166ebc2506abb01d3f7bc5f5a5f5bab71924692ea4c21f7",
+    "fullInventoryMapEntriesConstructed": {
+      "baseline": 420042,
+      "candidate": 0
+    },
+    "globalOrdinalsVisitedPerVariant": 420042
+  },
+  "mutations": {
+    "kind": "PRECISE_HELPER_MUTATIONS_NOT_BROWSER_ACCEPTANCE",
+    "reports": [
+      {
+        "name": "scope-root-check",
+        "status": "KILLED",
+        "exitCode": 1,
+        "failedTests": 2
+      },
+      {
+        "name": "full-manifest-size",
+        "status": "KILLED",
+        "exitCode": 1,
+        "failedTests": 2
+      },
+      {
+        "name": "global-ordinal-check",
+        "status": "KILLED",
+        "exitCode": 1,
+        "failedTests": 2
+      },
+      {
+        "name": "integer-key-order",
+        "status": "KILLED",
+        "exitCode": 1,
+        "failedTests": 1
+      },
+      {
+        "name": "ordinary-input-fallback",
+        "status": "KILLED",
+        "exitCode": 1,
+        "failedTests": 6
+      },
+      {
+        "name": "private-root-proof",
+        "status": "KILLED",
+        "exitCode": 1,
+        "failedTests": 1
+      },
+      {
+        "name": "private-piece-proof",
+        "status": "KILLED",
+        "exitCode": 1,
+        "failedTests": 11
+      },
+      {
+        "name": "private-context-binding",
+        "status": "KILLED",
+        "exitCode": 1,
+        "failedTests": 3
+      }
+    ]
+  },
+  "mutationChecksBeforeAndAfterIntegration": "identical: eight of eight KILLED by behavioral assertions, not fixture patch mismatch",
+  "ownerCounts": {
+    "fivePages108Refs": {
+      "baselineMaterializeCalls": 5,
+      "baselineMaterializedRows": 545,
+      "candidateMaterializeCalls": 0,
+      "candidateMaterializedRows": 0,
+      "indexReadsEach": 425,
+      "factReadsEach": 113,
+      "pageJSONEqual": true
+    },
+    "twoCompleteAudits1000Refs": {
+      "passes": 2,
+      "pagesEach": 3,
+      "revision": 2,
+      "indexReads": 1506,
+      "factReads": 2006,
+      "secondPassFresh": true
+    }
+  },
+  "independentReview": {
+    "status": "NO_BLOCKER_FOUND",
+    "testsIncluded": 21,
+    "privateFastPathDifferentialCases": 1440,
+    "finalReviewHelperSha256": "a920019f03fff020c016e8b5394fe3c4b3884ca0800f7f2e27f498e79a84c7f8",
+    "finalReviewPatchSha256": "6f70ca3593a46a9e673663646dcae0718f8b1ae8950cd6bb81a784a3b441a9a3",
+    "originalReviewFindings": "Earlier direct-input and snapshot-capture drafts changed getter/prototype validation; withdrawn. Final proof query is read-only and all existing snapshot functions are unchanged; ordinary inputs use original materializer."
+  },
+  "coverage": "77 tests includes independent 21; all 77 are inside affected 232. Repeated runs and 1440 cases are not disjoint test counts.",
+  "latestExternalCISample": {
+    "sourceCommit": "f29443acfa8157fd5b314367cec41952ba96f261",
+    "run": 39086077996,
+    "formal": "FAIL at PENDING_MEMBER/revision310 with 0 complete audits; after-failure revision311/10000 is not deadline completion",
+    "diagnostic": "first audit 3081.18164ms, second still in flight at deadline; does not replace formal failure"
+  },
+  "formalBrowser": "NOT_RUN",
+  "fullNodeSuite": "NOT_RUN",
+  "formalCI": "NOT_RUN",
+  "originalCIFailuresPreserved": true,
+  "productionOwnerPatchAppliedOnDeliveryBranch": false,
+  "acceptance": "NOT_ESTABLISHED"
+}
